@@ -1,0 +1,205 @@
+[
+  {
+    "id": "desire_opening_relationship",
+    "name": "Opening Our Relationship",
+    "description": "Exploring some form of consensual non-monogamy together — dating, playing, or connecting with others beyond your partnership.",
+    "category": "nm_structures",
+    "subcategory": "general",
+    "layer": "core",
+    "sortOrder": 1,
+    "isFree": true,
+    "sensitivityLevel": 1
+  },
+
+  {
+    "id": "desire_swinging_together",
+    "name": "Swinging or Playing Together",
+    "description": "Sexual experiences with others that you share as a couple — same room, same event, together.",
+    "category": "nm_structures",
+    "subcategory": "swinging",
+    "layer": "core",
+    "sortOrder": 2,
+    "isFree": true,
+    "sensitivityLevel": 1
+  },
+
+  {
+    "id": "desire_dating_separately",
+    "name": "Dating Separately",
+    "description": "Each partner having the freedom to go on dates or form connections with others independently.",
+    "category": "nm_structures",
+    "subcategory": "independent",
+    "layer": "core",
+    "sortOrder": 3,
+    "isFree": true,
+    "sensitivityLevel": 2
+  },
+
+  {
+    "id": "desire_polyamory",
+    "name": "Polyamory — Loving More Than One",
+    "description": "The possibility of developing deep romantic love with more than one person, with everyone's knowledge and consent.",
+    "category": "nm_structures",
+    "subcategory": "polyamory",
+    "layer": "core",
+    "sortOrder": 4,
+    "isFree": true,
+    "sensitivityLevel": 2
+  },
+
+  {
+    "id": "desire_hierarchy",
+    "name": "Our Relationship Comes First",
+    "description": "Maintaining a clear hierarchy where your partnership is the 'primary' relationship, and other connections come second.",
+    "category": "nm_structures",
+    "subcategory": "hierarchy",
+    "layer": "core",
+    "sortOrder": 5,
+    "isFree": true,
+    "sensitivityLevel": 2
+  },
+
+  {
+    "id": "desire_emotional_connections",
+    "name": "Emotional Connections With Others",
+    "description": "Forming meaningful emotional bonds — not just sexual ones — with people outside your partnership.",
+    "category": "emotional",
+    "subcategory": "emotional_intimacy",
+    "layer": "core",
+    "sortOrder": 6,
+    "isFree": true,
+    "sensitivityLevel": 2
+  },
+
+  {
+    "id": "desire_nre",
+    "name": "New Relationship Energy (NRE)",
+    "description": "The excitement and intensity that comes with a new connection — the butterflies, the constant texting, the giddiness.",
+    "category": "emotional",
+    "subcategory": "nre",
+    "layer": "core",
+    "sortOrder": 7,
+    "isFree": true,
+    "sensitivityLevel": 2
+  },
+
+  {
+    "id": "desire_partner_falling_in_love",
+    "name": "Your Partner Falling in Love",
+    "description": "The possibility that your partner could develop deep romantic feelings for another person.",
+    "category": "emotional",
+    "subcategory": "romantic_love",
+    "layer": "core",
+    "sortOrder": 8,
+    "isFree": true,
+    "sensitivityLevel": 3
+  },
+
+  {
+    "id": "desire_group_sexual",
+    "name": "Group Sexual Experiences",
+    "description": "Sexual experiences involving more than two people — threesomes, moresomes, or group play.",
+    "category": "sexual",
+    "subcategory": "group",
+    "layer": "core",
+    "sortOrder": 9,
+    "isFree": true,
+    "sensitivityLevel": 2
+  },
+
+  {
+    "id": "desire_safer_sex",
+    "name": "Safer Sex Boundaries",
+    "description": "Having clear agreements about protection, testing, and barriers with outside partners — and sticking to them.",
+    "category": "boundaries",
+    "subcategory": "sexual_health",
+    "layer": "core",
+    "sortOrder": 10,
+    "isFree": true,
+    "sensitivityLevel": 1
+  },
+
+  {
+    "id": "desire_overnight_stays",
+    "name": "Overnight Stays With Others",
+    "description": "The possibility of you or your partner spending the night at someone else's place after a date or encounter.",
+    "category": "boundaries",
+    "subcategory": "logistics",
+    "layer": "core",
+    "sortOrder": 11,
+    "isFree": true,
+    "sensitivityLevel": 2
+  },
+
+  {
+    "id": "desire_time_attention",
+    "name": "Time and Attention",
+    "description": "How you divide your time — evenings, weekends, trips — when other connections are part of your life.",
+    "category": "boundaries",
+    "subcategory": "time_management",
+    "layer": "core",
+    "sortOrder": 12,
+    "isFree": true,
+    "sensitivityLevel": 2
+  },
+
+  {
+    "id": "desire_veto_power",
+    "name": "Veto Power",
+    "description": "Either partner having the ability to say 'no' to a specific person or situation, and that decision is final.",
+    "category": "boundaries",
+    "subcategory": "control",
+    "layer": "core",
+    "sortOrder": 13,
+    "isFree": true,
+    "sensitivityLevel": 2
+  },
+
+  {
+    "id": "desire_full_disclosure",
+    "name": "Full Disclosure — Knowing Everything",
+    "description": "Wanting to hear all the details about your partner's experiences with others — what happened, how it felt, what they enjoyed.",
+    "category": "communication",
+    "subcategory": "disclosure",
+    "layer": "core",
+    "sortOrder": 14,
+    "isFree": true,
+    "sensitivityLevel": 2
+  },
+
+  {
+    "id": "desire_meeting_metamours",
+    "name": "Meeting Your Partner's Other Connections",
+    "description": "Getting to know the people your partner dates or is involved with — meeting metamours, sharing social time, or building a broader community.",
+    "category": "communication",
+    "subcategory": "metamours",
+    "layer": "core",
+    "sortOrder": 15,
+    "isFree": true,
+    "sensitivityLevel": 1
+  },
+
+  {
+    "id": "desire_social_disclosure",
+    "name": "Who Knows About Us",
+    "description": "Being open with friends, family, or your community about practicing non-monogamy.",
+    "category": "communication",
+    "subcategory": "outness",
+    "layer": "core",
+    "sortOrder": 16,
+    "isFree": true,
+    "sensitivityLevel": 1
+  },
+
+  {
+    "id": "desire_handling_jealousy",
+    "name": "Handling Jealousy Together",
+    "description": "Working through jealous feelings as a team — seeing jealousy as information, not a crisis.",
+    "category": "emotional",
+    "subcategory": "jealousy",
+    "layer": "core",
+    "sortOrder": 17,
+    "isFree": true,
+    "sensitivityLevel": 2
+  }
+]

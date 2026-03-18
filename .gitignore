@@ -1,0 +1,65 @@
+# ============================================================
+# .gitignore — Open Lightly
+# ============================================================
+
+# ── Secrets & Keys ──────────────────────────────────────────
+# NEVER commit API keys, tokens, or certificates.
+*.xcconfig
+.env
+*.pem
+*.p12
+*.mobileprovision
+*.cer
+
+# ── Xcode Build Artifacts ───────────────────────────────────
+DerivedData/
+build/
+*.o
+*.d
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ── Swift Package Manager ───────────────────────────────────
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+
+# ── Xcode User Data ─────────────────────────────────────────
+# Per-developer settings — should not be shared.
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+project.xcworkspace/xcuserdata/
+*.xcscmblueprint
+
+# ── SwiftData / SQLite ──────────────────────────────────────
+# Local on-device databases containing desire ratings,
+# session records, and safe words. Never commit user data.
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+
+# ── macOS ────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ── Simulator & Device ──────────────────────────────────────
+*.app
+
+# ── Crash Logs ──────────────────────────────────────────────
+*.crash
+
+# ── SPM Resolved (optional — remove if you want lockfile) ───
+# Uncomment the line below if you want to commit Package.resolved
+# (recommended for reproducible builds):
+# !Package.resolved
+Config.swift

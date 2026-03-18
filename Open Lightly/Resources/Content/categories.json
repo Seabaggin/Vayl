@@ -1,0 +1,68 @@
+[
+  {
+    "id": "communication",
+    "name": "Communication",
+    "icon": "bubble.left.and.bubble.right",
+    "description": "Build the language and skills for honest, compassionate dialogue.",
+    "phase": "foundation",
+    "card_count": 3,
+    "sort_order": 1,
+    "requires_unlock": false,
+    "unlock_requirement": null
+  },
+  {
+    "id": "boundaries",
+    "name": "Boundaries",
+    "icon": "shield.lefthalf.filled",
+    "description": "Define and respect the limits that keep everyone safe.",
+    "phase": "foundation",
+    "card_count": 3,
+    "sort_order": 2,
+    "requires_unlock": false,
+    "unlock_requirement": null
+  },
+  {
+    "id": "emotional_readiness",
+    "name": "Emotional Readiness",
+    "icon": "heart.circle",
+    "description": "Explore feelings, fears, and emotional preparedness.",
+    "phase": "exploration",
+    "card_count": 3,
+    "sort_order": 3,
+    "requires_unlock": false,
+    "unlock_requirement": null
+  },
+  {
+    "id": "relationship_structure",
+    "name": "Relationship Structure",
+    "icon": "person.2.circle",
+    "description": "Discuss frameworks, agreements, and relationship models.",
+    "phase": "framework",
+    "card_count": 3,
+    "sort_order": 4,
+    "requires_unlock": true,
+    "unlock_requirement": "Complete the assessment to unlock"
+  },
+  {
+    "id": "intimacy_sexuality",
+    "name": "Intimacy & Sexuality",
+    "icon": "flame",
+    "description": "Navigate physical intimacy, desire, and sexual wellness.",
+    "phase": "exploration",
+    "card_count": 3,
+    "sort_order": 5,
+    "requires_unlock": true,
+    "unlock_requirement": "Requires Core access"
+  },
+  {
+    "id": "planning_logistics",
+    "name": "Planning & Logistics",
+    "icon": "calendar.badge.clock",
+    "description": "Work through the practical realities of non-monogamy.",
+    "phase": "planning",
+    "card_count": 3,
+    "sort_order": 6,
+    "requires_unlock": true,
+    "unlock_requirement": "Requires Core access"
+  }
+]
