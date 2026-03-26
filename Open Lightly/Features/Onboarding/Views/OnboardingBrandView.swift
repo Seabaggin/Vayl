@@ -86,9 +86,11 @@ struct OnboardingBrandView: View {
                 wordmark
                     .scaleEffect(wordmarkBreath)
                     .position(x: w / 2 + 8, y: h * 0.46)
+                    .accessibilityHidden(true)
 
                 taglineView
                     .position(x: w / 2, y: h * 0.64)
+                    .accessibilityHidden(true)
 
                 // ✦ REMOVED — progressBar
 
@@ -97,6 +99,16 @@ struct OnboardingBrandView: View {
                     .opacity(fadeOutOpacity)
                     .allowsHitTesting(false)
                     .ignoresSafeArea()
+
+                // Accessibility: present wordmark + tagline as one announcement
+                VStack(spacing: 4) {
+                    Text("Open Lightly")
+                    Text("Explore what's possible.")
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Open Lightly. Explore what's possible.")
+                .opacity(0)                    // invisible — for VoiceOver only
+                .allowsHitTesting(false)
             }
             .drawingGroup()
         }
@@ -248,6 +260,14 @@ struct OnboardingBrandView: View {
             .offset(y: h * 0.36)
     }
 
+    // NOTE: The design doc references LivingText for the wordmark
+    // gradient animation. This screen uses bespoke holoPhase /
+    // holoPhaseB state animation instead because:
+    // 1. The wordmark uses Zodiak — a brand identity font, not a UI font.
+    // 2. The gradient endpoint animation (UnitPoint driven by holoPhase)
+    //    produces a directional sweep specific to this brand moment
+    //    that LivingText's pulse model does not replicate.
+    // 3. This is intentional. Do not replace with LivingText.
     // ✦ CHANGED — each word has its own opacity/scale/offset
     private var wordmark: some View {
         VStack(spacing: -16) {
@@ -308,7 +328,22 @@ struct OnboardingBrandView: View {
 
     // MARK: - Replay
 
-    func replay() {
+    /// Replays the animation sequence from the beginning.
+    /// — Development and preview use only.
+    /// — Do not call this from the onboarding coordinator.
+    /// — Calling after ambient loops have started (>1s) will produce
+    ///   competing repeatForever animations on shared state variables.
+    ///   This is a known limitation of SwiftUI's animation model.
+    private func replay() {
+        #if DEBUG
+        if autoAdvanceFired == false {
+            // Safe — loops haven't started yet if this fires
+            // before the 1s ambient loop dispatch
+        } else {
+            print("[OnboardingBrandView] ⚠️ replay() called after " +
+                  "ambient loops started — competing animations possible.")
+        }
+        #endif
         bl1Width = 6
         bl1Opacity = 0.8
         hotWidth = 3
@@ -500,12 +535,24 @@ struct OnboardingBrandView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
             guard !autoAdvanceFired else { return }
             autoAdvanceFired = true
+            #if DEBUG
+            assert(onFinished != nil,
+                "OnboardingBrandView: onFinished not injected — " +
+                "wire this callback from the coordinator.")
+            #endif
             onFinished?()
         }
     }
 }
 
-#Preview {
-    OnboardingBrandView()
+// MARK: - Previews
+
+#Preview("Dark") {
+    OnboardingBrandView(onFinished: {})
         .preferredColorScheme(.dark)
+}
+
+#Preview("Light") {
+    OnboardingBrandView(onFinished: {})
+        .preferredColorScheme(.light)
 }

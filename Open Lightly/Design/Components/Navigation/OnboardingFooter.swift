@@ -8,10 +8,14 @@ import SwiftUI
 struct OnboardingFooter: View {
     var text: String = "Your data is encrypted and always stays yours."
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         Text(text)
             .font(.system(size: 12))
-            .foregroundColor(Color(red: 0.42, green: 0.42, blue: 0.50))
+            .foregroundColor(colorScheme == .light
+                ? AppColors.lightTextTertiary
+                : Color(red: 0.42, green: 0.42, blue: 0.50))
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
             .padding(.top, 12)
@@ -20,11 +24,27 @@ struct OnboardingFooter: View {
 }
 
 #Preview {
-    ZStack {
-        AppColors.pageBg.ignoresSafeArea()
-        VStack {
-            OnboardingFooter()
-            OnboardingFooter(text: "Custom footer copy for another screen.")
+    VStack(spacing: 0) {
+        // Dark
+        ZStack {
+            AppColors.pageBg.ignoresSafeArea()
+            VStack {
+                OnboardingFooter()
+                OnboardingFooter(text: "Custom footer copy for another screen.")
+            }
         }
+        .preferredColorScheme(.dark)
+        .frame(maxWidth: .infinity)
+
+        // Light
+        ZStack {
+            AppColors.lightPageBg.ignoresSafeArea()
+            VStack {
+                OnboardingFooter()
+                OnboardingFooter(text: "Custom footer copy for another screen.")
+            }
+        }
+        .preferredColorScheme(.light)
+        .frame(maxWidth: .infinity)
     }
 }

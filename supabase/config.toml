@@ -1,0 +1,22 @@
+
+[functions.lookup-code]
+enabled = true
+verify_jwt = true
+import_map = "./functions/lookup-code/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/lookup-code/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/lookup-code/*.html" ]
+
+[functions.create-pair]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create-pair/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/create-pair/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/create-pair/*.html" ]

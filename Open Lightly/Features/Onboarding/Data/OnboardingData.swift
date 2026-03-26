@@ -9,6 +9,12 @@ struct OnboardingData {
     // Screen 1 — Name + Pronouns
     var displayName: String = ""
     var pronouns: [PronounOption] = []
+    // Solo path only — captured in ContextView when
+    // user selects a card implying a partner exists.
+    // Couple path does not use this field —
+    // partner sets their own pronouns in NameView.
+    // nil = not provided or not applicable.
+    var partnerPronouns: String? = nil
     var customPronouns: String?
 
     // Screen 2 — Mode Select
@@ -24,11 +30,21 @@ struct OnboardingData {
     var nmStage: NMStage?
     var defaultDepth: Float = 0.3
 
-    // Screen 5 — Pairing (couple only)
+    // Screen 5 — Curiosity Picker
+    var communicationGoals: [String] = []    // Section 1 selections
+    var learningGoals: [String] = []         // Section 2 selections
+    var curiositySelections: [String] = []   // Derived: communicationGoals + learningGoals
+
+    // Screen 6 — Pairing (couple only)
     var pairingId: String?
 
-    // Screen 6 — Ground Rules
+    // Screen 7 — Building Path (derived from nmStage)
+    var defaultDifficulty: String = ""
+
+    // Screen 8 — Ground Rules + completion
     var groundRulesAcceptedAt: Date?
+    var onboardingComplete: Bool = false
+    var completedAt: Date?
 
     // Solo Reflection
     var firstReflection: String?
@@ -49,6 +65,7 @@ enum PronounOption: String, CaseIterable, Identifiable, Hashable {
 enum ExplorationMode: String, CaseIterable {
     case solo
     case couple
+    case browsing
 }
 
 enum RelationshipStatus: String, CaseIterable {

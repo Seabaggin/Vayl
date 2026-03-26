@@ -209,7 +209,7 @@ class SyncManager: ObservableObject {
     ///   - localProfile: The local SwiftData UserProfile (has the data to push)
     func retryPendingSyncs(userId: UUID, localProfile: UserProfile?) async {
         if UserDefaults.standard.bool(forKey: "pendingProfileSync"),
-           let profile = localProfile {
+           localProfile != nil {
             do {
                 try await syncProfileToSupabase(authId: userId)
                 if lastSyncError == nil {

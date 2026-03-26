@@ -17,7 +17,7 @@ struct OnboardingGlowField: View {
             let h = geo.size.height
             ZStack {
                 // Cyan — upper-left
-                blob(AppColors.cyan, 0.32, 300, 280, 75, 0)
+                blob(AppColors.cyan,  0.32, 300, 280, 75, 0)
                     .offset(x: sin(blobPhase[0] * .pi * 2) * 12,
                             y: sin(blobPhase[0] * .pi * 2 + .pi / 3) * 14)
                     .position(x: w * 0.22, y: h * 0.20)

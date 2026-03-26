@@ -5,10 +5,37 @@
 // Used at the top of every onboarding screen that shows navigation.
 import SwiftUI
 
+// MARK: - Private Modifiers
+
+private struct BackButtonModifier: ViewModifier {
+    let colorScheme: ColorScheme
+
+    func body(content: Content) -> some View {
+        if colorScheme == .light {
+            content
+                .padding(10)
+                .background(
+                    Circle()
+                        .fill(Color.black.opacity(0.05))
+                        .overlay(
+                            Circle()
+                                .strokeBorder(Color.black.opacity(0.06), lineWidth: 1)
+                        )
+                )
+        } else {
+            content
+        }
+    }
+}
+
+// MARK: - View
+
 struct OnboardingNavBar: View {
     let currentStep: Int
     let totalSteps: Int
     var onBack: (() -> Void)?  // nil = no back button (ground rules, priming, arrival)
+
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack {
@@ -17,7 +44,10 @@ struct OnboardingNavBar: View {
                 Button(action: onBack) {
                     Image(systemName: "arrow.left")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundColor(colorScheme == .light
+                            ? AppColors.lightTextSecondary
+                            : .white.opacity(0.55))
+                        .modifier(BackButtonModifier(colorScheme: colorScheme))
                 }
                 .accessibilityLabel("Go back")
             } else {
@@ -34,13 +64,32 @@ struct OnboardingNavBar: View {
     }
 }
 
+// MARK: - Preview
+
 #Preview {
-    ZStack {
-        AppColors.pageBg.ignoresSafeArea()
-        VStack(spacing: 40) {
-            OnboardingNavBar(currentStep: 1, totalSteps: 6, onBack: { })
-            OnboardingNavBar(currentStep: 3, totalSteps: 6, onBack: nil)
+    VStack(spacing: 0) {
+        // Dark
+        ZStack {
+            AppColors.pageBg.ignoresSafeArea()
+            VStack(spacing: 40) {
+                OnboardingNavBar(currentStep: 1, totalSteps: 6, onBack: { })
+                OnboardingNavBar(currentStep: 3, totalSteps: 6, onBack: nil)
+            }
+            .padding(24)
         }
-        .padding(24)
+        .preferredColorScheme(.dark)
+        .frame(maxWidth: .infinity)
+
+        // Light
+        ZStack {
+            AppColors.lightPageBg.ignoresSafeArea()
+            VStack(spacing: 40) {
+                OnboardingNavBar(currentStep: 1, totalSteps: 6, onBack: { })
+                OnboardingNavBar(currentStep: 3, totalSteps: 6, onBack: nil)
+            }
+            .padding(24)
+        }
+        .preferredColorScheme(.light)
+        .frame(maxWidth: .infinity)
     }
 }

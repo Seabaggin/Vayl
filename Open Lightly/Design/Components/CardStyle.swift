@@ -5,20 +5,20 @@ import SwiftUI
 /// Replaces the repetitive 3-line pattern scattered across views:
 /// ```swift
 /// .background(AppColors.card)
-/// .clipShape(RoundedRectangle(cornerRadius: 14))
-/// .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppColors.border, lineWidth: 1))
+/// .clipShape(RoundedRectangle(cornerRadius: 20))
+/// .overlay(RoundedRectangle(cornerRadius: 20).stroke(AppColors.border, lineWidth: 1))
 /// ```
 ///
 /// Usage:
 /// ```swift
 /// VStack { ... }
-///     .cardStyle()                          // defaults: card bg, r14, border stroke
+///     .cardStyle()                          // defaults: card bg, r20, border stroke
 ///     .cardStyle(cornerRadius: 12)          // custom radius
 ///     .cardStyle(background: .surfaceBg)    // custom bg
 /// ```
 struct CardStyle: ViewModifier {
     var background: Color = AppColors.card
-    var cornerRadius: CGFloat = 14
+    var cornerRadius: CGFloat = 20
     var borderColor: Color = AppColors.border
     var lineWidth: CGFloat = 1.5
 
@@ -36,7 +36,7 @@ struct CardStyle: ViewModifier {
 extension View {
     func cardStyle(
         background: Color = AppColors.card,
-        cornerRadius: CGFloat = 14,
+        cornerRadius: CGFloat = 20,
         borderColor: Color = AppColors.border,
         lineWidth: CGFloat = 1.5
     ) -> some View {

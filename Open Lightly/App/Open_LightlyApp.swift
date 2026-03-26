@@ -41,6 +41,13 @@ struct Open_LightlyApp: App {
     // with @Environment(ThemeManager.self).
     @State private var themeManager = ThemeManager()
 
+    // ── App State ──
+    // Owns experience-type routing (soloSingle, soloPartnered, coupleNew, etc.)
+    // and the onboarding-complete flag that ContentView reads.
+    // Injected via .environment(appState) so any child can read with
+    // @Environment(AppState.self).
+    @State private var appState = AppState()
+
     // ── Auth Service ──
     // Manages user authentication state (Sign in with Apple + Supabase).
     // @StateObject so it persists for the lifetime of the app.
@@ -60,6 +67,7 @@ struct Open_LightlyApp: App {
                     ContentView()
                         .themedRoot()               // Applies theme modifiers (must be INSIDE)
                         .environment(themeManager)   // Provides ThemeManager to child views (must be OUTSIDE)
+                        .environment(appState)       // Provides AppState for experience routing
                 } else {
                     SignInView()
                 }

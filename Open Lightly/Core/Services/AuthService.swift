@@ -35,9 +35,7 @@ final class AuthService: NSObject, ObservableObject {
         #if targetEnvironment(simulator)
         isAuthenticated = true
         userId = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
-        return
-        #endif
-        
+        #else
         do {
             let session = try await supabase.auth.session
             self.userId = session.user.id
@@ -54,6 +52,7 @@ final class AuthService: NSObject, ObservableObject {
             self.isAuthenticated = false
             self.userId = nil
         }
+        #endif
     }
     
     // MARK: - Sign in with Apple
@@ -62,22 +61,21 @@ final class AuthService: NSObject, ObservableObject {
         #if targetEnvironment(simulator)
         isAuthenticated = true
         userId = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
-        return
-        #endif
-        
+        #else
         isLoading = true
         error = nil
-        
+
         let nonce = randomNonceString()
         currentNonce = nonce
-        
+
         let request = ASAuthorizationAppleIDProvider().createRequest()
         request.requestedScopes = [.email]
         request.nonce = sha256(nonce)
-        
+
         let controller = ASAuthorizationController(authorizationRequests: [request])
         controller.delegate = self
         controller.performRequests()
+        #endif
     }
     
     // MARK: - Sign Out
