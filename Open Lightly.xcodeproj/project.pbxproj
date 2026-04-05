@@ -14,10 +14,10 @@
 		3D51D74B2F5FB8D7002488A7 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D74A2F5FB8D7002488A7 /* Storage */; };
 		3D51D7502F5FBA71002488A7 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D74F2F5FBA71002488A7 /* Supabase */; };
 		3D58E6DD2F6227E800210EB6 /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 3D58E6DC2F6227E800210EB6 /* Config.xcconfig */; };
-		3D58E8D02F660E5600210EB6 /* OrbitEffect.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D58E8CF2F660E4A00210EB6 /* OrbitEffect.md */; };
 		3D767EFA2F5D562900F2D70F /* RULES.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EF92F5D562100F2D70F /* RULES.md */; };
 		3D767EFC2F5D565700F2D70F /* PROJECT_SCOPE.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */; };
 		3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */; };
+		3DE993A32F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,13 +39,13 @@
 
 /* Begin PBXFileReference section */
 		3D58E6DC2F6227E800210EB6 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
-		3D58E8CF2F660E4A00210EB6 /* OrbitEffect.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = OrbitEffect.md; sourceTree = "<group>"; };
 		3D767EB22F5D520D00F2D70F /* Open Lightly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Open Lightly.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D767EC12F5D520E00F2D70F /* Open LightlyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Open LightlyTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D767ECB2F5D520E00F2D70F /* Open LightlyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Open LightlyUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D767EF92F5D562100F2D70F /* RULES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = RULES.md; sourceTree = "<group>"; };
 		3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PROJECT_SCOPE.md; sourceTree = "<group>"; };
 		3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DESIGN_DOC.md; sourceTree = "<group>"; };
+		3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Open Lightly — LLM Audit Prompts.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -110,7 +110,7 @@
 				3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */,
 				3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */,
 				3D767EF92F5D562100F2D70F /* RULES.md */,
-				3D58E8CF2F660E4A00210EB6 /* OrbitEffect.md */,
+				3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */,
 				3D767EB42F5D520D00F2D70F /* Open Lightly */,
 				3D767EC42F5D520E00F2D70F /* Open LightlyTests */,
 				3D767ECE2F5D520E00F2D70F /* Open LightlyUITests */,
@@ -263,7 +263,7 @@
 				3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */,
 				3D58E6DD2F6227E800210EB6 /* Config.xcconfig in Resources */,
 				3D767EFA2F5D562900F2D70F /* RULES.md in Resources */,
-				3D58E8D02F660E5600210EB6 /* OrbitEffect.md in Resources */,
+				3DE993A32F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

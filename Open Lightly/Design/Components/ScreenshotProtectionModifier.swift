@@ -43,7 +43,10 @@ struct ScreenshotProtectionModifier: ViewModifier {
     private func checkCaptureStatus() {
         guard let windowScene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
-            .first else { return }
+            .first(where: { $0.activationState == .foregroundActive })
+            ?? UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first else { return }
         isObscured = windowScene.screen.isCaptured
     }
     

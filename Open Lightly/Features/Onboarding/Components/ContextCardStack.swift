@@ -6,6 +6,7 @@ struct ContextCardStack: View {
     @Binding var selection: ContextOption?
     let options: [ContextOption]
     let onAdvance: () -> Void
+    var initialIndex: Int = 0
 
     @State private var currentIndex: Int   = 0
     @State private var dragOffset: CGFloat = 0
@@ -25,6 +26,7 @@ struct ContextCardStack: View {
         ZStack {
             ForEach(renderPositions, id: \.self) { pos in
                 let opt           = option(at: pos)
+                let optionIndex   = ((pos % options.count) + options.count) % options.count
                 let diff          = CGFloat(pos - currentIndex)
                 let normalDrag    = dragOffset / 300
                 let effectiveDiff = diff + normalDrag
@@ -42,7 +44,9 @@ struct ContextCardStack: View {
                 ContextCard(
                     option: opt,
                     isFront: pos == currentIndex,
-                    isConfirmed: opt.id == selection?.id
+                    isConfirmed: opt.id == selection?.id,
+                    index: optionIndex,
+                    total: options.count
                 )
                 .offset(x: xOffset, y: yOffset)
                 .scaleEffect(scale)
@@ -61,11 +65,11 @@ struct ContextCardStack: View {
                     dragOffset = value.translation.width
                 }
                 .onEnded { value in
-                    let totalMove = abs(value.translation.width) + abs(value.translation.height)
+                    let horizontalMove = abs(value.translation.width)
 
-                    if totalMove < 10 {
+                    if horizontalMove < 12 {
                         // Tap: toggle confirm on front card
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) { dragOffset = 0 }
+                        // ...existing code...
                         let front = option(at: currentIndex)
                         if front.id == selection?.id {
                             // Unconfirm — cancel pending advance
@@ -77,7 +81,7 @@ struct ContextCardStack: View {
                             withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { selection = front }
                             autoAdvanceTask?.cancel()
                             autoAdvanceTask = Task {
-                                try? await Task.sleep(for: .seconds(0.8))
+                                try? await Task.sleep(for: .seconds(0.45))
                                 if !Task.isCancelled {
                                     await MainActor.run { onAdvance() }
                                 }
@@ -108,5 +112,25 @@ struct ContextCardStack: View {
                     }
                 }
         )
+        .onAppear {
+            if currentIndex == 0 && initialIndex != 0 {
+                currentIndex = initialIndex
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                guard selection == nil else { return }
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    dragOffset = 18
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                        dragOffset = 0
+                    }
+                }
+            }
+        }
+        .onDisappear {
+            autoAdvanceTask?.cancel()
+            autoAdvanceTask = nil
+        }
     }
 }

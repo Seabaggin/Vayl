@@ -1,4 +1,4 @@
-// Features/Onboarding/Views/OnboardingGroundRulesView.swift
+//Features/Onboarding/Views/OnboardingGroundRulesView.swift
 //
 // Screen 8: Before you dive in — honest framing of what this journey is and isn't.
 // Must-acknowledge. No back button. No skipping.
@@ -19,6 +19,7 @@ struct OnboardingGroundRulesView: View {
     var onFinished: (() -> Void)? = nil
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion // ANIM-STD-31
 
     @State private var hasAnimated        = false
     @State private var atmosphereVisible  = false
@@ -29,6 +30,7 @@ struct OnboardingGroundRulesView: View {
     @State private var frameVisible       = false
     @State private var ctaVisible         = false
     @State private var isPeeking          = false
+    @State private var hasAcknowledged    = false
 
     // MARK: - Pill Data
 
@@ -71,7 +73,7 @@ struct OnboardingGroundRulesView: View {
                     startPoint: .topLeading, endPoint: .bottomTrailing
                 )),
                 title: "They say money shows you more of who you are.",
-                detail: "This journey will do more of the same, if you see it through."
+                detail: "This journey will do more of the same. The people who go deepest with it are the ones who surprise themselves."
             ),
             pill2,
             PillContent(
@@ -107,8 +109,9 @@ struct OnboardingGroundRulesView: View {
         if isLight {
             return AnyShapeStyle(LinearGradient(
                 stops: [
-                    .init(color: AppColors.magenta, location: 0.00),
-                    .init(color: AppColors.gold,    location: 1.00),
+                    .init(color: AppColors.magenta,   location: 0.00),
+                    .init(color: AppColors.orangeHot, location: 0.55),
+                    .init(color: AppColors.gold,      location: 1.00),
                 ],
                 startPoint: .leading,
                 endPoint: .trailing
@@ -151,44 +154,6 @@ struct OnboardingGroundRulesView: View {
         }
     }
 
-    // MARK: - Decoration Layers
-
-    private var baseBackground: some View {
-        Group {
-            if isLight {
-                AppColors.lightPageBg.ignoresSafeArea()
-            } else {
-                AppColors.pageBg.ignoresSafeArea()
-            }
-        }
-    }
-
-    private var glowOverlay: some View {
-        Group {
-            if isLight {
-                AuroraGlowField(config: .groundRulesView)
-            } else {
-                OnboardingGlowField()
-            }
-        }
-        .ignoresSafeArea()
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-
-    private var sparkOverlay: some View {
-        Group {
-            if isLight {
-                SparkField(config: .groundRulesView)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
-            } else {
-                EmptyView()
-            }
-        }
-    }
-
     // MARK: - Body
 
     var body: some View {
@@ -219,15 +184,14 @@ struct OnboardingGroundRulesView: View {
                 }
                 .frame(minHeight: geo.size.height)
             }
+            .safeAreaPadding(.bottom, 8)
             .background {
                 ZStack {
-                    baseBackground
+                    Color.clear.ignoresSafeArea()
                     atmosphereLayer
                         .ignoresSafeArea()
                         .allowsHitTesting(false)
                         .accessibilityHidden(true)
-                    glowOverlay
-                    sparkOverlay
                 }
                 .ignoresSafeArea()
             }
@@ -293,8 +257,9 @@ struct OnboardingGroundRulesView: View {
                         .overlay(
                             LinearGradient(
                                 stops: [
-                                    .init(color: AppColors.magenta, location: 0.00),
-                                    .init(color: AppColors.gold,    location: 1.00),
+                                    .init(color: AppColors.magenta,   location: 0.00),
+                                    .init(color: AppColors.orangeHot, location: 0.55),
+                                    .init(color: AppColors.gold,      location: 1.00),
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -312,18 +277,18 @@ struct OnboardingGroundRulesView: View {
                         .tracking(2)
                 }
             }
-            .opacity(overlineVisible ? 1 : 0)
-            .offset(y: overlineVisible ? 0 : 8)
-            .animation(.easeOut(duration: 0.6), value: overlineVisible)
+            .opacity(overlineVisible ? 1 : 0) // ANIM-STD-32
+            .scaleEffect(overlineVisible ? 1.0 : 0.95) // ANIM-STD-32
+            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: overlineVisible)
             .padding(.horizontal, 24)
             .padding(.bottom, OL.compact(h))
             .accessibilityHidden(true)
 
             // Headline
             subheadView(h: h)
-                .opacity(subtextVisible ? 1 : 0)
-                .offset(y: subtextVisible ? 0 : 8)
-                .animation(.easeOut(duration: 0.7), value: subtextVisible)
+                .opacity(subtextVisible ? 1 : 0) // ANIM-STD-32
+                .scaleEffect(subtextVisible ? 1.0 : 0.95) // ANIM-STD-32
+                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: subtextVisible)
                 .padding(.horizontal, 24)
                 .padding(.bottom, isCompact
                     ? OL.compact(h)
@@ -335,7 +300,7 @@ struct OnboardingGroundRulesView: View {
             VStack(spacing: cardGap) {
                 ForEach(pills) { pill in
                     let isVisible = rulesVisible.contains(pill.id)
-                    FlipPromiseCard(
+                    let cardView = FlipPromiseCard(
                         icon:         pill.icon,
                         iconGradient: pill.iconBg,
                         title:        pill.title,
@@ -343,14 +308,20 @@ struct OnboardingGroundRulesView: View {
                         verticalPad:  cardPad,
                         cardHeight:   isCompact ? 72 : isMid ? 80 : 88
                     )
-                    .opacity(isVisible ? 1 : 0)
-                    .offset(y: isVisible ? 0 : 14)
-                    .animation(.easeOut(duration: 0.7), value: isVisible)
-                    .rotation3DEffect(
-                        .degrees(pill.id == 0 && isPeeking ? 15 : 0),
-                        axis: (x: 1, y: 0, z: 0),
-                        perspective: 0.5
-                    )
+                    .opacity(isVisible ? 1 : 0) // ANIM-STD-33
+                    .scaleEffect(isVisible ? 1.0 : 0.95) // ANIM-STD-33
+                    .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isVisible)
+                    
+                    if pill.id == 0 {
+                        cardView
+                            .rotation3DEffect(
+                                .degrees(isPeeking ? 15 : 0),
+                                axis: (x: 1, y: 0, z: 0),
+                                perspective: 0.5
+                            )
+                    } else {
+                        cardView
+                    }
                 }
             }
             .frame(maxWidth: .infinity)
@@ -382,18 +353,30 @@ struct OnboardingGroundRulesView: View {
                 .foregroundStyle(italicLineStyle)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                .opacity(frameVisible ? 1 : 0)
-                .offset(y: frameVisible ? 0 : 10)
-                .animation(.easeOut(duration: 0.8), value: frameVisible)
+                .opacity(frameVisible ? 1 : 0) // ANIM-STD-34
+                .scaleEffect(frameVisible ? 1.0 : 0.95) // ANIM-STD-34
+                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: frameVisible)
                 .padding(.horizontal, 24)
                 .padding(.bottom, OL.compact(h))
+            
+            Text("When you're ready, we'll get started.")
+                .font(AppFonts.caption)
+                .foregroundStyle(isLight
+                    ? AppColors.lightTextSecondary
+                    : AppColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .opacity(ctaVisible ? 1 : 0)
+                .animation(
+                    .spring(response: 0.5, dampingFraction: 0.82),
+                    value: ctaVisible
+                )
+                .padding(.bottom, 16)
+            
             HoloCTAButton(title: "I'm ready", isEnabled: true) {
                 handleAcknowledge()
             }
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.bottom, geo.safeAreaInsets.bottom > 0
-                ? geo.safeAreaInsets.bottom + 8
-                : 24)
+            .padding(.bottom, 24)
             .opacity(ctaVisible ? 1 : 0)
             .animation(
                 .spring(response: 0.5, dampingFraction: 0.82),
@@ -478,35 +461,62 @@ struct OnboardingGroundRulesView: View {
     // MARK: - Animation Timeline
 
     private func startAnimation() {
+        // ANIM-STD-35: Reduce Motion fallback
+        if reduceMotion {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                atmosphereVisible = true
+                progressVisible   = true
+                overlineVisible   = true
+                subtextVisible    = true
+                rulesVisible      = [0, 1, 2]
+                frameVisible      = true
+                ctaVisible        = true
+            }
+            return
+        }
+
+        // ANIM-STD-36: Standardized three-slot spring cascade
+        // Slot A (header — progress + overline + subtext): 0ms, 50ms, 100ms cascade
+        // Slot B (body  — cards, staggered within slot):  100ms, 150ms, 200ms
+        // Slot C (CTA   — lifeguard line + button):       300ms (after all cards visible)
+        let spring = Animation.spring(response: 0.35, dampingFraction: 0.8)
+
         withAnimation(.easeInOut(duration: 2.0)) { atmosphereVisible = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.00) {
-            withAnimation(.easeOut(duration: 0.6)) { progressVisible = true }
+
+        // Slot A — cascade the header elements
+        withAnimation(spring) { progressVisible = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            withAnimation(spring) { overlineVisible = true }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
-            withAnimation(.easeOut(duration: 0.6)) { overlineVisible = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+            withAnimation(spring) { subtextVisible = true }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-            withAnimation(.easeOut(duration: 0.7)) { subtextVisible = true }
+
+        // Slot B — cards staggered within the 100ms slot window
+        // Card 0 at 100ms
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+            withAnimation(spring) { _ = rulesVisible.insert(0) }
         }
+        // Card 1 at 150ms
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            withAnimation(spring) { _ = rulesVisible.insert(1) }
+        }
+        // Card 2 at 200ms
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) {
-            withAnimation(.easeOut(duration: 0.7)) { _ = rulesVisible.insert(0) }
+            withAnimation(spring) { _ = rulesVisible.insert(2) }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.27) {
-            withAnimation(.easeOut(duration: 0.7)) { _ = rulesVisible.insert(1) }
+
+        // Slot C — CTA appears after all cards (300ms)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
+            withAnimation(spring) { frameVisible = true }
+            withAnimation(spring) { ctaVisible = true }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) {
-            withAnimation(.easeOut(duration: 0.7)) { _ = rulesVisible.insert(2) }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.42) {
-            withAnimation(.easeOut(duration: 0.8)) { frameVisible = true }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.48) {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { ctaVisible = true }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+
+        // Peek effect — ambient, runs after entrance settles
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { isPeeking = true }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) { isPeeking = false }
         }
     }
@@ -514,6 +524,8 @@ struct OnboardingGroundRulesView: View {
     // MARK: - Acknowledge
 
     private func handleAcknowledge() {
+        guard !hasAcknowledged else { return }
+        hasAcknowledged = true
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         data.groundRulesAcceptedAt = Date()
         data.onboardingComplete    = true
@@ -523,77 +535,6 @@ struct OnboardingGroundRulesView: View {
             "OnboardingGroundRulesView: onFinished not injected — wire from coordinator.")
         #endif
         onFinished?()
-    }
-}
-
-// MARK: - PromiseCard
-
-private struct PromiseCard: View {
-    let icon:         String
-    let iconGradient: AnyShapeStyle
-    let title:        String
-    let detail:       String
-    var verticalPad:  CGFloat = 14
-
-    @Environment(\.colorScheme) private var colorScheme
-    private var isLight: Bool { colorScheme == .light }
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            iconBadge
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(AppFonts.bodyMedium)
-                    .foregroundStyle(isLight ? AppColors.lightCardTitle : AppColors.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .layoutPriority(1)
-                Text(detail)
-                    .font(AppFonts.bodyText)
-                    .foregroundStyle(isLight ? AppColors.lightCardDetail : AppColors.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .layoutPriority(1)
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, verticalPad)
-        .cardSurface(isLight: isLight)
-    }
-
-    private var iconBadge: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    isLight
-                        ? iconGradient
-                        : AnyShapeStyle(LinearGradient(
-                            colors: [AppColors.cyan.opacity(0.20), AppColors.purple.opacity(0.16)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                          ))
-                )
-                .opacity(isLight ? 0.18 : 1.0)
-            Image(systemName: icon)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(
-                    isLight
-                        ? AnyShapeStyle(LinearGradient(
-                            stops: [
-                                .init(color: AppColors.magenta,   location: 0.00),
-                                .init(color: AppColors.orangeHot, location: 0.55),
-                                .init(color: AppColors.gold,      location: 1.00),
-                            ],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                          ))
-                        : AnyShapeStyle(LinearGradient(
-                            colors: [AppColors.cyan, AppColors.purple],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                          ))
-                )
-        }
-        .frame(width: 40, height: 40)
-        .fixedSize()
-        .accessibilityHidden(true)
     }
 }
 
@@ -650,8 +591,7 @@ private struct FlipPromiseCard: View {
                     axis: (x: 0, y: 1, z: 0)
                 )
         }
-        .frame(height: cardHeight)
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, minHeight: cardHeight)
         .cardSurface(isLight: isLight)
         .onTapGesture {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -750,8 +690,17 @@ private struct PromiseCardBorder: ViewModifier {
         d.explorationMode = .solo
         return d
     }()
-    OnboardingGroundRulesView(data: $data, onFinished: {})
-        .preferredColorScheme(.dark)
+    ZStack {
+        AppColors.pageBg.ignoresSafeArea()
+        OnboardingAtmosphere(
+            config: .groundRules,
+            sparkConfig: .groundRulesView,
+            opacity: 1.0
+        )
+        .ignoresSafeArea()
+        OnboardingGroundRulesView(data: $data, onFinished: {})
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Light") {
@@ -761,6 +710,15 @@ private struct PromiseCardBorder: ViewModifier {
         d.explorationMode = .solo
         return d
     }()
-    OnboardingGroundRulesView(data: $data, onFinished: {})
-        .preferredColorScheme(.light)
+    ZStack {
+        AppColors.lightPageBg.ignoresSafeArea()
+        OnboardingAtmosphere(
+            config: .groundRules,
+            sparkConfig: .groundRulesView,
+            opacity: 1.0
+        )
+        .ignoresSafeArea()
+        OnboardingGroundRulesView(data: $data, onFinished: {})
+    }
+    .preferredColorScheme(.light)
 }

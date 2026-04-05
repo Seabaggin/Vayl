@@ -227,6 +227,29 @@ extension SparkConfiguration {
         palette:           nil
     )
 
+    // ── Screen 7: CardRevealView ──────────────
+    // Single card + single question — reflective, intimate moment.
+    // Near-silent atmosphere. Reduced density and velocity
+    // (approximately 15% of curiosityPickerView) to recede entirely
+    // and let the card and question hold full attention.
+    static let cardRevealView = SparkConfiguration(
+        count:             2,
+        baseSpeed:         0.04,
+        speedVariance:     0.02,
+        radiusMin:         0.40,
+        radiusMax:         1.10,
+        glowMultiplierMin: 2.5,
+        glowMultiplierMax: 3.8,
+        opacityCeilMin:    0.12,
+        opacityCeilMax:    0.22,
+        spawnXMin:         0.10,
+        spawnXMax:         0.90,
+        respawnYMin:       0.75,  // born in bottom 25% only
+        fadeStartY:        0.70,  // dissolve early — barely visible
+        fadeEndY:          0.55,
+        palette:           nil
+    )
+
     // ── Screen 8: GroundRulesView ─────────────
     // ScrollView with promise cards + italic line + pinned CTA.
     // Sparks confined to bottom quarter. Very dim.

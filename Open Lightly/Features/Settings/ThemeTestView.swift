@@ -140,8 +140,8 @@ struct ThemeTestView: View {
                                 .padding(.vertical, 16)
                                 .background(
                                     sel
-                                        ? color.opacity(t.isAmoled ? 0.15 : 0.08)
-                                        : (t.isAmoled
+                                        ? color.opacity(t.isDark ? 0.15 : 0.08)
+                                        : (t.isDark
                                             ? .white.opacity(0.03)
                                             : t.surface1)
                                 )
@@ -154,7 +154,7 @@ struct ThemeTestView: View {
                                         )
                                 )
                                 .shadow(
-                                    color: sel && t.isAmoled
+                                    color: sel && t.isDark
                                         ? color.opacity(0.2)
                                         : .clear,
                                     radius: 8
@@ -221,7 +221,7 @@ struct ThemeTestView: View {
                 .fill(color)
                 .frame(width: 32, height: 32)
                 .shadow(
-                    color: t.isAmoled ? color.opacity(0.3) : .clear,
+                    color: t.isDark ? color.opacity(0.3) : .clear,
                     radius: 6
                 )
             Text(label)

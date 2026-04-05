@@ -91,6 +91,14 @@ struct SelectablePill: View {
         }
     }
 
+    private var lightBloomFrameHeight: CGFloat {
+        switch intensity {
+        case .dim:   return 0
+        case .warm:  return 70
+        case .alive: return 100
+        }
+    }
+
     // ─────────────────────────────────────────────
     // MARK: Light mode computed properties
     // ─────────────────────────────────────────────
@@ -103,9 +111,9 @@ struct SelectablePill: View {
             }
         } else {
             switch intensity {
-            case .dim:   return 0.22
-            case .warm:  return 0.38
-            case .alive: return 0.46
+            case .dim:   return 0.10
+            case .warm:  return 0.16
+            case .alive: return 0.22
             }
         }
     }
@@ -146,76 +154,90 @@ struct SelectablePill: View {
             action()
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         } label: {
-            Text(label)
-                .font(.system(size: fontSize, weight: .medium))
-                .foregroundStyle(colorScheme == .light
-                    ? AppColors.wineDark
-                    : Color.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
-                .frame(maxWidth: .infinity)
-                .frame(height: height)
-                // ── Fill ──────────────────────────────────────
-                .background(isLight
-                    ? Color.white.opacity(0.85)
-                    : AppColors.surfaceBg)
-                // ── Shimmer ───────────────────────────────────
-                .overlay {
-                    if isLight {
-                        LightModeShimmer(duration: lightShimmerSpeed, usePillColors: true)
-                            .allowsHitTesting(false)
-                    } else {
-                        HolographicShimmer(duration: shimmerSpeed)
-                            .opacity(shimmerOpacity)
-                            .allowsHitTesting(false)
-                    }
-                }
-                .clipShape(Capsule())
-                // ── Border ────────────────────────────────────
-                // Dark:  plain strokeBorder with white opacity tint
-                // Light: warmAuroraBorder (gradient) when selected,
-                //        lightBorder (plain) when unselected
-                .modifier(PillBorderModifier(
-                    isLight: isLight,
-                    isSelected: isSelected,
-                    darkBorderColor: borderColor,
-                    darkBorderWidth: borderWidth,
-                    lightBorderOpacity: lightBorderOpacity,
-                    lightBorderWidth: lightBorderWidth
-                ))
-                // ── Flame aura — DARK ONLY ─────────────────────
-                // Invisible on cream. Shadow spread handles
-                // the selected state lift in light mode instead.
-                .overlay(alignment: .bottom) {
-                    if !isLight && isSelected && intensity != .dim && showFlame {
-                        GeometryReader { geo in
-                            FlameAura(intensity: intensity)
-                                .frame(
-                                    width: geo.size.width * 1.2,
-                                    height: flameFrameHeight
-                                )
-                                .position(
-                                    x: geo.size.width / 2,
-                                    y: geo.size.height - flameFrameHeight / 2
-                                )
-                        }
-                        .allowsHitTesting(false)
-                    }
-                }
-                // ── Shadows ───────────────────────────────────
-                // Dark:  cyan/purple/magenta/pink glow ring
-                // Light: lightShadowMagenta/Purple/Gold spread
-                //        opacity scales with intensity
+            pillContent
                 .modifier(PillShadowModifier(
                     isLight: isLight,
                     isSelected: isSelected,
                     intensity: intensity
                 ))
-                // ── Selected lift — light only ─────────────────
+                .background(alignment: .bottom) {
+                    flameLayer
+                }
                 .offset(y: isLight && isSelected ? -1 : 0)
                 .animation(.easeOut(duration: 0.2), value: isSelected)
         }
         .buttonStyle(.plain)
+    }
+
+    private var pillContent: some View {
+        Text(label)
+            .font(.system(size: fontSize, weight: .medium))
+            .foregroundStyle(isLight ? AppColors.wineDark : Color.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.85)
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+            .background(isLight
+                ? (isSelected
+                    ? AppColors.lightFrostPillSel
+                    : AppColors.lightFrostPill)   // FIX: was lightSurfaceBg (#F2EFE6)
+                                                   // which is near-identical to lightPageBg.
+                                                   // lightFrostPill is visibly lavender-tinted
+                                                   // so the shimmer has a tinted base to sweep
+                                                   // over — same role surfaceBg plays in dark.
+                : AppColors.surfaceBg)
+            .overlay {
+                if isLight {
+                    LightModeShimmer(duration: lightShimmerSpeed, usePillColors: true)
+                        .opacity(lightShimmerOpacity)
+                        .allowsHitTesting(false)
+                } else {
+                    HolographicShimmer(duration: shimmerSpeed)
+                        .opacity(shimmerOpacity)
+                        .allowsHitTesting(false)
+                }
+            }
+            .clipShape(Capsule())
+            .modifier(PillBorderModifier(
+                isLight: isLight,
+                isSelected: isSelected,
+                darkBorderColor: borderColor,
+                darkBorderWidth: borderWidth,
+                lightBorderOpacity: lightBorderOpacity,
+                lightBorderWidth: lightBorderWidth
+            ))
+    }
+
+    @ViewBuilder
+    private var flameLayer: some View {
+        if isSelected && intensity != .dim && showFlame {
+            GeometryReader { geo in
+                if isLight {
+                    LightAuraBloom(intensity: intensity)
+                        .frame(
+                            width:  geo.size.width * 1.15,
+                            height: lightBloomFrameHeight
+                        )
+                        .position(
+                            x: geo.size.width  / 2,
+                            y: geo.size.height - lightBloomFrameHeight / 2
+                        )
+                } else {
+                    FlameAura(intensity: intensity)
+                        .frame(
+                            width:  geo.size.width * 1.2,
+                            height: flameFrameHeight
+                        )
+                        .position(
+                            x: geo.size.width  / 2,
+                            y: geo.size.height - flameFrameHeight / 2
+                        )
+                }
+            }
+            .frame(height: isLight ? lightBloomFrameHeight : flameFrameHeight)
+            .allowsHitTesting(false)
+            .transition(.opacity.animation(.easeIn(duration: 0.4)))
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -264,22 +286,21 @@ private struct PillBorderModifier: ViewModifier {
     func body(content: Content) -> some View {
         if isLight {
             if isSelected {
-                // Selected light — warm aurora gradient border
+                // Selected light — magenta-gold gradient border
                 content
-                    .warmAuroraBorder(
+                    .magentaGoldBorder(
                         cornerRadius: 100,
                         lineWidth: lightBorderWidth,
+                        glowRadius: 6,
                         opacity: lightBorderOpacity
                     )
             } else {
-                // Unselected light — warm aurora border at low opacity
-                // so it's visible on cream (#F8F6EE) backgrounds.
-                content
-                    .warmAuroraBorder(
-                        cornerRadius: 100,
-                        lineWidth: 1.5,
-                        opacity: 0.55
+                content.overlay(
+                    Capsule().strokeBorder(
+                        AppColors.lightBorderHover,
+                        lineWidth: 1.5
                     )
+                )
             }
         } else {
             // Dark — spectrum pillBorder when selected; subtle plain stroke when not

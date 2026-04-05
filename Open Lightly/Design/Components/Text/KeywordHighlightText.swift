@@ -23,9 +23,14 @@ struct KeywordHighlightText: View {
         }
     }
 
+    var lineLimit: Int? = nil
+    var minimumScaleFactor: CGFloat = 1.0
+
     var body: some View {
         Text(buildAttributedString())
             .font(font)
+            .lineLimit(lineLimit)
+            .minimumScaleFactor(minimumScaleFactor)
     }
 
     private func buildAttributedString() -> AttributedString {

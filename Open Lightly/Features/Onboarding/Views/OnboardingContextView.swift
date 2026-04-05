@@ -40,11 +40,19 @@ struct OnboardingContextView: View {
             subtitle: "They know I'm exploring",
             detail: "We'll include prompts that help you navigate with transparency."
         ),
+        // COPYWRITING REVIEW: S6-E1
+        // .partneredHidden covers a wider range than "I haven't brought it up yet":
+        // - Partner doesn't know about curiosity (pre-conversation)
+        // - Partner is not supportive (conversation went badly)
+        // - Complicated relationship status
+        // Current title+subtitle narrow the card to pre-conversation users only.
+        // Consider broader framing: "It's complicated" / "The conversation is... sensitive"
+        // or keep current title but broaden subtitle: "I haven't figured out how to bring it up"
         ContextOption(
             id: "partnered_hidden", context: .partneredHidden, intensity: .blaze,
-            title: "It's complicated",
-            subtitle: "I'm not sure how to bring it up",
-            detail: "No pressure. We'll start with self-understanding before any conversations."
+            title: "I haven't brought it up yet",
+            subtitle: "Curious, but the conversation hasn't happened",
+            detail: "That's exactly what this is for. We'll help you find the words."
         ),
     ]
 
@@ -79,6 +87,15 @@ struct OnboardingContextView: View {
         data.explorationMode == .couple ? coupleOptions : soloOptions
     }
 
+    private var restoredCardIndex: Int {
+        guard let context = data.relationshipContext else {
+            return 0
+        }
+        return options.firstIndex(where: {
+            $0.context == context
+        }) ?? 0
+    }
+
     private var headlineText: String {
         let name = data.displayName.trimmingCharacters(in: .whitespaces)
         let hasName = !name.isEmpty
@@ -105,6 +122,15 @@ struct OnboardingContextView: View {
             : "One thing that helps us personalize —"
     }
 
+    // COPYWRITING REVIEW: S6-E2
+    // Couple reassurance text "Every starting point is valid" is generic encouragement
+    // that doesn't acknowledge the emotional weight of selected cards, particularly
+    // high-shame contexts like "We need a reset" (.inferno/.nova intensity).
+    // Solo text "No judgment on any answer" is well-targeted to shame reduction.
+    // Consider dynamic reassurance based on selected card intensity:
+    // - .ember/.flame: "Every starting point is valid."
+    // - .inferno/.nova: "Naming this is the first step."
+    // Or single copy covering all: "We've seen every starting point lead somewhere good."
     private var reassuranceText: String {
         data.explorationMode == .couple
             ? "Every starting point is valid."
@@ -118,8 +144,9 @@ struct OnboardingContextView: View {
             // RULE B — magenta→gold for all display gradient text in light
             return AnyShapeStyle(LinearGradient(
                 stops: [
-                    .init(color: AppColors.magenta, location: 0.00),
-                    .init(color: AppColors.gold,    location: 1.00),
+                    .init(color: AppColors.magenta,   location: 0.00),
+                    .init(color: AppColors.orangeHot, location: 0.55),
+                    .init(color: AppColors.gold,      location: 1.00),
                 ],
                 startPoint: .leading,
                 endPoint: .trailing
@@ -132,6 +159,24 @@ struct OnboardingContextView: View {
                 endPoint: .trailing
             ))
         }
+    }
+
+    private var headlineStyle: AnyShapeStyle { // FIXED: extracted from body
+        isLight
+            ? AnyShapeStyle(AppColors.lightCardTitle)
+            : AnyShapeStyle(AppColors.textPrimary)
+    }
+
+    private var subheadStyle: AnyShapeStyle { // FIXED: extracted from body
+        isLight
+            ? AnyShapeStyle(AppColors.lightCardTitle.opacity(0.65))
+            : AnyShapeStyle(AppColors.textSecondary)
+    }
+
+    private var pronounLabelStyle: AnyShapeStyle { // FIXED: extracted from body
+        isLight
+            ? AnyShapeStyle(AppColors.lightTextTertiary)
+            : AnyShapeStyle(AppColors.textTertiary)
     }
 
     // MARK: - Accessibility
@@ -159,23 +204,10 @@ struct OnboardingContextView: View {
     // can receive proportional dimensions from the GeometryReader in body.
     private func backgroundLayer(size: CGSize) -> some View {
         ZStack {
-            if isLight {
-                // ── Light background ─────────────────────────────
-                AppColors.lightPageBg
+            Color.clear.ignoresSafeArea()
 
-                AuroraGlowField(config: .contextView)
-
-                // SparkField: quiet — card stack is gestural,
-                // sparks stay peripheral
-                // count:14, speed:0.20–0.32, opacity:0.18–0.30,
-                // fade:0.60→0.48
-                SparkField(config: .contextView)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-            } else {
-                // ── Dark background — unchanged ───────────────────
-                AppColors.pageBg
-
+            // Dark mode screen-specific accent — kept, not atmosphere
+            if !isLight {
                 Ellipse()
                     .fill(RadialGradient(
                         colors: [
@@ -190,8 +222,6 @@ struct OnboardingContextView: View {
                     .frame(width: OL.atmosW(size.width), height: OL.atmosH(size.height)) // LAYOUT-FIX: was 600×500
                     .offset(y: -size.height * 0.09)                                       // LAYOUT-FIX: was -80
                     .blur(radius: 80)
-
-                OnboardingGlowField()
             }
         }
         .ignoresSafeArea()
@@ -204,7 +234,7 @@ struct OnboardingContextView: View {
         let h = geo.size.height
         VStack(spacing: 0) {
 
-            OnboardingNavBar(currentStep: 3, totalSteps: 5, onBack: onBack)
+            OnboardingNavBar(currentStep: 3, totalSteps: 6, onBack: onBack)
                 .padding(.top, OL.navTop(h))        // LAYOUT-FIX: was 12 hardcoded
                 .padding(.bottom, OL.navBottom(h))  // LAYOUT-FIX: was 20 hardcoded
                 .padding(.horizontal, 24)
@@ -214,20 +244,12 @@ struct OnboardingContextView: View {
             VStack(alignment: .leading, spacing: OL.compact(h)) { // LAYOUT-FIX: was 8 hardcoded
                 Text(headlineText)
                     .font(AppFonts.heroTitle)
-                    .foregroundStyle(
-                        isLight
-                            ? AnyShapeStyle(AppColors.lightCardTitle)
-                            : AnyShapeStyle(AppColors.textPrimary)
-                    )
+                    .foregroundStyle(headlineStyle)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(subheadText)
                     .font(AppFonts.caption)
-                    .foregroundStyle(
-                        isLight
-                            ? AnyShapeStyle(AppColors.lightCardTitle.opacity(0.65))
-                            : AnyShapeStyle(AppColors.textSecondary)
-                    )
+                    .foregroundStyle(subheadStyle)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 24)
@@ -239,7 +261,8 @@ struct OnboardingContextView: View {
             ContextCardStack(
                 selection: $selection,
                 options: options,
-                onAdvance: handleAdvance
+                onAdvance: handleAdvance,
+                initialIndex: restoredCardIndex
             )
             .opacity(cardsVisible ? 1 : 0)
             .offset(y: cardsVisible ? 0 : 16)
@@ -289,18 +312,22 @@ struct OnboardingContextView: View {
         // BrandView and BuildingPathView remain permanently dark.
         .onAppear {
             #if DEBUG
-            assert(
-                data.explorationMode == .solo || data.explorationMode == .couple,
-                "OnboardingContextView: received explorationMode " +
-                "\(String(describing: data.explorationMode)) — " +
-                "this screen should only be presented for .solo or .couple. " +
-                "Browsing users must be routed to CuriosityPickerView."
-            )
+            // Log only — do not assert in onAppear. assert() in a SwiftUI
+            // lifecycle modifier causes EXC_BREAKPOINT, crashing the entire
+            // preview process (not just this preview).
+            if data.explorationMode != .solo && data.explorationMode != .couple {
+                print("[OnboardingContextView] ⚠️ unexpected explorationMode: " +
+                      "\(String(describing: data.explorationMode))")
+            }
             #endif
             restoreSelectionIfNeeded()
             guard !hasAnimated else { return }
             hasAnimated = true
             runEntranceAnimations()
+        }
+        .onDisappear {
+            // Reset so back navigation can re-advance
+            autoAdvanceFired = false
         }
         } // LAYOUT-FIX: end GeometryReader
     }
@@ -313,10 +340,9 @@ struct OnboardingContextView: View {
             // selection is nil — ContextCardStack fired onAdvance
             // before a card was confirmed. Do not advance.
             // This should never happen in production.
-            assertionFailure(
-                "OnboardingContextView: handleAdvance() called " +
-                "with nil selection — ContextCardStack contract violated."
-            )
+            #if DEBUG
+            print("[OnboardingContextView] ⚠️ handleAdvance() called with nil selection")
+            #endif
             return
         }
         autoAdvanceFired = true
@@ -364,11 +390,20 @@ struct OnboardingContextView: View {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
         d.displayName     = "Jordan"
-        d.explorationMode = .solo
+        d.explorationMode = .couple
         return d
     }()
-    OnboardingContextView(data: $data, onContinue: {}, onBack: {})
-        .preferredColorScheme(.dark)
+    ZStack {
+        AppColors.pageBg.ignoresSafeArea()
+        OnboardingAtmosphere(
+            config: .contextSelect,
+            sparkConfig: .contextView,
+            opacity: 1.0
+        )
+        .ignoresSafeArea()
+        OnboardingContextView(data: $data, onContinue: {}, onBack: {})
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Light") {
@@ -378,8 +413,17 @@ struct OnboardingContextView: View {
         d.explorationMode = .solo
         return d
     }()
-    OnboardingContextView(data: $data, onContinue: {}, onBack: {})
-        .preferredColorScheme(.light)
+    ZStack {
+        AppColors.lightPageBg.ignoresSafeArea()
+        OnboardingAtmosphere(
+            config: .contextSelect,
+            sparkConfig: .contextView,
+            opacity: 1.0
+        )
+        .ignoresSafeArea()
+        OnboardingContextView(data: $data, onContinue: {}, onBack: {})
+    }
+    .preferredColorScheme(.light)
 }
 
 // MARK: - Changes applied
@@ -428,3 +472,5 @@ struct OnboardingContextView: View {
 //           @ViewBuilder body exceeded preview type-checker budget.
 // ISSUE 13: Revert NavArrow integration in OnboardingContextView:
 //           restore top bar onBack, remove NavArrow block from bottom
+// ISSUE 14: Added headlineStyle, subheadStyle, and pronounLabelStyle
+//           as extracted computed properties below reassuranceGradientStyle

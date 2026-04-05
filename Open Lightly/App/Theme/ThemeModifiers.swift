@@ -45,7 +45,7 @@ struct ThemedCardModifier: ViewModifier {
                     )
             )
             .shadow(
-                color: selected && t.isAmoled
+                color: selected && t.isDark
                     ? t.glowCyan
                     : .clear,
                 radius: selected ? 8 : 0

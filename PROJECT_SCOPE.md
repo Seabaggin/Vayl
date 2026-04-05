@@ -1,5 +1,5 @@
 # Open Lightly — Project Scope
-**Last Updated:** March 20, 2026 (three-act strategy restructure)
+**Last Updated:** March 31, 2026 (home redesign, onboarding polish, design system expansion, CuriosityPickerView layout fixes)
 **Developer:** Bryan Jorden
 **Platform:** iOS 26 (SwiftUI, SwiftData, Supabase)
 
@@ -176,7 +176,7 @@ This is "instant personalized result → paywall on that result." The mechanic w
 | Desire Map — full reveal | 1 | ✅ | Behind paywall |
 | Readiness Assessment | 1 | ✅ | Front-door |
 | Partner pairing (QR, code, link) | 1 | ✅ | Front-door |
-| Solo Reflection gate (post-onboarding) | 1/2/3 | ✅ | All paths |
+| CardReveal screen (replaces solo reflection gate) | 1/2/3 | ✅ | Universal — every user sees this. Pill selection feeds archetype routing. Scraps the separate post-onboarding reflection gate entirely. |
 | Graduated exposure roadmap (Coupled Curious) | 1 | ✅ | Front-door |
 | Home dashboard + Today view | 1 | ✅ | Front-door |
 | Safe word (always accessible) | 1 | ✅ | Front-door |
@@ -586,6 +586,14 @@ Total: ~$35 one-time + $7/mo for active AI features
 | `border` | white @ 6% | Subtle card borders |
 | `spectrumGradient` | cyan→purple→magenta | Hot border, prompt cards |
 
+#### Light Mode Color Tokens
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `orangeHot` | — | Light mode accent, borders |
+| `lightPageBg` | — | Light mode page background |
+| `lightCardTitle` | — | Light mode card heading text |
+
 ### Typography — `AppFonts`
 
 All tokens use two factory functions: `display(size, weight:)` (Clash Display) and `body(size, weight:)` (Switzer).
@@ -600,6 +608,7 @@ All tokens use two factory functions: `display(size, weight:)` (Clash Display) a
 | `caption` | Switzer Regular | 13 |
 | `ctaLabel` | Switzer Semibold | 16 |
 | `buttonLabel` | Switzer Semibold | 14 |
+| `overline` | Switzer Medium | ~11 (tracking 1.2) | Status labels, metadata |
 
 ### Shared Modifiers
 
@@ -608,6 +617,16 @@ All tokens use two factory functions: `display(size, weight:)` (Clash Display) a
 | `.cardStyle()` | `background + clipShape(RoundedRectangle) + border stroke` |
 | `.pillBorder()` | Neon gradient stroke (cyan→purple→magenta) with blur + shadow layers |
 | `.screenshotProtected()` | Prevents screenshots on sensitive content |
+
+### Card Dimensions — `CardLayout`
+Single source of truth for all card-shaped UI. Defined in `Design/Components/Cards/CardLayout.swift`.
+| Constant | Value | Notes |
+|----------|-------|-------|
+| `CardLayout.width` | 313 pt | Screen width − 80 pt margin |
+| `CardLayout.height` | 438 pt | 313 × 1.40 — poker/bridge aspect ratio |
+| `CardLayout.cornerRadius` | 20 pt | All card shapes |
+| `CardLayout.size` | CGSize(313, 438) | Convenience |
+| `CardLayout.horizontalMargin` | 80 pt | Total horizontal margin removed from screen width |
 
 ### Design Rules
 
@@ -672,52 +691,100 @@ App/
     ThemeModifiers.swift        — .themedRoot() modifier
 
 Features/
-  Auth/SignInView.swift
-  Home/HomeView.swift
-  Sessions/SessionView.swift
-  Compatibility/DesireMapView.swift
-  Progress/ProgressDashboardView.swift
+  Auth/
+    SignInView.swift
+  Home/
+    HomeRouterView.swift         — Top-level router
+    HomeView.swift               — Persona-based router (routes per experienceType)
+    HomeDashboardView.swift      — Main dashboard (categories + progress + today)
+    HomeGateView.swift           — Loading & permission gate
+    HomeMatchReadyView.swift     — Couple-specific variant
+    HomeWaitingView.swift        — Pending partner acceptance
+    PostMapReflectionView.swift  — Post-desire-map reflection
+    Models/
+      HomeEventEngine.swift, HomeModels.swift
+    Components/
+      DesireMapIndicator, PartnerChip, PickUpCard,
+      ReflectionBannerView, ReflectionCard, ResearchTicker, SessionCard
+  Sessions/
+    SessionView.swift
+  Compatibility/
+    DesireMapView.swift
+  Progress/
+    ProgressDashboardView.swift
   Settings/
     SettingsView.swift
     ThemePickerView.swift
     ThemeTestView.swift
+  MeUs/
+    MeUsView.swift
+  More/
+    MoreView.swift
+  Explore/
+    ExploreView.swift
   Onboarding/
     OnboardingFlowView.swift    — Coordinator / screen sequencer
-    Views/                      — StatView, BrandView, NameView, ModeSelection, PairingFork
-    Data/                       — OnboardingData, OnboardingTokens, ExperienceLevel
+    Design/
+      OnboardingAtmosphere.swift — Centralized atmosphere for all screens
+    Layout/
+      OnboardingLayout.swift     — OL namespace: screen-relative layout constants
+    Data/
+      OnboardingData.swift
+      CuriosityScreenConfig.swift
+    Views/
+      OnboardingStatView, OnboardingBrandView, OnboardingNameView,
+      OnboardingModeSelectView, OnboardingContextView,
+      OnboardingCuriosityPickerView, OnboardingCardRevealView,
+      OnboardingBuildingPathView, OnboardingGroundRulesView,
+      PairingForkView
+    Components/
+      CuriosityPill, CuriosityStatusStrip, CuriosityPanelNudge,
+      CuriosityPreviewLine, ContextOption
 
-Design/
-  Components/
-    Buttons/                    — GradientButton, HoloCTAButton, CriticalButton, SafeWordButton
-    Cards/                      — PromptCard, SettingsCard, CategoryTileView
-    Input/                      — InteractiveField, RatingButtonGroup, ToggleRow
-    Progress/                   — ProgressBar, ProgressRingView, ScoreRing, SpectrumBar
-    Effects/                    — GlowFieldView, HolographicShimmer, GlowOrb
-    Text/                       — GradientText
-    Modifiers/                  — PillBorder, ScreenshotProtectionModifier
-    SectionHeader.swift
+Design/Components/
+  Buttons/                    — GradientButton, HoloCTAButton, CriticalButton, SafeWordButton, SelectablePill
+  Cards/                      — PromptCard, SettingsCard, CategoryTileView, ContextCard, ConversationCard,
+                              — AtmosphericGhostDeck, CircularArrowView, ContextCardStack, FuseTimerView,
+                              — CuriosityFlipCard, CuriosityCardBack, CardLayout, ConversationCardTypes,
+                              — CardBackView, CardFrontView, CardRevealPillButton, CardShadows
+  Effects/                    — HolographicShimmer, OnboardingGlowField, SparkField, GlowOrb,
+                              — AuroraGlowField, LightAuraBloom, LightModeShimmer, FlameAura,
+                              — MazePatternView, TileOrbitView
+  Input/                      — InteractiveField, RatingButtonGroup, ToggleRow
+  Navigation/                 — OnboardingNavBar, OnboardingFooter
+  Progress/                   — OnboardingProgressBar, ProgressBar, ProgressRingView, ScoreRing,
+                              — SpectrumBar, OrbitIndicator
+  Text/                       — LivingText, KeywordHighlightText, GradientText
+  Misc Components/            — CardStyle.swift, PillBorder.swift, ScreenshotProtectionModifier.swift,
+                              — SectionHeader.swift, NavArrow.swift, OrbitSparkBorderView.swift, FilamentMode.swift
 
 Core/Services/
-  AuthService.swift             — Sign in with Apple + Supabase session
-  SupabaseManager.swift         — Shared Supabase client
-  SyncManager.swift             — Retry pending syncs on launch
-  ContentLoader.swift           — JSON prompt loading
-  Config.swift                  — API keys, environment config
-  ProfileService.swift          — User profile CRUD
-  PairingService.swift          — Couple pairing codes + Realtime
-  SessionSyncService.swift      — Session data sync
-  AssessmentSyncService.swift   — Assessment results sync
-  DesireSyncService.swift       — Desire map ratings sync
+  AppState.swift              — Experienceype routing state (@Observable)
+  AuthService.swift           — Sign in with Apple + Supabase session
+  SupabaseManager.swift       — Shared Supabase client
+  SyncManager.swift           — Retry pending syncs on launch
+  ContentLoader.swift         — JSON prompt loading
+  Config.swift                — API keys, environment config
+  ProfileService.swift        — User profile CRUD
+  PairingService.swift        — Couple pairing codes + Realtime
+  SessionSyncService.swift    — Session data sync
+  AssessmentSyncService.swift — Assessment results sync
+  DesireSyncService.swift     — Desire map ratings sync
 
 Data/Store/
-  DataStore.swift               — Central persistence layer
-  ModelContainer.swift          — SwiftData container config
+  DataStore.swift             — Central persistence layer
+  ModelContainer.swift        — SwiftData container config
 
 Models/
-  Content/                      — Prompt, Card, ContentCard, ContentCategory, DesireItem
-  Enums/AppEnums.swift          — All enums (PromptCategory, PromptDifficulty, etc.)
-  Persistence/                  — SessionRecord, RatingRecord, StreakRecord
-  Progress/                     — UserProfile, AssessmentResult, Couple, DesireMatch
+  Content/                    — ContentCard, ContentCategory, ContentAssessmentQuestion,
+                              — ContentDesireItem, Prompt
+  Enums/
+    AppEnums.swift            — All shared domain enums (CardType, Difficulty, RelationshipContext, etc.)
+    AppTab.swift              — Tab routing enum
+    ExperienceType.swift      — Experience routing (browsing, soloSingle, soloPartnered, coupleNew, coupleExperienced)
+  Persistence/                — SessionRecord, RatingRecord, StreakRecord (local-first)
+  Progress/                   — UserProfile, AssessmentResult, Couple, DesireMatch, CoupleSessionRecord,
+                              — CardProgress, DesireRating, AssessmentResponse (synced to Supabase)
 ```
 
 ---
@@ -734,33 +801,44 @@ Models/
 - Clear value exchange: user understands why each question matters
 - No dead ends: every path leads to value
 
-### Screen Sequence (8 screens)
+### Screen Sequence (9 screens)
 
 | # | Screen | File | Type | Data Collected | Purpose |
 |---|--------|------|------|---------------|---------|
 | 1 | StatView | `OnboardingStatView.swift` | Interactive | None | "1 in 5" stat — normalize, reduce shame |
 | 2 | BrandView | `OnboardingBrandView.swift` | Auto (3.5s) | None | Brand identity — mental break before first ask |
-| 3 | NameView | `OnboardingNameView.swift` | Form | `displayName`, `pronouns`, `customPronouns` | Personalization seed, lowest-stakes first ask |
+| 3 | NameView | `OnboardingNameView.swift` | Form | `displayName`, `gender` | Personalization seed, lowest-stakes first ask |
 | 4 | ModeSelectView | `OnboardingModeSelectView.swift` | Two-stage | `explorationMode`, `nmStage` | Primary branch: Solo / Couple / Just Browsing |
 | 5 | ContextView | `OnboardingContextView.swift` | Card stack | `relationshipContext` | Relationship situation — **skipped for Browsing** |
 | 6 | CuriosityPickerView | `OnboardingCuriosityPickerView.swift` | Multi-select | `curiositySelections`, `communicationGoals`, `learningGoals` | Interest + intent picker — drives content personalization |
-| 7 | BuildingPathView | `OnboardingBuildingPathView.swift` | Auto (~7.5s) | Derives `defaultDifficulty` from `nmStage` | Processing animation — pacing beat, reveals path is personal |
-| 8 | OnboardingGroundRulesView | `OnboardingGroundRulesView.swift` | Must-acknowledge, ScrollView | `groundRulesAcceptedAt`, `onboardingComplete`, `completedAt` | Honest framing — what this is and isn't. Terminal screen. No back button. |
+| 7 | CardRevealView | `OnboardingCardRevealView.swift` | Tap-to-flip card | `nmCardResponse` | **The reflective moment.** Replaces the old standalone solo reflection gate. Universal — every path. Front: open question the user sits with. Back: four pills (A desire / A fear / A boundary / A truth). Pill selection feeds archetype routing invisibly. Skip stores nil. |
+| 8 | BuildingPathView | `OnboardingBuildingPathView.swift` | Auto (~7.5s) | Derives `defaultDifficulty` from `nmStage` | **Arrival ceremony — not processing animation.** Responds directly to CardReveal data. Four orbit rows including `nmCardResponse`. Exit line: "Jordan, you're in." Copy: "YOUR PATH IS READY." |
+| 9 | GroundRulesView | `OnboardingGroundRulesView.swift` | Must-acknowledge, ScrollView | `groundRulesAcceptedAt`, `onboardingComplete`, `completedAt` | Ethical frame — what this is and isn't. Home renders blurred and non-interactive behind this screen. User sees destination before final acknowledgment. Blur animates to zero BEFORE `hasCompletedOnboarding` fires. No back button. |
 
 **Then:**
 ```
-→ HOME (first visit)
-→ Solo Reflection Card  ← one-time gate, applies to ALL paths
-→ HOME DASHBOARD
+→ HOME DASHBOARD (direct)
 ```
+
+**NOTE: The Solo Reflection gate has been scrapped. Its function is
+fully absorbed by the CardReveal screen (step 7), which poses the
+reflective open question universally within the onboarding flow itself.
+Post-onboarding, all paths land directly on the home dashboard with
+no intermediate gate.**
 
 ### Path Variations
 
 | Path | Screens | Notes |
 |------|---------|-------|
-| **Solo** | All 8 | ContextView shows 3 relationship-context cards |
-| **Couple** | All 8 | ContextView shows 4 relationship-context cards; pairing prompt deferred to Settings |
-| **Just Browsing** | 7 (skips ContextView) | Education tab unlocked; sessions locked until upgrade |
+| **Solo** | All 9 | ContextView shows 3 relationship-context cards. CardReveal is universal. |
+| **Couple** | All 9 | ContextView shows 4 relationship-context cards. CardReveal is universal. Pairing deferred to Settings. |
+| **Just Browsing** | 8 (skips ContextView) | CardReveal universal. Education tab unlocked; sessions locked until upgrade. |
+
+**Note on screen count:** The count increases by 1 from the previous spec
+because CardReveal has moved from step 7.5 (a half-step) to step 7 (a full
+step), with BuildingPath at step 8 and GroundRules at step 9. The total
+user experience duration is unchanged — BuildingPath and CardReveal existed
+before, they have simply been reordered and reframed.
 
 ### Act-Ownership Routing Logic
 
@@ -774,6 +852,13 @@ The onboarding routing is intentional and permanent — not a placeholder to be 
 
 When Act 2 marketing begins at V1.1, experienced users have always had a complete path. When Act 3 marketing begins at V1.2, solo users have always had a complete path. The routing is the strategy encoded in code.
 
+**CardReveal routing note:** nmCardResponse is available to BuildingPath
+because CardReveal now precedes it in the flow. BuildingPath reads this
+value to populate its fourth orbit row. The archetype classification that
+previously happened post-solo-reflection now happens at the same point —
+during BuildingPath's animation window, which provides sufficient processing
+time before the user reaches GroundRules.
+
 ### User Modes
 
 ```swift
@@ -786,13 +871,17 @@ enum UserMode: String, Codable {
 
 ### Experience Levels (collected in ModeSelectView, stage 2)
 
+Defined in `AppEnums.swift` as part of `NMStage`:
+
 ```swift
-enum ExperienceLevel: String, Codable {
+enum NMStage: String, Codable, CaseIterable {
     case curious     // Brand new → defaultDifficulty: "warm"
     case exploring   // Some context → defaultDifficulty: "medium"
     case experienced // Knows what they want → defaultDifficulty: "hot"
 }
 ```
+
+This was consolidated from the old standalone `ExperienceLevel.swift` into `AppEnums.swift` for unified enum management.
 
 ### Relationship Context Options (ContextView)
 
@@ -827,29 +916,48 @@ enum ExperienceLevel: String, Codable {
 
 ```swift
 // Implemented in OnboardingFlowView.swift as advance(to:)
-// All transitions: .easeInOut(duration: 0.5), .opacity only
+// All transitions: .spring(response: 0.35, dampingFraction: 0.8), .opacity.combined(with: .scale(0.95))
+// (ANIM-STD-37: advance() spring, ANIM-STD-38: screen transitions)
 
-func advance() {
-    switch currentStep {
-    case .stat:          advance(to: .brand)
-    case .brand:         advance(to: .name)           // auto-advance at 3.5s
-    case .name:          advance(to: .modeSelect)
+enum OnboardingStep: Int, CaseIterable {
+    case stat, brand, name, modeSelect, contextSelect, curiosityPicker, cardReveal, buildingPath, groundRules
+}
+// NOTE: cardReveal precedes buildingPath intentionally.
+// CardReveal is the reflective moment — nmCardResponse feeds directly
+// into BuildingPath's fourth orbit row and exit copy.
+// BuildingPath is the arrival ceremony, not a processing screen.
+
+func advance(to step: OnboardingStep) {
+    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+        currentStep = step
+    }
+}
+
+// Main navigation flow:
+switch currentStep {
+    case .stat:             advance(to: .brand)
+    case .brand:            advance(to: .name)           // auto-advance at 3.5s
+    case .name:             advance(to: .modeSelect)
     case .modeSelect:
         // Browsing skips context — goes directly to curiosity picker
         advance(to: explorationMode == .browsing ? .curiosityPicker : .contextSelect)
-    case .contextSelect: advance(to: .curiosityPicker)
-    case .curiosityPicker: advance(to: .buildingPath)
-    case .buildingPath:  advance(to: .groundRules)    // auto-advance at ~7.5s
+    case .contextSelect:    advance(to: .curiosityPicker)
+    case .curiosityPicker:  advance(to: .cardReveal)
+    case .cardReveal:
+        // User taps to flip & select pill (or skip)
+        // Stores data.nmCardResponse (String? — nil if skip)
+        // Encouragement typewriter completes → advance
+        advance(to: .buildingPath)
+    case .buildingPath:     advance(to: .groundRules)    // auto-advance at ~7.5s
     case .groundRules:
+        // Must-acknowledge; no back button
         // Writes: groundRulesAcceptedAt, onboardingComplete, completedAt
         // Then calls onFinished → coordinator marks onboarding done → HOME
         onFinished?()
-    }
 }
 
 func goBack() {
     // .stat, .brand — no back (brand already played)
-    // .groundRules, .buildingPath — no back button (terminal + auto-advance)
     switch currentStep {
     case .name:            advance(to: .modeSelect)   // back goes forward to avoid re-playing brand
     case .modeSelect:      advance(to: .name)
@@ -857,6 +965,10 @@ func goBack() {
     case .curiosityPicker:
         // Browsing went modeSelect → curiosity, so back goes to modeSelect
         advance(to: explorationMode == .browsing ? .modeSelect : .contextSelect)
+    // NOTE: cardReveal, buildingPath, groundRules — no back button
+    // cardReveal: first vulnerable moment, no return
+    // buildingPath: auto-advance terminal, no back
+    // groundRules: terminal screen, no back
     default: break
     }
 }
@@ -866,35 +978,51 @@ func goBack() {
 
 ```swift
 struct OnboardingData {
-    // Screen 3
+    // Screen 3 — NameView
     var displayName: String = ""
     var pronouns: [PronounOption] = []
 
-    // Screen 4
-    var userMode: UserMode?               // solo / couple / browsing
-    var experienceLevel: ExperienceLevel? // curious / exploring / experienced
+    // Screen 4 — ModeSelectView
+    var explorationMode: ExplorationMode?  // solo / couple / browsing (from AppEnums)
+    var nmStage: NMStage?                  // curious / exploring / experienced (from AppEnums)
 
-    // Screen 5 (Solo/Couple only)
-    var relationshipContext: RelationshipContext?
+    // Screen 5 — ContextView (Solo/Couple only)
+    var relationshipContext: RelationshipContext?  // from AppEnums
 
-    // Screen 6
+    // Screen 6 — CuriosityPickerView
     var curiositySelections: [String] = []
+    var communicationGoals: [String] = []
+    var learningGoals: [String] = []
 
-    // Derived during BuildingPathView
+    // Screen 7 — CardRevealView
+    // Pill selection for archetype routing; nil when user skips.
+    // This IS the solo reflection moment — no separate gate exists.
+    var nmCardResponse: String? = nil
+
+    // Screen 8 — BuildingPathView (auto-advance)
+    // Derived from nmStage. BuildingPath reads nmCardResponse to
+    // populate its fourth orbit row and personalise exit copy.
     var defaultDifficulty: String {
-        switch experienceLevel {
-        case .curious:    return "warm"
-        case .exploring:  return "medium"
+        switch nmStage {
+        case .curious:     return "warm"
+        case .exploring:   return "medium"
         case .experienced: return "hot"
-        default:          return "warm"
+        default:           return "warm"
         }
     }
 
-    // Completion
+    // Completion (Screen 9 — GroundRulesView)
+    var groundRulesAcceptedAt: Date?
     var onboardingComplete: Bool = false
-    var onboardingCompletedAt: Date?
+    var completedAt: Date?
 }
 ```
+
+**Notes:**
+- `nmCardResponse` is stored but used primarily for internal archetype classification
+- `nil` when user skips CardReveal (skip button or close); archetype routing uses fallback
+- Data defined in `Features/Onboarding/Data/OnboardingData.swift`
+- Threaded as `@Binding var data: OnboardingData` through all onboarding screens
 
 ### Partner Pairing (Couple Mode — deferred to Settings)
 
@@ -909,33 +1037,28 @@ Three pairing methods remain available in Settings:
 
 ---
 
-### Solo Reflection Card (Post-Onboarding Gate)
+### Solo Reflection — Absorbed Into CardReveal
 
-Appears on first HOME visit for **all paths** (Solo, Couple, Browsing). One-time, non-repeating.
+The standalone post-onboarding solo reflection gate has been scrapped.
+Its function is fully absorbed by the CardReveal screen (step 7 in the
+onboarding flow).
 
-**Prompt:** *"What brought you here tonight?"*
+**What changed:**
+- `SoloReflectionEntry` model is no longer needed — remove if present
+- No post-onboarding gate on first HOME visit
+- All paths land directly on home dashboard after GroundRules acknowledges
+- The reflective question ("What would you desire if nobody, not even you,
+  would judge the answer?") is posed universally during onboarding
+- `nmCardResponse` stores the pill selection and drives archetype routing
+- Skip behavior identical: nil stored, archetype routing uses fallback,
+  seed is still planted (user read the question even if they didn't answer)
 
-- Text stays on-device; only archetype tags sync to Supabase
-- Skip is non-punitive and prominent — no guilt
-- Even skipped users read the question (seed is planted)
-- Couples: both partners complete independently before shared sessions unlock
-
-**Why this prompt:**
-1. Forces self-honesty before partner performance
-2. Creates a private artifact they'll return to later
-3. Establishes the app's voice: "We're not here to perform. We're here to be honest."
-
-**Data stored:**
-```swift
-struct SoloReflectionEntry: Codable {
-    var id: UUID = UUID()
-    var timestamp: Date = Date()
-    var prompt: String = "What brought you here tonight?"
-    var response: String         // Empty string if skipped
-    var wordCount: Int
-    var skipped: Bool = false
-}
-```
+**Why this is better:**
+The old gate created a friction point at the home threshold — users who
+just completed 8 onboarding screens hit another reflective prompt before
+seeing the app. CardReveal poses the same quality of question at the
+correct moment in the emotional arc (immediately before BuildingPath
+confirms what was built from it) rather than as a post-hoc gate.
 
 ---
 
@@ -1161,7 +1284,8 @@ Act 1 batches ship before Act 2 batches are polished before Act 3 batches are co
 | 9 | 1/2/3 | Auth (Sign in with Apple + Supabase), partner pairing, sync services | Done |
 | 10 | 1/2/3 | Theming (light/AMOLED), sync retry on launch | Done |
 | — | 1/2/3 | Codebase audit & refactor (design tokens, shared components, dead code) | Done |
-| 11 | 1/2/3 | Onboarding flow (all three-act paths + solo reflection gate) | **In Progress** |
+| 11 | 1/2/3 | Onboarding flow complete (all 9 screens, CuriosityPickerView three-panel card deal, CardReveal, BuildingPath, GroundRules); home screen redesign (HomeDashboardView, router, per-persona views, PostMapReflection); design system expansion (CardLayout, OrbitIndicator, FilamentMode, new effects) | **Done** |
+| 11.1 | 1 | CuriosityPickerView layout fixes: .clipped() + .background() shadow overlay resolves shadow/clip tension; back-card overflow contained | **Done** |
 | 12 | 1 | Content authoring — Act 1 prompts, card decks, education modules | Planned |
 | 13 | 1 | Assessment / archetype classification (post-first-session) | Planned |
 | 14 | 1 | Communication Pack — Drop Box + AI translation | Planned |

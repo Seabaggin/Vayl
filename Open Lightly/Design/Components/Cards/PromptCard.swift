@@ -43,6 +43,7 @@ extension PromptDifficulty {
 
 struct PromptCard: View {
     let prompt: Prompt
+    var showDifficultyDots: Bool = true
     @Environment(\.colorScheme) private var colorScheme
 
     var intensity: PromptDifficulty {
@@ -94,10 +95,16 @@ struct PromptCard: View {
                     .foregroundColor(AppColors.textTertiary)
 
                 // Prompt text
-                KeywordHighlightText(fullText: prompt.text, keywords: prompt.highlightWords.map { (text: $0, type: "cyan") })
+                KeywordHighlightText(
+                    fullText: prompt.text,
+                    keywords: prompt.highlightWords.map { (text: $0, type: "cyan") },
+                    lineLimit: 3,
+                    minimumScaleFactor: 0.80
+                )
                     .font(AppFonts.cardTitle)
                     .lineSpacing(4)
                     .foregroundColor(AppColors.textPrimary)
+                    .fixedSize(horizontal: false, vertical: false)
 
                 // Footer row
                 HStack {
@@ -109,14 +116,16 @@ struct PromptCard: View {
                     Spacer()
 
                     // Difficulty dots
-                    HStack(spacing: 4) {
-                        let difficultyOrder = [PromptDifficulty.easy, .light, .medium, .deep, .sensitive, .ultimate]
-                        ForEach(0..<6, id: \ .self) { i in
-                            Circle()
-                                .frame(width: 6, height: 6)
-                                .foregroundStyle(
-                                    i <= difficultyOrder.firstIndex(of: prompt.difficulty) ?? 0 ? AppColors.cyan : Color.white.opacity(0.15)
-                                )
+                    if showDifficultyDots {
+                        HStack(spacing: 4) {
+                            let difficultyOrder = [PromptDifficulty.easy, .light, .medium, .deep, .sensitive, .ultimate]
+                            ForEach(0..<6, id: \ .self) { i in
+                                Circle()
+                                    .frame(width: 6, height: 6)
+                                    .foregroundStyle(
+                                        i <= difficultyOrder.firstIndex(of: prompt.difficulty) ?? 0 ? AppColors.cyan : Color.white.opacity(0.15)
+                                    )
+                            }
                         }
                     }
                 }

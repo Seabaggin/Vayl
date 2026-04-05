@@ -58,18 +58,15 @@ public enum OrbitIndicatorState: Equatable {
 /// Reusable orbit state indicator for three-state async flows.
 ///
 /// Animates smoothly between pending (static ring), processing (comet orbit),
-/// and complete (gradient fill + glow). Uses the project's color spectrum
-/// and follows PillBorder.swift's TimelineView + Canvas architecture.
-///
-/// Color adaptation:
-///   Dark mode  — cyan → purple → magenta spectrum
-///   Light mode — purple → magenta → gold warm aurora palette
-///   All colors derived from AppColors tokens.
+/// and complete (gradient fill + glow). Uses the project's dark mode color spectrum
+/// (cyan → purple → magenta) and follows PillBorder.swift's TimelineView + Canvas architecture.
+/// All colors derived from AppColors tokens.
 public struct OrbitIndicator: View {
     public let state: OrbitIndicatorState
     public var size: CGFloat = 22
-
-    @Environment(\.colorScheme) private var colorScheme
+    
+    @State private var sheenOffset: CGFloat = -1.5
+    @State private var sheenAnimating: Bool = false
 
     public init(
         state: OrbitIndicatorState,
@@ -83,12 +80,7 @@ public struct OrbitIndicator: View {
         ZStack {
             // LAYER 1 — Pending ring
             Circle()
-                .strokeBorder(
-                    colorScheme == .dark
-                        ? AppColors.border
-                        : AppColors.lightBorder,
-                    lineWidth: 1.5
-                )
+                .strokeBorder(AppColors.border, lineWidth: 1.5)
                 .opacity(state == .pending ? 1 : 0)
                 .animation(.easeOut(duration: 0.3), value: state == .pending)
 
@@ -97,18 +89,15 @@ public struct OrbitIndicator: View {
             // Wrapped in withAnimation context at call sites so the
             // .transition(.opacity) fires correctly when state changes.
             if state == .processing {
-                _OrbitCanvas(size: size, colorScheme: colorScheme)
+                _OrbitCanvas(size: size)
                     .transition(.opacity)
             }
 
             // LAYER 3 — Complete fill
-            // Dark: full spectrum (cyan → purple → magenta)
-            // Light: warm aurora (purple → magenta → gold)
+            // Dark mode spectrum: cyan → purple → magenta
             Circle()
                 .fill(LinearGradient(
-                    colors: colorScheme == .dark
-                        ? [AppColors.cyan, AppColors.purple, AppColors.magenta]
-                        : [AppColors.purple, AppColors.magenta, AppColors.gold],
+                    colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ))
@@ -123,24 +112,18 @@ public struct OrbitIndicator: View {
                 Circle()
                     .fill(Color.clear)
                     .shadow(
-                        color: colorScheme == .dark
-                            ? AppColors.glowCyan
-                            : AppColors.lightShadowPurple,
-                        radius: colorScheme == .dark ? 5 : 3,
+                        color: AppColors.glowCyan,
+                        radius: 5,
                         x: 0, y: 0
                     )
                     .shadow(
-                        color: colorScheme == .dark
-                            ? AppColors.glowMagenta
-                            : AppColors.lightShadowMagenta,
-                        radius: colorScheme == .dark ? 11 : 6.6,
+                        color: AppColors.glowMagenta,
+                        radius: 11,
                         x: 0, y: 0
                     )
                     .shadow(
-                        color: colorScheme == .dark
-                            ? AppColors.purple.opacity(0.13)
-                            : AppColors.lightShadowGold,
-                        radius: colorScheme == .dark ? 18 : 10.8,
+                        color: AppColors.purple.opacity(0.13),
+                        radius: 18,
                         x: 0, y: 0
                     )
                     .animation(
@@ -148,8 +131,58 @@ public struct OrbitIndicator: View {
                         value: state == .complete
                     )
             }
+
+            // LAYER 5 — Holographic sheen (complete state only)
+            if state == .complete {
+                Circle()
+                    .fill(Color.clear)
+                    .overlay {
+                        LinearGradient(
+                            stops: [
+                                .init(color: .clear,                    location: 0.00),
+                                .init(color: .clear,                    location: 0.25),
+                                .init(color: Color.white.opacity(0.35), location: 0.38),
+                                .init(color: Color.white.opacity(0.00), location: 0.45),
+                                .init(color: .clear,                    location: 0.55),
+                                .init(color: Color.white.opacity(0.20), location: 0.65),
+                                .init(color: .clear,                    location: 0.72),
+                                .init(color: .clear,                    location: 1.00),
+                            ],
+                            startPoint: UnitPoint(x: -0.1, y: 1.0),
+                            endPoint:   UnitPoint(x: 1.1,  y: -0.25)
+                        )
+                        // Scale the sweep to the circle diameter.
+                        // StatView uses 320pt for a ~140pt text block (2.3× ratio).
+                        // A 22pt circle uses 50pt sweep for the same visual ratio.
+                        .frame(width: size * 2.5)
+                        .offset(x: sheenOffset * (size * 2.5))
+                        .mask { Circle() }
+                    }
+                    .clipShape(Circle())
+                    .allowsHitTesting(false)
+                    .onAppear {
+                        guard !sheenAnimating else { return }
+                        sheenAnimating = true
+                        withAnimation(
+                            .easeInOut(duration: 4)
+                            .repeatForever(autoreverses: true)
+                        ) {
+                            sheenOffset = 1.5
+                        }
+                    }
+                    .onDisappear {
+                        sheenAnimating = false
+                        sheenOffset = -1.5
+                    }
+            }
         }
         .frame(width: size, height: size)
+        .onChange(of: state) { _, newState in
+            if newState != .complete {
+                sheenAnimating = false
+                sheenOffset = -1.5
+            }
+        }
     }
 }
 
@@ -168,45 +201,30 @@ public struct OrbitIndicator: View {
 /// invisible in previews. Now uses .color(opacity:) — matching
 /// BPOrbitCanvas — which renders correctly everywhere.
 ///
-/// Color adaptation:
-///   Dark:  comet trail lerps cyan → purple → magenta
-///   Light: comet trail lerps purple → magenta → gold
-///   RGB components resolved dynamically from AppColors tokens via UIColor.
+/// Color: Dark mode only — comet trail lerps cyan → purple → magenta.
+/// RGB components resolved dynamically from AppColors tokens via UIColor.
 private struct _OrbitCanvas: View {
     let size: CGFloat
-    let colorScheme: ColorScheme
 
     private let revolutionDuration: TimeInterval = 1.4
 
     // Pre-resolved RGB triples for the three anchor colors.
-    // Resolved once per render pass from AppColors tokens so that
-    // the Canvas closure (which has no Environment access) can
-    // interpolate between them without hardcoded hex values.
+    // Dark mode: cyan → purple → magenta spectrum
     private var primaryRGB: (r: Double, g: Double, b: Double) {
-        colorScheme == .dark
-            ? components(of: AppColors.cyan)
-            : components(of: AppColors.purple)
+        components(of: AppColors.cyan)
     }
     private var secondaryRGB: (r: Double, g: Double, b: Double) {
-        colorScheme == .dark
-            ? components(of: AppColors.purple)
-            : components(of: AppColors.magenta)
+        components(of: AppColors.purple)
     }
     private var tertiaryRGB: (r: Double, g: Double, b: Double) {
-        colorScheme == .dark
-            ? components(of: AppColors.magenta)
-            : components(of: AppColors.gold)
+        components(of: AppColors.magenta)
     }
 
-    // Spark head colors — resolved per colorScheme.
+    // Spark head colors — dark mode only
     // BUG-3 FIX: used as .color(opacity:) shading in Canvas,
     // NOT as radialGradient shading (which breaks in preview renderer).
-    private var sparkOuter: Color {
-        colorScheme == .dark ? AppColors.magenta : AppColors.magenta
-    }
-    private var sparkInner: Color {
-        colorScheme == .dark ? AppColors.cyan : AppColors.purple
-    }
+    private let sparkOuter: Color = AppColors.magenta
+    private let sparkInner: Color = AppColors.cyan
 
     var body: some View {
         // Capture resolved values before entering Canvas closure.
@@ -216,9 +234,7 @@ private struct _OrbitCanvas: View {
         let tRGB        = tertiaryRGB
         let outer       = sparkOuter
         let inner       = sparkInner
-        let borderColor: Color = colorScheme == .dark
-            ? AppColors.borderHover
-            : AppColors.lightBorderHover
+        let borderColor: Color = AppColors.borderHover
 
         TimelineView(.animation) { timeline in
             Canvas { context, canvasSize in

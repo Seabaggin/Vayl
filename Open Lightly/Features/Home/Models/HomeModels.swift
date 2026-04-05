@@ -5,17 +5,6 @@
 
 import SwiftUI
 
-// MARK: - Session Card State
-
-enum SessionCardState {
-    case dayZero
-    case midDeck(completed: Int, total: Int, nextPrompt: String)
-    case deckComplete(stageName: String, stageIndex: Int,
-                      nextStageName: String, nextStageCards: Int)
-    case waitingOnPartner(partnerName: String,
-                          completed: Int, total: Int)
-}
-
 // MARK: - Desire Map State
 
 enum DesireMapState {

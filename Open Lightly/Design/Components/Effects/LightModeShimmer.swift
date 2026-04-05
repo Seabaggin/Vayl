@@ -1,77 +1,106 @@
-//
-//  LightModeShimmer.swift
-//  Open Lightly
-//
-//  Created by Bryan Jorden on 3/20/26.
-//
-
-
 // LightModeShimmer.swift
 // Open Lightly
 //
-// Warm Aurora shimmer fill for light mode surfaces.
-// Light mode counterpart to HolographicShimmer.swift.
+// Rewritten to match HolographicShimmer's energy on cream surfaces.
 //
-// Key differences from HolographicShimmer:
-//   - Colors: AppColors.lightShimmerColors (purple/magenta/gold/magentaLight)
-//             No cyan — reads clinical on cream
-//   - Opacity: 7–11% vs 40–50% in dark — tinted ink-wash, not a light blast
-//   - Duration: 11s default vs 6s — slower sweep on cream reads more languid
-//   - Everything else: identical structure, identical mechanics
-//
-// Usage (identical pattern to HolographicShimmer):
-// ```swift
-// Capsule()
-//     .fill(AppColors.lightFrostPill)
-//     .overlay { LightModeShimmer().clipShape(Capsule()) }
-// ```
+// Key fixes vs original:
+//   - Removed .multiply blend mode — was darkening colours into mud
+//   - Added second diagonal pass at different speed — depth/foil feel
+//   - Matched HolographicShimmer's normal compositing
+//   - Kept warm palette (purple/magenta/gold) — no cyan on cream
 
 import SwiftUI
 
-/// Self-contained animated warm aurora shimmer fill for light mode.
-/// Renders a 3× wide warm gradient that sweeps left→right continuously.
-///
-/// Use as a background layer clipped to any shape:
-/// ```swift
-/// Capsule()
-///     .fill(AppColors.lightFrostPill)
-///     .overlay { LightModeShimmer().clipShape(Capsule()) }
-/// ```
 struct LightModeShimmer: View {
-    /// Animation duration in seconds. Defaults to 11 (languid warm sweep).
-    /// Use 9 for selected pills, 13 for CTA buttons.
-    var duration: Double = 11
+    var duration: Double = 6
     var usePillColors: Bool = false
 
-    @State private var phase: CGFloat = 0
+    @State private var phase1: CGFloat = 0   // primary horizontal sweep
+    @State private var phase2: CGFloat = 0   // secondary diagonal sweep
 
-    private var effectiveDuration: Double {
-        // Pills need faster sweep to feel alive —
-        // matches HolographicShimmer's 6s default.
-        // Background washes keep the languid 11s.
-        usePillColors ? min(duration, 7.0) : duration
+    // Primary sweep — matches HolographicShimmer's colour slot count
+    // and opacity range exactly. Only the hues differ (warm vs neon).
+    private var primaryColors: [Color] {
+        [
+            AppColors.purple.opacity(0.55),
+            AppColors.magenta.opacity(0.60),
+            AppColors.gold.opacity(0.55),
+            AppColors.magentaLight.opacity(0.58),
+            AppColors.purple.opacity(0.55),
+        ]
     }
 
-    // Reads directly from AppColors — single source of truth.
-    // purple → magenta → gold → magentaLight → purple
-    // Same wrap-around structure as HolographicShimmer for seamless loop.
-    private var colors: [Color] {
-        usePillColors
-            ? AppColors.lightPillShimmerColors
-            : AppColors.lightShimmerColors
+    // Secondary pass — softer, offset palette
+    // Sits on top of primary at lower opacity to create depth.
+    // Diagonal start/end point fakes a 2D foil angle.
+    private var secondaryColors: [Color] {
+        [
+            AppColors.gold.opacity(0.30),
+            AppColors.purple.opacity(0.25),
+            AppColors.magenta.opacity(0.28),
+            AppColors.gold.opacity(0.22),
+            AppColors.magentaLight.opacity(0.25),
+        ]
+    }
+
+    // Background wash variant — same structure, lower opacity
+    private var washColors: [Color] {
+        AppColors.lightShimmerColors
     }
 
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
-            LinearGradient(colors: colors, startPoint: .leading, endPoint: .trailing)
-                .frame(width: w * 3, height: geo.size.height)
-                .offset(x: phase * -w * 2)
+            let h = geo.size.height
+
+            ZStack {
+                // ── Pass 1: primary horizontal sweep ─────────────────
+                // Identical mechanics to HolographicShimmer.
+                // No blend mode — normal compositing, colours at face value.
+                LinearGradient(
+                    colors: usePillColors ? primaryColors : washColors,
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(width: w * 3, height: h)
+                .offset(x: phase1 * -w * 2)
+
+                // ── Pass 2: secondary diagonal sweep (pills only) ─────
+                // Offset diagonal gradient at 60% speed of primary.
+                // Creates the illusion of depth — light catching a
+                // different facet of the foil at a different angle.
+                // Skipped for background wash — too busy on large surfaces.
+                if usePillColors {
+                    LinearGradient(
+                        colors: secondaryColors,
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .frame(width: w * 3, height: h)
+                    .offset(x: phase2 * -w * 2)
+                    .blendMode(.screen)   // screen on cream = gentle brightening,
+                                          // not the darkening that multiply caused
+                }
+            }
         }
         .clipped()
         .onAppear {
-            withAnimation(.easeInOut(duration: effectiveDuration).repeatForever(autoreverses: true)) {
-                phase = 1
+            // Primary sweep — same timing as HolographicShimmer
+            withAnimation(
+                .easeInOut(duration: usePillColors ? min(duration, 5.5) : duration)
+                .repeatForever(autoreverses: true)
+            ) {
+                phase1 = 1
+            }
+
+            // Secondary sweep — 60% speed, starts offset so
+            // the two passes are never in sync (avoids strobing)
+            withAnimation(
+                .easeInOut(duration: usePillColors ? min(duration, 5.5) * 1.65 : duration * 1.4)
+                .repeatForever(autoreverses: true)
+                .delay(0.8)
+            ) {
+                phase2 = 1
             }
         }
     }

@@ -66,6 +66,13 @@ struct AppColors {
 
     /// Violet — between purple and blue, used in warm-tier pill gradients
     static let violet = Color(hex: "7C3AED")
+    static let electricViolet = Color(hex: "8B5CF6")
+    
+    
+    /// Electric purple — vivid gradient midpoint, LivingText only
+    static let purpleVivid = Color(hex: "9333EA")
+    
+    static let purpleBright = Color(hex: "C084FC")
 
     // Lighter variants — gradient text on keywords, badges
     static let cyanLight    = Color(hex: "4DD8FF")
@@ -132,6 +139,15 @@ struct AppColors {
     /// Muted text — disabled states, subtle hints
     static let textMuted     = Color.white.opacity(0.20)
 
+    /// Bright near-white for small labels that need to survive
+    /// a purple-tinted ambient background (status strip counts,
+    /// overline labels, etc). Device-absolute — cannot be tinted.
+    static let textBright = Color(white: 0.90)
+
+    /// Muted body text — sublabels inside cards.
+    /// Use when textSecondary reads below threshold on deep backgrounds.
+    static let textMutedBody = Color(white: 0.62)
+
     /// Badge/tag text
     static let textBadge     = Color(hex: "5BB8CC")
 
@@ -171,6 +187,14 @@ struct AppColors {
     static let success        = Color(hex: "00CC88")
 
     /// Off-spectrum utility — safety only (safe word, hard no, cool off)
+    /// Gold usage rule:
+    /// At full or near-full opacity: safety signals only
+    /// (safe word button, warnings, hard stop actions).
+    /// Never decorative at visible opacity.
+    /// Aurora atmospheric use at ≤8% opacity is acceptable
+    /// because it cannot be read as a directional signal
+    /// at that opacity level. If it is visible enough to be
+    /// noticed as gold, it is too opaque for non-safety use.
     static let gold       = Color(hex: "C8960A")
     static let goldLight  = Color(hex: "E2B93B")
     static let goldDark   = Color(hex: "8B6914")
@@ -278,11 +302,13 @@ struct AppColors {
     /// Near-black — primary headings and body on cream
     static let lightTextPrimary   = Color(hex: "1A1A1E")
 
-    /// 50% near-black — labels, descriptions
-    static let lightTextSecondary = Color(hex: "1A1A1E").opacity(0.50)
+    /// Mid-tone label text on cream — labels, descriptions.
+    /// Opaque equivalent of Color(hex:"1A1A1E").opacity(0.50) on #F8F6EE.
+    static let lightTextSecondary = Color(hex: "8C8C94")
 
-    /// 30% near-black — timestamps, meta, hints
-    static let lightTextTertiary  = Color(hex: "1A1A1E").opacity(0.30)
+    /// Subtle meta text on cream — timestamps, hints, tertiary labels.
+    /// Opaque equivalent of Color(hex:"1A1A1E").opacity(0.30) on #F8F6EE.
+    static let lightTextTertiary  = Color(hex: "B3B3BA")
 
     // Borders
     /// Default subtle border on cream surfaces
@@ -303,11 +329,39 @@ struct AppColors {
     // whites multiply with container opacity causing pills to vanish
     // at disabled 0.45. Opaque equivalent preserves identical appearance
     // at full opacity and holds at any container opacity.
-    static let lightFrostPill    = Color(red: 0.988, green: 0.984, blue: 0.970)
+    // TINT-FIX: was (0.988, 0.984, 0.970) near-white — shimmer had nothing
+    // to push against. Now a soft lavender-blush sits visibly on
+    // lightPageBg (#F8F6EE). Parallel role to surfaceBg (#1A1825) in dark.
+    // PILL-FILL-FIX: was (0.945, 0.925, 0.960) — near-white, indistinguishable
+    // from lightPageBg (#F8F6EE). Shimmer had nothing to push against.
+    // Now a visible lavender — parallel role to surfaceBg (#1A1825) in dark mode.
+    // The shimmer sweeps over this tinted base the same way HolographicShimmer
+    // sweeps over the deep purple surfaceBg.
+    static let lightFrostPill    = Color(red: 0.910, green: 0.875, blue: 0.945)
 
     /// Selected pill fill — slightly more opaque for legibility
-    // OPACITY-FIX: was Color.white.opacity(0.75)
-    static let lightFrostPillSel = Color(red: 0.993, green: 0.991, blue: 0.983)
+    // PILL-FILL-FIX: was (0.950, 0.922, 0.968) — barely distinguishable from
+    // lightFrostPill. Selected state had no visual lift over unselected.
+    // Now a visible rose-blush — selected reads richer and warmer than unselected.
+    // Contrast between selected/unselected mirrors dark mode's surfaceBg delta.
+    static let lightFrostPillSel = Color(red: 0.958, green: 0.875, blue: 0.925)
+
+    // MARK: - Pill Tokens
+
+    /// Unselected pill interior — dark mode.
+    /// Sits ~15% brighter than cardBg so pill labels have a
+    /// contrast floor against the purple ambient atmosphere.
+    static let pillSurface = Color(red: 0.10, green: 0.09, blue: 0.16)
+    static let pillSurfaceBottom = Color(red: 0.08, green: 0.07, blue: 0.13)
+
+    /// Selected pill interior tint multiplier base.
+    /// View applies .opacity() on top of this.
+    static let pillSurfaceSelected = Color(red: 0.051, green: 0.043, blue: 0.122)
+
+    /// Ambient lift shadow applied to every pill in dark mode.
+    /// Keeps pills visually separated from the background without
+    /// a directional light source.
+    static let pillGlow = Color(white: 1.0).opacity(0.04)
 
     /// CTA button fill — frosted, never fully opaque
     // OPACITY-FIX: was Color.white.opacity(0.70)
@@ -323,6 +377,7 @@ struct AppColors {
     static let lightLabelFocused  = magentaDark  // #BE185D
 
     /// Hint text — "so we get it right", helper copy
+    // TODO: replace with opaque equivalent
     static let lightHintText      = magentaDark.opacity(0.50)
 
     // Aurora atmosphere blobs
@@ -330,7 +385,7 @@ struct AppColors {
     // Opacity intentionally low — these are felt, not seen.
     static let auroraBlob1 = magenta.opacity(0.09)    // magenta — top right
     static let auroraBlob2 = purple.opacity(0.08)     // purple  — bottom left
-    static let auroraBlob3 = gold.opacity(0.07)       // gold    — bottom right
+    static let auroraBlob3 = gold.opacity(0.07)       // gold at 7% — below signal threshold, atmospheric use only. See gold usage rule above.
     static let auroraBlob4 = pink.opacity(0.06)       // pink    — mid left
 
     // Aurora shadow spread
@@ -365,6 +420,7 @@ struct AppColors {
     /// Card fill — barely blush (#FFF4F6)
     static let lightCardFill = Color(red: 1.0, green: 0.957, blue: 0.965)
 
+    static let lightFrostPillCustom = Color(red: 0.868, green: 0.848, blue: 0.908)
     /// Card shadow — warm amber mid
     static let lightCardShadowMagenta = Color(red: 0.78, green: 0.39, blue: 0.20)
 

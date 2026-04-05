@@ -2,730 +2,749 @@
 //  OnboardingCuriosityPickerView.swift
 //  Open Lightly
 //
-//  Screen 5 — Two-section interest & intent picker.
-//  Config is fully derived from OnboardingData — no mode checks in the view.
-//
 
 import SwiftUI
 
-// MARK: - Section Identity
-
-private enum PickerSection {
-    case one, two
+private enum ClusterPhase: Equatable {
+    case set1Active
+    case set2Active
+    case exiting
 }
 
-// MARK: - Main View
+// Scatter slots — 2-column organic layout with hand-tuned positions
+private struct ScatterSlot {
+    let xFrac:    CGFloat
+    let yPt:      CGFloat
+    let baseRot:  Double
+    let scale:    CGFloat
+}
+
+private let set1Slots: [ScatterSlot] = [
+    ScatterSlot(xFrac: 0.05,  yPt:  70,  baseRot: -1.2, scale: 1.00),
+    ScatterSlot(xFrac: 0.52,  yPt:  55,  baseRot:  0.8, scale: 0.97),
+    ScatterSlot(xFrac: 0.05,  yPt: 230,  baseRot:  0.5, scale: 1.02),
+    ScatterSlot(xFrac: 0.52,  yPt: 215,  baseRot: -0.7, scale: 0.98),
+    ScatterSlot(xFrac: 0.28,  yPt: 375,  baseRot: -0.8, scale: 1.00),
+]
+
+private let set2Slots: [ScatterSlot] = [
+    ScatterSlot(xFrac: 0.05,  yPt:  65,  baseRot:  1.1, scale: 0.98),
+    ScatterSlot(xFrac: 0.52,  yPt:  48,  baseRot: -0.9, scale: 1.01),
+    ScatterSlot(xFrac: 0.05,  yPt: 230,  baseRot: -0.6, scale: 1.00),
+    ScatterSlot(xFrac: 0.52,  yPt: 218,  baseRot:  1.3, scale: 0.97),
+    ScatterSlot(xFrac: 0.28,  yPt: 385,  baseRot:  0.6, scale: 1.00),
+]
 
 struct OnboardingCuriosityPickerView: View {
     @Binding var data: OnboardingData
     var onContinue: (() -> Void)?
-    var onBack: (() -> Void)?
+    var onBack:     (() -> Void)?
 
-    // MARK: - State
+    // MARK: - Selection
+    @State private var selectedSet1: Set<String> = []
+    @State private var selectedSet2: Set<String> = []
+    @State private var clusterPhase: ClusterPhase = .set1Active
+    @State private var hasAdvanced: Bool = false
 
-    @State private var selectedCommunicationGoals: Set<String> = []
-    @State private var selectedLearningGoals:      Set<String> = []
-    @State private var headerVisible      = false
-    @State private var section1Visible    = false
-    @State private var section2Visible    = false
-    @State private var reassuranceVisible = false
+    // MARK: - Scroll
+    @State private var scrollOffset: CGFloat = 0
+    @State private var seam:         CGFloat = 0
 
-    @State private var section2HasAppeared = false
-    @State private var ctaHasAppeared      = false
-    @State private var ctaExpanding        = false
-    @State private var isRestoringState    = false
+    // MARK: - UI
+    @State private var headerVisible:    Bool    = false
+    @State private var cardsVisible:     Bool    = false
+    @State private var navHeaderHeight:  CGFloat = 230
+    @State private var headerMeasured:   Bool    = false
 
-    @Environment(\.colorScheme)    private var colorScheme
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
-    // MARK: - Computed
-
-    // FIXED: Extracted from body, sectionHeader, pillGrid, sectionDivider, and
-    // CuriosityPill.body. Previously `let isLight = colorScheme == .light` was
-    // declared inside each @ViewBuilder scope and captured across multiple nested
-    // closures, exhausting the preview type-checker's per-expression time budget.
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var isLight: Bool { colorScheme == .light }
 
-    private var config: CuriosityScreenConfig {
-        data.curiosityScreenConfig
+    // MARK: - Atmosphere progress 0→1 as user scrolls set1→set2
+    private var atmosphereProgress: CGFloat {
+        guard seam > 0 else { return 0 }
+        return max(0, min(1, scrollOffset / seam))
     }
 
-    private var hasSelection: Bool {
-        !selectedCommunicationGoals.isEmpty || !selectedLearningGoals.isEmpty
+    private var atmosphereCyanOpacity:    Double { Double(1 - atmosphereProgress) * (isLight ? 0.10 : 0.20) }
+    private var atmosphereMagentaOpacity: Double { Double(atmosphereProgress)     * (isLight ? 0.10 : 0.20) }
+
+    // MARK: - Flash intensity — bell curve peaking at crossfade midpoint
+    // Essentially zero by progress=0.25 and progress=0.75
+    private var flashIntensity: CGFloat {
+        guard seam > 0 else { return 0 }
+        let p = atmosphereProgress
+        return exp(-18 * pow(p - 0.5, 2))
     }
 
-    private var pillColumns: [GridItem] {
-        dynamicTypeSize >= .accessibility2
-            ? [GridItem(.flexible())]
-            : [GridItem(.flexible(), spacing: 10),
-               GridItem(.flexible(), spacing: 10)]
+    // MARK: - Responsive font sizes
+    private var headerTitleSize: CGFloat {
+        UIScreen.main.bounds.width <= 375 ? 18 : 22
     }
 
-    // FIXED: Extracted from body — inline AnyShapeStyle ternary with LinearGradient
-    // exceeded the preview type-checker's inference budget.
-    private var reassuranceGradientStyle: AnyShapeStyle {
-        if isLight {
-            return AnyShapeStyle(LinearGradient(
-                stops: [
-                    .init(color: AppColors.magenta, location: 0.00),
-                    .init(color: AppColors.gold,    location: 1.00),
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            ))
-        } else {
-            return AnyShapeStyle(LinearGradient(
-                colors: [
-                    AppColors.cyan,
-                    AppColors.purple,
-                    AppColors.magenta,
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            ))
+    private var headerSubtitleSize: CGFloat {
+        UIScreen.main.bounds.width <= 375 ? 12 : 14
+    }
+
+    // MARK: - Helpers
+    private var hasSelection: Bool  { !selectedSet1.isEmpty && !selectedSet2.isEmpty }
+    private var totalSelected: Int  { selectedSet1.count + selectedSet2.count }
+    private var config: CuriosityScreenConfig { data.curiosityScreenConfig }
+
+    // MARK: - LivingText gradient stops — single source of truth
+    private var livingGradientColors: [Color] {
+        isLight
+            ? [AppColors.magenta, AppColors.orangeHot, AppColors.gold]
+            : [AppColors.cyan, AppColors.purpleVivid, AppColors.magenta]
+    }
+
+    // MARK: - Device-adaptive scaling
+    private func scaledSlots(_ slots: [ScatterSlot], screenW: CGFloat) -> [ScatterSlot] {
+        // Only scale DOWN for small screens — large screens don't need bigger gaps
+        let yScale = min(max(screenW / 390, 0.85), 1.0)
+        return slots.map { slot in
+            ScatterSlot(
+                xFrac:   slot.xFrac,
+                yPt:     slot.yPt * yScale,
+                baseRot: slot.baseRot,
+                scale:   slot.scale
+            )
         }
     }
 
-    // LAYOUT-FIX: converted from var to func(size:) so atmosphere ellipse
-    // receives proportional dimensions from the GeometryReader in body.
-    private func backgroundLayer(size: CGSize) -> some View {
-        ZStack {
-            if isLight {
-                // ── Light background ──────────────────────────────
-                AppColors.lightPageBg
+    // MARK: - Card specs
+    private enum CardSet { case set1, set2 }
 
-                AuroraGlowField(config: .curiosityPickerView)
+    private struct CardSpec: Identifiable {
+        let id:         String
+        let lead:       String
+        let full:       String
+        let slot:       ScatterSlot
+        let floatPhase: Double
+        let set:        CardSet
+    }
 
-                // SparkField: fewest sparks — picker is dense,
-                // sparks stay far peripheral
-                // count:12, speed:0.18–0.28, opacity:0.14–0.24,
-                // fade:0.65→0.52
-                SparkField(config: .curiosityPickerView)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
+    private func cardSpecs(screenH: CGFloat, screenW: CGFloat) -> [CardSpec] {
+        let s1slots = scaledSlots(set1Slots, screenW: screenW)
+        let s2slots = scaledSlots(set2Slots, screenW: screenW)
+        let s1 = Array(config.section1Options.prefix(5))
+        let s2 = Array(config.section2Options.prefix(5))
+        var out: [CardSpec] = []
+        for (i, opt) in s1.enumerated() {
+            out.append(CardSpec(
+                id:         opt.id,
+                lead:       CuriosityScreenConfig.leadPhrase(for: opt.id),
+                full:       opt.label,
+                slot:       s1slots[i % s1slots.count],
+                floatPhase: Double(i) * 0.8,
+                set:        .set1
+            ))
+        }
+        for (i, opt) in s2.enumerated() {
+            out.append(CardSpec(
+                id:         opt.id + "_set2",
+                lead:       CuriosityScreenConfig.leadPhrase(for: opt.id),
+                full:       opt.label,
+                slot:       s2slots[i % s2slots.count],
+                floatPhase: Double(i) * 0.8 + 0.4,
+                set:        .set2
+            ))
+        }
+        return out
+    }
+
+    private func isSelected(_ spec: CardSpec) -> Bool {
+        switch spec.set {
+        case .set1: return selectedSet1.contains(spec.id)
+        case .set2:
+            let raw = spec.id.hasSuffix("_set2")
+                ? String(spec.id.dropLast(5))
+                : spec.id
+            return selectedSet2.contains(raw)
+        }
+    }
+
+    // MARK: - Selection Logic
+    private let maxPerSection = 3
+
+    private func toggle(_ spec: CardSpec) {
+        guard clusterPhase != .exiting else { return }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        switch spec.set {
+        case .set1:
+            if selectedSet1.contains(spec.id) {
+                selectedSet1.remove(spec.id)
+            } else if selectedSet1.count < maxPerSection {
+                selectedSet1.insert(spec.id)
             } else {
-                // ── Dark background — unchanged ────────────────────
-                AppColors.pageBg
-
-                Ellipse()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                AppColors.purple.opacity(0.3),
-                                AppColors.deepBlue.opacity(0.15),
-                                Color.clear,
-                            ],
-                            center: .top,
-                            startRadius: 30,
-                            endRadius: 360
-                        )
-                    )
-                    .frame(width: OL.atmosW(size.width), height: OL.atmosH(size.height)) // LAYOUT-FIX: was 600×500
-                    .offset(y: -size.height * 0.09)                                       // LAYOUT-FIX: was -80
-                    .blur(radius: 80)
-
-                OnboardingGlowField()
+                // Max reached — provide haptic warning, no change
+                UINotificationFeedbackGenerator()
+                    .notificationOccurred(.warning)
+            }
+        case .set2:
+            let raw = spec.id.hasSuffix("_set2")
+                ? String(spec.id.dropLast(5))
+                : spec.id
+            if selectedSet2.contains(raw) {
+                selectedSet2.remove(raw)
+            } else if selectedSet2.count < maxPerSection {
+                selectedSet2.insert(raw)
+            } else {
+                // Max reached — provide haptic warning, no change
+                UINotificationFeedbackGenerator()
+                    .notificationOccurred(.warning)
             }
         }
-        .ignoresSafeArea()
+    }
+
+    // MARK: - Float
+    // More amplitude (3→5pt Y, 0.2→0.35 rot)
+    // Each card gets its own tick multiplier offset — never in sync
+    private func floatY(_ spec: CardSpec, tick: Double) -> CGFloat {
+        guard !reduceMotion else { return 0 }
+        let speedVariance = 0.009 + (spec.floatPhase.truncatingRemainder(dividingBy: 3)) * 0.002
+        return CGFloat(sin(spec.floatPhase + tick * speedVariance) * 5)
+    }
+
+    private func floatRot(_ spec: CardSpec, tick: Double) -> Double {
+        guard !reduceMotion else { return 0 }
+        let speedVariance = 0.006 + (spec.floatPhase.truncatingRemainder(dividingBy: 2)) * 0.002
+        return sin(spec.floatPhase + tick * speedVariance) * 0.35
+    }
+
+    private func gravity(_ spec: CardSpec) -> CGSize {
+        guard isSelected(spec) else { return .zero }
+        return CGSize(width: spec.slot.xFrac > 0.4 ? 10 : -10, height: 0)
+    }
+
+    // MARK: - Card width
+    private func cardW(for spec: CardSpec, canvasW: CGFloat) -> CGFloat {
+        canvasW * 0.44 * spec.slot.scale
+    }
+
+    // MARK: - Tint / border
+    private func cardTint(_ spec: CardSpec) -> Color {
+        switch spec.set {
+        case .set1: return AppColors.cyan.opacity(isLight ? 0.04 : 0.05)
+        case .set2: return AppColors.magenta.opacity(isLight ? 0.04 : 0.05)
+        }
+    }
+    private func cardBorder(_ spec: CardSpec) -> Color {
+        guard !isSelected(spec) else { return .clear }
+        switch spec.set {
+        case .set1: return AppColors.cyan.opacity(isLight ? 0.18 : 0.14)
+        case .set2: return AppColors.magenta.opacity(isLight ? 0.18 : 0.14)
+        }
+    }
+
+    // MARK: - Data / continue
+    private func commitData() {
+        data.communicationGoals = config.section1Options
+            .filter { selectedSet1.contains($0.id) }.map(\.id).sorted()
+        data.learningGoals = config.section2Options
+            .filter { selectedSet2.contains($0.id) }.map(\.id).sorted()
+        data.curiositySelections = data.communicationGoals + data.learningGoals
+    }
+
+    private func handleContinue() {
+        guard !hasAdvanced else { return }
+        hasAdvanced = true
+        commitData()
+        withAnimation(.easeInOut(duration: 0.3)) { clusterPhase = .exiting }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { onContinue?() }
+    }
+
+    // MARK: - Dimensions
+    private func sectionHeight(screenW: CGFloat) -> CGFloat {
+        let scale = min(max(screenW / 390, 0.85), 1.0)
+        return (385 + 90 + 95) * scale  // lastYPt + cardH + buffer for seam/margin
     }
 
     // MARK: - Body
-
     var body: some View {
-        GeometryReader { geo in // LAYOUT-FIX: proportionally scale spacing
-        let h = geo.size.height
+        GeometryReader { geo in
+            let h   = geo.size.height
+            let w   = geo.size.width
+            let top = geo.safeAreaInsets.top
+            let bot = geo.safeAreaInsets.bottom
 
-        VStack(spacing: 0) {
+            ZStack(alignment: .top) {
 
-            OnboardingNavBar(
-                currentStep: 4,
-                totalSteps: 5,
-                onBack: onBack
-            )
-            .padding(.top, OL.navTop(h))        // LAYOUT-FIX: was 12 hardcoded
-            .padding(.bottom, OL.navBottom(h))  // LAYOUT-FIX: was 20 hardcoded
-            .padding(.horizontal, 24)
+                // ── Atmosphere ────────────────────────────────────────
+                ZStack {
+                    Ellipse()
+                        .fill(RadialGradient(
+                            colors: [AppColors.cyan.opacity(atmosphereCyanOpacity), .clear],
+                            center: .center, startRadius: 0, endRadius: 300
+                        ))
+                        .frame(width: w * 1.3, height: h * 0.55)
+                        .position(x: w * 0.5, y: h * 0.25)
+                        .blur(radius: 70)
+                    Ellipse()
+                        .fill(RadialGradient(
+                            colors: [AppColors.magenta.opacity(atmosphereMagentaOpacity), .clear],
+                            center: .center, startRadius: 0, endRadius: 300
+                        ))
+                        .frame(width: w * 1.3, height: h * 0.55)
+                        .position(x: w * 0.5, y: h * 0.78)
+                        .blur(radius: 70)
+                }
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
 
-            ScrollViewReader { proxy in
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 0) {
-                        // LAYOUT-FIX: minHeight fills screen before scroll activates on SE
+                // ── Scroll canvas ─────────────────────────────────────
+                infiniteCanvas(w: w, h: h, top: top)
+                    .frame(width: w, height: h)
+                    .ignoresSafeArea()
 
-                        // MARK: Section 1 header
-                        sectionHeader(
-                            label:    config.section1Label,
-                            sublabel: config.section1Sublabel
+                // ── Fixed nav + header ────────────────────────────────
+                VStack(spacing: 0) {
+                    VStack(spacing: 0) {
+                        OnboardingNavBar(
+                            currentStep: 4,
+                            totalSteps:  6,
+                            onBack:      onBack
                         )
                         .padding(.horizontal, 24)
-                        .opacity(headerVisible ? 1 : 0)
-                        .offset(y: headerVisible ? 0 : 10)
+                        .padding(.top, top + 8)
+                        .padding(.bottom, OL.navBottom(h))
 
-                        Spacer(minLength: 14)
-
-                        // MARK: Section 1 pills
-                        pillGrid(
-                            options:      config.section1Options,
-                            selectedKeys: $selectedCommunicationGoals,
-                            isVisible:    section1Visible,
-                            section:      .one
-                        )
-                        .padding(.horizontal, 24)
-
-                        // MARK: Gate 2 — Section 2 expands into layout
-                        if config.showSection2 {
-                            VStack(alignment: .leading, spacing: 0) {
-                                if section2HasAppeared {
-                                    sectionDivider
-                                        .padding(.vertical, 16)
-                                        .padding(.horizontal, 24)
-                                        .opacity(section2Visible ? 1 : 0)
-
-                                    sectionHeader(
-                                        label:    config.section2Label,
-                                        sublabel: config.section2Sublabel
-                                    )
-                                    .padding(.horizontal, 24)
-                                    .opacity(section2Visible ? 1 : 0)
-                                    .offset(y: section2Visible ? 0 : 10)
-                                    .id("section2Top")
-
-                                    Spacer(minLength: 14)
-
-                                    pillGrid(
-                                        options:      config.section2Options,
-                                        selectedKeys: $selectedLearningGoals,
-                                        isVisible:    section2Visible,
-                                        section:      .two
-                                    )
-                                    .padding(.horizontal, 24)
-                                }
+                        headerBlock
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 10)
+                            .opacity(headerVisible ? 1 : 0)
+                            .animation(.easeOut(duration: 0.4).delay(0.1), value: headerVisible)
+                    }
+                    .background(
+                        GeometryReader { navGeo in
+                            Color.clear.onAppear {
+                                guard !headerMeasured else { return }
+                                headerMeasured  = true
+                                navHeaderHeight = navGeo.size.height + 20
                             }
-                            .animation(
-                                .spring(response: 0.55, dampingFraction: 0.82),
-                                value: section2HasAppeared
+                        }
+                    )
+
+                    Spacer()
+                }
+                .ignoresSafeArea(edges: .top)
+                .allowsHitTesting(false)
+
+                // ── Selection count pill — top right, below nav ───────────
+                VStack {
+                    HStack {
+                        Spacer()
+                        selectionPill
+                            .padding(.top, top + 14)
+                            .padding(.trailing, 24)
+                    }
+                    Spacer()
+                }
+                .ignoresSafeArea(edges: .top)
+                .allowsHitTesting(false)
+                .zIndex(20)
+
+                // ── Fixed CTA ─────────────────────────────────────────
+                VStack(spacing: 0) {
+                    Spacer()
+                    bottomZone
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, bot + 8)
+                        .background(
+                            LinearGradient(
+                                colors: [
+                                    (isLight ? AppColors.lightPageBg : AppColors.pageBg).opacity(0),
+                                    (isLight ? AppColors.lightPageBg : AppColors.pageBg).opacity(0.96),
+                                ],
+                                startPoint: .top,
+                                endPoint:   .bottom
                             )
-                            .clipped()
-                        }
+                            .ignoresSafeArea()
+                        )
+                }
+                .ignoresSafeArea(edges: .bottom)
+            }
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.4).delay(0.15)) { headerVisible = true }
+                withAnimation(.easeOut(duration: 0.4).delay(0.30)) { cardsVisible  = true }
+            }
+            .onDisappear {
+                // Preserve partial selections so back navigation
+                // restores the user's progress.
+                if !selectedSet1.isEmpty || !selectedSet2.isEmpty {
+                    commitData()
+                }
+                hasAdvanced = false
+            }
+        }
+    }
 
-                        Spacer(minLength: 16)
+    // MARK: - Infinite canvas
 
-                        // MARK: Reassurance
-                        // RULE B — magenta→gold in light; dark path unchanged
-                        Text("No wrong answers. You can always explore more later.")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(reassuranceGradientStyle) // FIXED: uses pre-resolved property
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity)
-                            .padding(.horizontal, 24)
-                            .opacity(reassuranceVisible ? 1 : 0)
-                            .offset(y: reassuranceVisible ? 0 : 8)
+    @ViewBuilder
+    private func infiniteCanvas(w: CGFloat, h: CGFloat, top: CGFloat) -> some View {
+        let secH     = sectionHeight(screenW: w)
+        let seamGap: CGFloat = -90  // was 60
+        let topPad:  CGFloat = navHeaderHeight
+        let totalH   = topPad + secH + seamGap + secH + 10
 
-                        // MARK: Gate 3 — CTA inside scroll surface
-                        if ctaHasAppeared {
-                            HoloCTAButton(
-                                title: "Show me my path",
-                                isEnabled: hasSelection
-                            ) {
-                                handleContinue()
+        ScrollView(.vertical, showsIndicators: false) {
+            ZStack(alignment: .topLeading) {
+
+                // ── Scroll tracker ────────────────────────────────────
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear {
+                            Task { @MainActor in
+                                // Seam position: scroll distance to the visual boundary between Set 1 and Set 2
+                                // Calculated as the end of Set 1 panel plus half of seamGap to center at the visual seam
+                                if seam == 0 { seam = secH + CGFloat(seamGap) / 2 }
                             }
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.horizontal, 24)
-                            .padding(.top, 16)
-                            .opacity(ctaExpanding ? 1 : 0)
-                            .offset(y: ctaExpanding ? 0 : 12)
-                            .id("ctaAnchor")
+                        }
+                        .onChange(of: proxy.frame(in: .named("scroll")).minY) { _, currentY in
+                            scrollOffset = max(0, -currentY)
+                            // Keep clusterPhase in sync for card hit-testing
+                            let inSet2 = scrollOffset >= seam
+                            let target: ClusterPhase = inSet2 ? .set2Active : .set1Active
+                            if clusterPhase != target && clusterPhase != .exiting {
+                                clusterPhase = target
+                            }
+                        }
+                }
+                .frame(width: w, height: 0)
+
+                // ── Animated cards ────────────────────────────────────
+                TimelineView(.animation(minimumInterval: 1/30,
+                                        paused: clusterPhase == .exiting || reduceMotion)) { tl in
+                    let tick = tl.date.timeIntervalSinceReferenceDate * 60
+
+                    ZStack(alignment: .topLeading) {
+                        Color.clear.frame(width: w, height: totalH)
+
+                        // Set 1
+                        ForEach(cardSpecs(screenH: h, screenW: w).filter { $0.set == .set1 }) { spec in
+                            let cw = cardW(for: spec, canvasW: w)
+                            let cx = spec.slot.xFrac * w + cw / 2
+                            let cy = topPad + spec.slot.yPt
+                            cardView(spec: spec, tick: tick, cw: cw)
+                                .position(x: cx, y: cy)
                         }
 
-                        OnboardingFooter()
-                            .opacity(0.5)
-                            .padding(.top, 8)
-                    }
-                    .frame(minHeight: OL.scrollMinH(h)) // LAYOUT-FIX: fills screen before scroll activates
-                }
-                .onChange(of: section2HasAppeared) { _, appeared in
-                    guard appeared, config.showSection2, !isRestoringState else { return }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.50) {
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            proxy.scrollTo("section2Top", anchor: .top)
+                        // Set 2
+                        let set2Origin = topPad + secH + seamGap
+                        ForEach(cardSpecs(screenH: h, screenW: w).filter { $0.set == .set2 }) { spec in
+                            let cw = cardW(for: spec, canvasW: w)
+                            let cx = spec.slot.xFrac * w + cw / 2
+                            let cy = set2Origin + spec.slot.yPt
+                            cardView(spec: spec, tick: tick, cw: cw)
+                                .position(x: cx, y: cy)
                         }
                     }
-                }
-                .onChange(of: ctaHasAppeared) { _, appeared in
-                    guard appeared else { return }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            proxy.scrollTo("ctaAnchor", anchor: .center)
-                        }
-                    }
+                    .frame(width: w, height: totalH)
                 }
             }
         }
-        .background { backgroundLayer(size: geo.size) } // LAYOUT-FIX: passes live size for proportional atmosphere
-        // RULE D — .preferredColorScheme(.dark) removed;
-        // screen now responds to system appearance.
-        .onAppear {
-            restoreSelectionsIfNeeded()
-            runEntranceAnimations()
-        }
-        } // LAYOUT-FIX: end GeometryReader
+        .coordinateSpace(name: "scroll")
+        .frame(width: w, height: h)
+        .mask(
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0.00),
+                    .init(color: .black, location: 0.15),
+                    .init(color: .black, location: 1.00),
+                ],
+                startPoint: .top,
+                endPoint:   .bottom
+            )
+        )
+        .opacity(cardsVisible ? 1 : 0)
     }
 
-    // MARK: - Section Header
+    // MARK: - Individual card
 
-    private func sectionHeader(label: String, sublabel: String) -> some View {
-        // FIXED: uses struct-level `isLight` instead of local `let isLight`
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label)
-                .font(AppFonts.screenTitle)
-                .foregroundStyle(
-                    isLight
-                        ? AnyShapeStyle(AppColors.lightCardTitle)
-                        : AnyShapeStyle(AppColors.textPrimary)
-                )
-                .fixedSize(horizontal: false, vertical: true)
+    @ViewBuilder
+    private func cardView(spec: CardSpec, tick: Double, cw: CGFloat) -> some View {
+        let selected = isSelected(spec)
+        let opacity: Double = clusterPhase == .exiting ? 0 : 1
 
-            Text(sublabel)
-                .font(AppFonts.caption)
-                .foregroundStyle(
-                    isLight
-                        ? AnyShapeStyle(AppColors.lightCardTitle.opacity(0.65))
-                        : AnyShapeStyle(AppColors.textSecondary)
+        ZStack {
+            FloatingCard(
+                spec: FloatingCardSpec(
+                    id:         spec.id,
+                    lead:       spec.lead,
+                    full:       spec.full,
+                    xFrac:      Double(spec.slot.xFrac),
+                    yFrac:      Double(spec.slot.yPt),
+                    floatPhase: spec.floatPhase
+                ),
+                isSelected:    selected,
+                floatY:        floatY(spec, tick: tick),
+                floatRot:      floatRot(spec, tick: tick),
+                gravity:       gravity(spec),
+                tick:          tick,
+                targetOpacity: opacity,
+                cardWidth:     cw,
+                tintColor:     cardTint(spec),
+                onTap:         { toggle(spec) }
+            )
+
+            // ...existing code...
+        }
+        .allowsHitTesting(opacity > 0.3)
+        .animation(.easeInOut(duration: 0.35), value: clusterPhase)
+    }
+
+    // MARK: - Fixed header
+
+    private var headerBlock: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            ZStack(alignment: .topLeading) {
+
+                // Flash bloom — uses LivingText palette, direction-aware
+                // cyan-weighted entering, magenta-weighted exiting
+                LinearGradient(
+                    colors: [
+                        AppColors.cyan.opacity(flashIntensity * (1 - atmosphereProgress) * 0.25),
+                        AppColors.purpleVivid.opacity(flashIntensity * 0.25),
+                        AppColors.magenta.opacity(flashIntensity * atmosphereProgress * 0.25),
+                    ],
+                    startPoint: .leading,
+                    endPoint:   .trailing
                 )
+                .blur(radius: 10 + flashIntensity * 14)
+                .frame(height: 50)
+                .padding(.horizontal, -16)
+                .padding(.vertical, -12)
+                .allowsHitTesting(false)
+
+                VStack(alignment: .leading, spacing: 0) {
+
+                    // Title crossfade with living gradient flash
+                    ZStack(alignment: .topLeading) {
+                        liveLabelTitle(
+                            config.section1Label,
+                            opacity: 1 - atmosphereProgress,
+                            flash:   flashIntensity * (1 - atmosphereProgress)
+                        )
+                        liveLabelTitle(
+                            config.section2Label,
+                            opacity: atmosphereProgress,
+                            flash:   flashIntensity * atmosphereProgress
+                        )
+                    }
+                    .frame(height: 32)
+                    .scaleEffect(1 + flashIntensity * 0.012, anchor: .leading)
+                    .clipped()
+
+                    // Subtitle crossfade — plain opacity, no gradient needed
+                    ZStack(alignment: .topLeading) {
+                        liveLabelSubtitle(config.section1Sublabel,
+                                          opacity: 1 - atmosphereProgress)
+                        liveLabelSubtitle(config.section2Sublabel,
+                                          opacity: atmosphereProgress)
+                    }
+                    .frame(height: 22)
+                    .padding(.top, 5)
+                    .clipped()
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Pill Grid
+    // MARK: - Title label
 
-    private func pillGrid(
-        options: [CuriosityOption],
-        selectedKeys: Binding<Set<String>>,
-        isVisible: Bool,
-        section: PickerSection
-    ) -> some View {
-        // FIXED: uses struct-level `isLight` instead of local `let isLight`
-        let isOdd = options.count % 2 != 0
+    @ViewBuilder
+    private func liveLabelTitle(_ text: String,
+                                opacity: CGFloat,
+                                flash: CGFloat) -> some View {
+        ZStack {
+            Text(text)
+                .font(AppFonts.display(headerTitleSize, weight: .semibold))
+                .foregroundStyle(isLight
+                    ? AppColors.lightTextPrimary
+                    : AppColors.textPrimary)
+                .opacity(1 - flash)
 
-        return VStack(alignment: .trailing, spacing: 6) {
-            LazyVGrid(columns: pillColumns, spacing: 10) {
-                ForEach(Array(options.enumerated()), id: \.element.id) { index, option in
-                    let isLast = index == options.count - 1
-                    CuriosityPill(
-                        option:     option,
-                        isSelected: selectedKeys.wrappedValue.contains(option.id),
-                        onTap:      { toggleSelection(option.id, in: selectedKeys, section: section) }
-                    )
-                    .gridCellColumns(isOdd && isLast ? 2 : 1)
-                    .opacity(isVisible ? 1 : 0)
-                    .offset(y: isVisible ? 0 : 12)
-                    .animation(
-                        .easeOut(duration: 0.4).delay(Double(index) * 0.04),
-                        value: isVisible
-                    )
-                }
-            }
-            if !selectedKeys.wrappedValue.isEmpty {
-                Text("Tap to deselect")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(
-                        isLight
-                            // lightTextTertiary handles low-emphasis
-                            // hint text on cream — no raw opacity needed
-                            ? AnyShapeStyle(AppColors.lightCardTitle.opacity(0.40))
-                            : AnyShapeStyle(AppColors.textSecondary.opacity(0.45))
-                    )
-                    .transition(.opacity)
-                    .accessibilityHidden(true) // visual affordance only
-            }
-        }
-        .animation(.easeInOut(duration: 0.25), value: selectedKeys.wrappedValue.isEmpty)
-    }
-
-    // MARK: - Section Divider
-
-    private var sectionDivider: some View {
-        // FIXED: uses struct-level `isLight` instead of local `let isLight`
-        HStack(spacing: 6) {
-            ForEach(0..<12, id: \.self) { _ in
-                Circle()
-                    // lightBorder in light — same visual weight as
-                    // card borders on cream
-                    .fill(isLight ? AppColors.lightBorder : AppColors.border)
-                    .frame(width: 3, height: 3)
-            }
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Helpers
-
-    private func toggleSelection(
-        _ key: String,
-        in set: Binding<Set<String>>,
-        section: PickerSection
-    ) {
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            if set.wrappedValue.contains(key) {
-                set.wrappedValue.remove(key)
-            } else {
-                set.wrappedValue.insert(key)
-            }
-        }
-
-        let newCount = set.wrappedValue.count
-
-        // Gate 2 — fires once on the first Section 1 selection
-        if section == .one
-            && newCount == 1
-            && !section2HasAppeared {
-
-            section2HasAppeared = true
-
-            if config.showSection2 {
-                withAnimation(.easeOut(duration: 0.5).delay(0.30)) {
-                    section2Visible = true
-                }
-                withAnimation(.easeOut(duration: 0.5).delay(0.65)) {
-                    reassuranceVisible = true
-                }
-            } else {
-                withAnimation(.easeOut(duration: 0.5).delay(0.30)) {
-                    reassuranceVisible = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                    triggerCTAAppearance()
-                }
-            }
-        }
-
-        // Gate 3 — fires once on the first Section 2 selection
-        if section == .two
-            && newCount == 1
-            && !ctaHasAppeared {
-            triggerCTAAppearance()
-        }
-    }
-
-    private func triggerCTAAppearance() {
-        guard !ctaHasAppeared else { return }
-        ctaHasAppeared = true
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.28) {
-            withAnimation(.easeOut(duration: 0.4)) {
-                ctaExpanding = true
-            }
-        }
-    }
-
-    private func restoreSelectionsIfNeeded() {
-        isRestoringState = true
-        let hasComms    = !data.communicationGoals.isEmpty
-        let hasLearning = !data.learningGoals.isEmpty
-
-        // On the browsing path, previous selections were written
-        // to data.learningGoals. Restore them into the Section 1
-        // state var, which is the only active section.
-        if !config.showSection2 {
-            if hasLearning {
-                selectedCommunicationGoals = Set(data.learningGoals)
-            }
-        } else {
-            if hasComms    { selectedCommunicationGoals = Set(data.communicationGoals) }
-            if hasLearning { selectedLearningGoals      = Set(data.learningGoals) }
-        }
-
-        // Fast-forward gate flags if Section 1 had selections.
-        // Do not animate — set all visibility flags to true directly
-        // so the screen renders fully formed without replaying the
-        // entrance sequence.
-        if !selectedCommunicationGoals.isEmpty {
-            headerVisible       = true
-            section1Visible     = true
-            section2HasAppeared = true
-            section2Visible     = true
-            reassuranceVisible  = true
-        }
-
-        // Fast-forward Gate 3 flags if Section 2 had selections,
-        // or if browsing path had any Section 1 selections.
-        let shouldShowCTA = !selectedLearningGoals.isEmpty
-            || (!config.showSection2 && !selectedCommunicationGoals.isEmpty)
-        if shouldShowCTA {
-            ctaHasAppeared = true
-            ctaExpanding   = true
-        }
-        isRestoringState = false
-    }
-
-    private func handleContinue() {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-
-        if config.showSection2 {
-            data.communicationGoals = Array(selectedCommunicationGoals).sorted()
-            data.learningGoals      = Array(selectedLearningGoals).sorted()
-        } else {
-            // Browsing path — all selections are learning-oriented.
-            // Note: selectedCommunicationGoals holds Section 1 state
-            // even on browsing path; the field name mismatch is
-            // intentional — see CuriosityScreenConfig.browsingConfig.
-            data.communicationGoals = []
-            data.learningGoals      = Array(selectedCommunicationGoals).sorted()
-        }
-        data.curiositySelections = data.communicationGoals + data.learningGoals
-        onContinue?()
-    }
-
-    private func runEntranceAnimations() {
-        #if DEBUG
-        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
-            headerVisible   = true
-            section1Visible = true
-            return
-        }
-        #endif
-        guard !headerVisible else { return }
-        withAnimation(.easeOut(duration: 0.5).delay(0.10)) { headerVisible   = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.25)) { section1Visible = true }
-    }
-}
-
-// MARK: - CuriosityPill
-
-private struct CuriosityPill: View {
-    let option:     CuriosityOption
-    let isSelected: Bool
-    let onTap:      () -> Void
-
-    // RULE H — private struct needs its own @Environment
-    @Environment(\.colorScheme) private var colorScheme
-
-    // FIXED: Extracted from body, pillBackground, and pillBorder.
-    // Same root cause as the parent view — `let isLight` inside @ViewBuilder
-    // scopes captured across multiple closures exhausts the preview type-checker.
-    private var isLight: Bool { colorScheme == .light }
-
-    // Quiz and DesireMap options use magenta accent to signal
-    // "this does something special"
-    private var accentColor: Color {
-        switch option.contentType {
-        case .quiz, .desireMap: return AppColors.magenta
-        default:                return AppColors.cyan
-        }
-    }
-
-    // Dark-mode selected border gradient — unchanged
-    private var darkSelectedBorder: LinearGradient {
-        switch option.contentType {
-        case .quiz, .desireMap:
-            return LinearGradient(
-                colors: [AppColors.magenta, AppColors.purple],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        default:
-            return LinearGradient(
-                colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
-    }
-
-    var body: some View {
-        // FIXED: uses struct-level `isLight` instead of local `let isLight`
-        Button(action: onTap) {
-            HStack(spacing: 10) {
-
-                // Icon area — checkmark when selected,
-                // ✦ when emphasized, empty otherwise.
-                // Fully hidden from VoiceOver — selection state is
-                // conveyed by the button's selected trait and label.
-                ZStack {
-                    if isSelected {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(
-                                // Magenta reads clearly on both frost
-                                // and dark fill in selected state
-                                isLight ? AppColors.magenta : accentColor
-                            )
-                            .transition(.scale.combined(with: .opacity))
-                    } else if option.isEmphasized {
-                        Text("✦")
-                            .font(.system(size: 8))
-                            .foregroundStyle(
-                                isLight
-                                    ? AppColors.purple.opacity(0.5)
-                                    : AppColors.cyan.opacity(0.5)
-                            )
-                    }
-                }
-                .frame(width: 16, height: 16)
-                .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSelected)
+            Text(text)
+                .font(AppFonts.display(headerTitleSize, weight: .semibold))
+                .foregroundStyle(LinearGradient(
+                    colors: livingGradientColors,
+                    startPoint: .leading,
+                    endPoint:   .trailing
+                ))
+                .blur(radius: flash * 5)
+                .opacity(flash * 0.40)
+                .allowsHitTesting(false)
                 .accessibilityHidden(true)
 
-                Text(option.label)
-                    .font(AppFonts.buttonLabel)
-                    .foregroundStyle(
-                        isSelected
-                            ? (isLight
-                                ? AnyShapeStyle(AppColors.lightCardTitle)
-                                : AnyShapeStyle(AppColors.textPrimary))
-                            : (isLight
-                                ? AnyShapeStyle(AppColors.wineDark)
-                                : AnyShapeStyle(Color.white))
-                    )
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .multilineTextAlignment(.leading)
+            Text(text)
+                .font(AppFonts.display(headerTitleSize, weight: .semibold))
+                .foregroundStyle(LinearGradient(
+                    colors: livingGradientColors,
+                    startPoint: .leading,
+                    endPoint:   .trailing
+                ))
+                .blur(radius: flash * 2)
+                .opacity(flash * 0.80)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
 
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
-            .background(pillBackground)
-            .overlay(pillBorder)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .shadow(
-                color: isSelected
-                    ? (isLight
-                        ? AppColors.lightShadowMagenta
-                        : accentColor.opacity(0.20))
-                    : (option.isEmphasized
-                        ? (isLight
-                            ? Color.clear
-                            : AppColors.cyan.opacity(0.06))
-                        : .clear),
-                radius: isSelected ? 10 : 6,
-                x: 0, y: 0
-            )
+            Text(text)
+                .font(AppFonts.display(headerTitleSize, weight: .semibold))
+                .foregroundStyle(LinearGradient(
+                    colors: livingGradientColors,
+                    startPoint: .leading,
+                    endPoint:   .trailing
+                ))
+                .opacity(flash)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
         }
-        .buttonStyle(.plain)
-        .scaleEffect(isSelected ? 1.02 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        .modifier(GlowUnderline(isLight: isLight, flash: flash))
+        .opacity(opacity)
     }
 
-    @ViewBuilder
-    private var pillBackground: some View {
-        // FIXED: uses struct-level `isLight` instead of local `let isLight`
-        RoundedRectangle(cornerRadius: 20)
-            .fill(
-                isSelected
-                    ? (isLight
-                        // lightFrostPillSel — frosted selected fill on cream
-                        ? LinearGradient(
-                            colors: [AppColors.lightFrostPillSel, AppColors.lightFrostPillSel],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          )
-                        : LinearGradient(
-                            colors: [accentColor.opacity(0.08), AppColors.purple.opacity(0.06)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          ))
-                    : (isLight
-                        // lightFrostPill — frosted unselected fill on cream
-                        ? LinearGradient(
-                            colors: [AppColors.lightFrostPill, AppColors.lightFrostPill],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          )
-                        : LinearGradient(
-                            colors: [AppColors.cardBg, AppColors.cardBg],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          ))
-            )
-    }
+    // MARK: - Subtitle label
 
     @ViewBuilder
-    private var pillBorder: some View {
-        // FIXED: uses struct-level `isLight` instead of local `let isLight`
-        if isSelected {
+    private func liveLabelSubtitle(_ text: String, opacity: CGFloat) -> some View {
+        Text(text)
+            .font(AppFonts.body(headerSubtitleSize, weight: .regular))
+            .foregroundStyle(isLight
+                ? AppColors.lightTextSecondary
+                : AppColors.textSecondary)
+            .opacity(opacity)
+    }
+
+    // MARK: - Selection count pill
+    private var selectionPill: some View {
+        HStack(spacing: 6) {
+            Text("\(totalSelected)")
+                .font(AppFonts.body(16, weight: .semibold))
+                .foregroundStyle(isLight ? AppColors.wineDark : Color.white)
+                .contentTransition(.numericText())
+                .animation(.spring(response: 0.35, dampingFraction: 0.7), value: totalSelected)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(isLight ? AppColors.lightFrostPill : AppColors.surfaceBg)
+        .overlay {
             if isLight {
-                // Light selected border — magentaGold with blur duplicate
-                // for visual mass on cream (Rule G / border spec Section 6)
-                ZStack {
-                    // 1. Crisp stroke
-                    RoundedRectangle(cornerRadius: 20)
-                        .strokeBorder(
-                            LinearGradient(
-                                stops: [
-                                    .init(color: AppColors.magenta,   location: 0.00),
-                                    .init(color: AppColors.orangeHot, location: 0.50),
-                                    .init(color: AppColors.gold,      location: 1.00),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 2.5
-                        )
-                    // 2. Blurred duplicate — gives border visual mass
-                    RoundedRectangle(cornerRadius: 20)
-                        .strokeBorder(
-                            LinearGradient(
-                                stops: [
-                                    .init(color: AppColors.magenta,   location: 0.00),
-                                    .init(color: AppColors.orangeHot, location: 0.50),
-                                    .init(color: AppColors.gold,      location: 1.00),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 3.5
-                        )
-                        .blur(radius: 6)
-                        .opacity(0.25)
-                }
-                // 3. Shadow spread — three layers
-                .shadow(color: AppColors.lightShadowMagenta, radius: 8,  x: 0, y: 3)
-                .shadow(color: AppColors.lightShadowPurple,  radius: 16, x: 0, y: 5)
-                .shadow(color: AppColors.lightShadowGold,    radius: 6,  x: 0, y: 2)
+                LightModeShimmer(duration: 4.0, usePillColors: true)
+                    .opacity(0.72)
+                    .allowsHitTesting(false)
             } else {
-                // Dark selected border — unchanged
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(darkSelectedBorder, lineWidth: 2)
+                HolographicShimmer(duration: 4.0)
+                    .opacity(0.72)
+                    .allowsHitTesting(false)
             }
-        } else if option.isEmphasized {
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(
-                    isLight
-                        ? AppColors.lightBorder
-                        : AppColors.cyan.opacity(0.15),
-                    lineWidth: 1.5
-                )
-        } else {
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(
-                    isLight ? AppColors.lightBorder : AppColors.border,
-                    lineWidth: 1.5
-                )
         }
+        .clipShape(Capsule())
+        .overlay {
+            if isLight {
+                Capsule()
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: livingGradientColors.map { $0.opacity(0.78) },
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 2.0
+                    )
+            } else {
+                Capsule()
+                    .strokeBorder(Color.white.opacity(0.22), lineWidth: 1.5)
+            }
+        }
+        .shadow(color: isLight
+            ? AppColors.magenta.opacity(0.18)
+            : AppColors.purple.opacity(0.25),
+                radius: 12, x: 0, y: 4)
+        .opacity(totalSelected > 0 ? 1 : 0)
+        .scaleEffect(totalSelected > 0 ? 1 : 0.85, anchor: .topTrailing)
+        .animation(.spring(response: 0.4, dampingFraction: 0.72), value: totalSelected > 0)
+    }
+
+    // MARK: - Bottom zone
+
+    private var bottomZone: some View {
+        VStack(spacing: 8) {
+            CuriosityPanelNudge(
+                s1Empty: selectedSet1.isEmpty,
+                s2Empty: selectedSet2.isEmpty,
+                isLight: isLight
+            )
+
+            HoloCTAButton(
+                title:     "Continue",
+                isEnabled: hasSelection,
+                action:    { handleContinue() }
+            )
+            .animation(.easeInOut(duration: 0.4), value: hasSelection)
+
+            OnboardingFooter()
+        }
+        .padding(.top, 8)
+        .padding(.bottom, 8)
     }
 }
 
 // MARK: - Previews
 
-#Preview("Dark") {
+#Preview("Dark — Solo") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
         d.displayName     = "Jordan"
+        d.relationshipContext = .single
         d.explorationMode = .solo
         return d
     }()
-    OnboardingCuriosityPickerView(data: $data)
-        .preferredColorScheme(.dark)
+    ZStack {
+        AppColors.pageBg.ignoresSafeArea()
+        OnboardingAtmosphere(
+            config: .curiosityPicker, sparkConfig: .curiosityPickerView, opacity: 1.0
+        )
+        .ignoresSafeArea().allowsHitTesting(false)
+        OnboardingCuriosityPickerView(data: $data, onContinue: {}, onBack: {})
+    }
+    .preferredColorScheme(.dark)
 }
 
-#Preview("Light") {
+#Preview("Light — Solo") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
         d.displayName     = "Jordan"
+        d.relationshipContext = .single
         d.explorationMode = .solo
         return d
     }()
-    OnboardingCuriosityPickerView(data: $data)
-        .preferredColorScheme(.light)
+    ZStack {
+        AppColors.lightPageBg.ignoresSafeArea()
+        OnboardingAtmosphere(
+            config: .curiosityPicker, sparkConfig: .curiosityPickerView, opacity: 1.0
+        )
+        .ignoresSafeArea().allowsHitTesting(false)
+        OnboardingCuriosityPickerView(data: $data, onContinue: {}, onBack: {})
+    }
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark — Couple") {
+    @Previewable @State var data: OnboardingData = {
+        var d = OnboardingData()
+        d.displayName     = "Jordan"
+        d.relationshipContext = .notTalked
+        d.explorationMode = .couple
+        return d
+    }()
+    ZStack {
+        AppColors.pageBg.ignoresSafeArea()
+        OnboardingAtmosphere(
+            config: .curiosityPicker, sparkConfig: .curiosityPickerView, opacity: 1.0
+        )
+        .ignoresSafeArea().allowsHitTesting(false)
+        OnboardingCuriosityPickerView(data: $data, onContinue: {}, onBack: {})
+    }
+    .preferredColorScheme(.dark)
 }

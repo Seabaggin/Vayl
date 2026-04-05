@@ -12,7 +12,7 @@ import SwiftUI
 enum ThemeMode: String, CaseIterable, Identifiable {
     case system
     case light
-    case amoled
+    case dark
 
     var id: String { rawValue }
 
@@ -20,7 +20,7 @@ enum ThemeMode: String, CaseIterable, Identifiable {
         switch self {
         case .system: return "System"
         case .light:  return "Light"
-        case .amoled: return "Dark"
+        case .dark:   return "Dark"
         }
     }
 
@@ -28,7 +28,7 @@ enum ThemeMode: String, CaseIterable, Identifiable {
         switch self {
         case .system: return "circle.lefthalf.filled"
         case .light:  return "sun.max.fill"
-        case .amoled: return "moon.fill"
+        case .dark:   return "moon.fill"
         }
     }
 }
@@ -67,7 +67,7 @@ struct AppPalette {
     let glowMagenta: Color
     let glowGold: Color
 
-    let isAmoled: Bool
+    let isDark: Bool
 }
 
 // MARK: - Computed Gradients
@@ -99,9 +99,9 @@ extension AppPalette {
         )
     }
 
-    /// Card border — hairline white on AMOLED, warm gray on light
+    /// Card border — hairline white on dark, warm gray on light
     var cardBorder: Color {
-        isAmoled ? .white.opacity(0.08) : border
+        isDark ? .white.opacity(0.08) : border
     }
 }
 
@@ -131,14 +131,14 @@ extension AppPalette {
         glowCyan:      Color(hex: "0891B2").opacity(0.10),
         glowMagenta:   Color(hex: "BE185D").opacity(0.08),
         glowGold:      Color(hex: "B8860B").opacity(0.08),
-        isAmoled:      false
+        isDark:        false
     )
 }
 
-// MARK: - AMOLED Palette
+// MARK: - Dark Palette
 
 extension AppPalette {
-    static let amoled = AppPalette(
+    static let dark = AppPalette(
         bg:            .black,
         bgElevated:    .black,
         surface1:      Color(hex: "0A0A10"),
@@ -161,6 +161,6 @@ extension AppPalette {
         glowCyan:      Color(hex: "5ED0EE").opacity(0.20),
         glowMagenta:   Color(hex: "F472AD").opacity(0.20),
         glowGold:      Color(hex: "FFD700").opacity(0.20),
-        isAmoled:      true
+        isDark:        true
     )
 }

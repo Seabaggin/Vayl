@@ -17,15 +17,20 @@ class ThemeManager {
     }
 
     init() {
-        let saved = UserDefaults.standard.string(forKey: "appThemeMode") ?? "system"
+        var saved = UserDefaults.standard.string(forKey: "appThemeMode") ?? "system"
+        // Migrate legacy "amoled" value to "dark"
+        if saved == "amoled" {
+            saved = "dark"
+            UserDefaults.standard.set("dark", forKey: "appThemeMode")
+        }
         self.mode = ThemeMode(rawValue: saved) ?? .system
     }
 
     func palette(for systemScheme: ColorScheme) -> AppPalette {
         switch mode {
         case .light:  return .light
-        case .amoled: return .amoled
-        case .system: return systemScheme == .dark ? .amoled : .light
+        case .dark:   return .dark
+        case .system: return systemScheme == .dark ? .dark : .light
         }
     }
 
@@ -33,7 +38,7 @@ class ThemeManager {
         switch mode {
         case .system: return nil
         case .light:  return .light
-        case .amoled: return .dark
+        case .dark:   return .dark
         }
     }
 }

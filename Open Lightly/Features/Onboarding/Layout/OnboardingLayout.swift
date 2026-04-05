@@ -29,9 +29,24 @@ enum OnboardingLayout {
 
     // MARK: - Nav Bar
 
-    /// Top clearance for the nav bar (below status bar / Dynamic Island).
-    /// SE: ~8pt   |   reference: ~12pt   |   Pro Max: ~13pt
-    static func navTop(_ h: CGFloat) -> CGFloat    { max(8, h * 0.014) }
+    /// Fixed top padding for the nav bar across all major iPhone models.
+    /// GeometryReader height (safe-area-excluded) is the key.
+    /// Values validated against:
+    ///   SE 2/3        667pt   → 8pt
+    ///   iPhone 14/15  844pt   → 12pt
+    ///   iPhone 16     852pt   → 12pt
+    ///   iPhone 16 Pro 874pt   → 14pt
+    ///   iPhone 16 Plus 932pt  → 14pt
+    ///   iPhone 16 Pro Max 956pt → 16pt
+    ///   iPhone 17 Pro Max 956pt → 16pt
+    static func navTop(_ h: CGFloat) -> CGFloat {
+        switch h {
+        case ..<700:  return 8
+        case ..<860:  return 12
+        case ..<940:  return 14
+        default:      return 16
+        }
+    }
 
     /// Gap between nav bar and first content element.
     /// SE: ~14pt  |   reference: ~20pt   |   Pro Max: ~22pt

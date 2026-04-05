@@ -1,7 +1,7 @@
 // FilamentView.swift
 // Open Lightly
 //
-// v3 — Solo color cycling + verified pattern variety
+// v4 — exitProgress parameter for orbit contraction transition
 
 import SwiftUI
 import Combine
@@ -18,9 +18,6 @@ enum FilamentMode {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MARK: - FilamentPattern
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 8 distinct parametric paths.
-// Spread and scale values tuned so every pattern
-// uses the full canvas area — nothing stays near center.
 
 enum FilamentPattern: Int, CaseIterable {
     case figure8
@@ -35,14 +32,12 @@ enum FilamentPattern: Int, CaseIterable {
     func position(t: Double, offset: Double) -> CGPoint {
         switch self {
 
-        // Classic horizontal figure-8
         case .figure8:
             return CGPoint(
                 x: sin(t + offset),
                 y: sin((t + offset) * 2) * 0.55
             )
 
-        // Tighter lemniscate (stays closer to center)
         case .lemniscate:
             let s = t + offset
             let d = 1 + pow(sin(s), 2)
@@ -51,7 +46,6 @@ enum FilamentPattern: Int, CaseIterable {
                 y: (sin(s) * cos(s) / d) * 1.2
             )
 
-        // Slow lateral breathing S
         case .sCurve:
             return CGPoint(
                 x: sin((t + offset) * 0.5) * 0.95,
@@ -59,7 +53,6 @@ enum FilamentPattern: Int, CaseIterable {
                     + cos((t + offset) * 1.5) * 0.28
             )
 
-        // Complex harmonic weave — most unpredictable
         case .weave:
             return CGPoint(
                 x: sin((t + offset) * 0.7)
@@ -68,15 +61,12 @@ enum FilamentPattern: Int, CaseIterable {
                     + cos((t + offset) * 2.3) * 0.22
             )
 
-        // Clean circular orbit — replaces .cross
-        // Deliberately simple so it contrasts the complex patterns
         case .circle:
             return CGPoint(
                 x: cos(t + offset) * 0.88,
                 y: sin(t + offset) * 0.88
             )
 
-        // Expanding/contracting spiral orbit
         case .spiral:
             let r = 0.5 + sin((t + offset) * 0.3) * 0.45
             return CGPoint(
@@ -84,7 +74,6 @@ enum FilamentPattern: Int, CaseIterable {
                 y: sin((t + offset) * 1.3) * r * 0.85
             )
 
-        // Slow harmonic drift — contemplative
         case .drift:
             return CGPoint(
                 x: sin((t + offset) * 0.4) * 0.75
@@ -93,7 +82,6 @@ enum FilamentPattern: Int, CaseIterable {
                     + sin((t + offset) * 1.3 + 1) * 0.28
             )
 
-        // Pendulum swing with vertical bounce
         case .pendulum:
             let swing = sin((t + offset) * 0.6) * 0.92
             return CGPoint(
@@ -108,42 +96,33 @@ enum FilamentPattern: Int, CaseIterable {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MARK: - FilamentColorSet
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Named color sets for solo mode cycling.
-// Dark and light variants use different palettes.
-// Cycling order is randomized per FilamentState init.
 
 struct FilamentColorSet {
     let primary: Color
     let light:   Color
     let glow:    Color
 
-    // ── Dark mode palette ─────────────────────────
     static let darkSets: [FilamentColorSet] = [
-        // Cyan
         FilamentColorSet(
             primary: Color(hex: "#00C2FF"),
             light:   Color(hex: "#4DD8FF"),
             glow:    Color(hex: "#0078FF")
         ),
-        // Magenta
         FilamentColorSet(
             primary: Color(hex: "#FF006A"),
             light:   Color(hex: "#FF4D94"),
             glow:    Color(hex: "#BE185D")
         ),
-        // Purple
         FilamentColorSet(
             primary: Color(hex: "#6C3AE0"),
             light:   Color(hex: "#A78BFA"),
             glow:    Color(hex: "#1A1A5E")
         ),
-        // Gold
         FilamentColorSet(
             primary: Color(hex: "#C8960A"),
             light:   Color(hex: "#F0BC2E"),
             glow:    Color(hex: "#92680A")
         ),
-        // Teal
         FilamentColorSet(
             primary: Color(hex: "#0891B2"),
             light:   Color(hex: "#22D3EE"),
@@ -151,35 +130,27 @@ struct FilamentColorSet {
         ),
     ]
 
-    // ── Light mode palette ────────────────────────
-    // Deeper, more saturated versions so trails read
-    // against the cream background.
     static let lightSets: [FilamentColorSet] = [
-        // Deep magenta
         FilamentColorSet(
             primary: Color(hex: "#BE185D"),
             light:   Color(hex: "#EC4899"),
             glow:    Color(hex: "#831843")
         ),
-        // Deep purple
         FilamentColorSet(
             primary: Color(hex: "#7C3AED"),
             light:   Color(hex: "#A78BFA"),
             glow:    Color(hex: "#4C1D95")
         ),
-        // Deep orange
         FilamentColorSet(
             primary: Color(hex: "#C2410C"),
             light:   Color(hex: "#FB923C"),
             glow:    Color(hex: "#7C2D12")
         ),
-        // Deep teal
         FilamentColorSet(
             primary: Color(hex: "#0E7490"),
             light:   Color(hex: "#06B6D4"),
             glow:    Color(hex: "#164E63")
         ),
-        // Deep gold
         FilamentColorSet(
             primary: Color(hex: "#B45309"),
             light:   Color(hex: "#F59E0B"),
@@ -194,76 +165,72 @@ struct FilamentColorSet {
 
 final class FilamentState: ObservableObject {
 
-    // ── Published — Canvas reads these ────────────
     @Published var trail1: [CGPoint] = []
     @Published var trail2: [CGPoint] = []
+    @Published var trail3: [CGPoint] = []
 
-    // Solo color cycling
     @Published var currentColorSet: FilamentColorSet
     @Published var nextColorSet:    FilamentColorSet
-    @Published var colorProgress:   Double = 0   // 0→1 crossfade
+    @Published var colorProgress:   Double = 0
 
-    // ── Private time ──────────────────────────────
     private var t: Double = 0
 
-    // Filament 1
     private var currentPattern1:     FilamentPattern
     private var nextPattern1:        FilamentPattern? = nil
     private var transitionProgress1: Double           = 0
     private var patternTimer1:       Int              = 0
     private var patternDuration1:    Int
 
-    // Filament 2
     private var currentPattern2:     FilamentPattern
     private var nextPattern2:        FilamentPattern? = nil
     private var transitionProgress2: Double           = 0
     private var patternTimer2:       Int              = 0
     private var patternDuration2:    Int
 
-    // Color cycling
-    private var colorTimer:          Int = 0
-    private var colorDuration:       Int         // frames before next color
-    private var colorTransitioning:  Bool        = false
-    private var colorSets:           [FilamentColorSet]
-    private var currentColorIndex:   Int
+    private var currentPattern3:     FilamentPattern
+    private var nextPattern3:        FilamentPattern? = nil
+    private var transitionProgress3: Double           = 0
+    private var patternTimer3:       Int              = 0
+    private var patternDuration3:    Int
+
+    private var colorTimer:         Int  = 0
+    private var colorDuration:      Int
+    private var colorTransitioning: Bool = false
+    private var colorSets:          [FilamentColorSet]
+    private var currentColorIndex:  Int
 
     private static let maxTrail:         Int    = 130
     private static let transitionFrames: Double = 120
-    // Color crossfade is slower than pattern crossfade — 3s at 60fps
     private static let colorFadeFrames:  Double = 180
 
     init(isDark: Bool = true) {
-        let all  = FilamentPattern.allCases
-        let i1   = Int.random(in: 0 ..< all.count)
-        // Ensure patterns start at least 3 apart for variety
-        let i2   = (i1 + 3 + Int.random(in: 0 ..< 3)) % all.count
+        let all = FilamentPattern.allCases
+        let i1  = Int.random(in: 0 ..< all.count)
+        let i2  = (i1 + 3 + Int.random(in: 0 ..< 3)) % all.count
+        let i3  = (i2 + 2 + Int.random(in: 0 ..< 2)) % all.count
         currentPattern1  = all[i1]
         currentPattern2  = all[i2]
+        currentPattern3  = all[i3]
         patternDuration1 = 280 + Int.random(in: 0 ..< 200)
         patternDuration2 = 320 + Int.random(in: 0 ..< 180)
-        colorDuration    = 360 + Int.random(in: 0 ..< 240) // 6-10s
+        patternDuration3 = 300 + Int.random(in: 0 ..< 160)
+        colorDuration    = 360 + Int.random(in: 0 ..< 240)
 
-        // Build a shuffled color queue
-        colorSets = isDark
+        colorSets         = isDark
             ? FilamentColorSet.darkSets.shuffled()
             : FilamentColorSet.lightSets.shuffled()
-
         currentColorIndex = 0
         currentColorSet   = colorSets[0]
         nextColorSet      = colorSets[1 % colorSets.count]
     }
-
-    // ── Helpers ───────────────────────────────────
 
     private func easeInOut(_ x: Double) -> Double {
         x < 0.5 ? 4*x*x*x : 1 - pow(-2*x + 2, 3) / 2
     }
 
     private func pickNext(avoiding c: FilamentPattern) -> FilamentPattern {
-        // Pick a pattern that is NOT the current one AND
-        // differs by at least 2 steps for perceptible variety
-        let all = FilamentPattern.allCases
-        let cur = c.rawValue
+        let all        = FilamentPattern.allCases
+        let cur        = c.rawValue
         let candidates = all.filter { abs($0.rawValue - cur) >= 2 }
         return (candidates.isEmpty
             ? all.filter { $0 != c }
@@ -289,28 +256,68 @@ final class FilamentState: ObservableObject {
     }
 
     // ── Advance ───────────────────────────────────
+    //
+    // exitProgress: nil = normal orbiting.
+    // 0.0→1.0 = spiral contraction toward center.
+    //
+    // Two effects of exitProgress:
+    //
+    // 1. SPREAD REDUCTION
+    //    spread is multiplied by (1 - exitProgress).
+    //    At exitProgress=1.0, spread=0 — all particles
+    //    converge to canvas center point.
+    //
+    // 2. SPIRAL ACCELERATION
+    //    t advances faster as exitProgress increases.
+    //    speedMultiplier = 1.0 + exitProgress * 4.0
+    //    At exitProgress=0.5, particles orbit ~3x faster.
+    //    At exitProgress=1.0, ~5x faster.
+    //    This creates the visual spiral-inward effect —
+    //    particles are still orbiting their patterns but
+    //    the radius is shrinking, producing a spiral.
+    //
+    // Trail history is preserved during contraction so
+    // the trail "chases" the contracting head — giving
+    // the spiral a comet-tail appearance rather than
+    // the entire trail collapsing at once.
 
-    func advance(speed: Double, mode: FilamentMode, size: CGFloat) {
-        t += 0.012 * speed
+    func advance(speed: Double, mode: FilamentMode, size: CGFloat,
+                 exitProgress: CGFloat = 0) {
 
-        let spread = size * 0.36
-        let cx     = size / 2
-        let cy     = size / 2
+        // Speed multiplier — orbits accelerate as they contract.
+        // easeInOut applied so acceleration starts gently.
+        let ep             = Double(max(0, min(1, exitProgress)))
+        let easedEP        = easeInOut(ep)
+        let speedMultiplier = 1.0 + easedEP * 4.0
+        t += 0.012 * speed * speedMultiplier
+
+        // Spread shrinks toward zero as exitProgress reaches 1.
+        // Particles converge on canvas center (cx, cy).
+        let fullSpread = size * 0.36
+        let spread     = fullSpread * CGFloat(1.0 - easedEP)
+        let cx         = size / 2
+        let cy         = size / 2
 
         // ── Pattern 1 cycling ─────────────────────
-        patternTimer1 += 1
-        if nextPattern1 == nil, patternTimer1 > patternDuration1 {
-            nextPattern1        = pickNext(avoiding: currentPattern1)
-            transitionProgress1 = 0
-        }
-        if nextPattern1 != nil {
-            transitionProgress1 += 1 / Self.transitionFrames
-            if transitionProgress1 >= 1 {
-                currentPattern1     = nextPattern1!
-                nextPattern1        = nil
+        // Pattern cycling is FROZEN during exit contraction.
+        // exitProgress > 0 means the orbits are being wound down —
+        // triggering a new pattern mid-contraction would cause a
+        // jarring direction change at the worst moment.
+        if ep == 0 {
+            patternTimer1 += 1
+            if nextPattern1 == nil, patternTimer1 > patternDuration1 {
+                nextPattern1        = pickNext(avoiding: currentPattern1)
                 transitionProgress1 = 0
-                patternTimer1       = 0
-                patternDuration1    = 250 + Int.random(in: 0 ..< 250)
+            }
+            if nextPattern1 != nil {
+                transitionProgress1 += 1 / Self.transitionFrames
+                if transitionProgress1 >= 1 {
+                    currentPattern1     = nextPattern1!
+                    nextPattern1        = nil
+                    transitionProgress1 = 0
+                    patternTimer1       = 0
+                    patternDuration1    = 250 + Int.random(in: 0 ..< 250)
+                }
             }
         }
 
@@ -327,8 +334,9 @@ final class FilamentState: ObservableObject {
         if t1.count > Self.maxTrail { t1.removeFirst() }
         trail1 = t1
 
-        // ── Pattern 2 cycling (duo only) ──────────
-        if mode == .duo {
+        // ── Pattern 2 cycling ─────────────────────
+
+        if ep == 0 {
             patternTimer2 += 1
             if nextPattern2 == nil, patternTimer2 > patternDuration2 {
                 nextPattern2        = pickNext(avoiding: currentPattern2)
@@ -344,25 +352,62 @@ final class FilamentState: ObservableObject {
                     patternDuration2    = 280 + Int.random(in: 0 ..< 220)
                 }
             }
-
-            let p2n = lerped(
-                current:  currentPattern2,
-                next:     nextPattern2,
-                progress: transitionProgress2,
-                t:        t * 0.85,
-                offset:   2.2
-            )
-            var t2 = trail2
-            t2.append(CGPoint(x: cx + p2n.x * spread,
-                              y: cy + p2n.y * spread))
-            if t2.count > Self.maxTrail { t2.removeFirst() }
-            trail2 = t2
         }
 
+        let trail2T      = mode == .solo ? t * 0.82 : t * 0.85
+        let trail2Offset = mode == .solo ? Double.pi  : 2.2
+
+        let p2n = lerped(
+            current:  currentPattern2,
+            next:     nextPattern2,
+            progress: transitionProgress2,
+            t:        trail2T,
+            offset:   trail2Offset
+        )
+        var t2 = trail2
+        t2.append(CGPoint(x: cx + p2n.x * spread,
+                          y: cy + p2n.y * spread))
+        if t2.count > Self.maxTrail { t2.removeFirst() }
+        trail2 = t2
+
+        // ── Pattern 3 cycling ─────────────────────
+
+        if ep == 0 {
+            patternTimer3 += 1
+            if nextPattern3 == nil, patternTimer3 > patternDuration3 {
+                nextPattern3        = pickNext(avoiding: currentPattern3)
+                transitionProgress3 = 0
+            }
+            if nextPattern3 != nil {
+                transitionProgress3 += 1 / Self.transitionFrames
+                if transitionProgress3 >= 1 {
+                    currentPattern3     = nextPattern3!
+                    nextPattern3        = nil
+                    transitionProgress3 = 0
+                    patternTimer3       = 0
+                    patternDuration3    = 300 + Int.random(in: 0 ..< 160)
+                }
+            }
+        }
+
+        let p3n = lerped(
+            current:  currentPattern3,
+            next:     nextPattern3,
+            progress: transitionProgress3,
+            t:        t * 0.91,
+            offset:   4.2
+        )
+        var t3 = trail3
+        t3.append(CGPoint(x: cx + p3n.x * spread,
+                          y: cy + p3n.y * spread))
+        if t3.count > Self.maxTrail { t3.removeFirst() }
+        trail3 = t3
+
         // ── Solo color cycling ────────────────────
-        // Runs in both modes but only rendered in solo.
-        // Keeping it running in duo costs nothing —
-        // the duo draw functions ignore colorSet entirely.
+        // Frozen during exit — no point cycling colors
+        // during a 600ms contraction window.
+        guard ep == 0 else { return }
+
         colorTimer += 1
         if !colorTransitioning, colorTimer > colorDuration {
             colorTransitioning = true
@@ -371,7 +416,6 @@ final class FilamentState: ObservableObject {
         if colorTransitioning {
             colorProgress += 1 / Self.colorFadeFrames
             if colorProgress >= 1 {
-                // Commit: current becomes next, pick a new next
                 currentColorIndex  = (currentColorIndex + 1) % colorSets.count
                 currentColorSet    = colorSets[currentColorIndex]
                 let nextIdx        = (currentColorIndex + 1) % colorSets.count
@@ -384,8 +428,6 @@ final class FilamentState: ObservableObject {
         }
     }
 
-    // Interpolated color for solo rendering
-    // Blends current → next using colorProgress
     func interpolatedColorSet() -> FilamentColorSet {
         guard colorProgress > 0 else { return currentColorSet }
         let e = easeInOut(colorProgress)
@@ -399,24 +441,8 @@ final class FilamentState: ObservableObject {
         )
     }
 
-    // Simple linear color blend via opacity layering
-    // SwiftUI Color doesn't expose RGB components for lerp,
-    // so we use a ZStack-style opacity overlay approach:
-    // return current at (1-t) opacity + next at t opacity.
-    // Since Canvas uses .color() shaders we encode this as
-    // the "closer" color at high opacity when t is near 0 or 1.
     private func blendColor(_ a: Color, _ b: Color, t: Double) -> Color {
-        // Encode blend as: if t < 0.5, use `a` faded toward `b`
-        // by returning `b` at low opacity overlay on `a`.
-        // Full RGB lerp requires UIColor extraction — we use
-        // a perceptually good approximation: cross-dissolve
-        // by returning whichever is dominant with adjusted opacity.
-        // At t=0 → a, at t=1 → b, midpoint blends.
-        if t < 0.5 {
-            return a   // caller applies opacity; color itself is dominant
-        } else {
-            return b
-        }
+        t < 0.5 ? a : b
     }
 }
 
@@ -430,6 +456,31 @@ struct FilamentView: View {
     var mode:  FilamentMode = .duo
     var speed: Double       = 1.0
 
+    // EXIT CONTRACTION
+    // ─────────────────
+    // nil  = normal orbiting — no contraction (default).
+    //        All existing call sites pass no value and are unaffected.
+    // 0.0  = contraction begins, full orbit radius, normal speed.
+    // 1.0  = fully contracted, all particles at canvas center.
+    //
+    // Animate from nil→0→1 using withAnimation(.easeInOut(duration: 0.60))
+    // in OnboardingBrandView at t=4700ms.
+    //
+    // Internal behaviour:
+    //   — spread multiplied by (1 - easeInOut(exitProgress))
+    //   — t advance speed multiplied by (1 + easeInOut(exitProgress) * 4)
+    //   — pattern cycling frozen (no jarring direction changes mid-spiral)
+    //   — color cycling frozen
+    var exitProgress: CGFloat? = nil
+
+    // 1, 2, or 3. Default 3 — all existing call sites unaffected.
+    var orbitCount: Int = 3
+
+    // false suppresses connection arcs between trail heads.
+    // Use false in small tiles where arcs read as noise.
+    // Default true — all existing call sites unaffected.
+    var showConnections: Bool = true
+
     @Environment(\.colorScheme) private var colorScheme
 
     @StateObject private var fs = FilamentState()
@@ -442,68 +493,59 @@ struct FilamentView: View {
 
     var body: some View {
         Canvas { context, _ in
-            if mode == .solo {
-                // Solo: use cycling color set
-                let cs = fs.interpolatedColorSet()
-                drawFilament(
-                    ctx:     &context,
-                    trail:   fs.trail1,
-                    primary: cs.primary,
-                    light:   cs.light,
-                    glow:    cs.glow
-                )
-            } else {
-                // Duo: color scheme aware cyan + magenta
-                let f1primary = colorScheme == .dark
-                    ? AppColors.cyan
-                    : AppColors.deepBlue
-                let f1light = colorScheme == .dark
-                    ? AppColors.cyanLight
-                    : AppColors.cyan
-                let f1glow = colorScheme == .dark
-                    ? AppColors.deepBlue
-                    : AppColors.cyanDark
-                let f2primary = colorScheme == .dark
-                    ? AppColors.magenta
-                    : AppColors.magentaDark
-                let f2light = colorScheme == .dark
-                    ? AppColors.magentaLight
-                    : AppColors.magenta
-                let f2glow = colorScheme == .dark
-                    ? AppColors.pink
-                    : AppColors.magentaDark
-                drawFilament(
-                    ctx:     &context,
-                    trail:   fs.trail1,
-                    primary: f1primary,
-                    light:   f1light,
-                    glow:    f1glow
-                )
-                drawConnection(
-                    ctx:    &context,
-                    trail1: fs.trail1,
-                    trail2: fs.trail2
-                )
-                drawFilament(
-                    ctx:     &context,
-                    trail:   fs.trail2,
-                    primary: f2primary,
-                    light:   f2light,
-                    glow:    f2glow
-                )
+            let f1primary = colorScheme == .dark ? AppColors.cyan        : AppColors.magenta
+            let f1light   = colorScheme == .dark ? AppColors.cyanLight   : AppColors.magentaLight
+            let f1glow    = colorScheme == .dark ? AppColors.deepBlue    : AppColors.magentaDark
+
+            let f2primary = colorScheme == .dark ? AppColors.magenta     : AppColors.orangeHot
+            let f2light   = colorScheme == .dark ? AppColors.magentaLight: AppColors.gold
+            let f2glow    = colorScheme == .dark ? AppColors.pink        : AppColors.goldDark
+
+            let f3primary = colorScheme == .dark ? AppColors.purple      : AppColors.purple
+            let f3light   = colorScheme == .dark ? AppColors.purpleLight : AppColors.purpleLight
+            let f3glow    = colorScheme == .dark ? AppColors.purpleDark  : AppColors.purpleDark
+
+            // Orbit 1 — always drawn
+            drawFilament(ctx: &context, trail: fs.trail1,
+                         primary: f1primary, light: f1light, glow: f1glow)
+
+            // Orbit 2 — drawn when orbitCount >= 2
+            if orbitCount >= 2 {
+                if showConnections {
+                    drawConnection(ctx: &context,
+                                   trail1: fs.trail1, trail2: fs.trail3)
+                }
+                drawFilament(ctx: &context, trail: fs.trail3,
+                             primary: f3primary, light: f3light, glow: f3glow)
             }
+
+            // Orbit 3 — drawn when orbitCount >= 3
+            if orbitCount >= 3 {
+                if showConnections {
+                    drawConnection(ctx: &context,
+                                   trail1: fs.trail3, trail2: fs.trail2)
+                }
+                drawFilament(ctx: &context, trail: fs.trail2,
+                             primary: f2primary, light: f2light, glow: f2glow)
+            }
+
+            // NOTE: FilamentState always advances all three trails regardless
+            // of orbitCount. Unused trails compute but don't render — this
+            // keeps trail2/trail3 warm so switching orbitCount mid-session
+            // produces no cold-start visual gap.
         }
         .frame(width: size, height: size)
         .onReceive(timer) { _ in
-            fs.advance(speed: speed, mode: mode, size: size)
+            fs.advance(
+                speed:        speed,
+                mode:         mode,
+                size:         size,
+                exitProgress: exitProgress ?? 0
+            )
         }
-        // COLOR SCHEME INIT: resets palette to correct scheme
-        // on first appear. One-frame dark flash on light mode
-        // is acceptable at 60fps — not perceptible.
         .onAppear {
             fs.resetColors(isDark: colorScheme == .dark)
         }
-        // Re-init color sets when color scheme changes
         .onChange(of: colorScheme) { _, newScheme in
             fs.resetColors(isDark: newScheme == .dark)
         }
@@ -514,26 +556,20 @@ struct FilamentView: View {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     private func drawFilament(
-        ctx:     inout GraphicsContext,
-        trail:   [CGPoint],
-        primary: Color,
-        light:   Color,
-        glow:    Color
+        ctx:       inout GraphicsContext,
+        trail:     [CGPoint],
+        primary:   Color,
+        light:     Color,
+        glow:      Color,
+        dimFactor: Double = 1.0
     ) {
         guard trail.count >= 2 else { return }
 
-        let count  = Double(trail.count)
-
-        // ── Trail segments ────────────────────────
-        // Draw in two passes:
-        // Pass 1 — glow + mid (wide, transparent)
-        // Pass 2 — core (narrow, bright)
-        // This prevents the core from being occluded by its
-        // own glow on overlapping trail segments.
+        let count = Double(trail.count)
 
         // Pass 1 — glow
         for i in 1 ..< trail.count {
-            let alpha = 0.04 + (Double(i) / count) * 0.18
+            let alpha = (0.04 + (Double(i) / count) * 0.18) * dimFactor
             let width = CGFloat(1.0 + (Double(i) / count) * 5.0)
 
             var seg = Path()
@@ -549,7 +585,7 @@ struct FilamentView: View {
 
         // Pass 2 — mid + core
         for i in 1 ..< trail.count {
-            let alpha = 0.08 + (Double(i) / count) * 0.88
+            let alpha = (0.08 + (Double(i) / count) * 0.88) * dimFactor
             let width = CGFloat(0.5 + (Double(i) / count) * 3.5)
 
             var seg = Path()
@@ -568,9 +604,9 @@ struct FilamentView: View {
             )
         }
 
-        // ── Head glow ─────────────────────────────
+        // Head glow
         let head  = trail[trail.count - 1]
-        let headR = size * 0.065
+        let headR = size * 0.065 * CGFloat(dimFactor < 1.0 ? 0.80 : 1.0)
 
         ctx.fill(
             Path(ellipseIn: CGRect(
@@ -579,9 +615,9 @@ struct FilamentView: View {
             )),
             with: .radialGradient(
                 Gradient(stops: [
-                    .init(color: light.opacity(0.95),   location: 0.00),
-                    .init(color: primary.opacity(0.55), location: 0.35),
-                    .init(color: primary.opacity(0.00), location: 1.00)
+                    .init(color: light.opacity(0.95 * dimFactor),   location: 0.00),
+                    .init(color: primary.opacity(0.55 * dimFactor), location: 0.35),
+                    .init(color: primary.opacity(0.00),             location: 1.00)
                 ]),
                 center:      head,
                 startRadius: 0,
@@ -589,8 +625,8 @@ struct FilamentView: View {
             )
         )
 
-        // ── White-hot dot ─────────────────────────
-        let dotR: CGFloat = 3.5
+        // White-hot dot
+        let dotR: CGFloat = dimFactor < 1.0 ? 2.5 : 3.5
         ctx.fill(
             Path(ellipseIn: CGRect(
                 x: head.x - dotR, y: head.y - dotR,
@@ -598,8 +634,8 @@ struct FilamentView: View {
             )),
             with: .radialGradient(
                 Gradient(stops: [
-                    .init(color: Color.white.opacity(1.0), location: 0.0),
-                    .init(color: light.opacity(0.0),       location: 1.0)
+                    .init(color: Color.white.opacity(dimFactor), location: 0.0),
+                    .init(color: light.opacity(0.0),             location: 1.0)
                 ]),
                 center:      head,
                 startRadius: 0,
@@ -637,20 +673,17 @@ struct FilamentView: View {
         arc.move(to: p1)
         arc.addQuadCurve(to: p2, control: ctrl)
 
-        // Glow arc
         ctx.stroke(
             arc,
             with: .color(Color(hex: "#A78BFA").opacity(ease * 0.22)),
             style: StrokeStyle(lineWidth: CGFloat(ease * 12), lineCap: .round)
         )
-        // Core arc
         ctx.stroke(
             arc,
             with: .color(Color(hex: "#A78BFA").opacity(ease * 0.65)),
             style: StrokeStyle(lineWidth: CGFloat(ease * 2.5), lineCap: .round)
         )
 
-        // Midpoint glow
         if ease > 0.3 {
             let mgR = size * 0.07
             let adj = ease - 0.3
@@ -672,12 +705,11 @@ struct FilamentView: View {
             )
         }
 
-        // Proximity sparks
         if ease > 0.4 {
             let sparkCount = max(1, Int((ease - 0.4) * 10))
-            let step1 = max(1, trail1.count / sparkCount)
-            let step2 = max(1, trail2.count / sparkCount)
-            var fired = 0
+            let step1      = max(1, trail1.count / sparkCount)
+            let step2      = max(1, trail2.count / sparkCount)
+            var fired      = 0
             outer: for i in stride(from: 0, to: trail1.count, by: step1) {
                 for j in stride(from: 0, to: trail2.count, by: step2) {
                     let tp1 = trail1[i], tp2 = trail2[j]
@@ -702,8 +734,6 @@ struct FilamentView: View {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MARK: - FilamentState color reset
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Extension so FilamentView can trigger a palette
-// swap when colorScheme changes.
 
 extension FilamentState {
     func resetColors(isDark: Bool) {
@@ -731,6 +761,25 @@ extension FilamentState {
                 .font(.caption)
                 .foregroundStyle(Color(hex: "#666680"))
             FilamentView(size: 300, mode: .solo, speed: 1.0)
+        }
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Dark — Solo — Exit contraction") {
+    // Preview the exitProgress contraction at 50% and 100%
+    ZStack {
+        Color(hex: "#030305").ignoresSafeArea()
+        VStack(spacing: 32) {
+            Text("exitProgress: 0.5")
+                .font(.caption)
+                .foregroundStyle(Color(hex: "#666680"))
+            FilamentView(size: 260, mode: .solo, speed: 1.0, exitProgress: 0.5)
+
+            Text("exitProgress: 0.9")
+                .font(.caption)
+                .foregroundStyle(Color(hex: "#666680"))
+            FilamentView(size: 260, mode: .solo, speed: 1.0, exitProgress: 0.9)
         }
     }
     .preferredColorScheme(.dark)
@@ -773,4 +822,55 @@ extension FilamentState {
         }
     }
     .preferredColorScheme(.light)
+}
+
+#Preview("orbitCount 1 / 2 / 3 — no connections") {
+    ZStack {
+        Color(hex: "#030305").ignoresSafeArea()
+        HStack(spacing: 20) {
+            VStack(spacing: 6) {
+                FilamentView(
+                    size:            52,
+                    mode:           .solo,
+                    speed:           1.0,
+                    orbitCount:      1,
+                    showConnections: false
+                )
+                .frame(width: 52, height: 52)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                Text("1")
+                    .font(.caption)
+                    .foregroundStyle(Color(hex: "#666680"))
+            }
+            VStack(spacing: 6) {
+                FilamentView(
+                    size:            52,
+                    mode:           .duo,
+                    speed:           1.0,
+                    orbitCount:      2,
+                    showConnections: false
+                )
+                .frame(width: 52, height: 52)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                Text("2")
+                    .font(.caption)
+                    .foregroundStyle(Color(hex: "#666680"))
+            }
+            VStack(spacing: 6) {
+                FilamentView(
+                    size:            52,
+                    mode:           .duo,
+                    speed:           1.0,
+                    orbitCount:      3,
+                    showConnections: false
+                )
+                .frame(width: 52, height: 52)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                Text("3")
+                    .font(.caption)
+                    .foregroundStyle(Color(hex: "#666680"))
+            }
+        }
+    }
+    .preferredColorScheme(.dark)
 }

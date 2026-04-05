@@ -24,14 +24,14 @@ struct GradientButton: View {
                 .background(t.buttonGradient)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
                 .shadow(
-                    color: t.isAmoled
+                    color: t.isDark
                         ? t.glowCyan.opacity(0.5)
                         : t.magenta.opacity(0.2),
-                    radius: t.isAmoled ? 16 : 12,
-                    y: t.isAmoled ? 0 : 4
+                    radius: t.isDark ? 16 : 12,
+                    y: t.isDark ? 0 : 4
                 )
                 .shadow(
-                    color: t.isAmoled
+                    color: t.isDark
                         ? t.glowMagenta.opacity(0.3)
                         : .clear,
                     radius: 24,

@@ -4,9 +4,12 @@ struct ContextCard: View {
     let option: ContextOption
     let isFront: Bool
     let isConfirmed: Bool
+    var index: Int = 0
+    var total: Int = 3
 
     @State private var detailVisible = false
     @State private var isBreathing   = false
+    @State private var breathTask: Task<Void, Never>? = nil
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -66,17 +69,26 @@ struct ContextCard: View {
             }
 
             // ── Watermark ─────────────────────────────────────────────────
-            // Dark: white 6% — subtle against dark card.
-            // Light: black 5% — equivalent perceptual weight on white frost.
+            // Replaced with TileOrbitView + position number in top-right.
             VStack {
                 HStack {
                     Spacer()
-                    Text("✦")
-                        .font(.system(size: 64))
-                        .foregroundColor(isLight
-                            ? .black.opacity(0.05)
-                            : .white.opacity(0.06))
-                        .padding(16)
+                    VStack(spacing: 2) {
+                        TileOrbitView(
+                            orbitCount: min(index + 1, 3),
+                            isActive:   isFront,
+                            speed:      1.0,
+                            size:       36
+                        )
+                        .frame(width: 36, height: 36)
+                        Text(String(format: "%02d", index + 1))
+                            .font(AppFonts.overline)
+                            .foregroundColor(isLight
+                                ? .black.opacity(isFront ? 0.85 : 0.45)
+                                : .white.opacity(isFront ? 0.85 : 0.45))
+                            .animation(.easeInOut(duration: 0.3), value: isFront)
+                    }
+                    .padding(16)
                 }
                 Spacer()
             }
@@ -84,25 +96,31 @@ struct ContextCard: View {
             // ── Content ───────────────────────────────────────────────────
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(option.title)
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(isLight
-                            ? AppColors.lightTextPrimary
+                Text(option.title)
+                    .font(AppFonts.display(22, weight: .semibold))
+                    .foregroundStyle(isLight
+                        ? AppColors.lightTextPrimary
+                        : intensity.rawValue >= 4
+                            ? Color.white
                             : AppColors.textPrimary)
                     Text(option.subtitle)
                         .font(AppFonts.caption)
                         .foregroundStyle(isLight
                             ? AppColors.lightTextSecondary
-                            : AppColors.textSecondary)
+                            : intensity.rawValue >= 4
+                                ? Color.white.opacity(0.75)
+                                : AppColors.textSecondary)
                 }
 
                 Spacer()
 
                 Text(option.detail)
-                    .font(.system(size: 13))
+                    .font(AppFonts.caption)
                     .foregroundStyle(isLight
                         ? AppColors.lightTextSecondary
-                        : AppColors.textSecondary)
+                        : intensity.rawValue >= 4
+                            ? Color.white.opacity(0.65)
+                            : AppColors.textSecondary)
                     .lineSpacing(13 * 0.55)
                     .fixedSize(horizontal: false, vertical: true)
                     .opacity(detailVisible ? 1 : 0)
@@ -202,21 +220,36 @@ struct ContextCard: View {
     // MARK: - Breathing Animation
 
     private func startBreathing() {
-        isBreathing = false
-        withAnimation(.easeInOut(duration: 0.2))                          { isBreathing = true  }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            withAnimation(.easeInOut(duration: 0.2))                      { isBreathing = false }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            withAnimation(.easeInOut(duration: 0.2))                      { isBreathing = true  }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            withAnimation(.easeInOut(duration: 0.2))                      { isBreathing = false }
+        breathTask?.cancel()
+        breathTask = Task {
+            isBreathing = false
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isBreathing = true
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isBreathing = false
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isBreathing = true
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isBreathing = false
+            }
         }
     }
 
     private func stopBreathing() {
-        withAnimation(.easeOut(duration: 0.2)) { isBreathing = false }
+        breathTask?.cancel()
+        breathTask = nil
+        withAnimation(.easeOut(duration: 0.2)) {
+            isBreathing = false
+        }
     }
 }
 
@@ -234,8 +267,14 @@ private let previewOptions: [ContextOption] = [
 #Preview("All Intensities — dark") {
     ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 20) {
-            ForEach(previewOptions, id: \.id) { option in
-                ContextCard(option: option, isFront: true, isConfirmed: false)
+            ForEach(Array(previewOptions.enumerated()), id: \.element.id) { i, option in
+                ContextCard(
+                    option:      option,
+                    isFront:     true,
+                    isConfirmed: false,
+                    index:       i,
+                    total:       previewOptions.count
+                )
             }
         }
         .padding(40)
@@ -247,8 +286,14 @@ private let previewOptions: [ContextOption] = [
 #Preview("All Intensities — light") {
     ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 20) {
-            ForEach(previewOptions, id: \.id) { option in
-                ContextCard(option: option, isFront: true, isConfirmed: false)
+            ForEach(Array(previewOptions.enumerated()), id: \.element.id) { i, option in
+                ContextCard(
+                    option:      option,
+                    isFront:     true,
+                    isConfirmed: false,
+                    index:       i,
+                    total:       previewOptions.count
+                )
             }
         }
         .padding(40)
@@ -260,8 +305,8 @@ private let previewOptions: [ContextOption] = [
 #Preview("Confirmed — dark") {
     let option = previewOptions.last!
     HStack(spacing: 20) {
-        ContextCard(option: option, isFront: true, isConfirmed: false)
-        ContextCard(option: option, isFront: true, isConfirmed: true)
+        ContextCard(option: option, isFront: true, isConfirmed: false, index: 0, total: 3)
+        ContextCard(option: option, isFront: true, isConfirmed: true, index: 0, total: 3)
     }
     .padding(40)
     .background(AppColors.pageBg)
@@ -271,8 +316,8 @@ private let previewOptions: [ContextOption] = [
 #Preview("Confirmed — light") {
     let option = previewOptions.last!
     HStack(spacing: 20) {
-        ContextCard(option: option, isFront: true, isConfirmed: false)
-        ContextCard(option: option, isFront: true, isConfirmed: true)
+        ContextCard(option: option, isFront: true, isConfirmed: false, index: 0, total: 3)
+        ContextCard(option: option, isFront: true, isConfirmed: true, index: 0, total: 3)
     }
     .padding(40)
     .background(AppColors.lightPageBg)

@@ -16,10 +16,15 @@ import SwiftUI
 // ─────────────────────────────────────────────
 
 private extension Color {
-    static let auroraOrange = Color(hex: "E04A10")
-    static let auroraWine   = Color(hex: "6B1030")
-    static let auroraPink   = Color(hex: "D42060")
-    static let auroraWineLo = Color(hex: "8A1430")
+    static let auroraOrange  = Color(hex: "E04A10")
+    static let auroraWine    = Color(hex: "6B1030")
+    static let auroraPink    = Color(hex: "D42060")
+    static let auroraWineLo  = Color(hex: "8A1430")
+    // CHANGE (v2): Added purple — required for brandView gradient harmony.
+    // Purple bridges the gap between wine/pink and gold in the brand palette.
+    static let auroraPurple  = Color(hex: "6B28AA")
+    // CHANGE (v2): Added gold — brandView uses magenta→orange→gold arc.
+    static let auroraGold    = Color(hex: "E8A020")
 }
 
 // ─────────────────────────────────────────────
@@ -32,29 +37,42 @@ struct AuroraConfig: Equatable {
     var bottomOpacityMult: Double
     var globalOpacity:     Double
 
+    // CHANGE (v2): Added brandView config.
+    // Heavy top-right (gold/orange) + strong left (purple/pink) +
+    // fading bottom. Mirrors the asymmetric distribution in the mockup.
+    // globalOpacity 0.78 — slightly under statView (0.85) because the
+    // brand screen has a filament orbit that already contributes color
+    // energy. Aurora should be atmospheric, not competing.
+    static let brandView = AuroraConfig(
+        topOpacityMult:    1.0,
+        midOpacityMult:    0.35,
+        bottomOpacityMult: 0.70,
+        globalOpacity: 0.88
+    )
+
     static let statView = AuroraConfig(
         topOpacityMult: 1.0, midOpacityMult: 0.4,
-        bottomOpacityMult: 1.15, globalOpacity: 0.85)
+        bottomOpacityMult: 1.15, globalOpacity: 1.0)
 
     static let nameView = AuroraConfig(
         topOpacityMult: 1.0, midOpacityMult: 0.1,
-        bottomOpacityMult: 1.15, globalOpacity: 0.60)
+        bottomOpacityMult: 1.15, globalOpacity: 0.85)
 
     static let modeSelectView = AuroraConfig(
         topOpacityMult: 0.1, midOpacityMult: 0.3,
-        bottomOpacityMult: 1.15, globalOpacity: 0.70)
+        bottomOpacityMult: 1.15, globalOpacity: 0.90)
 
     static let contextView = AuroraConfig(
         topOpacityMult: 0.4, midOpacityMult: 0.2,
-        bottomOpacityMult: 0.85, globalOpacity: 0.50)
+        bottomOpacityMult: 0.85, globalOpacity: 0.75)
 
     static let curiosityPickerView = AuroraConfig(
         topOpacityMult: 0.3, midOpacityMult: 0.1,
-        bottomOpacityMult: 0.75, globalOpacity: 0.40)
+        bottomOpacityMult: 0.75, globalOpacity: 0.65)
 
     static let groundRulesView = AuroraConfig(
         topOpacityMult: 0.15, midOpacityMult: 0.2,
-        bottomOpacityMult: 1.05, globalOpacity: 0.50)
+        bottomOpacityMult: 1.05, globalOpacity: 0.75)
 }
 
 // ─────────────────────────────────────────────
@@ -64,8 +82,8 @@ struct AuroraConfig: Equatable {
 struct AuroraGlowField: View {
     var config: AuroraConfig = .statView
 
-    @State private var blobVisible: [Bool]    = Array(repeating: false, count: 7)
-    @State private var blobPhase:   [CGFloat] = Array(repeating: 0,     count: 7)
+    @State private var blobVisible: [Bool]    = Array(repeating: false, count: 9)
+    @State private var blobPhase:   [CGFloat] = Array(repeating: 0,     count: 9)
     @State private var hasStarted = false
 
     var body: some View {
@@ -75,55 +93,134 @@ struct AuroraGlowField: View {
             let global = config.globalOpacity
 
             ZStack {
-                // Orange — upper-left  (was: Cyan 0.32 → Orange 0.58)
-                blob(.auroraOrange, 0.58 * config.topOpacityMult * global, 300, 280, 75, 0)
-                    .offset(x: sin(blobPhase[0] * .pi * 2) * 12,
-                            y: sin(blobPhase[0] * .pi * 2 + .pi / 3) * 14)
-                    .position(x: w * 0.22, y: h * 0.20)
 
-                // Deep Wine — center  (was: Purple 0.28 → Wine 0.55)
-                blob(.auroraWine, 0.55 * config.midOpacityMult * global, 380, 360, 75, 1)
-                    .scaleEffect(blobVisible[1] ? 1 + 0.06 * sin(blobPhase[1] * .pi * 2) : 0.7)
-                    .offset(x: sin(blobPhase[1] * .pi * 2) * 4)
-                    .position(x: w * 0.50, y: h * 0.40)
+                // ── Tier 1: Top zone — heavy, asymmetric ──────────────────
+                //
+                // CHANGE (v2): Was single upper-left orange blob.
+                // Now two blobs: dominant gold top-right + strong pink top-left.
+                // This matches the mockup's asymmetric top-heavy distribution
+                // and introduces gold into the upper field for brandView harmony.
 
-                // Hot Pink — right edge  (was: Magenta 0.24 → Pink 0.52)
-                blob(.auroraPink, 0.52 * config.topOpacityMult * global, 280, 300, 75, 2)
-                    .offset(x: sin(blobPhase[2] * .pi * 2) * -10,
-                            y: cos(blobPhase[2] * .pi * 2) * 12)
-                    .position(x: w * 0.88, y: h * 0.33)
+                // Gold — dominant top-right
+                blob(.auroraGold, 0.82 * config.topOpacityMult * global, 340, 280, 80, 0)
+                    .offset(
+                        x: sin(blobPhase[0] * .pi * 2) * 14,
+                        y: sin(blobPhase[0] * .pi * 2 + .pi / 3) * 10
+                    )
+                    .position(x: w * 0.78, y: h * 0.14)
 
-                // Orange — warm accent  (was: GoldLight 0.12 → Orange 0.28)
-                blob(.auroraOrange, 0.28 * config.midOpacityMult * global, 200, 180, 80, 3)
-                    .offset(x: sin(blobPhase[3] * .pi) * 8,
-                            y: sin(blobPhase[3] * .pi) * -6)
-                    .position(x: w * 0.20, y: h * 0.48)
+                // Pink — strong top-left
+                blob(.auroraPink, 0.76 * config.topOpacityMult * global, 280, 240, 72, 1)
+                    .offset(
+                        x: sin(blobPhase[1] * .pi * 2) * -10,
+                        y: sin(blobPhase[1] * .pi * 2 + .pi / 4) * 12
+                    )
+                    .position(x: w * 0.18, y: h * 0.17)
 
-                // Wine lo — mid-left  (was: Magenta 0.15 → WineLo 0.38 → ×1.6 = 0.608)
-                blob(.auroraWineLo, 0.608 * config.midOpacityMult * global, 300, 220, 85, 4)
-                    .scaleEffect(blobVisible[4] ? 1 + 0.05 * sin(blobPhase[4] * .pi * 2) : 0.7)
-                    .offset(x: sin(blobPhase[4] * .pi) * 8,
-                            y: sin(blobPhase[4] * .pi) * -6)
-                    .position(x: w * 0.18, y: h * 0.60)
+                // ── Tier 2: Mid zone — supporting, moderate opacity ────────
+                //
+                // CHANGE (v2): Added purple blob center-right — bridges the
+                // wine/pink and gold colors. Was absent in v1 entirely.
+                // Wine blob repositioned from center to center-left so the
+                // mid zone has left/right color separation rather than one
+                // central mass.
 
-                // Floor wash  (was: deepBlue/purple → auroraWine/auroraPink; ×1.6 = 0.352/0.224)
+                // Purple — center-right (new)
+                blob(.auroraPurple, 0.70 * config.midOpacityMult * global, 300, 260, 78, 2)
+                    .scaleEffect(
+                        blobVisible[2]
+                            ? 1 + 0.05 * sin(blobPhase[2] * .pi * 2)
+                            : 0.7
+                    )
+                    .offset(x: sin(blobPhase[2] * .pi * 2) * 8)
+                    .position(x: w * 0.80, y: h * 0.36)
+
+                // Wine — center-left (was: center w * 0.50)
+                blob(.auroraWine, 0.67 * config.midOpacityMult * global, 320, 280, 78, 3)
+                    .scaleEffect(
+                        blobVisible[3]
+                            ? 1 + 0.06 * sin(blobPhase[3] * .pi * 2)
+                            : 0.7
+                    )
+                    .offset(x: sin(blobPhase[3] * .pi * 2) * 5)
+                    .position(x: w * 0.28, y: h * 0.40)
+
+                // Orange — warm mid accent (unchanged position, opacity tuned)
+                blob(.auroraOrange, 0.42 * config.midOpacityMult * global, 200, 180, 80, 4)
+                    .offset(
+                        x: sin(blobPhase[4] * .pi) * 8,
+                        y: sin(blobPhase[4] * .pi) * -6
+                    )
+                    .position(x: w * 0.55, y: h * 0.50)
+
+                // ── Tier 3: Lower zone — faint, wide ──────────────────────
+                //
+                // CHANGE (v2): WineLo blob repositioned from w*0.18 h*0.60
+                // to w*0.22 h*0.64 — slightly more centered so the lower
+                // field doesn't feel left-only.
+                // Floor wash y moved from h*0.80 → h*0.86 for brandView
+                // so it doesn't bleed into the tagline zone at h*0.595.
+                // Bottom orange accent opacity reduced — less competition
+                // with the tagline text at the bottom of the brand screen.
+
+                // WineLo — lower left
+                blob(.auroraWineLo, 0.67 * config.midOpacityMult * global, 280, 200, 85, 5)
+                    .scaleEffect(
+                        blobVisible[5]
+                            ? 1 + 0.05 * sin(blobPhase[5] * .pi * 2)
+                            : 0.7
+                    )
+                    .offset(
+                        x: sin(blobPhase[5] * .pi) * 8,
+                        y: sin(blobPhase[5] * .pi) * -5
+                    )
+                    .position(x: w * 0.22, y: h * 0.64)
+
+                // Floor wash — wide radial sweep across bottom
                 Ellipse()
-                    .fill(RadialGradient(stops: [
-                        .init(color: Color.auroraWine.opacity(0.352 * config.bottomOpacityMult * global), location: 0),
-                        .init(color: Color.auroraPink.opacity(0.224 * config.bottomOpacityMult * global), location: 0.4),
-                        .init(color: .clear, location: 0.7)
-                    ], center: .center, startRadius: 0, endRadius: 200))
+                    .fill(RadialGradient(
+                        stops: [
+                            .init(
+                                color: Color.auroraWine.opacity(
+                                    0.48 * config.bottomOpacityMult * global
+                                ),
+                                location: 0
+                            ),
+                            .init(
+                                color: Color.auroraPink.opacity(
+                                    0.28 * config.bottomOpacityMult * global
+                                ),
+                                location: 0.4
+                            ),
+                            .init(color: .clear, location: 0.7)
+                        ],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 200
+                    ))
                     .frame(width: 420, height: 180)
                     .blur(radius: 90)
-                    .scaleEffect(blobVisible[5] ? 1 + 0.06 * sin(blobPhase[5] * .pi * 2) : 0.7)
-                    .opacity(blobVisible[5] ? 1 : 0)
-                    .offset(x: sin(blobPhase[5] * .pi * 2) * 4)
-                    .position(x: w * 0.5, y: h * 0.80)
+                    .scaleEffect(
+                        blobVisible[6]
+                            ? 1 + 0.06 * sin(blobPhase[6] * .pi * 2)
+                            : 0.7
+                    )
+                    .opacity(blobVisible[6] ? 1 : 0)
+                    .offset(x: sin(blobPhase[6] * .pi * 2) * 4)
+                    .position(x: w * 0.5, y: h * 0.86)
 
-                // Orange — bottom accent  (was: Cyan 0.08 → Orange 0.18 → ×1.8 = 0.324)
-                blob(.auroraOrange, 0.324 * config.bottomOpacityMult * global, 240, 150, 90, 6)
-                    .offset(x: sin(blobPhase[6] * .pi * 2) * -8)
-                    .position(x: w * 0.45, y: h * 0.88)
+                // Orange — bottom accent (opacity reduced v1→v2: 0.324→0.22)
+                blob(.auroraOrange, 0.35 * config.bottomOpacityMult * global, 220, 140, 88, 7)
+                    .offset(x: sin(blobPhase[7] * .pi * 2) * -8)
+                    .position(x: w * 0.46, y: h * 0.91)
+
+                // Gold — bottom-right faint accent (new in v2)
+                // Anchors the gold presence in the lower field so the
+                // warm arc (gold top-right → gold bottom-right) reads as
+                // intentional, not a single isolated blob.
+                blob(.auroraGold, 0.26 * config.bottomOpacityMult * global, 200, 140, 85, 8)
+                    .offset(x: sin(blobPhase[8] * .pi * 2) * 6)
+                    .position(x: w * 0.80, y: h * 0.88)
             }
         }
         .allowsHitTesting(false)
@@ -138,7 +235,14 @@ struct AuroraGlowField: View {
     // MARK: - Blob builder
 
     @ViewBuilder
-    private func blob(_ color: Color, _ opacity: Double, _ w: CGFloat, _ h: CGFloat, _ blur: CGFloat, _ i: Int) -> some View {
+    private func blob(
+        _ color: Color,
+        _ opacity: Double,
+        _ w: CGFloat,
+        _ h: CGFloat,
+        _ blur: CGFloat,
+        _ i: Int
+    ) -> some View {
         Ellipse()
             .fill(RadialGradient(
                 stops: [
@@ -157,19 +261,29 @@ struct AuroraGlowField: View {
     }
 
     // MARK: - Animation orchestration
+    //
+    // CHANGE (v2): Extended from 7 blobs → 9 blobs.
+    // Two new entries appended to all arrays (indices 7, 8).
+    // Phase-drifted durations prevent synchronization across blobs.
 
     private func startAtmosphere() {
-        let fadeDelays:    [Double] = [0.1, 0.2, 0.3, 0.35, 0.4,  0.5,  0.6]
-        let fadeDurations: [Double] = [0.9, 1.0, 0.9, 1.0,  1.0,  1.2,  1.0]
-        let loopDurations: [Double] = [8,   10,  9,   11,   12,   14,   10]
-        let loopDelays:    [Double] = [0.8, 1.0, 1.2, 1.3,  1.5,  1.6,  1.8]
+        let fadeDelays:    [Double] = [0.10, 0.20, 0.30, 0.35, 0.40, 0.50, 0.60, 0.65, 0.70]
+        let fadeDurations: [Double] = [0.90, 1.00, 0.90, 1.00, 1.00, 1.20, 1.00, 1.00, 1.10]
+        let loopDurations: [Double] = [8,    10,   9,    11,   12,   14,   10,   13,   11  ]
+        let loopDelays:    [Double] = [0.80, 1.00, 1.20, 1.30, 1.50, 1.60, 1.80, 1.90, 2.00]
 
-        for i in 0..<7 {
-            withAnimation(.easeInOut(duration: fadeDurations[i]).delay(fadeDelays[i])) {
+        for i in 0..<9 {
+            withAnimation(
+                .easeInOut(duration: fadeDurations[i])
+                .delay(fadeDelays[i])
+            ) {
                 blobVisible[i] = true
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + loopDelays[i]) {
-                withAnimation(.linear(duration: loopDurations[i]).repeatForever(autoreverses: false)) {
+                withAnimation(
+                    .linear(duration: loopDurations[i])
+                    .repeatForever(autoreverses: false)
+                ) {
                     blobPhase[i] = 1.0
                 }
             }
@@ -181,18 +295,26 @@ struct AuroraGlowField: View {
 // MARK: Previews
 // ─────────────────────────────────────────────
 
-#Preview("Dark") {
+#Preview("Brand View — Light") {
     ZStack {
         AppColors.lightPageBg.ignoresSafeArea()
-        AuroraGlowField(config: .statView)
+        AuroraGlowField(config: .brandView)
     }
-    .preferredColorScheme(.dark)
+    .preferredColorScheme(.light)
 }
 
-#Preview("Light") {
+#Preview("Stat View — Light") {
     ZStack {
         AppColors.lightPageBg.ignoresSafeArea()
         AuroraGlowField(config: .statView)
     }
     .preferredColorScheme(.light)
+}
+
+#Preview("Stat View — Dark") {
+    ZStack {
+        AppColors.lightPageBg.ignoresSafeArea()
+        AuroraGlowField(config: .statView)
+    }
+    .preferredColorScheme(.dark)
 }

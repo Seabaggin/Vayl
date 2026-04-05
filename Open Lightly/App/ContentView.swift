@@ -27,6 +27,13 @@ struct ContentView: View {
     // IMPORTANT: Do not move this gate to AppState — @AppStorage provides
     // immediate reactivity without any init ordering issues.
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    
+    // ADD this just below the hasCompletedOnboarding @AppStorage line:
+    #if DEBUG
+    private let forceOnboarding = true   // ← set false to test main app
+    #else
+    private let forceOnboarding = false
+    #endif
 
     // ── Experience routing ───────────────────────────────────────────────
     @Environment(AppState.self) private var appState
@@ -37,7 +44,7 @@ struct ContentView: View {
     // MARK: - Body
 
     var body: some View {
-        if hasCompletedOnboarding {
+        if hasCompletedOnboarding && !forceOnboarding {
             mainApp
         } else {
             OnboardingFlowView()
@@ -73,7 +80,7 @@ struct ContentView: View {
     private var tabBar: some View {
         TabView(selection: $selectedTab) {
 
-            HomeView()
+            HomeRouterView()
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(AppTab.home)
 

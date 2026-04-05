@@ -20,7 +20,7 @@ struct ScoreRing: View {
         ZStack {
             Circle()
                 .stroke(
-                    t.isAmoled ? .white.opacity(0.06) : t.surface3,
+                    t.isDark ? .white.opacity(0.06) : t.surface3,
                     lineWidth: lineWidth
                 )
 

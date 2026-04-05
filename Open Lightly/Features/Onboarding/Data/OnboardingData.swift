@@ -6,16 +6,17 @@
 import Foundation
 
 struct OnboardingData {
-    // Screen 1 — Name + Pronouns
+    // Screen 1 — Name + Gender Identity
     var displayName: String = ""
-    var pronouns: [PronounOption] = []
+    // Raw string value from the gender identity picker.
+    // nil = not provided or "Prefer not to say".
+    var genderIdentity: String? = nil
     // Solo path only — captured in ContextView when
     // user selects a card implying a partner exists.
     // Couple path does not use this field —
-    // partner sets their own pronouns in NameView.
+    // partner sets their own gender in NameView.
     // nil = not provided or not applicable.
     var partnerPronouns: String? = nil
-    var customPronouns: String?
 
     // Screen 2 — Mode Select
     var explorationMode: ExplorationMode?
@@ -28,67 +29,30 @@ struct OnboardingData {
 
     // Screen 4 — Personalize
     var nmStage: NMStage?
-    var defaultDepth: Float = 0.3
 
     // Screen 5 — Curiosity Picker
     var communicationGoals: [String] = []    // Section 1 selections
     var learningGoals: [String] = []         // Section 2 selections
     var curiositySelections: [String] = []   // Derived: communicationGoals + learningGoals
 
-    // Screen 6 — Pairing (couple only)
-    var pairingId: String?
-
     // Screen 7 — Building Path (derived from nmStage)
-    var defaultDifficulty: String = ""
+    // Derived from nmStage — read by BuildingPathView.
+    // Not stored. Returns "warm" if nmStage is nil.
+    var defaultDifficulty: String {
+        switch nmStage {
+        case .curious:     return "warm"
+        case .exploring:   return "medium"
+        case .experienced: return "hot"
+        case .none:        return "warm"
+        }
+    }
+
+    // Screen 7.5 — Card Reveal (pill selection for archetype routing)
+    // nil when user skips — archetype routing uses fallback.
+    var nmCardResponse: String? = nil
 
     // Screen 8 — Ground Rules + completion
     var groundRulesAcceptedAt: Date?
     var onboardingComplete: Bool = false
     var completedAt: Date?
-
-    // Solo Reflection
-    var firstReflection: String?
-    var firstReflectionCompleted: Bool = false
-    var firstReflectionTimestamp: Date?
-}
-
-// MARK: - Enums
-
-enum PronounOption: String, CaseIterable, Identifiable, Hashable {
-    case sheHer = "she/her"
-    case heHim = "he/him"
-    case theyThem = "they/them"
-    
-    var id: String { rawValue }
-}
-
-enum ExplorationMode: String, CaseIterable {
-    case solo
-    case couple
-    case browsing
-}
-
-enum RelationshipStatus: String, CaseIterable {
-    case single
-    case partneredOpen
-    case partneredHidden
-}
-
-enum NMStage: String, CaseIterable {
-    case curious
-    case exploring
-    case experienced
-}
-
-enum RelationshipContext: String, CaseIterable, Codable {
-    // Solo contexts
-    case single
-    case partneredOpen
-    case partneredHidden
-
-    // Couple contexts
-    case notTalked
-    case talking
-    case someExperience
-    case needsReset
 }

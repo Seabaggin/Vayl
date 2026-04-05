@@ -18,14 +18,8 @@ struct SettingsView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 28) {
                     header
-                    NavigationLink(destination: PairingForkView(
-                        onPairNow: {
-                            // TODO: Implement pairing logic or navigation
-                        },
-                        onPairLater: {
-                            // TODO: Implement skip pairing logic or navigation
-                        }
-                    )) {
+                    
+                    NavigationLink(destination: PairingSettingsView()) {
                         HStack {
                             Image(systemName: "heart.circle.fill")
                                 .foregroundStyle(.pink)

@@ -15,9 +15,10 @@ struct HoloCTAButton: View {
     let title: String
     let isEnabled: Bool
     let action: () -> Void
-
+    
     var cornerRadius: CGFloat = 100
     var height: CGFloat = 56
+    var lightModeGradient: LinearGradient? = nil
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -114,11 +115,16 @@ struct HoloCTAButton: View {
                 // ── Label ──────────────────────────────────────────
                 // Dark:  white
                 // Light: lightTextPrimary (#1A1A1E) — white on cream is invisible
+                //        Or custom gradient if lightModeGradient is provided
                 Text(title)
                     .font(AppFonts.ctaLabel)
-                    .foregroundStyle(colorScheme == .light
-                        ? AppColors.wineDark
-                        : Color.white)
+                    .foregroundStyle(
+                        isLight && lightModeGradient != nil
+                            ? AnyShapeStyle(lightModeGradient!)
+                            : AnyShapeStyle(colorScheme == .light
+                                ? AppColors.wineDark
+                                : Color.white)
+                    )
             }
             .frame(height: height)
             .overlay {

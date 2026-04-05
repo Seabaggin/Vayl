@@ -136,7 +136,8 @@ private var goalsLabel: String {
     let source = data.communicationGoals.first(where: { !$0.isEmpty })
         ?? data.learningGoals.first(where: { !$0.isEmpty })
     guard let s = source else { return "What you want to explore" }
-    return s.count > 32 ? String(s.prefix(32)) + "…" : s
+    let phrase = CuriosityScreenConfig.leadPhrase(for: s)
+    return phrase.count > 32 ? String(phrase.prefix(32)) + "…" : phrase
 }
 
 private var modeLabel: String {
@@ -178,8 +179,8 @@ private var selectionFragment: String? {
     let source = data.communicationGoals.first(where: { !$0.isEmpty })
         ?? data.learningGoals.first(where: { !$0.isEmpty })
     guard let s = source else { return nil }
-    // Cap at 20 chars for fragment display — full string is in the list row
-    return s.count > 20 ? String(s.prefix(20)) + "…" : s
+    let phrase = CuriosityScreenConfig.leadPhrase(for: s)
+    return phrase.count > 20 ? String(phrase.prefix(20)) + "…" : phrase
 }
 
 // MARK: - Computed: Personalization
@@ -224,12 +225,8 @@ private func schedule(_ seconds: Double, _ action: @escaping () -> Void) {
 }
 
 private func deriveDefaultDifficulty() {
-    switch data.nmStage {
-    case .curious:     data.defaultDifficulty = "warm"
-    case .exploring:   data.defaultDifficulty = "medium"
-    case .experienced: data.defaultDifficulty = "hot"
-    default:           data.defaultDifficulty = "warm"
-    }
+    // defaultDifficulty is now a computed property derived from nmStage.
+    // This function is kept for future use if additional logic is needed.
 }
 
 private func completeAndAdvance() {

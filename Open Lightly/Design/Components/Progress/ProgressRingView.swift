@@ -22,7 +22,7 @@ struct ProgressRingView: View {
             Circle()
                 .trim(from: 0, to: 1)
                 .stroke(
-                    t.isAmoled ? Color.white.opacity(0.06) : t.surface3,
+                    t.isDark ? Color.white.opacity(0.06) : t.surface3,
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .frame(width: size, height: size)

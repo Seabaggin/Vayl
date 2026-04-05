@@ -560,3 +560,45 @@ enum NMFlavor: String, CaseIterable, Identifiable, Codable {
         }
     }
 }
+
+
+// MARK: - Onboarding Enums
+
+enum ExplorationMode: String, CaseIterable {
+    case solo
+    case couple
+    case browsing
+}
+
+enum RelationshipStatus: String, CaseIterable {
+    case single
+    case partneredOpen
+    case partneredHidden
+}
+
+enum NMStage: String, Codable, CaseIterable {
+    case curious
+    case exploring
+    case experienced
+}
+
+enum RelationshipContext: String, CaseIterable, Codable {
+    // Solo contexts
+    case single
+    case partneredOpen
+    case partneredHidden
+
+    // Couple contexts
+    case notTalked
+    case talking
+    case someExperience
+    case needsReset
+}
+
+enum PronounOption: String, CaseIterable, Identifiable, Hashable {
+    case sheHer = "she/her"
+    case heHim = "he/him"
+    case theyThem = "they/them"
+    
+    var id: String { rawValue }
+}

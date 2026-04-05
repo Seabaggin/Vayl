@@ -23,7 +23,7 @@ struct SafeWordButton: View {
             .padding(.horizontal, 20)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(t.isAmoled ? t.gold.opacity(0.08) : t.gold.opacity(0.12))
+                    .fill(t.isDark ? t.gold.opacity(0.08) : t.gold.opacity(0.12))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)

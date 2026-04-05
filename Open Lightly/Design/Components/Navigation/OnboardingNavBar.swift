@@ -13,17 +13,40 @@ private struct BackButtonModifier: ViewModifier {
     func body(content: Content) -> some View {
         if colorScheme == .light {
             content
-                .padding(10)
+                .padding(13)
                 .background(
                     Circle()
-                        .fill(Color.black.opacity(0.05))
+                        .fill(Color.white.opacity(0.55))
                         .overlay(
                             Circle()
-                                .strokeBorder(Color.black.opacity(0.06), lineWidth: 1)
+                                .strokeBorder(AppColors.warmAuroraBorder, lineWidth: 2.0)
                         )
+                        
                 )
+                .shadow(color: AppColors.magenta.opacity(0.12), radius: 8, y: 2)
+                .shadow(color: AppColors.purple.opacity(0.08), radius: 16, y: 2)
         } else {
             content
+                .padding(13)
+                .background(
+                    Circle()
+                        .fill(Color.white.opacity(0.12))
+                        .overlay(
+                            Circle()
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 2.0
+                                )
+                        )
+                       
+                )
+                .shadow(color: AppColors.purple.opacity(0.22), radius: 8)
+                .shadow(color: AppColors.cyan.opacity(0.12), radius: 20)
+                .shadow(color: AppColors.purple.opacity(0.08), radius: 28)
         }
     }
 }
@@ -34,32 +57,33 @@ struct OnboardingNavBar: View {
     let currentStep: Int
     let totalSteps: Int
     var onBack: (() -> Void)?  // nil = no back button (ground rules, priming, arrival)
-
+    
     @Environment(\.colorScheme) private var colorScheme
-
+    
     var body: some View {
         HStack {
-            // Back button — or invisible spacer to keep bar centered
             if let onBack {
                 Button(action: onBack) {
                     Image(systemName: "arrow.left")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(colorScheme == .light
-                            ? AppColors.lightTextSecondary
-                            : .white.opacity(0.55))
+                                         ? AppColors.wineDark
+                                         : Color.white.opacity(0.80))
                         .modifier(BackButtonModifier(colorScheme: colorScheme))
                 }
                 .accessibilityLabel("Go back")
             } else {
-                Color.clear.frame(width: 18, height: 18)
+                // Match the 38pt rendered size of the back button
+                Color.clear.frame(width: 38, height: 38)
+                    .padding(.trailing, 0) 
             }
-
+            
             Spacer()
             OnboardingProgressBar(currentStep: currentStep, totalSteps: totalSteps)
             Spacer()
-
-            // Trailing spacer to balance the back button
-            Color.clear.frame(width: 18, height: 18)
+            
+            // FIXED: was 18pt — must match back button total size (18 icon + 10 pad each side = 38)
+            Color.clear.frame(width: 38, height: 38)
         }
     }
 }

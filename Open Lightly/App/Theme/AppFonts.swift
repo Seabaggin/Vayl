@@ -17,7 +17,11 @@ struct AppFonts {
         case .medium:
             return Font.custom("ClashDisplay-Medium", size: size)
         default:
-            return Font.system(size: size, weight: .bold, design: .default)
+            assertionFailure(
+                "AppFonts.display: unsupported weight \(weight). " +
+                "Supported: .bold, .semibold, .medium"
+            )
+            return Font.custom("ClashDisplay-Bold", size: size)
         }
     }
 
@@ -38,14 +42,30 @@ struct AppFonts {
     }
 
     // MARK: - Semantic Tokens
-    static var heroTitle: Font { display(42, weight: .bold) }
-    static var cardTitle: Font { display(22, weight: .semibold) }
-    static var sectionHeading: Font { display(20, weight: .medium) }
-    static var bodyText: Font { body(16, weight: .regular) }
-    static var bodyMedium: Font { body(15, weight: .medium) }
-    static var caption: Font { body(13, weight: .regular) }
-    static var overline: Font { body(11, weight: .semibold) }
-    static var buttonLabel: Font { body(14, weight: .semibold) }
+
+    // --- Display Scale (Clash Display) ---
+    static var heroTitle: Font           { display(42, weight: .bold) }           // 42pt Bold
+    static var displayHero: Font         { display(64, weight: .bold) }           // 64pt Bold
+    static var scoreDisplay: Font        { display(32, weight: .bold) }           // 32pt Bold
+    static var screenTitle: Font         { display(24, weight: .semibold) }       // 24pt Semibold
+    static var cardTitle: Font           { display(22, weight: .semibold) }       // 22pt Semibold
+    static var sectionHeading: Font      { display(20, weight: .medium) }         // 20pt Medium
+    static var sectionLabelSmall: Font   { display(13, weight: .medium) }         // 13pt Medium
+    static var prompt: Font              { display(17, weight: .medium) }         // 17pt Medium
+    static var promptHighlight: Font     { display(17, weight: .semibold) }       // 17pt Semibold
+
+    // --- Body Scale (Switzer) ---
+    static var ctaLabel: Font            { body(16, weight: .semibold) }          // 16pt Semibold
+    static var bodyText: Font            { body(16, weight: .regular) }           // 16pt Regular
+    static var bodyMedium: Font          { body(15, weight: .medium) }            // 15pt Medium
+    static var buttonLabel: Font         { body(14, weight: .semibold) }          // 14pt Semibold
+    static var caption: Font             { body(13, weight: .regular) }           // 13pt Regular
+    static var overline: Font            { body(11, weight: .semibold) }          // 11pt Semibold
+    static var buttonLabelSmall: Font    { body(11, weight: .medium) }            // 11pt Medium
+    static var tabLabel: Font            { body(10, weight: .medium) }            // 10pt Medium
+    static var label: Font               { body(10, weight: .semibold) }          // 10pt Semibold
+    static var badge: Font               { body(10, weight: .medium) }            // 10pt Medium
+    static var meta: Font                { body(10, weight: .regular) }           // 10pt Regular
 
     // MARK: - Debug Font List
     static func debugFontList() {
@@ -56,16 +76,4 @@ struct AppFonts {
             }
         }
     }
-
-    static var prompt: Font          { display(17, weight: .medium) }
-    static var promptHighlight: Font { display(17, weight: .semibold) }
-    static var badge: Font           { body(10, weight: .medium) }
-    static var button: Font          { body(11, weight: .medium) }
-    static var meta: Font            { body(10, weight: .regular) }
-    static var sectionHeader: Font   { display(13, weight: .medium) }
-    static var screenTitle: Font     { display(24, weight: .semibold) }
-    static var label: Font           { body(10, weight: .semibold) }
-    static var tabLabel: Font        { body(10, weight: .medium) }
-    static var scoreDisplay: Font    { display(32, weight: .bold) }
-    static var ctaLabel: Font        { body(16, weight: .semibold) }
 }

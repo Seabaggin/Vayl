@@ -167,7 +167,7 @@ final class ProgressAnimationClock {
 
 private enum ProgressBarConstants {
     static let defaultTotalWidth:    CGFloat = 120
-    static let defaultBarHeight:     CGFloat = 4
+    static let defaultBarHeight:     CGFloat = 5
     /// Extra canvas on each side so bloom can bleed past bar ends.
     static let bloomBleed:           CGFloat = 12
     // VQ-01: raised from 2.4 → 3.0s. See change log.

@@ -35,11 +35,11 @@ struct CriticalButton: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .background(
-                    fillColor.opacity(t.isAmoled ? 0.18 : 0.08)
+                    fillColor.opacity(t.isDark ? 0.18 : 0.08)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .shadow(
-                    color: t.isAmoled && style == .danger
+                    color: t.isDark && style == .danger
                         ? t.error.opacity(0.2)
                         : .clear,
                     radius: 8

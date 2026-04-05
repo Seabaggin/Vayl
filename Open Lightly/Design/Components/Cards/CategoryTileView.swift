@@ -51,9 +51,16 @@ struct CategoryTileView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(t.isAmoled ? Color.white.opacity(0.04) : Color.clear, lineWidth: 1.5)
+                .stroke(
+                    t.isDark ? Color.white.opacity(0.04) : Color.clear,
+                    lineWidth: 1.5
+                )
         )
-        .shadow(color: t.isAmoled ? .clear : Color.black.opacity(0.06), radius: 12, y: 4)
+        .shadow(
+            color: t.isDark ? .clear : Color.black.opacity(0.06),
+            radius: 12,
+            y: 4
+        )
         .aspectRatio(1/1.2, contentMode: .fit)
     }
 }

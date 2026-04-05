@@ -17,7 +17,7 @@ struct ProgressBar: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(t.isAmoled ? .white.opacity(0.06) : t.surface3)
+                    .fill(t.isDark ? .white.opacity(0.06) : t.surface3)
 
                 Capsule()
                     .fill(t.buttonGradient)

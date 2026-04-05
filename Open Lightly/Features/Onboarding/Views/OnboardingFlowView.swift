@@ -5,22 +5,10 @@ import OSLog
 
 private let logger = Logger(subsystem: "com.openlightly.app", category: "OnboardingFlowView")
 
-// MARK: - Screen Sequence
-// 0.   stat            → trust trigger
-// 0.5  brand           → identity (auto-advance)
-// 1.   name            → name + pronouns
-// 2.   modeSelect      → solo / couple / browsing
-// 3a.  contextSelect   → relationship context (solo + couple only)
-// 3b.  curiosityPicker → interest picker (all paths; browsing skips contextSelect)
-// 4.   buildingPath    → processing animation (auto-advance, derives defaultDifficulty)
-// 4.5  cardReveal      → prompt card reveal transition (skip to continue)
-// 5.   groundRules     → privacy guarantees + ethical frame (must-acknowledge)
-//
-// COMPLETION FLOW (groundRules → main app):
-//   1. deriveExperienceType(from: onboardingData) → ExperienceType
-//   2. appState.experienceType = derived value (persists to UserDefaults)
-//   3. hasCompletedOnboarding = true (triggers ContentView gate via @AppStorage)
-
+// Step order is intentional and load-bearing.
+// cardReveal precedes buildingPath: CardReveal collects
+// nmCardResponse, which BuildingPath reads for its fourth
+// orbit row and personalised exit copy. Do not reorder.
 enum OnboardingStep: Int, CaseIterable {
     case stat
     case brand
@@ -28,56 +16,69 @@ enum OnboardingStep: Int, CaseIterable {
     case modeSelect
     case contextSelect
     case curiosityPicker
-    case buildingPath
     case cardReveal
+    case buildingPath
     case groundRules
 }
 
 struct OnboardingFlowView: View {
-    @State private var currentStep: OnboardingStep = .stat
 
-    // Persisted onboarding data (builds up across screens)
+    init(startAt: OnboardingStep = .stat) {
+        _currentStep = State(initialValue: startAt)
+    }
+
+    @State private var currentStep: OnboardingStep
     @State private var onboardingData = OnboardingData()
 
-    // Completion gate — written here, read by ContentView
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-
-    // Experience routing — set on completion, drives HomeView router
     @Environment(AppState.self) private var appState
-
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         ZStack {
-            // Shared BG so transitions never flash the wrong surface color.
-            // Dark: near-black (#030305). Light: warm cream (#F8F6EE).
+            // ── Shared background ─────────────────────────────────────
             (colorScheme == .light ? AppColors.lightPageBg : AppColors.pageBg)
                 .ignoresSafeArea()
 
+            // ── Persistent atmosphere ─────────────────────────────────
+            OnboardingAtmosphere(
+                config:      atmosphereConfig,
+                sparkConfig: sparkConfig
+            )
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+
+            // ── Screen switch ─────────────────────────────────────────
             switch currentStep {
+
             case .stat:
                 OnboardingStatView(onContinue: {
-                    advance(to: .brand)
+                    advance(to: .brand, animation: .easeInOut(duration: 0.35))
                 })
                 .transition(.opacity)
 
             case .brand:
-                OnboardingBrandView(onFinished: {
-                    advance(to: .name)
-                })
-                .transition(.opacity)
+                OnboardingBrandView(
+                    onFinished: {
+                        advance(to: .name)
+                    }
+                )
 
+            // No onBack — NameView is the first data-entry screen.
+            // BrandView (the previous screen) auto-advances and
+            // cannot be safely navigated back to. Back is suppressed
+            // to prevent a BrandView → NameView loop.
             case .name:
-                OnboardingNameView(data: $onboardingData, onContinue: {
-                    advance(to: .modeSelect)
-                })
-                .transition(.opacity)
+                OnboardingNameView(
+                    data:       $onboardingData,
+                    onContinue: { advance(to: .modeSelect) }
+                )
 
             case .modeSelect:
                 OnboardingModeSelectView(
-                    data: $onboardingData,
+                    data:       $onboardingData,
                     onContinue: {
-                        // Browsing users skip contextSelect — they have no relationship context to declare
                         if onboardingData.explorationMode == .browsing {
                             advance(to: .curiosityPicker)
                         } else {
@@ -86,22 +87,21 @@ struct OnboardingFlowView: View {
                     },
                     onBack: { advance(to: .name) }
                 )
-                .transition(.opacity)
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
 
             case .contextSelect:
                 OnboardingContextView(
-                    data: $onboardingData,
+                    data:       $onboardingData,
                     onContinue: { advance(to: .curiosityPicker) },
                     onBack:     { advance(to: .modeSelect) }
                 )
-                .transition(.opacity)
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
 
             case .curiosityPicker:
                 OnboardingCuriosityPickerView(
-                    data: $onboardingData,
-                    onContinue: { advance(to: .buildingPath) },
+                    data:       $onboardingData,
+                    onContinue: { advance(to: .cardReveal) },
                     onBack: {
-                        // Browsing users went modeSelect → curiosityPicker, so back goes to modeSelect
                         if onboardingData.explorationMode == .browsing {
                             advance(to: .modeSelect)
                         } else {
@@ -109,74 +109,141 @@ struct OnboardingFlowView: View {
                         }
                     }
                 )
-                .transition(.opacity)
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
 
             case .buildingPath:
-                OnboardingBuildingPathView(data: $onboardingData, onFinished: {
-                    advance(to: .cardReveal)
-                })
-                .transition(.opacity)
+                OnboardingBuildingPathView(
+                    data:       $onboardingData,
+                    onFinished: { advance(to: .groundRules) }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
 
             case .cardReveal:
-                OnboardingCardRevealView(onContinue: {
-                    advance(to: .groundRules)
-                })
+                OnboardingCardRevealView(
+                    data:       $onboardingData,
+                    onContinue: { advance(to: .buildingPath) }
+                )
                 .transition(.opacity)
 
             case .groundRules:
-                OnboardingGroundRulesView(data: $onboardingData, onFinished: {
-                    let experience = deriveExperienceType(from: onboardingData)
-                    appState.experienceType = experience
-                    logger.info("Onboarding complete — experienceType set to: \(experience.rawValue)")
-                    hasCompletedOnboarding = true
-                })
-                .transition(.opacity)
+                OnboardingGroundRulesView(
+                    data:       $onboardingData,
+                    onFinished: {
+                        let experience = deriveExperienceType(from: onboardingData)
+                        appState.experienceType = experience
+                        logger.info("Onboarding complete — experienceType: \(experience.rawValue)")
+                        hasCompletedOnboarding = true
+                    }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
         }
     }
 
-    private func advance(to step: OnboardingStep) {
-        withAnimation(.easeInOut(duration: 0.5)) {
+    // MARK: - Atmosphere config per step
+
+    private var atmosphereConfig: AtmosphereConfig {
+        switch currentStep {
+        case .stat:            return .stat
+        case .brand:           return .brand
+        case .name:            return .name
+        case .modeSelect:      return .modeSelect
+        case .contextSelect:   return .contextSelect
+        case .curiosityPicker: return .curiosityPicker
+        case .buildingPath:    return .buildingPath
+        case .cardReveal:      return .cardReveal
+        case .groundRules:     return .groundRules
+        }
+    }
+
+    // MARK: - Spark config per step (light mode only)
+
+    private var sparkConfig: SparkConfiguration {
+        switch currentStep {
+        case .stat:            return .statView
+        case .brand:           return .statView
+        case .name:            return .nameView
+        case .modeSelect:      return .modeSelectView
+        case .contextSelect:   return .contextView
+        case .curiosityPicker: return .curiosityPickerView
+        case .buildingPath:    return .curiosityPickerView
+        case .cardReveal:      return .cardRevealView
+        case .groundRules:     return .groundRulesView
+        }
+    }
+
+    // MARK: - Navigation
+
+    private func advance(
+        to step: OnboardingStep,
+        animation: Animation = .spring(response: 0.35, dampingFraction: 0.8)
+    ) {
+        withAnimation(animation) {
             currentStep = step
         }
     }
 
     // MARK: - Experience Type Derivation
 
-    /// Maps onboarding answers → ExperienceType for AppState routing.
-    ///
-    /// Mapping rules:
-    ///   .browsing                              → .browsing
-    ///   .solo + .single (or no context)        → .soloSingle
-    ///   .solo + .partneredOpen/.partneredHidden → .soloPartnered
-    ///   .couple + nmStage == .experienced
-    ///           OR context == .someExperience  → .coupleExperienced
-    ///   .couple (otherwise)                    → .coupleNew
-    ///   nil mode (should not happen)           → .soloSingle (safe fallback)
     private func deriveExperienceType(from data: OnboardingData) -> ExperienceType {
         switch data.explorationMode {
         case .browsing:
             return .browsing
-
         case .solo:
             switch data.relationshipContext {
             case .partneredOpen, .partneredHidden:
                 return .soloPartnered
             default:
-                // .single, nil, or any unrecognised context
                 return .soloSingle
             }
-
         case .couple:
+            // Routes to coupleExperienced if the user has signalled
+            // prior experience via nmStage OR relationship context.
+            // .someExperience = "We've tried some things"
+            // .needsReset = "We need a reset" — implies prior history,
+            //   needs repair/advanced content, not foundational.
+            // .exploring nmStage intentionally routes to coupleNew —
+            //   the app is conservative; exploring users benefit from
+            //   foundational content before advanced tools surface.
             let isExperienced = data.nmStage == .experienced
                 || data.relationshipContext == .someExperience
+                || data.relationshipContext == .needsReset
             return isExperienced ? .coupleExperienced : .coupleNew
-
         case .none:
-            // explorationMode should always be set by modeSelect;
-            // .none means the user somehow skipped it — default safely.
-            logger.warning("deriveExperienceType: explorationMode is nil — defaulting to soloSingle")
+            logger.warning("deriveExperienceType: explorationMode nil — defaulting to soloSingle")
             return .soloSingle
         }
     }
+}
+
+// MARK: - Previews
+
+#Preview("Full Flow — Dark") {
+    OnboardingFlowView()
+        .environment(AppState())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Full Flow — Light") {
+    OnboardingFlowView()
+        .environment(AppState())
+        .preferredColorScheme(.light)
+}
+
+#Preview("Jump → Curiosity Picker") {
+    OnboardingFlowView(startAt: .curiosityPicker)
+        .environment(AppState())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Jump → Brand") {
+    OnboardingFlowView(startAt: .brand)
+        .environment(AppState())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Jump → Name") {
+    OnboardingFlowView(startAt: .name)
+        .environment(AppState())
+        .preferredColorScheme(.dark)
 }

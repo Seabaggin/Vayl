@@ -112,7 +112,7 @@ struct DesireMapView: View {
             } label: {
                 HStack {
                     Text(category.name.uppercased())
-                        .font(AppFonts.sectionHeader)
+                        .font(AppFonts.sectionLabelSmall)
                         .foregroundColor(AppColors.textSecondary)
                     
                     Spacer()

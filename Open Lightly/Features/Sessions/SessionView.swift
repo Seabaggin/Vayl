@@ -68,7 +68,7 @@ struct SessionView: View {
                     .foregroundColor(AppColors.textTertiary)
                 
                 Text(currentPrompt.category.displayName)
-                    .font(AppFonts.sectionHeader)
+                    .font(AppFonts.sectionLabelSmall)
                     .foregroundColor(AppColors.textSecondary)
             }
             
@@ -83,7 +83,7 @@ struct SessionView: View {
     
     // MARK: - Prompt Card
     private var cardArea: some View {
-        PromptCard(prompt: currentPrompt)
+        ConversationCard(prompt: currentPrompt)
             .id(currentPrompt.id) // force re-render on change
             .transition(.asymmetric(
                 insertion: .move(edge: .trailing).combined(with: .opacity),

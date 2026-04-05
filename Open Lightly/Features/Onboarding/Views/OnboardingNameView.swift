@@ -1,3 +1,5 @@
+
+
 // OnboardingNameView.swift
 // Open Lightly
 //
@@ -14,13 +16,12 @@ struct OnboardingNameView: View {
 
     // Form state
     @State private var displayName:       String         = ""
-    @State private var selectedPronoun:   PronounOption?  = nil
-    @State private var customPronounText: String          = ""
-    @State private var showCustomField:   Bool           = false
+    @State private var selectedGender:    String? = nil
+    @State private var customGenderText:  String = ""
+    @State private var showCustomGenderField: Bool = false
     @FocusState private var nameFieldFocused: Bool
 
     // Atmosphere
-    @State private var borderPhase: CGFloat   = 0
     @State private var hasAnimated: Bool      = false
 
     // Entrance
@@ -28,37 +29,43 @@ struct OnboardingNameView: View {
     @State private var cardVisible   = false
     @State private var ctaVisible    = false
 
-    // MARK: - TASK 1: Validation Bloom
+    // Greeting response
+    @State private var greetingVisible = false
+    @State private var greetingOwnsName: Bool = false
+    @State private var nameTextOpacity: Double = 1.0
+    @State private var fieldCollapsed: Bool = false
+    @State private var typingDebounce: DispatchWorkItem? = nil
+    @State private var focusTask: Task<Void, Never>? = nil
+
+    // Gender section
+    @State private var genderSectionVisible = false
+
+    // Validation Bloom
     @State private var isButtonGlowing: Bool = false
 
-    // MARK: - TASK 2: Pulse Animation
+    // Pulse Animation
     @State private var glowPulse: Bool = false
-
 
     // Environment
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: - Surface tokens
-    // Computed so they always read the current colorScheme.
-    // Replaces the file-scope `private let` constants which
-    // cannot capture colorScheme.
 
     private var kFieldBG: Color {
         colorScheme == .light
-            ? AppColors.lightSurfaceBg          // #F2EFE6 — inset on cream
+            ? AppColors.lightSurfaceBg
             : Color.white.opacity(0.07)
     }
 
     private var kGlassBorder: Color {
         colorScheme == .light
-            ? AppColors.lightBorder             // black 6%
+            ? AppColors.lightBorder
             : Color.white.opacity(0.09)
     }
 
     private var kFieldBorderActive: some ShapeStyle {
         if colorScheme == .light {
-            // Light: warmAuroraBorder stroke — no cyan
             return AnyShapeStyle(AppColors.warmAuroraBorder)
         } else {
             return AnyShapeStyle(AppColors.spectrumBorder)
@@ -67,7 +74,7 @@ struct OnboardingNameView: View {
 
     private var kFloatingLabelFocused: Color {
         colorScheme == .light
-            ? AppColors.lightLabelFocused       // #BE185D
+            ? AppColors.lightLabelFocused
             : AppColors.purpleLight
     }
 
@@ -86,18 +93,18 @@ struct OnboardingNameView: View {
     private var kPronounLabel: Color {
         colorScheme == .light
             ? AppColors.lightCardTitle.opacity(0.65)
-            : .white.opacity(0.75)   // D1-FIX: 0.55 fails WCAG AA at caption size — raised to 0.75
+            : .white.opacity(0.75)
     }
 
     private var kPronounHint: Color {
         colorScheme == .light
-            ? AppColors.lightHintText           // magentaDark 50%
-            : AppColors.textQuaternary          // D2-FIX: use design token, not inline literal
+            ? AppColors.lightHintText
+            : AppColors.textTertiary
     }
 
     private var kCustomPillFill: Color {
         colorScheme == .light
-            ? AppColors.lightFrostPill
+            ? AppColors.lightFrostPillCustom
             : AppColors.surfaceBg
     }
 
@@ -107,11 +114,192 @@ struct OnboardingNameView: View {
             : AppColors.borderHover
     }
 
-    // Validation — name required, pronoun required for bloom trigger.
-    // Both must be satisfied before the CTA enables.
     private var isValid: Bool {
         let trimmed = displayName.trimmingCharacters(in: .whitespaces)
-        return trimmed.count >= 1 && trimmed.count <= 20 && selectedPronoun != nil
+        guard trimmed.count >= 1 && trimmed.count <= 30
+              else { return false }
+        guard let gender = selectedGender else { return false }
+        if gender == "Something else" {
+            return !customGenderText
+                .trimmingCharacters(in: .whitespaces)
+                .isEmpty
+        }
+        return true
+    }
+
+    // MARK: - Name Field
+
+    @ViewBuilder
+    private var nameField: some View {
+        ZStack(alignment: .leading) {
+
+            // Floating label
+            Text("What should we call you?")
+                .font(displayName.isEmpty && !nameFieldFocused
+                      ? AppFonts.display(22, weight: .semibold)
+                      : AppFonts.overline)
+                .foregroundStyle(
+                    displayName.isEmpty && !nameFieldFocused
+                        ? (colorScheme == .light
+                            ? AnyShapeStyle(AppColors.lightTextSecondary)
+                            : AnyShapeStyle(AppColors.textSecondary))
+                        : (colorScheme == .light
+                            ? AnyShapeStyle(AppColors.lightLabelFocused)
+                            : AnyShapeStyle(AppColors.purpleLight))
+                )
+                .offset(y: displayName.isEmpty && !nameFieldFocused ? 0 : -36)
+                .animation(.easeInOut(duration: 0.35), value: nameFieldFocused)
+                .animation(.easeInOut(duration: 0.35), value: displayName.isEmpty)
+                .opacity(fieldCollapsed ? 0 : 1)
+                .animation(.easeInOut(duration: 0.25).delay(0.05), value: fieldCollapsed)
+                .accessibilityHidden(true)
+
+            TextField("", text: $displayName)
+                .font(AppFonts.display(28, weight: .semibold))
+                .foregroundColor(
+                    (colorScheme == .light
+                        ? AppColors.lightCardTitle
+                        : AppColors.textPrimary)
+                    .opacity(nameTextOpacity)
+                )
+                .tint(colorScheme == .light
+                    ? AppColors.lightLabelFocused
+                    : AppColors.cyan)
+                .offset(y: 10)
+                .focused($nameFieldFocused)
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled()
+                .submitLabel(.done)
+                .onSubmit {
+                    nameFieldFocused = false
+                    triggerCollapse()
+                }
+                .opacity(fieldCollapsed ? 0 : 1)
+                .animation(.easeInOut(duration: 0.3), value: fieldCollapsed)
+                .disabled(fieldCollapsed)
+                .onChange(of: displayName) { _, newValue in
+                    let trimmed = newValue
+                        .trimmingCharacters(in: .whitespaces)
+                    if trimmed.count > 30 {
+                        displayName = String(trimmed.prefix(30))
+                    }
+
+                    let hasContent = !trimmed
+                        .isEmpty
+
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) {
+                        genderSectionVisible = hasContent
+                    }
+
+                    typingDebounce?.cancel()
+
+                    guard !trimmed.isEmpty else {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            greetingVisible = false
+                            greetingOwnsName = false
+                        }
+                        withAnimation(.easeInOut(duration: 0.3).delay(0.15)) {
+                            fieldCollapsed = false
+                            nameTextOpacity = 1.0
+                        }
+                        return
+                    }
+
+                    let work = DispatchWorkItem {
+                        triggerCollapse()
+                    }
+                    typingDebounce = work
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: work)
+                }
+                .onChange(of: nameFieldFocused) { _, isFocused in
+                    if isFocused && greetingOwnsName {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            greetingVisible = false
+                            greetingOwnsName = false
+                        }
+                        withAnimation(.easeInOut(duration: 0.3).delay(0.15)) {
+                            fieldCollapsed = false
+                            nameTextOpacity = 1.0
+                        }
+                    }
+                }
+                .accessibilityLabel("What should we call you?")
+        }
+        .frame(height: 72)
+        .padding(.bottom, 4)
+        .overlay(alignment: .bottom) {
+            ZStack {
+                // Base line — always visible
+                Rectangle()
+                    .fill(
+                        nameFieldFocused || !displayName.isEmpty
+                            ? (colorScheme == .light
+                                ? AnyShapeStyle(AppColors.warmAuroraBorder)
+                                : AnyShapeStyle(AppColors.spectrumBorder))
+                            : (colorScheme == .light
+                                ? AnyShapeStyle(AppColors.lightBorder)
+                                : AnyShapeStyle(AppColors.border))
+                    )
+                    .frame(height: nameFieldFocused ? 3 : 2)
+                    .animation(.easeInOut(duration: 0.3), value: nameFieldFocused)
+
+                // Gradient glow line — appears when focused or has content
+                if nameFieldFocused || !displayName.isEmpty {
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: colorScheme == .light
+                                    ? [
+                                        AppColors.magenta.opacity(0.6),
+                                        AppColors.pink.opacity(0.9),
+                                        AppColors.purple.opacity(0.7),
+                                        AppColors.magenta.opacity(0.6)
+                                      ]
+                                    : [
+                                        AppColors.cyan.opacity(0.6),
+                                        AppColors.purple.opacity(0.9),
+                                        AppColors.pink.opacity(0.8),
+                                        AppColors.cyan.opacity(0.6)
+                                      ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(height: 3)
+                        .blur(radius: 4)
+                        .opacity(nameFieldFocused ? 1.0 : 0.5)
+                        .animation(.easeInOut(duration: 0.3), value: nameFieldFocused)
+
+                    // Outer soft glow
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: colorScheme == .light
+                                    ? [
+                                        AppColors.magenta.opacity(0.2),
+                                        AppColors.pink.opacity(0.35),
+                                        AppColors.purple.opacity(0.25),
+                                        AppColors.magenta.opacity(0.2)
+                                      ]
+                                    : [
+                                        AppColors.cyan.opacity(0.2),
+                                        AppColors.purple.opacity(0.35),
+                                        AppColors.pink.opacity(0.3),
+                                        AppColors.cyan.opacity(0.2)
+                                      ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(height: 8)
+                        .blur(radius: 6)
+                        .opacity(nameFieldFocused ? 0.9 : 0.4)
+                        .animation(.easeInOut(duration: 0.3), value: nameFieldFocused)
+                }
+            }
+            .opacity(fieldCollapsed ? 0 : 1)
+            .animation(.easeInOut(duration: 0.3), value: fieldCollapsed)
+        }
     }
 
     var body: some View {
@@ -120,31 +308,9 @@ struct OnboardingNameView: View {
 
             ZStack {
                 // ── Background ───────────────────────────────────────────
-                if colorScheme == .light {
-                    AppColors.lightPageBg.ignoresSafeArea()
-                } else {
-                    AppColors.pageBg.ignoresSafeArea()
-                }
-
-                // ── Glow field — layer 1 ─────────────────────────────────
-                if colorScheme == .light {
-                    AuroraGlowField(config: .nameView)
-                        .ignoresSafeArea()
-                } else {
-                    OnboardingGlowField()
-                        .ignoresSafeArea()
-                }
-
-                // ── SparkField — layer 2 (light only) ────────────────────
-                if colorScheme == .light {
-                    SparkField(config: .nameView)
-                        .ignoresSafeArea()
-                        .allowsHitTesting(false)
-                }
+                Color.clear.ignoresSafeArea()
 
                 // ── Atmosphere ellipse ────────────────────────────────────
-                // Dark: purple/blue glow in mid-screen
-                // Light: omitted — AuroraGlowField handles atmosphere
                 if colorScheme == .dark {
                     Ellipse()
                         .fill(RadialGradient(stops: [
@@ -152,7 +318,7 @@ struct OnboardingNameView: View {
                             .init(color: Color.blue.opacity(0.12),   location: 0.5),
                             .init(color: .clear,                     location: 1)
                         ], center: .center, startRadius: 0, endRadius: 240))
-                        .frame(width: geo.size.width, height: h * 0.31) // BUG1-FIX: capped to screen width
+                        .frame(width: geo.size.width, height: h * 0.31)
                         .blur(radius: 80)
                         .offset(y: h * 0.30)
                         .allowsHitTesting(false)
@@ -169,82 +335,94 @@ struct OnboardingNameView: View {
                         Text("Let's get")
                             .font(AppFonts.display(28, weight: .semibold))
                             .foregroundColor(kTextPrimary)
-                        LivingText(
-                            text: "acquainted.",
-                            palette: .cyanPurple,
-                            glowRadius: 6,
-                            glowFloor: 0.12,
-                            glowCeil: 0.28,
-                            breatheDur: 5.0,
-                            driftDur: 12.0
-                        )
+                        LivingText(text: "acquainted.")
                     }
                     .opacity(headerVisible ? 1 : 0)
-                    .scaleEffect(headerVisible ? 1 : 0.985, anchor: .leading)
+                    .scaleEffect(headerVisible ? 1.0 : 0.95)
                     .padding(.bottom, 28)
 
-                    // ── Glass card ────────────────────────────────────────
-                    VStack(alignment: .leading, spacing: 0) {
-                        nameField
-                            .padding(.bottom, 20)
+                    // ── Name field ────────────────────────────────────────
+                    nameField
+                        .padding(.bottom, 20)
+                        .opacity(cardVisible ? 1 : 0)
+                        .scaleEffect(cardVisible ? 1.0 : 0.95)
 
-                        Rectangle()
-                            .fill(colorScheme == .light
-                                ? AppColors.lightBorder
-                                : Color.white.opacity(0.05))
-                            .frame(height: 1)
-                            .padding(.bottom, 18)
+                    // ── Greeting ──────────────────────────────────────────
+                    // FIX: corrected brace structure
+                    HStack(alignment: .firstTextBaseline, spacing: 7.5) {
+                        Spacer()
 
-                        pronounsSection
+                        Text("Hi ")
+                            .font(AppFonts.display(32, weight: .bold))
+                            .foregroundStyle(colorScheme == .light
+                                ? AppColors.lightHeadlineDarkRose
+                                : AppColors.textPrimary.opacity(0.94))
+
+                        Text(displayName.trimmingCharacters(in: .whitespaces))
+                            .font(AppFonts.display(32, weight: .bold))
+                            .foregroundStyle(colorScheme == .light
+                                ? AppColors.lightHeadlineDarkRose
+                                : AppColors.textPrimary)
+                            .modifier(GlowUnderline(isLight: colorScheme == .light))
+
+                        Spacer()
                     }
-                    .padding(20)
-                    .background(
-                        Group {
-                            if colorScheme == .light {
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(AppColors.lightFrostCard)
-                                    .background(
-                                        .ultraThinMaterial,
-                                        in: RoundedRectangle(cornerRadius: 20)
-                                    )
-                            } else {
-                                // D5-FIX: material must BE the fill so blur renders;
-                                // tint overlaid on top so it doesn't occlude the effect
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(.ultraThinMaterial)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .fill(Color.white.opacity(0.05))
-                                    )
-                            }
+                    .frame(maxWidth: .infinity)
+                    .opacity(greetingVisible ? 1 : 0)
+                    .offset(y: greetingVisible ? -65 : 16)
+                    .animation(
+                        .spring(response: 1.1, dampingFraction: 0.88),
+                        value: greetingVisible
+                    )
+                    .padding(.top, 8)
+                    .padding(.bottom, 28)
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            greetingVisible = false
+                            greetingOwnsName = false
                         }
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .strokeBorder(kGlassBorder, lineWidth: 1.5)
-                    )
-                    .shadow(
-                        color: colorScheme == .light
-                            ? Color(red: 200/255, green: 100/255, blue: 40/255).opacity(0.05) // L2-FIX: valid SwiftUI initializer
-                            : .clear,
-                        radius: 24, y: 4
-                    )
-                    .shadow(
-                        color: colorScheme == .light
-                            ? Color.black.opacity(0.04)
-                            : .clear,
-                        radius: 4, y: 1
-                    )
-                    .opacity(cardVisible ? 1 : 0)
-                    .offset(y: cardVisible ? 0 : 16)
+                        withAnimation(.easeInOut(duration: 0.3).delay(0.15)) {
+                            fieldCollapsed = false
+                            nameTextOpacity = 1.0
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            nameFieldFocused = true
+                        }
+                    }
+                    .accessibilityLabel("Edit name")
+                    .accessibilityHint("Tap to change what we call you")
+                    .accessibilityAddTraits(.isButton)
 
-                    Spacer(minLength: OL.spacerMin(h)) // LAYOUT-FIX: unbounded above, min prevents CTA crowding on SE
+                    Text("tap to edit")
+                        .font(AppFonts.caption)
+                        .foregroundColor(colorScheme == .light
+                            ? AppColors.lightTextTertiary
+                            : AppColors.textTertiary)
+                        .padding(.top, 4)
+                        .opacity(greetingVisible ? 0.7 : 0)
+                        .animation(.easeInOut(duration: 0.3), value: greetingVisible)
 
-                    // ── CTA wrapper ───────────────────────────────────────
-                    // MARK: - TASK 4: Aura Effect Behind Button
-                    // ZStack layers: [aura] → [button] back to front.
-                    // Aura fades in with the bloom; the pulsing shadow on
-                    // the button itself provides the "alive" feeling.
+                    Rectangle()
+                        .fill(colorScheme == .light
+                              ? AppColors.lightBorder
+                              : Color.white.opacity(0.05))
+                        .frame(height: 1)
+                        .padding(.bottom, 18)
+                        .opacity(cardVisible && !fieldCollapsed ? 1 : 0)
+                        .scaleEffect(cardVisible ? 1.0 : 0.95)
+                        .animation(.easeInOut(duration: 0.3), value: fieldCollapsed)
+                        .animation(
+                            .spring(response: 0.5, dampingFraction: 0.85).delay(0.23),
+                            value: cardVisible
+                        )
+
+                    genderSection
+                        .opacity(cardVisible && genderSectionVisible ? 1 : 0)
+                        .scaleEffect(cardVisible && genderSectionVisible ? 1.0 : 0.95)
+
+                    Spacer(minLength: OL.spacerMin(h))
+
+                    // ── CTA ───────────────────────────────────────────────
                     ZStack {
                         RoundedRectangle(cornerRadius: 100)
                             .fill(LinearGradient(
@@ -261,7 +439,7 @@ struct OnboardingNameView: View {
                             .blur(radius: 36)
                             .opacity(isButtonGlowing ? 1.0 : 0.0)
                             .animation(
-                                reduceMotion ? .none : .easeInOut(duration: 0.4),
+                                reduceMotion ? .none : .easeInOut(duration: 0.6),
                                 value: isButtonGlowing
                             )
                             .allowsHitTesting(false)
@@ -270,20 +448,16 @@ struct OnboardingNameView: View {
                             title: "Next",
                             isEnabled: isValid
                         ) {
-                            // MARK: - TASK 3: Haptic Feedback — CTA tap
                             triggerHaptic(.medium)
-                            #if DEBUG
+#if DEBUG
                             assert(onContinue != nil,
-                                "OnboardingNameView: onContinue not injected — " +
-                                "wire this callback from the coordinator.")
-                            #endif
+                                   "OnboardingNameView: onContinue not injected — " +
+                                   "wire this callback from the coordinator.")
+#endif
                             commitData()
                             onContinue?()
                         }
                         .fixedSize(horizontal: false, vertical: true)
-                        // MARK: - TASK 2: Pulse Animation
-                        // Shadow breathes between radius 8 and 18 once valid.
-                        // reduceMotion: static radius 12 — no pulse, no spring.
                         .shadow(
                             color: isButtonGlowing
                                 ? AppColors.pink.opacity(
@@ -297,26 +471,23 @@ struct OnboardingNameView: View {
                         )
                     }
                     .opacity(ctaVisible ? 1 : 0)
-                    .offset(y: ctaVisible ? 0 : 12)
+                    .scaleEffect(ctaVisible ? 1.0 : 0.95)
 
                     OnboardingFooter()
                         .opacity(ctaVisible ? 1 : 0)
-                        .offset(y: ctaVisible ? 0 : 12)
+                        .scaleEffect(ctaVisible ? 1.0 : 0.95)
                 }
                 .padding(.horizontal, 28)
-
             }
-            .frame(width: geo.size.width, alignment: .topLeading) // BUG1-FIX: anchor content to leading edge
+            .frame(width: geo.size.width, alignment: .topLeading)
             .onAppear {
                 restoreStateIfNeeded()
 
-                // If restoring a previously valid state (back-nav re-entry),
-                // show bloom immediately without animation — no re-trigger needed.
                 if isValid {
                     isButtonGlowing = true
                     if !reduceMotion {
                         withAnimation(
-                            .easeInOut(duration: 2)
+                            .easeInOut(duration: 2.5)
                             .repeatForever(autoreverses: true)
                             .delay(0.6)
                         ) { glowPulse = true }
@@ -326,307 +497,224 @@ struct OnboardingNameView: View {
                 guard !hasAnimated else { return }
                 hasAnimated = true
 
-                withAnimation(.easeOut(duration: 0.4))              { headerVisible = true }
-                withAnimation(.easeOut(duration: 0.45).delay(0.15)) { cardVisible   = true }
-                withAnimation(.easeOut(duration: 0.4).delay(0.30))  { ctaVisible    = true }
+                let entranceSpring = Animation.spring(response: 0.5, dampingFraction: 0.85)
 
-                // D4-FIX: borderPhase only used by dark mode custom pill border
-                if colorScheme == .dark {
-                    withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
-                        borderPhase = 1.0
-                    }
-                }
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        nameFieldFocused = true
-                    }
-                }
-            }
-        }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
-        // REMOVED: .preferredColorScheme(.dark) — responds to system setting
-        // TINT-FIX: broad .tint() removed — was overriding HoloCTAButton and
-        // SelectablePill foreground colors across the entire view tree.
-        // Cursor/selection tint is now scoped directly to each TextField.
-        // M1-FIX: reset animation flags so entrance re-fires if view
-        // is dismissed and re-presented (e.g. back-nav + re-entry)
-        .onDisappear {
-            hasAnimated    = false
-            headerVisible  = false
-            cardVisible    = false
-            ctaVisible     = false
-            isButtonGlowing = false
-            glowPulse      = false
-        }
-        // MARK: - TASK 1: Validation Bloom — onChange driver
-        // Fires whenever name or pronoun changes the validity state.
-        // reduceMotion: instant opacity change only, no spring or pulse.
-        .onChange(of: isValid) { _, newValue in
-            if newValue {
-                // MARK: - TASK 3: Haptic Feedback — form becomes valid
-                triggerHaptic(.medium)
                 if reduceMotion {
-                    isButtonGlowing = true
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        headerVisible = true
+                        cardVisible   = true
+                        ctaVisible    = true
+                    }
                 } else {
-                    withAnimation(.easeInOut(duration: 0.4)) {
-                        isButtonGlowing = true
-                    }
-                    // Pulse starts after bloom lands (0.4s delay)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                        withAnimation(
-                            .easeInOut(duration: 2)
-                            .repeatForever(autoreverses: true)
-                        ) { glowPulse = true }
-                    }
+                    withAnimation(entranceSpring.delay(0.08)) { headerVisible = true }
+                    withAnimation(entranceSpring.delay(0.23)) { cardVisible = true }
+                    withAnimation(entranceSpring.delay(0.38)) { ctaVisible = true }
                 }
-            } else {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    isButtonGlowing = false
-                }
-                glowPulse = false
-            }
-        }
-    }
 
-    // MARK: - Name Field
-
-    private var nameField: some View {
-        TextField("", text: $displayName)
-            // TINT-FIX: tint scoped here for cursor + selection color only
-            .tint(colorScheme == .light ? AppColors.lightLabelFocused : AppColors.cyan)
-            .font(AppFonts.bodyText)
-            .foregroundColor(kTextPrimary)
-            .padding(.horizontal, 20)
-            .padding(.top, 14)          // C1-FIX: push input text below floated label
-            .frame(height: 58)
-            .background(
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(kFieldBG)
-                        .overlay {
-                            if nameFieldFocused || !displayName.isEmpty {
-                                // Active border
-                                if colorScheme == .light {
-                                    LightModeShimmer(duration: 9, usePillColors: true)
-                                        .mask(
-                                            RoundedRectangle(cornerRadius: 16)
-                                                .strokeBorder(Color.black, lineWidth: 2)
-                                        )
-                                        .shadow(
-                                            color: AppColors.lightShadowMagenta,
-                                            radius: 8
-                                        )
-                                } else {
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .strokeBorder(kFieldBorderActive, lineWidth: 2)
-                                        .shadow(
-                                            color: AppColors.glowCyan,
-                                            radius: 8
-                                        )
-                                }
-                            } else {
-                                RoundedRectangle(cornerRadius: 16)
-                                    .strokeBorder(kGlassBorder, lineWidth: 1.5)
+                if !reduceMotion {
+                    focusTask = Task {
+                        try? await Task.sleep(nanoseconds: 750_000_000)
+                        guard !Task.isCancelled else { return }
+                        await MainActor.run {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                nameFieldFocused = true
                             }
                         }
-                        .animation(.easeOut(duration: 0.2), value: nameFieldFocused)
-                        .animation(.easeOut(duration: 0.2), value: displayName.isEmpty)
-
-                    // Floating label
-                    Text("First name")
-                        .font(displayName.isEmpty && !nameFieldFocused
-                            ? AppFonts.bodyMedium
-                            : AppFonts.overline)
-                        .foregroundStyle(
-                            displayName.isEmpty && !nameFieldFocused
-                                ? kFloatingLabelUnfocused
-                                : kFloatingLabelFocused
-                        )
-                        .accessibilityHidden(true)
-                        .offset(x: 20, y: displayName.isEmpty && !nameFieldFocused ? 0 : -14)
-                        .animation(.easeOut(duration: 0.2), value: nameFieldFocused)
-                        .animation(.easeOut(duration: 0.2), value: displayName)
+                    }
                 }
-            )
-            .focused($nameFieldFocused)
-            .textInputAutocapitalization(.words)
-            .autocorrectionDisabled()
-            .submitLabel(.done)
-            .onSubmit { nameFieldFocused = false }
-            .onChange(of: displayName) { _, newValue in
-                if newValue.count > 20 { displayName = String(newValue.prefix(20)) }
             }
-            .accessibilityLabel("First name")
-            .accessibilityHint("Required. 1 to 20 characters.")
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .onDisappear {
+                typingDebounce?.cancel()
+                typingDebounce = nil
+                focusTask?.cancel()
+                focusTask = nil
+                hasAnimated      = false
+                headerVisible    = false
+                cardVisible      = false
+                ctaVisible       = false
+                isButtonGlowing  = false
+                glowPulse        = false
+                greetingOwnsName = false
+                nameTextOpacity  = 1.0
+                fieldCollapsed   = false
+            }
+            .onChange(of: isValid) { _, newValue in
+                if newValue {
+                    triggerHaptic(.medium)
+                    if reduceMotion {
+                        isButtonGlowing = true
+                    } else {
+                        withAnimation(.easeInOut(duration: 0.6)) {
+                            isButtonGlowing = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            withAnimation(
+                                .easeInOut(duration: 2.5)
+                                .repeatForever(autoreverses: true)
+                            ) { glowPulse = true }
+                        }
+                    }
+                } else {
+                    withAnimation(.easeInOut(duration: 0.45)) {
+                        isButtonGlowing = false
+                    }
+                    glowPulse = false
+                }
+            }
+        }
     }
 
-    // MARK: - Pronouns
+    // MARK: - Gender Section
 
-    private var pronounsSection: some View {
+    private var genderSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("Pronouns")
-                    .font(AppFonts.caption)
-                    .foregroundColor(kPronounLabel)
-                Spacer()
-                Text("so we get it right")
-                    .font(AppFonts.overline)
-                    .foregroundColor(kPronounHint)
-            }
-            .padding(.bottom, 12)
+            Text("Gender identity")
+                .font(AppFonts.body(13, weight: .medium))
+                .foregroundColor(kPronounLabel)
+            
+            Text("Helps us personalise your prompts and tone")
+                .font(AppFonts.caption)
+                .foregroundColor(kPronounHint)
+                .padding(.top, 2)
+                .padding(.bottom, 12)
 
-            // M2-FIX: static content — VStack/HStack has zero lazy overhead
             VStack(spacing: 10) {
                 HStack(spacing: 10) {
                     SelectablePill(
-                        label: "She/Her",
-                        isSelected: selectedPronoun == .sheHer,
+                        label: "Man",
+                        isSelected: selectedGender == "Man",
                         showFlame: false
                     ) {
-                        selectPronoun(.sheHer)
+                        nameFieldFocused = false
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            selectedGender = selectedGender == "Man" ? nil : "Man"
+                            showCustomGenderField = false
+                            customGenderText = ""
+                        }
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     }
-                    // MARK: - TASK 5: Pronoun Chip Tap Feedback
-                    
-                    .opacity(pillOpacity(for: .sheHer))
-                    .animation(.easeInOut(duration: 0.2), value: selectedPronoun)
-
                     SelectablePill(
-                        label: "He/Him",
-                        isSelected: selectedPronoun == .heHim,
+                        label: "Woman",
+                        isSelected: selectedGender == "Woman",
                         showFlame: false
                     ) {
-                        selectPronoun(.heHim)
+                        nameFieldFocused = false
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            selectedGender = selectedGender == "Woman" ? nil : "Woman"
+                            showCustomGenderField = false
+                            customGenderText = ""
+                        }
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     }
-                    // MARK: - TASK 5: Pronoun Chip Tap Feedback
-                   
-                    .opacity(pillOpacity(for: .heHim))
-                    .animation(.easeInOut(duration: 0.2), value: selectedPronoun)
                 }
-
                 HStack(spacing: 10) {
                     SelectablePill(
-                        label: "They/Them",
-                        isSelected: selectedPronoun == .theyThem,
+                        label: "Non-binary",
+                        isSelected: selectedGender == "Non-binary",
                         showFlame: false
                     ) {
-                        selectPronoun(.theyThem)
-                    }
-                    // MARK: - TASK 5: Pronoun Chip Tap Feedback
-                   
-                    .opacity(pillOpacity(for: .theyThem))
-                    .animation(.easeInOut(duration: 0.2), value: selectedPronoun)
-
-                    if showCustomField {
-                        TextField("", text: $customPronounText,
-                                  prompt: Text("e.g. ze/zir")
-                                      .foregroundColor(colorScheme == .light
-                                          ? AppColors.lightTextTertiary
-                                          : Color.white.opacity(0.35))) // D3-FIX: 0.20 is unreadable — raised to 0.35
-                            // TINT-FIX: tint scoped here for cursor + selection color only
-                            .tint(colorScheme == .light ? AppColors.lightLabelFocused : AppColors.cyan)
-                            .font(AppFonts.bodyMedium)
-                            .foregroundColor(kTextPrimary)
-                            .padding(.horizontal, 20)
-                            .frame(height: 46)
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                Capsule()
-                                    .fill(kFieldBG)
-                                    .overlay(
-                                        // Dark: animated spectrum border
-                                        // Light: warmAuroraBorder — no animated cyan
-                                        Group {
-                                            if colorScheme == .light {
-                                                Capsule()
-                                                    .strokeBorder(
-                                                        AppColors.warmAuroraBorder,
-                                                        lineWidth: 2
-                                                    )
-                                            } else {
-                                                Capsule()
-                                                    .strokeBorder(
-                                                        LinearGradient(colors: [
-                                                            AppColors.cyan,
-                                                            AppColors.purple,
-                                                            AppColors.magenta
-                                                            
-                                                        ], startPoint: .leading, endPoint: .trailing),
-                                                        lineWidth: 2
-                                                    )
-                                            }
-                                        }
-                                    )
-                            )
-                            .autocorrectionDisabled()
-                            .textInputAutocapitalization(.never)
-                            .transition(.opacity)
-                            .accessibilityLabel("Custom pronouns")
-                            .accessibilityHint("Enter your pronouns, for example ze slash zir")
-                    } else {
-                        Button {
-                            withAnimation(.easeOut(duration: 0.25)) { showCustomField = true }
-                        } label: {
-                            Text("Custom")
-                                .font(AppFonts.bodyMedium)
-                                .foregroundColor(colorScheme == .light
-                                    ? AppColors.wineDark
-                                    : .white)
-                                .frame(height: 46)
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    Capsule()
-                                        .fill(kCustomPillFill)
-                                        .overlay(
-                                            Capsule()
-                                                .strokeBorder(kCustomPillBorder, lineWidth: 1.5)
-                                        )
-                                )
+                        nameFieldFocused = false
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            selectedGender = selectedGender == "Non-binary" ? nil : "Non-binary"
+                            showCustomGenderField = false
+                            customGenderText = ""
                         }
-                        .buttonStyle(.plain)
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     }
+                    SelectablePill(
+                        label: "Something else",
+                        isSelected: selectedGender == "Something else",
+                        showFlame: false
+                    ) {
+                        nameFieldFocused = false
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            selectedGender = selectedGender == "Something else"
+                                ? nil : "Something else"
+                            showCustomGenderField = selectedGender == "Something else"
+                        }
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    }
+                }
+
+                // Full-width and visually prominent by design.
+                // Shame reduction architecture: the option to decline
+                // should never feel hidden or harder to find than
+                // providing the data. See PROJECT_SCOPE Section 6.
+                SelectablePill(
+                    label: "Prefer not to say",
+                    isSelected: selectedGender == "Prefer not to say",
+                    showFlame: false
+                ) {
+                    nameFieldFocused = false
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        selectedGender = selectedGender == "Prefer not to say"
+                            ? nil : "Prefer not to say"
+                        showCustomGenderField = false
+                        customGenderText = ""
+                    }
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                }
+                .frame(maxWidth: .infinity)
+
+                if showCustomGenderField {
+                    TextField("Describe your gender identity",
+                              text: $customGenderText)
+                        .font(AppFonts.body(16, weight: .regular))
+                        .foregroundColor(kTextPrimary)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(kCustomPillFill)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(kCustomPillBorder,
+                                                lineWidth: 1)
+                                )
+                        )
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .padding(.top, 8)
+                        .transition(.opacity.combined(
+                            with: .scale(scale: 0.97, anchor: .top)))
                 }
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Pronouns — optional")
+        .accessibilityLabel("Gender identity — optional")
     }
 
-    // MARK: - TASK 3: Haptic Feedback
-    // Centralized haptic helper — call at chip tap, validity change, and CTA tap.
+    // MARK: - Haptic
+
     private func triggerHaptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
         UIImpactFeedbackGenerator(style: style).impactOccurred()
     }
 
-    // MARK: - TASK 5: Pronoun Selection + Scale Bounce
-    // Handles toggle logic, spring bounce trigger, and custom field dismiss
-    // in one place so each chip's action stays to a single call.
-    private func selectPronoun(_ option: PronounOption) {
-        // MARK: - TASK 3: Haptic Feedback — chip tap
-        // SelectablePill fires its own .light haptic internally;
-        // this helper adds the medium bounce on the validity transition
-        // (handled in onChange(of: isValid)) not here — no double-fire.
-       
-        withAnimation(.easeInOut(duration: 0.2)) {
-            selectedPronoun = selectedPronoun == option ? nil : option
-        }
-        dismissCustomIfNeeded()
-    }
-
-    // Returns 1.0 for the selected chip (or when nothing is selected);
-    // 0.5 for chips that are not currently selected.
-    private func pillOpacity(for option: PronounOption) -> Double {
-        guard let sel = selectedPronoun else { return 1.0 }
-        return sel == option ? 1.0 : 0.5
-    }
-
     // MARK: - Helpers
 
+    private func triggerCollapse() {
+        let trimmed = displayName.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        typingDebounce?.cancel()
+        withAnimation(.easeInOut(duration: 0.35)) {
+            nameTextOpacity = 0
+            fieldCollapsed = true
+        }
+        withAnimation(
+            .spring(response: 0.6, dampingFraction: 0.85)
+            .delay(0.28)
+        ) {
+            greetingVisible = true
+            greetingOwnsName = true
+        }
+    }
+
     private func dismissCustomIfNeeded() {
-        if showCustomField {
-            withAnimation(.easeOut(duration: 0.25)) {
-                showCustomField   = false
-                customPronounText = ""
+        if showCustomGenderField {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                showCustomGenderField = false
+                customGenderText = ""
             }
         }
     }
@@ -636,19 +724,12 @@ struct OnboardingNameView: View {
     private func restoreStateIfNeeded() {
         if !data.displayName.isEmpty {
             displayName = data.displayName
+            genderSectionVisible = true
         }
-        if let firstPronoun = data.pronouns.first {
-            selectedPronoun = firstPronoun
-        }
-        let savedCustom = data.customPronouns ?? ""
-        if !savedCustom.isEmpty {
-            customPronounText = savedCustom
-            showCustomField   = true
-        } else {
-            // M3-FIX: explicitly clear so back-nav never shows an
-            // open-but-empty custom field from a previous partial entry
-            customPronounText = ""
-            showCustomField   = false
+        if let savedGender = data.genderIdentity {
+            selectedGender = savedGender
+            // If "Something else" was stored and it's a custom value,
+            // we cannot reconstruct the custom field — leave as-is.
         }
     }
 
@@ -656,9 +737,17 @@ struct OnboardingNameView: View {
 
     private func commitData() {
         data.displayName = displayName.trimmingCharacters(in: .whitespaces)
-        let custom = customPronounText.trimmingCharacters(in: .whitespaces)
-        if !custom.isEmpty { data.customPronouns = custom }
-        data.pronouns = selectedPronoun.map { [$0] } ?? []
+        if selectedGender == "Something else" {
+            let custom = customGenderText
+                .trimmingCharacters(in: .whitespaces)
+            if !custom.isEmpty {
+                data.genderIdentity = custom
+            }
+            // If somehow empty, do not write "Something else"
+        } else if let selected = selectedGender,
+                  selected != "Something else" {
+            data.genderIdentity = selected
+        }
     }
 }
 
@@ -670,8 +759,17 @@ struct OnboardingNameView: View {
         d.displayName = "Jordan"
         return d
     }()
-    OnboardingNameView(data: $data, onContinue: {}, onBack: {})
-        .preferredColorScheme(.dark)
+    ZStack {
+        AppColors.pageBg.ignoresSafeArea()
+        OnboardingAtmosphere(
+            config: .name,
+            sparkConfig: .nameView,
+            opacity: 1.0
+        )
+        .ignoresSafeArea()
+        OnboardingNameView(data: $data, onContinue: {}, onBack: {})
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Light") {
@@ -680,6 +778,45 @@ struct OnboardingNameView: View {
         d.displayName = "Jordan"
         return d
     }()
-    OnboardingNameView(data: $data, onContinue: {}, onBack: {})
-        .preferredColorScheme(.light)
+    ZStack {
+        AppColors.lightPageBg.ignoresSafeArea()
+        OnboardingAtmosphere(
+            config: .name,
+            sparkConfig: .nameView,
+            opacity: 1.0
+        )
+        .ignoresSafeArea()
+        OnboardingNameView(data: $data, onContinue: {}, onBack: {})
+    }
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark — empty state") {
+    @Previewable @State var data = OnboardingData()
+    ZStack {
+        AppColors.pageBg.ignoresSafeArea()
+        OnboardingAtmosphere(
+            config: .name,
+            sparkConfig: .nameView,
+            opacity: 1.0
+        )
+        .ignoresSafeArea()
+        OnboardingNameView(data: $data, onContinue: {}, onBack: {})
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Light — empty state") {
+    @Previewable @State var data = OnboardingData()
+    ZStack {
+        AppColors.lightPageBg.ignoresSafeArea()
+        OnboardingAtmosphere(
+            config: .name,
+            sparkConfig: .nameView,
+            opacity: 1.0
+        )
+        .ignoresSafeArea()
+        OnboardingNameView(data: $data, onContinue: {}, onBack: {})
+    }
+    .preferredColorScheme(.light)
 }

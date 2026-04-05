@@ -25,7 +25,7 @@ struct InteractiveField: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(
-            t.isAmoled ? .white.opacity(0.03) : t.surface1
+            t.isDark ? .white.opacity(0.03) : t.surface1
         )
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
@@ -33,7 +33,7 @@ struct InteractiveField: View {
                 .stroke(t.cardBorder, lineWidth: 1.5)
         )
         .shadow(
-            color: t.isAmoled ? t.glowCyan : .clear,
+            color: t.isDark ? t.glowCyan : .clear,
             radius: 6
         )
     }

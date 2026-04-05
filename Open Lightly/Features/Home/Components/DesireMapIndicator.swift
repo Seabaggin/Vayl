@@ -183,7 +183,7 @@ struct DesireMapIndicator: View {
                 : AppColors.purple.opacity(0.2),
                     radius: 20, y: 6)
 
-        case .freeRevealSeen(let partnerName):
+        case .freeRevealSeen(_):
             statusCard {
                 HStack(spacing: 14) {
                     ZStack {
