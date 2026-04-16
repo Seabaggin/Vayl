@@ -157,7 +157,7 @@ struct CardChestContainer: View {
             }
             .animation(.easeOut(duration: 0.25), value: isFloating)
         }
-        .clipShape(RoundedRectangle(cornerRadius: isFloating ? 0 : 24, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .strokeBorder(
