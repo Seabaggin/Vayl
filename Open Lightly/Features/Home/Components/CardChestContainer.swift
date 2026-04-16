@@ -155,6 +155,7 @@ struct CardChestContainer: View {
                     }
                 )
             }
+            .padding(.top, isFloating ? 6 : 0)
             .animation(.easeOut(duration: 0.25), value: isFloating)
         }
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
