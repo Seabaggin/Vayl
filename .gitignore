@@ -63,3 +63,4 @@ project.xcworkspace/xcuserdata/
 # (recommended for reproducible builds):
 # !Package.resolved
 Config.swift
+.aider*
