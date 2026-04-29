@@ -1,18 +1,11 @@
 //
-//  OnboardingError.swift
-//  Vayl
-//
-//  Created by Bryan Jorden on 4/28/26.
-//
-
-
-//
 //  OnboardingStore.swift
 //  Vayl
 //
 
 import Foundation
 import SwiftData
+import SwiftUI
 import OSLog
 
 private let logger = Logger(
@@ -54,13 +47,17 @@ final class OnboardingStore {
 
     // MARK: - Dependencies
 
-    private let modelContext: ModelContext
+    private let modelContainer: ModelContainer
     private let appState: AppState
 
     // MARK: - Init
 
-    init(modelContext: ModelContext, appState: AppState, startAt: OnboardingStep = .stat) {
-        self.modelContext = modelContext
+    init(
+        modelContainer: ModelContainer,
+        appState: AppState,
+        startAt: OnboardingStep = .stat
+    ) {
+        self.modelContainer = modelContainer
         self.appState = appState
         self.currentStep = startAt
     }
@@ -68,6 +65,7 @@ final class OnboardingStore {
     // MARK: - Validation
 
     /// Whether the user is allowed to advance from the current step.
+    /// Handles every OnboardingStep case exhaustively — no default.
     var canAdvance: Bool {
         switch currentStep {
         case .stat:
@@ -141,7 +139,7 @@ final class OnboardingStore {
     }
 
     /// Go back one step.
-    /// Handles every case exhaustively — no default.
+    /// Handles every OnboardingStep case exhaustively — no default.
     func goBack() {
         switch currentStep {
         case .stat:
@@ -179,56 +177,59 @@ final class OnboardingStore {
     // MARK: - Completion
 
     /// Called when the user reaches the end of their onboarding path.
-    /// Calls commit(), mirrors into AppState on success.
-    /// On failure, sets lastCommitError and does NOT set didComplete.
+    /// Creates a fresh ModelContext at call time — never stored on self.
+    /// On success: mirrors into AppState and sets didComplete = true.
+    /// On failure: sets lastCommitError only — never sets didComplete.
     private func finish() {
-        Task {
-            do {
-                try await commit()
-                mirrorIntoAppState()
-                didComplete = true
-                logger.info("Onboarding finished successfully — appMode: \(self.data.appMode?.rawValue ?? "nil")")
-            } catch {
-                lastCommitError = error
-                logger.error("Onboarding finish failed: \(error.localizedDescription)")
-            }
+        do {
+            try commit()
+            mirrorIntoAppState()
+            didComplete = true
+            logger.info("Onboarding finished — appMode: \(self.data.appMode?.rawValue ?? "nil")")
+        } catch {
+            lastCommitError = error
+            logger.error("Onboarding finish failed: \(error.localizedDescription)")
         }
     }
 
     // MARK: - Persistence
 
     /// Fetches existing UserProfile or creates a new one.
+    /// Creates a fresh ModelContext from the container at call time.
     /// Writes every OnboardingData field to the profile.
     /// Throws on any failure — never swallows errors.
-    private func commit() async throws {
+    private func commit() throws {
         guard let mode = data.appMode else {
             throw OnboardingError.missingAppMode
         }
 
+        // Create a fresh context at write time — never stored on self
+        let context = ModelContext(modelContainer)
+
         // Fetch existing profile or create a new one
         let descriptor = FetchDescriptor<UserProfile>()
-        let existing = try modelContext.fetch(descriptor)
+        let existing = try context.fetch(descriptor)
         let profile: UserProfile
 
         if let found = existing.first {
             profile = found
         } else {
             profile = UserProfile()
-            modelContext.insert(profile)
+            context.insert(profile)
         }
 
         // Write every field from OnboardingData
-        profile.displayName             = data.displayName
-        profile.appMode                 = mode
-        profile.nmStage                 = data.nmStage ?? .curious
-        profile.curiositySelections     = data.curiositySelections
-        profile.nmCardResponse          = data.nmCardResponse
-        profile.groundRulesAcceptedAt   = data.groundRulesAcceptedAt
-        profile.hasCompletedOnboarding  = true
-        profile.onboardingCompletedAt   = Date()
+        profile.displayName            = data.displayName
+        profile.appMode                = mode
+        profile.nmStage                = data.nmStage ?? .curious
+        profile.curiositySelections    = data.curiositySelections
+        profile.nmCardResponse         = data.nmCardResponse
+        profile.groundRulesAcceptedAt  = data.groundRulesAcceptedAt
+        profile.hasCompletedOnboarding = true
+        profile.onboardingCompletedAt  = Date()
 
         do {
-            try modelContext.saveWithLogging()
+            try context.saveWithLogging()
         } catch {
             throw OnboardingError.saveFailed(error)
         }
@@ -236,12 +237,13 @@ final class OnboardingStore {
 
     // MARK: - AppState Mirror
 
-    /// Writes display name and app mode into AppState.
+    /// Writes displayName, appMode, and isOnboardingComplete into AppState.
     /// AppState is not the source of truth — UserProfile is.
-    /// This mirrors only what AppState needs for routing.
+    /// This mirrors only what AppState needs for in-memory routing.
+    /// AppState.isOnboardingComplete persists to UserDefaults via its own didSet.
     private func mirrorIntoAppState() {
-        appState.displayName        = data.displayName
-        appState.appMode            = data.appMode ?? .together
+        appState.displayName          = data.displayName
+        appState.appMode              = data.appMode ?? .together
         appState.isOnboardingComplete = true
     }
 }

@@ -2,8 +2,17 @@
 //  PairingInviteView.swift
 //  Vayl
 //
+//  Created by Bryan Jorden on 4/28/26.
+//
+
+
+//
+//  PairingInviteView.swift
+//  Vayl
+//
 
 import SwiftUI
+import SwiftData
 
 // MARK: - PairingInviteView
 // Person A — generates a code and waits for partner to join.
@@ -267,7 +276,7 @@ struct PairingInviteView: View {
         modelContainer: container,
         appState: appState
     )
-    return PairingInviteView(store: store)
+    PairingInviteView(store: store)
         .environment(appState)
         .preferredColorScheme(.dark)
 }
@@ -277,10 +286,10 @@ struct PairingInviteView: View {
     let appState = AppState()
     let store = PairingStore(
         modelContainer: container,
-        appState: appState
+        appState: appState,
+        initialState: .waitingForPartner(code: "A3K9BX")
     )
-    store.linkState = .waitingForPartner(code: "A3K9BX")
-    return PairingInviteView(store: store)
+    PairingInviteView(store: store)
         .environment(appState)
         .preferredColorScheme(.dark)
 }
@@ -290,10 +299,10 @@ struct PairingInviteView: View {
     let appState = AppState()
     let store = PairingStore(
         modelContainer: container,
-        appState: appState
+        appState: appState,
+        initialState: .linked(coupleId: UUID())
     )
-    store.linkState = .linked(coupleId: UUID())
-    return PairingInviteView(store: store)
+    PairingInviteView(store: store)
         .environment(appState)
         .preferredColorScheme(.dark)
 }
@@ -303,10 +312,10 @@ struct PairingInviteView: View {
     let appState = AppState()
     let store = PairingStore(
         modelContainer: container,
-        appState: appState
+        appState: appState,
+        initialState: .error("Could not generate a code. Please try again.")
     )
-    store.linkState = .error("Could not generate a code. Please try again.")
-    return PairingInviteView(store: store)
+    PairingInviteView(store: store)
         .environment(appState)
         .preferredColorScheme(.dark)
 }

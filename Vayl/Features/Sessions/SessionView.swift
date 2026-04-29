@@ -13,11 +13,12 @@ struct SessionView: View {
     @State private var sessionStartDate: Date = .now
     @State private var completedFully: Bool = true
     
-    private let prompts: [Prompt] = Prompt.samples.isEmpty
-        ? SessionView.fallbackPrompts
-        : Array(Prompt.samples.prefix(5))
-    
-    private var currentPrompt: Prompt { prompts[currentIndex] }
+    private let prompts: [Card] = Array(Card.samples.prefix(5))
+
+    private var currentPrompt: Card? {
+        guard prompts.indices.contains(currentIndex) else { return nil }
+        return prompts[currentIndex]
+    }
     private var isLast: Bool { currentIndex >= prompts.count - 1 }
     
     var body: some View {
@@ -67,7 +68,7 @@ struct SessionView: View {
                     .font(AppFonts.overline)
                     .foregroundColor(AppColors.textTertiary)
                 
-                Text(currentPrompt.category.displayName)
+                Text("The Opener") // stub until Card has deck title
                     .font(AppFonts.sectionLabelSmall)
                     .foregroundColor(AppColors.textSecondary)
             }
@@ -83,8 +84,8 @@ struct SessionView: View {
     
     // MARK: - Prompt Card
     private var cardArea: some View {
-        ConversationCard(prompt: currentPrompt)
-            .id(currentPrompt.id) // force re-render on change
+        Text(currentPrompt?.text ?? "")
+            .id(currentIndex) // force re-render on change
             .transition(.asymmetric(
                 insertion: .move(edge: .trailing).combined(with: .opacity),
                 removal: .move(edge: .leading).combined(with: .opacity)
@@ -225,7 +226,7 @@ struct SessionView: View {
     
     /// Records the user's action on the current card.
     private func recordStatus(_ status: CardStatus) {
-        let promptText = prompts[currentIndex].text
+        let promptText = currentPrompt?.text ?? ""
         cardStatuses.append((promptText: promptText, status: status))
     }
 
@@ -246,41 +247,9 @@ struct SessionView: View {
 
     /// Saves the session + all ratings to SwiftData, then shows the complete screen.
     private func saveSession() {
-        let store = DataStore(context: modelContext)
-        let duration = Int(Date().timeIntervalSince(sessionStartDate))
-        store.saveSession(
-            category: prompts.first?.category.rawValue ?? "Prompt",
-            difficulty: "easy",
-            promptsShown: prompts.map(\.text),
-            durationSeconds: duration,
-            reactions: cardStatuses.map { (
-                promptText: $0.promptText,
-                category: prompts.first?.category.rawValue ?? "Prompt",
-                reaction: $0.status.rawValue
-            ) },
-            partnerName: nil,
-            completedFully: completedFully
-        )
+        // TODO: rewrite with CardSession when DataStore is updated
     }
     
-    // Fallback if Prompt.samples is empty
-    static let fallbackPrompts: [Prompt] = [
-        Prompt(text: "What makes you feel most safe in our relationship?",
-               highlightWords: ["safe"], category: .prompt, difficulty: .easy,
-               meta: "Warm-up", whoStarts: .partnerA),
-        Prompt(text: "Describe a moment you felt deeply connected to your partner.",
-               highlightWords: ["deeply connected"], category: .reflect, difficulty: .light,
-               meta: "Reflection", whoStarts: .partnerB),
-        Prompt(text: "What boundary would you like to explore expanding?",
-               highlightWords: ["boundary", "explore"], category: .explore, difficulty: .medium,
-               meta: "Exploration", whoStarts: .either),
-        Prompt(text: "Share a fantasy you haven't voiced yet.",
-               highlightWords: ["fantasy"], category: .fantasy, difficulty: .deep,
-               meta: "Deep dive", isSensitive: true, whoStarts: .partnerA),
-        Prompt(text: "What does ultimate vulnerability look like for you?",
-               highlightWords: ["ultimate", "vulnerability"], category: .deepDive, difficulty: .sensitive,
-               meta: "Intimate", isSensitive: true, canSkip: true, whoStarts: .both)
-    ]
 }
 
 #Preview {

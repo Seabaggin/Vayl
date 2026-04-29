@@ -1,99 +1,18 @@
 //
-//  PulseCapacityColor.swift
-//  Open Lightly
+//  PulseEntry.swift
+//  Vayl
 //
-//  Created by Bryan Jorden on 4/6/26.
+//  Location: Models/Persistence/PulseEntry.swift
+//  PulseCapacityColor and PulseTier live in AppEnums.swift
+//  Their color properties live in AppColors.swift as extensions
 //
 
-
-// Models/PulseEntry.swift
-// Open Lightly
-
-import SwiftUI
-
-// MARK: - PulseCapacityColor
-
-enum PulseCapacityColor: String, Codable, CaseIterable {
-    case rose    // Q4: Empty    — tier 1
-    case magenta // Q4: Low      — tier 2
-    case indigo  // Q4: Good     — tier 3
-    case cyan    // Q4: Abundant — tier 4
-
-    var color: Color {
-        switch self {
-        case .rose:    return AppColors.pink
-        case .magenta: return AppColors.magenta
-        case .indigo:  return AppColors.electricViolet
-        case .cyan:    return AppColors.cyan
-        }
-    }
-
-    var label: String {
-        switch self {
-        case .rose:    return "Empty"
-        case .magenta: return "Low"
-        case .indigo:  return "Good"
-        case .cyan:    return "Abundant"
-        }
-    }
-}
-
-// MARK: - PulseTier
-
-enum PulseTier {
-    case expansive   // 3.5+
-    case sovereign   // 2.5–3.5
-    case friction    // 1.5–2.5
-    case protective  // < 1.5
-
-    static func tier(for score: Double) -> PulseTier {
-        switch score {
-        case 3.5...: return .expansive
-        case 2.5...: return .sovereign
-        case 1.5...: return .friction
-        default:     return .protective
-        }
-    }
-
-    var label: String {
-        switch self {
-        case .expansive:  return "The Expansive Space"
-        case .sovereign:  return "The Sovereign Space"
-        case .friction:   return "The Friction Space"
-        case .protective: return "The Protective Space"
-        }
-    }
-
-    var sublabel: String {
-        switch self {
-        case .expansive:  return "Connected · Adventurous"
-        case .sovereign:  return "Grounded · Secure"
-        case .friction:   return "Anxious · Defensive"
-        case .protective: return "Overwhelmed · Need Space"
-        }
-    }
-
-    var color: Color {
-        switch self {
-        case .expansive:  return AppColors.cyan
-        case .sovereign:  return AppColors.electricViolet
-        case .friction:   return AppColors.magenta
-        case .protective: return AppColors.pink
-        }
-    }
-
-    // Light mode — same hue, reads on cream
-    var lightColor: Color {
-        switch self {
-        case .expansive:  return AppColors.cyanDark
-        case .sovereign:  return AppColors.purple
-        case .friction:   return AppColors.magenta
-        case .protective: return AppColors.magentaDark
-        }
-    }
-}
+import Foundation
 
 // MARK: - PulseEntry
+// Plain Codable struct — stored in UserDefaults via PulseStore.
+// NOT a SwiftData @Model — device-level cache, not synced.
+// Shape is not final — revisit when Pulse check-in UI is built.
 
 struct PulseEntry: Identifiable, Codable {
     var id:            UUID               = UUID()

@@ -1,64 +1,95 @@
 //
 //  Couple.swift
-//  Open Lightly
-//
-//  Created by Bryan Jorden on 3/8/26.
+//  Vayl
 //
 
 import Foundation
 import SwiftData
 
+// MARK: - Couple
+// Represents a linked partner connection.
+// Entitlement lives here — one purchase covers both partners.
+// No hierarchy displayed to either partner.
+//
+// When a Couple is dissolved the record is archived not deleted.
+// UserProfile records survive independently.
+// coreUnlockedBy is recorded for support only — never shown to either partner.
+
 @Model
-final class Couple: Identifiable {
+final class Couple {
 
-    // MARK: - Properties
+    // MARK: - Identity
 
-    var id: UUID = UUID()
-    var createdAt: Date = Date()
+    var id: UUID
+    var partnerAId: UUID
+    var partnerBId: UUID
+    var createdAt: Date
 
-    // References to the two partners. No cascade — deleting
-    // a Couple does NOT delete the UserProfiles.
-    var partnerA: UserProfile?
-    var partnerB: UserProfile?
+    // MARK: - Connection Type
 
-    // MARK: - Shared Settings
+    var connectionType: ConnectionType  // primary ($24.99) / additional ($7.99)
 
-    /// Safe word agreed upon by both partners.
-    /// Default traffic light system: "red" / "yellow" / "green"
-    /// Can be customized during onboarding or in Settings.
-    var sharedSafeWord: String = "red"
+    // MARK: - Shared Config
 
-    /// Whether kink map mutual matches have been revealed.
-    /// Stays false until both partners complete their ratings
-    /// and tap "Reveal Matches."
-    var matchesRevealed: Bool = false
+    var sharedSafeWord: String          // default "red" — only shared config
+
+    // MARK: - Desire Map State
+
+    var matchesRevealed: Bool
+    var desireMapRevealedAt: Date?
+
+    // MARK: - Entitlement
+    // Lives on Couple — one purchase unlocks both partners.
+    // purchasedBy recorded for support only — never surfaced to either partner.
+
+    var entitlementTier: EntitlementTier    // free / core / pro
+    var coreUnlockedAt: Date?
+    var coreUnlockedBy: UUID?               // support use only
+    var isFoundingMember: Bool              // first year Pro free when Act 2 launches
 
     // MARK: - Relationships
 
     @Relationship(deleteRule: .cascade)
-    var cardProgress: [CardProgress] = []
-
-    @Relationship(deleteRule: .cascade)
-    var sessionRecords: [CoupleSessionRecord] = []
-
-    @Relationship(deleteRule: .cascade)
     var desireMatches: [DesireMatch] = []
 
-    // MARK: - Initializer
+    @Relationship(deleteRule: .cascade)
+    var cardSessions: [CardSession] = []
+
+    @Relationship(deleteRule: .cascade)
+    var deckProgress: [DeckProgress] = []
+
+    // MARK: - Init
 
     init(
-        partnerA: UserProfile? = nil,
-        partnerB: UserProfile? = nil,
-        sharedSafeWord: String = "red"
+        partnerAId: UUID,
+        partnerBId: UUID,
+        connectionType: ConnectionType = .primary
     ) {
         self.id = UUID()
+        self.partnerAId = partnerAId
+        self.partnerBId = partnerBId
         self.createdAt = Date()
-        self.partnerA = partnerA
-        self.partnerB = partnerB
-        self.sharedSafeWord = sharedSafeWord
+        self.connectionType = connectionType
+        self.sharedSafeWord = "red"
+        self.matchesRevealed = false
+        self.desireMapRevealedAt = nil
+        self.entitlementTier = .free
+        self.coreUnlockedAt = nil
+        self.coreUnlockedBy = nil
+        self.isFoundingMember = false
+    }
+
+    // MARK: - Computed
+
+    /// Whether the full Desire Map reveal is available.
+    var canRevealDesireMap: Bool {
+        entitlementTier != .free
     }
 
     // MARK: - Preview Helpers
 
-    static let example = Couple()
+    static let example = Couple(
+        partnerAId: UUID(),
+        partnerBId: UUID()
+    )
 }

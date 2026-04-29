@@ -14,8 +14,6 @@ struct AppShell: View {
             let bottomInset = geo.safeAreaInsets.bottom
 
             ZStack(alignment: .bottom) {
-
-                // ── Tab content ───────────────────────────────────────
                 Group {
                     switch selectedTab {
                     case .home:
@@ -30,7 +28,6 @@ struct AppShell: View {
                 }
                 .ignoresSafeArea(edges: .bottom)
 
-                // ── Floating tab bar ──────────────────────────────────
                 RacetrackTabBar(selection: $selectedTab)
                     .padding(.bottom, bottomInset + 8)
             }
@@ -48,7 +45,7 @@ struct AppShell: View {
     state.displayName = "Jordan"
     return AppShell()
         .environment(state)
-        .environmentObject(PulseStore())
+        .environment(PulseStore())
         .preferredColorScheme(.dark)
 }
 
@@ -59,7 +56,7 @@ struct AppShell: View {
     state.displayName = "Jordan"
     return AppShell()
         .environment(state)
-        .environmentObject(PulseStore())
+        .environment(PulseStore())
         .preferredColorScheme(.dark)
 }
 
@@ -70,6 +67,6 @@ struct AppShell: View {
     state.displayName = "Riley"
     return AppShell()
         .environment(state)
-        .environmentObject(PulseStore())
+        .environment(PulseStore())
         .preferredColorScheme(.dark)
 }

@@ -22,7 +22,7 @@ enum CardAction {
     case startSession
     case navigateToPlay
     case share
-    case redo(Prompt)
+    case redo(Card)
 }
 
 // MARK: - Layout Constants
@@ -46,8 +46,8 @@ private let gatheredScales:    [CGFloat] = [0.91, 0.93, 0.95, 0.96, 0.97, 0.98]
 
 struct CardCarousel: View {
 
-    var cards: [Prompt]
-    var onCardAction: ((Prompt, CardAction) -> Void)? = nil
+    var cards: [Card]
+    var onCardAction: ((Card, CardAction) -> Void)? = nil
     var onNavigateToPlay: (() -> Void)? = nil
     var onPhaseChange: ((CarouselPhase) -> Void)? = nil
 
@@ -69,7 +69,7 @@ struct CardCarousel: View {
 
     private var isLight: Bool { colorScheme == .light }
 
-    private var activeCard: Prompt? {
+    private var activeCard: Card? {
         guard cards.indices.contains(activeIndex) else { return nil }
         return cards[activeIndex]
     }
@@ -270,9 +270,9 @@ struct CardCarousel: View {
             Ellipse()
                 .fill(RadialGradient(
                     colors: [
-                        card.difficulty.glowColor
+                        AppColors.purple
                             .opacity(phase == .spread ? 0.14 : 0.28),
-                        card.difficulty.glowColor.opacity(0.08),
+                        AppColors.purple.opacity(0.08),
                         Color.clear
                     ],
                     center: .center,
@@ -295,7 +295,7 @@ struct CardCarousel: View {
                 Ellipse()
                     .fill(RadialGradient(
                         colors: [
-                            cards[incoming].difficulty.glowColor
+                            AppColors.purple
                                 .opacity(bleed * 0.22),
                             Color.clear
                         ],
@@ -357,97 +357,114 @@ struct CardCarousel: View {
             ]
 
             ForEach(visibleSlots, id: \.index) { entry in
-                let i             = entry.index
-                let relativeIndex = entry.relative
-                let baseOffset    = CGFloat(relativeIndex) * (cardW + 16)
-                let rawX          = phase == .carousel ? (baseOffset + dragOffset) : 0
-                let progress      = rawX / (cardW + 16)
-                let clampedProgress = min(max(progress, -1.0), 1.0)
-                let visualX       = clampedProgress * (cardW * 0.78)
-
-                ZStack {
-                    PromptCard(prompt: cards[i], showDifficultyDots: false)
-                        .frame(width: cardW, height: cardH)
-
-                    LinearGradient(
-                        colors: [.clear, .white.opacity(isLight ? 0.4 : 0.12), .clear],
-                        startPoint: .init(x: 0.2 - (progress * 1.5), y: 0),
-                        endPoint:   .init(x: 0.8 - (progress * 1.5), y: 1)
-                    )
-                    .blendMode(.screen)
-                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                    .allowsHitTesting(false)
-                    .opacity(phase == .carousel ? 1 : 0)
-
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(LinearGradient(
-                            stops: [
-                                .init(color: .clear,                                          location: 0),
-                                .init(color: .white.opacity(isLight ? 0.14 : 0.08),          location: 0.35),
-                                .init(color: .white.opacity(isLight ? 0.28 : 0.20),          location: 0.50),
-                                .init(color: .white.opacity(isLight ? 0.14 : 0.08),          location: 0.65),
-                                .init(color: .clear,                                          location: 1),
-                            ],
-                            startPoint: .init(x: specularPhase * 1.4 - 0.4, y: 0),
-                            endPoint:   .init(x: specularPhase * 1.4 - 0.1, y: 1)
-                        ))
-                        .blendMode(.screen)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                        .opacity((i == activeIndex && specularActive && phase != .carousel) ? 1 : 0)
-                }
-                .frame(width: cardW, height: cardH)
-                .padding(.top, 8)
-                .padding(.bottom, -8)
-                .offset(
-                    x: phase == .carousel ? visualX : 0,
-                    y: ((phase == .lifted || phase == .carousel) ? -40
-                        : (phase == .floating && i == activeIndex) ? floatOffset
-                        : 0)
-                    // Rubber-band vertical offset applied on top of phase offset.
-                    // Only active card responds — others stay put.
-                    + (i == activeIndex ? verticalDragOffset : 0)
-                )
-                .scaleEffect(
-                    phase == .carousel
-                        ? max(0.75, 1.0 - abs(clampedProgress) * 0.25)
-                        : (phase == .lifted ? 1.04 : 1.0)
-                )
-                .blur(radius: phase == .carousel ? abs(clampedProgress) * 2.5 : 0)
-                .rotation3DEffect(
-                    phase == .lifted && !reduceMotion
-                        ? .degrees(-4)
-                        : (phase == .carousel && !reduceMotion)
-                            ? .degrees(Double(clampedProgress * -25.0))
-                            : .degrees(0.001),
-                    axis: (x: 0.3, y: 1, z: 0),
-                    perspective: 0.25
-                )
-                // Active card always on top. Dragging card gets maximum
-                // promotion so it renders above every other element on screen.
-                .zIndex(i == activeIndex ? 200.0 : 100.0 - Double(abs(progress) * 10))
-                .allowsHitTesting(phase == .carousel && i == activeIndex)
-                .onTapGesture {
-                    if phase == .carousel && i == activeIndex {
-                        onCardAction?(cards[i], .startSession)
-                    }
-                }
-                .shadow(
-                    color: (phase == .lifted || phase == .carousel)
-                        ? cards[i].difficulty.glowColor.opacity(
-                            (i == activeIndex ? 0.35 : 0.0) + (abs(clampedProgress) * 0.45)
-                          )
-                        : cards[i].difficulty.glowColor.opacity(0.001),
-                    radius: phase == .carousel ? 36 + (abs(clampedProgress) * 45) : 36,
-                    y: 18
-                )
-                .opacity(
-                    phase == .carousel
-                        ? (i == activeIndex ? 1.0 : 0.75)
-                        : (i == activeIndex ? 1.0 : 0.0)
-                )
-                .animation(.spring(response: 0.55, dampingFraction: 0.80), value: phase)
+                carouselCard(index: entry.index, relativeIndex: entry.relative)
             }
         }
+    }
+
+    // MARK: - Carousel Card Helper
+
+    @ViewBuilder
+    private func carouselCard(index i: Int, relativeIndex: Int) -> some View {
+        let baseOffset      = CGFloat(relativeIndex) * (cardW + 16)
+        let rawX            = phase == .carousel ? (baseOffset + dragOffset) : 0
+        let progress        = rawX / (cardW + 16)
+        let clampedProgress = min(max(progress, -1.0), 1.0)
+        let visualX         = clampedProgress * (cardW * 0.78)
+        let isActive        = i == activeIndex
+
+        ZStack {
+            // STUB: replace with Card-based view when PromptCard is updated
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(AppColors.pageBg.opacity(0.9))
+                .overlay(
+                    Text(cards[i].text)
+                        .font(AppFonts.bodyText)
+                        .foregroundStyle(.white)
+                        .padding(20)
+                )
+                .frame(width: cardW, height: cardH)
+
+            LinearGradient(
+                colors: [.clear, .white.opacity(isLight ? 0.4 : 0.12), .clear],
+                startPoint: .init(x: 0.2 - (progress * 1.5), y: 0),
+                endPoint:   .init(x: 0.8 - (progress * 1.5), y: 1)
+            )
+            .blendMode(.screen)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .allowsHitTesting(false)
+            .opacity(phase == .carousel ? 1 : 0)
+
+            let specularOpacity: Double = (isActive && specularActive && phase != .carousel) ? 1 : 0
+            RoundedRectangle(cornerRadius: 20)
+                .fill(LinearGradient(
+                    stops: [
+                        .init(color: .clear,                                 location: 0),
+                        .init(color: .white.opacity(isLight ? 0.14 : 0.08), location: 0.35),
+                        .init(color: .white.opacity(isLight ? 0.28 : 0.20), location: 0.50),
+                        .init(color: .white.opacity(isLight ? 0.14 : 0.08), location: 0.65),
+                        .init(color: .clear,                                 location: 1),
+                    ],
+                    startPoint: .init(x: specularPhase * 1.4 - 0.4, y: 0),
+                    endPoint:   .init(x: specularPhase * 1.4 - 0.1, y: 1)
+                ))
+                .blendMode(.screen)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .opacity(specularOpacity)
+        }
+        .frame(width: cardW, height: cardH)
+        .padding(.top, 8)
+        .padding(.bottom, -8)
+        .offset(
+            x: phase == .carousel ? visualX : 0,
+            y: phaseOffsetY(isActive: isActive) + (isActive ? verticalDragOffset : 0)
+        )
+        .scaleEffect(
+            phase == .carousel
+                ? max(0.75, 1.0 - abs(clampedProgress) * 0.25)
+                : (phase == .lifted ? 1.04 : 1.0)
+        )
+        .blur(radius: phase == .carousel ? abs(clampedProgress) * 2.5 : 0)
+        .rotation3DEffect(
+            rotationAngle(clampedProgress: clampedProgress),
+            axis: (x: 0.3, y: 1, z: 0),
+            perspective: 0.25
+        )
+        .zIndex(isActive ? 200.0 : 100.0 - Double(abs(progress) * 10))
+        .allowsHitTesting(phase == .carousel && isActive)
+        .onTapGesture {
+            if phase == .carousel && isActive {
+                onCardAction?(cards[i], .startSession)
+            }
+        }
+        .shadow(
+            color: shadowColor(isActive: isActive, clampedProgress: clampedProgress),
+            radius: phase == .carousel ? 36 + (abs(clampedProgress) * 45) : 36,
+            y: 18
+        )
+        .opacity(phase == .carousel ? (isActive ? 1.0 : 0.75) : (isActive ? 1.0 : 0.0))
+        .animation(.spring(response: 0.55, dampingFraction: 0.80), value: phase)
+    }
+
+    private func phaseOffsetY(isActive: Bool) -> CGFloat {
+        switch phase {
+        case .lifted, .carousel: return -40
+        case .floating:          return isActive ? floatOffset : 0
+        default:                 return 0
+        }
+    }
+
+    private func rotationAngle(clampedProgress: CGFloat) -> Angle {
+        if phase == .lifted && !reduceMotion      { return .degrees(-4) }
+        if phase == .carousel && !reduceMotion    { return .degrees(Double(clampedProgress * -25.0)) }
+        return .degrees(0.001)
+    }
+
+    private func shadowColor(isActive: Bool, clampedProgress: CGFloat) -> Color {
+        if phase == .lifted || phase == .carousel {
+            return AppColors.purple.opacity((isActive ? 0.35 : 0.0) + abs(clampedProgress) * 0.45)
+        }
+        return AppColors.purple.opacity(0.001)
     }
 
     // MARK: - Specular Glint
@@ -562,7 +579,7 @@ struct CardCarousel: View {
 #Preview("Spread — dark") {
     ZStack {
         AppColors.pageBg.ignoresSafeArea()
-        CardCarousel(cards: Prompt.samples)
+        CardCarousel(cards: Card.samples)
     }
     .preferredColorScheme(.dark)
 }
@@ -570,7 +587,7 @@ struct CardCarousel: View {
 #Preview("Spread — light") {
     ZStack {
         AppColors.lightPageBg.ignoresSafeArea()
-        CardCarousel(cards: Prompt.samples)
+        CardCarousel(cards: Card.samples)
     }
     .preferredColorScheme(.light)
 }

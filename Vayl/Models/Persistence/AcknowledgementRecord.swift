@@ -2,6 +2,14 @@
 //  AcknowledgementRecord.swift
 //  Vayl
 //
+//  Created by Bryan Jorden on 4/27/26.
+//
+
+
+//
+//  AcknowledgementRecord.swift
+//  Vayl
+//
 //  Location: Models/Persistence/AcknowledgementRecord.swift
 //
 

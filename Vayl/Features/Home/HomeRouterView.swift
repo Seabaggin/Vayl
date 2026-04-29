@@ -1,5 +1,7 @@
-// HomeRouterView.swift
-// Open Lightly
+//
+//  HomeRouterView.swift
+//  Vayl
+//
 
 import SwiftUI
 
@@ -16,11 +18,7 @@ struct HomeRouterView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(AppState.self) private var appState
 
-    // ── Real state — placeholder bools until SwiftData models exist ──────
-    // These will become @Bindable SwiftData model reads in a future batch.
-    // Kept as @State for now so the router compiles and all states are
-    // reachable for testing via the debug controls below.
-    // AFTER
+    // ── Desire map state ─────────────────────────────────────────────────
     #if DEBUG
     @State private var myMapComplete:      Bool    = true
     @State private var partnerMapComplete: Bool    = true
@@ -36,22 +34,24 @@ struct HomeRouterView: View {
     #endif
     @State private var reflectionStep: Int = 1
 
+    // ── Deck loading ─────────────────────────────────────────────────────
+    @State private var deck: Deck? = nil
+    @State private var deckLoadError: String? = nil
+    @State private var isLoadingDeck: Bool = false
+
     // ── Derived from AppState ────────────────────────────────────────────
     private var isPaired: Bool {
-        appState.experienceType == .coupleNew
-        || appState.experienceType == .coupleExperienced
+        appState.appMode == .together
     }
 
     private var isSolo: Bool {
-        appState.experienceType == .soloSingle
-        || appState.experienceType == .soloPartnered
+        appState.appMode == .solo
     }
 
     // ── Single computed property drives all routing ──────────────────────
     private var homeState: HomeState {
         guard myMapComplete else                        { return .gated }
         guard postReflectionDone else                   { return .postReflection }
-        // Temporarily bypass isPaired check for testing
         guard partnerMapComplete else                   { return .waiting }
         guard revealDone else                           { return .matchReady }
         return .dashboard
@@ -99,32 +99,92 @@ struct HomeRouterView: View {
                 .transition(.opacity)
 
             case .dashboard:
-                HomeDashboardView(
-                    displayName:         appState.displayName,
-                    partnerChipState:    isPaired ? .invitePending : .none,
-                    cards:               Prompt.samples,
-                    desireMapState:      .hidden,
-                    reflectionCardState: .hidden,
-                    pickUpItems:         [],
-                    stageIndex:          1,
-                    cardsCompleted:      0,
-                    recentEvents:        [],
-                    isSolo:              isSolo,
-                    onInvitePartner:     { appState.selectedTab = .map },
-                    onPartnerTap:        { appState.selectedTab = .map }
-                )
-                .transition(.opacity)
+                dashboardContent
+                    .transition(.opacity)
             }
         }
         .animation(.easeInOut(duration: 0.4), value: homeState)
+        .task {
+            await loadDeck()
+        }
 
         #if DEBUG
-        // ── Debug overlay — lets you walk through all home states
-        // in the preview canvas without touching real data
         .overlay(alignment: .bottomTrailing) {
             debugControls
         }
         #endif
+    }
+
+    // MARK: - Dashboard Content
+
+    @ViewBuilder
+    private var dashboardContent: some View {
+        if let error = deckLoadError {
+            // ── Load failure — visible error, never silent ────────────────
+            VStack(spacing: 16) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 36))
+                    .foregroundStyle(AppColors.magenta)
+
+                Text("Couldn't load your deck")
+                    .font(AppFonts.screenTitle)
+                    .foregroundStyle(AppColors.textPrimary)
+
+                Text(error)
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+
+                Button("Try Again") {
+                    Task { await loadDeck() }
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding(32)
+
+        } else if isLoadingDeck || deck == nil {
+            // ── Loading state ─────────────────────────────────────────────
+            VStack(spacing: 12) {
+                ProgressView()
+                    .tint(AppColors.cyan)
+                Text("Loading your deck...")
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(AppColors.textSecondary)
+            }
+
+        } else if let loadedDeck = deck {
+            // ── Real content ──────────────────────────────────────────────
+            HomeDashboardView(
+                displayName:         appState.displayName,
+                partnerChipState:    isPaired ? .invitePending : .none,
+                cards:               loadedDeck.orderedCards,
+                desireMapState:      .hidden,
+                reflectionCardState: .hidden,
+                pickUpItems:         [],
+                stageIndex:          1,
+                cardsCompleted:      0,
+                recentEvents:        [],
+                isSolo:              isSolo,
+                onInvitePartner:     { appState.selectedTab = .map },
+                onPartnerTap:        { appState.selectedTab = .map }
+            )
+        }
+    }
+
+    // MARK: - Deck Loading
+
+    private func loadDeck() async {
+        isLoadingDeck = true
+        deckLoadError = nil
+
+        do {
+            let loaded = try ContentLoader.loadDeck(id: "the-opener")
+            deck = loaded
+        } catch {
+            deckLoadError = error.localizedDescription
+        }
+
+        isLoadingDeck = false
     }
 
     // MARK: - Tab Lock Helper

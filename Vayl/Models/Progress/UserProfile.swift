@@ -1,139 +1,140 @@
 //
 //  UserProfile.swift
-//  Open Lightly
-//
-//  Created by Bryan Jorden on 3/8/26.
+//  Vayl
 //
 
 import Foundation
 import SwiftData
 
+// MARK: - UserProfile
+// One record per person. Created at the end of onboarding.
+// Onboarding data is the source of truth for content routing
+// throughout the entire app lifecycle — nothing here gets discarded.
+//
+// lastEntryRitualDate lives in UserDefaults — not here.
+// pairingCode lives in Supabase only — never persisted locally
+// beyond the pairing flow.
+// archetype is invisible infrastructure — never shown to the user.
+
 @Model
-final class UserProfile: Identifiable {
+final class UserProfile {
 
     // MARK: - Identity
 
-    var id: UUID = UUID()
-    var name: String
-    var createdAt: Date = Date()
-    var pronouns: String
-    var sexualOrientation: String
-    var rolePreference: String
+    var id: UUID
+    var accountId: String?          // Sign in with Apple subject
+    var displayName: String
+    var pronouns: [String]
+    var createdAt: Date
 
-    // MARK: - Mode & Experience
+    // MARK: - Onboarding Routing
 
-    var userMode: String
-    var experienceLevel: String
-    var defaultDifficulty: String
-    var nmFlavor: NMFlavor?
-
-    // MARK: - Curiosity & Content
-
+    var nmStage: NMStage                        // curious / exploring / experienced
+    var appMode: AppMode                        // together / solo / browsing
+    var emotionalRegister: EmotionalRegister    // anxious / excited / flexible
+    var archetype: ArchetypeTag                 // internal only — never shown
     var curiositySelections: [String]
-    var surpriseMeEnabled: Bool
+    var nmCardResponse: String?                 // Card Reveal pill selection — nil if skipped
 
     // MARK: - Onboarding State
 
-    var hasCompletedOnboarding: Bool = false
-    var hasCompletedAssessment: Bool = false
-    var mythBusterComplete: Bool
-    var mythBusterSkipped: Bool
-    var onboardingDropoffScreen: String?
+    var hasCompletedOnboarding: Bool
+    var onboardingCompletedAt: Date?
+    var onboardingDropoffScreen: String?        // analytics — where they left
+    var groundRulesAcceptedAt: Date?            // legal — never delete
+    var acknowledgementAcceptedAt: Date?        // 3-card modal — never delete
 
-    // MARK: - Account & Auth
+    // MARK: - Link State
 
-    var accountId: String?
-    var accountCreated: Bool
+    var isLinked: Bool
+    var coupleId: UUID?
+    var linkedAt: Date?                         // when pairing completed — never delete
 
-    // MARK: - Pairing
+    // MARK: - Desire Map
 
-    var pairingCode: String = ""
-    var isLinked: Bool = false
-    var partnerLabel: PartnerLabel?
-
-    // MARK: - Relationships
-
-    @Relationship(deleteRule: .cascade)
-  
-
-    @Relationship(deleteRule: .cascade)
-    var desireRatings: [DesireRating] = []
+    var hasCompletedDesireMap: Bool
 
     // MARK: - Init
 
     init(
-        id: UUID = UUID(),
-        name: String = "",
-        createdAt: Date = Date(),
-        pronouns: String = "they/them",
-        sexualOrientation: String = "prefer not to say",
-        rolePreference: String = "not sure",
-        userMode: String = "solo",
-        experienceLevel: String = "new",
-        defaultDifficulty: String = "warm",
-        nmFlavor: NMFlavor? = nil,
-        pairingCode: String? = nil,
-        isLinked: Bool = false,
-        partnerLabel: PartnerLabel? = nil,
-        hasCompletedOnboarding: Bool = false,
-        hasCompletedAssessment: Bool = false
+        displayName: String = "",
+        pronouns: [String] = [],
+        nmStage: NMStage = .curious,
+        appMode: AppMode = .together,
+        emotionalRegister: EmotionalRegister = .flexible,
+        archetype: ArchetypeTag = .curious,
+        curiositySelections: [String] = [],
+        nmCardResponse: String? = nil
     ) {
-        self.id = id
-        self.name = name
-        self.createdAt = createdAt
-        self.pronouns = pronouns
-        self.sexualOrientation = sexualOrientation
-        self.rolePreference = rolePreference
-        self.userMode = userMode
-        self.experienceLevel = experienceLevel
-        self.defaultDifficulty = defaultDifficulty
-        self.nmFlavor = nmFlavor
-        self.pairingCode = pairingCode ?? UserProfile.generatePairingCode()
-        self.isLinked = isLinked
-        self.partnerLabel = partnerLabel
-        self.hasCompletedOnboarding = hasCompletedOnboarding
-        self.hasCompletedAssessment = hasCompletedAssessment
-        self.curiositySelections = []
-        self.surpriseMeEnabled = false
-        self.mythBusterComplete = false
-        self.mythBusterSkipped = false
+        self.id = UUID()
         self.accountId = nil
-        self.accountCreated = false
+        self.displayName = displayName
+        self.pronouns = pronouns
+        self.createdAt = Date()
+        self.nmStage = nmStage
+        self.appMode = appMode
+        self.emotionalRegister = emotionalRegister
+        self.archetype = archetype
+        self.curiositySelections = curiositySelections
+        self.nmCardResponse = nmCardResponse
+        self.hasCompletedOnboarding = false
+        self.onboardingCompletedAt = nil
         self.onboardingDropoffScreen = nil
+        self.groundRulesAcceptedAt = nil
+        self.acknowledgementAcceptedAt = nil
+        self.isLinked = false
+        self.coupleId = nil
+        self.linkedAt = nil
+        self.hasCompletedDesireMap = false
     }
 
-    // MARK: - Computed Properties
+    // MARK: - Computed
 
     var displayInitial: String {
-        String(name.prefix(1)).uppercased()
+        String(displayName.prefix(1)).uppercased()
     }
 
-    var isSolo: Bool { !isLinked }
+    var linkState: LinkState {
+        isLinked ? .linked : .unlinked
+    }
 
-    // MARK: - Static Helpers
-
-    static func generatePairingCode() -> String {
-        let words = [
-            "HONEY", "SPARK", "FLAME", "BLOOM", "VELVET",
-            "LUNAR", "EMBER", "BLUSH", "SUGAR", "CEDAR",
-            "ROUGE", "PEARL", "CORAL", "DUSK", "HAVEN"
-        ]
-        let word = words.randomElement() ?? "SPARK"
-        let number = Int.random(in: 10...99)
-        return "\(word) \(number)"
+    /// Default card intensity derived from NM stage.
+    /// Never stored independently — always derived.
+    var defaultIntensity: CardIntensity {
+        nmStage.defaultDifficulty
     }
 
     // MARK: - Preview Helpers
 
-    static let example = UserProfile(name: "Jordan")
+    static let example = UserProfile(
+        displayName: "Jordan",
+        pronouns: ["they/them"],
+        nmStage: .curious,
+        appMode: .together,
+        emotionalRegister: .flexible
+    )
+
+    static let soloExample = UserProfile(
+        displayName: "Riley",
+        pronouns: ["she/her"],
+        nmStage: .curious,
+        appMode: .solo,
+        emotionalRegister: .anxious
+    )
 
     static let linkedExample: UserProfile = {
-        let p = UserProfile(name: "Riley")
+        let p = UserProfile(
+            displayName: "Alex",
+            pronouns: ["he/him"],
+            nmStage: .exploring,
+            appMode: .together,
+            emotionalRegister: .excited
+        )
         p.isLinked = true
-        p.partnerLabel = PartnerLabel.partnerA
+        p.coupleId = UUID()
+        p.linkedAt = Date()
         p.hasCompletedOnboarding = true
-        p.hasCompletedAssessment = true
-        p.pairingCode = "SPARK 42"
+        p.onboardingCompletedAt = Date()
         return p
     }()
 }

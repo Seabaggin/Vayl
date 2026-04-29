@@ -2,6 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>UIAppFonts</key>
+    <array>
+        <string>ClashDisplay-Medium.otf</string>
+        <string>ClashDisplay-Semibold.otf</string>
+        <string>ClashDisplay-Bold.otf</string>
+        <string>Switzer-Regular.otf</string>
+        <string>Switzer-Medium.otf</string>
+        <string>Switzer-Semibold.otf</string>
+        <string>Switzer-Bold.otf</string>
+        <string>Zodiak-ExtraboldItalic.otf</string>
+        <string>Zodiak-BoldItalic.otf</string>
+        <string>Zodiak-Extrabold.otf</string>
+        <string>Zodiak-Bold.otf</string>
+        <string>Zodiak-Black.otf</string>
+    </array>
     <key>SUPABASE_URL</key>
     <string>$(SUPABASE_URL)</string>
     <key>SUPABASE_ANON_KEY</key>

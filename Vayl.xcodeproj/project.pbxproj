@@ -15,7 +15,7 @@
 		3D51D7492F5FB8D7002488A7 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D7482F5FB8D7002488A7 /* Realtime */; };
 		3D51D74B2F5FB8D7002488A7 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D74A2F5FB8D7002488A7 /* Storage */; };
 		3D51D7502F5FBA71002488A7 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D74F2F5FBA71002488A7 /* Supabase */; };
-		3D58E6DD2F6227E800210EB6 /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 3D58E6DC2F6227E800210EB6 /* Config.xcconfig */; };
+		3D58E6DD2F6227E800210EB6 /* Vayl.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 3D58E6DC2F6227E800210EB6 /* Vayl.xcconfig */; };
 		3D767EFA2F5D562900F2D70F /* RULES.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EF92F5D562100F2D70F /* RULES.md */; };
 		3D767EFC2F5D565700F2D70F /* PROJECT_SCOPE.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */; };
 		3D807B942F8DC74B0021F080 /* .aider.conf.yml in Resources */ = {isa = PBXBuildFile; fileRef = 3D807B932F8DC7450021F080 /* .aider.conf.yml */; };
@@ -44,10 +44,10 @@
 /* Begin PBXFileReference section */
 		3D0635562F8AF7340098DE65 /* gather_audit_home.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_audit_home.sh; sourceTree = "<group>"; };
 		3D0635582F8AF7530098DE65 /* gather_audit_pulse_carousel.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_audit_pulse_carousel.sh; sourceTree = "<group>"; };
-		3D58E6DC2F6227E800210EB6 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
-		3D767EB22F5D520D00F2D70F /* Open Lightly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Open Lightly.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		3D767EC12F5D520E00F2D70F /* Open LightlyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Open LightlyTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		3D767ECB2F5D520E00F2D70F /* Open LightlyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Open LightlyUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D58E6DC2F6227E800210EB6 /* Vayl.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Vayl.xcconfig; sourceTree = "<group>"; };
+		3D767EB22F5D520D00F2D70F /* Vayl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vayl.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D767EC12F5D520E00F2D70F /* VaylTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VaylTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D767ECB2F5D520E00F2D70F /* VaylUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VaylUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D767EF92F5D562100F2D70F /* RULES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = RULES.md; sourceTree = "<group>"; };
 		3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PROJECT_SCOPE.md; sourceTree = "<group>"; };
 		3D807B932F8DC7450021F080 /* .aider.conf.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .aider.conf.yml; sourceTree = "<group>"; };
@@ -57,19 +57,9 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		3D767EB42F5D520D00F2D70F /* Open Lightly */ = {
+		3D767EB42F5D520D00F2D70F /* Vayl */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Open Lightly";
-			sourceTree = "<group>";
-		};
-		3D767EC42F5D520E00F2D70F /* Open LightlyTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Open LightlyTests";
-			sourceTree = "<group>";
-		};
-		3D767ECE2F5D520E00F2D70F /* Open LightlyUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Open LightlyUITests";
+			path = Vayl;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -123,21 +113,19 @@
 				3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */,
 				3D767EF92F5D562100F2D70F /* RULES.md */,
 				3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */,
-				3D767EB42F5D520D00F2D70F /* Open Lightly */,
-				3D767EC42F5D520E00F2D70F /* Open LightlyTests */,
-				3D767ECE2F5D520E00F2D70F /* Open LightlyUITests */,
+				3D767EB42F5D520D00F2D70F /* Vayl */,
 				3D51D74E2F5FBA71002488A7 /* Frameworks */,
 				3D767EB32F5D520D00F2D70F /* Products */,
-				3D58E6DC2F6227E800210EB6 /* Config.xcconfig */,
+				3D58E6DC2F6227E800210EB6 /* Vayl.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
 		3D767EB32F5D520D00F2D70F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3D767EB22F5D520D00F2D70F /* Open Lightly.app */,
-				3D767EC12F5D520E00F2D70F /* Open LightlyTests.xctest */,
-				3D767ECB2F5D520E00F2D70F /* Open LightlyUITests.xctest */,
+				3D767EB22F5D520D00F2D70F /* Vayl.app */,
+				3D767EC12F5D520E00F2D70F /* VaylTests.xctest */,
+				3D767ECB2F5D520E00F2D70F /* VaylUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -145,9 +133,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		3D767EB12F5D520D00F2D70F /* Open Lightly */ = {
+		3D767EB12F5D520D00F2D70F /* Vayl */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3D767ED52F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "Open Lightly" */;
+			buildConfigurationList = 3D767ED52F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "Vayl" */;
 			buildPhases = (
 				3D767EAE2F5D520D00F2D70F /* Sources */,
 				3D767EAF2F5D520D00F2D70F /* Frameworks */,
@@ -158,9 +146,9 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				3D767EB42F5D520D00F2D70F /* Open Lightly */,
+				3D767EB42F5D520D00F2D70F /* Vayl */,
 			);
-			name = "Open Lightly";
+			name = Vayl;
 			packageProductDependencies = (
 				3D51D7422F5FB8D7002488A7 /* Auth */,
 				3D51D7442F5FB8D7002488A7 /* Functions */,
@@ -170,12 +158,12 @@
 				3D51D74F2F5FBA71002488A7 /* Supabase */,
 			);
 			productName = "Open Lightly";
-			productReference = 3D767EB22F5D520D00F2D70F /* Open Lightly.app */;
+			productReference = 3D767EB22F5D520D00F2D70F /* Vayl.app */;
 			productType = "com.apple.product-type.application";
 		};
-		3D767EC02F5D520E00F2D70F /* Open LightlyTests */ = {
+		3D767EC02F5D520E00F2D70F /* VaylTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3D767ED82F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "Open LightlyTests" */;
+			buildConfigurationList = 3D767ED82F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "VaylTests" */;
 			buildPhases = (
 				3D767EBD2F5D520E00F2D70F /* Sources */,
 				3D767EBE2F5D520E00F2D70F /* Frameworks */,
@@ -186,19 +174,16 @@
 			dependencies = (
 				3D767EC32F5D520E00F2D70F /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				3D767EC42F5D520E00F2D70F /* Open LightlyTests */,
-			);
-			name = "Open LightlyTests";
+			name = VaylTests;
 			packageProductDependencies = (
 			);
 			productName = "Open LightlyTests";
-			productReference = 3D767EC12F5D520E00F2D70F /* Open LightlyTests.xctest */;
+			productReference = 3D767EC12F5D520E00F2D70F /* VaylTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		3D767ECA2F5D520E00F2D70F /* Open LightlyUITests */ = {
+		3D767ECA2F5D520E00F2D70F /* VaylUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3D767EDB2F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "Open LightlyUITests" */;
+			buildConfigurationList = 3D767EDB2F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "VaylUITests" */;
 			buildPhases = (
 				3D767EC72F5D520E00F2D70F /* Sources */,
 				3D767EC82F5D520E00F2D70F /* Frameworks */,
@@ -209,14 +194,11 @@
 			dependencies = (
 				3D767ECD2F5D520E00F2D70F /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				3D767ECE2F5D520E00F2D70F /* Open LightlyUITests */,
-			);
-			name = "Open LightlyUITests";
+			name = VaylUITests;
 			packageProductDependencies = (
 			);
 			productName = "Open LightlyUITests";
-			productReference = 3D767ECB2F5D520E00F2D70F /* Open LightlyUITests.xctest */;
+			productReference = 3D767ECB2F5D520E00F2D70F /* VaylUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -242,7 +224,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 3D767EAD2F5D520D00F2D70F /* Build configuration list for PBXProject "Open Lightly" */;
+			buildConfigurationList = 3D767EAD2F5D520D00F2D70F /* Build configuration list for PBXProject "Vayl" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -259,9 +241,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				3D767EB12F5D520D00F2D70F /* Open Lightly */,
-				3D767EC02F5D520E00F2D70F /* Open LightlyTests */,
-				3D767ECA2F5D520E00F2D70F /* Open LightlyUITests */,
+				3D767EB12F5D520D00F2D70F /* Vayl */,
+				3D767EC02F5D520E00F2D70F /* VaylTests */,
+				3D767ECA2F5D520E00F2D70F /* VaylUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -274,7 +256,7 @@
 				3D767EFC2F5D565700F2D70F /* PROJECT_SCOPE.md in Resources */,
 				3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */,
 				3D83007B2F84981B001F650B /* gather_checkin_context.sh in Resources */,
-				3D58E6DD2F6227E800210EB6 /* Config.xcconfig in Resources */,
+				3D58E6DD2F6227E800210EB6 /* Vayl.xcconfig in Resources */,
 				3D767EFA2F5D562900F2D70F /* RULES.md in Resources */,
 				3D807B942F8DC74B0021F080 /* .aider.conf.yml in Resources */,
 				3D0635592F8AF7570098DE65 /* gather_audit_pulse_carousel.sh in Resources */,
@@ -326,12 +308,12 @@
 /* Begin PBXTargetDependency section */
 		3D767EC32F5D520E00F2D70F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 3D767EB12F5D520D00F2D70F /* Open Lightly */;
+			target = 3D767EB12F5D520D00F2D70F /* Vayl */;
 			targetProxy = 3D767EC22F5D520E00F2D70F /* PBXContainerItemProxy */;
 		};
 		3D767ECD2F5D520E00F2D70F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 3D767EB12F5D520D00F2D70F /* Open Lightly */;
+			target = 3D767EB12F5D520D00F2D70F /* Vayl */;
 			targetProxy = 3D767ECC2F5D520E00F2D70F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -339,7 +321,7 @@
 /* Begin XCBuildConfiguration section */
 		3D767ED32F5D520E00F2D70F /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3D58E6DC2F6227E800210EB6 /* Config.xcconfig */;
+			baseConfigurationReference = 3D58E6DC2F6227E800210EB6 /* Vayl.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -403,7 +385,7 @@
 		};
 		3D767ED42F5D520E00F2D70F /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3D58E6DC2F6227E800210EB6 /* Config.xcconfig */;
+			baseConfigurationReference = 3D58E6DC2F6227E800210EB6 /* Vayl.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -460,16 +442,18 @@
 		};
 		3D767ED62F5D520E00F2D70F /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3D58E6DC2F6227E800210EB6 /* Vayl.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "Open Lightly/Open Lightly.entitlements";
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Vayl/Vayl.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8KUPG54AQZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Open-Lightly-Info.plist";
+				INFOPLIST_FILE = Vayl/Vayl.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -480,7 +464,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.bryanjorden.Open-Lightly";
+				PRODUCT_BUNDLE_IDENTIFIER = com.bryanjorden.Vayl;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -494,16 +478,18 @@
 		};
 		3D767ED72F5D520E00F2D70F /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3D58E6DC2F6227E800210EB6 /* Vayl.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "Open Lightly/Open Lightly.entitlements";
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Vayl/Vayl.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8KUPG54AQZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Open-Lightly-Info.plist";
+				INFOPLIST_FILE = Vayl/Vayl.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -514,7 +500,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.bryanjorden.Open-Lightly";
+				PRODUCT_BUNDLE_IDENTIFIER = com.bryanjorden.Vayl;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -543,7 +529,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Open Lightly.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Open Lightly";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vayl.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vayl";
 			};
 			name = Debug;
 		};
@@ -564,7 +550,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Open Lightly.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Open Lightly";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vayl.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vayl";
 			};
 			name = Release;
 		};
@@ -609,7 +595,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		3D767EAD2F5D520D00F2D70F /* Build configuration list for PBXProject "Open Lightly" */ = {
+		3D767EAD2F5D520D00F2D70F /* Build configuration list for PBXProject "Vayl" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3D767ED32F5D520E00F2D70F /* Debug */,
@@ -618,7 +604,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3D767ED52F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "Open Lightly" */ = {
+		3D767ED52F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "Vayl" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3D767ED62F5D520E00F2D70F /* Debug */,
@@ -627,7 +613,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3D767ED82F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "Open LightlyTests" */ = {
+		3D767ED82F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "VaylTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3D767ED92F5D520E00F2D70F /* Debug */,
@@ -636,7 +622,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3D767EDB2F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "Open LightlyUITests" */ = {
+		3D767EDB2F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "VaylUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3D767EDC2F5D520E00F2D70F /* Debug */,

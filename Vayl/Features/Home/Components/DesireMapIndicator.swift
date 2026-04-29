@@ -235,7 +235,7 @@ struct DesireMapIndicator: View {
                 .padding(.vertical, 16)
             }
 
-        case .redoInProgress(let partnerName, let partnerStarted):
+        case .redoInProgress(let partnerName, let matchCount):
             statusCard {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
@@ -268,13 +268,13 @@ struct DesireMapIndicator: View {
                             }
                             HStack(spacing: 5) {
                                 Circle()
-                                    .fill(partnerStarted
+                                    .fill(matchCount != 0
                                           ? (colorScheme == .light
                                               ? AppColors.gold
                                               : AppColors.purple)
                                           : Color.clear)
                                     .overlay {
-                                        if !partnerStarted {
+                                        if matchCount == 0 {
                                             Circle()
                                                 .stroke(colorScheme == .light
                                                     ? AppColors.lightTextTertiary
@@ -283,12 +283,12 @@ struct DesireMapIndicator: View {
                                         }
                                     }
                                     .frame(width: 7, height: 7)
-                                Text(partnerStarted
+                                Text(matchCount != 0
                                      ? "\(partnerName) in progress"
                                      : "\(partnerName) hasn't started")
                                     .font(AppFonts.caption)
                                     .foregroundStyle(
-                                        partnerStarted
+                                        matchCount != 0
                                         ? (colorScheme == .light
                                             ? AppColors.lightTextSecondary
                                             : AppColors.textSecondary)
@@ -300,7 +300,7 @@ struct DesireMapIndicator: View {
                         }
                     }
                     Spacer()
-                    if !partnerStarted {
+                    if matchCount == 0 {
                         Button {
                             UIImpactFeedbackGenerator(style: .light)
                                 .impactOccurred()
@@ -318,6 +318,9 @@ struct DesireMapIndicator: View {
                 .padding(.horizontal, 18)
                 .padding(.vertical, 16)
             }
+
+        case .gated, .yourTurn, .waiting, .matchReady, .revealed:
+            EmptyView()
         }
     }
 

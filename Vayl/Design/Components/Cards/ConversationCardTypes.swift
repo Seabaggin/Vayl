@@ -35,7 +35,7 @@ enum CardRevealPill: String, CaseIterable, Identifiable {
 // MARK: - Content Type
 
 enum ConversationCardContent {
-    case prompt(Prompt)
+    case prompt(String)     // card text — stub until full Card integration
     case onboarding(OBCard)
 }
 

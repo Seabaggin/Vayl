@@ -74,25 +74,33 @@ enum QuizType {
     case jealousyAnatomy
 }
 
-// MARK: - OnboardingData Extension
+// MARK: - Default Config Stub
 
-extension OnboardingData {
-    /// Derives the correct screen config from explorationMode + relationshipContext.
-    var curiosityScreenConfig: CuriosityScreenConfig {
-        switch (explorationMode, relationshipContext) {
-        case (.solo, .single):           return .soloSingleConfig
-        case (.solo, .partneredOpen):    return .soloPartneredOpenConfig
-        case (.solo, .partneredHidden):  return .soloPartneredHiddenConfig
-        case (.solo, nil):               return .soloSingleConfig
-        case (.couple, .notTalked):      return .coupleNotTalkedConfig
-        case (.couple, .talking):        return .coupleTalkingConfig
-        case (.couple, .someExperience): return .coupleSomeExperienceConfig
-        case (.couple, .needsReset):     return .coupleNeedsResetConfig
-        case (.couple, nil):             return .coupleNotTalkedConfig
-        default:                         return .browsingConfig
-        }
+extension CuriosityScreenConfig {
+    /// Placeholder used while the full appMode-based config is being rebuilt.
+    static var `default`: CuriosityScreenConfig {
+        CuriosityScreenConfig(
+            section1Label: "What do you want to explore?",
+            section1Sublabel: "Choose the topics that matter most",
+            section1Options: [],
+            showSection2: false
+        )
     }
 }
+
+// MARK: - OnboardingData Extension
+
+// PENDING: curiosityScreenConfig needs to be rewritten against AppMode.
+// extension OnboardingData {
+//     var curiosityScreenConfig: CuriosityScreenConfig {
+//         switch appMode {
+//         case .solo:     return .soloSingleConfig
+//         case .together: return .coupleNotTalkedConfig
+//         case .browsing: return .browsingConfig
+//         case nil:       return .browsingConfig
+//         }
+//     }
+// }
 
 // MARK: - Static Config Instances
 

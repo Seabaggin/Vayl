@@ -9,15 +9,18 @@
 // Features/Map/MapView.swift
 // Open Lightly
 
+//
+//  MapView.swift
+//  Vayl
+//
+// Temporary P2 test harness — shows PairingSettingsView for partner linking verification.
+// Replace with real Map/Desire Map implementation after P3 passes.
+//
+
 import SwiftUI
 
 struct MapView: View {
     var body: some View {
-        ZStack {
-            AppColors.pageBg.ignoresSafeArea()
-            Text("Map")
-                .font(AppFonts.screenTitle)
-                .foregroundStyle(AppColors.textSecondary)
-        }
+        PairingSettingsView()
     }
 }

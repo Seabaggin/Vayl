@@ -1,67 +1,56 @@
 //
 //  AuthService.swift
-//  Open Lightly
-//
-//  Created by Bryan Jorden on 3/9/26.
+//  Vayl
 //
 
 import AuthenticationServices
-import Supabase
 import CryptoKit
 import Foundation
-import Combine
+import Observation
+import Supabase
 
+// MARK: - AuthService
+
+@Observable
 @MainActor
-final class AuthService: NSObject, ObservableObject {
-    
-    // MARK: - Published State
+final class AuthService: NSObject {
 
-    @Published var isAuthenticated = true
-    @Published var userId: UUID?
-    @Published var isLoading = false
-    @Published var error: String?
-    
+    // MARK: - State
+
+    /// Starts false. Set to true only after a real session is confirmed.
+    /// Never defaults to true. Never bypassed on simulator.
+    var isAuthenticated = false
+    var userId: UUID?
+    var isLoading = false
+    var error: String?
+
     // MARK: - Private
-    
+
     private var currentNonce: String?
-    
+
     private var supabase: SupabaseClient {
         SupabaseManager.shared.client
     }
-    
-    // MARK: - Check Existing Session
-    
+
+    // MARK: - Session Check
+
+    /// Call once on app launch from VaylApp or AppShell.
+    /// Resolves the real auth state from Supabase — no simulator shortcuts.
     func checkSession() async {
-        #if targetEnvironment(simulator)
-        isAuthenticated = true
-        userId = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
-        #else
         do {
             let session = try await supabase.auth.session
             self.userId = session.user.id
             self.isAuthenticated = true
-            #if DEBUG
-            print("✅ Existing session found: \(session.user.id)")
-            #endif
         } catch {
-            // No active session — user needs to sign in
-            #if DEBUG
-            print("ℹ️ No existing session")
-            #endif
-            // ✅ TestFlight ready — properly clears auth state on failure
+            // No active session — correct default state.
             self.isAuthenticated = false
             self.userId = nil
         }
-        #endif
     }
-    
-    // MARK: - Sign in with Apple
-    
+
+    // MARK: - Sign In With Apple
+
     func signInWithApple() {
-        #if targetEnvironment(simulator)
-        isAuthenticated = true
-        userId = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
-        #else
         isLoading = true
         error = nil
 
@@ -75,46 +64,37 @@ final class AuthService: NSObject, ObservableObject {
         let controller = ASAuthorizationController(authorizationRequests: [request])
         controller.delegate = self
         controller.performRequests()
-        #endif
     }
-    
+
     // MARK: - Sign Out
-    
+
     func signOut() async {
         do {
             try await supabase.auth.signOut()
             self.isAuthenticated = false
             self.userId = nil
-            #if DEBUG
-            print("✅ Signed out")
-            #endif
         } catch {
             self.error = error.localizedDescription
-            #if DEBUG
-            print("❌ Sign out failed")
-            #endif
         }
     }
-    
-    // MARK: - Current User ID Helper
-    
-    var currentAuthId: UUID? {
-        return userId
-    }
-    
-    // MARK: - Nonce Helpers
-    
+
+    // MARK: - Helpers
+
+    var currentAuthId: UUID? { userId }
+
+    // MARK: - Nonce
+
     private func randomNonceString(length: Int = 32) -> String {
         precondition(length > 0)
         var randomBytes = [UInt8](repeating: 0, count: length)
         let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
-        if errorCode != errSecSuccess {
+        guard errorCode == errSecSuccess else {
             fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
         }
         let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
         return String(randomBytes.map { byte in charset[Int(byte) % charset.count] })
     }
-    
+
     private func sha256(_ input: String) -> String {
         let inputData = Data(input.utf8)
         let hashedData = SHA256.hash(data: inputData)
@@ -125,7 +105,7 @@ final class AuthService: NSObject, ObservableObject {
 // MARK: - ASAuthorizationControllerDelegate
 
 extension AuthService: ASAuthorizationControllerDelegate {
-    
+
     nonisolated func authorizationController(
         controller: ASAuthorizationController,
         didCompleteWithAuthorization authorization: ASAuthorization
@@ -140,7 +120,7 @@ extension AuthService: ASAuthorizationControllerDelegate {
             }
             return
         }
-        
+
         Task { @MainActor in
             do {
                 let session = try await supabase.auth.signInWithIdToken(
@@ -153,19 +133,13 @@ extension AuthService: ASAuthorizationControllerDelegate {
                 self.userId = session.user.id
                 self.isAuthenticated = true
                 self.isLoading = false
-                #if DEBUG
-                print("✅ Apple sign-in successful: \(session.user.id)")
-                #endif
             } catch {
                 self.error = error.localizedDescription
                 self.isLoading = false
-                #if DEBUG
-                print("❌ Apple sign-in failed: \(error.localizedDescription)")
-                #endif
             }
         }
     }
-    
+
     nonisolated func authorizationController(
         controller: ASAuthorizationController,
         didCompleteWithError error: Error
@@ -173,9 +147,6 @@ extension AuthService: ASAuthorizationControllerDelegate {
         Task { @MainActor in
             self.error = error.localizedDescription
             self.isLoading = false
-            #if DEBUG
-            print("❌ Apple auth error: \(error.localizedDescription)")
-            #endif
         }
     }
 }

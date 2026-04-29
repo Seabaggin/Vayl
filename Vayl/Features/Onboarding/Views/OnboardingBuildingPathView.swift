@@ -120,16 +120,7 @@ private var stageLabel: String {
 }
 
 private var contextLabel: String {
-    switch data.relationshipContext {
-    case .partneredOpen:   return "Navigating openness together"
-    case .partneredHidden: return "Finding words for the unspoken"
-    case .notTalked:       return "Opening the conversation"
-    case .talking:         return "Growing shared curiosity"
-    case .single:          return "Your journey, your pace"
-    case .someExperience:  return "Processing what's happened"
-    case .needsReset:      return "Rebuilding from here"
-    default:               return "Your situation"
-    }
+    "Your situation" // TODO: derive from emotionalRegister when OnboardingData field is added
 }
 
 private var goalsLabel: String {
@@ -141,10 +132,10 @@ private var goalsLabel: String {
 }
 
 private var modeLabel: String {
-    switch data.explorationMode {
-    case .solo:   return "At your own pace"
-    case .couple: return "Together, step by step"
-    default:      return "Your conversation style"
+    switch data.appMode {
+    case .solo:     return "At your own pace"
+    case .together: return "Together, step by step"
+    default:        return "Your conversation style"
     }
 }
 
@@ -160,16 +151,7 @@ private var stageFragment: String {
 }
 
 private var contextFragment: String? {
-    switch data.relationshipContext {
-    case .single:          return "Your journey"
-    case .partneredOpen:   return "With transparency"
-    case .partneredHidden: return "Finding the words"
-    case .notTalked:       return "Starting together"
-    case .talking:         return "Shared curiosity"
-    case .someExperience:  return "Processing this"
-    case .needsReset:      return "Rebuilding"
-    default:               return nil
-    }
+    nil // TODO: derive from emotionalRegister when OnboardingData field is added
 }
 
 // R-BUG-3 FIX: Fragment strings are kept short (≤20 chars) so they
@@ -1125,11 +1107,10 @@ var body: some View {
 #Preview("Dark Mode") {
 @Previewable @State var data: OnboardingData = {
 var d = OnboardingData()
-d.displayName         = "Jordan"
-d.explorationMode     = .couple
-d.nmStage             = .curious
-d.relationshipContext = .notTalked
-d.communicationGoals  = ["Talking about fantasies"]
+d.displayName        = "Jordan"
+d.appMode            = .together
+d.nmStage            = .curious
+d.communicationGoals = ["Talking about fantasies"]
 return d
 }()
 // Changing this id destroys and recreates the view, restarting animation.
@@ -1152,11 +1133,10 @@ Button("↺ Reset") { instanceID = UUID() }
 #Preview("Light Mode") {
 @Previewable @State var data: OnboardingData = {
 var d = OnboardingData()
-d.displayName         = "Alex"
-d.explorationMode     = .solo
-d.nmStage             = .experienced
-d.relationshipContext = .needsReset
-d.communicationGoals  = ["Rebuilding intimacy"]
+d.displayName        = "Alex"
+d.appMode            = .solo
+d.nmStage            = .experienced
+d.communicationGoals = ["Rebuilding intimacy"]
 return d
 }()
 @Previewable @State var instanceID = UUID()

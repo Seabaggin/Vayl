@@ -455,51 +455,7 @@ struct AppColors {
 // Maps prompt difficulty -> visual intensity
 // ──────────────────────────────────────────────────────
 
-enum CardIntensity: Int, CaseIterable, Identifiable {
-    case void        = 1
-    case deepOcean   = 2
-    case emberFloor  = 3
-    case split       = 4
-    case nebula      = 5
-    case auroraBand  = 6
-    case deepSpace   = 7
-    case supernova   = 8
-
-    var id: Int { rawValue }
-
-    // ─────────────────────────────────────────────
-    // MARK: Mapping from prompt data
-    // ─────────────────────────────────────────────
-
-    static func from(difficulty: String) -> CardIntensity {
-        switch difficulty.lowercased() {
-        case "easy":        return .void
-        case "light":       return .deepOcean
-        case "medium":      return .split
-        case "deep":        return .nebula
-        case "sensitive":   return .deepSpace
-        case "ultimate":    return .supernova
-        default:            return .deepOcean
-        }
-    }
-
-    static func from(score: Int) -> CardIntensity {
-        switch score {
-        case 1...2:  return .void
-        case 3:      return .deepOcean
-        case 4:      return .emberFloor
-        case 5:      return .split
-        case 6:      return .nebula
-        case 7:      return .auroraBand
-        case 8:      return .deepSpace
-        case 9...10: return .supernova
-        default:     return .deepOcean
-        }
-    }
-
-    // ─────────────────────────────────────────────
-    // MARK: Background
-    // ─────────────────────────────────────────────
+extension CardIntensity {
 
     var backgroundColor: Color {
         switch self {
@@ -548,10 +504,6 @@ enum CardIntensity: Int, CaseIterable, Identifiable {
         rawValue >= 5
     }
 
-    // ─────────────────────────────────────────────
-    // MARK: Radial Wash Overlays
-    // ─────────────────────────────────────────────
-
     var cyanWash: (x: CGFloat, y: CGFloat, opacity: Double)? {
         switch self {
         case .void:         return nil
@@ -577,10 +529,6 @@ enum CardIntensity: Int, CaseIterable, Identifiable {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // MARK: Glow / Shadow
-    // ─────────────────────────────────────────────
-
     var glowRadius: CGFloat {
         switch self {
         case .void, .deepOcean, .emberFloor:  return 30
@@ -605,31 +553,6 @@ enum CardIntensity: Int, CaseIterable, Identifiable {
 
     var cyanGlowOpacity: Double    { 0.08 * glowMultiplier }
     var magentaGlowOpacity: Double { 0.06 * glowMultiplier }
-
-    // ─────────────────────────────────────────────
-    // MARK: Display Helpers
-    // ─────────────────────────────────────────────
-
-    var displayName: String {
-        switch self {
-        case .void:        return "Void"
-        case .deepOcean:   return "Deep Ocean"
-        case .emberFloor:  return "Ember Floor"
-        case .split:       return "Split"
-        case .nebula:      return "Nebula"
-        case .auroraBand:  return "Aurora Band"
-        case .deepSpace:   return "Deep Space"
-        case .supernova:   return "Supernova"
-        }
-    }
-
-    var difficultyLabel: String {
-        switch self {
-        case .void, .deepOcean:         return "Easy"
-        case .emberFloor, .split:       return "Medium"
-        case .nebula, .auroraBand:      return "Deep"
-        case .deepSpace:                return "Sensitive"
-        case .supernova:                return "Ultimate"
-        }
-    }
 }
+
+

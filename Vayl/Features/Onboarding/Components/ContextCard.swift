@@ -256,12 +256,12 @@ struct ContextCard: View {
 // MARK: - Previews
 
 private let previewOptions: [ContextOption] = [
-    ContextOption(id: "single",           context: .single,          intensity: .ember,   title: "I'm single",              subtitle: "No partner in the picture",       detail: "Your journey is yours alone."),
-    ContextOption(id: "partnered_open",   context: .partneredOpen,   intensity: .spark,   title: "I have a partner",        subtitle: "They know I'm exploring",         detail: "We'll include prompts for transparency."),
-    ContextOption(id: "partnered_hidden", context: .partneredHidden, intensity: .blaze,   title: "It's complicated",        subtitle: "I'm not sure how to bring it up", detail: "No pressure. We'll start with self-understanding."),
-    ContextOption(id: "not_talked",       context: .notTalked,       intensity: .flame,   title: "Haven't talked about it", subtitle: "One or both of us is curious",    detail: "We'll start with the basics."),
-    ContextOption(id: "some_experience",  context: .someExperience,  intensity: .inferno, title: "We've tried some things", subtitle: "Good, bad, or in between",        detail: "We'll help you process what happened."),
-    ContextOption(id: "needs_reset",      context: .needsReset,      intensity: .nova,    title: "We need a reset",         subtitle: "Something's off",                 detail: "Let's rebuild with structure and care."),
+    ContextOption(id: "single",           emotionalRegister: .flexible, intensity: .ember,   title: "I'm single",              subtitle: "No partner in the picture",       detail: "Your journey is yours alone."),
+    ContextOption(id: "partnered_open",   emotionalRegister: .excited,  intensity: .spark,   title: "I have a partner",        subtitle: "They know I'm exploring",         detail: "We'll include prompts for transparency."),
+    ContextOption(id: "partnered_hidden", emotionalRegister: .anxious,  intensity: .blaze,   title: "It's complicated",        subtitle: "I'm not sure how to bring it up", detail: "No pressure. We'll start with self-understanding."),
+    ContextOption(id: "not_talked",       emotionalRegister: .flexible, intensity: .flame,   title: "Haven't talked about it", subtitle: "One or both of us is curious",    detail: "We'll start with the basics."),
+    ContextOption(id: "some_experience",  emotionalRegister: .excited,  intensity: .inferno, title: "We've tried some things", subtitle: "Good, bad, or in between",        detail: "We'll help you process what happened."),
+    ContextOption(id: "needs_reset",      emotionalRegister: .anxious,  intensity: .nova,    title: "We need a reset",         subtitle: "Something's off",                 detail: "Let's rebuild with structure and care."),
 ]
 
 #Preview("All Intensities — dark") {

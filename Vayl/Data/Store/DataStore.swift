@@ -1,6 +1,43 @@
 import Foundation
 import SwiftData
 
+// MARK: - Stubs (pending migration — RatingRecord/StreakRecord deleted, replacements not yet written)
+
+@Model final class RatingRecord {
+    var promptText: String = ""
+    var category: String = ""
+    var reaction: String = ""
+    var session: SessionRecord?
+    init(promptText: String, category: String, reaction: String, session: SessionRecord?) {
+        self.promptText = promptText; self.category = category
+        self.reaction = reaction; self.session = session
+    }
+}
+
+@Model final class StreakRecord {
+    var lastActiveDate: Date
+    var currentStreak: Int
+    var longestStreak: Int
+    var totalSessions: Int
+    var totalPromptsRated: Int
+    init() {
+        lastActiveDate = Date(); currentStreak = 0
+        longestStreak = 0; totalSessions = 0; totalPromptsRated = 0
+    }
+}
+
+enum DesireLevel: String, CaseIterable, Hashable {
+    case excitedAboutIt, openToIt, probablyNot, notForMe
+    var displayLabel: String {
+        switch self {
+        case .excitedAboutIt: return "Excited about it"
+        case .openToIt:       return "Open to it"
+        case .probablyNot:    return "Probably not"
+        case .notForMe:       return "Not for me"
+        }
+    }
+}
+
 // MARK: - DataStore
 // Central persistence layer for Open Lightly.
 // Every read/write to SwiftData goes through here.
@@ -65,7 +102,7 @@ final class DataStore {
         // 3. Update the streak
         let streak = fetchOrCreateStreak()
         let calendar = Calendar.current
-        let today = calendar.startOfDay(for: .now)
+        let today = calendar.startOfDay(for: Date.now)
         let lastActive = calendar.startOfDay(for: streak.lastActiveDate)
 
         if lastActive == today {
@@ -82,7 +119,7 @@ final class DataStore {
             streak.longestStreak = streak.currentStreak
         }
 
-        streak.lastActiveDate = .now
+        streak.lastActiveDate = Date.now
         streak.totalSessions += 1
         streak.totalPromptsRated += reactions.count
 

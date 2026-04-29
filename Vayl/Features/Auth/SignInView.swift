@@ -1,39 +1,42 @@
 //
 //  SignInView.swift
-//  Open Lightly
-//
-//  Created by Bryan Jorden on 3/9/26.
+//  Vayl
 //
 
 import SwiftUI
 
 struct SignInView: View {
-    @EnvironmentObject var authService: AuthService
-    
+
+    // MARK: - Dependencies
+
+    var authService: AuthService
+
+    // MARK: - Body
+
     var body: some View {
         ZStack {
             AppColors.pageBg
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 32) {
                 Spacer()
-                
+
                 VStack(spacing: 12) {
-                    Text("Open Lightly")
+                    Text("Vayl")
                         .font(.system(size: 36, weight: .bold))
                         .foregroundStyle(.white)
-                    
+
                     Text("Explore intimacy at your own pace")
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.6))
                 }
-                
+
                 Spacer()
-                
+
                 VStack(spacing: 16) {
-                    Button(action: {
+                    Button {
                         authService.signInWithApple()
-                    }) {
+                    } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "apple.logo")
                             Text("Sign in with Apple")
@@ -47,12 +50,12 @@ struct SignInView: View {
                     }
                     .padding(.horizontal, 40)
                     .disabled(authService.isLoading)
-                    
+
                     if authService.isLoading {
                         ProgressView()
                             .tint(.white)
                     }
-                    
+
                     if let error = authService.error {
                         Text(error)
                             .font(.caption)
@@ -61,7 +64,7 @@ struct SignInView: View {
                             .multilineTextAlignment(.center)
                     }
                 }
-                
+
                 Spacer()
                     .frame(height: 60)
             }
@@ -70,6 +73,5 @@ struct SignInView: View {
 }
 
 #Preview {
-    SignInView()
-        .environmentObject(AuthService())
+    SignInView(authService: AuthService())
 }

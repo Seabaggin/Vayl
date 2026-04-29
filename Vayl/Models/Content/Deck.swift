@@ -2,6 +2,14 @@
 //  Deck.swift
 //  Vayl
 //
+//  Created by Bryan Jorden on 4/27/26.
+//
+
+
+//
+//  Deck.swift
+//  Vayl
+//
 //  Location: Models/Content/Deck.swift
 //  Read-only. Loaded from JSON at runtime.
 //  NEVER stored in SwiftData.

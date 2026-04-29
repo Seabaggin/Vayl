@@ -1,3 +1,8 @@
+//
+//  OnboardingModeSelectView.swift
+//  Vayl
+//
+
 import SwiftUI
 
 // MARK: - Main View
@@ -12,9 +17,8 @@ struct OnboardingModeSelectView: View {
     @State private var cardsVisible  = false
     @State private var hasAnimated   = false
 
-    // Breathing atmosphere — one phase per tile, offset so they never sync
     @State private var soloBreath:    CGFloat = 0
-    @State private var coupleBreath:  CGFloat = 0
+    @State private var togetherBreath: CGFloat = 0
     @State private var browseBreath:  CGFloat = 0
     @State private var breathTask: Task<Void, Never>? = nil
 
@@ -22,48 +26,39 @@ struct OnboardingModeSelectView: View {
     private var isLight: Bool { colorScheme == .light }
 
     private var selectionMade: Bool {
-        guard let mode = data.explorationMode else {
-            return false
-        }
+        guard let mode = data.appMode else { return false }
         if mode == .browsing { return true }
         return data.nmStage != nil
     }
 
-    // COPYWRITING REVIEW: S5-E2
-    // Current descriptors read as a progression (rungs on a ladder) rather than
-    // three equally valid positions. "New to this" → "dipped my toes in" → "part of my life"
-    // inadvertently implies a hierarchy. Consider reframing as parallel states:
-    // "Still figuring out if this is for me." / "I've had experiences. Learning as I go." /
-    // "I know this territory. Here to go deeper." This removes hierarchical language while
-    // maintaining clarity. Also note: "No judgment" can paradoxically highlight judgment concerns.
     private var experienceDescriptor: String? {
         switch data.nmStage {
-        case .curious:    return "New to this — maybe I've read about it or know people who do it."
-        case .exploring:  return "I've dipped my toes in. A few real experiences."
-        case .experienced:return "This has been part of my life for a while."
-        case .none:       return nil
+        case .curious:     return "New to this — maybe I've read about it or know people who do it."
+        case .exploring:   return "I've dipped my toes in. A few real experiences."
+        case .experienced: return "This has been part of my life for a while."
+        case .none:        return nil
         }
     }
 
     private var atmosphereColors: (primary: Color, secondary: Color) {
-        switch data.explorationMode {
+        switch data.appMode {
         case .solo:     return (AppColors.cyan,    AppColors.deepBlue)
-        case .couple:   return (AppColors.magenta, AppColors.purple)
+        case .together: return (AppColors.magenta, AppColors.purple)
         case .browsing: return (AppColors.gold,    AppColors.orangeHot)
         case .none:     return (AppColors.purple,  AppColors.deepBlue)
         }
     }
 
-    private func handleSelection(_ mode: ExplorationMode) {
+    private func handleSelection(_ mode: AppMode) {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
-            if data.explorationMode == mode {
-                data.explorationMode = nil
+            if data.appMode == mode {
+                data.appMode = nil
                 data.nmStage = nil
             } else {
-                if data.explorationMode != nil {
+                if data.appMode != nil {
                     data.nmStage = nil
                 }
-                data.explorationMode = mode
+                data.appMode = mode
             }
         }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -127,7 +122,7 @@ struct OnboardingModeSelectView: View {
                         .blur(radius: 80)
                         .animation(
                             .easeOut(duration: 0.45),
-                            value: data.explorationMode?.rawValue ?? "none"
+                            value: data.appMode?.rawValue ?? "none"
                         )
                         .allowsHitTesting(false)
                         .ignoresSafeArea()
@@ -174,19 +169,16 @@ struct OnboardingModeSelectView: View {
                 withAnimation(.easeOut(duration: 0.3).delay(0.35)) { navVisible   = true }
 
                 breathTask = Task {
-                    // Solo — immediate
                     withAnimation(.easeInOut(duration: 4.0)
                         .repeatForever(autoreverses: true)) {
                         soloBreath = 1.0
                     }
-                    // Couple — 0.8s delay
                     try? await Task.sleep(nanoseconds: 800_000_000)
                     guard !Task.isCancelled else { return }
                     withAnimation(.easeInOut(duration: 5.0)
                         .repeatForever(autoreverses: true)) {
-                        coupleBreath = 1.0
+                        togetherBreath = 1.0
                     }
-                    // Browsing — additional 0.8s
                     try? await Task.sleep(nanoseconds: 800_000_000)
                     guard !Task.isCancelled else { return }
                     withAnimation(.easeInOut(duration: 6.0)
@@ -198,10 +190,10 @@ struct OnboardingModeSelectView: View {
             .onDisappear {
                 breathTask?.cancel()
                 breathTask = nil
-                hasAnimated  = false
-                soloBreath   = 0
-                coupleBreath = 0
-                browseBreath = 0
+                hasAnimated    = false
+                soloBreath     = 0
+                togetherBreath = 0
+                browseBreath   = 0
             }
         }
     }
@@ -214,16 +206,16 @@ struct OnboardingModeSelectView: View {
     ) -> some View {
         let h = geo.size.height
         let tileH: CGFloat = max(130, h * 0.195)
-        
+
         return VStack(alignment: .leading, spacing: sectionSpacing) {
-            
+
             VStack(alignment: .leading, spacing: 8) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("How are you")
                         .font(AppFonts.heroTitle)
                         .foregroundStyle(isLight
-                                         ? AppColors.lightTextPrimary
-                                         : AppColors.textPrimary)
+                            ? AppColors.lightTextPrimary
+                            : AppColors.textPrimary)
                     LivingText(text: "exploring?", font: AppFonts.heroTitle)
                 }
                 Text(data.displayName.trimmingCharacters(
@@ -233,39 +225,39 @@ struct OnboardingModeSelectView: View {
                 )
                 .font(AppFonts.caption)
                 .foregroundStyle(isLight
-                                 ? AppColors.lightTextSecondary
-                                 : AppColors.textSecondary)
+                    ? AppColors.lightTextSecondary
+                    : AppColors.textSecondary)
             }
             .opacity(titleVisible ? 1 : 0)
             .offset(y: titleVisible ? 0 : 12)
-            
+
             VStack(spacing: 10) {
                 HStack(spacing: 10) {
-                    bentoCentered(mode: .solo,   tileH: tileH)
-                    bentoCentered(mode: .couple, tileH: tileH)
+                    bentoCentered(mode: .solo,     tileH: tileH)
+                    bentoCentered(mode: .together, tileH: tileH)
                 }
                 bentoBar(mode: .browsing)
             }
             .opacity(cardsVisible ? 1 : 0)
             .offset(y: cardsVisible ? 0 : 16)
-            
-            if let mode = data.explorationMode {
+
+            if let mode = data.appMode {
                 let teaserText: String = {
                     switch mode {
                     case .solo:     return "Starts with what you actually want."
-                    case .couple:   return "Starts with the conversation you've been circling."
+                    case .together: return "Starts with the conversation you've been circling."
                     case .browsing: return "No commitment. Just curiosity."
                     }
                 }()
-                
+
                 let operationalContext: String? = {
                     switch mode {
                     case .solo:     return "You can connect with a partner later."
-                    case .couple:   return "Pairing happens after you both set up."
+                    case .together: return "Pairing happens after you both set up."
                     case .browsing: return nil
                     }
                 }()
-                
+
                 LivingText(
                     text: teaserText,
                     font: AppFonts.body(17, weight: .semibold)
@@ -273,37 +265,36 @@ struct OnboardingModeSelectView: View {
                 .id(mode)
                 .transition(.opacity)
                 .frame(maxWidth: .infinity)
-                
+
                 if let context = operationalContext {
                     Text(context)
                         .font(AppFonts.caption)
                         .foregroundStyle(isLight
-                                         ? AppColors.lightTextSecondary
-                                         : AppColors.textSecondary)
+                            ? AppColors.lightTextSecondary
+                            : AppColors.textSecondary)
                         .frame(maxWidth: .infinity)
                         .transition(.opacity)
                 }
             }
-            
-            let expVisible = data.explorationMode != nil
-                && data.explorationMode != .browsing
-            
+
+            let expVisible = data.appMode != nil && data.appMode != .browsing
+
             if expVisible {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("Your experience")
                             .font(AppFonts.caption)
                             .foregroundStyle(isLight
-                                             ? AppColors.lightTextSecondary
-                                             : AppColors.textSecondary)
+                                ? AppColors.lightTextSecondary
+                                : AppColors.textSecondary)
                         Spacer()
                         Text("No judgment")
                             .font(AppFonts.overline)
                             .foregroundStyle(isLight
-                                             ? AppColors.lightTextTertiary
-                                             : AppColors.textTertiary)
+                                ? AppColors.lightTextTertiary
+                                : AppColors.textTertiary)
                     }
-                    
+
                     HStack(spacing: 10) {
                         SelectablePill(
                             label:      "Curious",
@@ -337,14 +328,14 @@ struct OnboardingModeSelectView: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    
+
                     Group {
                         if let descriptor = experienceDescriptor {
                             Text(descriptor)
                                 .font(AppFonts.caption)
                                 .foregroundStyle(isLight
-                                                 ? AppColors.lightTextSecondary
-                                                 : AppColors.textSecondary)
+                                    ? AppColors.lightTextSecondary
+                                    : AppColors.textSecondary)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .multilineTextAlignment(.center)
                                 .id(data.nmStage)
@@ -354,12 +345,12 @@ struct OnboardingModeSelectView: View {
                         }
                     }
                     .animation(.easeOut(duration: 0.25), value: data.nmStage?.rawValue ?? "")
-                    
+
                     Text("You can always change these later.")
                         .font(AppFonts.caption)
                         .foregroundStyle(isLight
-                                         ? AppColors.lightTextTertiary
-                                         : AppColors.textTertiary)
+                            ? AppColors.lightTextTertiary
+                            : AppColors.textTertiary)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .transition(.opacity.combined(with: .offset(y: 8)))
@@ -367,7 +358,10 @@ struct OnboardingModeSelectView: View {
         }
         .padding(.horizontal, 24)
         .padding(.bottom, sectionSpacing)
-        .animation(.spring(response: 0.35, dampingFraction: 0.82), value: data.explorationMode?.rawValue ?? "none")
+        .animation(
+            .spring(response: 0.35, dampingFraction: 0.82),
+            value: data.appMode?.rawValue ?? "none"
+        )
     }
 
     // MARK: - CTA Block
@@ -383,50 +377,49 @@ struct OnboardingModeSelectView: View {
     }
 
     // MARK: - Bento Centered Tile
+
     @ViewBuilder
     private func bentoCentered(
-        mode:  ExplorationMode,
+        mode:  AppMode,
         tileH: CGFloat
     ) -> some View {
-        let isSelected    = data.explorationMode == mode
-        let somethingElse = data.explorationMode != nil && !isSelected
+        let isSelected    = data.appMode == mode
+        let somethingElse = data.appMode != nil && !isSelected
         let filamentSize: CGFloat = min(tileH * 0.52, 88)
 
-        // Per-tile color and breath values
         let tileColor: Color = {
             switch mode {
-            case .solo:   return AppColors.cyan
-            case .couple: return AppColors.magenta
-            default:      return AppColors.purple
+            case .solo:     return AppColors.cyan
+            case .together: return AppColors.magenta
+            case .browsing: return AppColors.purple
             }
         }()
 
         let breathValue: CGFloat = {
             switch mode {
-            case .solo:   return soloBreath
-            case .couple: return coupleBreath
+            case .solo:     return soloBreath
+            case .together: return togetherBreath
             case .browsing: return browseBreath
             }
         }()
 
-        // Glow opacity: low at rest, amplified on selection
         let glowOpacity: Double = isSelected
             ? 0.18 + Double(breathValue) * 0.10
             : 0.06 + Double(breathValue) * 0.04
 
         let headline: String = {
             switch mode {
-            case .solo:   return "Solo Discovery"
-            case .couple: return "Shared Journey"
-            default:      return ""
+            case .solo:     return "Solo Discovery"
+            case .together: return "Shared Journey"
+            case .browsing: return ""
             }
         }()
 
         let subtitle: String = {
             switch mode {
-            case .solo:   return "I want clarity\nfor myself first."
-            case .couple: return "Starting the conversation\ntogether."
-            default:      return ""
+            case .solo:     return "I want clarity\nfor myself first."
+            case .together: return "Starting the conversation\ntogether."
+            case .browsing: return ""
             }
         }()
 
@@ -436,7 +429,6 @@ struct OnboardingModeSelectView: View {
             VStack(spacing: 6) {
                 Spacer(minLength: 0)
 
-                // CHANGE: always active, speed idles at 0.28, accelerates on selection
                 TileOrbitView(
                     orbitCount: mode == .solo ? 1 : 2,
                     isActive:   true,
@@ -444,7 +436,6 @@ struct OnboardingModeSelectView: View {
                     size:       filamentSize
                 )
                 .frame(width: filamentSize, height: filamentSize)
-                // CHANGE: always visible, dims when not selected
                 .opacity(isSelected ? 1.0 : 0.35)
                 .animation(.easeInOut(duration: 0.4), value: isSelected)
 
@@ -472,13 +463,11 @@ struct OnboardingModeSelectView: View {
             .frame(height: tileH)
             .background(
                 ZStack {
-                    // Base fill — unchanged
                     RoundedRectangle(cornerRadius: 20)
                         .fill(isLight
                             ? (isSelected ? AppColors.lightFrostCard : AppColors.lightFrostPill)
                             : AppColors.cardBg)
 
-                    // CHANGE: breathing radial atmosphere — exists at rest, amplifies on selection
                     if !isLight {
                         RoundedRectangle(cornerRadius: 20)
                             .fill(
@@ -502,7 +491,6 @@ struct OnboardingModeSelectView: View {
                 ZStack {
                     selectedBorder(isSelected: isSelected, cornerRadius: 20)
 
-                    // CHANGE: left-edge glow accent on selected tile
                     if isSelected && !isLight {
                         HStack {
                             Rectangle()
@@ -554,7 +542,7 @@ struct OnboardingModeSelectView: View {
         .opacity(somethingElse ? 0.55 : 1.0)
         .animation(
             .spring(response: 0.35, dampingFraction: 0.7),
-            value: data.explorationMode?.rawValue ?? "none"
+            value: data.appMode?.rawValue ?? "none"
         )
         .accessibilityLabel(headline)
         .accessibilityHint(isSelected ? "Selected" : "Double-tap to select \(headline)")
@@ -562,17 +550,11 @@ struct OnboardingModeSelectView: View {
     }
 
     // MARK: - Bento Bar
-    
-    // COPYWRITING REVIEW: S5-E1
-    // The "Safe Learning" label is aspirational but may not authentically represent
-    // users who choose browsing to defer Solo/Couple selection (e.g., uncertain about
-    // relationship status, not ready to answer honestly). Consider "Just Browsing" or
-    // "Not Sure Yet" as alternatives. Update accessibilityLabel if changed.
-    
+
     @ViewBuilder
-    private func bentoBar(mode: ExplorationMode) -> some View {
-        let isSelected    = data.explorationMode == mode
-        let somethingElse = data.explorationMode != nil && !isSelected
+    private func bentoBar(mode: AppMode) -> some View {
+        let isSelected    = data.appMode == mode
+        let somethingElse = data.appMode != nil && !isSelected
         let filamentSize: CGFloat = 56
 
         let glowOpacity: Double = isSelected
@@ -583,7 +565,6 @@ struct OnboardingModeSelectView: View {
             handleSelection(mode)
         } label: {
             HStack(spacing: 14) {
-                // CHANGE: always active at idle speed
                 TileOrbitView(
                     orbitCount: 3,
                     isActive:   true,
@@ -591,7 +572,6 @@ struct OnboardingModeSelectView: View {
                     size:       filamentSize
                 )
                 .frame(width: filamentSize, height: filamentSize)
-                // CHANGE: always visible, dims when not selected
                 .opacity(isSelected ? 1.0 : 0.30)
                 .animation(.easeInOut(duration: 0.4), value: isSelected)
 
@@ -620,7 +600,6 @@ struct OnboardingModeSelectView: View {
                             ? (isSelected ? AppColors.lightFrostCard : AppColors.lightFrostPill)
                             : AppColors.cardBg)
 
-                    // CHANGE: breathing gold atmosphere on browsing bar
                     if !isLight {
                         RoundedRectangle(cornerRadius: 20)
                             .fill(
@@ -659,7 +638,7 @@ struct OnboardingModeSelectView: View {
         .opacity(somethingElse ? 0.55 : 1.0)
         .animation(
             .spring(response: 0.35, dampingFraction: 0.7),
-            value: data.explorationMode?.rawValue ?? "none"
+            value: data.appMode?.rawValue ?? "none"
         )
         .accessibilityLabel("Safe Learning")
         .accessibilityHint(isSelected ? "Selected" : "Double-tap to select Safe Learning")
@@ -687,8 +666,8 @@ struct OnboardingModeSelectView: View {
 #Preview("Dark — Solo selected") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
-        d.explorationMode = .solo
-        d.nmStage         = .curious
+        d.appMode  = .solo
+        d.nmStage  = .curious
         return d
     }()
     ZStack {
@@ -704,11 +683,11 @@ struct OnboardingModeSelectView: View {
     .preferredColorScheme(.dark)
 }
 
-#Preview("Dark — Couple selected") {
+#Preview("Dark — Together selected") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
-        d.explorationMode = .couple
-        d.nmStage         = .exploring
+        d.appMode  = .together
+        d.nmStage  = .exploring
         return d
     }()
     ZStack {
@@ -727,8 +706,7 @@ struct OnboardingModeSelectView: View {
 #Preview("Dark — Browsing selected") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
-        d.explorationMode = .browsing
-        d.nmStage         = .curious
+        d.appMode = .browsing
         return d
     }()
     ZStack {
@@ -759,11 +737,11 @@ struct OnboardingModeSelectView: View {
     .preferredColorScheme(.light)
 }
 
-#Preview("Light — Couple selected") {
+#Preview("Light — Together selected") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
-        d.explorationMode = .couple
-        d.nmStage         = .exploring
+        d.appMode = .together
+        d.nmStage = .exploring
         return d
     }()
     ZStack {
@@ -776,5 +754,4 @@ struct OnboardingModeSelectView: View {
         .ignoresSafeArea()
         OnboardingModeSelectView(data: $data, onContinue: {}, onBack: {})
     }
-    
 }

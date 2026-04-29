@@ -2,6 +2,14 @@
 //  PairingJoinView.swift
 //  Vayl
 //
+//  Created by Bryan Jorden on 4/29/26.
+//
+
+
+//
+//  PairingJoinView.swift
+//  Vayl
+//
 
 import SwiftUI
 import SwiftData
@@ -248,16 +256,11 @@ struct PairingJoinView: View {
     }
 }
 
-// MARK: - Previews
-
 #Preview("Empty") {
     let container = ModelContainer.previewContainer
     let appState = AppState()
-    let store = PairingStore(
-        modelContainer: container,
-        appState: appState
-    )
-    PairingJoinView(store: store)
+    let store = PairingStore(modelContainer: container, appState: appState)
+    return PairingJoinView(store: store)
         .environment(appState)
         .preferredColorScheme(.dark)
 }
@@ -265,12 +268,9 @@ struct PairingJoinView: View {
 #Preview("Joining") {
     let container = ModelContainer.previewContainer
     let appState = AppState()
-    let store = PairingStore(
-        modelContainer: container,
-        appState: appState
-    )
+    let store = PairingStore(modelContainer: container, appState: appState)
     store.linkState = PairingLinkState.joining
-    PairingJoinView(store: store)
+    return PairingJoinView(store: store)
         .environment(appState)
         .preferredColorScheme(.dark)
 }
@@ -278,12 +278,9 @@ struct PairingJoinView: View {
 #Preview("Linked") {
     let container = ModelContainer.previewContainer
     let appState = AppState()
-    let store = PairingStore(
-        modelContainer: container,
-        appState: appState
-    )
+    let store = PairingStore(modelContainer: container, appState: appState)
     store.linkState = PairingLinkState.linked(coupleId: UUID())
-    PairingJoinView(store: store)
+    return PairingJoinView(store: store)
         .environment(appState)
         .preferredColorScheme(.dark)
 }
@@ -291,12 +288,9 @@ struct PairingJoinView: View {
 #Preview("Error") {
     let container = ModelContainer.previewContainer
     let appState = AppState()
-    let store = PairingStore(
-        modelContainer: container,
-        appState: appState
-    )
+    let store = PairingStore(modelContainer: container, appState: appState)
     store.linkState = PairingLinkState.error("Code not found. Check and try again.")
-    PairingJoinView(store: store)
+    return PairingJoinView(store: store)
         .environment(appState)
         .preferredColorScheme(.dark)
 }

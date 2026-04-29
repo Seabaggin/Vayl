@@ -29,27 +29,21 @@ struct OnboardingContextView: View {
 
     private let soloOptions: [ContextOption] = [
         ContextOption(
-            id: "single", context: .single, intensity: .ember,
+            id: "single", emotionalRegister: .flexible, intensity: .ember,
             title: "I'm single",
             subtitle: "No partner in the picture",
             detail: "Your journey is yours alone — we'll tailor everything to individual exploration."
         ),
         ContextOption(
-            id: "partnered_open", context: .partneredOpen, intensity: .spark,
+            id: "partnered_open", emotionalRegister: .excited, intensity: .spark,
             title: "I have a partner",
             subtitle: "They know I'm exploring",
             detail: "We'll include prompts that help you navigate with transparency."
         ),
         // COPYWRITING REVIEW: S6-E1
-        // .partneredHidden covers a wider range than "I haven't brought it up yet":
-        // - Partner doesn't know about curiosity (pre-conversation)
-        // - Partner is not supportive (conversation went badly)
-        // - Complicated relationship status
-        // Current title+subtitle narrow the card to pre-conversation users only.
         // Consider broader framing: "It's complicated" / "The conversation is... sensitive"
-        // or keep current title but broaden subtitle: "I haven't figured out how to bring it up"
         ContextOption(
-            id: "partnered_hidden", context: .partneredHidden, intensity: .blaze,
+            id: "partnered_hidden", emotionalRegister: .anxious, intensity: .blaze,
             title: "I haven't brought it up yet",
             subtitle: "Curious, but the conversation hasn't happened",
             detail: "That's exactly what this is for. We'll help you find the words."
@@ -58,25 +52,25 @@ struct OnboardingContextView: View {
 
     private let coupleOptions: [ContextOption] = [
         ContextOption(
-            id: "not_talked", context: .notTalked, intensity: .ember,
+            id: "not_talked", emotionalRegister: .flexible, intensity: .ember,
             title: "Haven't really talked about it",
             subtitle: "One or both of us is curious",
             detail: "We'll start with the basics — language, comfort levels, and small openings."
         ),
         ContextOption(
-            id: "talking", context: .talking, intensity: .flame,
+            id: "talking", emotionalRegister: .excited, intensity: .flame,
             title: "We've been talking",
             subtitle: "No experience yet, but we're on the same page",
             detail: "Great foundation. We'll build on your shared curiosity with structured prompts."
         ),
         ContextOption(
-            id: "some_experience", context: .someExperience, intensity: .inferno,
+            id: "some_experience", emotionalRegister: .excited, intensity: .inferno,
             title: "We've tried some things",
             subtitle: "Real experiences — good, bad, or somewhere in between",
             detail: "We'll help you process what happened and decide what comes next."
         ),
         ContextOption(
-            id: "needs_reset", context: .needsReset, intensity: .nova,
+            id: "needs_reset", emotionalRegister: .anxious, intensity: .nova,
             title: "We need a reset",
             subtitle: "Something's off and we want to find our footing again",
             detail: "We'll focus on repair, reconnection, and rebuilding trust first."
@@ -84,22 +78,15 @@ struct OnboardingContextView: View {
     ]
 
     private var options: [ContextOption] {
-        data.explorationMode == .couple ? coupleOptions : soloOptions
+        data.appMode == .together ? coupleOptions : soloOptions
     }
 
-    private var restoredCardIndex: Int {
-        guard let context = data.relationshipContext else {
-            return 0
-        }
-        return options.firstIndex(where: {
-            $0.context == context
-        }) ?? 0
-    }
+    private var restoredCardIndex: Int { 0 }
 
     private var headlineText: String {
         let name = data.displayName.trimmingCharacters(in: .whitespaces)
         let hasName = !name.isEmpty
-        if data.explorationMode == .couple {
+        if data.appMode == .together {
             return hasName
                 ? "\(name), you're exploring this together."
                 : "You're exploring this together."
@@ -117,7 +104,7 @@ struct OnboardingContextView: View {
         // personalize." This is a deliberate stylistic choice.
         // Change only after user testing confirms it reads as an error
         // rather than an intentional grammatical pause.
-        data.explorationMode == .couple
+        data.appMode == .together
             ? "Where are you two at?"
             : "One thing that helps us personalize —"
     }
@@ -132,7 +119,7 @@ struct OnboardingContextView: View {
     // - .inferno/.nova: "Naming this is the first step."
     // Or single copy covering all: "We've seen every starting point lead somewhere good."
     private var reassuranceText: String {
-        data.explorationMode == .couple
+        data.appMode == .together
             ? "Every starting point is valid."
             : "No judgment on any answer."
     }
@@ -315,9 +302,9 @@ struct OnboardingContextView: View {
             // Log only — do not assert in onAppear. assert() in a SwiftUI
             // lifecycle modifier causes EXC_BREAKPOINT, crashing the entire
             // preview process (not just this preview).
-            if data.explorationMode != .solo && data.explorationMode != .couple {
-                print("[OnboardingContextView] ⚠️ unexpected explorationMode: " +
-                      "\(String(describing: data.explorationMode))")
+            if data.appMode != .solo && data.appMode != .together {
+                print("[OnboardingContextView] ⚠️ unexpected appMode: " +
+                      "\(String(describing: data.appMode))")
             }
             #endif
             restoreSelectionIfNeeded()
@@ -336,7 +323,7 @@ struct OnboardingContextView: View {
 
     private func handleAdvance() {
         guard !autoAdvanceFired else { return }
-        guard let confirmedContext = selection?.context else {
+        guard selection != nil else {
             // selection is nil — ContextCardStack fired onAdvance
             // before a card was confirmed. Do not advance.
             // This should never happen in production.
@@ -346,7 +333,7 @@ struct OnboardingContextView: View {
             return
         }
         autoAdvanceFired = true
-        data.relationshipContext = confirmedContext
+        // TODO: store emotionalRegister from selection on OnboardingData when field is added
         #if DEBUG
         assert(onContinue != nil,
             "OnboardingContextView: onContinue not injected — " +
@@ -358,13 +345,7 @@ struct OnboardingContextView: View {
     // MARK: - State Restoration
 
     private func restoreSelectionIfNeeded() {
-        // Restore confirmed selection from the binding on back navigation.
-        // Only restores if data has a committed value — safe on first appear
-        // (data.relationshipContext will be nil, no-op).
-        guard let context = data.relationshipContext else { return }
-        if selection?.context != context {
-            selection = options.first(where: { $0.context == context })
-        }
+        // TODO: restore from OnboardingData.emotionalRegister when field is added
     }
 
     // MARK: - Animations
@@ -389,8 +370,8 @@ struct OnboardingContextView: View {
 #Preview("Dark") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
-        d.displayName     = "Jordan"
-        d.explorationMode = .couple
+        d.displayName = "Jordan"
+        d.appMode     = .together
         return d
     }()
     ZStack {
@@ -409,8 +390,8 @@ struct OnboardingContextView: View {
 #Preview("Light") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
-        d.displayName     = "Jordan"
-        d.explorationMode = .solo
+        d.displayName = "Jordan"
+        d.appMode     = .solo
         return d
     }()
     ZStack {

@@ -84,7 +84,15 @@ struct OnboardingCuriosityPickerView: View {
     // MARK: - Helpers
     private var hasSelection: Bool  { !selectedSet1.isEmpty && !selectedSet2.isEmpty }
     private var totalSelected: Int  { selectedSet1.count + selectedSet2.count }
-    private var config: CuriosityScreenConfig { data.curiosityScreenConfig }
+    
+    private var config: CuriosityScreenConfig {
+        switch data.appMode {
+        case .together: return .coupleNotTalkedConfig
+        case .solo:     return .soloSingleConfig
+        case .browsing: return .browsingConfig
+        case .none:     return .browsingConfig
+        }
+    }
 
     // MARK: - LivingText gradient stops — single source of truth
     private var livingGradientColors: [Color] {
@@ -690,9 +698,8 @@ struct OnboardingCuriosityPickerView: View {
 #Preview("Dark — Solo") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
-        d.displayName     = "Jordan"
-        d.relationshipContext = .single
-        d.explorationMode = .solo
+        d.displayName = "Jordan"
+        d.appMode     = .solo
         return d
     }()
     ZStack {
@@ -709,9 +716,8 @@ struct OnboardingCuriosityPickerView: View {
 #Preview("Light — Solo") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
-        d.displayName     = "Jordan"
-        d.relationshipContext = .single
-        d.explorationMode = .solo
+        d.displayName = "Jordan"
+        d.appMode     = .solo
         return d
     }()
     ZStack {
@@ -728,9 +734,8 @@ struct OnboardingCuriosityPickerView: View {
 #Preview("Dark — Couple") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
-        d.displayName     = "Jordan"
-        d.relationshipContext = .notTalked
-        d.explorationMode = .couple
+        d.displayName = "Jordan"
+        d.appMode     = .together
         return d
     }()
     ZStack {

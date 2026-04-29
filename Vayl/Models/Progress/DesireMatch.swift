@@ -1,86 +1,79 @@
 //
 //  DesireMatch.swift
-//  Open Lightly
-//
-//  Created by Bryan Jorden on 3/8/26.
+//  Vayl
 //
 
 import Foundation
 import SwiftData
 
-// ============================================================
-// DesireMatch.swift
-// A SwiftData model representing a positive alignment between two
-// partners for a specific desire map item. A DesireMatch is only
-// created when the alignment logic yields a positive result.
-// Combinations involving a boundary never produce a DesireMatch.
+// MARK: - DesireMatch
+// Represents a positive match between two partners on a Desire Map item.
+// Computed by the Supabase Edge Function — never by the client.
+// Contains no individual ratings — only confirmed mutual positives.
 //
-// This model is owned by a Couple and records the alignment level
-// as well as the original ratings from each partner.
-// ============================================================
+// notForUs combinations never produce a DesireMatch.
+// Individual ratings live in DesireMapEntry — local only, never crossed.
+//
+// isFreeReveal is server-authoritative — the client cannot set this to true.
+// If the client could set it, the paywall is trivially bypassed.
+// revealedAt is nil until the paywall is cleared.
 
 @Model
-final class DesireMatch: Identifiable {
+final class DesireMatch {
 
-    // MARK: - Properties
+    // MARK: - Identity
 
-    var id: UUID = UUID()
+    var id: UUID
+    var coupleId: UUID
+    var itemId: String          // one of 17 canonical item IDs
+    var computedAt: Date
 
-    // Matches ContentDesireItem.id (e.g. "desire-001")
-    var desireItemId: String
+    // MARK: - Match Type
 
-    // The alignment level returned by the alignment engine
-    var alignmentLevel: String
+    var matchType: DesireMatchType  // mutual (both yes) / adjacent (one yes, one curious)
 
-    // What partner A rated this item
-    var ratingA: DesireLevel
+    // MARK: - Reveal State
 
-    // What partner B rated this item
-    var ratingB: DesireLevel
+    var isFreeReveal: Bool      // the one free match — set by Edge Function only
+    var revealedAt: Date?       // nil until paywall cleared
 
-    // When this match was computed/stored
-    var computedAt: Date = Date()
-
-    // Optional: partner values, gap, bridge card
-    var partnerAValue: String?
-    var partnerBValue: String?
-    var gapSize: Int?
-    var bridgeCardId: String?
-
-
-    // MARK: - Relationships
-
-    // The Couple that owns this match record (inverse declared on Couple)
-    @Relationship
-    var couple: Couple?
-
-
-    // MARK: - Initializer
+    // MARK: - Init
 
     init(
-        desireItemId: String,
-        alignmentLevel: String,
-        ratingA: DesireLevel,
-        ratingB: DesireLevel,
-        partnerAValue: String? = nil,
-        partnerBValue: String? = nil,
-        gapSize: Int? = nil,
-        bridgeCardId: String? = nil
+        coupleId: UUID,
+        itemId: String,
+        matchType: DesireMatchType
     ) {
         self.id = UUID()
-        self.desireItemId = desireItemId
-        self.alignmentLevel = alignmentLevel
-        self.ratingA = ratingA
-        self.ratingB = ratingB
+        self.coupleId = coupleId
+        self.itemId = itemId
+        self.matchType = matchType
         self.computedAt = Date()
-        self.partnerAValue = partnerAValue
-        self.partnerBValue = partnerBValue
-        self.gapSize = gapSize
-        self.bridgeCardId = bridgeCardId
+        self.isFreeReveal = false   // always set by Edge Function — never client
+        self.revealedAt = nil
     }
 
+    // MARK: - Computed
+
+    var isRevealed: Bool {
+        revealedAt != nil
+    }
 
     // MARK: - Preview Helpers
 
-    static let example = DesireMatch(desireItemId: "desire-001", alignmentLevel: AlignmentLevel.strongAlignment.rawValue, ratingA: DesireLevel.excitedAboutIt, ratingB: DesireLevel.openToIt)
+    static let example = DesireMatch(
+        coupleId: UUID(),
+        itemId: "desire-001",
+        matchType: .mutual
+    )
+
+    static let freeRevealExample: DesireMatch = {
+        let m = DesireMatch(
+            coupleId: UUID(),
+            itemId: "desire-002",
+            matchType: .adjacent
+        )
+        m.isFreeReveal = true
+        return m
+    }()
 }

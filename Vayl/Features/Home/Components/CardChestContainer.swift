@@ -5,9 +5,9 @@ import SwiftUI
 
 struct CardChestContainer: View {
 
-    var cards: [Prompt]
+    var cards: [Card]
     var cardsCompleted: Int = 0
-    var onCardAction: ((Prompt, CardAction) -> Void)? = nil
+    var onCardAction: ((Card, CardAction) -> Void)? = nil
     var onNavigateToPlay: (() -> Void)? = nil
     var onPhaseChange: ((CarouselPhase) -> Void)? = nil
 
@@ -362,7 +362,7 @@ struct NoiseTexture: View {
     ZStack {
         AppColors.pageBg.ignoresSafeArea()
         ScrollView {
-            CardChestContainer(cards: Prompt.samples)
+            CardChestContainer(cards: Card.samples)
                 .padding(20)
         }
     }
@@ -373,7 +373,7 @@ struct NoiseTexture: View {
     ZStack {
         AppColors.lightPageBg.ignoresSafeArea()
         ScrollView {
-            CardChestContainer(cards: Prompt.samples)
+            CardChestContainer(cards: Card.samples)
                 .padding(20)
         }
     }

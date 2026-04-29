@@ -1,24 +1,19 @@
 //
 //  PulseStore.swift
-//  Open Lightly
-//
-//  Created by Bryan Jorden on 4/8/26.
-//
-
-
-//
-//  PulseStore.swift
-//  Open Lightly
-//
-//  Created by Bryan Jorden on 4/8/26.
+//  Vayl
 //
 
 import Foundation
-import Combine
+import Observation
 
-final class PulseStore: ObservableObject {
+@Observable
+final class PulseStore {
 
-    @Published private(set) var entries: [PulseEntry] = []
+    // MARK: - State
+
+    private(set) var entries: [PulseEntry] = []
+
+    // MARK: - Private
 
     private let key = "pulse.entries.v1"
 
@@ -27,8 +22,6 @@ final class PulseStore: ObservableObject {
     init() {
         load()
         #if DEBUG
-        // Seed with preview entries if store is empty
-        // Gives the simulator real data to test scroll with
         if entries.isEmpty {
             PulseEntry.previews.forEach { add($0) }
         }
@@ -38,7 +31,6 @@ final class PulseStore: ObservableObject {
     // MARK: - Public
 
     func add(_ entry: PulseEntry) {
-        // Prevent duplicate saves for the same calendar day
         let cal = Calendar.current
         entries.removeAll { cal.isDate($0.date, inSameDayAs: entry.date) }
         entries.append(entry)
@@ -63,8 +55,8 @@ final class PulseStore: ObservableObject {
 
     private func load() {
         guard
-            let data   = UserDefaults.standard.data(forKey: key),
-            let saved  = try? JSONDecoder().decode([PulseEntry].self, from: data)
+            let data = UserDefaults.standard.data(forKey: key),
+            let saved = try? JSONDecoder().decode([PulseEntry].self, from: data)
         else { return }
         entries = saved
     }

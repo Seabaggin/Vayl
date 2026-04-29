@@ -213,6 +213,10 @@ struct PartnerChip: View {
                         : Color.white.opacity(0.06),
                         lineWidth: 1)
             }
+
+        // ── Nudge state — V1.1 stub ──────────────────────────
+        case .nudge:
+            EmptyView()
         }
     }
 }

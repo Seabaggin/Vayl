@@ -284,9 +284,9 @@ struct ConversationCard: View {
         switch content {
         case .onboarding(let card):
             return AnyView(highlightedQuestion(card: card))
-        case .prompt(let prompt):
+        case .prompt(let text):
             return AnyView(
-                Text(prompt.text)
+                Text(text)
                     .font(AppFonts.cardTitle)
                     .foregroundStyle(AppColors.textPrimary)
                     .lineSpacing(6)
@@ -354,17 +354,17 @@ struct ConversationCard: View {
     }
 }
 
-// MARK: - Convenience Initializer for Prompt Migration
+// MARK: - Convenience Initializer (stub — pending Card integration)
 
 extension ConversationCard {
-    /// Convenience initializer for Prompt cards
-    /// Provides a streamlined API for prompt-only usage
+    /// Convenience initializer for Card usage.
+    /// STUB: content mapping will be updated when ConversationCardContent adopts Card.
     init(
-        prompt: Prompt,
+        card: Card,
         onDismiss: (() -> Void)? = nil
     ) {
         self.init(
-            content: .prompt(prompt),
+            content: .prompt(card.text),
             fuseConfig: .none,
             ghostDeckMode: .none,
             onPillSelected: nil,
@@ -403,18 +403,18 @@ extension ConversationCard {
 }
 
 #Preview("Prompt Card — Convenience Init") {
-    let prompt = Prompt(
-        id: UUID(),
-        text: "What's one thing you've never told anyone?",
-        category: .prompt
-    )
-    
     ZStack {
         AppColors.pageBg.ignoresSafeArea()
-        
+
         VStack {
             Spacer()
-            ConversationCard(prompt: prompt, onDismiss: { })
+            ConversationCard(
+                content: .prompt("What's one thing you've never told anyone?"),
+                fuseConfig: .none,
+                ghostDeckMode: .none,
+                onPillSelected: nil,
+                onContinue: { }
+            )
             Spacer()
         }
         .padding()

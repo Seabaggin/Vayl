@@ -34,6 +34,15 @@ import Foundation
 import Supabase
 import Combine
 
+// STUB: DesireRating SwiftData model deleted — pending replacement with DesireMapEntry
+@_silgen_name("") private func _unused() {}
+struct DesireRating {
+    let id: UUID
+    let desireItemId: String
+    let rating: DesireRatingValue
+    let ratedAt: Date
+}
+
 // MARK: - Supabase DTO
 
 /// Maps one desire rating to the `desire_ratings` table in Supabase.

@@ -2,6 +2,14 @@
 //  LockInSession.swift
 //  Vayl
 //
+//  Created by Bryan Jorden on 4/27/26.
+//
+
+
+//
+//  LockInSession.swift
+//  Vayl
+//
 //  Location: Models/Persistence/LockInSession.swift
 //
 

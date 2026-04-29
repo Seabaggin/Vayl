@@ -5,16 +5,6 @@
 
 import SwiftUI
 
-// MARK: - Desire Map State
-
-enum DesireMapState {
-    case hidden
-    case youDone(partnerName: String)
-    case bothReady
-    case freeRevealSeen(partnerName: String)
-    case fullyUnlocked
-    case redoInProgress(partnerName: String, partnerStarted: Bool)
-}
 
 // MARK: - Reflection Card State
 
@@ -108,15 +98,7 @@ enum FactCategory {
     }
 }
 
-// MARK: - Partner Chip
 
-enum PartnerChipState {
-    case none
-    case invitePending
-    case active(name: String, initial: Character)
-    case multipleActive(partners: [(name: String, initial: Character)], selected: String?)
-    // ↑ V1.1 — stub only, renders as inactive "All ·" pill
-}
 
 // MARK: - Home Event (for EventEngine)
 

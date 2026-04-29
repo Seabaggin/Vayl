@@ -1,11 +1,10 @@
-// HomeDashboardView.swift
-// Vayl
+//
+//  HomeDashboardView.swift
+//  Vayl
+//
 
 import SwiftUI
 
-// Tracks the screen-space Y position of "THE CONSTELLATION" section header
-// so the background morph can be driven by the section's real position
-// instead of hardcoded scroll offset numbers.
 private struct ConstellationOffsetKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
@@ -19,7 +18,7 @@ struct HomeDashboardView: View {
 
     var displayName: String = "Jordan"
     var partnerChipState: PartnerChipState = .none
-    var cards: [Prompt] = Prompt.samples
+    var cards: [Card] = []
     var desireMapState: DesireMapState = .hidden
     var reflectionCardState: ReflectionCardState = .hidden
     var pickUpItems: [PickUpItem] = []
@@ -33,7 +32,7 @@ struct HomeDashboardView: View {
     // MARK: - Callbacks
 
     var onRemindPartner: (() -> Void)? = nil
-    var onCardAction: ((Prompt, CardAction) -> Void)? = nil
+    var onCardAction: ((Card, CardAction) -> Void)? = nil
     var onDesireMapReveal: (() -> Void)? = nil
     var onDesireMapUnlock: (() -> Void)? = nil
     var onReflectionDone: (([String], String?, Bool) -> Void)? = nil
@@ -59,7 +58,7 @@ struct HomeDashboardView: View {
     @State private var deckFocused: Bool    = false
     @State private var breathPhase: CGFloat = 0
 
-    // MARK: - Scroll tracking
+    // MARK: - Scroll Tracking
 
     @State private var scrollOffset: CGFloat = 0
     @State private var didFireThresholdHaptic = false
@@ -77,7 +76,7 @@ struct HomeDashboardView: View {
     @State private var showDebugGrid = false
     #endif
 
-    // MARK: - Opacity helpers
+    // MARK: - Opacity Helpers
 
     private func elementOpacity(visible: Bool, focusedFloor: CGFloat = 0.06) -> CGFloat {
         let entranceAlpha: CGFloat = visible ? 1.0 : 0.0
@@ -92,7 +91,7 @@ struct HomeDashboardView: View {
         return entrance * exitCurve * focus
     }
 
-    // MARK: - Deck-focus animation
+    // MARK: - Deck Focus Animation
 
     private var focusAnimation: Animation {
         deckFocused
@@ -104,13 +103,11 @@ struct HomeDashboardView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .center, spacing: 0) {
 
                     Spacer(minLength: 4)
 
-                    // ── Greeting ──────────────────────────────
                     greetingBlock
                         .padding(.horizontal, 24)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -134,7 +131,6 @@ struct HomeDashboardView: View {
                     Color.clear
                         .frame(height: max(0, 8 - (max(0, scrollOffset) * 0.3)))
 
-                    // ── Card Chest ────────────────────────────
                     CardChestContainer(
                         cards: cards,
                         cardsCompleted: cardsCompleted,
@@ -144,7 +140,8 @@ struct HomeDashboardView: View {
                             let shouldFocus = (phase != .floating)
                             if shouldFocus != deckFocused {
                                 if !shouldFocus {
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                    Task {
+                                        try? await Task.sleep(for: .milliseconds(200))
                                         deckFocused = false
                                     }
                                 } else {
@@ -159,13 +156,8 @@ struct HomeDashboardView: View {
                     .animation(.easeOut(duration: 0.5), value: sessionVisible)
                     .zIndex(10)
 
-                    // ── Optional cards ────────────────────────
-
-                    if desireMapState != .hidden
-                        && desireMapState != .fullyUnlocked {
-
+                    if desireMapState != .hidden && desireMapState != .fullyUnlocked {
                         Spacer(minLength: 56)
-
                         DesireMapIndicator(
                             state: desireMapState,
                             onReveal: onDesireMapReveal,
@@ -183,9 +175,7 @@ struct HomeDashboardView: View {
                     }
 
                     if reflectionCardState != .hidden {
-
                         Spacer(minLength: 56)
-
                         ReflectionCard(
                             state: reflectionCardState,
                             onMoreTap: onMoreTap,
@@ -204,9 +194,7 @@ struct HomeDashboardView: View {
                     }
 
                     if !pickUpItems.isEmpty {
-
                         Spacer(minLength: 56)
-
                         PickUpCard(
                             items: pickUpItems,
                             onItemTap: onPickUpItemTap
@@ -221,7 +209,6 @@ struct HomeDashboardView: View {
                         .animation(focusAnimation, value: deckFocused)
                     }
 
-                    // ── GravLift — standalone, bridges card chest to ambient ──
                     GravLiftView(breathPhase: breathPhase)
                         .padding(.horizontal, 20)
                         .frame(height: 32)
@@ -230,7 +217,6 @@ struct HomeDashboardView: View {
 
                     Spacer(minLength: 32)
 
-                    // ── Ambient Zone ──────────────────────────
                     ambientZone
 
                     Spacer(minLength: 320)
@@ -238,22 +224,15 @@ struct HomeDashboardView: View {
             }
             .scrollClipDisabled()
             .onPreferenceChange(ConstellationOffsetKey.self) { minY in
-                // Morph from glow blobs → galaxy as the section header scrolls up.
-                // Start: header is 110% down (just below screen bottom — user is approaching)
-                // End:   header is 30% down (well into view — morph complete)
-                let screenH   = (UIApplication.shared.connectedScenes
-                    .compactMap { $0 as? UIWindowScene }
-                    .first?.screen.bounds.height) ?? 844
+                let screenH   = UIScreen.main.bounds.height
                 let fadeStart = screenH * 1.10
                 let fadeEnd   = screenH * 0.30
-                // No withAnimation — driven frame-by-frame by the scroll gesture
                 constellationMorphProgress = max(0, min(1, (fadeStart - minY) / (fadeStart - fadeEnd)))
             }
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentOffset.y
             } action: { _, newOffset in
                 scrollOffset = max(0, newOffset)
-
                 if newOffset >= greetingExitThreshold && !didFireThresholdHaptic {
                     didFireThresholdHaptic = true
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -266,7 +245,6 @@ struct HomeDashboardView: View {
             }
             .simultaneousGesture(DragGesture(minimumDistance: 10))
 
-            // ── Reflection Banner ─────────────────────────────
             if showReflectionBanner {
                 VStack {
                     ReflectionBannerView(
@@ -288,7 +266,6 @@ struct HomeDashboardView: View {
                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showReflectionBanner)
             }
 
-            // ── Debug ─────────────────────────────────────────
             #if DEBUG
             if showDebugGrid {
                 DebugGridOverlay()
@@ -339,26 +316,11 @@ struct HomeDashboardView: View {
     }
 
     // MARK: - Section Divider
-    //
-    // Gradient bar replaces the widget name label.
-    // The bar color identifies the zone:
-    //   YOUR STATE   — cyan → purple  (Pulse palette)
-    //   REFLECTION   — purple → magenta (Prism palette)
-    // Fading hairline extends to the right edge.
 
-    private func sectionDivider(
-        label:    String,
-        colors:   [Color]
-    ) -> some View {
+    private func sectionDivider(label: String, colors: [Color]) -> some View {
         HStack(spacing: 8) {
             RoundedRectangle(cornerRadius: 2, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: colors,
-                        startPoint: .top,
-                        endPoint:   .bottom
-                    )
-                )
+                .fill(LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom))
                 .frame(width: 2.5, height: 16)
 
             Text(label)
@@ -374,8 +336,7 @@ struct HomeDashboardView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            (colorScheme == .light ? Color.black : Color.white)
-                                .opacity(0.10),
+                            (colorScheme == .light ? Color.black : Color.white).opacity(0.10),
                             .clear
                         ],
                         startPoint: .leading,
@@ -396,10 +357,10 @@ struct HomeDashboardView: View {
                 .fill(
                     LinearGradient(
                         stops: [
-                            .init(color: .clear,                   location: 0.00),
+                            .init(color: .clear,                       location: 0.00),
                             .init(color: AppColors.cyan.opacity(0.22), location: 0.20),
                             .init(color: AppColors.cyan.opacity(0.22), location: 0.80),
-                            .init(color: .clear,                   location: 1.00),
+                            .init(color: .clear,                       location: 1.00),
                         ],
                         startPoint: .leading,
                         endPoint:   .trailing
@@ -413,28 +374,18 @@ struct HomeDashboardView: View {
     }
 
     // MARK: - Ambient Zone
-    //
-    // Tray container removed entirely — cards float directly on page bg.
-    // Section dividers (gradient bar + label) replace the tray's hierarchy
-    // signal. GravLift lives above this zone as a standalone element.
-    // deckFocused dims and blurs the entire zone as one.
 
     private var ambientZone: some View {
         VStack(spacing: 0) {
-            
+
             Spacer(minLength: 16)
-            
-            // ── Section: The Pulse ────────────────────────────
-            sectionDivider(
-                label:  "THE PULSE",
-                colors: [AppColors.cyan, AppColors.purple]
-            )
-            .opacity(elementOpacity(visible: pulseVisible))
-            .animation(.easeOut(duration: 0.5), value: pulseVisible)
-            
+
+            sectionDivider(label: "THE PULSE", colors: [AppColors.cyan, AppColors.purple])
+                .opacity(elementOpacity(visible: pulseVisible))
+                .animation(.easeOut(duration: 0.5), value: pulseVisible)
+
             Spacer(minLength: 12)
-            
-            // ── Pulse ─────────────────────────────────────────
+
             HomeWidgetShell(
                 isLight:     colorScheme == .light,
                 accentColor: AppColors.cyan,
@@ -442,11 +393,7 @@ struct HomeDashboardView: View {
             ) {
                 ZStack {
                     if colorScheme == .dark {
-                        OrbLayer(
-                            accentColor: AppColors.cyan,
-                            height:      300,
-                            variant:     .pulse
-                        )
+                        OrbLayer(accentColor: AppColors.cyan, height: 300, variant: .pulse)
                     }
                     PulseWidget(onOpenInMap: onNavigateToPlay)
                 }
@@ -457,24 +404,17 @@ struct HomeDashboardView: View {
             .offset(y: pulseVisible ? 0 : 12)
             .allowsHitTesting(!deckFocused)
             .animation(.easeOut(duration: 0.5), value: pulseVisible)
-            
-            // ── Thread ────────────────────────────────────────
+
             Spacer(minLength: 20)
             pulseToprismThread
             Spacer(minLength: 16)
-            
-            // ── Section: The Prism ────────────────────────────
-            sectionDivider(
-                label:  "THE PRISM",
-                colors: [AppColors.purple, AppColors.magenta]
-            )
-            .opacity(elementOpacity(visible: prismVisible))
-            .animation(.easeOut(duration: 0.5), value: prismVisible)
-            
+
+            sectionDivider(label: "THE PRISM", colors: [AppColors.purple, AppColors.magenta])
+                .opacity(elementOpacity(visible: prismVisible))
+                .animation(.easeOut(duration: 0.5), value: prismVisible)
+
             Spacer(minLength: 12)
-            
-            // ── Prism ────────────────────────────────────────
-            
+
             HomeWidgetShell(
                 isLight:     colorScheme == .light,
                 accentColor: AppColors.electricViolet,
@@ -482,29 +422,23 @@ struct HomeDashboardView: View {
             ) {
                 ZStack {
                     if colorScheme == .dark {
-                        OrbLayer(
-                            accentColor: AppColors.electricViolet,
-                            height:      300,
-                            variant:     .prism
-                        )
+                        OrbLayer(accentColor: AppColors.electricViolet, height: 300, variant: .prism)
                     }
                     PrismView(breathPhase: breathPhase)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 14)
-            
-            // ── Thread (Prism → Constellation) ───────────────────
+
             Spacer(minLength: 20)
             pulseToprismThread
             Spacer(minLength: 16)
-            
-            // ── Section: The Constellation ───────────────────────
+
             sectionDivider(
                 label:  "THE CONSTELLATION",
                 colors: colorScheme == .dark
-                ? [AppColors.cyan, AppColors.purple]
-                : [AppColors.purple, AppColors.magenta]
+                    ? [AppColors.cyan, AppColors.purple]
+                    : [AppColors.purple, AppColors.magenta]
             )
             .background(
                 GeometryReader { proxy in
@@ -516,9 +450,9 @@ struct HomeDashboardView: View {
             )
             .opacity(elementOpacity(visible: prismVisible))
             .animation(.easeOut(duration: 0.5), value: prismVisible)
-            
+
             Spacer(minLength: 12)
-            
+
             ConstellationView()
                 .padding(.horizontal, 14)
                 .opacity(elementOpacity(visible: prismVisible))
@@ -527,7 +461,6 @@ struct HomeDashboardView: View {
                 .allowsHitTesting(!deckFocused)
                 .animation(.easeOut(duration: 0.5), value: prismVisible)
                 .animation(focusAnimation, value: deckFocused)
-            
         }
     }
 
@@ -551,12 +484,10 @@ struct HomeDashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Computed Properties
+    // MARK: - Computed
 
     private var bannerSessionLabel: String {
-        if case .pendingYours(let label, _) = reflectionCardState {
-            return label
-        }
+        if case .pendingYours(let label, _) = reflectionCardState { return label }
         return "Last session"
     }
 
@@ -611,7 +542,8 @@ struct HomeDashboardView: View {
         withAnimation(.easeOut(duration: 0.5).delay(0.80)) { prismVisible      = true }
         withAnimation(.easeOut(duration: 0.6).delay(0.95)) { tickerVisible     = true }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
             withAnimation(.linear(duration: 8.0).repeatForever(autoreverses: false)) {
                 breathPhase = 1.0
             }
@@ -687,27 +619,7 @@ private struct DebugGridOverlay: View {
 }
 #endif
 
-// MARK: - Equatable helpers
-
-extension DesireMapState: Equatable {
-    static func == (lhs: DesireMapState, rhs: DesireMapState) -> Bool {
-        switch (lhs, rhs) {
-        case (.hidden, .hidden),
-             (.bothReady, .bothReady),
-             (.fullyUnlocked, .fullyUnlocked):
-            return true
-        case (.youDone(let a), .youDone(let b)):
-            return a == b
-        case (.freeRevealSeen(let a), .freeRevealSeen(let b)):
-            return a == b
-        case (.redoInProgress(let a, let b),
-              .redoInProgress(let c, let d)):
-            return a == c && b == d
-        default:
-            return false
-        }
-    }
-}
+// MARK: - Equatable Helpers
 
 extension ReflectionCardState: Equatable {
     static func == (lhs: ReflectionCardState, rhs: ReflectionCardState) -> Bool {
@@ -723,67 +635,67 @@ extension ReflectionCardState: Equatable {
 #Preview("Dark — Day Zero, Solo") {
     HomeDashboardView(
         displayName: "Jordan", partnerChipState: .none,
-        cards: Prompt.samples, desireMapState: .hidden,
+        cards: [], desireMapState: .hidden,
         reflectionCardState: .hidden, pickUpItems: [],
         stageIndex: 1, cardsCompleted: 0, recentEvents: [], isSolo: true
     )
-    .environmentObject(PulseStore())
+    .environment(PulseStore())
     .preferredColorScheme(.dark)
 }
 
 #Preview("Dark — Day Zero, Invite Pending") {
     HomeDashboardView(
         displayName: "Jordan", partnerChipState: .invitePending,
-        cards: Prompt.samples, desireMapState: .youDone(partnerName: "Alex"),
+        cards: [], desireMapState: .youDone(partnerName: "Alex"),
         reflectionCardState: .hidden, pickUpItems: [],
         stageIndex: 1, cardsCompleted: 0, recentEvents: []
     )
-    .environmentObject(PulseStore())
+    .environment(PulseStore())
     .preferredColorScheme(.dark)
 }
 
 #Preview("Dark — Mid Deck, Both Map Ready") {
     HomeDashboardView(
         displayName: "Jordan", partnerChipState: .active(name: "Alex", initial: "A"),
-        cards: Prompt.samples, desireMapState: .bothReady,
+        cards: [], desireMapState: .bothReady,
         reflectionCardState: .pendingYours(sessionLabel: "Stage 1 · Session 1", sessionDate: Date().addingTimeInterval(-172800)),
         pickUpItems: [], stageIndex: 1, cardsCompleted: 5,
         recentEvents: [.partnerCompletedDesireMap(partnerName: "Alex")]
     )
-    .environmentObject(PulseStore())
+    .environment(PulseStore())
     .preferredColorScheme(.dark)
 }
 
 #Preview("Dark — Reflection Banner") {
     HomeDashboardView(
         displayName: "Jordan", partnerChipState: .active(name: "Alex", initial: "A"),
-        cards: Prompt.samples, desireMapState: .hidden,
+        cards: [], desireMapState: .hidden,
         reflectionCardState: .hidden, pickUpItems: [],
         stageIndex: 1, cardsCompleted: 3, recentEvents: [],
         showReflectionBanner: true
     )
-    .environmentObject(PulseStore())
+    .environment(PulseStore())
     .preferredColorScheme(.dark)
 }
 
 #Preview("Light — Day Zero") {
     HomeDashboardView(
         displayName: "Jordan", partnerChipState: .none,
-        cards: Prompt.samples, desireMapState: .hidden,
+        cards: [], desireMapState: .hidden,
         reflectionCardState: .hidden, pickUpItems: [],
         stageIndex: 1, cardsCompleted: 0, recentEvents: []
     )
-    .environmentObject(PulseStore())
+    .environment(PulseStore())
     .preferredColorScheme(.light)
 }
 
 #Preview("Dark — No Name") {
     HomeDashboardView(
         displayName: "", partnerChipState: .none,
-        cards: Prompt.samples, desireMapState: .hidden,
+        cards: [], desireMapState: .hidden,
         reflectionCardState: .hidden, pickUpItems: [],
         stageIndex: 1, cardsCompleted: 0, recentEvents: [], isSolo: true
     )
-    .environmentObject(PulseStore())
+    .environment(PulseStore())
     .preferredColorScheme(.dark)
 }

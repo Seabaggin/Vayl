@@ -92,18 +92,19 @@ Each person must feel like the app was built for them specifically. The persona 
 | Coupled + Curious | `coupled-curious` | Graduated exposure roadmap → first experiences |
 | Coupled + Experienced | `coupled-experienced` | Communication tune-ups → advanced scenarios → repair tools |
 
-### Tone Shift Between Populations
+### Tone Shift Between Populations & Emotional Registers
 
-| Element | Curious Tone | Experienced Tone |
-|---------|-------------|-----------------|
-| Vocabulary | Plain language, define everything | Community language, no hand-holding |
-| Pacing | Slow, gentle, "it's okay" | Direct, efficient, respects their time |
-| Assumed knowledge | Zero | Full |
-| Emotional register | Warm, reassuring, validating | Honest, challenging, growth-oriented |
-| Prompt complexity | One question at a time | Multi-layered, asks for nuance |
-| Example | "What's one thing about NM that excites you? Just one." | "What pattern keeps showing up that you haven't fully addressed?" |
+| Element | Curious (Anxious) | Curious (Excited) | Experienced (Anxious) | Experienced (Excited) |
+|---------|------------------|-------------------|----------------------|----------------------|
+| Vocabulary | Plain, defining, reassuring | Plain, direct, celebratory | Community language | Community language |
+| Pacing | Slow, gentle, "it's okay" | Fast, permission-giving | Efficient, respects time | Efficient, respects time |
+| Assumed knowledge | Zero | Zero | Full | Full |
+| Emotional register | Warm, reassuring, validating | Bold, celebratory, permissive | Honest, protective, growth-oriented | Honest, expansive, growth-oriented |
+| Prompt complexity | One question at a time | One question, but bigger | Multi-layered, nuanced | Multi-layered, expansive |
+| Crisis language | "Let's calm down and reset" | "Let's understand what this means" | "Here's the repair path" | "Here's what we learned" |
+| Example (Desire Map) | "What's one thing that makes you nervous?" | "What's one thing that excites you?" | "What's your dealbreaker?" | "How far do you actually want to go?" |
 
-If a curious user sees experienced content → overwhelmed, unready. If an experienced user sees curious content → patronized, deletes the app. **The persona filter is the difference between "this app gets me" and "this app isn't for me."**
+If a curious anxious user sees excited content → feels dismissed, like "you're just saying I should be braver." If a curious excited user sees anxious content → feels patronized, like "you don't think I can handle this." **The emotional register filter is the difference between "this app gets me" and "this app doesn't trust my energy."**
 
 ### Solo ↔ Coupled Transition
 
@@ -424,15 +425,70 @@ Public documentation of:
 
 ## 6. Psychology & Emotional Design
 
-### Shame Reduction Architecture
+### The Emotional Range Principle
 
-Every design decision passes through: "Does this reduce shame or increase it?"
+Open Lightly serves the full emotional spectrum of CNM exploration — from anxious to electric.
+
+The app must never assume the user is scared. Some users are scared. Some users are THRILLED. Both deserve to feel seen.
+
+**The tone is calibrated at onboarding and remains adjustable throughout.** The same features serve both emotional registers. What changes is the energy the app brings:
+
+- **For anxious users:** Light features first (playful cards, pulse, discovery). Heavy features accessible but not front-door. Reassurance-first language. Jealousy framed as "information about unmet needs."
+- **For excited users:** Expansion-focused content prominent. Pleasure and desire exploration celebrated. Heavy features as tools for deepening. Jealousy framed as "data about boundaries I want to explore."
+
+### Dual Emotional Pathways Architecture
+
+The app serves both registers through the same content library via context-aware routing. The infrastructure is transparent to the user. They experience different doorways to the same tools.
+
+| Element | Anxious Register | Excited Register |
+|---------|------------------|------------------|
+| Primary frame | Safety, clarity, reassurance | Possibility, expansion, pleasure |
+| Onboarding tone | "We'll take this slowly" | "There's a whole world here" |
+| Desire Map position | "Find alignment" | "Discover the full spectrum" |
+| Jealousy language | "Information about unmet needs" | "Data about boundaries I want to explore" |
+| Feature discovery | Light → heavy | Direct access to all tools |
+| Card carousel order | Safety-first cards | Excitement-first cards |
+| Pulse prominence | Daily check-in tool | Pleasure/energy tracking |
+| Prompt voice | Gentle, validating, patient | Direct, bold, curious |
+
+### Shame Reduction & Pleasure Cultivation
+
+Every design decision passes through two gates (not one):
+1. "Does this reduce shame?" (for anxious users)
+2. "Does this celebrate desire?" (for excited users)
+
+Both are load-bearing.
 
 - **Onboarding stat screen** ("1 in 5 Americans") — normalizes before asking anything personal
 - **"No judgment on any answer"** — explicit on relationship status screen (the partnered_hidden option carries shame)
 - **Skip is always real** — no guilt copy, no "Are you sure?", no re-prompting
-- **Jealousy is data, not failure** — reframed as information about unmet needs, not proof something is wrong
-- **Every outcome is valid** — including "We explored this and decided it's not for us"
+- **Jealousy is data, not failure** — reframed as information about unmet needs (anxious) or boundaries to explore (excited)
+- **Every outcome is valid** — including "We explored this and decided it's not for us" OR "We want to expand further"
+- **Desire is celebrated, never minimized** — for excited users, the app says "Yes, and?" not "Is this safe?"
+
+### Feature Positioning Across Emotional Registers
+
+The same tools and features serve both emotional journeys. **Positioning changes. The product does not.**
+
+| Feature | Anxious Register | Excited Register |
+|---------|------------------|------------------|
+| **Desire Map** | "Find alignment with your partner" | "Discover the full spectrum of what turns you both on" |
+| **Card Carousel** | Safety-first cards (veto power, boundaries, consent). Excitement cards accessible but not prominent. | Expansion-first cards (new experiences, pleasure, curiosity). Safety cards available as needed. |
+| **Pulse Check-In** | "How are you feeling? Let's track your emotional baseline." | "What's your energy level? Let's track your aliveness." |
+| **Jealousy Mapping** | "Jealousy is information. What does it tell you about what you need?" | "Jealousy is a signal. What does it reveal about boundaries you want to explore?" |
+| **Ground Rules** | Protective frame: "These keep us safe" | Developmental frame: "These let us play safely" |
+| **Agreements Vault** | "Know exactly what you agreed to" | "Build the structure that lets us explore further" |
+| **Crisis Tools** | "When things go wrong — here's the recovery path" | "When boundaries stretch — here's how to navigate it" |
+| **Communication Drop Box** | "Say the hard thing safely" | "Articulate the wild thing without filtering" |
+| **Onboarding flow** | Conversational, Q&A style, lots of reassurance | Fast, permission-giving, minimal friction |
+
+### The Same Journey, Different Doors
+
+Example: A couple might use the **Desire Map** to either:
+- (Anxious) "Make sure we're safe and aligned before trying anything"
+- (Excited) "See how far we both want to go and build from there"
+
+Both are real use cases. Both use the same data. The app frames it differently based on emotional register.
 
 ### Desire Map Assessment — Core 17 Items
 
@@ -480,27 +536,36 @@ The Desire Map is a mutual-reveal compatibility tool. Both partners rate 17 item
 
 ### Archetype System (Post-Reflection Classification)
 
-Solo reflection text is embedded and compared against 8 archetype centroids:
+Solo reflection text is embedded and compared against archetypes. Each archetype is routed to a **primary emotional register** (anxious or excited) that shapes tone, feature prominence, and prompt voice.
 
-| Archetype | Signals | Content Path |
-|-----------|---------|-------------|
-| The Curious | "wondering," "thinking about it" | Foundational, exploratory |
-| The Anxious | "scared," "worried about losing" | Reassurance-first, attachment-focused |
-| The Wanting | "desire," "something missing" | Desire exploration, permission-giving |
-| The Going-Along | "partner wants," "they asked me" | Autonomy-focused |
-| The Processing | "jealousy," "struggling" | Emotional processing tools |
-| The Stuck | "been doing this but," "not working" | Advanced mechanics, renegotiation |
-| The Communicator | "don't know how to talk about" | Communication frameworks |
-| The Builder | "rules," "structure," "boundaries" | Practical tools, agreements |
+| Archetype | Signals | Primary Register | Content Path |
+|-----------|---------|------------------|-------------|
+| The Curious | "wondering," "thinking about it" | Flexible (calibrated at onboarding) | Foundational, exploratory |
+| The Anxious | "scared," "worried about losing" | Anxious | Reassurance-first, attachment-focused |
+| The Thrilled | "excited," "turned on by the idea," "can't wait" | Excited | Exploration-first, expansion-focused |
+| The Wanting | "desire," "something missing" | Excited (but may include anxious) | Desire exploration, permission-giving |
+| The Going-Along | "partner wants," "they asked me" | Anxious (autonomy-focused) | Autonomy-focused, reassurance-first |
+| The Processing | "jealousy," "struggling" | Flexible (both registers serve) | Jealousy as data vs. jealousy as expansion signal |
+| The Stuck | "been doing this but," "not working" | Flexible | Advanced mechanics, renegotiation (tone calibrated) |
+| The Communicator | "don't know how to talk about" | Anxious | Communication frameworks, dialogue tools |
+| The Builder | "rules," "structure," "boundaries" | Flexible | Practical tools, agreements (safety frame vs. exploration frame) |
 
-Classification is **invisible infrastructure**. The system tags a user as `anxious` internally for content routing. The user never sees that label. They see cards that happen to address their experience. The user experience is just: "Wow, this app gets me." Use the science to build the engine. Let the user experience feel like wisdom, not treatment.
+**Routing logic:** Archetypes signal emotional direction. Onboarding calibration question ("What's your emotional baseline right now?") confirms and can override archetype inference. The system is **learned, not fixed** — users can adjust their emotional register in settings at any time.
+
+Classification is **invisible infrastructure**. The system tags a user as `anxious`, `excited`, or `flexible` internally for content routing. The user never sees that label. They see cards that happen to address their experience in their emotional register. The user experience is just: "Wow, this app gets me." Use the science to build the engine. Let the user experience feel like wisdom, not treatment.
 
 ### Emotional Pacing
 
 - Onboarding screens 1–7: logistics (setup energy)
 - Screen 8 (Ground Rules): ethical frame (trust energy)
-- Screen 9 (Priming): emotional threshold — everything after is personal
+- **Screen 9 (NEW: Emotional Calibration): "What's your energy right now?" — anxious/excited/flexible**
+- Screen 10 (Priming): emotional threshold — everything after is personal
 - Solo Reflection: first vulnerable moment — earns the right to personalize
+
+**Screen 9 options:**
+- "Nervous or cautious" → anxious register (reassurance-first, safety-focused)
+- "Excited or curious" → excited register (expansion-first, pleasure-focused)
+- "I'm not sure" → flexible register (system calibrates based on archetype inference, user can adjust)
 
 ### Ground Rules Resurfacing
 

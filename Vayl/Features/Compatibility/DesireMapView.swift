@@ -179,7 +179,7 @@ struct DesireMapView: View {
         let allItems = desireCategories.flatMap(\.items)
         for item in allItems {
             if let saved = store.fetchRating(forPromptId: item.id),
-               let level = Int(saved.reaction).flatMap({ DesireLevel(rawValue: $0) }) {
+               let level = DesireLevel(rawValue: saved.reaction) {
                 ratings[item.id] = level
             }
         }

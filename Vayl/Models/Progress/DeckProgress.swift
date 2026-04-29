@@ -2,6 +2,14 @@
 //  DeckProgress.swift
 //  Vayl
 //
+//  Created by Bryan Jorden on 4/27/26.
+//
+
+
+//
+//  DeckProgress.swift
+//  Vayl
+//
 
 import Foundation
 import SwiftData

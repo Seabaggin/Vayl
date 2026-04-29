@@ -43,7 +43,7 @@ struct OnboardingGroundRulesView: View {
     }
 
     private var pills: [PillContent] {
-        let pill2: PillContent = data.explorationMode == .couple
+        let pill2: PillContent = data.appMode == .together
             ? PillContent(
                 id: 1,
                 icon: "heart.fill",
@@ -686,8 +686,8 @@ private struct PromiseCardBorder: ViewModifier {
 #Preview("Dark") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
-        d.displayName     = "Jordan"
-        d.explorationMode = .solo
+        d.displayName = "Jordan"
+        d.appMode     = .solo
         return d
     }()
     ZStack {
@@ -706,8 +706,8 @@ private struct PromiseCardBorder: ViewModifier {
 #Preview("Light") {
     @Previewable @State var data: OnboardingData = {
         var d = OnboardingData()
-        d.displayName     = "Jordan"
-        d.explorationMode = .solo
+        d.displayName = "Jordan"
+        d.appMode     = .solo
         return d
     }()
     ZStack {

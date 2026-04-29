@@ -1,58 +1,71 @@
 //
-// OnboardingData.swift
-// Open Lightly
+//  OnboardingData.swift
+//  Vayl
 //
 
 import Foundation
 
+// Transient struct — lives only during the onboarding flow.
+// Written to UserProfile on completion. Not persisted independently.
+// Onboarding data is the source of truth for content routing
+// throughout the entire app lifecycle — nothing here gets discarded.
+
 struct OnboardingData {
-    // Screen 1 — Name + Gender Identity
+
+    // ── Screen 1 — NameView ──────────────────────────────────────────
     var displayName: String = ""
-    // Raw string value from the gender identity picker.
-    // nil = not provided or "Prefer not to say".
+    var pronouns: [String] = []
     var genderIdentity: String? = nil
-    // Solo path only — captured in ContextView when
-    // user selects a card implying a partner exists.
-    // Couple path does not use this field —
-    // partner sets their own gender in NameView.
-    // nil = not provided or not applicable.
-    var partnerPronouns: String? = nil
 
-    // Screen 2 — Mode Select
-    var explorationMode: ExplorationMode?
+    // ── Screen 2 — ModeSelectView ────────────────────────────────────
+    // together: both partners talked, doing this as a couple
+    // solo: in a relationship, conversation hasn't happened yet
+    // browsing: just looking, two-tab experience, short onboarding
+    var appMode: AppMode?
 
-    // Screen 3 — Relationship Status (solo only)
-    var relationshipStatus: RelationshipStatus?
-
-    // Screen 4 — Relationship Context (branches on explorationMode)
-    var relationshipContext: RelationshipContext?
-
-    // Screen 4 — Personalize
+    // NMStage — shown on ModeSelectView for together and solo only
+    // Not shown for browsing — they skip the experience question
     var nmStage: NMStage?
 
-    // Screen 5 — Curiosity Picker
-    var communicationGoals: [String] = []    // Section 1 selections
-    var learningGoals: [String] = []         // Section 2 selections
-    var curiositySelections: [String] = []   // Derived: communicationGoals + learningGoals
+    // ── Screen 3 — CuriosityPickerView (together + solo only) ────────
+    var communicationGoals: [String] = []
+    var learningGoals: [String] = []
+    var curiositySelections: [String] = []
 
-    // Screen 7 — Building Path (derived from nmStage)
-    // Derived from nmStage — read by BuildingPathView.
-    // Not stored. Returns "warm" if nmStage is nil.
-    var defaultDifficulty: String {
-        switch nmStage {
-        case .curious:     return "warm"
-        case .exploring:   return "medium"
-        case .experienced: return "hot"
-        case .none:        return "warm"
-        }
-    }
-
-    // Screen 7.5 — Card Reveal (pill selection for archetype routing)
+    // ── Screen 4 — CardRevealView (together + solo only) ─────────────
+    // Pill selection for archetype routing.
     // nil when user skips — archetype routing uses fallback.
     var nmCardResponse: String? = nil
 
-    // Screen 8 — Ground Rules + completion
+    // ── Screen 5 — GroundRulesView (together + solo only) ────────────
     var groundRulesAcceptedAt: Date?
     var onboardingComplete: Bool = false
     var completedAt: Date?
+
+    // ── Derived ───────────────────────────────────────────────────────
+
+    /// Default card intensity derived from NM stage.
+    /// Never stored independently — always derived.
+    var defaultIntensity: CardIntensity {
+        nmStage?.defaultDifficulty ?? .deepOcean
+    }
+
+    /// Whether this user goes through the full onboarding path.
+    /// Browsing users skip everything after ModeSelectView.
+    var isFullOnboarding: Bool {
+        appMode == .together || appMode == .solo
+    }
+
+    /// Whether enough data exists to complete onboarding.
+    var isReadyToComplete: Bool {
+        guard let mode = appMode else { return false }
+        switch mode {
+        case .browsing:
+            return !displayName.trimmingCharacters(in: .whitespaces).isEmpty
+        case .together, .solo:
+            return !displayName.trimmingCharacters(in: .whitespaces).isEmpty
+                && nmStage != nil
+                && groundRulesAcceptedAt != nil
+        }
+    }
 }

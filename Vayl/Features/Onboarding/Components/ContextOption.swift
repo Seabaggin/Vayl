@@ -2,7 +2,7 @@ import Foundation
 
 struct ContextOption: Identifiable {
     let id: String
-    let context: RelationshipContext
+    let emotionalRegister: EmotionalRegister  // what this selection sets on OnboardingData
     let intensity: ContextIntensity
     let title: String
     let subtitle: String

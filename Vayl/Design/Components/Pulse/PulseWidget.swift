@@ -1,33 +1,18 @@
-// Features/Pulse/PulseWidget.swift
-// Open Lightly
 //
-// Compact Pulse timeline widget for the Home dashboard.
-// Shell chrome (surface, orbs, rim, border, shadows, underglow)
-// owned by HomeWidgetShell — this view provides zero chrome.
+//  PulseWidget.swift
+//  Vayl
 //
-// Layout:
-//   Header — "THE PULSE" overline + LivingText tier name + sublabel
-//   Graph  — static 7-day snapshot, fills remaining space
-//   Footer — "The Pulse" label only. No history link — Map tab owns that.
+//  Compact Pulse timeline widget for the Home dashboard.
+//  Shell chrome owned by HomeWidgetShell — this view provides zero chrome.
 //
-// Interactions:
-//   Tap anywhere on card → sheet (PulseSheetView)
-//   Tap [+] → fullScreenCover (CheckInShell) — stops propagation
-//
-// isGraphActive removed — no scrollable graph, nothing to lock.
-// onViewAll removed — replaced by onOpenInMap threaded to sheet.
-// cardHeight owned by HomeWidgetShell via GeometryReader.
-// PulseWidget never drives its own size.
 
 import SwiftUI
-
-// MARK: - PulseWidget
 
 struct PulseWidget: View {
 
     // MARK: - Store
 
-    @EnvironmentObject private var store: PulseStore
+    @Environment(PulseStore.self) private var store
 
     // MARK: - Inputs
 
@@ -39,7 +24,6 @@ struct PulseWidget: View {
     @State private var showCheckIn:  Bool        = false
     @State private var pendingEntry: PulseEntry? = nil
 
-    // Camera + live state — owned here, passed into CheckInShell
     @State private var camScale:     CGFloat = 1.0
     @State private var camTx:        CGFloat = 0.0
     @State private var camTy:        CGFloat = 0.0
@@ -61,14 +45,11 @@ struct PulseWidget: View {
         return PulseTier.tier(for: last.capacityScore)
     }
 
-    // Last 7 logged entries for the snapshot graph
     private var snapshotEntries: [PulseEntry] {
         Array(entries.suffix(7))
     }
 
     // MARK: - Body
-    // Zero chrome. HomeWidgetShell owns surface, rim, border, shadows.
-    // This view renders content only.
 
     var body: some View {
         GeometryReader { geo in
@@ -76,19 +57,12 @@ struct PulseWidget: View {
             let H = geo.size.height
 
             ZStack(alignment: .top) {
-
-                // ── Graph ─────────────────────────────────────
                 graphLayer(width: W, height: H)
-
-                // ── Header ────────────────────────────────────
-                // Rendered above graph so buttons receive taps
                 floatingHeader
                     .frame(width: W)
-
             }
             .frame(width: W, height: H)
         }
-        // ── Sheet — PulseSheetView ─────────────────────────────
         .sheet(isPresented: $showSheet) {
             PulseSheetView(
                 entries:     entries,
@@ -102,7 +76,6 @@ struct PulseWidget: View {
             .presentationDragIndicator(.hidden)
             .presentationBackground(.clear)
         }
-        // ── Check-in — fullScreenCover ─────────────────────────
         .fullScreenCover(isPresented: $showCheckIn) {
             CheckInShell(
                 entries:      entries,
@@ -129,8 +102,6 @@ struct PulseWidget: View {
     }
 
     // MARK: - Graph Layer
-    // Static PulseGraph — last 7 entries, no scroll, no dot taps.
-    // Dot taps belong to PulseSheetView and MapPulseView.
 
     private func graphLayer(width: CGFloat, height: CGFloat) -> some View {
         let clearance: CGFloat = 32
@@ -145,24 +116,16 @@ struct PulseWidget: View {
     }
 
     // MARK: - Floating Header
-    // Overline + LivingText tier name + sublabel + [+] button.
-    // Floor gradient uses widgetDarkFloor / white to match
-    // HomeWidgetShell header floor layer beneath it.
 
     private var floatingHeader: some View {
         VStack(spacing: 0) {
             HStack(alignment: .top) {
-
-                // Left — label stack
                 VStack(alignment: .leading, spacing: 2) {
-
-                    // LivingText — tier name is the primary data
                     LivingText(
                         text: currentTier.label,
                         font: AppFonts.body(22, weight: .bold)
                     )
 
-                    // Sublabel — what it correlates to
                     Text(currentTier.sublabel)
                         .font(AppFonts.body(12, weight: .regular))
                         .foregroundStyle(
@@ -171,7 +134,6 @@ struct PulseWidget: View {
                                 : AppColors.textSecondary.opacity(0.75)
                         )
 
-                    // View Full History — gradient text, opens PulseSheetView
                     Button {
                         showSheet = true
                     } label: {
@@ -198,7 +160,6 @@ struct PulseWidget: View {
 
                 Spacer()
 
-                // [+] check-in button — stops propagation
                 Button {
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     resetCheckInState()
@@ -235,7 +196,6 @@ struct PulseWidget: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Start daily check-in")
-                // Stops the card tap gesture firing beneath this button
                 .simultaneousGesture(TapGesture().onEnded {})
                 .padding(.top, 2)
             }
@@ -243,7 +203,6 @@ struct PulseWidget: View {
             .padding(.top, 13)
             .padding(.bottom, 8)
 
-            // Gradient dissolve into graph
             LinearGradient(
                 colors: [
                     (isLight ? Color.white : AppColors.widgetDarkFloor).opacity(0),
@@ -277,7 +236,8 @@ struct PulseWidget: View {
     private func handleNewEntry(_ entry: PulseEntry) {
         store.add(entry)
         pendingEntry = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(500))
             resetCheckInState()
         }
     }
@@ -316,7 +276,7 @@ private func seededStore(_ entries: [PulseEntry] = PulseEntry.previews) -> Pulse
             .padding(20)
         }
     }
-    .environmentObject(seededStore())
+    .environment(seededStore())
     .preferredColorScheme(.dark)
 }
 
@@ -334,7 +294,7 @@ private func seededStore(_ entries: [PulseEntry] = PulseEntry.previews) -> Pulse
             .padding(20)
         }
     }
-    .environmentObject(seededStore())
+    .environment(seededStore())
     .preferredColorScheme(.light)
 }
 
@@ -355,7 +315,7 @@ private func seededStore(_ entries: [PulseEntry] = PulseEntry.previews) -> Pulse
             .padding(20)
         }
     }
-    .environmentObject(seededStore([]))
+    .environment(seededStore([]))
     .preferredColorScheme(.dark)
 }
 
@@ -376,6 +336,6 @@ private func seededStore(_ entries: [PulseEntry] = PulseEntry.previews) -> Pulse
             .padding(20)
         }
     }
-    .environmentObject(seededStore([PulseEntry.previews[0]]))
+    .environment(seededStore([PulseEntry.previews[0]]))
     .preferredColorScheme(.dark)
 }

@@ -59,7 +59,8 @@ final class PairingStore {
 
     // MARK: - Public State
 
-    private(set) var linkState: PairingLinkState = .idle
+
+    var linkState: PairingLinkState = .idle
 
     // MARK: - Dependencies
 
@@ -76,11 +77,13 @@ final class PairingStore {
     init(
         modelContainer: ModelContainer,
         appState: AppState,
-        pairingService: PairingService = PairingService()
+        pairingService: PairingService = PairingService(),
+        initialState: PairingLinkState = .idle
     ) {
         self.modelContainer = modelContainer
         self.appState = appState
         self.pairingService = pairingService
+        self.linkState = initialState
     }
 
     // MARK: - Generate Invite
@@ -195,6 +198,7 @@ final class PairingStore {
 
         // Mirror into AppState for in-memory routing
         appState.linkState = .linked
+        appState.coupleId = coupleId
         logger.info("Link persisted — coupleId: \(coupleId)")
     }
 }
