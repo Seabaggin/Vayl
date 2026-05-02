@@ -95,21 +95,23 @@ struct HomeDashboardView: View {
 
     private var focusAnimation: Animation {
         deckFocused
-            ? .easeOut(duration: 0.4)
-            : .easeIn(duration: 0.15)
+            ? AppAnimation.enter
+            : AppAnimation.fast
     }
 
     // MARK: - Body
 
     var body: some View {
-        ZStack(alignment: .top) {
+        GeometryReader { geo in
+            let layout = AppLayout.from(geo)
+            ZStack(alignment: .top) {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .center, spacing: 0) {
 
-                    Spacer(minLength: 4)
+                    Spacer(minLength: AppSpacing.xs)
 
                     greetingBlock
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, AppSpacing.lg)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .scaleEffect(
                             1.0 - (greetingExitProgress * 0.15),
@@ -125,7 +127,7 @@ struct HomeDashboardView: View {
                                   + (deckFocused ? 20.0 : 0.0)
                         )
                         .allowsHitTesting(!deckFocused && greetingExitProgress < 0.5)
-                        .animation(.easeOut(duration: 0.5), value: greetingVisible)
+                        .animation(AppAnimation.slow, value: greetingVisible)
                         .animation(focusAnimation, value: deckFocused)
 
                     Color.clear
@@ -150,32 +152,32 @@ struct HomeDashboardView: View {
                             }
                         }
                     )
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, AppSpacing.lg)
                     .opacity(sessionVisible ? 1 : 0)
                     .offset(y: sessionVisible ? 0 : 16)
-                    .animation(.easeOut(duration: 0.5), value: sessionVisible)
+                    .animation(AppAnimation.slow, value: sessionVisible)
                     .zIndex(10)
 
                     if desireMapState != .hidden && desireMapState != .fullyUnlocked {
-                        Spacer(minLength: 56)
+                        Spacer(minLength: AppSpacing.xxl)
                         DesireMapIndicator(
                             state: desireMapState,
                             onReveal: onDesireMapReveal,
                             onUnlock: onDesireMapUnlock,
                             onRemind: onRemindPartner
                         )
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, AppSpacing.lg)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .opacity(elementOpacity(visible: desireMapVisible))
                         .offset(y: desireMapVisible ? 0 : 12)
                         .blur(radius: deckFocused ? 20 : 0)
                         .allowsHitTesting(!deckFocused)
-                        .animation(.easeOut(duration: 0.5), value: desireMapVisible)
+                        .animation(AppAnimation.slow, value: desireMapVisible)
                         .animation(focusAnimation, value: deckFocused)
                     }
 
                     if reflectionCardState != .hidden {
-                        Spacer(minLength: 56)
+                        Spacer(minLength: AppSpacing.xxl)
                         ReflectionCard(
                             state: reflectionCardState,
                             onMoreTap: onMoreTap,
@@ -183,48 +185,48 @@ struct HomeDashboardView: View {
                                 onReflectionDone?(pills, note, true)
                             }
                         )
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, AppSpacing.lg)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .opacity(elementOpacity(visible: reflectionVisible))
                         .offset(y: reflectionVisible ? 0 : 12)
                         .blur(radius: deckFocused ? 20 : 0)
                         .allowsHitTesting(!deckFocused)
-                        .animation(.easeOut(duration: 0.5), value: reflectionVisible)
+                        .animation(AppAnimation.slow, value: reflectionVisible)
                         .animation(focusAnimation, value: deckFocused)
                     }
 
                     if !pickUpItems.isEmpty {
-                        Spacer(minLength: 56)
+                        Spacer(minLength: AppSpacing.xxl)
                         PickUpCard(
                             items: pickUpItems,
                             onItemTap: onPickUpItemTap
                         )
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, AppSpacing.lg)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .opacity(elementOpacity(visible: pickUpVisible))
                         .offset(y: pickUpVisible ? 0 : 8)
                         .blur(radius: deckFocused ? 20 : 0)
                         .allowsHitTesting(!deckFocused)
-                        .animation(.easeOut(duration: 0.4), value: pickUpVisible)
+                        .animation(AppAnimation.enter, value: pickUpVisible)
                         .animation(focusAnimation, value: deckFocused)
                     }
 
                     GravLiftView(breathPhase: breathPhase)
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, AppSpacing.lg)
                         .frame(height: 32)
                         .opacity(deckFocused ? 0.0 : 1.0)
                         .animation(focusAnimation, value: deckFocused)
 
-                    Spacer(minLength: 32)
+                    Spacer(minLength: AppSpacing.xl)
 
                     ambientZone
 
-                    Spacer(minLength: 320)
+                    Spacer(minLength: AppSpacing.xxl)
                 }
             }
             .scrollClipDisabled()
             .onPreferenceChange(ConstellationOffsetKey.self) { minY in
-                let screenH   = UIScreen.main.bounds.height
+                let screenH   = layout.screenHeight
                 let fadeStart = screenH * 1.10
                 let fadeEnd   = screenH * 0.30
                 constellationMorphProgress = max(0, min(1, (fadeStart - minY) / (fadeStart - fadeEnd)))
@@ -253,8 +255,8 @@ struct HomeDashboardView: View {
                         onDone: onReflectionDone,
                         onDismiss: onReflectionBannerDismiss
                     )
-                    .padding(.horizontal, 12)
-                    .padding(.top, 8)
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.top, AppSpacing.sm)
                     Spacer()
                 }
                 .transition(
@@ -263,18 +265,18 @@ struct HomeDashboardView: View {
                         removal:   .move(edge: .top).combined(with: .opacity)
                     )
                 )
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showReflectionBanner)
+                .animation(AppAnimation.spring, value: showReflectionBanner)
             }
 
             #if DEBUG
             if showDebugGrid {
                 DebugGridOverlay()
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
                     Text("SCROLL MATH")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(Font.custom("Switzer-Bold", size: 10, relativeTo: .caption2))
                         .foregroundStyle(.yellow)
-                        .padding(.bottom, 2)
+                        .padding(.bottom, AppSpacing.xxs)
                     Text("offset:       \(scrollOffset, specifier: "%.1f")")
                     Text("exitProgress: \(greetingExitProgress, specifier: "%.3f")")
                     Text("greetingVis:  \(greetingVisible ? "TRUE" : "FALSE")")
@@ -282,14 +284,14 @@ struct HomeDashboardView: View {
                     Text("deckFocused:  \(deckFocused ? "TRUE" : "FALSE")")
                     Text("breathPhase:  \(breathPhase, specifier: "%.3f")")
                 }
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .font(Font.custom("Switzer-Medium", size: 11, relativeTo: .caption2))
                 .foregroundStyle(.white)
-                .padding(10)
+                .padding(AppSpacing.sm)
                 .background(Color.black.opacity(0.75))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
-                .padding(.top, 60)
-                .padding(.leading, 16)
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
+                .overlay(RoundedRectangle(cornerRadius: AppRadius.sm).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .topClearance(layout)
+                .padding(.leading, AppSpacing.md)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .allowsHitTesting(false)
             }
@@ -299,27 +301,28 @@ struct HomeDashboardView: View {
                 HStack {
                     Button { showDebugGrid.toggle() } label: {
                         Image(systemName: showDebugGrid ? "grid.circle.fill" : "grid.circle")
-                            .font(.system(size: 22))
+                            .font(Font.custom("Switzer-Regular", size: 22, relativeTo: .title3))
                             .foregroundStyle(showDebugGrid ? Color.cyan : Color.white.opacity(0.4))
-                            .padding(12)
+                            .padding(AppSpacing.sm)
                             .background(Color.black.opacity(0.4))
                             .clipShape(Circle())
                     }
-                    .padding(.leading, 16)
-                    .padding(.bottom, 100)
+                    .padding(.leading, AppSpacing.md)
+                    .bottomContentInset(layout)
                     Spacer()
                 }
             }
             #endif
         }
         .onAppear { runEntranceAnimations() }
+        }
     }
 
     // MARK: - Section Divider
 
     private func sectionDivider(label: String, colors: [Color]) -> some View {
-        HStack(spacing: 8) {
-            RoundedRectangle(cornerRadius: 2, style: .continuous)
+        HStack(spacing: AppSpacing.sm) {
+            RoundedRectangle(cornerRadius: 2, style: .continuous) // intentional micro-radius
                 .fill(LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom))
                 .frame(width: 2.5, height: 16)
 
@@ -328,7 +331,7 @@ struct HomeDashboardView: View {
                 .tracking(2.5)
                 .foregroundStyle(
                     colorScheme == .light
-                        ? AppColors.lightTextTertiary
+                        ? AppColors.textTertiary
                         : AppColors.textTertiary
                 )
 
@@ -345,7 +348,7 @@ struct HomeDashboardView: View {
                 )
                 .frame(height: 1)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, AppSpacing.md)
     }
 
     // MARK: - Pulse → Prism Thread
@@ -358,8 +361,8 @@ struct HomeDashboardView: View {
                     LinearGradient(
                         stops: [
                             .init(color: .clear,                       location: 0.00),
-                            .init(color: AppColors.cyan.opacity(0.22), location: 0.20),
-                            .init(color: AppColors.cyan.opacity(0.22), location: 0.80),
+                            .init(color: AppColors.accentPrimary.opacity(0.22), location: 0.20),
+                            .init(color: AppColors.accentPrimary.opacity(0.22), location: 0.80),
                             .init(color: .clear,                       location: 1.00),
                         ],
                         startPoint: .leading,
@@ -370,7 +373,7 @@ struct HomeDashboardView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
         }
         .frame(height: 1)
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppSpacing.lg)
     }
 
     // MARK: - Ambient Zone
@@ -378,67 +381,67 @@ struct HomeDashboardView: View {
     private var ambientZone: some View {
         VStack(spacing: 0) {
 
-            Spacer(minLength: 16)
+            Spacer(minLength: AppSpacing.md)
 
-            sectionDivider(label: "THE PULSE", colors: [AppColors.cyan, AppColors.purple])
+            sectionDivider(label: "THE PULSE", colors: [AppColors.accentPrimary, AppColors.accentSecondary])
                 .opacity(elementOpacity(visible: pulseVisible))
-                .animation(.easeOut(duration: 0.5), value: pulseVisible)
+                .animation(AppAnimation.slow, value: pulseVisible)
 
-            Spacer(minLength: 12)
+            Spacer(minLength: AppSpacing.sm)
 
             HomeWidgetShell(
                 isLight:     colorScheme == .light,
-                accentColor: AppColors.cyan,
+                accentColor: AppColors.accentPrimary,
                 rimVariant:  .pulse
             ) {
                 ZStack {
                     if colorScheme == .dark {
-                        OrbLayer(accentColor: AppColors.cyan, height: 300, variant: .pulse)
+                        OrbLayer(accentColor: AppColors.accentPrimary, height: 300, variant: .pulse)
                     }
                     PulseWidget(onOpenInMap: onNavigateToPlay)
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, 14)
+            .padding(.horizontal, AppSpacing.md)
             .opacity(pulseVisible ? 1.0 : 0.0)
             .offset(y: pulseVisible ? 0 : 12)
             .allowsHitTesting(!deckFocused)
-            .animation(.easeOut(duration: 0.5), value: pulseVisible)
+            .animation(AppAnimation.slow, value: pulseVisible)
 
-            Spacer(minLength: 20)
+            Spacer(minLength: AppSpacing.lg)
             pulseToprismThread
-            Spacer(minLength: 16)
+            Spacer(minLength: AppSpacing.md)
 
-            sectionDivider(label: "THE PRISM", colors: [AppColors.purple, AppColors.magenta])
+            sectionDivider(label: "THE PRISM", colors: [AppColors.accentSecondary, AppColors.accentTertiary])
                 .opacity(elementOpacity(visible: prismVisible))
-                .animation(.easeOut(duration: 0.5), value: prismVisible)
+                .animation(AppAnimation.slow, value: prismVisible)
 
-            Spacer(minLength: 12)
+            Spacer(minLength: AppSpacing.sm)
 
             HomeWidgetShell(
                 isLight:     colorScheme == .light,
-                accentColor: AppColors.electricViolet,
+                accentColor: AppColors.accentSecondary,
                 rimVariant:  .prism
             ) {
                 ZStack {
                     if colorScheme == .dark {
-                        OrbLayer(accentColor: AppColors.electricViolet, height: 300, variant: .prism)
+                        OrbLayer(accentColor: AppColors.accentSecondary, height: 300, variant: .prism)
                     }
                     PrismView(breathPhase: breathPhase)
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, 14)
+            .padding(.horizontal, AppSpacing.md)
 
-            Spacer(minLength: 20)
+            Spacer(minLength: AppSpacing.lg)
             pulseToprismThread
-            Spacer(minLength: 16)
+            Spacer(minLength: AppSpacing.md)
 
             sectionDivider(
                 label:  "THE CONSTELLATION",
                 colors: colorScheme == .dark
-                    ? [AppColors.cyan, AppColors.purple]
-                    : [AppColors.purple, AppColors.magenta]
+                    ? [AppColors.accentPrimary, AppColors.accentSecondary]
+                    : [AppColors.accentSecondary, AppColors.accentTertiary]
             )
             .background(
                 GeometryReader { proxy in
@@ -449,17 +452,17 @@ struct HomeDashboardView: View {
                 }
             )
             .opacity(elementOpacity(visible: prismVisible))
-            .animation(.easeOut(duration: 0.5), value: prismVisible)
+            .animation(AppAnimation.slow, value: prismVisible)
 
-            Spacer(minLength: 12)
+            Spacer(minLength: AppSpacing.sm)
 
             ConstellationView()
-                .padding(.horizontal, 14)
+                .padding(.horizontal, AppSpacing.md)
                 .opacity(elementOpacity(visible: prismVisible))
                 .offset(y: prismVisible ? 0 : 12)
                 .blur(radius: deckFocused ? 20 : 0)
                 .allowsHitTesting(!deckFocused)
-                .animation(.easeOut(duration: 0.5), value: prismVisible)
+                .animation(AppAnimation.slow, value: prismVisible)
                 .animation(focusAnimation, value: deckFocused)
         }
     }
@@ -471,7 +474,7 @@ struct HomeDashboardView: View {
             if !displayName.isEmpty {
                 LivingText(
                     text: "\(displayName).",
-                    font: AppFonts.display(40, weight: .bold)
+                    font: AppFonts.display(40, weight: .bold, relativeTo: .largeTitle)
                 )
             }
             Spacer()
@@ -501,17 +504,17 @@ struct HomeDashboardView: View {
     private var backgroundLayer: some View {
         ZStack {
             if colorScheme == .light {
-                AppColors.lightPageBg
+                AppColors.pageBackground
             } else {
-                AppColors.pageBg
+                AppColors.pageBackground
             }
 
             if colorScheme == .dark {
                 Ellipse()
                     .fill(RadialGradient(
                         colors: [
-                            AppColors.purple.opacity(0.18),
-                            AppColors.deepBlue.opacity(0.08),
+                            AppColors.accentSecondary.opacity(0.18),
+                            AppColors.accentSecondary.opacity(0.08),
                             Color.clear
                         ],
                         center:      .top,
@@ -533,14 +536,14 @@ struct HomeDashboardView: View {
     // MARK: - Entrance Animations
 
     private func runEntranceAnimations() {
-        withAnimation(.easeOut(duration: 0.5).delay(0.10)) { greetingVisible   = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.25)) { sessionVisible    = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.38)) { desireMapVisible  = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.50)) { reflectionVisible = true }
-        withAnimation(.easeOut(duration: 0.4).delay(0.60)) { pickUpVisible     = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.65)) { pulseVisible      = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.80)) { prismVisible      = true }
-        withAnimation(.easeOut(duration: 0.6).delay(0.95)) { tickerVisible     = true }
+        withAnimation(AppAnimation.slow.delay(0.10)) { greetingVisible   = true }
+        withAnimation(AppAnimation.slow.delay(0.25)) { sessionVisible    = true }
+        withAnimation(AppAnimation.slow.delay(0.38)) { desireMapVisible  = true }
+        withAnimation(AppAnimation.slow.delay(0.50)) { reflectionVisible = true }
+        withAnimation(AppAnimation.enter.delay(0.60)) { pickUpVisible     = true }
+        withAnimation(AppAnimation.slow.delay(0.65)) { pulseVisible      = true }
+        withAnimation(AppAnimation.slow.delay(0.80)) { prismVisible      = true }
+        withAnimation(AppAnimation.slow.delay(0.95)) { tickerVisible     = true }
 
         Task {
             try? await Task.sleep(for: .milliseconds(300))
@@ -599,16 +602,16 @@ private struct DebugGridOverlay: View {
                     .frame(width: 1)
                     .offset(x: width - 24)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
                     Label("center axis", systemImage: "circle.fill").foregroundStyle(Color(red: 1, green: 0, blue: 1))
                     Label("20pt margin", systemImage: "circle.fill").foregroundStyle(.yellow)
                     Label("24pt margin", systemImage: "circle.fill").foregroundStyle(.orange)
                     Label("8pt grid",    systemImage: "circle.fill").foregroundStyle(.cyan)
                 }
-                .font(.system(size: 9, weight: .medium))
-                .padding(8)
+                .font(Font.custom("Switzer-Medium", size: 9, relativeTo: .caption2))
+                .padding(AppSpacing.sm)
                 .background(.black.opacity(0.6))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
                 .offset(x: 8, y: 8)
             }
             .frame(width: width, height: height, alignment: .topLeading)

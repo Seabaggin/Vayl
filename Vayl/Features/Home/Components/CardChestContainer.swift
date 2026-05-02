@@ -5,14 +5,14 @@ import SwiftUI
 
 struct CardChestContainer: View {
 
-    var cards: [Card]
-    var cardsCompleted: Int = 0
-    var onCardAction: ((Card, CardAction) -> Void)? = nil
-    var onNavigateToPlay: (() -> Void)? = nil
-    var onPhaseChange: ((CarouselPhase) -> Void)? = nil
+    var cards:            [Card]
+    var cardsCompleted:   Int                               = 0
+    var onCardAction:     ((Card, CardAction) -> Void)?     = nil
+    var onNavigateToPlay: (() -> Void)?                     = nil
+    var onPhaseChange:    ((CarouselPhase) -> Void)?        = nil
 
-    @State private var breathPhase: CGFloat = 0
-    @State private var deckPhase: CarouselPhase = .floating
+    @State private var breathPhase: CGFloat        = 0
+    @State private var deckPhase:   CarouselPhase  = .floating
 
     @Environment(\.colorScheme) private var colorScheme
     private var isLight: Bool { colorScheme == .light }
@@ -43,27 +43,22 @@ struct CardChestContainer: View {
         ZStack(alignment: .top) {
             VStack(spacing: 0) {
 
-                // Section label — collapses height when floating
                 sectionLabel
-                    .padding(.bottom, isFloating ? 0 : 10)
+                    .padding(.bottom, isFloating ? 0 : AppSpacing.sm)
                     .opacity(isFloating ? 0 : 1)
                     .frame(height: isFloating ? 0 : nil, alignment: .top)
                     .clipped()
-                    .animation(.easeOut(duration: 0.25), value: isFloating)
+                    .animation(AppAnimation.fast, value: isFloating)
 
-                // Glass chest
                 chestSurface
                     .overlay(alignment: .bottom) {
                         underglow
                             .opacity(isFloating ? 0 : 1)
-                            .animation(.easeOut(duration: 0.25), value: isFloating)
+                            .animation(AppAnimation.fast, value: isFloating)
                             .allowsHitTesting(false)
                     }
             }
-
-
         }
-        // ZStack must not clip — the card overflows upward during carousel
         .onAppear { startBreathCycle() }
     }
 
@@ -98,7 +93,7 @@ struct CardChestContainer: View {
             .fill(
                 RadialGradient(
                     colors: [
-                        AppColors.purple.opacity(underlowOpacity),
+                        AppColors.accentSecondary.opacity(underlowOpacity),
                         Color.clear
                     ],
                     center:      .center,
@@ -107,7 +102,7 @@ struct CardChestContainer: View {
                 )
             )
             .frame(height: 60)
-            .padding(.horizontal, 60)
+            .padding(.horizontal, AppSpacing.xxl)
             .blur(radius: 22)
             .offset(y: 32)
     }
@@ -124,7 +119,7 @@ struct CardChestContainer: View {
                     Color.white.opacity(0.04)
                     NoiseTexture(opacity: 0.028)
                 }
-                .transition(.opacity.animation(.easeOut(duration: 0.25)))
+                .transition(.opacity.animation(AppAnimation.fast))
             }
 
             VStack(spacing: 0) {
@@ -134,13 +129,13 @@ struct CardChestContainer: View {
                         .transition(
                             .opacity
                                 .combined(with: .offset(y: -10))
-                                .animation(.easeOut(duration: 0.25))
+                                .animation(AppAnimation.fast)
                         )
                 }
 
                 CardCarousel(
-                    cards: cards,
-                    onCardAction: onCardAction,
+                    cards:            cards,
+                    onCardAction:     onCardAction,
                     onNavigateToPlay: onNavigateToPlay,
                     onPhaseChange: {
                         deckPhase = $0
@@ -148,49 +143,40 @@ struct CardChestContainer: View {
                     }
                 )
             }
-            .padding(.top, isFloating ? 0 : 6)
-            .animation(.easeOut(duration: 0.25), value: isFloating)
+            .padding(.top, isFloating ? 0 : AppSpacing.sm)
+            .animation(AppAnimation.fast, value: isFloating)
         }
-        // Clip shape only when the glass surface is visible.
-        // When floating, NO clip at all — the card must be free to
-        // overflow the container's bounds in lifted/carousel phases.
-        // The clip is applied to the background surface only, not the
-        // card content itself.
         .if(!isFloating) { view in
-            view.clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            view.clipShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
         }
-        // Overflow is handled by the ZStack parent — this view must
-        // not re-introduce a clip boundary
         .overlay {
             if !isFloating {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
                     .strokeBorder(
                         isLight
-                            ? AnyShapeStyle(
-                                AppColors.warmAuroraBorder.opacity(0.30)
-                              )
+                            ? AnyShapeStyle(AppColors.spectrumBorder.opacity(0.30))
                             : AnyShapeStyle(LinearGradient(
                                 colors: [
-                                    AppColors.cyan.opacity(0.08),
-                                    AppColors.purple.opacity(0.08),
-                                    AppColors.magenta.opacity(0.08)
+                                    AppColors.accentPrimary.opacity(0.08),
+                                    AppColors.accentSecondary.opacity(0.08),
+                                    AppColors.accentTertiary.opacity(0.08)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint:   .bottomTrailing
                               )),
                         lineWidth: 1.5
                     )
-                    .transition(.opacity.animation(.easeOut(duration: 0.25)))
+                    .transition(.opacity.animation(AppAnimation.fast))
             }
         }
         .overlay(alignment: .top) {
             if !isFloating {
                 rimLight
-                    .transition(.opacity.animation(.easeOut(duration: 0.25)))
+                    .transition(.opacity.animation(AppAnimation.fast))
             }
         }
         .shadow(
-            color: AppColors.purple.opacity(isFloating ? 0 : 0.35),
+            color: AppColors.accentSecondary.opacity(isFloating ? 0 : 0.35),
             radius: 28, y: 10
         )
     }
@@ -203,19 +189,20 @@ struct CardChestContainer: View {
                 LinearGradient(
                     colors: [
                         Color.clear,
-                        AppColors.cyan.opacity(rimOpacity),
-                        AppColors.purple.opacity(rimOpacity),
-                        AppColors.magenta.opacity(rimOpacity * 0.65),
+                        AppColors.accentPrimary.opacity(rimOpacity),
+                        AppColors.accentSecondary.opacity(rimOpacity),
+                        AppColors.accentTertiary.opacity(rimOpacity * 0.65),
                         Color.clear
                     ],
                     startPoint: .leading,
                     endPoint:   .trailing
                 )
             )
+            .animation(AppAnimation.fast, value: isFloating)
             .frame(height: 1)
-            .padding(.horizontal, 28)
+            .padding(.horizontal, AppSpacing.xl)
             .shadow(
-                color:  AppColors.purple.opacity(rimOpacity * 0.65),
+                color:  AppColors.accentSecondary.opacity(rimOpacity * 0.65),
                 radius: 14, y: 0
             )
             .allowsHitTesting(false)
@@ -230,7 +217,7 @@ struct CardChestContainer: View {
                 Ellipse()
                     .fill(RadialGradient(
                         colors: [
-                            AppColors.purple.opacity(0.28 + breath * 0.12),
+                            AppColors.accentSecondary.opacity(0.28 + breath * 0.12),
                             Color.clear
                         ],
                         center:      .center,
@@ -244,7 +231,7 @@ struct CardChestContainer: View {
                 Ellipse()
                     .fill(RadialGradient(
                         colors: [
-                            AppColors.magenta.opacity(0.18 + breath * 0.10),
+                            AppColors.accentTertiary.opacity(0.18 + breath * 0.10),
                             Color.clear
                         ],
                         center:      .center,
@@ -262,14 +249,14 @@ struct CardChestContainer: View {
     // MARK: - Chest Header
 
     private var chestHeader: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: AppSpacing.sm) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
                     Text("The Opening Sequence")
                         .font(AppFonts.sectionHeading)
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [AppColors.cyan, AppColors.purple],
+                                colors: [AppColors.accentPrimary, AppColors.accentSecondary],
                                 startPoint: .leading,
                                 endPoint:   .trailing
                             )
@@ -301,16 +288,18 @@ struct CardChestContainer: View {
                     Capsule()
                         .fill(
                             LinearGradient(
-                                colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
+                                colors: [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                                 startPoint: .leading,
                                 endPoint:   .trailing
                             )
                         )
                         .frame(width: geo.size.width * progressPct)
                         .shadow(
-                            color:  AppColors.purple.opacity(0.55),
+                            color:  AppColors.accentSecondary.opacity(0.55),
                             radius: 6, y: 0
                         )
+                        // Intentional slow spring — progress bar fill should
+                        // feel weighty, not snappy. response: 0.9 is deliberate.
                         .animation(
                             .spring(response: 0.9, dampingFraction: 0.8),
                             value: progressPct
@@ -319,12 +308,15 @@ struct CardChestContainer: View {
             }
             .frame(height: 2)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
-        .padding(.bottom, 12)
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.top, AppSpacing.md)
+        .padding(.bottom, AppSpacing.md)
     }
 
     // MARK: - Breath Cycle
+    // 8.0s — intentional above ambientDrift. Matches HomeDashboardView
+    // breathPhase system — all ambient breath on the home screen runs
+    // at the same rate for visual coherence.
 
     private func startBreathCycle() {
         withAnimation(
@@ -360,10 +352,10 @@ struct NoiseTexture: View {
 
 #Preview("Card Chest — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             CardChestContainer(cards: Card.samples)
-                .padding(20)
+                .padding(AppSpacing.md)
         }
     }
     .preferredColorScheme(.dark)
@@ -371,10 +363,10 @@ struct NoiseTexture: View {
 
 #Preview("Card Chest — light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             CardChestContainer(cards: Card.samples)
-                .padding(20)
+                .padding(AppSpacing.md)
         }
     }
     .preferredColorScheme(.light)

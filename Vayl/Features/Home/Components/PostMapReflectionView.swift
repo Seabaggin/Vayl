@@ -38,8 +38,8 @@ private let stems: [StemConfig] = [
         overline: "REFLECT · 1 OF 3",
         stem: "The item I felt most certain about was",
         placeholder: "what came to mind first...",
-        bloomColor: AppColors.cyan,
-        gradient: [AppColors.cyan, AppColors.purple],
+        bloomColor: AppColors.accentPrimary,
+        gradient: [AppColors.accentPrimary, AppColors.accentSecondary],
         hint: "Certainty is data. It tells you something about yourself."
     ),
     StemConfig(
@@ -47,8 +47,8 @@ private let stems: [StemConfig] = [
         overline: "REFLECT · 2 OF 3",
         stem: "The one that surprised me was",
         placeholder: "I didn't expect to feel...",
-        bloomColor: AppColors.purple,
-        gradient: [AppColors.purple, AppColors.magenta],
+        bloomColor: AppColors.accentSecondary,
+        gradient: [AppColors.accentSecondary, AppColors.accentTertiary],
         hint: "Surprise is where the interesting stuff lives."
     ),
     StemConfig(
@@ -56,8 +56,8 @@ private let stems: [StemConfig] = [
         overline: "REFLECT · 3 OF 3",
         stem: "What I'm most curious about my partner's answer to is",
         placeholder: "I wonder if they feel the same about...",
-        bloomColor: AppColors.magenta,
-        gradient: [AppColors.magenta, AppColors.purple],
+        bloomColor: AppColors.accentTertiary,
+        gradient: [AppColors.accentTertiary, AppColors.accentSecondary],
         hint: "You'll find out soon."  // Intentional forward lean
     )
 ]
@@ -90,8 +90,9 @@ struct PostMapReflectionView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let h = geo.size.height
-            let w = geo.size.width
+            let layout = AppLayout.from(geo)
+            let h = layout.screenHeight
+            let w = layout.screenWidth
 
             let topPad     = max(20.0, h * 0.05)
             let sectionGap = max(20.0, h * 0.034)
@@ -101,7 +102,7 @@ struct PostMapReflectionView: View {
                     contentBlock(h: h, sectionGap: sectionGap, topPad: topPad)
                     Spacer(minLength: 0)
                     ctaBlock
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, AppSpacing.lg)
                 }
 
                 VStack(spacing: 0) {
@@ -109,7 +110,7 @@ struct PostMapReflectionView: View {
                         contentBlock(h: h, sectionGap: sectionGap, topPad: topPad)
                     }
                     ctaBlock
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, AppSpacing.lg)
                 }
             }
             .frame(width: w, height: h)
@@ -141,7 +142,7 @@ struct PostMapReflectionView: View {
                 .foregroundStyle(
                     colorScheme == .light
                         ? AnyShapeStyle(LinearGradient(
-                            colors: [AppColors.magenta, AppColors.gold],
+                            colors: [AppColors.accentTertiary, AppColors.safetyAccent],
                             startPoint: .leading, endPoint: .trailing))
                         : AnyShapeStyle(config.bloomColor.opacity(0.9))
                 )
@@ -149,11 +150,11 @@ struct PostMapReflectionView: View {
                 .offset(y: headerVisible ? 0 : -8)
 
             // ── Stem ───────────────────────────────────────────────
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text(config.stem)
                     .font(AppFonts.screenTitle)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextPrimary
+                        ? AppColors.textPrimary
                         : AppColors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -172,40 +173,40 @@ struct PostMapReflectionView: View {
             .offset(y: stemVisible ? 0 : 12)
 
             // ── Input field ────────────────────────────────────────
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 ZStack(alignment: .topLeading) {
                     // Placeholder
                     if inputText.isEmpty {
                         Text(config.placeholder)
                             .font(AppFonts.bodyText)
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextTertiary
+                                ? AppColors.textTertiary
                                 : AppColors.textTertiary)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 14)
+                            .padding(.horizontal, AppSpacing.md)
+                            .padding(.top, AppSpacing.md)
                             .allowsHitTesting(false)
                     }
 
                     TextEditor(text: $inputText)
                         .font(AppFonts.bodyText)
                         .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextPrimary
+                            ? AppColors.textPrimary
                             : AppColors.textPrimary)
                         .tint(config.bloomColor)
                         .focused($fieldFocused)
                         .frame(minHeight: 80, maxHeight: 120)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
+                        .padding(.horizontal, AppSpacing.sm)
+                        .padding(.vertical, AppSpacing.sm)
                         .scrollContentBackground(.hidden)
                 }
                 .background {
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: AppRadius.md)
                         .fill(colorScheme == .light
-                            ? AppColors.lightSurfaceBg
+                            ? AppColors.cardBackground
                             : Color.white.opacity(0.05))
                 }
                 .overlay {
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: AppRadius.md)
                         .stroke(
                             fieldFocused
                                 ? AnyShapeStyle(LinearGradient(
@@ -213,33 +214,33 @@ struct PostMapReflectionView: View {
                                     startPoint: .leading,
                                     endPoint: .trailing))
                                 : AnyShapeStyle(colorScheme == .light
-                                    ? AppColors.lightBorder
-                                    : AppColors.border),
+                                    ? AppColors.borderSubtle
+                                    : AppColors.borderSubtle),
                             lineWidth: fieldFocused ? 1.5 : 1
                         )
                 }
-                .animation(.easeOut(duration: 0.2), value: fieldFocused)
+                .animation(AppAnimation.fast, value: fieldFocused)
 
                 // Hint text
                 Text(config.hint)
                     .font(AppFonts.caption)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextTertiary
+                        ? AppColors.textTertiary
                         : AppColors.textTertiary)
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, AppSpacing.xs)
             }
             .opacity(fieldVisible ? 1 : 0)
             .offset(y: fieldVisible ? 0 : 12)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, AppSpacing.lg)
         .padding(.top, topPad)
-        .padding(.bottom, 16)
+        .padding(.bottom, AppSpacing.md)
     }
 
     // MARK: - CTA Block
 
     private var ctaBlock: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppSpacing.md) {
 
             // Primary CTA — changes on last step
             HoloCTAButton(
@@ -259,7 +260,7 @@ struct PostMapReflectionView: View {
                 Text(isLastStep ? "Skip for now" : "Skip this one")
                     .font(AppFonts.caption)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextTertiary
+                        ? AppColors.textTertiary
                         : AppColors.textTertiary)
             }
             .buttonStyle(.plain)
@@ -274,9 +275,9 @@ struct PostMapReflectionView: View {
     private func backgroundLayer(w: CGFloat, h: CGFloat) -> some View {
         ZStack {
             if colorScheme == .light {
-                AppColors.lightPageBg
+                AppColors.pageBackground
             } else {
-                AppColors.pageBg
+                AppColors.pageBackground
             }
 
             if colorScheme == .dark {
@@ -295,7 +296,7 @@ struct PostMapReflectionView: View {
                     .frame(width: w * 1.4, height: h * 0.50)
                     .offset(y: -h * 0.08)
                     .blur(radius: 80)
-                    .animation(.easeInOut(duration: 0.8), value: step)
+                    .animation(AppAnimation.slow, value: step)
             }
 
             if colorScheme == .light {
@@ -331,7 +332,7 @@ struct PostMapReflectionView: View {
             }
         } else {
             // Cross-fade to next stem
-            withAnimation(.easeInOut(duration: 0.35)) {
+            withAnimation(AppAnimation.standard) {
                 headerVisible = false
                 stemVisible   = false
                 fieldVisible  = false
@@ -350,10 +351,10 @@ struct PostMapReflectionView: View {
     // MARK: - Animations
 
     private func runEntranceAnimations() {
-        withAnimation(.easeOut(duration: 0.5).delay(0.10)) { headerVisible = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.25)) { stemVisible   = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.40)) { fieldVisible  = true }
-        withAnimation(.easeOut(duration: 0.4).delay(0.60)) { skipVisible   = true }
+        withAnimation(AppAnimation.slow.delay(0.10)) { headerVisible = true }
+        withAnimation(AppAnimation.slow.delay(0.25)) { stemVisible   = true }
+        withAnimation(AppAnimation.slow.delay(0.40)) { fieldVisible  = true }
+        withAnimation(AppAnimation.enter.delay(0.60)) { skipVisible   = true }
 
         // Auto-focus field after entrance settles
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {

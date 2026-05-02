@@ -64,7 +64,7 @@ struct PillBorder: ViewModifier {
         let activeOpacity    = tier?.opacity    ?? opacity
 
         let gradient = LinearGradient(
-            colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
+            colors: [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
@@ -80,9 +80,9 @@ struct PillBorder: ViewModifier {
                     .blur(radius: activeGlowRadius)
                     .opacity(0.35)
             )
-            .shadow(color: AppColors.purple.opacity(0.18), radius: 6)
-            .shadow(color: AppColors.cyan.opacity(0.08),   radius: 12)
-            .shadow(color: AppColors.purple.opacity(0.06), radius: 16)
+            .shadow(color: AppColors.accentSecondary.opacity(0.18), radius: 6)
+            .shadow(color: AppColors.accentPrimary.opacity(0.08),   radius: 12)
+            .shadow(color: AppColors.accentSecondary.opacity(0.06), radius: 16)
     }
 }
 
@@ -110,7 +110,7 @@ extension View {
 // Used on ALL light mode selected/active states.
 // Replaces .pillBorder() when colorScheme == .light.
 //
-// Gradient: AppColors.warmAuroraBorder
+// Gradient: AppColors.spectrumBorder
 //   purple → magenta → gold, topLeading → bottomTrailing
 //
 // Key differences from dark PillBorder:
@@ -121,7 +121,7 @@ extension View {
 //
 // Usage:
 //   .warmAuroraBorder()                         // pills, fields, cards
-//   .warmAuroraBorder(cornerRadius: 20)         // rounded rect cards
+//   .warmAuroraBorder(cornerRadius: AppRadius.container)         // rounded rect cards
 //   .warmAuroraBorder(lineWidth: 3, opacity: 0.95) // CTA buttons
 // ─────────────────────────────────────────────
 
@@ -138,12 +138,12 @@ struct WarmAuroraBorder: ViewModifier {
         return content
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .strokeBorder(AppColors.warmAuroraBorder, lineWidth: activeLineWidth)
+                    .strokeBorder(AppColors.spectrumBorder, lineWidth: activeLineWidth)
                     .opacity(activeOpacity)
             )
-            .shadow(color: AppColors.lightShadowMagenta, radius: 8,  x: 0, y: 3)
-            .shadow(color: AppColors.lightShadowPurple,  radius: 16, x: 0, y: 5)
-            .shadow(color: AppColors.lightShadowGold,    radius: 6,  x: 0, y: 2)
+            .shadow(color: AppColors.shadowMagenta, radius: 8,  x: 0, y: 3)
+            .shadow(color: AppColors.shadowPurple,  radius: 16, x: 0, y: 5)
+            .shadow(color: AppColors.shadowGold,    radius: 6,  x: 0, y: 2)
     }
 }
 
@@ -185,15 +185,15 @@ extension View {
 //
 // Usage:
 //   .magentaGoldBorder()                          // pills — default
-//   .magentaGoldBorder(cornerRadius: 20)          // rounded rect cards
+//   .magentaGoldBorder(cornerRadius: AppRadius.container)          // rounded rect cards
 //   .magentaGoldBorder(lineWidth: 3, opacity: 0.90) // CTA weight
 // ─────────────────────────────────────────────
 
 private let magentaGoldGradient = LinearGradient(
     stops: [
-        .init(color: AppColors.magenta,    location: 0.00),
-        .init(color: AppColors.orangeHot,  location: 0.55), // VQ-08: extended pink zone
-        .init(color: AppColors.gold,       location: 1.00),
+        .init(color: AppColors.accentTertiary,    location: 0.00),
+        .init(color: AppColors.progressBarLeading,  location: 0.55), // VQ-08: extended pink zone
+        .init(color: AppColors.safetyAccent,       location: 1.00),
     ],
     startPoint: .topLeading,
     endPoint:   .bottomTrailing
@@ -228,9 +228,9 @@ struct MagentaGoldBorder: ViewModifier {
             )
             // Shadow spread — three layers, same pattern as WarmAuroraBorder.
             // Magenta: tight warm halo. OrangeHot: mid warmth. Gold: wide soft glow.
-            .shadow(color: AppColors.magenta.opacity(0.18),   radius: 8,  x: 0, y: 3)
-            .shadow(color: AppColors.orangeHot.opacity(0.12), radius: 16, x: 0, y: 5)
-            .shadow(color: AppColors.gold.opacity(0.08),      radius: 6,  x: 0, y: 2)
+            .shadow(color: AppColors.accentTertiary.opacity(0.18),   radius: 8,  x: 0, y: 3)
+            .shadow(color: AppColors.progressBarLeading.opacity(0.12), radius: 16, x: 0, y: 5)
+            .shadow(color: AppColors.safetyAccent.opacity(0.08),      radius: 6,  x: 0, y: 2)
     }
 }
 

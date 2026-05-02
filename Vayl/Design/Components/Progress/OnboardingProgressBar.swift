@@ -192,17 +192,17 @@ private enum ProgressBarGradients {
     // ── Fill ──────────────────────────────────────────────────────────────
     static let staticFill = LinearGradient(
         stops: [
-            .init(color: AppColors.cyan,   location: 0.0),
-            .init(color: AppColors.purple, location: 1.0)
+            .init(color: AppColors.accentPrimary,   location: 0.0),
+            .init(color: AppColors.accentSecondary, location: 1.0)
         ],
         startPoint: .leading,
         endPoint:   .trailing
     )
     static let finalFill = LinearGradient(
         stops: [
-            .init(color: AppColors.cyan,    location: 0.0),
-            .init(color: AppColors.purple,  location: 0.5),
-            .init(color: AppColors.magenta, location: 1.0)
+            .init(color: AppColors.accentPrimary,   location: 0.0),
+            .init(color: AppColors.accentSecondary, location: 0.5),
+            .init(color: AppColors.accentTertiary,  location: 1.0)
         ],
         startPoint: .leading,
         endPoint:   .trailing
@@ -211,17 +211,17 @@ private enum ProgressBarGradients {
     // RTL mirrors — colour order preserved, direction flipped
     static let staticFillRTL = LinearGradient(
         stops: [
-            .init(color: AppColors.cyan,   location: 0.0),
-            .init(color: AppColors.purple, location: 1.0)
+            .init(color: AppColors.accentPrimary,   location: 0.0),
+            .init(color: AppColors.accentSecondary, location: 1.0)
         ],
         startPoint: .trailing,
         endPoint:   .leading
     )
     static let finalFillRTL = LinearGradient(
         stops: [
-            .init(color: AppColors.cyan,    location: 0.0),
-            .init(color: AppColors.purple,  location: 0.5),
-            .init(color: AppColors.magenta, location: 1.0)
+            .init(color: AppColors.accentPrimary,   location: 0.0),
+            .init(color: AppColors.accentSecondary, location: 0.5),
+            .init(color: AppColors.accentTertiary,  location: 1.0)
         ],
         startPoint: .trailing,
         endPoint:   .leading
@@ -233,34 +233,34 @@ private enum ProgressBarGradients {
 
     static let staticFillLight = LinearGradient(
         stops: [
-            .init(color: AppColors.orangeDeep, location: 0.0),
-            .init(color: AppColors.orangeHot,  location: 1.0)
+            .init(color: AppColors.progressBarTrailing, location: 0.0),
+            .init(color: AppColors.progressBarLeading,  location: 1.0)
         ],
         startPoint: .leading,
         endPoint:   .trailing
     )
     static let finalFillLight = LinearGradient(
         stops: [
-            .init(color: AppColors.orangeDeep,            location: 0.00),
-            .init(color: AppColors.orangeHot,             location: 0.65),  // VQ-08: was 0.50
-            .init(color: AppColors.magenta.opacity(0.55), location: 1.00)   // VQ-08: was 0.75
+            .init(color: AppColors.progressBarTrailing,            location: 0.00),
+            .init(color: AppColors.progressBarLeading,             location: 0.65),  // VQ-08: was 0.50
+            .init(color: AppColors.accentTertiary.opacity(0.55),   location: 1.00)   // VQ-08: was 0.75
         ],
         startPoint: .leading,
         endPoint:   .trailing
     )
     static let staticFillLightRTL = LinearGradient(
         stops: [
-            .init(color: AppColors.orangeDeep, location: 0.0),
-            .init(color: AppColors.orangeHot,  location: 1.0)
+            .init(color: AppColors.progressBarTrailing, location: 0.0),
+            .init(color: AppColors.progressBarLeading,  location: 1.0)
         ],
         startPoint: .trailing,
         endPoint:   .leading
     )
     static let finalFillLightRTL = LinearGradient(
         stops: [
-            .init(color: AppColors.orangeDeep,            location: 0.00),
-            .init(color: AppColors.orangeHot,             location: 0.65),  // VQ-08: was 0.50
-            .init(color: AppColors.magenta.opacity(0.55), location: 1.00)   // VQ-08: was 0.75
+            .init(color: AppColors.progressBarTrailing,            location: 0.00),
+            .init(color: AppColors.progressBarLeading,             location: 0.65),  // VQ-08: was 0.50
+            .init(color: AppColors.accentTertiary.opacity(0.55),   location: 1.00)   // VQ-08: was 0.75
         ],
         startPoint: .trailing,
         endPoint:   .leading
@@ -816,17 +816,17 @@ struct OnboardingProgressBar: View {
                 Path(roundedRect: atmoRect, cornerRadius: atmoSpread / 2),
                 with: .linearGradient(
                     Gradient(colors: isLight ? [
-                        AppColors.orangeDeep.opacity(0.40),   // VQ-03: anchors left end
-                        AppColors.orangeDeep.opacity(0.55),
-                        AppColors.magenta.opacity(0.50),       // VQ-04: was 0.80
-                        AppColors.orangeDeep.opacity(0.55),
-                        AppColors.orangeDeep.opacity(0.30)
+                        AppColors.progressBarTrailing.opacity(0.40),   // VQ-03: anchors left end
+                        AppColors.progressBarTrailing.opacity(0.55),
+                        AppColors.accentTertiary.opacity(0.50),        // VQ-04: was 0.80
+                        AppColors.progressBarTrailing.opacity(0.55),
+                        AppColors.progressBarTrailing.opacity(0.30)
                     ] : [
-                        AppColors.cyan.opacity(0.35),          // VQ-03: anchors cyan end
-                        AppColors.purple.opacity(0.60),
-                        AppColors.magenta.opacity(0.70),       // VQ-04: was 0.80
-                        AppColors.purple.opacity(0.60),
-                        AppColors.purple.opacity(0.30)
+                        AppColors.accentPrimary.opacity(0.35),         // VQ-03: anchors cyan end
+                        AppColors.accentSecondary.opacity(0.60),
+                        AppColors.accentTertiary.opacity(0.70),        // VQ-04: was 0.80
+                        AppColors.accentSecondary.opacity(0.60),
+                        AppColors.accentSecondary.opacity(0.30)
                     ]),
                     startPoint: CGPoint(x: atmoRect.minX, y: barMidY),
                     endPoint:   CGPoint(x: atmoRect.maxX, y: barMidY)
@@ -851,17 +851,17 @@ struct OnboardingProgressBar: View {
                 Path(roundedRect: midRect, cornerRadius: midSpread / 2),
                 with: .linearGradient(
                     Gradient(colors: isLight ? [
-                        AppColors.orangeDeep.opacity(0.18),
-                        AppColors.orangeDeep.opacity(0.50),
-                        AppColors.orangeHot.opacity(0.65),     // VQ-05: was 0.90
-                        AppColors.magenta.opacity(0.60),
-                        AppColors.magenta.opacity(0.30)
+                        AppColors.progressBarTrailing.opacity(0.18),
+                        AppColors.progressBarTrailing.opacity(0.50),
+                        AppColors.progressBarLeading.opacity(0.65),    // VQ-05: was 0.90
+                        AppColors.accentTertiary.opacity(0.60),
+                        AppColors.accentTertiary.opacity(0.30)
                     ] : [
-                        AppColors.cyan.opacity(0.18),
-                        AppColors.cyan.opacity(0.50),
-                        AppColors.purple.opacity(0.90),
-                        AppColors.magenta.opacity(0.60),
-                        AppColors.magenta.opacity(0.30)
+                        AppColors.accentPrimary.opacity(0.18),
+                        AppColors.accentPrimary.opacity(0.50),
+                        AppColors.accentSecondary.opacity(0.90),
+                        AppColors.accentTertiary.opacity(0.60),
+                        AppColors.accentTertiary.opacity(0.30)
                     ]),
                     startPoint: CGPoint(x: midRect.minX, y: barMidY),
                     endPoint:   CGPoint(x: midRect.maxX, y: barMidY)
@@ -887,17 +887,17 @@ struct OnboardingProgressBar: View {
                 Path(roundedRect: coreRect, cornerRadius: coreSpread / 2),
                 with: .linearGradient(
                     Gradient(colors: isLight ? [
-                        AppColors.orangeDeep.opacity(0.25),
-                        AppColors.orangeHot.opacity(0.90),
-                        AppColors.orangeHot.opacity(0.80),
-                        AppColors.magenta.opacity(0.90),
-                        AppColors.magenta.opacity(0.65)
+                        AppColors.progressBarTrailing.opacity(0.25),
+                        AppColors.progressBarLeading.opacity(0.90),
+                        AppColors.progressBarLeading.opacity(0.80),
+                        AppColors.accentTertiary.opacity(0.90),
+                        AppColors.accentTertiary.opacity(0.65)
                     ] : [
-                        AppColors.cyan.opacity(0.25),
-                        AppColors.cyan.opacity(0.90),
-                        AppColors.purple.opacity(0.80),
-                        AppColors.magenta.opacity(0.90),
-                        AppColors.magenta.opacity(0.65)
+                        AppColors.accentPrimary.opacity(0.25),
+                        AppColors.accentPrimary.opacity(0.90),
+                        AppColors.accentSecondary.opacity(0.80),
+                        AppColors.accentTertiary.opacity(0.90),
+                        AppColors.accentTertiary.opacity(0.65)
                     ]),
                     startPoint: CGPoint(x: coreRect.minX, y: barMidY),
                     endPoint:   CGPoint(x: coreRect.maxX, y: barMidY)
@@ -909,19 +909,19 @@ struct OnboardingProgressBar: View {
             // VQ-18: particleOpacityScale handles overall light/dark scaling.
 
             let particleDefs: [(Color, CGFloat, Double)] = isLight ? [
-                (AppColors.orangeHot,  0.08, 0.0),
-                (AppColors.orangeDeep, 0.42, 0.6),
-                (AppColors.magenta,    0.72, 1.2),
-                (AppColors.orangeHot,  0.90, 0.3),
-                (AppColors.magenta,    0.22, 0.95),
-                (AppColors.orangeDeep, 0.55, 0.65),
+                (AppColors.progressBarLeading,  0.08, 0.0),
+                (AppColors.progressBarTrailing, 0.42, 0.6),
+                (AppColors.accentTertiary,      0.72, 1.2),
+                (AppColors.progressBarLeading,  0.90, 0.3),
+                (AppColors.accentTertiary,      0.22, 0.95),
+                (AppColors.progressBarTrailing, 0.55, 0.65),
             ] : [
-                (AppColors.cyan,    0.08, 0.0),
-                (AppColors.purple,  0.42, 0.6),
-                (AppColors.magenta, 0.72, 1.2),
-                (AppColors.cyan,    0.90, 0.3),
-                (AppColors.magenta, 0.22, 0.95),
-                (AppColors.purple,  0.55, 0.65),
+                (AppColors.accentPrimary,   0.08, 0.0),
+                (AppColors.accentSecondary, 0.42, 0.6),
+                (AppColors.accentTertiary,  0.72, 1.2),
+                (AppColors.accentPrimary,   0.90, 0.3),
+                (AppColors.accentTertiary,  0.22, 0.95),
+                (AppColors.accentSecondary, 0.55, 0.65),
             ]
 
             // VQ-18: particleOpacityScale passed in; 0.65 light, 1.0 dark.
@@ -1056,10 +1056,10 @@ private struct PreviewContent: View {
 
     var body: some View {
         ZStack {
-            (colorScheme == .light ? AppColors.lightPageBg : AppColors.pageBg)
+            AppColors.pageBackground
                 .ignoresSafeArea()
             ScrollView {
-                VStack(alignment: .leading, spacing: 32) {
+                VStack(alignment: .leading, spacing: AppSpacing.xl) {
 
                     sectionHeader("SOLO · COUPLE  (6 steps)")
                     stepGroup(total: 6)
@@ -1110,7 +1110,7 @@ private struct PreviewContent: View {
                         )
                     }
                 }
-                .padding(.vertical, 48)
+                .padding(.vertical, AppSpacing.xxl)
             }
         }
     }
@@ -1121,12 +1121,12 @@ private struct PreviewContent: View {
             .font(AppFonts.overline)
             .foregroundStyle(AppColors.textTertiary)
             .tracking(2)
-            .padding(.horizontal, 24)
+            .padding(.horizontal, AppSpacing.lg)
     }
 
     @ViewBuilder
     private func stepGroup(total: Int) -> some View {
-        VStack(spacing: 20) {
+        VStack(spacing: AppSpacing.lg) {
             ForEach(1...total, id: \.self) { step in
                 OnboardingProgressBar(
                     currentStep:          step,
@@ -1136,7 +1136,7 @@ private struct PreviewContent: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.horizontal, 24)
+        .padding(.horizontal, AppSpacing.lg)
     }
 
     @ViewBuilder
@@ -1144,14 +1144,14 @@ private struct PreviewContent: View {
         _ label: String,
         @ViewBuilder content: () -> C
     ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text(label)
                 .font(.caption)
                 .foregroundStyle(AppColors.textTertiary)
-                .padding(.horizontal, 24)
+                .padding(.horizontal, AppSpacing.lg)
             content()
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.horizontal, 24)
+                .padding(.horizontal, AppSpacing.lg)
         }
     }
 }

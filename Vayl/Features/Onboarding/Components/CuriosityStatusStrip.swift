@@ -23,19 +23,19 @@ struct CuriosityStatusStrip: View {
     let totalPanels:   Int = 2
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppSpacing.sm) {
 
             Spacer()
 
             // ── Page dots ─────────────────────────────────────────────
-            HStack(spacing: 8) {
+            HStack(spacing: AppSpacing.sm) {
                 ForEach(0..<3, id: \.self) { i in
                     let isActive = i == currentPanel
                     let dotW: CGFloat = isActive ? 28 : 8
                     let dotH: CGFloat = 8
 
                     ZStack {
-                        RoundedRectangle(cornerRadius: 100)
+                        RoundedRectangle(cornerRadius: AppRadius.pill)
                             .fill(
                                 isActive
                                     ? Color.clear
@@ -46,7 +46,7 @@ struct CuriosityStatusStrip: View {
                             .frame(width: dotW, height: dotH)
 
                         if isActive {
-                            RoundedRectangle(cornerRadius: 100)
+                            RoundedRectangle(cornerRadius: AppRadius.pill)
                                 .fill(Color.clear)
                                 .frame(width: dotW, height: dotH)
                                 .overlay(
@@ -57,27 +57,24 @@ struct CuriosityStatusStrip: View {
                                             HolographicShimmer(duration: 4)
                                         }
                                     }
-                                    .clipShape(RoundedRectangle(cornerRadius: 100))
+                                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.pill))
                                 )
                                 .shadow(
                                     color: isLight
-                                        ? AppColors.magenta.opacity(0.35)
-                                        : AppColors.cyan.opacity(0.55),
+                                        ? AppColors.accentTertiary.opacity(0.35)
+                                        : AppColors.accentPrimary.opacity(0.55),
                                     radius: 6
                                 )
                         }
                     }
                     .frame(width: dotW, height: dotH)
-                    .animation(
-                        .spring(response: 0.38, dampingFraction: 0.80),
-                        value: currentPanel
-                    )
+                    .animation(AppAnimation.spring, value: currentPanel)
                 }
             }
 
             // ── Selection count ───────────────────────────────────────
             if totalSelected > 0 {
-                HStack(spacing: 5) {
+                HStack(spacing: AppSpacing.xs) {
                     Rectangle()
                         .fill(isLight
                             ? Color.black.opacity(0.10)
@@ -89,7 +86,7 @@ struct CuriosityStatusStrip: View {
                         .tracking(1.2)
                         .foregroundStyle(
                             isLight
-                                ? AppColors.lightCardTitle.opacity(0.40)
+                                ? AppColors.textBody.opacity(0.40)
                                 : Color(white: 0.90)
                         )
                 }
@@ -103,15 +100,15 @@ struct CuriosityStatusStrip: View {
 
             Spacer()
         }
-        .animation(.spring(response: 0.38, dampingFraction: 0.80), value: totalSelected > 0)
+        .animation(AppAnimation.spring, value: totalSelected > 0)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
+        .padding(.vertical, AppSpacing.sm)
     }
 }
 
 #Preview("Dark — panel 0, 3 selected") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CuriosityStatusStrip(currentPanel: 0, totalSelected: 3, isLight: false)
     }
     .preferredColorScheme(.dark)
@@ -119,7 +116,7 @@ struct CuriosityStatusStrip: View {
 
 #Preview("Light — panel 1, 0 selected") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CuriosityStatusStrip(currentPanel: 1, totalSelected: 0, isLight: true)
     }
     .preferredColorScheme(.light)

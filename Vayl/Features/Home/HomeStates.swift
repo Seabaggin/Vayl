@@ -16,13 +16,11 @@ struct HomeGateView: View {
 
     @Environment(\.colorScheme) private var colorScheme
 
-    @State private var headerVisible     = false
-    @State private var cardVisible       = false
-    @State private var detailVisible     = false
-    @State private var ctaVisible        = false
-    @State private var hasAnimated       = false
-
-    // Subtle breathing glow behind the CTA
+    @State private var headerVisible = false
+    @State private var cardVisible   = false
+    @State private var detailVisible = false
+    @State private var ctaVisible    = false
+    @State private var hasAnimated   = false
     @State private var breathe: Bool = false
 
     var body: some View {
@@ -30,9 +28,11 @@ struct HomeGateView: View {
             let h = geo.size.height
             let w = geo.size.width
 
-            let topPad      = max(16.0, h * 0.04)
-            let sectionGap  = max(20.0, h * 0.032)
-            let cardPad     = max(16.0, h * 0.022)
+            // Geometry-relative layout values — intentional adaptive
+            // calculations, not spacing token candidates.
+            let topPad     = max(16.0, h * 0.04)
+            let sectionGap = max(20.0, h * 0.032)
+            let cardPad    = max(16.0, h * 0.022)
 
             ViewThatFits(in: .vertical) {
 
@@ -42,7 +42,7 @@ struct HomeGateView: View {
                                  cardPad: cardPad, topPad: topPad)
                     Spacer(minLength: 0)
                     ctaBlock
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, AppSpacing.lg)
                 }
 
                 // Attempt 2 — scroll fallback (SE + large text)
@@ -52,7 +52,7 @@ struct HomeGateView: View {
                                      cardPad: cardPad, topPad: topPad)
                     }
                     ctaBlock
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, AppSpacing.lg)
                 }
             }
             .frame(width: w, height: h)
@@ -65,7 +65,6 @@ struct HomeGateView: View {
         }
     }
 
-    // ...existing code...
     private func contentBlock(
         h: CGFloat,
         sectionGap: CGFloat,
@@ -80,36 +79,35 @@ struct HomeGateView: View {
                 .tracking(2)
                 .foregroundStyle(colorScheme == .light
                     ? AnyShapeStyle(LinearGradient(
-                        colors: [AppColors.magenta, AppColors.gold],
+                        colors: [AppColors.accentTertiary, AppColors.safetyAccent],
                         startPoint: .leading, endPoint: .trailing))
-                    : AnyShapeStyle(AppColors.cyanLight))
+                    : AnyShapeStyle(AppColors.accentPrimary))
                 .opacity(headerVisible ? 1 : 0)
                 .offset(y: headerVisible ? 0 : -8)
 
             // ── Headline ───────────────────────────────────────────
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 Text("Before you can see")
                     .font(AppFonts.heroTitle)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextPrimary
+                        ? AppColors.textPrimary
                         : AppColors.textPrimary)
 
                 Text("what you share —")
                     .font(AppFonts.heroTitle)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextPrimary
+                        ? AppColors.textPrimary
                         : AppColors.textPrimary)
 
-                // Gradient keyword line
                 Text("know what YOU want.")
                     .font(AppFonts.heroTitle)
                     .foregroundStyle(
                         colorScheme == .light
                             ? AnyShapeStyle(LinearGradient(
-                                colors: [AppColors.magenta, AppColors.gold],
+                                colors: [AppColors.accentTertiary, AppColors.safetyAccent],
                                 startPoint: .leading, endPoint: .trailing))
                             : AnyShapeStyle(LinearGradient(
-                                colors: [AppColors.cyan, AppColors.purple],
+                                colors: [AppColors.accentPrimary, AppColors.accentSecondary],
                                 startPoint: .leading, endPoint: .trailing))
                     )
             }
@@ -117,36 +115,36 @@ struct HomeGateView: View {
             .offset(y: headerVisible ? 0 : 12)
 
             // ── Info card ──────────────────────────────────────────
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
                 infoRow(
-                    icon: "lock.fill",
+                    icon: AppIcons.lock,
                     text: "17 questions. Your answers stay **completely private**."
                 )
                 infoRow(
-                    icon: "clock.fill",
+                    icon: AppIcons.clock,
                     text: "About **5 minutes**. No wrong answers."
                 )
                 infoRow(
-                    icon: "eye.slash.fill",
+                    icon: AppIcons.eyeSlash,
                     text: isPaired
                         ? "Your partner **never sees** your individual answers — only what you both agree on."
                         : "When your partner joins, they'll **never see** your individual answers."
                 )
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, AppSpacing.md)
             .padding(.vertical, cardPad)
             .background {
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: AppRadius.lg)
                     .fill(colorScheme == .light
-                        ? AppColors.lightCardFill
-                        : AppColors.cardBg)
+                        ? AppColors.cardBackground
+                        : AppColors.cardBackground)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: AppRadius.lg)
                     .stroke(
                         colorScheme == .light
-                            ? AppColors.lightBorder
-                            : AppColors.border,
+                            ? AppColors.borderSubtle
+                            : AppColors.borderSubtle,
                         lineWidth: 1
                     )
             }
@@ -157,39 +155,40 @@ struct HomeGateView: View {
             Text("There are no right answers. Just yours.")
                 .font(AppFonts.caption)
                 .foregroundStyle(colorScheme == .light
-                    ? AppColors.lightTextSecondary
+                    ? AppColors.textSecondary
                     : AppColors.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .opacity(detailVisible ? 1 : 0)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, AppSpacing.lg)
         .padding(.top, topPad)
-        .padding(.bottom, 16)
+        .padding(.bottom, AppSpacing.md)
     }
 
     private func infoRow(icon: String, text: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            // Icon badge
+        HStack(alignment: .top, spacing: AppSpacing.md) {
             ZStack {
                 Circle()
                     .fill(colorScheme == .light
-                        ? AppColors.magenta.opacity(0.08)
-                        : AppColors.cyan.opacity(0.10))
+                        ? AppColors.accentTertiary.opacity(0.08)
+                        : AppColors.accentPrimary.opacity(0.10))
                     .frame(width: 32, height: 32)
 
                 Image(systemName: icon)
-                    .font(.system(size: 13, weight: .medium))
+                    // .caption scales with Dynamic Type — correct for
+                    // icon badges that accompany body-scale text.
+                    .font(.caption)
+                    .fontWeight(.medium)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.magenta
-                        : AppColors.cyan)
+                        ? AppColors.accentTertiary
+                        : AppColors.accentPrimary)
             }
             .fixedSize()
 
-            // Markdown-style bold text
             Text(parseInlineBold(text))
                 .font(AppFonts.bodyText)
                 .foregroundStyle(colorScheme == .light
-                    ? AppColors.lightTextPrimary
+                    ? AppColors.textPrimary
                     : AppColors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
                 .layoutPriority(1)
@@ -197,9 +196,8 @@ struct HomeGateView: View {
     }
 
     private var ctaBlock: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppSpacing.md) {
 
-            // Primary CTA
             HoloCTAButton(
                 title: "Start Your Desire Map",
                 isEnabled: true
@@ -209,50 +207,40 @@ struct HomeGateView: View {
             }
             .fixedSize(horizontal: false, vertical: true)
             .opacity(ctaVisible ? 1 : 0)
-            .animation(.spring(response: 0.5, dampingFraction: 0.82), value: ctaVisible)
+            .animation(AppAnimation.spring, value: ctaVisible)
 
-            // Education escape hatch
             Button {
-                // Route to Learn tab
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "books.vertical.fill")
-                        .font(.system(size: 12, weight: .medium))
+                HStack(spacing: AppSpacing.sm) {
+                    Image(systemName: AppIcons.books)
+                        .font(.caption)
+                        .fontWeight(.medium)
                     Text("Browse the education library while you wait")
                         .font(AppFonts.caption)
                 }
                 .foregroundStyle(colorScheme == .light
-                    ? AppColors.lightTextSecondary
+                    ? AppColors.textSecondary
                     : AppColors.textSecondary)
             }
             .buttonStyle(.plain)
             .opacity(ctaVisible ? 1 : 0)
-            .animation(
-                .easeOut(duration: 0.4).delay(0.1),
-                value: ctaVisible
-            )
+            .animation(AppAnimation.enter.delay(0.1), value: ctaVisible)
 
-            // Footer
             OnboardingFooter(text: "Your answers are encrypted and never leave your device.")
         }
     }
 
     private func backgroundLayer(w: CGFloat, h: CGFloat) -> some View {
         ZStack {
-            if colorScheme == .light {
-                AppColors.lightPageBg
-            } else {
-                AppColors.pageBg
-            }
+            AppColors.pageBackground
 
             if colorScheme == .dark {
-                // Atmospheric ellipse — purple top wash
                 Ellipse()
                     .fill(RadialGradient(
                         colors: [
-                            AppColors.purple.opacity(0.25),
-                            AppColors.deepBlue.opacity(0.12),
+                            AppColors.accentSecondary.opacity(0.25),
+                            AppColors.accentSecondary.opacity(0.12),
                             Color.clear
                         ],
                         center: .top,
@@ -262,6 +250,13 @@ struct HomeGateView: View {
                     .frame(width: w * 1.4, height: h * 0.55)
                     .offset(y: -h * 0.1)
                     .blur(radius: 80)
+                    // Ambient breathe — decorative glow pulse behind content.
+                    // ambientAnimation removes this entirely under reduce motion.
+                    .ambientAnimation(
+                        .easeInOut(duration: AppAnimation.ambientPulse)
+                            .repeatForever(autoreverses: true),
+                        value: breathe
+                    )
             }
 
             if colorScheme == .light {
@@ -274,16 +269,17 @@ struct HomeGateView: View {
     }
 
     private func runEntranceAnimations() {
-        withAnimation(.easeOut(duration: 0.5).delay(0.15)) { headerVisible = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.30)) { cardVisible   = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.50)) { detailVisible = true }
-        withAnimation(.easeOut(duration: 0.4).delay(0.55)) { ctaVisible    = true }
+        // Choreographed entrance sequence — preserve all stagger delays.
+        withAnimation(AppAnimation.slow.delay(0.15))  { headerVisible = true }
+        withAnimation(AppAnimation.slow.delay(0.30))  { cardVisible   = true }
+        withAnimation(AppAnimation.slow.delay(0.50))  { detailVisible = true }
+        withAnimation(AppAnimation.enter.delay(0.55)) { ctaVisible    = true }
 
-        // Breathing glow loop — starts after entrance settles
+        // Ambient breathe — toggle boolean directly after delay.
+        // The ambientAnimation modifier on the view handles the loop
+        // and strips it under reduce motion. No withAnimation needed here.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
-                breathe = true
-            }
+            breathe = true
         }
     }
 
@@ -310,12 +306,12 @@ struct HomeWaitingView: View {
 
     @Environment(\.colorScheme) private var colorScheme
 
-    @State private var headerVisible  = false
-    @State private var statusVisible  = false
-    @State private var ctaVisible     = false
+    @State private var headerVisible    = false
+    @State private var statusVisible    = false
+    @State private var ctaVisible       = false
     @State private var secondaryVisible = false
-    @State private var hasAnimated    = false
-    @State private var pulsing        = false
+    @State private var hasAnimated      = false
+    @State private var pulsing          = false
 
     private var displayPartnerName: String {
         partnerName.isEmpty ? "your partner" : partnerName
@@ -331,7 +327,7 @@ struct HomeWaitingView: View {
                     contentBlock(h: h)
                 }
                 ctaBlock
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, AppSpacing.lg)
             }
             .frame(width: w, height: h)
             .background { backgroundLayer(w: w, h: h) }
@@ -343,7 +339,6 @@ struct HomeWaitingView: View {
         }
     }
 
-    // ...existing code...
     private func contentBlock(h: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: max(24.0, h * 0.036)) {
 
@@ -354,21 +349,21 @@ struct HomeWaitingView: View {
                 .foregroundStyle(
                     colorScheme == .light
                         ? AnyShapeStyle(LinearGradient(
-                            colors: [AppColors.magenta, AppColors.gold],
+                            colors: [AppColors.accentTertiary, AppColors.safetyAccent],
                             startPoint: .leading, endPoint: .trailing))
-                        : AnyShapeStyle(AppColors.cyanLight)
+                        : AnyShapeStyle(AppColors.accentPrimary)
                 )
                 .opacity(headerVisible ? 1 : 0)
                 .offset(y: headerVisible ? 0 : -8)
 
             // ── Headline ───────────────────────────────────────────
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text(isPaired
                      ? "Now we wait for"
                      : "Invite your partner")
                     .font(AppFonts.heroTitle)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextPrimary
+                        ? AppColors.textPrimary
                         : AppColors.textPrimary)
 
                 if isPaired {
@@ -376,7 +371,7 @@ struct HomeWaitingView: View {
                         .font(AppFonts.heroTitle)
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [AppColors.cyan, AppColors.purple],
+                                colors: [AppColors.accentPrimary, AppColors.accentSecondary],
                                 startPoint: .leading, endPoint: .trailing
                             )
                         )
@@ -398,27 +393,27 @@ struct HomeWaitingView: View {
                  : "They'll complete their own map privately. When you're both done, you'll see your first shared result.")
                 .font(AppFonts.bodyText)
                 .foregroundStyle(colorScheme == .light
-                    ? AppColors.lightTextSecondary
+                    ? AppColors.textSecondary
                     : AppColors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .opacity(statusVisible ? 1 : 0)
                 .offset(y: statusVisible ? 0 : 8)
 
             // ── While you wait ─────────────────────────────────────
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
                 Text("While you wait")
                     .font(AppFonts.caption)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextSecondary
+                        ? AppColors.textSecondary
                         : AppColors.textSecondary)
 
                 whileYouWaitRow(
-                    icon: "books.vertical.fill",
+                    icon: AppIcons.books,
                     text: "Browse the education library",
                     action: { /* route to Learn tab */ }
                 )
                 whileYouWaitRow(
-                    icon: "eye.fill",
+                    icon: AppIcons.eye,
                     text: "Preview your first conversation deck",
                     action: { /* route to deck preview */ }
                 )
@@ -426,35 +421,41 @@ struct HomeWaitingView: View {
             .opacity(secondaryVisible ? 1 : 0)
             .offset(y: secondaryVisible ? 0 : 12)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 40)
-        .padding(.bottom, 16)
+        .padding(.horizontal, AppSpacing.lg)
+        .padding(.top, AppSpacing.xl)
+        .padding(.bottom, AppSpacing.md)
     }
 
     private var partnerStatusCard: some View {
-        HStack(spacing: 14) {
-            // Pulsing pending indicator
+        HStack(spacing: AppSpacing.md) {
+            // Pulsing pending indicator — ambient loop driven by pulsing state.
+            // ambientAnimation modifier on the views handles reduce motion.
             ZStack {
                 Circle()
-                    .fill(AppColors.cyan.opacity(pulsing ? 0.15 : 0.06))
+                    .fill(AppColors.accentPrimary.opacity(pulsing ? 0.15 : 0.06))
                     .frame(width: 36, height: 36)
                     .scaleEffect(pulsing ? 1.15 : 1.0)
+                    .ambientAnimation(
+                        .easeInOut(duration: AppAnimation.ambientPulse)
+                            .repeatForever(autoreverses: true),
+                        value: pulsing
+                    )
 
                 Circle()
-                    .fill(AppColors.cyan.opacity(0.3))
+                    .fill(AppColors.accentPrimary.opacity(0.3))
                     .frame(width: 10, height: 10)
             }
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                 Text(displayPartnerName)
                     .font(AppFonts.bodyMedium)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextPrimary
+                        ? AppColors.textPrimary
                         : AppColors.textPrimary)
                 Text("Map in progress...")
                     .font(AppFonts.caption)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextTertiary
+                        ? AppColors.textTertiary
                         : AppColors.textTertiary)
             }
 
@@ -464,28 +465,28 @@ struct HomeWaitingView: View {
                 .font(AppFonts.overline)
                 .tracking(1)
                 .foregroundStyle(AppColors.textTertiary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.vertical, AppSpacing.xs)
                 .background {
                     Capsule()
                         .fill(colorScheme == .light
-                            ? AppColors.lightBorder
+                            ? AppColors.borderSubtle
                             : Color.white.opacity(0.06))
                 }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.md)
         .background {
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: AppRadius.md)
                 .fill(colorScheme == .light
-                    ? AppColors.lightCardFill
-                    : AppColors.cardBg)
+                    ? AppColors.cardBackground
+                    : AppColors.cardBackground)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: AppRadius.md)
                 .stroke(colorScheme == .light
-                    ? AppColors.lightBorder
-                    : AppColors.border,
+                    ? AppColors.borderSubtle
+                    : AppColors.borderSubtle,
                     lineWidth: 1)
         }
     }
@@ -496,41 +497,47 @@ struct HomeWaitingView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: AppSpacing.md) {
                 Image(systemName: icon)
-                    .font(.system(size: 14, weight: .medium))
+                    // .body scales with Dynamic Type — correct for
+                    // row icons that accompany body-scale text.
+                    .font(.body)
+                    .fontWeight(.medium)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.purple
-                        : AppColors.cyanLight)
+                        ? AppColors.accentSecondary
+                        : AppColors.accentPrimary)
                     .frame(width: 20)
 
                 Text(text)
                     .font(AppFonts.bodyText)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextPrimary
+                        ? AppColors.textPrimary
                         : AppColors.textPrimary)
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .medium))
+                Image(systemName: AppIcons.chevronRight)
+                    // .caption scales with Dynamic Type — correct for
+                    // trailing disclosure chevrons.
+                    .font(.caption)
+                    .fontWeight(.medium)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextTertiary
+                        ? AppColors.textTertiary
                         : AppColors.textTertiary)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.vertical, AppSpacing.md)
             .background {
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AppRadius.md)
                     .fill(colorScheme == .light
-                        ? AppColors.lightFrostCard
-                        : AppColors.cardBg)
+                        ? AppColors.glassFrostCard
+                        : AppColors.cardBackground)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AppRadius.md)
                     .stroke(colorScheme == .light
-                        ? AppColors.lightBorder
-                        : AppColors.border,
+                        ? AppColors.borderSubtle
+                        : AppColors.borderSubtle,
                         lineWidth: 1)
             }
         }
@@ -538,7 +545,7 @@ struct HomeWaitingView: View {
     }
 
     private var ctaBlock: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppSpacing.md) {
             HoloCTAButton(
                 title: isPaired
                     ? "Remind \(displayPartnerName)"
@@ -550,7 +557,7 @@ struct HomeWaitingView: View {
             }
             .fixedSize(horizontal: false, vertical: true)
             .opacity(ctaVisible ? 1 : 0)
-            .animation(.spring(response: 0.5, dampingFraction: 0.82), value: ctaVisible)
+            .animation(AppAnimation.spring, value: ctaVisible)
 
             OnboardingFooter(
                 text: isPaired
@@ -562,18 +569,14 @@ struct HomeWaitingView: View {
 
     private func backgroundLayer(w: CGFloat, h: CGFloat) -> some View {
         ZStack {
-            if colorScheme == .light {
-                AppColors.lightPageBg
-            } else {
-                AppColors.pageBg
-            }
+            AppColors.pageBackground
 
             if colorScheme == .dark {
                 Ellipse()
                     .fill(RadialGradient(
                         colors: [
-                            AppColors.purple.opacity(0.20),
-                            AppColors.deepBlue.opacity(0.10),
+                            AppColors.accentSecondary.opacity(0.20),
+                            AppColors.accentSecondary.opacity(0.10),
                             Color.clear
                         ],
                         center: .top,
@@ -595,16 +598,17 @@ struct HomeWaitingView: View {
     }
 
     private func runEntranceAnimations() {
-        withAnimation(.easeOut(duration: 0.5).delay(0.15)) { headerVisible    = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.30)) { statusVisible    = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.50)) { secondaryVisible = true }
-        withAnimation(.easeOut(duration: 0.4).delay(0.55)) { ctaVisible       = true }
+        // Choreographed entrance sequence — preserve all stagger delays.
+        withAnimation(AppAnimation.slow.delay(0.15))  { headerVisible    = true }
+        withAnimation(AppAnimation.slow.delay(0.30))  { statusVisible    = true }
+        withAnimation(AppAnimation.slow.delay(0.50))  { secondaryVisible = true }
+        withAnimation(AppAnimation.enter.delay(0.55)) { ctaVisible       = true }
 
-        // Pulsing partner status loop
+        // Ambient pulsing — toggle boolean directly after delay.
+        // The ambientAnimation modifier on the view handles the loop
+        // and strips it under reduce motion. No withAnimation needed here.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
-                pulsing = true
-            }
+            pulsing = true
         }
     }
 }
@@ -616,14 +620,12 @@ struct HomeMatchReadyView: View {
 
     @Environment(\.colorScheme) private var colorScheme
 
-    @State private var readyVisible   = false
-    @State private var bodyVisible    = false
-    @State private var ctaVisible     = false
+    @State private var readyVisible    = false
+    @State private var bodyVisible     = false
+    @State private var ctaVisible      = false
     @State private var togetherVisible = false
-    @State private var hasAnimated    = false
-
-    // Spectrum bloom breathing — this screen's signature
-    @State private var bloom: Bool = false
+    @State private var hasAnimated     = false
+    @State private var bloom: Bool     = false
 
     var body: some View {
         GeometryReader { geo in
@@ -638,19 +640,21 @@ struct HomeMatchReadyView: View {
 
                     // Particle burst placeholder
                     // Replace with ParticleBurstView when built (Risk 3 in DESIGN_DOC)
-                    HStack(spacing: 12) {
+                    HStack(spacing: AppSpacing.md) {
                         ForEach(0..<5) { i in
                             Circle()
                                 .fill(
-                                    [AppColors.cyan, AppColors.purple,
-                                     AppColors.magenta, AppColors.cyan,
-                                     AppColors.purple][i]
+                                    [AppColors.accentPrimary, AppColors.accentSecondary,
+                                     AppColors.accentTertiary, AppColors.accentPrimary,
+                                     AppColors.accentSecondary][i]
                                     .opacity(bloom ? 0.9 : 0.4)
                                 )
                                 .frame(width: 6, height: 6)
                                 .scaleEffect(bloom ? 1.2 : 0.8)
-                                .animation(
-                                    .easeInOut(duration: 1.4)
+                                // Choreographed stagger — preserve per-element delay multiplier.
+                                // ambientAnimation handles reduce motion removal.
+                                .ambientAnimation(
+                                    .easeInOut(duration: AppAnimation.ambientPulse)
                                         .repeatForever(autoreverses: true)
                                         .delay(Double(i) * 0.18),
                                     value: bloom
@@ -659,15 +663,14 @@ struct HomeMatchReadyView: View {
                     }
                     .opacity(readyVisible ? 1 : 0)
 
-                    // Headline
-                    VStack(spacing: 6) {
+                    VStack(spacing: AppSpacing.sm) {
                         Text("You're both ready.")
                             .font(AppFonts.heroTitle)
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: colorScheme == .light
-                                        ? [AppColors.magenta, AppColors.gold]
-                                        : [AppColors.cyan, AppColors.purple, AppColors.magenta],
+                                        ? [AppColors.accentTertiary, AppColors.safetyAccent]
+                                        : [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -677,21 +680,20 @@ struct HomeMatchReadyView: View {
                     .opacity(readyVisible ? 1 : 0)
                     .offset(y: readyVisible ? 0 : 16)
 
-                    // Body
                     Text("One thing you agree on\nis waiting to be seen.")
                         .font(AppFonts.bodyText)
                         .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextSecondary
+                            ? AppColors.textSecondary
                             : AppColors.textSecondary)
                         .multilineTextAlignment(.center)
                         .opacity(bodyVisible ? 1 : 0)
                 }
-                .padding(.horizontal, 32)
+                .padding(.horizontal, AppSpacing.xl)
 
                 Spacer()
 
                 // ── CTA — pinned to bottom ─────────────────────────
-                VStack(spacing: 12) {
+                VStack(spacing: AppSpacing.md) {
                     HoloCTAButton(
                         title: "See Your First Match",
                         isEnabled: true
@@ -701,19 +703,18 @@ struct HomeMatchReadyView: View {
                     }
                     .fixedSize(horizontal: false, vertical: true)
                     .opacity(ctaVisible ? 1 : 0)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.82), value: ctaVisible)
+                    .animation(AppAnimation.spring, value: ctaVisible)
 
-                    // "Do this together" — only instruction on this screen
                     Text("Do this together.")
                         .font(AppFonts.caption)
                         .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextTertiary
+                            ? AppColors.textTertiary
                             : AppColors.textTertiary)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .opacity(togetherVisible ? 1 : 0)
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 32)
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.xl)
             }
             .frame(width: w, height: h)
             .background { backgroundLayer(w: w, h: h) }
@@ -725,22 +726,19 @@ struct HomeMatchReadyView: View {
         }
     }
 
-    // ...existing code...
     private func backgroundLayer(w: CGFloat, h: CGFloat) -> some View {
         ZStack {
-            if colorScheme == .light {
-                AppColors.lightPageBg
-            } else {
-                AppColors.pageBg
-            }
+            AppColors.pageBackground
 
             if colorScheme == .dark {
-                // Tri-color bloom — all three spectrum colors present
+                // Tri-color bloom — all three spectrum colors present.
+                // ambientAnimation drives opacity changes and removes
+                // the loop entirely under reduce motion.
                 Ellipse()
                     .fill(RadialGradient(
                         colors: [
-                            AppColors.cyan.opacity(bloom ? 0.18 : 0.10),
-                            AppColors.purple.opacity(bloom ? 0.14 : 0.08),
+                            AppColors.accentPrimary.opacity(bloom ? 0.18 : 0.10),
+                            AppColors.accentSecondary.opacity(bloom ? 0.14 : 0.08),
                             Color.clear
                         ],
                         center: .top,
@@ -750,11 +748,16 @@ struct HomeMatchReadyView: View {
                     .frame(width: w * 1.6, height: h * 0.6)
                     .offset(y: -h * 0.05)
                     .blur(radius: 90)
+                    .ambientAnimation(
+                        .easeInOut(duration: AppAnimation.ambientPulse)
+                            .repeatForever(autoreverses: true),
+                        value: bloom
+                    )
 
                 Ellipse()
                     .fill(RadialGradient(
                         colors: [
-                            AppColors.magenta.opacity(bloom ? 0.12 : 0.06),
+                            AppColors.accentTertiary.opacity(bloom ? 0.12 : 0.06),
                             Color.clear
                         ],
                         center: .bottom,
@@ -764,6 +767,11 @@ struct HomeMatchReadyView: View {
                     .frame(width: w * 1.2, height: h * 0.4)
                     .offset(y: h * 0.15)
                     .blur(radius: 80)
+                    .ambientAnimation(
+                        .easeInOut(duration: AppAnimation.ambientPulse)
+                            .repeatForever(autoreverses: true),
+                        value: bloom
+                    )
             }
 
             if colorScheme == .light {
@@ -773,21 +781,21 @@ struct HomeMatchReadyView: View {
             }
         }
         .ignoresSafeArea()
-        .animation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true), value: bloom)
     }
 
     private func runEntranceAnimations() {
-        // Deliberate slowness — this screen gets more ceremony
-        withAnimation(.easeOut(duration: 0.7).delay(0.30)) { readyVisible    = true }
-        withAnimation(.easeOut(duration: 0.6).delay(0.60)) { bodyVisible     = true }
-        withAnimation(.easeOut(duration: 0.4).delay(0.90)) { ctaVisible      = true }
-        withAnimation(.easeOut(duration: 0.4).delay(1.05)) { togetherVisible = true }
+        // Choreographed entrance — deliberate slowness, this screen gets more ceremony.
+        // Preserve all stagger delays. Base animations mapped to nearest tokens.
+        withAnimation(AppAnimation.slow.delay(0.30))  { readyVisible    = true }
+        withAnimation(AppAnimation.slow.delay(0.60))  { bodyVisible     = true }
+        withAnimation(AppAnimation.enter.delay(0.90)) { ctaVisible      = true }
+        withAnimation(AppAnimation.enter.delay(1.05)) { togetherVisible = true }
 
-        // Bloom breathing — starts after content settles
+        // Ambient bloom — toggle boolean directly after delay.
+        // The ambientAnimation modifiers on the background ellipses handle
+        // the repeat loop and strip it under reduce motion.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
-                bloom = true
-            }
+            bloom = true
         }
     }
 }

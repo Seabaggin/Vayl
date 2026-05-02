@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct CriticalButton: View {
-    @Environment(\.theme) private var t
+    @Environment(\.theme) private var t // ARCHITECTURAL FLAG: legacy theme env — do not migrate to AppColors until theme system is unified
     let title: String
     let icon: String
     var style: CriticalStyle = .neutral
@@ -30,14 +30,14 @@ struct CriticalButton: View {
     var body: some View {
         Button(action: action) {
             Label(title, systemImage: icon)
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppFonts.caption)
                 .foregroundStyle(fillColor)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
+                .padding(.vertical, AppSpacing.sm)
                 .background(
                     fillColor.opacity(t.isDark ? 0.18 : 0.08)
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
                 .shadow(
                     color: t.isDark && style == .danger
                         ? t.error.opacity(0.2)

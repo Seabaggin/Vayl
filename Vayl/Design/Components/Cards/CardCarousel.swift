@@ -30,15 +30,16 @@ enum CardAction {
 private let cardW: CGFloat = 300
 private let cardH: CGFloat = 190
 
-// 6-Card Converging Fan
-private let spreadOffsets:   [CGFloat] = [-180,  180,  -120,  120,  -60,  60  ]
-private let spreadRotations: [Double]  = [ -18,   18,   -12,   12,   -6,   6  ]
-private let spreadYOffsets:  [CGFloat] = [  24,   24,    16,   16,    8,   8  ]
-private let spreadScales:    [CGFloat] = [0.78, 0.78,  0.84, 0.84, 0.90, 0.90 ]
-private let spreadOpacities: [Double]  = [0.25, 0.25,  0.50, 0.50, 0.75, 0.75 ]
+// 6-Card Converging Fan — hand-tuned offsets, not AppSpacing candidates.
+// These define the physical spread geometry of the fan animation.
+private let spreadOffsets:   [CGFloat] = [-180,  180, -120,  120,  -60,  60 ]
+private let spreadRotations: [Double]  = [ -18,   18,  -12,   12,   -6,   6 ]
+private let spreadYOffsets:  [CGFloat] = [  24,   24,   16,   16,    8,   8 ]
+private let spreadScales:    [CGFloat] = [0.78, 0.78, 0.84, 0.84, 0.90, 0.90]
+private let spreadOpacities: [Double]  = [0.25, 0.25, 0.50, 0.50, 0.75, 0.75]
 
 // 6-Card Gathered State
-private let gatheredYOffsets:  [CGFloat] = [15,   12,   9,    6,    4,    2   ]
+private let gatheredYOffsets:  [CGFloat] = [15,   12,   9,    6,    4,    2  ]
 private let gatheredOpacities: [Double]  = [0.30, 0.45, 0.60, 0.75, 0.85, 0.95]
 private let gatheredScales:    [CGFloat] = [0.91, 0.93, 0.95, 0.96, 0.97, 0.98]
 
@@ -85,17 +86,24 @@ struct CardCarousel: View {
         }
         .onAppear {
             onPhaseChange?(.floating)
-            withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+
+            // Border rotation — ambient loop, 4.0s matches AppAnimation.ambientDrift.
+            withAnimation(.linear(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: false)) {
                 borderRotation = 360.0
             }
+
             DispatchQueue.main.async {
                 DispatchQueue.main.async {
+                    // Float loop — 3.2s intentional, slightly below ambientDrift (4.0s).
+                    // Gives card a faster, more responsive idle breath.
                     withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
                         floatOffset = -6
                     }
                 }
             }
-            withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
+
+            // Bloom pulse — 4.0s matches AppAnimation.ambientDrift.
+            withAnimation(.easeInOut(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: true)) {
                 bloomOpacity = 0.75
             }
         }
@@ -110,13 +118,11 @@ struct CardCarousel: View {
             carouselCards
         }
         .frame(maxWidth: .infinity)
-        // Tall enough to contain lifted/carousel state without clipping.
-        // Cards lift -40pt and have 8pt top padding — 300pt gives clearance
-        // above and below without constraining the compositor.
+        // Height gives clearance above and below for lifted/carousel state.
+        // Cards lift -40pt and have 8pt top padding — 300pt is sufficient.
         .frame(height: cardH + 120)
-        // No .clipped() here — cards must be able to overflow this frame
-        // upward during lifted/carousel phases
-        .animation(.spring(response: 0.5, dampingFraction: 0.85), value: phase)
+        // No .clipped() — cards must overflow upward during lifted/carousel phases.
+        .animation(AppAnimation.spring, value: phase)
         .background {
             Rectangle()
                 .fill(Color.black.opacity(isLight ? 0.35 : 0.75))
@@ -136,10 +142,15 @@ struct CardCarousel: View {
         .overlay { glassTrackpad }
         .scaleEffect(phase == .spread ? 0.75 : 1.0)
         .offset(y: phase == .spread ? 0 : (phase == .floating ? 0 : -20))
+        // Phase-driven negative bottom padding — intentional carousel layout mechanics.
+        // Each value controls how much the card container bleeds into content below
+        // for that phase. These are not AppSpacing candidates.
         .padding(.bottom, phase == .carousel ? -40 : phase == .spread ? -60 : phase == .floating ? -100 : -20)
         .animation(
             reduceMotion
-                ? .easeOut(duration: 0.3)
+                ? AppAnimation.standard
+                // Slow phase spring — intentional above AppAnimation.spring ceiling.
+                // response: 0.95 gives the card stack deliberate weight during transitions.
                 : .spring(response: 0.95, dampingFraction: 0.85),
             value: phase
         )
@@ -190,15 +201,15 @@ struct CardCarousel: View {
 
     private func handleDragChanged(_ value: DragGesture.Value) {
         if phase == .lifted {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            withAnimation(AppAnimation.spring) {
                 phase = .carousel
             }
         }
         if dragOffset == 0 {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }
-        isDragging = true
-        dragVelocity = value.translation.width - previousDragOffset
+        isDragging    = true
+        dragVelocity  = value.translation.width - previousDragOffset
 
         let currentProgress  = abs(value.translation.width / (cardW + 16))
         let previousProgress = abs(previousDragOffset / (cardW + 16))
@@ -207,10 +218,10 @@ struct CardCarousel: View {
             UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.8)
         }
         previousDragOffset = value.translation.width
-        dragOffset = value.translation.width
+        dragOffset         = value.translation.width
 
-        // Rubber-band downward drag — heavy resistance, not a valid
-        // swipe direction. sqrt damping gives a physical feel.
+        // Rubber-band downward drag — sqrt damping gives physical resistance feel.
+        // verticalDragOffset is a layout mechanic, not a spacing token.
         let verticalTranslation = value.translation.height
         if verticalTranslation > 0 {
             verticalDragOffset = sqrt(verticalTranslation) * 2.5
@@ -220,17 +231,15 @@ struct CardCarousel: View {
     }
 
     private func handleDragEnded(_ value: DragGesture.Value) {
-        // If primarily a downward drag, dismiss — reset rubber-band
         if value.translation.height > 80 {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            withAnimation(AppAnimation.spring) {
                 verticalDragOffset = 0
             }
             handleDismissQuickview()
             return
         }
 
-        // Reset vertical rubber-band on any release
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+        withAnimation(AppAnimation.spring) {
             verticalDragOffset = 0
         }
 
@@ -253,7 +262,7 @@ struct CardCarousel: View {
         }
 
         DispatchQueue.main.async {
-            withAnimation(.spring(response: 0.55, dampingFraction: 0.82)) {
+            withAnimation(AppAnimation.spring) {
                 isDragging = false
                 dragOffset = 0
             }
@@ -266,13 +275,13 @@ struct CardCarousel: View {
 
     @ViewBuilder
     private var auroraBloom: some View {
-        if let card = activeCard {
+        if let _ = activeCard {
             Ellipse()
                 .fill(RadialGradient(
                     colors: [
-                        AppColors.purple
+                        AppColors.accentSecondary
                             .opacity(phase == .spread ? 0.14 : 0.28),
-                        AppColors.purple.opacity(0.08),
+                        AppColors.accentSecondary.opacity(0.08),
                         Color.clear
                     ],
                     center: .center,
@@ -283,9 +292,11 @@ struct CardCarousel: View {
                 .blur(radius: 60)
                 .scaleEffect(isDragging ? 1.15 : 1.0)
                 .opacity(phase == .floating ? bloomOpacity : (isDragging ? 1.0 : 0.6))
+                // Intentional low-damping aurora spring (0.4 / 0.6) —
+                // produces a bouncy atmospheric swell on drag.
                 .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isDragging)
                 .allowsHitTesting(false)
-                .animation(.easeOut(duration: 0.55), value: activeIndex)
+                .animation(AppAnimation.slow, value: activeIndex)
 
             if phase == .carousel && !reduceMotion {
                 let incoming = dragOffset < 0
@@ -295,7 +306,7 @@ struct CardCarousel: View {
                 Ellipse()
                     .fill(RadialGradient(
                         colors: [
-                            AppColors.purple
+                            AppColors.accentSecondary
                                 .opacity(bleed * 0.22),
                             Color.clear
                         ],
@@ -308,7 +319,7 @@ struct CardCarousel: View {
                     .blur(radius: 65)
                     .allowsHitTesting(false)
                     .animation(
-                        isDragging ? .none : .easeOut(duration: 0.4),
+                        isDragging ? .none : AppAnimation.enter,
                         value: dragOffset
                     )
             }
@@ -334,7 +345,9 @@ struct CardCarousel: View {
             .offset(y: (phase == .lifted || phase == .carousel) ? -15 : 0)
             .animation(
                 reduceMotion
-                    ? .easeOut(duration: 0.3)
+                    ? AppAnimation.standard
+                    // Backing card spring — intentional above AppAnimation.spring ceiling.
+                    // response: 0.85 makes backing cards feel heavier than the active card.
                     : .spring(response: 0.85, dampingFraction: 0.80),
                 value: phase
             )
@@ -374,14 +387,13 @@ struct CardCarousel: View {
         let isActive        = i == activeIndex
 
         ZStack {
-            // STUB: replace with Card-based view when PromptCard is updated
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(AppColors.pageBg.opacity(0.9))
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                .fill(AppColors.pageBackground.opacity(0.9))
                 .overlay(
                     Text(cards[i].text)
                         .font(AppFonts.bodyText)
                         .foregroundStyle(.white)
-                        .padding(20)
+                        .padding(AppSpacing.md)
                 )
                 .frame(width: cardW, height: cardH)
 
@@ -391,12 +403,12 @@ struct CardCarousel: View {
                 endPoint:   .init(x: 0.8 - (progress * 1.5), y: 1)
             )
             .blendMode(.screen)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
             .allowsHitTesting(false)
             .opacity(phase == .carousel ? 1 : 0)
 
             let specularOpacity: Double = (isActive && specularActive && phase != .carousel) ? 1 : 0
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: AppRadius.xl)
                 .fill(LinearGradient(
                     stops: [
                         .init(color: .clear,                                 location: 0),
@@ -409,11 +421,13 @@ struct CardCarousel: View {
                     endPoint:   .init(x: specularPhase * 1.4 - 0.1, y: 1)
                 ))
                 .blendMode(.screen)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl))
                 .opacity(specularOpacity)
         }
         .frame(width: cardW, height: cardH)
-        .padding(.top, 8)
+        .padding(.top, AppSpacing.sm)
+        // .padding(.bottom, -8) — intentional negative bleed offset.
+        // Keeps the card visually anchored without a gap below. Not an AppSpacing candidate.
         .padding(.bottom, -8)
         .offset(
             x: phase == .carousel ? visualX : 0,
@@ -443,7 +457,7 @@ struct CardCarousel: View {
             y: 18
         )
         .opacity(phase == .carousel ? (isActive ? 1.0 : 0.75) : (isActive ? 1.0 : 0.0))
-        .animation(.spring(response: 0.55, dampingFraction: 0.80), value: phase)
+        .animation(AppAnimation.spring, value: phase)
     }
 
     private func phaseOffsetY(isActive: Bool) -> CGFloat {
@@ -455,16 +469,16 @@ struct CardCarousel: View {
     }
 
     private func rotationAngle(clampedProgress: CGFloat) -> Angle {
-        if phase == .lifted && !reduceMotion      { return .degrees(-4) }
-        if phase == .carousel && !reduceMotion    { return .degrees(Double(clampedProgress * -25.0)) }
+        if phase == .lifted && !reduceMotion   { return .degrees(-4) }
+        if phase == .carousel && !reduceMotion { return .degrees(Double(clampedProgress * -25.0)) }
         return .degrees(0.001)
     }
 
     private func shadowColor(isActive: Bool, clampedProgress: CGFloat) -> Color {
         if phase == .lifted || phase == .carousel {
-            return AppColors.purple.opacity((isActive ? 0.35 : 0.0) + abs(clampedProgress) * 0.45)
+            return AppColors.accentSecondary.opacity((isActive ? 0.35 : 0.0) + abs(clampedProgress) * 0.45)
         }
-        return AppColors.purple.opacity(0.001)
+        return AppColors.accentSecondary.opacity(0.001)
     }
 
     // MARK: - Specular Glint
@@ -473,6 +487,8 @@ struct CardCarousel: View {
         guard !reduceMotion else { return }
         specularPhase  = 0
         specularActive = true
+        // Custom material motion curve — intentional, not AppAnimation.standard.
+        // Produces a precise specular sweep feel distinct from easeOut.
         withAnimation(.timingCurve(0.4, 0, 0.6, 1, duration: 0.75)) {
             specularPhase = 1.0
         }
@@ -483,22 +499,36 @@ struct CardCarousel: View {
     }
 
     // MARK: - Phase Transitions
+    //
+    // ANIMATION ARCHITECTURE — read before modifying:
+    //
+    // Each spring in this section is tuned for a specific physical feel:
+    //   Fan spread:    response 0.6 / damping 0.7  — bouncy, like cards fanning
+    //   Card lift:     response 0.85 / damping 0.82 — heavy, deliberate raise
+    //   Dismiss:       response 0.6 / damping 0.8  — settle back with weight
+    //   Backing cards: response 0.85 / damping 0.80 — lags behind active card
+    //   Phase stack:   response 0.95 / damping 0.85 — slowest, gives stack weight
+    //
+    // These are all above AppAnimation.spring (0.5 / 0.85) intentionally.
+    // They work together as a layered physics system. Do not normalise them.
 
     func handleFloatingTap() {
         guard phase == .floating else { return }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        withAnimation(.easeOut(duration: 0.2)) { floatOffset = 0 }
+        withAnimation(AppAnimation.fast) { floatOffset = 0 }
         let fanAnim: Animation = reduceMotion
-            ? .easeOut(duration: 0.2)
+            ? AppAnimation.fast
+            // Fan spread spring — intentional bouncy feel.
             : .spring(response: 0.6, dampingFraction: 0.7)
         withAnimation(fanAnim) { phase = .spread }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+            // Card lift spring — intentional heavy raise.
             withAnimation(.spring(response: 0.85, dampingFraction: 0.82)) {
                 phase = .lifted
             }
             if !reduceMotion { triggerSpecularGlint() }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                withAnimation(.spring(response: 0.55, dampingFraction: 0.82)) {
+                withAnimation(AppAnimation.spring) {
                     phase = .carousel
                 }
             }
@@ -507,8 +537,8 @@ struct CardCarousel: View {
 
     func handleBrowseDeck() {
         let anim: Animation = reduceMotion
-            ? .easeOut(duration: 0.2)
-            : .spring(response: 0.4, dampingFraction: 0.85)
+            ? AppAnimation.fast
+            : AppAnimation.spring
         withAnimation(anim) { phase = .carousel }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
@@ -516,15 +546,16 @@ struct CardCarousel: View {
     func handleDismissQuickview() {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         withAnimation(reduceMotion
-            ? .easeOut(duration: 0.2)
-            : .spring(response: 0.4, dampingFraction: 0.85)
+            ? AppAnimation.fast
+            : AppAnimation.spring
         ) {
-            phase = .spread
+            phase              = .spread
             verticalDragOffset = 0
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             withAnimation(reduceMotion
-                ? .easeOut(duration: 0.2)
+                ? AppAnimation.fast
+                // Dismiss return spring — intentional deliberate settle.
                 : .spring(response: 0.6, dampingFraction: 0.8)
             ) {
                 phase       = .floating
@@ -534,6 +565,7 @@ struct CardCarousel: View {
             }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            // Float loop restart — same 3.2s as onAppear, intentional.
             withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
                 floatOffset = -6
             }
@@ -542,8 +574,8 @@ struct CardCarousel: View {
 
     func handleBackToDeck() {
         let anim: Animation = reduceMotion
-            ? .easeOut(duration: 0.2)
-            : .spring(response: 0.4, dampingFraction: 0.85)
+            ? AppAnimation.fast
+            : AppAnimation.spring
         withAnimation(anim) {
             phase       = .lifted
             activeIndex = 0
@@ -558,7 +590,7 @@ struct CardCarousel: View {
             ? (activeIndex + 1) % cards.count
             : (activeIndex - 1 + cards.count) % cards.count
         guard next != activeIndex else {
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) {
+            withAnimation(AppAnimation.spring) {
                 dragOffset = 0
             }
             return
@@ -568,7 +600,7 @@ struct CardCarousel: View {
         activeIndex = next
         UISelectionFeedbackGenerator().selectionChanged()
         if !reduceMotion { triggerSpecularGlint() }
-        withAnimation(.spring(response: 0.55, dampingFraction: 0.82)) {
+        withAnimation(AppAnimation.spring) {
             dragOffset = 0
         }
     }
@@ -578,7 +610,7 @@ struct CardCarousel: View {
 
 #Preview("Spread — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CardCarousel(cards: Card.samples)
     }
     .preferredColorScheme(.dark)
@@ -586,7 +618,7 @@ struct CardCarousel: View {
 
 #Preview("Spread — light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CardCarousel(cards: Card.samples)
     }
     .preferredColorScheme(.light)

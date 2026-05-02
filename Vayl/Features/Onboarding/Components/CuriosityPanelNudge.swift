@@ -35,7 +35,7 @@ struct CuriosityPanelNudge: View {
                     .font(AppFonts.caption)
                     .foregroundStyle(
                         isLight
-                            ? AppColors.lightCardTitle.opacity(0.35)
+                            ? AppColors.textBody.opacity(0.35)
                             : AppColors.textTertiary
                     )
                     .multilineTextAlignment(.center)
@@ -45,14 +45,14 @@ struct CuriosityPanelNudge: View {
             }
         }
         .frame(height: 22)
-        .animation(.easeOut(duration: 0.3), value: text)
-        .padding(.bottom, 4)
+        .animation(AppAnimation.standard, value: text)
+        .padding(.bottom, AppSpacing.xs)
     }
 }
 
 #Preview("Dark — s1 done") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CuriosityPanelNudge(s1Empty: false, s2Empty: true, isLight: false)
     }
     .preferredColorScheme(.dark)
@@ -60,7 +60,7 @@ struct CuriosityPanelNudge: View {
 
 #Preview("Light — both empty") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CuriosityPanelNudge(s1Empty: true, s2Empty: true, isLight: true)
     }
     .preferredColorScheme(.light)

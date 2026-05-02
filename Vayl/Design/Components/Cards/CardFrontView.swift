@@ -23,14 +23,12 @@ struct CardFrontView: View {
            cornerRadius: cornerRadius,
            fuseProgress: fuseProgress
        ) {
-           VStack(spacing: 16) {
+           VStack(spacing: AppSpacing.md) {
                Text("YOUR FIRST CARD")
                    .font(AppFonts.overline)
                    .tracking(2.0)
-                   .foregroundStyle(
-                       isLight ? AppColors.lightTextTertiary : AppColors.textTertiary
-                   )
-                   .padding(.top, 20)
+                   .foregroundStyle(AppColors.textTertiary)
+                   .padding(.top, AppSpacing.md)
 
                Spacer(minLength: 0)
 
@@ -39,20 +37,20 @@ struct CardFrontView: View {
                    questionTextView
                        .opacity(pillsVisible ? 0 : (questionVisible ? 1 : 0))
                        .offset(y: pillsVisible ? -12 : 0)
-                       .animation(.easeInOut(duration: 0.45), value: pillsVisible)
+                       .animation(AppAnimation.enter, value: pillsVisible)
 
                    // Pills — dissolve in when pillsVisible becomes true
                    if pillsVisible {
                        pillsView
                            .opacity(pillsVisible ? 1 : 0)
                            .offset(y: pillsVisible ? 0 : 12)
-                           .animation(.easeOut(duration: 0.4), value: pillsVisible)
+                           .animation(AppAnimation.enter, value: pillsVisible)
                            .transition(.opacity.combined(with: .offset(y: 12)))
                    }
                }
 
                Spacer(minLength: 0)
-               Spacer(minLength: 28)
+               Spacer(minLength: AppSpacing.xl)
            }
            .frame(width: cardSize.width, height: cardSize.height)
        }
@@ -64,50 +62,50 @@ struct CardFrontView: View {
    // MARK: - Question Text View
 
    private var questionTextView: some View {
-       VStack(spacing: 8) {
+       VStack(spacing: AppSpacing.sm) {
            Text("What would you desire if nobody")
-               .font(AppFonts.body(19, weight: .semibold))
+               .font(AppFonts.body(19, weight: .semibold, relativeTo: .title3))
                .foregroundStyle(
-                   isLight ? AppColors.lightCardTitle : AppColors.textPrimary
+                   isLight ? AppColors.textBody : AppColors.textPrimary
                )
                .multilineTextAlignment(.center)
 
            LivingText(
                text: "not even you,",
-               font: AppFonts.body(20, weight: .semibold)
+               font: AppFonts.body(20, weight: .semibold, relativeTo: .title3)
            )
 
            Text("would judge the answer?")
-               .font(AppFonts.body(19, weight: .semibold))
+               .font(AppFonts.body(19, weight: .semibold, relativeTo: .title3))
                .foregroundStyle(
-                   isLight ? AppColors.lightCardTitle : AppColors.textPrimary
+                   isLight ? AppColors.textBody : AppColors.textPrimary
                )
                .multilineTextAlignment(.center)
        }
-       .padding(.horizontal, 28)
+       .padding(.horizontal, AppSpacing.xl)
    }
 
    // MARK: - Pills View
 
    private var pillsView: some View {
-       VStack(spacing: 12) {
+       VStack(spacing: AppSpacing.sm) {
            ForEach(CardRevealPill.allCases) { pill in
                Button(action: {
                    onPillSelected?(pill)
                }) {
                    Text(pill.rawValue)
-                       .font(AppFonts.body(17, weight: .semibold))
+                       .font(AppFonts.body(17, weight: .semibold, relativeTo: .body))
                        .foregroundStyle(AppColors.textPrimary)
                        .frame(maxWidth: .infinity)
                        .frame(height: 44)
                        .background(
-                           RoundedRectangle(cornerRadius: 12)
+                           RoundedRectangle(cornerRadius: AppRadius.md)
                                .fill(Color.white.opacity(0.08))
                        )
                }
            }
        }
-       .padding(.horizontal, 28)
+       .padding(.horizontal, AppSpacing.xl)
    }
 
 

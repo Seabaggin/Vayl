@@ -34,7 +34,7 @@ struct OnboardingFlowView: View {
     var body: some View {
         ZStack {
             // ── Shared background ─────────────────────────────────────
-            (colorScheme == .light ? AppColors.lightPageBg : AppColors.pageBg)
+            (colorScheme == .light ? AppColors.pageBackground : AppColors.pageBackground)
                 .ignoresSafeArea()
 
             // ── Persistent atmosphere ─────────────────────────────────
@@ -51,9 +51,7 @@ struct OnboardingFlowView: View {
 
             case .stat:
                 OnboardingStatView(onContinue: {
-                    withAnimation(.easeInOut(duration: 0.35)) {
-                        store.advance()
-                    }
+                    store.advance()
                 })
                 .transition(.opacity)
 
@@ -122,7 +120,7 @@ struct OnboardingFlowView: View {
 
             // ── Error overlay ─────────────────────────────────────────
             if let error = store.lastCommitError {
-                VStack(spacing: 16) {
+                VStack(spacing: AppSpacing.md) {
                     Text("Something went wrong")
                         .font(AppFonts.screenTitle)
                         .foregroundStyle(AppColors.textPrimary)
@@ -137,12 +135,13 @@ struct OnboardingFlowView: View {
                     }
                     .buttonStyle(.borderedProminent)
                 }
-                .padding(24)
-                .background(AppColors.pageBg)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .padding(32)
+                .padding(AppSpacing.lg)
+                .background(AppColors.pageBackground)
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl))
+                .padding(AppSpacing.xl)
             }
         }
+        .animation(AppAnimation.standard, value: store.currentStep)
     }
 
     // MARK: - Atmosphere config per step

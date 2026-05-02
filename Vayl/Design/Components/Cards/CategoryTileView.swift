@@ -1,4 +1,4 @@
-// ✅ Design system audit — verified March 9, 2026
+// Design system audit — verified March 9, 2026
 import SwiftUI
 
 // MARK: - CategoryTileView
@@ -19,19 +19,19 @@ struct CategoryTileView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Emoji icon
             Text(emoji)
-                .font(.system(size: 28))
-                .padding(.bottom, 8)
+                .font(Font.custom("ClashDisplay-Bold", size: 28, relativeTo: .title))
+                .padding(.bottom, AppSpacing.sm)
             Spacer()
             // Category name
             Text(title)
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppFonts.bodyMedium)
                 .foregroundStyle(t.text)
-                .padding(.bottom, 2)
+                .padding(.bottom, AppSpacing.xxs)
             // Card count
             Text("\(completedCards) / \(totalCards) cards")
-                .font(.system(size: 11))
+                .font(AppFonts.overline)
                 .foregroundStyle(t.textMuted)
-                .padding(.bottom, 8)
+                .padding(.bottom, AppSpacing.sm)
             // Progress bar
             ZStack(alignment: .leading) {
                 Capsule()
@@ -43,14 +43,14 @@ struct CategoryTileView: View {
             }
             .frame(height: 3)
         }
-        .padding(14)
+        .padding(AppSpacing.md)
         .frame(width: 80, height: 96)
         .background(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: AppRadius.md)
                 .fill(t.surface1)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: AppRadius.md)
                 .stroke(
                     t.isDark ? Color.white.opacity(0.04) : Color.clear,
                     lineWidth: 1.5
@@ -76,7 +76,7 @@ struct CategoryTileView_Previews: PreviewProvider {
         ]
         ZStack {
             Color.black.ignoresSafeArea()
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppSpacing.md) {
                 ForEach(sampleTiles, id: \ .1) { tile in
                     CategoryTileView(
                         emoji: tile.0,

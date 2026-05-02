@@ -1,11 +1,3 @@
-//
-//  TabContentWrapper.swift
-//  Open Lightly
-//
-//  Created by Bryan Jorden on 4/8/26.
-//
-
-
 // Design/Components/Navigation/TabContentWrapper.swift
 // Open Lightly
 //
@@ -18,13 +10,11 @@
 //   TabContentWrapper { YourView() }
 //
 // Every tab gets this automatically. No per-tab configuration needed.
-// The wrapper reads safeAreaInsets from the environment — injected
-// once at AppShell, available to all children without GeometryReader.
 
 import SwiftUI
 
 struct TabContentWrapper<Content: View>: View {
-    
+
     let content: Content
 
     init(@ViewBuilder content: () -> Content) {
@@ -35,11 +25,11 @@ struct TabContentWrapper<Content: View>: View {
 
     var body: some View {
         GeometryReader { geo in
-            let bottomInset    = geo.safeAreaInsets.bottom
-            let barHeight:     CGFloat = 62
-            let barOffset:     CGFloat = bottomInset + 8
-            let totalClearance: CGFloat = barHeight + barOffset + 16
-            let fadeHeight:    CGFloat = 120
+            let bottomInset      = geo.safeAreaInsets.bottom
+            let barHeight:       CGFloat = 62
+            let barOffset:       CGFloat = bottomInset + 8
+            let totalClearance:  CGFloat = barHeight + barOffset + 16
+            let fadeHeight:      CGFloat = 120
 
             content
                 .contentMargins(
@@ -55,14 +45,14 @@ struct TabContentWrapper<Content: View>: View {
                 .mask(
                     VStack(spacing: 0) {
                         Rectangle()
-                            .fill(AppColors.pageBg)
+                            .fill(AppColors.pageBackground)
                         LinearGradient(
                             stops: [
-                                .init(color: .black,              location: 0.00),
-                                .init(color: .black,              location: 0.15),
+                                .init(color: .black,               location: 0.00),
+                                .init(color: .black,               location: 0.15),
                                 .init(color: .black.opacity(0.85), location: 0.40),
                                 .init(color: .black.opacity(0.40), location: 0.70),
-                                .init(color: .clear,              location: 1.00),
+                                .init(color: .clear,               location: 1.00),
                             ],
                             startPoint: .top,
                             endPoint:   .bottom
@@ -79,67 +69,66 @@ struct TabContentWrapper<Content: View>: View {
 
 #Preview("Dark — Scroll Test") {
     ZStack(alignment: .bottom) {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
 
         TabContentWrapper {
             ScrollView {
-                VStack(spacing: 12) {
+                VStack(spacing: AppSpacing.md) {
                     ForEach(0..<20) { i in
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(AppColors.cardBg)
+                        RoundedRectangle(cornerRadius: AppRadius.md)
+                            .fill(AppColors.cardBackground)
                             .overlay(
                                 Text("Item \(i + 1)")
-                                    .font(AppFonts.body(15))
+                                    .font(AppFonts.body(15, weight: .regular, relativeTo: .body))
                                     .foregroundStyle(AppColors.textSecondary)
                             )
                             .frame(height: 72)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .strokeBorder(AppColors.border, lineWidth: 1)
+                                RoundedRectangle(cornerRadius: AppRadius.md)
+                                    .strokeBorder(AppColors.borderSubtle, lineWidth: 1)
                             )
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.top, AppSpacing.md)
             }
         }
 
-        // Simulated bar so the fade target is visible
         RacetrackTabBar(selection: .constant(.home))
-            .padding(.bottom, 8)
+            .padding(.bottom, AppSpacing.sm)
     }
     .preferredColorScheme(.dark)
 }
 
 #Preview("Light — Scroll Test") {
     ZStack(alignment: .bottom) {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
 
         TabContentWrapper {
             ScrollView {
-                VStack(spacing: 12) {
+                VStack(spacing: AppSpacing.md) {
                     ForEach(0..<20) { i in
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(AppColors.lightFrostCard)
+                        RoundedRectangle(cornerRadius: AppRadius.md)
+                            .fill(AppColors.glassFrostCard)
                             .overlay(
                                 Text("Item \(i + 1)")
-                                    .font(AppFonts.body(15))
-                                    .foregroundStyle(AppColors.lightTextSecondary)
+                                    .font(AppFonts.body(15, weight: .regular, relativeTo: .body))
+                                    .foregroundStyle(AppColors.textSecondary)
                             )
                             .frame(height: 72)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .strokeBorder(AppColors.lightBorder, lineWidth: 1)
+                                RoundedRectangle(cornerRadius: AppRadius.md)
+                                    .strokeBorder(AppColors.borderSubtle, lineWidth: 1)
                             )
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.top, AppSpacing.md)
             }
         }
 
         RacetrackTabBar(selection: .constant(.home))
-            .padding(.bottom, 8)
+            .padding(.bottom, AppSpacing.sm)
     }
     .preferredColorScheme(.light)
 }

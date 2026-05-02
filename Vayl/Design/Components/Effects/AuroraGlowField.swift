@@ -302,7 +302,7 @@ struct AuroraGlowField: View {
 
 #Preview("Brand View — Light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         AuroraGlowField(config: .brandView)
     }
     .preferredColorScheme(.light)
@@ -310,7 +310,7 @@ struct AuroraGlowField: View {
 
 #Preview("Stat View — Light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         AuroraGlowField(config: .statView)
     }
     .preferredColorScheme(.light)
@@ -318,7 +318,7 @@ struct AuroraGlowField: View {
 
 #Preview("Stat View — Dark") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         AuroraGlowField(config: .statView)
     }
     .preferredColorScheme(.dark)

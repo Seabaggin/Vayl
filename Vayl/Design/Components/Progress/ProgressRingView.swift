@@ -22,7 +22,7 @@ struct ProgressRingView: View {
             Circle()
                 .trim(from: 0, to: 1)
                 .stroke(
-                    t.isDark ? AppColors.border : t.surface3,
+                    t.isDark ? AppColors.borderSubtle : t.surface3,
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .frame(width: size, height: size)
@@ -35,10 +35,10 @@ struct ProgressRingView: View {
                 )
                 .frame(width: size, height: size)
                 .rotationEffect(.degrees(-90))
-                .animation(.easeInOut(duration: 0.5), value: progress)
+                .animation(AppAnimation.slow, value: progress)
             // Center content
             Text("\(Int(progress * 100))%")
-                .font(.system(size: size * 0.22, weight: .bold, design: .rounded))
+                .font(.system(size: size * 0.22, weight: .bold, design: .rounded)) // intentional — computed geometric badge font, size derived from ring diameter
                 .foregroundStyle(t.text)
         }
         .frame(width: size, height: size)
@@ -48,14 +48,14 @@ struct ProgressRingView: View {
 // MARK: - Preview
 struct ProgressRingView_Previews: PreviewProvider {
     static var previews: some View {
-        HStack(spacing: 24) {
+        HStack(spacing: AppSpacing.lg) {
             ProgressRingView(progress: 0.0)
             ProgressRingView(progress: 0.33)
             ProgressRingView(progress: 0.67)
             ProgressRingView(progress: 1.0)
         }
         .padding()
-        .background(AppColors.pageBg.ignoresSafeArea())
+        .background(AppColors.pageBackground.ignoresSafeArea())
         .preferredColorScheme(.dark)
     }
 }

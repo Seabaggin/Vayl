@@ -54,19 +54,19 @@ struct OnboardingNameView: View {
 
     private var kFieldBG: Color {
         colorScheme == .light
-            ? AppColors.lightSurfaceBg
+            ? AppColors.modalBackground
             : Color.white.opacity(0.07)
     }
 
     private var kGlassBorder: Color {
         colorScheme == .light
-            ? AppColors.lightBorder
+            ? AppColors.borderSubtle
             : Color.white.opacity(0.09)
     }
 
     private var kFieldBorderActive: some ShapeStyle {
         if colorScheme == .light {
-            return AnyShapeStyle(AppColors.warmAuroraBorder)
+            return AnyShapeStyle(AppColors.spectrumBorder)
         } else {
             return AnyShapeStyle(AppColors.spectrumBorder)
         }
@@ -74,44 +74,44 @@ struct OnboardingNameView: View {
 
     private var kFloatingLabelFocused: Color {
         colorScheme == .light
-            ? AppColors.lightLabelFocused
-            : AppColors.purpleLight
+            ? AppColors.accentSecondary
+            : AppColors.accentSecondary
     }
 
     private var kFloatingLabelUnfocused: Color {
         colorScheme == .light
-            ? AppColors.lightCardTitle.opacity(0.40)
+            ? AppColors.textPrimary.opacity(0.40)
             : AppColors.textTertiary
     }
 
     private var kTextPrimary: Color {
         colorScheme == .light
-            ? AppColors.lightCardTitle
+            ? AppColors.textPrimary
             : .white
     }
 
     private var kPronounLabel: Color {
         colorScheme == .light
-            ? AppColors.lightCardTitle.opacity(0.65)
+            ? AppColors.textPrimary.opacity(0.65)
             : .white.opacity(0.75)
     }
 
     private var kPronounHint: Color {
         colorScheme == .light
-            ? AppColors.lightHintText
+            ? AppColors.textHint
             : AppColors.textTertiary
     }
 
     private var kCustomPillFill: Color {
         colorScheme == .light
-            ? AppColors.lightFrostPillCustom
-            : AppColors.surfaceBg
+            ? AppColors.glassFrostPill
+            : AppColors.modalBackground
     }
 
     private var kCustomPillBorder: Color {
         colorScheme == .light
-            ? AppColors.lightBorder
-            : AppColors.borderHover
+            ? AppColors.borderSubtle
+            : AppColors.borderDefault
     }
 
     private var isValid: Bool {
@@ -136,35 +136,35 @@ struct OnboardingNameView: View {
             // Floating label
             Text("What should we call you?")
                 .font(displayName.isEmpty && !nameFieldFocused
-                      ? AppFonts.display(22, weight: .semibold)
+                      ? AppFonts.display(22, weight: .semibold, relativeTo: .title2)
                       : AppFonts.overline)
                 .foregroundStyle(
                     displayName.isEmpty && !nameFieldFocused
                         ? (colorScheme == .light
-                            ? AnyShapeStyle(AppColors.lightTextSecondary)
+                            ? AnyShapeStyle(AppColors.textSecondary)
                             : AnyShapeStyle(AppColors.textSecondary))
                         : (colorScheme == .light
-                            ? AnyShapeStyle(AppColors.lightLabelFocused)
-                            : AnyShapeStyle(AppColors.purpleLight))
+                            ? AnyShapeStyle(AppColors.accentSecondary)
+                            : AnyShapeStyle(AppColors.accentSecondary))
                 )
                 .offset(y: displayName.isEmpty && !nameFieldFocused ? 0 : -36)
-                .animation(.easeInOut(duration: 0.35), value: nameFieldFocused)
-                .animation(.easeInOut(duration: 0.35), value: displayName.isEmpty)
+                .animation(AppAnimation.standard, value: nameFieldFocused)
+                .animation(AppAnimation.standard, value: displayName.isEmpty)
                 .opacity(fieldCollapsed ? 0 : 1)
-                .animation(.easeInOut(duration: 0.25).delay(0.05), value: fieldCollapsed)
+                .animation(AppAnimation.fast.delay(0.05), value: fieldCollapsed)
                 .accessibilityHidden(true)
 
             TextField("", text: $displayName)
-                .font(AppFonts.display(28, weight: .semibold))
+                .font(AppFonts.display(28, weight: .semibold, relativeTo: .title))
                 .foregroundColor(
                     (colorScheme == .light
-                        ? AppColors.lightCardTitle
+                        ? AppColors.textPrimary
                         : AppColors.textPrimary)
                     .opacity(nameTextOpacity)
                 )
                 .tint(colorScheme == .light
-                    ? AppColors.lightLabelFocused
-                    : AppColors.cyan)
+                    ? AppColors.accentSecondary
+                    : AppColors.accentPrimary)
                 .offset(y: 10)
                 .focused($nameFieldFocused)
                 .textInputAutocapitalization(.words)
@@ -175,7 +175,7 @@ struct OnboardingNameView: View {
                     triggerCollapse()
                 }
                 .opacity(fieldCollapsed ? 0 : 1)
-                .animation(.easeInOut(duration: 0.3), value: fieldCollapsed)
+                .animation(AppAnimation.standard, value: fieldCollapsed)
                 .disabled(fieldCollapsed)
                 .onChange(of: displayName) { _, newValue in
                     let trimmed = newValue
@@ -187,18 +187,18 @@ struct OnboardingNameView: View {
                     let hasContent = !trimmed
                         .isEmpty
 
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) {
+                    withAnimation(AppAnimation.spring) {
                         genderSectionVisible = hasContent
                     }
 
                     typingDebounce?.cancel()
 
                     guard !trimmed.isEmpty else {
-                        withAnimation(.easeInOut(duration: 0.25)) {
+                        withAnimation(AppAnimation.fast) {
                             greetingVisible = false
                             greetingOwnsName = false
                         }
-                        withAnimation(.easeInOut(duration: 0.3).delay(0.15)) {
+                        withAnimation(AppAnimation.standard.delay(0.15)) {
                             fieldCollapsed = false
                             nameTextOpacity = 1.0
                         }
@@ -213,11 +213,11 @@ struct OnboardingNameView: View {
                 }
                 .onChange(of: nameFieldFocused) { _, isFocused in
                     if isFocused && greetingOwnsName {
-                        withAnimation(.easeInOut(duration: 0.25)) {
+                        withAnimation(AppAnimation.fast) {
                             greetingVisible = false
                             greetingOwnsName = false
                         }
-                        withAnimation(.easeInOut(duration: 0.3).delay(0.15)) {
+                        withAnimation(AppAnimation.standard.delay(0.15)) {
                             fieldCollapsed = false
                             nameTextOpacity = 1.0
                         }
@@ -226,7 +226,7 @@ struct OnboardingNameView: View {
                 .accessibilityLabel("What should we call you?")
         }
         .frame(height: 72)
-        .padding(.bottom, 4)
+        .padding(.bottom, AppSpacing.xs)
         .overlay(alignment: .bottom) {
             ZStack {
                 // Base line — always visible
@@ -234,14 +234,14 @@ struct OnboardingNameView: View {
                     .fill(
                         nameFieldFocused || !displayName.isEmpty
                             ? (colorScheme == .light
-                                ? AnyShapeStyle(AppColors.warmAuroraBorder)
+                                ? AnyShapeStyle(AppColors.spectrumBorder)
                                 : AnyShapeStyle(AppColors.spectrumBorder))
                             : (colorScheme == .light
-                                ? AnyShapeStyle(AppColors.lightBorder)
-                                : AnyShapeStyle(AppColors.border))
+                                ? AnyShapeStyle(AppColors.borderSubtle)
+                                : AnyShapeStyle(AppColors.borderSubtle))
                     )
                     .frame(height: nameFieldFocused ? 3 : 2)
-                    .animation(.easeInOut(duration: 0.3), value: nameFieldFocused)
+                    .animation(AppAnimation.standard, value: nameFieldFocused)
 
                 // Gradient glow line — appears when focused or has content
                 if nameFieldFocused || !displayName.isEmpty {
@@ -250,16 +250,16 @@ struct OnboardingNameView: View {
                             LinearGradient(
                                 colors: colorScheme == .light
                                     ? [
-                                        AppColors.magenta.opacity(0.6),
-                                        AppColors.pink.opacity(0.9),
-                                        AppColors.purple.opacity(0.7),
-                                        AppColors.magenta.opacity(0.6)
+                                        AppColors.accentTertiary.opacity(0.6),
+                                        AppColors.accentTertiary.opacity(0.9),
+                                        AppColors.accentSecondary.opacity(0.7),
+                                        AppColors.accentTertiary.opacity(0.6)
                                       ]
                                     : [
-                                        AppColors.cyan.opacity(0.6),
-                                        AppColors.purple.opacity(0.9),
-                                        AppColors.pink.opacity(0.8),
-                                        AppColors.cyan.opacity(0.6)
+                                        AppColors.accentPrimary.opacity(0.6),
+                                        AppColors.accentSecondary.opacity(0.9),
+                                        AppColors.accentTertiary.opacity(0.8),
+                                        AppColors.accentPrimary.opacity(0.6)
                                       ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -268,7 +268,7 @@ struct OnboardingNameView: View {
                         .frame(height: 3)
                         .blur(radius: 4)
                         .opacity(nameFieldFocused ? 1.0 : 0.5)
-                        .animation(.easeInOut(duration: 0.3), value: nameFieldFocused)
+                        .animation(AppAnimation.standard, value: nameFieldFocused)
 
                     // Outer soft glow
                     Rectangle()
@@ -276,16 +276,16 @@ struct OnboardingNameView: View {
                             LinearGradient(
                                 colors: colorScheme == .light
                                     ? [
-                                        AppColors.magenta.opacity(0.2),
-                                        AppColors.pink.opacity(0.35),
-                                        AppColors.purple.opacity(0.25),
-                                        AppColors.magenta.opacity(0.2)
+                                        AppColors.accentTertiary.opacity(0.2),
+                                        AppColors.accentTertiary.opacity(0.35),
+                                        AppColors.accentSecondary.opacity(0.25),
+                                        AppColors.accentTertiary.opacity(0.2)
                                       ]
                                     : [
-                                        AppColors.cyan.opacity(0.2),
-                                        AppColors.purple.opacity(0.35),
-                                        AppColors.pink.opacity(0.3),
-                                        AppColors.cyan.opacity(0.2)
+                                        AppColors.accentPrimary.opacity(0.2),
+                                        AppColors.accentSecondary.opacity(0.35),
+                                        AppColors.accentTertiary.opacity(0.3),
+                                        AppColors.accentPrimary.opacity(0.2)
                                       ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -294,17 +294,18 @@ struct OnboardingNameView: View {
                         .frame(height: 8)
                         .blur(radius: 6)
                         .opacity(nameFieldFocused ? 0.9 : 0.4)
-                        .animation(.easeInOut(duration: 0.3), value: nameFieldFocused)
+                        .animation(AppAnimation.standard, value: nameFieldFocused)
                 }
             }
             .opacity(fieldCollapsed ? 0 : 1)
-            .animation(.easeInOut(duration: 0.3), value: fieldCollapsed)
+            .animation(AppAnimation.standard, value: fieldCollapsed)
         }
     }
 
     var body: some View {
         GeometryReader { geo in
-            let h = geo.size.height
+            let layout = AppLayout.from(geo)
+            let h = layout.screenHeight
 
             ZStack {
                 // ── Background ───────────────────────────────────────────
@@ -318,7 +319,7 @@ struct OnboardingNameView: View {
                             .init(color: Color.blue.opacity(0.12),   location: 0.5),
                             .init(color: .clear,                     location: 1)
                         ], center: .center, startRadius: 0, endRadius: 240))
-                        .frame(width: geo.size.width, height: h * 0.31)
+                        .frame(width: layout.screenWidth, height: h * 0.31)
                         .blur(radius: 80)
                         .offset(y: h * 0.30)
                         .allowsHitTesting(false)
@@ -328,40 +329,40 @@ struct OnboardingNameView: View {
                 VStack(alignment: .leading, spacing: 0) {
 
                     OnboardingNavBar(currentStep: 1, totalSteps: 6, onBack: onBack)
-                        .padding(.top, geo.safeAreaInsets.top > 50 ? 8 : 20)
-                        .padding(.bottom, 28)
+                        .padding(.top, layout.safeAreaInsets.top > 50 ? 8 : 20)
+                        .padding(.bottom, AppSpacing.xl)
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
                         Text("Let's get")
-                            .font(AppFonts.display(28, weight: .semibold))
+                            .font(AppFonts.display(28, weight: .semibold, relativeTo: .title))
                             .foregroundColor(kTextPrimary)
                         LivingText(text: "acquainted.")
                     }
                     .opacity(headerVisible ? 1 : 0)
                     .scaleEffect(headerVisible ? 1.0 : 0.95)
-                    .padding(.bottom, 28)
+                    .padding(.bottom, AppSpacing.xl)
 
                     // ── Name field ────────────────────────────────────────
                     nameField
-                        .padding(.bottom, 20)
+                        .padding(.bottom, AppSpacing.lg)
                         .opacity(cardVisible ? 1 : 0)
                         .scaleEffect(cardVisible ? 1.0 : 0.95)
 
                     // ── Greeting ──────────────────────────────────────────
                     // FIX: corrected brace structure
-                    HStack(alignment: .firstTextBaseline, spacing: 7.5) {
+                    HStack(alignment: .firstTextBaseline, spacing: 7.5) { // intentional optical alignment — not a spacing token candidate
                         Spacer()
 
                         Text("Hi ")
-                            .font(AppFonts.display(32, weight: .bold))
+                            .font(AppFonts.display(32, weight: .bold, relativeTo: .title))
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightHeadlineDarkRose
+                                ? AppColors.textPrimary
                                 : AppColors.textPrimary.opacity(0.94))
 
                         Text(displayName.trimmingCharacters(in: .whitespaces))
-                            .font(AppFonts.display(32, weight: .bold))
+                            .font(AppFonts.display(32, weight: .bold, relativeTo: .title))
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightHeadlineDarkRose
+                                ? AppColors.textPrimary
                                 : AppColors.textPrimary)
                             .modifier(GlowUnderline(isLight: colorScheme == .light))
 
@@ -374,14 +375,14 @@ struct OnboardingNameView: View {
                         .spring(response: 1.1, dampingFraction: 0.88),
                         value: greetingVisible
                     )
-                    .padding(.top, 8)
-                    .padding(.bottom, 28)
+                    .padding(.top, AppSpacing.sm)
+                    .padding(.bottom, AppSpacing.xl)
                     .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.25)) {
+                        withAnimation(AppAnimation.fast) {
                             greetingVisible = false
                             greetingOwnsName = false
                         }
-                        withAnimation(.easeInOut(duration: 0.3).delay(0.15)) {
+                        withAnimation(AppAnimation.standard.delay(0.15)) {
                             fieldCollapsed = false
                             nameTextOpacity = 1.0
                         }
@@ -396,23 +397,23 @@ struct OnboardingNameView: View {
                     Text("tap to edit")
                         .font(AppFonts.caption)
                         .foregroundColor(colorScheme == .light
-                            ? AppColors.lightTextTertiary
+                            ? AppColors.textTertiary
                             : AppColors.textTertiary)
-                        .padding(.top, 4)
+                        .padding(.top, AppSpacing.xs)
                         .opacity(greetingVisible ? 0.7 : 0)
-                        .animation(.easeInOut(duration: 0.3), value: greetingVisible)
+                        .animation(AppAnimation.standard, value: greetingVisible)
 
                     Rectangle()
                         .fill(colorScheme == .light
-                              ? AppColors.lightBorder
+                              ? AppColors.borderSubtle
                               : Color.white.opacity(0.05))
                         .frame(height: 1)
-                        .padding(.bottom, 18)
+                        .padding(.bottom, AppSpacing.lg)
                         .opacity(cardVisible && !fieldCollapsed ? 1 : 0)
                         .scaleEffect(cardVisible ? 1.0 : 0.95)
-                        .animation(.easeInOut(duration: 0.3), value: fieldCollapsed)
+                        .animation(AppAnimation.standard, value: fieldCollapsed)
                         .animation(
-                            .spring(response: 0.5, dampingFraction: 0.85).delay(0.23),
+                            AppAnimation.spring.delay(0.23),
                             value: cardVisible
                         )
 
@@ -424,12 +425,12 @@ struct OnboardingNameView: View {
 
                     // ── CTA ───────────────────────────────────────────────
                     ZStack {
-                        RoundedRectangle(cornerRadius: 100)
+                        RoundedRectangle(cornerRadius: AppRadius.md)
                             .fill(LinearGradient(
                                 colors: [
-                                    AppColors.pink.opacity(0.30),
-                                    AppColors.purple.opacity(0.25),
-                                    AppColors.magenta.opacity(0.20)
+                                    AppColors.accentTertiary.opacity(0.30),
+                                    AppColors.accentSecondary.opacity(0.25),
+                                    AppColors.accentTertiary.opacity(0.20)
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -460,7 +461,7 @@ struct OnboardingNameView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .shadow(
                             color: isButtonGlowing
-                                ? AppColors.pink.opacity(
+                                ? AppColors.accentTertiary.opacity(
                                     reduceMotion ? 0.30 : (glowPulse ? 0.40 : 0.20)
                                 )
                                 : .clear,
@@ -477,9 +478,9 @@ struct OnboardingNameView: View {
                         .opacity(ctaVisible ? 1 : 0)
                         .scaleEffect(ctaVisible ? 1.0 : 0.95)
                 }
-                .padding(.horizontal, 28)
+                .padding(.horizontal, AppSpacing.xl)
             }
-            .frame(width: geo.size.width, alignment: .topLeading)
+            .frame(width: layout.screenWidth, alignment: .topLeading)
             .onAppear {
                 restoreStateIfNeeded()
 
@@ -487,7 +488,7 @@ struct OnboardingNameView: View {
                     isButtonGlowing = true
                     if !reduceMotion {
                         withAnimation(
-                            .easeInOut(duration: 2.5)
+                            .easeInOut(duration: AppAnimation.ambientPulse) // ambient loop
                             .repeatForever(autoreverses: true)
                             .delay(0.6)
                         ) { glowPulse = true }
@@ -497,10 +498,10 @@ struct OnboardingNameView: View {
                 guard !hasAnimated else { return }
                 hasAnimated = true
 
-                let entranceSpring = Animation.spring(response: 0.5, dampingFraction: 0.85)
+                let entranceSpring = AppAnimation.spring
 
                 if reduceMotion {
-                    withAnimation(.easeInOut(duration: 0.3)) {
+                    withAnimation(AppAnimation.standard) {
                         headerVisible = true
                         cardVisible   = true
                         ctaVisible    = true
@@ -516,7 +517,7 @@ struct OnboardingNameView: View {
                         try? await Task.sleep(nanoseconds: 750_000_000)
                         guard !Task.isCancelled else { return }
                         await MainActor.run {
-                            withAnimation(.easeInOut(duration: 0.25)) {
+                            withAnimation(AppAnimation.fast) {
                                 nameFieldFocused = true
                             }
                         }
@@ -545,18 +546,18 @@ struct OnboardingNameView: View {
                     if reduceMotion {
                         isButtonGlowing = true
                     } else {
-                        withAnimation(.easeInOut(duration: 0.6)) {
+                        withAnimation(AppAnimation.slow) {
                             isButtonGlowing = true
                         }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                             withAnimation(
-                                .easeInOut(duration: 2.5)
+                                .easeInOut(duration: AppAnimation.ambientPulse) // ambient loop
                                 .repeatForever(autoreverses: true)
                             ) { glowPulse = true }
                         }
                     }
                 } else {
-                    withAnimation(.easeInOut(duration: 0.45)) {
+                    withAnimation(AppAnimation.enter) {
                         isButtonGlowing = false
                     }
                     glowPulse = false
@@ -570,24 +571,24 @@ struct OnboardingNameView: View {
     private var genderSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Gender identity")
-                .font(AppFonts.body(13, weight: .medium))
+                .font(AppFonts.body(13, weight: .medium, relativeTo: .caption))
                 .foregroundColor(kPronounLabel)
             
             Text("Helps us personalise your prompts and tone")
                 .font(AppFonts.caption)
                 .foregroundColor(kPronounHint)
-                .padding(.top, 2)
-                .padding(.bottom, 12)
+                .padding(.top, AppSpacing.xxs)
+                .padding(.bottom, AppSpacing.sm)
 
-            VStack(spacing: 10) {
-                HStack(spacing: 10) {
+            VStack(spacing: AppSpacing.sm) {
+                HStack(spacing: AppSpacing.sm) {
                     SelectablePill(
                         label: "Man",
                         isSelected: selectedGender == "Man",
                         showFlame: false
                     ) {
                         nameFieldFocused = false
-                        withAnimation(.easeInOut(duration: 0.25)) {
+                        withAnimation(AppAnimation.fast) {
                             selectedGender = selectedGender == "Man" ? nil : "Man"
                             showCustomGenderField = false
                             customGenderText = ""
@@ -600,7 +601,7 @@ struct OnboardingNameView: View {
                         showFlame: false
                     ) {
                         nameFieldFocused = false
-                        withAnimation(.easeInOut(duration: 0.25)) {
+                        withAnimation(AppAnimation.fast) {
                             selectedGender = selectedGender == "Woman" ? nil : "Woman"
                             showCustomGenderField = false
                             customGenderText = ""
@@ -608,14 +609,14 @@ struct OnboardingNameView: View {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     }
                 }
-                HStack(spacing: 10) {
+                HStack(spacing: AppSpacing.sm) {
                     SelectablePill(
                         label: "Non-binary",
                         isSelected: selectedGender == "Non-binary",
                         showFlame: false
                     ) {
                         nameFieldFocused = false
-                        withAnimation(.easeInOut(duration: 0.25)) {
+                        withAnimation(AppAnimation.fast) {
                             selectedGender = selectedGender == "Non-binary" ? nil : "Non-binary"
                             showCustomGenderField = false
                             customGenderText = ""
@@ -628,7 +629,7 @@ struct OnboardingNameView: View {
                         showFlame: false
                     ) {
                         nameFieldFocused = false
-                        withAnimation(.easeInOut(duration: 0.25)) {
+                        withAnimation(AppAnimation.fast) {
                             selectedGender = selectedGender == "Something else"
                                 ? nil : "Something else"
                             showCustomGenderField = selectedGender == "Something else"
@@ -647,7 +648,7 @@ struct OnboardingNameView: View {
                     showFlame: false
                 ) {
                     nameFieldFocused = false
-                    withAnimation(.easeInOut(duration: 0.25)) {
+                    withAnimation(AppAnimation.fast) {
                         selectedGender = selectedGender == "Prefer not to say"
                             ? nil : "Prefer not to say"
                         showCustomGenderField = false
@@ -660,22 +661,22 @@ struct OnboardingNameView: View {
                 if showCustomGenderField {
                     TextField("Describe your gender identity",
                               text: $customGenderText)
-                        .font(AppFonts.body(16, weight: .regular))
+                        .font(AppFonts.body(16, weight: .regular, relativeTo: .body))
                         .foregroundColor(kTextPrimary)
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 16)
+                        .padding(.vertical, AppSpacing.sm)
+                        .padding(.horizontal, AppSpacing.md)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: AppRadius.md)
                                 .fill(kCustomPillFill)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
+                                    RoundedRectangle(cornerRadius: AppRadius.md)
                                         .stroke(kCustomPillBorder,
                                                 lineWidth: 1)
                                 )
                         )
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
-                        .padding(.top, 8)
+                        .padding(.top, AppSpacing.sm)
                         .transition(.opacity.combined(
                             with: .scale(scale: 0.97, anchor: .top)))
                 }
@@ -697,12 +698,12 @@ struct OnboardingNameView: View {
         let trimmed = displayName.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         typingDebounce?.cancel()
-        withAnimation(.easeInOut(duration: 0.35)) {
+        withAnimation(AppAnimation.standard) {
             nameTextOpacity = 0
             fieldCollapsed = true
         }
         withAnimation(
-            .spring(response: 0.6, dampingFraction: 0.85)
+            AppAnimation.spring
             .delay(0.28)
         ) {
             greetingVisible = true
@@ -712,7 +713,7 @@ struct OnboardingNameView: View {
 
     private func dismissCustomIfNeeded() {
         if showCustomGenderField {
-            withAnimation(.easeInOut(duration: 0.3)) {
+            withAnimation(AppAnimation.standard) {
                 showCustomGenderField = false
                 customGenderText = ""
             }
@@ -760,7 +761,7 @@ struct OnboardingNameView: View {
         return d
     }()
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingAtmosphere(
             config: .name,
             sparkConfig: .nameView,
@@ -779,7 +780,7 @@ struct OnboardingNameView: View {
         return d
     }()
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingAtmosphere(
             config: .name,
             sparkConfig: .nameView,
@@ -794,7 +795,7 @@ struct OnboardingNameView: View {
 #Preview("Dark — empty state") {
     @Previewable @State var data = OnboardingData()
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingAtmosphere(
             config: .name,
             sparkConfig: .nameView,
@@ -809,7 +810,7 @@ struct OnboardingNameView: View {
 #Preview("Light — empty state") {
     @Previewable @State var data = OnboardingData()
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingAtmosphere(
             config: .name,
             sparkConfig: .nameView,

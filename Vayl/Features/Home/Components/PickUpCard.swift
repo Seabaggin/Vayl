@@ -3,9 +3,9 @@
 import SwiftUI
 
 struct PickUpCard: View {
-    let items: [PickUpItem]
-    var onItemTap: ((PickUpItem) -> Void)? = nil
-    var onSeeAll: (() -> Void)? = nil
+    let items:      [PickUpItem]
+    var onItemTap:  ((PickUpItem) -> Void)? = nil
+    var onSeeAll:   (() -> Void)?           = nil
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -15,12 +15,11 @@ struct PickUpCard: View {
         if items.isEmpty {
             EmptyView()
         } else {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 ForEach(items.prefix(2)) { item in
                     itemCard(item)
                         .onTapGesture {
-                            UIImpactFeedbackGenerator(style: .light)
-                                .impactOccurred()
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             onItemTap?(item)
                         }
                 }
@@ -32,52 +31,53 @@ struct PickUpCard: View {
                         Text("See all in-progress →")
                             .font(AppFonts.caption)
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.magenta
-                                : AppColors.cyanLight)
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
                     }
                     .buttonStyle(.plain)
-                    .padding(.leading, 4)
+                    .padding(.leading, AppSpacing.xs)
                 }
             }
         }
     }
 
     private func itemCard(_ item: PickUpItem) -> some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
+        HStack(spacing: AppSpacing.md) {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                HStack(spacing: AppSpacing.sm) {
                     Text(item.contentType.label)
                         .font(AppFonts.overline)
                         .tracking(1.0)
                         .foregroundStyle(colorScheme == .light
-                            ? AppColors.magenta
-                            : AppColors.cyanLight)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                            ? AppColors.accentTertiary
+                            : AppColors.accentPrimary)
+                        .padding(.horizontal, AppSpacing.sm)
+                        .padding(.vertical, AppSpacing.xs)
                         .background {
                             Capsule()
                                 .fill(colorScheme == .light
-                                    ? AppColors.magenta.opacity(0.08)
-                                    : AppColors.cyan.opacity(0.12))
+                                    ? AppColors.accentTertiary.opacity(0.08)
+                                    : AppColors.accentPrimary.opacity(0.12))
                         }
                         .overlay {
                             Capsule()
                                 .stroke(colorScheme == .light
-                                    ? AppColors.magenta.opacity(0.20)
-                                    : AppColors.cyan.opacity(0.25),
+                                    ? AppColors.accentTertiary.opacity(0.20)
+                                    : AppColors.accentPrimary.opacity(0.25),
                                     lineWidth: 1)
                         }
 
                     Spacer()
 
-                    // Pulsing amber dot
+                    // Pulsing amber activity dot — 1.2s intentional.
+                    // Faster than ambientPulse (2.0s) to signal urgency.
                     Circle()
                         .fill(Color(red: 1, green: 0.72, blue: 0))
                         .frame(width: 7, height: 7)
                         .scaleEffect(pulseScale)
                         .onAppear {
                             withAnimation(
-                                .easeInOut(duration: 1.2)
+                                .easeInOut(duration: AppAnimation.ambientShimmer)
                                 .repeatForever(autoreverses: true)
                             ) {
                                 pulseScale = 1.4
@@ -88,36 +88,33 @@ struct PickUpCard: View {
                 Text(item.contextLine)
                     .font(AppFonts.caption)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextTertiary
+                        ? AppColors.textTertiary
                         : AppColors.textTertiary)
 
                 Text(item.title)
                     .font(AppFonts.bodyText)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextSecondary
+                        ? AppColors.textSecondary
                         : AppColors.textSecondary)
                     .lineLimit(2)
 
                 Text(item.actionLabel)
                     .font(AppFonts.caption)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.magenta
-                        : AppColors.cyanLight)
+                        ? AppColors.accentTertiary
+                        : AppColors.accentPrimary)
             }
         }
-        .padding(14)
+        .padding(AppSpacing.md)
         .background {
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: AppRadius.md)
                 .fill(colorScheme == .light
-                    ? AppColors.lightFrostCard
-                    : AppColors.cardBg)
+                    ? AppColors.glassFrostCard
+                    : AppColors.cardBackground)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(colorScheme == .light
-                    ? AppColors.lightBorder
-                    : AppColors.border,
-                    lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppRadius.md)
+                .stroke(AppColors.borderSubtle, lineWidth: 1)
         }
     }
 }
@@ -127,7 +124,7 @@ private extension PickUpContentType {
         switch self {
         case .timelineScenario: return "TIMELINE"
         case .article:          return "ARTICLE"
-        case .judgmentCall:      return "JUDGMENT"
+        case .judgmentCall:     return "JUDGMENT"
         case .autopsy:          return "AUTOPSY"
         }
     }

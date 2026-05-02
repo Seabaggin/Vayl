@@ -55,7 +55,7 @@ struct CheckInShell: View {
             ZStack(alignment: .top) {
 
                 // ── Background ──────────────────────────────
-                (isLight ? AppColors.lightPageBg : AppColors.pageBg)
+                (isLight ? AppColors.pageBackground : AppColors.pageBackground)
                     .ignoresSafeArea()
 
                 // ── Atmosphere ──────────────────────────────

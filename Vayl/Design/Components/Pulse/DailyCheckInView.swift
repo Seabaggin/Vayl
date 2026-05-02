@@ -51,36 +51,33 @@ struct DailyCheckInView: View {
     // MARK: - Inputs
 
     let entries:     [PulseEntry]
-    let graphWidth:  CGFloat      // actual rendered graph width — must match CheckInShell
-    let graphHeight: CGFloat      // actual rendered graph height — must match CheckInShell
+    let graphWidth:  CGFloat
+    let graphHeight: CGFloat
 
-    // Camera bindings — control PulseGraph in CheckInShell
     @Binding var camScale:     CGFloat
     @Binding var camTx:        CGFloat
     @Binding var camTy:        CGFloat
     @Binding var liveScore:    Double?
     @Binding var drawProgress: CGFloat
-    
 
     var onComplete: (PulseEntry) -> Void
     var onDismiss:  () -> Void
 
     // MARK: - State
 
-    @State private var phase:       CheckInPhase      = .idle
-    @State private var dotY:        Double            = 2.5
-    @State private var glowColor:   PulseCapacityColor = .indigo
-    @State private var qi:          Int               = 0
-    @State private var chosen:      String?           = nil
-    @State private var speed:       String?           = nil
+    @State private var phase:     CheckInPhase       = .idle
+    @State private var dotY:      Double             = 2.5
+    @State private var glowColor: PulseCapacityColor = .indigo
+    @State private var qi:        Int                = 0
+    @State private var chosen:    String?            = nil
+    @State private var speed:     String?            = nil
 
     @State private var answerNS:    String = ""
     @State private var answerFocus: String = ""
     @State private var answerFeel:  String = ""
 
-    @State private var msgVisible:     Bool                   = false
-    @State private var resolutionAttempt: Int = 0
-  
+    @State private var msgVisible:        Bool = false
+    @State private var resolutionAttempt: Int  = 0
 
     @Environment(\.colorScheme)               private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -179,26 +176,18 @@ struct DailyCheckInView: View {
     private let padBot:     CGFloat = 24
     private let minSpacing: CGFloat = 44
 
-    // Replicates PulseGraph.canvasWidth exactly.
-    // liveScore is always non-nil during check-in so slotCount = entries.count + 1.
-    // Root cause of camera targeting empty space: usableWidth was derived from
-    // graphWidth (~390px) instead of canvasWidth (~654px for 14 entries).
-    // Every xForIndex call was returning a coordinate ~240px short of the actual dot.
     private var canvasWidth: CGFloat {
-        let slotCount = entries.count + 1   // +1 for live dot — always present during check-in
+        let slotCount = entries.count + 1
         let computed  = padLeft + CGFloat(max(1, slotCount - 1)) * minSpacing + padRight
         return max(graphWidth, computed)
     }
 
-    // usableWidth derives from canvasWidth, not graphWidth.
     private var usableWidth:  CGFloat { canvasWidth  - padLeft - padRight }
     private var usableHeight: CGFloat { graphHeight  - padTop  - padBot   }
 
     private func xForIndex(_ index: Int) -> CGFloat {
         let totalSlots = entries.count + 1
-        guard totalSlots > 1 else {
-            return padLeft + usableWidth / 2
-        }
+        guard totalSlots > 1 else { return padLeft + usableWidth / 2 }
         return padLeft + (CGFloat(index) / CGFloat(totalSlots - 1)) * usableWidth
     }
 
@@ -206,18 +195,14 @@ struct DailyCheckInView: View {
         padTop + CGFloat((4.0 - score) / 3.0) * usableHeight
     }
 
-    // ADD THIS: The distance the ScrollView natively shifts the content left
     private var initialScrollOffset: CGFloat {
         max(0, canvasWidth - graphWidth)
     }
 
-    // Camera step 1 — zoom to last historical entry.
     private var step1Values: (scale: CGFloat, tx: CGFloat, ty: CGFloat) {
-        let lastX = xForIndex(entries.count - 1)
-        let lastY = yForScore(entries.last?.capacityScore ?? 2.5)
+        let lastX    = xForIndex(entries.count - 1)
+        let lastY    = yForScore(entries.last?.capacityScore ?? 2.5)
         let s: CGFloat = 9.0
-        
-        // Calculate the actual visual X coordinate on screen
         let visibleX = lastX - initialScrollOffset
         return (
             scale: s,
@@ -226,29 +211,25 @@ struct DailyCheckInView: View {
         )
     }
 
-    // Camera step 2 — pan to midpoint (Unused if using the single linear block, but updated for safety)
     private var step2Values: (tx: CGFloat, ty: CGFloat) {
-        let lastX  = xForIndex(entries.count - 1)
-        let lastY  = yForScore(entries.last?.capacityScore ?? 2.5)
-        let todayX = xForIndex(entries.count)
-        let todayY = yForScore(dotY)
-        let midX   = (lastX + todayX) / 2
-        let midY   = (lastY + todayY) / 2
+        let lastX    = xForIndex(entries.count - 1)
+        let lastY    = yForScore(entries.last?.capacityScore ?? 2.5)
+        let todayX   = xForIndex(entries.count)
+        let todayY   = yForScore(dotY)
+        let midX     = (lastX + todayX) / 2
+        let midY     = (lastY + todayY) / 2
         let s: CGFloat = 9.0
         let visibleMidX = midX - initialScrollOffset
-        
         return (
             tx: (graphWidth  / 2) - visibleMidX * s,
             ty: (graphHeight / 2) - midY * s
         )
     }
 
-    // Camera step 3 — settle on today dot
     private var step3Values: (scale: CGFloat, tx: CGFloat, ty: CGFloat) {
-        let todayX = xForIndex(entries.count)
-        let todayY = yForScore(dotY)
-        let s: CGFloat = 11.0   // change this number to change zoom level
-        
+        let todayX   = xForIndex(entries.count)
+        let todayY   = yForScore(dotY)
+        let s: CGFloat = 11.0
         let visibleX = todayX - initialScrollOffset
         return (
             scale: s,
@@ -258,9 +239,6 @@ struct DailyCheckInView: View {
     }
 
     // MARK: - Body
-    // Renders only the active phase content.
-    // No background. No glow field. Those live in CheckInShell.
-    // Frame is the bottom 40% panel — CheckInShell owns the layout.
 
     var body: some View {
         ZStack {
@@ -282,7 +260,7 @@ struct DailyCheckInView: View {
                     .transition(.opacity.combined(with: .offset(y: 12)))
             }
         }
-        .animation(.easeOut(duration: 0.4), value: phase)
+        .animation(AppAnimation.enter, value: phase)
         .onAppear { startIdle() }
         .onDisappear { resolutionAttempt += 1 }
     }
@@ -290,8 +268,7 @@ struct DailyCheckInView: View {
     // MARK: - Idle View
 
     private var idleView: some View {
-        VStack(spacing: 20) {
-            // Divider between graph and panel — subtle, not structural
+        VStack(spacing: AppSpacing.lg) {
             Rectangle()
                 .fill(
                     LinearGradient(
@@ -306,27 +283,23 @@ struct DailyCheckInView: View {
 
             Text("Daily Check-In")
                 .font(AppFonts.screenTitle)
-                .foregroundStyle(
-                    isLight ? AppColors.lightTextPrimary : AppColors.textPrimary
-                )
+                .foregroundStyle(AppColors.textPrimary)
 
             Text("5 questions. Honest answers.\nNo judgment.")
                 .font(AppFonts.bodyText)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(
-                    isLight ? AppColors.lightTextSecondary : AppColors.textSecondary
-                )
+                .foregroundStyle(AppColors.textSecondary)
 
             Spacer()
 
             HoloCTAButton(title: "Begin", isEnabled: true) {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                withAnimation(.easeOut(duration: 0.3)) {
+                withAnimation(AppAnimation.standard) {
                     phase = .questions
                 }
                 liveScore = 2.5
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, AppSpacing.xl)
 
             Button("Not now") {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -334,19 +307,16 @@ struct DailyCheckInView: View {
                 onDismiss()
             }
             .font(AppFonts.caption)
-            .foregroundStyle(
-                isLight ? AppColors.lightTextTertiary : AppColors.textTertiary
-            )
-            .padding(.bottom, 16)
+            .foregroundStyle(AppColors.textTertiary)
+            .padding(.bottom, AppSpacing.md)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, AppSpacing.lg)
     }
 
     // MARK: - Question View
 
     private var questionView: some View {
         VStack(spacing: 0) {
-            // Divider
             Rectangle()
                 .fill(
                     LinearGradient(
@@ -357,20 +327,16 @@ struct DailyCheckInView: View {
                 )
                 .frame(height: 1)
 
-            // Progress bar
             progressBar
-                .padding(.horizontal, 32)
-                .padding(.top, 20)
-                .padding(.bottom, 16)
+                .padding(.horizontal, AppSpacing.xl)
+                .padding(.top, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.md)
 
-            // Question text
             Text(currentQuestion.text)
                 .font(AppFonts.sectionHeading)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(
-                    isLight ? AppColors.lightTextPrimary : AppColors.textPrimary
-                )
-                .padding(.horizontal, 32)
+                .foregroundStyle(AppColors.textPrimary)
+                .padding(.horizontal, AppSpacing.xl)
                 .id(qi)
                 .transition(.asymmetric(
                     insertion: .opacity.combined(with: .offset(y: 12)),
@@ -378,27 +344,26 @@ struct DailyCheckInView: View {
                 ))
                 .fixedSize(horizontal: false, vertical: true)
 
-            Spacer(minLength: 12)
+            Spacer(minLength: AppSpacing.md)
 
-            // Pills
             pillGrid
-                .padding(.horizontal, 24)
-                .padding(.bottom, 24)
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.lg)
         }
     }
 
     // MARK: - Progress Bar
 
     private var progressBar: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppSpacing.sm) {
             ForEach(0..<questions.count, id: \.self) { i in
                 Capsule()
                     .fill(
                         i < qi
                             ? AnyShapeStyle(LinearGradient(
                                 colors: isLight
-                                    ? [AppColors.purple, AppColors.magenta]
-                                    : [AppColors.cyan,   AppColors.purple],
+                                    ? [AppColors.accentSecondary, AppColors.accentTertiary]
+                                    : [AppColors.accentPrimary,   AppColors.accentSecondary],
                                 startPoint: .leading,
                                 endPoint:   .trailing
                               ))
@@ -409,7 +374,7 @@ struct DailyCheckInView: View {
                                   )
                     )
                     .frame(height: 3)
-                    .animation(.easeOut(duration: 0.3), value: qi)
+                    .animation(AppAnimation.standard, value: qi)
             }
         }
     }
@@ -421,10 +386,10 @@ struct DailyCheckInView: View {
 
         return LazyVGrid(
             columns: Array(
-                repeating: GridItem(.flexible(), spacing: 10),
+                repeating: GridItem(.flexible(), spacing: AppSpacing.sm),
                 count: pills.count <= 3 ? pills.count : 2
             ),
-            spacing: 10
+            spacing: AppSpacing.sm
         ) {
             ForEach(pills) { pill in
                 SelectablePill(
@@ -444,12 +409,9 @@ struct DailyCheckInView: View {
     }
 
     // MARK: - Resolving View
-    // Minimal UI — graph is the experience during resolution.
-    // Completion message fades in after the line has drawn.
 
     private var resolvingView: some View {
         VStack {
-            // Divider
             Rectangle()
                 .fill(
                     LinearGradient(
@@ -469,13 +431,13 @@ struct DailyCheckInView: View {
                     .foregroundStyle(
                         LinearGradient(
                             colors: isLight
-                                ? [AppColors.purple, AppColors.magenta]
-                                : [AppColors.cyan, AppColors.electricViolet, AppColors.magenta],
+                                ? [AppColors.accentSecondary, AppColors.accentTertiary]
+                                : [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                             startPoint: .leading,
                             endPoint:   .trailing
                         )
                     )
-                    .padding(.horizontal, 40)
+                    .padding(.horizontal, AppSpacing.xl)
                     .transition(.opacity.combined(with: .offset(y: 8)))
             }
 
@@ -487,7 +449,6 @@ struct DailyCheckInView: View {
 
     private var doneView: some View {
         VStack(spacing: 0) {
-            // Divider
             Rectangle()
                 .fill(
                     LinearGradient(
@@ -500,14 +461,14 @@ struct DailyCheckInView: View {
 
             Spacer()
 
-            VStack(spacing: 6) {
+            VStack(spacing: AppSpacing.sm) {
                 Text(PulseTier.tier(for: dotY).label)
                     .font(AppFonts.cardTitle)
                     .foregroundStyle(
                         LinearGradient(
                             colors: isLight
-                                ? [AppColors.purple, AppColors.magenta]
-                                : [AppColors.cyan, AppColors.electricViolet, AppColors.magenta],
+                                ? [AppColors.accentSecondary, AppColors.accentTertiary]
+                                : [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                             startPoint: .leading,
                             endPoint:   .trailing
                         )
@@ -515,37 +476,31 @@ struct DailyCheckInView: View {
 
                 Text(PulseTier.tier(for: dotY).sublabel)
                     .font(AppFonts.caption)
-                    .foregroundStyle(
-                        isLight ? AppColors.lightTextTertiary : AppColors.textTertiary
-                    )
+                    .foregroundStyle(AppColors.textTertiary)
             }
-            .padding(.bottom, 16)
+            .padding(.bottom, AppSpacing.md)
 
             Text(insightCopy)
                 .font(AppFonts.bodyText)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(
-                    isLight ? AppColors.lightTextSecondary : AppColors.textSecondary
-                )
-                .padding(.horizontal, 32)
-                .padding(.bottom, 24)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.horizontal, AppSpacing.xl)
+                .padding(.bottom, AppSpacing.lg)
 
             HoloCTAButton(title: "Done", isEnabled: true) {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 submitEntry()
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, AppSpacing.xl)
 
             Button("Start over") {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 resetAll()
             }
             .font(AppFonts.caption)
-            .foregroundStyle(
-                isLight ? AppColors.lightTextTertiary : AppColors.textTertiary
-            )
-            .padding(.top, 12)
-            .padding(.bottom, 16)
+            .foregroundStyle(AppColors.textTertiary)
+            .padding(.top, AppSpacing.sm)
+            .padding(.bottom, AppSpacing.md)
         }
     }
 
@@ -569,20 +524,18 @@ struct DailyCheckInView: View {
         default: break
         }
 
-        // Move the live dot on the graph above — immediately visible to user
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+        withAnimation(AppAnimation.spring) {
             liveScore = dotY
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             if qi < questions.count - 1 {
-                withAnimation(.easeOut(duration: 0.3)) {
+                withAnimation(AppAnimation.standard) {
                     qi     += 1
                     chosen  = nil
                 }
             } else {
-                // Q5 complete — fire cinematic resolution on the graph above
-                withAnimation(.easeOut(duration: 0.3)) {
+                withAnimation(AppAnimation.standard) {
                     phase = .resolving
                 }
                 triggerResolution()
@@ -591,15 +544,18 @@ struct DailyCheckInView: View {
     }
 
     // MARK: - Cinematic Resolution
-    // Camera moves animate the PulseGraph in CheckInShell's top 60%.
-    // The user watches the line draw in real time on the graph above.
-  
+    // Camera move timings are deliberate cinematic choreography — not UI response animations.
+    // .easeInOut(duration: 1.8) and .linear(duration: 6.0) are intentional exceptions.
+    // The 6.0s draw duration mirrors the 6.2s sleep gap exactly — do not migrate to tokens.
+    // The 1.8s camera durations mirror the 2.0s sleep gaps — do not migrate to tokens.
+    // Outer phase transitions use AppAnimation tokens. Inner camera timings do not.
+
     private func triggerResolution() {
         guard !reduceMotion else {
             drawProgress = 1.0
             msgVisible   = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                withAnimation { phase = .done }
+                withAnimation(AppAnimation.standard) { phase = .done }
                 resetCamera()
             }
             return
@@ -611,6 +567,7 @@ struct DailyCheckInView: View {
         Task { @MainActor in
 
             // t=0.00s — Slow zoom to last historical entry
+            // Cinematic camera move — intentional exception, not a token candidate.
             let s1 = step1Values
             withAnimation(.easeInOut(duration: 1.8)) {
                 camScale = s1.scale
@@ -621,7 +578,8 @@ struct DailyCheckInView: View {
             try? await Task.sleep(for: .seconds(2.0))
             guard currentAttempt == resolutionAttempt && !Task.isCancelled else { return }
 
-            // t=2.0s — Camera tracks pen tip, line draws
+            // t=2.0s — Camera tracks pen tip, line draws.
+            // Linear 6.0s duration mirrors 6.2s sleep gap — intentional, do not change.
             let s3 = step3Values
             withAnimation(.linear(duration: 6.0)) {
                 camTx        = s3.tx
@@ -634,7 +592,7 @@ struct DailyCheckInView: View {
             guard currentAttempt == resolutionAttempt && !Task.isCancelled else { return }
 
             // t=8.2s — Message fades in
-            withAnimation(.easeOut(duration: 0.7)) {
+            withAnimation(AppAnimation.slow) {
                 msgVisible = true
             }
             UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -643,6 +601,7 @@ struct DailyCheckInView: View {
             guard currentAttempt == resolutionAttempt && !Task.isCancelled else { return }
 
             // t=10.0s — Pull back to full graph
+            // Cinematic camera move — intentional exception, not a token candidate.
             withAnimation(.easeInOut(duration: 1.8)) {
                 camScale = 1.0
                 camTx    = 0.0
@@ -653,7 +612,7 @@ struct DailyCheckInView: View {
             guard currentAttempt == resolutionAttempt && !Task.isCancelled else { return }
 
             // t=11.6s — Done card
-            withAnimation(.easeOut(duration: 0.5)) {
+            withAnimation(AppAnimation.slow) {
                 phase = .done
             }
         }
@@ -668,8 +627,8 @@ struct DailyCheckInView: View {
             glowColor:     glowColor,
             speed:         speed ?? "Light Connection",
             nervousSystem: answerNS.isEmpty    ? "Stable"   : answerNS,
-            focus:         answerFocus.isEmpty  ? "Balanced" : answerFocus,
-            feeling:       answerFeel.isEmpty   ? "Content"  : answerFeel
+            focus:         answerFocus.isEmpty ? "Balanced" : answerFocus,
+            feeling:       answerFeel.isEmpty  ? "Content"  : answerFeel
         )
         resetCamera()
         onComplete(entry)
@@ -678,13 +637,13 @@ struct DailyCheckInView: View {
     // MARK: - Helpers
 
     private func startIdle() {
-        withAnimation(.easeOut(duration: 0.4).delay(0.2)) {
+        withAnimation(AppAnimation.enter.delay(0.2)) {
             phase = .idle
         }
     }
 
     private func resetCamera() {
-        withAnimation(.easeOut(duration: 0.5)) {
+        withAnimation(AppAnimation.slow) {
             camScale = 1.0
             camTx    = 0.0
             camTy    = 0.0
@@ -703,14 +662,13 @@ struct DailyCheckInView: View {
         drawProgress = 0.0
         liveScore    = 2.5
         resetCamera()
-        withAnimation(.easeOut(duration: 0.3)) {
+        withAnimation(AppAnimation.standard) {
             phase = .questions
         }
     }
 }
 
 // MARK: - Previews
-// Previews render the full shell so the graph is visible above the panel
 
 #Preview("Idle — dark") {
     CheckInShell(

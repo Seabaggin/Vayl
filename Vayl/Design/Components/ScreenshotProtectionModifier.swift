@@ -14,10 +14,10 @@ struct ScreenshotProtectionModifier: ViewModifier {
                         Rectangle()
                             .fill(.ultraThinMaterial)
                             .ignoresSafeArea()
-                        VStack(spacing: 12) {
-                            Image(systemName: "eye.slash.fill")
+                        VStack(spacing: AppSpacing.sm) {
+                            Image(AppIcons.eyeSlashScreen)
                                 .font(.largeTitle)
-                                .foregroundStyle(AppColors.gold)
+                                .foregroundStyle(AppColors.safetyAccent)
                             Text("Content Protected")
                                 .font(AppFonts.sectionHeading)
                                 .foregroundStyle(AppColors.textPrimary)
@@ -26,9 +26,9 @@ struct ScreenshotProtectionModifier: ViewModifier {
                                 .foregroundStyle(AppColors.textSecondary)
                                 .multilineTextAlignment(.center)
                         }
-                        .padding(40)
+                        .padding(AppSpacing.xxl)
                     }
-                    .transition(.opacity.animation(.easeIn(duration: 0.15)))
+                    .transition(.opacity.animation(AppAnimation.fast))
                 }
             }
             .onAppear { checkCaptureStatus() }

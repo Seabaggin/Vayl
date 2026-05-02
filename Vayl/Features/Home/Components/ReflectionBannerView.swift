@@ -27,53 +27,43 @@ struct ReflectionBannerView: View {
                     ? Color.black.opacity(0.15)
                     : Color.white.opacity(0.3))
                 .frame(width: 36, height: 4)
-                .padding(.top, 10)
-                .padding(.bottom, 14)
+                .padding(.top, AppSpacing.sm)
+                .padding(.bottom, AppSpacing.md)
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
                 // Header
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
                     Text(sessionLabel)
                         .font(AppFonts.overline)
                         .tracking(1.2)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary)
+                        .foregroundStyle(AppColors.textTertiary)
                     Text("How did that land for you?")
                         .font(AppFonts.bodyMedium)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextPrimary
-                            : AppColors.textPrimary)
+                        .foregroundStyle(AppColors.textPrimary)
                 }
 
                 if isWritingNote {
                     TextEditor(text: $noteText)
                         .frame(minHeight: 70)
                         .font(AppFonts.bodyText)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextPrimary
-                            : AppColors.textPrimary)
+                        .foregroundStyle(AppColors.textPrimary)
                         .scrollContentBackground(.hidden)
-                        .padding(10)
+                        .padding(AppSpacing.sm)
                         .background {
-                            RoundedRectangle(cornerRadius: 10)
+                            RoundedRectangle(cornerRadius: AppRadius.sm)
                                 .fill(colorScheme == .light
                                     ? Color.black.opacity(0.03)
                                     : Color.white.opacity(0.04))
                         }
                         .overlay {
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(colorScheme == .light
-                                    ? AppColors.lightBorder
-                                    : AppColors.border,
-                                    lineWidth: 1)
+                            RoundedRectangle(cornerRadius: AppRadius.sm)
+                                .stroke(AppColors.borderSubtle, lineWidth: 1)
                         }
                 } else {
-                    // 5 default pills in 2 rows
                     LazyVGrid(
                         columns: Array(repeating:
-                            GridItem(.flexible(), spacing: 8), count: 3),
-                        spacing: 8
+                            GridItem(.flexible(), spacing: AppSpacing.sm), count: 3),
+                        spacing: AppSpacing.sm
                     ) {
                         ForEach(ReflectionPillGroup.inlineDefault,
                                 id: \.self) { pill in
@@ -87,8 +77,8 @@ struct ReflectionBannerView: View {
                         Text("More →")
                             .font(AppFonts.caption)
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.magenta
-                                : AppColors.cyanLight)
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -101,26 +91,22 @@ struct ReflectionBannerView: View {
                          ? "← Use pills instead"
                          : "✎ Write a note instead")
                         .font(AppFonts.caption)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary)
+                        .foregroundStyle(AppColors.textTertiary)
                 }
                 .buttonStyle(.plain)
 
-                // Share toggle (only if has partner)
+                // Share toggle — only shown when partner is present
                 if let name = partnerName {
                     HStack {
                         Text("Share with \(name)")
                             .font(AppFonts.caption)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextSecondary
-                                : AppColors.textSecondary)
+                            .foregroundStyle(AppColors.textSecondary)
                         Spacer()
                         Toggle("", isOn: $shareWithPartner)
                             .labelsHidden()
                             .tint(colorScheme == .light
-                                ? AppColors.magenta
-                                : AppColors.cyan)
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
                     }
                 }
 
@@ -130,9 +116,7 @@ struct ReflectionBannerView: View {
                         dismiss()
                     }
                     .font(AppFonts.caption)
-                    .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextTertiary
-                        : AppColors.textTertiary)
+                    .foregroundStyle(AppColors.textTertiary)
                     .buttonStyle(.plain)
 
                     Spacer()
@@ -148,22 +132,22 @@ struct ReflectionBannerView: View {
                         Text("Done")
                             .font(AppFonts.ctaLabel)
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightBodyWineDark
+                                ? AppColors.textSecondary
                                 : .white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 10)
+                            .padding(.horizontal, AppSpacing.lg)
+                            .padding(.vertical, AppSpacing.sm)
                             .background {
                                 Capsule()
                                     .fill(colorScheme == .light
                                         ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.magenta.opacity(0.18),
-                                                     AppColors.gold.opacity(0.14)],
+                                            colors: [AppColors.accentTertiary.opacity(0.18),
+                                                     AppColors.safetyAccent.opacity(0.14)],
                                             startPoint: .leading,
                                             endPoint: .trailing))
                                         : AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.cyan,
-                                                     AppColors.purple,
-                                                     AppColors.magenta],
+                                            colors: [AppColors.accentPrimary,
+                                                     AppColors.accentSecondary,
+                                                     AppColors.accentTertiary],
                                             startPoint: .leading,
                                             endPoint: .trailing)))
                             }
@@ -171,8 +155,8 @@ struct ReflectionBannerView: View {
                                 Capsule()
                                     .stroke(colorScheme == .light
                                         ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.magenta,
-                                                     AppColors.gold],
+                                            colors: [AppColors.accentTertiary,
+                                                     AppColors.safetyAccent],
                                             startPoint: .leading,
                                             endPoint: .trailing))
                                         : AnyShapeStyle(Color.clear),
@@ -180,42 +164,37 @@ struct ReflectionBannerView: View {
                             }
                     }
                     .buttonStyle(.plain)
-                    .disabled(selectedPills.isEmpty
-                              && noteText.isEmpty)
-                    .opacity(selectedPills.isEmpty
-                             && noteText.isEmpty ? 0.4 : 1)
+                    .disabled(selectedPills.isEmpty && noteText.isEmpty)
+                    .opacity(selectedPills.isEmpty && noteText.isEmpty ? 0.4 : 1)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 24)
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.bottom, AppSpacing.lg)
         }
         .background {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .overlay {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill((colorScheme == .light
-                            ? AppColors.lightCardFill
-                            : AppColors.cardBg).opacity(0.85))
+                    RoundedRectangle(cornerRadius: AppRadius.xl)
+                        .fill(AppColors.cardBackground.opacity(0.85))
                 }
         }
         .overlay(alignment: .top) {
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: AppRadius.xl)
                 .stroke(colorScheme == .light
-                    ? AnyShapeStyle(
-                        AppColors.warmAuroraBorder.opacity(0.5))
+                    ? AnyShapeStyle(AppColors.spectrumBorder.opacity(0.5))
                     : AnyShapeStyle(LinearGradient(
-                        colors: [AppColors.cyan.opacity(0.4),
-                                 AppColors.purple.opacity(0.3),
-                                 AppColors.magenta.opacity(0.2)],
+                        colors: [AppColors.accentPrimary.opacity(0.4),
+                                 AppColors.accentSecondary.opacity(0.3),
+                                 AppColors.accentTertiary.opacity(0.2)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing)),
                     lineWidth: 1.5)
         }
         .shadow(
             color: colorScheme == .light
-                ? AppColors.lightShadowPurple
-                : AppColors.purple.opacity(0.12),
+                ? AppColors.shadowPurple
+                : AppColors.accentSecondary.opacity(0.12),
             radius: 20, y: 6
         )
         .offset(y: dragOffset)
@@ -250,54 +229,50 @@ struct ReflectionBannerView: View {
                 .font(AppFonts.caption)
                 .foregroundStyle(isSelected
                     ? (colorScheme == .light
-                        ? AppColors.lightBodyWineDark
+                        ? AppColors.textSecondary
                         : .white)
-                    : (colorScheme == .light
-                        ? AppColors.lightTextSecondary
-                        : AppColors.textSecondary))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 7)
+                    : AppColors.textSecondary)
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.vertical, AppSpacing.sm)
                 .frame(maxWidth: .infinity)
                 .background {
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: AppRadius.sm)
                         .fill(isSelected
                             ? (colorScheme == .light
                                 ? AnyShapeStyle(LinearGradient(
-                                    colors: [AppColors.magenta.opacity(0.15),
-                                             AppColors.gold.opacity(0.12)],
+                                    colors: [AppColors.accentTertiary.opacity(0.15),
+                                             AppColors.safetyAccent.opacity(0.12)],
                                     startPoint: .leading,
                                     endPoint: .trailing))
                                 : AnyShapeStyle(LinearGradient(
-                                    colors: [AppColors.cyan.opacity(0.35),
-                                             AppColors.purple.opacity(0.25)],
+                                    colors: [AppColors.accentPrimary.opacity(0.35),
+                                             AppColors.accentSecondary.opacity(0.25)],
                                     startPoint: .leading,
                                     endPoint: .trailing)))
                             : AnyShapeStyle(Color.clear))
                 }
                 .overlay {
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: AppRadius.sm)
                         .stroke(
                             isSelected
                             ? (colorScheme == .light
                                 ? AnyShapeStyle(LinearGradient(
-                                    colors: [AppColors.magenta,
-                                             AppColors.gold],
+                                    colors: [AppColors.accentTertiary,
+                                             AppColors.safetyAccent],
                                     startPoint: .leading,
                                     endPoint: .trailing))
                                 : AnyShapeStyle(LinearGradient(
-                                    colors: [AppColors.cyan,
-                                             AppColors.purple],
+                                    colors: [AppColors.accentPrimary,
+                                             AppColors.accentSecondary],
                                     startPoint: .leading,
                                     endPoint: .trailing)))
-                            : AnyShapeStyle(colorScheme == .light
-                                ? AppColors.lightBorder
-                                : AppColors.border),
+                            : AnyShapeStyle(AppColors.borderSubtle),
                             lineWidth: 1
                         )
                 }
         }
         .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.15), value: isSelected)
+        .animation(AppAnimation.fast, value: isSelected)
     }
 
     // MARK: - Full Pill Sheet
@@ -305,7 +280,7 @@ struct ReflectionBannerView: View {
     private var fullPillSheet: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: AppSpacing.lg) {
                     pillSheetSection(
                         title: "HOW IT FELT",
                         pills: ReflectionPillGroup.howItFelt
@@ -319,34 +294,27 @@ struct ReflectionBannerView: View {
                         pills: ReflectionPillGroup.whatYouNeedNow
                     )
 
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         Text("ADD A NOTE")
                             .font(AppFonts.overline)
                             .tracking(1.2)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextTertiary
-                                : AppColors.textTertiary)
+                            .foregroundStyle(AppColors.textTertiary)
 
                         TextEditor(text: $noteText)
                             .frame(minHeight: 80)
                             .font(AppFonts.bodyText)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextPrimary
-                                : AppColors.textPrimary)
+                            .foregroundStyle(AppColors.textPrimary)
                             .scrollContentBackground(.hidden)
-                            .padding(10)
+                            .padding(AppSpacing.sm)
                             .background {
-                                RoundedRectangle(cornerRadius: 10)
+                                RoundedRectangle(cornerRadius: AppRadius.sm)
                                     .fill(colorScheme == .light
                                         ? Color.black.opacity(0.03)
                                         : Color.white.opacity(0.04))
                             }
                             .overlay {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(colorScheme == .light
-                                        ? AppColors.lightBorder
-                                        : AppColors.border,
-                                        lineWidth: 1)
+                                RoundedRectangle(cornerRadius: AppRadius.sm)
+                                    .stroke(AppColors.borderSubtle, lineWidth: 1)
                             }
                     }
 
@@ -354,15 +322,13 @@ struct ReflectionBannerView: View {
                         HStack {
                             Text("Share with \(name)")
                                 .font(AppFonts.bodyText)
-                                .foregroundStyle(colorScheme == .light
-                                    ? AppColors.lightTextSecondary
-                                    : AppColors.textSecondary)
+                                .foregroundStyle(AppColors.textSecondary)
                             Spacer()
                             Toggle("", isOn: $shareWithPartner)
                                 .labelsHidden()
                                 .tint(colorScheme == .light
-                                    ? AppColors.magenta
-                                    : AppColors.cyan)
+                                    ? AppColors.accentTertiary
+                                    : AppColors.accentPrimary)
                         }
                     }
 
@@ -375,31 +341,31 @@ struct ReflectionBannerView: View {
                         Text("Done")
                             .font(AppFonts.ctaLabel)
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightBodyWineDark
+                                ? AppColors.textSecondary
                                 : .white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
+                            .padding(.vertical, AppSpacing.md)
                             .background {
-                                RoundedRectangle(cornerRadius: 14)
+                                RoundedRectangle(cornerRadius: AppRadius.md)
                                     .fill(colorScheme == .light
                                         ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.magenta.opacity(0.18),
-                                                     AppColors.gold.opacity(0.14)],
+                                            colors: [AppColors.accentTertiary.opacity(0.18),
+                                                     AppColors.safetyAccent.opacity(0.14)],
                                             startPoint: .leading,
                                             endPoint: .trailing))
                                         : AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.cyan,
-                                                     AppColors.purple,
-                                                     AppColors.magenta],
+                                            colors: [AppColors.accentPrimary,
+                                                     AppColors.accentSecondary,
+                                                     AppColors.accentTertiary],
                                             startPoint: .leading,
                                             endPoint: .trailing)))
                             }
                             .overlay {
-                                RoundedRectangle(cornerRadius: 14)
+                                RoundedRectangle(cornerRadius: AppRadius.md)
                                     .stroke(colorScheme == .light
                                         ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.magenta,
-                                                     AppColors.gold],
+                                            colors: [AppColors.accentTertiary,
+                                                     AppColors.safetyAccent],
                                             startPoint: .leading,
                                             endPoint: .trailing))
                                         : AnyShapeStyle(Color.clear),
@@ -407,32 +373,28 @@ struct ReflectionBannerView: View {
                             }
                     }
                     .buttonStyle(.plain)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, AppSpacing.md)
                 }
-                .padding(20)
+                .padding(AppSpacing.md)
             }
-            .background((colorScheme == .light
-                ? AppColors.lightPageBg
-                : AppColors.pageBg).ignoresSafeArea())
+            .background(AppColors.pageBackground.ignoresSafeArea())
             .navigationTitle("How did that land?")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
 
     private func pillSheetSection(title: String,
-                                   pills: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+                                  pills: [String]) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text(title)
                 .font(AppFonts.overline)
                 .tracking(1.2)
-                .foregroundStyle(colorScheme == .light
-                    ? AppColors.lightTextTertiary
-                    : AppColors.textTertiary)
+                .foregroundStyle(AppColors.textTertiary)
 
             LazyVGrid(
                 columns: Array(repeating:
-                    GridItem(.flexible(), spacing: 8), count: 2),
-                spacing: 8
+                    GridItem(.flexible(), spacing: AppSpacing.sm), count: 2),
+                spacing: AppSpacing.sm
             ) {
                 ForEach(pills, id: \.self) { pill in
                     bannerPillButton(pill)
@@ -441,9 +403,12 @@ struct ReflectionBannerView: View {
         }
     }
 
+    // MARK: - Dismiss
+    // TODO: withAnimation belongs in the caller, not here.
+    // The banner's parent view should own the dismiss animation.
+    // Move animation to HomeDashboardView when home dashboard is rebuilt.
     private func dismiss() {
-        withAnimation(.spring(response: 0.35,
-                               dampingFraction: 0.8)) {
+        withAnimation(AppAnimation.spring) {
             onDismiss?()
         }
     }

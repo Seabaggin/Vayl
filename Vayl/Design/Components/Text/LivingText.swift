@@ -2,32 +2,30 @@ import SwiftUI
 
 struct LivingText: View {
     let text: String
-    var font: Font = AppFonts.display(28, weight: .semibold)
+    var font: Font = AppFonts.display(28, weight: .semibold, relativeTo: .title2)
 
     @Environment(\.colorScheme) private var colorScheme
 
     // MARK: - Gradient Stops
     //
     // Dark: clean three-stop directional gradient.
-    // cyan left → purpleVivid mid → magenta right.
-    // purpleVivid (9333EA) is bright enough to read as a
-    // distinct color beat without muddying the transition.
+    // accentPrimary left → accentSecondary mid → accentTertiary right.
     //
     // Light: directional warm sweep.
-    // magenta left → orangeHot mid → gold right.
+    // accentTertiary left → progressBarLeading mid → progressBarTrailing right.
 
     private var gradientStops: [Color] {
         if colorScheme == .light {
             return [
-                AppColors.magenta,
-                AppColors.orangeHot,
-                AppColors.gold,
+                AppColors.accentTertiary,
+                AppColors.progressBarLeading,
+                AppColors.progressBarTrailing,
             ]
         } else {
             return [
-                AppColors.cyan,
-                AppColors.purpleVivid,
-                AppColors.magenta,
+                AppColors.accentPrimary,
+                AppColors.accentSecondary,
+                AppColors.accentTertiary,
             ]
         }
     }
@@ -42,8 +40,8 @@ struct LivingText: View {
                     .font(font)
                     .foregroundStyle(LinearGradient(
                         colors: colorScheme == .light
-                            ? [AppColors.magenta, AppColors.orangeHot, AppColors.gold]
-                            : [AppColors.cyan, AppColors.purpleVivid, AppColors.magenta],
+                            ? [AppColors.accentTertiary, AppColors.progressBarLeading, AppColors.safetyAccent]
+                            : [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                         startPoint: .leading,
                         endPoint: .trailing
                     ))
@@ -88,14 +86,14 @@ struct LivingText: View {
                     // breathes independently via tri-color phase offsets.
                     let animatedStops: [Color] = colorScheme == .light
                         ? [
-                            AppColors.magenta.opacity(0.75 + cyanGlow * 0.25),
-                            AppColors.orangeHot.opacity(0.75 + midGlow * 0.25),
-                            AppColors.gold.opacity(0.75 + magentaGlow * 0.25),
+                            AppColors.accentTertiary.opacity(0.75 + cyanGlow * 0.25),
+                            AppColors.progressBarLeading.opacity(0.75 + midGlow * 0.25),
+                            AppColors.progressBarTrailing.opacity(0.75 + magentaGlow * 0.25),
                           ]
                         : [
-                            AppColors.cyan.opacity(0.70 + cyanGlow * 0.30),
-                            AppColors.purpleVivid.opacity(0.70 + midGlow * 0.30),
-                            AppColors.magenta.opacity(0.70 + magentaGlow * 0.30),
+                            AppColors.accentPrimary.opacity(0.70 + cyanGlow * 0.30),
+                            AppColors.accentSecondary.opacity(0.70 + midGlow * 0.30),
+                            AppColors.accentTertiary.opacity(0.70 + magentaGlow * 0.30),
                           ]
 
                     let baseGradient = LinearGradient(
@@ -154,10 +152,10 @@ struct LivingText: View {
 
 #Preview("Dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
-        VStack(alignment: .leading, spacing: 32) {
+        AppColors.pageBackground.ignoresSafeArea()
+        VStack(alignment: .leading, spacing: AppSpacing.xl) {
             LivingText(text: "acquainted.",
-                       font: AppFonts.display(42, weight: .bold))
+                       font: AppFonts.display(42, weight: .bold, relativeTo: .largeTitle))
             LivingText(text: "exploring?",
                        font: AppFonts.heroTitle)
             LivingText(text: "Conversations",
@@ -165,37 +163,37 @@ struct LivingText: View {
             LivingText(text: "Easier",
                        font: AppFonts.screenTitle)
             LivingText(text: "You're in good company.",
-                       font: AppFonts.body(20, weight: .bold))
+                       font: AppFonts.body(20, weight: .bold, relativeTo: .title3))
         }
-        .padding(28)
+        .padding(AppSpacing.xl)
     }
     .preferredColorScheme(.dark)
 }
 
 #Preview("Light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
-        VStack(alignment: .leading, spacing: 32) {
+        AppColors.pageBackground.ignoresSafeArea()
+        VStack(alignment: .leading, spacing: AppSpacing.xl) {
             LivingText(text: "acquainted.",
-                       font: AppFonts.display(42, weight: .bold))
+                       font: AppFonts.display(42, weight: .bold, relativeTo: .largeTitle))
             LivingText(text: "exploring?",
                        font: AppFonts.heroTitle)
             LivingText(text: "Conversations",
                        font: AppFonts.screenTitle)
         }
-        .padding(28)
+        .padding(AppSpacing.xl)
     }
     .preferredColorScheme(.light)
 }
 
 #Preview("Against atmosphere — Dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         Ellipse()
             .fill(RadialGradient(
                 colors: [
-                    AppColors.magenta.opacity(0.30),
-                    AppColors.purple.opacity(0.15),
+                    AppColors.accentTertiary.opacity(0.30),
+                    AppColors.accentSecondary.opacity(0.15),
                     Color.clear,
                 ],
                 center: .top,
@@ -205,17 +203,17 @@ struct LivingText: View {
             .frame(width: 500, height: 400)
             .offset(y: -200)
             .blur(radius: 80)
-        VStack(alignment: .leading, spacing: 24) {
-            VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: AppSpacing.lg) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text("How are you")
                     .font(AppFonts.heroTitle)
                     .foregroundStyle(AppColors.textPrimary)
                 LivingText(text: "exploring?", font: AppFonts.heroTitle)
             }
             LivingText(text: "acquainted.",
-                       font: AppFonts.display(42, weight: .bold))
+                       font: AppFonts.display(42, weight: .bold, relativeTo: .largeTitle))
         }
-        .padding(28)
+        .padding(AppSpacing.xl)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     .preferredColorScheme(.dark)

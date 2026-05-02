@@ -1,558 +1,532 @@
-//
-//  AppColors.swift
-//  Open Lightly
-//
-//  Created by Bryan Jorden on 3/8/26.
-//
+// App/Theme/AppColors.swift
 
 import SwiftUI
 
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        guard Scanner(string: hex).scanHexInt64(&int) else {
-            self = .black
-            return
-        }
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 6:
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8:
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            self = .black
-            return
-        }
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
-        )
-    }
-}
-
-// MARK: - ──────────────────────────────────────────────
-// AppColors.swift
-// Open Lightly
+// ─────────────────────────────────────────────────────────────
+// Tier 2 — Semantic color tokens.
 //
-// Design System: Hot Border × Clash Display × Gradient Keywords
-// Card intensity scales 1–8 with prompt difficulty
-// ──────────────────────────────────────────────────────
-
-// MARK: - App Colors
+// Rules:
+//   • Every token has ONE name describing purpose, not appearance
+//   • Every token resolves automatically for light and dark via
+//     UIColor(dynamicProvider:) — no manual branching in views
+//   • Every token maps exclusively to VaylPrimitives values
+//   • Every token has a one-line use context comment
+//   • VaylPrimitives is NEVER referenced outside this file
+//
+// Light = Dawn mode   (warm cream, refractive atmosphere)
+// Dark  = Midnight mode (deep ink, emissive glows)
+// ─────────────────────────────────────────────────────────────
 
 struct AppColors {
 
     // ─────────────────────────────────────────────
-    // MARK: Core Spectrum
-    // The 3 anchor colors — used for borders,
-    // gradient text highlights, glows
-    // Gradient direction: 135° (top-left -> bottom-right)
-    // ─────────────────────────────────────────────
-
-    static let cyan       = Color(hex: "00C2FF")
-    static let purple     = Color(hex: "6C3AE0")
-    static let magenta    = Color(hex: "FF006A")
-
-    /// Soft magenta variant — used in shimmer gradients and atmospheric fills
-    static let pink       = Color(hex: "FF2D8A")
-
-    /// Deep atmospheric blue — used in glow field floor washes
-    static let deepBlue   = Color(hex: "0078FF")
-
-    /// Electric violet — gradient midpoint, orb layers, PulseWidget orb C
-    /// Use this. `violet` (#7C3AED) was removed — it had 0 usages.
-    static let electricViolet = Color(hex: "8B5CF6")
-
-    /// Electric purple — vivid gradient midpoint, LivingText only
-    static let purpleVivid = Color(hex: "9333EA")
-
-    static let purpleBright = Color(hex: "C084FC")
-
-    // Lighter variants — gradient text on keywords, badges
-    static let cyanLight    = Color(hex: "4DD8FF")
-    static let purpleLight  = Color(hex: "A78BFA")
-    static let magentaLight = Color(hex: "FF4D94")
-
-    // Darker variants — tinted backgrounds, deep accents
-    static let cyanDark    = Color(hex: "0891B2")
-    static let purpleDark  = Color(hex: "1A1A5E")
-    static let magentaDark = Color(hex: "BE185D")
-
-    // ─────────────────────────────────────────────
-    // MARK: Backgrounds
-    // Page -> Card -> Surface hierarchy (darkest to lightest)
-    // ─────────────────────────────────────────────
-
-    /// Main app background
-    static let pageBg = Color(hex: "030305")
-    // AppColors.swift
-
-    static let appIconBg = Color(hex: "090B17")
-
-    /// Widget/tray dark floor — sits between pageBg and surfaceRaised.
-    /// Used for the dark base layer behind home widgets (PulseWidget, etc.)
-    /// so the widget reads as a raised element without going full cardBg.
-    static let widgetDarkFloor = Color(hex: "08060A")
-
-    /// Default card interior (levels 1–4)
-    // DARK-FILL-FIX: was #050507 — only 2/255 delta from pageBg.
-    // At disabled opacity 0.45 the button was invisible.
-    // #12111A holds shape identity at 0.45 while staying dark.
-    static let cardBg = Color(hex: "12111A")
-
-    /// Elevated surfaces, sheets, modals
-    // DARK-FILL-FIX: was #08080C — 5/255 delta from pageBg.
-    // Invisible at 0.45 opacity. #1A1825 holds pill shape.
-    static let surfaceBg = Color(hex: "1A1825")
-
-    /// Slightly raised elements (input fields, etc)
-    static let surfaceRaised = Color(hex: "0C0C10")
-
-    // Tinted card backgrounds (for intensity levels 5–8)
-    static let tintCyan    = Color(hex: "061018")
-    static let tintPurple  = Color(hex: "080614")
-    static let tintMagenta = Color(hex: "120610")
-    static let tintNavy    = Color(hex: "0A1018")
-    static let tintIndigo  = Color(hex: "0A0820")
-    static let tintPlum    = Color(hex: "180818")
-
-    // Supernova (ultimate) gradient layers — deepest possible darks
-    static let tintSupernovaA = Color(hex: "081420")
-    static let tintSupernovaB = Color(hex: "0C0624")
-    static let tintSupernovaC = Color(hex: "1A0620")
-    static let tintSupernovaD = Color(hex: "1C0818")
-
-    // ─────────────────────────────────────────────
-    // MARK: Dark Mode Text
+    // MARK: Backgrounds — elevation hierarchy
     //
-    // All dark mode text is white-family — opacity lets
-    // the purple atmosphere bleed through rather than
-    // introducing flat grey hues.
-    //
-    // textPrimary (#E8E8F0): use for prompt content and
-    // headings that need a fixed colour value.
-    // .white (1.0): use for body copy that should feel
-    // pure — onboarding screens, card text.
+    // Page → Card → Modal. Never nest a higher
+    // elevation color inside a lower one.
     // ─────────────────────────────────────────────
 
-    /// Primary text — prompt content, headings. Near-white with a subtle
-    /// warm tint. Use .white directly for pure body copy.
-    static let textPrimary    = Color(hex: "E8E8F0")
+    /// Root view background. One per screen, never nested.
+    static let pageBackground = Color.dynamic(
+        light: VaylPrimitives.warmCream,
+        dark:  VaylPrimitives.inkBase
+    )
 
-    /// Secondary text — descriptions, labels (white @ 65%)
-    /// opacity preserves luminance while letting atmosphere bleed through.
-    static let textSecondary  = Color.white.opacity(0.65)
+    /// Content containers that sit directly on pageBackground.
+    static let cardBackground = Color.dynamic(
+        light: VaylPrimitives.pureWhite,
+        dark:  VaylPrimitives.inkCard
+    )
 
-    /// Tertiary text — timestamps, meta (white @ 38%).
-    /// Apply .italic() at usage sites — italic is the semantic signal
-    /// that separates tertiary from secondary, not just opacity.
-    static let textTertiary   = Color.white.opacity(0.38)
+    /// Second-tier elevated cards that sit on cardBackground.
+    static let cardBackgroundRaised = Color.dynamic(
+        light: UIColor(red: 1.0,   green: 0.957, blue: 0.965, alpha: 1),
+        dark:  UIColor(red: 0.086, green: 0.078, blue: 0.141, alpha: 0.92)
+    )
 
-    /// Hint text — pronoun hints, placeholders, inline helper copy (white @ 42%).
-    /// Slightly brighter than tertiary — hints compete with placeholder
-    /// backgrounds and need a touch more presence.
-    /// Renamed from textQuaternary (was incorrectly dimmer than tertiary).
-    static let textHint       = Color.white.opacity(0.42)
+    /// Sheets, modals, overlays. Always sits above cardBackground.
+    static let modalBackground = Color.dynamic(
+        light: VaylPrimitives.pureWhite,
+        dark:  VaylPrimitives.inkSurface
+    )
 
-    /// Muted text — disabled states, truly silent copy (white @ 20%)
-    static let textMuted      = Color.white.opacity(0.20)
+    /// Input fields and inset wells. Recessed below pageBackground.
+    static let inputBackground = Color.dynamic(
+        light: VaylPrimitives.offWhite,
+        dark:  VaylPrimitives.inkRaised
+    )
 
-    /// Bright near-white for small labels that need to survive a
-    /// purple-tinted ambient background (status strip counts, overline
-    /// labels, etc). Device-absolute — cannot be tinted.
-    static let textBright     = Color(white: 0.90)
+    /// Home widget base layers only. Between page and card elevation.
+    static let widgetBackground = Color.dynamic(
+        light: VaylPrimitives.warmCream,
+        dark:  VaylPrimitives.inkWidget
+    )
+
+    /// Constellation node core fill. Slightly lighter than pageBackground with a
+    /// purple undertone. Distinct from cardBackground / modalBackground — not a
+    /// general surface token; use only in ConstellationView node circles.
+    static let constellationNodeCore = Color.dynamic(
+        light: VaylPrimitives.pureWhite,
+        dark:  VaylPrimitives.inkNodeCore
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Text — hierarchy
+    //
+    // Never use a lower-hierarchy token for primary content.
+    // ─────────────────────────────────────────────
+
+    /// Headings, screen titles, display text.
+    static let textPrimary = Color.dynamic(
+        light: VaylPrimitives.wineDeep,
+        dark:  UIColor(hex: "#E8E8F0")
+    )
+
+    /// Paragraph content, card text, descriptions.
+    static let textBody = Color.dynamic(
+        light: VaylPrimitives.wineMid,
+        dark:  UIColor.white
+    )
+
+    /// Labels, descriptions, supporting copy. 60% hierarchy.
+    static let textSecondary = Color.dynamic(
+        light: VaylPrimitives.wineMid.withAlphaComponent(0.60),
+        dark:  UIColor.white.withAlphaComponent(0.65)
+    )
+
+    /// Timestamps, metadata, counts. 38% hierarchy.
+    /// Apply .italic() at usage site — italic is the semantic signal.
+    static let textTertiary = Color.dynamic(
+        light: VaylPrimitives.wineMid.withAlphaComponent(0.38),
+        dark:  UIColor.white.withAlphaComponent(0.38)
+    )
+
+    /// Placeholder text, pronoun hints, inline helper copy.
+    static let textHint = Color.dynamic(
+        light: VaylPrimitives.magentaDark.withAlphaComponent(0.50),
+        dark:  UIColor.white.withAlphaComponent(0.42)
+    )
+
+    /// Disabled states, ghost copy. Lowest visible hierarchy.
+    static let textMuted = Color.dynamic(
+        light: VaylPrimitives.wineMid.withAlphaComponent(0.22),
+        dark:  UIColor.white.withAlphaComponent(0.20)
+    )
+
+    /// Overline labels and status counts. Must survive a tinted
+    /// ambient background — device-absolute, never tinted.
+    static let textBright = Color.dynamic(
+        light: VaylPrimitives.wineDeep,
+        dark:  UIColor(white: 0.90, alpha: 1)
+    )
+
+    /// Tappable links and accent body text.
+    static let textAccent = Color.dynamic(
+        light: VaylPrimitives.magentaDark,
+        dark:  VaylPrimitives.cyan
+    )
+
+    /// Card overline and section labels with spectrum tint.
+    static let textCardLabel = Color.dynamic(
+        light: VaylPrimitives.purple.withAlphaComponent(0.70),
+        dark:  VaylPrimitives.cyan.withAlphaComponent(0.60)
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Accent — action and emphasis
+    // ─────────────────────────────────────────────
+
+    /// Primary interactive accent. CTAs, active states, focus rings.
+    /// Midnight: cyan (emissive). Dawn: magenta (refractive).
+    static let accentPrimary = Color.dynamic(
+        light: VaylPrimitives.magenta,
+        dark:  VaylPrimitives.cyan
+    )
+
+    /// Secondary accent. Decorative spectrum, orbit trails.
+    static let accentSecondary = Color.dynamic(
+        light: VaylPrimitives.purple,
+        dark:  VaylPrimitives.purple
+    )
+
+    /// Tertiary accent. Badge fills, atmospheric tints.
+    static let accentTertiary = Color.dynamic(
+        light: VaylPrimitives.gold,
+        dark:  VaylPrimitives.magenta
+    )
 
     // ─────────────────────────────────────────────
     // MARK: Borders
     // ─────────────────────────────────────────────
 
-    /// Default subtle border
-    static let border         = Color.white.opacity(0.06)
+    /// Default card and surface border. Barely visible structural edge.
+    static let borderSubtle = Color.dynamic(
+        light: UIColor.black.withAlphaComponent(0.06),
+        dark:  UIColor.white.withAlphaComponent(0.06)
+    )
 
-    /// Hover/active border
-    static let borderHover    = Color.white.opacity(0.10)
+    /// Hover and focus border. Slightly more present than subtle.
+    static let borderDefault = Color.dynamic(
+        light: UIColor.black.withAlphaComponent(0.10),
+        dark:  UIColor.white.withAlphaComponent(0.10)
+    )
 
-    /// Prominent border
-    static let borderActive   = Color.white.opacity(0.15)
+    /// Active, selected, or structural border.
+    static let borderActive = Color.dynamic(
+        light: UIColor.black.withAlphaComponent(0.15),
+        dark:  UIColor.white.withAlphaComponent(0.15)
+    )
 
-    // ─────────────────────────────────────────────
-    // MARK: UI Elements
-    // ─────────────────────────────────────────────
+    /// Accent-tinted border. Focus rings on accent inputs.
+    static let borderAccent = Color.dynamic(
+        light: VaylPrimitives.magenta.withAlphaComponent(0.22),
+        dark:  VaylPrimitives.cyan.withAlphaComponent(0.20)
+    )
 
-    /// Badge background
-    static let badgeBg        = cyan.opacity(0.08)
-
-    /// Ghost button border
-    static let btnGhostBorder = Color.white.opacity(0.06)
-
-    /// Toggle / switch active
-    static let toggleActive   = cyan
-
-    /// Destructive / warning
-    static let destructive    = Color(hex: "FF4444")
-
-    /// Success / confirmed
-    static let success        = Color(hex: "00CC88")
-
-    /// Off-spectrum utility — safety only (safe word, hard no, cool off)
-    /// Gold usage rule:
-    /// At full or near-full opacity: safety signals only
-    /// (safe word button, warnings, hard stop actions).
-    /// Never decorative at visible opacity.
-    /// Aurora atmospheric use at ≤8% opacity is acceptable
-    /// because it cannot be read as a directional signal
-    /// at that opacity level. If it is visible enough to be
-    /// noticed as gold, it is too opaque for non-safety use.
-    static let gold      = Color(hex: "C8960A")
-    static let goldLight = Color(hex: "E2B93B")
-    static let goldDark  = Color(hex: "8B6914")
-
-    // ── Warm Amber — Light Mode Progress Bar ──────────────────────────
-    // Used in OnboardingProgressBar fill and bloom layers in light mode only.
-    // Source: HTML section 9A stat gradient — #E07020 "amber" stop.
-    // Do NOT use these in aurora blobs — those use gold (#C8960A).
-    /// Hot orange-amber — bright fill leading stop and bloom core
-    static let orangeHot  = Color(hex: "E07020")
-    /// Deep orange-amber — fill trailing anchor and bloom atmosphere
-    static let orangeDeep = Color(hex: "C8710A")
-    // ────
-
-    /// Shadow colors
-    static let shadowDeep = Color.black.opacity(0.50)
+    /// Purple-tinted structural border. Cards and fields in light mode.
+    static let borderPurple = Color.dynamic(
+        light: VaylPrimitives.purple.withAlphaComponent(0.14),
+        dark:  VaylPrimitives.purple.withAlphaComponent(0.14)
+    )
 
     // ─────────────────────────────────────────────
-    // MARK: Gradients
+    // MARK: Feedback states
     // ─────────────────────────────────────────────
 
-    /// Card border gradient — the "Hot Border"
-    /// Used on every prompt card at full opacity
+    /// Destructive actions, error states, irreversible confirmations.
+    static let destructive = Color.dynamic(
+        light: VaylPrimitives.destructiveRed,
+        dark:  VaylPrimitives.destructiveRed
+    )
+
+    /// Success confirmations, completed states.
+    static let success = Color.dynamic(
+        light: VaylPrimitives.successGreen,
+        dark:  VaylPrimitives.successGreen
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Gold — safety signal
+    //
+    // At full or near-full opacity: safety signals only.
+    // (safe word button, warnings, hard stop actions)
+    // Aurora atmospheric use at ≤8% opacity is acceptable —
+    // it cannot be read as a directional signal at that opacity.
+    // If it is visible enough to be noticed as gold, it is
+    // too opaque for non-safety use.
+    // ─────────────────────────────────────────────
+
+    /// Safety signal accent. Safe word, warnings, hard stops only.
+    static let safetyAccent = Color.dynamic(
+        light: VaylPrimitives.gold,
+        dark:  VaylPrimitives.gold
+    )
+
+    /// Aurora atmospheric wash. ≤8% opacity enforced at call sites.
+    static let safetyAtmosphere = Color.dynamic(
+        light: VaylPrimitives.gold,
+        dark:  VaylPrimitives.gold
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Shadows and glows
+    // ─────────────────────────────────────────────
+
+    /// Modal scrims and card drop shadows.
+    static let shadowDeep = Color.dynamic(
+        light: UIColor.black.withAlphaComponent(0.12),
+        dark:  UIColor.black.withAlphaComponent(0.50)
+    )
+
+    /// Dawn tinted shadow — magenta channel. Cards in light mode.
+    static let shadowMagenta = Color.dynamic(
+        light: VaylPrimitives.magenta.withAlphaComponent(0.18),
+        dark:  VaylPrimitives.magenta.withAlphaComponent(0.10)
+    )
+
+    /// Dawn tinted shadow — purple channel. Cards in light mode.
+    static let shadowPurple = Color.dynamic(
+        light: VaylPrimitives.purple.withAlphaComponent(0.12),
+        dark:  VaylPrimitives.purple.withAlphaComponent(0.08)
+    )
+
+    /// Dawn tinted shadow — gold warmth layer. Lowest shadow channel.
+    static let shadowGold = Color.dynamic(
+        light: VaylPrimitives.gold.withAlphaComponent(0.07),
+        dark:  VaylPrimitives.gold.withAlphaComponent(0.04)
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Aurora atmosphere
+    //
+    // Background blobs behind frosted surfaces.
+    // Opacity intentionally low — felt, not seen.
+    // ─────────────────────────────────────────────
+
+    /// Aurora blob — top right corner.
+    static let auroraBlob1 = Color.dynamic(
+        light: VaylPrimitives.magenta.withAlphaComponent(0.09),
+        dark:  VaylPrimitives.magenta.withAlphaComponent(0.09)
+    )
+
+    /// Aurora blob — bottom left corner.
+    static let auroraBlob2 = Color.dynamic(
+        light: VaylPrimitives.purple.withAlphaComponent(0.08),
+        dark:  VaylPrimitives.purple.withAlphaComponent(0.08)
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Glass fills
+    //
+    // Opaque values only. Semi-transparent fills multiply with
+    // container opacity and vanish at disabled (0.45).
+    // These hold shape identity at any opacity level.
+    // ─────────────────────────────────────────────
+
+    /// Frosted card fill. Warm near-white over aurora in Dawn.
+    static let glassFrostCard = Color.dynamic(
+        light: UIColor(red: 0.989, green: 0.985, blue: 0.972, alpha: 1),
+        dark:  VaylPrimitives.inkCard
+    )
+
+    /// Unselected pill fill. Visible contrast against page background.
+    static let glassFrostPill = Color.dynamic(
+        light: UIColor(red: 0.910, green: 0.875, blue: 0.945, alpha: 1),
+        dark:  UIColor(red: 0.10,  green: 0.09,  blue: 0.16,  alpha: 1)
+    )
+
+    /// Selected pill fill. Lifts visibly over unselected state.
+    static let glassFrostPillSelected = Color.dynamic(
+        light: UIColor(red: 0.958, green: 0.875, blue: 0.925, alpha: 1),
+        dark:  VaylPrimitives.inkSurface
+    )
+
+    /// CTA button fill. Warm rose on Dawn, ink surface on Midnight.
+    static let glassFrostCTA = Color.dynamic(
+        light: UIColor(red: 0.98, green: 0.91, blue: 0.93, alpha: 1),
+        dark:  VaylPrimitives.inkSurface
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Pill surface — Midnight mode
+    //
+    // ~15% brighter than cardBackground so pill labels have a
+    // contrast floor against the purple ambient atmosphere.
+    // ─────────────────────────────────────────────
+
+    /// Unselected pill interior gradient — top stop.
+    static let pillSurface = Color.dynamic(
+        light: UIColor(red: 0.910, green: 0.875, blue: 0.945, alpha: 1),
+        dark:  UIColor(red: 0.10,  green: 0.09,  blue: 0.16,  alpha: 1)
+    )
+
+    /// Unselected pill interior gradient — bottom stop.
+    static let pillSurfaceBottom = Color.dynamic(
+        light: UIColor(red: 0.880, green: 0.845, blue: 0.920, alpha: 1),
+        dark:  UIColor(red: 0.08,  green: 0.07,  blue: 0.13,  alpha: 1)
+    )
+
+    /// Ambient lift shadow on every pill.
+    static let pillGlow = Color.dynamic(
+        light: UIColor.black.withAlphaComponent(0.04),
+        dark:  UIColor.white.withAlphaComponent(0.04)
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Input
+    // ─────────────────────────────────────────────
+
+    /// Floating label color when a text field is focused.
+    static let inputLabelFocused = Color.dynamic(
+        light: VaylPrimitives.magentaDark,
+        dark:  VaylPrimitives.cyan
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Icon badge backgrounds
+    // ─────────────────────────────────────────────
+
+    /// Magenta-tinted icon badge background.
+    static let iconBadgeMagenta = Color.dynamic(
+        light: VaylPrimitives.magenta.withAlphaComponent(0.18),
+        dark:  VaylPrimitives.magenta.withAlphaComponent(0.12)
+    )
+
+    /// Amber-tinted icon badge background.
+    static let iconBadgeAmber = Color.dynamic(
+        light: VaylPrimitives.orangeHot.withAlphaComponent(0.14),
+        dark:  VaylPrimitives.orangeHot.withAlphaComponent(0.10)
+    )
+
+    /// Gold-tinted icon badge background.
+    static let iconBadgeGold = Color.dynamic(
+        light: VaylPrimitives.gold.withAlphaComponent(0.14),
+        dark:  VaylPrimitives.gold.withAlphaComponent(0.10)
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Toggle
+    // ─────────────────────────────────────────────
+
+    /// Active toggle and switch fill.
+    static let toggleActive = Color.dynamic(
+        light: VaylPrimitives.magenta,
+        dark:  VaylPrimitives.cyan
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Progress bar
+    // ─────────────────────────────────────────────
+
+    /// Leading stop of onboarding progress bar fill.
+    static let progressBarLeading = Color.dynamic(
+        light: VaylPrimitives.orangeHot,
+        dark:  VaylPrimitives.cyan
+    )
+
+    /// Trailing stop of onboarding progress bar fill.
+    static let progressBarTrailing = Color.dynamic(
+        light: VaylPrimitives.orangeDeep,
+        dark:  VaylPrimitives.purple
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: App icon
+    // ─────────────────────────────────────────────
+
+    /// App icon launch background. Asset-matched fixed value.
+    static let appIconBackground = Color(uiColor: VaylPrimitives.inkAppIcon)
+
+    // ─────────────────────────────────────────────
+    // MARK: Gradient stop tokens — structural only
+    //
+    // These are building blocks for gradients below.
+    // Not for direct use in views — if you see gradientStop*
+    // in a view file, that is a violation.
+    //
+    // Midnight: cyan  → purple → magenta   (emissive spectrum)
+    // Dawn:     purple → magenta → gold    (refractive aurora)
+    //
+    // Cyan never appears in Dawn — it reads clinical on warm cream.
+    // ─────────────────────────────────────────────
+
+    private static let gradientStop1 = Color.dynamic(
+        light: VaylPrimitives.purple,
+        dark:  VaylPrimitives.cyan
+    )
+    private static let gradientStop2 = Color.dynamic(
+        light: VaylPrimitives.magenta,
+        dark:  VaylPrimitives.purple
+    )
+    private static let gradientStop3 = Color.dynamic(
+        light: VaylPrimitives.gold,
+        dark:  VaylPrimitives.magenta
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: Gradients — public tokens
+    // ─────────────────────────────────────────────
+
+    /// Universal spectrum border.
+    /// Midnight: cyan → purple → magenta
+    /// Dawn:     purple → magenta → gold
+    /// Applied to every prompt card and bordered surface.
     static let spectrumBorder = LinearGradient(
-        colors: [cyan, purple, magenta],
+        colors: [gradientStop1, gradientStop2, gradientStop3],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
-    /// Keyword highlight gradient — applied to select words
-    /// Use with .foregroundStyle() on Text views
+    /// Universal spectrum text highlight.
+    /// Same adaptive stops as spectrumBorder, horizontal direction.
+    /// Use with .foregroundStyle() on keyword Text views.
     static let spectrumText = LinearGradient(
-        colors: [cyan, purpleLight, magenta],
+        colors: [gradientStop1, gradientStop2, gradientStop3],
         startPoint: .leading,
         endPoint: .trailing
     )
 
-    // ─────────────────────────────────────────────
-    // MARK: Light Mode — Warm Aurora
-    //
-    // Background: #F8F6EE (warm cream — never change)
-    // Aurora palette: Magenta / Purple / Gold — no cyan
-    // All tokens prefixed with light* or aurora* to
-    // prevent any collision with dark mode tokens.
-    // ─────────────────────────────────────────────
-
-    // Backgrounds
-    /// Warm cream — the one true light mode page background
-    static let lightPageBg    = Color(hex: "F8F6EE")
-
-    /// Pure white — card interiors lift off the cream naturally
-    static let lightCardBg    = Color(hex: "FFFFFF")
-
-    /// Inset fields — slightly deeper than page, clearly recessed
-    static let lightSurfaceBg = Color(hex: "F2EFE6")
-
-    // ─────────────────────────────────────────────
-    // MARK: Light Mode Text — Wine Scale
-    //
-    // Primary body text for all light mode screens derives
-    // from the wine family, not near-black. This keeps the
-    // full text stack within the warm aurora palette.
-    //
-    // Hierarchy (solid anchors):
-    //   lightHeadline   #3D1A26  darkest — display headers
-    //   lightBodyPrimary #5C1F35  mid wine — all body text
-    //   lightBodyAccent  #7A2D45  lighter — accent / detail
-    //   lightBodyWineDark #703040 lightest — pill labels, CTA text
-    //
-    // Opacity scale (derived from lightBodyPrimary):
-    //   lightTextSecondary  60% — labels, descriptions
-    //   lightTextTertiary   38% — meta, timestamps (+ italic at usage)
-    //   lightTextMuted      22% — disabled, ghost copy
-    //
-    // lightTextPrimary (#1A1A1E near-black) is kept for any future
-    // screen that genuinely wants neutral dark text, but it is NOT
-    // the onboarding body color and should not be used there.
-    // ─────────────────────────────────────────────
-
-    /// Near-black — reserved for neutral screens. NOT the onboarding body color.
-    static let lightTextPrimary   = Color(hex: "1A1A1E")
-
-    /// Darkest wine — display headlines on cream (#3D1A26)
-    static let lightHeadline      = Color(red: 0.24, green: 0.10, blue: 0.15)
-
-    /// Mid wine — primary body text for all light mode screens (#5C1F35)
-    /// This is the base for the opacity scale below.
-    static let lightBodyPrimary   = Color(red: 0.36, green: 0.12, blue: 0.21)
-
-    /// Lighter wine — accent body, card detail text (#7A2D45)
-    static let lightBodyAccent    = Color(red: 0.478, green: 0.176, blue: 0.271)
-
-    /// Lightest wine — unselected pill labels, CTA text on light surfaces (#703040)
-    static let lightBodyWineDark  = Color(red: 0.44, green: 0.07, blue: 0.18)
-
-    /// Secondary text — labels, descriptions (lightBodyPrimary @ 60%)
-    static let lightTextSecondary = lightBodyPrimary.opacity(0.60)
-
-    /// Tertiary text — meta, timestamps (lightBodyPrimary @ 38%)
-    /// Apply .italic() at usage sites — italic is the semantic differentiator.
-    static let lightTextTertiary  = lightBodyPrimary.opacity(0.38)
-
-    /// Muted text — disabled states, ghost copy (lightBodyPrimary @ 22%)
-    static let lightTextMuted     = lightBodyPrimary.opacity(0.22)
-
-    // Backwards-compatibility aliases for old token names.
-    // Update call sites to lightHeadline / lightBodyPrimary / lightBodyAccent
-    // and remove these once callers are migrated.
-    static var lightHeadlineDarkRose: Color { lightHeadline }
-    static var lightCardTitle: Color        { lightBodyPrimary }
-    static var lightCardDetail: Color       { lightBodyAccent }
-
-    // ─────────────────────────────────────────────
-    // MARK: Light Mode Borders
-    // ─────────────────────────────────────────────
-
-    /// Default subtle border on cream surfaces
-    static let lightBorder        = Color.black.opacity(0.06)
-
-    /// Hover / focus border on cream surfaces
-    static let lightBorderHover   = Color.black.opacity(0.10)
-
-    /// Structural purple-tinted border for cards and fields (#6C3AE0 @ 14%)
-    static let lightBorderPurple  = purple.opacity(0.14)
-
-    // ─────────────────────────────────────────────
-    // MARK: Light Mode Glass Fills
-    // Used with .background + backdrop blur in SwiftUI.
-    // Opaque equivalents — semi-transparent whites multiply
-    // with container opacity causing shapes to vanish at
-    // disabled (0.45). Opaque values hold at any opacity.
-    // ─────────────────────────────────────────────
-
-    /// Glass card fill — warm near-white over aurora
-    static let lightFrostCard     = Color(red: 0.989, green: 0.985, blue: 0.972)
-
-    /// Pill fill — unselected state on cream (visible lavender-blush)
-    static let lightFrostPill     = Color(red: 0.910, green: 0.875, blue: 0.945)
-
-    /// Selected pill fill — rose-blush, lifts visibly over unselected
-    static let lightFrostPillSel  = Color(red: 0.958, green: 0.875, blue: 0.925)
-
-    /// Custom pill fill — OnboardingNameView gender picker only
-    static let lightFrostPillCustom = Color(red: 0.868, green: 0.848, blue: 0.908)
-
-    /// CTA button fill — warm near-white
-    static let lightFrostCTA      = Color(red: 0.992, green: 0.990, blue: 0.980)
-
-    /// CTA button base fill — opaque rose, reads at any container opacity
-    static let lightCTAFill       = Color(red: 0.98, green: 0.91, blue: 0.93)
-
-    // ─────────────────────────────────────────────
-    // MARK: Light Mode Input
-    // ─────────────────────────────────────────────
-
-    /// Focused floating label — magentaDark reads well on cream, still spectrum
-    static let lightLabelFocused  = magentaDark  // #BE185D
-
-    /// Hint text — "so we get it right", helper copy (#BE185D @ 50%)
-    static let lightHintText      = magentaDark.opacity(0.50)
-
-    // ─────────────────────────────────────────────
-    // MARK: Light Mode Pill Tokens
-    // ─────────────────────────────────────────────
-
-    /// Unselected pill interior — dark mode.
-    /// Sits ~15% brighter than cardBg so pill labels have a
-    /// contrast floor against the purple ambient atmosphere.
-    static let pillSurface       = Color(red: 0.10, green: 0.09, blue: 0.16)
-    static let pillSurfaceBottom = Color(red: 0.08, green: 0.07, blue: 0.13)
-
-    /// Ambient lift shadow applied to every pill in dark mode.
-    static let pillGlow          = Color(white: 1.0).opacity(0.04)
-
-    // ─────────────────────────────────────────────
-    // MARK: Light Mode Aurora Atmosphere
-    // ─────────────────────────────────────────────
-
-    // Aurora atmosphere blobs — pool in corners behind frosted cards.
-    // Opacity intentionally low — these are felt, not seen.
-    static let auroraBlob1 = magenta.opacity(0.09)   // top right
-    static let auroraBlob2 = purple.opacity(0.08)    // bottom left
-
-    // Aurora shadow spread — on light surfaces, shadow IS the glow.
-    static let lightShadowMagenta = magenta.opacity(0.18)
-    static let lightShadowPurple  = purple.opacity(0.12)
-    static let lightShadowGold    = gold.opacity(0.07)
-
-    // ─────────────────────────────────────────────
-    // MARK: Light Mode Icon Badges
-    // ─────────────────────────────────────────────
-
-    /// Icon badge background — magenta tint (18% opacity)
-    static let lightIconBgMagenta = magenta.opacity(0.18)
-
-    /// Icon badge background — orangeHot tint (14% opacity)
-    static let lightIconBgOrange  = orangeHot.opacity(0.14)
-
-    /// Icon badge background — gold tint (14% opacity)
-    static let lightIconBgGold    = gold.opacity(0.14)
-
-    /// Card fill — barely blush (#FFF4F6)
-    static let lightCardFill = Color(red: 1.0, green: 0.957, blue: 0.965)
-
-    // ─────────────────────────────────────────────
-    // MARK: Universal Gradient Borders
-    //
-    // One gradient border per mode used on ALL screens.
-    // Replaces per-component branching on borders.
-    //
-    // Dark:  full spectrum (cyan → purple → magenta)
-    // Light: warm aurora  (purple → magenta → gold)
-    //        No cyan — cyan reads too clinical on cream.
-    //
-    // Usage: .pillBorder() calls this via PillBorder.swift
-    //        .warmAuroraBorder() calls the light variant
-    // ─────────────────────────────────────────────
-
-    /// Light mode border gradient — warm aurora
-    static let warmAuroraBorder = LinearGradient(
-        colors: [purple, magenta, gold],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
-    /// Light mode gradient text — keyword highlights on cream
-    static let warmAuroraText = LinearGradient(
-        colors: [purple, purpleLight, magentaLight],
-        startPoint: .leading,
-        endPoint: .trailing
-    )
-
-    /// Light mode shimmer sweep colors — used in LightModeShimmer.swift
+    /// Light mode shimmer sweep. Used in LightModeShimmer.swift only.
     static let lightShimmerColors: [Color] = [
-        purple.opacity(0.22),
-        magenta.opacity(0.20),
-        gold.opacity(0.18),
-        magenta.opacity(0.18),
-        purple.opacity(0.22),
+        Color(uiColor: VaylPrimitives.purple.withAlphaComponent(0.22)),
+        Color(uiColor: VaylPrimitives.magenta.withAlphaComponent(0.20)),
+        Color(uiColor: VaylPrimitives.gold.withAlphaComponent(0.18)),
+        Color(uiColor: VaylPrimitives.magenta.withAlphaComponent(0.18)),
+        Color(uiColor: VaylPrimitives.purple.withAlphaComponent(0.22)),
     ]
-}
 
-// MARK: - ──────────────────────────────────────────────
-// Card Intensity System
-// Maps prompt difficulty -> visual intensity
-// ──────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // MARK: Card intensity — tinted backgrounds
+    //
+    // Used by CardIntensity extension only.
+    // Not for general use in views or components.
+    // ─────────────────────────────────────────────
 
-extension CardIntensity {
+    static let cardIntensityTintCyan      = Color(uiColor: VaylPrimitives.tintCyan)
+    static let cardIntensityTintPurple    = Color(uiColor: VaylPrimitives.tintPurple)
+    static let cardIntensityTintMagenta   = Color(uiColor: VaylPrimitives.tintMagenta)
+    static let cardIntensityTintNavy      = Color(uiColor: VaylPrimitives.tintNavy)
+    static let cardIntensityTintIndigo    = Color(uiColor: VaylPrimitives.tintIndigo)
+    static let cardIntensityTintPlum      = Color(uiColor: VaylPrimitives.tintPlum)
+    static let cardIntensityTintSupernovaA = Color(uiColor: VaylPrimitives.tintSupernovaA)
+    static let cardIntensityTintSupernovaB = Color(uiColor: VaylPrimitives.tintSupernovaB)
+    static let cardIntensityTintSupernovaC = Color(uiColor: VaylPrimitives.tintSupernovaC)
+    static let cardIntensityTintSupernovaD = Color(uiColor: VaylPrimitives.tintSupernovaD)
+    
+    // ─────────────────────────────────────────────────────────────
+    // MARK: Pulse tier — data visualization only
+    //
+    // These colors represent emotional capacity states on a scale.
+    // Used exclusively in pulse graph and tier indicators.
+    // Never used for UI interaction states or accents.
+    //
+    // Midnight: emissive spectrum — cyan down to soft magenta
+    // Dawn:     refractive spectrum — magenta down to muted wine
+    // ─────────────────────────────────────────────────────────────
 
-    var backgroundColor: Color {
-        switch self {
-        case .void, .deepOcean, .emberFloor, .split, .auroraBand:
-            return AppColors.cardBg
-        case .nebula:
-            return AppColors.tintCyan
-        case .deepSpace:
-            return AppColors.tintNavy
-        case .supernova:
-            return AppColors.tintIndigo
-        }
-    }
+    /// Pulse tier 1 — Expansive. Highest capacity. Connected, adventurous.
+    static let pulseTierExpansive = Color.dynamic(
+        light: VaylPrimitives.magenta,
+        dark:  VaylPrimitives.cyan
+    )
 
-    var backgroundGradient: LinearGradient? {
-        switch self {
-        case .void, .deepOcean, .emberFloor, .split, .auroraBand:
-            return nil
-        case .nebula:
-            return LinearGradient(
-                colors: [AppColors.tintCyan, AppColors.tintPurple, AppColors.tintMagenta],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .deepSpace:
-            return LinearGradient(
-                colors: [AppColors.tintNavy, AppColors.tintIndigo, AppColors.tintPlum],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .supernova:
-            return LinearGradient(
-                colors: [
-                    AppColors.tintSupernovaA,
-                    AppColors.tintSupernovaB,
-                    AppColors.tintSupernovaC,
-                    AppColors.tintSupernovaD
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
-    }
+    /// Pulse tier 2 — Sovereign. Stable capacity. Grounded, secure.
+    static let pulseTierSovereign = Color.dynamic(
+        light: VaylPrimitives.purple,
+        dark:  VaylPrimitives.purple
+    )
 
-    var usesGradientBackground: Bool {
-        rawValue >= 5
-    }
+    /// Pulse tier 3 — Friction. Reduced capacity. Anxious, defensive.
+    static let pulseTierFriction = Color.dynamic(
+        light: VaylPrimitives.magentaDark,
+        dark:  VaylPrimitives.magenta
+    )
 
-    var cyanWash: (x: CGFloat, y: CGFloat, opacity: Double)? {
-        switch self {
-        case .void:         return nil
-        case .deepOcean:    return (x: 0.0, y: 1.0, opacity: 0.08)
-        case .emberFloor:   return nil
-        case .split:        return (x: 0.1, y: 0.0, opacity: 0.07)
-        case .nebula:       return (x: 0.15, y: 0.2, opacity: 0.06)
-        case .auroraBand:   return nil
-        case .deepSpace:    return (x: 0.2, y: 0.1, opacity: 0.08)
-        case .supernova:    return (x: 0.1, y: 0.0, opacity: 0.10)
-        }
-    }
-
-    var magentaWash: (x: CGFloat, y: CGFloat, opacity: Double)? {
-        switch self {
-        case .void, .deepOcean: return nil
-        case .emberFloor:       return (x: 0.5, y: 1.1, opacity: 0.09)
-        case .split:            return (x: 0.9, y: 1.0, opacity: 0.06)
-        case .nebula:           return (x: 0.85, y: 0.8, opacity: 0.05)
-        case .auroraBand:       return nil
-        case .deepSpace:        return (x: 0.8, y: 0.9, opacity: 0.07)
-        case .supernova:        return (x: 0.9, y: 1.0, opacity: 0.09)
-        }
-    }
-
-    var glowRadius: CGFloat {
-        switch self {
-        case .void, .deepOcean, .emberFloor:  return 30
-        case .split, .nebula, .auroraBand:    return 40
-        case .deepSpace:                       return 45
-        case .supernova:                       return 60
-        }
-    }
-
-    var glowMultiplier: Double {
-        switch self {
-        case .void:        return 0.6
-        case .deepOcean:   return 0.8
-        case .emberFloor:  return 0.8
-        case .split:       return 0.9
-        case .nebula:      return 1.0
-        case .auroraBand:  return 0.9
-        case .deepSpace:   return 1.1
-        case .supernova:   return 1.3
-        }
-    }
-
-    var cyanGlowOpacity: Double    { 0.08 * glowMultiplier }
-    var magentaGlowOpacity: Double { 0.06 * glowMultiplier }
+    /// Pulse tier 4 — Protective. Lowest capacity. Overwhelmed, needs space.
+    static let pulseTierProtective = Color.dynamic(
+        light: VaylPrimitives.wineFaint,
+        dark:  VaylPrimitives.magentaLight
+    )
 }
 
 
+
+// MARK: - Color.dynamic
+
+extension Color {
+    /// Resolves automatically for light and dark via UIColor(dynamicProvider:).
+    /// No @Environment(\.colorScheme) branching required in views.
+    static func dynamic(light: UIColor, dark: UIColor) -> Color {
+        Color(UIColor(dynamicProvider: { traits in
+            traits.userInterfaceStyle == .dark ? dark : light
+        }))
+    }
+}
+
+// MARK: - Color(hex:) — SwiftUI convenience
+
+extension Color {
+    init(hex: String) {
+        self.init(uiColor: UIColor(hex: hex))
+    }
+}

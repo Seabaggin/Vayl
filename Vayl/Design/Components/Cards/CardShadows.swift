@@ -10,8 +10,8 @@ extension View {
         self
             .shadow(
                 color: isLight
-                    ? AppColors.purple.opacity(0.10)
-                    : AppColors.cyan.opacity(0.14),
+                    ? AppColors.accentSecondary.opacity(0.10)
+                    : AppColors.accentPrimary.opacity(0.14),
                 radius: 20
             )
             .shadow(

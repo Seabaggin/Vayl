@@ -25,11 +25,11 @@ struct OrbitSparkBorderView: View {
     private var borderGradient: LinearGradient {
         colorScheme == .dark
             ? LinearGradient(
-                colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
+                colors: [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                 startPoint: .leading,
                 endPoint: .trailing
               )
-            : AppColors.warmAuroraBorder   // purple → magenta → gold
+            : AppColors.spectrumBorder   // purple → magenta → gold
     }
 
     // NEW: tells the Metal shader which palette to use

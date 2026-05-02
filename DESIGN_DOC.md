@@ -15,32 +15,32 @@ Deep space / bioluminescent. Dark backgrounds, spectrum glow (cyan → purple �
 
 ```swift
 // Core Spectrum
-AppColors.cyan          // #00C2FF — primary accent
-AppColors.purple        // #6C3AE0 — mid-spectrum
-AppColors.magenta       // #FF006A — emotion accent
-AppColors.pink          // #FF2D8A — shimmer layers
-AppColors.deepBlue      // #0078FF — atmospheric washes
+AppColors.accentPrimary          // #00C2FF — primary accent
+AppColors.accentSecondary        // #6C3AE0 — mid-spectrum
+AppColors.accentTertiary       // #FF006A — emotion accent
+AppColors.accentTertiary          // #FF2D8A — shimmer layers
+AppColors.accentSecondary      // #0078FF — atmospheric washes
 
 // Variants
-AppColors.cyanLight     // #4DD8FF
-AppColors.purpleLight   // #A78BFA — focused label text
-AppColors.magentaLight  // #FF4D94
-AppColors.cyanDark      // #0891B2
-AppColors.purpleDark    // #1A1A5E
-AppColors.magentaDark   // #BE185D
+AppColors.accentPrimary     // #4DD8FF
+AppColors.accentSecondary   // #A78BFA — focused label text
+AppColors.accentTertiary  // #FF4D94
+AppColors.accentPrimary      // #0891B2
+AppColors.accentSecondary    // #1A1A5E
+AppColors.accentTertiaryDark   // #BE185D
 
 // Backgrounds (darkest → lightest)
-AppColors.pageBg        // #030305
-AppColors.cardBg        // #050507
-AppColors.surfaceBg     // #08080C
+AppColors.pageBackground        // #030305
+ AppColors.cardBackground        // #050507
+AppColors.modalBackground     // #08080C
 
 // Tinted card backgrounds
-AppColors.cardBgCyanTint    // #061018
-AppColors.cardBgPurpleTint  // #080614
-AppColors.cardBgMagentaTint // #120610
-AppColors.cardBgDeepNavy    // #0A1018
-AppColors.cardBgDeepIndigo  // #0A0820
-AppColors.cardBgDeepPlum    // #180818
+ AppColors.cardBackgroundCyanTint    // #061018
+ AppColors.cardBackgroundPurpleTint  // #080614
+ AppColors.cardBackgroundMagentaTint // #120610
+ AppColors.cardBackgroundDeepNavy    // #0A1018
+ AppColors.cardBackgroundDeepIndigo  // #0A0820
+ AppColors.cardBackgroundDeepPlum    // #180818
 
 // Text
 AppColors.textPrimary   // #E8E8F0 — headings, prompt text
@@ -50,11 +50,11 @@ AppColors.textMuted     // white @ 20%
 AppColors.textBadge     // #5BB8CC
 
 // Borders
-AppColors.border        // white @ 6% — default
-AppColors.borderHover   // white @ 10% — hover/focus
+AppColors.borderSubtle        // white @ 6% — default
+AppColors.borderDefault   // white @ 10% — hover/focus
 
 // Safety — NEVER decorative
-AppColors.gold          // #C8960A — safe word + warnings ONLY
+AppColors.safetyAccent          // #C8960A — safe word + warnings ONLY
 
 // Gradients
 AppColors.spectrumBorder  // cyan→purple→magenta, topLeading→bottomTrailing
@@ -76,7 +76,7 @@ Track/Rail Opacity
 Normal: Color.white.opacity(0.18)
 High contrast: Color.white.opacity(0.50)
 Always Color.white, never Color(.systemFill)
-Particle → Gradient Position MappingFill positionColor0–25%AppColors.cyan25–60%AppColors.purple60–90%AppColors.magenta90–100%AppColors.cyan (echo)3. Light Mode Color TokensPage / SurfaceElementTokenValuePage backgroundlightPageBg#F8F6EE warm creamCard filllightCardFill#FFF4F6 barely-blushGlass cardlightFrostCard#FFFFFF @ 58%Frost pill (unselected)lightFrostPill#FFFFFF @ 55%Frost pill (selected)lightFrostPillSel#FFFFFF @ 75%CTA button filllightFrostCTA#FFFFFF @ 70%Inset field bglightSurfaceBg#F2EFE6Pure white cardlightCardBg#FFFFFFTextRoleTokenValueHeadline / screen titlelightCardTitle#5B1E35 wine darkCard titlelightCardTitle#5B1E35Card detaillightCardDetail#792C45 mid wineBody primarylightTextPrimary#1A1A1EBody secondarylightTextSecondary#1A1A1E @ 50%Body tertiarylightTextTertiary#1A1A1E @ 30%Button / pill labelwineDark#70122E — enabled AND disabledFocused labellightLabelFocused#BE185D (magentaDark)Hint textlightHintText#BE185D @ 50%Overline / italic accentgradientmagenta #FF006A → gold #C8960AKeyword gradient textwarmAuroraTextpurple→purpleLight→magentaLightBorders & ShadowsTokenValuelightBorder#000000 @ 6%lightBorderHover#000000 @ 10%lightShadowMagenta#FF006A @ 18%lightShadowPurple#6C3AE0 @ 12%lightShadowGold#C8960A @ 7%Light Mode Gradient Modifiers
+Particle → Gradient Position MappingFill positionColor0–25%AppColors.accentPrimary25–60%AppColors.accentSecondary60–90%AppColors.accentTertiary90–100%AppColors.accentPrimary (echo)3. Light Mode Color TokensPage / SurfaceElementTokenValuePage backgroundlightPageBg#F8F6EE warm creamCard filllightCardFill#FFF4F6 barely-blushGlass cardlightFrostCard#FFFFFF @ 58%Frost pill (unselected)lightFrostPill#FFFFFF @ 55%Frost pill (selected)lightFrostPillSel#FFFFFF @ 75%CTA button filllightFrostCTA#FFFFFF @ 70%Inset field bglightSurfaceBg#F2EFE6Pure white cardlightCardBg#FFFFFFTextRoleTokenValueHeadline / screen titlelightCardTitle#5B1E35 wine darkCard titlelightCardTitle#5B1E35Card detaillightCardDetail#792C45 mid wineBody primarylightTextPrimary#1A1A1EBody secondarylightTextSecondary#1A1A1E @ 50%Body tertiarylightTextTertiary#1A1A1E @ 30%Button / pill labelwineDark#70122E — enabled AND disabledFocused labellightLabelFocused#BE185D (magentaDark)Hint textlightHintText#BE185D @ 50%Overline / italic accentgradientmagenta #FF006A → gold #C8960AKeyword gradient textwarmAuroraTextpurple→purpleLight→magentaLightBorders & ShadowsTokenValuelightBorder#000000 @ 6%lightBorderHover#000000 @ 10%lightShadowMagenta#FF006A @ 18%lightShadowPurple#6C3AE0 @ 12%lightShadowGold#C8960A @ 7%Light Mode Gradient Modifiers
 .warmAuroraBorder() — purple→magenta→gold, topLeading→bottomTrailing
 .magentaGoldBorder() — magenta→orangeHot(#E07020)→gold, topLeading→bottomTrailing
 Light Mode ShimmerAppColors.lightShimmerColors: purple 11%, magenta 10%, gold 8%, magenta 8%, purple 11%Light Mode Atmosphere
@@ -84,7 +84,7 @@ Top bloom: RadialGradient magenta 12% → gold 6% → clear, blur 80
 Bottom warmth: LinearGradient purple 8% → clear, height 200
 Component: AuroraGlowField (NOT OnboardingGlowField)
 Particles: SparkField with per-screen config
-4. DO NOT USE in Light ModeTokenReasonpageBg / cardBg / surfaceBgNear-black dark mode backgroundsAppColors.cyan as textClinical on creamAppColors.cyanLightDark mode accent onlyColor.white as textInvisible on creamColor.white.opacity(x) borders/fillsDark mode only — use lightBorder/lightFrost*OnboardingGlowFieldUse AuroraGlowField.preferredColorScheme(.dark)Follows system in light modetextPrimary/Secondary/TertiaryUse lightText* equivalentsAppColors.border/borderHoverWhite borders on cream — use lightBorderAppColors.spectrumTextUse warmAuroraText5. Typography Tokens — AppFontsFamilies: Clash Display (headings, prompts, scores) · Switzer (body, labels, buttons)// Parametric
+4. DO NOT USE in Light ModeTokenReasonpageBg / cardBg / surfaceBgNear-black dark mode backgroundsAppColors.accentPrimary as textClinical on creamAppColors.accentPrimary mode accent onlyColor.white as textInvisible on creamColor.white.opacity(x) borders/fillsDark mode only — use lightBorder/lightFrost*OnboardingGlowFieldUse AuroraGlowField.preferredColorScheme(.dark)Follows system in light modetextPrimary/Secondary/TertiaryUse lightText* equivalentsAppColors.borderSubtle/borderHoverWhite borders on cream — use lightBorderAppColors.spectrumTextUse warmAuroraText5. Typography Tokens — AppFontsFamilies: Clash Display (headings, prompts, scores) · Switzer (body, labels, buttons)// Parametric
 AppFonts.display(_ size: CGFloat, weight: .bold/.semibold/.medium) // ClashDisplay
 AppFonts.body(_ size: CGFloat, weight: .semibold/.medium/.regular) // Switzer
 
@@ -111,8 +111,8 @@ Brand Identity Exception (BrandView wordmark only — never replace with AppFont
 Zero hardcoded colors. Every color via AppColors. Need a new one? Add to AppColors.swift first.
 Zero hardcoded fonts. Every font via AppFonts.
 Dark mode: .preferredColorScheme(.dark) on every dark screen's root view.
-Gold = safety only. AppColors.gold reserved for safe word + critical warnings.
-Spectrum gradient = interaction reward. .pillBorder() only on selected/active/confirmed states. Static non-interactive cards use AppColors.border + plain .stroke.
+Gold = safety only. AppColors.safetyAccent reserved for safe word + critical warnings.
+Spectrum gradient = interaction reward. .pillBorder() only on selected/active/confirmed states. Static non-interactive cards use AppColors.borderSubtle + plain .stroke.
 Color is earned. Unselected/static = muted (white 6% borders, textSecondary). Selected/active = full spectrum.
 No external packages. SwiftUI primitives only.
 No ! force-unwrap on values that could realistically be nil.
@@ -131,7 +131,7 @@ Shape: full-width pill, cornerRadius 100, height 56
 Dark — disabled: muted, no glow · enabled: spectrum shimmer + breathing bloom
 Light — fill: lightFrostCTA, border: .warmAuroraBorder() @ 3pt/0.90, label: wineDark
 Light — shimmer: lightShimmerColors, shadows: magenta/purple/gold stack
-.padding(.horizontal, 24) from parent
+.padding(.horizontal, AppSpacing.lg) from parent
 SelectablePill// Four intensity states
 .unselected  // border 1.5pt white 6%
 .dim         // muted text, border 1.5pt
@@ -144,11 +144,11 @@ Final step activates: bloom (3-layer Canvas), shimmer sweep, 6 particles
 Reduce motion: static bar, no effects
 PromiseCard
 Background: RoundedRectangle fill white 5% (dark) · lightCardFill (light)
-Border: AppColors.border stroke 1pt — plain static, NOT .pillBorder()
+Border: AppColors.borderSubtle stroke 1pt — plain static, NOT .pillBorder()
 Icon badge: Circle fill cyan 20%→purple 16% gradient · SF Symbol cyan→purple foreground
 Title: bodyMedium / textPrimary · Detail: caption / textSecondary
 Background Stack (Screens 3–6, dark mode)ZStack {
-    AppColors.pageBg
+    AppColors.pageBackground
     Ellipse() // purple 0.3 → deepBlue 0.15 → clear, blur 80, offset y: -80
     OnboardingGlowField() // .allowsHitTesting(false), never over content
 }

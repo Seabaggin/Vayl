@@ -36,9 +36,9 @@ struct ThemedCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(t.surface1)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: AppRadius.lg)
                     .stroke(
                         selected ? t.cyan : t.cardBorder,
                         lineWidth: selected ? 2 : 1.5

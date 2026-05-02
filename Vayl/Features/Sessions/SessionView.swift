@@ -7,12 +7,12 @@ struct SessionView: View {
     @State private var showSafeWordConfirm: Bool = false
     @State private var sessionEnded: Bool = false
     @Environment(\.dismiss) private var dismiss
-    
+
     @Environment(\.modelContext) private var modelContext
     @State private var cardStatuses: [(promptText: String, status: CardStatus)] = []
     @State private var sessionStartDate: Date = .now
     @State private var completedFully: Bool = true
-    
+
     private let prompts: [Card] = Array(Card.samples.prefix(5))
 
     private var currentPrompt: Card? {
@@ -20,12 +20,11 @@ struct SessionView: View {
         return prompts[currentIndex]
     }
     private var isLast: Bool { currentIndex >= prompts.count - 1 }
-    
+
     var body: some View {
         ZStack {
-            // Background
-            AppColors.pageBg.ignoresSafeArea()
-            
+            AppColors.pageBackground.ignoresSafeArea()
+
             if sessionEnded {
                 sessionCompleteView
             } else {
@@ -34,152 +33,182 @@ struct SessionView: View {
         }
         .screenshotProtected()
     }
-    
+
     // MARK: - Main Session Content
+
     private var sessionContent: some View {
         VStack(spacing: 0) {
             topBar
-            Spacer(minLength: 12)
+            Spacer(minLength: AppSpacing.md)        // was 12 → md (16), snap per handoff
             cardArea
-            Spacer(minLength: 12)
+            Spacer(minLength: AppSpacing.md)        // was 12 → md
             progressPips
-            Spacer(minLength: 16)
+            Spacer(minLength: AppSpacing.md)        // was 16 → md, exact
             bottomControls
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
+        .padding(.horizontal, AppSpacing.lg)        // was 20 → lg (24)
+        .padding(.vertical, AppSpacing.md)          // was 16 → md, exact
     }
-    
+
     // MARK: - Top Bar
+
     private var topBar: some View {
         HStack {
             Button {
                 dismiss()
             } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
+                Image(AppIcons.chevronLeft)          // was "chevron.left"
+                    .font(
+                        Font.custom("Switzer-Semibold", size: 18, relativeTo: .body)
+                    )                               // was .system(size: 18, weight: .semibold)
                     .foregroundColor(AppColors.textSecondary)
+                    .frame(minWidth: 44, minHeight: 44) // A11y: minimum hit target
             }
-            
+            .accessibilityLabel("Back")
+            .accessibilityAddTraits(.isButton)
+
             Spacer()
-            
-            VStack(spacing: 2) {
+
+            VStack(spacing: AppSpacing.xxs) {       // was 2 → xxs, exact
                 Text("\(currentIndex + 1) of \(prompts.count)")
                     .font(AppFonts.overline)
                     .foregroundColor(AppColors.textTertiary)
-                
-                Text("The Opener") // stub until Card has deck title
+
+                Text("The Opener")
                     .font(AppFonts.sectionLabelSmall)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Spacer()
-            
-            // Balanced spacer for centering
-            Image(systemName: "chevron.left")
-                .font(.system(size: 18, weight: .semibold))
+
+            // Phantom mirror — keeps title centred, never visible
+            Image(AppIcons.chevronLeft)              // was "chevron.left"
+                .font(
+                    Font.custom("Switzer-Semibold", size: 18, relativeTo: .body)
+                )                                   // was .system(size: 18, weight: .semibold)
                 .foregroundColor(.clear)
+                .frame(minWidth: 44, minHeight: 44)
+                .accessibilityHidden(true)
         }
     }
-    
+
     // MARK: - Prompt Card
+
     private var cardArea: some View {
         Text(currentPrompt?.text ?? "")
-            .id(currentIndex) // force re-render on change
+            .id(currentIndex)
             .transition(.asymmetric(
                 insertion: .move(edge: .trailing).combined(with: .opacity),
-                removal: .move(edge: .leading).combined(with: .opacity)
+                removal:   .move(edge: .leading).combined(with: .opacity)
             ))
-            .animation(.easeInOut(duration: 0.35), value: currentIndex)
+            .animation(AppAnimation.standard, value: currentIndex) // was .easeInOut(duration: 0.35)
     }
-    
+
     // MARK: - Progress Pips
+
     private var progressPips: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppSpacing.sm) {            // was 8 → sm, exact
             ForEach(0..<prompts.count, id: \.self) { i in
                 Capsule()
-                    .fill(i == currentIndex ? AppColors.cyan : AppColors.border)
+                    .fill(i == currentIndex ? AppColors.accentPrimary : AppColors.borderSubtle)
                     .frame(width: i == currentIndex ? 24 : 8, height: 8)
-                    .animation(.easeInOut(duration: 0.25), value: currentIndex)
+                    .animation(AppAnimation.fast, value: currentIndex) // was .easeInOut(duration: 0.25)
             }
         }
     }
-    
+
     // MARK: - Bottom Controls
+
     private var bottomControls: some View {
-        VStack(spacing: 16) {
-            // Reaction buttons — like or dislike the current prompt
-            HStack(spacing: 12) {
+        VStack(spacing: AppSpacing.md) {            // was 16 → md, exact
+            HStack(spacing: AppSpacing.md) {        // was 12 → md (16), snap per handoff
+
                 // Skip — not ready for this card
                 Button {
                     recordStatus(.skipped)
                     advanceCard()
                 } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "forward.fill")
-                            .font(.system(size: 14))
+                    HStack(spacing: AppSpacing.sm) { // was 6 → sm (8), snap per handoff
+                        Image(AppIcons.forwardFill)  // was "forward.fill"
+                            .font(
+                                Font.custom("Switzer-Regular", size: 14, relativeTo: .caption)
+                            )                       // was .system(size: 14)
                         Text("Not Ready")
                             .font(AppFonts.bodyMedium)
                     }
                     .foregroundColor(AppColors.textMuted)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .cardStyle(cornerRadius: 12)
+                    .frame(maxWidth: .infinity, minHeight: 44) // A11y: min hit target
+                    .padding(.vertical, AppSpacing.md)  // was 14 → md (16), snap
+                    .cardStyle(cornerRadius: AppRadius.md) // was 12 → md, exact
                 }
+                .accessibilityLabel("Not Ready — skip this card")
+                .accessibilityAddTraits(.isButton)
 
                 // Bookmark — save for later
                 Button {
                     recordStatus(.bookmarked)
                     advanceCard()
                 } label: {
-                    Image(systemName: "bookmark.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(AppColors.cyan)
+                    Image(AppIcons.bookmarkFill)     // was "bookmark.fill"
+                        .font(
+                            Font.custom("Switzer-Regular", size: 18, relativeTo: .body)
+                        )                           // was .system(size: 18)
+                        .foregroundColor(AppColors.accentPrimary)
                         .frame(width: 52, height: 48)
-                        .cardStyle(cornerRadius: 12)
+                        .cardStyle(cornerRadius: AppRadius.md) // was 12 → md, exact
                 }
+                .accessibilityLabel("Bookmark — save for later")
+                .accessibilityAddTraits(.isButton)
             }
 
-            // Discussed — primary action, full width below
+            // Discussed — primary action, full width
             Button {
                 recordStatus(.discussed)
                 advanceCard()
             } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18))
+                HStack(spacing: AppSpacing.sm) {    // was 8 → sm, exact
+                    Image(AppIcons.checkmarkCircle) // was "checkmark.circle.fill"
+                        .font(
+                            Font.custom("Switzer-Regular", size: 18, relativeTo: .body)
+                        )                           // was .system(size: 18)
                     Text("We Discussed This")
                         .font(AppFonts.bodyMedium)
                 }
                 .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity, minHeight: 44) // A11y: min hit target
+                .padding(.vertical, AppSpacing.md)  // was 16 → md, exact
                 .background(
                     LinearGradient(
-                        colors: [AppColors.magenta, AppColors.purple],
+                        colors: [AppColors.accentTertiary, AppColors.accentSecondary],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md)) // was 14 → md, snap
             }
+            .accessibilityLabel("We Discussed This")
+            .accessibilityAddTraits(.isButton)
         }
     }
-    
+
     // MARK: - Session Complete
+
     private var sessionCompleteView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: AppSpacing.lg) {            // was 24 → lg, exact
             Spacer()
-            
-            Image(systemName: "sparkles")
-                .font(.system(size: 48))
+
+            Image(AppIcons.sparkles)                // was "sparkles"
+                .font(
+                    Font.custom("ClashDisplay-Bold", size: 48, relativeTo: .largeTitle)
+                )                                   // was .system(size: 48)
                 .foregroundStyle(AppColors.spectrumText)
-            
-            // Summary of discussed, skipped, and bookmarked counts
-            let discussedCount = cardStatuses.filter { $0.status == .discussed }.count
-            let skippedCount = cardStatuses.filter { $0.status == .skipped }.count
+                .accessibilityHidden(true)          // decorative
+
+            let discussedCount  = cardStatuses.filter { $0.status == .discussed  }.count
+            let skippedCount    = cardStatuses.filter { $0.status == .skipped    }.count
             let bookmarkedCount = cardStatuses.filter { $0.status == .bookmarked }.count
-            VStack(spacing: 8) {
+
+            VStack(spacing: AppSpacing.sm) {        // was 8 → sm, exact
                 Text("Session Complete")
                     .font(AppFonts.screenTitle)
                     .foregroundColor(AppColors.textPrimary)
@@ -189,7 +218,7 @@ struct SessionView: View {
                 if bookmarkedCount > 0 {
                     Text("\(bookmarkedCount) bookmarked for later")
                         .font(AppFonts.caption)
-                        .foregroundColor(AppColors.cyan)
+                        .foregroundColor(AppColors.accentPrimary)
                 }
                 if skippedCount > 0 {
                     Text("\(skippedCount) skipped — no pressure")
@@ -200,56 +229,52 @@ struct SessionView: View {
             .multilineTextAlignment(.center)
 
             GradientButton(title: "Done") {
-                // Reset session to fresh state — dismiss() doesn't work in a tab
-                withAnimation {
-                    currentIndex = 0
-                    sessionEnded = false
-                    cardStatuses = []
+                withAnimation(AppAnimation.standard) { // was bare withAnimation
+                    currentIndex     = 0
+                    sessionEnded     = false
+                    cardStatuses     = []
                     sessionStartDate = .now
-                    completedFully = true
+                    completedFully   = true
                 }
             }
-            .padding(.horizontal, 40)
-            
+            .padding(.horizontal, AppSpacing.xxl)  // was 40 → xxl (48), snap per handoff
+
             Spacer()
         }
-        .padding(20)
+        .padding(AppSpacing.lg)                    // was 20 → lg (24)
     }
-    
+
     // MARK: - Helpers
+
+    /// Unused — advanceCard() handles all navigation. Retained to avoid API break.
     private func advance() {
         guard !isLast else { return }
-        withAnimation(.easeInOut(duration: 0.35)) {
+        withAnimation(AppAnimation.standard) {     // was .easeInOut(duration: 0.35)
             currentIndex += 1
         }
     }
-    
-    /// Records the user's action on the current card.
+
     private func recordStatus(_ status: CardStatus) {
         let promptText = currentPrompt?.text ?? ""
         cardStatuses.append((promptText: promptText, status: status))
     }
 
-    /// Moves to the next card or ends the session.
     private func advanceCard() {
         if currentIndex < prompts.count - 1 {
-            withAnimation {
+            withAnimation(AppAnimation.standard) { // was bare withAnimation
                 currentIndex += 1
             }
         } else {
-            // Session complete
             saveSession()
-            withAnimation {
+            withAnimation(AppAnimation.standard) { // was bare withAnimation
                 sessionEnded = true
             }
         }
     }
 
-    /// Saves the session + all ratings to SwiftData, then shows the complete screen.
     private func saveSession() {
         // TODO: rewrite with CardSession when DataStore is updated
     }
-    
 }
 
 #Preview {

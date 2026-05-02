@@ -20,7 +20,9 @@ private struct GraphGlowButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .onChange(of: configuration.isPressed) { _, isPressed in
-                withAnimation(.easeOut(duration: isPressed ? 0.15 : 0.45)) {
+                // Conditional reactive animation — fast on press, enter on release.
+                // Cannot be a single token — two different curves for two directions.
+                withAnimation(isPressed ? AppAnimation.fast : AppAnimation.enter) {
                     touchGlow = isPressed ? 1.0 : 0.0
                 }
             }
@@ -35,12 +37,12 @@ struct PulseGraph: View {
     let graphWidth:  CGFloat
     let graphHeight: CGFloat
 
-    var camScale:     CGFloat = 1.0
-    var camTx:        CGFloat = 0.0
-    var camTy:        CGFloat = 0.0
-    var liveScore:    Double? = nil
-    var drawProgress: CGFloat = 0.0
-    var onDotTapped:  ((PulseEntry, CGPoint) -> Void)? = nil
+    var camScale:         CGFloat = 1.0
+    var camTx:            CGFloat = 0.0
+    var camTy:            CGFloat = 0.0
+    var liveScore:        Double? = nil
+    var drawProgress:     CGFloat = 0.0
+    var onDotTapped:      ((PulseEntry, CGPoint) -> Void)? = nil
     var disableTouchGlow: Bool = false
 
     @State private var breathPhase:   Double  = 0
@@ -93,27 +95,32 @@ struct PulseGraph: View {
             }
         }
         // Demo loop — empty state
+        // Note: reduce motion guard is missing from the demo loop.
+        // TODO: Add reduceMotion check before demo withAnimation calls
+        // to match the pattern used on the breath task below.
         .task(id: entries.isEmpty) {
             guard entries.isEmpty else { return }
             while !Task.isCancelled {
-                withAnimation(.easeInOut(duration: 4.0)) { demoProgress = 1.0 }
+                withAnimation(AppAnimation.slow) { demoProgress = 1.0 }
                 try? await Task.sleep(for: .seconds(5.0))
                 guard !Task.isCancelled else { break }
-                withAnimation(.easeOut(duration: 0.8)) { demoOpacity = 0.0 }
+                withAnimation(AppAnimation.slow) { demoOpacity = 0.0 }
                 try? await Task.sleep(for: .seconds(0.9))
                 guard !Task.isCancelled else { break }
                 demoProgress = 0.0
                 demoOpacity  = 0.0
-                withAnimation(.easeIn(duration: 0.6)) { demoOpacity = 1.0 }
+                withAnimation(AppAnimation.slow) { demoOpacity = 1.0 }
                 try? await Task.sleep(for: .seconds(1.0))
             }
         }
-        // Breath — continuous sine, no idle gap, no jitter
+        // Breath — continuous sine, no idle gap, no jitter.
+        // reduceMotion check is the guard — task exits early if enabled.
+        // AppAnimation.ambientDrift duration (4.0s) matches original exactly.
         .task(id: reduceMotion) {
             guard !reduceMotion else { return }
             try? await Task.sleep(for: .milliseconds(100))
             withAnimation(
-                .easeInOut(duration: 4.0)
+                .easeInOut(duration: AppAnimation.ambientDrift)
                 .repeatForever(autoreverses: true)
             ) {
                 breathPhase = 1.0
@@ -179,8 +186,8 @@ private struct PulseGraphCanvas: View, Animatable {
 
     private var lineColors: [Color] {
         isLight
-            ? [AppColors.purple, AppColors.magenta, AppColors.gold]
-            : [AppColors.cyan,   AppColors.purple,  AppColors.magenta]
+            ? [AppColors.accentSecondary, AppColors.accentTertiary, AppColors.safetyAccent]
+            : [AppColors.accentPrimary,   AppColors.accentSecondary,  AppColors.accentTertiary]
     }
 
     private var lineGradient: Gradient {
@@ -339,7 +346,6 @@ private struct PulseGraphCanvas: View, Animatable {
         let linePath = buildLinePath(points: points)
 
         return ZStack {
-            // Tight glow
             LinearGradient(
                 gradient:   lineGradient,
                 startPoint: gradientStartUnit,
@@ -355,7 +361,6 @@ private struct PulseGraphCanvas: View, Animatable {
             .blur(radius: 2)
             .opacity(breathGlowOpacity)
 
-            // Crisp line
             LinearGradient(
                 gradient:   lineGradient,
                 startPoint: gradientStartUnit,
@@ -372,21 +377,12 @@ private struct PulseGraphCanvas: View, Animatable {
     }
 
     // MARK: - Tier Labels Overlay
-    //
-    // Labels right-aligned at canvasWidth - padRight - labelRightMargin.
-    // The line skips a gap at this x band — see labelSkipZone.
-
-    // MARK: - Tier Badge Overlay
-    //
-    // Single letter in a small frosted circle sitting ON each tier line.
-    // Tap any badge → tier guide sheet.
-    // No text/line intersection issue — badge straddles the line by design.
 
     private var tierLabelsOverlay: some View {
         let tiers: [(score: Double, letter: String, color: Color)] = [
-            (4.0, "E", isLight ? AppColors.gold            : AppColors.magenta),
-            (3.0, "S", isLight ? AppColors.magenta         : AppColors.electricViolet),
-            (2.0, "P", isLight ? AppColors.purple          : AppColors.cyan),
+            (4.0, "E", isLight ? AppColors.safetyAccent    : AppColors.accentTertiary),
+            (3.0, "S", isLight ? AppColors.accentTertiary  : AppColors.accentSecondary),
+            (2.0, "P", isLight ? AppColors.accentSecondary : AppColors.accentPrimary),
             (1.0, "C", isLight ? Color.black.opacity(0.70) : Color.white.opacity(0.70)),
         ]
 
@@ -402,6 +398,8 @@ private struct PulseGraphCanvas: View, Animatable {
                         .frame(width: 44, height: 44)
 
                     // Visible badge
+                    // TODO: Color(red: 8/255, green: 6/255, blue: 10/255) requires
+                    // an AppColors token (e.g. AppColors.graphBadgeDark) before migration.
                     Circle()
                         .fill(
                             isLight
@@ -418,6 +416,9 @@ private struct PulseGraphCanvas: View, Animatable {
                         }
 
                     Text(tier.letter)
+                        // Fixed 8pt monospaced — intentional exception.
+                        // Badge circle is fixed at 16pt. Letter must fit within it.
+                        // Dynamic Type scaling would overflow the badge geometry.
                         .font(.system(size: 8, weight: .bold, design: .monospaced))
                         .foregroundStyle(tier.color.opacity(active ? 1.0 : 0.65))
                 }
@@ -435,10 +436,10 @@ private struct PulseGraphCanvas: View, Animatable {
 
     private func drawTierGuides(context: GraphicsContext, size: CGSize) {
         let tierDefs: [(score: Double, darkColor: Color, lightColor: Color)] = [
-            (1.0, Color.white,               Color.black),
-            (2.0, AppColors.cyan,            AppColors.purple),
-            (3.0, AppColors.electricViolet,  AppColors.magenta),
-            (4.0, AppColors.magenta,         AppColors.gold),
+            (1.0, Color.white,              Color.black),
+            (2.0, AppColors.accentPrimary,  AppColors.accentSecondary),
+            (3.0, AppColors.accentSecondary, AppColors.accentTertiary),
+            (4.0, AppColors.accentTertiary, AppColors.safetyAccent),
         ]
 
         for tier in tierDefs {
@@ -454,7 +455,6 @@ private struct PulseGraphCanvas: View, Animatable {
                 ? (isLight ? 0.85 : 0.90)
                 : (isLight ? 0.55 : 0.62)
 
-            // Glow pass — full width, blurred
             var glowCtx = context
             glowCtx.opacity = glowOpacity
             glowCtx.addFilter(.blur(radius: 2.5))
@@ -468,7 +468,6 @@ private struct PulseGraphCanvas: View, Animatable {
                 style: StrokeStyle(lineWidth: active ? 3 : 1.5, lineCap: .round)
             )
 
-            // Crisp pass — fresh context, NO filter
             var crispCtx = context
             crispCtx.opacity = crispOpacity + touchGlow * 0.20
 
@@ -494,7 +493,6 @@ private struct PulseGraphCanvas: View, Animatable {
             endPoint:   gradientEndPoint
         )
 
-        // Tight core glow only
         var coreBloom = context
         coreBloom.addFilter(.blur(radius: 1.5 + breathPhase * 0.5))
         coreBloom.stroke(
@@ -503,7 +501,6 @@ private struct PulseGraphCanvas: View, Animatable {
             style: StrokeStyle(lineWidth: 4.0, lineCap: .round, lineJoin: .round)
         )
 
-        // CRT phosphor burn — last segment
         let lastIdx = entries.count - 1
         let lastPt  = pointForIndex(lastIdx)
         let prevPt  = pointForIndex(max(0, lastIdx - 1))
@@ -564,7 +561,7 @@ private struct PulseGraphCanvas: View, Animatable {
 
     private func drawLiveDot(context: GraphicsContext) {
         guard let point = liveDotPoint else { return }
-        let color = isLight ? AppColors.purple : AppColors.cyan
+        let color = isLight ? AppColors.accentSecondary : AppColors.accentPrimary
 
         context.fill(
             Path(ellipseIn: CGRect(x: point.x-14, y: point.y-14, width: 28, height: 28)),
@@ -643,7 +640,6 @@ private struct PulseGraphCanvas: View, Animatable {
 
     private var dotsOverlay: some View {
         ZStack {
-            // Waypoint dots
             ForEach(sampledIndices.dropLast(), id: \.self) { i in
                 let point = pointForIndex(i)
                 let entry = entries[i]
@@ -659,7 +655,6 @@ private struct PulseGraphCanvas: View, Animatable {
                     .accessibilityHint("Double tap to see full summary")
             }
 
-            // Anchor dot
             if let lastEntry = entries.last {
                 let lastIndex = entries.count - 1
                 let point     = pointForIndex(lastIndex)
@@ -672,7 +667,7 @@ private struct PulseGraphCanvas: View, Animatable {
                     .allowsHitTesting(false)
 
                 Circle()
-                    .fill(isLight ? AppColors.lightCardBg : AppColors.cardBg)
+                    .fill(isLight ? AppColors.cardBackground : AppColors.cardBackground)
                     .overlay(Circle().stroke(color, lineWidth: 2))
                     .frame(width: 10, height: 10)
                     .position(point)
@@ -682,7 +677,6 @@ private struct PulseGraphCanvas: View, Animatable {
                     .accessibilityHint("Double tap to see full summary")
             }
 
-            // Hero dot — breathing
             if liveScore == nil, let lastEntry = entries.last {
                 let lastIndex = entries.count - 1
                 let point     = pointForIndex(lastIndex)
@@ -884,138 +878,47 @@ private struct PulseGraphCanvas: View, Animatable {
     }
 }
 
-// MARK: - TierGuideSheet
 
-private struct TierGuideSheet: View {
-    @Environment(\.colorScheme) private var colorScheme
-    private var isLight: Bool { colorScheme == .light }
-
-    private let tiers: [(letter: String, name: String, sublabel: String, color: Color, description: String)] = [
-        ("E", "Expansive",  "Connected · Adventurous", AppColors.magenta,
-         "You have full capacity. Energy is available. A good day to show up fully and go deep."),
-        ("S", "Sovereign",  "Grounded · Secure",       AppColors.electricViolet,
-         "Stable ground. You're present and able. Presence without performance is enough."),
-        ("P", "Protective", "Anxious · Defensive",     AppColors.cyan,
-         "Something's rubbing. That's not wrong — it's information. Protect your energy first."),
-        ("C", "Contracted", "Overwhelmed · Closed",    AppColors.textTertiary,
-         "Low capacity is valid data. You're not available right now and that's honest."),
-    ]
-
-    var body: some View {
-        ZStack {
-            (isLight ? AppColors.lightPageBg : AppColors.pageBg)
-                .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                // Header
-                VStack(spacing: 4) {
-                    Text("CAPACITY TIERS")
-                        .font(AppFonts.overline)
-                        .tracking(2.5)
-                        .foregroundStyle(isLight ? AppColors.lightTextTertiary : AppColors.textTertiary)
-                        .padding(.top, 24)
-                    Text("Your daily state has four zones.")
-                        .font(AppFonts.bodyMedium)
-                        .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textSecondary)
-                        .padding(.bottom, 20)
-                }
-
-                Divider()
-                    .background(isLight ? Color.black.opacity(0.07) : Color.white.opacity(0.07))
-
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        ForEach(Array(tiers.enumerated()), id: \.offset) { i, tier in
-                            HStack(alignment: .top, spacing: 14) {
-                                // Letter badge
-                                ZStack {
-                                    Circle()
-                                        .fill(tier.color.opacity(0.12))
-                                        .frame(width: 32, height: 32)
-                                        .overlay {
-                                            Circle()
-                                                .strokeBorder(tier.color.opacity(0.35), lineWidth: 1)
-                                        }
-                                    Text(tier.letter)
-                                        .font(.system(size: 13, weight: .bold, design: .monospaced))
-                                        .foregroundStyle(tier.color)
-                                }
-                                .padding(.top, 2)
-
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(tier.name)
-                                        .font(AppFonts.bodyMedium)
-                                        .foregroundStyle(tier.color)
-                                    Text(tier.sublabel)
-                                        .font(AppFonts.overline)
-                                        .tracking(1.5)
-                                        .foregroundStyle(isLight ? AppColors.lightTextTertiary : AppColors.textTertiary)
-                                    Text(tier.description)
-                                        .font(AppFonts.caption)
-                                        .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textSecondary)
-                                        .lineSpacing(3)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                        .padding(.top, 2)
-                                }
-
-                                Spacer()
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 16)
-
-                            if i < tiers.count - 1 {
-                                Divider()
-                                    .background(isLight ? Color.black.opacity(0.05) : Color.white.opacity(0.05))
-                                    .padding(.horizontal, 20)
-                            }
-                        }
-                    }
-                    .padding(.bottom, 32)
-                }
-            }
-        }
-    }
-}
 
 // MARK: - Previews
 
 #Preview("Zero entries — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseGraph(entries: [], graphWidth: 320, graphHeight: 200)
-            .padding(20)
+            .padding(AppSpacing.md)
     }
     .preferredColorScheme(.dark)
 }
 
 #Preview("14 entries — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseGraph(entries: PulseEntry.previews, graphWidth: 320, graphHeight: 200)
-            .padding(20)
+            .padding(AppSpacing.md)
     }
     .preferredColorScheme(.dark)
 }
 
 #Preview("14 entries — light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseGraph(entries: PulseEntry.previews, graphWidth: 320, graphHeight: 200)
-            .padding(20)
+            .padding(AppSpacing.md)
     }
     .preferredColorScheme(.light)
 }
 
 #Preview("14 entries — with live dot") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseGraph(
             entries:     PulseEntry.previews,
             graphWidth:  320,
             graphHeight: 200,
             liveScore:   2.5
         )
-        .padding(20)
+        .padding(AppSpacing.md)
     }
     .preferredColorScheme(.dark)
 }

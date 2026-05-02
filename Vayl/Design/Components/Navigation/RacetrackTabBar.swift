@@ -39,10 +39,10 @@ struct RacetrackTabBar: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 8)
+        .padding(.vertical, AppSpacing.sm)
+        .padding(.horizontal, AppSpacing.sm)
         .background(barBackground)
-        .padding(.horizontal, 30)
+        .padding(.horizontal, AppSpacing.xl)
         .onAppear {
             trimValues[selection] = 1.0
         }
@@ -88,8 +88,8 @@ struct RacetrackTabBar: View {
             Capsule()
                 .fill(
                     colorScheme == .light
-                        ? AnyShapeStyle(AppColors.lightFrostCard)
-                        : AnyShapeStyle(AppColors.surfaceBg.opacity(0.97))
+                        ? AnyShapeStyle(AppColors.glassFrostCard)
+                        : AnyShapeStyle(AppColors.modalBackground.opacity(0.97))
                 )
 
             // Shimmer — more opaque so it reads on the bar
@@ -109,14 +109,14 @@ struct RacetrackTabBar: View {
             Capsule()
                 .strokeBorder(
                     colorScheme == .light
-                        ? AppColors.lightBorder
-                        : AppColors.borderHover,
+                        ? AppColors.borderSubtle
+                        : AppColors.borderSubtle,
                     lineWidth: 1.5
                 )
         }
         .shadow(
             color: colorScheme == .light
-                ? AppColors.lightShadowPurple
+                ? AppColors.shadowPurple
                 : AppColors.shadowDeep,
             radius: 24,
             y: -4
@@ -141,10 +141,10 @@ private struct RacetrackTabPill: View {
     var body: some View {
         Button(action: onTap) {
             Image(systemName: tab.icon)
-                .font(.system(size: 24, weight: .light))
+                .font(Font.custom("Switzer-Regular", size: 24, relativeTo: .title3))
                 .frame(width: 24, height: 24) // Forces uniform size so circles match perfectly
                 .foregroundStyle(iconColor)
-                .padding(12)
+                .padding(AppSpacing.sm)
                 .background(pillBackground)
                 .clipShape(Capsule())
                 .overlay(racetrackBorder)   // outside clip so stroke isn't cut
@@ -166,29 +166,29 @@ private struct RacetrackTabPill: View {
     // MARK: - Visual layers
 
     private var iconColor: Color {
-        if isSelected { return isLight ? AppColors.lightCardTitle : .white }
+        if isSelected { return isLight ? AppColors.textBody : .white }
         if isPressed  {
             return isLight
-                ? AppColors.lightCardTitle
+                ? AppColors.textBody
                 : AppColors.textSecondary
         }
-        return isLight ? AppColors.lightCardTitle.opacity(0.85) : AppColors.textPrimary
+        return isLight ? AppColors.textBody.opacity(0.85) : AppColors.textPrimary
     }
 
     private var pillBackground: some View {
         Capsule()
             .fill(pillFill)
-            .animation(.easeOut(duration: 0.25), value: isSelected)
-            .animation(.easeOut(duration: 0.25), value: isPressed)
+            .animation(AppAnimation.fast, value: isSelected)
+            .animation(AppAnimation.fast, value: isPressed)
     }
 
     private var pillFill: Color {
         if isSelected {
-            return isLight ? AppColors.lightFrostPillSel : AppColors.surfaceBg
+            return isLight ? AppColors.glassFrostPillSelected : AppColors.modalBackground
         }
         if isPressed {
             return isLight
-                ? AppColors.lightFrostPill
+                ? AppColors.glassFrostPill
                 : Color(red: 0.086, green: 0.079, blue: 0.141) // ~#161424 — intentional offset from cardBg (#12111A), reviewed
         }
         return .clear
@@ -200,8 +200,8 @@ private struct RacetrackTabPill: View {
             .stroke(
                 AngularGradient(
                     colors: isLight
-                        ? [AppColors.magenta, AppColors.orangeHot, AppColors.gold, AppColors.magenta]
-                        : [AppColors.cyan, AppColors.purple, AppColors.magenta, AppColors.pink, AppColors.cyan],
+                        ? [AppColors.accentTertiary, AppColors.progressBarLeading, AppColors.safetyAccent, AppColors.accentTertiary]
+                        : [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary, AppColors.accentTertiary, AppColors.accentPrimary],
                     center: .center
                 ),
                 style: StrokeStyle(
@@ -212,8 +212,8 @@ private struct RacetrackTabPill: View {
             .rotationEffect(.degrees(-90))
             // Glow — makes the stroke pop off the dark background
             .shadow(color: isLight
-                ? AppColors.magenta.opacity(0.55)
-                : AppColors.cyan.opacity(0.70),
+                ? AppColors.accentTertiary.opacity(0.55)
+                : AppColors.accentPrimary.opacity(0.70),
                     radius: 4, x: 0, y: 0)
     }
 }
@@ -221,20 +221,23 @@ private struct RacetrackTabPill: View {
 
 #Preview("Dark — Interactive") {
     @Previewable @State var selection: AppTab = .home
-    ZStack {
-        AppColors.pageBg.ignoresSafeArea()
-        VStack {
-            Text(selection.label)
-                .font(AppFonts.heroTitle)
-                .foregroundStyle(AppColors.textSecondary)
-                .animation(.easeInOut(duration: 0.2), value: selection)
-            Spacer()
-        }
-        .padding(.top, 120)
-        VStack {
-            Spacer()
-            RacetrackTabBar(selection: $selection)
-                .padding(.bottom, 20)
+    GeometryReader { geo in
+        let layout = AppLayout.from(geo)
+        ZStack {
+            AppColors.pageBackground.ignoresSafeArea()
+            VStack {
+                Text(selection.label)
+                    .font(AppFonts.heroTitle)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .animation(AppAnimation.fast, value: selection)
+                Spacer()
+            }
+            .topClearance(layout)
+            VStack {
+                Spacer()
+                RacetrackTabBar(selection: $selection)
+                    .padding(.bottom, AppSpacing.lg)
+            }
         }
     }
     .preferredColorScheme(.dark)
@@ -242,20 +245,23 @@ private struct RacetrackTabPill: View {
 
 #Preview("Light — Interactive") {
     @Previewable @State var selection: AppTab = .home
-    ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
-        VStack {
-            Text(selection.label)
-                .font(AppFonts.heroTitle)
-                .foregroundStyle(AppColors.lightTextSecondary)
-                .animation(.easeInOut(duration: 0.2), value: selection)
-            Spacer()
-        }
-        .padding(.top, 120)
-        VStack {
-            Spacer()
-            RacetrackTabBar(selection: $selection)
-                .padding(.bottom, 20)
+    GeometryReader { geo in
+        let layout = AppLayout.from(geo)
+        ZStack {
+            AppColors.pageBackground.ignoresSafeArea()
+            VStack {
+                Text(selection.label)
+                    .font(AppFonts.heroTitle)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .animation(AppAnimation.fast, value: selection)
+                Spacer()
+            }
+            .topClearance(layout)
+            VStack {
+                Spacer()
+                RacetrackTabBar(selection: $selection)
+                    .padding(.bottom, AppSpacing.lg)
+            }
         }
     }
     .preferredColorScheme(.light)

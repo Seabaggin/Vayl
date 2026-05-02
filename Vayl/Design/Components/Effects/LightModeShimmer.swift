@@ -22,11 +22,11 @@ struct LightModeShimmer: View {
     // and opacity range exactly. Only the hues differ (warm vs neon).
     private var primaryColors: [Color] {
         [
-            AppColors.purple.opacity(0.55),
-            AppColors.magenta.opacity(0.60),
-            AppColors.gold.opacity(0.55),
-            AppColors.magentaLight.opacity(0.58),
-            AppColors.purple.opacity(0.55),
+            AppColors.accentSecondary.opacity(0.55),
+            AppColors.accentTertiary.opacity(0.60),
+            AppColors.safetyAccent.opacity(0.55),
+            AppColors.pulseTierProtective.opacity(0.58),
+            AppColors.accentSecondary.opacity(0.55),
         ]
     }
 
@@ -35,11 +35,11 @@ struct LightModeShimmer: View {
     // Diagonal start/end point fakes a 2D foil angle.
     private var secondaryColors: [Color] {
         [
-            AppColors.gold.opacity(0.30),
-            AppColors.purple.opacity(0.25),
-            AppColors.magenta.opacity(0.28),
-            AppColors.gold.opacity(0.22),
-            AppColors.magentaLight.opacity(0.25),
+            AppColors.safetyAccent.opacity(0.30),
+            AppColors.accentSecondary.opacity(0.25),
+            AppColors.accentTertiary.opacity(0.28),
+            AppColors.safetyAccent.opacity(0.22),
+            AppColors.pulseTierProtective.opacity(0.25),
         ]
     }
 

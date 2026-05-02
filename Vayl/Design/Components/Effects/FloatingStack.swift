@@ -13,12 +13,12 @@
 // and session card decks. Pass any view as content.
 //
 // Usage (bubbles):
-//   FloatingStack(items: selectedSpecs, cornerRadius: 20) { spec in
+//   FloatingStack(items: selectedSpecs, cornerRadius: AppRadius.container) { spec in
 //       FloatingCard(spec: spec, ...)
 //   }
 //
 // Usage (deck):
-//   FloatingStack(items: deck.cards, cornerRadius: 16) { card in
+//   FloatingStack(items: deck.cards, cornerRadius: AppRadius.lg) { card in
 //       PromptCard(card: card, ...)
 //   }
 
@@ -175,7 +175,7 @@ struct FloatingStack<Item: Identifiable, CardContent: View>: View {
         VStack(spacing: 0) {
             if let label {
                 stackLabel(label)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, AppSpacing.sm)
             }
 
             if isExpanded {
@@ -189,7 +189,7 @@ struct FloatingStack<Item: Identifiable, CardContent: View>: View {
         .opacity(mounted ? 1 : 0)
         .scaleEffect(mounted ? 1 : 0.88)
         .onAppear {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.82).delay(0.1)) {
+            withAnimation(AppAnimation.spring.delay(0.1)) {
                 mounted = true
             }
         }
@@ -271,7 +271,7 @@ struct FloatingStack<Item: Identifiable, CardContent: View>: View {
                     .clipShape(RoundedRectangle(cornerRadius: config.cornerRadius))
                     .transition(.opacity.combined(with: .offset(y: expandInsertionOffset(i))))
                     .animation(
-                        .spring(response: 0.45, dampingFraction: 0.82)
+                        AppAnimation.spring
                         .delay(Double(i) * 0.04),
                         value: isExpanded
                     )
@@ -286,9 +286,9 @@ struct FloatingStack<Item: Identifiable, CardContent: View>: View {
             Circle()
                 .fill(
                     isLight
-                        ? AnyShapeStyle(AppColors.magenta)
+                        ? AnyShapeStyle(AppColors.accentTertiary)
                         : AnyShapeStyle(LinearGradient(
-                            colors: [AppColors.cyan, AppColors.purple],
+                            colors: [AppColors.accentPrimary, AppColors.accentSecondary],
                             startPoint: .topLeading,
                             endPoint:   .bottomTrailing
                           ))
@@ -296,8 +296,8 @@ struct FloatingStack<Item: Identifiable, CardContent: View>: View {
                 .frame(width: 22, height: 22)
                 .shadow(
                     color: isLight
-                        ? AppColors.magenta.opacity(0.40)
-                        : AppColors.cyan.opacity(0.55),
+                        ? AppColors.accentTertiary.opacity(0.40)
+                        : AppColors.accentPrimary.opacity(0.55),
                     radius: 6
                 )
             Text("\(count)")
@@ -307,32 +307,21 @@ struct FloatingStack<Item: Identifiable, CardContent: View>: View {
     }
 
     private var collapseHandle: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "chevron.up")
-                .font(.system(size: 11, weight: .semibold))
+        HStack(spacing: AppSpacing.sm) {
+            Image(AppIcons.chevronUp)
+                .font(.system(size: 11, weight: .semibold)) // intentional exception: fixed-size icon inside collapse handle pill
             Text("Collapse")
                 .font(AppFonts.caption)
         }
-        .foregroundStyle(
-            isLight
-                ? AppColors.lightTextSecondary
-                : AppColors.textSecondary
-        )
-        .padding(.vertical, 6)
-        .padding(.horizontal, 14)
+        .foregroundStyle(AppColors.textSecondary)
+        .padding(.vertical, AppSpacing.sm)
+        .padding(.horizontal, AppSpacing.md)
         .background(
             Capsule()
-                .fill(
-                    isLight
-                        ? AppColors.lightFrostPill
-                        : AppColors.surfaceBg
-                )
+                .fill(AppColors.glassFrostPill)
                 .overlay(
                     Capsule()
-                        .strokeBorder(
-                            isLight ? AppColors.lightBorder : AppColors.border,
-                            lineWidth: 1
-                        )
+                        .strokeBorder(AppColors.borderSubtle, lineWidth: 1)
                 )
         )
     }
@@ -340,11 +329,7 @@ struct FloatingStack<Item: Identifiable, CardContent: View>: View {
     private func stackLabel(_ text: String) -> some View {
         Text(text.uppercased())
             .font(AppFonts.overline)
-            .foregroundStyle(
-                isLight
-                    ? AppColors.lightTextTertiary
-                    : AppColors.textTertiary
-            )
+            .foregroundStyle(AppColors.textTertiary)
             .tracking(1.5)
     }
 

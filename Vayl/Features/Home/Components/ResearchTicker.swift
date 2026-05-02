@@ -39,59 +39,49 @@ struct ResearchTicker: View {
             attribution: "— Diamond, 2003"),
     ]
 
-    @State private var currentIndex: Int = 0
-    @State private var opacity: Double = 1.0
+    @State private var currentIndex: Int  = 0
+    @State private var opacity:      Double = 1.0
 
     private let displayDuration: TimeInterval = 10
-    private let fadeDuration: TimeInterval = 0.4
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            // Top separator
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
             Rectangle()
                 .fill(isLight
                     ? Color.black.opacity(0.06)
                     : Color.white.opacity(0.06))
                 .frame(height: 1)
 
-            VStack(alignment: .leading, spacing: 4) {
-                // Overline
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text(facts[currentIndex].category.overlineLabel)
                     .font(AppFonts.overline)
                     .tracking(1.2)
-                    .foregroundStyle(isLight
-                        ? AppColors.lightTextTertiary
-                        : AppColors.textTertiary)
+                    .foregroundStyle(AppColors.textTertiary)
 
-                // Body
                 Text(facts[currentIndex].body)
                     .font(AppFonts.bodyText)
                     .foregroundStyle(isLight
-                        ? AppColors.lightTextSecondary
+                        ? AppColors.textSecondary
                         : AppColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .lineLimit(3)
 
-                // Attribution if exists
                 if let attribution = facts[currentIndex].attribution {
                     Text(attribution)
                         .font(AppFonts.caption)
-                        .foregroundStyle(isLight
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary)
+                        .foregroundStyle(AppColors.textTertiary)
                 }
             }
             .opacity(opacity)
-            .padding(.vertical, 14)
+            .padding(.vertical, AppSpacing.md)
 
-            // Bottom separator
             Rectangle()
                 .fill(isLight
                     ? Color.black.opacity(0.06)
                     : Color.white.opacity(0.06))
                 .frame(height: 1)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, AppSpacing.lg)
         .allowsHitTesting(false)
         .onAppear {
             startCycle()
@@ -101,16 +91,14 @@ struct ResearchTicker: View {
     private func startCycle() {
         Timer.scheduledTimer(withTimeInterval: displayDuration,
                              repeats: true) { _ in
-            // Fade out
-            withAnimation(.easeInOut(duration: fadeDuration)) {
+            withAnimation(AppAnimation.enter) {
                 opacity = 0
             }
-            // Swap fact + fade in
             DispatchQueue.main.asyncAfter(
-                deadline: .now() + fadeDuration + 0.1
+                deadline: .now() + 0.4 + 0.1
             ) {
                 currentIndex = (currentIndex + 1) % facts.count
-                withAnimation(.easeInOut(duration: fadeDuration)) {
+                withAnimation(AppAnimation.enter) {
                     opacity = 1
                 }
             }
@@ -120,7 +108,7 @@ struct ResearchTicker: View {
 
 #Preview("Ticker Dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ResearchTicker()
     }
     .preferredColorScheme(.dark)
@@ -128,7 +116,7 @@ struct ResearchTicker: View {
 
 #Preview("Ticker Light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ResearchTicker()
     }
     .preferredColorScheme(.light)

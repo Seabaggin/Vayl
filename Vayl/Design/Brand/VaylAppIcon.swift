@@ -81,9 +81,9 @@ struct VaylAppIcon: View {
     private var spectrumGradient: LinearGradient {
         LinearGradient(
             stops: [
-                .init(color: AppColors.cyan,    location: 0.00),
-                .init(color: AppColors.purple,  location: 0.50),
-                .init(color: AppColors.magenta, location: 1.00),
+                .init(color: AppColors.accentPrimary,    location: 0.00),
+                .init(color: AppColors.accentSecondary,  location: 0.50),
+                .init(color: AppColors.accentTertiary, location: 1.00),
             ],
             startPoint: .leading, endPoint: .trailing
         )
@@ -199,9 +199,9 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.cyan.opacity(0.22),
-                    AppColors.cyan.opacity(0.07),
-                    AppColors.cyan.opacity(0.00),
+                    AppColors.accentPrimary.opacity(0.22),
+                    AppColors.accentPrimary.opacity(0.07),
+                    AppColors.accentPrimary.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.08, y: 0.10),
                 startRadius: 0,
@@ -210,8 +210,8 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.cyan.opacity(0.08),
-                    AppColors.cyan.opacity(0.00),
+                    AppColors.accentPrimary.opacity(0.08),
+                    AppColors.accentPrimary.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.92, y: 0.05),
                 startRadius: 0,
@@ -220,9 +220,9 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.purple.opacity(0.22),
-                    AppColors.purple.opacity(0.08),
-                    AppColors.purple.opacity(0.00),
+                    AppColors.accentSecondary.opacity(0.22),
+                    AppColors.accentSecondary.opacity(0.08),
+                    AppColors.accentSecondary.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.50, y: 0.48),
                 startRadius: 0,
@@ -231,8 +231,8 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.purple.opacity(0.14),
-                    AppColors.purple.opacity(0.00),
+                    AppColors.accentSecondary.opacity(0.14),
+                    AppColors.accentSecondary.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.78, y: 0.22),
                 startRadius: 0,
@@ -241,9 +241,9 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.magenta.opacity(0.20),
-                    AppColors.magenta.opacity(0.07),
-                    AppColors.magenta.opacity(0.00),
+                    AppColors.accentTertiary.opacity(0.20),
+                    AppColors.accentTertiary.opacity(0.07),
+                    AppColors.accentTertiary.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.90, y: 0.88),
                 startRadius: 0,
@@ -252,8 +252,8 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.magenta.opacity(0.08),
-                    AppColors.magenta.opacity(0.00),
+                    AppColors.accentTertiary.opacity(0.08),
+                    AppColors.accentTertiary.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.12, y: 0.92),
                 startRadius: 0,
@@ -419,9 +419,9 @@ struct VaylAppIcon: View {
                 layer.stroke(p,
                     with: .linearGradient(
                         Gradient(stops: [
-                            .init(color: AppColors.cyan.opacity(0.22),    location: 0.00),
-                            .init(color: AppColors.purple.opacity(0.42),  location: 0.50),
-                            .init(color: AppColors.magenta.opacity(0.22), location: 1.00),
+                            .init(color: AppColors.accentPrimary.opacity(0.22),    location: 0.00),
+                            .init(color: AppColors.accentSecondary.opacity(0.42),  location: 0.50),
+                            .init(color: AppColors.accentTertiary.opacity(0.22), location: 1.00),
                         ]),
                         startPoint: CGPoint(x: lineLeft,  y: lineY),
                         endPoint:   CGPoint(x: lineRight, y: lineY)
@@ -439,9 +439,9 @@ struct VaylAppIcon: View {
                 layer.stroke(p,
                     with: .linearGradient(
                         Gradient(stops: [
-                            .init(color: AppColors.cyan.opacity(0.30),    location: 0.00),
-                            .init(color: AppColors.purple.opacity(0.50),  location: 0.50),
-                            .init(color: AppColors.magenta.opacity(0.30), location: 1.00),
+                            .init(color: AppColors.accentPrimary.opacity(0.30),    location: 0.00),
+                            .init(color: AppColors.accentSecondary.opacity(0.50),  location: 0.50),
+                            .init(color: AppColors.accentTertiary.opacity(0.30), location: 1.00),
                         ]),
                         startPoint: CGPoint(x: lineLeft,  y: lineY),
                         endPoint:   CGPoint(x: lineRight, y: lineY)
@@ -459,9 +459,9 @@ struct VaylAppIcon: View {
                 layer.stroke(p,
                     with: .linearGradient(
                         Gradient(stops: [
-                            .init(color: AppColors.cyan.opacity(0.40),    location: 0.00),
-                            .init(color: AppColors.purple.opacity(0.58),  location: 0.50),
-                            .init(color: AppColors.magenta.opacity(0.40), location: 1.00),
+                            .init(color: AppColors.accentPrimary.opacity(0.40),    location: 0.00),
+                            .init(color: AppColors.accentSecondary.opacity(0.58),  location: 0.50),
+                            .init(color: AppColors.accentTertiary.opacity(0.40), location: 1.00),
                         ]),
                         startPoint: CGPoint(x: lineLeft,  y: lineY),
                         endPoint:   CGPoint(x: lineRight, y: lineY)
@@ -480,10 +480,10 @@ struct VaylAppIcon: View {
             solidCtx.stroke(solidPath,
                 with: .linearGradient(
                     Gradient(stops: [
-                        .init(color: AppColors.cyan,               location: 0.00),
-                        .init(color: AppColors.purple,             location: 0.50),
-                        .init(color: AppColors.magenta,            location: 0.92),
-                        .init(color: AppColors.magenta.opacity(0), location: 1.00),
+                        .init(color: AppColors.accentPrimary,               location: 0.00),
+                        .init(color: AppColors.accentSecondary,             location: 0.50),
+                        .init(color: AppColors.accentTertiary,            location: 0.92),
+                        .init(color: AppColors.accentTertiary.opacity(0), location: 1.00),
                     ]),
                     startPoint: CGPoint(x: lineLeft,  y: lineY),
                     endPoint:   CGPoint(x: lineRight, y: lineY)
@@ -639,18 +639,18 @@ private struct StarFieldView: View {
 
     private let stars: [StarSpec] = [
         StarSpec(x: 0.168, y: 0.205, hRx: 22, vRy: 2.5,  dotR: 1.6, color: .white,            opacity: 0.85),
-        StarSpec(x: 0.607, y: 0.168, hRx: 14, vRy: 2.0,  dotR: 1.2, color: AppColors.cyan,    opacity: 0.80),
+        StarSpec(x: 0.607, y: 0.168, hRx: 14, vRy: 2.0,  dotR: 1.2, color: AppColors.accentPrimary,    opacity: 0.80),
         StarSpec(x: 0.871, y: 0.135, hRx:  8, vRy: 1.3,  dotR: 1.0, color: .white,            opacity: 0.70),
         StarSpec(x: 0.379, y: 0.266, hRx:  5, vRy: 1.0,  dotR: 0.8, color: .white,            opacity: 0.60),
-        StarSpec(x: 0.916, y: 0.359, hRx: 13, vRy: 2.0,  dotR: 1.2, color: AppColors.magenta, opacity: 0.75),
+        StarSpec(x: 0.916, y: 0.359, hRx: 13, vRy: 2.0,  dotR: 1.2, color: AppColors.accentTertiary, opacity: 0.75),
         StarSpec(x: 0.080, y: 0.438, hRx:  7, vRy: 1.2,  dotR: 0.9, color: .white,            opacity: 0.62),
-        StarSpec(x: 0.773, y: 0.291, hRx:  8, vRy: 1.3,  dotR: 1.0, color: AppColors.purple,  opacity: 0.68),
+        StarSpec(x: 0.773, y: 0.291, hRx:  8, vRy: 1.3,  dotR: 1.0, color: AppColors.accentSecondary,  opacity: 0.68),
         StarSpec(x: 0.139, y: 0.740, hRx: 16, vRy: 2.2,  dotR: 1.4, color: .white,            opacity: 0.72),
-        StarSpec(x: 0.559, y: 0.809, hRx:  5, vRy: 0.9,  dotR: 0.8, color: AppColors.cyan,    opacity: 0.58),
-        StarSpec(x: 0.848, y: 0.785, hRx:  8, vRy: 1.3,  dotR: 1.0, color: AppColors.magenta, opacity: 0.65),
+        StarSpec(x: 0.559, y: 0.809, hRx:  5, vRy: 0.9,  dotR: 0.8, color: AppColors.accentPrimary,    opacity: 0.58),
+        StarSpec(x: 0.848, y: 0.785, hRx:  8, vRy: 1.3,  dotR: 1.0, color: AppColors.accentTertiary, opacity: 0.65),
         StarSpec(x: 0.818, y: 0.236, hRx:  4, vRy: 0.8,  dotR: 0.7, color: .white,            opacity: 0.55),
         StarSpec(x: 0.900, y: 0.877, hRx:  7, vRy: 1.2,  dotR: 0.9, color: .white,            opacity: 0.58),
-        StarSpec(x: 0.193, y: 0.842, hRx:  6, vRy: 1.0,  dotR: 0.8, color: AppColors.cyan,    opacity: 0.55),
+        StarSpec(x: 0.193, y: 0.842, hRx:  6, vRy: 1.0,  dotR: 0.8, color: AppColors.accentPrimary,    opacity: 0.55),
         StarSpec(x: 0.945, y: 0.623, hRx:  5, vRy: 0.9,  dotR: 0.7, color: .white,            opacity: 0.52),
     ]
 
@@ -696,11 +696,11 @@ private struct StarFieldView: View {
 // ── Preview ───────────────────────────────────────────────────────────────────
 
 #Preview("Icon sizes") {
-    VStack(spacing: 32) {
+    VStack(spacing: AppSpacing.xl) {
         VaylAppIcon(size: 240)
         VaylAppIcon(size: 120)
         VaylAppIcon(size: 60)
     }
-    .padding(40)
+    .padding(AppSpacing.xxl)
     .background(Color(hex: "050508"))
 }

@@ -21,8 +21,8 @@
 //    sectionDivider(
 //        label:  "THE CONSTELLATION",
 //        colors: colorScheme == .dark
-//            ? [AppColors.cyan, AppColors.purple]
-//            : [AppColors.purple, AppColors.magenta]
+//            ? [AppColors.accentPrimary, AppColors.accentSecondary]
+//            : [AppColors.accentSecondary, AppColors.accentTertiary]
 //    )
 //    ConstellationView()
 //        .padding(.horizontal, 14)
@@ -138,8 +138,8 @@ private let nodeConnections: [NodeConnection] = {
 private func nodeColor(index: Int, colorScheme: ColorScheme) -> Color {
     // Dark:  cyan → purple → magenta
     // Light: purple → magenta → gold
-    let dark:  [Color] = [AppColors.cyan, AppColors.purple, AppColors.magenta]
-    let light: [Color] = [AppColors.purple, AppColors.magenta, AppColors.gold]
+    let dark:  [Color] = [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary]
+    let light: [Color] = [AppColors.accentSecondary, AppColors.accentTertiary, AppColors.safetyAccent]
     let palette = colorScheme == .dark ? dark : light
     return palette[index % palette.count]
 }
@@ -265,15 +265,15 @@ private struct ConstellationNodeView: View {
                     case .term:
                         // Terms are largest — scale font to fill the bigger circles
                         let pt: CGFloat = node.size > 74 ? 11 : node.size > 70 ? 10 : 9
-                        return AppFonts.body(pt, weight: .semibold)
+                        return AppFonts.body(pt, weight: .semibold, relativeTo: .caption2)
                     case .stat:
                         // "1 in 5" has spaces — needs smaller font to fit
                         if node.label.contains(" ") {
-                            return AppFonts.display(13, weight: .bold)
+                            return AppFonts.display(13, weight: .bold, relativeTo: .subheadline)
                         }
                         // Pure numbers — scale relative to circle size
                         let pt: CGFloat = node.size > 56 ? 16 : node.size > 52 ? 14 : 13
-                        return AppFonts.display(pt, weight: .bold)
+                        return AppFonts.display(pt, weight: .bold, relativeTo: pt >= 16 ? .body : .subheadline)
                     }
                 }())
                 .foregroundStyle(color)
@@ -287,7 +287,7 @@ private struct ConstellationNodeView: View {
     }
 
     private func startShimmer() {
-        withAnimation(.easeInOut(duration: 3.8).repeatForever(autoreverses: true)) {
+        withAnimation(.easeInOut(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: true)) {
             shimmer = 0.10
         }
     }
@@ -316,7 +316,7 @@ private struct ConstellationNodeView: View {
             let delay = Double(i) * 0.09
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                 opacityB.wrappedValue = 0.9
-                withAnimation(.easeOut(duration: 0.55)) {
+                withAnimation(AppAnimation.slow) {
                     scaleB.wrappedValue   = 3.5 + CGFloat(i) * 0.5
                     opacityB.wrappedValue = 0.0
                 }
@@ -339,141 +339,137 @@ private struct ConstellationSheet: View {
 
     @Environment(\.colorScheme) private var colorScheme
 
+    private var dragHandle: some View {
+        HStack {
+            Spacer()
+            RoundedRectangle(cornerRadius: 2) // intentional micro-radius
+                .fill(color.opacity(0.45))
+                .frame(width: 40, height: 4)
+            Spacer()
+        }
+        .padding(.top, AppSpacing.md)
+        .padding(.bottom, AppSpacing.sm)
+    }
+
+    private var header: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                Text(node.label)
+                    .font(node.type == .stat
+                          ? AppFonts.display(46, weight: .bold,     relativeTo: .largeTitle)
+                          : AppFonts.display(28, weight: .semibold, relativeTo: .title))
+                    .foregroundStyle(color)
+                    .shadow(color: color.opacity(0.30), radius: 12, x: 0, y: 2)
+
+                Text(node.title)
+                    .font(AppFonts.body(13, weight: .semibold, relativeTo: .caption))
+                    .foregroundStyle(color.opacity(0.75))
+            }
+            Spacer()
+            Button(action: onClose) {
+                Image(AppIcons.close)
+                    .font(Font.custom("Switzer-Semibold", size: 13, relativeTo: .caption))
+                    .foregroundStyle(AppColors.textTertiary)
+                    .frame(width: 30, height: 30)
+                    .background(colorScheme == .dark
+                                ? AppColors.modalBackground
+                                : AppColors.glassFrostPill)
+                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppRadius.sm)
+                            .strokeBorder(color.opacity(0.15), lineWidth: 1)
+                    )
+            }
+        }
+        .padding(.horizontal, AppSpacing.lg)
+        .padding(.bottom, AppSpacing.md)
+    }
+
+    private var bodyText: some View {
+        Text(node.body)
+            .font(AppFonts.body(15, weight: .regular, relativeTo: .body))
+            .foregroundStyle(colorScheme == .dark
+                             ? AppColors.textPrimary
+                             : AppColors.textBody)
+            .lineSpacing(4)
+            .padding(.top, AppSpacing.md)
+            .padding(.bottom, AppSpacing.sm)
+    }
+
+    private var sourceText: some View {
+        Text("— \(node.source)")
+            .font(AppFonts.body(11, weight: .regular, relativeTo: .caption2))
+            .italic()
+            .foregroundStyle(AppColors.textTertiary)
+            .padding(.bottom, AppSpacing.lg)
+    }
+
+    private var satelliteCards: some View {
+        VStack(spacing: AppSpacing.sm) {
+            ForEach(node.satellites.indices, id: \.self) { i in
+                let sat = node.satellites[i]
+                HStack(alignment: .top, spacing: 0) {
+                    Rectangle()
+                        .fill(color.opacity(0.55))
+                        .frame(width: 3)
+                        .clipShape(RoundedRectangle(cornerRadius: 1.5))
+
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                        Text(sat.label.uppercased())
+                            .font(AppFonts.label)
+                            .tracking(1)
+                            .foregroundStyle(color)
+
+                        Text(sat.detail)
+                            .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
+                            .foregroundStyle(colorScheme == .dark
+                                             ? AppColors.textSecondary
+                                             : AppColors.textSecondary)
+                            .lineSpacing(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, AppSpacing.sm)
+                    .padding(.horizontal, AppSpacing.md)
+
+                    Spacer()
+                }
+                .background(color.opacity(colorScheme == .dark ? 0.05 : 0.06))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppRadius.md)
+                        .strokeBorder(color.opacity(0.12), lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
+            }
+        }
+        .padding(.bottom, AppSpacing.xxl)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-
-            // ── Drag handle ───────────────────────────────
-            HStack {
-                Spacer()
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(color.opacity(0.45))
-                    .frame(width: 40, height: 4)
-                Spacer()
-            }
-            .padding(.top, 14)
-            .padding(.bottom, 10)
-
-            // ── Header ────────────────────────────────────
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(node.label)
-                        .font(node.type == .stat
-                              ? AppFonts.display(46, weight: .bold)
-                              : AppFonts.display(28, weight: .semibold))
-                        .foregroundStyle(color)
-                        .shadow(color: color.opacity(0.30), radius: 12, x: 0, y: 2)
-
-                    Text(node.title)
-                        .font(AppFonts.body(13, weight: .semibold))
-                        .foregroundStyle(color.opacity(0.75))
-                }
-                Spacer()
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(colorScheme == .dark
-                                         ? AppColors.textTertiary
-                                         : AppColors.lightTextTertiary)
-                        .frame(width: 30, height: 30)
-                        .background(colorScheme == .dark
-                                    ? AppColors.surfaceBg
-                                    : AppColors.lightFrostPill)
-                        .clipShape(RoundedRectangle(cornerRadius: 9))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 9)
-                                .strokeBorder(color.opacity(0.15), lineWidth: 1)
-                        )
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 14)
+            dragHandle
+            header
 
             Divider()
                 .overlay(color.opacity(0.12))
-                .padding(.horizontal, 20)
+                .padding(.horizontal, AppSpacing.lg)
 
-            // ── Scrollable body ───────────────────────────
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
-
-                    // Body copy
-                    Text(node.body)
-                        .font(AppFonts.body(15, weight: .regular))
-                        .foregroundStyle(colorScheme == .dark
-                                         ? AppColors.textPrimary
-                                         : AppColors.lightBodyPrimary)
-                        .lineSpacing(4)
-                        .padding(.top, 16)
-                        .padding(.bottom, 10)
-
-                    // Source
-                    Text("— \(node.source)")
-                        .font(AppFonts.body(11, weight: .regular))
-                        .italic()
-                        .foregroundStyle(colorScheme == .dark
-                                         ? AppColors.textTertiary
-                                         : AppColors.lightTextTertiary)
-                        .padding(.bottom, 22)
-
-                    // Satellite cards
-                    VStack(spacing: 8) {
-                        ForEach(node.satellites.indices, id: \.self) { i in
-                            let sat = node.satellites[i]
-                            HStack(alignment: .top, spacing: 0) {
-                                // Left accent bar
-                                Rectangle()
-                                    .fill(color.opacity(0.55))
-                                    .frame(width: 3)
-                                    .clipShape(
-                                        RoundedRectangle(cornerRadius: 1.5)
-                                    )
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(sat.label.uppercased())
-                                        .font(AppFonts.label)
-                                        .tracking(1)
-                                        .foregroundStyle(color)
-
-                                    Text(sat.detail)
-                                        .font(AppFonts.body(13, weight: .regular))
-                                        .foregroundStyle(colorScheme == .dark
-                                                         ? AppColors.textSecondary
-                                                         : AppColors.lightBodyAccent)
-                                        .lineSpacing(3)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                                .padding(.vertical, 12)
-                                .padding(.horizontal, 14)
-
-                                Spacer()
-                            }
-                            .background(
-                                colorScheme == .dark
-                                    ? color.opacity(0.05)
-                                    : color.opacity(0.06)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .strokeBorder(color.opacity(0.12), lineWidth: 1)
-                            )
-                            .clipShape(
-                                RoundedRectangle(cornerRadius: 12)
-                            )
-                        }
-                    }
-                    .padding(.bottom, 48)
+                    bodyText
+                    sourceText
+                    satelliteCards
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, AppSpacing.lg)
             }
         }
         .background(
             colorScheme == .dark
-                ? AppColors.surfaceBg
-                : AppColors.lightFrostCard
+                ? AppColors.modalBackground
+                : AppColors.glassFrostCard
         )
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
                 .strokeBorder(color.opacity(0.22), lineWidth: 1)
         )
         .shadow(color: color.opacity(0.14), radius: 32, x: 0, y: -8)
@@ -499,8 +495,9 @@ struct ConstellationView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let W = geo.size.width
-            let H = geo.size.height
+            let layout = AppLayout.from(geo)
+            let W = layout.screenWidth
+            let H = layout.screenHeight
 
             ZStack(alignment: .bottom) {
 
@@ -531,7 +528,7 @@ struct ConstellationView: View {
                     ConstellationSheet(node: node, color: color) {
                         dismissSheet()
                     }
-                    .frame(maxHeight: geo.size.height * 0.82)
+                    .frame(maxHeight: layout.screenHeight * 0.82)
                     .offset(y: sheetOffset)
                     .gesture(
                         DragGesture(minimumDistance: 8)
@@ -545,7 +542,7 @@ struct ConstellationView: View {
                                 if val.translation.height > 80 {
                                     dismissSheet()
                                 } else {
-                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                    withAnimation(AppAnimation.spring) {
                                         sheetOffset = 0
                                     }
                                 }
@@ -633,34 +630,34 @@ struct ConstellationView: View {
                     ? AppColors.textMuted
                     : Color(hex: "B08060").opacity(0.8)
             )
-            .padding(.trailing, 16)
-            .padding(.bottom, 12)
+            .padding(.trailing, AppSpacing.md)
+            .padding(.bottom, AppSpacing.sm)
     }
 
     private var legendLabel: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppSpacing.sm) {
             legendItem(
-                fill:   colorScheme == .dark ? AppColors.cyan.opacity(0.12) : AppColors.purple.opacity(0.12),
-                stroke: colorScheme == .dark ? AppColors.cyan : AppColors.purple,
+                fill:   colorScheme == .dark ? AppColors.accentPrimary.opacity(0.12) : AppColors.accentSecondary.opacity(0.12),
+                stroke: colorScheme == .dark ? AppColors.accentPrimary : AppColors.accentSecondary,
                 dashed: false,
                 label:  "Research"
             )
             legendItem(
-                fill:   colorScheme == .dark ? AppColors.magentaDark.opacity(0.12) : AppColors.magenta.opacity(0.10),
-                stroke: colorScheme == .dark ? AppColors.magentaDark : AppColors.magenta,
+                fill:   colorScheme == .dark ?AppColors.accentTertiary.opacity(0.12) : AppColors.accentTertiary.opacity(0.10),
+                stroke: colorScheme == .dark ?AppColors.accentTertiary : AppColors.accentTertiary,
                 dashed: true,
                 label:  "Glossary"
             )
         }
-        .padding(.leading, 18)
-        .padding(.bottom, 12)
+        .padding(.leading, AppSpacing.lg)
+        .padding(.bottom, AppSpacing.sm)
     }
 
     private func legendItem(
         fill: Color, stroke: Color,
         dashed: Bool, label: String
     ) -> some View {
-        HStack(spacing: 5) {
+        HStack(spacing: AppSpacing.xs) {
             Circle()
                 .fill(fill)
                 .overlay(
@@ -693,7 +690,7 @@ struct ConstellationView: View {
         sheetOffset  = 0
 
         // Sheet opens simultaneously with burst — zero latency
-        withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+        withAnimation(AppAnimation.spring) {
             showSheet = true
         }
 
@@ -704,7 +701,7 @@ struct ConstellationView: View {
     }
 
     private func dismissSheet() {
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+        withAnimation(AppAnimation.spring) {
             showSheet   = false
             sheetOffset = 0
         }
@@ -726,8 +723,8 @@ struct ConstellationView: View {
 //   sectionDivider(
 //       label:  "THE CONSTELLATION",
 //       colors: colorScheme == .dark
-//           ? [AppColors.cyan, AppColors.purple]
-//           : [AppColors.purple, AppColors.magenta]
+//           ? [AppColors.accentPrimary, AppColors.accentSecondary]
+//           : [AppColors.accentSecondary, AppColors.accentTertiary]
 //   )
 //   .opacity(elementOpacity(visible: prismVisible))
 //   .animation(.easeOut(duration: 0.5), value: prismVisible)
@@ -751,11 +748,11 @@ struct ConstellationView: View {
 
 #Preview("Dark — Constellation") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         VStack(spacing: 0) {
             Spacer()
             ConstellationView()
-                .padding(.horizontal, 14)
+                .padding(.horizontal, AppSpacing.md)
             Spacer()
         }
     }
@@ -764,14 +761,12 @@ struct ConstellationView: View {
 
 #Preview("Light — Constellation") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         AuroraGlowField().ignoresSafeArea()
         VStack(spacing: 0) {
             Spacer()
             ConstellationView()
-                .padding(.horizontal, 14)
-            Spacer()
+                .padding(.horizontal, AppSpacing.md)
         }
     }
-    .preferredColorScheme(.light)
 }

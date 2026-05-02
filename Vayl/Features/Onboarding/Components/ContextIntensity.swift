@@ -14,11 +14,11 @@ enum ContextIntensity: Int {
     var bgTintColor: Color {
         switch self {
         case .ember:   return .clear
-        case .spark:   return AppColors.cyan.opacity(0.04)
-        case .flame:   return AppColors.cyan.opacity(0.06)
-        case .blaze:   return AppColors.purple.opacity(0.08)
-        case .inferno: return AppColors.magenta.opacity(0.06)
-        case .nova:    return AppColors.magenta.opacity(0.10)
+        case .spark:   return AppColors.accentPrimary.opacity(0.04)
+        case .flame:   return AppColors.accentPrimary.opacity(0.06)
+        case .blaze:   return AppColors.accentSecondary.opacity(0.08)
+        case .inferno: return AppColors.accentTertiary.opacity(0.06)
+        case .nova:    return AppColors.accentTertiary.opacity(0.10)
         }
     }
 
@@ -50,11 +50,11 @@ enum ContextIntensity: Int {
     var internalGlowColor: Color {
         switch self {
         case .ember:   return .clear
-        case .spark:   return AppColors.cyan.opacity(0.10)
-        case .flame:   return AppColors.purple.opacity(0.15)
-        case .blaze:   return AppColors.purple.opacity(0.20)
-        case .inferno: return AppColors.magenta.opacity(0.20)
-        case .nova:    return AppColors.magenta.opacity(0.30)
+        case .spark:   return AppColors.accentPrimary.opacity(0.10)
+        case .flame:   return AppColors.accentSecondary.opacity(0.15)
+        case .blaze:   return AppColors.accentSecondary.opacity(0.20)
+        case .inferno: return AppColors.accentTertiary.opacity(0.20)
+        case .nova:    return AppColors.accentTertiary.opacity(0.30)
         }
     }
 
@@ -83,12 +83,12 @@ enum ContextIntensity: Int {
     // MARK: External ambient shadow
     var shadowColor: Color {
         switch self {
-        case .ember:   return AppColors.cyan.opacity(0.04)
-        case .spark:   return AppColors.cyan.opacity(0.06)
-        case .flame:   return AppColors.purple.opacity(0.08)
-        case .blaze:   return AppColors.purple.opacity(0.12)
-        case .inferno: return AppColors.magenta.opacity(0.10)
-        case .nova:    return AppColors.magenta.opacity(0.16)
+        case .ember:   return AppColors.accentPrimary.opacity(0.04)
+        case .spark:   return AppColors.accentPrimary.opacity(0.06)
+        case .flame:   return AppColors.accentSecondary.opacity(0.08)
+        case .blaze:   return AppColors.accentSecondary.opacity(0.12)
+        case .inferno: return AppColors.accentTertiary.opacity(0.10)
+        case .nova:    return AppColors.accentTertiary.opacity(0.16)
         }
     }
 

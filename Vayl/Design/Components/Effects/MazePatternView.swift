@@ -160,7 +160,7 @@ struct MazePatternView: View {
     ZStack {
         Color(red: 0.051, green: 0.043, blue: 0.122).ignoresSafeArea()
         MazePatternView(
-            color:       AppColors.magenta,
+            color:       AppColors.accentTertiary,
             opacity:     0.28,
             glowColor:   .clear,
             glowOpacity: 0.0
@@ -172,11 +172,11 @@ struct MazePatternView: View {
 
 #Preview("Light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         MazePatternView(
-            color:       AppColors.orangeHot,
+            color:       AppColors.progressBarLeading,
             opacity:     0.32,
-            glowColor:   AppColors.orangeHot,
+            glowColor:   AppColors.progressBarLeading,
             glowOpacity: 0.18
         )
         .frame(width: 280, height: 280)

@@ -3,6 +3,10 @@
 //  Vayl
 //
 
+// ⚠️ BEFORE BUILDING: add the following to AppIcons:
+//   static let link = "link"
+// AppIcons.personBadgePlus and AppIcons.chevronRight already exist.
+
 import SwiftUI
 import SwiftData
 
@@ -25,11 +29,11 @@ struct PairingSettingsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                (isLight ? AppColors.lightPageBg : AppColors.pageBg)
+                AppColors.pageBackground            // was isLight ? x : x — same both sides
                     .ignoresSafeArea()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: AppSpacing.lg) { // was 24 → lg, exact
 
                         // ── Current link state ────────────────────────
                         linkStateSection
@@ -39,9 +43,9 @@ struct PairingSettingsView: View {
                             actionsSection
                         }
 
-                        Spacer(minLength: 40)
+                        Spacer(minLength: AppSpacing.xxl) // was 40 → xxl (48), snap per handoff
                     }
-                    .padding(24)
+                    .padding(AppSpacing.lg)         // was 24 → lg, exact
                 }
             }
             .navigationTitle("Partner Linking")
@@ -71,33 +75,40 @@ struct PairingSettingsView: View {
 
     @ViewBuilder
     private var linkStateSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) { // was 12 → sm (8), snap per handoff
             Text("STATUS")
                 .font(AppFonts.overline)
                 .tracking(2)
-                .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textSecondary)
+                .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
 
-            HStack(spacing: 12) {
+            HStack(spacing: AppSpacing.sm) {        // was 12 → sm (8), snap per handoff
                 Circle()
-                    .fill(appState.linkState == .linked ? AppColors.cyan : AppColors.textTertiary)
+                    .fill(
+                        appState.linkState == .linked
+                            ? AppColors.accentPrimary
+                            : AppColors.textTertiary
+                    )
                     .frame(width: 10, height: 10)
+                    .accessibilityHidden(true)      // status communicated by adjacent text
 
                 Text(appState.linkState == .linked ? "Linked with partner" : "Not linked")
                     .font(AppFonts.bodyText)
-                    .foregroundStyle(isLight ? AppColors.lightTextPrimary : AppColors.textPrimary)
+                    .foregroundStyle(AppColors.textPrimary) // was isLight ? x : x — same both sides
 
                 Spacer()
             }
-            .padding(16)
+            .padding(AppSpacing.md)                 // was 16 → md, exact
             .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(isLight ? AppColors.lightCardFill : AppColors.surfaceBg)
+                RoundedRectangle(cornerRadius: AppRadius.md) // was 14 → md (12), snap per handoff
+                    .fill(isLight ? AppColors.cardBackground : AppColors.modalBackground)
+                // isLight ternary retained — different tokens on each branch
             )
 
             if let coupleId = appState.coupleId {
                 Text("Couple ID: \(coupleId.uuidString.prefix(8))...")
                     .font(AppFonts.caption)
-                    .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textTertiary)
+                    .foregroundStyle(isLight ? AppColors.textSecondary : AppColors.textTertiary)
+                // isLight ternary retained — different tokens on each branch
             }
         }
     }
@@ -105,15 +116,15 @@ struct PairingSettingsView: View {
     // MARK: - Actions Section
 
     private var actionsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppSpacing.md) { // was 16 → md, exact
             Text("LINK WITH PARTNER")
                 .font(AppFonts.overline)
                 .tracking(2)
-                .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textSecondary)
+                .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
 
             // Invite — Person A
             actionCard(
-                icon: "person.badge.plus",
+                icon: AppIcons.personBadgePlus,     // was "person.badge.plus"
                 title: "Generate an invite code",
                 subtitle: "Share a code with your partner so they can link their app to yours.",
                 action: { showInviteView = true }
@@ -121,7 +132,8 @@ struct PairingSettingsView: View {
 
             // Join — Person B
             actionCard(
-                icon: "link",
+                icon: AppIcons.link,                // was "link"
+                // ⚠️ AppIcons.link must be added to AppIcons before building
                 title: "Enter a partner's code",
                 subtitle: "Your partner has a code — enter it here to link your accounts.",
                 action: { showJoinView = true }
@@ -138,36 +150,46 @@ struct PairingSettingsView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(AppColors.cyan)
-                    .frame(width: 36)
+            HStack(spacing: AppSpacing.md) {        // was 16 → md, exact
+                Image(systemName: icon)             // icon param — raw string moved to call sites
+                    .font(
+                        Font.custom("Switzer-Medium", size: 20, relativeTo: .body)
+                    )                               // was .system(size: 20, weight: .medium)
+                    .foregroundStyle(AppColors.accentPrimary)
+                    .frame(width: 36, height: 44)   // height: 44 for A11y min hit target
+                    .accessibilityHidden(true)      // decorative — title describes the action
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) { // was 4 → xs, exact
                     Text(title)
                         .font(AppFonts.bodyMedium)
-                        .foregroundStyle(isLight ? AppColors.lightTextPrimary : AppColors.textPrimary)
+                        .foregroundStyle(AppColors.textPrimary) // was isLight ? x : x — same both sides
 
                     Text(subtitle)
                         .font(AppFonts.caption)
-                        .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textSecondary)
+                        .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
                         .multilineTextAlignment(.leading)
                 }
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textTertiary)
+                Image(AppIcons.chevronRight)        // was "chevron.right"
+                    .font(
+                        Font.custom("Switzer-Medium", size: 12, relativeTo: .caption)
+                    )                               // was .system(size: 12, weight: .medium)
+                    .foregroundStyle(isLight ? AppColors.textSecondary : AppColors.textTertiary)
+                // isLight ternary retained — different tokens on each branch
             }
-            .padding(16)
+            .padding(AppSpacing.md)                 // was 16 → md, exact
             .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(isLight ? AppColors.lightCardFill : AppColors.surfaceBg)
+                RoundedRectangle(cornerRadius: AppRadius.md) // was 14 → md (12), snap per handoff
+                    .fill(isLight ? AppColors.cardBackground : AppColors.modalBackground)
+                // isLight ternary retained — different tokens on each branch
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityHint(subtitle)
+        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -184,7 +206,7 @@ struct PairingSettingsView: View {
 #Preview("Linked") {
     let state = AppState()
     state.linkState = .linked
-    state.coupleId = UUID()
+    state.coupleId  = UUID()
     return PairingSettingsView()
         .environment(state)
         .preferredColorScheme(.dark)

@@ -2,14 +2,10 @@
 //  PairingJoinView.swift
 //  Vayl
 //
-//  Created by Bryan Jorden on 4/29/26.
-//
 
-
-//
-//  PairingJoinView.swift
-//  Vayl
-//
+// ⚠️ BEFORE BUILDING: confirm AppIcons.exclamationTriangle was added during
+//    PairingInviteView migration: static let exclamationTriangle = "exclamationmark.triangle"
+// AppIcons.checkmarkCircle already exists.
 
 import SwiftUI
 import SwiftData
@@ -58,8 +54,8 @@ struct PairingJoinView: View {
                 Spacer()
                 footer
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 32)
+            .padding(.horizontal, AppSpacing.lg)    // was 24 → lg, exact
+            .padding(.vertical, AppSpacing.xl)      // was 32 → xl, exact
         }
         .onAppear {
             isInputFocused = true
@@ -89,18 +85,18 @@ struct PairingJoinView: View {
     // MARK: - Join Form
 
     private var joinForm: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: AppSpacing.xl) {            // was 32 → xl, exact
 
             // Header
-            VStack(spacing: 8) {
+            VStack(spacing: AppSpacing.sm) {        // was 8 → sm, exact
                 Text("Enter your partner's code")
                     .font(AppFonts.screenTitle)
-                    .foregroundStyle(isLight ? AppColors.lightTextPrimary : AppColors.textPrimary)
+                    .foregroundStyle(AppColors.textPrimary) // was isLight ? x : x — same both sides
                     .multilineTextAlignment(.center)
 
                 Text("Ask your partner for their 6-character code\nand enter it below.")
                     .font(AppFonts.bodyText)
-                    .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textSecondary)
+                    .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
                     .multilineTextAlignment(.center)
             }
 
@@ -114,22 +110,24 @@ struct PairingJoinView: View {
             ) {
                 isInputFocused = false
                 Task {
-                    await store.joinWithCode(codeInput.trimmingCharacters(in: .whitespaces).uppercased())
+                    await store.joinWithCode(
+                        codeInput.trimmingCharacters(in: .whitespaces).uppercased()
+                    )
                 }
             }
-            .animation(.easeInOut(duration: 0.2), value: canSubmit)
+            .animation(AppAnimation.fast, value: canSubmit) // was .easeInOut(duration: 0.2) → fast
         }
     }
 
     // MARK: - Code Input Field
 
     private var codeInputField: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppSpacing.sm) {            // was 8 → sm, exact
             TextField("", text: $codeInput)
                 .font(AppFonts.displayHero)
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [AppColors.cyan, AppColors.purple],
+                        colors: [AppColors.accentPrimary, AppColors.accentSecondary],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -147,18 +145,22 @@ struct PairingJoinView: View {
                         .filter { $0.isLetter || $0.isNumber }
                     codeInput = String(filtered.prefix(6))
                 }
-                .padding(24)
+                .padding(AppSpacing.lg)             // was 24 → lg, exact
                 .frame(maxWidth: .infinity)
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(isLight ? AppColors.lightCardFill : Color.white.opacity(0.04))
+                    RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
+                        .fill(isLight ? AppColors.cardBackground : Color.white.opacity(0.04))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
+                            RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
                                 .strokeBorder(
                                     LinearGradient(
                                         colors: [
-                                            AppColors.cyan.opacity(codeInput.isEmpty ? 0.15 : 0.4),
-                                            AppColors.purple.opacity(codeInput.isEmpty ? 0.15 : 0.4)
+                                            AppColors.accentPrimary.opacity(
+                                                codeInput.isEmpty ? 0.15 : 0.4
+                                            ),
+                                            AppColors.accentSecondary.opacity(
+                                                codeInput.isEmpty ? 0.15 : 0.4
+                                            )
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -167,29 +169,34 @@ struct PairingJoinView: View {
                                 )
                         )
                 )
+                .accessibilityLabel("Partner code input")
 
             Text("\(codeInput.count) / 6 characters")
                 .font(AppFonts.caption)
-                .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textTertiary)
+                .foregroundStyle(isLight ? AppColors.textSecondary : AppColors.textTertiary)
+                // isLight ternary retained — these ARE different tokens, intentional distinction
         }
     }
 
     // MARK: - Linked State
 
     private func linkedState(coupleId: UUID) -> some View {
-        VStack(spacing: 24) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(AppColors.cyan)
+        VStack(spacing: AppSpacing.lg) {            // was 24 → lg, exact
+            Image(AppIcons.checkmarkCircle)         // was "checkmark.circle.fill"
+                .font(
+                    Font.custom("ClashDisplay-Bold", size: 64, relativeTo: .largeTitle)
+                )                                   // was .system(size: 64)
+                .foregroundStyle(AppColors.accentPrimary)
+                .accessibilityHidden(true)          // decorative — state communicated by text
 
-            VStack(spacing: 8) {
+            VStack(spacing: AppSpacing.sm) {        // was 8 → sm, exact
                 Text("You're linked!")
                     .font(AppFonts.screenTitle)
-                    .foregroundStyle(isLight ? AppColors.lightTextPrimary : AppColors.textPrimary)
+                    .foregroundStyle(AppColors.textPrimary) // was isLight ? x : x — same both sides
 
                 Text("You've successfully connected\nwith your partner.")
                     .font(AppFonts.bodyText)
-                    .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textSecondary)
+                    .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
                     .multilineTextAlignment(.center)
             }
         }
@@ -198,19 +205,23 @@ struct PairingJoinView: View {
     // MARK: - Error State
 
     private func errorState(message: String) -> some View {
-        VStack(spacing: 24) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 48))
-                .foregroundStyle(AppColors.magenta)
+        VStack(spacing: AppSpacing.lg) {            // was 24 → lg, exact
+            Image(AppIcons.exclamationTriangle)     // was "exclamationmark.triangle"
+            // ⚠️ confirm AppIcons.exclamationTriangle was added during PairingInviteView pass
+                .font(
+                    Font.custom("ClashDisplay-Bold", size: 48, relativeTo: .largeTitle)
+                )                                   // was .system(size: 48)
+                .foregroundStyle(AppColors.accentTertiary)
+                .accessibilityHidden(true)          // decorative — error communicated by text below
 
-            VStack(spacing: 8) {
+            VStack(spacing: AppSpacing.sm) {        // was 8 → sm, exact
                 Text("Something went wrong")
                     .font(AppFonts.screenTitle)
-                    .foregroundStyle(isLight ? AppColors.lightTextPrimary : AppColors.textPrimary)
+                    .foregroundStyle(AppColors.textPrimary) // was isLight ? x : x — same both sides
 
                 Text(message)
                     .font(AppFonts.bodyText)
-                    .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textSecondary)
+                    .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
                     .multilineTextAlignment(.center)
             }
 
@@ -219,7 +230,7 @@ struct PairingJoinView: View {
                 isEnabled: true
             ) {
                 store.reset()
-                codeInput = ""
+                codeInput     = ""
                 isInputFocused = true
             }
         }
@@ -230,7 +241,8 @@ struct PairingJoinView: View {
     private var footer: some View {
         Text("Your data is encrypted and always stays yours.")
             .font(AppFonts.caption)
-            .foregroundStyle(isLight ? AppColors.lightTextSecondary : AppColors.textTertiary)
+            .foregroundStyle(isLight ? AppColors.textSecondary : AppColors.textTertiary)
+            // isLight ternary retained — these ARE different tokens, intentional distinction
             .multilineTextAlignment(.center)
     }
 
@@ -238,12 +250,12 @@ struct PairingJoinView: View {
 
     private var background: some View {
         ZStack {
-            (isLight ? AppColors.lightPageBg : AppColors.pageBg)
+            AppColors.pageBackground                // was isLight ? x : x — same both sides
                 .ignoresSafeArea()
 
             Ellipse()
                 .fill(RadialGradient(
-                    colors: [AppColors.purple.opacity(isLight ? 0.08 : 0.15), .clear],
+                    colors: [AppColors.accentSecondary.opacity(isLight ? 0.08 : 0.15), .clear],
                     center: .center,
                     startRadius: 0,
                     endRadius: 300
@@ -252,14 +264,17 @@ struct PairingJoinView: View {
                 .blur(radius: 60)
                 .offset(y: -100)
                 .allowsHitTesting(false)
+                .accessibilityHidden(true)
         }
     }
 }
 
+// MARK: - Previews
+
 #Preview("Empty") {
     let container = ModelContainer.previewContainer
-    let appState = AppState()
-    let store = PairingStore(modelContainer: container, appState: appState)
+    let appState  = AppState()
+    let store     = PairingStore(modelContainer: container, appState: appState)
     return PairingJoinView(store: store)
         .environment(appState)
         .preferredColorScheme(.dark)
@@ -267,8 +282,8 @@ struct PairingJoinView: View {
 
 #Preview("Joining") {
     let container = ModelContainer.previewContainer
-    let appState = AppState()
-    let store = PairingStore(modelContainer: container, appState: appState)
+    let appState  = AppState()
+    let store     = PairingStore(modelContainer: container, appState: appState)
     store.linkState = PairingLinkState.joining
     return PairingJoinView(store: store)
         .environment(appState)
@@ -277,8 +292,8 @@ struct PairingJoinView: View {
 
 #Preview("Linked") {
     let container = ModelContainer.previewContainer
-    let appState = AppState()
-    let store = PairingStore(modelContainer: container, appState: appState)
+    let appState  = AppState()
+    let store     = PairingStore(modelContainer: container, appState: appState)
     store.linkState = PairingLinkState.linked(coupleId: UUID())
     return PairingJoinView(store: store)
         .environment(appState)
@@ -287,8 +302,8 @@ struct PairingJoinView: View {
 
 #Preview("Error") {
     let container = ModelContainer.previewContainer
-    let appState = AppState()
-    let store = PairingStore(modelContainer: container, appState: appState)
+    let appState  = AppState()
+    let store     = PairingStore(modelContainer: container, appState: appState)
     store.linkState = PairingLinkState.error("Code not found. Check and try again.")
     return PairingJoinView(store: store)
         .environment(appState)

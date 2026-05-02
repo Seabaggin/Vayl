@@ -58,8 +58,10 @@ struct HomeRouterView: View {
     }
 
     var body: some View {
-        ZStack {
-            switch homeState {
+        GeometryReader { geo in
+            let layout = AppLayout.from(geo)
+            ZStack {
+                switch homeState {
 
             case .gated:
                 HomeGateView(
@@ -72,12 +74,12 @@ struct HomeRouterView: View {
                 PostMapReflectionView(
                     step: $reflectionStep,
                     onComplete: {
-                        withAnimation(.easeInOut(duration: 0.4)) {
+                        withAnimation(AppAnimation.enter) {
                             postReflectionDone = true
                         }
                     },
                     onSkipAll: {
-                        withAnimation(.easeInOut(duration: 0.4)) {
+                        withAnimation(AppAnimation.enter) {
                             postReflectionDone = true
                         }
                     }
@@ -101,18 +103,19 @@ struct HomeRouterView: View {
             case .dashboard:
                 dashboardContent
                     .transition(.opacity)
+                }
             }
-        }
-        .animation(.easeInOut(duration: 0.4), value: homeState)
-        .task {
-            await loadDeck()
-        }
+            .animation(AppAnimation.enter, value: homeState)
+            .task {
+                await loadDeck()
+            }
 
-        #if DEBUG
-        .overlay(alignment: .bottomTrailing) {
-            debugControls
+            #if DEBUG
+            .overlay(alignment: .bottomTrailing) {
+                debugControls(layout: layout)
+            }
+            #endif
         }
-        #endif
     }
 
     // MARK: - Dashboard Content
@@ -121,10 +124,10 @@ struct HomeRouterView: View {
     private var dashboardContent: some View {
         if let error = deckLoadError {
             // ── Load failure — visible error, never silent ────────────────
-            VStack(spacing: 16) {
-                Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 36))
-                    .foregroundStyle(AppColors.magenta)
+            VStack(spacing: AppSpacing.md) {
+                Image(AppIcons.exclamationTriangle)
+                    .font(Font.custom("ClashDisplay-Bold", size: 36, relativeTo: .largeTitle))
+                    .foregroundStyle(AppColors.accentTertiary)
 
                 Text("Couldn't load your deck")
                     .font(AppFonts.screenTitle)
@@ -140,13 +143,13 @@ struct HomeRouterView: View {
                 }
                 .buttonStyle(.borderedProminent)
             }
-            .padding(32)
+            .padding(AppSpacing.xl)
 
         } else if isLoadingDeck || deck == nil {
             // ── Loading state ─────────────────────────────────────────────
-            VStack(spacing: 12) {
+            VStack(spacing: AppSpacing.sm) {
                 ProgressView()
-                    .tint(AppColors.cyan)
+                    .tint(AppColors.accentPrimary)
                 Text("Loading your deck...")
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textSecondary)
@@ -201,10 +204,10 @@ struct HomeRouterView: View {
     // MARK: - Debug Controls
 
     #if DEBUG
-    private var debugControls: some View {
-        VStack(alignment: .trailing, spacing: 6) {
+    private func debugControls(layout: AppLayout) -> some View {
+        VStack(alignment: .trailing, spacing: AppSpacing.sm) {
             Text("HomeState: \(String(describing: homeState))")
-                .font(.system(size: 10, weight: .medium))
+                .font(Font.custom("Switzer-Medium", size: 10, relativeTo: .caption2))
                 .foregroundStyle(AppColors.textTertiary)
 
             Button(myMapComplete ? "Map ✓" : "Map ✗") {
@@ -220,13 +223,13 @@ struct HomeRouterView: View {
                 revealDone.toggle()
             }
         }
-        .font(.system(size: 11, weight: .medium))
-        .foregroundStyle(AppColors.cyan)
-        .padding(12)
-        .background(AppColors.cardBg.opacity(0.85))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .padding(.trailing, 16)
-        .padding(.bottom, 100)
+        .font(Font.custom("Switzer-Medium", size: 11, relativeTo: .caption2))
+        .foregroundStyle(AppColors.accentPrimary)
+        .padding(AppSpacing.sm)
+        .background(AppColors.cardBackground.opacity(0.85))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
+        .padding(.trailing, AppSpacing.md)
+        .bottomContentInset(layout)
     }
     #endif
 }

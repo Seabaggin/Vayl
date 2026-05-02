@@ -131,9 +131,9 @@ struct OnboardingContextView: View {
             // RULE B — magenta→gold for all display gradient text in light
             return AnyShapeStyle(LinearGradient(
                 stops: [
-                    .init(color: AppColors.magenta,   location: 0.00),
-                    .init(color: AppColors.orangeHot, location: 0.55),
-                    .init(color: AppColors.gold,      location: 1.00),
+                    .init(color: AppColors.accentTertiary,    location: 0.00),
+                    .init(color: AppColors.progressBarLeading, location: 0.55),
+                    .init(color: AppColors.safetyAccent,      location: 1.00),
                 ],
                 startPoint: .leading,
                 endPoint: .trailing
@@ -141,7 +141,7 @@ struct OnboardingContextView: View {
         } else {
             // Dark path — byte-for-byte unchanged
             return AnyShapeStyle(LinearGradient(
-                colors: [AppColors.cyan, AppColors.purple],
+                colors: [AppColors.accentPrimary, AppColors.accentSecondary],
                 startPoint: .leading,
                 endPoint: .trailing
             ))
@@ -150,19 +150,19 @@ struct OnboardingContextView: View {
 
     private var headlineStyle: AnyShapeStyle { // FIXED: extracted from body
         isLight
-            ? AnyShapeStyle(AppColors.lightCardTitle)
+            ? AnyShapeStyle(AppColors.textPrimary)
             : AnyShapeStyle(AppColors.textPrimary)
     }
 
     private var subheadStyle: AnyShapeStyle { // FIXED: extracted from body
         isLight
-            ? AnyShapeStyle(AppColors.lightCardTitle.opacity(0.65))
+            ? AnyShapeStyle(AppColors.textPrimary.opacity(0.65))
             : AnyShapeStyle(AppColors.textSecondary)
     }
 
     private var pronounLabelStyle: AnyShapeStyle { // FIXED: extracted from body
         isLight
-            ? AnyShapeStyle(AppColors.lightTextTertiary)
+            ? AnyShapeStyle(AppColors.textTertiary)
             : AnyShapeStyle(AppColors.textTertiary)
     }
 
@@ -198,8 +198,8 @@ struct OnboardingContextView: View {
                 Ellipse()
                     .fill(RadialGradient(
                         colors: [
-                            AppColors.purple.opacity(0.3),
-                            AppColors.deepBlue.opacity(0.15),
+                            AppColors.accentSecondary.opacity(0.3),
+                            AppColors.accentSecondary.opacity(0.15),
                             Color.clear
                         ],
                         center: .top,
@@ -218,13 +218,14 @@ struct OnboardingContextView: View {
 
     var body: some View {
         GeometryReader { geo in // LAYOUT-FIX: single GeometryReader for proportional spacing
-        let h = geo.size.height
+        let layout = AppLayout.from(geo)
+        let h = layout.screenHeight
         VStack(spacing: 0) {
 
             OnboardingNavBar(currentStep: 3, totalSteps: 6, onBack: onBack)
                 .padding(.top, OL.navTop(h))        // LAYOUT-FIX: was 12 hardcoded
                 .padding(.bottom, OL.navBottom(h))  // LAYOUT-FIX: was 20 hardcoded
-                .padding(.horizontal, 24)
+                .padding(.horizontal, AppSpacing.lg)
                 .opacity(headerVisible ? 1 : 0)
                 .offset(y: headerVisible ? 0 : -8)
 
@@ -239,7 +240,7 @@ struct OnboardingContextView: View {
                     .foregroundStyle(subheadStyle)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 24)
+            .padding(.horizontal, AppSpacing.lg)
             .opacity(headerVisible ? 1 : 0)
             .offset(y: headerVisible ? 0 : 12)
 
@@ -270,7 +271,7 @@ struct OnboardingContextView: View {
                 @unknown default:
                     return
                 }
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
+                withAnimation(AppAnimation.spring) {
                     selection = options[newIndex]
                 }
             }
@@ -290,10 +291,12 @@ struct OnboardingContextView: View {
                 .accessibilityLabel(reassuranceText)
 
             OnboardingFooter(text: "Your data is encrypted and always stays yours.")
-                .padding(.horizontal, 24)
+                .padding(.horizontal, AppSpacing.lg)
                 .accessibilityHidden(true)
         }
-        .background { backgroundLayer(size: geo.size) } // LAYOUT-FIX: passes live size for proportional atmosphere
+        .background {
+            backgroundLayer(size: CGSize(width: layout.screenWidth, height: layout.screenHeight))
+        } // LAYOUT-FIX: passes live size for proportional atmosphere
         // RULE D — .preferredColorScheme(.dark) removed;
         // screen now responds to system appearance.
         // BrandView and BuildingPathView remain permanently dark.
@@ -359,9 +362,9 @@ struct OnboardingContextView: View {
             return
         }
         #endif
-        withAnimation(.easeOut(duration: 0.5).delay(0.15)) { headerVisible      = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.30)) { cardsVisible       = true }
-        withAnimation(.easeOut(duration: 0.5).delay(0.55)) { reassuranceVisible = true }
+        withAnimation(AppAnimation.slow.delay(0.15)) { headerVisible      = true }
+        withAnimation(AppAnimation.slow.delay(0.30)) { cardsVisible       = true }
+        withAnimation(AppAnimation.slow.delay(0.55)) { reassuranceVisible = true }
     }
 }
 
@@ -375,7 +378,7 @@ struct OnboardingContextView: View {
         return d
     }()
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingAtmosphere(
             config: .contextSelect,
             sparkConfig: .contextView,
@@ -395,7 +398,7 @@ struct OnboardingContextView: View {
         return d
     }()
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingAtmosphere(
             config: .contextSelect,
             sparkConfig: .contextView,

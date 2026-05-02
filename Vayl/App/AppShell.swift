@@ -11,7 +11,7 @@ struct AppShell: View {
 
     var body: some View {
         GeometryReader { geo in
-            let bottomInset = geo.safeAreaInsets.bottom
+            let layout = AppLayout.from(geo)
 
             ZStack(alignment: .bottom) {
                 Group {
@@ -29,7 +29,7 @@ struct AppShell: View {
                 .ignoresSafeArea(edges: .bottom)
 
                 RacetrackTabBar(selection: $selectedTab)
-                    .padding(.bottom, bottomInset + 8)
+                    .padding(.bottom, layout.homeIndicatorInset + AppSpacing.xs)
             }
             .ignoresSafeArea(edges: .bottom)
         }

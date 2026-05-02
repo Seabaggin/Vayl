@@ -15,7 +15,7 @@ struct FuseTimerView: View {
     let lineWidth:    CGFloat
     let duration:     TimeInterval
     let delay:        TimeInterval
-    let sparkColor:   Color        // NEW — defaults to AppColors.cyan
+    let sparkColor:   Color        // NEW — defaults to AppColors.accentPrimary
     let onComplete:   () -> Void
 
     init(
@@ -24,7 +24,7 @@ struct FuseTimerView: View {
         lineWidth:    CGFloat,
         duration:     TimeInterval,
         delay:        TimeInterval,
-        sparkColor:   Color = AppColors.cyan,
+        sparkColor:   Color = AppColors.accentPrimary,
         onComplete:   @escaping () -> Void
     ) {
         self.size         = size

@@ -23,24 +23,24 @@ struct ContextCard: View {
             // Light: lightFrostCard (white 58%) + ultraThinMaterial so the
             //        aurora blobs bleed through the card intentionally.
             if isLight {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(AppColors.lightFrostCard)
+                RoundedRectangle(cornerRadius: AppRadius.container)
+                    .fill(AppColors.glassFrostCard)
                     .background(
                         .ultraThinMaterial,
-                        in: RoundedRectangle(cornerRadius: 20)
+                        in: RoundedRectangle(cornerRadius: AppRadius.container)
                     )
             } else {
                 if intensity.bgTintStart < 1.0 {
                     LinearGradient(
                         stops: [
-                            .init(color: AppColors.cardBg,           location: intensity.bgTintStart),
+                            .init(color: AppColors.cardBackground,           location: intensity.bgTintStart),
                             .init(color: intensity.bgTintColor,      location: 1.0)
                         ],
                         startPoint: .topLeading,
                         endPoint:   .bottomTrailing
                     )
                 } else {
-                    AppColors.cardBg
+                    AppColors.cardBackground
                 }
             }
 
@@ -73,7 +73,7 @@ struct ContextCard: View {
             VStack {
                 HStack {
                     Spacer()
-                    VStack(spacing: 2) {
+                    VStack(spacing: AppSpacing.xxs) {
                         TileOrbitView(
                             orbitCount: min(index + 1, 3),
                             isActive:   isFront,
@@ -86,27 +86,27 @@ struct ContextCard: View {
                             .foregroundColor(isLight
                                 ? .black.opacity(isFront ? 0.85 : 0.45)
                                 : .white.opacity(isFront ? 0.85 : 0.45))
-                            .animation(.easeInOut(duration: 0.3), value: isFront)
+                            .animation(AppAnimation.standard, value: isFront)
                     }
-                    .padding(16)
+                    .padding(AppSpacing.md)
                 }
                 Spacer()
             }
 
             // ── Content ───────────────────────────────────────────────────
             VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 Text(option.title)
-                    .font(AppFonts.display(22, weight: .semibold))
+                    .font(AppFonts.display(22, weight: .semibold, relativeTo: .title2))
                     .foregroundStyle(isLight
-                        ? AppColors.lightTextPrimary
+                        ? AppColors.textPrimary
                         : intensity.rawValue >= 4
                             ? Color.white
                             : AppColors.textPrimary)
                     Text(option.subtitle)
                         .font(AppFonts.caption)
                         .foregroundStyle(isLight
-                            ? AppColors.lightTextSecondary
+                            ? AppColors.textSecondary
                             : intensity.rawValue >= 4
                                 ? Color.white.opacity(0.75)
                                 : AppColors.textSecondary)
@@ -117,7 +117,7 @@ struct ContextCard: View {
                 Text(option.detail)
                     .font(AppFonts.caption)
                     .foregroundStyle(isLight
-                        ? AppColors.lightTextSecondary
+                        ? AppColors.textSecondary
                         : intensity.rawValue >= 4
                             ? Color.white.opacity(0.65)
                             : AppColors.textSecondary)
@@ -125,12 +125,12 @@ struct ContextCard: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .opacity(detailVisible ? 1 : 0)
             }
-            .padding(28)
+            .padding(AppSpacing.xl)
             .frame(width: 300, height: 340, alignment: .topLeading)
         }
         .frame(width: 300, height: 340)
         .scaleEffect(isBreathing ? 1.02 : 1.0)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
         // ── Border overlay ────────────────────────────────────────────────
         // Dark:  spectrum gradient (cyan→purple→magenta).
         //        At rest: intensity.borderOpacity. Confirmed: full opacity.
@@ -141,28 +141,28 @@ struct ContextCard: View {
             Group {
                 if isLight {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 20)
+                        RoundedRectangle(cornerRadius: AppRadius.container)
                             .strokeBorder(
-                                AppColors.warmAuroraBorder,
+                                AppColors.spectrumBorder,
                                 lineWidth: isConfirmed ? 2.5 : 2.0
                             )
                             .opacity(isConfirmed ? 1.0 : max(intensity.borderOpacity, 0.65))
-                        RoundedRectangle(cornerRadius: 20)
+                        RoundedRectangle(cornerRadius: AppRadius.container)
                             .strokeBorder(
-                                AppColors.warmAuroraBorder,
+                                AppColors.spectrumBorder,
                                 lineWidth: isConfirmed ? 3.5 : 3.0
                             )
                             .blur(radius: 6)
                             .opacity(isConfirmed ? 0.35 : 0.25)
                     }
-                    .shadow(color: AppColors.lightShadowMagenta, radius: 8,  x: 0, y: 3)
-                    .shadow(color: AppColors.lightShadowPurple,  radius: 16, x: 0, y: 5)
-                    .shadow(color: AppColors.lightShadowGold,    radius: 6,  x: 0, y: 2)
+                    .shadow(color: AppColors.shadowMagenta, radius: 8,  x: 0, y: 3)
+                    .shadow(color: AppColors.shadowPurple,  radius: 16, x: 0, y: 5)
+                    .shadow(color: AppColors.shadowGold,    radius: 6,  x: 0, y: 2)
                 } else {
-                    RoundedRectangle(cornerRadius: 20)
+                    RoundedRectangle(cornerRadius: AppRadius.container)
                         .stroke(
                             LinearGradient(
-                                colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
+                                colors: [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             ),
@@ -179,31 +179,31 @@ struct ContextCard: View {
         //        shadow spread provides equivalent depth.
         .shadow(
             color: isLight
-                ? AppColors.lightShadowMagenta.opacity(0.12)
+                ? AppColors.shadowMagenta.opacity(0.12)
                 : intensity.shadowColor,
             radius: isLight ? 12 : intensity.shadowRadius
         )
         .shadow(
             color: isConfirmed
                 ? (isLight
-                    ? AppColors.lightShadowMagenta
-                    : AppColors.cyan.opacity(isBreathing ? 0.36 : 0.30))
+                    ? AppColors.shadowMagenta
+                    : AppColors.accentPrimary.opacity(isBreathing ? 0.36 : 0.30))
                 : .clear,
             radius: 8
         )
         .shadow(
             color: isConfirmed
                 ? (isLight
-                    ? AppColors.lightShadowPurple
-                    : AppColors.magenta.opacity(isBreathing ? 0.24 : 0.20))
+                    ? AppColors.shadowPurple
+                    : AppColors.accentTertiary.opacity(isBreathing ? 0.24 : 0.20))
                 : .clear,
             radius: 12
         )
         .onChange(of: isFront) { _, newFront in
             if newFront {
-                withAnimation(.easeIn(duration: 0.3).delay(0.2)) { detailVisible = true }
+                withAnimation(AppAnimation.standard.delay(0.2)) { detailVisible = true }
             } else {
-                withAnimation(.easeOut(duration: 0.15)) { detailVisible = false }
+                withAnimation(AppAnimation.fast) { detailVisible = false }
             }
         }
         .onChange(of: isConfirmed) { _, confirmed in
@@ -211,7 +211,7 @@ struct ContextCard: View {
         }
         .onAppear {
             if isFront {
-                withAnimation(.easeIn(duration: 0.3).delay(0.5)) { detailVisible = true }
+                withAnimation(AppAnimation.standard.delay(0.5)) { detailVisible = true }
             }
             if isConfirmed { startBreathing() }
         }
@@ -223,22 +223,22 @@ struct ContextCard: View {
         breathTask?.cancel()
         breathTask = Task {
             isBreathing = false
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(AppAnimation.fast) {
                 isBreathing = true
             }
             try? await Task.sleep(for: .milliseconds(200))
             guard !Task.isCancelled else { return }
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(AppAnimation.fast) {
                 isBreathing = false
             }
             try? await Task.sleep(for: .milliseconds(200))
             guard !Task.isCancelled else { return }
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(AppAnimation.fast) {
                 isBreathing = true
             }
             try? await Task.sleep(for: .milliseconds(200))
             guard !Task.isCancelled else { return }
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(AppAnimation.fast) {
                 isBreathing = false
             }
         }
@@ -247,7 +247,7 @@ struct ContextCard: View {
     private func stopBreathing() {
         breathTask?.cancel()
         breathTask = nil
-        withAnimation(.easeOut(duration: 0.2)) {
+        withAnimation(AppAnimation.fast) {
             isBreathing = false
         }
     }
@@ -266,7 +266,7 @@ private let previewOptions: [ContextOption] = [
 
 #Preview("All Intensities — dark") {
     ScrollView(.horizontal, showsIndicators: false) {
-        HStack(spacing: 20) {
+        HStack(spacing: AppSpacing.lg) {
             ForEach(Array(previewOptions.enumerated()), id: \.element.id) { i, option in
                 ContextCard(
                     option:      option,
@@ -277,15 +277,15 @@ private let previewOptions: [ContextOption] = [
                 )
             }
         }
-        .padding(40)
+        .padding(AppSpacing.xxl)
     }
-    .background(AppColors.pageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }
 
 #Preview("All Intensities — light") {
     ScrollView(.horizontal, showsIndicators: false) {
-        HStack(spacing: 20) {
+        HStack(spacing: AppSpacing.lg) {
             ForEach(Array(previewOptions.enumerated()), id: \.element.id) { i, option in
                 ContextCard(
                     option:      option,
@@ -296,30 +296,30 @@ private let previewOptions: [ContextOption] = [
                 )
             }
         }
-        .padding(40)
+        .padding(AppSpacing.xxl)
     }
-    .background(AppColors.lightPageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.light)
 }
 
 #Preview("Confirmed — dark") {
     let option = previewOptions.last!
-    HStack(spacing: 20) {
+    HStack(spacing: AppSpacing.lg) {
         ContextCard(option: option, isFront: true, isConfirmed: false, index: 0, total: 3)
         ContextCard(option: option, isFront: true, isConfirmed: true, index: 0, total: 3)
     }
-    .padding(40)
-    .background(AppColors.pageBg)
+    .padding(AppSpacing.xxl)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }
 
 #Preview("Confirmed — light") {
     let option = previewOptions.last!
-    HStack(spacing: 20) {
+    HStack(spacing: AppSpacing.lg) {
         ContextCard(option: option, isFront: true, isConfirmed: false, index: 0, total: 3)
         ContextCard(option: option, isFront: true, isConfirmed: true, index: 0, total: 3)
     }
-    .padding(40)
-    .background(AppColors.lightPageBg)
+    .padding(AppSpacing.xxl)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.light)
 }

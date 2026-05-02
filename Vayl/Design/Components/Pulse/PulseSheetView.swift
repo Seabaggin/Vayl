@@ -1,11 +1,3 @@
-//
-//  PulseSheetView.swift
-//  Open Lightly
-//
-//  Created by Bryan Jorden on 4/21/26.
-//
-
-
 // Features/Pulse/PulseSheetView.swift
 // Open Lightly
 //
@@ -34,8 +26,8 @@ struct PulseSheetView: View {
     // MARK: - Inputs
 
     var entries:     [PulseEntry]
-    var onDismiss:   (() -> Void)?   = nil
-    var onOpenInMap: (() -> Void)?   = nil
+    var onDismiss:   (() -> Void)? = nil
+    var onOpenInMap: (() -> Void)? = nil
 
     // MARK: - State
 
@@ -58,8 +50,7 @@ struct PulseSheetView: View {
     }
 
     private var streakCount: Int {
-        // Count consecutive days with entries ending today
-        var streak = 0
+        var streak    = 0
         var checkDate = Calendar.current.startOfDay(for: Date())
         let sortedDates = entries
             .map { Calendar.current.startOfDay(for: $0.date) }
@@ -94,9 +85,11 @@ struct PulseSheetView: View {
     }
 
     private var trendColor: Color {
+        // TODO: Color(hex: "34C759") requires AppColors.trendPositive token before migration.
+        // Flagged — do not replace with a raw hex elsewhere in the codebase.
         if trendLabel.hasPrefix("↑") { return Color(hex: "34C759") }
-        if trendLabel.hasPrefix("↓") { return isLight ? AppColors.magenta : AppColors.cyan }
-        return isLight ? AppColors.lightTextSecondary : AppColors.textSecondary
+        if trendLabel.hasPrefix("↓") { return isLight ? AppColors.accentTertiary : AppColors.accentPrimary }
+        return isLight ? AppColors.textSecondary : AppColors.textSecondary
     }
 
     // MARK: - Body
@@ -105,57 +98,57 @@ struct PulseSheetView: View {
         ZStack(alignment: .top) {
 
             // Background
-            (isLight ? AppColors.lightPageBg : Color(hex: "0D0B14"))
+            // TODO: Color(hex: "0D0B14") requires an AppColors token before migration.
+            // pageBackground is the semantic replacement candidate — confirm with design.
+            (isLight ? AppColors.pageBackground : Color(hex: "0D0B14"))
                 .ignoresSafeArea()
 
-            // Atmosphere — faint orbs echo the widget
             atmosphereLayer
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-            // Sheet rim — top edge spectrum line signals
-            // continuity with the widget rim above it
             sheetRim
 
-            // Content
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
 
                     // Drag handle
                     dragHandle
-                        .padding(.top, 12)
-                        .padding(.bottom, 18)
+                        .padding(.top, AppSpacing.sm)
+                        .padding(.bottom, AppSpacing.md)
 
                     // Header — mirrors PulseWidget
                     headerRow
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 20)
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.bottom, AppSpacing.lg)
 
                     // Stats
                     statsRow
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 18)
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.bottom, AppSpacing.md)
 
                     // Window selector
                     windowSelector
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 14)
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.bottom, AppSpacing.md)
 
                     // Graph
                     graphCard
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 20)
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.bottom, AppSpacing.lg)
 
                     // Divider
                     Divider()
-                        .background(isLight ? Color.black.opacity(0.07) : Color.white.opacity(0.07))
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 20)
+                        .background(isLight
+                            ? Color.black.opacity(0.07)
+                            : Color.white.opacity(0.07))
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.bottom, AppSpacing.lg)
 
                     // Open in Map CTA
                     openInMapButton
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 40)
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.bottom, AppSpacing.xl)
                 }
             }
         }
@@ -164,7 +157,9 @@ struct PulseSheetView: View {
     // MARK: - Drag Handle
 
     private var dragHandle: some View {
-        RoundedRectangle(cornerRadius: 2)
+        RoundedRectangle(cornerRadius: 2) // intentional micro-radius
+            // cornerRadius: 2 — micro-radius on drag handle pill.
+            // Intentional — do not migrate to AppRadius token.
             .fill(
                 isLight
                     ? Color.black.opacity(0.18)
@@ -179,17 +174,17 @@ struct PulseSheetView: View {
     private var sheetRim: some View {
         LinearGradient(
             stops: [
-                .init(color: .clear,                          location: 0.00),
+                .init(color: .clear,                                                              location: 0.00),
                 .init(color: isLight
-                    ? AppColors.purple.opacity(0.45)
-                    : AppColors.cyan.opacity(0.45),           location: 0.08),
+                    ? AppColors.accentSecondary.opacity(0.45)
+                    : AppColors.accentPrimary.opacity(0.45),                                      location: 0.08),
                 .init(color: isLight
-                    ? AppColors.magenta.opacity(0.45)
-                    : AppColors.purple.opacity(0.45),         location: 0.50),
+                    ? AppColors.accentTertiary.opacity(0.45)
+                    : AppColors.accentSecondary.opacity(0.45),                                    location: 0.50),
                 .init(color: isLight
-                    ? AppColors.gold.opacity(0.40)
-                    : AppColors.magenta.opacity(0.40),        location: 0.92),
-                .init(color: .clear,                          location: 1.00),
+                    ? AppColors.safetyAccent.opacity(0.40)
+                    : AppColors.accentTertiary.opacity(0.40),                                     location: 0.92),
+                .init(color: .clear,                                                              location: 1.00),
             ],
             startPoint: .leading,
             endPoint:   .trailing
@@ -206,12 +201,12 @@ struct PulseSheetView: View {
         if isLight {
             ZStack {
                 Ellipse()
-                    .fill(AppColors.magenta.opacity(0.06))
+                    .fill(AppColors.accentTertiary.opacity(0.06))
                     .frame(width: 300, height: 250)
                     .blur(radius: 90)
                     .offset(x: -80, y: 40)
                 Ellipse()
-                    .fill(AppColors.purple.opacity(0.05))
+                    .fill(AppColors.accentSecondary.opacity(0.05))
                     .frame(width: 250, height: 200)
                     .blur(radius: 90)
                     .offset(x: 100, y: 100)
@@ -219,12 +214,12 @@ struct PulseSheetView: View {
         } else {
             ZStack {
                 Ellipse()
-                    .fill(AppColors.purple.opacity(0.10))
+                    .fill(AppColors.accentSecondary.opacity(0.10))
                     .frame(width: 300, height: 250)
                     .blur(radius: 80)
                     .offset(x: -80, y: 40)
                 Ellipse()
-                    .fill(AppColors.magenta.opacity(0.07))
+                    .fill(AppColors.accentTertiary.opacity(0.07))
                     .frame(width: 250, height: 200)
                     .blur(radius: 80)
                     .offset(x: 100, y: 100)
@@ -236,42 +231,41 @@ struct PulseSheetView: View {
 
     private var headerRow: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
 
-                // Overline
                 Text("THE PULSE")
                     .font(AppFonts.overline)
                     .tracking(2.5)
                     .foregroundStyle(
-                        isLight ? AppColors.lightTextTertiary : AppColors.textTertiary
+                        isLight ? AppColors.textTertiary : AppColors.textTertiary
                     )
 
-                // LivingText tier name
                 LivingText(
                     text: "The \(currentTier.label) Space",
                     font: AppFonts.sectionHeading
                 )
 
-                // Sublabel — what it correlates to
                 Text(currentTier.sublabel)
                     .font(AppFonts.caption)
                     .foregroundStyle(
                         isLight
-                            ? AppColors.lightTextSecondary.opacity(0.75)
+                            ? AppColors.textSecondary.opacity(0.75)
                             : AppColors.textSecondary.opacity(0.75)
                     )
             }
 
             Spacer()
 
-            // Close button
             Button {
                 onDismiss?()
             } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 13, weight: .semibold))
+                Image(systemName: AppIcons.close)
+                    // .caption scales with Dynamic Type — correct for
+                    // icon-only close buttons at this visual weight.
+                    .font(.caption)
+                    .fontWeight(.semibold)
                     .foregroundStyle(
-                        isLight ? AppColors.lightTextTertiary : AppColors.textTertiary
+                        isLight ? AppColors.textTertiary : AppColors.textTertiary
                     )
                     .frame(width: 30, height: 30)
                     .background {
@@ -293,14 +287,15 @@ struct PulseSheetView: View {
                     }
             }
             .buttonStyle(.plain)
-            .padding(.top, 4)
+            .accessibilityLabel("Close")
+            .padding(.top, AppSpacing.xs)
         }
     }
 
     // MARK: - Stats Row
 
     private var statsRow: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppSpacing.sm) {
             statCell(
                 label: "STREAK",
                 value: "\(streakCount) day\(streakCount == 1 ? "" : "s")",
@@ -309,7 +304,7 @@ struct PulseSheetView: View {
             statCell(
                 label: "AVG TIER",
                 value: avgTier.label,
-                valueColor: isLight ? AppColors.magenta : AppColors.electricViolet
+                valueColor: isLight ? AppColors.accentTertiary : AppColors.accentSecondary
             )
             statCell(
                 label: "TREND",
@@ -324,26 +319,26 @@ struct PulseSheetView: View {
         value: String,
         valueColor: Color?
     ) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
             Text(label)
                 .font(AppFonts.overline)
                 .tracking(1.5)
                 .foregroundStyle(
-                    isLight ? AppColors.lightTextTertiary : AppColors.textTertiary
+                    isLight ? AppColors.textTertiary : AppColors.textTertiary
                 )
             Text(value)
                 .font(AppFonts.bodyMedium)
                 .foregroundStyle(
                     valueColor ?? (isLight
-                        ? AppColors.lightTextPrimary
+                        ? AppColors.textPrimary
                         : AppColors.textPrimary)
                 )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.sm)
         .background {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                 .fill(
                     isLight
                         ? Color.white.opacity(0.60)
@@ -351,7 +346,7 @@ struct PulseSheetView: View {
                 )
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                 .strokeBorder(
                     isLight
                         ? Color.white.opacity(0.80)
@@ -364,11 +359,11 @@ struct PulseSheetView: View {
     // MARK: - Window Selector
 
     private var windowSelector: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: AppSpacing.xs) {
             ForEach(PulseWindow.allCases) { window in
                 Button {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    withAnimation(.easeOut(duration: 0.2)) {
+                    withAnimation(AppAnimation.fast) {
                         selectedWindow = window
                     }
                 } label: {
@@ -376,28 +371,28 @@ struct PulseSheetView: View {
                         .font(AppFonts.buttonLabelSmall)
                         .foregroundStyle(
                             selectedWindow == window
-                                ? AppColors.purple
+                                ? AppColors.accentSecondary
                                 : (isLight
-                                    ? AppColors.lightTextTertiary
+                                    ? AppColors.textTertiary
                                     : AppColors.textTertiary)
                         )
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 7)
+                        .padding(.vertical, AppSpacing.sm)
                         .background {
-                            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
                                 .fill(
                                     selectedWindow == window
                                         ? (isLight
-                                            ? AppColors.purple.opacity(0.10)
-                                            : AppColors.purple.opacity(0.20))
+                                            ? AppColors.accentSecondary.opacity(0.10)
+                                            : AppColors.accentSecondary.opacity(0.20))
                                         : Color.clear
                                 )
                         }
                         .overlay {
-                            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
                                 .strokeBorder(
                                     selectedWindow == window
-                                        ? AppColors.purple.opacity(isLight ? 0.35 : 0.40)
+                                        ? AppColors.accentSecondary.opacity(isLight ? 0.35 : 0.40)
                                         : (isLight
                                             ? Color.black.opacity(0.07)
                                             : Color.white.opacity(0.07)),
@@ -406,7 +401,7 @@ struct PulseSheetView: View {
                         }
                 }
                 .buttonStyle(.plain)
-                .animation(.easeOut(duration: 0.2), value: selectedWindow)
+                .animation(AppAnimation.fast, value: selectedWindow)
             }
         }
     }
@@ -415,15 +410,17 @@ struct PulseSheetView: View {
 
     private var graphCard: some View {
         GeometryReader { geo in
-            let W = geo.size.width
+            let W             = geo.size.width
             let pointSpacing: CGFloat = 55
-            let safeCount = max(0, filteredEntries.count - 1)
-            let canvasW   = max(W, CGFloat(safeCount) * pointSpacing + 64)
-            let canvasH:  CGFloat = 220
+            let safeCount     = max(0, filteredEntries.count - 1)
+            let canvasW       = max(W, CGFloat(safeCount) * pointSpacing + 64)
+            let canvasH:      CGFloat = 220
 
             ZStack {
                 // Card surface
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                // TODO: Color(hex: "0C0A16") requires an AppColors token before migration.
+                // cardBackground is the semantic replacement candidate — confirm with design.
+                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
                     .fill(
                         isLight
                             ? Color.white.opacity(0.60)
@@ -431,19 +428,19 @@ struct PulseSheetView: View {
                     )
 
                 // Subtle iridescence
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
                     .fill(
                         LinearGradient(
                             stops: [
                                 .init(color: isLight
-                                    ? AppColors.purple.opacity(0.05)
-                                    : AppColors.cyan.opacity(0.06),    location: 0.0),
+                                    ? AppColors.accentSecondary.opacity(0.05)
+                                    : AppColors.accentPrimary.opacity(0.06),    location: 0.0),
                                 .init(color: isLight
-                                    ? AppColors.magenta.opacity(0.04)
-                                    : AppColors.purple.opacity(0.05),  location: 0.5),
+                                    ? AppColors.accentTertiary.opacity(0.04)
+                                    : AppColors.accentSecondary.opacity(0.05),  location: 0.5),
                                 .init(color: isLight
-                                    ? AppColors.gold.opacity(0.03)
-                                    : AppColors.magenta.opacity(0.04), location: 1.0),
+                                    ? AppColors.safetyAccent.opacity(0.03)
+                                    : AppColors.accentTertiary.opacity(0.04),   location: 1.0),
                             ],
                             startPoint: .topLeading,
                             endPoint:   .bottomTrailing
@@ -453,17 +450,17 @@ struct PulseSheetView: View {
                 // Rim
                 LinearGradient(
                     stops: [
-                        .init(color: .clear,                                              location: 0.00),
+                        .init(color: .clear,                                                      location: 0.00),
                         .init(color: isLight
-                            ? AppColors.purple.opacity(0.42)
-                            : AppColors.cyan.opacity(0.42),             location: 0.08),
+                            ? AppColors.accentSecondary.opacity(0.42)
+                            : AppColors.accentPrimary.opacity(0.42),             location: 0.08),
                         .init(color: isLight
-                            ? AppColors.magenta.opacity(0.42)
-                            : AppColors.purple.opacity(0.42),           location: 0.50),
+                            ? AppColors.accentTertiary.opacity(0.42)
+                            : AppColors.accentSecondary.opacity(0.42),           location: 0.50),
                         .init(color: isLight
-                            ? AppColors.gold.opacity(0.36)
-                            : AppColors.magenta.opacity(0.36),          location: 0.92),
-                        .init(color: .clear,                                              location: 1.00),
+                            ? AppColors.safetyAccent.opacity(0.36)
+                            : AppColors.accentTertiary.opacity(0.36),            location: 0.92),
+                        .init(color: .clear,                                                      location: 1.00),
                     ],
                     startPoint: .leading,
                     endPoint:   .trailing
@@ -472,19 +469,19 @@ struct PulseSheetView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
                 // Border
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
                     .strokeBorder(
                         LinearGradient(
                             stops: [
                                 .init(color: isLight
-                                    ? AppColors.purple.opacity(0.25)
-                                    : AppColors.cyan.opacity(0.20),     location: 0.0),
+                                    ? AppColors.accentSecondary.opacity(0.25)
+                                    : AppColors.accentPrimary.opacity(0.20),     location: 0.0),
                                 .init(color: isLight
-                                    ? AppColors.magenta.opacity(0.20)
-                                    : AppColors.purple.opacity(0.16),   location: 0.5),
+                                    ? AppColors.accentTertiary.opacity(0.20)
+                                    : AppColors.accentSecondary.opacity(0.16),   location: 0.5),
                                 .init(color: isLight
-                                    ? AppColors.gold.opacity(0.16)
-                                    : AppColors.magenta.opacity(0.12),  location: 1.0),
+                                    ? AppColors.safetyAccent.opacity(0.16)
+                                    : AppColors.accentTertiary.opacity(0.12),    location: 1.0),
                             ],
                             startPoint: .topLeading,
                             endPoint:   .bottomTrailing
@@ -504,12 +501,12 @@ struct PulseSheetView: View {
                 }
                 .defaultScrollAnchor(.trailing)
                 .frame(height: canvasH)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous))
             }
             .frame(height: 220)
             .shadow(
                 color: isLight
-                    ? AppColors.purple.opacity(0.07)
+                    ? AppColors.accentSecondary.opacity(0.07)
                     : Color.black.opacity(0.35),
                 radius: 20,
                 y: 8
@@ -525,28 +522,31 @@ struct PulseSheetView: View {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             onOpenInMap?()
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: AppSpacing.sm) {
                 Text("Open in Map")
                     .font(AppFonts.buttonLabel)
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 13, weight: .semibold))
+                Image(systemName: AppIcons.arrowRight)
+                    // .caption scales with Dynamic Type — correct for
+                    // inline directional icons accompanying button label text.
+                    .font(.caption)
+                    .fontWeight(.semibold)
             }
-            .foregroundStyle(AppColors.purple)
+            .foregroundStyle(AppColors.accentSecondary)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, AppSpacing.md)
             .background {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(AppColors.purple.opacity(isLight ? 0.10 : 0.18))
+                RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                    .fill(AppColors.accentSecondary.opacity(isLight ? 0.10 : 0.18))
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                     .strokeBorder(
-                        AppColors.purple.opacity(isLight ? 0.35 : 0.45),
+                        AppColors.accentSecondary.opacity(isLight ? 0.35 : 0.45),
                         lineWidth: 1.5
                     )
             }
             .shadow(
-                color: AppColors.purple.opacity(isLight ? 0.12 : 0.20),
+                color: AppColors.accentSecondary.opacity(isLight ? 0.12 : 0.20),
                 radius: 16,
                 y: 4
             )
@@ -555,13 +555,11 @@ struct PulseSheetView: View {
     }
 }
 
-
-
 // MARK: - Previews
 
 #Preview("Sheet — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseSheetView(
             entries:     PulseEntry.previews,
             onDismiss:   {},
@@ -573,7 +571,7 @@ struct PulseSheetView: View {
 
 #Preview("Sheet — light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseSheetView(
             entries:     PulseEntry.previews,
             onDismiss:   {},
@@ -585,7 +583,7 @@ struct PulseSheetView: View {
 
 #Preview("Sheet — zero entries") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseSheetView(
             entries:     [],
             onDismiss:   {},

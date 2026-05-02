@@ -44,7 +44,7 @@ struct CuriosityCardBack: View {
             // ── Ambient center glow ───────────────────────────────────
             RadialGradient(
                 colors: [
-                    (isLight ? AppColors.orangeHot : AppColors.purple).opacity(
+                    (isLight ? AppColors.progressBarLeading : AppColors.accentSecondary).opacity(
                         isLight ? 0.08 : 0.09
                     ),
                     Color.clear,
@@ -59,14 +59,14 @@ struct CuriosityCardBack: View {
             // TileOrbitView lives inside MazePatternView's GeometryReader
             // so both share the exact same cx/cy — guaranteed co-centered.
             MazePatternView(
-                color:         isLight ? AppColors.orangeHot : AppColors.magenta,
+                color:         isLight ? AppColors.progressBarLeading : AppColors.accentTertiary,
                 opacity:       isLight ? 0.14 : 0.16,
-                glowColor:     isLight ? AppColors.orangeHot : .clear,
+                glowColor:     isLight ? AppColors.progressBarLeading : .clear,
                 glowOpacity:   isLight ? 0.10 : 0.0,
                 orbitCount:    3,
                 isOrbitActive: isActive
             )
-            .padding(10)
+            .padding(AppSpacing.sm)
 
             // ── Corner marks ──────────────────────────────────────────
             VStack {
@@ -82,7 +82,7 @@ struct CuriosityCardBack: View {
                     cornerMark
                 }
             }
-            .padding(14)
+            .padding(AppSpacing.md)
 
         } // ZStack
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -93,14 +93,14 @@ struct CuriosityCardBack: View {
                     LinearGradient(
                         colors: isLight
                             ? [
-                                AppColors.purple.opacity(0.40),
-                                AppColors.orangeHot,
-                                AppColors.gold,
+                                AppColors.accentSecondary.opacity(0.40),
+                                AppColors.progressBarLeading,
+                                AppColors.safetyAccent,
                               ]
                             : [
-                                AppColors.purple,
-                                AppColors.cyan,
-                                AppColors.magenta,
+                                AppColors.accentSecondary,
+                                AppColors.accentPrimary,
+                                AppColors.accentTertiary,
                               ],
                         startPoint: .topLeading,
                         endPoint:   .bottomTrailing
@@ -111,8 +111,8 @@ struct CuriosityCardBack: View {
         )
         .shadow(
             color: isLight
-                ? AppColors.orangeHot.opacity(0.14)
-                : AppColors.purple.opacity(0.20),
+                ? AppColors.progressBarLeading.opacity(0.14)
+                : AppColors.accentSecondary.opacity(0.20),
             radius: 20
         )
         .shadow(color: Color.black.opacity(0.20), radius: 12, y: 6)
@@ -124,7 +124,7 @@ struct CuriosityCardBack: View {
         Text("✦")
             .font(AppFonts.overline)
             .foregroundStyle(
-                (isLight ? AppColors.orangeHot : AppColors.purple)
+                (isLight ? AppColors.progressBarLeading : AppColors.accentSecondary)
                     .opacity(isLight ? 0.55 : 0.45)
             )
     }
@@ -134,7 +134,7 @@ struct CuriosityCardBack: View {
 
 #Preview("Dark — active") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CuriosityCardBack(isActive: true)
             .frame(width: 340, height: 480)
     }
@@ -143,7 +143,7 @@ struct CuriosityCardBack: View {
 
 #Preview("Light — active") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CuriosityCardBack(isActive: true)
             .frame(width: 340, height: 480)
     }
@@ -152,7 +152,7 @@ struct CuriosityCardBack: View {
 
 #Preview("Dark — inactive (flipped)") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CuriosityCardBack(isActive: false)
             .frame(width: 340, height: 480)
     }

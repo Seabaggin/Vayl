@@ -79,8 +79,8 @@ struct AtmosphericGhostDeck: View {
                 RoundedRectangle(cornerRadius: cornerRadius)
                     .stroke(
                         colorScheme == .light
-                            ? AppColors.purple.opacity(0.12)  // barely-there border, same family as card border
-                            : AppColors.purple.opacity(0.38), // strong on dark
+                            ? AppColors.accentSecondary.opacity(0.12)  // barely-there border, same family as card border
+                            : AppColors.accentSecondary.opacity(0.38), // strong on dark
                         lineWidth: 2.5
                     )
             )

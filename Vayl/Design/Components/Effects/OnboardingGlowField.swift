@@ -17,31 +17,31 @@ struct OnboardingGlowField: View {
             let h = geo.size.height
             ZStack {
                 // Cyan — upper-left
-                blob(AppColors.cyan,  0.32, 300, 280, 75, 0)
+                blob(AppColors.accentPrimary,  0.32, 300, 280, 75, 0)
                     .offset(x: sin(blobPhase[0] * .pi * 2) * 12,
                             y: sin(blobPhase[0] * .pi * 2 + .pi / 3) * 14)
                     .position(x: w * 0.22, y: h * 0.20)
 
                 // Purple — center
-                blob(AppColors.purple, 0.28, 380, 360, 75, 1)
+                blob(AppColors.accentSecondary, 0.28, 380, 360, 75, 1)
                     .scaleEffect(blobVisible[1] ? 1 + 0.06 * sin(blobPhase[1] * .pi * 2) : 0.7)
                     .offset(x: sin(blobPhase[1] * .pi * 2) * 4)
                     .position(x: w * 0.50, y: h * 0.40)
 
                 // Magenta — right edge
-                blob(AppColors.magenta, 0.24, 280, 300, 75, 2)
+                blob(AppColors.accentTertiary, 0.24, 280, 300, 75, 2)
                     .offset(x: sin(blobPhase[2] * .pi * 2) * -10,
                             y: cos(blobPhase[2] * .pi * 2) * 12)
                     .position(x: w * 0.88, y: h * 0.33)
 
                 // Gold — warm accent
-                blob(AppColors.goldLight, 0.12, 200, 180, 80, 3)
+                blob(AppColors.safetyAccent, 0.12, 200, 180, 80, 3)
                     .offset(x: sin(blobPhase[3] * .pi) * 8,
                             y: sin(blobPhase[3] * .pi) * -6)
                     .position(x: w * 0.20, y: h * 0.48)
 
                 // Magenta — mid-left
-                blob(AppColors.magenta, 0.15, 300, 220, 85, 4)
+                blob(AppColors.accentTertiary, 0.15, 300, 220, 85, 4)
                     .scaleEffect(blobVisible[4] ? 1 + 0.05 * sin(blobPhase[4] * .pi * 2) : 0.7)
                     .offset(x: sin(blobPhase[4] * .pi) * 8,
                             y: sin(blobPhase[4] * .pi) * -6)
@@ -50,9 +50,9 @@ struct OnboardingGlowField: View {
                 // Floor wash
                 Ellipse()
                     .fill(RadialGradient(stops: [
-                        .init(color: AppColors.deepBlue.opacity(0.12), location: 0),
-                        .init(color: AppColors.purple.opacity(0.08),   location: 0.4),
-                        .init(color: .clear,                           location: 0.7)
+                        .init(color: AppColors.accentSecondary.opacity(0.12), location: 0),
+                        .init(color: AppColors.accentSecondary.opacity(0.08), location: 0.4),
+                        .init(color: .clear,                                  location: 0.7)
                     ], center: .center, startRadius: 0, endRadius: 200))
                     .frame(width: 420, height: 180)
                     .blur(radius: 90)
@@ -62,7 +62,7 @@ struct OnboardingGlowField: View {
                     .position(x: w * 0.5, y: h * 0.80)
 
                 // Cyan accent — bottom
-                blob(AppColors.cyan, 0.08, 240, 150, 90, 6)
+                blob(AppColors.accentPrimary, 0.08, 240, 150, 90, 6)
                     .offset(x: sin(blobPhase[6] * .pi * 2) * -8)
                     .position(x: w * 0.45, y: h * 0.88)
             }
@@ -110,7 +110,7 @@ struct OnboardingGlowField: View {
 
 #Preview {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingGlowField()
     }
 }

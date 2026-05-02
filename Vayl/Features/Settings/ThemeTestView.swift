@@ -19,14 +19,14 @@ struct ThemeTestView: View {
         @Bindable var tm = themeManager
 
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: AppSpacing.lg) {
 
                 // Theme Picker
                 ThemePickerView()
 
                 // Accent Swatches
                 section("Accents") {
-                    HStack(spacing: 12) {
+                    HStack(spacing: AppSpacing.sm) {
                         swatch("Cyan (UI)", t.cyan)
                         swatch("Magenta (UI)", t.magenta)
                         Divider().frame(height: 40)
@@ -46,8 +46,8 @@ struct ThemeTestView: View {
 
                 // Cards
                 section("Cards") {
-                    VStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
+                    VStack(spacing: AppSpacing.sm) {
+                        VStack(alignment: .leading, spacing: AppSpacing.xs) {
                             Text("Normal Card")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(t.text)
@@ -55,10 +55,10 @@ struct ThemeTestView: View {
                                 .font(.system(size: 11))
                                 .foregroundStyle(t.textSecondary)
                         }
-                        .padding(16)
+                        .padding(AppSpacing.md)
                         .themedCard()
 
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: AppSpacing.xs) {
                             Text("Selected Card")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(t.text)
@@ -66,7 +66,7 @@ struct ThemeTestView: View {
                                 .font(.system(size: 11))
                                 .foregroundStyle(t.textSecondary)
                         }
-                        .padding(16)
+                        .padding(AppSpacing.md)
                         .themedCard(selected: true)
                     }
                 }
@@ -78,7 +78,7 @@ struct ThemeTestView: View {
 
                 // Critical
                 section("Critical Buttons") {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppSpacing.sm) {
                         CriticalButton(
                             title: "Skip",
                             icon: "forward.fill",
@@ -114,7 +114,7 @@ struct ThemeTestView: View {
                             GridItem(.flexible()),
                             GridItem(.flexible())
                         ],
-                        spacing: 10
+                        spacing: AppSpacing.sm
                     ) {
                         ForEach(0..<4, id: \.self) { i in
                             let (emoji, label, color) = options[i]
@@ -124,7 +124,7 @@ struct ThemeTestView: View {
                                     selectedRating = i
                                 }
                             } label: {
-                                VStack(spacing: 4) {
+                                VStack(spacing: AppSpacing.xs) {
                                     Text(emoji)
                                         .font(.system(size: 28))
                                     Text(label)
@@ -137,7 +137,7 @@ struct ThemeTestView: View {
                                         )
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
+                                .padding(.vertical, AppSpacing.md)
                                 .background(
                                     sel
                                         ? color.opacity(t.isDark ? 0.15 : 0.08)
@@ -145,9 +145,9 @@ struct ThemeTestView: View {
                                             ? .white.opacity(0.03)
                                             : t.surface1)
                                 )
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 16)
+                                    RoundedRectangle(cornerRadius: AppRadius.lg)
                                         .stroke(
                                             sel ? color : t.cardBorder,
                                             lineWidth: sel ? 2 : 1.5
@@ -168,7 +168,7 @@ struct ThemeTestView: View {
 
                 // Text Hierarchy
                 section("Text Hierarchy") {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         Text("Primary — .text")
                             .foregroundStyle(t.text)
                             .font(.system(size: 14, weight: .semibold))
@@ -195,7 +195,7 @@ struct ThemeTestView: View {
                     GradBadge(text: "Ready with Awareness")
                 }
 
-                Spacer(minLength: 40)
+                Spacer(minLength: AppSpacing.xxl)
             }
         }
         .background(t.bg.ignoresSafeArea())
@@ -205,19 +205,19 @@ struct ThemeTestView: View {
         _ title: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text(title.uppercased())
                 .font(.system(size: 10, weight: .semibold))
                 .tracking(1.5)
                 .foregroundStyle(t.textMuted)
             content()
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, AppSpacing.md)
     }
 
     private func swatch(_ label: String, _ color: Color) -> some View {
-        VStack(spacing: 4) {
-            RoundedRectangle(cornerRadius: 8)
+        VStack(spacing: AppSpacing.xs) {
+            RoundedRectangle(cornerRadius: AppRadius.sm)
                 .fill(color)
                 .frame(width: 32, height: 32)
                 .shadow(

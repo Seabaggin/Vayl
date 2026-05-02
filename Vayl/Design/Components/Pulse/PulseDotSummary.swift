@@ -76,20 +76,20 @@ struct PulseDotSummary: View {
     // Light: purple → magenta (warm aurora — no cyan on cream)
 
     private var ringInner: Color {
-        isLight ? AppColors.purple        : AppColors.cyan
+        isLight ? AppColors.accentSecondary        : AppColors.accentPrimary
     }
     private var ringMid: Color {
-        isLight ? AppColors.magenta       : AppColors.electricViolet
+        isLight ? AppColors.accentTertiary       :AppColors.accentSecondary
     }
     private var ringOuter: Color {
-        isLight ? AppColors.magentaLight  : AppColors.magenta
+        isLight ? AppColors.accentTertiary  : AppColors.accentTertiary
     }
 
     // Scrim color — dark mode uses page background so the blackout
     // is seamless. Light mode must use true black — cream scrim
     // at 0.92 reads beige, not dark.
     private var scrimColor: Color {
-        isLight ? Color.black.opacity(0.78) : AppColors.pageBg.opacity(0.95)
+        isLight ? Color.black.opacity(0.78) : AppColors.pageBackground.opacity(0.95)
     }
 
     // MARK: - Info Position
@@ -314,9 +314,9 @@ struct PulseDotSummary: View {
             .font(AppFonts.overline)
             .tracking(1.5)
             .foregroundStyle(
-                isLight ? AppColors.lightTextTertiary : AppColors.textTertiary
+                isLight ? AppColors.textTertiary : AppColors.textTertiary
             )
-            .padding(.bottom, 5)
+            .padding(.bottom, AppSpacing.xs)
 
             // Tier name — gradient matches mode
             Text(entry.tier.label)
@@ -324,25 +324,25 @@ struct PulseDotSummary: View {
                 .foregroundStyle(
                     LinearGradient(
                         colors: isLight
-                            ? [AppColors.purple, AppColors.magenta, AppColors.gold]
-                            : [AppColors.cyan, AppColors.electricViolet, AppColors.magenta],
+                            ? [AppColors.accentSecondary, AppColors.accentTertiary, AppColors.safetyAccent]
+                            : [AppColors.accentPrimary,AppColors.accentSecondary, AppColors.accentTertiary],
                         startPoint: .leading,
                         endPoint:   .trailing
                     )
                 )
-                .padding(.bottom, 2)
+                .padding(.bottom, AppSpacing.xxs)
 
             // Glow underline
             glowUnderline
-                .padding(.bottom, 4)
+                .padding(.bottom, AppSpacing.xs)
 
             // Sublabel
             Text(entry.tier.sublabel)
                 .font(AppFonts.caption)
                 .foregroundStyle(
-                    isLight ? AppColors.lightTextTertiary : AppColors.textTertiary
+                    isLight ? AppColors.textTertiary : AppColors.textTertiary
                 )
-                .padding(.bottom, 12)
+                .padding(.bottom, AppSpacing.sm)
 
             // Answer rows
             VStack(spacing: 0) {
@@ -373,7 +373,7 @@ struct PulseDotSummary: View {
                     .font(AppFonts.caption)
                     .foregroundStyle(
                         isLight
-                            ? AppColors.lightTextSecondary
+                            ? AppColors.textSecondary
                             : AppColors.textSecondary
                     )
                 Spacer()
@@ -381,11 +381,11 @@ struct PulseDotSummary: View {
                     .font(AppFonts.bodyMedium)
                     .foregroundStyle(
                         isLight
-                            ? AppColors.lightTextPrimary
+                            ? AppColors.textPrimary
                             : AppColors.textPrimary
                     )
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, AppSpacing.sm)
 
             if !isLast {
                 Rectangle()
@@ -412,15 +412,15 @@ struct PulseDotSummary: View {
             .fill(
                 LinearGradient(
                     colors: isLight
-                        ? [AppColors.purple, AppColors.magenta, AppColors.gold, .clear]
-                        : [AppColors.cyan, AppColors.electricViolet, AppColors.magenta, .clear],
+                        ? [AppColors.accentSecondary, AppColors.accentTertiary, AppColors.safetyAccent, .clear]
+                        : [AppColors.accentPrimary,AppColors.accentSecondary, AppColors.accentTertiary, .clear],
                     startPoint: .leading,
                     endPoint:   .trailing
                 )
             )
             .frame(width: 140, height: 1.5)
-            .shadow(color: AppColors.electricViolet.opacity(0.7), radius: 4)
-            .shadow(color: AppColors.cyan.opacity(0.4),           radius: 8)
+            .shadow(color:AppColors.accentSecondary.opacity(0.7), radius: 4)
+            .shadow(color: AppColors.accentPrimary.opacity(0.4),           radius: 8)
     }
 
     // MARK: - Open Animation
@@ -452,7 +452,7 @@ struct PulseDotSummary: View {
         }
 
         // Embers burst outward from dot
-        withAnimation(.easeOut(duration: 0.45)) {
+        withAnimation(AppAnimation.enter) {
             emberOpacity = 1.0
         }
         animateEmbers()
@@ -464,12 +464,12 @@ struct PulseDotSummary: View {
         }
 
         // Info fades in after burn has opened
-        withAnimation(.easeOut(duration: 0.40).delay(0.55)) {
+        withAnimation(AppAnimation.enter.delay(0.55)) {
             infoOpacity = 1.0
         }
 
         // Embers fade as they travel
-        withAnimation(.easeOut(duration: 0.40).delay(0.75)) {
+        withAnimation(AppAnimation.enter.delay(0.75)) {
             emberOpacity = 0.0
         }
     }
@@ -487,6 +487,10 @@ struct PulseDotSummary: View {
             return
         }
         let targetOpacity: Double = (current % 2 == 0) ? 0.45 : 1.0
+        // DESIGN DECISION: 0.08 + random(0...0.04) — intentional jitter.
+        // Each flicker cycle varies ±25% around 0.08s to simulate organic ember cooling.
+        // A fixed duration would produce a metronomic pulse that reads as mechanical.
+        // Do not migrate to an AppAnimation token — this is stochastic physics, not UI state.
         let duration: Double      = 0.08 + Double.random(in: 0...0.04)
         withAnimation(.easeInOut(duration: duration)) {
             charFlickerOpacity = targetOpacity
@@ -503,7 +507,7 @@ struct PulseDotSummary: View {
         isDismissing = true
 
         // Info fades first
-        withAnimation(.easeIn(duration: 0.22)) {
+        withAnimation(AppAnimation.exit) {
             infoOpacity = 0.0
         }
 
@@ -531,22 +535,22 @@ struct PulseDotSummary: View {
     private func spawnEmbers() {
         let colors: [Color] = isLight
             ? [
-                AppColors.purple,
-                AppColors.magenta,
-                AppColors.purpleLight,
-                AppColors.magentaLight,
-                AppColors.gold,
-                AppColors.purple,
-                AppColors.magenta,
+                AppColors.accentSecondary,
+                AppColors.accentTertiary,
+                AppColors.accentSecondary,
+                AppColors.accentTertiary,
+                AppColors.safetyAccent,
+                AppColors.accentSecondary,
+                AppColors.accentTertiary,
             ]
             : [
-                AppColors.cyan,
-                AppColors.electricViolet,
-                AppColors.magenta,
-                AppColors.pink,
-                AppColors.purple,
-                AppColors.cyan,
-                AppColors.magenta,
+                AppColors.accentPrimary,
+               AppColors.accentSecondary,
+                AppColors.accentTertiary,
+                AppColors.accentTertiary,
+                AppColors.accentSecondary,
+                AppColors.accentPrimary,
+                AppColors.accentTertiary,
             ]
 
         embers = (0..<20).map { i in
@@ -580,7 +584,7 @@ struct PulseDotSummary: View {
 
 #Preview("Sovereign — mid — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseDotSummary(
             entry:       PulseEntry.previews[1],
             dotPosition: CGPoint(x: 180, y: 160),
@@ -593,7 +597,7 @@ struct PulseDotSummary: View {
 
 #Preview("Expansive — high dot — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseDotSummary(
             entry:       PulseEntry.previews[7],
             dotPosition: CGPoint(x: 260, y: 55),
@@ -606,7 +610,7 @@ struct PulseDotSummary: View {
 
 #Preview("Protective — low dot — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseDotSummary(
             entry:       PulseEntry.previews[2],
             dotPosition: CGPoint(x: 90, y: 240),
@@ -619,7 +623,7 @@ struct PulseDotSummary: View {
 
 #Preview("Sovereign — light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseDotSummary(
             entry:       PulseEntry.previews[4],
             dotPosition: CGPoint(x: 180, y: 150),
@@ -632,7 +636,7 @@ struct PulseDotSummary: View {
 
 #Preview("High dot — light — flip test") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         PulseDotSummary(
             entry:       PulseEntry.previews[6],
             dotPosition: CGPoint(x: 200, y: 40),

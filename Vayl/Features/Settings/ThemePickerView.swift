@@ -15,37 +15,37 @@ struct ThemePickerView: View {
     var body: some View {
         @Bindable var tm = themeManager
 
-        VStack(spacing: 12) {
+        VStack(spacing: AppSpacing.sm) {
             Text("Appearance")
-                .font(.system(size: 13, weight: .bold))
+                .font(Font.custom("Switzer-Bold", size: 13, relativeTo: .caption))
                 .foregroundStyle(t.text)
 
-            HStack(spacing: 8) {
+            HStack(spacing: AppSpacing.sm) {
                 ForEach(ThemeMode.allCases) { mode in
                     Button {
-                        withAnimation(.easeInOut(duration: 0.3)) {
+                        withAnimation(AppAnimation.standard) {
                             tm.mode = mode
                         }
                     } label: {
-                        VStack(spacing: 6) {
+                        VStack(spacing: AppSpacing.sm) {
                             Image(systemName: mode.icon)
-                                .font(.system(size: 16))
+                                .font(Font.custom("Switzer-Regular", size: 16, relativeTo: .body))
                             Text(mode.displayName)
-                                .font(.system(size: 10, weight: .medium))
+                                .font(Font.custom("Switzer-Medium", size: 10, relativeTo: .caption2))
                         }
                         .foregroundStyle(
                             tm.mode == mode ? .white : t.textSecondary
                         )
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, AppSpacing.sm)
                         .background(
                             tm.mode == mode
                                 ? AnyShapeStyle(t.buttonGradient)
                                 : AnyShapeStyle(t.surface1)
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 10)
+                            RoundedRectangle(cornerRadius: AppRadius.md)
                                 .stroke(
                                     tm.mode == mode ? .clear : t.cardBorder,
                                     lineWidth: 1.5
@@ -55,6 +55,6 @@ struct ThemePickerView: View {
                 }
             }
         }
-        .padding(16)
+        .padding(AppSpacing.md)
     }
 }

@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showResetConfirm: Bool = false
     @State private var showExportSheet: Bool = false
     @AppStorage("screenshotProtectionEnabled") private var screenshotProtection: Bool = true
+    // TODO: migrate key to UserDefaultsKey.screenshotProtectionEnabled
     @State private var hapticFeedback: Bool = true
     @State private var navigateToThemePicker: Bool = false
 
@@ -23,24 +24,25 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 28) {
+                VStack(spacing: AppSpacing.xl) {        // was 28 → xl (32), snap per handoff
                     header
                     NavigationLink(destination: PairingSettingsView()) {
                         HStack {
-                            Image(systemName: "heart.circle.fill")
+                            Image(AppIcons.heartCircleFill) // was "heart.circle.fill"
                                 .foregroundStyle(.pink)
-                            VStack(alignment: .leading, spacing: 2) {
+                            VStack(alignment: .leading, spacing: AppSpacing.xxs) { // was 2 → xxs, exact
                                 Text("Pair with Partner")
-                                    .fontWeight(.medium)
+                                    .font(AppFonts.bodyMedium)   // was .fontWeight(.medium) on system font
+                                    .foregroundColor(AppColors.textPrimary)
                                 Text("Connect your accounts to play together")
-                                    .font(.caption)
+                                    .font(AppFonts.caption)      // was .font(.caption) system token
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Image(systemName: "chevron.right")
+                            Image(AppIcons.chevronRight)     // was "chevron.right"
                                 .foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, AppSpacing.xs)  // was 4 → xs, exact
                     }
                     profileSection
                     partnerSection
@@ -53,11 +55,11 @@ struct SettingsView: View {
                     DebugLogoutView()
                     #endif
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-                .padding(.bottom, 40)
+                .padding(.horizontal, AppSpacing.lg)    // was 20 → lg (24)
+                .padding(.top, AppSpacing.md)           // was 16 → md, exact
+                .padding(.bottom, AppSpacing.xxl)       // was 40 → xxl (48), snap per handoff
             }
-            .background(AppColors.pageBg.ignoresSafeArea())
+            .background(AppColors.pageBackground.ignoresSafeArea())
             .if(screenshotProtection) { $0.screenshotProtected() }
             .alert("Reset All Data?", isPresented: $showResetConfirm) {
                 Button("Cancel", role: .cancel) {}
@@ -85,11 +87,11 @@ struct SettingsView: View {
 
     private var profileSection: some View {
         SettingsCard {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
                 SectionHeader("PROFILE")
                 InteractiveField(
                     placeholder: "Your name",
-                    icon: "person.fill",
+                    icon: "person.fill",            // raw string lives in InteractiveField — migrate there
                     text: $partnerName
                 )
             }
@@ -100,35 +102,51 @@ struct SettingsView: View {
 
     private var partnerSection: some View {
         SettingsCard {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
                 SectionHeader("PARTNER PAIRING")
                 Text("Share this code with your partner so they can link their app to yours.")
                     .font(AppFonts.caption)
                     .foregroundColor(AppColors.textTertiary)
-                HStack(spacing: 12) {
+                HStack(spacing: AppSpacing.sm) {    // was 12 → sm (8), snap per handoff
                     Text(pairingCode)
                         .font(AppFonts.scoreDisplay)
-                        .foregroundColor(AppColors.cyan)
+                        .foregroundColor(AppColors.accentPrimary)
                         .kerning(2)
                     Spacer()
                     Button {
                         UIPasteboard.general.string = pairingCode
-                        withAnimation { showPairingCopied = true }
+                        withAnimation(AppAnimation.fast) { // was bare withAnimation
+                            showPairingCopied = true
+                        }
                         Task {
                             try? await Task.sleep(for: .seconds(2))
-                            withAnimation { showPairingCopied = false }
+                            // TODO: replace try? with do/catch per Swift rules
+                            withAnimation(AppAnimation.fast) { // was bare withAnimation
+                                showPairingCopied = false
+                            }
                         }
                     } label: {
-                        Image(systemName: showPairingCopied ? "checkmark" : "doc.on.doc")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(showPairingCopied ? AppColors.success : AppColors.textSecondary)
+                        Image(showPairingCopied ? AppIcons.checkmark : AppIcons.docOnDoc)
+                        // was "checkmark" / "doc.on.doc"
+                            .font(
+                                Font.custom("Switzer-Medium", size: 16, relativeTo: .body)
+                            )                       // was .system(size: 16, weight: .medium)
+                            .foregroundColor(
+                                showPairingCopied ? AppColors.success : AppColors.textSecondary
+                            )
+                            .frame(minWidth: 44, minHeight: 44) // A11y: min hit target
                     }
+                    .accessibilityLabel(showPairingCopied ? "Copied" : "Copy pairing code")
+                    .accessibilityAddTraits(.isButton)
                 }
-                .padding(14)
-                .cardStyle(background: AppColors.surfaceBg, cornerRadius: 10)
+                .padding(AppSpacing.md)             // was 14 → md (16), snap
+                .cardStyle(
+                    background: AppColors.modalBackground,
+                    cornerRadius: AppRadius.md      // was 10 → md (12), snap per handoff
+                )
                 InteractiveField(
                     placeholder: "Enter partner's code",
-                    icon: "link",
+                    icon: "link",                   // raw string lives in InteractiveField — migrate there
                     text: .constant("")
                 )
                 GradientButton(title: "Link Partner") {
@@ -144,15 +162,17 @@ struct SettingsView: View {
 
     private var appearanceSection: some View {
         SettingsCard {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
                 SectionHeader("APPEARANCE")
                 Button {
                     navigateToThemePicker = true
                 } label: {
                     HStack {
-                        Image(systemName: "paintpalette.fill")
-                            .font(.system(size: 15))
-                            .foregroundColor(AppColors.purple)
+                        Image(AppIcons.paintpalette) // was "paintpalette.fill"
+                            .font(
+                                Font.custom("Switzer-Regular", size: 15, relativeTo: .body)
+                            )                       // was .system(size: 15)
+                            .foregroundColor(AppColors.accentSecondary)
                         Text("Theme")
                             .font(AppFonts.bodyMedium)
                             .foregroundColor(AppColors.textPrimary)
@@ -160,16 +180,20 @@ struct SettingsView: View {
                         Text("Midnight")
                             .font(AppFonts.caption)
                             .foregroundColor(AppColors.textMuted)
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
+                        Image(AppIcons.chevronRight) // was "chevron.right"
+                            .font(
+                                Font.custom("Switzer-Semibold", size: 12, relativeTo: .caption)
+                            )                       // was .system(size: 12, weight: .semibold)
                             .foregroundColor(AppColors.textMuted)
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, AppSpacing.xs) // was 4 → xs, exact
                 }
+                .accessibilityLabel("Theme — currently Midnight")
+                .accessibilityAddTraits(.isButton)
                 SpectrumBar()
                 ToggleRow(
-                    icon: "waveform",
-                    iconColor: AppColors.magenta,
+                    icon: "waveform",               // raw string lives in ToggleRow — migrate there
+                    iconColor: AppColors.accentTertiary,
                     label: "Haptic Feedback",
                     isOn: $hapticFeedback
                 )
@@ -181,11 +205,11 @@ struct SettingsView: View {
 
     private var privacySection: some View {
         SettingsCard {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
                 SectionHeader("PRIVACY")
                 ToggleRow(
-                    icon: "eye.slash.fill",
-                    iconColor: AppColors.gold,
+                    icon: "eye.slash.fill",         // raw string lives in ToggleRow — migrate there
+                    iconColor: AppColors.safetyAccent,
                     label: "Screenshot Protection",
                     isOn: $screenshotProtection
                 )
@@ -200,9 +224,10 @@ struct SettingsView: View {
 
     private var dataSection: some View {
         SettingsCard {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
                 SectionHeader("DATA")
                 CriticalButton(title: "Export My Data", icon: "square.and.arrow.up", style: .neutral) {
+                    // raw string lives in CriticalButton — migrate there
                     showExportSheet = true
                 }
             }
@@ -213,9 +238,10 @@ struct SettingsView: View {
 
     private var dangerZone: some View {
         SettingsCard {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
                 SectionHeader("DANGER ZONE")
                 CriticalButton(title: "Reset All Data", icon: "trash.fill", style: .neutral) {
+                    // raw string lives in CriticalButton — migrate there
                     showResetConfirm = true
                 }
             }
@@ -225,7 +251,7 @@ struct SettingsView: View {
     // MARK: - App Info
 
     private var appInfo: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: AppSpacing.sm) {            // was 6 → sm (8), snap per handoff
             Text("Vayl")
                 .font(AppFonts.caption)
                 .foregroundColor(AppColors.textMuted)
@@ -233,7 +259,7 @@ struct SettingsView: View {
                 .font(AppFonts.meta)
                 .foregroundColor(AppColors.textMuted)
         }
-        .padding(.top, 8)
+        .padding(.top, AppSpacing.sm)              // was 8 → sm, exact
     }
 }
 
@@ -243,6 +269,7 @@ struct SettingsView: View {
 struct DebugLogoutView: View {
     @Environment(AuthService.self) private var authService
     @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
+    // TODO: migrate key to UserDefaultsKey.hasCompletedOnboarding
 
     var body: some View {
         Button("⚠️ DEV: Log Out & Reset Onboarding") {

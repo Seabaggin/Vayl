@@ -17,8 +17,8 @@ struct GradientText: View {
             .foregroundStyle(
                 LinearGradient(
                     colors: colorScheme == .light
-                        ? [AppColors.gold, AppColors.magenta]
-                        : [AppColors.cyan, AppColors.purple],
+                        ? [AppColors.safetyAccent, AppColors.accentTertiary]
+                        : [AppColors.accentPrimary, AppColors.accentSecondary],
                     startPoint: .leading,
                     endPoint: .trailing
                 )
@@ -29,7 +29,7 @@ struct GradientText: View {
 // MARK: - Previews
 
 #Preview("Dark Mode") {
-    VStack(alignment: .leading, spacing: 20) {
+    VStack(alignment: .leading, spacing: AppSpacing.lg) {
         GradientText(
             text: "Jordan.",
             font: .system(size: 28, weight: .bold)
@@ -43,14 +43,14 @@ struct GradientText: View {
             font: .system(size: 13, weight: .regular)
         )
     }
-    .padding(24)
+    .padding(AppSpacing.lg)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(AppColors.pageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }
 
 #Preview("Light Mode") {
-    VStack(alignment: .leading, spacing: 20) {
+    VStack(alignment: .leading, spacing: AppSpacing.lg) {
         GradientText(
             text: "Jordan.",
             font: .system(size: 28, weight: .bold)
@@ -64,8 +64,8 @@ struct GradientText: View {
             font: .system(size: 13, weight: .regular)
         )
     }
-    .padding(24)
+    .padding(AppSpacing.lg)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(AppColors.lightPageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.light)
 }

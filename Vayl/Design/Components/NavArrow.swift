@@ -1,8 +1,8 @@
 // NavArrow.swift
-// Open Lightly
+// Vayl
 //
 // Pill nav arrow — adaptive dark/light.
-// Dark:  pillBorder()       (cyan → purple → magenta) border + arrow
+// Dark:  pillBorder()  (cyan → purple → magenta) border + arrow
 // Light: warmAuroraBorder() border, magenta → orangeHot → gold arrow
 
 import SwiftUI
@@ -24,15 +24,15 @@ enum OnboardingArrowStyle {
 extension CGSize {
     /// Top nav bar weight — sits beside progress indicator
     static let navArrowTopBar = CGSize(width: 80, height: 44)
-    /// Compact nav bar — smaller screens or tighter headers  //
-      static let navArrowCompact = CGSize(width: 56, height: 32)
+    /// Compact nav bar — smaller screens or tighter headers
+    static let navArrowCompact = CGSize(width: 56, height: 32)
 }
 
 // MARK: - Shared Gradients
 
 /// Dark mode — arrow + border: cyan → purple → magenta
 private let spectrumGradient = LinearGradient(
-    colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
+    colors: [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
     startPoint: .topLeading,
     endPoint:   .bottomTrailing
 )
@@ -40,9 +40,9 @@ private let spectrumGradient = LinearGradient(
 /// Light mode — arrow: magenta → orangeHot → gold
 private let magentaGoldGradient = LinearGradient(
     stops: [
-        .init(color: AppColors.magenta,   location: 0.00),
-        .init(color: AppColors.orangeHot, location: 0.55),
-        .init(color: AppColors.gold,      location: 1.00),
+        .init(color: AppColors.accentTertiary,      location: 0.00),
+        .init(color: AppColors.progressBarLeading,  location: 0.55),
+        .init(color: AppColors.safetyAccent,        location: 1.00),
     ],
     startPoint: .topLeading,
     endPoint:   .bottomTrailing
@@ -108,58 +108,63 @@ struct GradientStrokeArrow: View {
 //
 // Parameter order: size → action (enables trailing closure, fixes init ordering)
 //
-// Pill:  surfaceBg fill at 0.85 opacity + pillBorder() spectrum border
+// Pill:  modalBackground fill at 0.85 opacity + pillBorder() spectrum border
 // Arrow: spectrumGradient (cyan → purple → magenta)
 // Glow:  blurred border duplicate at 0.50 opacity
 // strokeWidth scales proportionally with pill height.
 
 struct DarkNavArrow: View {
     var size:   CGSize = .navArrowCompact  // ← first
-    var action: () -> Void                // ← last, enables trailing closure
+    var action: () -> Void                 // ← last, enables trailing closure
 
     // Stroke scales with height — 1.8 at 44pt
     private var strokeWidth: CGFloat {
         (size.height / 44) * 1.8
     }
 
+    // Extracted to reduce body complexity for the compiler
+    private var pill: some View {
+        ZStack {
+
+            // ── Pill fill
+            Capsule()
+                .fill(AppColors.modalBackground.opacity(0.85))
+                .frame(width: size.width, height: size.height)
+
+            // ── Crisp spectrum border via existing modifier
+            Capsule()
+                .strokeBorder(Color.clear, lineWidth: 0)
+                .frame(width: size.width, height: size.height)
+                .pillBorder()
+
+            // ── Blurred glow border duplicate
+            Capsule()
+                .strokeBorder(spectrumGradient, lineWidth: 4)
+                .blur(radius: 7)
+                .opacity(0.50)
+                .frame(width: size.width, height: size.height)
+
+            // ── Arrow glyph — spectrum, 65% of pill
+            GradientStrokeArrow(
+                gradient:     spectrumGradient,
+                strokeWidth:  strokeWidth,
+                shadowColor1: AppColors.accentPrimary,
+                shadowColor2: AppColors.accentSecondary
+            )
+            .frame(
+                width:  size.width  * 0.65,
+                height: size.height * 0.65
+            )
+        }
+        .frame(width: size.width, height: size.height)
+    }
+
     var body: some View {
         Button(action: action, label: {
-            ZStack {
-
-                // ── Pill fill
-                Capsule()
-                    .fill(AppColors.surfaceBg.opacity(0.85))
-                    .frame(width: size.width, height: size.height)
-
-                // ── Crisp spectrum border via existing modifier
-                Capsule()
-                    .strokeBorder(Color.clear, lineWidth: 0)
-                    .frame(width: size.width, height: size.height)
-                    .pillBorder()
-
-                // ── Blurred glow border duplicate
-                Capsule()
-                    .strokeBorder(spectrumGradient, lineWidth: 4)
-                    .blur(radius: 7)
-                    .opacity(0.50)
-                    .frame(width: size.width, height: size.height)
-
-                // ── Arrow glyph — spectrum, 65% of pill
-                GradientStrokeArrow(
-                    gradient:     spectrumGradient,
-                    strokeWidth:  strokeWidth,
-                    shadowColor1: AppColors.cyan,
-                    shadowColor2: AppColors.purple
-                )
-                .frame(
-                    width:  size.width  * 0.65,
-                    height: size.height * 0.65
-                )
-            }
-            .frame(width: size.width, height: size.height)
-            .shadow(color: AppColors.purple.opacity(0.22), radius: 8)
-            .shadow(color: AppColors.cyan.opacity(0.12),   radius: 20)
-            .shadow(color: AppColors.purple.opacity(0.08), radius: 28)
+            pill
+                .shadow(color: AppColors.accentSecondary.opacity(0.22), radius: 8)
+                .shadow(color: AppColors.accentPrimary.opacity(0.12),   radius: 20)
+                .shadow(color: AppColors.accentSecondary.opacity(0.08), radius: 28)
         })
         .buttonStyle(.plain)
     }
@@ -169,15 +174,15 @@ struct DarkNavArrow: View {
 //
 // Parameter order: size → style → action (enables trailing closure, fixes init ordering)
 //
-// Pill:  lightCardBg fill + warmAuroraBorder() or magentaGoldBorder()
+// Pill:  cardBackground fill + pillBorder() or magentaGoldBorder()
 // Arrow: magentaGoldGradient (magenta → orangeHot → gold)
 // Glow:  coloured spread shadows
 // strokeWidth scales proportionally with pill height.
 
 struct LightNavArrow: View {
     var size:   CGSize               = .navArrowCompact  // ← first
-    var style:  OnboardingArrowStyle = .magentaGold     // ← second
-    var action: () -> Void                              // ← last, enables trailing closure
+    var style:  OnboardingArrowStyle = .magentaGold      // ← second
+    var action: () -> Void                               // ← last, enables trailing closure
 
     // Stroke scales with height — 2.1 at 44pt
     private var strokeWidth: CGFloat {
@@ -190,7 +195,7 @@ struct LightNavArrow: View {
 
                 // ── Pill fill
                 Capsule()
-                    .fill(AppColors.lightCardBg)
+                    .fill(AppColors.cardBackground)
                     .frame(width: size.width, height: size.height)
 
                 // ── Border — aurora or magentaGold
@@ -203,8 +208,8 @@ struct LightNavArrow: View {
                 GradientStrokeArrow(
                     gradient:     magentaGoldGradient,
                     strokeWidth:  strokeWidth,
-                    shadowColor1: AppColors.magenta,
-                    shadowColor2: AppColors.orangeHot
+                    shadowColor1: AppColors.accentTertiary,
+                    shadowColor2: AppColors.progressBarLeading
                 )
                 .frame(
                     width:  size.width  * 0.65,
@@ -212,9 +217,9 @@ struct LightNavArrow: View {
                 )
             }
             .frame(width: size.width, height: size.height)
-            .shadow(color: AppColors.lightShadowMagenta.opacity(0.35), radius: 10, x: 0, y: 4)
-            .shadow(color: AppColors.lightShadowPurple.opacity(0.22),  radius: 20, x: 0, y: 6)
-            .shadow(color: AppColors.lightShadowGold.opacity(0.18),    radius: 8,  x: 0, y: 2)
+            .shadow(color: AppColors.shadowMagenta.opacity(0.35), radius: 10, x: 0, y: 4)
+            .shadow(color: AppColors.shadowPurple.opacity(0.22),  radius: 20, x: 0, y: 6)
+            .shadow(color: AppColors.shadowGold.opacity(0.18),    radius: 8,  x: 0, y: 2)
         })
         .buttonStyle(.plain)
     }
@@ -228,7 +233,7 @@ private struct LightBorderModifier: ViewModifier {
     func body(content: Content) -> some View {
         switch style {
         case .aurora:
-            content.warmAuroraBorder()
+            content.pillBorder()
         case .magentaGold:
             content.magentaGoldBorder()
         }
@@ -246,10 +251,10 @@ private struct LightBorderModifier: ViewModifier {
 ///   OnboardingNavArrow(direction: .forward) { goNext() }
 
 struct OnboardingNavArrow: View {
-    var direction: ArrowDirection                          // ← first
-    var size:      CGSize               = .navArrowTopBar // ← second
-    var style:     OnboardingArrowStyle = .magentaGold    // ← third, light mode only
-    var action:    () -> Void                             // ← last, enables trailing closure
+    var direction: ArrowDirection                           // ← first
+    var size:      CGSize               = .navArrowTopBar  // ← second
+    var style:     OnboardingArrowStyle = .magentaGold     // ← third, light mode only
+    var action:    () -> Void                              // ← last, enables trailing closure
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -270,8 +275,8 @@ struct OnboardingNavArrow: View {
 
 #Preview("NavArrow Dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
-        HStack(spacing: 24) {
+        AppColors.pageBackground.ignoresSafeArea()
+        HStack(spacing: AppSpacing.lg) {
             OnboardingNavArrow(direction: .back)    { }
             OnboardingNavArrow(direction: .forward) { }
         }
@@ -281,8 +286,8 @@ struct OnboardingNavArrow: View {
 
 #Preview("NavArrow Light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
-        HStack(spacing: 24) {
+        AppColors.pageBackground.ignoresSafeArea()
+        HStack(spacing: AppSpacing.lg) {
             OnboardingNavArrow(direction: .back)    { }
             OnboardingNavArrow(direction: .forward) { }
         }

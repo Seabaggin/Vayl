@@ -78,8 +78,8 @@ struct PremiumCardShell<Content: View>: View {
                 .fill(
                     RadialGradient(
                         colors: isLight
-                            ? [AppColors.magenta.opacity(0.07), .clear]
-                            : [AppColors.purple.opacity(0.18),  .clear],
+                            ? [AppColors.accentTertiary.opacity(0.07), .clear]
+                            : [AppColors.accentSecondary.opacity(0.18),  .clear],
                         center:      UnitPoint(x: 0.80, y: 0.10),
                         startRadius: 0,
                         endRadius:   160
@@ -90,8 +90,8 @@ struct PremiumCardShell<Content: View>: View {
                 .fill(
                     RadialGradient(
                         colors: isLight
-                            ? [AppColors.purple.opacity(0.05), .clear]
-                            : [AppColors.cyan.opacity(0.10),   .clear],
+                            ? [AppColors.accentSecondary.opacity(0.05), .clear]
+                            : [AppColors.accentPrimary.opacity(0.10),   .clear],
                         center:      UnitPoint(x: 0.15, y: 0.88),
                         startRadius: 0,
                         endRadius:   120
@@ -118,7 +118,7 @@ struct PremiumCardShell<Content: View>: View {
             // Both include glow blur duplicate via PillBorder.swift
             if isLight {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(AppColors.warmAuroraBorder, lineWidth: 2.5)
+                    .strokeBorder(AppColors.spectrumBorder, lineWidth: 2.5)
             } else {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(AppColors.spectrumBorder, lineWidth: 2.5)
@@ -137,15 +137,15 @@ struct PremiumCardShell<Content: View>: View {
         // and renders against the page background correctly.
         .shadow(
             color: isLight
-                ? AppColors.lightShadowMagenta.opacity(0.10)
+                ? AppColors.shadowMagenta.opacity(0.10)
                 : .black.opacity(0.35),
             radius: isLight ? 16 : 32,
             y:      isLight ? 4  : 12
         )
         .shadow(
             color: isLight
-                ? AppColors.lightShadowPurple.opacity(0.07)
-                : AppColors.purple.opacity(0.08),
+                ? AppColors.shadowPurple.opacity(0.07)
+                : AppColors.accentSecondary.opacity(0.08),
             radius: isLight ? 28 : 48,
             y:      isLight ? 8  : 18
         )
@@ -159,7 +159,7 @@ struct PremiumCardShell<Content: View>: View {
             // Frosted white — aurora atmosphere bleeds through at the edges
             ? AnyShapeStyle(Color.white.opacity(0.55))
             // Flat near-black — unified with Pulse / Prism / Beacon glass spec
-            : AnyShapeStyle(AppColors.cardBg)
+            : AnyShapeStyle(AppColors.cardBackground)
     }
 
     // MARK: - Fuse Animation — untouched
@@ -201,7 +201,7 @@ struct PremiumCardShell<Content: View>: View {
                     let r = CGFloat(3.5)
                     let sparkRect = CGRect(x: pt.x - r, y: pt.y - r, width: r * 2, height: r * 2)
 
-                    let sparkColor: Color = isLight ? AppColors.magenta : AppColors.cyan
+                    let sparkColor: Color = isLight ? AppColors.accentTertiary : AppColors.accentPrimary
 
                     var outerCtx = ctx
                     outerCtx.addFilter(.blur(radius: 6))

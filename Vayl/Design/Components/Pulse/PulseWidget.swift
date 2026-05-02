@@ -120,17 +120,17 @@ struct PulseWidget: View {
     private var floatingHeader: some View {
         VStack(spacing: 0) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                     LivingText(
                         text: currentTier.label,
-                        font: AppFonts.body(22, weight: .bold)
+                        font: AppFonts.body(22, weight: .bold, relativeTo: .title2)
                     )
 
                     Text(currentTier.sublabel)
-                        .font(AppFonts.body(12, weight: .regular))
+                        .font(AppFonts.body(12, weight: .regular, relativeTo: .caption))
                         .foregroundStyle(
                             isLight
-                                ? AppColors.lightTextSecondary.opacity(0.75)
+                                ? AppColors.textSecondary.opacity(0.75)
                                 : AppColors.textSecondary.opacity(0.75)
                         )
 
@@ -138,23 +138,23 @@ struct PulseWidget: View {
                         showSheet = true
                     } label: {
                         Text("View Full History")
-                            .font(AppFonts.body(11, weight: .semibold))
+                            .font(AppFonts.body(11, weight: .semibold, relativeTo: .caption2))
                             .foregroundStyle(
                                 isLight
                                     ? AnyShapeStyle(LinearGradient(
-                                        colors: [AppColors.purple, AppColors.magenta, AppColors.gold],
+                                        colors: [AppColors.accentSecondary, AppColors.accentTertiary, AppColors.safetyAccent],
                                         startPoint: .leading,
                                         endPoint:   .trailing
                                       ))
                                     : AnyShapeStyle(LinearGradient(
-                                        colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
+                                        colors: [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                                         startPoint: .leading,
                                         endPoint:   .trailing
                                       ))
                             )
                     }
                     .buttonStyle(.plain)
-                    .padding(.top, 2)
+                    .padding(.top, AppSpacing.xxs)
                 }
                 .opacity(entries.isEmpty ? 0 : 1)
 
@@ -169,17 +169,17 @@ struct PulseWidget: View {
                         Circle()
                             .fill(
                                 isLight
-                                    ? AppColors.magenta.opacity(0.10)
-                                    : AppColors.electricViolet.opacity(0.20)
+                                    ? AppColors.accentTertiary.opacity(0.10)
+                                    :AppColors.accentSecondary.opacity(0.20)
                             )
                             .frame(width: 32, height: 32)
 
                         Circle()
                             .strokeBorder(
                                 isLight
-                                    ? AnyShapeStyle(AppColors.warmAuroraBorder.opacity(0.60))
+                                    ? AnyShapeStyle(AppColors.spectrumBorder.opacity(0.60))
                                     : AnyShapeStyle(LinearGradient(
-                                        colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
+                                        colors: [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                                         startPoint: .topLeading,
                                         endPoint:   .bottomTrailing
                                       )),
@@ -187,25 +187,25 @@ struct PulseWidget: View {
                             )
                             .frame(width: 32, height: 32)
 
-                        Image(systemName: "plus")
-                            .font(.system(size: 13, weight: .semibold))
+                        Image(AppIcons.plus)
+                            .font(AppFonts.caption)
                             .foregroundStyle(
-                                isLight ? AppColors.magenta : AppColors.purpleBright
+                                isLight ? AppColors.accentTertiary : AppColors.accentSecondary
                             )
                     }
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Start daily check-in")
                 .simultaneousGesture(TapGesture().onEnded {})
-                .padding(.top, 2)
+                .padding(.top, AppSpacing.xxs)
             }
-            .padding(.horizontal, 15)
-            .padding(.top, 13)
-            .padding(.bottom, 8)
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.top, AppSpacing.md)
+            .padding(.bottom, AppSpacing.sm)
 
             LinearGradient(
                 colors: [
-                    (isLight ? Color.white : AppColors.widgetDarkFloor).opacity(0),
+                    (isLight ? Color.white : AppColors.widgetBackground).opacity(0),
                     Color.clear
                 ],
                 startPoint: .top,
@@ -218,10 +218,10 @@ struct PulseWidget: View {
                 colors: [
                     isLight
                         ? Color.white.opacity(0.55)
-                        : AppColors.widgetDarkFloor.opacity(0.55),
+                        : AppColors.widgetBackground.opacity(0.55),
                     isLight
                         ? Color.white.opacity(0.25)
-                        : AppColors.widgetDarkFloor.opacity(0.28),
+                        : AppColors.widgetBackground.opacity(0.28),
                     Color.clear
                 ],
                 startPoint: .top,
@@ -261,19 +261,19 @@ private func seededStore(_ entries: [PulseEntry] = PulseEntry.previews) -> Pulse
 
 #Preview("14 entries — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             HomeWidgetShell(
                 isLight:     false,
-                accentColor: AppColors.cyan,
+                accentColor: AppColors.accentPrimary,
                 rimVariant:  .pulse
             ) {
                 ZStack {
-                    OrbLayer(accentColor: AppColors.cyan, height: 300, variant: .pulse)
+                    OrbLayer(accentColor: AppColors.accentPrimary, height: 300, variant: .pulse)
                     PulseWidget()
                 }
             }
-            .padding(20)
+            .padding(AppSpacing.lg)
         }
     }
     .environment(seededStore())
@@ -282,16 +282,16 @@ private func seededStore(_ entries: [PulseEntry] = PulseEntry.previews) -> Pulse
 
 #Preview("14 entries — light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             HomeWidgetShell(
                 isLight:     true,
-                accentColor: AppColors.magenta,
+                accentColor: AppColors.accentTertiary,
                 rimVariant:  .pulse
             ) {
                 PulseWidget()
             }
-            .padding(20)
+            .padding(AppSpacing.lg)
         }
     }
     .environment(seededStore())
@@ -300,19 +300,19 @@ private func seededStore(_ entries: [PulseEntry] = PulseEntry.previews) -> Pulse
 
 #Preview("Zero entries — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             HomeWidgetShell(
                 isLight:     false,
-                accentColor: AppColors.cyan,
+                accentColor: AppColors.accentPrimary,
                 rimVariant:  .pulse
             ) {
                 ZStack {
-                    OrbLayer(accentColor: AppColors.cyan, height: 300, variant: .pulse)
+                    OrbLayer(accentColor: AppColors.accentPrimary, height: 300, variant: .pulse)
                     PulseWidget()
                 }
             }
-            .padding(20)
+            .padding(AppSpacing.lg)
         }
     }
     .environment(seededStore([]))
@@ -321,19 +321,19 @@ private func seededStore(_ entries: [PulseEntry] = PulseEntry.previews) -> Pulse
 
 #Preview("Single entry — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             HomeWidgetShell(
                 isLight:     false,
-                accentColor: AppColors.cyan,
+                accentColor: AppColors.accentPrimary,
                 rimVariant:  .pulse
             ) {
                 ZStack {
-                    OrbLayer(accentColor: AppColors.cyan, height: 300, variant: .pulse)
+                    OrbLayer(accentColor: AppColors.accentPrimary, height: 300, variant: .pulse)
                     PulseWidget()
                 }
             }
-            .padding(20)
+            .padding(AppSpacing.lg)
         }
     }
     .environment(seededStore([PulseEntry.previews[0]]))

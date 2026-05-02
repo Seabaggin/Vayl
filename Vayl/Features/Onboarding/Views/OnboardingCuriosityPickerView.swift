@@ -97,8 +97,8 @@ struct OnboardingCuriosityPickerView: View {
     // MARK: - LivingText gradient stops — single source of truth
     private var livingGradientColors: [Color] {
         isLight
-            ? [AppColors.magenta, AppColors.orangeHot, AppColors.gold]
-            : [AppColors.cyan, AppColors.purpleVivid, AppColors.magenta]
+            ? [AppColors.accentTertiary, AppColors.progressBarLeading, AppColors.safetyAccent]
+            : [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary]
     }
 
     // MARK: - Device-adaptive scaling
@@ -228,15 +228,15 @@ struct OnboardingCuriosityPickerView: View {
     // MARK: - Tint / border
     private func cardTint(_ spec: CardSpec) -> Color {
         switch spec.set {
-        case .set1: return AppColors.cyan.opacity(isLight ? 0.04 : 0.05)
-        case .set2: return AppColors.magenta.opacity(isLight ? 0.04 : 0.05)
+        case .set1: return AppColors.accentPrimary.opacity(isLight ? 0.04 : 0.05)
+        case .set2: return AppColors.accentTertiary.opacity(isLight ? 0.04 : 0.05)
         }
     }
     private func cardBorder(_ spec: CardSpec) -> Color {
         guard !isSelected(spec) else { return .clear }
         switch spec.set {
-        case .set1: return AppColors.cyan.opacity(isLight ? 0.18 : 0.14)
-        case .set2: return AppColors.magenta.opacity(isLight ? 0.18 : 0.14)
+        case .set1: return AppColors.accentPrimary.opacity(isLight ? 0.18 : 0.14)
+        case .set2: return AppColors.accentTertiary.opacity(isLight ? 0.18 : 0.14)
         }
     }
 
@@ -253,7 +253,7 @@ struct OnboardingCuriosityPickerView: View {
         guard !hasAdvanced else { return }
         hasAdvanced = true
         commitData()
-        withAnimation(.easeInOut(duration: 0.3)) { clusterPhase = .exiting }
+        withAnimation(AppAnimation.standard) { clusterPhase = .exiting }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { onContinue?() }
     }
 
@@ -266,10 +266,9 @@ struct OnboardingCuriosityPickerView: View {
     // MARK: - Body
     var body: some View {
         GeometryReader { geo in
-            let h   = geo.size.height
-            let w   = geo.size.width
-            let top = geo.safeAreaInsets.top
-            let bot = geo.safeAreaInsets.bottom
+            let layout = AppLayout.from(geo)
+            let h = layout.screenHeight
+            let w = layout.screenWidth
 
             ZStack(alignment: .top) {
 
@@ -277,7 +276,7 @@ struct OnboardingCuriosityPickerView: View {
                 ZStack {
                     Ellipse()
                         .fill(RadialGradient(
-                            colors: [AppColors.cyan.opacity(atmosphereCyanOpacity), .clear],
+                            colors: [AppColors.accentPrimary.opacity(atmosphereCyanOpacity), .clear],
                             center: .center, startRadius: 0, endRadius: 300
                         ))
                         .frame(width: w * 1.3, height: h * 0.55)
@@ -285,7 +284,7 @@ struct OnboardingCuriosityPickerView: View {
                         .blur(radius: 70)
                     Ellipse()
                         .fill(RadialGradient(
-                            colors: [AppColors.magenta.opacity(atmosphereMagentaOpacity), .clear],
+                            colors: [AppColors.accentTertiary.opacity(atmosphereMagentaOpacity), .clear],
                             center: .center, startRadius: 0, endRadius: 300
                         ))
                         .frame(width: w * 1.3, height: h * 0.55)
@@ -296,7 +295,7 @@ struct OnboardingCuriosityPickerView: View {
                 .allowsHitTesting(false)
 
                 // ── Scroll canvas ─────────────────────────────────────
-                infiniteCanvas(w: w, h: h, top: top)
+                infiniteCanvas(w: w, h: h, top: layout.safeAreaInsets.top)
                     .frame(width: w, height: h)
                     .ignoresSafeArea()
 
@@ -308,15 +307,15 @@ struct OnboardingCuriosityPickerView: View {
                             totalSteps:  6,
                             onBack:      onBack
                         )
-                        .padding(.horizontal, 24)
-                        .padding(.top, top + 8)
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.top, layout.safeAreaInsets.top + 8)
                         .padding(.bottom, OL.navBottom(h))
 
                         headerBlock
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 10)
+                            .padding(.horizontal, AppSpacing.lg)
+                            .padding(.bottom, AppSpacing.sm)
                             .opacity(headerVisible ? 1 : 0)
-                            .animation(.easeOut(duration: 0.4).delay(0.1), value: headerVisible)
+                            .animation(AppAnimation.enter.delay(0.1), value: headerVisible)
                     }
                     .background(
                         GeometryReader { navGeo in
@@ -338,8 +337,8 @@ struct OnboardingCuriosityPickerView: View {
                     HStack {
                         Spacer()
                         selectionPill
-                            .padding(.top, top + 14)
-                            .padding(.trailing, 24)
+                            .padding(.top, layout.safeAreaInsets.top + 14)
+                            .padding(.trailing, AppSpacing.lg)
                     }
                     Spacer()
                 }
@@ -351,13 +350,13 @@ struct OnboardingCuriosityPickerView: View {
                 VStack(spacing: 0) {
                     Spacer()
                     bottomZone
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, bot + 8)
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.bottom, layout.safeAreaInsets.bottom + 8)
                         .background(
                             LinearGradient(
                                 colors: [
-                                    (isLight ? AppColors.lightPageBg : AppColors.pageBg).opacity(0),
-                                    (isLight ? AppColors.lightPageBg : AppColors.pageBg).opacity(0.96),
+                                    AppColors.pageBackground.opacity(0),
+                                    AppColors.pageBackground.opacity(0.96),
                                 ],
                                 startPoint: .top,
                                 endPoint:   .bottom
@@ -368,8 +367,8 @@ struct OnboardingCuriosityPickerView: View {
                 .ignoresSafeArea(edges: .bottom)
             }
             .onAppear {
-                withAnimation(.easeOut(duration: 0.4).delay(0.15)) { headerVisible = true }
-                withAnimation(.easeOut(duration: 0.4).delay(0.30)) { cardsVisible  = true }
+                withAnimation(AppAnimation.enter.delay(0.15)) { headerVisible = true }
+                withAnimation(AppAnimation.enter.delay(0.30)) { cardsVisible  = true }
             }
             .onDisappear {
                 // Preserve partial selections so back navigation
@@ -494,22 +493,22 @@ struct OnboardingCuriosityPickerView: View {
             // ...existing code...
         }
         .allowsHitTesting(opacity > 0.3)
-        .animation(.easeInOut(duration: 0.35), value: clusterPhase)
+        .animation(AppAnimation.standard, value: clusterPhase)
     }
 
     // MARK: - Fixed header
 
     private var headerBlock: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
             ZStack(alignment: .topLeading) {
 
                 // Flash bloom — uses LivingText palette, direction-aware
                 // cyan-weighted entering, magenta-weighted exiting
                 LinearGradient(
                     colors: [
-                        AppColors.cyan.opacity(flashIntensity * (1 - atmosphereProgress) * 0.25),
-                        AppColors.purpleVivid.opacity(flashIntensity * 0.25),
-                        AppColors.magenta.opacity(flashIntensity * atmosphereProgress * 0.25),
+                        AppColors.accentPrimary.opacity(flashIntensity * (1 - atmosphereProgress) * 0.25),
+                        AppColors.accentSecondary.opacity(flashIntensity * 0.25),
+                        AppColors.accentTertiary.opacity(flashIntensity * atmosphereProgress * 0.25),
                     ],
                     startPoint: .leading,
                     endPoint:   .trailing
@@ -547,7 +546,7 @@ struct OnboardingCuriosityPickerView: View {
                                           opacity: atmosphereProgress)
                     }
                     .frame(height: 22)
-                    .padding(.top, 5)
+                    .padding(.top, AppSpacing.xs)
                     .clipped()
                 }
             }
@@ -563,14 +562,14 @@ struct OnboardingCuriosityPickerView: View {
                                 flash: CGFloat) -> some View {
         ZStack {
             Text(text)
-                .font(AppFonts.display(headerTitleSize, weight: .semibold))
+                .font(AppFonts.display(headerTitleSize, weight: .semibold, relativeTo: .title2))
                 .foregroundStyle(isLight
-                    ? AppColors.lightTextPrimary
+                    ? AppColors.textPrimary
                     : AppColors.textPrimary)
                 .opacity(1 - flash)
 
             Text(text)
-                .font(AppFonts.display(headerTitleSize, weight: .semibold))
+                .font(AppFonts.display(headerTitleSize, weight: .semibold, relativeTo: .title2))
                 .foregroundStyle(LinearGradient(
                     colors: livingGradientColors,
                     startPoint: .leading,
@@ -582,7 +581,7 @@ struct OnboardingCuriosityPickerView: View {
                 .accessibilityHidden(true)
 
             Text(text)
-                .font(AppFonts.display(headerTitleSize, weight: .semibold))
+                .font(AppFonts.display(headerTitleSize, weight: .semibold, relativeTo: .title2))
                 .foregroundStyle(LinearGradient(
                     colors: livingGradientColors,
                     startPoint: .leading,
@@ -594,7 +593,7 @@ struct OnboardingCuriosityPickerView: View {
                 .accessibilityHidden(true)
 
             Text(text)
-                .font(AppFonts.display(headerTitleSize, weight: .semibold))
+                .font(AppFonts.display(headerTitleSize, weight: .semibold, relativeTo: .title2))
                 .foregroundStyle(LinearGradient(
                     colors: livingGradientColors,
                     startPoint: .leading,
@@ -613,25 +612,25 @@ struct OnboardingCuriosityPickerView: View {
     @ViewBuilder
     private func liveLabelSubtitle(_ text: String, opacity: CGFloat) -> some View {
         Text(text)
-            .font(AppFonts.body(headerSubtitleSize, weight: .regular))
+            .font(AppFonts.body(headerSubtitleSize, weight: .regular, relativeTo: .callout))
             .foregroundStyle(isLight
-                ? AppColors.lightTextSecondary
+                ? AppColors.textSecondary
                 : AppColors.textSecondary)
             .opacity(opacity)
     }
 
     // MARK: - Selection count pill
     private var selectionPill: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppSpacing.sm) {
             Text("\(totalSelected)")
-                .font(AppFonts.body(16, weight: .semibold))
-                .foregroundStyle(isLight ? AppColors.lightBodyWineDark : Color.white)
+                .font(AppFonts.body(16, weight: .semibold, relativeTo: .body))
+                .foregroundStyle(isLight ? AppColors.textBody : Color.white)
                 .contentTransition(.numericText())
-                .animation(.spring(response: 0.35, dampingFraction: 0.7), value: totalSelected)
+                .animation(AppAnimation.spring, value: totalSelected)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(isLight ? AppColors.lightFrostPill : AppColors.surfaceBg)
+        .padding(.horizontal, AppSpacing.sm)
+        .padding(.vertical, AppSpacing.sm)
+        .background(isLight ? AppColors.glassFrostPill : AppColors.cardBackground)
         .overlay {
             if isLight {
                 LightModeShimmer(duration: 4.0, usePillColors: true)
@@ -661,18 +660,18 @@ struct OnboardingCuriosityPickerView: View {
             }
         }
         .shadow(color: isLight
-            ? AppColors.magenta.opacity(0.18)
-            : AppColors.purple.opacity(0.25),
+            ? AppColors.accentTertiary.opacity(0.18)
+            : AppColors.accentSecondary.opacity(0.25),
                 radius: 12, x: 0, y: 4)
         .opacity(totalSelected > 0 ? 1 : 0)
         .scaleEffect(totalSelected > 0 ? 1 : 0.85, anchor: .topTrailing)
-        .animation(.spring(response: 0.4, dampingFraction: 0.72), value: totalSelected > 0)
+        .animation(AppAnimation.spring, value: totalSelected > 0)
     }
 
     // MARK: - Bottom zone
 
     private var bottomZone: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppSpacing.sm) {
             CuriosityPanelNudge(
                 s1Empty: selectedSet1.isEmpty,
                 s2Empty: selectedSet2.isEmpty,
@@ -684,12 +683,12 @@ struct OnboardingCuriosityPickerView: View {
                 isEnabled: hasSelection,
                 action:    { handleContinue() }
             )
-            .animation(.easeInOut(duration: 0.4), value: hasSelection)
+            .animation(AppAnimation.enter, value: hasSelection)
 
             OnboardingFooter()
         }
-        .padding(.top, 8)
-        .padding(.bottom, 8)
+        .padding(.top, AppSpacing.sm)
+        .padding(.bottom, AppSpacing.sm)
     }
 }
 
@@ -703,7 +702,7 @@ struct OnboardingCuriosityPickerView: View {
         return d
     }()
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingAtmosphere(
             config: .curiosityPicker, sparkConfig: .curiosityPickerView, opacity: 1.0
         )
@@ -721,7 +720,7 @@ struct OnboardingCuriosityPickerView: View {
         return d
     }()
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingAtmosphere(
             config: .curiosityPicker, sparkConfig: .curiosityPickerView, opacity: 1.0
         )
@@ -739,7 +738,7 @@ struct OnboardingCuriosityPickerView: View {
         return d
     }()
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingAtmosphere(
             config: .curiosityPicker, sparkConfig: .curiosityPickerView, opacity: 1.0
         )

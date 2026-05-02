@@ -11,7 +11,7 @@
 //
 // Usage:
 //   ZStack {
-//       AppColors.lightPageBg.ignoresSafeArea()
+//       AppColors.pageBackground.ignoresSafeArea()
 //       AuroraGlowField().ignoresSafeArea()
 //       SparkField(config: .statView).ignoresSafeArea()
 //       // content
@@ -552,13 +552,13 @@ private struct Particle {
 
 #Preview("StatView — full travel") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         AuroraGlowField().ignoresSafeArea()
         SparkField(config: .statView).ignoresSafeArea()
         VStack {
             Spacer()
             Text("1 in 5")
-                .font(.system(size: 120, weight: .bold))
+                .font(Font.custom("ClashDisplay-Bold", size: 120, relativeTo: .largeTitle))
                 .foregroundStyle(Color.orange)
             Spacer()
         }
@@ -568,15 +568,15 @@ private struct Particle {
 
 #Preview("NameView — fades before card") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         AuroraGlowField().ignoresSafeArea()
         SparkField(config: .nameView).ignoresSafeArea()
         VStack {
             Spacer().frame(height: 200)
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: AppRadius.xl)
                 .fill(.ultraThinMaterial)
                 .frame(height: 340)
-                .padding(.horizontal, 28)
+                .padding(.horizontal, AppSpacing.xl)
             Spacer()
         }
     }
@@ -585,7 +585,7 @@ private struct Particle {
 
 #Preview("ModeSelectView — lower third") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         AuroraGlowField().ignoresSafeArea()
         SparkField(config: .modeSelectView).ignoresSafeArea()
     }
@@ -594,7 +594,7 @@ private struct Particle {
 
 #Preview("ContextView — very subtle") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         AuroraGlowField().ignoresSafeArea()
         SparkField(config: .contextView).ignoresSafeArea()
     }
@@ -603,7 +603,7 @@ private struct Particle {
 
 #Preview("CuriosityPickerView — minimal") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         AuroraGlowField().ignoresSafeArea()
         SparkField(config: .curiosityPickerView).ignoresSafeArea()
     }
@@ -612,15 +612,15 @@ private struct Particle {
 
 #Preview("GroundRulesView — bottom quarter") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         AuroraGlowField().ignoresSafeArea()
         SparkField(config: .groundRulesView).ignoresSafeArea()
         VStack {
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: AppRadius.lg)
                 .fill(.ultraThinMaterial)
                 .frame(height: 500)
-                .padding(.horizontal, 24)
-                .padding(.top, 80)
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.top, AppSpacing.xxl)
             Spacer()
         }
     }

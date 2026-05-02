@@ -9,7 +9,7 @@ struct SettingsCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             content
         }
-        .padding(16)
+        .padding(AppSpacing.md)
         .cardStyle()
     }
 }

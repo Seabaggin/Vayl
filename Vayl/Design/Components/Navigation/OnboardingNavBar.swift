@@ -3,6 +3,7 @@
 //
 // Reusable nav row: back chevron + centered progress bar.
 // Used at the top of every onboarding screen that shows navigation.
+
 import SwiftUI
 
 // MARK: - Private Modifiers
@@ -13,21 +14,20 @@ private struct BackButtonModifier: ViewModifier {
     func body(content: Content) -> some View {
         if colorScheme == .light {
             content
-                .padding(13)
+                .padding(AppSpacing.sm)
                 .background(
                     Circle()
                         .fill(Color.white.opacity(0.55))
                         .overlay(
                             Circle()
-                                .strokeBorder(AppColors.warmAuroraBorder, lineWidth: 2.0)
+                                .strokeBorder(AppColors.spectrumBorder, lineWidth: 2.0)
                         )
-                        
                 )
-                .shadow(color: AppColors.magenta.opacity(0.12), radius: 8, y: 2)
-                .shadow(color: AppColors.purple.opacity(0.08), radius: 16, y: 2)
+                .shadow(color: AppColors.accentTertiary.opacity(0.12), radius: 8, y: 2)
+                .shadow(color: AppColors.accentSecondary.opacity(0.08), radius: 16, y: 2)
         } else {
             content
-                .padding(13)
+                .padding(AppSpacing.sm)
                 .background(
                     Circle()
                         .fill(Color.white.opacity(0.12))
@@ -35,18 +35,17 @@ private struct BackButtonModifier: ViewModifier {
                             Circle()
                                 .strokeBorder(
                                     LinearGradient(
-                                        colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
+                                        colors: [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ),
                                     lineWidth: 2.0
                                 )
                         )
-                       
                 )
-                .shadow(color: AppColors.purple.opacity(0.22), radius: 8)
-                .shadow(color: AppColors.cyan.opacity(0.12), radius: 20)
-                .shadow(color: AppColors.purple.opacity(0.08), radius: 28)
+                .shadow(color: AppColors.accentSecondary.opacity(0.22), radius: 8)
+                .shadow(color: AppColors.accentPrimary.opacity(0.12), radius: 20)
+                .shadow(color: AppColors.accentSecondary.opacity(0.08), radius: 28)
         }
     }
 }
@@ -56,33 +55,34 @@ private struct BackButtonModifier: ViewModifier {
 struct OnboardingNavBar: View {
     let currentStep: Int
     let totalSteps: Int
-    var onBack: (() -> Void)?  // nil = no back button (ground rules, priming, arrival)
-    
+    var onBack: (() -> Void)?
+
     @Environment(\.colorScheme) private var colorScheme
-    
+
     var body: some View {
         HStack {
             if let onBack {
                 Button(action: onBack) {
-                    Image(systemName: "arrow.left")
-                        .font(.system(size: 18, weight: .medium))
+                    Image(systemName: AppIcons.arrowLeft)
+                        // .body scales with Dynamic Type — correct for
+                        // navigation back buttons at this visual weight.
+                        .font(.body)
+                        .fontWeight(.medium)
                         .foregroundColor(colorScheme == .light
-                                         ? AppColors.lightBodyWineDark
-                                         : Color.white.opacity(0.80))
+                            ? AppColors.textSecondary
+                            : Color.white.opacity(0.80))
                         .modifier(BackButtonModifier(colorScheme: colorScheme))
                 }
                 .accessibilityLabel("Go back")
             } else {
                 // Match the 38pt rendered size of the back button
                 Color.clear.frame(width: 38, height: 38)
-                    .padding(.trailing, 0) 
             }
-            
+
             Spacer()
             OnboardingProgressBar(currentStep: currentStep, totalSteps: totalSteps)
             Spacer()
-            
-            // FIXED: was 18pt — must match back button total size (18 icon + 10 pad each side = 38)
+
             Color.clear.frame(width: 38, height: 38)
         }
     }
@@ -92,26 +92,24 @@ struct OnboardingNavBar: View {
 
 #Preview {
     VStack(spacing: 0) {
-        // Dark
         ZStack {
-            AppColors.pageBg.ignoresSafeArea()
-            VStack(spacing: 40) {
+            AppColors.pageBackground.ignoresSafeArea()
+            VStack(spacing: AppSpacing.xxl) {
                 OnboardingNavBar(currentStep: 1, totalSteps: 6, onBack: { })
                 OnboardingNavBar(currentStep: 3, totalSteps: 6, onBack: nil)
             }
-            .padding(24)
+            .padding(AppSpacing.lg)
         }
         .preferredColorScheme(.dark)
         .frame(maxWidth: .infinity)
 
-        // Light
         ZStack {
-            AppColors.lightPageBg.ignoresSafeArea()
-            VStack(spacing: 40) {
+            AppColors.pageBackground.ignoresSafeArea()
+            VStack(spacing: AppSpacing.xxl) {
                 OnboardingNavBar(currentStep: 1, totalSteps: 6, onBack: { })
                 OnboardingNavBar(currentStep: 3, totalSteps: 6, onBack: nil)
             }
-            .padding(24)
+            .padding(AppSpacing.lg)
         }
         .preferredColorScheme(.light)
         .frame(maxWidth: .infinity)

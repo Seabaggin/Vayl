@@ -84,7 +84,7 @@ struct CardBackView: View {
     ) {
         // Fixed deck geometry
         self.cardSize            = CGSize(width: 300, height: 190)
-        self.cornerRadius        = 20
+        self.cornerRadius        = AppRadius.container
         // Suppress all interactive state
         self.selectedPill        = nil
         self.selectedScale       = 1.0
@@ -125,8 +125,8 @@ struct CardBackView: View {
                 .fill(
                     RadialGradient(
                         colors: isLight
-                            ? [AppColors.magenta.opacity(0.06), Color.clear]
-                            : [AppColors.purple.opacity(0.15),  Color.clear],
+                            ? [AppColors.accentTertiary.opacity(0.06), Color.clear]
+                            : [AppColors.accentSecondary.opacity(0.15),  Color.clear],
                         center:      UnitPoint(x: 0.7, y: 0.8),
                         startRadius: 0,
                         endRadius:   180
@@ -137,7 +137,7 @@ struct CardBackView: View {
             if isLight {
                 RoundedRectangle(cornerRadius: cornerRadius)
                     .strokeBorder(
-                        AppColors.warmAuroraBorder,
+                        AppColors.spectrumBorder,
                         lineWidth: selectedBorderWidth
                     )
             } else {
@@ -155,13 +155,13 @@ struct CardBackView: View {
                 HStack {
                     Spacer()
                     Text("∞")
-                        .font(.system(size: 28, weight: .light))
+                        .font(Font.custom("Switzer-Regular", size: 28, relativeTo: .title))
                         .foregroundStyle(
                             isLight
-                                ? AppColors.purple.opacity(0.08)
-                                : AppColors.purple.opacity(0.10)
+                                ? AppColors.accentSecondary.opacity(0.08)
+                                : AppColors.accentSecondary.opacity(0.10)
                         )
-                        .padding(14)
+                        .padding(AppSpacing.md)
                         .allowsHitTesting(false)
                 }
             }
@@ -171,12 +171,12 @@ struct CardBackView: View {
                 VStack(spacing: 0) {
 
                     // Heading
-                    VStack(spacing: 6) {
+                    VStack(spacing: AppSpacing.xs) {
                         Text("Something came up.")
-                            .font(AppFonts.body(20, weight: .semibold))
+                            .font(AppFonts.body(20, weight: .semibold, relativeTo: .title3))
                             .foregroundStyle(
                                 isLight
-                                    ? AppColors.lightCardTitle
+                                    ? AppColors.textBody
                                     : AppColors.textPrimary
                             )
                             .multilineTextAlignment(.center)
@@ -185,19 +185,19 @@ struct CardBackView: View {
                             .font(AppFonts.caption)
                             .foregroundStyle(
                                 isLight
-                                    ? AppColors.lightCardTitle.opacity(0.50)
+                                    ? AppColors.textBody.opacity(0.50)
                                     : AppColors.textSecondary
                             )
                     }
-                    .padding(.top, 24)
+                    .padding(.top, AppSpacing.lg)
                     .opacity(revealed ? 1 : 0)
                     .offset(y: revealed ? 0 : 6)
-                    .animation(.easeOut(duration: 0.3), value: revealed)
+                    .animation(AppAnimation.standard, value: revealed)
 
                     Spacer()
 
                     // Pills
-                    VStack(spacing: 8) {
+                    VStack(spacing: AppSpacing.sm) {
                         ForEach(
                             Array(CardRevealPill.allCases.enumerated()),
                             id: \.element
@@ -213,10 +213,10 @@ struct CardBackView: View {
                                     .foregroundStyle(
                                         selectedPill == pill
                                             ? (isLight
-                                                ? AppColors.lightCardTitle
+                                                ? AppColors.textBody
                                                 : AppColors.textPrimary)
                                             : (isLight
-                                                ? AppColors.lightBodyWineDark
+                                                ? AppColors.textSecondary
                                                 : Color.white.opacity(0.75))
                                     )
                                     .frame(maxWidth: .infinity)
@@ -226,11 +226,11 @@ struct CardBackView: View {
                                             .fill(
                                                 selectedPill == pill
                                                     ? (isLight
-                                                        ? AnyShapeStyle(AppColors.lightFrostPillSel)
+                                                        ? AnyShapeStyle(AppColors.glassFrostPillSelected)
                                                         : AnyShapeStyle(Color.white.opacity(0.10)))
                                                     : (isLight
-                                                        ? AnyShapeStyle(AppColors.lightFrostPill)
-                                                        : AnyShapeStyle(AppColors.cardBg))
+                                                        ? AnyShapeStyle(AppColors.glassFrostPill)
+                                                        : AnyShapeStyle(AppColors.cardBackground))
                                             )
                                     )
                                     .overlay(
@@ -239,7 +239,7 @@ struct CardBackView: View {
                                                 if isLight {
                                                     Capsule()
                                                         .strokeBorder(
-                                                            AppColors.warmAuroraBorder,
+                                                            AppColors.spectrumBorder,
                                                             lineWidth: 2.0
                                                         )
                                                 } else {
@@ -253,8 +253,8 @@ struct CardBackView: View {
                                                 Capsule()
                                                     .strokeBorder(
                                                         isLight
-                                                            ? AppColors.lightBorder
-                                                            : AppColors.border,
+                                                            ? AppColors.borderSubtle
+                                                            : AppColors.borderSubtle,
                                                         lineWidth: 1.5
                                                     )
                                             }
@@ -266,10 +266,7 @@ struct CardBackView: View {
                             .scaleEffect(
                                 selectedPill == pill ? selectedScale : 1.0
                             )
-                            .animation(
-                                .spring(response: 0.35, dampingFraction: 0.7),
-                                value: selectedScale
-                            )
+                            .animation(AppAnimation.spring, value: selectedScale)
                             .opacity({
                                 if selectedPill != nil && selectedPill != pill {
                                     return unselectedVisible ? 1 : 0
@@ -278,12 +275,15 @@ struct CardBackView: View {
                             }())
                             .offset(y: revealed ? 0 : 10)
                             .animation(
-                                .easeOut(duration: 0.3)
+                                AppAnimation.standard
                                     .delay(Double(index) * 0.07 + 0.12),
                                 value: revealed
                             )
+                            // easeIn exit — 0.35s intentional: pill deselect fade-out
+                            // slightly longer than AppAnimation.exit (0.2s) to read as
+                            // deliberate removal rather than an instant dismissal.
                             .animation(
-                                .easeIn(duration: 0.35),
+                                AppAnimation.standard,
                                 value: unselectedVisible
                             )
                             .disabled(
@@ -293,29 +293,25 @@ struct CardBackView: View {
                                 Capsule()
                                     .fill(
                                         isLight
-                                            ? AppColors.lightFrostPill
-                                            : AppColors.cardBg
+                                            ? AppColors.glassFrostPill
+                                            : AppColors.cardBackground
                                     )
                             )
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, AppSpacing.md)
 
                     Spacer()
 
                     Text("✦")
                         .font(AppFonts.overline)
-                        .foregroundStyle(
-                            isLight
-                                ? AppColors.lightTextTertiary.opacity(0.5)
-                                : AppColors.textTertiary.opacity(0.5)
-                        )
+                        .foregroundStyle(AppColors.textTertiary.opacity(0.5))
                         .opacity(revealed ? 0.6 : 0)
                         .animation(
-                            .easeOut(duration: 0.4).delay(0.5),
+                            AppAnimation.enter.delay(0.5),
                             value: revealed
                         )
-                        .padding(.bottom, 24)
+                        .padding(.bottom, AppSpacing.lg)
                 }
             } // end !deckMode
         }
@@ -356,7 +352,7 @@ struct CardBackView: View {
 
 #Preview("Interactive mode — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CardBackView(
             cardSize:            CGSize(width: 340, height: 420),
             cornerRadius:        20,
@@ -376,7 +372,7 @@ struct CardBackView: View {
 
 #Preview("Deck mode — spread fan — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ZStack {
             CardBackView(offsetX: -60, offsetY: 8,
                          rotation: -12, scale: 0.95, opacity: 0.70)
@@ -395,7 +391,7 @@ struct CardBackView: View {
 
 #Preview("Deck mode — gathered stack — light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ZStack {
             CardBackView(offsetY: 12, scale: 0.930,
                          opacity: 0.42, isLight: true)

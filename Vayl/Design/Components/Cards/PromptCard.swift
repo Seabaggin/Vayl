@@ -10,23 +10,23 @@ struct PromptCard: View {
             VStack {
                 Text(card.type.rawValue.uppercased())
                     .font(AppFonts.overline)
-                    .foregroundStyle(colorScheme == .light ? AppColors.lightTextTertiary : AppColors.textTertiary)
-                    .padding(.top, 20)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .padding(.top, AppSpacing.md)
 
                 Spacer()
 
                 Text(card.text)
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .font(AppFonts.prompt)
                     .minimumScaleFactor(0.65)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, AppSpacing.md)
 
                 Spacer()
 
                 if showDifficultyDots {
                     Text(card.intensity.displayName)
                         .font(AppFonts.caption)
-                        .padding(.bottom, 20)
+                        .padding(.bottom, AppSpacing.md)
                 }
             }
         }

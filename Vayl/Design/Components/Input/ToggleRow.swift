@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Icon + label + Toggle row used in Settings sections.
-/// Usage: `ToggleRow(icon: "waveform", iconColor: AppColors.magenta, label: "Haptic Feedback", isOn: $hapticFeedback)`
+/// Usage: `ToggleRow(icon: "waveform", iconColor: AppColors.accentTertiary, label: "Haptic Feedback", isOn: $hapticFeedback)`
 struct ToggleRow: View {
     let icon: String
     let iconColor: Color
@@ -9,9 +9,9 @@ struct ToggleRow: View {
     @Binding var isOn: Bool
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppSpacing.sm) {
             Image(systemName: icon)
-                .font(.system(size: 15))
+                .font(Font.custom("Switzer-Regular", size: 15, relativeTo: .body))
                 .foregroundColor(iconColor)
 
             Text(label)

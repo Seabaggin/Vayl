@@ -87,8 +87,9 @@ struct OnboardingBrandView: View {
     // MARK: - Body
     var body: some View {
         GeometryReader { geo in
-            let w        = geo.size.width
-            let h        = geo.size.height
+            let layout   = AppLayout.from(geo)
+            let w        = layout.screenWidth
+            let h        = layout.screenHeight
             let scale    = w / kRefW
             let horizonY = h * 0.5
             let cx       = w * 0.5
@@ -169,12 +170,16 @@ struct OnboardingBrandView: View {
             .overlay(alignment: .bottom) {
                 #if DEBUG
                 Button("↺ Replay") { replay() }
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppFonts.caption)
                     .foregroundColor(.white.opacity(0.40))
-                    .padding(.horizontal, 20).padding(.vertical, 10)
+                    .padding(.horizontal, AppSpacing.lg).padding(.vertical, AppSpacing.sm)
                     .background(.white.opacity(0.10))
                     .clipShape(Capsule())
-                    .padding(.bottom, 52)
+                    .padding(.bottom, 52) // intentional brand offset — no token match, exception per handoff
+.padding(.bottom, 52) // intentional brand offset — no token match, exception per handoff
+.padding(.bottom, 52) // intentional brand offset — no token match, exception per handoff
+.padding(.bottom, 52) // intentional brand offset — no token match, exception per handoff
+
                 #endif
             }
             .onAppear {
@@ -231,8 +236,8 @@ struct OnboardingBrandView: View {
         return Rectangle()
             .fill(LinearGradient(stops: [
                 .init(color: .clear,                        location: 0.00),
-                .init(color: AppColors.cyan.opacity(0.05),  location: 0.40),
-                .init(color: AppColors.cyan.opacity(0.025), location: 0.75),
+                .init(color: AppColors.accentPrimary.opacity(0.05),  location: 0.40),
+                .init(color: AppColors.accentPrimary.opacity(0.025), location: 0.75),
                 .init(color: .clear,                        location: 1.00),
             ], startPoint: .bottom, endPoint: .top))
             .frame(width: w, height: bounceH)
@@ -248,9 +253,9 @@ struct OnboardingBrandView: View {
             Rectangle()
                 .fill(LinearGradient(stops: [
                     .init(color: .clear,                          location: 0.00),
-                    .init(color: AppColors.cyan.opacity(0.09),    location: 0.28),
+                    .init(color: AppColors.accentPrimary.opacity(0.09),    location: 0.28),
                     .init(color: Color.white.opacity(0.20),       location: 0.50),
-                    .init(color: AppColors.magenta.opacity(0.09), location: 0.72),
+                    .init(color: AppColors.accentTertiary.opacity(0.09), location: 0.72),
                     .init(color: .clear,                          location: 1.00),
                 ], startPoint: .leading, endPoint: .trailing))
                 .frame(width: w * 0.88, height: max(1.5 * scale, 1.0))
@@ -385,8 +390,8 @@ struct OnboardingBrandView: View {
                     Path(CGRect(x: 0, y: 0, width: tw, height: horizGlowH)),
                     with: .linearGradient(
                         Gradient(stops: [
-                            .init(color: AppColors.purple.opacity(0.14), location: 0.0),
-                            .init(color: AppColors.cyan.opacity(0.06),   location: 0.4),
+                            .init(color: AppColors.accentSecondary.opacity(0.14), location: 0.0),
+                            .init(color: AppColors.accentPrimary.opacity(0.06),   location: 0.4),
                             .init(color: .clear,                         location: 1.0),
                         ]),
                         startPoint: CGPoint(x: tw*0.5, y: 0),
@@ -404,8 +409,8 @@ struct OnboardingBrandView: View {
                     phase:     wavePhase * 0.65
                 )
                 .fill(LinearGradient(stops: [
-                    .init(color: AppColors.cyan.opacity(0.55), location: 0.00),
-                    .init(color: AppColors.cyan.opacity(0.18), location: 0.35),
+                    .init(color: AppColors.accentPrimary.opacity(0.55), location: 0.00),
+                    .init(color: AppColors.accentPrimary.opacity(0.18), location: 0.35),
                     .init(color: .clear,                        location: 0.65),
                 ], startPoint: .top, endPoint: .bottom))
                 .opacity(0.20)
@@ -417,8 +422,8 @@ struct OnboardingBrandView: View {
                     phase:     wavePhase * 0.85 + 0.9
                 )
                 .fill(LinearGradient(stops: [
-                    .init(color: AppColors.purple.opacity(0.70), location: 0.00),
-                    .init(color: AppColors.purple.opacity(0.22), location: 0.40),
+                    .init(color: AppColors.accentSecondary.opacity(0.70), location: 0.00),
+                    .init(color: AppColors.accentSecondary.opacity(0.22), location: 0.40),
                     .init(color: .clear,                          location: 0.70),
                 ], startPoint: .top, endPoint: .bottom))
                 .opacity(0.26)
@@ -430,7 +435,7 @@ struct OnboardingBrandView: View {
                     phase:     wavePhase + 1.7
                 )
                 .fill(LinearGradient(stops: [
-                    .init(color: AppColors.magenta.opacity(0.75), location: 0.00),
+                    .init(color: AppColors.accentTertiary.opacity(0.75), location: 0.00),
                     .init(color: Color(red:0.60,green:0.05,blue:0.25).opacity(0.40), location: 0.40),
                     .init(color: .clear, location: 0.72),
                 ], startPoint: .top, endPoint: .bottom))
@@ -456,11 +461,11 @@ struct OnboardingBrandView: View {
             Rectangle()
                 .fill(LinearGradient(stops: [
                     .init(color:.clear,                                       location:0.00),
-                    .init(color:AppColors.cyan.opacity(0.20 * lineBloom),     location:0.14),
-                    .init(color:AppColors.purple.opacity(0.38 * lineBloom),   location:0.42),
-                    .init(color:AppColors.purple.opacity(0.44 * lineBloom),   location:0.50),
-                    .init(color:AppColors.magenta.opacity(0.32 * lineBloom),  location:0.68),
-                    .init(color:AppColors.magenta.opacity(0.18 * lineBloom),  location:0.86),
+                    .init(color:AppColors.accentPrimary.opacity(0.20 * lineBloom),     location:0.14),
+                    .init(color:AppColors.accentSecondary.opacity(0.38 * lineBloom),   location:0.42),
+                    .init(color:AppColors.accentSecondary.opacity(0.44 * lineBloom),   location:0.50),
+                    .init(color:AppColors.accentTertiary.opacity(0.32 * lineBloom),  location:0.68),
+                    .init(color:AppColors.accentTertiary.opacity(0.18 * lineBloom),  location:0.86),
                     .init(color:.clear,                                       location:1.00),
                 ], startPoint: .leading, endPoint: .trailing))
                 .frame(width: w, height: bloomWide)
@@ -470,11 +475,11 @@ struct OnboardingBrandView: View {
             Rectangle()
                 .fill(LinearGradient(stops: [
                     .init(color:.clear,                                       location:0.05),
-                    .init(color:AppColors.cyan.opacity(0.60 * lineBloom),     location:0.20),
-                    .init(color:AppColors.purple.opacity(0.88 * lineBloom),   location:0.47),
-                    .init(color:AppColors.purple.opacity(0.94 * lineBloom),   location:0.50),
-                    .init(color:AppColors.magenta.opacity(0.78 * lineBloom),  location:0.68),
-                    .init(color:AppColors.magenta.opacity(0.42 * lineBloom),  location:0.83),
+                    .init(color:AppColors.accentPrimary.opacity(0.60 * lineBloom),     location:0.20),
+                    .init(color:AppColors.accentSecondary.opacity(0.88 * lineBloom),   location:0.47),
+                    .init(color:AppColors.accentSecondary.opacity(0.94 * lineBloom),   location:0.50),
+                    .init(color:AppColors.accentTertiary.opacity(0.78 * lineBloom),  location:0.68),
+                    .init(color:AppColors.accentTertiary.opacity(0.42 * lineBloom),  location:0.83),
                     .init(color:.clear,                                       location:0.95),
                 ], startPoint: .leading, endPoint: .trailing))
                 .frame(width: w, height: bloomMid)
@@ -484,9 +489,9 @@ struct OnboardingBrandView: View {
             Rectangle()
                 .fill(LinearGradient(stops: [
                     .init(color:.clear,            location:0.08),
-                    .init(color:AppColors.cyan,    location:0.22),
-                    .init(color:AppColors.purple,  location:0.50),
-                    .init(color:AppColors.magenta, location:0.78),
+                    .init(color:AppColors.accentPrimary,    location:0.22),
+                    .init(color:AppColors.accentSecondary,  location:0.50),
+                    .init(color:AppColors.accentTertiary, location:0.78),
                     .init(color:.clear,            location:0.92),
                 ], startPoint: .leading, endPoint: .trailing))
                 .frame(width: w, height: coreH)
@@ -513,9 +518,9 @@ struct OnboardingBrandView: View {
         Rectangle()
             .fill(LinearGradient(stops: [
                 .init(color:.clear,                           location:0.00),
-                .init(color:AppColors.cyan.opacity(0.55),     location:0.20),
-                .init(color:AppColors.purple.opacity(0.75),   location:0.50),
-                .init(color:AppColors.magenta.opacity(0.55),  location:0.80),
+                .init(color:AppColors.accentPrimary.opacity(0.55),     location:0.20),
+                .init(color:AppColors.accentSecondary.opacity(0.75),   location:0.50),
+                .init(color:AppColors.accentTertiary.opacity(0.55),  location:0.80),
                 .init(color:.clear,                           location:1.00),
             ], startPoint: .leading, endPoint: .trailing))
             .frame(width: w, height: max(4 * scale, 2.5))
@@ -529,26 +534,26 @@ struct OnboardingBrandView: View {
     // MARK: - Wordmark halves (Perfectly Centered)
     private func topHalfWord(fontSize: CGFloat, scale: CGFloat) -> some View {
         ZStack {
-            wordLabel(fontSize: fontSize, color: AppColors.cyan.opacity(0.65 * aberration))
+            wordLabel(fontSize: fontSize, color: AppColors.accentPrimary.opacity(0.65 * aberration))
                 .blur(radius: 0.8 * scale).offset(y: 1.5 * scale)
-            wordLabel(fontSize: fontSize, color: AppColors.cyan.opacity(0.35 * aberration))
+            wordLabel(fontSize: fontSize, color: AppColors.accentPrimary.opacity(0.35 * aberration))
                 .blur(radius: 2.0 * scale).offset(y: 4.0 * scale)
-            wordLabel(fontSize: fontSize, color: AppColors.magenta.opacity(0.25 * aberration))
+            wordLabel(fontSize: fontSize, color: AppColors.accentTertiary.opacity(0.25 * aberration))
                 .blur(radius: 3.0 * scale).offset(y: 7.0 * scale)
 
             wordLabel(fontSize: fontSize, color: Color(red: 0.863, green: 0.922, blue: 1.000).opacity(0.93))
-                .shadow(color: AppColors.cyan.opacity(0.25), radius: 28 * scale)
-                .shadow(color: AppColors.cyan.opacity(0.10), radius: 56 * scale)
+                .shadow(color: AppColors.accentPrimary.opacity(0.25), radius: 28 * scale)
+                .shadow(color: AppColors.accentPrimary.opacity(0.10), radius: 56 * scale)
         }
     }
 
     private func bottomHalfWord(fontSize: CGFloat, scale: CGFloat) -> some View {
         ZStack {
-            wordLabel(fontSize: fontSize, color: AppColors.magenta.opacity(0.65 * aberration))
+            wordLabel(fontSize: fontSize, color: AppColors.accentTertiary.opacity(0.65 * aberration))
                 .blur(radius: 0.8 * scale).offset(y: -1.5 * scale)
-            wordLabel(fontSize: fontSize, color: AppColors.magenta.opacity(0.35 * aberration))
+            wordLabel(fontSize: fontSize, color: AppColors.accentTertiary.opacity(0.35 * aberration))
                 .blur(radius: 2.0 * scale).offset(y: -4.0 * scale)
-            wordLabel(fontSize: fontSize, color: AppColors.cyan.opacity(0.25 * aberration))
+            wordLabel(fontSize: fontSize, color: AppColors.accentPrimary.opacity(0.25 * aberration))
                 .blur(radius: 3.0 * scale).offset(y: -7.0 * scale)
 
             Text("VAYL")
@@ -563,8 +568,8 @@ struct OnboardingBrandView: View {
                     .init(color:Color(red:0.820,green:0.140,blue:0.520).opacity(0.93), location:0.76),
                     .init(color:Color(red:0.740,green:0.090,blue:0.360).opacity(0.90), location:1.00),
                 ], startPoint: .topLeading, endPoint: .bottomTrailing))
-                .shadow(color: AppColors.purple.opacity(0.45),  radius: 14 * scale)
-                .shadow(color: AppColors.magenta.opacity(0.20), radius: 30 * scale)
+                .shadow(color: AppColors.accentSecondary.opacity(0.45),  radius: 14 * scale)
+                .shadow(color: AppColors.accentTertiary.opacity(0.20), radius: 30 * scale)
         }
     }
 

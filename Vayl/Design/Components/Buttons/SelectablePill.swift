@@ -30,7 +30,7 @@ struct SelectablePill: View {
     private var isLight: Bool { colorScheme == .light }
 
     // ─────────────────────────────────────────────
-    // MARK: Dark mode computed properties — unchanged
+    // MARK: Dark mode computed properties
     // ─────────────────────────────────────────────
 
     private var shimmerOpacity: CGFloat {
@@ -56,7 +56,7 @@ struct SelectablePill: View {
         case .alive: return 3.5
         }
     }
-    
+
     private var lightShimmerSpeed: Double {
         switch intensity {
         case .dim:   return 6.0
@@ -75,7 +75,7 @@ struct SelectablePill: View {
     }
 
     private var borderColor: Color {
-        guard isSelected else { return AppColors.borderHover }
+        guard isSelected else { return AppColors.borderSubtle }
         switch intensity {
         case .dim:   return Color.white.opacity(0.12)
         case .warm:  return Color.white.opacity(0.22)
@@ -102,6 +102,7 @@ struct SelectablePill: View {
     // ─────────────────────────────────────────────
     // MARK: Light mode computed properties
     // ─────────────────────────────────────────────
+
     private var lightShimmerOpacity: CGFloat {
         if isSelected {
             switch intensity {
@@ -118,8 +119,6 @@ struct SelectablePill: View {
         }
     }
 
-    /// Light mode border opacity — higher than dark because no glow
-    /// canvas to boost the visual weight of the border.
     private var lightBorderOpacity: Double {
         if isSelected {
             switch intensity {
@@ -132,7 +131,6 @@ struct SelectablePill: View {
         }
     }
 
-    /// Light mode border line width — matches warmAuroraBorder defaults.
     private var lightBorderWidth: CGFloat {
         if isSelected {
             switch intensity {
@@ -156,36 +154,34 @@ struct SelectablePill: View {
         } label: {
             pillContent
                 .modifier(PillShadowModifier(
-                    isLight: isLight,
+                    isLight:    isLight,
                     isSelected: isSelected,
-                    intensity: intensity
+                    intensity:  intensity
                 ))
                 .background(alignment: .bottom) {
                     flameLayer
                 }
                 .offset(y: isLight && isSelected ? -1 : 0)
-                .animation(.easeOut(duration: 0.2), value: isSelected)
+                .animation(AppAnimation.fast, value: isSelected)
         }
         .buttonStyle(.plain)
     }
 
     private var pillContent: some View {
         Text(label)
-            .font(.system(size: fontSize, weight: .medium))
-            .foregroundStyle(isLight ? AppColors.lightBodyWineDark : Color.white)
+            // AppFonts.body replaces .system(size:weight:) —
+            // scales correctly with Dynamic Type via relativeTo: .body.
+            .font(AppFonts.body(fontSize, weight: .medium, relativeTo: .body))
+            .foregroundStyle(isLight ? AppColors.textSecondary : Color.white)
             .lineLimit(1)
             .minimumScaleFactor(0.85)
             .frame(maxWidth: .infinity)
             .frame(height: height)
             .background(isLight
                 ? (isSelected
-                    ? AppColors.lightFrostPillSel
-                    : AppColors.lightFrostPill)   // FIX: was lightSurfaceBg (#F2EFE6)
-                                                   // which is near-identical to lightPageBg.
-                                                   // lightFrostPill is visibly lavender-tinted
-                                                   // so the shimmer has a tinted base to sweep
-                                                   // over — same role surfaceBg plays in dark.
-                : AppColors.surfaceBg)
+                    ? AppColors.glassFrostPillSelected
+                    : AppColors.glassFrostPill)
+                : AppColors.modalBackground)
             .overlay {
                 if isLight {
                     LightModeShimmer(duration: lightShimmerSpeed, usePillColors: true)
@@ -199,12 +195,12 @@ struct SelectablePill: View {
             }
             .clipShape(Capsule())
             .modifier(PillBorderModifier(
-                isLight: isLight,
-                isSelected: isSelected,
-                darkBorderColor: borderColor,
-                darkBorderWidth: borderWidth,
+                isLight:            isLight,
+                isSelected:         isSelected,
+                darkBorderColor:    borderColor,
+                darkBorderWidth:    borderWidth,
                 lightBorderOpacity: lightBorderOpacity,
-                lightBorderWidth: lightBorderWidth
+                lightBorderWidth:   lightBorderWidth
             ))
     }
 
@@ -236,23 +232,24 @@ struct SelectablePill: View {
             }
             .frame(height: isLight ? lightBloomFrameHeight : flameFrameHeight)
             .allowsHitTesting(false)
-            .transition(.opacity.animation(.easeIn(duration: 0.4)))
+            .transition(.opacity.animation(AppAnimation.enter))
         }
     }
 
     // ─────────────────────────────────────────────
-    // MARK: Helpers — unchanged from original
+    // MARK: Helpers
     // ─────────────────────────────────────────────
 
     private var labelColor: Color {
-        if isLight {
-            return AppColors.lightBodyWineDark   // selected and unselected both deep wine on cream
-        } else {
-            return .white
-        }
+        isLight ? AppColors.textSecondary : .white
     }
 
-    private func glowColor(_ base: Color, _ dimAlpha: CGFloat, _ warmAlpha: CGFloat, _ aliveAlpha: CGFloat) -> Color {
+    private func glowColor(
+        _ base: Color,
+        _ dimAlpha: CGFloat,
+        _ warmAlpha: CGFloat,
+        _ aliveAlpha: CGFloat
+    ) -> Color {
         switch intensity {
         case .dim:   return base.opacity(dimAlpha)
         case .warm:  return base.opacity(warmAlpha)
@@ -271,41 +268,40 @@ struct SelectablePill: View {
 
 // ─────────────────────────────────────────────
 // MARK: PillBorderModifier
-// Handles the dark/light border split cleanly
-// without .if() helper to avoid redeclaration.
 // ─────────────────────────────────────────────
 
 private struct PillBorderModifier: ViewModifier {
-    let isLight: Bool
-    let isSelected: Bool
-    let darkBorderColor: Color
-    let darkBorderWidth: CGFloat
+    let isLight:            Bool
+    let isSelected:         Bool
+    let darkBorderColor:    Color
+    let darkBorderWidth:    CGFloat
     let lightBorderOpacity: Double
-    let lightBorderWidth: CGFloat
+    let lightBorderWidth:   CGFloat
 
     func body(content: Content) -> some View {
         if isLight {
             if isSelected {
-                // Selected light — magenta-gold gradient border
                 content
                     .magentaGoldBorder(
-                        cornerRadius: 100,
-                        lineWidth: lightBorderWidth,
-                        glowRadius: 6,
-                        opacity: lightBorderOpacity
+                        // AppRadius.pill replacescornerRadius: AppRadius.pill
+                        cornerRadius: AppRadius.pill,
+                        lineWidth:    lightBorderWidth,
+                        glowRadius:   6,
+                        opacity:      lightBorderOpacity
                     )
             } else {
                 content.overlay(
-                    Capsule().strokeBorder(
-                        AppColors.lightBorderHover,
-                        lineWidth: 1.5
-                    )
+                    Capsule().strokeBorder(AppColors.borderSubtle, lineWidth: 1.5)
                 )
             }
         } else {
-            // Dark — spectrum pillBorder when selected; subtle plain stroke when not
             if isSelected {
-                content.pillBorder(cornerRadius: 100, lineWidth: darkBorderWidth, glowRadius: 5, opacity: 0.85)
+                content.pillBorder(
+                    cornerRadius: AppRadius.pill,
+                    lineWidth:    darkBorderWidth,
+                    glowRadius:   5,
+                    opacity:      0.85
+                )
             } else {
                 content.overlay(
                     Capsule().strokeBorder(darkBorderColor, lineWidth: darkBorderWidth)
@@ -317,41 +313,36 @@ private struct PillBorderModifier: ViewModifier {
 
 // ─────────────────────────────────────────────
 // MARK: PillShadowModifier
-// Dark: spectrum glow ring
-// Light: warm aurora shadow spread
 // ─────────────────────────────────────────────
 
 private struct PillShadowModifier: ViewModifier {
-    let isLight: Bool
+    let isLight:    Bool
     let isSelected: Bool
-    let intensity: SelectablePill.Intensity
+    let intensity:  SelectablePill.Intensity
 
     func body(content: Content) -> some View {
         if isLight {
-            // Shadow spread — opacity scales with intensity
             let base: Double = isSelected ? 1.0 : 0.0
             content
-                .shadow(color: AppColors.lightShadowMagenta.opacity(base * magentaScale),
+                .shadow(color: AppColors.shadowMagenta.opacity(base * magentaScale),
                         radius: 8,  x: 0, y: 3)
-                .shadow(color: AppColors.lightShadowPurple.opacity(base * purpleScale),
+                .shadow(color: AppColors.shadowPurple.opacity(base * purpleScale),
                         radius: 16, x: 0, y: 5)
-                .shadow(color: AppColors.lightShadowGold.opacity(base * goldScale),
+                .shadow(color: AppColors.shadowGold.opacity(base * goldScale),
                         radius: 6,  x: 0, y: 2)
         } else {
-            // Dark — original spectrum glow ring, unchanged
             content
-                .shadow(color: isSelected ? glowColor(AppColors.purple,  0.20, 0.25, 0.34) : .clear,
+                .shadow(color: isSelected ? glowColor(AppColors.accentSecondary, 0.20, 0.25, 0.34) : .clear,
                         radius: pick(6,  12, 14))
-                .shadow(color: isSelected ? glowColor(AppColors.cyan,    0.0,  0.15, 0.30) : .clear,
+                .shadow(color: isSelected ? glowColor(AppColors.accentPrimary,   0.0,  0.15, 0.30) : .clear,
                         radius: pick(0,  16, 28))
-                .shadow(color: isSelected ? glowColor(AppColors.magenta, 0.0,  0.08, 0.25) : .clear,
+                .shadow(color: isSelected ? glowColor(AppColors.accentTertiary,  0.0,  0.08, 0.25) : .clear,
                         radius: pick(0,  8,  45))
-                .shadow(color: isSelected ? glowColor(AppColors.pink,    0.0,  0.0,  0.12) : .clear,
+                .shadow(color: isSelected ? glowColor(AppColors.accentTertiary,  0.0,  0.0,  0.12) : .clear,
                         radius: pick(0,  0,  70))
         }
     }
 
-    // Light shadow intensity scales with pill intensity
     private var magentaScale: Double {
         switch intensity { case .dim: return 0.5; case .warm: return 0.9; case .alive: return 1.0 }
     }
@@ -362,7 +353,6 @@ private struct PillShadowModifier: ViewModifier {
         switch intensity { case .dim: return 0.3; case .warm: return 0.7; case .alive: return 1.0 }
     }
 
-    // Helpers mirror the original SelectablePill private functions
     private func glowColor(_ base: Color, _ d: CGFloat, _ w: CGFloat, _ a: CGFloat) -> Color {
         switch intensity {
         case .dim:   return base.opacity(d)
@@ -380,25 +370,25 @@ private struct PillShadowModifier: ViewModifier {
 // ─────────────────────────────────────────────
 
 #Preview("Dark") {
-    VStack(spacing: 12) {
-        SelectablePill(label: "She/Her",    isSelected: true,  intensity: .alive) { }
-        SelectablePill(label: "He/Him",     isSelected: false, intensity: .warm)  { }
-        SelectablePill(label: "They/Them",  isSelected: true,  intensity: .warm)  { }
-        SelectablePill(label: "Curious",    isSelected: true,  intensity: .dim)   { }
+    VStack(spacing: AppSpacing.md) {
+        SelectablePill(label: "She/Her",   isSelected: true,  intensity: .alive) { }
+        SelectablePill(label: "He/Him",    isSelected: false, intensity: .warm)  { }
+        SelectablePill(label: "They/Them", isSelected: true,  intensity: .warm)  { }
+        SelectablePill(label: "Curious",   isSelected: true,  intensity: .dim)   { }
     }
-    .padding(24)
-    .background(AppColors.pageBg)
+    .padding(AppSpacing.lg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }
 
 #Preview("Light") {
-    VStack(spacing: 12) {
-        SelectablePill(label: "She/Her",    isSelected: true,  intensity: .alive) { }
-        SelectablePill(label: "He/Him",     isSelected: false, intensity: .warm)  { }
-        SelectablePill(label: "They/Them",  isSelected: true,  intensity: .warm)  { }
-        SelectablePill(label: "Curious",    isSelected: true,  intensity: .dim)   { }
+    VStack(spacing: AppSpacing.md) {
+        SelectablePill(label: "She/Her",   isSelected: true,  intensity: .alive) { }
+        SelectablePill(label: "He/Him",    isSelected: false, intensity: .warm)  { }
+        SelectablePill(label: "They/Them", isSelected: true,  intensity: .warm)  { }
+        SelectablePill(label: "Curious",   isSelected: true,  intensity: .dim)   { }
     }
-    .padding(24)
-    .background(AppColors.lightPageBg)
+    .padding(AppSpacing.lg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.light)
 }

@@ -9,27 +9,27 @@
 import SwiftUI
 
 struct InteractiveField: View {
-    @Environment(\.theme) private var t
+    @Environment(\.theme) private var t // ARCHITECTURAL FLAG: legacy theme env — do not migrate to AppColors until theme system is unified
     let placeholder: String
     let icon: String
     @Binding var text: String
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppSpacing.sm) {
             Text(icon)
-                .font(.system(size: 13))
+                .font(.system(size: 13)) // intentional exception: emoji/symbol icon passed as String param — size set for visual balance
             TextField(placeholder, text: $text)
-                .font(.system(size: 12))
+                .font(AppFonts.caption)
                 .foregroundStyle(t.text)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.sm)
         .background(
             t.isDark ? .white.opacity(0.03) : t.surface1
         )
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: AppRadius.md)
                 .stroke(t.cardBorder, lineWidth: 1.5)
         )
         .shadow(

@@ -16,9 +16,9 @@ struct KeywordHighlightText: View {
 
     private func highlightUIColor(for type: String) -> UIColor {
         switch type.lowercased() {
-        case "cyan": return UIColor(AppColors.cyan)
-        case "magenta": return UIColor(AppColors.magenta)
-        case "gold": return UIColor(AppColors.gold)
+        case "cyan": return UIColor(AppColors.accentPrimary)
+        case "magenta": return UIColor(AppColors.accentTertiary)
+        case "gold": return UIColor(AppColors.safetyAccent)
         default: return UIColor(baseColor)
         }
     }
@@ -62,5 +62,5 @@ struct KeywordHighlightText: View {
         ]
     )
     .padding()
-    .background(AppColors.pageBg)
+    .background(AppColors.pageBackground)
 }

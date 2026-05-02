@@ -31,7 +31,7 @@ struct ConversationCard: View {
     // MARK: - Layout
 
     private let cardHeight: CGFloat = 420
-    private let cornerRadius: CGFloat = 20
+    private let cornerRadius: CGFloat = AppRadius.container
     private let lineWidth: CGFloat = 1.5
 
     private var cardWidth: CGFloat {
@@ -99,15 +99,15 @@ struct ConversationCard: View {
         ZStack {
             // Card background
             RoundedRectangle(cornerRadius: cornerRadius)
-                .fill(AppColors.cardBg)
+                .fill(AppColors.cardBackground)
 
             // Ambient wash — subtle glow at bottom
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(
                     LinearGradient(
                         colors: [
-                            AppColors.purple.opacity(0.06),
-                            AppColors.cyan.opacity(0.04),
+                            AppColors.accentSecondary.opacity(0.06),
+                            AppColors.accentPrimary.opacity(0.04),
                             .clear
                         ],
                         startPoint: .bottomLeading,
@@ -116,7 +116,7 @@ struct ConversationCard: View {
                 )
 
             // Content
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: AppSpacing.lg) {
                 // Overline
                 if let overline = frontOverline {
                     Text(overline)
@@ -139,7 +139,7 @@ struct ConversationCard: View {
                     }
                 }
             }
-            .padding(28)
+            .padding(AppSpacing.xl)
 
             // Fuse timer — rendered over card, under content
             fuseOverlay
@@ -155,14 +155,14 @@ struct ConversationCard: View {
     private var backFace: some View {
         ZStack {
             RoundedRectangle(cornerRadius: cornerRadius)
-                .fill(AppColors.cardBg)
+                .fill(AppColors.cardBackground)
 
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(
                     LinearGradient(
                         colors: [
-                            AppColors.magenta.opacity(0.05),
-                            AppColors.purple.opacity(0.04),
+                            AppColors.accentTertiary.opacity(0.05),
+                            AppColors.accentSecondary.opacity(0.04),
                             .clear
                         ],
                         startPoint: .topTrailing,
@@ -170,7 +170,7 @@ struct ConversationCard: View {
                     )
                 )
 
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
                 Text("Something came up. What's it closest to?")
                     .font(AppFonts.bodyMedium)
                     .foregroundStyle(AppColors.textSecondary)
@@ -189,7 +189,7 @@ struct ConversationCard: View {
                         .transition(.opacity)
                 }
             }
-            .padding(28)
+            .padding(AppSpacing.xl)
 
             RoundedRectangle(cornerRadius: cornerRadius)
                 .stroke(Color.white.opacity(0.06), lineWidth: 1)
@@ -199,7 +199,7 @@ struct ConversationCard: View {
     // MARK: - Pill Grid
 
     private func pillGrid(pills: [CardRevealPill]) -> some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AppSpacing.sm) {
             ForEach(pills) { pill in
                 pillButton(pill: pill)
             }
@@ -217,15 +217,15 @@ struct ConversationCard: View {
                 .font(AppFonts.buttonLabel)
                 .foregroundStyle(isSelected ? AppColors.textPrimary : AppColors.textSecondary)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
+                .padding(.vertical, AppSpacing.md)
                 .background(
-                    RoundedRectangle(cornerRadius: 100)
+                    RoundedRectangle(cornerRadius: AppRadius.pill)
                         .fill(isSelected
-                              ? AppColors.purple.opacity(0.15)
+                              ? AppColors.accentSecondary.opacity(0.15)
                               : Color.white.opacity(0.04))
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 100)
+                    RoundedRectangle(cornerRadius: AppRadius.pill)
                         .stroke(
                             isSelected
                                 ? AnyShapeStyle(AppColors.spectrumBorder)
@@ -236,7 +236,7 @@ struct ConversationCard: View {
         }
         .buttonStyle(.plain)
         .scaleEffect(isSelected ? 1.02 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        .animation(AppAnimation.spring, value: isSelected)
     }
 
     // MARK: - Encouragement
@@ -330,20 +330,20 @@ struct ConversationCard: View {
 
     private func flipCard() {
         withAnimation(
-            .spring(response: 0.65, dampingFraction: 0.78)
+            AppAnimation.spring
         ) {
             isFlipped = true
         }
     }
 
     private func handlePillSelection(_ pill: CardRevealPill) {
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+        withAnimation(AppAnimation.spring) {
             selectedPill = pill
         }
         onPillSelected?(pill)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            withAnimation(.easeInOut(duration: 0.4)) {
+            withAnimation(AppAnimation.enter) {
                 showEncouragement = true
             }
         }
@@ -384,7 +384,7 @@ extension ConversationCard {
     )
     
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         
         VStack {
             Spacer()
@@ -404,7 +404,7 @@ extension ConversationCard {
 
 #Preview("Prompt Card — Convenience Init") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
 
         VStack {
             Spacer()

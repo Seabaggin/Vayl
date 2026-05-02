@@ -6,27 +6,27 @@ import SwiftUI
 struct SafeWordButton: View {
     let onActivate: () -> Void
     @State private var showConfirmation: Bool = false
-    @Environment(\.theme) private var t
+    @Environment(\.theme) private var t // ARCHITECTURAL FLAG: legacy theme env — do not migrate to AppColors until theme system is unified
 
     var body: some View {
         Button {
             showConfirmation = true
         } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "hand.raised.fill")
-                    .font(.system(size: 18, weight: .semibold))
+            HStack(spacing: AppSpacing.sm) {
+                Image(AppIcons.handRaised)
+                    .font(.system(size: 18, weight: .semibold)) // intentional exception: fixed-size safety icon for unmissable tap target
                 Text("Safe Word")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(AppFonts.buttonLabel)
             }
             .foregroundColor(t.gold)
-            .padding(.vertical, 12)
-            .padding(.horizontal, 20)
+            .padding(.vertical, AppSpacing.sm)
+            .padding(.horizontal, AppSpacing.md)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AppRadius.md)
                     .fill(t.isDark ? t.gold.opacity(0.08) : t.gold.opacity(0.12))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AppRadius.md)
                     .stroke(t.gold.opacity(0.25), lineWidth: 1.5)
             )
         }
@@ -53,7 +53,7 @@ struct SafeWordButton: View {
 // MARK: - Preview
 #Preview {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         SafeWordButton { print("Safe word activated") }
     }
 }

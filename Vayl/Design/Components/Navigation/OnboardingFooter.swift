@@ -12,22 +12,23 @@ struct OnboardingFooter: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 12))
+            // .caption2 scales with Dynamic Type — correct for
+            // legal/privacy footer copy at minimum legible size.
+            .font(.caption2)
             .foregroundColor(colorScheme == .light
-                ? AppColors.lightTextTertiary
+                ? AppColors.textTertiary
                 : AppColors.textHint)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
-            .padding(.top, 12)
-            .padding(.bottom, 24)
+            .padding(.top, AppSpacing.md)
+            .padding(.bottom, AppSpacing.lg)
     }
 }
 
 #Preview {
     VStack(spacing: 0) {
-        // Dark
         ZStack {
-            AppColors.pageBg.ignoresSafeArea()
+            AppColors.pageBackground.ignoresSafeArea()
             VStack {
                 OnboardingFooter()
                 OnboardingFooter(text: "Custom footer copy for another screen.")
@@ -36,9 +37,8 @@ struct OnboardingFooter: View {
         .preferredColorScheme(.dark)
         .frame(maxWidth: .infinity)
 
-        // Light
         ZStack {
-            AppColors.lightPageBg.ignoresSafeArea()
+            AppColors.pageBackground.ignoresSafeArea()
             VStack {
                 OnboardingFooter()
                 OnboardingFooter(text: "Custom footer copy for another screen.")

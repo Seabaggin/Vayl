@@ -12,11 +12,11 @@ struct RatingButtonGroup: View {
     private let columns = [GridItem(.flexible()), GridItem(.flexible())]
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 8) {
+        LazyVGrid(columns: columns, spacing: AppSpacing.sm) {
             ForEach(ratings, id: \.self) { rating in
                 let isSelected = selected == rating
                 Button {
-                    withAnimation(.spring(response: 0.3)) {
+                    withAnimation(AppAnimation.spring) {
                         if isSelected {
                             selected = nil
                         } else {
@@ -25,43 +25,43 @@ struct RatingButtonGroup: View {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     }
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: AppSpacing.xs) {
                         Text(rating.displayLabel)
                             .font(AppFonts.caption)
                             .fontWeight(.semibold)
                             .foregroundColor(AppColors.textPrimary)
                     }
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 8)
+                    .padding(.vertical, AppSpacing.sm)
+                    .padding(.horizontal, AppSpacing.sm)
                     .frame(maxWidth: .infinity)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: AppRadius.md)
                             .fill(isSelected
                                 ? accentColor(for: rating).opacity(0.06)
-                                : AppColors.cardBg)
+                                :  AppColors.cardBackground)
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: AppRadius.md)
                             .stroke(isSelected
                                 ? accentColor(for: rating)
-                                : AppColors.border, lineWidth: 1.5)
+                                : AppColors.borderSubtle, lineWidth: 1.5)
                     )
                     .scaleEffect(isSelected ? 0.97 : 1.0)
-                    .animation(.spring(response: 0.3), value: isSelected)
+                    .animation(AppAnimation.spring, value: isSelected)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .padding(.vertical, 4)
-        .padding(.horizontal, 2)
+        .padding(.vertical, AppSpacing.xs)
+        .padding(.horizontal, AppSpacing.xxs)
     }
 
     private func accentColor(for rating: DesireLevel) -> Color {
         switch rating {
-        case .excitedAboutIt: return AppColors.magenta
-        case .openToIt:       return AppColors.cyan
+        case .excitedAboutIt: return AppColors.accentTertiary
+        case .openToIt:       return AppColors.accentPrimary
         case .probablyNot:    return Color.white.opacity(0.5)
-        case .notForMe:       return AppColors.gold
+        case .notForMe:       return AppColors.safetyAccent
         }
     }
 }

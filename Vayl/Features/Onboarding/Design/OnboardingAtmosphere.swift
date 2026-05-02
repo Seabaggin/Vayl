@@ -152,7 +152,7 @@ struct OnboardingAtmosphere: View {
 
 #Preview("Stat — Dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingAtmosphere(config: .stat, sparkConfig: .statView, opacity: 1.0)
             .ignoresSafeArea()
     }
@@ -161,7 +161,7 @@ struct OnboardingAtmosphere: View {
 
 #Preview("Stat — Light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         OnboardingAtmosphere(config: .stat, sparkConfig: .statView, opacity: 1.0)
             .ignoresSafeArea()
     }

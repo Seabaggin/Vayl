@@ -27,9 +27,9 @@ enum PrismMode: CaseIterable {
 
     var color: Color {
         switch self {
-        case .journal:    return AppColors.cyan
-        case .reflect:    return AppColors.purple
-        case .agreements: return AppColors.magenta
+        case .journal:    return AppColors.accentPrimary
+        case .reflect:    return AppColors.accentSecondary
+        case .agreements: return AppColors.accentTertiary
         }
     }
 
@@ -102,9 +102,9 @@ struct PrismView: View {
                 cursorTimer?.invalidate()
                 cursorTimer = nil
             }
-            .animation(.easeInOut(duration: 0.35), value: activeMode)
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: expanded)
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: cardDrawn)
+            .animation(AppAnimation.standard, value: activeMode)
+            .animation(AppAnimation.spring, value: expanded)
+            .animation(AppAnimation.spring, value: cardDrawn)
     }
 
     // MARK: - Content
@@ -112,23 +112,23 @@ struct PrismView: View {
     private var content: some View {
         VStack(spacing: 0) {
             headerRow
-                .padding(.horizontal, 20)
-                .padding(.top, 18)
-                .padding(.bottom, 14)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.top, AppSpacing.md)
+                .padding(.bottom, AppSpacing.md)
 
             Divider()
                 .background(
                     isLight
                         ? Color.black.opacity(0.07)
-                        : AppColors.border
+                        : AppColors.borderSubtle
                 )
-                .padding(.horizontal, 20)
+                .padding(.horizontal, AppSpacing.md)
 
             TabView(selection: $activeMode) {
                 journalContent
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.top, AppSpacing.md)
+                    .padding(.bottom, AppSpacing.sm)
                     .frame(
                         minHeight: expanded ? 200 : 180,
                         maxHeight: expanded ? .infinity : 180,
@@ -137,9 +137,9 @@ struct PrismView: View {
                     .tag(PrismMode.journal)
 
                 reflectContent
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.top, AppSpacing.md)
+                    .padding(.bottom, AppSpacing.sm)
                     .frame(
                         minHeight: expanded ? 200 : 180,
                         maxHeight: expanded ? .infinity : 180,
@@ -148,9 +148,9 @@ struct PrismView: View {
                     .tag(PrismMode.reflect)
 
                 agreementsContent
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.top, AppSpacing.md)
+                    .padding(.bottom, AppSpacing.sm)
                     .frame(
                         minHeight: expanded ? 200 : 180,
                         maxHeight: expanded ? .infinity : 180,
@@ -161,7 +161,7 @@ struct PrismView: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(height: expanded ? 280 : 196)
             .onChange(of: activeMode) { _, _ in
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                withAnimation(AppAnimation.spring) {
                     expanded    = false
                     cardDrawn   = false
                     journalText = ""
@@ -169,9 +169,9 @@ struct PrismView: View {
             }
 
             pillSwitcher
-                .padding(.horizontal, 14)
-                .padding(.top, 4)
-                .padding(.bottom, 16)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.top, AppSpacing.xs)
+                .padding(.bottom, AppSpacing.md)
         }
     }
 
@@ -179,38 +179,38 @@ struct PrismView: View {
 
     private var headerRow: some View {
         HStack(alignment: .center) {
-            HStack(spacing: 6) {
+            HStack(spacing: AppSpacing.sm) {
                 Circle()
                     .fill(modeColor)
                     .frame(width: 6, height: 6)
                     .shadow(color: modeColor, radius: 4)
-                    .animation(.easeInOut(duration: 0.3), value: activeMode)
+                    .animation(AppAnimation.standard, value: activeMode)
 
                 Text(activeMode.privateLabel)
                     .font(AppFonts.overline)
                     .tracking(1.0)
                     .foregroundStyle(modeColor.opacity(0.55))
-                    .animation(.easeOut(duration: 0.2), value: activeMode)
+                    .animation(AppAnimation.fast, value: activeMode)
             }
 
             Spacer()
 
             if expanded {
                 Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(AppAnimation.spring) {
                         expanded    = false
                         cardDrawn   = false
                         journalText = ""
                     }
                 } label: {
                     Text("Close")
-                        .font(AppFonts.body(12, weight: .medium))
+                        .font(AppFonts.body(12, weight: .medium, relativeTo: .caption))
                         .foregroundStyle(
                             isLight
-                                ? AppColors.lightTextTertiary
+                                ? AppColors.textTertiary
                                 : AppColors.textTertiary
                         )
-                        .padding(.leading, 10)
+                        .padding(.leading, AppSpacing.sm)
                 }
             }
         }
@@ -225,170 +225,170 @@ struct PrismView: View {
 
                 HStack(alignment: .firstTextBaseline, spacing: 0) {
                     Text(activeMode.timeAwarePrompt)
-                        .font(AppFonts.body(15, weight: .regular))
+                        .font(AppFonts.body(15, weight: .regular, relativeTo: .body))
                         .foregroundStyle(
                             isLight
-                                ? AppColors.lightTextSecondary.opacity(0.80)
+                                ? AppColors.textSecondary.opacity(0.80)
                                 : AppColors.textSecondary.opacity(0.80)
                         )
                         .lineSpacing(4)
                     Text(cursorOn ? "|" : " ")
-                        .font(AppFonts.body(15, weight: .regular))
-                        .foregroundStyle(AppColors.cyan.opacity(0.65))
+                        .font(AppFonts.body(15, weight: .regular, relativeTo: .body))
+                        .foregroundStyle(AppColors.accentPrimary.opacity(0.65))
                 }
-                .padding(.bottom, 16)
+                .padding(.bottom, AppSpacing.md)
 
                 Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(AppAnimation.spring) {
                         expanded = true
                     }
                 } label: {
-                    HStack(spacing: 10) {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(AppColors.cyan.opacity(0.10))
+                    HStack(spacing: AppSpacing.sm) {
+                        RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
+                            .fill(AppColors.accentPrimary.opacity(0.10))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(AppColors.cyan.opacity(0.22), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
+                                    .strokeBorder(AppColors.accentPrimary.opacity(0.22), lineWidth: 1)
                             )
                             .frame(width: 28, height: 28)
                             .overlay(
                                 Text("+")
-                                    .font(.system(size: 16, weight: .light))
-                                    .foregroundStyle(AppColors.cyan)
+                                    .font(Font.custom("Switzer-Regular", size: 16, relativeTo: .body))
+                                    .foregroundStyle(AppColors.accentPrimary)
                             )
 
                         Text("Write entry")
-                            .font(AppFonts.body(12, weight: .medium))
-                            .foregroundStyle(AppColors.cyan.opacity(0.65))
+                            .font(AppFonts.body(12, weight: .medium, relativeTo: .caption))
+                            .foregroundStyle(AppColors.accentPrimary.opacity(0.65))
 
                         Spacer()
 
-                        HStack(spacing: 4) {
+                        HStack(spacing: AppSpacing.xs) {
                             ForEach(0..<3, id: \.self) { i in
                                 Circle()
                                     .fill(i == 0
-                                          ? AppColors.cyan
-                                          : (isLight ? Color.black.opacity(0.10) : AppColors.border))
+                                          ? AppColors.accentPrimary
+                                          : (isLight ? Color.black.opacity(0.10) : AppColors.borderSubtle))
                                     .frame(width: 4, height: 4)
                             }
                         }
                     }
                 }
-                .padding(.bottom, 14)
+                .padding(.bottom, AppSpacing.md)
 
                 Divider()
                     .background(
                         isLight
                             ? Color.black.opacity(0.07)
-                            : AppColors.border
+                            : AppColors.borderSubtle
                     )
-                    .padding(.bottom, 12)
+                    .padding(.bottom, AppSpacing.md)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
                     Text("LAST ENTRY · 2 DAYS AGO")
                         .font(AppFonts.overline)
                         .tracking(1.8)
                         .foregroundStyle(
                             isLight
-                                ? AppColors.lightTextTertiary
+                                ? AppColors.textTertiary
                                 : AppColors.textMuted
                         )
 
                     Text("\"Didn't expect to feel that settled after the conversation about...\"")
-                        .font(AppFonts.body(12, weight: .regular))
+                        .font(AppFonts.body(12, weight: .regular, relativeTo: .caption))
                         .foregroundStyle(
                             isLight
-                                ? AppColors.lightTextSecondary.opacity(0.65)
+                                ? AppColors.textSecondary.opacity(0.65)
                                 : AppColors.textTertiary
                         )
                         .lineSpacing(3)
                         .lineLimit(2)
                 }
-                .padding(.bottom, 4)
+                .padding(.bottom, AppSpacing.xs)
             }
 
         } else {
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
 
                 Text(activeMode.timeAwarePrompt)
-                    .font(AppFonts.body(13, weight: .regular))
+                    .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
                     .foregroundStyle(
                         journalText.isEmpty
                             ? (isLight
-                                ? AppColors.lightTextSecondary.opacity(0.45)
+                                ? AppColors.textSecondary.opacity(0.45)
                                 : AppColors.textSecondary.opacity(0.45))
                             : (isLight
-                                ? AppColors.lightTextTertiary
+                                ? AppColors.textTertiary
                                 : AppColors.textMuted)
                     )
                     .italic()
 
                 ZStack(alignment: .topLeading) {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                         .fill(
                             isLight
                                 ? Color.black.opacity(0.03)
                                 : Color.white.opacity(0.03)
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .strokeBorder(AppColors.cyan.opacity(0.18), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                                .strokeBorder(AppColors.accentPrimary.opacity(0.18), lineWidth: 1)
                         )
                         .frame(minHeight: 110)
 
                     if journalText.isEmpty {
                         Text("Start writing...")
-                            .font(AppFonts.body(14, weight: .regular))
+                            .font(AppFonts.body(14, weight: .regular, relativeTo: .callout))
                             .foregroundStyle(
                                 isLight
-                                    ? AppColors.lightTextTertiary
+                                    ? AppColors.textTertiary
                                     : AppColors.textMuted
                             )
-                            .padding(14)
+                            .padding(AppSpacing.md)
                     }
                 }
 
-                HStack(spacing: 10) {
+                HStack(spacing: AppSpacing.sm) {
                     Button { } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "mic.fill")
-                                .font(.system(size: 12))
+                        HStack(spacing: AppSpacing.sm) {
+                            Image(AppIcons.mic)
+                                .font(Font.custom("Switzer-Regular", size: 12, relativeTo: .caption))
                             Text("Dictate")
-                                .font(AppFonts.body(12, weight: .medium))
+                                .font(AppFonts.body(12, weight: .medium, relativeTo: .caption))
                         }
-                        .foregroundStyle(AppColors.cyan.opacity(0.65))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                        .background(AppColors.cyan.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .foregroundStyle(AppColors.accentPrimary.opacity(0.65))
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.vertical, AppSpacing.sm)
+                        .background(AppColors.accentPrimary.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(AppColors.cyan.opacity(0.18), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                                .strokeBorder(AppColors.accentPrimary.opacity(0.18), lineWidth: 1)
                         )
                     }
 
                     Spacer()
 
                     Button {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        withAnimation(AppAnimation.spring) {
                             expanded = false
                         }
                     } label: {
                         Text("Save")
-                            .font(AppFonts.body(12, weight: .semibold))
-                            .foregroundStyle(AppColors.cyan)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 9)
-                            .background(AppColors.cyan.opacity(0.12))
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .font(AppFonts.body(12, weight: .semibold, relativeTo: .caption))
+                            .foregroundStyle(AppColors.accentPrimary)
+                            .padding(.horizontal, AppSpacing.md)
+                            .padding(.vertical, AppSpacing.sm)
+                            .background(AppColors.accentPrimary.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .strokeBorder(AppColors.cyan.opacity(0.28), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                                    .strokeBorder(AppColors.accentPrimary.opacity(0.28), lineWidth: 1)
                             )
                     }
                 }
-                .padding(.bottom, 4)
+                .padding(.bottom, AppSpacing.xs)
             }
         }
     }
@@ -402,7 +402,7 @@ struct PrismView: View {
 
                 Button {
                     if !expanded {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        withAnimation(AppAnimation.spring) {
                             expanded = true
                         }
                     } else {
@@ -410,20 +410,20 @@ struct PrismView: View {
                     }
                 } label: {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        AppColors.purple.opacity(0.16),
-                                        AppColors.purple.opacity(0.07)
+                                        AppColors.accentSecondary.opacity(0.16),
+                                        AppColors.accentSecondary.opacity(0.07)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint:   .bottomTrailing
                                 )
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .strokeBorder(AppColors.purple.opacity(0.28), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                                    .strokeBorder(AppColors.accentSecondary.opacity(0.28), lineWidth: 1)
                             )
                             .frame(height: expanded ? 100 : 80)
 
@@ -431,123 +431,123 @@ struct PrismView: View {
                             ForEach([1.0, 0.65, 0.35], id: \.self) { scale in
                                 Circle()
                                     .strokeBorder(
-                                        AppColors.purple.opacity(0.10 + scale * 0.08),
+                                        AppColors.accentSecondary.opacity(0.10 + scale * 0.08),
                                         lineWidth: 1
                                     )
                                     .frame(width: 60 * scale, height: 60 * scale)
                             }
                             Circle()
-                                .fill(AppColors.purple.opacity(0.20))
+                                .fill(AppColors.accentSecondary.opacity(0.20))
                                 .frame(width: 8, height: 8)
-                                .shadow(color: AppColors.purple, radius: 4)
+                                .shadow(color: AppColors.accentSecondary, radius: 4)
                         }
                         .opacity(cardShimmer ? 0 : 1)
 
                         if expanded {
                             Text("Draw a card")
-                                .font(AppFonts.body(13, weight: .semibold))
-                                .foregroundStyle(AppColors.purple.opacity(0.75))
+                                .font(AppFonts.body(13, weight: .semibold, relativeTo: .caption))
+                                .foregroundStyle(AppColors.accentSecondary.opacity(0.75))
                                 .offset(y: 28)
                         }
                     }
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(BorderlessButtonStyle())
-                .padding(.bottom, expanded ? 0 : 14)
+                .padding(.bottom, expanded ? 0 : AppSpacing.md)
 
                 if !expanded {
                     Divider()
                         .background(
                             isLight
                                 ? Color.black.opacity(0.07)
-                                : AppColors.border
+                                : AppColors.borderSubtle
                         )
-                        .padding(.bottom, 12)
+                        .padding(.bottom, AppSpacing.md)
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
                         Text("LAST REFLECTION · 5 DAYS AGO")
                             .font(AppFonts.overline)
                             .tracking(1.8)
                             .foregroundStyle(
                                 isLight
-                                    ? AppColors.lightTextTertiary
+                                    ? AppColors.textTertiary
                                     : AppColors.textMuted
                             )
 
                         Text("You drew from the solo deck. No note saved.")
-                            .font(AppFonts.body(12, weight: .regular))
+                            .font(AppFonts.body(12, weight: .regular, relativeTo: .caption))
                             .foregroundStyle(
                                 isLight
-                                    ? AppColors.lightTextSecondary.opacity(0.65)
+                                    ? AppColors.textSecondary.opacity(0.65)
                                     : AppColors.textTertiary
                             )
                             .lineSpacing(3)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, AppSpacing.xs)
                 }
 
             } else {
 
-                VStack(alignment: .leading, spacing: 12) {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
                         .fill(
                             LinearGradient(
                                 colors: [
                                     Color(red: 0.06, green: 0.04, blue: 0.16),
-                                    AppColors.purple.opacity(0.12)
+                                    AppColors.accentSecondary.opacity(0.12)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint:   .bottomTrailing
                             )
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(AppColors.purple.opacity(0.40), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                                .strokeBorder(AppColors.accentSecondary.opacity(0.40), lineWidth: 1)
                         )
                         .overlay(alignment: .topLeading) {
-                            VStack(alignment: .leading, spacing: 8) {
+                            VStack(alignment: .leading, spacing: AppSpacing.sm) {
                                 Text("SOLO · INNER WORK")
                                     .font(AppFonts.overline)
                                     .tracking(2.0)
-                                    .foregroundStyle(AppColors.purple.opacity(0.65))
+                                    .foregroundStyle(AppColors.accentSecondary.opacity(0.65))
 
                                 Text("When do you find yourself editing your feelings before sharing them?")
-                                    .font(AppFonts.body(14, weight: .regular))
+                                    .font(AppFonts.body(14, weight: .regular, relativeTo: .callout))
                                     .foregroundStyle(AppColors.textPrimary.opacity(0.85))
                                     .lineSpacing(4)
                             }
-                            .padding(16)
+                            .padding(AppSpacing.md)
                         }
                         .frame(minHeight: 100)
 
-                    HStack(spacing: 10) {
+                    HStack(spacing: AppSpacing.sm) {
                         Button {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            withAnimation(AppAnimation.spring) {
                                 cardDrawn = false
                             }
                         } label: {
                             Text("Draw another")
-                                .font(AppFonts.body(12, weight: .medium))
+                                .font(AppFonts.body(12, weight: .medium, relativeTo: .caption))
                                 .foregroundStyle(
                                     isLight
-                                        ? AppColors.lightTextTertiary
+                                        ? AppColors.textTertiary
                                         : AppColors.textTertiary
                                 )
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 9)
+                                .padding(.vertical, AppSpacing.sm)
                                 .background(
                                     isLight
                                         ? Color.black.opacity(0.04)
                                         : Color.white.opacity(0.04)
                                 )
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                                         .strokeBorder(
                                             isLight
                                                 ? Color.black.opacity(0.08)
-                                                : AppColors.border,
+                                                : AppColors.borderSubtle,
                                             lineWidth: 1
                                         )
                                 )
@@ -555,19 +555,19 @@ struct PrismView: View {
 
                         Button { } label: {
                             Text("Write a note")
-                                .font(AppFonts.body(12, weight: .semibold))
-                                .foregroundStyle(AppColors.purple)
+                                .font(AppFonts.body(12, weight: .semibold, relativeTo: .caption))
+                                .foregroundStyle(AppColors.accentSecondary)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 9)
-                                .background(AppColors.purple.opacity(0.12))
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .padding(.vertical, AppSpacing.sm)
+                                .background(AppColors.accentSecondary.opacity(0.12))
+                                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .strokeBorder(AppColors.purple.opacity(0.30), lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                                        .strokeBorder(AppColors.accentSecondary.opacity(0.30), lineWidth: 1)
                                 )
                         }
                     }
-                    .padding(.bottom, 4)
+                    .padding(.bottom, AppSpacing.xs)
                 }
             }
         }
@@ -587,14 +587,14 @@ struct PrismView: View {
             if !expanded {
 
                 Text("\"\(agreements[0].text)\"")
-                    .font(AppFonts.body(14, weight: .regular))
+                    .font(AppFonts.body(14, weight: .regular, relativeTo: .callout))
                     .foregroundStyle(
                         isLight
-                            ? AppColors.lightTextSecondary.opacity(0.65)
+                            ? AppColors.textSecondary.opacity(0.65)
                             : AppColors.textSecondary.opacity(0.65)
                     )
                     .lineSpacing(4)
-                    .padding(.bottom, 14)
+                    .padding(.bottom, AppSpacing.md)
 
                 HStack {
                     Text("Added \(agreements[0].date) · \(agreements.count) total")
@@ -602,63 +602,63 @@ struct PrismView: View {
                         .tracking(1.2)
                         .foregroundStyle(
                             isLight
-                                ? AppColors.lightTextTertiary
+                                ? AppColors.textTertiary
                                 : AppColors.textMuted
                         )
 
                     Spacer()
 
                     Button {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        withAnimation(AppAnimation.spring) {
                             expanded = true
                         }
                     } label: {
                         Text("View all →")
-                            .font(AppFonts.body(12, weight: .medium))
-                            .foregroundStyle(AppColors.magenta.opacity(0.65))
+                            .font(AppFonts.body(12, weight: .medium, relativeTo: .caption))
+                            .foregroundStyle(AppColors.accentTertiary.opacity(0.65))
                     }
                 }
-                .padding(.bottom, 4)
+                .padding(.bottom, AppSpacing.xs)
 
             } else {
 
-                VStack(spacing: 10) {
+                VStack(spacing: AppSpacing.sm) {
                     ForEach(Array(agreements.enumerated()), id: \.offset) { i, a in
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: AppSpacing.sm) {
                             Text(a.date)
                                 .font(AppFonts.overline)
                                 .tracking(1.2)
                                 .foregroundStyle(
                                     isLight
-                                        ? AppColors.lightTextTertiary
+                                        ? AppColors.textTertiary
                                         : AppColors.textMuted
                                 )
 
                             Text("\"\(a.text)\"")
-                                .font(AppFonts.body(13, weight: .regular))
+                                .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
                                 .foregroundStyle(
                                     isLight
-                                        ? AppColors.lightTextSecondary.opacity(0.70)
+                                        ? AppColors.textSecondary.opacity(0.70)
                                         : AppColors.textSecondary.opacity(0.70)
                                 )
                                 .lineSpacing(3)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(14)
+                        .padding(AppSpacing.md)
                         .background(
                             isLight
                                 ? Color.black.opacity(0.03)
                                 : Color.white.opacity(0.03)
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                                 .strokeBorder(
                                     i == 0
-                                        ? AppColors.magenta.opacity(0.25)
+                                        ? AppColors.accentTertiary.opacity(0.25)
                                         : (isLight
                                             ? Color.black.opacity(0.07)
-                                            : AppColors.border),
+                                            : AppColors.borderSubtle),
                                     lineWidth: 1
                                 )
                         )
@@ -666,20 +666,20 @@ struct PrismView: View {
 
                     HStack {
                         Text("Changes made in Map tab")
-                            .font(AppFonts.body(11, weight: .regular))
+                            .font(AppFonts.body(11, weight: .regular, relativeTo: .caption2))
                             .foregroundStyle(
                                 isLight
-                                    ? AppColors.lightTextTertiary
+                                    ? AppColors.textTertiary
                                     : AppColors.textMuted
                             )
                         Spacer()
                         Text("Go to Map →")
-                            .font(AppFonts.body(11, weight: .medium))
-                            .foregroundStyle(AppColors.magenta.opacity(0.55))
+                            .font(AppFonts.body(11, weight: .medium, relativeTo: .caption2))
+                            .foregroundStyle(AppColors.accentTertiary.opacity(0.55))
                     }
-                    .padding(.horizontal, 4)
-                    .padding(.top, 4)
-                    .padding(.bottom, 4)
+                    .padding(.horizontal, AppSpacing.xs)
+                    .padding(.top, AppSpacing.xs)
+                    .padding(.bottom, AppSpacing.xs)
                 }
             }
         }
@@ -688,11 +688,11 @@ struct PrismView: View {
     // MARK: - Pill Switcher
 
     private var pillSwitcher: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppSpacing.sm) {
             ForEach(PrismMode.allCases, id: \.label) { mode in
                 let isActive = mode == activeMode
                 Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                    withAnimation(AppAnimation.spring) {
                         activeMode  = mode
                         expanded    = false
                         cardDrawn   = false
@@ -700,22 +700,22 @@ struct PrismView: View {
                     }
                 } label: {
                     Text(mode.label)
-                        .font(AppFonts.body(11, weight: isActive ? .semibold : .regular))
+                        .font(AppFonts.body(11, weight: isActive ? .semibold : .regular, relativeTo: .caption2))
                         .foregroundStyle(
                             isActive
                                 ? mode.color
                                 : (isLight
-                                    ? AppColors.lightTextTertiary
+                                    ? AppColors.textTertiary
                                     : AppColors.textTertiary)
                         )
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, AppSpacing.sm)
                         .background {
                             if isActive {
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
                                     .fill(mode.color.opacity(0.12))
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
                                             .strokeBorder(mode.color.opacity(0.35), lineWidth: 1.0)
                                     )
                                     .matchedGeometryEffect(id: "pill", in: pillNamespace)
@@ -724,19 +724,19 @@ struct PrismView: View {
                 }
             }
         }
-        .padding(8)
+        .padding(AppSpacing.sm)
         .background(
             isLight
                 ? Color.black.opacity(0.04)
                 : Color.white.opacity(0.03)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                 .strokeBorder(
                     isLight
                         ? Color.black.opacity(0.07)
-                        : AppColors.border,
+                        : AppColors.borderSubtle,
                     lineWidth: 1
                 )
         )
@@ -753,7 +753,7 @@ struct PrismView: View {
                         next = max(current - 1, 0)
                     }
                     guard next != current else { return }
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                    withAnimation(AppAnimation.spring) {
                         activeMode  = all[next]
                         expanded    = false
                         cardDrawn   = false
@@ -774,7 +774,7 @@ struct PrismView: View {
     private func drawSoloCard() {
         cardShimmer = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            withAnimation(AppAnimation.spring) {
                 cardDrawn   = true
                 cardShimmer = false
             }
@@ -787,23 +787,23 @@ struct PrismView: View {
 
 #Preview("Prism — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             HomeWidgetShell(
                 isLight:     false,
-                accentColor: AppColors.electricViolet,
+                accentColor: AppColors.accentSecondary,
                 rimVariant:  .prism
             ) {
                 ZStack {
                     OrbLayer(
-                        accentColor: AppColors.electricViolet,
+                        accentColor: AppColors.accentSecondary,
                         height:      300,
                         variant:     .prism
                     )
                     PrismView(breathPhase: 0)
                 }
             }
-            .padding(14)
+            .padding(AppSpacing.md)
         }
     }
     .preferredColorScheme(.dark)
@@ -811,16 +811,16 @@ struct PrismView: View {
 
 #Preview("Prism — light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             HomeWidgetShell(
                 isLight:     true,
-                accentColor: AppColors.purple,
+                accentColor: AppColors.accentSecondary,
                 rimVariant:  .prism
             ) {
                 PrismView(breathPhase: 0)
             }
-            .padding(14)
+            .padding(AppSpacing.md)
         }
     }
     .preferredColorScheme(.light)
@@ -828,19 +828,19 @@ struct PrismView: View {
 
 #Preview("Prism — Journal expanded — dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             HomeWidgetShell(
                 isLight:     false,
-                accentColor: AppColors.electricViolet,
+                accentColor: AppColors.accentSecondary,
                 rimVariant:  .prism
             ) {
                 ZStack {
-                    OrbLayer(accentColor: AppColors.electricViolet, height: 300, variant: .prism)
+                    OrbLayer(accentColor: AppColors.accentSecondary, height: 300, variant: .prism)
                     PrismView(breathPhase: 0)
                 }
             }
-            .padding(14)
+            .padding(AppSpacing.md)
         }
     }
     .preferredColorScheme(.dark)

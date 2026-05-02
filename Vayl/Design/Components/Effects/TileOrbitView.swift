@@ -29,11 +29,11 @@
 //
 // Color cycling:
 //   Three AppColors tokens used as cycle anchors:
-//     AppColors.cyan    (#00C2FF)
-//     AppColors.magenta (#FF006A)
-//     AppColors.purple  (#6C3AE0)
+//     AppColors.accentPrimary    (#00C2FF)
+//     AppColors.accentTertiary (#FF006A)
+//     AppColors.accentSecondary  (#6C3AE0)
 //   Light mode uses the warm aurora equivalents:
-//     AppColors.magenta → AppColors.orangeHot → AppColors.purple
+//     AppColors.accentTertiary → AppColors.progressBarLeading → AppColors.accentSecondary
 //
 // Performance:
 //   No state objects. No trail history. No pattern cycling.
@@ -62,8 +62,8 @@ struct TileOrbitView: View {
     // Light: magenta → orangeHot → purple
     private var cycleColors: [Color] {
         isLight
-            ? [AppColors.magenta, AppColors.orangeHot, AppColors.purple]
-            : [AppColors.cyan,    AppColors.magenta,   AppColors.purple]
+            ? [AppColors.accentTertiary, AppColors.progressBarLeading, AppColors.accentSecondary]
+            : [AppColors.accentPrimary,  AppColors.accentTertiary,     AppColors.accentSecondary]
     }
 
     // MARK: - Orbit geometry constants
@@ -115,8 +115,8 @@ struct TileOrbitView: View {
         let baseR  = Double(size.width) * 0.36
         let stroke = StrokeStyle(lineWidth: 1.0, lineCap: .round)
         let color = isLight
-            ? AppColors.lightBorder.opacity(0.28)
-            : AppColors.border.opacity(0.28)
+            ? AppColors.borderSubtle.opacity(0.28)
+            : AppColors.borderSubtle.opacity(0.28)
 
         switch orbitCount {
 
@@ -167,8 +167,8 @@ struct TileOrbitView: View {
                 context.stroke(
                     ring,
                     with: .color(isLight
-                        ? AppColors.lightBorder.opacity(0.18)
-                        : AppColors.border.opacity(0.18)),
+                        ? AppColors.borderSubtle.opacity(0.18)
+                        : AppColors.borderSubtle.opacity(0.18)),
                     style: stroke
                 )
             }
@@ -290,9 +290,9 @@ struct TileOrbitView: View {
 // MARK: - Previews
 
 #Preview("Dark — all counts, resting") {
-    HStack(spacing: 24) {
+    HStack(spacing: AppSpacing.lg) {
         ForEach([1, 2, 3], id: \.self) { count in
-            VStack(spacing: 8) {
+            VStack(spacing: AppSpacing.sm) {
                 TileOrbitView(orbitCount: count, isActive: false, size: 72)
                 Text("\(count)")
                     .font(AppFonts.caption)
@@ -300,15 +300,15 @@ struct TileOrbitView: View {
             }
         }
     }
-    .padding(40)
-    .background(AppColors.pageBg)
+    .padding(AppSpacing.xxl)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }
 
 #Preview("Dark — all counts, active") {
-    HStack(spacing: 24) {
+    HStack(spacing: AppSpacing.lg) {
         ForEach([1, 2, 3], id: \.self) { count in
-            VStack(spacing: 8) {
+            VStack(spacing: AppSpacing.sm) {
                 TileOrbitView(orbitCount: count, isActive: true, size: 72)
                 Text("\(count)")
                     .font(AppFonts.caption)
@@ -316,38 +316,38 @@ struct TileOrbitView: View {
             }
         }
     }
-    .padding(40)
-    .background(AppColors.pageBg)
+    .padding(AppSpacing.xxl)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }
 
 #Preview("Light — all counts, active") {
-    HStack(spacing: 24) {
+    HStack(spacing: AppSpacing.lg) {
         ForEach([1, 2, 3], id: \.self) { count in
-            VStack(spacing: 8) {
+            VStack(spacing: AppSpacing.sm) {
                 TileOrbitView(orbitCount: count, isActive: true, size: 72)
                 Text("\(count)")
                     .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.lightTextTertiary)
+                    .foregroundStyle(AppColors.textTertiary)
             }
         }
     }
-    .padding(40)
-    .background(AppColors.lightPageBg)
+    .padding(AppSpacing.xxl)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.light)
 }
 
 #Preview("Tap to activate") {
     @Previewable @State var active = false
-    VStack(spacing: 20) {
+    VStack(spacing: AppSpacing.lg) {
         TileOrbitView(orbitCount: 2, isActive: active, size: 88)
         Button(active ? "Deactivate" : "Activate") {
-            withAnimation { active.toggle() }
+            withAnimation(AppAnimation.standard) { active.toggle() }
         }
         .font(AppFonts.caption)
         .foregroundStyle(AppColors.textSecondary)
     }
-    .padding(40)
-    .background(AppColors.pageBg)
+    .padding(AppSpacing.xxl)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }

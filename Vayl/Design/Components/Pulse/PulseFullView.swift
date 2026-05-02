@@ -61,28 +61,28 @@ struct PulseFullView: View {
 
     var body: some View {
         GeometryReader { geo in
+            let layout = AppLayout.from(geo)
             ZStack {
-                // Background
-                (isLight ? AppColors.lightPageBg : AppColors.pageBg)
+                AppColors.pageBackground
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
 
                     // ── Navigation bar ────────────────────────
                     navBar
-                        .padding(.horizontal, 20)
-                        .padding(.top, 60)
-                        .padding(.bottom, 24)
+                        .padding(.horizontal, AppSpacing.md)
+                        .topClearance(layout)
+                        .padding(.bottom, AppSpacing.lg)
 
                     // ── Window selector ───────────────────────
                     windowSelector
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 20)
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.bottom, AppSpacing.lg)
 
                     // ── Graph ─────────────────────────────────
                     let pointSpacing:    CGFloat = 65
                     let safeCount                = max(0, filteredEntries.count - 1)
-                    let graphContentWidth        = max(geo.size.width, CGFloat(safeCount) * pointSpacing + 104)
+                    let graphContentWidth        = max(layout.screenWidth, CGFloat(safeCount) * pointSpacing + 104)
                     let graphContentHeight       = graphHeight * 1.6
 
                     ScrollView([.horizontal, .vertical], showsIndicators: false) {
@@ -103,10 +103,11 @@ struct PulseFullView: View {
                     }
                     .frame(height: graphContentHeight)
                     .defaultScrollAnchor(.trailing)
-                    .padding(.bottom, 24)
+                    .padding(.bottom, AppSpacing.lg)
+
                     // ── Insights placeholder ──────────────────
                     insightsPlaceholder
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, AppSpacing.md)
 
                     Spacer()
                 }
@@ -116,7 +117,7 @@ struct PulseFullView: View {
                     PulseDotSummary(
                         entry:       entry,
                         dotPosition: summaryPosition,
-                        graphHeight: geo.size.height,
+                        graphHeight: layout.screenHeight,
                         onDismiss: {
                             showSummary  = false
                             summaryEntry = nil
@@ -135,9 +136,7 @@ struct PulseFullView: View {
         HStack {
             Text("The Pulse")
                 .font(AppFonts.screenTitle)
-                .foregroundStyle(
-                    isLight ? AppColors.lightTextPrimary : AppColors.textPrimary
-                )
+                .foregroundStyle(AppColors.textPrimary)
 
             Spacer()
 
@@ -145,11 +144,12 @@ struct PulseFullView: View {
                 Button {
                     onDismiss?()
                 } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(
-                            isLight ? AppColors.lightTextSecondary : AppColors.textSecondary
-                        )
+                    Image(systemName: AppIcons.close)
+                        // .callout scales with Dynamic Type — correct for
+                        // close buttons at this visual weight.
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(AppColors.textSecondary)
                         .frame(width: 32, height: 32)
                         .background {
                             Circle()
@@ -161,6 +161,7 @@ struct PulseFullView: View {
                         }
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Close")
             }
         }
     }
@@ -169,11 +170,11 @@ struct PulseFullView: View {
 
     private var windowSelector: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppSpacing.sm) {
                 ForEach(PulseWindow.allCases) { window in
                     Button {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        withAnimation(.easeOut(duration: 0.2)) {
+                        withAnimation(AppAnimation.fast) {
                             selectedWindow = window
                         }
                     } label: {
@@ -181,18 +182,18 @@ struct PulseFullView: View {
                             .font(AppFonts.buttonLabelSmall)
                             .foregroundStyle(
                                 selectedWindow == window
-                                    ? (isLight ? AppColors.lightTextPrimary : AppColors.textPrimary)
-                                    : (isLight ? AppColors.lightTextTertiary : AppColors.textTertiary)
+                                    ? (isLight ? AppColors.textPrimary : AppColors.textPrimary)
+                                    : (isLight ? AppColors.textTertiary : AppColors.textTertiary)
                             )
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 7)
+                            .padding(.horizontal, AppSpacing.md)
+                            .padding(.vertical, AppSpacing.sm)
                             .background {
                                 Capsule()
                                     .fill(
                                         selectedWindow == window
                                             ? (isLight
-                                                ? AnyShapeStyle(AppColors.magenta.opacity(0.10))
-                                                : AnyShapeStyle(AppColors.electricViolet.opacity(0.20)))
+                                                ? AnyShapeStyle(AppColors.accentTertiary.opacity(0.10))
+                                                : AnyShapeStyle(AppColors.accentSecondary.opacity(0.20)))
                                             : AnyShapeStyle(
                                                 (isLight ? Color.black : Color.white).opacity(0.05)
                                               )
@@ -203,9 +204,9 @@ struct PulseFullView: View {
                                     Capsule()
                                         .strokeBorder(
                                             isLight
-                                                ? AnyShapeStyle(AppColors.warmAuroraBorder.opacity(0.5))
+                                                ? AnyShapeStyle(AppColors.spectrumBorder.opacity(0.5))
                                                 : AnyShapeStyle(LinearGradient(
-                                                    colors: [AppColors.cyan, AppColors.purple, AppColors.magenta],
+                                                    colors: [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                                                     startPoint: .topLeading,
                                                     endPoint:   .bottomTrailing
                                                   )),
@@ -217,7 +218,9 @@ struct PulseFullView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 2)
+            // .padding(.horizontal, 2) // intentional micro-inset — AppSpacing.xxs overshoots — intentional micro-inset preventing
+            // pill stroke clipping at scroll view edges. Not a spacing token candidate.
+            .padding(.horizontal, 2) // intentional micro-inset — AppSpacing.xxs overshoots
         }
     }
 
@@ -226,32 +229,22 @@ struct PulseFullView: View {
     // Shows a clear "coming later" state without feeling broken.
 
     private var insightsPlaceholder: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
 
             Text("INSIGHTS")
                 .font(AppFonts.overline)
                 .tracking(2)
-                .foregroundStyle(
-                    isLight ? AppColors.lightTextTertiary : AppColors.textTertiary
-                )
+                .foregroundStyle(AppColors.textTertiary)
 
             VStack(spacing: 0) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
                         Text("Trends unlock after 4 weeks")
                             .font(AppFonts.bodyMedium)
-                            .foregroundStyle(
-                                isLight
-                                    ? AppColors.lightTextSecondary
-                                    : AppColors.textSecondary
-                            )
+                            .foregroundStyle(AppColors.textSecondary)
                         Text("Keep checking in daily to see patterns emerge.")
                             .font(AppFonts.caption)
-                            .foregroundStyle(
-                                isLight
-                                    ? AppColors.lightTextTertiary
-                                    : AppColors.textTertiary
-                            )
+                            .foregroundStyle(AppColors.textTertiary)
                     }
                     Spacer()
 
@@ -266,34 +259,25 @@ struct PulseFullView: View {
                         Circle()
                             .trim(from: 0, to: progress)
                             .stroke(
-                                isLight ? AppColors.magenta : AppColors.electricViolet,
+                                isLight ? AppColors.accentTertiary : AppColors.accentSecondary,
                                 style: StrokeStyle(lineWidth: 3, lineCap: .round)
                             )
                             .rotationEffect(.degrees(-90))
                         Text("\(entries.count)")
                             .font(AppFonts.meta)
-                            .foregroundStyle(
-                                isLight
-                                    ? AppColors.lightTextSecondary
-                                    : AppColors.textSecondary
-                            )
+                            .foregroundStyle(AppColors.textSecondary)
                     }
                     .frame(width: 40, height: 40)
                 }
-                .padding(16)
+                .padding(AppSpacing.md)
             }
             .background {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(
-                        isLight ? AppColors.lightCardFill : AppColors.cardBg
-                    )
+                RoundedRectangle(cornerRadius: AppRadius.md)
+                    .fill(AppColors.cardBackground)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(
-                        isLight ? AppColors.lightBorder : AppColors.border,
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: AppRadius.md)
+                    .stroke(AppColors.borderSubtle, lineWidth: 1)
             }
         }
     }

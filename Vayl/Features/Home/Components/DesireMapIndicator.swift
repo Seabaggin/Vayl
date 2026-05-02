@@ -18,268 +18,243 @@ struct DesireMapIndicator: View {
         case .youDone(let partnerName):
             statusCard {
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
                         Text("DESIRE MAP")
                             .font(AppFonts.overline)
                             .tracking(1.2)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextTertiary
-                                : AppColors.textTertiary)
+                            .foregroundStyle(AppColors.textTertiary)
 
-                        HStack(spacing: 12) {
-                            HStack(spacing: 5) {
+                        HStack(spacing: AppSpacing.md) {
+                            HStack(spacing: AppSpacing.xs) {
                                 Circle()
                                     .fill(colorScheme == .light
-                                        ? AppColors.magenta
-                                        : AppColors.cyan)
+                                        ? AppColors.accentTertiary
+                                        : AppColors.accentPrimary)
                                     .frame(width: 7, height: 7)
                                 Text("You're done")
                                     .font(AppFonts.caption)
-                                    .foregroundStyle(colorScheme == .light
-                                        ? AppColors.lightTextSecondary
-                                        : AppColors.textSecondary)
+                                    .foregroundStyle(AppColors.textSecondary)
                             }
-                            HStack(spacing: 5) {
+                            HStack(spacing: AppSpacing.xs) {
                                 Circle()
-                                    .stroke(colorScheme == .light
-                                        ? AppColors.lightTextTertiary
-                                        : AppColors.textTertiary,
-                                        lineWidth: 1)
+                                    .stroke(AppColors.textTertiary, lineWidth: 1)
                                     .frame(width: 7, height: 7)
                                 Text(partnerName)
                                     .font(AppFonts.caption)
-                                    .foregroundStyle(colorScheme == .light
-                                        ? AppColors.lightTextTertiary
-                                        : AppColors.textTertiary)
+                                    .foregroundStyle(AppColors.textTertiary)
                             }
                         }
                     }
                     Spacer()
                     Button {
-                        UIImpactFeedbackGenerator(style: .light)
-                            .impactOccurred()
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         onRemind?()
                     } label: {
                         Text("Remind \(partnerName) →")
                             .font(AppFonts.caption)
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.magenta
-                                : AppColors.cyanLight)
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 16)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.md)
             }
 
         case .bothReady:
             // Elevated treatment — highest CTA weight on screen
             VStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     HStack {
                         Text("DESIRE MAP")
                             .font(AppFonts.overline)
                             .tracking(1.2)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextTertiary
-                                : AppColors.textTertiary)
+                            .foregroundStyle(AppColors.textTertiary)
                         Spacer()
                         Text("You're both ready")
                             .font(AppFonts.caption)
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.magenta
-                                : AppColors.cyanLight)
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
                     }
 
-                    HStack(spacing: 16) {
-                        HStack(spacing: 5) {
+                    HStack(spacing: AppSpacing.md) {
+                        HStack(spacing: AppSpacing.xs) {
                             Circle()
                                 .fill(colorScheme == .light
-                                    ? AppColors.magenta
-                                    : AppColors.cyan)
+                                    ? AppColors.accentTertiary
+                                    : AppColors.accentPrimary)
                                 .frame(width: 7, height: 7)
                             Text("You")
                                 .font(AppFonts.bodyMedium)
-                                .foregroundStyle(colorScheme == .light
-                                    ? AppColors.lightTextPrimary
-                                    : AppColors.textPrimary)
+                                .foregroundStyle(AppColors.textPrimary)
                         }
-                        HStack(spacing: 5) {
+                        HStack(spacing: AppSpacing.xs) {
                             Circle()
                                 .fill(colorScheme == .light
-                                    ? AppColors.gold
-                                    : AppColors.purple)
+                                    ? AppColors.safetyAccent
+                                    : AppColors.accentSecondary)
                                 .frame(width: 7, height: 7)
                             Text("Partner")
                                 .font(AppFonts.bodyMedium)
-                                .foregroundStyle(colorScheme == .light
-                                    ? AppColors.lightTextPrimary
-                                    : AppColors.textPrimary)
+                                .foregroundStyle(AppColors.textPrimary)
                         }
                     }
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 18)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.top, AppSpacing.md)
 
-                Spacer(minLength: 14)
+                Spacer(minLength: AppSpacing.md)
 
                 Button {
-                    UIImpactFeedbackGenerator(style: .medium)
-                        .impactOccurred()
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     onReveal?()
                 } label: {
                     Text("See Your First Match")
                         .font(AppFonts.ctaLabel)
                         .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightBodyWineDark
+                            ? AppColors.textSecondary
                             : .white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
+                        .padding(.vertical, AppSpacing.md)
                         .background {
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: AppRadius.md)
                                 .fill(colorScheme == .light
                                     ? AnyShapeStyle(LinearGradient(
-                                        colors: [AppColors.magenta.opacity(0.18),
-                                                 AppColors.gold.opacity(0.14)],
+                                        colors: [AppColors.accentTertiary.opacity(0.18),
+                                                 AppColors.safetyAccent.opacity(0.14)],
                                         startPoint: .leading,
                                         endPoint: .trailing))
                                     : AnyShapeStyle(LinearGradient(
-                                        colors: [AppColors.cyan,
-                                                 AppColors.purple,
-                                                 AppColors.magenta],
+                                        colors: [AppColors.accentPrimary,
+                                                 AppColors.accentSecondary,
+                                                 AppColors.accentTertiary],
                                         startPoint: .leading,
                                         endPoint: .trailing)))
                         }
-                        .shadow(color: colorScheme == .light
-                            ? AppColors.lightShadowMagenta
-                            : AppColors.purple.opacity(0.4),
-                                radius: 12, y: 4)
+                        .shadow(
+                            color: colorScheme == .light
+                                ? AppColors.shadowMagenta
+                                : AppColors.accentSecondary.opacity(0.4),
+                            radius: 12, y: 4
+                        )
                 }
                 .buttonStyle(.plain)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 18)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.bottom, AppSpacing.md)
             }
             .background {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(colorScheme == .light
-                        ? AppColors.lightCardFill
-                        : AppColors.cardBg)
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .fill(AppColors.cardBackground)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: AppRadius.lg)
                     .stroke(colorScheme == .light
-                        ? AnyShapeStyle(
-                            AppColors.warmAuroraBorder.opacity(0.6))
+                        ? AnyShapeStyle(AppColors.spectrumBorder.opacity(0.6))
                         : AnyShapeStyle(LinearGradient(
-                            colors: [AppColors.cyan.opacity(0.5),
-                                     AppColors.purple.opacity(0.4),
-                                     AppColors.magenta.opacity(0.3)],
+                            colors: [AppColors.accentPrimary.opacity(0.5),
+                                     AppColors.accentSecondary.opacity(0.4),
+                                     AppColors.accentTertiary.opacity(0.3)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing)),
                         lineWidth: 1.5)
             }
-            .shadow(color: colorScheme == .light
-                ? AppColors.lightShadowPurple
-                : AppColors.purple.opacity(0.2),
-                    radius: 20, y: 6)
+            .shadow(
+                color: colorScheme == .light
+                    ? AppColors.shadowPurple
+                    : AppColors.accentSecondary.opacity(0.2),
+                radius: 20, y: 6
+            )
 
         case .freeRevealSeen(_):
             statusCard {
-                HStack(spacing: 14) {
+                HStack(spacing: AppSpacing.md) {
                     ZStack {
                         Circle()
                             .fill(colorScheme == .light
-                                ? AppColors.magenta.opacity(0.10)
-                                : AppColors.purple.opacity(0.15))
+                                ? AppColors.accentTertiary.opacity(0.10)
+                                : AppColors.accentSecondary.opacity(0.15))
                             .frame(width: 38, height: 38)
-                        Image(systemName: "heart.text.square.fill")
-                            .font(.system(size: 16, weight: .medium))
+                        Image(systemName: AppIcons.heartTextSquare)
+                            // .body scales with Dynamic Type — correct for
+                            // icon badges at this visual weight.
+                            .font(.body)
+                            .fontWeight(.medium)
                             .foregroundStyle(colorScheme == .light
                                 ? AnyShapeStyle(LinearGradient(
-                                    colors: [AppColors.magenta, AppColors.gold],
+                                    colors: [AppColors.accentTertiary, AppColors.safetyAccent],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing))
                                 : AnyShapeStyle(LinearGradient(
-                                    colors: [AppColors.purple, AppColors.magenta],
+                                    colors: [AppColors.accentSecondary, AppColors.accentTertiary],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing)))
                     }
 
-                    VStack(alignment: .leading, spacing: 3) {
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
                         Text("1 match revealed")
                             .font(AppFonts.bodyMedium)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextPrimary
-                                : AppColors.textPrimary)
+                            .foregroundStyle(AppColors.textPrimary)
                         Text("+ more waiting")
                             .font(AppFonts.caption)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextTertiary
-                                : AppColors.textTertiary)
+                            .foregroundStyle(AppColors.textTertiary)
                     }
                     Spacer()
                     Button {
-                        UIImpactFeedbackGenerator(style: .light)
-                            .impactOccurred()
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         onUnlock?()
                     } label: {
                         Text("Unlock →")
                             .font(AppFonts.caption)
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.magenta
-                                : AppColors.cyanLight)
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 16)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.md)
             }
 
         case .redoInProgress(let partnerName, let matchCount):
             statusCard {
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 6) {
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                        HStack(spacing: AppSpacing.sm) {
                             Text("DESIRE MAP")
                                 .font(AppFonts.overline)
                                 .tracking(1.2)
-                                .foregroundStyle(colorScheme == .light
-                                    ? AppColors.lightTextTertiary
-                                    : AppColors.textTertiary)
+                                .foregroundStyle(AppColors.textTertiary)
                             Text("· Check-in")
                                 .font(AppFonts.overline)
                                 .foregroundStyle(colorScheme == .light
-                                    ? AppColors.magenta
-                                    : AppColors.cyanLight)
+                                    ? AppColors.accentTertiary
+                                    : AppColors.accentPrimary)
                         }
 
-                        HStack(spacing: 12) {
-                            HStack(spacing: 5) {
+                        HStack(spacing: AppSpacing.md) {
+                            HStack(spacing: AppSpacing.xs) {
                                 Circle()
                                     .fill(colorScheme == .light
-                                        ? AppColors.magenta
-                                        : AppColors.cyan)
+                                        ? AppColors.accentTertiary
+                                        : AppColors.accentPrimary)
                                     .frame(width: 7, height: 7)
                                 Text("You — redoing")
                                     .font(AppFonts.caption)
-                                    .foregroundStyle(colorScheme == .light
-                                        ? AppColors.lightTextSecondary
-                                        : AppColors.textSecondary)
+                                    .foregroundStyle(AppColors.textSecondary)
                             }
-                            HStack(spacing: 5) {
+                            HStack(spacing: AppSpacing.xs) {
                                 Circle()
                                     .fill(matchCount != 0
                                           ? (colorScheme == .light
-                                              ? AppColors.gold
-                                              : AppColors.purple)
+                                              ? AppColors.safetyAccent
+                                              : AppColors.accentSecondary)
                                           : Color.clear)
                                     .overlay {
                                         if matchCount == 0 {
                                             Circle()
-                                                .stroke(colorScheme == .light
-                                                    ? AppColors.lightTextTertiary
-                                                    : AppColors.textTertiary,
-                                                    lineWidth: 1)
+                                                .stroke(AppColors.textTertiary, lineWidth: 1)
                                         }
                                     }
                                     .frame(width: 7, height: 7)
@@ -289,12 +264,8 @@ struct DesireMapIndicator: View {
                                     .font(AppFonts.caption)
                                     .foregroundStyle(
                                         matchCount != 0
-                                        ? (colorScheme == .light
-                                            ? AppColors.lightTextSecondary
-                                            : AppColors.textSecondary)
-                                        : (colorScheme == .light
-                                            ? AppColors.lightTextTertiary
-                                            : AppColors.textTertiary)
+                                            ? AppColors.textSecondary
+                                            : AppColors.textTertiary
                                     )
                             }
                         }
@@ -302,21 +273,20 @@ struct DesireMapIndicator: View {
                     Spacer()
                     if matchCount == 0 {
                         Button {
-                            UIImpactFeedbackGenerator(style: .light)
-                                .impactOccurred()
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             onRemind?()
                         } label: {
                             Text("Remind →")
                                 .font(AppFonts.caption)
                                 .foregroundStyle(colorScheme == .light
-                                    ? AppColors.magenta
-                                    : AppColors.cyanLight)
+                                    ? AppColors.accentTertiary
+                                    : AppColors.accentPrimary)
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 16)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.md)
             }
 
         case .gated, .yourTurn, .waiting, .matchReady, .revealed:
@@ -332,17 +302,14 @@ struct DesireMapIndicator: View {
     ) -> some View {
         content()
             .background {
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: AppRadius.lg)
                     .fill(colorScheme == .light
-                        ? AppColors.lightFrostCard
-                        : AppColors.cardBg)
+                        ? AppColors.glassFrostCard
+                        : AppColors.cardBackground)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(colorScheme == .light
-                        ? AppColors.lightBorder
-                        : AppColors.border,
-                        lineWidth: 1)
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .stroke(AppColors.borderSubtle, lineWidth: 1)
             }
     }
 }

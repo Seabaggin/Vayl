@@ -21,6 +21,7 @@
 		3D807B942F8DC74B0021F080 /* .aider.conf.yml in Resources */ = {isa = PBXBuildFile; fileRef = 3D807B932F8DC7450021F080 /* .aider.conf.yml */; };
 		3D83007B2F84981B001F650B /* gather_checkin_context.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3D83007A2F849817001F650B /* gather_checkin_context.sh */; };
 		3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */; };
+		3DE73B002FA687E000BF22F1 /* migrate_animations.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */; };
 		3DE993A32F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */; };
 /* End PBXBuildFile section */
 
@@ -53,6 +54,7 @@
 		3D807B932F8DC7450021F080 /* .aider.conf.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .aider.conf.yml; sourceTree = "<group>"; };
 		3D83007A2F849817001F650B /* gather_checkin_context.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_checkin_context.sh; sourceTree = "<group>"; };
 		3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DESIGN_DOC.md; sourceTree = "<group>"; };
+		3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = migrate_animations.sh; sourceTree = "<group>"; };
 		3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Open Lightly — LLM Audit Prompts.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -105,6 +107,7 @@
 		3D767EA92F5D520D00F2D70F = {
 			isa = PBXGroup;
 			children = (
+				3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */,
 				3D807B932F8DC7450021F080 /* .aider.conf.yml */,
 				3D0635582F8AF7530098DE65 /* gather_audit_pulse_carousel.sh */,
 				3D0635562F8AF7340098DE65 /* gather_audit_home.sh */,
@@ -260,6 +263,7 @@
 				3D767EFA2F5D562900F2D70F /* RULES.md in Resources */,
 				3D807B942F8DC74B0021F080 /* .aider.conf.yml in Resources */,
 				3D0635592F8AF7570098DE65 /* gather_audit_pulse_carousel.sh in Resources */,
+				3DE73B002FA687E000BF22F1 /* migrate_animations.sh in Resources */,
 				3D0635572F8AF7370098DE65 /* gather_audit_home.sh in Resources */,
 				3DE993A32F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md in Resources */,
 			);

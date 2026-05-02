@@ -14,59 +14,62 @@ struct SignInView: View {
     // MARK: - Body
 
     var body: some View {
-        ZStack {
-            AppColors.pageBg
-                .ignoresSafeArea()
+        GeometryReader { geo in
+            let layout = AppLayout.from(geo)
+            ZStack {
+                AppColors.pageBackground
+                    .ignoresSafeArea()
 
-            VStack(spacing: 32) {
-                Spacer()
+                VStack(spacing: AppSpacing.xl) {
+                    Spacer()
 
-                VStack(spacing: 12) {
-                    Text("Vayl")
-                        .font(.system(size: 36, weight: .bold))
-                        .foregroundStyle(.white)
+                    VStack(spacing: AppSpacing.sm) {
+                        Text("Vayl")
+                            .font(Font.custom("ClashDisplay-Bold", size: 36, relativeTo: .largeTitle))
+                            .foregroundStyle(.white)
 
-                    Text("Explore intimacy at your own pace")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.6))
-                }
+                        Text("Explore intimacy at your own pace")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
 
-                Spacer()
+                    Spacer()
 
-                VStack(spacing: 16) {
-                    Button {
-                        authService.signInWithApple()
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "apple.logo")
-                            Text("Sign in with Apple")
-                                .fontWeight(.semibold)
+                    VStack(spacing: AppSpacing.md) {
+                        Button {
+                            authService.signInWithApple()
+                        } label: {
+                            HStack(spacing: AppSpacing.sm) {
+                                Image(AppIcons.appleLogo)
+                                Text("Sign in with Apple")
+                                    .fontWeight(.semibold)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 54)
+                            .background(.white)
+                            .foregroundStyle(.black)
+                            .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(.white)
-                        .foregroundStyle(.black)
-                        .cornerRadius(14)
-                    }
-                    .padding(.horizontal, 40)
-                    .disabled(authService.isLoading)
+                        .padding(.horizontal, AppSpacing.xxl)
+                        .disabled(authService.isLoading)
 
-                    if authService.isLoading {
-                        ProgressView()
-                            .tint(.white)
+                        if authService.isLoading {
+                            ProgressView()
+                                .tint(.white)
+                        }
+
+                        if let error = authService.error {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                                .padding(.horizontal, AppSpacing.xxl)
+                                .multilineTextAlignment(.center)
+                        }
                     }
 
-                    if let error = authService.error {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundStyle(.red)
-                            .padding(.horizontal, 40)
-                            .multilineTextAlignment(.center)
-                    }
+                    Spacer()
                 }
-
-                Spacer()
-                    .frame(height: 60)
+                .padding(.bottom, layout.safeAreaInsets.bottom)
             }
         }
     }

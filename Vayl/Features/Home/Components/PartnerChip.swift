@@ -4,7 +4,7 @@ import SwiftUI
 
 struct PartnerChip: View {
     let state: PartnerChipState
-    var onInviteTap: (() -> Void)? = nil
+    var onInviteTap:  (() -> Void)? = nil
     var onPartnerTap: (() -> Void)? = nil
 
     @Environment(\.colorScheme) private var colorScheme
@@ -19,22 +19,20 @@ struct PartnerChip: View {
                 onInviteTap?()
             } label: {
                 ZStack {
-                    // ── Outer glow bloom ──────────────────────
                     Circle()
                         .fill(isLight
                             ? AppColors.auroraBlob2
-                            : AppColors.cyan.opacity(0.15))
+                            : AppColors.accentPrimary.opacity(0.15))
                         .frame(width: 44, height: 44)
                         .blur(radius: 8)
 
                     Circle()
                         .fill(isLight
                             ? AppColors.auroraBlob1
-                            : AppColors.purple.opacity(0.20))
+                            : AppColors.accentSecondary.opacity(0.20))
                         .frame(width: 40, height: 40)
                         .blur(radius: 6)
 
-                    // ── Shimmer fill ──────────────────────────
                     if isLight {
                         LightModeShimmer(duration: 6, usePillColors: true)
                             .clipShape(Circle())
@@ -47,16 +45,15 @@ struct PartnerChip: View {
                             .opacity(0.85)
                     }
 
-                    // ── Border ────────────────────────────────
                     Circle()
                         .strokeBorder(
                             isLight
-                                ? AnyShapeStyle(AppColors.warmAuroraBorder)
+                                ? AnyShapeStyle(AppColors.spectrumBorder)
                                 : AnyShapeStyle(LinearGradient(
                                     colors: [
-                                        AppColors.cyan,
-                                        AppColors.purple,
-                                        AppColors.magenta
+                                        AppColors.accentPrimary,
+                                        AppColors.accentSecondary,
+                                        AppColors.accentTertiary
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -65,11 +62,13 @@ struct PartnerChip: View {
                         )
                         .frame(width: 36, height: 36)
 
-                    // ── Icon ──────────────────────────────────
-                    Image(systemName: "person.badge.plus")
-                        .font(.system(size: 13, weight: .medium))
+                    Image(systemName: AppIcons.personBadgePlus)
+                        // .caption scales with Dynamic Type — correct for
+                        // compact icon badges at this visual weight.
+                        .font(.caption)
+                        .fontWeight(.medium)
                         .foregroundStyle(isLight
-                            ? AnyShapeStyle(AppColors.lightHeadlineDarkRose)
+                            ? AnyShapeStyle(AppColors.textPrimary)
                             : AnyShapeStyle(Color.white)
                         )
                 }
@@ -77,27 +76,22 @@ struct PartnerChip: View {
             .buttonStyle(.plain)
 
         // ── Invite pending ─────────────────────────────────────
-        // Invite sent, waiting for partner to accept.
-        // Brighter border than .none to signal progress.
-        // Not tappable — this is a status indicator only.
         case .invitePending:
             ZStack {
-                // ── Outer glow bloom — stronger than .none ────
                 Circle()
                     .fill(isLight
-                        ? AppColors.magenta.opacity(0.18)
-                        : AppColors.magenta.opacity(0.20))
+                        ? AppColors.accentTertiary.opacity(0.18)
+                        : AppColors.accentTertiary.opacity(0.20))
                     .frame(width: 48, height: 48)
                     .blur(radius: 10)
 
                 Circle()
                     .fill(isLight
-                        ? AppColors.purple.opacity(0.14)
-                        : AppColors.purple.opacity(0.25))
+                        ? AppColors.accentSecondary.opacity(0.14)
+                        : AppColors.accentSecondary.opacity(0.25))
                     .frame(width: 42, height: 42)
                     .blur(radius: 8)
 
-                // ── Shimmer fill ──────────────────────────────
                 if isLight {
                     LightModeShimmer(duration: 4, usePillColors: true)
                         .clipShape(Circle())
@@ -110,16 +104,15 @@ struct PartnerChip: View {
                         .opacity(0.95)
                 }
 
-                // ── Border — brighter, pulsing ────────────────
                 Circle()
                     .strokeBorder(
                         isLight
-                            ? AnyShapeStyle(AppColors.warmAuroraBorder)
+                            ? AnyShapeStyle(AppColors.spectrumBorder)
                             : AnyShapeStyle(LinearGradient(
                                 colors: [
-                                    AppColors.cyan,
-                                    AppColors.purple,
-                                    AppColors.magenta
+                                    AppColors.accentPrimary,
+                                    AppColors.accentSecondary,
+                                    AppColors.accentTertiary
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -128,22 +121,23 @@ struct PartnerChip: View {
                     )
                     .frame(width: 36, height: 36)
 
-                // ── Icon — clock signals waiting ──────────────
-                Image(systemName: "person.badge.clock")
-                    .font(.system(size: 13, weight: .medium))
+                Image(systemName: AppIcons.personBadgeClock)
+                    // .caption scales with Dynamic Type — correct for
+                    // compact icon badges at this visual weight.
+                    .font(.caption)
+                    .fontWeight(.medium)
                     .foregroundStyle(isLight
-                        ? AnyShapeStyle(AppColors.lightHeadlineDarkRose)
+                        ? AnyShapeStyle(AppColors.textPrimary)
                         : AnyShapeStyle(Color.white)
                     )
             }
 
         // ── Active partner ─────────────────────────────────────
-        // Tap → Map tab, partner profile
         case .active(let name, let initial):
             Button {
                 onPartnerTap?()
             } label: {
-                HStack(spacing: 6) {
+                HStack(spacing: AppSpacing.sm) {
                     ZStack {
                         Circle()
                             .fill(isLight
@@ -151,36 +145,41 @@ struct PartnerChip: View {
                                 : Color.white.opacity(0.12))
                             .frame(width: 20, height: 20)
                         Text(String(initial))
-                            .font(.system(size: 9, weight: .bold))
+                            // .caption2 scales with Dynamic Type — correct for
+                            // single-letter avatar initials in a 20pt circle.
+                            .font(.caption2)
+                            .fontWeight(.bold)
                             .foregroundStyle(isLight
-                                ? AppColors.lightTextPrimary
+                                ? AppColors.textPrimary
                                 : .white)
                     }
                     Text(name)
                         .font(AppFonts.caption)
                         .foregroundStyle(isLight
-                            ? AppColors.lightTextSecondary
+                            ? AppColors.textSecondary
                             : AppColors.textSecondary)
 
-                    // Chevron signals tappability
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 8, weight: .semibold))
+                    Image(systemName: AppIcons.chevronRight)
+                        // .caption2 scales with Dynamic Type — correct for
+                        // small directional indicators in compact chips.
+                        .font(.caption2)
+                        .fontWeight(.semibold)
                         .foregroundStyle(isLight
-                            ? AppColors.lightTextTertiary
+                            ? AppColors.textTertiary
                             : AppColors.textTertiary)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.vertical, AppSpacing.sm)
                 .background {
                     Capsule()
                         .fill(isLight
-                            ? AppColors.lightFrostCard
+                            ? AppColors.glassFrostCard
                             : Color.white.opacity(0.04))
                 }
                 .overlay {
                     Capsule()
                         .stroke(isLight
-                            ? AppColors.lightBorder
+                            ? AppColors.borderSubtle
                             : Color.white.opacity(0.08),
                             lineWidth: 1)
                 }
@@ -188,33 +187,31 @@ struct PartnerChip: View {
             .buttonStyle(.plain)
 
         // ── Multiple partners — V1.1 stub ──────────────────────
-        // Renders as inactive "All ·" pill.
-        // No behavior until multi-partner support ships.
         case .multipleActive:
-            HStack(spacing: 5) {
+            HStack(spacing: AppSpacing.xs) {
                 Text("All ·")
                     .font(AppFonts.caption)
                     .foregroundStyle(isLight
-                        ? AppColors.lightTextTertiary
+                        ? AppColors.textTertiary
                         : AppColors.textTertiary)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .padding(.horizontal, AppSpacing.sm)
+            .padding(.vertical, AppSpacing.sm)
             .background {
                 Capsule()
                     .fill(isLight
-                        ? AppColors.lightFrostCard
+                        ? AppColors.glassFrostCard
                         : Color.white.opacity(0.04))
             }
             .overlay {
                 Capsule()
                     .stroke(isLight
-                        ? AppColors.lightBorder
+                        ? AppColors.borderSubtle
                         : Color.white.opacity(0.06),
                         lineWidth: 1)
             }
 
-        // ── Nudge state — V1.1 stub ──────────────────────────
+        // ── Nudge state — V1.1 stub ────────────────────────────
         case .nudge:
             EmptyView()
         }
@@ -226,14 +223,14 @@ struct PartnerChip: View {
 #Preview("Dark — None") {
     PartnerChip(state: .none, onInviteTap: {})
         .padding()
-        .background(AppColors.pageBg)
+        .background(AppColors.pageBackground)
         .preferredColorScheme(.dark)
 }
 
 #Preview("Dark — Invite Pending") {
     PartnerChip(state: .invitePending)
         .padding()
-        .background(AppColors.pageBg)
+        .background(AppColors.pageBackground)
         .preferredColorScheme(.dark)
 }
 
@@ -243,7 +240,7 @@ struct PartnerChip: View {
         onPartnerTap: {}
     )
     .padding()
-    .background(AppColors.pageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }
 
@@ -253,21 +250,21 @@ struct PartnerChip: View {
         selected: nil)
     )
     .padding()
-    .background(AppColors.pageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }
 
 #Preview("Light — None") {
     PartnerChip(state: .none, onInviteTap: {})
         .padding()
-        .background(AppColors.lightPageBg)
+        .background(AppColors.pageBackground)
         .preferredColorScheme(.light)
 }
 
 #Preview("Light — Invite Pending") {
     PartnerChip(state: .invitePending)
         .padding()
-        .background(AppColors.lightPageBg)
+        .background(AppColors.pageBackground)
         .preferredColorScheme(.light)
 }
 
@@ -277,7 +274,7 @@ struct PartnerChip: View {
         onPartnerTap: {}
     )
     .padding()
-    .background(AppColors.lightPageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.light)
 }
 
@@ -287,6 +284,6 @@ struct PartnerChip: View {
         selected: nil)
     )
     .padding()
-    .background(AppColors.lightPageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.light)
 }

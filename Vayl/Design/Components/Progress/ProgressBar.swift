@@ -22,7 +22,7 @@ struct ProgressBar: View {
                 Capsule()
                     .fill(t.buttonGradient)
                     .frame(width: geo.size.width * (value / max))
-                    .animation(.easeOut(duration: 0.6), value: value)
+                    .animation(AppAnimation.slow, value: value)
             }
         }
         .frame(height: 4)

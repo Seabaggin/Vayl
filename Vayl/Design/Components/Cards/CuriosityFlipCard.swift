@@ -39,7 +39,7 @@ struct CuriosityFlipCard<Content: View>: View {
                 )
                 .opacity(isFlipped ? 1 : 0)
         }
-        .animation(.spring(response: 0.6, dampingFraction: 0.82), value: isFlipped)
+        .animation(AppAnimation.spring, value: isFlipped)
     }
 }
 
@@ -47,7 +47,7 @@ struct CuriosityFlipCard<Content: View>: View {
 
 #Preview("Back face") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CuriosityFlipCard(isFlipped: false) {
             Color.clear
         }
@@ -58,7 +58,7 @@ struct CuriosityFlipCard<Content: View>: View {
 
 #Preview("Front face") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CuriosityFlipCard(isFlipped: true) {
             RoundedRectangle(cornerRadius: CardLayout.cornerRadius)
                 .fill(Color(red: 0.051, green: 0.043, blue: 0.122))

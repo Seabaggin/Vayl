@@ -50,7 +50,7 @@ struct OrbLayer: View {
 
     private var orbs: [OrbSpec] {
         let orbB = OrbSpec(
-            color:       AppColors.electricViolet,
+            color:       AppColors.accentSecondary,
             size:        CGSize(width: 190, height: 155),
             anchor:      UnitPoint(x: 0.72, y: 0.65),
             driftX:      0.09, driftY: 0.09,
@@ -60,7 +60,7 @@ struct OrbLayer: View {
             speed:       0.17
         )
         let orbC = OrbSpec(
-            color:       variant == .prism ? AppColors.cyan : AppColors.electricViolet,
+            color:       variant == .prism ? AppColors.accentPrimary : AppColors.accentSecondary,
             size:        CGSize(width: 240, height: 120),
             anchor:      UnitPoint(x: 0.50, y: 0.42),
             driftX:      0.16, driftY: 0.07,
@@ -188,25 +188,25 @@ struct HomeWidgetShell<Content: View>: View {
                     .strokeBorder(borderGradient, lineWidth: isLight ? 1.5 : 1.0)
             }
             .shadow(
-                color: isLight ? AppColors.purple.opacity(0x18 / 255.0) : .black.opacity(0.30),
+                color: isLight ? AppColors.accentSecondary.opacity(0x18 / 255.0) : .black.opacity(0.30),
                 radius: 4, y: 2
             )
             .shadow(
-                color: isLight ? AppColors.magenta.opacity(0x14 / 255.0) : .black.opacity(0.48),
+                color: isLight ? AppColors.accentTertiary.opacity(0x14 / 255.0) : .black.opacity(0.48),
                 radius: isLight ? 14 : 18,
                 y:      isLight ?  8 : 10
             )
             .shadow(
-                color: isLight ? .black.opacity(0.08) : AppColors.purple.opacity(0x14 / 255.0),
+                color: isLight ? .black.opacity(0.08) : AppColors.accentSecondary.opacity(0x14 / 255.0),
                 radius: isLight ? 24 : 30,
                 y:      isLight ? 20 :  0
             )
             .shadow(
-                color: isLight ? AppColors.purple.opacity(0.20) : AppColors.cyan.opacity(0.18),
+                color: isLight ? AppColors.accentSecondary.opacity(0.20) : AppColors.accentPrimary.opacity(0.18),
                 radius: 8, x: 0, y: -2
             )
             .shadow(
-                color: isLight ? AppColors.magenta.opacity(0.28) : AppColors.purple.opacity(0.24),
+                color: isLight ? AppColors.accentTertiary.opacity(0.28) : AppColors.accentSecondary.opacity(0.24),
                 radius: 6, x: 0, y: -4
             )
             .background(alignment: .bottom) {
@@ -228,9 +228,9 @@ struct HomeWidgetShell<Content: View>: View {
 
             LinearGradient(
                 stops: [
-                    .init(color: AppColors.widgetDarkFloor.opacity(0.85), location: 0.00),
-                    .init(color: AppColors.widgetDarkFloor.opacity(0.45), location: 0.55),
-                    .init(color: AppColors.widgetDarkFloor.opacity(0.00), location: 1.00),
+                    .init(color: AppColors.widgetBackground.opacity(0.85), location: 0.00),
+                    .init(color: AppColors.widgetBackground.opacity(0.45), location: 0.55),
+                    .init(color: AppColors.widgetBackground.opacity(0.00), location: 1.00),
                 ],
                 startPoint: .top, endPoint: .bottom
             )
@@ -239,9 +239,9 @@ struct HomeWidgetShell<Content: View>: View {
 
             LinearGradient(
                 stops: [
-                    .init(color: AppColors.widgetDarkFloor.opacity(0.72), location: 0.00),
-                    .init(color: AppColors.widgetDarkFloor.opacity(0.35), location: 0.55),
-                    .init(color: AppColors.widgetDarkFloor.opacity(0.00), location: 1.00),
+                    .init(color: AppColors.widgetBackground.opacity(0.72), location: 0.00),
+                    .init(color: AppColors.widgetBackground.opacity(0.35), location: 0.55),
+                    .init(color: AppColors.widgetBackground.opacity(0.00), location: 1.00),
                 ],
                 startPoint: .bottom, endPoint: .top
             )
@@ -269,12 +269,12 @@ struct HomeWidgetShell<Content: View>: View {
 
             LinearGradient(
                 stops: [
-                    .init(color: AppColors.cyan.opacity(0.18),    location: 0.00),
-                    .init(color: AppColors.cyan.opacity(0.10),    location: 0.20),
-                    .init(color: AppColors.purple.opacity(0.16),  location: 0.40),
-                    .init(color: AppColors.magenta.opacity(0.10), location: 0.60),
-                    .init(color: AppColors.purple.opacity(0.12),  location: 0.80),
-                    .init(color: AppColors.cyan.opacity(0.08),    location: 1.00),
+                    .init(color: AppColors.accentPrimary.opacity(0.18),    location: 0.00),
+                    .init(color: AppColors.accentPrimary.opacity(0.10),    location: 0.20),
+                    .init(color: AppColors.accentSecondary.opacity(0.16),  location: 0.40),
+                    .init(color: AppColors.accentTertiary.opacity(0.10), location: 0.60),
+                    .init(color: AppColors.accentSecondary.opacity(0.12),  location: 0.80),
+                    .init(color: AppColors.accentPrimary.opacity(0.08),    location: 1.00),
                 ],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
@@ -328,14 +328,14 @@ struct HomeWidgetShell<Content: View>: View {
         ZStack {
             LinearGradient(
                 stops: [
-                    .init(color: AppColors.purple.opacity(0.60),  location: 0.00),
-                    .init(color: AppColors.purple.opacity(0.55),  location: 0.20),
+                    .init(color: AppColors.accentSecondary.opacity(0.60),  location: 0.00),
+                    .init(color: AppColors.accentSecondary.opacity(0.55),  location: 0.20),
                     .init(color: Color(red: 0.55, green: 0.11, blue: 0.64).opacity(0.50), location: 0.35),
-                    .init(color: AppColors.magenta.opacity(0.45), location: 0.50),
-                    .init(color: AppColors.magenta.opacity(0.40), location: 0.62),
+                    .init(color: AppColors.accentTertiary.opacity(0.45), location: 0.50),
+                    .init(color: AppColors.accentTertiary.opacity(0.40), location: 0.62),
                     .init(color: Color(red: 0.94, green: 0.30, blue: 0.22).opacity(0.42), location: 0.72),
-                    .init(color: AppColors.gold.opacity(0.40),    location: 0.85),
-                    .init(color: AppColors.gold.opacity(0.32),    location: 1.00),
+                    .init(color: AppColors.safetyAccent.opacity(0.40),    location: 0.85),
+                    .init(color: AppColors.safetyAccent.opacity(0.32),    location: 1.00),
                 ],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
@@ -381,11 +381,11 @@ struct HomeWidgetShell<Content: View>: View {
 
             LinearGradient(
                 stops: [
-                    .init(color: AppColors.purple.opacity(0.15),  location: 0.00),
+                    .init(color: AppColors.accentPrimary.opacity(0.15),  location: 0.00),
                     .init(color: .clear,                           location: 0.26),
-                    .init(color: AppColors.magenta.opacity(0.12), location: 0.50),
+                    .init(color: AppColors.accentTertiary.opacity(0.12), location: 0.50),
                     .init(color: .clear,                           location: 0.64),
-                    .init(color: AppColors.gold.opacity(0.10),    location: 0.88),
+                    .init(color: AppColors.safetyAccent.opacity(0.10),    location: 0.88),
                     .init(color: .clear,                           location: 1.00),
                 ],
                 startPoint: .topLeading, endPoint: .bottomTrailing
@@ -460,17 +460,17 @@ struct HomeWidgetShell<Content: View>: View {
         isLight
         ? LinearGradient(
             stops: [
-                .init(color: AppColors.purple.opacity(0x88 / 255.0),  location: 0.0),
-                .init(color: AppColors.magenta.opacity(0x72 / 255.0), location: 0.5),
-                .init(color: AppColors.gold.opacity(0x60 / 255.0),    location: 1.0),
+                .init(color: AppColors.accentPrimary.opacity(0x88 / 255.0),  location: 0.0),
+                .init(color: AppColors.accentTertiary.opacity(0x72 / 255.0), location: 0.5),
+                .init(color: AppColors.safetyAccent.opacity(0x60 / 255.0),    location: 1.0),
             ],
             startPoint: .topLeading, endPoint: .bottomTrailing
           )
         : LinearGradient(
             stops: [
-                .init(color: AppColors.cyan.opacity(0x65 / 255.0),    location: 0.0),
-                .init(color: AppColors.purple.opacity(0x50 / 255.0),  location: 0.5),
-                .init(color: AppColors.magenta.opacity(0x40 / 255.0), location: 1.0),
+                .init(color: AppColors.accentPrimary.opacity(0x65 / 255.0),    location: 0.0),
+                .init(color: AppColors.accentSecondary.opacity(0x50 / 255.0),  location: 0.5),
+                .init(color: AppColors.accentTertiary.opacity(0x40 / 255.0), location: 1.0),
             ],
             startPoint: .topLeading, endPoint: .bottomTrailing
           )
@@ -488,11 +488,11 @@ struct HomeWidgetShell<Content: View>: View {
         let darkStops: [Gradient.Stop] = [
             .init(color: .clear,            location: 0.00),
             .init(color: .clear,            location: taper),
-            .init(color: AppColors.cyan,    location: taper + 0.02),
-            .init(color: AppColors.purple,  location: 0.32),
-            .init(color: AppColors.magenta, location: 0.50),
-            .init(color: AppColors.purple,  location: 0.68),
-            .init(color: AppColors.cyan,    location: trail - 0.02),
+            .init(color: AppColors.accentPrimary,    location: taper + 0.02),
+            .init(color: AppColors.accentSecondary,  location: 0.32),
+            .init(color: AppColors.accentTertiary, location: 0.50),
+            .init(color: AppColors.accentSecondary,  location: 0.68),
+            .init(color: AppColors.accentPrimary,    location: trail - 0.02),
             .init(color: .clear,            location: trail),
             .init(color: .clear,            location: 1.00),
         ]
@@ -500,9 +500,9 @@ struct HomeWidgetShell<Content: View>: View {
         let lightStops: [Gradient.Stop] = [
             .init(color: .clear,            location: 0.00),
             .init(color: .clear,            location: taper),
-            .init(color: AppColors.purple,  location: taper + 0.04),
-            .init(color: AppColors.magenta, location: 0.50),
-            .init(color: AppColors.gold,    location: trail - 0.04),
+            .init(color: AppColors.accentSecondary,  location: taper + 0.04),
+            .init(color: AppColors.accentTertiary, location: 0.50),
+            .init(color: AppColors.safetyAccent,    location: trail - 0.04),
             .init(color: .clear,            location: trail),
             .init(color: .clear,            location: 1.00),
         ]
@@ -562,7 +562,7 @@ struct HomeWidgetShell<Content: View>: View {
             .fill(RadialGradient(
                 stops: [
                     .init(color: accentColor.opacity(0x30 / 255.0),      location: 0.00),
-                    .init(color: AppColors.purple.opacity(0x1C / 255.0), location: 0.55),
+                    .init(color: AppColors.accentSecondary.opacity(0x1C / 255.0), location: 0.55),
                     .init(color: .clear,                                  location: 0.80),
                 ],
                 center: .center, startRadius: 0, endRadius: 80
@@ -581,21 +581,21 @@ struct HomeWidgetShell<Content: View>: View {
 
 #Preview("Dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
-            VStack(spacing: 12) {
+            VStack(spacing: AppSpacing.sm) {
                 HomeWidgetShell(
                     isLight:     false,
-                    accentColor: AppColors.cyan,
+                    accentColor: AppColors.accentPrimary,
                     rimVariant:  .pulse
                 ) {
                     ZStack {
                         OrbLayer(
-                            accentColor: AppColors.cyan,
+                            accentColor: AppColors.accentPrimary,
                             height:      300,   // approx — orb positions are relative anyway
                             variant:     .pulse
                         )
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: AppSpacing.sm) {
                             Text("THE PULSE")
                                 .font(AppFonts.overline)
                                 .tracking(2.5)
@@ -607,23 +607,23 @@ struct HomeWidgetShell<Content: View>: View {
                                 .font(AppFonts.caption)
                                 .foregroundStyle(AppColors.textSecondary)
                         }
-                        .padding(20)
+                        .padding(AppSpacing.lg)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     }
                 }
 
                 HomeWidgetShell(
                     isLight:     false,
-                    accentColor: AppColors.electricViolet,
+                    accentColor: AppColors.accentSecondary,
                     rimVariant:  .prism
                 ) {
                     ZStack {
                         OrbLayer(
-                            accentColor: AppColors.electricViolet,
+                            accentColor: AppColors.accentSecondary,
                             height:      300,
                             variant:     .prism
                         )
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: AppSpacing.sm) {
                             Text("THE PRISM")
                                 .font(AppFonts.overline)
                                 .tracking(2.5)
@@ -632,12 +632,12 @@ struct HomeWidgetShell<Content: View>: View {
                                 .font(AppFonts.bodyMedium)
                                 .foregroundStyle(AppColors.textSecondary)
                         }
-                        .padding(20)
+                        .padding(AppSpacing.lg)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     }
                 }
             }
-            .padding(14)
+            .padding(AppSpacing.md)
         }
     }
     .preferredColorScheme(.dark)
@@ -645,49 +645,49 @@ struct HomeWidgetShell<Content: View>: View {
 
 #Preview("Light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
-            VStack(spacing: 12) {
+            VStack(spacing: AppSpacing.sm) {
                 HomeWidgetShell(
                     isLight:     true,
-                    accentColor: AppColors.magenta,
+                    accentColor: AppColors.accentTertiary,
                     rimVariant:  .pulse
                 ) {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         Text("THE PULSE")
                             .font(AppFonts.overline)
                             .tracking(2.5)
-                            .foregroundStyle(AppColors.lightTextTertiary)
+                            .foregroundStyle(AppColors.textTertiary)
                         Text("Sovereign Space")
                             .font(AppFonts.sectionHeading)
-                            .foregroundStyle(AppColors.lightTextPrimary)
+                            .foregroundStyle(AppColors.textPrimary)
                         Text("High capacity · 14 check-ins")
                             .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.lightTextSecondary)
+                            .foregroundStyle(AppColors.textSecondary)
                     }
-                    .padding(20)
+                    .padding(AppSpacing.lg)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
 
                 HomeWidgetShell(
                     isLight:     true,
-                    accentColor: AppColors.purple,
+                    accentColor: AppColors.accentSecondary,
                     rimVariant:  .prism
                 ) {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         Text("THE PRISM")
                             .font(AppFonts.overline)
                             .tracking(2.5)
-                            .foregroundStyle(AppColors.lightTextTertiary)
+                            .foregroundStyle(AppColors.textTertiary)
                         Text("What are you bringing into today?")
                             .font(AppFonts.bodyMedium)
-                            .foregroundStyle(AppColors.lightTextSecondary)
+                            .foregroundStyle(AppColors.textSecondary)
                     }
-                    .padding(20)
+                    .padding(AppSpacing.lg)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
             }
-            .padding(14)
+            .padding(AppSpacing.md)
         }
     }
     .preferredColorScheme(.light)

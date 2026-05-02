@@ -14,7 +14,7 @@ import SwiftUI
 struct LearnView: View {
     var body: some View {
         ZStack {
-            AppColors.pageBg.ignoresSafeArea()
+            AppColors.pageBackground.ignoresSafeArea()
             Text("Learn")
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(AppColors.textSecondary)

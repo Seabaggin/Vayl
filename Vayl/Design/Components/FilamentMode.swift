@@ -104,27 +104,27 @@ struct FilamentColorSet {
 
     static let darkSets: [FilamentColorSet] = [
         FilamentColorSet(
-            primary: AppColors.cyan,
-            light:   AppColors.cyanLight,
-            glow:    AppColors.deepBlue
+            primary: AppColors.accentPrimary,
+            light:   AppColors.accentPrimary,
+            glow:    AppColors.accentSecondary
         ),
         FilamentColorSet(
-            primary: AppColors.magenta,
-            light:   AppColors.magentaLight,
-            glow:    AppColors.magentaDark
+            primary: AppColors.accentTertiary,
+            light:   AppColors.accentTertiary,
+            glow:   AppColors.accentTertiary
         ),
         FilamentColorSet(
-            primary: AppColors.purple,
-            light:   AppColors.purpleLight,
-            glow:    AppColors.purpleDark
+            primary: AppColors.accentSecondary,
+            light:   AppColors.accentSecondary,
+            glow:    AppColors.accentSecondary
         ),
         FilamentColorSet(
-            primary: AppColors.gold,
+            primary: AppColors.safetyAccent,
             light:   Color(hex: "#F0BC2E"),
             glow:    Color(hex: "#92680A")
         ),
         FilamentColorSet(
-            primary: AppColors.cyanDark,
+            primary: AppColors.accentPrimary,
             light:   Color(hex: "#22D3EE"),
             glow:    Color(hex: "#164E63")
         ),
@@ -132,13 +132,13 @@ struct FilamentColorSet {
 
     static let lightSets: [FilamentColorSet] = [
         FilamentColorSet(
-            primary: AppColors.magentaDark,
+            primary:AppColors.accentTertiary,
             light:   Color(hex: "#EC4899"),
             glow:    Color(hex: "#831843")
         ),
         FilamentColorSet(
-            primary: AppColors.electricViolet,
-            light:   AppColors.purpleLight,
+            primary:AppColors.accentSecondary,
+            light:   AppColors.accentSecondary,
             glow:    Color(hex: "#4C1D95")
         ),
         FilamentColorSet(
@@ -493,17 +493,17 @@ struct FilamentView: View {
 
     var body: some View {
         Canvas { context, _ in
-            let f1primary = colorScheme == .dark ? AppColors.cyan        : AppColors.magenta
-            let f1light   = colorScheme == .dark ? AppColors.cyanLight   : AppColors.magentaLight
-            let f1glow    = colorScheme == .dark ? AppColors.deepBlue    : AppColors.magentaDark
+            let f1primary = colorScheme == .dark ? AppColors.accentPrimary        : AppColors.accentTertiary
+            let f1light   = colorScheme == .dark ? AppColors.accentPrimary   : AppColors.accentTertiary
+            let f1glow    = colorScheme == .dark ? AppColors.accentSecondary    :AppColors.accentTertiary
 
-            let f2primary = colorScheme == .dark ? AppColors.magenta     : AppColors.orangeHot
-            let f2light   = colorScheme == .dark ? AppColors.magentaLight: AppColors.gold
-            let f2glow    = colorScheme == .dark ? AppColors.pink        : AppColors.goldDark
+            let f2primary = colorScheme == .dark ? AppColors.accentTertiary     : AppColors.progressBarLeading
+            let f2light   = colorScheme == .dark ? AppColors.accentTertiary: AppColors.safetyAccent
+            let f2glow    = colorScheme == .dark ? AppColors.accentTertiary        : AppColors.safetyAccent
 
-            let f3primary = colorScheme == .dark ? AppColors.purple      : AppColors.purple
-            let f3light   = colorScheme == .dark ? AppColors.purpleLight : AppColors.purpleLight
-            let f3glow    = colorScheme == .dark ? AppColors.purpleDark  : AppColors.purpleDark
+            let f3primary = colorScheme == .dark ? AppColors.accentSecondary      : AppColors.accentSecondary
+            let f3light   = colorScheme == .dark ? AppColors.accentSecondary : AppColors.accentSecondary
+            let f3glow    = colorScheme == .dark ? AppColors.accentSecondary  : AppColors.accentSecondary
 
             // Orbit 1 — always drawn
             drawFilament(ctx: &context, trail: fs.trail1,
@@ -675,12 +675,12 @@ struct FilamentView: View {
 
         ctx.stroke(
             arc,
-            with: .color(AppColors.purpleLight.opacity(ease * 0.22)),
+            with: .color(AppColors.accentSecondary.opacity(ease * 0.22)),
             style: StrokeStyle(lineWidth: CGFloat(ease * 12), lineCap: .round)
         )
         ctx.stroke(
             arc,
-            with: .color(AppColors.purpleLight.opacity(ease * 0.65)),
+            with: .color(AppColors.accentSecondary.opacity(ease * 0.65)),
             style: StrokeStyle(lineWidth: CGFloat(ease * 2.5), lineCap: .round)
         )
 
@@ -694,9 +694,9 @@ struct FilamentView: View {
                 )),
                 with: .radialGradient(
                     Gradient(stops: [
-                        .init(color: AppColors.purpleLight.opacity(adj * 0.55), location: 0.0),
-                        .init(color: AppColors.electricViolet.opacity(adj * 0.22), location: 0.5),
-                        .init(color: AppColors.purple.opacity(0.00),       location: 1.0)
+                        .init(color: AppColors.accentSecondary.opacity(adj * 0.55), location: 0.0),
+                        .init(color:AppColors.accentSecondary.opacity(adj * 0.22), location: 0.5),
+                        .init(color: AppColors.accentSecondary.opacity(0.00),       location: 1.0)
                     ]),
                     center:      ctrl,
                     startRadius: 0,
@@ -721,7 +721,7 @@ struct FilamentView: View {
                             y: (tp1.y + tp2.y) / 2 - 1.5,
                             width: 3, height: 3
                         )),
-                        with: .color(AppColors.purpleLight.opacity(0.55))
+                        with: .color(AppColors.accentSecondary.opacity(0.55))
                     )
                     fired += 1
                     if fired >= sparkCount { break outer }
@@ -756,7 +756,7 @@ extension FilamentState {
 #Preview("Dark — Solo (color cycling)") {
     ZStack {
         Color(hex: "#030305").ignoresSafeArea()
-        VStack(spacing: 20) {
+        VStack(spacing: AppSpacing.lg) {
             Text("Solo · dark · color cycling")
                 .font(.caption)
                 .foregroundStyle(Color(hex: "#666680"))
@@ -770,7 +770,7 @@ extension FilamentState {
     // Preview the exitProgress contraction at 50% and 100%
     ZStack {
         Color(hex: "#030305").ignoresSafeArea()
-        VStack(spacing: 32) {
+        VStack(spacing: AppSpacing.xl) {
             Text("exitProgress: 0.5")
                 .font(.caption)
                 .foregroundStyle(Color(hex: "#666680"))
@@ -788,7 +788,7 @@ extension FilamentState {
 #Preview("Dark — Duo") {
     ZStack {
         Color(hex: "#030305").ignoresSafeArea()
-        VStack(spacing: 20) {
+        VStack(spacing: AppSpacing.lg) {
             Text("Duo · dark · cyan + magenta")
                 .font(.caption)
                 .foregroundStyle(Color(hex: "#666680"))
@@ -801,7 +801,7 @@ extension FilamentState {
 #Preview("Light — Solo (color cycling)") {
     ZStack {
         Color(hex: "#F5F0E8").ignoresSafeArea()
-        VStack(spacing: 20) {
+        VStack(spacing: AppSpacing.lg) {
             Text("Solo · light · color cycling")
                 .font(.caption)
                 .foregroundStyle(Color(hex: "#888880"))
@@ -814,7 +814,7 @@ extension FilamentState {
 #Preview("Light — Duo") {
     ZStack {
         Color(hex: "#F5F0E8").ignoresSafeArea()
-        VStack(spacing: 20) {
+        VStack(spacing: AppSpacing.lg) {
             Text("Duo · light · cyan + magenta")
                 .font(.caption)
                 .foregroundStyle(Color(hex: "#888880"))
@@ -827,8 +827,8 @@ extension FilamentState {
 #Preview("orbitCount 1 / 2 / 3 — no connections") {
     ZStack {
         Color(hex: "#030305").ignoresSafeArea()
-        HStack(spacing: 20) {
-            VStack(spacing: 6) {
+        HStack(spacing: AppSpacing.lg) {
+            VStack(spacing: AppSpacing.sm) {
                 FilamentView(
                     size:            52,
                     mode:           .solo,
@@ -837,12 +837,12 @@ extension FilamentState {
                     showConnections: false
                 )
                 .frame(width: 52, height: 52)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
                 Text("1")
                     .font(.caption)
                     .foregroundStyle(Color(hex: "#666680"))
             }
-            VStack(spacing: 6) {
+            VStack(spacing: AppSpacing.sm) {
                 FilamentView(
                     size:            52,
                     mode:           .duo,
@@ -851,12 +851,12 @@ extension FilamentState {
                     showConnections: false
                 )
                 .frame(width: 52, height: 52)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
                 Text("2")
                     .font(.caption)
                     .foregroundStyle(Color(hex: "#666680"))
             }
-            VStack(spacing: 6) {
+            VStack(spacing: AppSpacing.sm) {
                 FilamentView(
                     size:            52,
                     mode:           .duo,
@@ -865,7 +865,7 @@ extension FilamentState {
                     showConnections: false
                 )
                 .frame(width: 52, height: 52)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
                 Text("3")
                     .font(.caption)
                     .foregroundStyle(Color(hex: "#666680"))

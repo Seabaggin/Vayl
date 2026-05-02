@@ -169,9 +169,7 @@ final class OnboardingStore {
     // MARK: - Private Navigation
 
     private func move(to step: OnboardingStep) {
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-            currentStep = step
-        }
+        currentStep = step
     }
 
     // MARK: - Completion

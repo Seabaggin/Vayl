@@ -10,19 +10,19 @@
 import SwiftUI
 
 struct GradientButton: View {
-    @Environment(\.theme) private var t
+    @Environment(\.theme) private var t // ARCHITECTURAL FLAG: legacy theme env — do not migrate to AppColors until theme system is unified
     let title: String
     var action: () -> Void = {}
 
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 15, weight: .bold))
+                .font(AppFonts.bodyMedium)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 15)
+                .padding(.vertical, AppSpacing.md)
                 .background(t.buttonGradient)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
                 .shadow(
                     color: t.isDark
                         ? t.glowCyan.opacity(0.5)
@@ -43,17 +43,17 @@ struct GradientButton: View {
 }
 
 struct GradBadge: View {
-    @Environment(\.theme) private var t
+    @Environment(\.theme) private var t // ARCHITECTURAL FLAG: legacy theme env — do not migrate to AppColors until theme system is unified
     let text: String
 
     var body: some View {
         Text(text.uppercased())
-            .font(.system(size: 9, weight: .bold))
+            .font(.system(size: 9, weight: .bold)) // intentional exception: micro badge label — below AppFonts minimum (overline=11pt)
             .tracking(0.8)
             .foregroundStyle(.white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 3)
+            .padding(.horizontal, AppSpacing.sm)
+            .padding(.vertical, 3) // intentional exception: micro badge vertical padding — no token between xxs(2) and xs(4)
             .background(t.buttonGradient)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm)) // intentional exception: badge-specific corner — no token between micro(2) and sm(8)
     }
 }

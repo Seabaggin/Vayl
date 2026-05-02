@@ -18,7 +18,7 @@ struct GlowUnderline: ViewModifier {
                 ZStack {
                     Rectangle()
                         .fill(isLight
-                            ? AnyShapeStyle(AppColors.warmAuroraBorder)
+                            ? AnyShapeStyle(AppColors.spectrumBorder)
                             : AnyShapeStyle(AppColors.spectrumBorder))
                         .frame(height: 3)
                         .opacity(Double(1 - flash * 0.6))
@@ -26,14 +26,14 @@ struct GlowUnderline: ViewModifier {
                     Rectangle()
                         .fill(LinearGradient(
                             colors: isLight
-                                ? [AppColors.magenta.opacity(0.9),
-                                   AppColors.pink.opacity(1.0),
-                                   AppColors.purple.opacity(0.9),
-                                   AppColors.magenta.opacity(0.9)]
-                                : [AppColors.cyan.opacity(1.0),
-                                   AppColors.purple.opacity(1.0),
-                                   AppColors.pink.opacity(1.0),
-                                   AppColors.cyan.opacity(1.0)],
+                                ? [AppColors.accentTertiary.opacity(0.9),
+                                   AppColors.accentTertiary.opacity(1.0),
+                                   AppColors.accentSecondary.opacity(0.9),
+                                   AppColors.accentTertiary.opacity(0.9)]
+                                : [AppColors.accentPrimary.opacity(1.0),
+                                   AppColors.accentSecondary.opacity(1.0),
+                                   AppColors.accentTertiary.opacity(1.0),
+                                   AppColors.accentPrimary.opacity(1.0)],
                             startPoint: .leading,
                             endPoint: .trailing
                         ))
@@ -44,14 +44,14 @@ struct GlowUnderline: ViewModifier {
                     Rectangle()
                         .fill(LinearGradient(
                             colors: isLight
-                                ? [AppColors.magenta.opacity(0.35),
-                                   AppColors.pink.opacity(0.50),
-                                   AppColors.purple.opacity(0.40),
-                                   AppColors.magenta.opacity(0.35)]
-                                : [AppColors.cyan.opacity(0.35),
-                                   AppColors.purple.opacity(0.50),
-                                   AppColors.pink.opacity(0.45),
-                                   AppColors.cyan.opacity(0.35)],
+                                ? [AppColors.accentTertiary.opacity(0.35),
+                                   AppColors.accentTertiary.opacity(0.50),
+                                   AppColors.accentSecondary.opacity(0.40),
+                                   AppColors.accentTertiary.opacity(0.35)]
+                                : [AppColors.accentPrimary.opacity(0.35),
+                                   AppColors.accentSecondary.opacity(0.50),
+                                   AppColors.accentTertiary.opacity(0.45),
+                                   AppColors.accentPrimary.opacity(0.35)],
                             startPoint: .leading,
                             endPoint: .trailing
                         ))

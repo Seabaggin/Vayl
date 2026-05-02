@@ -21,62 +21,62 @@ struct CuriosityPreviewLine: View {
     let isLight: Bool
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: AppSpacing.sm) {
             Text(text)
                 .font(AppFonts.caption)
                 .italic()
                 .foregroundStyle(
                     isLight
-                        ? AppColors.lightCardTitle.opacity(0.70)
+                        ? AppColors.textBody.opacity(0.70)
                         : AppColors.textSecondary
                 )
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 11)
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: AppRadius.md)
                 .fill(
                     isLight
-                        ? AppColors.magenta.opacity(0.05)
-                        : AppColors.cyan.opacity(0.05)
+                        ? AppColors.accentTertiary.opacity(0.05)
+                        : AppColors.accentPrimary.opacity(0.05)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14)
+                    RoundedRectangle(cornerRadius: AppRadius.md)
                         .strokeBorder(
                             isLight
-                                ? AppColors.magenta.opacity(0.12)
-                                : AppColors.cyan.opacity(0.12),
+                                ? AppColors.accentTertiary.opacity(0.12)
+                                : AppColors.accentPrimary.opacity(0.12),
                             lineWidth: 1
                         )
                 )
         )
-        .padding(.top, 8)
+        .padding(.top, AppSpacing.sm)
         .transition(.opacity.combined(with: .offset(y: 6)))
     }
 }
 
 #Preview("Dark") {
     ZStack {
-        AppColors.pageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CuriosityPreviewLine(
             text: "We'll center your path on desire clarity — the cards most people circle for years.",
             isLight: false
         )
-        .padding(24)
+        .padding(AppSpacing.lg)
     }
     .preferredColorScheme(.dark)
 }
 
 #Preview("Light") {
     ZStack {
-        AppColors.lightPageBg.ignoresSafeArea()
+        AppColors.pageBackground.ignoresSafeArea()
         CuriosityPreviewLine(
             text: "We'll center your path on desire clarity — the cards most people circle for years.",
             isLight: true
         )
-        .padding(24)
+        .padding(AppSpacing.lg)
     }
     .preferredColorScheme(.light)
 }

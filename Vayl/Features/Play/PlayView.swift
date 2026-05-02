@@ -14,7 +14,7 @@ import SwiftUI
 struct PlayView: View {
     var body: some View {
         ZStack {
-            AppColors.pageBg.ignoresSafeArea()
+            AppColors.pageBackground.ignoresSafeArea()
             Text("Play")
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(AppColors.textSecondary)

@@ -512,10 +512,10 @@ enum PulseTier: String, CaseIterable, Codable {
 
     var color: Color {
         switch self {
-        case .expansive:  return AppColors.cyan
-        case .sovereign:  return AppColors.purple
-        case .friction:   return AppColors.magenta
-        case .protective: return AppColors.magentaLight
+        case .expansive:  return AppColors.pulseTierExpansive
+        case .sovereign:  return AppColors.pulseTierSovereign
+        case .friction:   return AppColors.pulseTierFriction
+        case .protective: return AppColors.pulseTierProtective
         }
     }
 
@@ -653,4 +653,70 @@ enum MilestoneType: String, CaseIterable, Codable {
     case acknowledgedGroundRules    // gates Card 2
     case linkedPartner              // first time partner link completes
     case completedSoloDeck          // solo prep deck finished
+}
+// ─────────────────────────────────────────────────────────────
+// MARK: - UI Constants
+// ─────────────────────────────────────────────────────────────
+
+/// SF Symbol names used across the app.
+/// Raw strings for SF Symbols are banned — always reference via this enum.
+/// Add a case here before using any new symbol anywhere in the codebase.
+enum AppIcons {
+    // ── Navigation & actions ──────────────────────────────────
+    static let close              = "xmark"
+    static let chevronRight       = "chevron.right"
+    static let chevronLeft        = "chevron.left"
+    static let chevronUp          = "chevron.up"
+    static let arrowRight         = "arrow.right"
+    static let arrowLeft          = "arrow.left"
+    static let arrowTurnUpLeft    = "arrow.turn.up.left"
+    static let forwardFill        = "forward.fill"
+    static let chevronDown = "chevron.down"
+   
+
+    // ── Desire Map & onboarding ───────────────────────────────
+    static let lock               = "lock.fill"
+    static let clock              = "clock.fill"
+    static let eyeSlash           = "eye.slash.fill"
+    static let eye                = "eye.fill"
+    static let lightbulb       = "lightbulb.fill"
+    static let heartFill       = "heart.fill"
+    static let figureWalk      = "figure.walk"
+    static let handRaised      = "hand.raised.fill"
+    static let heartTextSquare = "heart.text.square.fill"
+
+    // ── Education & content ───────────────────────────────────
+    static let books              = "books.vertical.fill"
+
+    // ── Input ─────────────────────────────────────────────────
+    static let mic                = "mic.fill"
+
+    // ── Actions & status ──────────────────────────────────────
+    static let checkmark          = "checkmark"
+    static let checkmarkCircle    = "checkmark.circle.fill"
+    static let plus               = "plus"
+    static let bookmarkFill       = "bookmark.fill"
+    static let docOnDoc           = "doc.on.doc"
+    static let sparkles           = "sparkles"
+    static let exclamationTriangle = "exclamationmark.triangle"
+
+    // ── People & social ───────────────────────────────────────
+    static let personBadgePlus    = "person.badge.plus"
+    static let personBadgeClock   = "person.badge.clock"
+    static let heartCircleFill    = "heart.circle.fill"
+
+    // ── System & settings ─────────────────────────────────────
+    static let paintpalette       = "paintpalette.fill"
+    static let appleLogo          = "apple.logo"
+    static let eyeSlashScreen     = "eye.slash.fill"
+
+    // ── Status & feedback ─────────────────────────────────────
+    static let warning            = "exclamationmark.triangle"
+    static let gridCircle         = "grid.circle"
+    static let gridCircleFill     = "grid.circle.fill"
+    static let infoCircle         = "info.circle"
+    static let link               = "link"
+
+    // ── Tab bar ───────────────────────────────────────────────
+    // Tab icons live on AppTab — not duplicated here.
 }

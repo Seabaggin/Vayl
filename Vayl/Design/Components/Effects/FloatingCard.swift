@@ -53,7 +53,7 @@ struct FloatingCard: View {
     @Environment(\.colorScheme) private var colorScheme
     private var isLight: Bool { colorScheme == .light }
 
-    private var cardCornerRadius: CGFloat { 20 }
+    private var cardCornerRadius: CGFloat { AppRadius.container }
 
     private var shimmerOffset: CGFloat {
         // Oscillates ±18pt around card center — no sweep, no reset
@@ -65,15 +65,15 @@ struct FloatingCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(spec.full)
-                .font(AppFonts.body(16, weight: isSelected ? .semibold : .medium))
+                .font(AppFonts.body(16, weight: isSelected ? .semibold : .medium, relativeTo: .body))
                 .foregroundStyle(isLight
-                    ? AppColors.lightCardTitle
+                    ? AppColors.textBody
                     : Color.white.opacity(0.92))
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 14)
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.md)
         .frame(width: cardWidth, alignment: .leading)
         .background(glassSurface)
         .frame(width: cardWidth)
@@ -84,10 +84,11 @@ struct FloatingCard: View {
         )
         .rotationEffect(.degrees(floatRot))
         .opacity(mounted ? targetOpacity : 0)
-        .animation(.spring(response: 0.38, dampingFraction: 0.72), value: isSelected)
-        .animation(.easeInOut(duration: 0.45), value: targetOpacity)
+        .animation(AppAnimation.spring, value: isSelected)
+        .animation(AppAnimation.enter, value: targetOpacity)
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.82).delay(0.08)) {
+            // intentional exception: slower mount entrance (response:0.5) than AppAnimation.spring for a softer initial float-in
+            withAnimation(AppAnimation.spring.delay(0.08)) {
                 mounted = true
             }
         }
@@ -166,8 +167,8 @@ private var glassSurface: some View {
                   .strokeBorder(
                       LinearGradient(
                           colors: isLight
-                              ? [AppColors.magenta, AppColors.orangeHot, AppColors.gold]
-                              : [AppColors.cyan, AppColors.purple, AppColors.magenta],
+                              ? [AppColors.accentTertiary, AppColors.progressBarLeading, AppColors.safetyAccent]
+                              : [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
                           startPoint: .topLeading,
                           endPoint:   .bottomTrailing
                       ),
@@ -177,7 +178,7 @@ private var glassSurface: some View {
               RoundedRectangle(cornerRadius: cardCornerRadius)
                   .strokeBorder(
                       isLight
-                          ? AppColors.lightBorder
+                          ? AppColors.borderSubtle
                           : Color.white.opacity(0.09),
                       lineWidth: 1
                   )
@@ -191,12 +192,12 @@ private var glassSurface: some View {
     private var surfaceFill: AnyShapeStyle {
         if isLight {
             return isSelected
-                ? AnyShapeStyle(AppColors.lightFrostPillSel)
-                : AnyShapeStyle(AppColors.lightFrostPill)
+                ? AnyShapeStyle(AppColors.glassFrostPillSelected)
+                : AnyShapeStyle(AppColors.glassFrostPill)
         } else {
             if isSelected {
                 return AnyShapeStyle(LinearGradient(
-                    colors: [AppColors.surfaceBg, AppColors.cardBg],
+                    colors: [AppColors.modalBackground, AppColors.cardBackground],
                     startPoint: .topLeading,
                     endPoint:   .bottomTrailing
                 ))
@@ -239,7 +240,7 @@ private let previewSpec3 = FloatingCardSpec(
 )
 
 #Preview("Unselected — Dark") {
-    VStack(spacing: 16) {
+    VStack(spacing: AppSpacing.md) {
         FloatingCard(
             spec:       previewSpec1,
             isSelected: false,
@@ -255,14 +256,14 @@ private let previewSpec3 = FloatingCardSpec(
             onTap:      {}
         )
     }
-    .padding(24)
+    .padding(AppSpacing.lg)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(AppColors.pageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }
 
 #Preview("Selected — Dark") {
-    VStack(spacing: 16) {
+    VStack(spacing: AppSpacing.md) {
         FloatingCard(
             spec:       previewSpec1,
             isSelected: true,
@@ -278,14 +279,14 @@ private let previewSpec3 = FloatingCardSpec(
             onTap:      {}
         )
     }
-    .padding(24)
+    .padding(AppSpacing.lg)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(AppColors.pageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }
 
 #Preview("Unselected — Light") {
-    VStack(spacing: 16) {
+    VStack(spacing: AppSpacing.md) {
         FloatingCard(
             spec:       previewSpec1,
             isSelected: false,
@@ -301,14 +302,14 @@ private let previewSpec3 = FloatingCardSpec(
             onTap:      {}
         )
     }
-    .padding(24)
+    .padding(AppSpacing.lg)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(AppColors.lightPageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.light)
 }
 
 #Preview("Selected — Light") {
-    VStack(spacing: 16) {
+    VStack(spacing: AppSpacing.md) {
         FloatingCard(
             spec:       previewSpec1,
             isSelected: true,
@@ -324,14 +325,14 @@ private let previewSpec3 = FloatingCardSpec(
             onTap:      {}
         )
     }
-    .padding(24)
+    .padding(AppSpacing.lg)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(AppColors.lightPageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.light)
 }
 
 #Preview("Mixed — Dark") {
-    VStack(spacing: 16) {
+    VStack(spacing: AppSpacing.md) {
         FloatingCard(
             spec:       previewSpec1,
             isSelected: true,
@@ -357,8 +358,8 @@ private let previewSpec3 = FloatingCardSpec(
             onTap:      {}
         )
     }
-    .padding(24)
+    .padding(AppSpacing.lg)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(AppColors.pageBg)
+    .background(AppColors.pageBackground)
     .preferredColorScheme(.dark)
 }

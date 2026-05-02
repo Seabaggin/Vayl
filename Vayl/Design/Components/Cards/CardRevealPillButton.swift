@@ -34,8 +34,8 @@ struct CardRevealPillButton: View {
                .font(AppFonts.bodyMedium)
                .foregroundStyle(
                    isSelected
-                       ? (isLight ? AppColors.lightCardTitle : AppColors.textPrimary)
-                       : (isLight ? AppColors.lightBodyWineDark : Color.white.opacity(0.75))
+                       ? (isLight ? AppColors.textBody : AppColors.textPrimary)
+                       : (isLight ? AppColors.textSecondary : Color.white.opacity(0.75))
                )
                .frame(maxWidth: .infinity)
                .frame(height: 40)
@@ -47,18 +47,18 @@ struct CardRevealPillButton: View {
        // Scale — driven by parent selectedPillScale during beat 1
        .scaleEffect(isSelected ? selectedScale : 1.0)
        .animation(
-           .spring(response: 0.35, dampingFraction: 0.7),
+           AppAnimation.spring,
            value: selectedScale
        )
        // Entrance stagger — rise from y+10
        .opacity(entranceVisible ? (isOther && !globalVisible ? 0 : 1) : 0)
        .offset(y: entranceVisible ? (isOther && !globalVisible ? 4 : 0) : 10)
        .animation(
-           .easeOut(duration: 0.35).delay(entranceDelay),
+           AppAnimation.standard.delay(entranceDelay),
            value: entranceVisible
        )
        // Beat 3 sink — independent from entrance
-       .animation(.easeIn(duration: 0.35), value: globalVisible)
+       .animation(AppAnimation.standard, value: globalVisible)
        .disabled(isOther)
        .accessibilityLabel(pill.rawValue)
        .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -76,11 +76,11 @@ struct CardRevealPillButton: View {
            .fill(
                isSelected
                    ? (isLight
-                       ? AnyShapeStyle(AppColors.lightFrostPillSel)
+                       ? AnyShapeStyle(AppColors.glassFrostPillSelected)
                        : AnyShapeStyle(Color.white.opacity(0.10)))
                    : (isLight
-                       ? AnyShapeStyle(AppColors.lightFrostPill)
-                       : AnyShapeStyle(AppColors.cardBg))
+                       ? AnyShapeStyle(AppColors.glassFrostPill)
+                       : AnyShapeStyle(AppColors.cardBackground))
            )
    }
 
@@ -89,7 +89,7 @@ struct CardRevealPillButton: View {
        if isSelected {
            if isLight {
                Capsule()
-                   .strokeBorder(AppColors.warmAuroraBorder, lineWidth: borderWidth)
+                   .strokeBorder(AppColors.spectrumBorder, lineWidth: borderWidth)
            } else {
                Capsule()
                    .strokeBorder(AppColors.spectrumBorder, lineWidth: borderWidth)
@@ -97,7 +97,7 @@ struct CardRevealPillButton: View {
        } else {
            Capsule()
                .strokeBorder(
-                   isLight ? AppColors.lightBorder : AppColors.border,
+                   AppColors.borderSubtle,
                    lineWidth: 1.5
                )
        }

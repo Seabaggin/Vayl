@@ -74,11 +74,11 @@ struct ContextCardStack: View {
                         if front.id == selection?.id {
                             // Unconfirm — cancel pending advance
                             autoAdvanceTask?.cancel()
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { selection = nil }
+                            withAnimation(AppAnimation.spring) { selection = nil }
                         } else {
                             // Confirm — schedule auto-advance
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { selection = front }
+                            withAnimation(AppAnimation.spring) { selection = front }
                             autoAdvanceTask?.cancel()
                             autoAdvanceTask = Task {
                                 try? await Task.sleep(for: .seconds(0.45))
@@ -92,7 +92,7 @@ struct ContextCardStack: View {
 
                     // Swipe — blocked if confirmed
                     guard selection == nil else {
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) { dragOffset = 0 }
+                        withAnimation(AppAnimation.spring) { dragOffset = 0 }
                         return
                     }
 
@@ -106,7 +106,7 @@ struct ContextCardStack: View {
                         newIndex = currentIndex + 1
                     }
 
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
+                    withAnimation(AppAnimation.spring) {
                         currentIndex = newIndex
                         dragOffset   = 0
                     }
@@ -118,11 +118,11 @@ struct ContextCardStack: View {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                 guard selection == nil else { return }
-                withAnimation(.easeInOut(duration: 0.25)) {
+                withAnimation(AppAnimation.fast) {
                     dragOffset = 18
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    withAnimation(AppAnimation.spring) {
                         dragOffset = 0
                     }
                 }

@@ -35,7 +35,7 @@ struct ScoreRing: View {
                 )
                 .rotationEffect(.degrees(-90))
 
-            VStack(spacing: 2) {
+            VStack(spacing: AppSpacing.xxs) {
                 Text(score, format: .number)
                     .font(.system(
                         size: size > 80 ? 28 : 16,
@@ -54,9 +54,10 @@ struct ScoreRing: View {
         }
         .frame(width: size, height: size)
         .onAppear {
-            withAnimation(.easeOut(duration: 1.2)) {
+            withAnimation(AppAnimation.slow) { // was 1.2 — above slow ceiling, nearest token {
                 progress = CGFloat(score) / 100.0
             }
         }
     }
-}
+ }
+

@@ -6,7 +6,7 @@ import SwiftUI
 /// Use as a background layer clipped to any shape:
 /// ```swift
 /// Capsule()
-///     .fill(AppColors.surfaceBg)
+///     .fill(AppColors.modalBackground)
 ///     .overlay { HolographicShimmer().clipShape(Capsule()) }
 /// ```
 struct HolographicShimmer: View {
@@ -16,11 +16,11 @@ struct HolographicShimmer: View {
     @State private var phase: CGFloat = 0
 
     private let colors: [Color] = [
-        AppColors.cyan.opacity(0.50),
-        AppColors.purple.opacity(0.45),
-        AppColors.magenta.opacity(0.45),
-        AppColors.pink.opacity(0.40),
-        AppColors.cyan.opacity(0.40),
+        AppColors.accentPrimary.opacity(0.50),
+        AppColors.accentSecondary.opacity(0.45),
+        AppColors.accentTertiary.opacity(0.45),
+        AppColors.accentTertiary.opacity(0.40),
+        AppColors.accentPrimary.opacity(0.40),
     ]
 
     var body: some View {

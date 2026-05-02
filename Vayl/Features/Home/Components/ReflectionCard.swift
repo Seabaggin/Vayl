@@ -57,62 +57,51 @@ struct ReflectionCard: View {
     // MARK: - Pending State
 
     private func pendingCard(sessionLabel: String,
-                              sessionDate: Date) -> some View {
+                             sessionDate: Date) -> some View {
         cardShell {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
                 // Header
                 HStack {
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
                         Text(sessionLabel)
                             .font(AppFonts.overline)
                             .tracking(1.2)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextTertiary
-                                : AppColors.textTertiary)
+                            .foregroundStyle(AppColors.textTertiary)
                         Text(sessionDate.relativeString)
                             .font(AppFonts.caption)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextTertiary
-                                : AppColors.textTertiary)
+                            .foregroundStyle(AppColors.textTertiary)
                     }
                     Spacer()
                 }
 
                 Text("How did that land?")
                     .font(AppFonts.bodyMedium)
-                    .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextPrimary
-                        : AppColors.textPrimary)
+                    .foregroundStyle(AppColors.textPrimary)
 
                 if isWritingNote {
                     // Journal mode
                     TextEditor(text: $noteText)
                         .frame(minHeight: 80)
                         .font(AppFonts.bodyText)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextPrimary
-                            : AppColors.textPrimary)
+                        .foregroundStyle(AppColors.textPrimary)
                         .scrollContentBackground(.hidden)
-                        .padding(10)
+                        .padding(AppSpacing.sm)
                         .background {
-                            RoundedRectangle(cornerRadius: 10)
+                            RoundedRectangle(cornerRadius: AppRadius.sm)
                                 .fill(colorScheme == .light
                                     ? Color.black.opacity(0.03)
                                     : Color.white.opacity(0.04))
                         }
                         .overlay {
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(colorScheme == .light
-                                    ? AppColors.lightBorder
-                                    : AppColors.border,
-                                    lineWidth: 1)
+                            RoundedRectangle(cornerRadius: AppRadius.sm)
+                                .stroke(AppColors.borderSubtle, lineWidth: 1)
                         }
                 } else {
                     // Pill row — 5 inline defaults
                     LazyVGrid(
                         columns: Array(repeating:
-                            GridItem(.flexible(), spacing: 8), count: 3),
-                        spacing: 8
+                            GridItem(.flexible(), spacing: AppSpacing.sm), count: 3),
+                        spacing: AppSpacing.sm
                     ) {
                         ForEach(ReflectionPillGroup.inlineDefault,
                                 id: \.self) { pill in
@@ -127,8 +116,8 @@ struct ReflectionCard: View {
                             Text("More →")
                                 .font(AppFonts.caption)
                                 .foregroundStyle(colorScheme == .light
-                                    ? AppColors.magenta
-                                    : AppColors.cyanLight)
+                                    ? AppColors.accentTertiary
+                                    : AppColors.accentPrimary)
                         }
                         .buttonStyle(.plain)
                         Spacer()
@@ -143,9 +132,7 @@ struct ReflectionCard: View {
                          ? "← Use pills instead"
                          : "✎ Write a note instead")
                         .font(AppFonts.caption)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary)
+                        .foregroundStyle(AppColors.textTertiary)
                 }
                 .buttonStyle(.plain)
 
@@ -153,24 +140,20 @@ struct ReflectionCard: View {
                 HStack {
                     Text("Share with partner")
                         .font(AppFonts.caption)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextSecondary
-                            : AppColors.textSecondary)
+                        .foregroundStyle(AppColors.textSecondary)
                     Spacer()
                     Toggle("", isOn: $shareWithPartner)
                         .labelsHidden()
                         .tint(colorScheme == .light
-                            ? AppColors.magenta
-                            : AppColors.cyan)
+                            ? AppColors.accentTertiary
+                            : AppColors.accentPrimary)
                 }
 
                 // Done + Not now
                 HStack {
                     Button("Not now") {}
                         .font(AppFonts.caption)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary)
+                        .foregroundStyle(AppColors.textTertiary)
                         .buttonStyle(.plain)
 
                     Spacer()
@@ -184,22 +167,22 @@ struct ReflectionCard: View {
                         Text("Done")
                             .font(AppFonts.ctaLabel)
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightBodyWineDark
+                                ? AppColors.textSecondary
                                 : .white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 10)
+                            .padding(.horizontal, AppSpacing.lg)
+                            .padding(.vertical, AppSpacing.sm)
                             .background {
                                 Capsule()
                                     .fill(colorScheme == .light
                                         ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.magenta.opacity(0.18),
-                                                     AppColors.gold.opacity(0.14)],
+                                            colors: [AppColors.accentTertiary.opacity(0.18),
+                                                     AppColors.safetyAccent.opacity(0.14)],
                                             startPoint: .leading,
                                             endPoint: .trailing))
                                         : AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.cyan,
-                                                     AppColors.purple,
-                                                     AppColors.magenta],
+                                            colors: [AppColors.accentPrimary,
+                                                     AppColors.accentSecondary,
+                                                     AppColors.accentTertiary],
                                             startPoint: .leading,
                                             endPoint: .trailing)))
                             }
@@ -207,8 +190,8 @@ struct ReflectionCard: View {
                                 Capsule()
                                     .stroke(colorScheme == .light
                                         ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.magenta,
-                                                     AppColors.gold],
+                                            colors: [AppColors.accentTertiary,
+                                                     AppColors.safetyAccent],
                                             startPoint: .leading,
                                             endPoint: .trailing))
                                         : AnyShapeStyle(Color.clear),
@@ -217,11 +200,10 @@ struct ReflectionCard: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(selectedPills.isEmpty && noteText.isEmpty)
-                    .opacity(selectedPills.isEmpty
-                             && noteText.isEmpty ? 0.4 : 1)
+                    .opacity(selectedPills.isEmpty && noteText.isEmpty ? 0.4 : 1)
                 }
             }
-            .padding(18)
+            .padding(AppSpacing.md)
         }
         .sheet(isPresented: $showFullPillSheet) {
             fullPillSheet
@@ -231,59 +213,52 @@ struct ReflectionCard: View {
     // MARK: - Waiting State
 
     private func waitingCard(sessionLabel: String,
-                              yourPills: [String]) -> some View {
+                             yourPills: [String]) -> some View {
         cardShell {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 HStack {
                     Text(sessionLabel)
                         .font(AppFonts.overline)
                         .tracking(1.2)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary)
+                        .foregroundStyle(AppColors.textTertiary)
                     Spacer()
                     // Status dots
-                    HStack(spacing: 4) {
-                        Circle().fill(colorScheme == .light
-                            ? AppColors.magenta
-                            : AppColors.cyan)
+                    HStack(spacing: AppSpacing.xs) {
+                        Circle()
+                            .fill(colorScheme == .light
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
                             .frame(width: 7, height: 7)
-                        Circle().stroke(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary,
-                            lineWidth: 1)
+                        Circle()
+                            .stroke(AppColors.textTertiary, lineWidth: 1)
                             .frame(width: 7, height: 7)
                     }
                 }
 
                 Text("You reflected.")
                     .font(AppFonts.bodyMedium)
-                    .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextPrimary
-                        : AppColors.textPrimary)
+                    .foregroundStyle(AppColors.textPrimary)
 
                 // Your pills read-only
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
+                    HStack(spacing: AppSpacing.sm) {
                         ForEach(yourPills, id: \.self) { pill in
                             Text(pill)
                                 .font(AppFonts.caption)
-                                .foregroundStyle(colorScheme == .light
-                                    ? AppColors.lightTextPrimary
-                                    : AppColors.textPrimary)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
+                                .foregroundStyle(AppColors.textPrimary)
+                                .padding(.horizontal, AppSpacing.sm)
+                                .padding(.vertical, AppSpacing.xs)
                                 .background {
                                     Capsule()
                                         .fill(colorScheme == .light
                                             ? AnyShapeStyle(LinearGradient(
-                                                colors: [AppColors.magenta.opacity(0.12),
-                                                         AppColors.gold.opacity(0.10)],
+                                                colors: [AppColors.accentTertiary.opacity(0.12),
+                                                         AppColors.safetyAccent.opacity(0.10)],
                                                 startPoint: .leading,
                                                 endPoint: .trailing))
                                             : AnyShapeStyle(LinearGradient(
-                                                colors: [AppColors.cyan.opacity(0.2),
-                                                         AppColors.purple.opacity(0.15)],
+                                                colors: [AppColors.accentPrimary.opacity(0.2),
+                                                         AppColors.accentSecondary.opacity(0.15)],
                                                 startPoint: .leading,
                                                 endPoint: .trailing)))
                                 }
@@ -293,13 +268,11 @@ struct ReflectionCard: View {
 
                 Text("Waiting for your partner.")
                     .font(AppFonts.caption)
-                    .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextTertiary
-                        : AppColors.textTertiary)
+                    .foregroundStyle(AppColors.textTertiary)
 
                 cardFooter
             }
-            .padding(18)
+            .padding(AppSpacing.md)
         }
     }
 
@@ -312,45 +285,41 @@ struct ReflectionCard: View {
         swipePosition: Int
     ) -> some View {
         cardShell {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
                 HStack {
                     Text(sessionLabel)
                         .font(AppFonts.overline)
                         .tracking(1.2)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary)
+                        .foregroundStyle(AppColors.textTertiary)
                     Spacer()
-                    HStack(spacing: 4) {
-                        Circle().fill(colorScheme == .light
-                            ? AppColors.magenta
-                            : AppColors.cyan)
+                    HStack(spacing: AppSpacing.xs) {
+                        Circle()
+                            .fill(colorScheme == .light
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
                             .frame(width: 7, height: 7)
-                        Circle().fill(colorScheme == .light
-                            ? AppColors.gold
-                            : AppColors.purple)
+                        Circle()
+                            .fill(colorScheme == .light
+                                ? AppColors.safetyAccent
+                                : AppColors.accentSecondary)
                             .frame(width: 7, height: 7)
                     }
                 }
 
                 // Your section
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     Text(yourName.uppercased())
                         .font(AppFonts.overline)
                         .tracking(1.0)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary)
+                        .foregroundStyle(AppColors.textTertiary)
                     pillsReadOnly(yourPills,
                                   color: colorScheme == .light
-                                      ? AppColors.magenta
-                                      : AppColors.cyan)
+                                      ? AppColors.accentTertiary
+                                      : AppColors.accentPrimary)
                     if let note = yourNote {
                         Text("\"\(note)\"")
                             .font(AppFonts.bodyText)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextSecondary
-                                : AppColors.textSecondary)
+                            .foregroundStyle(AppColors.textSecondary)
                             .italic()
                             .lineLimit(2)
                     }
@@ -363,23 +332,19 @@ struct ReflectionCard: View {
                     .frame(height: 1)
 
                 // Partner section
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     Text(partnerName.uppercased())
                         .font(AppFonts.overline)
                         .tracking(1.0)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary)
+                        .foregroundStyle(AppColors.textTertiary)
                     pillsReadOnly(partnerPills,
                                   color: colorScheme == .light
-                                      ? AppColors.gold
-                                      : AppColors.purple)
+                                      ? AppColors.safetyAccent
+                                      : AppColors.accentSecondary)
                     if let note = partnerNote {
                         Text("\"\(note)\"")
                             .font(AppFonts.bodyText)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextSecondary
-                                : AppColors.textSecondary)
+                            .foregroundStyle(AppColors.textSecondary)
                             .italic()
                             .lineLimit(2)
                     }
@@ -387,7 +352,7 @@ struct ReflectionCard: View {
 
                 cardFooter
             }
-            .padding(18)
+            .padding(AppSpacing.md)
         }
     }
 
@@ -400,52 +365,45 @@ struct ReflectionCard: View {
         swipePosition: Int
     ) -> some View {
         cardShell {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
                 // Dot header
-                HStack(spacing: 5) {
+                HStack(spacing: AppSpacing.xs) {
                     ForEach(0..<3, id: \.self) { i in
                         Circle()
                             .fill(i < yourDots.count && yourDots[i]
                                   ? (colorScheme == .light
-                                      ? AppColors.magenta
-                                      : AppColors.cyan)
+                                      ? AppColors.accentTertiary
+                                      : AppColors.accentPrimary)
                                   : Color.clear)
                             .overlay {
                                 if !(i < yourDots.count && yourDots[i]) {
                                     Circle()
-                                        .stroke(colorScheme == .light
-                                            ? AppColors.lightTextTertiary
-                                            : AppColors.textTertiary,
-                                            lineWidth: 1)
+                                        .stroke(AppColors.textTertiary, lineWidth: 1)
                                 }
                             }
                             .frame(width: 7, height: 7)
                     }
                     Text("Last 3 sessions")
                         .font(AppFonts.caption)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary)
-                        .padding(.leading, 4)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .padding(.leading, AppSpacing.xs)
                 }
 
                 // Arc copy
                 Text(arc)
                     .font(AppFonts.bodyMedium)
-                    .foregroundStyle(colorScheme == .light
-                        ? AppColors.lightTextPrimary
-                        : AppColors.textPrimary)
+                    .foregroundStyle(AppColors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 // Timeline rows
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
                     timelineRow(name: yourName, dots: yourDots)
                     timelineRow(name: partnerName, dots: partnerDots)
                 }
 
                 cardFooter
             }
-            .padding(18)
+            .padding(AppSpacing.md)
         }
     }
 
@@ -454,7 +412,7 @@ struct ReflectionCard: View {
     private var fullPillSheet: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: AppSpacing.lg) {
                     pillSection(
                         title: "HOW IT FELT",
                         pills: ReflectionPillGroup.howItFelt
@@ -469,34 +427,27 @@ struct ReflectionCard: View {
                     )
 
                     // Optional note
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         Text("ADD A NOTE")
                             .font(AppFonts.overline)
                             .tracking(1.2)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextTertiary
-                                : AppColors.textTertiary)
+                            .foregroundStyle(AppColors.textTertiary)
 
                         TextEditor(text: $noteText)
                             .frame(minHeight: 80)
                             .font(AppFonts.bodyText)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextPrimary
-                                : AppColors.textPrimary)
+                            .foregroundStyle(AppColors.textPrimary)
                             .scrollContentBackground(.hidden)
-                            .padding(10)
+                            .padding(AppSpacing.sm)
                             .background {
-                                RoundedRectangle(cornerRadius: 10)
+                                RoundedRectangle(cornerRadius: AppRadius.sm)
                                     .fill(colorScheme == .light
                                         ? Color.black.opacity(0.03)
                                         : Color.white.opacity(0.04))
                             }
                             .overlay {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(colorScheme == .light
-                                        ? AppColors.lightBorder
-                                        : AppColors.border,
-                                        lineWidth: 1)
+                                RoundedRectangle(cornerRadius: AppRadius.sm)
+                                    .stroke(AppColors.borderSubtle, lineWidth: 1)
                             }
                     }
 
@@ -504,15 +455,13 @@ struct ReflectionCard: View {
                     HStack {
                         Text("Share with partner")
                             .font(AppFonts.bodyText)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightTextSecondary
-                                : AppColors.textSecondary)
+                            .foregroundStyle(AppColors.textSecondary)
                         Spacer()
                         Toggle("", isOn: $shareWithPartner)
                             .labelsHidden()
                             .tint(colorScheme == .light
-                                ? AppColors.magenta
-                                : AppColors.cyan)
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
                     }
 
                     Button {
@@ -523,31 +472,31 @@ struct ReflectionCard: View {
                         Text("Done")
                             .font(AppFonts.ctaLabel)
                             .foregroundStyle(colorScheme == .light
-                                ? AppColors.lightBodyWineDark
+                                ? AppColors.textSecondary
                                 : .white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
+                            .padding(.vertical, AppSpacing.md)
                             .background {
-                                RoundedRectangle(cornerRadius: 14)
+                                RoundedRectangle(cornerRadius: AppRadius.md)
                                     .fill(colorScheme == .light
                                         ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.magenta.opacity(0.18),
-                                                     AppColors.gold.opacity(0.14)],
+                                            colors: [AppColors.accentTertiary.opacity(0.18),
+                                                     AppColors.safetyAccent.opacity(0.14)],
                                             startPoint: .leading,
                                             endPoint: .trailing))
                                         : AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.cyan,
-                                                     AppColors.purple,
-                                                     AppColors.magenta],
+                                            colors: [AppColors.accentPrimary,
+                                                     AppColors.accentSecondary,
+                                                     AppColors.accentTertiary],
                                             startPoint: .leading,
                                             endPoint: .trailing)))
                             }
                             .overlay {
-                                RoundedRectangle(cornerRadius: 14)
+                                RoundedRectangle(cornerRadius: AppRadius.md)
                                     .stroke(colorScheme == .light
                                         ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.magenta,
-                                                     AppColors.gold],
+                                            colors: [AppColors.accentTertiary,
+                                                     AppColors.safetyAccent],
                                             startPoint: .leading,
                                             endPoint: .trailing))
                                         : AnyShapeStyle(Color.clear),
@@ -555,32 +504,30 @@ struct ReflectionCard: View {
                             }
                     }
                     .buttonStyle(.plain)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, AppSpacing.md)
                 }
-                .padding(20)
+                .padding(AppSpacing.md)
             }
             .background((colorScheme == .light
-                ? AppColors.lightPageBg
-                : AppColors.pageBg).ignoresSafeArea())
+                ? AppColors.pageBackground
+                : AppColors.pageBackground).ignoresSafeArea())
             .navigationTitle("How did that land?")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
 
     private func pillSection(title: String,
-                              pills: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+                             pills: [String]) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text(title)
                 .font(AppFonts.overline)
                 .tracking(1.2)
-                .foregroundStyle(colorScheme == .light
-                    ? AppColors.lightTextTertiary
-                    : AppColors.textTertiary)
+                .foregroundStyle(AppColors.textTertiary)
 
             LazyVGrid(
                 columns: Array(repeating:
-                    GridItem(.flexible(), spacing: 8), count: 2),
-                spacing: 8
+                    GridItem(.flexible(), spacing: AppSpacing.sm), count: 2),
+                spacing: AppSpacing.sm
             ) {
                 ForEach(pills, id: \.self) { pill in
                     pillButton(pill)
@@ -605,75 +552,68 @@ struct ReflectionCard: View {
                 .font(AppFonts.caption)
                 .foregroundStyle(isSelected
                     ? (colorScheme == .light
-                        ? AppColors.lightBodyWineDark
+                        ? AppColors.textSecondary
                         : .white)
-                    : (colorScheme == .light
-                        ? AppColors.lightTextSecondary
-                        : AppColors.textSecondary))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                    : AppColors.textSecondary)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.sm)
                 .frame(maxWidth: .infinity)
                 .background {
                     if isSelected {
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: AppRadius.sm)
                             .fill(colorScheme == .light
                                 ? AnyShapeStyle(LinearGradient(
-                                    colors: [AppColors.magenta.opacity(0.15),
-                                             AppColors.gold.opacity(0.12)],
+                                    colors: [AppColors.accentTertiary.opacity(0.15),
+                                             AppColors.safetyAccent.opacity(0.12)],
                                     startPoint: .leading,
                                     endPoint: .trailing))
                                 : AnyShapeStyle(LinearGradient(
-                                    colors: [AppColors.cyan.opacity(0.4),
-                                             AppColors.purple.opacity(0.3)],
+                                    colors: [AppColors.accentPrimary.opacity(0.4),
+                                             AppColors.accentSecondary.opacity(0.3)],
                                     startPoint: .leading,
                                     endPoint: .trailing)))
                     } else {
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: AppRadius.sm)
                             .fill(Color.clear)
                     }
                 }
                 .overlay {
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: AppRadius.sm)
                         .stroke(
                             isSelected
                             ? (colorScheme == .light
                                 ? AnyShapeStyle(LinearGradient(
-                                    colors: [AppColors.magenta, AppColors.gold],
+                                    colors: [AppColors.accentTertiary, AppColors.safetyAccent],
                                     startPoint: .leading, endPoint: .trailing))
                                 : AnyShapeStyle(LinearGradient(
-                                    colors: [AppColors.cyan, AppColors.purple],
+                                    colors: [AppColors.accentPrimary, AppColors.accentSecondary],
                                     startPoint: .leading, endPoint: .trailing)))
-                            : AnyShapeStyle(colorScheme == .light
-                                ? AppColors.lightBorder
-                                : AppColors.border),
+                            : AnyShapeStyle(AppColors.borderSubtle),
                             lineWidth: 1
                         )
                 }
         }
         .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.15), value: isSelected)
+        .animation(AppAnimation.fast, value: isSelected)
     }
 
     private func pillsReadOnly(_ pills: [String],
-                                color: Color) -> some View {
+                               color: Color) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
+            HStack(spacing: AppSpacing.sm) {
                 ForEach(pills, id: \.self) { pill in
                     Text(pill)
                         .font(AppFonts.caption)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextPrimary
-                            : AppColors.textPrimary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
+                        .foregroundStyle(AppColors.textPrimary)
+                        .padding(.horizontal, AppSpacing.sm)
+                        .padding(.vertical, AppSpacing.xs)
                         .background {
                             Capsule()
                                 .fill(color.opacity(0.15))
                         }
                         .overlay {
                             Capsule()
-                                .stroke(color.opacity(0.3),
-                                        lineWidth: 1)
+                                .stroke(color.opacity(0.3), lineWidth: 1)
                         }
                 }
             }
@@ -681,41 +621,36 @@ struct ReflectionCard: View {
     }
 
     private func timelineRow(name: String,
-                              dots: [Bool]) -> some View {
-        HStack(spacing: 6) {
+                             dots: [Bool]) -> some View {
+        HStack(spacing: AppSpacing.sm) {
             Text(name)
                 .font(AppFonts.caption)
-                .foregroundStyle(colorScheme == .light
-                    ? AppColors.lightTextTertiary
-                    : AppColors.textTertiary)
+                .foregroundStyle(AppColors.textTertiary)
                 .frame(width: 60, alignment: .leading)
 
+            // Fixed 9pt — intentional decorative connector glyph.
+            // Dynamic Type scaling would make "──" oversized relative
+            // to the 7pt dots it connects.
             Text("──")
-                .font(.system(size: 9))
-                .foregroundStyle(colorScheme == .light
-                    ? AppColors.lightTextTertiary
-                    : AppColors.textTertiary)
+                .font(Font.custom("Switzer-Regular", size: 9, relativeTo: .caption2))
+                .foregroundStyle(AppColors.textTertiary)
 
             ForEach(0..<dots.count, id: \.self) { i in
                 if dots[i] {
-                    Circle().fill(colorScheme == .light
-                        ? AppColors.magenta
-                        : AppColors.cyan)
+                    Circle()
+                        .fill(colorScheme == .light
+                            ? AppColors.accentTertiary
+                            : AppColors.accentPrimary)
                         .frame(width: 7, height: 7)
                 } else {
                     Circle()
-                        .stroke(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary,
-                            lineWidth: 1)
+                        .stroke(AppColors.textTertiary, lineWidth: 1)
                         .frame(width: 7, height: 7)
                 }
                 if i < dots.count - 1 {
                     Text("──")
-                        .font(.system(size: 9))
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.lightTextTertiary
-                            : AppColors.textTertiary)
+                        .font(Font.custom("Switzer-Regular", size: 9, relativeTo: .caption2))
+                        .foregroundStyle(AppColors.textTertiary)
                 }
             }
         }
@@ -730,8 +665,8 @@ struct ReflectionCard: View {
                 Text("More ↗")
                     .font(AppFonts.caption)
                     .foregroundStyle(colorScheme == .light
-                        ? AppColors.magenta
-                        : AppColors.cyanLight)
+                        ? AppColors.accentTertiary
+                        : AppColors.accentPrimary)
             }
             .buttonStyle(.plain)
         }
@@ -743,17 +678,14 @@ struct ReflectionCard: View {
     ) -> some View {
         content()
             .background {
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: AppRadius.lg)
                     .fill(colorScheme == .light
-                        ? AppColors.lightFrostCard
-                        : AppColors.cardBg)
+                        ? AppColors.glassFrostCard
+                        : AppColors.cardBackground)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(colorScheme == .light
-                        ? AppColors.lightBorder
-                        : AppColors.border,
-                        lineWidth: 1)
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .stroke(AppColors.borderSubtle, lineWidth: 1)
             }
     }
 }

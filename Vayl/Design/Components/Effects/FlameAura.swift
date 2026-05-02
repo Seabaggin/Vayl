@@ -62,7 +62,7 @@ struct FlameAura: View {
         }
         .opacity(appeared ? masterOpacity : 0)
         .onAppear {
-            withAnimation(.easeIn(duration: 0.45)) { appeared = true }
+            withAnimation(AppAnimation.enter) { appeared = true }
         }
         .onDisappear { appeared = false }
         .onReceive(ticker) { _ in t += 0.018 }
