@@ -31,7 +31,6 @@ struct NamePhase: View {
     @State private var cardOffset:   CGSize        = .zero
     @State private var cardAngle:    Double        = 0
     @State private var cardAlpha:    Double        = 0
-    @State private var rimBurst:     Double        = 0
 
     // Landing seed — generated once, stable across replays in session
     @State private var landingAngle:  Double = 0
@@ -43,8 +42,7 @@ struct NamePhase: View {
     @State private var faceStartDate: Date? = nil
 
     // ── Expand state ───────────────────────────────────────────────────────────
-    @State private var cardScale:  Double = 1.0
-    @State private var tableFade:  Double = 1.0
+    @State private var cardScale:       Double = 1.0
     @State private var cardScreenAlpha: Double = 1.0
 
     // ── Name input state ───────────────────────────────────────────────────────
@@ -85,10 +83,7 @@ struct NamePhase: View {
 
     var body: some View {
         ZStack {
-            // Table surface — fades out during expand
-            TableSurfaceView(fade: tableFade, rimBurst: rimBurst)
-
-            // Card layer
+            // Card layer (no TableSurfaceView here — it lives in OnboardingCanvasView Layer 3)
             TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { tl in
                 let t: Double = {
                     guard showFace, let start = faceStartDate else { return 0 }
@@ -245,10 +240,10 @@ struct NamePhase: View {
         guard !Task.isCancelled else { return }
 
         // ── Landing ────────────────────────────────────────────────────────────────
-        dealPhase = .landing
-        rimBurst  = 1.0
+        dealPhase        = .landing
+        director.rimBurst = 1.0
         withAnimation(.timingCurve(0.2, 0.8, 0.4, 1.0, duration: 0.6)) {
-            rimBurst = 0.0
+            director.rimBurst = 0.0
         }
 
         try? await Task.sleep(for: .milliseconds(300))
@@ -311,7 +306,7 @@ struct NamePhase: View {
         let target = max(scaleX, scaleY) * 1.04  // 4% overshoot ensures full bleed
 
         withAnimation(.easeIn(duration: 0.55)) {
-            tableFade = 0.0
+            director.tableFade = 0.0
         }
         withAnimation(.timingCurve(0.4, 0.0, 0.2, 1.0, duration: 1.05)) {
             cardScale = target

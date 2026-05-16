@@ -42,6 +42,7 @@ final class VaylDirector {
     // MARK: - Table State
 
     var tableFade:          Double = 0.0    // 0=gone 1=full
+    var rimBurst:           Double = 0      // 0=off 1=flash peak
     var dealPointIntensity: Double = 0.0    // 0=off 1=full warm
 
     // MARK: - Projected Text
@@ -160,6 +161,8 @@ final class VaylDirector {
 
     private func runNameEntry() {
         // TODO: deal point warms, card slides in, flips, corner deck appears
+        tableFade         = 1.0   // table must be visible for the deal animation
+        rimBurst          = 0     // reset any lingering burst from previous phase
         cornerDeckVisible = true
     }
 

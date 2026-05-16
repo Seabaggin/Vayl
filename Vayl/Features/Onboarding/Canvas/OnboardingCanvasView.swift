@@ -43,7 +43,8 @@ struct OnboardingCanvasView: View {
 
                 // ── Layer 3: Table surface ────────────────────────
                 TableSurfaceView(
-                    fade: director.tableFade
+                    fade: director.tableFade,
+                    rimBurst: director.rimBurst
                 )
                 .ignoresSafeArea()
 
