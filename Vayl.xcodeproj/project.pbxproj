@@ -60,9 +60,30 @@
 		3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Open Lightly — LLM Audit Prompts.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3DE73D382FB100DE00BF22F1 /* Exceptions for "Vayl" folder in "Vayl" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Features/Onboarding/Views/OnboardingBrandView.swift,
+				Features/Onboarding/Views/OnboardingCardRevealView.swift,
+				Features/Onboarding/Views/OnboardingContextView.swift,
+				Features/Onboarding/Views/OnboardingCuriosityPickerView.swift,
+				Features/Onboarding/Views/OnboardingFlowView.swift,
+				Features/Onboarding/Views/OnboardingGroundRulesView.swift,
+				Features/Onboarding/Views/OnboardingModeSelectView.swift,
+				Features/Onboarding/Views/OnboardingNameView.swift,
+				Features/Onboarding/Views/OnboardingStatView.swift,
+			);
+			target = 3D767EB12F5D520D00F2D70F /* Vayl */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3D767EB42F5D520D00F2D70F /* Vayl */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3DE73D382FB100DE00BF22F1 /* Exceptions for "Vayl" folder in "Vayl" target */,
+			);
 			path = Vayl;
 			sourceTree = "<group>";
 		};
