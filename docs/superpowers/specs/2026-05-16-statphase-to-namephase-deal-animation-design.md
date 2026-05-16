@@ -181,6 +181,84 @@ No CTA button. The swipe is the only exit. Copy adjacent to the name field shoul
 
 ---
 
+## Section 5 — Card Face: "The Deep" (Pensieve)
+
+The card front face that is revealed on flip. The target feel is the Pensieve from Harry Potter — silver-violet liquid with depth and slow swirl. You are looking *into* it, not *at* it. The light comes from within the liquid, not above it.
+
+### Visual Layers (bottom to top)
+
+**1. Base — deep violet-indigo void**
+Not black, not space. Liquid. A dark pool.
+```
+Radial gradient, center → edge:
+  #080418 (center)
+  #0d0628 (mid)
+  #04020e (edge)
+```
+
+**2. Swirl — slow surface undulation**
+Two overlapping sine-wave fields, slightly offset in phase and speed, producing a gentle drift that never repeats. Not a vortex — just alive. One full drift cycle every ~10 seconds. Rendered as a Canvas layer using parametric noise (layered `sin`/`cos` with domain offset).
+
+Color: deep indigo-purple (`#1a0a3e` → `#2a1060`) at 8–14% opacity per layer. The swirl is felt more than seen.
+
+**3. Suspended particles**
+Replace stars entirely. 40–55 soft-edged particles drifting slowly in the current — not fixed, not falling. Each particle:
+- Slow independent drift velocity (random angle, very low speed)
+- Soft radial gradient fill — no hard edge, reads as submerged
+- Color: silver-lavender (`#c8b8ff`) at 10–30% opacity
+- Size: 1.5–3.5pt radius with a 3× soft halo
+
+**4. Surface shimmer**
+Iridescent flecks that appear and fade across the surface — like light catching moving liquid. Not stars, not sparks. 2–4 visible at any time. Each:
+- Random position within card bounds
+- Fade in over ~0.4s, hold briefly, fade out over ~0.8s
+- Color: `rgba(210, 200, 255, 0.20–0.30)` — silver-lavender
+- Tiny: 1–2pt radius, large soft halo (8–12pt)
+
+**5. Depth glow — the light below**
+A single breathing source deep in the liquid. Not at the surface — below it. Radiates upward through the fluid. Three-layer radial gradient, breathes at 3.6s cycle:
+
+```
+Outer (r=55pt):  #3a0f8a at 20–28% opacity
+Mid   (r=22pt):  #6C3AE0 at 45–55% opacity  
+Core  (r=6pt):   #c0a8ff at 85–90% opacity
+Pinpoint:        rgba(230, 220, 255, 0.70)
+```
+
+The glow breathes with a power-curve envelope — lingers at peak, dips quickly. Feels organic, not mechanical.
+
+**6. Spectrum shell**
+Unchanged from `VaylCardBack` — outer hairline, inset frame, top/bottom hairlines, corner ✦ marks. The shell is always present on both faces.
+
+### Color Palette
+
+| Role | Value |
+|------|-------|
+| Base center | `#080418` |
+| Base mid | `#0d0628` |
+| Base edge | `#04020e` |
+| Swirl | `#1a0a3e` → `#2a1060` |
+| Particle / shimmer | `#c8b8ff` |
+| Glow outer | `#3a0f8a` |
+| Glow mid | `#6C3AE0` |
+| Glow core | `#c0a8ff` |
+
+### What is NOT on this card face
+
+- No tide rings
+- No expanding geometry
+- No color cycling
+- No inward particles
+- Nothing that announces itself
+
+The card should feel like you leaned over a pool and might fall in. The light is below you. Something is down there.
+
+### Screen expansion behavior
+
+When the card expands to fill the screen (`.expanding` phase), the Pensieve atmosphere scales with it — the swirl, particles, shimmer, and depth glow all continue at full-screen size. The `OnboardingAtmosphere(config: .name)` beneath is the same deep void, so the transition is seamless. The screen hairlines (top + bottom spectrum gradient, 1.2pt) appear as the card reaches full screen — the card border becomes the screen border.
+
+---
+
 ## Open Items
 
 - Placeholder copy: exact strings TBD — will be authored separately
