@@ -1,0 +1,192 @@
+// App/Theme/AppFonts.swift
+
+import SwiftUI
+
+// ─────────────────────────────────────────────────────────────
+// Typography scale.
+//
+// Rules:
+//   • Every token uses Font.custom(_:size:relativeTo:) — no exceptions
+//   • relativeTo: maps to the TextStyle closest to the token's
+//     visual role — this is what Dynamic Type scales against
+//   • Font.system(size:) is banned in this file
+//   • assertionFailure fires on unsupported weights in debug
+//     before the fallback path — surfaces programmer errors
+//     without crashing in production
+//   • Every token has a one-sentence use context comment
+// ─────────────────────────────────────────────────────────────
+
+struct AppFonts {
+
+    // ─────────────────────────────────────────────
+    // MARK: Typeface constructors
+    //
+    // Not for direct use in views.
+    // Use the semantic tokens below.
+    // ─────────────────────────────────────────────
+
+    static func display(
+        _ size: CGFloat,
+        weight: Font.Weight = .bold,
+        relativeTo textStyle: Font.TextStyle
+    ) -> Font {
+        switch weight {
+        case .bold:
+            return Font.custom("ClashDisplay-Bold",     size: size, relativeTo: textStyle)
+        case .semibold:
+            return Font.custom("ClashDisplay-Semibold", size: size, relativeTo: textStyle)
+        case .medium:
+            return Font.custom("ClashDisplay-Medium",   size: size, relativeTo: textStyle)
+        default:
+            assertionFailure(
+                "AppFonts.display: unsupported weight \(weight). " +
+                "Supported: .bold, .semibold, .medium"
+            )
+            return Font.custom("ClashDisplay-Bold", size: size, relativeTo: textStyle)
+        }
+    }
+
+    static func body(
+        _ size: CGFloat,
+        weight: Font.Weight = .regular,
+        relativeTo textStyle: Font.TextStyle
+    ) -> Font {
+        switch weight {
+        case .regular:
+            return Font.custom("Switzer-Regular",  size: size, relativeTo: textStyle)
+        case .medium:
+            return Font.custom("Switzer-Medium",   size: size, relativeTo: textStyle)
+        case .semibold:
+            return Font.custom("Switzer-Semibold", size: size, relativeTo: textStyle)
+        case .bold:
+            return Font.custom("Switzer-Bold",     size: size, relativeTo: textStyle)
+        default:
+            assertionFailure(
+                "AppFonts.body: unsupported weight \(weight). " +
+                "Supported: .regular, .medium, .semibold, .bold"
+            )
+            return Font.custom("Switzer-Regular", size: size, relativeTo: textStyle)
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // MARK: Display scale — ClashDisplay
+    // ─────────────────────────────────────────────
+
+    /// Full-screen hero text. Splash screens and empty state illustrations only.
+    static var heroTitle: Font {
+        display(42, weight: .bold, relativeTo: .largeTitle)
+    }
+
+    /// Oversized display numeral or word. One element per screen maximum.
+    static var displayHero: Font {
+        display(64, weight: .bold, relativeTo: .largeTitle)
+    }
+
+    /// Numeric data display — scores, counts, codes. Never prose.
+    static var scoreDisplay: Font {
+        display(32, weight: .bold, relativeTo: .title)
+    }
+
+    /// One per screen. Top of content area, primary screen identifier.
+    static var screenTitle: Font {
+        display(24, weight: .semibold, relativeTo: .title)
+    }
+
+    /// Primary text inside a card surface. Never the screen title.
+    static var cardTitle: Font {
+        display(22, weight: .semibold, relativeTo: .title2)
+    }
+
+    /// Section labels inside a screen. Never the screen title.
+    static var sectionHeading: Font {
+        display(20, weight: .medium, relativeTo: .title3)
+    }
+
+    /// Category tags and grouped list headers.
+    static var sectionLabelSmall: Font {
+        display(13, weight: .medium, relativeTo: .subheadline)
+    }
+
+    /// The question or statement on a prompt card.
+    static var prompt: Font {
+        display(17, weight: .medium, relativeTo: .body)
+    }
+
+    /// Keyword emphasis within a prompt. Gradient foreground applied at usage site.
+    static var promptHighlight: Font {
+        display(17, weight: .semibold, relativeTo: .body)
+    }
+
+    // ─────────────────────────────────────────────
+    // MARK: Body scale — Switzer
+    // ─────────────────────────────────────────────
+
+    /// Primary CTA button label. One per screen.
+    static var ctaLabel: Font {
+        body(17, weight: .semibold, relativeTo: .body)
+    }
+
+    /// Paragraph content. Never UI labels or navigation elements.
+    static var bodyText: Font {
+        body(16, weight: .regular, relativeTo: .body)
+    }
+
+    /// Emphasized body. Form labels, card subtitles, inline emphasis.
+    static var bodyMedium: Font {
+        body(15, weight: .medium, relativeTo: .body)
+    }
+
+    /// Secondary button and action label. Not the primary CTA.
+    static var buttonLabel: Font {
+        body(14, weight: .semibold, relativeTo: .callout)
+    }
+
+    /// Supporting information. Never primary content.
+    static var caption: Font {
+        body(13, weight: .regular, relativeTo: .caption)
+    }
+
+    /// Section dividers only. Always uppercase with tracking at usage site.
+    static var overline: Font {
+        body(11, weight: .semibold, relativeTo: .caption2)
+    }
+
+    /// Compact pill and chip labels only.
+    static var buttonLabelSmall: Font {
+        body(11, weight: .medium, relativeTo: .caption2)
+    }
+
+    /// Navigation labels at the bottom of the screen.
+    static var tabLabel: Font {
+        body(10, weight: .medium, relativeTo: .caption2)
+    }
+
+    /// Badges, counts, status indicators.
+    static var label: Font {
+        body(10, weight: .semibold, relativeTo: .caption2)
+    }
+
+    /// Notification and count badges only.
+    static var badge: Font {
+        body(10, weight: .medium, relativeTo: .caption2)
+    }
+
+    /// Timestamps, counts, secondary metadata. Never primary content.
+    static var meta: Font {
+        body(10, weight: .regular, relativeTo: .caption2)
+    }
+
+    // ─────────────────────────────────────────────
+    // MARK: Debug
+    // ─────────────────────────────────────────────
+
+    static func debugFontList() {
+        for family in UIFont.familyNames.sorted() {
+            print("\n\(family)")
+            for name in UIFont.fontNames(forFamilyName: family) {
+                print("  \(name)")
+            }
+        }
+    }
+}
