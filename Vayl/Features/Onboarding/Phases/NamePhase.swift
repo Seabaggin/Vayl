@@ -197,10 +197,15 @@ struct NamePhase: View {
             Spacer().frame(height: safeBottom + 42)
         }
         .padding(.horizontal, 32)
+        .offset(y: dragY)
         .gesture(
             DragGesture()
-                .onChanged { v in dragY = v.translation.height }
-                .onEnded   { v in handleSwipeDown(v.translation.height) }
+                .onChanged { v in
+                    if v.translation.height > 0 {
+                        dragY = v.translation.height
+                    }
+                }
+                .onEnded { v in handleSwipeDown(v.translation.height) }
         )
     }
 
@@ -332,6 +337,66 @@ struct NamePhase: View {
             uiAlpha = 1.0
         }
     }
-    @MainActor private func submitName()                   { /* Task 5 */ }
-    @MainActor private func handleSwipeDown(_ y: CGFloat)  { /* Task 5 */ }
+    // MARK: - Submission
+
+    @MainActor
+    private func handleSwipeDown(_ translationY: CGFloat) {
+        guard dealPhase == .nameInput, translationY > 80 else {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                dragY = 0
+            }
+            return
+        }
+
+        guard !name.trimmingCharacters(in: .whitespaces).isEmpty else {
+            let impact = UIImpactFeedbackGenerator(style: .medium)
+            impact.impactOccurred()
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                dragY = 0
+            }
+            return
+        }
+
+        submitName()
+    }
+
+    @MainActor
+    private func submitName() {
+        isCharging = true
+
+        let impact = UIImpactFeedbackGenerator(style: .heavy)
+        impact.impactOccurred()
+
+        director.onboardingData.displayName = name.trimmingCharacters(in: .whitespaces)
+
+        withAnimation(.easeIn(duration: 0.20)) {
+            uiAlpha = 0
+        }
+        withAnimation(.spring(response: 0.48, dampingFraction: 0.88)) {
+            dragY = screenSize.height * 1.2
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(480))
+            director.advance(to: .gender)
+        }
+    }
+}
+
+#Preview("NamePhase — name input state") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        OBDeepCardFace(deepT: 3.0)
+            .ignoresSafeArea()
+            .drawingGroup()
+
+        VStack(alignment: .leading, spacing: 0) {
+            Spacer().frame(height: 58)
+            Text("Let's get").font(AppFonts.screenTitle).foregroundStyle(AppColors.textPrimary)
+            Text("acquainted.").font(AppFonts.screenTitle).foregroundStyle(AppColors.spectrumBorder)
+            Spacer()
+        }
+        .padding(.horizontal, 32)
+    }
+    .preferredColorScheme(.dark)
 }
