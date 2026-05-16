@@ -26,6 +26,7 @@ struct NamePhase: View {
     let screenSize: CGSize
 
     // ── Deal state ─────────────────────────────────────────────────────────────
+    @State private var dealTask:     Task<Void, Never>? = nil
     @State private var dealPhase:    CardDealPhase = .idle
     @State private var cardOffset:   CGSize        = .zero
     @State private var cardAngle:    Double        = 0
@@ -39,7 +40,6 @@ struct NamePhase: View {
     // ── Flip state ─────────────────────────────────────────────────────────────
     @State private var flipScaleX: Double = 1.0
     @State private var showFace:   Bool   = false
-    @State private var deepT:      Double = 0
     @State private var faceStartDate: Date? = nil
 
     // ── Expand state ───────────────────────────────────────────────────────────
@@ -90,8 +90,11 @@ struct NamePhase: View {
 
             // Card layer
             TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { tl in
-                let _ = updateDeepT(date: tl.date)
-                cardLayer
+                let t: Double = {
+                    guard showFace, let start = faceStartDate else { return 0 }
+                    return tl.date.timeIntervalSince(start)
+                }()
+                cardLayerWithTime(t)
             }
 
             // Name input UI — appears after expand
@@ -100,12 +103,16 @@ struct NamePhase: View {
                     .opacity(uiAlpha)
             }
         }
-        .onAppear { seedLanding(); startDeal() }
+        .onAppear {
+            seedLanding()
+            dealTask = Task { @MainActor in startDeal() }
+        }
+        .onDisappear { dealTask?.cancel() }
     }
 
     // MARK: - Card Layer
 
-    private var cardLayer: some View {
+    private func cardLayerWithTime(_ deepT: Double) -> some View {
         Group {
             if !showFace {
                 VaylCardBack()
@@ -197,17 +204,9 @@ struct NamePhase: View {
         )
     }
 
-    // MARK: - deepT update
-
-    @discardableResult
-    private func updateDeepT(date: Date) -> Double {
-        guard showFace, let start = faceStartDate else { return 0 }
-        deepT = date.timeIntervalSince(start)
-        return deepT
-    }
-
     // MARK: - Deal sequence
 
+    @MainActor
     private func seedLanding() {
         landingAngle  = Double.random(in: -7...7)
         landingOffset = CGSize(
@@ -216,6 +215,7 @@ struct NamePhase: View {
         )
     }
 
+    @MainActor
     private func startDeal() {
         // Place card at origin (invisible)
         cardOffset = dealOrigin
@@ -238,12 +238,13 @@ struct NamePhase: View {
         }
 
         // Offset arrives first (~920ms), then trigger landing
-        Task {
+        Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(940))
             triggerLanding()
         }
     }
 
+    @MainActor
     private func triggerLanding() {
         dealPhase = .landing
 
@@ -254,12 +255,13 @@ struct NamePhase: View {
         }
 
         // Short beat then organize
-        Task {
+        Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(300))
             triggerOrganize()
         }
     }
 
+    @MainActor
     private func triggerOrganize() {
         dealPhase = .organizing
 
@@ -269,7 +271,7 @@ struct NamePhase: View {
             cardAngle  = 0
         }
 
-        Task {
+        Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(780))
             dealPhase = .settled
             // 1.2s settled beat, then flip
@@ -280,9 +282,9 @@ struct NamePhase: View {
 
     // MARK: - Forward stubs (Task 4 + 5 will replace these)
 
-    private func triggerFlip()                  { /* Task 4 */ }
-    private func triggerExpand()                { /* Task 4 */ }
-    private func triggerNameInput()             { /* Task 4 */ }
-    private func submitName()                   { /* Task 5 */ }
-    private func handleSwipeDown(_ y: CGFloat)  { /* Task 5 */ }
+    @MainActor private func triggerFlip()                  { /* Task 4 */ }
+    @MainActor private func triggerExpand()                { /* Task 4 */ }
+    @MainActor private func triggerNameInput()             { /* Task 4 */ }
+    @MainActor private func submitName()                   { /* Task 5 */ }
+    @MainActor private func handleSwipeDown(_ y: CGFloat)  { /* Task 5 */ }
 }
