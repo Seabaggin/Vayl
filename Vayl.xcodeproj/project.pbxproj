@@ -22,6 +22,7 @@
 		3D83007B2F84981B001F650B /* gather_checkin_context.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3D83007A2F849817001F650B /* gather_checkin_context.sh */; };
 		3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */; };
 		3DE73B002FA687E000BF22F1 /* migrate_animations.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */; };
+		3DE73D1C2FB0555000BF22F1 /* gather_theme.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3DE73D1B2FB0554700BF22F1 /* gather_theme.sh */; };
 		3DE993A32F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */; };
 /* End PBXBuildFile section */
 
@@ -55,12 +56,34 @@
 		3D83007A2F849817001F650B /* gather_checkin_context.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_checkin_context.sh; sourceTree = "<group>"; };
 		3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DESIGN_DOC.md; sourceTree = "<group>"; };
 		3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = migrate_animations.sh; sourceTree = "<group>"; };
+		3DE73D1B2FB0554700BF22F1 /* gather_theme.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_theme.sh; sourceTree = "<group>"; };
 		3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Open Lightly — LLM Audit Prompts.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3DE73D382FB100DE00BF22F1 /* Exceptions for "Vayl" folder in "Vayl" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppIconRetreival.swift,
+				Features/Onboarding/Views/OnboardingCardRevealView.swift,
+				Features/Onboarding/Views/OnboardingContextView.swift,
+				Features/Onboarding/Views/OnboardingCuriosityPickerView.swift,
+				Features/Onboarding/Views/OnboardingFlowView.swift,
+				Features/Onboarding/Views/OnboardingGroundRulesView.swift,
+				Features/Onboarding/Views/OnboardingModeSelectView.swift,
+				Features/Onboarding/Views/OnboardingNameView.swift,
+				Features/Onboarding/Views/OnboardingStatView.swift,
+			);
+			target = 3D767EB12F5D520D00F2D70F /* Vayl */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3D767EB42F5D520D00F2D70F /* Vayl */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3DE73D382FB100DE00BF22F1 /* Exceptions for "Vayl" folder in "Vayl" target */,
+			);
 			path = Vayl;
 			sourceTree = "<group>";
 		};
@@ -107,6 +130,7 @@
 		3D767EA92F5D520D00F2D70F = {
 			isa = PBXGroup;
 			children = (
+				3DE73D1B2FB0554700BF22F1 /* gather_theme.sh */,
 				3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */,
 				3D807B932F8DC7450021F080 /* .aider.conf.yml */,
 				3D0635582F8AF7530098DE65 /* gather_audit_pulse_carousel.sh */,
@@ -140,6 +164,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3D767ED52F5D520E00F2D70F /* Build configuration list for PBXNativeTarget "Vayl" */;
 			buildPhases = (
+				3DE73B012FA69E0E00BF22F1 /* SwiftLint */,
 				3D767EAE2F5D520D00F2D70F /* Sources */,
 				3D767EAF2F5D520D00F2D70F /* Frameworks */,
 				3D767EB02F5D520D00F2D70F /* Resources */,
@@ -258,6 +283,7 @@
 			files = (
 				3D767EFC2F5D565700F2D70F /* PROJECT_SCOPE.md in Resources */,
 				3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */,
+				3DE73D1C2FB0555000BF22F1 /* gather_theme.sh in Resources */,
 				3D83007B2F84981B001F650B /* gather_checkin_context.sh in Resources */,
 				3D58E6DD2F6227E800210EB6 /* Vayl.xcconfig in Resources */,
 				3D767EFA2F5D562900F2D70F /* RULES.md in Resources */,
@@ -284,6 +310,30 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		3DE73B012FA69E0E00BF22F1 /* SwiftLint */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.swiftlint.yml",
+				"$(SRCROOT)/Vayl",
+			);
+			name = SwiftLint;
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if test -d \"/opt/homebrew/bin/\"; then\n  PATH=\"/opt/homebrew/bin/:${PATH}\"\nfi\n\nexport PATH\n\nif which swiftlint > /dev/null; then\n  swiftlint\nelse\n  echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		3D767EAE2F5D520D00F2D70F /* Sources */ = {
@@ -456,6 +506,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8KUPG54AQZ;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Vayl/Vayl.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -492,6 +543,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8KUPG54AQZ;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Vayl/Vayl.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
