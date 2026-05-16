@@ -1,0 +1,315 @@
+// Home/Components/DesireMapIndicator.swift
+
+import SwiftUI
+
+struct DesireMapIndicator: View {
+    let state: DesireMapState
+    var onReveal: (() -> Void)? = nil
+    var onUnlock: (() -> Void)? = nil
+    var onRemind: (() -> Void)? = nil
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        switch state {
+        case .hidden, .fullyUnlocked:
+            EmptyView()
+
+        case .youDone(let partnerName):
+            statusCard {
+                HStack {
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                        Text("DESIRE MAP")
+                            .font(AppFonts.overline)
+                            .tracking(1.2)
+                            .foregroundStyle(AppColors.textTertiary)
+
+                        HStack(spacing: AppSpacing.md) {
+                            HStack(spacing: AppSpacing.xs) {
+                                Circle()
+                                    .fill(colorScheme == .light
+                                        ? AppColors.accentTertiary
+                                        : AppColors.accentPrimary)
+                                    .frame(width: 7, height: 7)
+                                Text("You're done")
+                                    .font(AppFonts.caption)
+                                    .foregroundStyle(AppColors.textSecondary)
+                            }
+                            HStack(spacing: AppSpacing.xs) {
+                                Circle()
+                                    .stroke(AppColors.textTertiary, lineWidth: 1)
+                                    .frame(width: 7, height: 7)
+                                Text(partnerName)
+                                    .font(AppFonts.caption)
+                                    .foregroundStyle(AppColors.textTertiary)
+                            }
+                        }
+                    }
+                    Spacer()
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        onRemind?()
+                    } label: {
+                        Text("Remind \(partnerName) →")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(colorScheme == .light
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.md)
+            }
+
+        case .bothReady:
+            // Elevated treatment — highest CTA weight on screen
+            VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    HStack {
+                        Text("DESIRE MAP")
+                            .font(AppFonts.overline)
+                            .tracking(1.2)
+                            .foregroundStyle(AppColors.textTertiary)
+                        Spacer()
+                        Text("You're both ready")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(colorScheme == .light
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
+                    }
+
+                    HStack(spacing: AppSpacing.md) {
+                        HStack(spacing: AppSpacing.xs) {
+                            Circle()
+                                .fill(colorScheme == .light
+                                    ? AppColors.accentTertiary
+                                    : AppColors.accentPrimary)
+                                .frame(width: 7, height: 7)
+                            Text("You")
+                                .font(AppFonts.bodyMedium)
+                                .foregroundStyle(AppColors.textPrimary)
+                        }
+                        HStack(spacing: AppSpacing.xs) {
+                            Circle()
+                                .fill(colorScheme == .light
+                                    ? AppColors.safetyAccent
+                                    : AppColors.accentSecondary)
+                                .frame(width: 7, height: 7)
+                            Text("Partner")
+                                .font(AppFonts.bodyMedium)
+                                .foregroundStyle(AppColors.textPrimary)
+                        }
+                    }
+                }
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.top, AppSpacing.md)
+
+                Spacer(minLength: AppSpacing.md)
+
+                Button {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    onReveal?()
+                } label: {
+                    Text("See Your First Match")
+                        .font(AppFonts.ctaLabel)
+                        .foregroundStyle(colorScheme == .light
+                            ? AppColors.textSecondary
+                            : .white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppSpacing.md)
+                        .background {
+                            RoundedRectangle(cornerRadius: AppRadius.md)
+                                .fill(colorScheme == .light
+                                    ? AnyShapeStyle(LinearGradient(
+                                        colors: [AppColors.accentTertiary.opacity(0.18),
+                                                 AppColors.safetyAccent.opacity(0.14)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing))
+                                    : AnyShapeStyle(LinearGradient(
+                                        colors: [AppColors.accentPrimary,
+                                                 AppColors.accentSecondary,
+                                                 AppColors.accentTertiary],
+                                        startPoint: .leading,
+                                        endPoint: .trailing)))
+                        }
+                        .shadow(
+                            color: colorScheme == .light
+                                ? AppColors.shadowMagenta
+                                : AppColors.accentSecondary.opacity(0.4),
+                            radius: 12, y: 4
+                        )
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.bottom, AppSpacing.md)
+            }
+            .background {
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .fill(AppColors.cardBackground)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .stroke(colorScheme == .light
+                        ? AnyShapeStyle(AppColors.spectrumBorder.opacity(0.6))
+                        : AnyShapeStyle(LinearGradient(
+                            colors: [AppColors.accentPrimary.opacity(0.5),
+                                     AppColors.accentSecondary.opacity(0.4),
+                                     AppColors.accentTertiary.opacity(0.3)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing)),
+                        lineWidth: 1.5)
+            }
+            .shadow(
+                color: colorScheme == .light
+                    ? AppColors.shadowPurple
+                    : AppColors.accentSecondary.opacity(0.2),
+                radius: 20, y: 6
+            )
+
+        case .freeRevealSeen(_):
+            statusCard {
+                HStack(spacing: AppSpacing.md) {
+                    ZStack {
+                        Circle()
+                            .fill(colorScheme == .light
+                                ? AppColors.accentTertiary.opacity(0.10)
+                                : AppColors.accentSecondary.opacity(0.15))
+                            .frame(width: 38, height: 38)
+                        Image(systemName: AppIcons.heartTextSquare)
+                            // .body scales with Dynamic Type — correct for
+                            // icon badges at this visual weight.
+                            .font(.body)
+                            .fontWeight(.medium)
+                            .foregroundStyle(colorScheme == .light
+                                ? AnyShapeStyle(LinearGradient(
+                                    colors: [AppColors.accentTertiary, AppColors.safetyAccent],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing))
+                                : AnyShapeStyle(LinearGradient(
+                                    colors: [AppColors.accentSecondary, AppColors.accentTertiary],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing)))
+                    }
+
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                        Text("1 match revealed")
+                            .font(AppFonts.bodyMedium)
+                            .foregroundStyle(AppColors.textPrimary)
+                        Text("+ more waiting")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textTertiary)
+                    }
+                    Spacer()
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        onUnlock?()
+                    } label: {
+                        Text("Unlock →")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(colorScheme == .light
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.md)
+            }
+
+        case .redoInProgress(let partnerName, let matchCount):
+            statusCard {
+                HStack {
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                        HStack(spacing: AppSpacing.sm) {
+                            Text("DESIRE MAP")
+                                .font(AppFonts.overline)
+                                .tracking(1.2)
+                                .foregroundStyle(AppColors.textTertiary)
+                            Text("· Check-in")
+                                .font(AppFonts.overline)
+                                .foregroundStyle(colorScheme == .light
+                                    ? AppColors.accentTertiary
+                                    : AppColors.accentPrimary)
+                        }
+
+                        HStack(spacing: AppSpacing.md) {
+                            HStack(spacing: AppSpacing.xs) {
+                                Circle()
+                                    .fill(colorScheme == .light
+                                        ? AppColors.accentTertiary
+                                        : AppColors.accentPrimary)
+                                    .frame(width: 7, height: 7)
+                                Text("You — redoing")
+                                    .font(AppFonts.caption)
+                                    .foregroundStyle(AppColors.textSecondary)
+                            }
+                            HStack(spacing: AppSpacing.xs) {
+                                Circle()
+                                    .fill(matchCount != 0
+                                          ? (colorScheme == .light
+                                              ? AppColors.safetyAccent
+                                              : AppColors.accentSecondary)
+                                          : Color.clear)
+                                    .overlay {
+                                        if matchCount == 0 {
+                                            Circle()
+                                                .stroke(AppColors.textTertiary, lineWidth: 1)
+                                        }
+                                    }
+                                    .frame(width: 7, height: 7)
+                                Text(matchCount != 0
+                                     ? "\(partnerName) in progress"
+                                     : "\(partnerName) hasn't started")
+                                    .font(AppFonts.caption)
+                                    .foregroundStyle(
+                                        matchCount != 0
+                                            ? AppColors.textSecondary
+                                            : AppColors.textTertiary
+                                    )
+                            }
+                        }
+                    }
+                    Spacer()
+                    if matchCount == 0 {
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            onRemind?()
+                        } label: {
+                            Text("Remind →")
+                                .font(AppFonts.caption)
+                                .foregroundStyle(colorScheme == .light
+                                    ? AppColors.accentTertiary
+                                    : AppColors.accentPrimary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.md)
+            }
+
+        case .gated, .yourTurn, .waiting, .matchReady, .revealed:
+            EmptyView()
+        }
+    }
+
+    // MARK: - Shared card shell for compact states
+
+    @ViewBuilder
+    private func statusCard<Content: View>(
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        content()
+            .background {
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .fill(colorScheme == .light
+                        ? AppColors.glassFrostCard
+                        : AppColors.cardBackground)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .stroke(AppColors.borderSubtle, lineWidth: 1)
+            }
+    }
+}

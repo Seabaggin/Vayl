@@ -1,0 +1,415 @@
+// Home/Components/ReflectionBannerView.swift
+
+import SwiftUI
+
+struct ReflectionBannerView: View {
+    let sessionLabel: String
+    let partnerName: String?
+    var onDone: (([String], String?, Bool) -> Void)? = nil
+    var onDismiss: (() -> Void)? = nil
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    @State private var selectedPills: Set<String> = []
+    @State private var noteText: String = ""
+    @State private var isWritingNote: Bool = false
+    @State private var shareWithPartner: Bool = true
+    @State private var showFullPillSheet: Bool = false
+
+    @GestureState private var dragOffset: CGFloat = 0
+    @State private var isVisible: Bool = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Drag handle
+            Capsule()
+                .fill(colorScheme == .light
+                    ? Color.black.opacity(0.15)
+                    : Color.white.opacity(0.3))
+                .frame(width: 36, height: 4)
+                .padding(.top, AppSpacing.sm)
+                .padding(.bottom, AppSpacing.md)
+
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
+                // Header
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    Text(sessionLabel)
+                        .font(AppFonts.overline)
+                        .tracking(1.2)
+                        .foregroundStyle(AppColors.textTertiary)
+                    Text("How did that land for you?")
+                        .font(AppFonts.bodyMedium)
+                        .foregroundStyle(AppColors.textPrimary)
+                }
+
+                if isWritingNote {
+                    TextEditor(text: $noteText)
+                        .frame(minHeight: 70)
+                        .font(AppFonts.bodyText)
+                        .foregroundStyle(AppColors.textPrimary)
+                        .scrollContentBackground(.hidden)
+                        .padding(AppSpacing.sm)
+                        .background {
+                            RoundedRectangle(cornerRadius: AppRadius.sm)
+                                .fill(colorScheme == .light
+                                    ? Color.black.opacity(0.03)
+                                    : Color.white.opacity(0.04))
+                        }
+                        .overlay {
+                            RoundedRectangle(cornerRadius: AppRadius.sm)
+                                .stroke(AppColors.borderSubtle, lineWidth: 1)
+                        }
+                } else {
+                    LazyVGrid(
+                        columns: Array(repeating:
+                            GridItem(.flexible(), spacing: AppSpacing.sm), count: 3),
+                        spacing: AppSpacing.sm
+                    ) {
+                        ForEach(ReflectionPillGroup.inlineDefault,
+                                id: \.self) { pill in
+                            bannerPillButton(pill)
+                        }
+                    }
+
+                    Button {
+                        showFullPillSheet = true
+                    } label: {
+                        Text("More →")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(colorScheme == .light
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                // Mode toggle
+                Button {
+                    isWritingNote.toggle()
+                } label: {
+                    Text(isWritingNote
+                         ? "← Use pills instead"
+                         : "✎ Write a note instead")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                }
+                .buttonStyle(.plain)
+
+                // Share toggle — only shown when partner is present
+                if let name = partnerName {
+                    HStack {
+                        Text("Share with \(name)")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textSecondary)
+                        Spacer()
+                        Toggle("", isOn: $shareWithPartner)
+                            .labelsHidden()
+                            .tint(colorScheme == .light
+                                ? AppColors.accentTertiary
+                                : AppColors.accentPrimary)
+                    }
+                }
+
+                // Done + Not now
+                HStack {
+                    Button("Not now") {
+                        dismiss()
+                    }
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .buttonStyle(.plain)
+
+                    Spacer()
+
+                    Button {
+                        UIImpactFeedbackGenerator(style: .medium)
+                            .impactOccurred()
+                        onDone?(Array(selectedPills),
+                                noteText.isEmpty ? nil : noteText,
+                                shareWithPartner)
+                        dismiss()
+                    } label: {
+                        Text("Done")
+                            .font(AppFonts.ctaLabel)
+                            .foregroundStyle(colorScheme == .light
+                                ? AppColors.textSecondary
+                                : .white)
+                            .padding(.horizontal, AppSpacing.lg)
+                            .padding(.vertical, AppSpacing.sm)
+                            .background {
+                                Capsule()
+                                    .fill(colorScheme == .light
+                                        ? AnyShapeStyle(LinearGradient(
+                                            colors: [AppColors.accentTertiary.opacity(0.18),
+                                                     AppColors.safetyAccent.opacity(0.14)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing))
+                                        : AnyShapeStyle(LinearGradient(
+                                            colors: [AppColors.accentPrimary,
+                                                     AppColors.accentSecondary,
+                                                     AppColors.accentTertiary],
+                                            startPoint: .leading,
+                                            endPoint: .trailing)))
+                            }
+                            .overlay {
+                                Capsule()
+                                    .stroke(colorScheme == .light
+                                        ? AnyShapeStyle(LinearGradient(
+                                            colors: [AppColors.accentTertiary,
+                                                     AppColors.safetyAccent],
+                                            startPoint: .leading,
+                                            endPoint: .trailing))
+                                        : AnyShapeStyle(Color.clear),
+                                        lineWidth: 1)
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(selectedPills.isEmpty && noteText.isEmpty)
+                    .opacity(selectedPills.isEmpty && noteText.isEmpty ? 0.4 : 1)
+                }
+            }
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.bottom, AppSpacing.lg)
+        }
+        .background {
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: AppRadius.xl)
+                        .fill(AppColors.cardBackground.opacity(0.85))
+                }
+        }
+        .overlay(alignment: .top) {
+            RoundedRectangle(cornerRadius: AppRadius.xl)
+                .stroke(colorScheme == .light
+                    ? AnyShapeStyle(AppColors.spectrumBorder.opacity(0.5))
+                    : AnyShapeStyle(LinearGradient(
+                        colors: [AppColors.accentPrimary.opacity(0.4),
+                                 AppColors.accentSecondary.opacity(0.3),
+                                 AppColors.accentTertiary.opacity(0.2)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing)),
+                    lineWidth: 1.5)
+        }
+        .shadow(
+            color: colorScheme == .light
+                ? AppColors.shadowPurple
+                : AppColors.accentSecondary.opacity(0.12),
+            radius: 20, y: 6
+        )
+        .offset(y: dragOffset)
+        .gesture(
+            DragGesture()
+                .updating($dragOffset) { value, state, _ in
+                    if value.translation.height > 0 {
+                        state = value.translation.height
+                    }
+                }
+                .onEnded { value in
+                    if value.translation.height > 80 {
+                        dismiss()
+                    }
+                }
+        )
+        .sheet(isPresented: $showFullPillSheet) {
+            fullPillSheet
+        }
+    }
+
+    // MARK: - Pill Button
+
+    private func bannerPillButton(_ pill: String) -> some View {
+        let isSelected = selectedPills.contains(pill)
+        return Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            if isSelected { selectedPills.remove(pill) }
+            else          { selectedPills.insert(pill) }
+        } label: {
+            Text(pill)
+                .font(AppFonts.caption)
+                .foregroundStyle(isSelected
+                    ? (colorScheme == .light
+                        ? AppColors.textSecondary
+                        : .white)
+                    : AppColors.textSecondary)
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.vertical, AppSpacing.sm)
+                .frame(maxWidth: .infinity)
+                .background {
+                    RoundedRectangle(cornerRadius: AppRadius.sm)
+                        .fill(isSelected
+                            ? (colorScheme == .light
+                                ? AnyShapeStyle(LinearGradient(
+                                    colors: [AppColors.accentTertiary.opacity(0.15),
+                                             AppColors.safetyAccent.opacity(0.12)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing))
+                                : AnyShapeStyle(LinearGradient(
+                                    colors: [AppColors.accentPrimary.opacity(0.35),
+                                             AppColors.accentSecondary.opacity(0.25)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing)))
+                            : AnyShapeStyle(Color.clear))
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: AppRadius.sm)
+                        .stroke(
+                            isSelected
+                            ? (colorScheme == .light
+                                ? AnyShapeStyle(LinearGradient(
+                                    colors: [AppColors.accentTertiary,
+                                             AppColors.safetyAccent],
+                                    startPoint: .leading,
+                                    endPoint: .trailing))
+                                : AnyShapeStyle(LinearGradient(
+                                    colors: [AppColors.accentPrimary,
+                                             AppColors.accentSecondary],
+                                    startPoint: .leading,
+                                    endPoint: .trailing)))
+                            : AnyShapeStyle(AppColors.borderSubtle),
+                            lineWidth: 1
+                        )
+                }
+        }
+        .buttonStyle(.plain)
+        .animation(AppAnimation.fast, value: isSelected)
+    }
+
+    // MARK: - Full Pill Sheet
+
+    private var fullPillSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                    pillSheetSection(
+                        title: "HOW IT FELT",
+                        pills: ReflectionPillGroup.howItFelt
+                    )
+                    pillSheetSection(
+                        title: "WHAT HAPPENED",
+                        pills: ReflectionPillGroup.whatHappened
+                    )
+                    pillSheetSection(
+                        title: "WHAT YOU NEED NOW",
+                        pills: ReflectionPillGroup.whatYouNeedNow
+                    )
+
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                        Text("ADD A NOTE")
+                            .font(AppFonts.overline)
+                            .tracking(1.2)
+                            .foregroundStyle(AppColors.textTertiary)
+
+                        TextEditor(text: $noteText)
+                            .frame(minHeight: 80)
+                            .font(AppFonts.bodyText)
+                            .foregroundStyle(AppColors.textPrimary)
+                            .scrollContentBackground(.hidden)
+                            .padding(AppSpacing.sm)
+                            .background {
+                                RoundedRectangle(cornerRadius: AppRadius.sm)
+                                    .fill(colorScheme == .light
+                                        ? Color.black.opacity(0.03)
+                                        : Color.white.opacity(0.04))
+                            }
+                            .overlay {
+                                RoundedRectangle(cornerRadius: AppRadius.sm)
+                                    .stroke(AppColors.borderSubtle, lineWidth: 1)
+                            }
+                    }
+
+                    if let name = partnerName {
+                        HStack {
+                            Text("Share with \(name)")
+                                .font(AppFonts.bodyText)
+                                .foregroundStyle(AppColors.textSecondary)
+                            Spacer()
+                            Toggle("", isOn: $shareWithPartner)
+                                .labelsHidden()
+                                .tint(colorScheme == .light
+                                    ? AppColors.accentTertiary
+                                    : AppColors.accentPrimary)
+                        }
+                    }
+
+                    Button {
+                        showFullPillSheet = false
+                        onDone?(Array(selectedPills),
+                                noteText.isEmpty ? nil : noteText,
+                                shareWithPartner)
+                    } label: {
+                        Text("Done")
+                            .font(AppFonts.ctaLabel)
+                            .foregroundStyle(colorScheme == .light
+                                ? AppColors.textSecondary
+                                : .white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, AppSpacing.md)
+                            .background {
+                                RoundedRectangle(cornerRadius: AppRadius.md)
+                                    .fill(colorScheme == .light
+                                        ? AnyShapeStyle(LinearGradient(
+                                            colors: [AppColors.accentTertiary.opacity(0.18),
+                                                     AppColors.safetyAccent.opacity(0.14)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing))
+                                        : AnyShapeStyle(LinearGradient(
+                                            colors: [AppColors.accentPrimary,
+                                                     AppColors.accentSecondary,
+                                                     AppColors.accentTertiary],
+                                            startPoint: .leading,
+                                            endPoint: .trailing)))
+                            }
+                            .overlay {
+                                RoundedRectangle(cornerRadius: AppRadius.md)
+                                    .stroke(colorScheme == .light
+                                        ? AnyShapeStyle(LinearGradient(
+                                            colors: [AppColors.accentTertiary,
+                                                     AppColors.safetyAccent],
+                                            startPoint: .leading,
+                                            endPoint: .trailing))
+                                        : AnyShapeStyle(Color.clear),
+                                        lineWidth: 1)
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.bottom, AppSpacing.md)
+                }
+                .padding(AppSpacing.md)
+            }
+            .background(AppColors.pageBackground.ignoresSafeArea())
+            .navigationTitle("How did that land?")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private func pillSheetSection(title: String,
+                                  pills: [String]) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            Text(title)
+                .font(AppFonts.overline)
+                .tracking(1.2)
+                .foregroundStyle(AppColors.textTertiary)
+
+            LazyVGrid(
+                columns: Array(repeating:
+                    GridItem(.flexible(), spacing: AppSpacing.sm), count: 2),
+                spacing: AppSpacing.sm
+            ) {
+                ForEach(pills, id: \.self) { pill in
+                    bannerPillButton(pill)
+                }
+            }
+        }
+    }
+
+    // MARK: - Dismiss
+    // TODO: withAnimation belongs in the caller, not here.
+    // The banner's parent view should own the dismiss animation.
+    // Move animation to HomeDashboardView when home dashboard is rebuilt.
+    private func dismiss() {
+        withAnimation(AppAnimation.spring) {
+            onDismiss?()
+        }
+    }
+}

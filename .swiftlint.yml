@@ -1,0 +1,46 @@
+# .swiftlint.yml
+opt_in_rules:
+  - force_unwrapping # Uses the native, bulletproof Swift compiler check
+
+custom_rules:
+  no_font_system:
+    name: "Font.system Banned"
+    regex: "Font\\.system"
+    message: "Use Font.custom(_:size:relativeTo:) to support Dynamic Type."
+    severity: error
+
+  no_uiscreen:
+    name: "UIScreen Banned"
+    regex: "UIScreen\\.main"
+    message: "Use AppLayout.from(geometry) instead."
+    severity: error
+
+  no_hardcoded_padding:
+    name: "Hardcoded Padding Banned"
+    regex: "\\.padding\\s*\\([^)]*[0-9]+\\s*\\)"
+    message: "Use AppSpacing tokens instead of raw numbers."
+    severity: error
+
+  no_raw_sf_symbols:
+    name: "Raw SF Symbol Banned"
+    regex: "systemName:\\s*\""
+    message: "Use typed AppIcons tokens."
+    severity: error
+
+  no_published:
+    name: "@Published Banned"
+    regex: "@Published"
+    message: "Use the @Observable macro."
+    severity: error
+
+  no_dispatch_main:
+    name: "DispatchQueue.main Banned"
+    regex: "DispatchQueue\\.main"
+    message: "Use async/await and MainActor."
+    severity: error
+
+  no_anyview:
+    name: "AnyView Banned"
+    regex: "\\bAnyView\\("
+    message: "AnyView destroys SwiftUI performance. Use @ViewBuilder."
+    severity: error
