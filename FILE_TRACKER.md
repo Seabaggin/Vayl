@@ -1,13 +1,11 @@
-# Open Lightly — File Tracker
+# Vayl — File Tracker
 
-> Last updated: 2026-04-04
-> ~160 Swift files across 36 directories
+> Last updated: 2026-05-16
+> ~230 Swift files across 44 directories
 
 ---
 
 ## Reach Tags
-
-Files that touch many other files or provide cross-cutting infrastructure get a reach tag:
 
 | Tag | Meaning |
 |---|---|
@@ -22,18 +20,67 @@ Files that touch many other files or provide cross-cutting infrastructure get a 
 
 | File | What It Does | Reach |
 |---|---|---|
-| **`ContentView.swift`** | Root router. Gates onboarding vs. main tab bar vs. guest shell based on `@AppStorage("hasCompletedOnboarding")` and `AppState.experienceType`. | **`HUB`** |
-| **`Open_LightlyApp.swift`** | `@main` entry point. Creates `AppState`, `ThemeManager`, and the SwiftData `ModelContainer`. Injects all environment objects. Gates auth (`SignInView` vs `ContentView`). Retries pending Supabase syncs on launch. | **`BACKBONE`** |
+| **`VaylApp.swift`** | `@main` entry point. Creates `ThemeManager`, `AppState`, `PulseStore`, `AuthService`, `OnboardingStore`. Injects all environment objects. Retries pending syncs on launch via `SyncManager`. | **`BACKBONE`** |
+| **`AppRootView.swift`** | Thin gate router. Branches on auth state → `SignInView` vs. content views. | **`HUB`** |
+| **`AppShell.swift`** | Main tab bar shell. Switches on `selectedTab: AppTab` (.home/.play/.map/.learn) and wraps each in `TabContentWrapper`. | **`HUB`** |
+| **`ContentView.swift`** | Root onboarding gate. Branches on `isOnboardingComplete` → `OnboardingFlowView` vs. `AppShell`. | **`HUB`** |
+| **`ModelContainer.swift`** | SwiftData schema definition (SchemaV1). Registers all `@Model` classes. Called from `VaylApp`. | |
 
 ### `App/Theme/`
 
 | File | What It Does | Reach |
 |---|---|---|
-| **`AppColors.swift`** | Full color palette as static `Color` constants plus a `Color(hex:)` initializer. Single source of truth for every color token in the app. All light-mode tokens (`lightCardTitle`, `lightCardDetail`, `lightCardFill`, etc.) and dark-mode tokens are defined here and documented in DESIGN_DOC.md. **⚠️ Contains 10 unused tokens** (`purpleBright`, `electricViolet`, `cyanDark`, `deepPurple`, `surfaceRaised`, `textQuaternary`, `btnGhostBorder`, `btnGhostText`, `badgeBg`, `destructive`) — candidates for removal. | **`FOUNDATION`** |
-| **`AppFonts.swift`** | Centralized font factory. Static methods for Clash Display (display/headline) and Switzer (body) at named semantic sizes (`screenTitle`, `overline`, `body`, etc.). | **`FOUNDATION`** |
-| **`AppTheme.swift`** | Defines `ThemeMode` enum (system / light / amoled) and `AppPalette` — the resolved set of semantic colors for the active theme. | |
-| **`ThemeManager.swift`** | `@Observable` class. Persists the user's selected theme mode to `UserDefaults` and resolves the active `AppPalette` from mode + system `colorScheme`. | |
-| **`ThemeModifiers.swift`** | `ThemedRootModifier` ViewModifier. Injects the resolved `AppPalette` into the environment and sets `preferredColorScheme`. Applied once at the root via `.themedRoot()`. | |
+| **`AppColors.swift`** | Tier 2 semantic color tokens. Every color resolves automatically for light/dark via `UIColor(dynamicProvider:)`. Maps exclusively to `VaylPrimitives`. | **`FOUNDATION`** |
+| **`AppFonts.swift`** | Typography scale. Font.custom only, no Font.system. Semantic sizes: screenTitle/headline/body/caption. | **`FOUNDATION`** |
+| **`VaylPrimitives.swift`** | Tier 1 primitive color constants. Light dawn palette (warm cream) and dark midnight palette (deep ink). Never referenced outside `AppColors.swift`. | |
+| **`AppTheme.swift`** | Defines `ThemeMode` enum (system/light/amoled) and theme palette structs. | |
+| **`ThemeManager.swift`** | `@Observable` class. Persists user-selected theme to `UserDefaults` and resolves active palette from mode + system `colorScheme`. | |
+| **`ThemeModifiers.swift`** | `ThemedRootModifier` ViewModifier. Injects resolved `AppPalette` into environment and sets `preferredColorScheme`. Applied once at root. | |
+| **`AppAnimation.swift`** | Centralized animation timing constants (`.standard`, `.cardTransition`, spring configs). | |
+| **`AppSpacing.swift`** | Spacing scale: `xs`/`sm`/`md`/`lg`/`xl`/`xxl`. | |
+| **`AppRadius.swift`** | Corner radius tokens: `none`/`sm`/`md`/`lg`/`full`. | |
+| **`AppGrid.swift`** | Grid layout system. Column counts and gutter widths for device classes. | |
+| **`AppLayout.swift`** | OB card geometry functions. `obCardWidth(in:)` / `obCardHeight(in:)` — never hardcoded. | |
+| **`AppSafeArea.swift`** | UIKit key window reader. Never geo.safeAreaInsets in OB. | |
+| **`AppElevation.swift`** | Elevation/z-index tokens for layering hierarchy. | |
+| **`AppGlows.swift`** | Glow intensity and color mappings for effects across the app. | |
+
+---
+
+## `Core/Models/`
+
+| File | What It Does | Reach |
+|---|---|---|
+| **`UserProfile.swift`** | `@Model`. Created on OB completion. Never before. Full user profile — name, pronouns, gender, NM stage, app mode, curiosity selections, archetype. | **`BACKBONE`** |
+| **`Couple.swift`** | `@Model`. Links two UserProfiles. `EntitlementRecord` lives here, not UserProfile. Archived not deleted. | **`BACKBONE`** |
+| **`Card.swift`** | Codable struct. Loaded from JSON. NEVER SwiftData. One prompt: text, highlights, category, difficulty, sensitivity. | |
+| **`Deck.swift`** | Codable struct. Loaded from JSON. NEVER SwiftData. One deck: cards array, difficulty, intensity. | |
+| **`CardSession.swift`** | `@Model`. `coupleId` — never `userId`. One playback of a deck. Cards shown, skipped, reactions, timestamps. | |
+| **`SessionRecord.swift`** | `@Model`. One completed or safe-worded session. Duration, category, completion date. | |
+| **`DeckProgress.swift`** | `@Model`. String `cardId` joins to Card. Never stores card text. Per-user per-deck progress. | |
+| **`DesireRating.swift`** | `@Model`. Local SwiftData only. NEVER synced. `notForUs` never leaves device. One user's private rating of one desire map item. | |
+| **`DesireMatch.swift`** | Supabase only. Computed by Edge Function. Never by client. Positive desire alignment between partners. | |
+| **`PulseEntry.swift`** | `@Model`. Local only. Emotional state — health-adjacent data. One daily mood check-in. | |
+| **`EntitlementRecord.swift`** | `@Model`. On Couple, not UserProfile. One purchase = both partners. | |
+| **`MilestoneRecord.swift`** | `@Model`. Milestone/achievement records. Type, date achieved. | |
+| **`AcknowledgementRecord.swift`** | `@Model`. Ground rules / ethical acknowledgements. Timestamp accepted. | |
+| **`LockInSession.swift`** | `@Model`. Lock-in session record. (Pending full implementation.) | |
+
+### `Core/Models/Enums/`
+
+| File | What It Does | Reach |
+|---|---|---|
+| **`AppEnums.swift`** | Master enum file. `NMStage`, `AppMode`, `CardIntensity`, `CardStatus`, `ConnectionType`, `OpenerDeckType`, `ArchetypeTag`. All shared domain enums. | **`FOUNDATION`** |
+| **`AppTab.swift`** | Four tab cases: `.home`, `.play`, `.map`, `.learn`. Hashable for TabView selection. | |
+
+---
+
+## `Core/Persistence/`
+
+| File | What It Does | Reach |
+|---|---|---|
+| **`DataStore.swift`** | Central persistence layer. Stub implementations — RatingRecord/StreakRecord replacements pending. | **`BRIDGE`** |
+| **`ModelContext+Extensions.swift`** | Extension helpers for SwiftData operations. | |
 
 ---
 
@@ -41,426 +88,363 @@ Files that touch many other files or provide cross-cutting infrastructure get a 
 
 | File | What It Does | Reach |
 |---|---|---|
-| **`AppState.swift`** | `@MainActor @Observable` class. Owns `experienceType` (persisted to `UserDefaults`) which drives all home-screen routing. Injected as `@Environment` at the root. | **`BACKBONE`** |
-| **`Config.swift`** | Static constants for Supabase project URL and anon key. The only file with hardcoded credentials. | |
-| **`SupabaseManager.swift`** | Singleton. Initializes and exposes the single `SupabaseClient` instance. All services read from `SupabaseManager.shared.client`. | **`BRIDGE`** |
-| **`AuthService.swift`** | Sign in with Apple via Supabase auth. Publishes `isAuthenticated`, `userId`, `isLoading`, `error`. Uses `ObservableObject` (legacy — pre-`@Observable` migration). | |
-| **`ProfileService.swift`** | Reads/writes user profile data to Supabase `profiles` table. **⚠️ Contains nested `SupabaseProfile` Codable struct** — should be extracted to `Models/` for cross-service visibility (also used by `SyncManager`). Uses `ObservableObject` (legacy). | |
-| **`PairingService.swift`** | Couple pairing: generate codes, look up codes, complete pairing in Supabase. Publishes `generatedCode`, `isPairing`, `error`. Uses `ObservableObject` (legacy). | |
-| **`ContentLoader.swift`** | Static generic helper that decodes bundled JSON files from the app bundle. `fatalError` on missing/malformed files (dev-time catch). | |
-| **`SyncManager.swift`** | Orchestrator for local-first data writes. Pattern: save to SwiftData first, push to Supabase; if push fails, flag for retry via `UserDefaults`. Coordinates all domain sync services. | **`BRIDGE`** |
-| **`AssessmentSyncService.swift`** | Pushes completed assessment data (responses + results) from SwiftData to Supabase `assessment_responses` / `assessment_results`. | |
-| **`DesireSyncService.swift`** | Pushes desire map ratings from SwiftData to Supabase `desire_ratings`. Ratings are private — only used server-side for DesireMatch computation. | |
-| **`SessionSyncService.swift`** | Pushes completed couple session records from SwiftData to Supabase `couple_session_records`. Syncs on completion, pause, and safe-word. | |
+| **`AppState.swift`** | `@Observable @MainActor`. Central app-level state. Owns onboarding gate, link state, tab routing. | **`BACKBONE`** |
+| **`AuthService.swift`** | `@Observable @MainActor`. Sign in with Apple via Supabase. Publishes `isAuthenticated`, `userId`, `isLoading`, `error`. | **`BACKBONE`** |
+| **`SupabaseManager.swift`** | Singleton. Initializes and exposes single `SupabaseClient`. All services read from `SupabaseManager.shared.client`. | **`BRIDGE`** |
+| **`ContentLoader.swift`** | Static generic helper. Decodes bundled JSON files (decks, cards). `fatalError` on missing/malformed — dev-time catch. | |
+| **`PairingService.swift`** | Couple pairing — generate codes, lookup, complete pairing in Supabase. | |
+| **`SyncManager.swift`** | Local-first orchestrator. Save to SwiftData first, push to Supabase; flag for retry via `UserDefaults` on failure. | **`BRIDGE`** |
+| **`DesireSyncService.swift`** | Pushes desire ratings from SwiftData to Supabase. Ratings are private — only used server-side for alignment. | |
 
 ---
 
-## `Data/Store/`
+## `Design/Brand/`
 
-| File | What It Does | Reach |
-|---|---|---|
-| **`DataStore.swift`** | Central persistence layer. All SwiftData reads/writes go through here (`saveSession`, `fetchAllSessions`, `fetchOrCreateStreak`, etc.). Initialized with a `ModelContext`. | **`BRIDGE`** |
-| **`ModelContainer.swift`** | `extension ModelContainer` that registers all `@Model` classes into the shared container. Called once from the app entry point. | |
+| File | What It Does |
+|---|---|
+| **`VaylAppIcon.swift`** | App icon vector render. Geometric spectrum design. |
+| **`SplashScreenView.swift`** | Animated intro splash screen. Plays once on cold launch before routing to content. |
 
 ---
 
-## `Design/Components/`
-
-### `Banners/`
+## `Design/Components/Buttons/`
 
 | File | What It Does |
 |---|---|
-| **`GuestBannerView.swift`** | Persistent top banner for guest/browsing users. "Create an account" button resets onboarding flag to re-enter the flow. References `AppState`. |
+| **`VaylButton.swift`** | Primary branded button. Spectrum gradient border + glow. Replaces GradientButton and HoloCTAButton. |
+| **`CriticalButton.swift`** | Destructive/neutral action button. `.neutral` and `.danger` styles. |
+| **`SafeWordButton.swift`** | Always-visible safety button during sessions. Confirmation alert before triggering safe-word callback. |
+| **`SelectablePill.swift`** | Toggle pill for multi-select lists. Three intensity levels. Dark: holo shimmer + flame aura. Light: aurora shimmer + shadow. |
 
-### `Buttons/`
+---
 
-| File | What It Does |
-|---|---|
-| **`CriticalButton.swift`** | Destructive/neutral action button. `.neutral` and `.danger` styles. Themed via `\.theme` (`AppPalette`). |
-| **`GradientButton.swift`** | Full-width gradient CTA button. Uses `t.buttonGradient`. Glow shadow adapts between amoled and light. **⚠️ Contains `GradBadge` component** (lines 45–59) — only used in `DesireMapView` and `ThemeTestView`; consider deprecation. |
-| **`HoloCTAButton.swift`** | Primary onboarding CTA. Dark: holographic shimmer + pill border + bloom. Light: warm aurora shimmer + shadow spread. References `HolographicShimmer`, `LightModeShimmer`, `PillBorder`. **⚠️ Contains unused `CTABorderModifier`** (lines 165–176) — defined but never instantiated; consider refactoring to use it or removing. |
-| **`SafeWordButton.swift`** | Always-visible safety button during sessions. Shows confirmation alert before triggering the safe-word callback. |
-| **`SelectablePill.swift`** | Toggle pill for multi-select lists (onboarding pickers). Three intensity levels. Dark: holo shimmer + flame aura. Light: aurora shimmer + shadow. |
-
-### `Cards/`
+## `Design/Components/Cards/`
 
 | File | What It Does |
 |---|---|
-| **`AtmosphericGhostDeck.swift`** | Ghost deck visual for CardRevealView. Layered cards with atmospheric blur + glow. |
-| **`CardBackView.swift`** | Back face of the CardReveal flip card. Gradient fill, "Something came up" heading, and 4 `CardRevealPill` option buttons. Pill selection state and entrance stagger managed here. |
-| **`CardFrontView.swift`** | Front face of the CardReveal flip card. Bridge prompt text + fuse timer burn effect that progressively erases the spectrum border clockwise via Canvas. Contains `interpolate` helper for position-based spark color. |
-| **`CardLayout.swift`** | Single source of truth for card dimensions. Standard card: 313×438pt (poker/bridge 1:1.40 ratio). Defines `width`, `height`, `cornerRadius`, `size`, `horizontalMargin`. |
-| **`CardRevealPillButton.swift`** | Individual pill button on `CardBackView`. Handles selected/unselected visual states, entrance stagger animation, and disabled state for non-selected pills post-selection. |
-| **`CardShadows.swift`** | `View` extension `.cardShadows(isLight:)`. Reusable two-layer shadow modifier (ambient color + depth drop) shared by `CardFrontView`, `CardBackView`, and related cards. |
-| **`CategoryTileView.swift`** | Home-screen grid tile. Emoji, name, card count, and a `ProgressBar` for one category. |
-| **`CircularArrowView.swift`** | Animated circular arrow indicator. Used in gesture-driven UI. |
-| **`ConversationCard.swift`** | Rendered prompt card in sessions. Displays text with highlighted keywords, difficulty badge, category. |
+| **`CardLayout.swift`** | Single source of truth for card dimensions. Standard card: 313×438pt (1.40 ratio). |
+| **`CardStyle.swift`** | ViewModifier. Reusable card shell: background + rounded clip + border stroke. |
+| **`VaylCardRenderer.swift`** | Unified card rendering system for sessions/play. Renders both faces. |
+| **`VaylCardFace.swift`** | Front card face. Prompt, highlights, difficulty badge, category. |
+| **`VaylCardBack.swift`** | Back card face. Options and interaction state. |
+| **`CardBackView.swift`** | Back face of flip card. Gradient fill, "Something came up" heading, 4 selectable pill buttons. |
+| **`CardFrontView.swift`** | Front face of flip card. Bridge prompt text + fuse timer burn effect. |
+| **`CardRevealPillButton.swift`** | Individual pill button on CardBackView. Selected/unselected visual states, entrance stagger. |
+| **`CardShadows.swift`** | `.cardShadows(isLight:)` View extension. Two-layer shadow modifier. |
+| **`CardCarousel.swift`** | Carousel navigation model and state. Enum-based phase tracking. |
+| **`AtmosphericGhostDeck.swift`** | Ghost deck visual for reveals. Layered cards with atmospheric blur + glow. |
+| **`CategoryTileView.swift`** | Home-screen grid tile. Emoji, name, card count, ProgressBar per category. |
+| **`ConversationCard.swift`** | Rendered prompt card in sessions. Text with highlighted keywords, difficulty badge. |
 | **`ConversationCardTypes.swift`** | Types and enums for conversation cards. Card styling by difficulty/type. |
-| **`CuriosityCardBack.swift`** | Face-down side of curiosity picker cards. Laser-engraved maze texture (`MazePatternView`) + embedded `TileOrbitView` orbit. Orbit stops (`isActive: false`) when flipped to prevent Canvas bleed-through. |
-| **`CuriosityFlipCard.swift`** | 3D flip container. Pairs `CuriosityCardBack` with a caller-supplied front face. `isFlipped = false` → back visible, orbit active. `isFlipped = true` → front visible, orbit stopped. |
-| **`FuseTimerView.swift`** | Session timer display. Countdown or elapsed time with optional urgency indicators. |
-| **`PromptCard.swift`** | Renders a single conversation prompt card with difficulty-keyed styling (background tint, border opacity, glow color). |
-| **`SettingsCard.swift`** | Generic `<Content: View>` container. Wraps content in a padded `.cardStyle()` shell for Settings and list screens. |
-
-### `Effects/`
-
-| File | What It Does |
-|---|---|
-| **`AuroraGlowField.swift`** | Light mode atmospheric blob background. 6 blobs in magenta/purple/gold/pink at 6–9% opacity. Light mode counterpart to `OnboardingGlowField`. |
-| **`FlameAura.swift`** | Flame-wisp particle effect for selected `SelectablePill`s in dark mode. Intensity-driven sizing. |
-| **`FloatingCard.swift`** | Individual floating glass card (`FloatingCardSpec` data model + `FloatingCard` view). Used in `OnboardingCuriosityPickerView`. Float physics (Y offset, rotation, gravity) driven by parent; owns press state and mounted entrance. Dark: deep purple + angular gradient border. Light: frost fill + warm aurora border. |
-| **`FloatingStack.swift`** | Generic collapsible card stack (`FloatingStackConfig` + `FloatingStack<Item, Content>`). Config-driven with `.curiosityStack` and `.sessionDeck` presets. Collapsed: stacked ghost layers with count badge. Expanded: vertical list with collapse handle. Supports float animation when used in cluster. |
-| **`GlowOrb.swift`** | Single blurred radial-gradient circle. Opacity from `t.glowOpacity`. Decorative accent. |
-| **`HolographicShimmer.swift`** | Animated 3x-wide cyan→purple→magenta→pink gradient that sweeps L→R. Dark mode overlay, clipped to any shape. |
-| **`LightAuraBloom.swift`** | Light mode bloom/glow effect. Aurora palette with breathing animation for atmospheric depth. |
-| **`LightModeShimmer.swift`** | Light mode counterpart to `HolographicShimmer`. `AppColors.lightShimmerColors` at 7–11% opacity, 11s sweep cycle. |
-| **`MazePatternView.swift`** | Concentric ring maze with gaps and spokes. Three rendering layers (groove shadow / main engraved line / highlight edge). Optional glow bloom for light mode. Embeds `TileOrbitView` at center via shared `GeometryReader` for co-centered orbit. |
-| **`OnboardingGlowField.swift`** | Dark mode animated glow blob field for all onboarding screens. Self-managing animation state (7 blobs). |
-| **`SparkField.swift`** | Canvas-based campfire ember particle system for light mode. Multiple screen-specific configs (`.statView`, `.nameView`, `.modeSelectView`, etc.). |
-| **`TileOrbitView.swift`** | Canvas-based comet orbit animation for small tile contexts (44–88pt). Resting: static arc indicator(s). Active: `TimelineView`-driven comets with tail gradient, head glow, and color cycling (cyan→magenta→purple / warm aurora in light). 1, 2, or 3 orbits. Zero GPU cost in resting state. |
-
-### `Input/`
-
-| File | What It Does |
-|---|---|
-| **`InteractiveField.swift`** | Styled text field with emoji/icon prefix. Themed background and text color. |
-| **`RatingButtonGroup.swift`** | 2x2 grid of rating buttons for the Desire Map. Bound to `DesireLevel?`. Haptic feedback. |
-| **`ToggleRow.swift`** | Icon + label + Toggle row for Settings sections. |
-
-### `Navigation/`
-
-| File | What It Does |
-|---|---|
-| **`OnboardingFooter.swift`** | Small footer below the CTA ("Your data is encrypted..."). Adapts color to light/dark. |
-| **`OnboardingNavBar.swift`** | Back chevron + centered `OnboardingProgressBar`. Back button gets a frosted circle in light mode. |
-
-### `Progress/`
-
-| File | What It Does |
-|---|---|
-| **`OnboardingProgressBar.swift`** | Highly refined animated progress bar for onboarding. Dual-mode (light/dark). Bloom glow, holographic shimmer fill, atmospheric gradient, breathing pulse. |
-| **`OrbitIndicator.swift`** | Orbital animation progress indicator. Used in BuildingPath screen for processing animation. |
-| **`ProgressBar.swift`** | Simple themed horizontal bar. `t.buttonGradient` fill on a muted track. |
-| **`ProgressRingView.swift`** | Circular progress ring. Configurable line width and size. Track adapts to amoled/light. |
-| **`ScoreRing.swift`** | Circular ring displaying a 0–100 score. Animates fill on appear via `t.ringGradient`. |
-| **`SpectrumBar.swift`** | Thin capsule filled with `t.spectrumGradient`. Decorative separator/accent. |
-
-### `Text/`
-
-| File | What It Does |
-|---|---|
-| **`GradientText.swift`** | Static (non-animated) gradient text. Dark: pink→purple→magenta. Light: magentaDark→magenta→orangeHot. Lightweight alternative to `LivingText` for gradient labels that don't need shimmer. |
-| **`KeywordHighlightText.swift`** | Renders text with specific keywords highlighted in cyan/magenta/gold via `NSAttributedString`. Used on prompt cards. |
-| **`LivingText.swift`** | Animated gradient text with breathing glow. `TimelineView` at 30fps, RTL-aware, dual-mode. The animated text identity for the app. |
-
-### Misc Components
-
-| File | What It Does |
-|---|---|
-| **`CardStyle.swift`** | `ViewModifier`. Reusable card shell: background + rounded clip + border stroke. Replaces the repetitive 3-line pattern across views. |
-| **`FilamentMode.swift`** | Mode enum and utilities for filament-style animations and effects. **❌ DEAD CODE** — `FilamentMode` and `FilamentPattern` enums are never referenced anywhere. Candidate for deletion. |
-| **`NavArrow.swift`** | Reusable chevron navigation arrow component. |
-| **`OrbitSparkBorderView.swift`** | Decorative border with orbital spark animation. |
-| **`PillBorder.swift`** | `ViewModifier`. Holographic pill border: cyan→purple→magenta gradient stroke + glow overlay. Single source of truth for dark mode selected/active borders. |
-| **`ScreenshotProtectionModifier.swift`** | Listens for screenshot/screen-recording notifications and overlays a blur + "Content Protected" message. Uses UIKit notification hooks. |
-| **`SectionHeader.swift`** | All-caps muted label for section dividers. `AppFonts.sectionHeader` + `AppColors.textMuted`. |
+| **`CuriosityCardBack.swift`** | Face-down side of curiosity picker cards. Laser-engraved maze texture + embedded TileOrbitView. |
+| **`CuriosityFlipCard.swift`** | 3D flip container. `isFlipped` drives visibility and orbit state. |
+| **`FuseTimerView.swift`** | Session timer display. Countdown/elapsed with optional urgency indicators. |
+| **`PromptCard.swift`** | Single conversation prompt with difficulty-keyed styling (tint, border opacity, glow). |
+| **`SettingsCard.swift`** | Generic `<Content: View>` container. Wraps content in padded `.cardStyle()` shell. |
+| **`PremiumCardShell.swift`** | Premium/entitlement-gated card container. Shows lock or unlock state. |
 
 ---
 
-## `Features/`
-
-### `Auth/`
+## `Design/Components/Effects/`
 
 | File | What It Does |
 |---|---|
-| **`SignInView.swift`** | Sign in with Apple screen. Dark background, app name + tagline, Apple sign-in button. Uses `AuthService` via `@EnvironmentObject`. |
+| **`VaylBorderEffect.swift`** | Animated spectrum gradient border. Used on VaylButton and bordered surfaces. |
+| **`AuroraGlowField.swift`** | Light mode atmospheric blob background. 6 blobs in magenta/purple/gold/pink at 6–9% opacity. |
+| **`HomeGlowField.swift`** | Home screen variant of glow field. Config-driven atmosphere. |
+| **`OnboardingGlowField.swift`** | Onboarding atmosphere glow field. Per-screen config transitions. |
+| **`HolographicShimmer.swift`** | Animated cyan→purple→magenta→pink gradient sweeping L→R. Dark mode overlay. |
+| **`LightModeShimmer.swift`** | Light mode counterpart shimmer. 7–11% opacity, 11s sweep. |
+| **`FlameAura.swift`** | Flame-wisp particle effect for selected pills in dark mode. |
+| **`FloatingCard.swift`** | Individual floating glass card with float physics (Y offset, rotation, gravity). |
+| **`FloatingStack.swift`** | Generic collapsible card stack. Config-driven with `.curiosityStack` and `.sessionDeck` presets. |
+| **`GlowOrb.swift`** | Single blurred radial-gradient circle. Decorative accent. |
+| **`GlowUnderline.swift`** | Underline ViewModifier with glow effect. |
+| **`GlowUnderlineView.swift`** | Standalone glow underline view. |
+| **`GradBadge.swift`** | Gradient badge component. Used in DesireMapView and ThemeTestView. |
+| **`MazePatternView.swift`** | Concentric ring maze with gaps/spokes. Three rendering layers. Embeds TileOrbitView at center. |
+| **`TileOrbitView.swift`** | Canvas-based comet orbit animation for small tiles (44–88pt). Zero GPU cost at rest. |
+| **`OrbitSparkBorderView.swift`** | Decorative border with orbital spark animation. |
+| **`PillBorder.swift`** | ViewModifier. Holographic pill border: cyan→purple→magenta gradient stroke + glow. |
+| **`SparkField.swift`** | Canvas-based campfire ember particle system for light mode. Screen-specific configs. |
+| **`FilamentMode.swift`** | **[DEAD CODE — never referenced. Delete.]** |
+| **`SectionHeader.swift`** | All-caps muted label for section dividers. |
 
-### `Compatibility/`
+---
 
-| File | What It Does |
-|---|---|
-| **`DesireMapView.swift`** | Desire map UI. Expandable category list where users privately rate intimacy items with `DesireLevel`. **⚠️ Placeholder data** — full persistence and partner reveal flow pending implementation. |
-
-### `Explore/`
-
-| File | What It Does |
-|---|---|
-| **`ExploreView.swift`** | Content discovery hub. **❌ STUB** — renders a label only. Not yet implemented. |
-
-### `Home/`
-
-| File | What It Does |
-|---|---|
-| **`HomeView.swift`** | Thin router. Switches on `appState.experienceType` → renders matching home view variant. Zero business logic. |
-| **`HomeDashboardView.swift`** | Main home dashboard. Shows categories, progress, session history, and quick-start buttons. |
-| **`HomeGateView.swift`** | Gate view for home. Handles loading state and permission checks. |
-| **`HomeMatchReadyView.swift`** | Couple home variant. Shows partner readiness status and synchronized session invitations. |
-| **`HomeRouterView.swift`** | Advanced router for complex home navigation flows. Handles deep linking and state restoration. |
-| **`HomeWaitingView.swift`** | Waiting state view for pending partner acceptance or sync. |
-| **`HomeViewSingle.swift`** | Home screen for solo users with no partner. |
-| **`HomeViewSolo.swift`** | Home screen for solo users who have a partner. |
-| **`HomeViewCoupleNew.swift`** | Home screen for couples new to ENM. |
-| **`HomeViewCoupleExp.swift`** | Home screen for couples with existing ENM experience. |
-| **`PostMapReflectionView.swift`** | Post-desire-map reflection screen. Synthesis of alignment data and relationship insights. |
-
-#### `Home/Components/`
+## `Design/Components/Input/`
 
 | File | What It Does |
 |---|---|
-| **`DesireMapIndicator.swift`** | Visual indicator showing desire map completion status. |
-| **`PartnerChip.swift`** | Compact partner profile chip for couple views. Name, status, photo. |
+| **`InteractiveField.swift`** | Styled text field with emoji/icon prefix. Themed background and text. |
+| **`RatingButtonGroup.swift`** | 2×2 grid of rating buttons for Desire Map. Bound to `DesireLevel?`. Haptic feedback. |
+| **`ToggleRow.swift`** | Icon + label + Toggle row for Settings. |
+
+---
+
+## `Design/Components/Navigation/`
+
+| File | What It Does |
+|---|---|
+| **`OnboardingNavBar.swift`** | Back chevron + centered `OnboardingProgressBar`. Frosted circle in light mode. |
+| **`OnboardingFooter.swift`** | Small footer below CTA ("Your data is encrypted…"). Adapts to light/dark. |
+| **`NavArrow.swift`** | Reusable chevron navigation arrow component. |
+| **`RacetrackTabBar.swift`** | Custom racetrack-style tab bar navigation. |
+| **`TabContentWrapper.swift`** | Wraps tab content. Handles safe area and layout constraints. |
+
+---
+
+## `Design/Components/Progress/`
+
+| File | What It Does |
+|---|---|
+| **`OnboardingProgressBar.swift`** | Animated progress bar for onboarding. Bloom glow, holographic shimmer, breathing pulse. |
+| **`ProgressBar.swift`** | Simple themed horizontal bar. `t.buttonGradient` fill on muted track. |
+| **`ProgressRingView.swift`** | Circular progress ring. Configurable line width. Track adapts to amoled/light. |
+| **`ScoreRing.swift`** | Circular ring displaying 0–100 score. Animates fill on appear. |
+| **`SpectrumBar.swift`** | Thin capsule filled with `t.spectrumGradient`. Decorative separator. |
+| **`OrbitIndicator.swift`** | Orbital animation progress indicator. Used in processing animations. |
+| **`ScreenshotProtectionModifier.swift`** | Listens for screenshot/screen-recording. Overlays blur + "Content Protected". |
+
+---
+
+## `Design/Components/Text/`
+
+| File | What It Does |
+|---|---|
+| **`GradientText.swift`** | Static gradient text. Dark: pink→purple→magenta. Light: magentaDark→magenta→orangeHot. |
+| **`LivingText.swift`** | Animated gradient text with breathing glow. TimelineView @ 30fps. App's animated text identity. |
+| **`KeywordHighlightText.swift`** | Renders text with keywords highlighted in cyan/magenta/gold via NSAttributedString. |
+
+---
+
+## `Features/Auth/Views/`
+
+| File | What It Does |
+|---|---|
+| **`SignInView.swift`** | Sign in with Apple screen. Uses `AuthService` via `@Environment`. |
+
+---
+
+## `Features/Compatibility/`
+
+| File | What It Does |
+|---|---|
+| **`DesireMapView.swift`** | Expandable category list where users privately rate intimacy items with `DesireLevel`. Persistence pending. |
+| **`Store/DesireMapStore.swift`** | Manages desire map category expansion and rating state. |
+
+---
+
+## `Features/Home/Views/`
+
+| File | What It Does |
+|---|---|
+| **`HomeDashboardView.swift`** | Main home dashboard. Categories, progress, session history, quick-start buttons. |
+| **`HomeRouterView.swift`** | Advanced home router. Deep linking, state restoration, routing logic. |
+| **`HomeGateView.swift`** | Gate view for home. Handles loading state and auth checks. |
+| **`HomeMatchReadyView.swift`** | Couple home variant. Partner readiness status and synchronized session invitations. |
+| **`HomeWaitingView.swift`** | Waiting state for pending partner acceptance or sync. |
+
+### `Features/Home/Components/`
+
+| File | What It Does |
+|---|---|
+| **`CardChestContainer.swift`** | Card chest/deck container. Shows available cards to play. |
+| **`DesireMapIndicator.swift`** | Visual indicator for desire map completion status. |
+| **`GravLiftView.swift`** | Gravity lift animation effect component. |
+| **`HomeWidgetShell.swift`** | Generic widget container for home screen cards. Enum-based rim variants. |
+| **`PartnerChip.swift`** | Compact partner profile chip. Name, status, initial. |
 | **`PickUpCard.swift`** | Quick-action card to resume or start a session. |
+| **`PostMapReflectionView.swift`** | Post-desire-map reflection screen. Synthesis of alignment data. |
 | **`ReflectionBannerView.swift`** | Banner prompting reflection after key moments. |
 | **`ReflectionCard.swift`** | Card for structured reflection prompts. |
 | **`ResearchTicker.swift`** | Scrolling research insights ticker. |
-| **`SessionCard.swift`** | Card summarizing a past session. Category, duration, cards discussed. |
 
-#### `Home/Models/`
-
-| File | What It Does |
-|---|---|
-| **`HomeEventEngine.swift`** | Event orchestration for home screen state transitions and notifications. |
-| **`HomeModels.swift`** | Data models for home screen views. Session summaries, category tiles, partner data. |
-
-### `MeUs/`
+### `Features/Home/Models/`
 
 | File | What It Does |
 |---|---|
-| **`MeUsView.swift`** | Personal profile + partner connection hub. Tab label adapts ("Me" for solo, "Us · Me" for couple). **❌ STUB** — not yet implemented. |
+| **`HomeModels.swift`** | Data models for home views. Session summaries, category tiles, partner data. `ReflectionCardState` enum. |
 
-### `More/`
-
-| File | What It Does |
-|---|---|
-| **`MoreView.swift`** | Settings / account / support hub. Also the sole visible screen for guest/browsing users. **❌ STUB** — placeholder only. |
-
-### `Onboarding/Components/`
-
-| File | What It Does |
-|---|---|
-| **`ContextCard.swift`** | Single card in the context-select stack. Dual-mode: light uses frosted ultraThinMaterial; dark uses intensity-keyed gradient. Embeds `TileOrbitView` as watermark. Breathing animation on confirm. *(Relocated from `Design/Components/Cards/`)* |
-| **`ContextCardStack.swift`** | Gesture-driven infinite-scroll card stack. Swipe to browse, tap to confirm/unconfirm. Auto-advances 0.45s after selection. *(Relocated from `Design/Components/Cards/`)* |
-| **`ContextIntensity.swift`** | Six intensity levels (ember → nova) mapping to visual properties: bg tint gradient, internal glow size/color/blur, border opacity, shadow color/radius. *(Relocated from `Design/Components/Cards/`)* |
-| **`ContextOption.swift`** | Plain data model for one context card. Holds `RelationshipContext`, `ContextIntensity`, title, subtitle, detail. *(Relocated from `Design/Components/Cards/`)* |
-| **`CuriosityPanelNudge.swift`** | Contextual nudge text shown below `CuriosityStatusStrip`. Guides user to complete both panels ("Select from both panels to continue" / "Swipe left — pick one more thing →" / "← Swipe back..."). |
-| **`CuriosityPill.swift`** | Selectable pill for curiosity picker panels. Gradient checkmark icon on selection. Border and background adapt to `CuriosityOption.contentType` and selection state. Dark/light dual-mode. |
-| **`CuriosityPreviewLine.swift`** | Italic preview text shown beneath a selected pill. Tells the user how their selection shapes their path. Subtle tinted background with matching border. |
-| **`CuriosityStatusStrip.swift`** | Three-dot panel indicator + selection count label. Active dot shows `HolographicShimmer` / `LightModeShimmer` with glow. Animates width on panel change. |
-
-### `Onboarding/Data/`
-
-| File | What It Does |
-|---|---|
-| **`OnboardingData.swift`** | The single mutable data bag threaded through the entire onboarding flow. Holds name, pronouns, mode, relationship context, curiosity selections, experience level, ground rules timestamp, and completion flag. Now includes `nmCardResponse` for CardReveal pill selection. |
-| **`CuriosityScreenConfig.swift`** | Config model driving `OnboardingCuriosityPickerView`. Two sections of labels, sublabels, option arrays, visibility flags. Derived from `OnboardingData`. |
-
-### `Onboarding/Design/`
-
-| File | What It Does |
-|---|---|
-| **`OnboardingAtmosphere.swift`** | Centralized atmosphere layer for all onboarding screens. Owns glow fields, spark fields, and transitions between atmosphere configs per screen. **New in this version.** |
-
-### `Onboarding/Layout/`
-
-| File | What It Does |
-|---|---|
-| **`OnboardingLayout.swift`** | Layout constants and utilities for onboarding screens. Screen-relative measurements, spacing, animation timings. **New in this version.** |
-
-### `Onboarding/Views/`
-
-| File | Screen | What It Does |
-|---|---|---|
-| **`OnboardingFlowView.swift`** | *Coordinator* | Flow coordinator. Defines the 8-step sequence, manages transitions via `advance()` with spring animations, derives `ExperienceType` on completion, writes to `AppState`, sets `hasCompletedOnboarding`. Passes `data: $onboardingData` to CardRevealView. |
-| **`OnboardingStatView.swift`** | Screen 0 | Trust trigger. Large emotional statistic with animated holographic glow + tap-to-expand citation + ethos statement before CTA. |
-| **`OnboardingBrandView.swift`** | Screen 0.5 | Animated brand reveal (auto-advance). Beam widths, opacities, wisp particles, center glow. Calls `onFinished` when complete. |
-| **`OnboardingNameView.swift`** | Screen 1 | Name + pronouns entry. Glass-style text field, pronoun pill selector, custom pronoun field. Three-slot entrance cascade (ANIM-STD). |
-| **`OnboardingModeSelectView.swift`** | Screen 2 | Solo vs. Couple mode + NM experience level (curious / exploring / experienced). Drives remainder of flow branching. (ANIM-STD-06–12) |
-| **`OnboardingContextView.swift`** | Screen 3 | Relationship context picker. Solo: 3 cards. Couple: 4 cards. Uses `ContextCardStack`. Auto-advances after selection. (ANIM-STD-13–18) |
-| **`OnboardingCuriosityPickerView.swift`** | Screen 4 | Two-section interest + intent picker. Config from `OnboardingData`. Uses `SelectablePill`. (ANIM-STD-19–26) |
-| **`OnboardingBuildingPathView.swift`** | Screen 6 | Non-interactive "Building your path" processing animation. Derives `defaultDifficulty` from `nmStage`. Auto-advances. (ANIM-STD-27–30) |
-| **`OnboardingCardRevealView.swift`** | Screen 6.5 | Card reveal with tap-to-flip mechanic. User flips card to reveal bridge prompt + 4 selectable pills. Idle animations (pulse, wiggle, skip text). Stores pill selection to `data.nmCardResponse`. Accepts `@Binding var data: OnboardingData`. |
-| **`OnboardingGroundRulesView.swift`** | Screen 7 | Must-acknowledge ethical framing. 3 promise cards with flip animations + reassurance text. No back, no skip. Writes acceptance timestamp + completion flags, then calls `onFinished`. (ANIM-STD-31–36) |
-| **`PairingForkView.swift`** | *(Couple fork)* | Couple-only decision: "Pair Now" (inline pairing) or "Pair Later" (skip to Settings). No data saving — closures only. |
-
----
-
-## `Models/`
-
-### `Models/Enums/`
+### `Features/Home/Store/`
 
 | File | What It Does | Reach |
 |---|---|---|
-| **`AppEnums.swift`** | Master enum file. All shared domain enums: `CardType`, `Difficulty`, `Sensitivity`, `TurnOrder`, `CategoryType`, `CategoryPhase`, `AssessmentDomain`, `DesireLevel`, `DesireAlignment`, `RelationshipContext`, `ExplorationMode`, `NMStage`, `PronounOption`, `RelationshipStatus`, `NMFlavor`, `CardStatus`, `PromptCategory`, `PromptDifficulty`, `WhoStarts`. | **`FOUNDATION`** |
-| **`AppTab.swift`** | Four tab cases: `home`, `meUs`, `explore`, `more`. `Hashable` for `TabView` selection. | |
-| **`ExperienceType.swift`** | Five experience modes: `browsing`, `soloSingle`, `soloPartnered`, `coupleNew`, `coupleExperienced`. Drives all home-screen routing. `CaseIterable`, `Codable`. | **`BACKBONE`** |
-
-### `Models/Content/` *(read-only, decoded from bundled JSON)*
-
-| File | What It Does |
-|---|---|
-| **`ContentAssessmentQuestion.swift`** | One of 20 assessment questions (5 domains x 4). Types: scale (1–5 Likert) or multi-select. Answers live in `AssessmentResponse`, not here. |
-| **`ContentCard.swift`** | Read-only content model for a conversation card within a category. Per-card progress tracked separately in `CardProgress`. |
-| **`ContentCategory.swift`** | One of the 6 topic categories. Progress tracking lives in SwiftData, not here. |
-| **`ContentDesireItem.swift`** | One item on the Desire Map. "Not For Me" ratings are never revealed to partners — alignment engine returns `.boundary`. |
-| **`Prompt.swift`** | Prompt card model for `SessionView`. Text, highlight words, category, difficulty, sensitivity flags, `canSkip`, `whoStarts`. Includes static sample data. |
-
-### `Models/Persistence/` *(SwiftData `@Model` classes — local-first)*
-
-| File | What It Does |
-|---|---|
-| **`RatingRecord.swift`** | One record per prompt shown in a session. Owned by `SessionRecord` via cascade. Stores prompt text, reaction, timestamp. |
-| **`SessionRecord.swift`** | One row per completed or safe-worded session. Category, difficulty, duration, prompts shown, completion flag, date. |
-| **`StreakRecord.swift`** | Singleton record. Tracks `currentStreak`, `longestStreak`, `totalSessions`, `lastSessionDate`. Updated by `DataStore`. |
-
-### `Models/Progress/` *(SwiftData `@Model` classes — synced to Supabase)*
-
-| File | What It Does |
-|---|---|
-| **`AssessmentResponse.swift`** | One user's answer to one assessment question. Scale value or selected option IDs, computed score, timestamp. Owned by `UserProfile`. |
-| **`AssessmentResult.swift`** | Overall assessment result. Per-domain scores (string-keyed dict), composite weighted score, readiness band. Owned by `UserProfile`. |
-| **`CardProgress.swift`** | Couple-level per-card progress: discussed/skipped/bookmarked, timestamps, notes. Owned by `Couple` via cascade. |
-| **`Couple.swift`** | Links two `UserProfile`s as partners. Owns `CardProgress` + `CoupleSessionRecord` via cascade. Deleting a `Couple` does NOT delete the profiles. |
-| **`CoupleSessionRecord.swift`** | One couple session record. Cards discussed/skipped, timing, metadata. Owned by `Couple`. |
-| **`DesireMatch.swift`** | Positive desire alignment between two partners on a specific item. Only created when alignment is positive. Owned by `Couple`. |
-| **`DesireRating.swift`** | One person's private rating of one desire map item. Never exposed to partner — used only to compute `DesireMatch`. Owned by `UserProfile`. |
-| **`UserProfile.swift`** | Full user profile. Name, pronouns, orientation, mode, experience level, `NMFlavor`, curiosity selections. Owns `AssessmentResponse`, `AssessmentResult`, `DesireRating` collections. |
+| **`HomeStore.swift`** | `@Observable @MainActor`. Brain of home flow. Deck loading, map completion, routing state. Dependencies injected via init — never from `@Environment`. | **`HUB`** |
 
 ---
 
-## File Count by Directory
+## `Features/Sessions/`
 
-| Directory | Files |
+| File | What It Does | Reach |
+|---|---|---|
+| **`SessionView.swift`** | Thin view — renders only. All logic lives in `SessionStore`. | |
+| **`SessionStore.swift`** | `@Observable @MainActor`. Brain of card session. Card navigation, result recording, persistence. Dependencies injected via init. | **`HUB`** |
+
+---
+
+## `Features/Play/`
+
+| File | What It Does |
 |---|---|
-| `App/` | 2 |
-| `App/Theme/` | 5 |
-| `Core/Services/` | 11 |
-| `Data/Store/` | 2 |
-| `Design/Components/` | ~47 |
-| `Design/Components/Banners/` | 1 |
-| `Design/Components/Buttons/` | 5 |
-| `Design/Components/Cards/` | 15 |
-| `Design/Components/Effects/` | 13 |
-| `Design/Components/Input/` | 3 |
-| `Design/Components/Navigation/` | 2 |
-| `Design/Components/Progress/` | 6 |
-| `Design/Components/Text/` | 3 |
-| `Design/Components/Misc/` | 7 |
-| `Features/Auth/` | 1 |
-| `Features/Compatibility/` | 1 |
-| `Features/Explore/` | 1 |
-| `Features/Home/` | 10 |
-| `Features/Home/Components/` | 7 |
-| `Features/Home/Models/` | 2 |
-| `Features/MeUs/` | 1 |
-| `Features/More/` | 1 |
-| `Features/Onboarding/` | ~28 |
-| `Features/Onboarding/Components/` | 8 |
-| `Features/Onboarding/Data/` | 2 |
-| `Features/Onboarding/Design/` | 1 |
-| `Features/Onboarding/Layout/` | 1 |
-| `Features/Onboarding/Views/` | 11 |
-| `Features/Progress/` | 1 |
-| `Features/Sessions/` | 1 |
-| `Features/Settings/` | 3 |
-| `Models/Content/` | 5 |
-| `Models/Enums/` | 3 |
-| `Models/Persistence/` | 3 |
-| `Models/Progress/` | 8 |
-| `Resources/` | 1 (Documentation) |
-| **Total** | **~160** |
-
-*Note: Count reflects consolidation from old `Card/` to `Cards/` (plural) directory in this redesign cycle. Some components may be nested across multiple files.*
+| **`PlayView.swift`** | Play hub. Browse and start sessions by category or difficulty. |
 
 ---
 
-## Recent Changes (This Session)
+## `Features/Map/`
 
-- **OnboardingFlowView.swift**: Restored to clean ANIM-STD state; pass `data: $onboardingData` to CardRevealView (cardReveal case line 135)
-- **OnboardingCardRevealView.swift**: Accepts `@Binding var data: OnboardingData`; EncouragementView body simplified to single Text
-- **OnboardingBuildingPathView.swift**: Fixed BPFloatingFragment scope (moved from nested in BPOrbitCanvas to top-level private struct)
-- **OnboardingGroundRulesView.swift**: Removed baseBackground/glowOverlay/sparkOverlay; background now uses Color.clear + atmosphereLayer; previews wrapped in ZStack with AppColors background + OnboardingAtmosphere
-- **File reorganization**: Moved Cards from `Design/Components/Card/` to `Design/Components/Cards/` (note plural); deleted old `Card/` directory
-- **Context components relocated**: `ContextCard`, `ContextCardStack`, `ContextIntensity`, `ContextOption` moved from `Design/Components/Cards/` → `Features/Onboarding/Components/`
-- **New card infrastructure**: `CardLayout`, `CardBackView`, `CardFrontView`, `CardRevealPillButton`, `CardShadows` added to `Design/Components/Cards/`
-- **New flip cards**: `CuriosityCardBack` + `CuriosityFlipCard` added to `Design/Components/Cards/`
-- **New effects**: `FloatingCard`, `FloatingStack`, `MazePatternView`, `TileOrbitView` added to `Design/Components/Effects/`
-- **New text component**: `GradientText` added to `Design/Components/Text/`
-- **New onboarding components**: `CuriosityPill`, `CuriosityPanelNudge`, `CuriosityPreviewLine`, `CuriosityStatusStrip` added to `Features/Onboarding/Components/`
+| File | What It Does |
+|---|---|
+| **`MapView.swift`** | Navigation hub for desire map and relationship insights. |
+| **`PrismView.swift`** | Prism visualization. Alignment/relationship insights. Enum `PrismMode`-driven. |
 
 ---
 
-## Dead Code & Maintenance Inventory
+## `Features/Learn/Views/`
 
-### 🚨 Critical Issues
+| File | What It Does |
+|---|---|
+| **`LearnView.swift`** | Learn hub. Educational content about communication, boundaries, intimacy. |
+| **`ConstellationNode.swift`** | Interactive node in learn constellation. Topic with expandable details. |
 
-| Item | File | Details | Impact |
-|---|---|---|---|
-| **Exposed API Keys** | `Config.swift:2-3` | Supabase URL + anon key hardcoded in source code (committed to git). Should be in xcconfig or environment. | **SECURITY**: Credentials visible in version control. |
-| **SessionView God Object** | `Features/Sessions/SessionView.swift:4-50` | Manages session state, UI presentation, timing, card advancement, progress tracking, and persistence all in one view. 50+ lines of logic. | **MAINTAINABILITY**: Hard to test, difficult to extend, state changes scattered. |
-| **UserDefaults Key Inconsistency** | `SyncManager.swift` vs `AppState.swift` | SyncManager uses hardcoded strings (`"supabaseProfileId"`, `"pendingProfileSync"`); AppState uses `PersistenceKey` enum. No shared key management. | **MAINTAINABILITY**: Inconsistent patterns, key duplication, hard to refactor. |
-| **ContentLoader.swift Fatal Error** | `Core/Services/ContentLoader.swift` | Uses `fatalError` on JSON parse failure. A typo in bundled JSON crashes the app in production. | **RELIABILITY**: No graceful fallback; bundle errors are unrecoverable. |
+---
 
-### 🗑️ Dead Code to Remove
+## `Features/Pulse/`
 
-| Item | File | Lines | Action |
-|---|---|---|---|
-| **FilamentMode** | `FilamentMode.swift` | Entire file | No references. Delete. |
-| **10 Unused Colors** | `AppColors.swift` | 10 tokens | `purpleBright`, `electricViolet`, `cyanDark`, `deepPurple`, `surfaceRaised`, `textQuaternary`, `btnGhostBorder`, `btnGhostText`, `badgeBg`, `destructive` — remove. |
+| File | What It Does |
+|---|---|
+| **`PulseFullView.swift`** | Full pulse mood tracking view. Daily check-ins, graph, tier guide. |
+| **`PulseWidget.swift`** | Compact pulse widget. Quick mood entry. |
+| **`PulseSheetView.swift`** | Sheet view for pulse interactions. |
+| **`PulseGraph.swift`** | Graph visualization of pulse entries over time. |
+| **`PulseDotSummary.swift`** | Summary view of mood dots. |
+| **`PulseCanvasScrollView.swift`** | Canvas-based scrollable pulse visualization. |
+| **`CheckInShell.swift`** | Shell/container for daily check-in flow. |
+| **`DailyCheckInView.swift`** | Daily mood check-in interface. Enum `CheckInPhase`-driven stages. |
+| **`TierGuideSheet.swift`** | Guide sheet explaining tier levels (1–5 mood scale). |
 
-### ⚠️ Code Quality Issues
+### `Features/Pulse/Store/`
+
+| File | What It Does | Reach |
+|---|---|---|
+| **`PulseStore.swift`** | `@Observable`. Owns pulse entries array. Persists to `UserDefaults` (`"pulse.entries.v1"`). | **`HUB`** |
+
+---
+
+## `Features/Settings/`
+
+| File | What It Does |
+|---|---|
+| **`SettingsView.swift`** | Settings hub. Account, theme, privacy, support links. |
+| **`ThemePickerView.swift`** | Theme mode picker (system/light/amoled). |
+| **`ThemeTestView.swift`** | Debug view for theme tokens and components. |
+
+---
+
+## `Features/Pairing/`
+
+| File | What It Does | Reach |
+|---|---|---|
+| **`PairingInviteView.swift`** | Generate and share pairing code with partner. | |
+| **`PairingJoinView.swift`** | Join partner via pairing code. | |
+| **`PairingSettingsView.swift`** | Pairing settings. View/edit partner, disconnect. | |
+| **`Store/PairingStore.swift`** | `@Observable @MainActor`. Enum `PairingLinkState`-driven: idle/generating/waitingForPartner/joining/linked/error. | **`HUB`** |
+
+---
+
+## `Features/Onboarding/Views/` — **[LEGACY — excluded from build]**
+
+> Kept for reference during OB overhaul. See `Phases/` for current implementation.
+
+| File | Screen | Notes |
+|---|---|---|
+| **`OnboardingFlowView.swift`** | Coordinator | Legacy flow coordinator. |
+| **`OnboardingBrandView.swift`** | Screen 0.5 | Animated brand reveal (now `SplashScreenView`). |
+| **`OnboardingNameView.swift`** | Screen 1 | Name + pronouns entry. |
+| **`OnboardingStatView.swift`** | Screen 0 | Trust trigger statistic with glow. |
+| **`OnboardingModeSelectView.swift`** | Screen 2 | Solo vs. couple mode + NM experience level. |
+| **`OnboardingContextView.swift`** | Screen 3 | Relationship context picker. |
+| **`OnboardingCuriosityPickerView.swift`** | Screen 4 | Two-section interest + intent picker. |
+| **`OnboardingCardRevealView.swift`** | Screen 6.5 | Card reveal with tap-to-flip mechanic. |
+| **`OnboardingGroundRulesView.swift`** | Screen 7 | Ethical framing + flip cards acknowledgement. |
+
+---
+
+## `Features/Onboarding/Phases/` — **[CURRENT IMPLEMENTATION]**
+
+| File | What It Does |
+|---|---|
+| **`NamePhase.swift`** | Name + pronouns + gender identity entry. Text fields and pill selectors. |
+| **`ModeSelectPhase.swift`** | Solo vs. together mode + NM experience level. Drives flow branching. |
+| **`ExperienceLevelPhase.swift`** | NM stage selection (curious/exploring/experienced) with detailed descriptions. |
+| **`ContextPhase.swift`** | Relationship context picker. Card stack. Solo: 3 cards. Together: 4 cards. |
+| **`CuriosityPhase.swift`** | Two-section interest + intent picker. Pills with gradient checkmarks. |
+| **`GenderPhase.swift`** | Gender identity optional entry. Text field with suggestions. |
+| **`StatPhase.swift`** | Trust trigger statistic. Animated holographic glow + citation + ethos statement. |
+| **`FoilPhase.swift`** | Foil tear mechanic. Card reveal with destructive interaction. `FoilTear` models tear state. |
+| **`FounderLetterPhase.swift`** | Founder welcome letter. Onboarding frame-setting. |
+| **`BuildingPathPhase.swift`** | Non-interactive "Building your path" processing animation. `OrbitIndicator` shows progress. |
+| **`QuizPhase.swift`** | Assessment or knowledge check. (Pending full design.) |
+
+### `Features/Onboarding/Canvas/`
+
+| File | What It Does |
+|---|---|
+| **`OnboardingCanvasView.swift`** | Canvas-based onboarding render. Orchestrates drawing and phase animations. |
+| **`TableSurfaceView.swift`** | Table surface visual. Spatial context for cards and canvas elements. |
+| **`VaylDirector.swift`** | `@Observable`. Orchestrates phase transitions, animations, and timing. Brain of canvas onboarding. |
+
+### `Features/Onboarding/Components/`
+
+| File | What It Does |
+|---|---|
+| **`ContextCard.swift`** | Single card in context stack. Light: frosted ultraThinMaterial. Dark: intensity-keyed gradient. Embeds TileOrbitView. |
+| **`ContextCardStack.swift`** | Gesture-driven infinite-scroll card stack. Auto-advances 0.45s after selection. |
+| **`ContextIntensity.swift`** | Six intensity levels (ember → nova) mapping gradient, glow, border, shadow. |
+| **`ContextOption.swift`** | Data model for one context card. Holds `RelationshipContext`, intensity, title, subtitle, detail. |
+| **`CuriosityPill.swift`** | Selectable pill for curiosity picker. Gradient checkmark on selection. Border/background adapt to contentType. |
+| **`CuriosityPanelNudge.swift`** | Contextual nudge text guiding user to complete both picker panels. |
+| **`CuriosityPreviewLine.swift`** | Italic preview text showing how selection shapes user's path. |
+| **`CuriosityStatusStrip.swift`** | Three-dot panel indicator + selection count. Active dot shows HolographicShimmer. |
+| **`OnboardingAtmosphere.swift`** | Centralized atmosphere layer. Owns glow fields, spark fields, per-screen config transitions. |
+| **`CornerDeckView.swift`** | Corner deck visual element. Layered cards in corner for spatial context. |
+| **`CornerMarksView.swift`** | Corner marks/cutouts for design framing. |
+
+### `Features/Onboarding/Models/`
+
+| File | What It Does |
+|---|---|
+| **`OnboardingData.swift`** | Mutable data bag. Name, pronouns, mode, context, curiosity selections, experience level. Threaded through the full OB flow. |
+| **`VaylCardModel.swift`** | `@Observable`. Card reveal interaction state. Flip state, pill selections. |
+| **`FoilTear.swift`** | Struct. Models one foil tear. Position, tear progress, animations. |
+
+### `Features/Onboarding/Store/`
+
+| File | What It Does | Reach |
+|---|---|---|
+| **`OnboardingStore.swift`** | `@Observable @MainActor`. Orchestrates phase transitions, data persistence. Saves `UserProfile` on completion. Derives `AppMode` and `NMStage` from selections. | **`HUB`** |
+| **`OnboardingStep.swift`** | Enum. CaseIterable phase markers for step sequencing. | |
+| **`CuriosityScreenConfig.swift`** | Config model driving `CuriosityPhase`. Two sections of labels, options, visibility flags. Derived from `OnboardingData`. | |
+
+### `Features/Onboarding/Layout/`
+
+| File | What It Does |
+|---|---|
+| **`OnboardingLayout.swift`** | Layout constants and utilities. Screen-relative measurements, spacing, animation timings. |
+
+### `Features/Onboarding/Renders/`
+
+| File | What It Does |
+|---|---|
+| **`ProjectedTextView.swift`** | Perspective text rendering. Text appears to recede into space. |
+| **`DealPointView.swift`** | Deal point marker/callout component. Annotates key onboarding moments. |
+
+---
+
+## Dead Code & Maintenance
 
 | Item | File | Action |
 |---|---|---|
-| **Nested SupabaseProfile** | `ProfileService.swift` | Extract to `Models/ProfileService/SupabaseProfile.swift` for cross-service visibility. |
-| **Unused CTABorderModifier** | `HoloCTAButton.swift:165-176` | Either refactor to use it or remove. |
-| **Limited GradBadge Usage** | `GradientButton.swift:45-59` | Used only in 2 files (`DesireMapView`, `ThemeTestView`). Deprecate or move to test utilities. |
-| **Duplicate Header Comments** | `SyncManager.swift`, `ProfileService.swift` | Both files have header comment blocks appearing twice. Remove the duplicates. |
-
-### 🔧 Magic Numbers & Missing Constants
-
-| Item | Files Affected | Fix |
-|---|---|---|
-| **Animation Durations** | ContextCard, ConversationCard, ContextCardStack, SessionView (7+ instances) | Extract to `Animation.cardTransition` and similar constants. |
-| **Corner Radius `20`** | ContextCard, ConversationCard, SessionView, CardStyle (4+ instances) | Define `DesignTokens.cardCornerRadius = 20`. |
-| **Padding `28`** | ContextCard, ConversationCard (3+ instances) | Define `DesignTokens.cardPadding = 28`. |
-| **Light Mode Shadow Spread** | ContextCard:157-159, SelectablePill:334-339 | Extract to `.lightGlowShadows()` modifier. |
-| **Dark/Light Border Logic** | SelectablePill, ContextCard, HoloCTAButton | Create `ThemedBorderModifier`. |
-| **Blob Timing Arrays** | `AuroraGlowField.swift:270-273` | Extract to named `BlobTimingConfig` struct. |
-
-### 📊 Naming Issues
-
-| Item | File | Fix |
-|---|---|---|
-| **Boolean Naming** | `UserProfile.swift:39-40` | `mythBusterComplete` → `hasMythBusterCompleted`; `mythBusterSkipped` → `isMythBusterSkipped`. |
-| **Vague Parameters** | `ContextCard.swift:7-8` | `index: Int` → `cardIndex: Int`; `total: Int` → `totalCards: Int`. |
-| **Single-Letter Theme Var** | `ProgressRingView`, `ContextCard` | `@Environment(\.theme) private var t` → use `palette`. |
-| **Abbreviated NM** | `AppEnums.swift` | Document or standardize `nmLogistics` / `NM` usage. |
-
----
-
-## Key Architectural Notes
-
-- **Onboarding Atmosphere**: Centralized in `OnboardingAtmosphere.swift` (Design/) for all screens; config-driven per-screen transitions
-- **Home Expansion**: Home directory grew significantly with `HomeDashboardView`, component library, and event engine for complex state management
-- **Card System Consolidation**: New unified card rendering system in `Design/Components/Cards/` for both conversation and context cards
-- **ANIM-STD Protocol**: All onboarding screens now use standardized entrance animations (three-slot cascade: slot A @ 0ms, slot B @ 100ms, slot C @ 200ms) with reduce-motion fallback
-- **Desire Map Architecture**: Still using private-first model; `DesireRating` never exposed to partners; alignment computed server-side via `DesireMatch`
-
----
-
-## Design System Gaps (Missing Constants)
-
-The codebase lacks centralized constants for spacing, sizing, and animations. These are currently scattered as magic numbers:
-
-| Category | Current State | Recommended Constant |
-|---|---|---|
-| **Card Corner Radius** | `20` hardcoded in 4+ files | `DesignTokens.cardCornerRadius = 20` |
-| **Card Padding** | `28` hardcoded in 3+ files | `DesignTokens.cardPadding = 28` |
-| **Button Height** | Explicit in `HoloCTAButton` (56), implicit/padding-based in others | `DesignTokens.buttonHeight = 56` |
-| **Line Width (borders)** | 1.5–3.0 depending on context | `DesignTokens.borderStandard = 1.5`, `.strong = 2.5`, `.cta = 3.0` |
-| **Card Transition Duration** | 0.25–0.4s scattered across files | `Animation.cardTransition` constant |
-| **Spring Animation** | `spring(response: 0.4, dampingFraction: 0.75/0.7)` used 7+ times | `Animation.cardSpring`, `Animation.pillSpring` |
-| **Light Mode Shadows** | Triple-shadow block (magenta/purple/gold) copied in 2 files | `.lightGlowShadows()` ViewModifier |
-| **Dark/Light Border Logic** | Conditional repeated in 3+ files | `ThemedBorderModifier` struct |
-
-**Action**: Create a `DesignTokens` enum (or split into `Spacing`, `Sizing`, `Animation`) to centralize these values.
+| **FilamentMode** | `Design/Components/Effects/FilamentMode.swift` | Never referenced. Delete when safe. |
+| **Legacy OB Views** | `Features/Onboarding/Views/` (9 files) | Excluded from build. Delete after OB overhaul ships. |
+| **DataStore stubs** | `Core/Persistence/DataStore.swift` | RatingRecord/StreakRecord replacements pending. |
