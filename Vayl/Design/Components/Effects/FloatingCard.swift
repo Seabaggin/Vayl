@@ -205,7 +205,7 @@ private var glassSurface: some View {
                 // Blend tint over base surface
                 return AnyShapeStyle(LinearGradient(
                     colors: [
-                        AppColors.pillSurface.opacity(0.85),
+                        AppColors.glassFrostPill.opacity(0.85),
                         AppColors.pillSurfaceBottom.opacity(0.85),
                     ],
                     startPoint: .topLeading,

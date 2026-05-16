@@ -9,7 +9,6 @@
 import SwiftUI
 
 struct ProgressBar: View {
-    @Environment(\.theme) private var t
     let value: Double
     let max: Double
 
@@ -17,10 +16,10 @@ struct ProgressBar: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(t.isDark ? .white.opacity(0.06) : t.surface3)
+                    .fill(AppColors.borderSubtle)
 
                 Capsule()
-                    .fill(t.buttonGradient)
+                    .fill(AppColors.spectrumBorder)
                     .frame(width: geo.size.width * (value / max))
                     .animation(AppAnimation.slow, value: value)
             }

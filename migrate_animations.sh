@@ -1,14 +1,16 @@
-echo "=== FINAL PHASE 1 AUDIT ===" && \
-echo "SPACING padding:" && grep -rn "\.padding(.*[0-9]" --include="*.swift" --exclude-dir=".build" --exclude-dir="SourcePackages" ./Vayl | grep -v "AppSpacing\|//\|safeAreaInsets\|layout\.\|lineWidth\|cornerRadius\|padding(-\|TODO\|intentional\|seam\|bleed\|LAYOUT-FIX\|max(\|\-[0-9]" | wc -l && \
-echo "SPACING spacing::" && grep -rn "spacing: [1-9]" --include="*.swift" --exclude-dir=".build" --exclude-dir="SourcePackages" ./Vayl | grep -v "AppSpacing\|//\|response:\|dampingFraction:\|AppGrid" | wc -l && \
-echo "SPACING Spacer:" && grep -rn "Spacer(minLength: [1-9]" --include="*.swift" --exclude-dir=".build" --exclude-dir="SourcePackages" ./Vayl | grep -v "AppSpacing\|//" | wc -l && \
-echo "RADIUS:" && grep -rn "cornerRadius: [0-9]\|\.cornerRadius([0-9]" --include="*.swift" --exclude-dir=".build" --exclude-dir="SourcePackages" ./Vayl | grep -v "AppRadius\|//\|lineWidth\|1\.25\|1\.5\|- [0-9]" | wc -l && \
-echo "ANIMATION durations:" && grep -rn "easeOut(duration:\|easeIn(duration:\|easeInOut(duration:" --include="*.swift" --exclude-dir=".build" --exclude-dir="SourcePackages" ./Vayl | grep -v "AppAnimation\|//\|cinematic\|k \*\|ambientDrift\|ambientPulse\|ambientShimmer\|repeatForever\|duration)\|animationDuration\|fadeDuration\|min(duration\|duration \*\|Double\.random\|reduceMotion\|OnboardingBuildingPathView\|OnboardingBrandView\|OnboardingCardRevealView\|PulseDotSummary\|CardCarousel\|AtmosphericGhostDeck\|OnboardingGroundRulesView\|OnboardingGlowField\|HomeGlowField\|GlowUnderline\|LightModeShimmer\|AuroraGlowField\|HolographicShimmer\|OnboardingAtmosphere\|ConversationCard\|OnboardingModeSelectView\|DailyCheckInView" | wc -l && \
-echo "ANIMATION bare withAnimation:" && grep -rn "withAnimation {" --include="*.swift" --exclude-dir=".build" --exclude-dir="SourcePackages" ./Vayl | grep -v "//" | wc -l && \
-echo "ANIMATION springs:" && grep -rn "\.spring(response:" --include="*.swift" --exclude-dir=".build" --exclude-dir="SourcePackages" ./Vayl | grep -v "AppAnimation\|//" | wc -l && \
-echo "FONT.SYSTEM:" && grep -rn "Font\.system\|\.font(\.system\|\.font(.system" --include="*.swift" --exclude-dir=".build" --exclude-dir="SourcePackages" ./Vayl | grep -v "//\|debugFontList\|UIFont\|ThemeTestView\|ScoreRing\|TierGuideSheet\|PulseGraph\|monospaced" | wc -l && \
-echo "FONT.CUSTOM missing relativeTo:" && grep -rn "Font\.custom(" --include="*.swift" --exclude-dir=".build" --exclude-dir="SourcePackages" ./Vayl | grep -v "relativeTo:\|//" | wc -l && \
-echo "SF SYMBOLS:" && grep -rn 'Image(systemName: "' --include="*.swift" --exclude-dir=".build" --exclude-dir="SourcePackages" ./Vayl | grep -v "AppIcons\|//" | wc -l && \
-echo "UISCREEN:" && grep -rn "UIScreen\.main" --include="*.swift" --exclude-dir=".build" --exclude-dir="SourcePackages" ./Vayl | grep -v "//" | wc -l && \
-echo "withAnimation IN STORES:" && grep -rn "withAnimation" --include="*Store.swift" --exclude-dir=".build" ./Vayl | grep -v "//" | wc -l && \
-echo "=== END ==="
+echo "=== RacetrackTabBar — .top, 120 ===" && \
+grep -n "\.top, 120\|\.top,120" Features/Home/Components/RacetrackTabBar.swift && \
+echo "=== HomeDashboardView — .top, 60 and .bottom, 100 ===" && \
+grep -n "\.top, 60\|\.top,60\|\.bottom, 100\|\.bottom,100" Features/Home/HomeDashboardView.swift && \
+echo "=== HomeRouterView — .bottom, 100 ===" && \
+grep -n "\.bottom, 100\|\.bottom,100" Features/Home/HomeRouterView.swift && \
+echo "=== GravLiftView — .vertical, 60 ===" && \
+grep -n "\.vertical, 60\|\.vertical,60" Features/Home/Components/GravLiftView.swift && \
+echo "=== PulseFullView — .top, 60 ===" && \
+grep -n "\.top, 60\|\.top,60" Features/Pulse/PulseFullView.swift && \
+echo "=== SignInView — Spacer height 60 ===" && \
+grep -n "Spacer.*60\|\.top, 60\|\.top,60" Features/Auth/SignInView.swift && \
+echo "=== AppShell — bottomInset + 8 ===" && \
+grep -n "bottomInset.*+.*8\|\.bottom.*bottomInset" App/AppShell.swift && \
+echo "=== SparkField — .top, 80 ===" && \
+grep -n "\.top, 80\|\.top,80" Design/Components/Effects/SparkField.swift

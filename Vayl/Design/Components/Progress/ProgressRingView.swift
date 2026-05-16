@@ -8,7 +8,6 @@ struct ProgressRingView: View {
     let progress: Double // 0.0 to 1.0
     let lineWidth: CGFloat
     let size: CGFloat
-    @Environment(\.theme) private var t
 
     init(progress: Double, lineWidth: CGFloat = 6, size: CGFloat = 60) {
         self.progress = progress
@@ -22,7 +21,7 @@ struct ProgressRingView: View {
             Circle()
                 .trim(from: 0, to: 1)
                 .stroke(
-                    t.isDark ? AppColors.borderSubtle : t.surface3,
+                    AppColors.borderSubtle,
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .frame(width: size, height: size)
@@ -30,7 +29,7 @@ struct ProgressRingView: View {
             Circle()
                 .trim(from: 0, to: min(max(progress, 0), 1))
                 .stroke(
-                    t.buttonGradient,
+                    AppColors.spectrumBorder,
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .frame(width: size, height: size)
@@ -39,7 +38,7 @@ struct ProgressRingView: View {
             // Center content
             Text("\(Int(progress * 100))%")
                 .font(.system(size: size * 0.22, weight: .bold, design: .rounded)) // intentional — computed geometric badge font, size derived from ring diameter
-                .foregroundStyle(t.text)
+                .foregroundStyle(AppColors.textPrimary)
         }
         .frame(width: size, height: size)
     }

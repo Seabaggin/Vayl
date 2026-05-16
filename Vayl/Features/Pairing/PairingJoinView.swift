@@ -104,9 +104,9 @@ struct PairingJoinView: View {
             codeInputField
 
             // Submit button
-            HoloCTAButton(
-                title: isLoading ? "Linking..." : "Link with partner",
-                isEnabled: canSubmit && !isLoading
+            VaylButton(
+                label: isLoading ? "Linking..." : "Link with partner",
+                isDisabled: !(canSubmit && !isLoading)
             ) {
                 isInputFocused = false
                 Task {
@@ -225,9 +225,8 @@ struct PairingJoinView: View {
                     .multilineTextAlignment(.center)
             }
 
-            HoloCTAButton(
-                title: "Try Again",
-                isEnabled: true
+            VaylButton(
+                label: "Try Again"
             ) {
                 store.reset()
                 codeInput     = ""

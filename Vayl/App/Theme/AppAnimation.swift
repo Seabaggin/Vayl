@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 5/1/26.
 //
 
-
 // App/Theme/AppAnimation.swift
 
 import SwiftUI
@@ -65,6 +64,18 @@ internal enum AppAnimation {
     /// Do not use for UI response animations — those use slow or enter.
     static let cinematic: Double = 1.2
 
+    /// Cinematic ease-out — TableSurfaceView fade in/out.
+    /// Use this instead of constructing .easeOut(duration: AppAnimation.cinematic) inline.
+    static let cinematicFade: Animation = .easeOut(duration: AppAnimation.cinematic)
+
+    /// 0.35s material expand — Citation panel expand and collapse.
+    /// timingCurve (0.4, 0, 0.2, 1): standard deceleration curve — element
+    /// enters fast and eases into its resting position. Used for the expandable
+    /// citation card in StatPhase. Not a general-purpose animation token — do
+    /// not use outside StatPhase without deliberate intent.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let materialExpand: Animation = .timingCurve(0.4, 0, 0.2, 1, duration: 0.35)
+
     /// Spring — Physical, elastic responses to direct manipulation.
     /// Use for card lifts, pill selections, drag release snapping, and any interaction
     /// where the element should feel like it has mass and momentum.
@@ -111,6 +122,233 @@ internal enum AppAnimation {
     /// and light-catch effects on premium surfaces.
     /// Reduce motion: remove the animation entirely — shimmer is purely decorative.
     static let ambientShimmer: Double = 1.2
+
+    // MARK: — Border Effect
+        // Used by VaylBorderEffect. Applied to the spectrum stroke fill and glow pop
+        // on VaylButton, SelectablePill, sheets, and any bordered surface.
+        //
+        // Spring timing note:
+        // borderFill uses a spring, not a cubic-bezier. Spring animations do not
+        // have a fixed wall-clock duration — response: 0.36 is the spring's natural
+        // period, not its settle time. The actual visual settle is longer (~0.52s
+        // at dampingFraction: 0.9). borderFillDuration accounts for this by using
+        // the observed settle time rather than the spring response value.
+        // If borderFill's spring parameters change, re-measure and update
+        // borderFillDuration to match the new observed settle time.
+        //
+        // Reduce motion fallback: borderFill → instant state change, no animation.
+        // Hairline tokens are opacity-only — safe under reduce motion as-is.
+
+        /// Observed settle duration of borderFill — used in onPressUp() to calculate
+        /// how long to wait before firing the glow so it lands exactly when the arcs meet.
+        /// This is NOT the spring response value. It is the wall-clock time at which
+        /// the spring animation is perceptually complete (within 1pt of target).
+        /// Re-measure if borderFill spring parameters change.
+        static let borderFillDuration: Double = 0.30
+
+        /// Spring — Spectrum border filling around a pill on press.
+        /// Two arcs sweep from top-center down to meet at bottom-center simultaneously.
+        /// response: 0.36, dampingFraction: 0.9 — snappy initial velocity, no visible
+        /// bounce. The circuit-completing feel comes from the arcs arriving with
+        /// confidence rather than coasting in.
+        /// Reduce motion: skip animation entirely — border jumps to filled state.
+        static let borderFill: Animation = .spring(response: 0.36, dampingFraction: 0.9)
+
+        /// 0.12s ease-out — Glow bursting on the moment arcs meet at bottom-center.
+        /// Short and fast — this should feel like a flash of energy completing the
+        /// circuit, not a bloom or fade-in. The intensity peak is immediate.
+        /// Reduce motion: skip — no glow fires under reduce motion.
+        static let borderGlowIn: Animation = .easeOut(duration: 0.12)
+
+        /// 0.28s ease-in — Glow dissipating after the hold period.
+        /// Ease-in communicates energy draining — the glow accelerates away from
+        /// the peak rather than fading linearly. Faster than the previous 0.38s
+        /// so the button feels resolved rather than lingering.
+        /// Reduce motion: skip — no glow fires under reduce motion.
+        static let borderGlowOut: Animation = .easeIn(duration: 0.28)
+
+        /// How long the glow holds at full intensity before borderGlowOut begins.
+        /// Not an Animation — a raw TimeInterval consumed by Task.sleep in VaylButton.
+        /// 0.12s is short enough to clear before a rapid second tap, long enough
+        /// to register as a deliberate energy burst rather than a flicker.
+        /// Reduce motion: unused — glow sequence is skipped entirely.
+        static let borderGlowHoldDuration: TimeInterval = 0.12
+
+        /// 0.12s ease-in — Hairline retracting as border fill begins.
+        /// Fast ease-in so the hairline clears before the arc strokes are visible.
+        /// No visual overlap between hairline and arcs at any point in the transition.
+        /// Reduce motion: use as-is — opacity only, no spatial movement.
+        static let hairlineRetract: Animation = .easeIn(duration: 0.12)
+
+        /// 0.35s ease-out — Hairline returning after border resets on cancel.
+        /// Slower than retract — eases back in gently rather than snapping.
+        /// Reduce motion: use as-is — opacity only, no spatial movement.
+        static let hairlineReturn: Animation = .easeOut(duration: 0.35)
+
+        /// 0.16s ease-in — Border retreating after a cancelled press.
+        /// Ease-in signals a decisive abort — the border accelerates away from
+        /// the pressed state rather than drifting back.
+        /// Reduce motion: instant borderProgress = 0, no animation.
+        static let borderRetract: Animation = .easeIn(duration: 0.16)
+    // MARK: — Splash Screen
+    // These tokens are exclusive to VaylSplashScreen.
+    // They must never appear in any other screen — the cold launch ceremony
+    // does not repeat as a UI pattern anywhere in the main app.
+    //
+    // Sequence timing (absolute offsets from cold launch):
+    //   0.000s  void       — black screen, destination renders silently underneath
+    //   0.250s  slit       — spectrum line aperture opens at constant velocity
+    //   0.280s  bloom creep — line bloom builds from 0.35 → 0.58 over 300ms
+    //   0.600s  ignition   — wordmark reveal begins, bloom spikes to 1.0
+    //   0.640s  pulse      — linePulse fires 40ms after ignition (reveal leads)
+    //   0.900s  hold       — bloom settles to 0.65, ambient oscillation begins
+    //   1.660s  anticipate — zoom container micro-squeezes to 0.97× (40ms)
+    //   1.700s  zoom       — camera crashes into line at 3.5×
+    //   1.950s  tear       — panels snap apart, destination revealed
+    //   2.200s  home fade  — destination opacity confirms (no animation — instant)
+    //   2.400s  dismiss    — splash container removed from hierarchy
+    //
+    // Reduce motion fallback for all splash tokens:
+    //   Skip the sequence entirely. Crossfade from void to destination at
+    //   AppAnimation.standard duration. The destination must be visually
+    //   complete at rest — no motion required to read it.
+
+    /// 0.08s linear — Spectrum line aperture opening.
+    /// Constant velocity communicates mechanical precision — an iris or shutter
+    /// opening, not a fade. Linear is intentional and correct here.
+    /// Reduce motion: skip — line appears instantly at full opacity.
+    static let splashLineAppear: Animation = .linear(duration: 0.08)
+
+    /// 0.58s easeOutExpo approximation — Wordmark reveal from light source.
+    /// timingCurve (0.16, 1.0, 0.3, 1.0): high initial velocity decelerating
+    /// sharply — communicates the letterforms arriving with mass from the energy
+    /// of the line. Do NOT substitute .easeOut — it will feel lighter and faster.
+    /// Reduce motion: skip — wordmark appears at full reveal instantly.
+    static let splashReveal: Animation = .timingCurve(0.16, 1.0, 0.3, 1.0, duration: 0.58)
+
+    /// 0.18s overshoot — Bloom energy spike at ignition.
+    /// timingCurve (0.0, 0.8, 0.2, 1.2): y2 of 1.2 produces a genuine mathematical
+    /// overshoot beyond the target bloom value before settling. This makes the
+    /// ignition feel like a physical energy punch, not a fade-up.
+    /// Reduce motion: skip — bloom appears at hold level instantly.
+    static let splashBloomIgnite: Animation = .timingCurve(0.0, 0.8, 0.2, 1.2, duration: 0.18)
+
+    /// 0.35s settle — Bloom returning to hold level after ignition overshoot.
+    /// timingCurve (0.22, 1.0, 0.36, 1.0): snappy ease-out, no overshoot.
+    /// Fired after splashBloomIgnite completes — bloom coasts down to resting glow.
+    /// Reduce motion: not reached — reduce motion skips the ignition entirely.
+    static let splashBloomSettle: Animation = .timingCurve(0.22, 1.0, 0.36, 1.0, duration: 0.35)
+
+    /// 0.04s ease — Zoom container micro-squeeze anticipation.
+    /// timingCurve (0.4, 0.0, 0.6, 1.0): scales the container to 0.97× in 40ms
+    /// immediately before the zoom fires. The brief compression makes the zoom
+    /// feel launched rather than switched on — physical cause before effect.
+    /// Reduce motion: skip — zoom is suppressed entirely under reduce motion.
+    static let splashZoomAnticipate: Animation = .timingCurve(0.4, 0.0, 0.6, 1.0, duration: 0.04)
+
+    /// 0.38s crash — Camera zoom into the spectrum line.
+    /// timingCurve (0.12, 0.9, 0.2, 1.0): acceleration-dominant curve that
+    /// commits to the zoom early and arrives with confidence. The transform origin
+    /// is locked to LINE_Y — the line stays fixed while everything else expands.
+    /// Reduce motion: skip — zoom does not fire, sequence jumps straight to tear.
+    static let splashZoom: Animation = .timingCurve(0.12, 0.9, 0.2, 1.0, duration: 0.38)
+
+    /// 0.28s snap — Panels separating on tear.
+    /// timingCurve (0.2, 0.9, 0.2, 1.0): near-instant initial velocity communicates
+    /// a physical snap rather than a slide. The 20ms ramp at the start (x1=0.2)
+    /// provides a one-frame buffer against dropped first frames on older hardware.
+    /// Pairs with a keyframe overshoot: panels travel to H*0.74 then settle at H*0.70.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity only —
+    /// panels do not move, destination crossfades in.
+    static let splashTear: Animation = .timingCurve(0.2, 0.9, 0.2, 1.0, duration: 0.28)
+
+    /// Tear overshoot distance as a ratio of panel travel distance.
+    /// Panels snap to (tearDistance * splashTearOvershoot) then settle back to tearDistance.
+    /// 1.056 = ~5.6% overshoot — enough to read as physical momentum, not noticeable as error.
+    /// Used by the KeyframeAnimator driving panel translation. Not an Animation value.
+    static let splashTearOvershoot: CGFloat = 1.056
+
+    // MARK: — OB Card Physics
+    // These tokens are exclusive to the Onboarding canvas. They must never appear
+    // in main-app screens — the table metaphor does not leave the OB boundary.
+    // Reduce motion fallback for all card physics tokens: .easeOut(duration: 0.15)
+    // on opacity only. Card travel stops. State changes are still confirmed.
+
+    /// 0.85s custom ease — Card travelling from deal point to table position.
+    /// Cubic bezier (0, 0, 0.2, 1): accelerates instantly off the deal point,
+    /// decelerates sharply into the landing position. Communicates weight and arrival.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity — card appears in place.
+    static let cardSlide: Animation = .timingCurve(0, 0, 0.2, 1, duration: 0.85)
+
+    /// Spring — Card settling after it lands on the table.
+    /// High damping (0.92) gives a single, confident settle with no secondary bounce.
+    /// Fired immediately after cardSlide completes at the destination.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — skip the physical settle.
+    static let cardSettle: Animation = .spring(response: 0.55, dampingFraction: 0.92)
+
+    /// 0.52s custom ease — Card pocketing to the corner deck.
+    /// Cubic bezier (0.4, 0, 1, 1): eases into motion then accelerates off-screen.
+    /// The asymmetric exit communicates the card is being filed away, not dismissed.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity — card disappears in place.
+    static let cardPocket: Animation = .timingCurve(0.4, 0, 1, 1, duration: 0.52)
+
+    /// 0.58s custom ease — Card flipping face-up or face-down.
+    /// Cubic bezier (0.4, 0, 0.6, 1): symmetric ease creates the sense of rotation
+    /// through space. Applied to scaleX: 1 → 0 (first half) then -1 → 0 (second half).
+    /// The renderer swaps VaylCardBack ↔ VaylCardFace at the scaleX = 0 moment.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — card face changes without rotating.
+    static let cardFlip: Animation = .timingCurve(0.4, 0, 0.6, 1, duration: 0.58)
+
+    /// 0.95s custom ease — Card lifting off the table toward the user.
+    /// Cubic bezier (0.4, 0, 0.2, 1): gradual initial lift that carries through to the
+    /// extended hold position. Elevation value drives shadow deepening simultaneously.
+    /// Used for raise-and-confirm mechanic and full-bleed card expansion.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — card confirms raised state instantly.
+    static let cardLift: Animation = .timingCurve(0.4, 0, 0.2, 1, duration: 0.95)
+
+    /// Spring — Fan of cards spreading from a deck.
+    /// Lower damping (0.88) than cardSettle allows a soft overshoot as cards fan apart,
+    /// reinforcing the sense of physical playing cards spreading under slight tension.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — fan state appears without travel.
+    static let deckFan: Animation = .spring(response: 0.70, dampingFraction: 0.88)
+
+    /// 0.72s ease — Deck weave shuffle (interleaving two halves).
+    /// Standard ease (0.25, 0.46, 0.45, 0.94) used here because the weave is a
+    /// composed sequence — each card's motion looks hand-applied, not mechanical.
+    /// Applied per-card with staggered delays, not to the deck as a whole.
+    /// Reduce motion: skip the shuffle sequence entirely — deck goes directly to squared state.
+    static let deckWeave: Animation = .timingCurve(0.25, 0.46, 0.45, 0.94, duration: 0.72)
+
+    /// 0.65s ease-in — Foil surface dissolving after sufficient tears.
+    /// Ease-in curve communicates the foil burning outward from tear edges —
+    /// starts slow at the breach, accelerates as integrity collapses.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity — foil disappears instantly.
+    static let foilDissolve: Animation = .easeIn(duration: 0.65)
+
+    /// 0.70s custom ease — Table surface receding during hand-raise and full-bleed phases.
+    /// Cubic bezier (0.4, 0, 0.6, 1): symmetric ease so the table feels like it is
+    /// physically pulling back rather than fading. Applied to tableFade in VaylDirector.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity — table dims instantly.
+    static let tableRecede: Animation = .timingCurve(0.4, 0, 0.6, 1, duration: 0.70)
+
+    /// Spring — Corner deck receiving a newly pocketed card.
+    /// Fast response (0.40) makes the receive feel reactive to the arriving card.
+    /// The glow pulse uses this same token and fades after 600ms.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — card count increments without bounce.
+    static let deckReceive: Animation = .spring(response: 0.40, dampingFraction: 0.85)
+
+    /// 0.50s ease-out — Dealer line projecting onto the felt surface.
+    /// Matched to the scaleY (0.94 → 1.0) and opacity entrance of ProjectedTextView.
+    /// Text must be fully legible before the phase interaction begins — do not rush this token.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — text appears without scaling.
+    static let textProject: Animation = .easeOut(duration: 0.50)
+
+    /// 3.2s ease-in-out repeating — Subtle card surface breathe on the table.
+    /// Applied to the elevation/glow of a stationary card while it awaits user input.
+    /// Communicates that the card is alive and waiting, not frozen.
+    /// This is an ambient animation — remove entirely under reduce motion.
+    /// Use .ambientAnimation(AppAnimation.cardBreathe, value:) at every call site.
+    static let cardBreathe: Animation = .easeInOut(duration: 3.2).repeatForever(autoreverses: true)
 }
 
 // MARK: — Reduce Motion Helpers

@@ -82,9 +82,9 @@ Particle → Gradient Position MappingFill positionColor0–25%AppColors.accentP
 Light Mode ShimmerAppColors.lightShimmerColors: purple 11%, magenta 10%, gold 8%, magenta 8%, purple 11%Light Mode Atmosphere
 Top bloom: RadialGradient magenta 12% → gold 6% → clear, blur 80
 Bottom warmth: LinearGradient purple 8% → clear, height 200
-Component: AuroraGlowField (NOT OnboardingGlowField)
+Component: AuroraGlowField (NOT OnboardingAtmosphere)
 Particles: SparkField with per-screen config
-4. DO NOT USE in Light ModeTokenReasonpageBg / cardBg / surfaceBgNear-black dark mode backgroundsAppColors.accentPrimary as textClinical on creamAppColors.accentPrimary mode accent onlyColor.white as textInvisible on creamColor.white.opacity(x) borders/fillsDark mode only — use lightBorder/lightFrost*OnboardingGlowFieldUse AuroraGlowField.preferredColorScheme(.dark)Follows system in light modetextPrimary/Secondary/TertiaryUse lightText* equivalentsAppColors.borderSubtle/borderHoverWhite borders on cream — use lightBorderAppColors.spectrumTextUse warmAuroraText5. Typography Tokens — AppFontsFamilies: Clash Display (headings, prompts, scores) · Switzer (body, labels, buttons)// Parametric
+4. DO NOT USE in Light ModeTokenReasonpageBg / cardBg / surfaceBgNear-black dark mode backgroundsAppColors.accentPrimary as textClinical on creamAppColors.accentPrimary mode accent onlyColor.white as textInvisible on creamColor.white.opacity(x) borders/fillsDark mode only — use lightBorder/lightFrost*OnboardingAtmosphereUse AuroraGlowField.preferredColorScheme(.dark)Follows system in light modetextPrimary/Secondary/TertiaryUse lightText* equivalentsAppColors.borderSubtle/borderHoverWhite borders on cream — use lightBorderAppColors.spectrumTextUse warmAuroraText5. Typography Tokens — AppFontsFamilies: Clash Display (headings, prompts, scores) · Switzer (body, labels, buttons)// Parametric
 AppFonts.display(_ size: CGFloat, weight: .bold/.semibold/.medium) // ClashDisplay
 AppFonts.body(_ size: CGFloat, weight: .semibold/.medium/.regular) // Switzer
 
@@ -150,7 +150,7 @@ Title: bodyMedium / textPrimary · Detail: caption / textSecondary
 Background Stack (Screens 3–6, dark mode)ZStack {
     AppColors.pageBackground
     Ellipse() // purple 0.3 → deepBlue 0.15 → clear, blur 80, offset y: -80
-    OnboardingGlowField() // .allowsHitTesting(false), never over content
+    OnboardingAtmosphere() // .allowsHitTesting(false), never over content
 }
 .ignoresSafeArea()
 9. Card Intensity SystemsContext Cards (Onboarding only)IntensityBG TintBorder %Internal GlowExternal Shadowembernone40%nonecyan 4%/10pxsparkcyan 4%@70%50%cyan 10%/100pxcyan 6%/15pxflamecyan 6%@50%60%purple 15%/130pxpurple 8%/20pxblazepurple 8%@40%70%purple 20%/150pxpurple 12%/25pxinfernomagenta 6%@30%80%magenta 20%/170pxmagenta 10%/30pxnovamagenta 10%@20%90%magenta 30%/200pxmagenta 16%/35pxCard: 300×340pt, cornerRadius 20, spectrum border always at intensity.borderOpacity.
@@ -193,7 +193,7 @@ Design/Components/
   Cards/ContextCard.swift · ContextCardStack.swift · ContextIntensity.swift
   Navigation/OnboardingNavBar.swift · OnboardingFooter.swift
   Progress/OnboardingProgressBar.swift
-  Effects/OnboardingGlowField.swift
+  Effects/OnboardingAtmosphere.swift
 
 Features/Onboarding/Views/
   OnboardingFlowView.swift     (coordinator)

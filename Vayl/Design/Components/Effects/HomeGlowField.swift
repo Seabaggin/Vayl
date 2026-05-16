@@ -2,7 +2,7 @@
 // Open Lightly
 //
 // Full-page atmospheric background for HomeDashboardView.
-// morphProgress 0.0 = glow blobs (identical to OnboardingGlowField).
+// morphProgress 0.0 = glow blobs (identical to OnboardingAtmosphere).
 // morphProgress 1.0 = deep space galaxy (dark gradient + stars + blooms).
 // Crossfades smoothly between states as the user scrolls to the constellation.
 

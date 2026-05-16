@@ -98,8 +98,6 @@ enum FactCategory {
     }
 }
 
-
-
 // MARK: - Home Event (for EventEngine)
 
 enum HomeEvent {
@@ -137,4 +135,17 @@ enum HomeEvent {
             return 0 // persistent until condition changes
         }
     }
+}
+
+// MARK: - Home State
+
+/// The routing state that drives HomeRouterView.
+/// Computed by HomeStore — never set directly by the view.
+/// Order matters — each case gates the next.
+enum HomeState: Equatable {
+    case gated          // desire map not started
+    case postReflection // desire map done, reflection not done
+    case waiting        // reflection done, partner not done
+    case matchReady     // both done, reveal not triggered
+    case dashboard      // fully unlocked home
 }

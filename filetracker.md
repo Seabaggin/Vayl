@@ -1,519 +1,363 @@
-# Codebase File Tracker & Audit Report
-**Last Updated:** 2026-04-28
-**Total Files:** ~158 Swift files
-**Last Full Audit:** 2026-04-12 (partial refresh 2026-04-28 — inventory updated, issues inherited)
-**Branch:** feat/home-redesign-onboarding-polish
+# Vayl — File Tree & Descriptions
+
+_Last updated: 2026-05-16_  
+_~180 Swift files + Metal shaders across 40+ directories_
 
 ---
 
-## What Changed Since Last Audit (2026-04-28 refresh)
+## Vayl/ (App Source)
 
-| Change | Detail |
-|--------|--------|
-| Project renamed | Open Lightly → Vayl (all paths updated) |
-| `App/Open_LightlyApp.swift` | → `App/VaylApp.swift` |
-| `Data/Store/ModelContainer.swift` | Moved → `App/ModelContainer.swift` |
-| `Models/Content/` | Complete rewrite: ContentCard + Prompt + ContentAssessmentQuestion + ContentDesireItem + ContentCategory all deleted; replaced by `Card.swift` + `Deck.swift` |
-| `Models/Enums/ExperienceType.swift` | Deleted |
-| `Models/Persistence/` | RatingRecord + StreakRecord deleted; Added AcknowledgementRecord, LockInSession, MilestoneRecord; PulseStore moved here from old Models/Pulse/ |
-| `Models/Pulse/` folder | Dissolved: PulseEntry → `Models/Progress/`, PulseStore → `Models/Persistence/`, PulseWindow → absorbed into AppEnums |
-| `Models/Progress/` | Removed AssessmentResponse, AssessmentResult, CardProgress, CoupleSessionRecord; Added CardSession, DeckProgress, EntitlementRecord, PulseEntry |
-| `Core/Services/AssessmentSyncService.swift` | Deleted |
-| `Core/Services/AppState.swift` | New |
-| `Design/Components/Banners/` | GuestBannerView.swift deleted — folder now empty |
-| `Design/Brand/VaylAppIcon.swift` | New |
-| `App/Theme/ColorRow.swift` | New |
-| `AppIconRetreival.swift` | New (at Vayl/ root) |
-| `Features/Explore/ExploreView.swift` | Deleted |
-| `Features/Home/Components/CardChestContainer.swift` | New |
-| `Features/Home/Components/GravLiftView.swift` | New |
-| `Features/Learn/ConstellationNode.swift` | New |
-| `Features/Map/PrismView.swift` | New |
+```
+Vayl/
+├── Vayl.entitlements          — App capabilities and permissions
+├── Vayl.plist                 — App configuration metadata
+│
+├── App/
+│   ├── VaylApp.swift          — @main entry point; creates AppState, ThemeManager, ModelContainer, injects environment objects.
+│   ├── AppShell.swift         — Tab router; switches between home, play, map, learn tabs with RacetrackTabBar.
+│   ├── ContentView.swift      — Auth router; gates SignInView vs AppShell based on AuthService.isAuthenticated.
+│   ├── ModelContainer.swift   — SwiftData ModelContainer factory; returns previewContainer or live container.
+│   ├── AppIconRetreival.swift — Loads app icon from bundle for display in UI.
+│   │
+│   └── Theme/
+│       ├── AppAnimation.swift           — Reusable animation curves and durations (fast, slow, spring, etc.).
+│       ├── AppColors.swift              — Full semantic color palette via Color.dynamic(light:dark:) tokens; ground truth for all colors.
+│       ├── AppElevation.swift           — Shadow and depth scale for hierarchical elevation.
+│       ├── AppFonts.swift               — Font factory for Clash Display and Switzer; semantic sizes (heroTitle, body, etc.).
+│       ├── AppGlows.swift               — Glow and shimmer effect definitions for spectrum borders and accents.
+│       ├── AppGrid.swift                — Layout grid constants; columns, gaps, alignment guides.
+│       ├── AppLayout.swift              — Responsive layout sizing; adapts padding, margins, font sizes for screen size.
+│       ├── AppRadius.swift              — Border radius scale for consistent corner rounding across components.
+│       ├── AppRootView.swift            — Top-level routing gate; shows SplashScreenView once, then routes to auth/onboarding.
+│       ├── AppSafeArea.swift            — Safe area insets and home indicator padding.
+│       ├── AppSpacing.swift             — Spacing scale (xs, sm, md, lg, xl); used for consistent padding/margins.
+│       ├── AppTheme.swift               — ThemeMode enum and AppPalette struct; defines light/dark palettes.
+│       ├── ThemeManager.swift           — @Observable class; persists theme mode to UserDefaults, resolves active palette.
+│       ├── ThemeModifiers.swift         — ThemedRootModifier; injects AppPalette into environment and sets preferredColorScheme.
+│       └── VaylPrimitives.swift         — Tier 1 raw hex colors; cyan, purple, magenta, gold, ink scale, neutrals.
+│
+├── Core/
+│   ├── Models/
+│   │   ├── AcknowledgementRecord.swift  — SwiftData model; tracks acknowledgement events (read, viewed, etc.).
+│   │   ├── Card.swift                   — Core card model; title, description, answers, metadata.
+│   │   ├── CardSession.swift            — SwiftData model; tracks card history within a session.
+│   │   ├── Couple.swift                 — SwiftData model; represents paired couple; pairing code, experience type.
+│   │   ├── Deck.swift                   — Card deck model; title, description, category, all cards.
+│   │   ├── DeckProgress.swift           — Tracks progress through a deck; completed count, current position.
+│   │   ├── DesireMatch.swift            — SwiftData model; represents desire/compatibility rating between partners.
+│   │   ├── DesireRating.swift           — SwiftData model; user's rating for a desire item in a category.
+│   │   ├── EntitlementRecord.swift      — SwiftData model; tracks feature entitlements and unlock status.
+│   │   ├── LockInSession.swift          — SwiftData model; represents a locked-in session between partners.
+│   │   ├── MilestoneRecord.swift        — SwiftData model; tracks user milestones and achievements.
+│   │   ├── PulseEntry.swift             — SwiftData model; daily pulse/mood checkin entry.
+│   │   ├── SessionRecord.swift          — SwiftData model; tracks session metadata (start time, answers, etc.).
+│   │   ├── UserProfile.swift            — SwiftData model; user profile data (name, preferences, birthday, etc.).
+│   │   │
+│   │   └── Enums/
+│   │       ├── AppEnums.swift           — Shared enums (ExperienceType, LinkState, GenderIdentity, etc.).
+│   │       └── AppTab.swift             — Tab enum (home, play, map, learn).
+│   │
+│   ├── Persistence/
+│   │   ├── DataStore.swift              — Migrated; SwiftData persistence layer; CRUD operations for models.
+│   │   └── ModelContext+Extensions.swift — Fetch helper extensions for ModelContext.
+│   │
+│   └── Services/
+│       ├── AppState.swift               — @Observable class; owns experienceType, linkState, displayName; persists to UserDefaults.
+│       ├── AuthService.swift            — @Observable class; Sign in with Apple via Supabase; owns isAuthenticated, userId.
+│       ├── Config.swift                 — Static constants; Supabase project URL and anon API key.
+│       ├── ContentLoader.swift          — Loads bundled JSON files (cards.json, assessment_questions.json, etc.).
+│       ├── DesireSyncService.swift      — Syncs desire ratings between local and Supabase; handles conflicts.
+│       ├── PairingService.swift         — Couple pairing; generate codes, look up codes, complete pairing in Supabase.
+│       ├── ProfileService.swift         — Reads/writes user profile to Supabase profiles table.
+│       ├── SessionSyncService.swift     — Syncs session records (answers, timing) between local and Supabase.
+│       ├── SupabaseManager.swift        — Singleton SupabaseClient; all services read from SupabaseManager.shared.client.
+│       └── SyncManager.swift            — Orchestrates all sync services; retry logic for pending syncs.
+│
+├── Design/
+│   ├── Brand/
+│   │   ├── SplashScreenView.swift       — Animated splash screen; plays on cold launch, tears away to reveal app.
+│   │   └── VaylAppIcon.swift            — Renders spectrum icon; used in brand contexts.
+│   │
+│   └── Components/
+│       ├── Buttons/
+│       │   ├── CriticalButton.swift     — Destructive action button (logout, delete); red background, white text.
+│       │   ├── SafeWordButton.swift     — Safeword action button; shows red pill with white text.
+│       │   └── SelectablePill.swift     — Toggle pill button; selected/unselected states with animation.
+│       │
+│       ├── Cards/
+│       │   ├── AtmosphericGhostDeck.swift      — Ghost deck background; faded cards visible beneath current.
+│       │   ├── CardBackView.swift              — Card back face; spectrum border, glow, animation.
+│       │   ├── CardCarousel.swift              — Horizontal carousel of cards with swipe navigation.
+│       │   ├── CardFrontView.swift             — Card front face; displays question and answer options.
+│       │   ├── CardLayout.swift                — Card sizing and geometry; handles responsive sizing.
+│       │   ├── CardRevealPillButton.swift      — Reveals answer button; triggers card flip animation.
+│       │   ├── CardShadows.swift               — Card shadow styles; floating elevation, pressed states.
+│       │   ├── CardStyle.swift                 — Card appearance modifiers; fills, borders, corner styles.
+│       │   ├── CategoryTileView.swift          — Category tile for desire map; shows icon, title, rating.
+│       │   ├── ConversationCard.swift          — Conversation prompt card; displays relationship question.
+│       │   ├── ConversationCardTypes.swift     — Enums and types for conversation cards.
+│       │   ├── CuriosityCardBack.swift         — Curiosity card back; custom styling with intensity meter.
+│       │   ├── CuriosityFlipCard.swift         — Flippable curiosity card; front/back animation.
+│       │   ├── FuseTimerView.swift             — Timer display for fuse/session countdown.
+│       │   ├── PremiumCardShell.swift          — Premium card wrapper; adds premium badge and border.
+│       │   ├── PromptCard.swift                — Generic prompt card container.
+│       │   ├── SettingsCard.swift              — Settings panel card; key-value display.
+│       │   ├── VaylCardBack.swift              — New spectrum card back with Vayl branding.
+│       │   ├── VaylCardFace.swift              — New spectrum card front face.
+│       │   └── VaylCardRenderer.swift          — Card render orchestrator; handles flipping, animation, state.
+│       │
+│       ├── Effects/
+│       │   ├── AuroraGlowField.swift           — Aurora shimmer background; animates soft glow across screen.
+│       │   ├── FilamentMode.swift              — Metal shader effect; creates filament/thread visual pattern.
+│       │   ├── FlameAura.swift                 — Flame-like aura effect; orange/red gradient glow.
+│       │   ├── FloatingCard.swift              — Card floating in space; bobbing animation, perspective.
+│       │   ├── FloatingStack.swift             — Multiple floating cards stacked with depth.
+│       │   ├── GlowOrb.swift                   — Glowing orb component; uses theme gradient.
+│       │   ├── GlowUnderline.swift             — Animated glow underline for text; spectrum gradient.
+│       │   ├── GlowUnderlineView.swift         — Container for glow underline effect.
+│       │   ├── GradBadge.swift                 — Badge with spectrum gradient border.
+│       │   ├── HolographicShimmer.metal        — Metal shader; creates holographic shimmer effect.
+│       │   ├── HolographicShimmer.swift        — Wrapper for holographic shimmer Metal shader.
+│       │   ├── HomeGlowField.swift             — Glow background for home screen; adapts to light/dark.
+│       │   ├── LightAuraBloom.swift            — Light bloom effect; soft expanding glow.
+│       │   ├── LightModeShimmer.swift          — Shimmer effect for light mode; warm gradient.
+│       │   ├── MazePatternView.swift           — Procedural maze pattern background.
+│       │   ├── OnboardingGlowField.swift       — Glow background for onboarding screens.
+│       │   ├── OrbitSpark.metal                — Metal shader; creates orbiting spark effect.
+│       │   ├── OrbitSparkBorderView.swift      — Sparking border animation around elements.
+│       │   ├── PillBorder.swift                — Pill-shaped border with spectrum gradient.
+│       │   ├── SectionHeader.swift             — Decorative section header divider.
+│       │   ├── SparkField.swift                — Field of animated sparks; background effect.
+│       │   ├── TileOrbitView.swift             — Tiles orbiting in a circle; decorative effect.
+│       │   ├── VaylBorderEffect.swift          — Complex border effect with multiple layers and animation.
+│       │   └── VaylButton.swift                — Button with Vayl-specific styling and effects.
+│       │
+│       ├── Input/
+│       │   ├── InteractiveField.swift          — Text input field with validation and decoration.
+│       │   ├── RatingButtonGroup.swift         — Group of rating buttons (1-5 stars/scale).
+│       │   └── ToggleRow.swift                 — Toggle switch row for settings.
+│       │
+│       ├── Navigation/
+│       │   ├── NavArrow.swift                  — Directional arrow button for navigation.
+│       │   ├── OnboardingFooter.swift          — Footer with navigation buttons for onboarding.
+│       │   ├── OnboardingNavBar.swift          — Navigation bar for onboarding screens.
+│       │   ├── RacetrackTabBar.swift           — Custom tab bar with racetrack shape.
+│       │   └── TabContentWrapper.swift         — Wrapper for tab content; handles transitions.
+│       │
+│       ├── Progress/
+│       │   ├── OnboardingProgressBar.swift     — Horizontal progress bar for onboarding steps.
+│       │   ├── OrbitIndicator.swift            — Circular orbit progress indicator.
+│       │   ├── ProgressBar.swift               — Linear progress bar component.
+│       │   ├── ProgressRingView.swift          — Circular progress ring with center percentage.
+│       │   ├── ScoreRing.swift                 — Circular ring displaying a score value.
+│       │   ├── ScreenshotProtectionModifier.swift — Blocks screenshots for sensitive screens.
+│       │   └── SpectrumBar.swift               — Spectrum gradient bar for visual accent.
+│       │
+│       ├── Text/
+│       │   ├── GradientText.swift              — Text with spectrum gradient fill.
+│       │   ├── KeywordHighlightText.swift      — Text with highlighted keywords.
+│       │   └── LivingText.swift                — Animated text with gradient that changes per light/dark mode.
+│       │
+│       └── (Removed: Pulse components moved to Features/Pulse/)
+│
+├── Features/
+│   ├── Auth/
+│   │   └── Views/
+│   │       └── SignInView.swift                — Sign in with Apple screen; handles AuthService.
+│   │
+│   ├── Compatibility/
+│   │   ├── Store/
+│   │   │   └── DesireMapStore.swift            — State management for desire map feature.
+│   │   └── Views/
+│   │       └── DesireMapView.swift             — Desire compatibility map visualization.
+│   │
+│   ├── Home/
+│   │   ├── Components/
+│   │   │   ├── CardChestContainer.swift        — Container for displaying available card decks.
+│   │   │   ├── DesireMapIndicator.swift        — Small indicator for desire map on home.
+│   │   │   ├── GravLiftView.swift              — Gravity well lift effect; pulls cards upward.
+│   │   │   ├── HomeWidgetShell.swift           — Container for home screen widgets (Pulse, etc.).
+│   │   │   ├── PartnerChip.swift               — Displays partner info chip on home.
+│   │   │   ├── PickUpCard.swift                — "Pick me up" card suggestion widget.
+│   │   │   ├── PostMapReflectionView.swift     — Reflection on desire map interaction.
+│   │   │   ├── ReflectionBannerView.swift      — Banner showing relationship reflection/insight.
+│   │   │   ├── ReflectionCard.swift            — Card displaying a reflection prompt.
+│   │   │   └── ResearchTicker.swift            — Scrolling ticker of research/tips.
+│   │   ├── Models/
+│   │   │   ├── HomeEventEngine.swift           — Event state machine for home screen transitions.
+│   │   │   └── HomeModels.swift                — Data models for home screen state.
+│   │   ├── Store/
+│   │   │   └── HomeStore.swift                 — @Observable store; manages home screen state.
+│   │   └── Views/
+│   │       ├── HomeDashboardView.swift         — Main home screen layout; card carousel, widgets, reflection.
+│   │       ├── HomeGateView.swift              — Gate screen; routes to dashboard, waiting, or match-ready views.
+│   │       ├── HomeMatchReadyView.swift        — Screen when partners are ready to play.
+│   │       ├── HomeRouterView.swift            — Navigation router for home tab.
+│   │       └── HomeWaitingView.swift           — Screen shown while waiting for partner.
+│   │
+│   ├── Learn/
+│   │   └── Views/
+│   │       ├── ConstellationNode.swift         — Individual node in learning constellation.
+│   │       └── LearnView.swift                 — Educational content browser; constellation layout.
+│   │
+│   ├── Map/
+│   │   ├── MapView.swift                       — Desire/compatibility map display.
+│   │   └── PrismView.swift                     — 3D prism effect for map visualization.
+│   │
+│   ├── Onboarding/
+│   │   ├── Canvas/
+│   │   │   ├── OnboardingCanvasView.swift      — Top-level onboarding canvas; orchestrates phases.
+│   │   │   ├── TableSurfaceView.swift          — Background table surface for onboarding.
+│   │   │   └── VaylDirector.swift              — Orchestrates onboarding flow; routes between phases.
+│   │   ├── Components/
+│   │   │   ├── ContextCard.swift               — Card for selecting relationship context.
+│   │   │   ├── ContextCardStack.swift          — Stack of context cards.
+│   │   │   ├── ContextIntensity.swift          — Intensity slider for context selection.
+│   │   │   ├── ContextOption.swift             — Individual context option button.
+│   │   │   ├── CornerDeckView.swift            — Decorative card in corner of screen.
+│   │   │   ├── CornerMarksView.swift           — Corner decorative marks/lines.
+│   │   │   ├── CuriosityPanelNudge.swift       — Nudge prompting curiosity selection.
+│   │   │   ├── CuriosityPill.swift             — Pill button for curiosity category.
+│   │   │   ├── CuriosityPreviewLine.swift      — Preview line of curiosity categories.
+│   │   │   ├── CuriosityStatusStrip.swift      — Status strip showing curiosity progress.
+│   │   │   └── OnboardingAtmosphere.swift      — Background atmosphere/glow for onboarding.
+│   │   ├── Layout/
+│   │   │   └── OnboardingLayout.swift          — Layout constants and geometry for onboarding.
+│   │   ├── Models/
+│   │   │   ├── FoilTear.swift                  — Animation model for foil tear effect.
+│   │   │   ├── OnboardingData.swift            — Data structure for onboarding content.
+│   │   │   └── VaylCardModel.swift             — Card model specific to onboarding.
+│   │   ├── Phases/
+│   │   │   ├── BuildingPathPhase.swift         — Onboarding phase: select relationship building path.
+│   │   │   ├── ContextPhase.swift              — Onboarding phase: select relationship context.
+│   │   │   ├── CuriosityPhase.swift            — Onboarding phase: select curiosity categories.
+│   │   │   ├── ExperienceLevelPhase.swift      — Onboarding phase: select experience level.
+│   │   │   ├── FoilPhase.swift                 — Onboarding phase: animated foil tear transition.
+│   │   │   ├── FounderLetterPhase.swift        — Onboarding phase: display founder letter.
+│   │   │   ├── GenderPhase.swift               — Onboarding phase: select gender identity.
+│   │   │   ├── ModeSelectPhase.swift           — Onboarding phase: select solo/together mode.
+│   │   │   ├── NamePhase.swift                 — Onboarding phase: enter user name.
+│   │   │   ├── QuizPhase.swift                 — Onboarding phase: compatibility quiz.
+│   │   │   └── StatPhase.swift                 — Onboarding phase: show stats/summary.
+│   │   ├── Renders/
+│   │   │   ├── DealPointView.swift             — Renders deal point (card reveal point).
+│   │   │   └── ProjectedTextView.swift         — Text with projection/perspective effect.
+│   │   ├── Store/
+│   │   │   ├── CuriosityScreenConfig.swift     — Configuration for curiosity selection screen.
+│   │   │   ├── OnboardingStep.swift            — Enum defining onboarding steps.
+│   │   │   └── OnboardingStore.swift           — @Observable store; manages onboarding state.
+│   │   └── Views/
+│   │       ├── OnboardingCardRevealView.swift  — Phase view: reveal cards after name entry.
+│   │       ├── OnboardingContextView.swift     — Phase view: context selection.
+│   │       ├── OnboardingCuriosityPickerView.swift — Phase view: curiosity category picker.
+│   │       ├── OnboardingFlowView.swift        — Main onboarding flow container.
+│   │       ├── OnboardingGroundRulesView.swift — Phase view: display ground rules.
+│   │       ├── OnboardingModeSelectView.swift  — Phase view: solo vs together mode.
+│   │       ├── OnboardingNameView.swift        — Phase view: name entry with animation.
+│   │       └── OnboardingStatView.swift        — Phase view: display user stats.
+│   │
+│   ├── Pairing/
+│   │   ├── PairingInviteView.swift             — Screen to generate and share pairing code.
+│   │   ├── PairingJoinView.swift               — Screen to enter pairing code and join.
+│   │   ├── PairingSettingsView.swift           — Settings for managing pairing.
+│   │   └── PairingStore.swift                  — State management for pairing feature.
+│   │
+│   ├── Play/
+│   │   └── PlayView.swift                      — Play tab main view; card game interface.
+│   │
+│   ├── Progress/
+│   │   └── ProgressDashboardView.swift         — Dashboard showing progress through decks/sessions.
+│   │
+│   ├── Pulse/
+│   │   ├── CheckInShell.swift                  — Container for checkin modals.
+│   │   ├── DailyCheckInView.swift              — Daily pulse/mood checkin interface.
+│   │   ├── PulseCanvasScrollView.swift         — Scrollable canvas for pulse history.
+│   │   ├── PulseDotSummary.swift               — Summary view of pulse entries as dots.
+│   │   ├── PulseFullView.swift                 — Full view of pulse history with graphs.
+│   │   ├── PulseGraph.swift                    — Graph visualization of pulse data.
+│   │   ├── PulseSheetView.swift                — Sheet presentation for pulse details.
+│   │   ├── PulseWidget.swift                   — Home screen widget showing pulse status.
+│   │   ├── TierGuideSheet.swift                — Sheet explaining pulse tier/level system.
+│   │   └── Store/
+│   │       └── PulseStore.swift                — @Observable store; manages pulse/checkin state.
+│   │
+│   ├── Sessions/
+│   │   ├── SessionStore.swift                  — State management for session tracking.
+│   │   └── SessionView.swift                   — Session history and details view.
+│   │
+│   └── Settings/
+│       ├── SettingsView.swift                  — Settings screen; preferences, theme, account.
+│       ├── ThemePickerView.swift               — Theme mode picker (system/light/dark).
+│       └── ThemeTestView.swift                 — Debug view for testing theme colors.
+│
+└── Resources/
+    ├── Content/
+    │   ├── assessment_questions.json           — Bundled assessment questions for quizzes.
+    │   ├── cards.json                          — Bundled card deck data.
+    │   ├── categories.json                     — Bundled category definitions.
+    │   └── desire_items.json                   — Bundled desire/compatibility items.
+    ├── Decks/
+    │   ├── deck-index.json                     — Index of available decks.
+    │   └── the-opener.json                     — The Opener starter deck data.
+    └── Fonts/
+        └── (ClashDisplay, Switzer, Zodiak — custom OTF font files)
+```
 
 ---
 
-## Audit Summary
+## supabase/
 
-| Metric | Count |
-|--------|-------|
-| Files in inventory | ~158 |
-| **CRITICAL issues** | **11** (3 resolved by refactor — AssessmentSyncService gone, ModelContainer path changed, ContentCard model simplified) |
-| **WARNING issues** | ~55 (inherited; some may be resolved) |
-| INFO observations | 40+ |
-
-> **Note:** Issues below were audited against the Apr 12 snapshot. Files added or restructured since then are marked ⚠️ Uninspected. Re-audit before shipping those files.
-
----
-
-## CRITICAL Issues (Fix Before Shipping)
-
-### 1. Hardcoded Supabase Credentials in Source Code
-**Files:** `Core/Services/Config.swift:2-3`
-**Type:** Security
-Supabase URL and anon key are hardcoded as string literals. Move to a `.gitignored` xcconfig or CI-injected secrets; have `Config.swift` read from `Bundle.main.infoDictionary`.
-
-### 2. `isAuthenticated` Defaults to `true`
-**Files:** `Core/Services/AuthService.swift:19`, `App/ContentView.swift:29`
-**Type:** Security / UX
-`AuthService.isAuthenticated` defaults to `true`, creating a window where unauthenticated users see the main app. Both should default to `false` with a splash/loading state.
-
-### 3. Sensitive PII Stored in Plaintext
-**Files:** `Models/Progress/UserProfile.swift:19-22`, `Models/Progress/Couple.swift:29`
-**Type:** Security / Privacy
-Sexual orientation, role preference, and safe words stored as plaintext in SwiftData. Consider encrypting at rest or using Keychain for sensitive fields.
-
-### 4. Timer Memory Leak in ResearchTicker
-**File:** `Features/Home/Components/ResearchTicker.swift:102`
-**Type:** Performance / Memory
-`Timer.scheduledTimer` created in `onAppear` but never invalidated. Each `onAppear` creates a new timer, causing memory leak, stacked timers, and accelerating tick rate.
-
-### 5. `Timer.publish(every: 1/60)` on Main Thread
-**Files:** `Design/Components/Effects/FlameAura.swift`, `Design/Components/Effects/LightAuraBloom.swift`
-**Type:** Performance
-60fps timer on the main thread blocks UI. Replace with `TimelineView(.animation)` or `CADisplayLink`.
-
-### 6. Deprecated `UIScreen.main.bounds` Usage
-**Files:** `Design/Components/Effects/FloatingStack.swift`, `Design/Components/Pulse/PulseFullView.swift`, `Features/Onboarding/Components/CuriosityPill.swift:86`, `Features/Onboarding/Views/OnboardingCuriosityPickerView.swift:86-87`
-**Type:** Performance / Compatibility
-Not reactive to window changes, iPad multitasking, or Stage Manager. Use `GeometryReader` instead.
-
-### 7. `UIApplication.shared.connectedScenes` for Screen Width
-**Files:** `Design/Components/Cards/ConversationCard.swift`, `Features/Onboarding/Views/OnboardingBuildingPathView.swift:98-103`
-**Type:** Performance / Compatibility
-Bypasses SwiftUI's layout system. Not reactive, breaks on window resize / iPad multitasking.
-
-### 8. DEBUG Gate Bypass
-**File:** `Features/Home/HomeRouterView.swift:25-36`
-**Type:** Logic / Testing
-`#if DEBUG` block sets `myMapComplete = true`, etc., so TestFlight/DEBUG builds skip all onboarding gates.
-
-### 9. Hardcoded Pairing Code Placeholders
-**Files:** `Features/Settings/SettingsView.swift:7`, `Features/Pairing/PairingSettingsView.swift:13`
-**Type:** Logic
-Hardcoded `"AX7-QM2"` pairing code placeholder; `PairingSettingsView` copies it to clipboard.
-
-### 10. ForEach/totalPanels Mismatch — Potential Crash
-**File:** `Features/Onboarding/Components/CuriosityStatusStrip.swift:24 vs 32`
-**Type:** Logic
-`ForEach(0..<3)` iterates 3 indices but `totalPanels` is 2. Potential out-of-bounds crash.
-
-### 11. Privacy Rule Violation in DesireMatch
-**File:** `Models/Progress/DesireMatch.swift:36-38`
-**Type:** Privacy
-`ratingA`/`ratingB` store exact ratings for both partners including `notForUs`. Privacy guarantee is UI-only, not enforced at the data layer.
-
-> **Resolved since last audit:**
-> - C12 (ModelContainer computed property) — file moved to `App/ModelContainer.swift`; re-verify fix is in place
-> - C13 (SessionView wrong category) — verify fix landed
-> - C14 (Pairing code entropy) — verify fix landed
+```
+supabase/
+├── config.toml                 — Supabase project configuration.
+└── functions/
+    ├── create-pair/
+    │   ├── deno.json           — Dependencies for create-pair Edge Function.
+    │   └── index.ts            — Edge Function; creates pair relationship between two users.
+    └── lookup-code/
+        ├── deno.json           — Dependencies for lookup-code Edge Function.
+        └── index.ts            — Edge Function; looks up pairing code details.
+```
 
 ---
 
-## WARNING Issues (Fix Before Beta)
+## Key Architectural Layers
 
-### Architecture & Patterns
-| # | Issue | File(s) | Lines |
-|---|-------|---------|-------|
-| W1 | Dual theming: ~10 files use `@Environment(\.theme)` while newer files use `AppColors.*` directly | CategoryTileView, GlowOrb, SafeWordButton, CriticalButton, GradientButton, InteractiveField, SpectrumBar, ProgressBar, ProgressRingView, ScoreRing | throughout |
-| W2 | `@EnvironmentObject` in SignInView vs `@Environment` everywhere else | Features/Auth/SignInView.swift | 11 |
-| W3 | Inconsistent color token: `AppColors.background` vs `AppColors.pageBg` | SettingsView, SessionView, ProgressDashboardView, DesireMapView | various |
+**Tier 1 — Primitives (VaylPrimitives.swift)**  
+Raw hex colors, values, and design constants.
 
-### Data Integrity
-| # | Issue | File(s) | Lines |
-|---|-------|---------|-------|
-| W4 | `try? context.save()` silently swallows all SwiftData errors | DataStore.swift, SyncManager.swift | 89,153,167,189,196,223,165 |
-| W5 | Magic number `86400` for day calculation (doesn't handle DST) | Data/Store/DataStore.swift | 73 |
-| W6 | No upsert/conflict handling on batch inserts | DesireSyncService.swift | 134-137 |
-| W7 | Cached profile ID in UserDefaults can become stale | Core/Services/ProfileService.swift | 204-206 |
-| W8 | Pulse data stored in plaintext UserDefaults | Models/Persistence/PulseStore.swift | — |
-| W9 | Desire ratings privacy is UI-only | Models/Progress/DesireRating.swift | — |
+**Tier 2 — Tokens (AppColors.swift, AppFonts.swift, AppSpacing.swift, etc.)**  
+Semantic tokens derived from primitives. Used everywhere in views.
 
-### Performance
-| # | Issue | File(s) | Lines |
-|---|-------|---------|-------|
-| W10 | `DataStore(context:)` created as computed property — queries on every render | ProgressDashboardView, DesireMapView | 9, 38 |
-| W11 | `UIImpactFeedbackGenerator` created inline per gesture instead of cached | CardCarousel.swift, OnboardingNameView.swift | various |
-| W12 | SparkSystem `Timer.publish` — particle updates on main thread | Design/Components/Effects/SparkField.swift | 50-100 |
-| W13 | `TimelineView` at 30fps in CuriosityPickerView — GPU-intensive | Features/Onboarding/Views/OnboardingCuriosityPickerView.swift | 417-418 |
-| W14 | `cardSpecs()` recomputed on every render | Features/Onboarding/Views/OnboardingCuriosityPickerView.swift | 425,435 |
-| W15 | `AnyView` wrapping defeats SwiftUI structural identity | Design/Components/Effects/LightAuraBloom.swift | 80-90 |
+**Tier 3 — Components (Design/Components/)**  
+Reusable UI elements (buttons, cards, effects, text, navigation, progress).
 
-### Code Quality / Dead Code
-| # | Issue | File(s) | Lines |
-|---|-------|---------|-------|
-| W16 | 30+ `@State` properties in single views | OnboardingBrandView (30+), OnboardingCardRevealView (25+) | 21-78, 63-113 |
-| W17 | `DispatchQueue.main.asyncAfter` chains with no cancellation on view dismiss | OnboardingBrandView, OnboardingCardRevealView, RacetrackTabBar | various |
-| W18 | Dead code: multiple unused functions/properties | SessionView (`advance()`), OnboardingNameView (`dismissCustomIfNeeded()`), ReflectionBannerView (`isVisible`), SettingsView (`navigateToThemePicker`), BuildingPathView (`deriveDefaultDifficulty()`) | various |
-| W19 | Non-functional UI: "Link Partner" button has empty action | Features/Pairing/PairingSettingsView.swift | 72-74 |
-| W20 | `Task.sleep(for: .seconds(1))` instead of proper async coordination | App/VaylApp.swift | ~110 |
-| W21 | Simulator hardcodes a fixed UUID for auth | Core/Services/AuthService.swift | 36-37 |
-| W22 | `pulseScale` repeatForever animation never cancelled | Features/Home/Components/PickUpCard.swift | 79 |
-| W23 | "Temporarily bypass isPaired check" left in prod code | Features/Home/HomeRouterView.swift | 55 |
+**Tier 4 — Features (Features/)**  
+Screens and flows (Home, Onboarding, Pairing, Pulse, Settings, etc.).
 
-### DRY Violations
-| # | Issue | File(s) |
-|---|-------|---------|
-| W24 | `GlowUnderline.swift` / `GlowUnderlineView.swift` — exact duplicate | Design/Components/Effects/ |
-| W25 | `OnboardingGlowField` / `AuroraGlowField` — structural duplicate, only palette differs | Design/Components/Effects/ |
-| W26 | `cardFill` computed property duplicated | PremiumCardShell.swift, CardBackView.swift |
-| W27 | `ReflectionCard` / `ReflectionBannerView` — significant code overlap | Features/Home/Components/ |
-| W28 | Duplicated animation schedule in BuildingPathView (~140 lines near-identical) | Features/Onboarding/Views/OnboardingBuildingPathView.swift |
-| W29 | `HolographicShimmer` / `LightModeShimmer` — same pattern, different colors | Design/Components/Effects/ |
-
-### Misc
-| # | Issue | File(s) | Lines |
-|---|-------|---------|-------|
-| W30 | `fatalError` on missing/malformed bundle content | Core/Services/ContentLoader.swift | 27, 36 |
-| W31 | `fatalError` on invalid Supabase URL | Core/Services/SupabaseManager.swift | 18-19 |
-| W32 | Profile ID cached in plain UserDefaults (should be Keychain) | Core/Services/ProfileService.swift | 204-221 |
-| W33 | Orphaned `ProfileService()` instances created inline | PairingService, DesireSyncService | various |
-| W34 | `retryPendingSyncs` has no backoff or max retry count | Core/Services/SyncManager.swift | 210-242 |
-| W35 | Raw error display in SignInView could expose internals | Features/Auth/SignInView.swift | 57 |
-| W36 | `PostMapReflectionView` loses state on view destruction | Features/Home/Components/PostMapReflectionView.swift | 82 |
-| W37 | `OnboardingData` not persisted — lost if app killed mid-flow | Features/Onboarding/Data/OnboardingData.swift | — |
-| W38 | Oversized views should be decomposed | DailyCheckInView (~740), PulseWidget (~730), CardCarousel (~690) | — |
-| W39 | ~400 lines of preview code in OrbitIndicator | Design/Components/Progress/OrbitIndicator.swift | 400-794 |
-| W40 | `FilamentMode.swift` should use `@Observable` | Design/Components/FilamentMode.swift | — |
+**Cross-cutting — Services & Stores (Core/Services/, Features/*/Store/)**  
+State management, sync, auth, data persistence.
 
 ---
 
-## File Inventory
+## File Change Summary (from 2026-04-04 baseline)
 
-### App Layer (11 files)
+### Moved/Renamed
+- `CardFrontView.swift` → refactored into `VaylCardFace.swift`
+- `OnboardingBrandView.swift`, `OnboardingBuildingPathView.swift` → replaced with phase-based architecture
 
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| App/VaylApp.swift | ⚠️ | W20 (Task.sleep) |
-| App/ContentView.swift | 🔴 | C2 (hasCompletedOnboarding defaults true) |
-| App/AppShell.swift | ✅ | Clean |
-| App/ModelContainer.swift | ⚠️ Uninspected | Moved from Data/Store/ — re-verify C12 fix |
-| App/Theme/AppColors.swift | ✅ | Clean |
-| App/Theme/AppFonts.swift | ✅ | Clean |
-| App/Theme/AppTheme.swift | ✅ | Clean |
-| App/Theme/ThemeModifiers.swift | ✅ | Clean |
-| App/Theme/ThemeManager.swift | ✅ | Clean |
-| App/Theme/ColorRow.swift | ⚠️ Uninspected | New since last audit |
-| AppIconRetreival.swift | ⚠️ Uninspected | New since last audit |
+### New (2026-05-16)
+- **Theme**: `AppGlows.swift`, `AppRootView.swift`
+- **Cards**: `VaylCardBack.swift`, `VaylCardFace.swift`, `VaylCardRenderer.swift`
+- **Effects**: `GradBadge.swift`, `PillBorder.swift`, `VaylBorderEffect.swift`, `VaylButton.swift`
+- **Onboarding Canvas**: `OnboardingCanvasView.swift`, `TableSurfaceView.swift`, `VaylDirector.swift`
+- **Onboarding Phases**: `BuildingPathPhase.swift`, `ContextPhase.swift`, `CuriosityPhase.swift`, `ExperienceLevelPhase.swift`, `FoilPhase.swift`, `FounderLetterPhase.swift`, `GenderPhase.swift`, `ModeSelectPhase.swift`, `NamePhase.swift`, `QuizPhase.swift`, `StatPhase.swift`
+- **Onboarding Renders**: `DealPointView.swift`, `ProjectedTextView.swift`
+- **Onboarding Models**: `FoilTear.swift`, `VaylCardModel.swift`
+- **Brand**: `SplashScreenView.swift`
+- **Pulse**: `PulseDotSummary.swift`, `TierGuideSheet.swift`
+- **Components**: `CornerDeckView.swift`, `CornerMarksView.swift`
 
-### Core Services (10 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Core/Services/Config.swift | 🔴 | C1 (hardcoded credentials) |
-| Core/Services/AuthService.swift | 🔴 | C2 + W21 (simulator UUID) |
-| Core/Services/AppState.swift | ⚠️ Uninspected | New since last audit |
-| Core/Services/ProfileService.swift | ⚠️ | W7, W32, W33 |
-| Core/Services/SyncManager.swift | ⚠️ | W4, W34 |
-| Core/Services/PairingService.swift | ⚠️ | W33 |
-| Core/Services/DesireSyncService.swift | ⚠️ | W6, W33 |
-| Core/Services/SessionSyncService.swift | ✅ | Skeleton — minimal code |
-| Core/Services/ContentLoader.swift | ⚠️ | W30 (fatalError) |
-| Core/Services/SupabaseManager.swift | ⚠️ | W31 (fatalError) |
-
-### Data Store (1 file)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Data/Store/DataStore.swift | ⚠️ | W4 (silent saves), W5 (magic 86400) |
-
-### Design — Brand (1 file)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Design/Brand/VaylAppIcon.swift | ⚠️ Uninspected | New since last audit |
-
-### Design — Buttons (5 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Design/Components/Buttons/HoloCTAButton.swift | ⚠️ | Missing: destructive variant, size param, icon support, a11y label |
-| Design/Components/Buttons/SelectablePill.swift | ⚠️ | Missing: maxWidth param, accent override, ViewBuilder variant, a11y |
-| Design/Components/Buttons/SafeWordButton.swift | ⚠️ | W1 (old theme), missing a11y label |
-| Design/Components/Buttons/GradientButton.swift | ⚠️ | W1 (old theme), missing isEnabled + a11y |
-| Design/Components/Buttons/CriticalButton.swift | ⚠️ | W1 (old theme), missing isEnabled + a11y |
-
-### Design — Cards (16 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Design/Components/Cards/CardCarousel.swift | ⚠️ | W11 (haptics), hardcoded spread config, W38 (oversized ~690L) |
-| Design/Components/Cards/ConversationCard.swift | 🔴 | C7 (UIApplication scenes), hardcoded card dims |
-| Design/Components/Cards/CardBackView.swift | ⚠️ | W26 (cardFill DRY) |
-| Design/Components/Cards/PremiumCardShell.swift | ⚠️ | W26 (cardFill DRY) |
-| Design/Components/Cards/CuriosityCardBack.swift | ⚠️ | Hardcoded RGB gradient values |
-| Design/Components/Cards/FuseTimerView.swift | ✅ | Clean |
-| Design/Components/Cards/CardFrontView.swift | ✅ | Clean |
-| Design/Components/Cards/CardRevealPillButton.swift | ⚠️ | Hardcoded animation timing |
-| Design/Components/Cards/CategoryTileView.swift | ⚠️ | W1 (old theme), missing a11y |
-| Design/Components/Cards/AtmosphericGhostDeck.swift | ⚠️ | Hardcoded drift/opacity values |
-| Design/Components/Cards/CuriosityFlipCard.swift | ✅ | Clean |
-| Design/Components/Cards/ConversationCardTypes.swift | ✅ | Clean |
-| Design/Components/Cards/CardLayout.swift | ✅ | Clean |
-| Design/Components/Cards/CardShadows.swift | ✅ | Clean |
-| Design/Components/Cards/PromptCard.swift | ✅ | Clean |
-| Design/Components/Cards/SettingsCard.swift | ✅ | Clean |
-
-### Design — Effects (15 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Design/Components/Effects/SparkField.swift | ⚠️ | W12 (main thread timer) |
-| Design/Components/Effects/FloatingStack.swift | 🔴 | C6 (UIScreen deprecated) |
-| Design/Components/Effects/FloatingCard.swift | ⚠️ | Hardcoded card dims (168pt, 20pt corner radius) |
-| Design/Components/Effects/TileOrbitView.swift | ⚠️ | Hardcoded orbit timing constants |
-| Design/Components/Effects/AuroraGlowField.swift | ⚠️ | W25 (DRY with OnboardingGlowField), file-scoped hex colors |
-| Design/Components/Effects/FlameAura.swift | 🔴 | C5 (60fps timer on main thread), W15 |
-| Design/Components/Effects/MazePatternView.swift | ✅ | Clean |
-| Design/Components/Effects/LightAuraBloom.swift | 🔴 | C5 (60fps timer), W15 (AnyView) |
-| Design/Components/Effects/OnboardingGlowField.swift | ⚠️ | W25 (DRY with AuroraGlowField), hardcoded timing |
-| Design/Components/Effects/LightModeShimmer.swift | ⚠️ | W29 (DRY with HolographicShimmer) |
-| Design/Components/Effects/HolographicShimmer.swift | ⚠️ | W29 (DRY with LightModeShimmer) |
-| Design/Components/Effects/HomeGlowField.swift | ⚠️ | Hardcoded deep-space hex colors, blob config |
-| Design/Components/Effects/GlowUnderline.swift | ⚠️ | W24 (DRY with GlowUnderlineView), hardcoded sizing |
-| Design/Components/Effects/GlowUnderlineView.swift | 🔴 | W24 — exact duplicate; delete this file |
-| Design/Components/Effects/GlowOrb.swift | ⚠️ | W1 (old theme) |
-
-### Design — FilamentMode (1 file)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Design/Components/FilamentMode.swift | ⚠️ | W40 (use @Observable) |
-
-### Design — Input (3 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Design/Components/Input/RatingButtonGroup.swift | ⚠️ | No light mode, no a11y labels |
-| Design/Components/Input/InteractiveField.swift | ⚠️ | W1 (old theme), no status enum, no a11y |
-| Design/Components/Input/ToggleRow.swift | ✅ | Clean (minor: expose toggleTint param) |
-
-### Design — Navigation (4 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Design/Components/Navigation/RacetrackTabBar.swift | ⚠️ | W17 (asyncAfter) |
-| Design/Components/Navigation/TabContentWrapper.swift | ✅ | Clean |
-| Design/Components/Navigation/OnboardingNavBar.swift | ✅ | Clean |
-| Design/Components/Navigation/OnboardingFooter.swift | ✅ | Clean |
-
-### Design — Other Root (5 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Design/Components/NavArrow.swift | ✅ | Clean |
-| Design/Components/PillBorder.swift | ✅ | Clean (minor: expose gradient override) |
-| Design/Components/CardStyle.swift | ✅ | Clean |
-| Design/Components/ScreenshotProtectionModifier.swift | ✅ | Clean |
-| Design/Components/OrbitSparkBorderView.swift | ✅ | Clean (0 callers) |
-| Design/Components/SectionHeader.swift | ✅ | Clean (minor: add a11y label) |
-| Design/Components/FilamentMode.swift | ⚠️ | W40 |
-
-### Design — Progress (6 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Design/Components/Progress/OnboardingProgressBar.swift | ✅ | Clean (well-engineered; misnamed — general-purpose) |
-| Design/Components/Progress/OrbitIndicator.swift | ⚠️ | W39 (~400 lines of previews) |
-| Design/Components/Progress/ProgressBar.swift | ⚠️ | W1 (old theme); duplicate of OnboardingProgressBar; mark deprecated |
-| Design/Components/Progress/ProgressRingView.swift | ⚠️ | W1 (old theme); overlaps ScoreRing |
-| Design/Components/Progress/ScoreRing.swift | ⚠️ | W1 (old theme); feature-specific ("OF 100" text); belongs in Features/Home/ |
-| Design/Components/Progress/SpectrumBar.swift | ⚠️ | W1 (old theme) |
-
-### Design — Pulse (8 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Design/Components/Pulse/PulseGraph.swift | ✅ | Clean (correct Animatable pattern) |
-| Design/Components/Pulse/DailyCheckInView.swift | ⚠️ | W38 (oversized, mixed concerns); should be in Features/Pulse/ |
-| Design/Components/Pulse/PulseWidget.swift | ⚠️ | W38 (oversized); review screen vs widget split |
-| Design/Components/Pulse/PulseDotSummary.swift | ✅ | Clean |
-| Design/Components/Pulse/PulseFullView.swift | 🔴 | C6 (UIScreen deprecated); is a screen — should be in Features/Pulse/ |
-| Design/Components/Pulse/PulseSheetView.swift | ⚠️ | Is a screen — should be in Features/Pulse/ |
-| Design/Components/Pulse/CheckInShell.swift | ✅ | Clean |
-| Design/Components/Pulse/PulseCanvasScrollView.swift | ✅ | Clean |
-
-### Design — Text (3 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Design/Components/Text/LivingText.swift | ✅ | Clean (good a11y) |
-| Design/Components/Text/GradientText.swift | ✅ | Clean (minor: add a11y label) |
-| Design/Components/Text/KeywordHighlightText.swift | ⚠️ | No light mode support for highlight colors |
-
-### Models — Content (2 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Models/Content/Card.swift | ⚠️ Uninspected | New since last audit — replaced ContentCard + Prompt + 3 others |
-| Models/Content/Deck.swift | ⚠️ Uninspected | New since last audit |
-
-### Models — Enums (2 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Models/Enums/AppEnums.swift | ⚠️ | Blanket Identifiable extension; now also contains PulseWindow |
-| Models/Enums/AppTab.swift | ✅ | Clean |
-
-### Models — Persistence (5 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Models/Persistence/SessionRecord.swift | ⚠️ | Raw strings instead of enums for category/difficulty |
-| Models/Persistence/AcknowledgementRecord.swift | ⚠️ Uninspected | New since last audit |
-| Models/Persistence/LockInSession.swift | ⚠️ Uninspected | New since last audit |
-| Models/Persistence/MilestoneRecord.swift | ⚠️ Uninspected | New since last audit |
-| Models/Persistence/PulseStore.swift | ⚠️ | W8 (plaintext UserDefaults); moved from old Models/Pulse/ |
-
-### Models — Progress (8 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Models/Progress/UserProfile.swift | 🔴 | C3 (PII plaintext) |
-| Models/Progress/Couple.swift | 🔴 | C3 (safe word plaintext) |
-| Models/Progress/DesireMatch.swift | 🔴 | C11 (privacy violation — exact ratings stored) |
-| Models/Progress/DesireRating.swift | ⚠️ | W9 (privacy UI-only) |
-| Models/Progress/PulseEntry.swift | ⚠️ Uninspected | Moved from old Models/Pulse/ |
-| Models/Progress/CardSession.swift | ⚠️ Uninspected | New since last audit |
-| Models/Progress/DeckProgress.swift | ⚠️ Uninspected | New since last audit |
-| Models/Progress/EntitlementRecord.swift | ⚠️ Uninspected | New since last audit |
-
-### Features — Auth (1 file)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Features/Auth/SignInView.swift | ⚠️ | W2 (@EnvironmentObject), W35 (raw errors) |
-
-### Features — Compatibility (1 file)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Features/Compatibility/DesireMapView.swift | ⚠️ | W10 (render queries), W3 (color token) |
-
-### Features — Home (15 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Features/Home/HomeDashboardView.swift | ⚠️ | Naming issue, dead gesture |
-| Features/Home/HomeRouterView.swift | 🔴 | C8 (DEBUG bypass), W23 (bypass comment) |
-| Features/Home/HomeStates.swift | ⚠️ | Dead state, W46 (fragile parser) |
-| Features/Home/Models/HomeEventEngine.swift | ✅ | Clean (needs unit tests) |
-| Features/Home/Models/HomeModels.swift | ✅ | Clean |
-| Features/Home/Components/PartnerChip.swift | ✅ | Clean; candidate for extraction to Design/Components/ |
-| Features/Home/Components/HomeWidgetShell.swift | ✅ | Clean; candidate for extraction to Design/Components/ |
-| Features/Home/Components/DesireMapIndicator.swift | ✅ | Clean |
-| Features/Home/Components/PickUpCard.swift | ⚠️ | W22 (uncancelled animation) |
-| Features/Home/Components/ResearchTicker.swift | 🔴 | C4 (timer leak) |
-| Features/Home/Components/ReflectionCard.swift | ⚠️ | W27 (DRY with BannerView) |
-| Features/Home/Components/ReflectionBannerView.swift | ⚠️ | W18 (dead code), W27 |
-| Features/Home/Components/PostMapReflectionView.swift | ⚠️ | W35 (state lost on dismiss) |
-| Features/Home/Components/CardChestContainer.swift | ⚠️ Uninspected | New since last audit |
-| Features/Home/Components/GravLiftView.swift | ⚠️ Uninspected | New since last audit |
-
-### Features — Learn (2 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Features/Learn/LearnView.swift | ✅ | Stub |
-| Features/Learn/ConstellationNode.swift | ⚠️ Uninspected | New since last audit |
-
-### Features — Map (2 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Features/Map/MapView.swift | ✅ | Stub |
-| Features/Map/PrismView.swift | ⚠️ Uninspected | New since last audit |
-
-### Features — Onboarding (22 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Features/Onboarding/Views/OnboardingBuildingPathView.swift | ⚠️ | C7 (UIApplication), W28 (dup schedule), W18 (dead code) |
-| Features/Onboarding/Views/OnboardingCardRevealView.swift | ⚠️ | W16 (25+ @State), W17 (asyncAfter) |
-| Features/Onboarding/Views/OnboardingNameView.swift | ⚠️ | W11 (inline haptics), W18 (dead code) |
-| Features/Onboarding/Views/OnboardingBrandView.swift | ⚠️ | W16 (30+ @State), W17 (asyncAfter chains) |
-| Features/Onboarding/Views/OnboardingModeSelectView.swift | ✅ | Clean (proper Task cancellation) |
-| Features/Onboarding/Views/OnboardingCuriosityPickerView.swift | 🔴 | C6 (UIScreen) + W13, W14 |
-| Features/Onboarding/Views/OnboardingGroundRulesView.swift | ✅ | Clean (good a11y) |
-| Features/Onboarding/Views/OnboardingStatView.swift | ⚠️ | Magic numbers, uncancelled animations |
-| Features/Onboarding/Views/OnboardingContextView.swift | ✅ | Clean |
-| Features/Onboarding/Views/OnboardingFlowView.swift | ✅ | Clean |
-| Features/Onboarding/Data/CuriosityScreenConfig.swift | ✅ | Clean |
-| Features/Onboarding/Data/OnboardingData.swift | ⚠️ | W37 (not persisted) |
-| Features/Onboarding/Design/OnboardingAtmosphere.swift | ✅ | Clean |
-| Features/Onboarding/Layout/OnboardingLayout.swift | ✅ | Clean |
-| Features/Onboarding/Components/ContextCard.swift | ✅ | Clean; candidate for extraction to Design/Components/ |
-| Features/Onboarding/Components/ContextIntensity.swift | ✅ | Clean; candidate for extraction to Design/Components/ |
-| Features/Onboarding/Components/ContextCardStack.swift | ✅ | Clean; onboarding-specific, keep in place |
-| Features/Onboarding/Components/ContextOption.swift | ✅ | Clean |
-| Features/Onboarding/Components/CuriosityPill.swift | 🔴 | C6 (UIScreen deprecated) |
-| Features/Onboarding/Components/CuriosityStatusStrip.swift | 🔴 | C10 (ForEach/totalPanels mismatch) |
-| Features/Onboarding/Components/CuriosityPreviewLine.swift | ✅ | Clean |
-| Features/Onboarding/Components/CuriosityPanelNudge.swift | ✅ | Clean |
-
-### Features — Other (9 files)
-
-| File Path | Status | Issues |
-|-----------|--------|--------|
-| Features/Sessions/SessionView.swift | ⚠️ | Verify C13 (wrong category) was fixed; 2 other warnings |
-| Features/Settings/SettingsView.swift | 🔴 | C9 (hardcoded code) + 4 warnings |
-| Features/Settings/ThemeTestView.swift | ✅ | Clean (DEBUG only) |
-| Features/Settings/ThemePickerView.swift | ✅ | Clean |
-| Features/Compatibility/DesireMapView.swift | ⚠️ | W10 (render queries) |
-| Features/Progress/ProgressDashboardView.swift | ⚠️ | W10 (render queries), W3 (color token) |
-| Features/Pairing/PairingSettingsView.swift | 🔴 | C9 (hardcoded code) + 2 warnings |
-| Features/Auth/SignInView.swift | ⚠️ | W2, W35 |
-| Features/Play/PlayView.swift | ✅ | Stub |
-
----
-
-## Issue Distribution
-
-| Category | Critical | Warning |
-|----------|----------|---------|
-| Security / Privacy | 3 | 5 |
-| Performance | 3 | 6 |
-| Data Integrity | 2 | 6 |
-| Architecture / DRY | 0 | 10 |
-| Code Quality / Dead Code | 1 | 15 |
-| Logic / UX | 2 | 8 |
-
----
-
-## Priority Action Plan
-
-### P0 — Ship Blockers
-1. Move Supabase credentials out of source control (C1)
-2. Fix `isAuthenticated` / `hasCompletedOnboarding` defaults to `false` (C2)
-3. Fix `ResearchTicker` timer leak (C4)
-4. Verify `SessionView` category bug fix landed (C13)
-5. Fix `CuriosityStatusStrip` ForEach/totalPanels mismatch (C10)
-6. Remove hardcoded pairing code placeholders (C9)
-7. Remove DEBUG gate bypass in HomeRouterView (C8)
-
-### P1 — Security & Privacy
-8. Encrypt sensitive PII fields — sexual orientation, safe word, role preference (C3)
-9. Enforce desire rating privacy at the data layer (C11)
-10. Sanitize error messages in SignInView (W35)
-11. Move Pulse data from UserDefaults to encrypted storage (W8)
-
-### P2 — Performance
-12. Replace `Timer.publish(every: 1/60)` with TimelineView in FlameAura + LightAuraBloom (C5)
-13. Replace all `UIScreen.main.bounds` with GeometryReader (C6)
-14. Fix `UIApplication.shared.connectedScenes` screen width (C7)
-15. Fix `DataStore` render-time queries (W10)
-16. Cache `UIImpactFeedbackGenerator` instances (W11)
-
-### P3 — Design System (active branch work)
-17. Unify HolographicShimmer + LightModeShimmer → Shimmer.swift (W29)
-18. Delete GlowUnderlineView.swift — exact duplicate (W24)
-19. Migrate remaining views from `@Environment(\.theme)` to `AppColors.*` (W1)
-20. Parameterize HoloCTAButton, SelectablePill, GradientButton, CriticalButton
-21. Extract PartnerChip → Design/Components/Indicators/
-22. Extract HomeWidgetShell → Design/Components/Cards/WidgetShell
-23. Extract ContextCard + ContextIntensity → Design/Components/Cards/
-
-### P4 — Code Quality
-24. Consolidate AuroraGlowField / OnboardingGlowField (W25)
-25. Remove dead code (W18)
-26. Add upsert handling to sync services (W6)
-27. Audit all ⚠️ Uninspected files added since Apr 12
+### Removed/Archived
+- `CardFrontView.swift` (functionality merged into `VaylCardFace.swift`)
+- Old onboarding screen views (replaced with phase-based system)

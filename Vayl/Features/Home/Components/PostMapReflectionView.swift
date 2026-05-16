@@ -243,9 +243,9 @@ struct PostMapReflectionView: View {
         VStack(spacing: AppSpacing.md) {
 
             // Primary CTA — changes on last step
-            HoloCTAButton(
-                title: isLastStep ? "See my waiting state" : "Next",
-                isEnabled: canAdvance
+            VaylButton(
+                label: isLastStep ? "See my waiting state" : "Next",
+                isDisabled: !canAdvance
             ) {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 saveAndAdvance()
@@ -302,7 +302,7 @@ struct PostMapReflectionView: View {
             if colorScheme == .light {
                 AuroraGlowField()
             } else {
-                OnboardingGlowField()
+                OnboardingAtmosphere()
             }
         }
         .ignoresSafeArea()

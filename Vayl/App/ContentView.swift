@@ -39,10 +39,7 @@ struct ContentView: View {
         if hasCompletedOnboarding && !forceOnboarding {
             AppShell()
         } else {
-            OnboardingFlowView(
-                modelContainer: modelContext.container,
-                appState: appState
-            )
+            OnboardingCanvasView()
         }
     }
 }

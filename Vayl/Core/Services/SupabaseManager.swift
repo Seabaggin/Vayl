@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 3/9/26.
 //
 
-
 import Supabase
 import Foundation
 
@@ -20,7 +19,12 @@ final class SupabaseManager {
         }
         client = SupabaseClient(
             supabaseURL: url,
-            supabaseKey: Config.supabaseAnonKey
+            supabaseKey: Config.supabaseAnonKey,
+            options: SupabaseClientOptions(
+                auth: .init(  // <-- Swift automatically knows this is SupabaseClientOptions.AuthOptions
+                    emitLocalSessionAsInitialSession: true
+                )
+            )
         )
     }
 }

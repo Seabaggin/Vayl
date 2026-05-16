@@ -17,13 +17,24 @@ class ThemeManager {
     }
 
     init() {
-        var saved = UserDefaults.standard.string(forKey: "appThemeMode") ?? "system"
-        // Migrate legacy "amoled" value to "dark"
+        var saved = UserDefaults.standard.string(forKey: "appThemeMode") ?? "dark"
+
+        // Migrate legacy "amoled" value → "dark"
         if saved == "amoled" {
             saved = "dark"
             UserDefaults.standard.set("dark", forKey: "appThemeMode")
         }
-        self.mode = ThemeMode(rawValue: saved) ?? .system
+
+        // Migrate stale "light" value when onboarding is not yet complete.
+        // Light mode is unavailable in Act 1 — if "light" is stored and the
+        // user has not finished onboarding, it leaked from a dev/test session.
+        // Reset to "dark" so cold launch always starts with the Midnight palette.
+        if saved == "light" && !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
+            saved = "dark"
+            UserDefaults.standard.set("dark", forKey: "appThemeMode")
+        }
+
+        self.mode = ThemeMode(rawValue: saved) ?? .dark
     }
 
     func palette(for systemScheme: ColorScheme) -> AppPalette {
@@ -46,7 +57,10 @@ class ThemeManager {
 // MARK: - Environment Key
 
 private struct PaletteKey: EnvironmentKey {
-    static let defaultValue: AppPalette = .light
+    // .dark — any view outside .themedRoot() gets Midnight, not Dawn.
+    // Previously .light caused unthemed routes (SignIn, OB) to render
+    // the warm palette even on dark-mode devices.
+    static let defaultValue: AppPalette = .dark
 }
 
 extension EnvironmentValues {

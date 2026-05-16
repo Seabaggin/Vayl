@@ -10,9 +10,12 @@
 import SwiftUI
 
 struct GlowOrb: View {
-    @Environment(\.theme) private var t
+    @Environment(\.colorScheme) private var colorScheme
     let color: Color
     var size: CGFloat = 200
+
+    // Matches AppPalette.glowOpacity values: 0.18 dark, 0.06 light.
+    private var glowOpacity: Double { colorScheme == .dark ? 0.18 : 0.06 }
 
     var body: some View {
         Circle()
@@ -26,7 +29,7 @@ struct GlowOrb: View {
             )
             .frame(width: size, height: size)
             .blur(radius: 40)
-            .opacity(t.glowOpacity)
+            .opacity(glowOpacity)
             .allowsHitTesting(false)
     }
 }

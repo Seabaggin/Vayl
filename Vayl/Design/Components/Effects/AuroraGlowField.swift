@@ -3,7 +3,7 @@
 //  Open Lightly
 //
 //  Warm Aurora atmospheric blob field for light mode screens.
-//  Near-verbatim copy of OnboardingGlowField with warm palette
+//  Near-verbatim copy of OnboardingAtmosphere with warm palette
 //  swapped in and opacities raised ~1.8–2.2× to compensate
 //  for cream (#F8F6EE) absorbing color vs dark (#030305) amplifying it.
 //

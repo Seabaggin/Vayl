@@ -124,7 +124,7 @@ struct AppFonts {
 
     /// Primary CTA button label. One per screen.
     static var ctaLabel: Font {
-        body(16, weight: .semibold, relativeTo: .body)
+        body(17, weight: .semibold, relativeTo: .body)
     }
 
     /// Paragraph content. Never UI labels or navigation elements.

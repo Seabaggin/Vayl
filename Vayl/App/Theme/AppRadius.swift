@@ -56,4 +56,29 @@ internal enum AppRadius {
     /// SwiftUI mathematically clamps .infinity to perfectly round the shortest edge.
     /// Never use for cards, buttons, inputs, or any rectangular surface.
     static let pill: CGFloat = .infinity
+
+    // MARK: - OB Card Radii
+    // These tokens are exclusive to the Onboarding canvas and its card components.
+    // They must never appear in main-app screens — the table metaphor does not
+    // leave the OB boundary.
+
+    /// 14pt — Full-size OB vertical card.
+    /// Applied to VaylCardBack, VaylCardFace, and VaylCardRenderer frame clips.
+    /// Distinct from lg (16pt) — the slightly tighter radius reads as a playing card,
+    /// not a UI card. Do not substitute lg here.
+    /// Vertical cards are OB/personal only. This token never appears on session cards.
+    static let obCard: CGFloat = 14
+
+    /// 4pt — Corner deck mini-card stack.
+    /// Applied to the scaled-down card representations in CornerDeckView.
+    /// At the rendered scale of the corner deck (~22% of full card size), 4pt
+    /// produces the correct visual proportion of the obCard radius.
+    /// Never use for full-size cards.
+    static let cornerCard: CGFloat = 4
+
+    /// 16pt — Foil wrapper overlay in FoilPhase.
+    /// Applied to FoilRenderer as it wraps the assembled deck.
+    /// Matches lg intentionally — the foil sits over the deck surface and its
+    /// edge radius must align with the card stack beneath it.
+    static let foilEdge: CGFloat = 16
 }

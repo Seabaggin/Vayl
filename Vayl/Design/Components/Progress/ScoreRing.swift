@@ -9,25 +9,39 @@
 import SwiftUI
 
 struct ScoreRing: View {
-    @Environment(\.theme) private var t
     let score: Int
     var size: CGFloat = 110
     var lineWidth: CGFloat = 9
 
     @State private var progress: CGFloat = 0
 
+    // Spectrum sweep: cyan → purple → magenta → cyan (full arc).
+    // AngularGradient matches AppPalette.ringGradient — migrated off
+    // legacy theme env so Color.dynamic tokens resolve correctly.
+    private var ringGradient: AngularGradient {
+        AngularGradient(
+            colors: [
+                AppColors.spectrumCyan,
+                AppColors.spectrumPurple,
+                AppColors.spectrumMagenta,
+                AppColors.spectrumCyan,
+            ],
+            center: .center
+        )
+    }
+
     var body: some View {
         ZStack {
             Circle()
                 .stroke(
-                    t.isDark ? .white.opacity(0.06) : t.surface3,
+                    AppColors.borderSubtle,
                     lineWidth: lineWidth
                 )
 
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
-                    t.ringGradient,
+                    ringGradient,
                     style: StrokeStyle(
                         lineWidth: lineWidth,
                         lineCap: .round
@@ -42,13 +56,13 @@ struct ScoreRing: View {
                         weight: .bold,
                         design: .rounded
                     ))
-                    .foregroundStyle(t.text)
+                    .foregroundStyle(AppColors.textPrimary)
 
                 if size > 80 {
                     Text("OF 100")
                         .font(.system(size: 9, weight: .semibold))
                         .tracking(1.5)
-                        .foregroundStyle(t.textMuted)
+                        .foregroundStyle(AppColors.textMuted)
                 }
             }
         }
@@ -59,5 +73,5 @@ struct ScoreRing: View {
             }
         }
     }
- }
+}
 

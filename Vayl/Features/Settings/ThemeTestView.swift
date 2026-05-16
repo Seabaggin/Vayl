@@ -73,7 +73,7 @@ struct ThemeTestView: View {
 
                 // CTA
                 section("Primary CTA") {
-                    GradientButton(title: "Begin Together") {}
+                    VaylButton(label: "Begin Together") {}
                 }
 
                 // Critical

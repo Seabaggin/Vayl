@@ -59,15 +59,31 @@ extension ModelContainer {
 
     /// App-wide ModelContainer.
     /// Called once from VaylApp.swift via .modelContainer(ModelContainer.appContainer)
-    /// fatalError on failure is intentional — catches schema mismatches immediately.
+    ///
+    /// Store location is explicit — Application Support/Vayl.store.
+    /// This guarantees the file lands inside the app sandbox where the
+    /// Data Protection capability (Complete Protection) covers it.
+    /// The file is unreadable when the device is locked.
+    ///
+    /// fatalError on failure is intentional — catches schema mismatches
+    /// at launch rather than producing silent data loss.
     static var appContainer: ModelContainer {
         do {
             let schema = Schema(SchemaV1.models)
+
+            // Explicit store URL — never let SwiftData choose the location.
+            // Application Support is the correct directory for persistent
+            // structured data. It is excluded from user-visible Documents
+            // and included in the Data Protection sandbox.
+            let storeURL = URL.applicationSupportDirectory
+                .appending(path: "Vayl.store")
+
             let config = ModelConfiguration(
                 "Vayl",
                 schema: schema,
-                isStoredInMemoryOnly: false
+                url: storeURL
             )
+
             return try ModelContainer(
                 for: schema,
                 migrationPlan: AppMigrationPlan.self,
@@ -80,6 +96,7 @@ extension ModelContainer {
 
     /// In-memory container for SwiftUI previews and unit tests.
     /// Identical schema to appContainer — nothing hits disk.
+    /// No URL parameter — memory-only containers have no file to locate.
     static var previewContainer: ModelContainer {
         do {
             let schema = Schema(SchemaV1.models)

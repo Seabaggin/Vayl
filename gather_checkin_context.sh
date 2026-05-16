@@ -33,7 +33,7 @@ TARGET_FILES=(
   "$SOURCE_ROOT/Design/Components/Effects/AuroraGlowField.swift"
   "$SOURCE_ROOT/Design/Components/Effects/GlowOrb.swift"
   "$SOURCE_ROOT/Design/Components/Effects/HolographicShimmer.swift"
-  "$SOURCE_ROOT/Design/Components/Effects/OnboardingGlowField.swift"
+  "$SOURCE_ROOT/Design/Components/Effects/OnboardingAtmosphere.swift"
 
   # ── Design Components — Buttons ───────────────────────────────────────────
   "$SOURCE_ROOT/Design/Components/Buttons/SelectablePill.swift"

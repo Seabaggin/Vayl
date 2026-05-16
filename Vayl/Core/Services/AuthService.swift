@@ -39,10 +39,18 @@ final class AuthService: NSObject {
     func checkSession() async {
         do {
             let session = try await supabase.auth.session
+            
+            // Add this check
+            if session.isExpired {
+                try? await supabase.auth.signOut()
+                self.isAuthenticated = false
+                self.userId = nil
+                return
+            }
+            
             self.userId = session.user.id
             self.isAuthenticated = true
         } catch {
-            // No active session — correct default state.
             self.isAuthenticated = false
             self.userId = nil
         }

@@ -145,6 +145,76 @@ internal enum AppElevation {
             y: 6
         )
     }
+
+    // MARK: — Citation Panel
+    // Exclusive to the expandable citation card in StatPhase.
+    // Lighter radius than card elevation — the panel is a secondary
+    // surface attached to inline copy, not a first-class card.
+
+    enum citationPanel {
+
+        /// Dawn mode — purple-tinted shadow matching the warm palette.
+        static let dawnShadow = Shadow(
+            color:  AppColors.shadowPurple,
+            radius: 16,
+            x:      0,
+            y:      4
+        )
+
+        /// Midnight mode — deep shadow with slightly more spread.
+        static let midnightShadow = Shadow(
+            color:  AppColors.shadowDeep,
+            radius: 20,
+            x:      0,
+            y:      6
+        )
+    }
+
+    // MARK: — OB Card Physics Elevation
+    // These tokens are exclusive to the Onboarding canvas.
+    // They must never appear in main-app screens — the table metaphor
+    // does not leave the OB boundary.
+    //
+    // OB cards exist on a continuous elevation range from 0.0 (flat on the table)
+    // to 1.0 (fully lifted toward the user). The standard Page/Card/Modal tiers
+    // do not apply here — card height is driven by physics state, not surface hierarchy.
+
+    /// A shadow specification for a VaylCardModel at a given elevation.
+    /// VaylDirector writes card.elevation. VaylCardRenderer calls this function.
+    ///
+    /// elevation 0.0 — card lying flat on the felt.
+    ///   color: black at 50% opacity, radius 8pt, y offset 4pt.
+    /// elevation 1.0 — card fully lifted toward the user.
+    ///   color: black at 16% opacity, radius 32pt, y offset 20pt.
+    ///
+    /// The opacity inversion is intentional — a lifted card scatters its shadow
+    /// across a larger area, so the color lightens as the radius grows.
+    /// This matches the physical behaviour of an overhead point light source.
+    ///
+    /// - Parameter elevation: A Double in the range 0.0–1.0. Values outside
+    ///   this range are not clamped — callers are responsible for correct input.
+    struct CardShadow {
+        let color:  Color
+        let radius: CGFloat
+        let y:      CGFloat
+    }
+
+    static func cardShadow(elevation: Double) -> CardShadow {
+        CardShadow(
+            color:  Color.black.opacity(lerp(0.50, 0.16, elevation)),
+            radius: lerp(8,  32, elevation),
+            y:      lerp(4,  20, elevation)
+        )
+    }
+
+    // MARK: — Private Helpers
+
+    /// Linear interpolation between two Double values.
+    /// Used by cardShadow(elevation:) — not exported.
+    /// a = value at t=0, b = value at t=1.
+    private static func lerp(_ a: Double, _ b: Double, _ t: Double) -> Double {
+        a + (b - a) * t
+    }
 }
 
 // MARK: — View Modifiers

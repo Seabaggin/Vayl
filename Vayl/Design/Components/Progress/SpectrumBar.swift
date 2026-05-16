@@ -9,12 +9,11 @@
 import SwiftUI
 
 struct SpectrumBar: View {
-    @Environment(\.theme) private var t
     var height: CGFloat = 3
 
     var body: some View {
         Capsule()
-            .fill(t.spectrumGradient)
+            .fill(AppColors.spectrumBorder)
             .frame(height: height)
     }
 }

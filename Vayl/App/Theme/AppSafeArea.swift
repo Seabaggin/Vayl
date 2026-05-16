@@ -44,7 +44,7 @@ extension View {
     ///         content
     ///     }
     ///     .stickyBottomCTA {
-    ///         HoloCTAButton("Continue") { ... }
+    ///         VaylButton("Continue") { ... }
     ///     }
     ///
     /// The spacing between the CTA and the home indicator is AppSpacing.md (16pt).

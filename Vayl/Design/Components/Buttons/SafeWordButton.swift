@@ -6,7 +6,7 @@ import SwiftUI
 struct SafeWordButton: View {
     let onActivate: () -> Void
     @State private var showConfirmation: Bool = false
-    @Environment(\.theme) private var t // ARCHITECTURAL FLAG: legacy theme env — do not migrate to AppColors until theme system is unified
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Button {
@@ -18,16 +18,16 @@ struct SafeWordButton: View {
                 Text("Safe Word")
                     .font(AppFonts.buttonLabel)
             }
-            .foregroundColor(t.gold)
+            .foregroundColor(AppColors.safetyAccent)
             .padding(.vertical, AppSpacing.sm)
             .padding(.horizontal, AppSpacing.md)
             .background(
                 RoundedRectangle(cornerRadius: AppRadius.md)
-                    .fill(t.isDark ? t.gold.opacity(0.08) : t.gold.opacity(0.12))
+                    .fill(AppColors.safetyAccent.opacity(colorScheme == .dark ? 0.08 : 0.12))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.md)
-                    .stroke(t.gold.opacity(0.25), lineWidth: 1.5)
+                    .stroke(AppColors.safetyAccent.opacity(0.25), lineWidth: 1.5)
             )
         }
         .alert(

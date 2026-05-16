@@ -369,7 +369,7 @@ struct OnboardingGroundRulesView: View {
                 .animation(AppAnimation.spring, value: ctaVisible)
                 .padding(.bottom, AppSpacing.md)
 
-            HoloCTAButton(title: "I'm ready", isEnabled: true) {
+            VaylButton(label: "I'm ready") {
                 handleAcknowledge()
             }
             .fixedSize(horizontal: false, vertical: true)

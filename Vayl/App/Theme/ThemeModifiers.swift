@@ -30,23 +30,23 @@ extension View {
 // MARK: - Card Modifier
 
 struct ThemedCardModifier: ViewModifier {
-    @Environment(\.theme) private var t
+    @Environment(\.colorScheme) private var colorScheme
     var selected: Bool = false
 
     func body(content: Content) -> some View {
         content
-            .background(t.surface1)
+            .background(AppColors.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.lg)
                     .stroke(
-                        selected ? t.cyan : t.cardBorder,
+                        selected ? AppColors.accentPrimary : AppColors.borderSubtle,
                         lineWidth: selected ? 2 : 1.5
                     )
             )
             .shadow(
-                color: selected && t.isDark
-                    ? t.glowCyan
+                color: selected && colorScheme == .dark
+                    ? AppColors.accentPrimary.opacity(0.20)
                     : .clear,
                 radius: selected ? 8 : 0
             )

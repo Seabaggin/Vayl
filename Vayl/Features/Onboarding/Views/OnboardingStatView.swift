@@ -126,9 +126,8 @@ struct OnboardingStatView: View {
 
                     Spacer(minLength: AppSpacing.xl)
 
-                    HoloCTAButton(
-                        title: "Explore",
-                        isEnabled: true,
+                    VaylButton(
+                        label:  "Explore",
                         action: {
                             guard !hasAdvanced else { return }
                             hasAdvanced = true

@@ -149,7 +149,7 @@ struct SettingsView: View {
                     icon: "link",                   // raw string lives in InteractiveField — migrate there
                     text: .constant("")
                 )
-                GradientButton(title: "Link Partner") {
+                VaylButton(label: "Link Partner") {
                     #if DEBUG
                     print("[Settings] Link partner tapped")
                     #endif

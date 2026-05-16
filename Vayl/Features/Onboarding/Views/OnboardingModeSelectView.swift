@@ -368,7 +368,7 @@ struct OnboardingModeSelectView: View {
 
     private var ctaBlock: some View {
         VStack(spacing: 0) {
-            HoloCTAButton(title: "Next", isEnabled: selectionMade) {
+            VaylButton(label: "Next", isDisabled: !selectionMade) {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 onContinue()
             }

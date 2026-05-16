@@ -1,13 +1,21 @@
 //
 //  VaylAppIcon.swift
-//  Open Lightly
+//  Vayl
 //
-//  Created by Bryan Jorden on 4/24/26.
+//  The spectrum line, wordmark gradients, aurora backgrounds, and star
+//  field all use AppColors.spectrumCyan/Purple/Magenta — the fixed
+//  non-adaptive tokens. Never use accentPrimary/Secondary/Tertiary here.
+//  Those tokens are adaptive and will resolve to light-mode colors
+//  (magenta-led, gold-trailed) when the render context is light mode.
 //
-//  CHANGED: spectrumLine() only.
-//  - lineLeft/lineRight confirmed flush values from device (0.162, 0.517)
-//  - Left tip gradients taper from zero so line dissolves into V naturally
-//  - Bloom rendered into offscreen CGLayer, clipped via trapezoid on composite
+//  iconBackground() gradient stops are intentionally distinct from
+//  AppColors.void (#0A0810). The icon background skews cooler/more navy
+//  (#0A0E20) to improve legibility at 60pt against iOS home screen
+//  backgrounds. Do not replace with AppColors.void.
+//
+//  Color(hex: "3A1070") deep violet center bloom has no AppColors token
+//  because it exists only in the app icon as a rendering artifact of the
+//  layered aurora gradients. Add a token if it appears elsewhere.
 
 import SwiftUI
 import CoreText
@@ -33,9 +41,6 @@ struct VaylAppIcon: View {
         return (f.capHeight - f.ascender - f.descender) / 2
     }
 
-    // Horizontal correction: shift text + line so that the V/L ink midpoint
-    // lands exactly at size/2. Derived entirely from CoreText glyph geometry —
-    // no magic constant, correct at every size.
     private var centeringCorrection: CGFloat {
         let font   = clashUIFont
         let ctFont = font as CTFont
@@ -57,11 +62,11 @@ struct VaylAppIcon: View {
         let kY = GY - sidebearings(of: "Y", font: font).right - sidebearings(of: "L", font: font).left
 
         let attrStr = NSMutableAttributedString(string: "VAYL")
-        attrStr.addAttribute(.font, value: font,              range: NSRange(location: 0, length: 4))
-        attrStr.addAttribute(.kern, value: kV as NSNumber,    range: NSRange(location: 0, length: 1))
-        attrStr.addAttribute(.kern, value: kA as NSNumber,    range: NSRange(location: 1, length: 1))
-        attrStr.addAttribute(.kern, value: kY as NSNumber,    range: NSRange(location: 2, length: 1))
-        attrStr.addAttribute(.kern, value: 0  as NSNumber,    range: NSRange(location: 3, length: 1))
+        attrStr.addAttribute(.font, value: font,           range: NSRange(location: 0, length: 4))
+        attrStr.addAttribute(.kern, value: kV as NSNumber, range: NSRange(location: 0, length: 1))
+        attrStr.addAttribute(.kern, value: kA as NSNumber, range: NSRange(location: 1, length: 1))
+        attrStr.addAttribute(.kern, value: kY as NSNumber, range: NSRange(location: 2, length: 1))
+        attrStr.addAttribute(.kern, value: 0  as NSNumber, range: NSRange(location: 3, length: 1))
 
         let line      = CTLineCreateWithAttributedString(attrStr)
         let typoWidth = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
@@ -78,14 +83,17 @@ struct VaylAppIcon: View {
     }
 
     // ── Gradients ────────────────────────────────────────────────────────────────
+    // All gradient tokens use fixed spectrum values — never adaptive accent tokens.
+
     private var spectrumGradient: LinearGradient {
         LinearGradient(
             stops: [
-                .init(color: AppColors.accentPrimary,    location: 0.00),
-                .init(color: AppColors.accentSecondary,  location: 0.50),
-                .init(color: AppColors.accentTertiary, location: 1.00),
+                .init(color: AppColors.spectrumCyan,    location: 0.00),
+                .init(color: AppColors.spectrumPurple,  location: 0.50),
+                .init(color: AppColors.spectrumMagenta, location: 1.00),
             ],
-            startPoint: .leading, endPoint: .trailing
+            startPoint: .leading,
+            endPoint:   .trailing
         )
     }
 
@@ -96,11 +104,10 @@ struct VaylAppIcon: View {
                 .init(color: .white.opacity(0.88), location: 0.96),
                 .init(color: .white.opacity(0),    location: 1.00),
             ],
-            startPoint: .leading, endPoint: .trailing
+            startPoint: .leading,
+            endPoint:   .trailing
         )
     }
-
-
 
     private var bottomGradient: LinearGradient {
         LinearGradient(
@@ -110,29 +117,21 @@ struct VaylAppIcon: View {
                 .init(color: Color(red: 0.529, green: 0.098, blue: 0.659).opacity(0.97), location: 0.65),
                 .init(color: Color(red: 0.784, green: 0.000, blue: 0.345).opacity(0.97), location: 1.00),
             ],
-            startPoint: .leading, endPoint: .trailing
+            startPoint: .leading,
+            endPoint:   .trailing
         )
     }
 
     // ── Body ─────────────────────────────────────────────────────────────────────
     var body: some View {
         ZStack {
-            // 1. Background — layered atmosphere
             iconBackground()
-
-            // 2. Star field
             StarFieldView(size: size)
-
-            // 3. Top half — cold white, embossed
             topHalfWordGroup()
-
-            // 4. Bottom half — spectrum gradient, embossed
             bottomHalfWordGroup()
-
-            // 5. Spectrum line
             spectrumLine()
 
-            // 6. Film grain — deterministic, screen blend
+            // Film grain — deterministic, screen blend
             Canvas { context, _ in
                 let s = Int(size)
                 for i in 0..<grainCount {
@@ -151,19 +150,19 @@ struct VaylAppIcon: View {
             .frame(width: size, height: size)
             .blendMode(.screen)
 
-            // 7. Vignette
+            // Vignette
             RadialGradient(
                 gradient: Gradient(stops: [
                     .init(color: .clear,                    location: 0.0),
                     .init(color: Color.black.opacity(0.52), location: 1.0),
                 ]),
-                center: .center,
+                center:      .center,
                 startRadius: size * 0.32,
                 endRadius:   size * 0.72
             )
             .frame(width: size, height: size)
 
-            // 8. Border
+            // Border
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .strokeBorder(
                     LinearGradient(
@@ -184,6 +183,8 @@ struct VaylAppIcon: View {
     }
 
     // ── Background ───────────────────────────────────────────────────────────────
+    // Gradient stops are intentionally distinct from AppColors.void — see file header.
+    // Aurora blobs use fixed spectrum tokens, never adaptive accent tokens.
     @ViewBuilder
     private func iconBackground() -> some View {
         ZStack {
@@ -199,9 +200,9 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.accentPrimary.opacity(0.22),
-                    AppColors.accentPrimary.opacity(0.07),
-                    AppColors.accentPrimary.opacity(0.00),
+                    AppColors.spectrumCyan.opacity(0.22),
+                    AppColors.spectrumCyan.opacity(0.07),
+                    AppColors.spectrumCyan.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.08, y: 0.10),
                 startRadius: 0,
@@ -210,8 +211,8 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.accentPrimary.opacity(0.08),
-                    AppColors.accentPrimary.opacity(0.00),
+                    AppColors.spectrumCyan.opacity(0.08),
+                    AppColors.spectrumCyan.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.92, y: 0.05),
                 startRadius: 0,
@@ -220,9 +221,9 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.accentSecondary.opacity(0.22),
-                    AppColors.accentSecondary.opacity(0.08),
-                    AppColors.accentSecondary.opacity(0.00),
+                    AppColors.spectrumPurple.opacity(0.22),
+                    AppColors.spectrumPurple.opacity(0.08),
+                    AppColors.spectrumPurple.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.50, y: 0.48),
                 startRadius: 0,
@@ -231,8 +232,8 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.accentSecondary.opacity(0.14),
-                    AppColors.accentSecondary.opacity(0.00),
+                    AppColors.spectrumPurple.opacity(0.14),
+                    AppColors.spectrumPurple.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.78, y: 0.22),
                 startRadius: 0,
@@ -241,9 +242,9 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.accentTertiary.opacity(0.20),
-                    AppColors.accentTertiary.opacity(0.07),
-                    AppColors.accentTertiary.opacity(0.00),
+                    AppColors.spectrumMagenta.opacity(0.20),
+                    AppColors.spectrumMagenta.opacity(0.07),
+                    AppColors.spectrumMagenta.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.90, y: 0.88),
                 startRadius: 0,
@@ -252,14 +253,16 @@ struct VaylAppIcon: View {
 
             RadialGradient(
                 colors: [
-                    AppColors.accentTertiary.opacity(0.08),
-                    AppColors.accentTertiary.opacity(0.00),
+                    AppColors.spectrumMagenta.opacity(0.08),
+                    AppColors.spectrumMagenta.opacity(0.00),
                 ],
                 center:      UnitPoint(x: 0.12, y: 0.92),
                 startRadius: 0,
                 endRadius:   size * 0.40
             )
 
+            // Deep violet center bloom — no AppColors token.
+            // Rendering artifact of layered aurora gradients, icon-only.
             RadialGradient(
                 colors: [
                     Color(hex: "3A1070").opacity(0.28),
@@ -310,19 +313,9 @@ struct VaylAppIcon: View {
     }
 
     // ── Spectrum line ─────────────────────────────────────────────────────────────
-    //
-    //  Endpoint fractions confirmed flush on device (iPhone 17 Pro, 111% canvas zoom):
-    //    lineLeft  = vOriginX + vAdvance * 0.162
-    //    lineRight = lOriginX + lAdvance * 0.517
-    //
-    //  Left tip taper: all gradients fade from opacity 0 at location 0.00
-    //  and reach full opacity by location 0.08 (solid/bloom) or 0.10 (core).
-    //  This makes the line dissolve naturally into the V diagonal rather than
-    //  appearing as a hard-clipped edge.
-
+    // All stroke gradients use fixed spectrum tokens.
     private func spectrumLine() -> some View {
 
-        // ── 1. Reconstruct CTLine matching wordRow() kerning ──────────────────
         let font = clashUIFont
         let G:  CGFloat = fontSize * 0.025
         let GY: CGFloat = fontSize * 0.215
@@ -333,7 +326,7 @@ struct VaylAppIcon: View {
 
         let attrString = NSMutableAttributedString(string: "VAYL")
         let fullRange  = NSRange(location: 0, length: 4)
-        attrString.addAttribute(.font,            value: font,         range: fullRange)
+        attrString.addAttribute(.font,            value: font,          range: fullRange)
         attrString.addAttribute(.foregroundColor, value: UIColor.white, range: fullRange)
         attrString.addAttribute(.kern, value: kV as NSNumber, range: NSRange(location: 0, length: 1))
         attrString.addAttribute(.kern, value: kA as NSNumber, range: NSRange(location: 1, length: 1))
@@ -341,8 +334,6 @@ struct VaylAppIcon: View {
         attrString.addAttribute(.kern, value: 0  as NSNumber, range: NSRange(location: 3, length: 1))
 
         let line        = CTLineCreateWithAttributedString(attrString)
-        // CTLine typographic width > SwiftUI ink width, so center by typographic
-        // bounds then apply the shared centeringCorrection to match word group offset.
         let lineOriginX = (size - CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))) / 2.0
             + centeringCorrection
 
@@ -354,13 +345,9 @@ struct VaylAppIcon: View {
         let vAdvance = glyphAdvance(of: "V", font: font)
         let lAdvance = glyphAdvance(of: "L", font: font)
 
-        // ── 2. Flush endpoints — confirmed on device ──────────────────────────
-        // 0.162 × vAdvance: enters V at the inner diagonal stroke ink edge
-        // 0.517 × lAdvance: exits at the L right stem ink edge
-        let lineLeft  = vOriginX + vAdvance * 0.158
-        let lineRight = lOriginX + lAdvance * 0.515
+        let lineLeft  = vOriginX + vAdvance * 0.32
+        let lineRight = lOriginX + lAdvance * 0.38
 
-        // ── 3. V stroke angle for diagonal clip ───────────────────────────────
         let ctFontRef  = font as CTFont
         var vGlyphChar = Array("V".utf16)
         var vGlyph     = CGGlyph(0)
@@ -371,12 +358,10 @@ struct VaylAppIcon: View {
         let capHeight = font.capHeight
         let vAngle    = atan2(capHeight, vBbox.width * 0.5)
 
-        // ── 4. Geometry ───────────────────────────────────────────────────────
         let lineY  = cutY
         let bloomH = size * 0.13
         let slant  = bloomH / tan(vAngle)
 
-        // Trapezoid for solid line + core: tight right wall at lineRight
         var trapezoid = Path()
         trapezoid.move(to:    CGPoint(x: lineLeft  + slant, y: lineY - bloomH))
         trapezoid.addLine(to: CGPoint(x: lineRight,         y: lineY - bloomH))
@@ -384,8 +369,6 @@ struct VaylAppIcon: View {
         trapezoid.addLine(to: CGPoint(x: lineLeft  - slant, y: lineY + bloomH))
         trapezoid.closeSubpath()
 
-        // Bloom trapezoid: right wall extends past lineRight by the outer blur radius
-        // so the glow has physical room to dissipate rather than hitting a hard wall
         let bloomClipRight = lineRight + size * 0.028
         var bloomTrapezoid = Path()
         bloomTrapezoid.move(to:    CGPoint(x: lineLeft  + slant, y: lineY - bloomH))
@@ -394,17 +377,7 @@ struct VaylAppIcon: View {
         bloomTrapezoid.addLine(to: CGPoint(x: lineLeft  - slant, y: lineY + bloomH))
         bloomTrapezoid.closeSubpath()
 
-        // ── 5. Canvas ─────────────────────────────────────────────────────────
         return Canvas { context, _ in
-
-            // ── Bloom — offscreen layer composited inside trapezoid clip ──────
-            // All blur passes rendered into isolated layer first so that
-            // filter:blur is fully resolved before the clip is applied.
-            // Clip on composite = true hard pixel wall, no bleed.
-            //
-            // Left tip: bloom gradients fade from 0 at location 0.00 → full
-            // at 0.08. The diagonal clip then cuts through the fade, making
-            // the line appear to emerge from the V rather than be chopped by it.
 
             var bloomCtx = context
             bloomCtx.clip(to: bloomTrapezoid)
@@ -414,14 +387,14 @@ struct VaylAppIcon: View {
             bloomCtx.drawLayer { layer in
                 layer.addFilter(.blur(radius: size * 0.018))
                 var p = Path()
-                p.move(to: CGPoint(x: lineLeft, y: lineY))
+                p.move(to:    CGPoint(x: lineLeft,  y: lineY))
                 p.addLine(to: CGPoint(x: lineRight, y: lineY))
                 layer.stroke(p,
                     with: .linearGradient(
                         Gradient(stops: [
-                            .init(color: AppColors.accentPrimary.opacity(0.22),    location: 0.00),
-                            .init(color: AppColors.accentSecondary.opacity(0.42),  location: 0.50),
-                            .init(color: AppColors.accentTertiary.opacity(0.22), location: 1.00),
+                            .init(color: AppColors.spectrumCyan.opacity(0.22),    location: 0.00),
+                            .init(color: AppColors.spectrumPurple.opacity(0.42),  location: 0.50),
+                            .init(color: AppColors.spectrumMagenta.opacity(0.22), location: 1.00),
                         ]),
                         startPoint: CGPoint(x: lineLeft,  y: lineY),
                         endPoint:   CGPoint(x: lineRight, y: lineY)
@@ -434,14 +407,14 @@ struct VaylAppIcon: View {
             bloomCtx.drawLayer { layer in
                 layer.addFilter(.blur(radius: size * 0.008))
                 var p = Path()
-                p.move(to: CGPoint(x: lineLeft, y: lineY))
+                p.move(to:    CGPoint(x: lineLeft,  y: lineY))
                 p.addLine(to: CGPoint(x: lineRight, y: lineY))
                 layer.stroke(p,
                     with: .linearGradient(
                         Gradient(stops: [
-                            .init(color: AppColors.accentPrimary.opacity(0.30),    location: 0.00),
-                            .init(color: AppColors.accentSecondary.opacity(0.50),  location: 0.50),
-                            .init(color: AppColors.accentTertiary.opacity(0.30), location: 1.00),
+                            .init(color: AppColors.spectrumCyan.opacity(0.30),    location: 0.00),
+                            .init(color: AppColors.spectrumPurple.opacity(0.50),  location: 0.50),
+                            .init(color: AppColors.spectrumMagenta.opacity(0.30), location: 1.00),
                         ]),
                         startPoint: CGPoint(x: lineLeft,  y: lineY),
                         endPoint:   CGPoint(x: lineRight, y: lineY)
@@ -454,14 +427,14 @@ struct VaylAppIcon: View {
             bloomCtx.drawLayer { layer in
                 layer.addFilter(.blur(radius: size * 0.003))
                 var p = Path()
-                p.move(to: CGPoint(x: lineLeft, y: lineY))
+                p.move(to:    CGPoint(x: lineLeft,  y: lineY))
                 p.addLine(to: CGPoint(x: lineRight, y: lineY))
                 layer.stroke(p,
                     with: .linearGradient(
                         Gradient(stops: [
-                            .init(color: AppColors.accentPrimary.opacity(0.40),    location: 0.00),
-                            .init(color: AppColors.accentSecondary.opacity(0.58),  location: 0.50),
-                            .init(color: AppColors.accentTertiary.opacity(0.40), location: 1.00),
+                            .init(color: AppColors.spectrumCyan.opacity(0.40),    location: 0.00),
+                            .init(color: AppColors.spectrumPurple.opacity(0.58),  location: 0.50),
+                            .init(color: AppColors.spectrumMagenta.opacity(0.40), location: 1.00),
                         ]),
                         startPoint: CGPoint(x: lineLeft,  y: lineY),
                         endPoint:   CGPoint(x: lineRight, y: lineY)
@@ -470,8 +443,7 @@ struct VaylAppIcon: View {
                 )
             }
 
-            // ── Solid spectrum line ───────────────────────────────────────────
-            // Left tip fades from 0 → full cyan over 8% of line length.
+            // Solid spectrum line
             var solidCtx = context
             solidCtx.clip(to: trapezoid)
             var solidPath = Path()
@@ -480,10 +452,10 @@ struct VaylAppIcon: View {
             solidCtx.stroke(solidPath,
                 with: .linearGradient(
                     Gradient(stops: [
-                        .init(color: AppColors.accentPrimary,               location: 0.00),
-                        .init(color: AppColors.accentSecondary,             location: 0.50),
-                        .init(color: AppColors.accentTertiary,            location: 0.92),
-                        .init(color: AppColors.accentTertiary.opacity(0), location: 1.00),
+                        .init(color: AppColors.spectrumCyan,               location: 0.00),
+                        .init(color: AppColors.spectrumPurple,             location: 0.50),
+                        .init(color: AppColors.spectrumMagenta,            location: 0.92),
+                        .init(color: AppColors.spectrumMagenta.opacity(0), location: 1.00),
                     ]),
                     startPoint: CGPoint(x: lineLeft,  y: lineY),
                     endPoint:   CGPoint(x: lineRight, y: lineY)
@@ -491,8 +463,7 @@ struct VaylAppIcon: View {
                 style: StrokeStyle(lineWidth: max(1.5, size * 0.0034), lineCap: .butt)
             )
 
-            // ── White core ────────────────────────────────────────────────────
-            // Fades in over 10% on the left so the tip tapers more softly.
+            // White core
             var coreCtx = context
             coreCtx.clip(to: trapezoid)
             var corePath = Path()
@@ -602,7 +573,7 @@ struct VaylAppIcon: View {
         let el = ptr.pointee
         switch el.type {
         case .moveToPoint:
-            cur  = el.points[0];  move = el.points[0]
+            cur  = el.points[0]; move = el.points[0]
         case .addLineToPoint:
             let p2 = el.points[0]
             if let x = xIntercept(p1: cur, p2: p2, atY: scanY) { crossings.append(x) }
@@ -623,6 +594,7 @@ struct VaylAppIcon: View {
 }
 
 // ── Star Field ────────────────────────────────────────────────────────────────
+// Star colors use fixed spectrum tokens where chromatic — never adaptive tokens.
 
 private struct StarSpec {
     let x: CGFloat
@@ -638,20 +610,20 @@ private struct StarFieldView: View {
     let size: CGFloat
 
     private let stars: [StarSpec] = [
-        StarSpec(x: 0.168, y: 0.205, hRx: 22, vRy: 2.5,  dotR: 1.6, color: .white,            opacity: 0.85),
-        StarSpec(x: 0.607, y: 0.168, hRx: 14, vRy: 2.0,  dotR: 1.2, color: AppColors.accentPrimary,    opacity: 0.80),
-        StarSpec(x: 0.871, y: 0.135, hRx:  8, vRy: 1.3,  dotR: 1.0, color: .white,            opacity: 0.70),
-        StarSpec(x: 0.379, y: 0.266, hRx:  5, vRy: 1.0,  dotR: 0.8, color: .white,            opacity: 0.60),
-        StarSpec(x: 0.916, y: 0.359, hRx: 13, vRy: 2.0,  dotR: 1.2, color: AppColors.accentTertiary, opacity: 0.75),
-        StarSpec(x: 0.080, y: 0.438, hRx:  7, vRy: 1.2,  dotR: 0.9, color: .white,            opacity: 0.62),
-        StarSpec(x: 0.773, y: 0.291, hRx:  8, vRy: 1.3,  dotR: 1.0, color: AppColors.accentSecondary,  opacity: 0.68),
-        StarSpec(x: 0.139, y: 0.740, hRx: 16, vRy: 2.2,  dotR: 1.4, color: .white,            opacity: 0.72),
-        StarSpec(x: 0.559, y: 0.809, hRx:  5, vRy: 0.9,  dotR: 0.8, color: AppColors.accentPrimary,    opacity: 0.58),
-        StarSpec(x: 0.848, y: 0.785, hRx:  8, vRy: 1.3,  dotR: 1.0, color: AppColors.accentTertiary, opacity: 0.65),
-        StarSpec(x: 0.818, y: 0.236, hRx:  4, vRy: 0.8,  dotR: 0.7, color: .white,            opacity: 0.55),
-        StarSpec(x: 0.900, y: 0.877, hRx:  7, vRy: 1.2,  dotR: 0.9, color: .white,            opacity: 0.58),
-        StarSpec(x: 0.193, y: 0.842, hRx:  6, vRy: 1.0,  dotR: 0.8, color: AppColors.accentPrimary,    opacity: 0.55),
-        StarSpec(x: 0.945, y: 0.623, hRx:  5, vRy: 0.9,  dotR: 0.7, color: .white,            opacity: 0.52),
+        StarSpec(x: 0.168, y: 0.205, hRx: 22, vRy: 2.5,  dotR: 1.6, color: .white,                      opacity: 0.85),
+        StarSpec(x: 0.607, y: 0.168, hRx: 14, vRy: 2.0,  dotR: 1.2, color: AppColors.spectrumCyan,       opacity: 0.80),
+        StarSpec(x: 0.871, y: 0.135, hRx:  8, vRy: 1.3,  dotR: 1.0, color: .white,                      opacity: 0.70),
+        StarSpec(x: 0.379, y: 0.266, hRx:  5, vRy: 1.0,  dotR: 0.8, color: .white,                      opacity: 0.60),
+        StarSpec(x: 0.916, y: 0.359, hRx: 13, vRy: 2.0,  dotR: 1.2, color: AppColors.spectrumMagenta,    opacity: 0.75),
+        StarSpec(x: 0.080, y: 0.438, hRx:  7, vRy: 1.2,  dotR: 0.9, color: .white,                      opacity: 0.62),
+        StarSpec(x: 0.773, y: 0.291, hRx:  8, vRy: 1.3,  dotR: 1.0, color: AppColors.spectrumPurple,     opacity: 0.68),
+        StarSpec(x: 0.139, y: 0.740, hRx: 16, vRy: 2.2,  dotR: 1.4, color: .white,                      opacity: 0.72),
+        StarSpec(x: 0.559, y: 0.809, hRx:  5, vRy: 0.9,  dotR: 0.8, color: AppColors.spectrumCyan,       opacity: 0.58),
+        StarSpec(x: 0.848, y: 0.785, hRx:  8, vRy: 1.3,  dotR: 1.0, color: AppColors.spectrumMagenta,    opacity: 0.65),
+        StarSpec(x: 0.818, y: 0.236, hRx:  4, vRy: 0.8,  dotR: 0.7, color: .white,                      opacity: 0.55),
+        StarSpec(x: 0.900, y: 0.877, hRx:  7, vRy: 1.2,  dotR: 0.9, color: .white,                      opacity: 0.58),
+        StarSpec(x: 0.193, y: 0.842, hRx:  6, vRy: 1.0,  dotR: 0.8, color: AppColors.spectrumCyan,       opacity: 0.55),
+        StarSpec(x: 0.945, y: 0.623, hRx:  5, vRy: 0.9,  dotR: 0.7, color: .white,                      opacity: 0.52),
     ]
 
     var body: some View {
@@ -698,9 +670,8 @@ private struct StarFieldView: View {
 #Preview("Icon sizes") {
     VStack(spacing: AppSpacing.xl) {
         VaylAppIcon(size: 240)
-        VaylAppIcon(size: 120)
-        VaylAppIcon(size: 60)
     }
     .padding(AppSpacing.xxl)
     .background(Color(hex: "050508"))
+    .preferredColorScheme(.dark)   // icon always renders in midnight context
 }

@@ -445,9 +445,9 @@ struct OnboardingNameView: View {
                             )
                             .allowsHitTesting(false)
 
-                        HoloCTAButton(
-                            title: "Next",
-                            isEnabled: isValid
+                        VaylButton(
+                            label:      "Next",
+                            isDisabled: !isValid
                         ) {
                             triggerHaptic(.medium)
 #if DEBUG

@@ -678,10 +678,10 @@ struct OnboardingCuriosityPickerView: View {
                 isLight: isLight
             )
 
-            HoloCTAButton(
-                title:     "Continue",
-                isEnabled: hasSelection,
-                action:    { handleContinue() }
+            VaylButton(
+                label:      "Continue",
+                isDisabled: !hasSelection,
+                action:     { handleContinue() }
             )
             .animation(AppAnimation.enter, value: hasSelection)
 
