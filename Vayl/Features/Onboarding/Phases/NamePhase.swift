@@ -265,14 +265,73 @@ struct NamePhase: View {
         try? await Task.sleep(for: .milliseconds(1200))
         guard !Task.isCancelled else { return }
 
-        triggerFlip()
+        await triggerFlip()
     }
 
     // MARK: - Forward stubs (Task 4 + 5 will replace these)
 
-    @MainActor private func triggerFlip()                  { /* Task 4 */ }
-    @MainActor private func triggerExpand()                { /* Task 4 */ }
-    @MainActor private func triggerNameInput()             { /* Task 4 */ }
+    @MainActor
+    private func triggerFlip() async {
+        dealPhase = .flipping
+
+        // First half — collapse to scaleX == 0
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+            flipScaleX = 0.0
+        }
+
+        try? await Task.sleep(for: .milliseconds(190))
+        guard !Task.isCancelled else { return }
+
+        // Swap face at the invisible midpoint — undetectable
+        showFace = true
+        faceStartDate = Date()
+
+        // Second half — expand mirrored (negative = face-up)
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+            flipScaleX = -1.0
+        }
+
+        try? await Task.sleep(for: .milliseconds(660))
+        guard !Task.isCancelled else { return }
+
+        await triggerExpand()
+    }
+
+    @MainActor
+    private func triggerExpand() async {
+        dealPhase = .expanding
+
+        let scaleX = screenSize.width  / cardWidth
+        let scaleY = screenSize.height / cardHeight
+        let target = max(scaleX, scaleY) * 1.04  // 4% overshoot ensures full bleed
+
+        withAnimation(.easeIn(duration: 0.55)) {
+            tableFade = 0.0
+        }
+        withAnimation(.timingCurve(0.4, 0.0, 0.2, 1.0, duration: 1.05)) {
+            cardScale = target
+        }
+
+        try? await Task.sleep(for: .milliseconds(550))
+        guard !Task.isCancelled else { return }
+
+        withAnimation(.easeIn(duration: 0.35)) {
+            cardScreenAlpha = 0.0
+        }
+
+        try? await Task.sleep(for: .milliseconds(380))
+        guard !Task.isCancelled else { return }
+
+        triggerNameInput()
+    }
+
+    @MainActor
+    private func triggerNameInput() {
+        dealPhase = .nameInput
+        withAnimation(.easeOut(duration: 0.52)) {
+            uiAlpha = 1.0
+        }
+    }
     @MainActor private func submitName()                   { /* Task 5 */ }
     @MainActor private func handleSwipeDown(_ y: CGFloat)  { /* Task 5 */ }
 }
