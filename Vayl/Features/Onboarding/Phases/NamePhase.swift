@@ -105,7 +105,7 @@ struct NamePhase: View {
         }
         .onAppear {
             seedLanding()
-            dealTask = Task { @MainActor in startDeal() }
+            dealTask = Task { await runDealSequence() }
         }
         .onDisappear { dealTask?.cancel() }
     }
@@ -216,19 +216,18 @@ struct NamePhase: View {
     }
 
     @MainActor
-    private func startDeal() {
-        // Place card at origin (invisible)
+    private func runDealSequence() async {
+        // ── Deal flight ────────────────────────────────────────────────────────────
         cardOffset = dealOrigin
         cardAngle  = -14
         cardAlpha  = 0
         dealPhase  = .dealing
 
-        // Fade in card as it enters
         withAnimation(.linear(duration: 0.14)) {
             cardAlpha = 1
         }
 
-        // Deal flight — rotation and offset use slightly different springs
+        // Rotation and offset use slightly different springs
         // so they don't arrive simultaneously, producing natural tilt in flight
         withAnimation(
             .interpolatingSpring(mass: 1.1, stiffness: 160, damping: 18, initialVelocity: 6)
@@ -237,47 +236,36 @@ struct NamePhase: View {
             cardAngle  = landingAngle
         }
 
-        // Offset arrives first (~920ms), then trigger landing
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(940))
-            triggerLanding()
-        }
-    }
+        try? await Task.sleep(for: .milliseconds(940))
+        guard !Task.isCancelled else { return }
 
-    @MainActor
-    private func triggerLanding() {
+        // ── Landing ────────────────────────────────────────────────────────────────
         dealPhase = .landing
-
-        // rimBurst spike with long decay
-        rimBurst = 1.0
+        rimBurst  = 1.0
         withAnimation(.timingCurve(0.2, 0.8, 0.4, 1.0, duration: 0.6)) {
             rimBurst = 0.0
         }
 
-        // Short beat then organize
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(300))
-            triggerOrganize()
-        }
-    }
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
 
-    @MainActor
-    private func triggerOrganize() {
+        // ── Organize ───────────────────────────────────────────────────────────────
         dealPhase = .organizing
-
         // Critically damped — zero overshoot. Eerie precision.
         withAnimation(.spring(response: 0.72, dampingFraction: 1.0)) {
             cardOffset = .zero
             cardAngle  = 0
         }
 
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(780))
-            dealPhase = .settled
-            // 1.2s settled beat, then flip
-            try? await Task.sleep(for: .milliseconds(1200))
-            triggerFlip()
-        }
+        try? await Task.sleep(for: .milliseconds(780))
+        guard !Task.isCancelled else { return }
+
+        dealPhase = .settled
+
+        try? await Task.sleep(for: .milliseconds(1200))
+        guard !Task.isCancelled else { return }
+
+        triggerFlip()
     }
 
     // MARK: - Forward stubs (Task 4 + 5 will replace these)
