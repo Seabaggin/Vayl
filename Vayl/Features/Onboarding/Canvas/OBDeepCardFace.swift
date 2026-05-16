@@ -59,12 +59,13 @@ private extension OBDeepCardFace {
         let radius: CGFloat
     }
 
+    private static func rng(_ seed: Double) -> Double {
+        var x = sin(seed) * 43758.5453
+        x -= floor(x)
+        return x
+    }
+
     static func makeParticles() -> [Particle] {
-        let rng: (Double) -> Double = { s in
-            var x = sin(s) * 43758.5453
-            x -= floor(x)
-            return x
-        }
         return (0 ..< 48).map { i in
             let fi = Double(i)
             return Particle(
@@ -80,11 +81,6 @@ private extension OBDeepCardFace {
     }
 
     static func makeFlecks() -> [Fleck] {
-        let rng: (Double) -> Double = { s in
-            var x = sin(s) * 43758.5453
-            x -= floor(x)
-            return x
-        }
         return (0 ..< 4).map { i in
             let fi = Double(i)
             return Fleck(
@@ -382,7 +378,7 @@ private struct DeepCardShell: View {
                     CGPoint(x: size.width - 16,  y: 16),
                     CGPoint(x: 16,               y: size.height - 16),
                     CGPoint(x: size.width - 16,  y: size.height - 16),
-                ], id: \.x) { pt in
+                ], id: \.debugDescription) { pt in
                     Text("✦")
                         .font(AppFonts.label)
                         .foregroundStyle(Color.white.opacity(0.12))
