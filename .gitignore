@@ -1,6 +1,10 @@
 # ============================================================
-# .gitignore — Open Lightly
+# .gitignore — Vayl
 # ============================================================
+
+# ── Script Output Files ──────────────────────────────────────
+*OUTPUT
+*OUTPUT_FILE
 
 # ── Secrets & Keys ──────────────────────────────────────────
 # NEVER commit API keys, tokens, or certificates.
