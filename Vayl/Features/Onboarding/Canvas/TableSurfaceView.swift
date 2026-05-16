@@ -82,6 +82,9 @@ struct TableSurfaceView: View {
     /// Never animated by this view — caller drives the value.
     /// VaylDirector is the only thing that writes this.
     let fade: Double
+    /// 0.0 = resting spectrum rim. 1.0 = full impact flare.
+    /// Caller drives — VaylDirector does not own this value.
+    var rimBurst: Double = 0
 
     // ── Body ──────────────────────────────────────────────────────────────────
 
@@ -127,7 +130,8 @@ struct TableSurfaceView: View {
             drawSpectrumRim(
                 context: context, size: size,
                 cx: cx, cy: cy, tableR: tableR,
-                TY: TY, W: W, dpX: dpX, dpY: dpY
+                TY: TY, W: W, dpX: dpX, dpY: dpY,
+                rimBurst: rimBurst
             )
         }
         .opacity(fade)
@@ -584,15 +588,16 @@ private extension TableSurfaceView {
 private extension TableSurfaceView {
 
     func drawSpectrumRim(
-        context: GraphicsContext,
-        size:    CGSize,
-        cx:      CGFloat,
-        cy:      CGFloat,
-        tableR:  CGFloat,
-        TY:      CGFloat,
-        W:       CGFloat,
-        dpX:     CGFloat,
-        dpY:     CGFloat
+        context:  GraphicsContext,
+        size:     CGSize,
+        cx:       CGFloat,
+        cy:       CGFloat,
+        tableR:   CGFloat,
+        TY:       CGFloat,
+        W:        CGFloat,
+        dpX:      CGFloat,
+        dpY:      CGFloat,
+        rimBurst: Double
     ) {
         // ── Rim inner glow ─────────────────────────────────────────────────────
         // AppGlows.tableRimInnerGlow.color is tuned to 0.05 opacity — accent only.
@@ -658,19 +663,22 @@ private extension TableSurfaceView {
         let crispThick:  CGFloat = 2.7
         // 2.5 — base bloom multiplier. Rendering constant — bloom hugs crisp line exactly.
         let baseMultiplier: CGFloat = 2.5
-        // 0.12 — base pass opacity. Rendering constant — soft felt-embedded glow.
-        let baseOpacity: Double  = 0.12
+        // rimBurst spikes to 1.0 on card impact, decays to 0.0.
+        // Multiplies base pass opacity and rim gradient stops for the flare.
+        let burstMult   = 1.0 + rimBurst * 4.0
+        let baseOpacity = 0.12 * burstMult
 
+        let bo = min(rimBurst * 2.5, 1.0)  // burst opacity additive, capped
         let rimGradient = Gradient(stops: [
-            .init(color: AppColors.spectrumCyan.opacity(0.28),    location: 0.00),
-            .init(color: AppColors.spectrumCyan.opacity(0.55),    location: 0.06),
-            .init(color: AppColors.spectrumCyan.opacity(0.70),    location: 0.26),
-            .init(color: AppColors.spectrumPurple.opacity(0.88),  location: 0.44),
-            .init(color: AppColors.spectrumPurple.opacity(0.94),  location: 0.50),
-            .init(color: AppColors.spectrumPurple.opacity(0.88),  location: 0.56),
-            .init(color: AppColors.spectrumMagenta.opacity(0.70), location: 0.74),
-            .init(color: AppColors.spectrumMagenta.opacity(0.55), location: 0.94),
-            .init(color: AppColors.spectrumMagenta.opacity(0.28), location: 1.00),
+            .init(color: AppColors.spectrumCyan.opacity(0.28 + bo * 0.50),    location: 0.00),
+            .init(color: AppColors.spectrumCyan.opacity(0.55 + bo * 0.40),    location: 0.06),
+            .init(color: AppColors.spectrumCyan.opacity(0.70 + bo * 0.30),    location: 0.26),
+            .init(color: AppColors.spectrumPurple.opacity(0.88 + bo * 0.12),  location: 0.44),
+            .init(color: AppColors.spectrumPurple.opacity(0.94 + bo * 0.06),  location: 0.50),
+            .init(color: AppColors.spectrumPurple.opacity(0.88 + bo * 0.12),  location: 0.56),
+            .init(color: AppColors.spectrumMagenta.opacity(0.70 + bo * 0.30), location: 0.74),
+            .init(color: AppColors.spectrumMagenta.opacity(0.55 + bo * 0.40), location: 0.94),
+            .init(color: AppColors.spectrumMagenta.opacity(0.28 + bo * 0.50), location: 1.00),
         ])
 
         let gradStart = CGPoint(x: 0, y: TY)
