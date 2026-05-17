@@ -1,0 +1,16 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: '0 0 * * 0,4' # Runs at midnight UTC every Sunday and Thursday
+  workflow_dispatch: # Allows you to trigger it manually from the GitHub UI
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Database
+        run: |
+          curl -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/YOUR_TABLE_NAME?select=id&limit=1" \
+          -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}"
