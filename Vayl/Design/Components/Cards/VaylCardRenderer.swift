@@ -26,6 +26,7 @@ import SwiftUI
 struct VaylCardRenderer: View {
     let card:       VaylCardModel
     let screenSize: CGSize
+    var onAction:   ((VaylCardAction) -> Void)? = nil
 
     private var cardW: CGFloat { AppLayout.obCardWidth(in: screenSize.width) }
     private var cardH: CGFloat { AppLayout.obCardHeight(in: screenSize.width) }
@@ -37,7 +38,7 @@ struct VaylCardRenderer: View {
             if card.flipProgress < 0.5 {
                 VaylCardBack()
             } else {
-                VaylCardFace(question: card.question)
+                VaylCardFace(content: card.content, onAction: onAction)
                     .scaleEffect(x: -1) // mirror to correct face-up orientation
             }
         }

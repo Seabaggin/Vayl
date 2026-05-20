@@ -259,4 +259,15 @@ struct AppLayout {
     /// Large radius ensures only the top cap of the circle is visible.
     /// Used by TableSurfaceView arc geometry only.
     static let tableArcRadiusFrac: CGFloat = 1.05
+
+    /// Returns the Y coordinate of the optical center of the felt table surface.
+    /// Derived from tableArcPeakYFrac — the Y fraction where the spectrum rim arc peaks.
+    /// The table surface runs from that point to the bottom of the screen.
+    /// Card center is the midpoint of that zone.
+    /// Use this for every card resting position in the OB sequence — never hardcode 0.55 or any raw fraction.
+    static func obTableCardCenterY(in screenHeight: CGFloat) -> CGFloat {
+        let arcPeakY = screenHeight * tableArcPeakYFrac
+        let tableHeight = screenHeight - arcPeakY
+        return arcPeakY + (tableHeight * 0.50)
+    }
 }

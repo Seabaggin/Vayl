@@ -112,7 +112,7 @@ struct NamePhase: View {
             if !showFace {
                 VaylCardBack()
             } else {
-                OBDeepCardFace(deepT: deepT)
+                OBDeepCardFace(deepT: deepT) // TODO: Replace with VaylCardFace(content: .portal(startDate:)) after Step 6 is complete.
             }
         }
         .frame(width: cardWidth, height: cardHeight)

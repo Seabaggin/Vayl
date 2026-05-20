@@ -35,6 +35,12 @@ final class VaylCardModel: Identifiable {
     /// nil for cards that have no text content (e.g. corner deck representations).
     var question: String? = nil
 
+    /// The content displayed on this card's face.
+    /// Director writes this when creating or mutating a card.
+    /// VaylCardRenderer reads it and passes it to VaylCardFace.
+    /// Defaults to .blank — a card with no content assigned yet.
+    var content: VaylCardContent = .blank
+
     /// Whether the card is currently showing its face.
     /// VaylDirector writes this. VaylCardRenderer reads it to choose
     /// VaylCardBack vs VaylCardFace. Do not use as an animation driver —
