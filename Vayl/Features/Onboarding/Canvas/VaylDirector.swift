@@ -1,292 +1,311 @@
-//
-//  VaylDirector.swift
-//  Vayl
-//
-//  Created by Bryan Jorden on 5/9/26.
-//
-
-
-//
-//  VaylDirector.swift
-//  Vayl
-//
-
 // Features/Onboarding/Canvas/VaylDirector.swift
 
 import SwiftUI
+import SpriteKit
 
 @Observable
 @MainActor
 final class VaylDirector {
 
-    // MARK: - Phase
-
     var phase: OBPhase = .stat
-
-    // MARK: - Card Arrays
-    // Director writes. Renderers read.
 
     var tableCards:      [VaylCardModel] = []
     var cornerDeckCards: [VaylCardModel] = []
     var inFlightCards:   [VaylCardModel] = []
     var muckCards:       [VaylCardModel] = []
 
-    // MARK: - User Data
-
     var onboardingData: OnboardingData = OnboardingData()
-
-    // MARK: - Deck Assignment
-
     var openerDeckType: OpenerDeckType = .anxious
 
-    // MARK: - Table State
+    var tableFade:          Double = 0.0
+    var dealPointIntensity: Double = 0.0
 
-    var tableFade:          Double = 0.0    // 0=gone 1=full
-    var rimBurst:           Double = 0      // 0=off 1=flash peak
-    var dealPointIntensity: Double = 0.0    // 0=off 1=full warm
-
-    // MARK: - Projected Text
+    var cardFlightScene: CardFlightScene = CardFlightScene()
 
     var projectedText:        String? = nil
     var projectedTextVisible: Bool    = false
 
-    // MARK: - Foil State
-
-    var foilIntegrity: Double     = 1.0    // 1.0=sealed 0.0=dissolved
+    var foilIntegrity: Double     = 1.0
     var foilTears:     [FoilTear] = []
 
-    // MARK: - Corner Deck
-
     var cornerDeckVisible: Bool = false
-
-    // MARK: - Deck Pulse (AppArrival)
-
     var deckPulse: Bool = false
-
-    // MARK: - Attempt Tracking
-    // Prevents stale Tasks from acting after a phase change.
-    // Each independent sequence family has its own counter so they
-    // cannot cancel each other by incrementing a shared value.
-    //
-    // sequenceAttempt  — phase entry sequences (intro, appArrival,
-    //                    foilDissolve, pocketToCornerDeck)
-    // dealerLineAttempt — showDealerLine only
 
     private var sequenceAttempt:   Int = 0
     private var dealerLineAttempt: Int = 0
 
-    // MARK: - Dependencies
-    // Injected after init — VaylDirector is created by OnboardingCanvasView
-    // before the store is available. Set via onboardingStore setter.
+    // Slot pool — tracks which landing zones are still available this round.
+    // Starts full; shrinks as cards are dealt; auto-resets when exhausted.
+    private var availableSlotIDs: [Int] = AppLayout.obCardLandingSlots.map(\.id)
 
+    // ARCH: Injected via direct assignment from OnboardingCanvasView.onAppear.
+    // commit() is a no-op until assigned — Director must be initialized before appArrival fires.
     var onboardingStore: OnboardingStore? = nil
-
-    // MARK: - Start
 
     func start() {
         phase = .stat
         handlePhaseEntry(.stat)
     }
 
-    // MARK: - Transition Guard
-
     private var isTransitioning: Bool = false
-
-    // MARK: - Phase Advancement
-    // VaylDirector is the ONLY thing that advances phase.
-    // Phase overlays dispatch intents. Director decides.
 
     func advance(to next: OBPhase) {
         guard !isTransitioning else { return }
         isTransitioning = true
         Task { @MainActor in
-            // Let current phase begin its fade-out before the next renders.
-            try? await Task.sleep(for: .milliseconds(200))
+            try? await Task.sleep(for: .milliseconds(200)) // advance debounce
             phase = next
             handlePhaseEntry(next)
             isTransitioning = false
         }
     }
 
-    // MARK: - Phase Entry Handlers
-
     private func handlePhaseEntry(_ phase: OBPhase) {
         switch phase {
-        case .stat:
-            break // StatPhase handles its own sequence
-
-        case .name:
-            runNameEntry()
-
-        case .gender:
-            runGenderEntry()
-
-        case .modeSelect:
-            runModeSelectEntry()
-
-        case .experienceLevel:
-            runExperienceLevelEntry()
-
-        case .context:
-            runContextEntry()
-
-        case .quiz:
-            runQuizEntry()
-
-        case .curiosityRound1:
-            runCuriosityRound1Entry()
-
-        case .curiosityRound2:
-            runCuriosityRound2Entry()
-
-        case .buildingPath:
-            runBuildingPathEntry()
-
-        case .foil:
-            runFoilEntry()
-
-        case .founderLetter:
-            runFounderLetterEntry()
-
-        case .appArrival:
-            runAppArrival()
+        case .stat:            break
+        case .name:            runNameEntry()
+        case .gender:          runGenderEntry()
+        case .modeSelect:      runModeSelectEntry()
+        case .experienceLevel: runExperienceLevelEntry()
+        case .context:         runContextEntry()
+        case .quiz:            runQuizEntry()
+        case .curiosityRound1: runCuriosityRound1Entry()
+        case .curiosityRound2: runCuriosityRound2Entry()
+        case .buildingPath:    runBuildingPathEntry()
+        case .foil:            runFoilEntry()
+        case .founderLetter:   runFounderLetterEntry()
+        case .appArrival:      runAppArrival()
         }
     }
 
-    // MARK: - Phase Sequences
-    // Full animation sequences to be implemented per phase.
-    // Barebones: advance timing only. No card physics yet.
-
-  
-
     private func runNameEntry() {
-        // TODO: deal point warms, card slides in, flips, corner deck appears
-        tableFade         = 1.0   // table must be visible for the deal animation
-        rimBurst          = 0     // reset any lingering burst from previous phase
-        cornerDeckVisible = true
+        tableFade = 1.0
+        withAnimation(AppAnimation.standard) { cornerDeckVisible = false }
+        resetSlotPool()
     }
 
     private func runGenderEntry() {
-        // TODO: deal next card sequence
+        withAnimation(AppAnimation.standard) { cornerDeckVisible = false }
+        resetSlotPool()
+        withAnimation(AppAnimation.cinematicFade.reduceMotionSafe) {
+            tableFade = 1.0
+        }
+        showDealerLine("Tell me a little more about you.", hideAfter: 3.5)
     }
-
     private func runModeSelectEntry() {
-        // TODO: three cards deal with stagger, dealer line fires
+        withAnimation(AppAnimation.standard) { cornerDeckVisible = false }
         showDealerLine("Everyone comes to this table differently.")
     }
-
     private func runExperienceLevelEntry() {
-        // TODO: deck weave shuffle, fan, three cards deal
+        withAnimation(AppAnimation.standard) { cornerDeckVisible = false }
     }
-
     private func runContextEntry() {
-        // TODO: cards deal, hand raise transition
+        withAnimation(AppAnimation.standard) { cornerDeckVisible = false }
         showDealerLine("Tell me where you're at.")
     }
-
-    private func runQuizEntry() {
-        // TODO: mid-arc flip, full bleed expansion
-    }
-
-    private func runCuriosityRound1Entry() {
-        // TODO: 5 cards arrive overlapping quiz dissolve
-        showDealerLine("Sweep away what you aren't ready for.")
-    }
-
-    private func runCuriosityRound2Entry() {
-        // TODO: chapter break, 5 new cards deal
-        showDealerLine("Pick one.")
-    }
-
-    private func runBuildingPathEntry() {
-        // TODO: slot machine sequence, deck assembly
-    }
-
-    private func runFoilEntry() {
-        // TODO: foil materialises over deck
-        foilIntegrity = 1.0
-        foilTears = []
-    }
-
-    private func runFounderLetterEntry() {
-        // TODO: card rises from deck
-    }
+    private func runQuizEntry() {}
+    private func runCuriosityRound1Entry() { showDealerLine("Sweep away what you aren't ready for.") }
+    private func runCuriosityRound2Entry() { showDealerLine("Pick one.") }
+    private func runBuildingPathEntry() {}
+    private func runFoilEntry() { foilIntegrity = 1.0; foilTears = [] }
+    private func runFounderLetterEntry() {}
 
     private func runAppArrival() {
         sequenceAttempt += 1
         let current = sequenceAttempt
         Task { @MainActor in
             onboardingStore?.commit(data: onboardingData)
-            try? await Task.sleep(for: .milliseconds(100))
+            try? await Task.sleep(for: .milliseconds(100)) // post-commit settle
             guard current == self.sequenceAttempt else { return }
-            withAnimation(.easeOut(duration: AppAnimation.cinematic)) {
-                self.tableFade = 0
-            }
-            withAnimation(AppAnimation.spring) {
-                self.deckPulse = true
-            }
-            try? await Task.sleep(for: .milliseconds(200))
-            guard current == self.sequenceAttempt else { return }
-            // AppState.isOnboardingComplete is set inside OnboardingStore.commit()
-            // ContentView observes AppState and switches to AppShell automatically
+            withAnimation(AppAnimation.cinematicFade.reduceMotionSafe) { self.tableFade = 0 }
+            withAnimation(AppAnimation.spring.reduceMotionSafe) { self.deckPulse = true }
         }
     }
-
-    // MARK: - Dealer Lines
-    // Exactly four. Projected on the felt. Not UI labels.
-    // 1. "Everyone comes to this table differently." — ModeSelectPhase
-    // 2. "Tell me where you're at."                 — ContextPhase
-    // 3. "Sweep away what you aren't ready for."    — CuriosityPhase R1
-    // 4. "Pick one."                                — CuriosityPhase R2
 
     func showDealerLine(_ text: String, hideAfter seconds: Double = 4.0) {
         dealerLineAttempt += 1
         let current = dealerLineAttempt
         projectedText = text
-        withAnimation(AppAnimation.textProject) {
-            projectedTextVisible = true
-        }
+        withAnimation(AppAnimation.textProject.reduceMotionSafe) { projectedTextVisible = true }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(seconds))
             guard current == self.dealerLineAttempt else { return }
-            withAnimation(AppAnimation.textProject) {
-                self.projectedTextVisible = false
-            }
+            withAnimation(AppAnimation.textProject.reduceMotionSafe) { self.projectedTextVisible = false }
         }
     }
 
-    // MARK: - Card Operations
+    func showDealerLineManual(_ text: String) {
+        projectedText = text
+        withAnimation(AppAnimation.textProject.reduceMotionSafe) { projectedTextVisible = true }
+    }
 
-    /// Deal a card from the deal point to a position on the table.
+    func hideDealerLine() {
+        withAnimation(AppAnimation.textProject.reduceMotionSafe) { projectedTextVisible = false }
+    }
+
+    // MARK: - Card Flight
+
+    /// Flies a single card via SpriteKit and returns its rested position and rotation.
+    /// The `cardID` is threaded into the per-card callback so the continuation only
+    /// resumes for the correct card, even if multiple sailCard calls overlap.
+    func sailCard(
+        cardID:       String,
+        image:        UIImage,
+        from:         CGPoint,
+        to:           CGPoint,
+        sceneSize:    CGSize,
+        duration:     TimeInterval = 0.92,
+        initialAngle: CGFloat      = -0.24,
+        finalAngle:   CGFloat      = 0.0314,
+        zPosition:    CGFloat      = 0
+    ) async -> (CGPoint, CGFloat) {
+        if cardFlightScene.size == .zero || cardFlightScene.size != sceneSize {
+            cardFlightScene.size = sceneSize
+        }
+
+        let skOrigin = CGPoint(x: from.x, y: sceneSize.height - from.y)
+        let skDest   = CGPoint(x: to.x,   y: sceneSize.height - to.y)
+
+        return await withCheckedContinuation { continuation in
+            cardFlightScene.onCardRested[cardID] = { [weak self] cbID, pos, rot in
+                guard let _ = self else { return }
+                let swiftUIPos = CGPoint(x: pos.x, y: sceneSize.height - pos.y)
+                continuation.resume(returning: (swiftUIPos, -rot * (180 / .pi)))
+            }
+            cardFlightScene.dealCard(
+                id:           cardID,
+                image:        image,
+                from:         skOrigin,
+                to:           skDest,
+                initialAngle: initialAngle,
+                finalAngle:   finalAngle,
+                zPosition:    zPosition,
+                duration:     duration
+            )
+        }
+    }
+
+    /// Slides a card from the deal point to a destination without SpriteKit flight.
+    /// Used for non-cinematic deals (e.g. credential cards after the main sequence).
     func dealCard(_ card: VaylCardModel, to destination: CGPoint, screenSize: CGSize) {
-        let dealOrigin = CGPoint(
-            x: screenSize.width * 0.50,
-            y: screenSize.height * AppLayout.dealPointYFrac
-        )
+        let dealOrigin = CGPoint(x: screenSize.width * 0.50, y: screenSize.height * AppLayout.dealPointYFrac)
         card.position = dealOrigin
         card.opacity  = 0
+        card.zIndex   = 0
         tableCards.append(card)
-        withAnimation(AppAnimation.cardSlide) {
+        withAnimation(AppAnimation.cardSlide.reduceMotionSafe) {
             card.position = destination
             card.opacity  = 1
         }
     }
 
-    /// Send a card to the corner deck.
+    /// Deals N cards with 150 ms stagger between launches.
+    ///
+    /// Slots and zIndex are pre-assigned before any async work so the stagger
+    /// loop never contends with the slot pool. Each card hands off
+    /// SpriteKit → SwiftUI independently the frame it rests.
+    func dealCards(_ models: [VaylCardModel], screenSize: CGSize) {
+        guard !models.isEmpty else { return }
+        if cardFlightScene.size == .zero || cardFlightScene.size != screenSize {
+            cardFlightScene.size = screenSize
+        }
+
+        let skLaunch   = CGPoint(x: screenSize.width * 1.05, y: screenSize.height * 0.08)
+        let dealOrigin = CGPoint(x: screenSize.width * 0.50, y: screenSize.height * AppLayout.dealPointYFrac)
+
+        // Pre-assign all slots and z-order before launching any Tasks.
+        let assignments: [(model: VaylCardModel, slot: CardLandingSlot.Resolved, z: Int)] =
+            models.enumerated().map { index, model in
+                let slot = claimLandingSlot(screenSize: screenSize)
+                model.zIndex = index
+                model.slotID = index
+                return (model, slot, index)
+            }
+
+        // Register all as in-flight at opacity 0 so Layer 6 holds space immediately.
+        for (model, _, _) in assignments {
+            model.position = dealOrigin
+            model.opacity  = 0
+            inFlightCards.append(model)
+        }
+
+        // Per-card callbacks: each rested card transitions inFlight → table independently,
+        // without waiting for the other cards to land. Registered per-id so sailCard
+        // handlers running concurrently are never overwritten.
+        for (model, _, _) in assignments {
+            let id = model.id.uuidString
+            cardFlightScene.onCardRested[id] = { [weak self] cbID, pos, rot in
+                guard let self else { return }
+                let swiftUIPos = CGPoint(x: pos.x, y: screenSize.height - pos.y)
+                let degrees    = -rot * (180.0 / .pi)
+                if let m = self.inFlightCards.first(where: { $0.id.uuidString == cbID }) {
+                    m.position = swiftUIPos
+                    m.rotation = degrees
+                    m.opacity  = 1
+                    self.inFlightCards.removeAll { $0.id.uuidString == cbID }
+                    self.tableCards.append(m)
+                }
+                self.cardFlightScene.clearCard(id: cbID)
+            }
+        }
+
+        for (model, slot, z) in assignments {
+            let id           = model.id.uuidString
+            let delayMS      = z * 150
+            let skDest       = CGPoint(x: slot.position.x, y: screenSize.height - slot.position.y)
+            let initialAngle = CGFloat(-Double.random(in: 11.0...16.0) * .pi / 180)
+            let finalAngle   = CGFloat(-slot.angleDeg * .pi / 180)
+
+            Task { @MainActor in
+                if delayMS > 0 { try? await Task.sleep(for: .milliseconds(delayMS)) }
+                guard !Task.isCancelled else { return }
+                guard let cardImage = self.snapshotCardBack(screenSize: screenSize) else {
+                    print("[VaylDirector] dealCards: skipping card \(id) — snapshot failed")
+                    return
+                }
+                self.cardFlightScene.dealCard(
+                    id:           id,
+                    image:        cardImage,
+                    from:         skLaunch,
+                    to:           skDest,
+                    initialAngle: initialAngle,
+                    finalAngle:   finalAngle,
+                    zPosition:    CGFloat(z),
+                    duration:     0.92
+                )
+            }
+        }
+    }
+
+    @MainActor
+    private func snapshotCardBack(screenSize: CGSize) -> UIImage? {
+        let w        = AppLayout.obTableCardWidth(in: screenSize.width)
+        let h        = AppLayout.obTableCardHeight(in: screenSize.width)
+        let renderer = ImageRenderer(content: VaylCardBack().frame(width: w, height: h))
+        renderer.scale = UIScreen.main.scale // TODO: UIScreen.main.scale — no AppLayout equivalent for render scale, acceptable UIKit bridge
+        guard let image = renderer.uiImage else {
+            // Non-fatal: card flight will show blank sprite.
+            // This should never happen in production — log for diagnostics.
+            print("[VaylDirector] snapshotCardBack returned nil — ImageRenderer failed")
+            return nil
+        }
+        return image
+    }
+
     func pocketToCornerDeck(_ card: VaylCardModel, screenSize: CGSize) {
         let cornerTarget = CGPoint(
-            x: screenSize.width - AppLayout.cornerDeckRight - AppLayout.cornerDeckWidth / 2,
+            x: screenSize.width  - AppLayout.cornerDeckRight - AppLayout.cornerDeckWidth  / 2,
             y: AppLayout.cornerDeckTop + AppLayout.cornerDeckHeight / 2
         )
         sequenceAttempt += 1
         let current = sequenceAttempt
-        withAnimation(AppAnimation.cardPocket) {
+        withAnimation(AppAnimation.cardPocket.reduceMotionSafe) {
             card.position = cornerTarget
-            card.scale    = 0.22    // physics constant — shrink to corner deck scale
+            card.scale    = 0.22
             card.opacity  = 0
         }
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(550))
+            try? await Task.sleep(for: .milliseconds(550)) // pocket duration
             guard current == self.sequenceAttempt else { return }
             tableCards.removeAll    { $0.id == card.id }
             inFlightCards.removeAll { $0.id == card.id }
@@ -296,8 +315,6 @@ final class VaylDirector {
         }
     }
 
-    /// Evaluate and assign opener deck type from collected OB data.
-    /// Called silently at the end of CuriosityPhase round 2.
     func evaluateOpenerDeckType() {
         let hasHeavyContext   = onboardingData.emotionalRegister == "anxious"
         let hasMoreSelections = onboardingData.curiositySelections.count >= 4
@@ -305,29 +322,41 @@ final class VaylDirector {
         onboardingData.openerDeckType = openerDeckType
     }
 
-    // MARK: - Foil
+    // MARK: - Landing Slot Pool
 
-    /// Add a tear at the tapped point. Evaluate integrity threshold.
+    /// Picks a random unused slot from the pool, removes it so the next call gets
+    /// a different zone, and returns a resolved position + angle for `screenSize`.
+    /// When all slots are exhausted the pool resets automatically, so a long flow
+    /// that deals more than 5 cards simply cycles through all zones again.
+    func claimLandingSlot(screenSize: CGSize) -> CardLandingSlot.Resolved {
+        if availableSlotIDs.isEmpty {
+            availableSlotIDs = AppLayout.obCardLandingSlots.map(\.id)
+        }
+        let pickIndex  = availableSlotIDs.indices.randomElement()!
+        let slotID     = availableSlotIDs.remove(at: pickIndex)
+        let slot       = AppLayout.obCardLandingSlots.first(where: { $0.id == slotID })!
+        return slot.resolve(in: screenSize)
+    }
+
+    /// Resets the slot pool so the next deal sequence starts fresh.
+    /// Call this when entering a new OB phase that deals cards.
+    func resetSlotPool() {
+        availableSlotIDs = AppLayout.obCardLandingSlots.map(\.id)
+    }
+
     func addFoilTear(at point: CGPoint) {
         let tear = FoilTear(tapPoint: point)
         foilTears.append(tear)
-        // Three tears crosses the threshold — begin auto-dissolve
-        if foilTears.count >= 3 {
-            beginFoilDissolve()
-        }
+        if foilTears.count >= 3 { beginFoilDissolve() }
     }
 
     private func beginFoilDissolve() {
         sequenceAttempt += 1
         let current = sequenceAttempt
-        // TODO: animate foil integrity to 0, fire particles, reveal deck
-        withAnimation(AppAnimation.foilDissolve) {
-            self.foilIntegrity = 0
-        }
+        withAnimation(AppAnimation.foilDissolve.reduceMotionSafe) { self.foilIntegrity = 0 }
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(800))
+            try? await Task.sleep(for: .milliseconds(800)) // foil dissolve delay
             guard current == self.sequenceAttempt else { return }
-            // TODO: particles complete — advance
             try? await Task.sleep(for: .seconds(1))
             guard current == self.sequenceAttempt else { return }
             self.advance(to: .founderLetter)
