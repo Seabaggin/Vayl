@@ -87,12 +87,13 @@ struct OnboardingCanvasView: View {
             }
             .frame(width: size.width, height: size.height)
             .ignoresSafeArea()
+            .onAppear {
+                director.updateScreenSize(size)
+                director.onboardingStore = onboardingStore
+                director.start()
+            }
         }
         .ignoresSafeArea()
-        .onAppear {
-            director.onboardingStore = onboardingStore
-            director.start()
-        }
     }
 }
 

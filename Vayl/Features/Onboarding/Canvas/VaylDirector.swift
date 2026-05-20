@@ -1,16 +1,3 @@
-//
-//  VaylDirector.swift
-//  Vayl
-//
-//  Created by Bryan Jorden on 5/9/26.
-//
-
-
-//
-//  VaylDirector.swift
-//  Vayl
-//
-
 // Features/Onboarding/Canvas/VaylDirector.swift
 
 import SwiftUI
@@ -31,6 +18,15 @@ final class VaylDirector {
     var inFlightCards:   [VaylCardModel] = []
     var muckCards:       [VaylCardModel] = []
 
+    // Phase card models — canvas-level rendering via VaylCardRenderer
+    var nameCard:   VaylCardModel? = nil
+    var genderCard: VaylCardModel? = nil
+
+    // UI visibility signals — observed by phase overlays
+    var nameInputVisible:    Bool = false
+    var genderPickerVisible: Bool = false
+    var genderCopyVisible:   Bool = false
+
     // MARK: - User Data
 
     var onboardingData: OnboardingData = OnboardingData()
@@ -41,9 +37,9 @@ final class VaylDirector {
 
     // MARK: - Table State
 
-    var tableFade:          Double = 0.0    // 0=gone 1=full
-    var rimBurst:           Double = 0      // 0=off 1=flash peak
-    var dealPointIntensity: Double = 0.0    // 0=off 1=full warm
+    var tableFade:          Double = 0.0
+    var rimBurst:           Double = 0
+    var dealPointIntensity: Double = 0.0
 
     // MARK: - Projected Text
 
@@ -52,7 +48,7 @@ final class VaylDirector {
 
     // MARK: - Foil State
 
-    var foilIntegrity: Double     = 1.0    // 1.0=sealed 0.0=dissolved
+    var foilIntegrity: Double     = 1.0
     var foilTears:     [FoilTear] = []
 
     // MARK: - Corner Deck
@@ -64,22 +60,31 @@ final class VaylDirector {
     var deckPulse: Bool = false
 
     // MARK: - Attempt Tracking
-    // Prevents stale Tasks from acting after a phase change.
-    // Each independent sequence family has its own counter so they
-    // cannot cancel each other by incrementing a shared value.
-    //
-    // sequenceAttempt  — phase entry sequences (intro, appArrival,
-    //                    foilDissolve, pocketToCornerDeck)
-    // dealerLineAttempt — showDealerLine only
 
     private var sequenceAttempt:   Int = 0
     private var dealerLineAttempt: Int = 0
 
+    // MARK: - Phase Sequence Private State
+    // @ObservationIgnored — these never need to trigger view re-renders.
+
+    @ObservationIgnored private var cachedScreenSize:  CGSize = .zero
+    @ObservationIgnored private var nameLandingAngle:  Double = 0
+    @ObservationIgnored private var nameLandingOffset: CGSize = .zero
+
+    @ObservationIgnored private var genderLiftFired:  Bool = false
+    @ObservationIgnored private var genderHasTugged:  Bool = false
+    @ObservationIgnored private var genderTugTask:    Task<Void, Never>? = nil
+    @ObservationIgnored private var genderDriftTask:  Task<Void, Never>? = nil
+
     // MARK: - Dependencies
-    // Injected after init — VaylDirector is created by OnboardingCanvasView
-    // before the store is available. Set via onboardingStore setter.
 
     var onboardingStore: OnboardingStore? = nil
+
+    // MARK: - Screen Size
+
+    func updateScreenSize(_ size: CGSize) {
+        cachedScreenSize = size
+    }
 
     // MARK: - Start
 
@@ -93,14 +98,11 @@ final class VaylDirector {
     private var isTransitioning: Bool = false
 
     // MARK: - Phase Advancement
-    // VaylDirector is the ONLY thing that advances phase.
-    // Phase overlays dispatch intents. Director decides.
 
     func advance(to next: OBPhase) {
         guard !isTransitioning else { return }
         isTransitioning = true
         Task { @MainActor in
-            // Let current phase begin its fade-out before the next renders.
             try? await Task.sleep(for: .milliseconds(200))
             phase = next
             handlePhaseEntry(next)
@@ -113,7 +115,7 @@ final class VaylDirector {
     private func handlePhaseEntry(_ phase: OBPhase) {
         switch phase {
         case .stat:
-            break // StatPhase handles its own sequence
+            break
 
         case .name:
             runNameEntry()
@@ -153,25 +155,324 @@ final class VaylDirector {
         }
     }
 
-    // MARK: - Phase Sequences
-    // Full animation sequences to be implemented per phase.
-    // Barebones: advance timing only. No card physics yet.
-
-  
+    // MARK: - Name Entry Sequence
 
     private func runNameEntry() {
-        // TODO: deal point warms, card slides in, flips, corner deck appears
-        tableFade         = 1.0   // table must be visible for the deal animation
-        rimBurst          = 0     // reset any lingering burst from previous phase
+        guard cachedScreenSize != .zero else { return }
+
+        tableFade         = 1.0
+        rimBurst          = 0
         cornerDeckVisible = true
+        nameInputVisible  = false
+
+        // Seed landing position once per session
+        nameLandingAngle  = Double.random(in: -7...7)
+        nameLandingOffset = CGSize(
+            width:  CGFloat.random(in: -38...38),
+            height: CGFloat.random(in: -28...28)
+        )
+
+        let card = VaylCardModel()
+        card.credential = .name
+        card.opacity    = 0
+        card.position   = CGPoint(
+            x: cachedScreenSize.width  * (0.5 + 0.60),
+            y: cachedScreenSize.height * (0.5 - 0.58)
+        )
+        card.rotation = -14
+        nameCard = card
+        tableCards.append(card)
+
+        Task { @MainActor in
+            await runNameDealSequence(card: card)
+        }
     }
+
+    private func runNameDealSequence(card: VaylCardModel) async {
+        let sw = cachedScreenSize.width
+        let sh = cachedScreenSize.height
+
+        // Deal flight — card fades in while flying to landing position
+        withAnimation(.linear(duration: 0.14)) {
+            card.opacity = 1
+        }
+        withAnimation(.interpolatingSpring(mass: 1.1, stiffness: 160, damping: 18, initialVelocity: 6)) {
+            card.position = CGPoint(
+                x: sw / 2 + nameLandingOffset.width,
+                y: sh / 2 + nameLandingOffset.height
+            )
+            card.rotation = nameLandingAngle
+        }
+
+        try? await Task.sleep(for: .milliseconds(940))
+        guard !Task.isCancelled else { return }
+
+        // Landing — rim burst fires
+        rimBurst = 1.0
+        withAnimation(.timingCurve(0.2, 0.8, 0.4, 1.0, duration: 0.6)) {
+            rimBurst = 0.0
+        }
+
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
+
+        // Organize — critically damped, zero overshoot
+        withAnimation(.spring(response: 0.72, dampingFraction: 1.0)) {
+            card.position = CGPoint(x: sw / 2, y: sh / 2)
+            card.rotation = 0
+        }
+
+        try? await Task.sleep(for: .milliseconds(780))
+        guard !Task.isCancelled else { return }
+
+        try? await Task.sleep(for: .milliseconds(1200))
+        guard !Task.isCancelled else { return }
+
+        await runNameFlip(card: card)
+    }
+
+    private func runNameFlip(card: VaylCardModel) async {
+        // First half — collapse to scaleX 0
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+            card.scaleX = 0.0
+        }
+
+        try? await Task.sleep(for: .milliseconds(190))
+        guard !Task.isCancelled else { return }
+
+        // Swap to portal face at the invisible midpoint
+        card.flipProgress = 1.0
+        card.content      = .portal(startDate: Date())
+
+        // Second half — renderer's built-in ×(-1) on face yields correct orientation
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+            card.scaleX = 1.0
+        }
+
+        try? await Task.sleep(for: .milliseconds(660))
+        guard !Task.isCancelled else { return }
+
+        await runNameExpand(card: card)
+    }
+
+    private func runNameExpand(card: VaylCardModel) async {
+        let cardW = AppLayout.obCardWidth(in: cachedScreenSize.width)
+        let cardH = AppLayout.obCardHeight(in: cachedScreenSize.width)
+        let scaleX = cachedScreenSize.width  / cardW
+        let scaleY = cachedScreenSize.height / cardH
+        let target = max(scaleX, scaleY) * 1.04
+
+        withAnimation(.easeIn(duration: 0.55)) {
+            tableFade = 0.0
+        }
+        withAnimation(.timingCurve(0.4, 0.0, 0.2, 1.0, duration: 1.05)) {
+            card.scale  = target
+            card.scaleX = target
+        }
+
+        try? await Task.sleep(for: .milliseconds(550))
+        guard !Task.isCancelled else { return }
+
+        withAnimation(.easeIn(duration: 0.35)) {
+            card.opacity = 0.0
+        }
+
+        try? await Task.sleep(for: .milliseconds(380))
+        guard !Task.isCancelled else { return }
+
+        nameInputVisible = true
+    }
+
+    // MARK: - Gender Entry Sequence
 
     private func runGenderEntry() {
-        // TODO: deal next card sequence
+        guard cachedScreenSize != .zero else { return }
+
+        // Clean up invisible name card — it finished its expand and is opacity 0
+        if let nc = nameCard {
+            tableCards.removeAll { $0.id == nc.id }
+        }
+
+        tableFade         = 1.0
+        cornerDeckVisible = true
+        genderLiftFired   = false
+        genderHasTugged   = false
+        genderPickerVisible = false
+        genderCopyVisible   = true
+
+        let card = VaylCardModel()
+        card.credential = .gender
+        card.opacity    = 1.0
+        card.position   = CGPoint(
+            x: cachedScreenSize.width / 2,
+            y: AppLayout.obTableCardCenterY(in: cachedScreenSize.height)
+        )
+        genderCard = card
+        tableCards.append(card)
+
+        scheduleGenderTug(card: card)
+        scheduleGenderDrift(card: card)
     }
 
+    // MARK: - Gender Tug
+
+    private func scheduleGenderTug(card: VaylCardModel) {
+        guard !genderHasTugged else { return }
+        genderTugTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled, !genderHasTugged, !genderLiftFired else { return }
+            await runGenderTugSequence(card: card)
+        }
+    }
+
+    private func runGenderTugSequence(card: VaylCardModel) async {
+        genderHasTugged = true
+        let restingY = AppLayout.obTableCardCenterY(in: cachedScreenSize.height)
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
+            card.position = CGPoint(x: cachedScreenSize.width / 2, y: restingY + 7)
+        }
+        try? await Task.sleep(for: .milliseconds(400))
+        guard !Task.isCancelled else { return }
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            card.position = CGPoint(x: cachedScreenSize.width / 2, y: restingY)
+        }
+        try? await Task.sleep(for: .milliseconds(700))
+    }
+
+    // MARK: - Gender Auto-Drift
+
+    private func scheduleGenderDrift(card: VaylCardModel) {
+        genderDriftTask?.cancel()
+        genderDriftTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled, !genderLiftFired else { return }
+            await runGenderDriftSequence(card: card)
+        }
+    }
+
+    private func runGenderDriftSequence(card: VaylCardModel) async {
+        let restingY  = AppLayout.obTableCardCenterY(in: cachedScreenSize.height)
+        let threshold = cachedScreenSize.height * 0.18
+        withAnimation(.spring(response: 1.2, dampingFraction: 0.9)) {
+            card.position = CGPoint(x: cachedScreenSize.width / 2, y: restingY + threshold)
+        }
+        try? await Task.sleep(for: .milliseconds(900))
+        guard !Task.isCancelled else { return }
+        runGenderPortalLift(card: card)
+    }
+
+    // MARK: - Gender Portal Lift
+
+    private func runGenderPortalLift(card: VaylCardModel) {
+        guard !genderLiftFired else { return }
+        genderLiftFired = true
+        genderTugTask?.cancel()
+        genderDriftTask?.cancel()
+        genderCopyVisible = false
+
+        Task { @MainActor in
+            await runGenderFlip(card: card)
+        }
+    }
+
+    private func runGenderFlip(card: VaylCardModel) async {
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+            card.scaleX = 0.0
+        }
+        try? await Task.sleep(for: .milliseconds(190))
+
+        card.flipProgress = 1.0
+        card.content      = .portal(startDate: Date())
+
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+            card.scaleX = 1.0
+        }
+        try? await Task.sleep(for: .milliseconds(660))
+
+        await runGenderExpand(card: card)
+    }
+
+    private func runGenderExpand(card: VaylCardModel) async {
+        let cardW = AppLayout.obCardWidth(in: cachedScreenSize.width)
+        let cardH = AppLayout.obCardHeight(in: cachedScreenSize.width)
+        let scaleX = cachedScreenSize.width  / cardW
+        let scaleY = cachedScreenSize.height / cardH
+        let target = max(scaleX, scaleY) * 1.04
+
+        // Slide to center before expanding
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.80)) {
+            card.position = CGPoint(x: cachedScreenSize.width / 2, y: cachedScreenSize.height / 2)
+        }
+
+        withAnimation(.easeIn(duration: 0.55)) {
+            tableFade = 0.0
+        }
+        withAnimation(.timingCurve(0.4, 0.0, 0.2, 1.0, duration: 1.05)) {
+            card.scale  = target
+            card.scaleX = target
+        }
+        try? await Task.sleep(for: .milliseconds(550))
+
+        withAnimation(.easeIn(duration: 0.35)) {
+            card.opacity = 0.0
+        }
+        try? await Task.sleep(for: .milliseconds(380))
+
+        genderPickerVisible = true
+    }
+
+    // MARK: - Gender Drag API (called by GenderPhase gesture)
+
+    func applyGenderDrag(dy: CGFloat) {
+        guard let card = genderCard, !genderLiftFired else { return }
+        genderTugTask?.cancel()
+        genderDriftTask?.cancel()
+        let restingY  = AppLayout.obTableCardCenterY(in: cachedScreenSize.height)
+        let clampedDy = max(0, dy) * 0.85
+        card.position = CGPoint(x: cachedScreenSize.width / 2, y: restingY + clampedDy)
+    }
+
+    func endGenderDrag(translationY: CGFloat, velocityY: CGFloat) {
+        guard let card = genderCard, !genderLiftFired else { return }
+        let threshold = cachedScreenSize.height * 0.18
+        if translationY >= threshold || velocityY >= 400 {
+            runGenderPortalLift(card: card)
+        } else {
+            let restingY = AppLayout.obTableCardCenterY(in: cachedScreenSize.height)
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.80)) {
+                card.position = CGPoint(x: cachedScreenSize.width / 2, y: restingY)
+            }
+            scheduleGenderDrift(card: card)
+        }
+    }
+
+    // MARK: - Gender Collect (called by GenderPhase after confirm)
+
+    func collectGenderCard() {
+        guard let card = genderCard else { return }
+        genderPickerVisible = false
+        Task { @MainActor in
+            withAnimation(AppAnimation.standard) {
+                card.opacity = 1.0
+                card.scale   = 1.0
+                card.scaleX  = 1.0
+            }
+            try? await Task.sleep(for: .milliseconds(100))
+            pocketToCornerDeck(card, screenSize: cachedScreenSize)
+            try? await Task.sleep(for: .milliseconds(650))
+            advance(to: .modeSelect)
+        }
+    }
+
+    func cancelGenderTasks() {
+        genderTugTask?.cancel()
+        genderDriftTask?.cancel()
+        genderLiftFired = false
+    }
+
+    // MARK: - Other Phase Sequences
+
     private func runModeSelectEntry() {
-        // TODO: three cards deal with stagger, dealer line fires
         showDealerLine("Everyone comes to this table differently.")
     }
 
@@ -180,7 +481,6 @@ final class VaylDirector {
     }
 
     private func runContextEntry() {
-        // TODO: cards deal, hand raise transition
         showDealerLine("Tell me where you're at.")
     }
 
@@ -189,12 +489,10 @@ final class VaylDirector {
     }
 
     private func runCuriosityRound1Entry() {
-        // TODO: 5 cards arrive overlapping quiz dissolve
         showDealerLine("Sweep away what you aren't ready for.")
     }
 
     private func runCuriosityRound2Entry() {
-        // TODO: chapter break, 5 new cards deal
         showDealerLine("Pick one.")
     }
 
@@ -203,7 +501,6 @@ final class VaylDirector {
     }
 
     private func runFoilEntry() {
-        // TODO: foil materialises over deck
         foilIntegrity = 1.0
         foilTears = []
     }
@@ -227,17 +524,10 @@ final class VaylDirector {
             }
             try? await Task.sleep(for: .milliseconds(200))
             guard current == self.sequenceAttempt else { return }
-            // AppState.isOnboardingComplete is set inside OnboardingStore.commit()
-            // ContentView observes AppState and switches to AppShell automatically
         }
     }
 
     // MARK: - Dealer Lines
-    // Exactly four. Projected on the felt. Not UI labels.
-    // 1. "Everyone comes to this table differently." — ModeSelectPhase
-    // 2. "Tell me where you're at."                 — ContextPhase
-    // 3. "Sweep away what you aren't ready for."    — CuriosityPhase R1
-    // 4. "Pick one."                                — CuriosityPhase R2
 
     func showDealerLine(_ text: String, hideAfter seconds: Double = 4.0) {
         dealerLineAttempt += 1
@@ -257,7 +547,6 @@ final class VaylDirector {
 
     // MARK: - Card Operations
 
-    /// Deal a card from the deal point to a position on the table.
     func dealCard(_ card: VaylCardModel, to destination: CGPoint, screenSize: CGSize) {
         let dealOrigin = CGPoint(
             x: screenSize.width * 0.50,
@@ -272,7 +561,6 @@ final class VaylDirector {
         }
     }
 
-    /// Send a card to the corner deck.
     func pocketToCornerDeck(_ card: VaylCardModel, screenSize: CGSize) {
         let cornerTarget = CGPoint(
             x: screenSize.width - AppLayout.cornerDeckRight - AppLayout.cornerDeckWidth / 2,
@@ -282,7 +570,7 @@ final class VaylDirector {
         let current = sequenceAttempt
         withAnimation(AppAnimation.cardPocket) {
             card.position = cornerTarget
-            card.scale    = 0.22    // physics constant — shrink to corner deck scale
+            card.scale    = 0.22
             card.opacity  = 0
         }
         Task { @MainActor in
@@ -296,8 +584,6 @@ final class VaylDirector {
         }
     }
 
-    /// Evaluate and assign opener deck type from collected OB data.
-    /// Called silently at the end of CuriosityPhase round 2.
     func evaluateOpenerDeckType() {
         let hasHeavyContext   = onboardingData.emotionalRegister == "anxious"
         let hasMoreSelections = onboardingData.curiositySelections.count >= 4
@@ -307,11 +593,9 @@ final class VaylDirector {
 
     // MARK: - Foil
 
-    /// Add a tear at the tapped point. Evaluate integrity threshold.
     func addFoilTear(at point: CGPoint) {
         let tear = FoilTear(tapPoint: point)
         foilTears.append(tear)
-        // Three tears crosses the threshold — begin auto-dissolve
         if foilTears.count >= 3 {
             beginFoilDissolve()
         }
@@ -320,14 +604,12 @@ final class VaylDirector {
     private func beginFoilDissolve() {
         sequenceAttempt += 1
         let current = sequenceAttempt
-        // TODO: animate foil integrity to 0, fire particles, reveal deck
         withAnimation(AppAnimation.foilDissolve) {
             self.foilIntegrity = 0
         }
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(800))
             guard current == self.sequenceAttempt else { return }
-            // TODO: particles complete — advance
             try? await Task.sleep(for: .seconds(1))
             guard current == self.sequenceAttempt else { return }
             self.advance(to: .founderLetter)
