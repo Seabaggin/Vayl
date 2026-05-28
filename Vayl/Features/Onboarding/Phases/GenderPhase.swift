@@ -35,11 +35,10 @@
 //   3-item drum wheel; options sourced from director.genderOptions only.
 //   Drum scroll calls director.updateGenderDrum — reels sync at 0.68× ratio.
 //   Drum settle calls director.settleGenderDrum — winning glow + 3× haptic.
-//   Pronouns TextField fades in on genderDrumSettled.
-//   Swipe-right confirms: .success haptic + director.confirmGenderSelection.
+//   (Pronouns removed — not needed for Vayl's use case.)
 //
 // Stub (not yet built):
-//   ✗ Drag cue / tug hint
+//   ✗ Card swipe-right confirm + auto-tug affordance (Task 2)
 //   ✗ User-drag → flip + reel spin
 
 import SwiftUI
