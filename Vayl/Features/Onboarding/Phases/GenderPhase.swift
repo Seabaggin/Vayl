@@ -56,6 +56,8 @@ struct GenderPhase: View {
     @State private var drumBaseOffset:   CGFloat = 0   // settled strip offset; resets on picker appear
     @State private var drumDragOffset:   CGFloat = 0   // live delta during current drag
     @State private var confirmedTrigger: Bool    = false
+    @State private var cardTugOffset:        CGFloat = 0   // horizontal nudge for tug hint
+    @State private var borderPulseIntensity: Double  = 0   // 0→1→0 during tug sequence
 
     // MARK: — Dimensions (derived, not stored)
 
@@ -108,6 +110,24 @@ struct GenderPhase: View {
             Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(550))
                 director.advance(to: .experienceLevel)
+            }
+        }
+        .onChange(of: director.genderReelSettleComplete) { _, complete in
+            guard complete, !reduceMotion else { return }
+            Task { @MainActor in
+                // Wait for the winning-glow haptic burst to finish before hinting.
+                try? await Task.sleep(for: .milliseconds(800))
+                // Border pulse: spectrum glow charges up.
+                withAnimation(.easeIn(duration: 0.18)) { borderPulseIntensity = 1.0 }
+                try? await Task.sleep(for: .milliseconds(200))
+                // Tug card right — fast, bouncy spring.
+                withAnimation(.spring(response: 0.22, dampingFraction: 0.50)) { cardTugOffset = 22 }
+                try? await Task.sleep(for: .milliseconds(230))
+                // Spring back.
+                withAnimation(AppAnimation.spring.reduceMotionSafe) { cardTugOffset = 0 }
+                try? await Task.sleep(for: .milliseconds(320))
+                // Border pulse fades out.
+                withAnimation(.easeOut(duration: 0.28)) { borderPulseIntensity = 0.0 }
             }
         }
     }
@@ -230,7 +250,26 @@ struct GenderPhase: View {
         .blur(radius: blur)
         .frame(width: cardWidth, height: cardHeight)
         .scaleEffect(x: director.genderCardFlipScaleX, y: 1.0)
+        .gesture(
+            DragGesture(minimumDistance: 30)
+                .onEnded { value in
+                    // Only active after reels have settled.
+                    guard director.genderReelSettleComplete else { return }
+                    // Require a rightward swipe with limited vertical drift.
+                    guard value.translation.width  >  55  else { return }
+                    guard abs(value.translation.height) < 80 else { return }
+                    confirmedTrigger.toggle()   // triggers .sensoryFeedback(.success) in body
+                    director.confirmGenderSelection(pronouns: nil)
+                }
+        )
         .offset(director.genderCardOffset)
+        .offset(x: cardTugOffset)
+        .overlay {
+            RoundedRectangle(cornerRadius: AppRadius.obCard)
+                .spectrumBorderGlow(intensity: borderPulseIntensity * 2.5)
+                .opacity(borderPulseIntensity)
+                .allowsHitTesting(false)
+        }
     }
 
     // MARK: — Picker
