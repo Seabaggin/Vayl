@@ -38,7 +38,7 @@
 //   (Pronouns removed — not needed for Vayl's use case.)
 //
 // Stub (not yet built):
-//   ✗ Card swipe-right confirm + auto-tug affordance (Task 2)
+//   ✓ Card swipe-right confirm + auto-tug border pulse (Tasks 2)
 //   ✗ User-drag → flip + reel spin
 
 import SwiftUI
