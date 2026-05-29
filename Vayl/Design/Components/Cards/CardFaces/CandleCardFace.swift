@@ -804,15 +804,17 @@ struct FlameCfg {
     }
 }
 
-#Preview("Candles — all three @118pt") {
-    ZStack {
-        Color.black
-        HStack(spacing: AppSpacing.sm) {
-            ForEach(CandleIntensity.ordered, id: \.self) { i in
-                CandleCardFace(intensity: i)
-                    .frame(width: 118, height: 118 * 1.5)
+#Preview("Candles — animated") {
+    TimelineView(.animation) { tl in
+        let t = tl.date.timeIntervalSinceReferenceDate
+        ZStack {
+            Color.black
+            HStack(spacing: AppSpacing.sm) {
+                ForEach(CandleIntensity.ordered, id: \.self) { i in
+                    CandleCardFace(intensity: i, time: t)
+                        .frame(width: 118, height: 118 * 1.5)
+                }
             }
-        }
+        }.ignoresSafeArea()
     }
-    .ignoresSafeArea()
 }
