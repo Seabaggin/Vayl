@@ -4,9 +4,10 @@
 **Phase position:** after ModeSelectPhase → advances to ContextPhase
 **Question it asks:** *Where are you in this lifestyle?*
 
-A "Three Card Monte" mechanic: deal three candle cards face-down with crossing
-arcs → shuffle → flip all face-up → tap to pick → swipe up to confirm →
-`director.advance(to: .context)`. Each card shows a `CandleCardFace` at one of
+A "Three Card Monte" mechanic: deal three cards face-down → organize into a
+clean row → shuffle (theatre, 3–4s) → flip in succession revealing
+Curious → Exploring → Experienced → tap to pick → swipe up to confirm →
+`director.advance(to: .context)`. Each card reveals a `CandleCardFace` at one of
 three intensities representing experience level.
 
 This spec supersedes the original `ExperienceLevelPhase — Full Spec.md` on one
@@ -96,108 +97,153 @@ The geometry contract is untouched — only the flame's control points move.
 
 **`time` is passed in, not owned.** One phase-level `TimelineView(.animation)`
 produces a single clock; all three faces read the same value. This avoids three
-unsynchronized timers each scheduling their own redraw (3× cost when all cards
-are on-screen during deal/shuffle).
+unsynchronized timers each scheduling their own redraw (3× cost once all cards
+are revealed face-up in the row).
 
 Under Reduce Motion: parent passes a frozen `time` → flames render static at a
 representative phase, Curious pulse disabled.
 
 ---
 
-## Section 3 — Choreography (`VaylDirector`)
+## Section 3 — Choreography (`CardThreeMonte.swift`)
 
-Mirrors the proven gender pattern (`runGenderEntry` / `startGenderSequence` /
-`cancelGenderSequence`). Per-card visual state is bundled into one struct because
-the Monte has three cards (gender animated one via flat offset vars).
+All deal/organize/shuffle/flip/lift/confirm logic lives in a dedicated controller
+in `CardPhysics`, modeled directly on the proven
+[`CardMirrorDeal.swift`](../../../Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift)
+pattern. **No Monte state lives on `VaylDirector`** — the director's only
+involvement is `advance(to: .context)` fired from the controller's `onConfirm`.
 
-**New state on the director:**
-```swift
-enum MonteStage { case idle, dealing, shuffling, revealed, picked, confirming }
+This follows the same ownership split CardMirrorDeal established:
+- **Controller owns:** deal animation, organize, shuffle, flip, lift, confirm,
+  reject, all card transforms, haptic triggers.
+- **Caller (`ExperienceLevelPhase`) owns:** card content, the flame clock, phase
+  advancement (forwarded to the director).
 
-struct MonteCardState: Identifiable {
-    let id: Int                  // 0,1,2 — also the CandleIntensity index
-    var offset:    CGSize = .zero
-    var rotation:  Double = 0
-    var flipScaleX: Double = 1.0  // face-down (1) → mid (0) → face-up
-    var faceUp:    Bool   = false
-    var lifted:    Bool   = false
-    var dismissed: Bool   = false
-}
+### Engine boundary — face-down vs face-up
 
-var monteCards: [MonteCardState] = []
-var monteSelectedID: Int? = nil
-var monteFlameTime0: Date = .now      // flame-clock anchor (frozen under Reduce Motion)
-var monteStage: MonteStage = .idle
-var monteShouldPocket: Bool = false   // View observes → advance (mirrors genderShouldPocket)
-@ObservationIgnored var experienceSequenceTask: Task<Void, Never>? = nil
+```
+CardFlightScene (SpriteKit textures, face-down)   SwiftUI live views (face-up)
+  deal 3 backs in   →   ┊HANDOFF┊   →   organize · shuffle · flip · candles · pick · confirm
 ```
 
-**Lifecycle methods (same split as gender):**
-- `runExperienceLevelEntry()` — *sync, router-owned* (replaces the empty stub at
-  `VaylDirector.swift:197`). Cancels any task, resets `monteCards` to three fresh
-  face-down states, `monteStage = .idle`, `monteSelectedID = nil`. Idempotent.
-- `startExperienceLevelSequence(screenSize:)` — *async, View-lifecycle-owned*
-  (`.onAppear`, never the router). Runs scripted beats as one `Task`: deal
-  (crossing arcs) → shuffle (2–3 passes) → simultaneous flip → `monteStage =
-  .revealed`. Each beat awaits its `AppAnimation` duration. Task ends at
-  `.revealed`, awaiting input.
-- `cancelExperienceLevelSequence()` — `.onDisappear`. Cancels + nils the task.
+- **CardFlightScene does the deal-in travel only.** Three `dealCard` calls fly
+  card-*back* textures from the dealer point to the row. Static textures are
+  correct here because the cards are face-down. Each call passes
+  `zPosition = dealIndex` (deal 1 → 0, deal 2 → 1, deal 3 → 2).
+- **Everything after the deal is owned by `CardThreeMonteController`** in the
+  SwiftUI layer — organize, the 3–4s shuffle, the flip, lift, and confirm. The
+  shuffle is the whole reason this file exists.
 
-**User-input methods (called from View gestures):**
-- `selectMonteCard(_ id:)` — sets `monteSelectedID`, marks that card `lifted`,
-  others `dismissed`, `monteStage = .picked`.
-- `confirmExperienceSelection()` — writes `onboardingData.nmStage` from the
-  selected id, pockets the lifted card (`pocketToCornerDeck`), sets
-  `monteShouldPocket = true`. View observes and calls `advance(to: .context)` —
-  **the only phase gate**.
+### Deal-order z-invariant
 
-**Flame clock lives in the View, not the director.** The director stores only
-`monteFlameTime0` + discrete state. The phase's `TimelineView(.animation)`
-computes `time = now − monteFlameTime0` and passes it to the three faces. Under
-Reduce Motion the View passes a frozen delta. **Zero per-frame @Observable
-writes** — the core reason for this architecture (Approach A).
+A card's stacking depth is fixed the instant it is dealt and **never changes**
+through organize + shuffle + flip: the 1st-dealt card always renders *beneath*
+the 2nd and 3rd. Cards may physically overlap/rest on each other, but the 1st
+can never sit on top. Carried from CardFlightScene's `zPosition` into the SwiftUI
+layer as a permanent per-card `zIndex`.
+
+**One exception:** the lifted (picked) card rises above all others while held.
+When the other two fold back down, deal-order z resumes for them.
+
+### Identity assigned at reveal — no shuffle tracking
+
+Because the shuffle is pure theatre with no "real" card to follow, the three
+nodes are anonymous backs during deal + shuffle. **Candle identity is assigned
+only at the flip (step 4).** This eliminates all "which card is which" tracking
+through the swaps. The flip reveals **Curious → Exploring → Experienced in
+succession, always resolving to a clean left→right ordered row** (Curious left,
+Exploring center, Experienced right) regardless of where the shuffle left things.
+
+### Controller shape (mirrors `CardMirrorDealController`)
+
+```swift
+enum ThreeMonteState: Equatable {
+    case idle, dealing, organizing, shuffling, revealing, faceUp
+    case lifted(CandleIntensity), confirming(CandleIntensity), done(CandleIntensity)
+}
+
+@Observable @MainActor
+final class CardThreeMonteController {
+    var state: ThreeMonteState = .idle
+
+    // Per-card transforms — three of each (vs MirrorDeal's two).
+    var offsets:    [CGSize] = [.zero, .zero, .zero]
+    var angles:     [Double] = [0, 0, 0]
+    var scales:     [Double] = [1, 1, 1]
+    var alphas:     [Double] = [0, 0, 0]
+    var flipScaleX: [Double] = [1, 1, 1]   // face-down (1) → mid (0) → face-up
+    var showFace:   [Bool]   = [false, false, false]
+    var zIndices:   [Double] = [0, 1, 2]   // permanent deal-order stacking
+    var confirmHapticTrigger: Bool = false
+
+    // deal(): CardFlightScene 3× (face-down backs) → onCardRested settles state
+    // organize(): align to clean row (the reference image)
+    // shuffle(): 3–4s theatrical position swaps, z-invariant held
+    // reveal(): flip in succession → assign Curious/Exploring/Experienced L→R
+    // lift(_:) / confirm(_:onLanded:onConfirm:) / cancel()  — as in MirrorDeal
+}
+```
+
+### Flame clock — owned by the View, not the controller
+
+The controller holds no per-frame state. The phase's `TimelineView(.animation)`
+produces one `time` value and passes it to all three `CandleCardFace`s. **Zero
+per-frame `@Observable` writes** — the core reason for this architecture
+(Approach A). Under Reduce Motion the View passes a frozen `time`.
+
+### `VaylDirector` touch points (minimal)
+
+- `runExperienceLevelEntry()` (the empty stub at `VaylDirector.swift:197`) →
+  resets/creates the controller for a clean entry.
+- Controller's `onConfirm` → director writes `onboardingData.nmStage` from the
+  chosen `CandleIntensity` and calls `advance(to: .context)` — **the only phase
+  gate**.
 
 ---
 
 ## Section 4 — Build Protocol segments
 
 Each segment does one thing, has an on-device done condition, and a
-files-it-may-not-touch constraint. Build the candle first (static → alive), then
-the Monte around it. The screen is functional by Segment 6; Segments 7–9 layer
-spectacle on top.
+files-it-may-not-touch constraint. Two arcs: **build the candle (static → alive),
+then build the Monte controller around it.** The screen is functional end-to-end
+by Segment 6; Segments 7–9 layer the deal/shuffle/reveal spectacle on top.
 
 | # | Does | Done when (on-device) | May not touch |
 |---|------|------------------------|---------------|
-| 1 | `CandleCardFace.swift` renders `.exploring` candle, outline, two passes, static | Renders at 177pt, spectrum reads cyan→purple→magenta, no fills | director, phase, shells |
-| 2 | Add `CandleIntensity` branches: flame heights, Curious no-drips, Experienced drips | Three distinguishable **at 118pt** | director, phase |
-| 3 | Add `time` param + fbm flame sway; Curious pulse 0.88→1.0 | Flames flicker smoothly, no stutter | director, phase |
-| 4 | Reduce Motion: frozen-`time` static flame, pulse off | Reduce Motion on → candles still + legible | director, phase |
-| 5 | Rewrite `ExperienceLevelPhase.swift`: 3 `VaylCardFace` shells in a row at table size, each with a `CandleCardFace`; `runExperienceLevelEntry()` (3 face-up cards); View `TimelineView` flame clock. No deal/shuffle/flip yet | Three live candle cards on the felt at table size, on the real phase | candle file, `advance()` logic, shells |
-| 6 | Pick + confirm: tap lifts + dismisses others; swipe-up writes `nmStage`, `monteShouldPocket`, `advance(to: .context)`; haptics. Add `selectMonteCard`/`confirmExperienceSelection` | Tap → lift → swipe up → lands in ContextPhase. Screen works end-to-end | candle file, shells, other phases |
-| 7 | Flip reveal: cards start face-down; `startExperienceLevelSequence` flips all three simultaneously on appear | Cards begin face-down, flip up together, right feel | candle file, pick/confirm |
-| 8 | Deal: crossing-arc paths from dealer point, arriving face-down | Deal feels like a Monte deal | candle file, pick/confirm/flip |
-| 9 | Shuffle: 2–3 position-swap passes between deal and flip | Shuffle reads as Monte; flip still lands cleanly | everything prior frozen |
+| 1 | `CandleCardFace.swift` renders `.exploring` candle, outline, two passes, static | Renders at 177pt, spectrum reads cyan→purple→magenta, no fills | controller, phase, shells |
+| 2 | Add `CandleIntensity` branches: flame heights, Curious no-drips, Experienced drips | Three distinguishable **at 118pt** | controller, phase |
+| 3 | Add `time` param + fbm flame sway; Curious pulse 0.88→1.0 | Flames flicker smoothly, no stutter | controller, phase |
+| 4 | Reduce Motion: frozen-`time` static flame, pulse off | Reduce Motion on → candles still + legible | controller, phase |
+| 5 | Rewrite `ExperienceLevelPhase.swift`: render 3 `VaylCardFace` shells in a clean row at table size from controller state, each with a `CandleCardFace`; View `TimelineView` flame clock. New `CardThreeMonte.swift` controller starts in `.faceUp` (cards just present, ordered L→R). No deal/shuffle/flip yet | Three live candle cards in a clean row at table size, on the real phase | candle file, shells, `advance()` |
+| 6 | Controller `lift` + `confirm`: tap lifts chosen card above all (z-exception) + folds others; swipe-up → `onConfirm` → director writes `nmStage` + `advance(to: .context)`; haptics | Tap → lift → swipe up → lands in ContextPhase. Screen works end-to-end | candle file, shells, other phases |
+| 7 | Controller `reveal`: cards start face-down; flip in succession assigning Curious→Exploring→Experienced, resolving to ordered L→R row | Cards begin face-down, flip in succession, land ordered, right feel | candle file, lift/confirm |
+| 8 | Controller `deal`: CardFlightScene 3× flies backs from dealer point, deal-order `zPosition`; `onCardRested` → controller `.dealing`→`.organizing` | Deal feels like a Monte deal; 1st-dealt stays underneath | candle file, lift/confirm/reveal |
+| 9 | Controller `organize` + `shuffle`: settle to clean row (ref image), then 3–4s theatrical swaps, z-invariant held, then hand to reveal | Organize tidies cleanly; shuffle reads good for 3–4s; flip still lands ordered | everything prior frozen |
 
 **Files:**
-- `CandleCardFace.swift` — **create**
-- `ExperienceLevelPhase.swift` — **rewrite** (currently a stub)
-- `VaylDirector.swift` — **extend** (state + 5 methods; fill `runExperienceLevelEntry` stub at line 197)
+- `CandleCardFace.swift` — **create** in `CardFaces/` (alongside `ControllerCardFace`, `TypewriterCardFace`)
+- `CardThreeMonte.swift` — **create** in `CardPhysics/` (the `CardThreeMonteController`; CardMirrorDeal is the template)
+- `ExperienceLevelPhase.swift` — **rewrite** (currently a stub; thin View + flame clock)
+- `VaylDirector.swift` — **minimal touch** (`runExperienceLevelEntry` stub at line 197 wires up the controller; `onConfirm` → `nmStage` + `advance`)
+- `CardFlightScene.swift` — **read-only / reuse** (deal-in travel; only extend if true arcs are wanted later)
 
 ---
 
 ## Section 5 — Reduce Motion & performance
 
-**Reduce Motion:**
+**Reduce Motion** (controller branches on `reduceMotion`):
 - Flames freeze, Curious pulse off (Segment 4).
-- Deal/shuffle/flip → cross-fade or instant placement; cards still arrive
-  face-down and flip, so the mechanic survives without motion paths.
+- Deal/organize/shuffle → skip the theatrical swaps; cards place directly into
+  the clean row (a short fade), then flip in succession. The *mechanic* (choose
+  your level) survives without the motion spectacle.
 - Lift-on-pick → opacity/scale snap, not a sprung rise.
 - `.ambientAnimation()` on the one looping animation (Curious pulse).
 
 **Performance — the gate that decides Metal:**
 - Verify on a **real device** (Canvas + fbm differs from simulator).
-- Worst-case frame: deal/shuffle, all three flames animating while cards are in
-  flight. Profile there.
+- Worst-case frame: **post-reveal**, all three live flames animating in the row
+  (during deal/shuffle the cards are flameless SpriteKit backs — cheap). Profile
+  the three-flame steady state, plus the lift transition. Profile there.
 - If it holds 60/120fps → stay in pure SwiftUI Canvas (expected outcome).
 - If it drops frames → move **only** the blurred glow pass to a Metal
   `.layerEffect` (precedent: `HolographicShimmer.metal`, `VaylBorderEffect`);
@@ -207,9 +253,12 @@ spectacle on top.
 
 ## Architecture contracts (from CLAUDE.md)
 
-- `ExperienceLevelPhase` is a View — renders and forwards taps only.
-- Selection state lives on the director, not the View.
-- `director.advance()` is the only phase gate (via `monteShouldPocket`).
+- `ExperienceLevelPhase` is a View — renders from controller state, forwards
+  taps, owns the flame clock only.
+- Deal/shuffle/selection state lives in `CardThreeMonteController` (CardPhysics),
+  not the View and not the director — same ownership split as `CardMirrorDeal`.
+- `director.advance()` is the only phase gate (fired from the controller's
+  `onConfirm`).
 - No fixed pixels — all geometry proportional to cardWidth/cardHeight.
 - `VaylCardFace` shell used for all three cards; no View writes to
   `VaylCardModel`.
