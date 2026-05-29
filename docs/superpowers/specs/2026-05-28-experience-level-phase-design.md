@@ -188,6 +188,26 @@ static func monteRowCenters(in containerWidth: CGFloat) -> [CGFloat] {
 - Row Y-center comes from the existing `AppLayout.obTableCardCenterY(in:)`, the
   same anchor CardMirrorDeal uses.
 
+### Shuffle motion — lift-and-toss
+
+There are no rendered hands; "real monte" is emulated entirely through card
+motion. The shuffle uses a **lift-and-toss** model rather than flat sliding:
+
+- As a card swaps slots, its `elevation` ramps `0 → 1 → 0` across the move — it
+  lifts off the felt, crosses, and drops into the new slot. Elevation drives a
+  small scale bump (~1.0 → 1.06) and `AppElevation.cardShadow(elevation:)` so the
+  shadow grows and softens as the card rises (the depth cue that sells the toss).
+- Cards cross in **arcs**, not straight lines — the lifted card travels a shallow
+  curved path over the others. The deal-order `zIndex` decides who passes over
+  whom; a lifted card still obeys its permanent z (a lifted 1st-dealt card crosses
+  *under* a resting 3rd, which is what keeps the stack honest).
+- 3–4 seconds, several swaps. Pure theatre — no identity tracked (see below).
+- All swaps return every card to a `monteRowCenters` slot before the reveal, so
+  the row is clean and ordered when flipping starts.
+- **Tune on-device (Segment 9):** lift height / scale-bump amount, arc curvature,
+  per-swap duration, number of swaps. These are feel values — start conservative,
+  feel it, adjust.
+
 ### Controller shape (mirrors `CardMirrorDealController`)
 
 ```swift
@@ -207,6 +227,7 @@ final class CardThreeMonteController {
     var alphas:     [Double] = [0, 0, 0]
     var flipScaleX: [Double] = [1, 1, 1]   // face-down (1) → mid (0) → face-up
     var showFace:   [Bool]   = [false, false, false]
+    var elevations: [Double] = [0, 0, 0]   // 0 flat → 1 lifted; drives scale bump + AppElevation.cardShadow
     var zIndices:   [Double] = [0, 1, 2]   // permanent deal-order stacking
     var confirmHapticTrigger: Bool = false
 
@@ -252,7 +273,7 @@ by Segment 6; Segments 7–9 layer the deal/shuffle/reveal spectacle on top.
 | 6 | Controller `lift` + `confirm`: tap lifts chosen card above all (z-exception) + folds others; swipe-up → `onConfirm` → director writes `nmStage` + `advance(to: .context)`; haptics | Tap → lift → swipe up → lands in ContextPhase. Screen works end-to-end | candle file, shells, other phases |
 | 7 | Controller `reveal`: cards start face-down; flip in succession assigning Curious→Exploring→Experienced, resolving to ordered L→R row | Cards begin face-down, flip in succession, land ordered, right feel | candle file, lift/confirm |
 | 8 | Controller `deal`: CardFlightScene 3× flies backs from dealer point, deal-order `zPosition`; `onCardRested` → controller `.dealing`→`.organizing` | Deal feels like a Monte deal; 1st-dealt stays underneath | candle file, lift/confirm/reveal |
-| 9 | Controller `organize` + `shuffle`: settle to `monteRowCenters` (ref image), then 3–4s theatrical swaps *between those slots*, z-invariant held, then hand to reveal | Organize snaps to the canonical row; shuffle reads good for 3–4s; flip still lands ordered | everything prior frozen |
+| 9 | Controller `organize` + `shuffle`: settle to `monteRowCenters`, then 3–4s **lift-and-toss** swaps between slots (elevation 0→1→0 + scale bump + `cardShadow`, arced crossings), z-invariant held, then hand to reveal | Organize snaps to the canonical row; lift-and-toss reads convincingly for 3–4s (lift height / arc / timing tuned on-device); flip still lands ordered | everything prior frozen |
 
 **Files:**
 - `CandleCardFace.swift` — **create** in `CardFaces/` (alongside `ControllerCardFace`, `TypewriterCardFace`)
