@@ -26,37 +26,48 @@ struct ExperienceLevelPhase: View {
             TimelineView(.animation) { tl in
                 let t = reduceMotion ? 0 : tl.date.timeIntervalSinceReferenceDate
                 ForEach(0..<3, id: \.self) { i in
-                    VaylCardFace(content: .candle(intensity: monte.intensities[i], time: t))
-                        .frame(width: cardW, height: cardH)
-                        .scaleEffect(monte.scales[i])
-                        .rotationEffect(.degrees(monte.angles[i]))
-                        .offset(monte.offsets[i])
-                        .opacity(monte.alphas[i])
-                        .zIndex(monte.zIndices[i])
-                        .onTapGesture {
-                            withAnimation(AppAnimation.standard) {
-                                monte.lift(monte.intensities[i], screenSize: screenSize)
-                            }
+                    Group {
+                        if monte.showFace[i] {
+                            VaylCardFace(content: .candle(intensity: monte.intensities[i], time: t))
+                                .frame(width: cardW, height: cardH)
+                        } else {
+                            VaylCardBack()
+                                .frame(width: cardW, height: cardH)
                         }
-                        .gesture(
-                            DragGesture().onEnded { v in
-                                if case .lifted(let held) = monte.state,
-                                   held == monte.intensities[i],
-                                   v.translation.height < -55,
-                                   abs(v.translation.width) < 80 {
-                                    monte.confirm(held, screenSize: screenSize) {
-                                        director.commitExperienceLevel($0)
-                                    }
+                    }
+                    .scaleEffect(x: monte.flipScaleX[i], y: 1, anchor: .center)
+                    .scaleEffect(monte.scales[i])
+                    .rotationEffect(.degrees(monte.angles[i]))
+                    .offset(monte.offsets[i])
+                    .opacity(monte.alphas[i])
+                    .zIndex(monte.zIndices[i])
+                    .onTapGesture {
+                        withAnimation(AppAnimation.standard) {
+                            monte.lift(monte.intensities[i], screenSize: screenSize)
+                        }
+                    }
+                    .gesture(
+                        DragGesture().onEnded { v in
+                            if case .lifted(let held) = monte.state,
+                               held == monte.intensities[i],
+                               v.translation.height < -55,
+                               abs(v.translation.width) < 80 {
+                                monte.confirm(held, screenSize: screenSize) {
+                                    director.commitExperienceLevel($0)
                                 }
                             }
-                        )
+                        }
+                    )
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .sensoryFeedback(.selection, trigger: monte.state)
         .sensoryFeedback(.impact(weight: .medium), trigger: monte.confirmHapticTrigger)
-        .onAppear  { monte.placeStaticRow(screenSize: screenSize) }
+        .onAppear {
+            monte.placeRowFaceDown(screenSize: screenSize)
+            Task { await monte.reveal() }
+        }
         .onDisappear { monte.cancel() }
         .accessibilityLabel("Experience level phase")
     }

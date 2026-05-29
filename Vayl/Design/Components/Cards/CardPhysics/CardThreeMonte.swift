@@ -15,7 +15,7 @@ final class CardThreeMonteController {
     var scales:     [Double] = [1, 1, 1]
     var alphas:     [Double] = [1, 1, 1]
     var flipScaleX: [Double] = [1, 1, 1]
-    var showFace:   [Bool]   = [true, true, true]
+    var showFace:   [Bool]   = [false, false, false]
     var elevations: [Double] = [0, 0, 0]
     var zIndices:   [Double] = [0, 1, 2]
     var confirmHapticTrigger = false
@@ -24,6 +24,31 @@ final class CardThreeMonteController {
     let intensities = CandleIntensity.ordered
 
     private var dealTask: Task<Void, Never>?
+
+    /// Flip each card face-up in succession (L→R), assigning the face at the half-flip.
+    func reveal() async {
+        state = .revealing
+        for i in 0..<3 {
+            withAnimation(AppAnimation.cardFlip) { flipScaleX[i] = 0.0 }
+            try? await Task.sleep(for: .milliseconds(160))
+            showFace[i] = true              // identity becomes visible at the half-flip
+            withAnimation(AppAnimation.cardFlip) { flipScaleX[i] = 1.0 }
+            try? await Task.sleep(for: .milliseconds(140))
+        }
+        state = .faceUp
+    }
+
+    /// Place the three cards in the clean row, FACE DOWN (no reveal yet).
+    func placeRowFaceDown(screenSize: CGSize) {
+        let centers = AppLayout.monteRowCenters(in: screenSize.width)
+        let restY   = AppLayout.obTableCardCenterY(in: screenSize.height) - screenSize.height / 2
+        for i in 0..<3 {
+            offsets[i] = CGSize(width: centers[i] - screenSize.width / 2, height: restY)
+            showFace[i] = false
+            flipScaleX[i] = 1.0
+        }
+        state = .idle
+    }
 
     /// Lay the three cards directly in the clean row, face-up. (Pre-deal placeholder;
     /// later tasks replace this with deal→organize→shuffle→reveal.)
