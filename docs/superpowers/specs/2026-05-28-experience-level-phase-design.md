@@ -154,6 +154,40 @@ through the swaps. The flip reveals **Curious → Exploring → Experienced in
 succession, always resolving to a clean left→right ordered row** (Curious left,
 Exploring center, Experienced right) regardless of where the shuffle left things.
 
+### Canonical row geometry (the reference frame — define first)
+
+The "clean row" is the canonical coordinate frame that **every** subsequent step
+references: organize snaps to it, shuffle swaps between its slots, flip lands on
+it, lift/dismiss are computed relative to it. It must exist before any card moves.
+Because it's geometry, it lives in `AppLayout` (alongside `obTableCardWidth`),
+not invented inside the controller.
+
+```swift
+// AppLayout
+/// X-centers (absolute, in container coords) of the three Monte row slots.
+/// Slot 0 = left, 1 = center, 2 = right. These are the reference coordinates
+/// shuffle swaps between and organize snaps to.
+static func monteRowCenters(in containerWidth: CGFloat) -> [CGFloat] {
+    let cardW = obTableCardWidth(in: containerWidth)   // ~118 on a 393pt phone
+    let pitch = cardW + AppSpacing.sm                  // slot-to-slot distance; sm(8) = small gap
+    let mid   = containerWidth / 2
+    return [mid - pitch, mid, mid + pitch]
+}
+```
+
+- **Pitch = `obTableCardWidth + AppSpacing.sm`** keeps the row edge-to-edge with a
+  small gap. Because `obTableCardWidth` scales with screen width (`width * 0.30`,
+  clamped), the row stays on-screen with consistent margins from SE (320pt) up —
+  verified: rightmost edge fits within an 8pt margin on a 320pt container.
+- The `AppSpacing.sm` gap is the one **feel value to tune on-device** at Segment 5
+  (tighter for a denser deal, looser for breathing room). Everything else is
+  derived, not guessed.
+- **Lift / dismiss derive from this frame:** the lifted card animates to
+  `mid` (center) at cinematic scale; the two dismissed cards fold back toward
+  their own row slots (or the deal origin) — no independent coordinates.
+- Row Y-center comes from the existing `AppLayout.obTableCardCenterY(in:)`, the
+  same anchor CardMirrorDeal uses.
+
 ### Controller shape (mirrors `CardMirrorDealController`)
 
 ```swift
@@ -214,11 +248,11 @@ by Segment 6; Segments 7–9 layer the deal/shuffle/reveal spectacle on top.
 | 2 | Add `CandleIntensity` branches: flame heights, Curious no-drips, Experienced drips | Three distinguishable **at 118pt** | controller, phase |
 | 3 | Add `time` param + fbm flame sway; Curious pulse 0.88→1.0 | Flames flicker smoothly, no stutter | controller, phase |
 | 4 | Reduce Motion: frozen-`time` static flame, pulse off | Reduce Motion on → candles still + legible | controller, phase |
-| 5 | Rewrite `ExperienceLevelPhase.swift`: render 3 `VaylCardFace` shells in a clean row at table size from controller state, each with a `CandleCardFace`; View `TimelineView` flame clock. New `CardThreeMonte.swift` controller starts in `.faceUp` (cards just present, ordered L→R). No deal/shuffle/flip yet | Three live candle cards in a clean row at table size, on the real phase | candle file, shells, `advance()` |
+| 5 | Add `AppLayout.monteRowCenters(in:)` (the canonical frame). Rewrite `ExperienceLevelPhase.swift`: render 3 `VaylCardFace` shells at those centers, table size, each with a `CandleCardFace`; View `TimelineView` flame clock. New `CardThreeMonte.swift` controller starts in `.faceUp` (cards present, ordered L→R). No deal/shuffle/flip yet | Three live candle cards in a clean row at the canonical centers, on the real phase; gap (`AppSpacing.sm`) tuned on-device | candle file, shells, `advance()` |
 | 6 | Controller `lift` + `confirm`: tap lifts chosen card above all (z-exception) + folds others; swipe-up → `onConfirm` → director writes `nmStage` + `advance(to: .context)`; haptics | Tap → lift → swipe up → lands in ContextPhase. Screen works end-to-end | candle file, shells, other phases |
 | 7 | Controller `reveal`: cards start face-down; flip in succession assigning Curious→Exploring→Experienced, resolving to ordered L→R row | Cards begin face-down, flip in succession, land ordered, right feel | candle file, lift/confirm |
 | 8 | Controller `deal`: CardFlightScene 3× flies backs from dealer point, deal-order `zPosition`; `onCardRested` → controller `.dealing`→`.organizing` | Deal feels like a Monte deal; 1st-dealt stays underneath | candle file, lift/confirm/reveal |
-| 9 | Controller `organize` + `shuffle`: settle to clean row (ref image), then 3–4s theatrical swaps, z-invariant held, then hand to reveal | Organize tidies cleanly; shuffle reads good for 3–4s; flip still lands ordered | everything prior frozen |
+| 9 | Controller `organize` + `shuffle`: settle to `monteRowCenters` (ref image), then 3–4s theatrical swaps *between those slots*, z-invariant held, then hand to reveal | Organize snaps to the canonical row; shuffle reads good for 3–4s; flip still lands ordered | everything prior frozen |
 
 **Files:**
 - `CandleCardFace.swift` — **create** in `CardFaces/` (alongside `ControllerCardFace`, `TypewriterCardFace`)
