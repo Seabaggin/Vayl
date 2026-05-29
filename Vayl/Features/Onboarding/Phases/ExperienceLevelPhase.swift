@@ -21,9 +21,10 @@ struct ExperienceLevelPhase: View {
     private var cardW: CGFloat { AppLayout.obTableCardWidth(in: screenSize.width) }
     private var cardH: CGFloat { cardW * 1.5 }
 
-    /// True only while SpriteKit sprites are in flight — hides the SwiftUI card layer.
+    /// SpriteKit layer visible ONLY during `.dealing` — sprites carry the cards.
+    /// `.organizing` and `.shuffling` use the visible SwiftUI face-down cards.
     private var spriteActive: Bool {
-        monte.state == .dealing || monte.state == .organizing
+        monte.state == .dealing
     }
 
     var body: some View {
@@ -68,6 +69,11 @@ struct ExperienceLevelPhase: View {
                     .offset(monte.offsets[i])
                     .opacity(monte.alphas[i])
                     .zIndex(monte.zIndices[i])
+                    .shadow(
+                        color:  AppElevation.cardShadow(elevation: monte.elevations[i]).color,
+                        radius: AppElevation.cardShadow(elevation: monte.elevations[i]).radius,
+                        y:      AppElevation.cardShadow(elevation: monte.elevations[i]).y
+                    )
                     .onTapGesture {
                         withAnimation(AppAnimation.standard) {
                             monte.lift(monte.intensities[i], screenSize: screenSize)
@@ -95,10 +101,13 @@ struct ExperienceLevelPhase: View {
             // Pre-set row positions (alphas stay 0 until deal completes).
             monte.placeRowFaceDown(screenSize: screenSize)
 
-            // Reduce Motion: skip the deal-in entirely, show backs directly.
+            // Reduce Motion: skip deal-in and shuffle theatre; show backs + tidy row + reveal.
             guard !reduceMotion else {
                 monte.showSwiftUIBacks()
-                Task { await monte.reveal() }
+                Task {
+                    await monte.organize(screenSize: screenSize)
+                    await monte.reveal()
+                }
                 return
             }
 
@@ -120,14 +129,21 @@ struct ExperienceLevelPhase: View {
                     return
                 }
 
-                // Fly cards in via SpriteKit (alphas = 0 throughout; sprites carry visual).
+                // 1. Fly cards in via SpriteKit (alphas = 0; sprites carry visual).
                 await monte.deal(screenSize: screenSize, backImage: backImage)
 
-                // Hand-off: sprites cleared, SwiftUI backs appear at exact row positions.
-                // No animation on the alpha change — instant swap for zero flicker.
+                // 2. Hand-off: sprites cleared, SwiftUI backs appear at exact row positions.
+                //    Instant alpha swap (no animation) for zero flicker.
+                //    State is now .organizing — SpriteKit layer hidden, SwiftUI cards visible.
                 monte.showSwiftUIBacks()
 
-                // Flip reveal runs with SwiftUI backs now visible.
+                // 3. Tidy to exact clean row (SwiftUI face-down cards animate).
+                await monte.organize(screenSize: screenSize)
+
+                // 4. Shuffle theatre (SwiftUI face-down cards; SpriteKit stays hidden).
+                await monte.shuffle(screenSize: screenSize)
+
+                // 5. Flip reveal L→R.
                 await monte.reveal()
             }
         }

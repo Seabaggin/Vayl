@@ -109,6 +109,73 @@ final class CardThreeMonteController {
     /// so it is always @MainActor-isolated.
     private var restedCount: Int = 0
 
+    // MARK: - Organize
+
+    /// Animate all three from their post-deal landing positions to the exact clean row.
+    /// Cards remain face-down. ~0.42 s with AppAnimation.standard.
+    func organize(screenSize: CGSize) async {
+        let centers = AppLayout.monteRowCenters(in: screenSize.width)
+        let restY   = AppLayout.obTableCardCenterY(in: screenSize.height) - screenSize.height / 2
+        withAnimation(AppAnimation.standard) {
+            for i in 0..<3 {
+                offsets[i]    = CGSize(width: centers[i] - screenSize.width / 2, height: restY)
+                angles[i]     = 0
+                scales[i]     = 1
+                elevations[i] = 0
+            }
+        }
+        try? await Task.sleep(for: .milliseconds(420))
+    }
+
+    // MARK: - Shuffle
+
+    /// Lift-and-toss theatre: several position swaps between the three row slots (~3–4 s).
+    /// Each swap ramps elevation 0→1 (drives shadow + scale bump), cards arc to each
+    /// other's slot, then drop. zIndices are NOT changed — deal-order over/under is permanent.
+    func shuffle(screenSize: CGSize) async {
+        state = .shuffling
+        let centers = AppLayout.monteRowCenters(in: screenSize.width)
+        let restY   = AppLayout.obTableCardCenterY(in: screenSize.height) - screenSize.height / 2
+        let liftY   = restY - 18   // tune on-device: arc height above rest row
+
+        // slotOf[cardIndex] = which row slot (0,1,2) that card currently occupies.
+        var slotOf = [0, 1, 2]
+        let swaps: [(Int, Int)] = [(0, 1), (1, 2), (0, 2), (1, 2), (0, 1)]   // tune count on-device
+
+        for (a, b) in swaps {
+            guard let ia = slotOf.firstIndex(of: a),
+                  let ib = slotOf.firstIndex(of: b) else { continue }
+
+            // Lift phase: raise elevation + scale, arc upward to mid-travel height.
+            withAnimation(.easeInOut(duration: 0.34)) {
+                elevations[ia] = 1; elevations[ib] = 1
+                scales[ia] = 1.06; scales[ib] = 1.06
+                // Arc: lift Y before crossing so travel reads as a toss, not a flat slide.
+                offsets[ia] = CGSize(width: centers[b] - screenSize.width / 2, height: liftY)
+                offsets[ib] = CGSize(width: centers[a] - screenSize.width / 2, height: liftY)
+            }
+            try? await Task.sleep(for: .milliseconds(340))
+
+            // Drop phase: settle to rest row, restore scale/elevation.
+            withAnimation(.easeOut(duration: 0.14)) {
+                elevations[ia] = 0; elevations[ib] = 0
+                scales[ia] = 1; scales[ib] = 1
+                offsets[ia] = CGSize(width: centers[b] - screenSize.width / 2, height: restY)
+                offsets[ib] = CGSize(width: centers[a] - screenSize.width / 2, height: restY)
+            }
+            slotOf.swapAt(ia, ib)
+            try? await Task.sleep(for: .milliseconds(120))
+        }
+
+        // Restore cards to canonical slot order before reveal (identity assigned at reveal).
+        withAnimation(AppAnimation.standard) {
+            for i in 0..<3 {
+                offsets[i] = CGSize(width: centers[i] - screenSize.width / 2, height: restY)
+            }
+        }
+        try? await Task.sleep(for: .milliseconds(300))
+    }
+
     // MARK: - Reveal
 
     /// Flip each card face-up in succession (L→R), assigning the face at the half-flip.
