@@ -192,7 +192,7 @@ enum ContextBeatType: String, Codable {
 
 /// Experience-level candle states. Render-layer enum (decoupled from the
 /// domain `NMStage`); maps 1:1 onto it for selection.
-enum CandleIntensity: String, CaseIterable, Equatable {
+public enum CandleIntensity: String, CaseIterable, Equatable {
     case curious, exploring, experienced
 
     /// Left → right row order.

@@ -16,6 +16,7 @@ import SwiftUI
 ///   · Spectrum diamond — center motif, dims when question present
 ///   · ✦ corner marks
 ///   · Question text — when question != nil
+///   · Content face — when content != nil (mode, curiosity, etc.)
 ///
 /// The caller owns:
 ///   · frame · scale · rotation · opacity · offset · shadow
@@ -27,8 +28,10 @@ import SwiftUI
 
 struct VaylCardFace: View {
 
-    var question:   String?       = nil
-    var credential: OBCredential? = nil
+    var question:   String?                      = nil
+    var credential: OBCredential?                = nil
+    var content:    VaylCardContent?             = nil
+    var onAction:   ((VaylCardAction) -> Void)?  = nil
 
     var body: some View {
         GeometryReader { geo in
@@ -57,14 +60,49 @@ struct VaylCardFace: View {
                     .blur(radius: AppGlows.spectrumBorder.outer.radius)
                     .padding(0.75)
 
-                // ── 4 · Spectrum diamond — center motif ───────────
-                // Ornamental. Dims when the card carries a question.
-                SpectrumDiamond(size: size)
-                    .opacity(question == nil ? 1.0 : 0.18)
-                    .animation(
-                        AppAnimation.standard.reduceMotionSafe,
-                        value: question == nil
-                    )
+                // ── 4 · Content face — when VaylCardContent is provided ─
+                if let content {
+                    switch content {
+                    case .typewriter(let activeKey, let carriageProgress):
+                        TypewriterCardFace(
+                            cardWidth:        size.width,
+                            cardHeight:       size.height,
+                            activeKey:        activeKey,
+                            carriageProgress: carriageProgress
+                        )
+                    case .slotMachine:
+                        SlotMachineCardFace(
+                            cardWidth:  size.width,
+                            cardHeight: size.height
+                        )
+                    case .controller(let activeButtons):
+                        ControllerCardFace(
+                            cardWidth:     size.width,
+                            cardHeight:    size.height,
+                            activeButtons: activeButtons
+                        )
+                    case .dualController(let front, let back):
+                        DualControllerCardFace(
+                            cardWidth:          size.width,
+                            cardHeight:         size.height,
+                            activeButtonsFront: front,
+                            activeButtonsBack:  back
+                        )
+                    case .mode(let title, let subtitle, let motif):
+                        ModeFaceContent(
+                            title:    title,
+                            subtitle: subtitle,
+                            motif:    motif,
+                            cardSize: size,
+                            lifted:   false,
+                            onAction: onAction
+                        )
+                    case .candle(let intensity, let time):
+                        CandleCardFace(intensity: intensity, time: time)
+                    default:
+                        EmptyView()
+                    }
+                }
 
                 // ── 5 · Question text ──────────────────────────────
                 if let question {
@@ -90,11 +128,26 @@ struct VaylCardFace: View {
                     .opacity(0.52)
                     .padding(0.75)
 
-                // ── 10 · ✦ Corner marks ────────────────────────────
-                CornerMarks(size: size)
+
+
             }
+            .contentShape(RoundedRectangle(cornerRadius: radius))
+            .onTapGesture {
+                onAction?(.tapped)
+            }
+            .gesture(
+                DragGesture(minimumDistance: 10)
+                    .onEnded { value in
+                        let velocity    = value.predictedEndLocation.y - value.location.y
+                        let translation = value.translation.height
+                        if translation <= -(geo.size.height * 0.14) || velocity <= -400 {
+                            onAction?(.swipedUp)
+                        }
+                    }
+            )
             .clipShape(RoundedRectangle(cornerRadius: radius))
         }
+        .drawingGroup() // rasterize ZStack of gradients + strokes to Metal texture for card transforms
     }
 }
 
@@ -136,44 +189,7 @@ private struct FaceAtmosphere: View {
     }
 }
 
-// MARK: - SpectrumDiamond
 
-/// Rotated 45° square — spectrum gradient stroke.
-/// Sits at vertical center of card.
-/// Ornamental. Dims when the card carries a question.
-///
-/// Stroke weights are decorative motif geometry — no AppGlows token
-/// covers interior card motifs. Values documented here as the
-/// single source of truth for this element.
-///   Glow pass:  6pt stroke, blur 6 — atmospheric bloom
-///   Core pass:  0.6pt stroke — lighter than hairline (1.2pt) because
-///               the diamond is interior decoration, not a border element
-
-private struct SpectrumDiamond: View {
-    let size: CGSize
-
-    private var side: CGFloat { min(size.width, size.height) * 0.22 }
-
-    var body: some View {
-        ZStack {
-            // Glow pass
-            Rectangle()
-                .rotation(.degrees(45))
-                .stroke(AppColors.spectrumBorder, lineWidth: 6)
-                .blur(radius: 6)
-                .opacity(0.20)
-                .frame(width: side, height: side)
-
-            // Core pass
-            Rectangle()
-                .rotation(.degrees(45))
-                .stroke(AppColors.spectrumBorder, lineWidth: 0.6)
-                .opacity(0.72)
-                .frame(width: side, height: side)
-        }
-        .frame(width: size.width, height: size.height)
-    }
-}
 
 // MARK: - QuestionText
 
@@ -240,33 +256,239 @@ private struct CardHairline: View {
     }
 }
 
-// MARK: - CornerMarks
+// MARK: - ModeFaceContent
 
-/// ✦ spark mark at each corner — 12% white opacity.
-/// Inset: AppLayout.cardHPad (16pt) from each edge.
+/// Glass bar motif for ModeSelectPhase cards.
+/// Single bar = Solo Discovery. Dual bars = Shared Journey (together).
+/// Handles tap → .tapped and swipe-up → .swipedUp via onAction.
 
-private struct CornerMarks: View {
-    let size: CGSize
+private struct ModeFaceContent: View {
+    let title:    String
+    let subtitle: String
+    let motif:    ModeMotifStyle
+    let cardSize: CGSize
+    let lifted:   Bool
+    let onAction: ((VaylCardAction) -> Void)?
 
-    private let inset: CGFloat = AppLayout.cardHPad  // 16pt
+    @State private var holoShift: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var positions: [CGPoint] {[
-        CGPoint(x: inset,              y: inset),
-        CGPoint(x: size.width - inset, y: inset),
-        CGPoint(x: inset,              y: size.height - inset),
-        CGPoint(x: size.width - inset, y: size.height - inset),
-    ]}
+    // Bar rendering constants — relative to card width.
+    private var barW:      CGFloat { cardSize.width  * 0.20 }
+    private var barH:      CGFloat { barW * 3.08 }
+    private var barGap:    CGFloat { cardSize.width  * 0.16 }
+    private let barRadius: CGFloat = 3
+
+    /// Single unified gradient for all bars regardless of motif.
+    /// Magenta top → purple mid → cyan bottom.
+    /// The number of bars communicates Solo vs Shared — not the color.
+    private var gradColors: [Color] {
+        [
+            AppColors.spectrumMagenta,
+            AppColors.spectrumPurple,
+            AppColors.spectrumCyan,
+        ]
+    }
+
+    private func startHoloShift() {
+        guard !reduceMotion else { return }
+        withAnimation(
+            .easeInOut(duration: 2.6)
+            .repeatForever(autoreverses: true)
+        ) {
+            holoShift = 1.0
+        }
+    }
+
+    // MARK: — Bar Canvas
+
+    private func barCanvas(reversed: Bool) -> some View {
+        let colors = reversed ? gradColors.reversed() : gradColors
+        let bW     = barW
+        let bH     = barH
+        let bR     = barRadius
+        let lift   = lifted
+        let shift  = holoShift
+
+        return Canvas { context, _ in
+            let barRect = CGRect(x: 0, y: 0, width: bW, height: bH)
+            let barPath = Path(roundedRect: barRect, cornerRadius: bR)
+
+            // ── 1. Cast shadow — blurred ellipse below bar ────────────
+            context.drawLayer { ctx in
+                let shadowRect = CGRect(
+                    x: bW * 0.175, y: bH + 2,
+                    width: bW * 0.65, height: 10
+                )
+                ctx.addFilter(.blur(radius: 6))
+                ctx.fill(
+                    Path(ellipseIn: shadowRect),
+                    with: .color(colors[1].opacity(lift ? 0.45 : 0.08))
+                )
+            }
+
+            // ── 2. Bloom glow — blurred bar behind core fill ─────────
+            context.drawLayer { ctx in
+                ctx.addFilter(.blur(radius: 6))
+                ctx.opacity = lift ? 0.65 : 0.18
+                ctx.fill(barPath, with: .linearGradient(
+                    Gradient(colors: colors),
+                    startPoint: CGPoint(x: bW / 2, y: 0),
+                    endPoint:   CGPoint(x: bW / 2, y: bH)
+                ))
+            }
+
+            // ── 3. Core fill — spectrum gradient ─────────────────────
+            context.fill(barPath, with: .linearGradient(
+                Gradient(colors: colors),
+                startPoint: CGPoint(x: bW / 2, y: 0),
+                endPoint:   CGPoint(x: bW / 2, y: bH)
+            ))
+
+            // ── 4. Glass gloss — NO drawLayer, NO clip ────────────────
+            // Gradient fades to .clear at 11% — self-constrains without clipping.
+            // drawLayer+clip was silently failing in SwiftUI Canvas.
+            context.fill(barPath, with: .linearGradient(
+                Gradient(stops: [
+                    .init(color: .white.opacity(0.92), location: 0.000),
+                    .init(color: .white.opacity(0.32), location: 0.028),
+                    .init(color: .white.opacity(0.06), location: 0.070),
+                    .init(color: .white.opacity(0.00), location: 0.110),
+                    .init(color: .white.opacity(0.00), location: 1.000),
+                ]),
+                startPoint: CGPoint(x: bW / 2, y: 0),
+                endPoint:   CGPoint(x: bW / 2, y: bH)
+            ))
+
+            // ── 5. Specular sweep — diagonal, animated by holoShift ──
+            // Fades to .clear at both ends — no clip needed.
+            let specX1 = CGPoint(x: shift * (-bW * 1.5), y: 0)
+            let specX2 = CGPoint(x: shift * (bW * 2.5) + bW, y: bH)
+            context.fill(barPath, with: .linearGradient(
+                Gradient(stops: [
+                    .init(color: .clear,                                location: 0.00),
+                    .init(color: .white.opacity(lift ? 0.42 : 0.10),   location: 0.32),
+                    .init(color: .white.opacity(lift ? 0.20 : 0.05),   location: 0.52),
+                    .init(color: .white.opacity(lift ? 0.06 : 0.01),   location: 0.72),
+                    .init(color: .clear,                                location: 1.00),
+                ]),
+                startPoint: specX1,
+                endPoint:   specX2
+            ))
+
+            // ── 6. Top edge highlight — primary glass read ────────────
+            // Horizontal gradient fades in/out at corners to follow bar radius.
+            // Drawn on top of all fill passes — must be last before border.
+            let topHighlight = Path(CGRect(x: 1, y: 0, width: bW - 2, height: 2))
+            context.fill(
+                topHighlight,
+                with: .linearGradient(
+                    Gradient(stops: [
+                        .init(color: .white.opacity(0.0),                location: 0.00),
+                        .init(color: .white.opacity(lift ? 1.0 : 0.70),  location: 0.15),
+                        .init(color: .white.opacity(lift ? 1.0 : 0.70),  location: 0.85),
+                        .init(color: .white.opacity(0.0),                location: 1.00),
+                    ]),
+                    startPoint: CGPoint(x: 0, y: 0),
+                    endPoint:   CGPoint(x: bW, y: 0)
+                )
+            )
+
+            // ── 7. Bottom boundary ────────────────────────────────────
+            let bottomEdge = Path(CGRect(x: 0, y: bH - 0.5, width: bW, height: 0.5))
+            context.fill(bottomEdge, with: .color(.black.opacity(0.40)))
+
+            // ── 8. Hairline border stroke ─────────────────────────────
+            context.stroke(
+                barPath,
+                with: .linearGradient(
+                    Gradient(colors: colors),
+                    startPoint: CGPoint(x: bW / 2, y: 0),
+                    endPoint:   CGPoint(x: bW / 2, y: bH)
+                ),
+                style: StrokeStyle(lineWidth: 1, lineCap: .round, lineJoin: .round)
+            )
+            context.opacity = 1.0  // reset after layer ops
+        }
+        .frame(width: barW, height: barH + 24)
+    }
+
+    // MARK: — Floor line
+
+    private var floorLine: some View {
+        Rectangle()
+            .frame(width: cardSize.width * 0.78, height: 1)
+            .foregroundStyle(LinearGradient(
+                colors: [
+                    .clear,
+                    AppColors.spectrumMagenta,
+                    AppColors.spectrumPurple,
+                    AppColors.spectrumCyan,
+                    .clear
+                ],
+                startPoint: .leading,
+                endPoint:   .trailing
+            ))
+            .opacity(lifted ? 0.70 : 0.22)
+            .animation(AppAnimation.standard, value: lifted)
+    }
+
+    // MARK: — Title block
+
+    private var titleBlock: some View {
+        VStack(spacing: AppSpacing.sm) {
+            // Spectrum hairline divider
+            Rectangle()
+                .frame(width: cardSize.width * 0.78, height: 0.6)
+                .foregroundStyle(LinearGradient(
+                    colors: [
+                        .clear,
+                        AppColors.spectrumMagenta,
+                        AppColors.spectrumPurple,
+                        AppColors.spectrumCyan,
+                        .clear
+                    ],
+                    startPoint: .leading,
+                    endPoint:   .trailing
+                ))
+                .opacity(lifted ? 0.55 : 0.10)
+                .animation(AppAnimation.standard, value: lifted)
+
+            Text(title)
+                .font(AppFonts.display(22, weight: .bold, relativeTo: .title))
+                .foregroundStyle(AppColors.spectrumText)
+                .kerning(-1.0)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, AppSpacing.lg)
+    }
+
+    // MARK: — Body
 
     var body: some View {
-        ZStack {
-            ForEach(positions.indices, id: \.self) { i in
-                Text("✦")
-                    .font(AppFonts.label)
-                    .foregroundStyle(Color.white.opacity(0.12))
-                    .position(positions[i])
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: AppSpacing.sm) {
+                HStack(spacing: motif == .dual ? barGap : 0) {
+                    barCanvas(reversed: false)
+                    if motif == .dual {
+                        barCanvas(reversed: false)
+                    }
+                }
+                floorLine
             }
+
+            Spacer()
+
+            titleBlock
+                .padding(.bottom, AppSpacing.xl)
         }
-        .frame(width: size.width, height: size.height)
+        .frame(width: cardSize.width, height: cardSize.height)
+        .allowsHitTesting(false)
+        .onAppear { startHoloShift() }
     }
 }
 
@@ -295,6 +517,24 @@ private struct CornerMarks: View {
         Color.black.ignoresSafeArea()
         VaylCardFace(question: "What do I call you?")
             .frame(width: 390, height: 780)
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Mode — Solo Discovery") {
+    ZStack {
+        Color.black.ignoresSafeArea()
+        VaylCardFace(content: .mode(title: "Solo Discovery", subtitle: "Just you", motif: .single))
+            .frame(width: 220, height: 330)
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Mode — Together") {
+    ZStack {
+        Color.black.ignoresSafeArea()
+        VaylCardFace(content: .mode(title: "Together", subtitle: "You and a partner", motif: .dual))
+            .frame(width: 220, height: 330)
     }
     .preferredColorScheme(.dark)
 }
