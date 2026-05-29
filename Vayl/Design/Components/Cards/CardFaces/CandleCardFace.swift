@@ -79,13 +79,25 @@ struct CandleCardFace: View {
     var time: Double = 0
     var reduceMotion: Bool = false
 
+    @State private var pulse = false
+
+    private var curiousScale: CGFloat {
+        guard intensity == .curious, !reduceMotion else { return 1.0 }
+        return pulse ? 1.0 : 0.88
+    }
+
     var body: some View {
         Canvas { ctx, size in
             CandleRenderer.draw(into: &ctx, size: size,
                                 intensity: intensity, time: time,
                                 reduceMotion: reduceMotion)
         }
+        .scaleEffect(curiousScale)
+        .ambientAnimation(AppAnimation.cardBreathe, value: pulse)
         .drawingGroup()   // CLAUDE.md: required on card faces — never remove
+        .onAppear {
+            if intensity == .curious && !reduceMotion { pulse = true }
+        }
     }
 }
 
@@ -334,7 +346,10 @@ enum CandleRenderer {
 
     // MARK: - Main draw (full mockup draw order, line 76–95)
     static func draw(into ctx: inout GraphicsContext, size: CGSize,
-                     intensity: CandleIntensity, time t: Double, reduceMotion: Bool) {
+                     intensity: CandleIntensity, time: Double, reduceMotion: Bool) {
+        // Single chokepoint: all motion-driven math flows through `t`.
+        // When Reduce Motion is on, t=0 yields a calm, static representative frame.
+        let t = reduceMotion ? 0.0 : time
         let w = size.width, h = size.height, S = w / 160
         let g = CandleGeo(w: w, h: h)
         let cfg = FlameCfg.of(intensity)
@@ -817,4 +832,16 @@ struct FlameCfg {
             }
         }.ignoresSafeArea()
     }
+}
+
+#Preview("Candles — reduce motion") {
+    ZStack {
+        Color.black
+        HStack(spacing: AppSpacing.sm) {
+            ForEach(CandleIntensity.ordered, id: \.self) { i in
+                CandleCardFace(intensity: i, time: 5.0, reduceMotion: true)
+                    .frame(width: 118, height: 118 * 1.5)
+            }
+        }
+    }.ignoresSafeArea()
 }
