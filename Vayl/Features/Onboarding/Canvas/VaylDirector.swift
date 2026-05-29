@@ -14,6 +14,11 @@ final class VaylDirector {
     var inFlightCards:   [VaylCardModel] = []
     var muckCards:       [VaylCardModel] = []
 
+    /// Pre-placed gender card. Stored outside tableCards so VaylCardRenderer
+    /// never renders it. Lives here from NamePhase greeting → GenderPhase open.
+    /// GenderPhase reads this, takes local ownership, and nils it on consume.
+    var pendingGenderCard: VaylCardModel? = nil
+
     var onboardingData: OnboardingData = OnboardingData()
     var openerDeckType: OpenerDeckType = .anxious
 
@@ -24,6 +29,107 @@ final class VaylDirector {
 
     var projectedText:        String? = nil
     var projectedTextVisible: Bool    = false
+
+    // MARK: - Gender Phase
+
+    var genderCardOffset:         CGSize = .zero
+    var genderCardFlipScaleX:     Double = 1.0
+    var genderCardFaceUp:         Bool   = false
+    var genderCardVisible:        Bool   = false
+    var genderCardSettled:        Bool   = false
+
+    /// Primary driver for the dissolution / recrystallisation sequence.
+    /// 0 = card is indistinguishable from felt. 1 = card is fully crystallised.
+    /// All visual curves are computed from this single value — only one @Observable
+    /// write per frame, keeping SwiftUI invalidation to a minimum.
+    var dissolutionT:             Double = 0
+
+    var genderDealerLineVisible:  Bool   = false
+    var genderBeatComplete:       Bool   = false
+    /// Dealer line copy shown above the card. Set before the phase opens.
+    var genderDealerLine:         String = "Let's find your place at the table."
+
+    // Segment 4 — handle pull
+    var genderHandleOffset:       CGFloat = 0     // internal illustration units; drives SlotMachineCardFace.handleOffset
+    var genderHandlePullComplete: Bool    = false
+
+    // Segments 5+6 — reel spin + staggered settle
+    var genderReelOffsets:        [CGFloat]  = [0, 0, 0]         // screen pts per reel; drives SlotMachineCardFace.reelOffsets
+    var genderReelsSpinning:      Bool       = false
+    var genderSettledSymbols:     [Int?]     = [nil, nil, nil]   // per-reel symbol index; nil = still spinning
+    var genderActiveReel:         Int?       = nil               // which reel glows; triggers haptic in GenderPhase
+    var genderReelSettleComplete: Bool       = false
+
+    // Swipe-hint loop flag — true after the reels settle and the winning-glow haptics
+    // finish; false the moment the user grabs the card or confirms. Drives the looping
+    // "swipe me right" affordance in GenderPhase (rightward drift + clockwise tip).
+    var genderSwipeHintActive:    Bool       = false
+
+    // Segment 7 — picker + reel sync
+    var genderPickerVisible:  Bool     = false
+    // Populated here so VaylDirector is always safe to use from previews or tests
+    // that don't route through advance(to: .gender) / runGenderEntry().
+    // runGenderEntry() resets this to the same values — idempotent, intentional.
+    var genderOptions:        [String] = [
+        "Man", "Woman", "Trans Man", "Trans Woman", "Non-binary",
+    ]
+    var genderDrumOffset:     CGFloat  = 0
+    var genderSelectedIndex:  Int      = 0
+    var genderDrumSettled:    Bool     = false
+
+    // Segment 8 — confirm logic (solo vs together)
+    var genderSpinCount:         Int    = 1      // 1 for solo, 2 for together; set in runGenderEntry
+    var genderSpinIndex:         Int    = 0      // 0 = player A, 1 = player B
+    var genderDealerLinePartner: String = "And your partner?"
+    var genderShouldPocket:      Bool   = false  // GenderPhase observes; advances on true
+
+    // Together-mode spin 1 → spin 2 handoff beat.
+    // Shown simultaneously with the card flip-back so the partner knows it's their turn.
+    var genderHandoffVisible:    Bool   = false
+    var genderHandoffCopy:       String = "Now let's find theirs."
+
+    // MARK: — Dissolution computed curves
+    //
+    // All eight curves derive from dissolutionT (0→1).
+    // Views read these; they are never stored individually.
+    // Easing: eIO3 = ease-in-out cubic, eO5 = ease-out quint, eO7 = ease-out sept.
+
+    /// nm: normalise t within a window [start, start+dur], clamp 0…1.
+    private func nm(_ t: Double, _ s: Double, _ d: Double) -> Double {
+        max(0, min(1, (t - s) / d))
+    }
+    private func eIO3(_ x: Double) -> Double {
+        x < 0.5 ? 4*x*x*x : 1 - pow(-2*x+2, 3)/2
+    }
+    private func eO5(_ x: Double) -> Double { 1 - pow(max(0, 1-x), 5) }
+    private func eO7(_ x: Double) -> Double { 1 - pow(max(0, 1-x), 7) }
+
+    /// 0→1 — ambient density stir before anything visible.
+    var dissolutionPre:      Double { eIO3(nm(dissolutionT, 0,    0.12)) }
+
+    /// 0→0.52 — topo lines pulled inward toward card footprint.
+    var dissolutionWarp:     Double { eIO3(nm(dissolutionT, 0.08, 0.20)) * 0.52 }
+
+    /// 0→1 — card body density (felt-matched mass emerging).
+    var dissolutionDensity:  Double { eO5(nm(dissolutionT, 0.18, 0.36)) }
+
+    /// 0→1 — card material sharpness (blur + colour shift felt → void).
+    var dissolutionSharp:    Double { eO7(nm(dissolutionT, 0.42, 0.32)) }
+
+    /// 0°→8° — hex grid angle drift (phase-matched → native card moiré).
+    var dissolutionHexAngle: Double { eIO3(nm(dissolutionT, 0.24, 0.42)) * 8.0 }
+
+    /// 2.2→1.0 — hex cell spacing multiplier (topo frequency → card size).
+    var dissolutionHexSpacing: Double { 2.2 + (1.0 - 2.2) * eIO3(nm(dissolutionT, 0.24, 0.44)) }
+
+    /// 0→1 — topo lines relax outward, flowing around card boundary.
+    var dissolutionFlowOut:  Double { eIO3(nm(dissolutionT, 0.50, 0.30)) }
+
+    /// 0→1 — wordmark crystallises last.
+    var dissolutionMark:     Double { eO7(nm(dissolutionT, 0.62, 0.26)) }
+
+    /// Task handle for the gender visual sequence. Not observed — internal bookkeeping only.
+    @ObservationIgnored var genderSequenceTask: Task<Void, Never>? = nil
 
     var foilIntegrity: Double     = 1.0
     var foilTears:     [FoilTear] = []
@@ -39,7 +145,7 @@ final class VaylDirector {
     private var availableSlotIDs: [Int] = AppLayout.obCardLandingSlots.map(\.id)
 
     // ARCH: Injected via direct assignment from OnboardingCanvasView.onAppear.
-    // commit() is a no-op until assigned — Director must be initialized before appArrival fires.
+    // commit() is a no-op until assigned — Director must be initialized before founderLetter fires.
     var onboardingStore: OnboardingStore? = nil
 
     func start() {
@@ -53,7 +159,7 @@ final class VaylDirector {
         guard !isTransitioning else { return }
         isTransitioning = true
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(200)) // advance debounce
+            try? await Task.sleep(for: .milliseconds(50)) // advance debounce — double-fire guard only
             phase = next
             handlePhaseEntry(next)
             isTransitioning = false
@@ -64,53 +170,47 @@ final class VaylDirector {
         switch phase {
         case .stat:            break
         case .name:            runNameEntry()
-        case .gender:          runGenderEntry()
         case .modeSelect:      runModeSelectEntry()
+        case .gender:          runGenderEntry()
         case .experienceLevel: runExperienceLevelEntry()
         case .context:         runContextEntry()
         case .quiz:            runQuizEntry()
-        case .curiosityRound1: runCuriosityRound1Entry()
-        case .curiosityRound2: runCuriosityRound2Entry()
-        case .buildingPath:    runBuildingPathEntry()
-        case .foil:            runFoilEntry()
+        case .curiosity:       runCuriosityEntry()
+        case .confirmation:    runConfirmationEntry()
+        case .buildDeck:       runBuildDeckEntry()
         case .founderLetter:   runFounderLetterEntry()
-        case .appArrival:      runAppArrival()
         }
     }
 
     private func runNameEntry() {
-        tableFade = 1.0
-        withAnimation(AppAnimation.standard) { cornerDeckVisible = false }
         resetSlotPool()
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(900))
+            withAnimation(.easeIn(duration: 1.6)) { tableFade = 1.0 }
+        }
     }
 
-    private func runGenderEntry() {
-        withAnimation(AppAnimation.standard) { cornerDeckVisible = false }
-        resetSlotPool()
-        withAnimation(AppAnimation.cinematicFade.reduceMotionSafe) {
-            tableFade = 1.0
-        }
-        showDealerLine("Tell me a little more about you.", hideAfter: 3.5)
-    }
     private func runModeSelectEntry() {
-        withAnimation(AppAnimation.standard) { cornerDeckVisible = false }
-        showDealerLine("Everyone comes to this table differently.")
+        withAnimation(.easeOut(duration: 0.6)) { tableFade = 1.0 }
+        // Speech bubble handled by ModeSelectPhase directly
     }
     private func runExperienceLevelEntry() {
-        withAnimation(AppAnimation.standard) { cornerDeckVisible = false }
+        // Controller is View-owned (@State in ExperienceLevelPhase); nothing to reset here.
+    }
+
+    /// Called by ExperienceLevelPhase on confirm. Writes nmStage and advances.
+    func commitExperienceLevel(_ intensity: CandleIntensity) {
+        onboardingData.nmStage = intensity.nmStage
+        advance(to: .context)
     }
     private func runContextEntry() {
-        withAnimation(AppAnimation.standard) { cornerDeckVisible = false }
         showDealerLine("Tell me where you're at.")
     }
     private func runQuizEntry() {}
-    private func runCuriosityRound1Entry() { showDealerLine("Sweep away what you aren't ready for.") }
-    private func runCuriosityRound2Entry() { showDealerLine("Pick one.") }
-    private func runBuildingPathEntry() {}
-    private func runFoilEntry() { foilIntegrity = 1.0; foilTears = [] }
-    private func runFounderLetterEntry() {}
-
-    private func runAppArrival() {
+    private func runCuriosityEntry() { showDealerLine("Sweep away what you aren't ready for.") }
+    private func runConfirmationEntry() {}
+    private func runBuildDeckEntry() { foilIntegrity = 1.0; foilTears = [] }
+    private func runFounderLetterEntry() {
         sequenceAttempt += 1
         let current = sequenceAttempt
         Task { @MainActor in
@@ -183,6 +283,90 @@ final class VaylDirector {
                 duration:     duration
             )
         }
+    }
+
+    /// Deals a single card to a natural landing slot via CardFlightScene.
+    ///
+    /// Encapsulates the repeated pattern shared by every phase that cinematic-deals
+    /// one card: snapshot → random launch point → slot claim with travel-distance
+    /// guard → overshoot eligibility → SpriteKit flight.
+    ///
+    /// Returns `(offset, angle, flightID)` for the SwiftUI handoff.
+    /// **Caller is responsible for:**
+    ///   1. Setting `cardOffset = offset`, `cardAngle = angle`, `cardAlpha = 1`.
+    ///   2. The 32 ms flash fix: `Task.sleep(32 ms)` → `cardFlightScene.clearCard(id: flightID)`.
+    ///   3. Marking `cardSettled = true` (or equivalent phase flag).
+    ///
+    /// Returns `nil` if the VaylCardBack snapshot fails (caller should guard-return cleanly).
+    /// Does **not** handle Reduce Motion — caller checks `reduceMotion` and branches before calling.
+    @MainActor
+    func dealSingleCard(
+        screenSize: CGSize
+    ) async -> (offset: CGSize, angle: Double, flightID: String)? {
+
+        let cardW = AppLayout.obTableCardWidth(in: screenSize.width)  * AppLayout.obTableCardCinematicScale
+        let cardH = AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale
+
+        let scale = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.screen.scale ?? 2.0
+
+        let renderer = ImageRenderer(
+            content: VaylCardBack().frame(width: cardW, height: cardH)
+        )
+        renderer.scale = scale
+        guard let cardImage = renderer.uiImage else {
+            print("[VaylDirector] dealSingleCard: VaylCardBack snapshot failed")
+            return nil
+        }
+
+        let flightID      = UUID().uuidString
+        let startAngleDeg = Double.random(in: 11.0...16.0)
+        let launchX       = screenSize.width * CGFloat.random(in: -0.45...1.45)
+
+        let origin = CGPoint(
+            x: launchX,
+            y: screenSize.height * AppLayout.tableHorizonYFrac
+        )
+
+        // Travel-distance guard — retry up to 4 times before accepting.
+        let minTravelDistance = screenSize.width * 0.75
+        var slot = claimLandingSlot(screenSize: screenSize)
+        for _ in 0..<4 {
+            let dist = hypot(slot.position.x - origin.x,
+                             slot.position.y - origin.y)
+            if dist >= minTravelDistance { break }
+            slot = claimLandingSlot(screenSize: screenSize)
+        }
+
+        // Overshoot eligibility — only when the overshoot projection clears
+        // at least 1/3 of the card width past the screen edge.
+        let overshootDist   = slot.position.x + (slot.position.x - origin.x) * 0.22
+        let cardThird       = cardW / 3
+        let wouldClearLeft  = overshootDist < -cardThird
+        let wouldClearRight = overshootDist > screenSize.width + cardThird
+        let canOvershoot    = wouldClearLeft || wouldClearRight
+        cardFlightScene.pendingShouldOvershoot = canOvershoot && Double.random(in: 0...1) < 0.60
+
+        let skInitialAngle = CGFloat(-startAngleDeg * .pi / 180)
+        let skFinalAngle   = CGFloat(-slot.angleDeg  * .pi / 180)
+
+        let (restPos, restRot) = await sailCard(
+            cardID:       flightID,
+            image:        cardImage,
+            from:         origin,
+            to:           slot.position,
+            sceneSize:    screenSize,
+            duration:     0.45,
+            initialAngle: skInitialAngle,
+            finalAngle:   skFinalAngle
+        )
+
+        let offset = CGSize(
+            width:  restPos.x - screenSize.width  / 2,
+            height: restPos.y - screenSize.height / 2
+        )
+        return (offset, Double(restRot), flightID)
     }
 
     /// Slides a card from the deal point to a destination without SpriteKit flight.
@@ -282,7 +466,10 @@ final class VaylDirector {
         let w        = AppLayout.obTableCardWidth(in: screenSize.width)
         let h        = AppLayout.obTableCardHeight(in: screenSize.width)
         let renderer = ImageRenderer(content: VaylCardBack().frame(width: w, height: h))
-        renderer.scale = UIScreen.main.scale // TODO: UIScreen.main.scale — no AppLayout equivalent for render scale, acceptable UIKit bridge
+        let scale = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.screen.scale ?? 2.0
+        renderer.scale = scale
         guard let image = renderer.uiImage else {
             // Non-fatal: card flight will show blank sprite.
             // This should never happen in production — log for diagnostics.
@@ -313,6 +500,24 @@ final class VaylDirector {
             corner.credential = card.credential
             cornerDeckCards.append(corner)
         }
+        
+    }
+
+    @MainActor
+    func placeGenderCardSilently(screenSize: CGSize) {
+        let card        = VaylCardModel()
+        card.credential = .gender
+        let tableY = screenSize.height * 0.58  // sits in upper felt, below the arc
+        card.position = CGPoint(x: screenSize.width / 2, y: tableY)
+        card.rotation   = 0
+        card.opacity    = 1.0
+        card.elevation  = 0.0
+        card.isFaceUp   = false
+        // Store in pendingGenderCard — NOT tableCards.
+        // VaylCardRenderer only renders tableCards.
+        // The card is invisible during NamePhase because it is never in tableCards.
+        // GenderPhase reads pendingGenderCard on open and takes local ownership.
+        pendingGenderCard = card
     }
 
     func evaluateOpenerDeckType() {
@@ -362,4 +567,455 @@ final class VaylDirector {
             self.advance(to: .founderLetter)
         }
     }
+
+    // MARK: - Gender Phase Entry & Sequence
+    //
+    // Boundary contract (locked):
+    //   runGenderEntry()      = sync, router-owned, no View lifecycle coupling
+    //   startGenderSequence() = async, View-lifecycle-owned, never called by router
+
+    /// Sync reset only — no animation, no async.
+    /// Resets all gender visual state so the View starts clean on every entry.
+    func runGenderEntry() {
+        genderSequenceTask?.cancel()
+        genderSequenceTask = nil
+
+        genderCardOffset         = .zero
+        genderCardFlipScaleX     = 1.0
+        genderCardFaceUp         = false
+        genderCardVisible        = false
+        genderCardSettled        = false
+        dissolutionT             = 0
+        genderDealerLineVisible  = false
+        genderBeatComplete       = false
+        genderHandleOffset       = 0
+        genderHandlePullComplete = false
+        genderReelOffsets        = [0, 0, 0]
+        genderReelsSpinning      = false
+        genderSettledSymbols     = [nil, nil, nil]
+        genderActiveReel         = nil
+        genderReelSettleComplete = false
+        genderSwipeHintActive    = false
+        genderPickerVisible      = false
+        genderOptions            = [
+            "Man", "Woman", "Trans Man", "Trans Woman", "Non-binary",
+        ]
+        genderDrumOffset         = 0
+        genderSelectedIndex      = 0
+        genderDrumSettled        = false
+        genderSpinCount          = onboardingData.appMode == .together ? 2 : 1
+        genderSpinIndex          = 0
+        genderShouldPocket       = false
+        genderHandoffVisible     = false
+    }
+
+    /// Called by GenderPhase.onAppear. Safe to call multiple times.
+    func startGenderSequence(screenSize: CGSize, reduceMotion: Bool) {
+        genderSequenceTask?.cancel()
+        genderSequenceTask = Task { await runGenderRise(screenSize: screenSize, reduceMotion: reduceMotion) }
+    }
+
+    /// Called by GenderPhase.onDisappear.
+    func cancelGenderSequence() {
+        genderSequenceTask?.cancel()
+        genderSequenceTask = nil
+    }
+
+    /// Full autonomous sequence: crystallise → dealer line → flip → handle pull.
+    ///
+    /// dissolutionT (0→1) drives the Segment 1 visual curves as computed properties.
+    /// All subsequent beats are direct state writes on the @MainActor.
+    @MainActor
+    private func runGenderRise(screenSize: CGSize, reduceMotion: Bool) async {
+        guard !genderOptions.isEmpty else { return } // safety: should never be empty after init fix
+
+        // Rest position: horizontally centred, obGenderCardRestYFrac down screen.
+        // Derived from layout token — never use UIScreen.main (iOS 26: banned).
+        let restY = screenSize.height * AppLayout.obGenderCardRestYFrac - screenSize.height / 2
+
+        // ── Reduce Motion: instant all state ──────────────────────────────────
+        if reduceMotion {
+            genderCardOffset         = CGSize(width: 0, height: restY)
+            genderCardVisible        = true
+            dissolutionT             = 1
+            genderCardSettled        = true
+            genderDealerLineVisible  = true
+            genderCardFaceUp         = true
+            genderCardFlipScaleX     = 1.0
+            genderBeatComplete       = true
+            genderHandleOffset       = 38
+            genderHandlePullComplete = true
+            genderReelOffsets        = [0, 0, 0]
+            genderReelsSpinning      = false
+            genderSettledSymbols     = [0, 0, 0]
+            genderActiveReel         = nil
+            genderReelSettleComplete = true
+            genderSwipeHintActive    = false   // no looping hint under reduce motion
+            genderDealerLineVisible  = false
+            genderPickerVisible      = true
+            genderDrumOffset         = 0
+            genderSelectedIndex      = 0
+            genderDrumSettled        = false
+            genderSpinCount          = onboardingData.appMode == .together ? 2 : 1
+            genderSpinIndex          = 0
+            genderShouldPocket       = false
+            return
+        }
+
+        // ── SEGMENT 1 — Card crystallises out of the felt ─────────────────────
+        //
+        // dissolutionT drives eight computed visual curves (see dissolution section above).
+        // One @Observable write per ~14ms tick minimises SwiftUI invalidation.
+        //
+        // Phase timeline (fractions of 7s total):
+        //   0.00–0.12  pre: ambient density stir
+        //   0.08–0.28  warp: topo lines pull inward
+        //   0.18–0.54  density: body emerges as felt-matched mass
+        //   0.24–0.66  hex drift: angle 0°→8°, spacing 2.2→1.0
+        //   0.42–0.74  sharp: blur 28→0, colour felt→void
+        //   0.50–0.80  flowOut: topo lines flow around card boundary
+        //   0.62–0.88  mark: wordmark crystallises
+
+        genderCardOffset  = CGSize(width: 0, height: restY)
+        genderCardVisible = true
+        dissolutionT      = 0
+
+        // One frame before the drive loop so SwiftUI registers initial state.
+        try? await Task.sleep(for: .milliseconds(16))
+        guard !Task.isCancelled else { return }
+
+        let dur   = 7.0
+        let start = Date()
+
+        while !Task.isCancelled {
+            let elapsed = -start.timeIntervalSinceNow
+            let t = min(elapsed / dur, 1.0)
+            dissolutionT = t
+            if t >= 1.0 { break }
+            try? await Task.sleep(for: .milliseconds(14))
+        }
+
+        guard !Task.isCancelled else { return }
+        dissolutionT      = 1
+        genderCardSettled = true
+
+        // ── SEGMENT 2 — Dealer line → flip → hold ─────────────────────────────
+
+        // Beat A: dealer line fades in (200ms after settled)
+        try? await Task.sleep(for: .milliseconds(200))
+        guard !Task.isCancelled else { return }
+        withAnimation(AppAnimation.textProject.reduceMotionSafe) {
+            genderDealerLineVisible = true
+        }
+
+        // Beat B onwards: 300ms after dealer line, then flip + handle pull + reel + picker.
+        // Shared with partner spin — extracted into runGenderFlipAndSpin().
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
+        await runGenderFlipAndSpin()
+    }
+
+    /// Beat B through Segment 7 — flip card, pull handle, spin + settle reels, show picker.
+    ///
+    /// Called immediately after the dealer line has been shown and a 300ms beat has passed.
+    /// Shared between the initial spin (called by runGenderRise) and the partner spin
+    /// (called by runGenderSpin2 after the partner dealer line + 600ms hold).
+    ///
+    /// Preconditions on entry:
+    ///   genderCardFaceUp         = false   (flip will reveal face)
+    ///   genderDealerLineVisible  = true    (caller showed it)
+    ///   genderHandleOffset       = 0
+    ///   genderHandlePullComplete = false
+    ///   genderSettledSymbols     = [nil, nil, nil]
+    @MainActor
+    private func runGenderFlipAndSpin() async {
+
+        // ── Flip half 1 — collapse scaleX to 0 ───────────────────────────────
+        withAnimation(AppAnimation.cardFlipHalf.reduceMotionSafe) {
+            genderCardFlipScaleX = 0.0
+        }
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
+
+        // Face swap at scaleX = 0 — card is invisible, no visual pop
+        genderCardFaceUp = true
+
+        // Flip half 2 — expand scaleX back to 1
+        withAnimation(AppAnimation.cardFlipHalf.reduceMotionSafe) {
+            genderCardFlipScaleX = 1.0
+        }
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
+
+        // Beat C: hold (300ms after flip)
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
+        genderBeatComplete = true
+
+        // ── SEGMENTS 4+5+6 — Handle pull + reel spin + staggered settle ──────
+        //
+        // One drive loop covers all three phases so offsets are continuous:
+        //   Phase 1 (0–500ms)  — handle pulls; reels join at 100ms elapsed
+        //   Phase 2 (+300ms)   — coast: reels spin freely after pull settles
+        //   Phase 3 (3 × 80ms) — stagger settle; unsettled reels spin until locked
+
+        // 300ms beat post-flip
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
+
+        let pullDuration:    Double    = 0.500
+        let pullTarget:      CGFloat   = 38
+        let reelSpeed:       CGFloat   = 600    // pts/s — fast enough to blur symbols
+        let spinDelay:       Double    = 0.100  // reels start 100ms into the pull
+        let coastDuration:   Double    = 0.300
+        let staggerInterval: Double    = 0.080  // seconds between reel settles
+        let reelFactors:     [CGFloat] = [1.0, 1.07, 0.94]  // per-reel speed variation
+
+        let masterStart = Date()
+        var spinStart: Date? = nil
+
+        // Phase 1 — Handle pull + reel start
+        while !Task.isCancelled {
+            let elapsed = -masterStart.timeIntervalSinceNow
+            let t       = min(elapsed / pullDuration, 1.0)
+            let eased   = CGFloat(1 - pow(1 - t, 3))  // ease-out cubic
+
+            genderHandleOffset = pullTarget * eased
+
+            if elapsed >= spinDelay {
+                if spinStart == nil {
+                    spinStart = Date()
+                    genderReelsSpinning = true
+                    // Picker and dealer line transition together the moment reels start.
+                    withAnimation(AppAnimation.textProject.reduceMotionSafe) {
+                        genderDealerLineVisible = false
+                    }
+                    withAnimation(AppAnimation.standard.reduceMotionSafe) {
+                        genderPickerVisible = true
+                    }
+                }
+                let re = CGFloat(-spinStart!.timeIntervalSinceNow)
+                genderReelOffsets = reelFactors.map { re * reelSpeed * $0 }
+                let rawDrum1      = genderReelOffsets[0] / 0.68
+                let drumCycle     = CGFloat(genderOptions.count) * symbolSlotH
+                genderDrumOffset  = rawDrum1.truncatingRemainder(dividingBy: drumCycle)
+            }
+
+            if t >= 1.0 { break }
+            try? await Task.sleep(for: .milliseconds(14))
+        }
+
+        guard !Task.isCancelled else { return }
+        genderHandleOffset       = pullTarget
+        genderHandlePullComplete = true
+
+        // Phase 2 — Coast
+        let coastEnd = Date().addingTimeInterval(coastDuration)
+        while !Task.isCancelled {
+            if let s = spinStart {
+                let re            = CGFloat(-s.timeIntervalSinceNow)
+                genderReelOffsets = reelFactors.map { re * reelSpeed * $0 }
+                let rawDrum2      = genderReelOffsets[0] / 0.68
+                let drumCycle2    = CGFloat(genderOptions.count) * symbolSlotH
+                genderDrumOffset  = rawDrum2.truncatingRemainder(dividingBy: drumCycle2)
+            }
+            if Date() >= coastEnd { break }
+            try? await Task.sleep(for: .milliseconds(14))
+        }
+
+        guard !Task.isCancelled else { return }
+
+        // Phase 3 — Staggered settle
+        // Random symbols for now — picker selection overwrites via settleGenderDrum.
+        let settleTargets: [Int] = [
+            Int.random(in: 0..<genderOptions.count),
+            Int.random(in: 0..<genderOptions.count),
+            Int.random(in: 0..<genderOptions.count),
+        ]
+
+        for i in 0..<3 {
+            guard !Task.isCancelled else { return }
+
+            // Snap reel i — canvas centres it from settledSymbols; reelOffset ignored.
+            genderSettledSymbols[i] = settleTargets[i]
+            genderActiveReel        = i     // triggers .sensoryFeedback in GenderPhase
+
+            if i < 2 {
+                // Keep unsettled reels live during the stagger window.
+                let nextSettle = Date().addingTimeInterval(staggerInterval)
+                while !Task.isCancelled {
+                    if let s = spinStart {
+                        let re = CGFloat(-s.timeIntervalSinceNow)
+                        // Settled reels: canvas ignores reelOffsets — safe to write full array.
+                        genderReelOffsets = reelFactors.map { re * reelSpeed * $0 }
+                        let rawDrum3      = genderReelOffsets[0] / 0.68
+                        let drumCycle3    = CGFloat(genderOptions.count) * symbolSlotH
+                        genderDrumOffset  = rawDrum3.truncatingRemainder(dividingBy: drumCycle3)
+                    }
+                    if Date() >= nextSettle { break }
+                    try? await Task.sleep(for: .milliseconds(14))
+                }
+                guard !Task.isCancelled else { return }
+            }
+        }
+
+        guard !Task.isCancelled else { return }
+
+        // Brief hold so the final reel glow reads before it clears.
+        try? await Task.sleep(for: .milliseconds(400))
+        guard !Task.isCancelled else { return }
+
+        genderActiveReel         = nil
+        genderReelsSpinning      = false
+        genderReelSettleComplete = true
+        genderSelectedIndex      = settleTargets[0]   // picker snaps to match settled reel
+        genderDrumSettled        = true               // pronouns + confirm reveal
+    }
+
+    /// Partner spin — runs after together-mode spin 1 confirm.
+    ///
+    /// 1. Flips card back to the back face.
+    /// 2. Resets handle + reel + drum state.
+    /// 3. Shows the partner dealer line.
+    /// 4. Calls runGenderFlipAndSpin() for the full B-through-7 sequence.
+    @MainActor
+    private func runGenderSpin2() async {
+
+        // ── Flip card back + show handoff copy simultaneously ─────────────────
+        // The handoff copy appears as the card flips so the partner has something
+        // to read during the transition. It echoes spin 1's dealer line copy.
+        withAnimation(AppAnimation.cardFlipHalf.reduceMotionSafe) { genderCardFlipScaleX = 0 }
+        withAnimation(AppAnimation.textProject.reduceMotionSafe) { genderHandoffVisible = true }
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
+
+        genderCardFaceUp = false
+
+        withAnimation(AppAnimation.cardFlipHalf.reduceMotionSafe) { genderCardFlipScaleX = 1 }
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
+
+        // ── Reset handle + reel + drum state (handoff still visible) ─────────
+        withAnimation(AppAnimation.spring.reduceMotionSafe) { genderHandleOffset = 0 }
+        genderSettledSymbols     = [nil, nil, nil]
+        genderReelOffsets        = [0, 0, 0]
+        genderHandlePullComplete = false
+        genderReelSettleComplete = false
+        genderSwipeHintActive    = false
+        genderDrumSettled        = false
+        genderSelectedIndex      = 0
+
+        // Hold the handoff copy for a beat after the flip settles.
+        try? await Task.sleep(for: .milliseconds(900))
+        guard !Task.isCancelled else { return }
+
+        // ── Handoff fades out; partner dealer line crossfades in ──────────────
+        withAnimation(AppAnimation.textProject.reduceMotionSafe) { genderHandoffVisible = false }
+        try? await Task.sleep(for: .milliseconds(350)) // let textProject fade before dealer line
+        guard !Task.isCancelled else { return }
+
+        genderDealerLine = genderDealerLinePartner
+        withAnimation(AppAnimation.textProject.reduceMotionSafe) {
+            genderDealerLineVisible = true
+        }
+
+        try? await Task.sleep(for: .milliseconds(600))
+        guard !Task.isCancelled else { return }
+
+        genderBeatComplete = false
+        await runGenderFlipAndSpin()
+    }
+
+    // MARK: - Gender Drum Interaction
+    //
+    // The only paths through which GenderPhase may write back to director state.
+    // All reel-sync math lives here — zero logic in View.
+
+    /// Internal canvas units per reel symbol slot. Must match SlotMachineCardFace.symbolSlotH.
+    private let symbolSlotH: CGFloat = 58
+
+    /// Called every frame while the drum is dragged.
+    /// Syncs reels at a 0.68× ratio so they visually track the drum without matching it exactly.
+    func updateGenderDrum(offset: CGFloat) {
+        genderDrumOffset  = offset
+        genderDrumSettled = false
+        genderSettledSymbols = [nil, nil, nil]  // resume scroll mode
+        genderActiveReel  = nil
+        let reelOffset = offset * 0.68
+        genderReelOffsets = [0, 1, 2].map { _ in
+            reelOffset.truncatingRemainder(
+                dividingBy: CGFloat(genderOptions.count) * symbolSlotH
+            )
+        }
+    }
+
+    /// Called when the drum snaps to a gender option.
+    /// Settles all three reels on the corresponding symbol and plays the winning glow sequence.
+    func settleGenderDrum(index: Int) {
+        genderSelectedIndex  = index
+        genderDrumSettled    = true
+        // All three reels agree on the selection.
+        // index is always in [0, genderOptions.count-1] (clamped by drum snapping logic).
+        // % genderOptions.count is defensive — ensures canvas never receives an out-of-range index.
+        genderSettledSymbols = [
+            index % genderOptions.count,
+            index % genderOptions.count,
+            index % genderOptions.count,
+        ]
+        // Winning glow — reuse active-reel animation briefly (triggers impact haptics in View)
+        Task { @MainActor in
+            for i in 0..<3 {
+                genderActiveReel = i
+                try? await Task.sleep(for: .milliseconds(80))
+            }
+            try? await Task.sleep(for: .milliseconds(300))
+            genderActiveReel = nil
+        }
+    }
+
+    // MARK: - Gender Swipe Hint
+
+    /// Starts the looping "swipe me right" affordance. Called by GenderPhase after the
+    /// reels settle and the winning-glow haptics finish. The caller guards on the
+    /// reduce-motion environment value before calling — no looping hint under reduce motion.
+    func beginGenderSwipeHint() { genderSwipeHintActive = true }
+
+    /// Stops the swipe-hint loop — called the instant the user grabs the card to swipe.
+    func endGenderSwipeHint() { genderSwipeHintActive = false }
+
+    /// Called when the user swipes to confirm their gender selection.
+    ///
+    /// Writes genderA/B + pronounsA/B to onboardingData — the only place these fields are set.
+    ///
+    /// Solo / together spin 2:  hides picker + card, sets genderShouldPocket.
+    ///   GenderPhase onChange observer waits for cardPocket duration then calls advance.
+    ///
+    /// Together spin 1:  hides picker, cancels current sequence, starts runGenderSpin2().
+    func confirmGenderSelection(pronouns: String?) {
+        // Card is being swiped — the hint loop has done its job.
+        genderSwipeHintActive = false
+
+        // Persist selection for the current player
+        if genderSpinIndex == 0 {
+            onboardingData.genderA   = genderOptions[genderSelectedIndex]
+            onboardingData.pronounsA = pronouns
+        } else {
+            onboardingData.genderB   = genderOptions[genderSelectedIndex]
+            onboardingData.pronounsB = pronouns
+        }
+
+        if genderSpinCount == 1 || genderSpinIndex == 1 {
+            // Solo or together spin 2 — pocket the card and advance
+            withAnimation(AppAnimation.fast.reduceMotionSafe) { genderPickerVisible = false }
+            withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { genderCardVisible = false }
+            genderShouldPocket = true
+        } else {
+            // Together spin 1 — reset machine for partner
+            genderSpinIndex = 1
+            withAnimation(AppAnimation.fast.reduceMotionSafe) { genderPickerVisible = false }
+            genderSequenceTask?.cancel()
+            genderSequenceTask = Task { await runGenderSpin2() }
+        }
+    }
+
 }

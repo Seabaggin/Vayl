@@ -6,9 +6,8 @@
 import SwiftUI
 
 /// OB Phase — Experience Level
-/// Renders three candle cards in a static row using CardThreeMonteController.
-/// No pick/confirm yet — static layout only (Task 7).
-/// Advances to .context via director (wired in Task 8).
+/// Three candle cards in a static row. Tap to lift, swipe up to confirm.
+/// On confirm writes nmStage via director.commitExperienceLevel and advances to .context.
 struct ExperienceLevelPhase: View {
 
     let director:   VaylDirector
@@ -34,10 +33,29 @@ struct ExperienceLevelPhase: View {
                         .offset(monte.offsets[i])
                         .opacity(monte.alphas[i])
                         .zIndex(monte.zIndices[i])
+                        .onTapGesture {
+                            withAnimation(AppAnimation.standard) {
+                                monte.lift(monte.intensities[i], screenSize: screenSize)
+                            }
+                        }
+                        .gesture(
+                            DragGesture().onEnded { v in
+                                if case .lifted(let held) = monte.state,
+                                   held == monte.intensities[i],
+                                   v.translation.height < -55,
+                                   abs(v.translation.width) < 80 {
+                                    monte.confirm(held, screenSize: screenSize) {
+                                        director.commitExperienceLevel($0)
+                                    }
+                                }
+                            }
+                        )
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .sensoryFeedback(.selection, trigger: monte.state)
+        .sensoryFeedback(.impact(weight: .medium), trigger: monte.confirmHapticTrigger)
         .onAppear  { monte.placeStaticRow(screenSize: screenSize) }
         .onDisappear { monte.cancel() }
         .accessibilityLabel("Experience level phase")
