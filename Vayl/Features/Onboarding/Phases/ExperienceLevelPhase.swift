@@ -67,7 +67,7 @@ struct ExperienceLevelPhase: View {
                             }
                         }
                         .scaleEffect(x: monte.flipScaleX[i], y: 1, anchor: .center)
-                        .scaleEffect(pressedSlot == i ? 0.97 : monte.scales[i])
+                        .scaleEffect(monte.scales[i] * (pressedSlot == i ? 0.97 : 1.0))
                         .rotationEffect(.degrees(monte.angles[i]))
                         .offset(monte.offsets[i])
                         .opacity(monte.alphas[i])
