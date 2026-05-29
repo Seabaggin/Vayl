@@ -221,16 +221,6 @@ struct AppLayout {
         obTableCardWidth(in: screenWidth) * 1.5
     }
 
-    /// X-centers (absolute, container coords) of the three Three-Card-Monte row slots.
-    /// Slot 0 = left, 1 = center, 2 = right. The canonical reference frame that
-    /// shuffle swaps between, organize snaps to, and lift/dismiss derive from.
-    static func monteRowCenters(in containerWidth: CGFloat) -> [CGFloat] {
-        let cardW = obTableCardWidth(in: containerWidth)
-        let pitch = cardW + AppSpacing.sm
-        let mid   = containerWidth / 2
-        return [mid - pitch, mid, mid + pitch]
-    }
-
     /// Width of a card in the ExperienceLevel fanned hand. Larger than the on-table
     /// row card because the fan cards overlap — the overlap absorbs the extra width.
     static func obFanCardWidth(in screenWidth: CGFloat) -> CGFloat {

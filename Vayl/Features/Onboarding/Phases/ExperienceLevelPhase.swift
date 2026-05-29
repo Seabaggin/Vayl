@@ -97,16 +97,13 @@ struct ExperienceLevelPhase: View {
         .sensoryFeedback(.selection, trigger: monte.state)
         .sensoryFeedback(.impact(weight: .medium), trigger: monte.confirmHapticTrigger)
         .onAppear {
-            // Pre-set row positions (alphas stay 0 until deal completes).
-            monte.placeRowFaceDown(screenSize: screenSize)
+            // Pre-set fan positions (alphas stay 0 until deal completes).
+            monte.placeFanFaceDown(screenSize: screenSize)
 
-            // Reduce Motion: skip deal-in and shuffle theatre; show backs + tidy row + reveal.
+            // Reduce Motion: skip deal-in theatre; show backs + reveal.
             if reduceMotion {
                 monte.showSwiftUIBacks()
-                Task {
-                    await monte.organize(screenSize: screenSize)
-                    await monte.reveal()
-                }
+                Task { await monte.reveal() }
                 return
             }
 
