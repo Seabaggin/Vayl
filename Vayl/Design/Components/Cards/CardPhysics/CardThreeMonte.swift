@@ -193,7 +193,7 @@ final class CardThreeMonteController {
 
     /// Runs the full entrance: deal → showSwiftUIBacks → reveal.
     /// The task is stored so `cancel()` can interrupt it at any await point.
-    func runEntrance(screenSize: CGSize, backImage: UIImage, reduceMotion: Bool) {
+    func runEntrance(screenSize: CGSize, backImage: UIImage) {
         sequenceTask?.cancel()
         sequenceTask = Task { @MainActor in
             await deal(screenSize: screenSize, backImage: backImage)

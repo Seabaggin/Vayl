@@ -205,6 +205,14 @@ public enum CandleIntensity: String, CaseIterable, Equatable {
         case .experienced: return .experienced
         }
     }
+
+    var displayName: String {
+        switch self {
+        case .curious:     return "Curious"
+        case .exploring:   return "Exploring"
+        case .experienced: return "Experienced"
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────

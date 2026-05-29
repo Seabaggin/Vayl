@@ -1,28 +1,33 @@
 //
 //  ExperienceLevelPhase.swift
 //  Vayl
-//
 
 import SwiftUI
 import SpriteKit
 
 /// OB Phase — Experience Level
-/// Three candle cards dealt face-down from the dealer point, then flipped L→R.
-/// Tap to lift, swipe up to confirm.
+/// Three candle cards deal in one-at-a-time and settle into a fan, flip to reveal.
+/// Tap to lift (shows level name + descriptor), swipe up to confirm.
 /// On confirm writes nmStage via director.commitExperienceLevel and advances to .context.
 struct ExperienceLevelPhase: View {
 
     let director:   VaylDirector
     let screenSize: CGSize
 
-    @State private var monte = CardThreeMonteController()
+    @State private var monte        = CardThreeMonteController()
+    @State private var liftedText:  String?          = nil
+    @State private var liftedLevel: CandleIntensity? = nil
+    @State private var liftTextTask: Task<Void, Never>? = nil
+    @State private var pressedSlot: Int?             = nil
+    @State private var promptTask:  Task<Void, Never>? = nil
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var cardW: CGFloat { AppLayout.obTableCardWidth(in: screenSize.width) }
-    private var cardH: CGFloat { cardW * 1.5 }
+    // ── Card dimensions (fan tokens) ─────────────────────────────
+    private var cardW: CGFloat { AppLayout.obFanCardWidth(in: screenSize.width) }
+    private var cardH: CGFloat { AppLayout.obFanCardHeight(in: screenSize.width) }
 
     /// SpriteKit layer visible ONLY during `.dealing` — sprites carry the cards.
-    /// `.organizing` and `.shuffling` use the visible SwiftUI face-down cards.
     private var spriteActive: Bool {
         monte.state == .dealing
     }
@@ -33,7 +38,7 @@ struct ExperienceLevelPhase: View {
         ZStack {
             // ── Layer: SpriteKit card flight ──────────────────────────────────
             // Visible only during .dealing (sprites carry the cards in flight).
-            // Hidden once .organizing starts — SwiftUI backs take over at row positions.
+            // Hidden once deal completes — SwiftUI backs take over at fan positions.
             SpriteView(
                 scene:   monte.flightScene,
                 options: [.allowsTransparency]
@@ -47,9 +52,6 @@ struct ExperienceLevelPhase: View {
             }
 
             // ── Layer: SwiftUI cards ──────────────────────────────────────────
-            // Wrapped in an explicit ZStack inside TimelineView so the ForEach
-            // items overlay each other (ZStack layout) rather than stacking
-            // vertically (TimelineView's implicit multi-view layout).
             TimelineView(.animation) { tl in
                 let t = reduceMotion ? 0 : tl.date.timeIntervalSinceReferenceDate
                 ZStack {
@@ -65,23 +67,43 @@ struct ExperienceLevelPhase: View {
                             }
                         }
                         .scaleEffect(x: monte.flipScaleX[i], y: 1, anchor: .center)
-                        .scaleEffect(monte.scales[i])
+                        .scaleEffect(pressedSlot == i ? 0.97 : monte.scales[i])
                         .rotationEffect(.degrees(monte.angles[i]))
                         .offset(monte.offsets[i])
                         .opacity(monte.alphas[i])
                         .zIndex(monte.zIndices[i])
                         .shadow(color: s.color, radius: s.radius, y: s.y)
+                        .sensoryFeedback(.impact(weight: .light), trigger: pressedSlot == i)
                         .onTapGesture {
+                            promptTask?.cancel()
+                            director.hideDealerLine()
                             withAnimation(AppAnimation.standard) {
                                 monte.lift(monte.intensities[i], screenSize: screenSize)
                             }
+                            liftTextTask?.cancel()
+                            withAnimation(AppAnimation.fast) {
+                                liftedText  = nil
+                                liftedLevel = nil
+                            }
+                            scheduleLiftText(for: monte.intensities[i])
                         }
+                        .simultaneousGesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { _ in pressedSlot = i }
+                                .onEnded   { _ in pressedSlot = nil }
+                        )
                         .gesture(
                             DragGesture().onEnded { v in
                                 if case .lifted(let held) = monte.state,
                                    held == monte.intensities[i],
                                    v.translation.height < -55,
                                    abs(v.translation.width) < 80 {
+                                    liftTextTask?.cancel()
+                                    withAnimation(AppAnimation.fast) {
+                                        liftedText  = nil
+                                        liftedLevel = nil
+                                    }
+                                    director.hideDealerLine()
                                     monte.confirm(held, screenSize: screenSize) {
                                         director.commitExperienceLevel($0)
                                     }
@@ -92,6 +114,20 @@ struct ExperienceLevelPhase: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+
+            // ── Layer: Projected dealer prompt ────────────────────────────────
+            if director.projectedTextVisible, let copy = director.projectedText {
+                ProjectedTextView(text: copy, screenSize: screenSize)
+                    .transition(.opacity.combined(with: .offset(y: -6)))
+                    .zIndex(18)
+            }
+
+            // ── Layer: Lift label ─────────────────────────────────────────────
+            if let text = liftedText, let level = liftedLevel {
+                liftCopyLayer(title: level.displayName, subtitle: text)
+                    .transition(.opacity)
+                    .zIndex(20)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .sensoryFeedback(.selection, trigger: monte.state)
@@ -99,6 +135,16 @@ struct ExperienceLevelPhase: View {
         .onAppear {
             // Pre-set fan positions (alphas stay 0 until deal completes).
             monte.placeFanFaceDown(screenSize: screenSize)
+
+            // Dealer prompt — appears after the deal lands.
+            promptTask = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(1600))
+                guard !Task.isCancelled else { return }
+                director.showDealerLineManual("How much have you explored?")
+                try? await Task.sleep(for: .milliseconds(3000))
+                guard !Task.isCancelled else { return }
+                director.hideDealerLine()
+            }
 
             // Reduce Motion: skip deal-in theatre; show backs + reveal.
             if reduceMotion {
@@ -118,22 +164,86 @@ struct ExperienceLevelPhase: View {
             renderer.scale = scale
 
             guard let backImage = renderer.uiImage else {
-                // Snapshot failed — fall back to instant row reveal.
+                // Snapshot failed — fall back to instant reveal.
                 monte.showSwiftUIBacks()
                 Task { await monte.reveal() }
                 return
             }
 
-            // Full entrance: deal → showSwiftUIBacks → organize → shuffle → reveal.
-            // The sequence is owned by the controller so it can be cancelled on disappear.
-            monte.runEntrance(screenSize: screenSize, backImage: backImage, reduceMotion: reduceMotion)
+            // Full entrance: deal → showSwiftUIBacks → reveal.
+            monte.runEntrance(screenSize: screenSize, backImage: backImage)
         }
         .onDisappear {
+            promptTask?.cancel()
+            liftTextTask?.cancel()
             // cancel() stops both sequenceTask and pocketTask.
-            // clearAllCards() is NOT called here — deal()'s cancellation path clears
-            // sprites itself, and the normal completion path in deal() clears them too.
             monte.cancel()
         }
         .accessibilityLabel("Experience level phase")
+    }
+
+    // MARK: — Lift copy overlay
+
+    private func liftCopyLayer(title: String, subtitle: String) -> some View {
+        ZStack {
+            VStack(spacing: AppSpacing.sm) {
+                // Level name — LivingText
+                LivingText(
+                    text: title,
+                    font: AppFonts.heroTitle
+                )
+
+                // Descriptor — GradientText
+                GradientText(
+                    text: subtitle,
+                    font: AppFonts.sectionHeading
+                )
+                .multilineTextAlignment(.center)
+
+                // Spectrum hairline
+                Rectangle()
+                    .frame(height: 0.75)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                .clear,
+                                AppColors.spectrumCyan,
+                                AppColors.spectrumPurple,
+                                AppColors.spectrumMagenta,
+                                .clear
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .opacity(0.55)
+                    .padding(.horizontal, AppSpacing.xl)
+                    .padding(.top, AppSpacing.xs)
+            }
+            .liftCopyGlow()
+        }
+        .position(x: screenSize.width / 2, y: screenSize.height * 0.16)
+        .allowsHitTesting(false)
+    }
+
+    // MARK: — Lift text scheduler
+
+    private func scheduleLiftText(for intensity: CandleIntensity) {
+        liftTextTask?.cancel()
+        liftTextTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(120))
+            guard !Task.isCancelled else { return }
+            let descriptor: String = {
+                switch intensity {
+                case .curious:     return "Just opening the door."
+                case .exploring:   return "Finding our rhythm."
+                case .experienced: return "We know what we like."
+                }
+            }()
+            withAnimation(AppAnimation.standard) {
+                liftedText  = descriptor
+                liftedLevel = intensity
+            }
+        }
     }
 }
