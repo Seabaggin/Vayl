@@ -65,35 +65,46 @@ struct CandleCardFace: View {
 }
 ```
 
-**Geometry (outline only, proportional — unchanged from original spec):**
+**Visual source of truth:** [`docs/mockups/real-card-scale.html`](../../mockups/real-card-scale.html)
+— the validated v12 candle. The Swift `Canvas` is a **verbatim port of its
+`drawFrame`**, function-for-function. The numbers below come from that file
+(`getGeo`, line 46), *not* the original Full Spec (whose 0.18/0.35 outline
+figures are superseded).
+
+**Geometry (proportional to card size, from the validated mockup):**
 ```swift
-candleBodyW = cardWidth  * 0.18
-candleBodyH = cardHeight * 0.35
-wickH       = candleBodyH * 0.06
+// getGeo — body
+candleBodyW = cardWidth  * 0.33     // bW
+candleBodyH = cardHeight * 0.46     // bH
+bodyTopY    = cardHeight * 0.28     // bY
+cx          = cardWidth  / 2
+wickH       = candleBodyH * 0.072
 
-flameH(.curious)     = candleBodyH * 0.38
-flameH(.exploring)   = candleBodyH * 0.52
-flameH(.experienced) = candleBodyH * 0.68
-
-waxDrips(.curious)     = 0
-waxDrips(.exploring)   = 0
-waxDrips(.experienced) = 2–3 curved strokes descending from body top edge
+// Per-intensity flame + behavior live in FLAME_CFG (mockup lines 41–45):
+//   curious     baseH 0.20, swayAmp 0.58, dim, smoke wisp, no drips
+//   exploring   baseH 0.42, swayAmp 0.12, steady, wax pool, side run
+//   experienced baseH 0.42, swayAmp 0.14, notched flame, wax pool + 4 wax drips
+// flameH = candleBodyH * cfg.baseH ; flameW = candleBodyW * cfg.baseW
 ```
 
-**Rendering rules:**
-- 1D spectrum gradient outline only — cyan → purple → magenta. No fills.
-- Two passes per shape: blurred low-opacity **glow** + crisp full-opacity
-  **stroke**.
-- `strokeLineCap: .round` on flame curves, `.square` on body geometry.
+**Rendering model (v12 — a sanctioned exception to the outline-only OB rule):**
+- The candle is the phase's one ambient hero symbol and was visually validated
+  with fills, so it is an explicit, self-contained exception to CLAUDE.md's
+  "1D outline only — no fills." Fills are confined to this file.
+- Spectrum gradient (cyan #00C2FF → purple #6C3AE0 → magenta #FF006A) on every
+  stroke and gradient.
+- Multi-pass draw order exactly as `drawFrame`: ambient warm glow → blurred flame
+  glow → blurred body glow → (curious cylinder fill) → crisp body stroke → top
+  rim → wax pool → texture lines → side runs → ember → wick → crisp flame edges →
+  inner core → tip glow → (curious smoke wisp / experienced wax drips).
+- All absolute px values in the mockup are scaled by `S = cardWidth / 160` so the
+  port is resolution-independent (the mockup already does this).
 
-**Reconciling fidelity with the outline rule:** body, wick, and wax drips are
-static vector geometry. The flame is *also* outline-only, but its silhouette
-control points are recomputed each frame from `fbm(noise)` sampled at `time`.
-The geometry contract is untouched — only the flame's control points move.
-
-- Curious: low sway amplitude + scale pulse 0.88 → 1.0 (`.ambientAnimation()`).
-- Exploring: steady, minimal sway.
-- Experienced: tall, stronger sway.
+**Flame motion (the only per-frame-varying part):** `fbm(noise)` sampled at
+`time` drives sway, flicker, height-mod, and breathe exactly as mockup lines
+54–60. Curious also has the `0.88 → 1.0` ambient scale pulse. Body, wick, wax,
+drips are static geometry; only flame control points and the ember/tip pulses
+move.
 
 **`time` is passed in, not owned.** One phase-level `TimelineView(.animation)`
 produces a single clock; all three faces read the same value. This avoids three
@@ -265,9 +276,9 @@ by Segment 6; Segments 7–9 layer the deal/shuffle/reveal spectacle on top.
 
 | # | Does | Done when (on-device) | May not touch |
 |---|------|------------------------|---------------|
-| 1 | `CandleCardFace.swift` renders `.exploring` candle, outline, two passes, static | Renders at 177pt, spectrum reads cyan→purple→magenta, no fills | controller, phase, shells |
-| 2 | Add `CandleIntensity` branches: flame heights, Curious no-drips, Experienced drips | Three distinguishable **at 118pt** | controller, phase |
-| 3 | Add `time` param + fbm flame sway; Curious pulse 0.88→1.0 | Flames flicker smoothly, no stutter | controller, phase |
+| 1 | `CandleCardFace.swift` — port `drawFrame` body+flame skeleton for `.exploring` (static `time=0`): getGeo, body path, crisp body stroke, flame edges. `#Preview` at 177pt | Side-by-side with mockup `.exploring` at 177pt: body + flame match | controller, phase, shells |
+| 2 | Port remaining v12 passes + all three `CandleIntensity` cases: curious (fill, smoke), exploring (rim, pool, side run), experienced (notch, pool, 4 drips, texture) | All three match the mockup and are distinguishable **at 118pt** | controller, phase |
+| 3 | Wire `time` param → fbm sway/flicker/breathe (mockup 54–60); Curious pulse 0.88→1.0 | Flames flicker smoothly matching the mockup loop, no stutter | controller, phase |
 | 4 | Reduce Motion: frozen-`time` static flame, pulse off | Reduce Motion on → candles still + legible | controller, phase |
 | 5 | Add `AppLayout.monteRowCenters(in:)` (the canonical frame). Rewrite `ExperienceLevelPhase.swift`: render 3 `VaylCardFace` shells at those centers, table size, each with a `CandleCardFace`; View `TimelineView` flame clock. New `CardThreeMonte.swift` controller starts in `.faceUp` (cards present, ordered L→R). No deal/shuffle/flip yet | Three live candle cards in a clean row at the canonical centers, on the real phase; gap (`AppSpacing.sm`) tuned on-device | candle file, shells, `advance()` |
 | 6 | Controller `lift` + `confirm`: tap lifts chosen card above all (z-exception) + folds others; swipe-up → `onConfirm` → director writes `nmStage` + `advance(to: .context)`; haptics | Tap → lift → swipe up → lands in ContextPhase. Screen works end-to-end | candle file, shells, other phases |
