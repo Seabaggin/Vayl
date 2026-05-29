@@ -27,7 +27,8 @@ final class CardThreeMonteController {
     /// Slot index → intensity (ordered L→R).
     let intensities = CandleIntensity.ordered
 
-    private var dealTask: Task<Void, Never>?
+    private var pocketTask:   Task<Void, Never>?
+    private var sequenceTask: Task<Void, Never>?
 
     // MARK: - Deal-in
 
@@ -75,7 +76,21 @@ final class CardThreeMonteController {
         // to stay @MainActor-isolated without capture issues.
         restedCount = 0
 
+        // `resumed` ensures the continuation fires exactly once even if Task is
+        // cancelled mid-flight and clearAllCards() removes the onCardRested handlers
+        // before all three cards have rested (which would otherwise strand the continuation).
+        var resumed = false
+        func resumeOnce(_ cont: CheckedContinuation<Void, Never>) {
+            guard !resumed else { return }
+            resumed = true
+            cont.resume()
+        }
+
         await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            // Safety: if the task is already cancelled before we even start,
+            // resume immediately so we don't strand the continuation.
+            guard !Task.isCancelled else { resumeOnce(cont); return }
+
             for i in 0..<3 {
                 let id = "monte-\(i)"
                 // Guard against duplicate fires (onCardRested removes itself, but be safe).
@@ -85,7 +100,7 @@ final class CardThreeMonteController {
                     guard !fired else { return }
                     fired = true
                     self.restedCount += 1
-                    if self.restedCount == 3 { cont.resume() }
+                    if self.restedCount == 3 { resumeOnce(cont) }
                 }
                 flightScene.dealCard(
                     id:           id,
@@ -98,6 +113,12 @@ final class CardThreeMonteController {
                     duration:     0.55
                 )
             }
+        }
+
+        // If cancelled during flight, clear sprites and bail before hand-off logic.
+        if Task.isCancelled {
+            for i in 0..<3 { flightScene.clearCard(id: "monte-\(i)") }
+            return
         }
 
         // Clear sprites — SwiftUI backs take over at the same positions.
@@ -179,14 +200,15 @@ final class CardThreeMonteController {
     // MARK: - Reveal
 
     /// Flip each card face-up in succession (L→R), assigning the face at the half-flip.
+    /// Each half uses `cardFlipHalf` (0.29s), so the two halves compose the full 0.58s flip.
     func reveal() async {
         state = .revealing
         for i in 0..<3 {
-            withAnimation(AppAnimation.cardFlip) { flipScaleX[i] = 0.0 }
-            try? await Task.sleep(for: .milliseconds(160))
+            withAnimation(AppAnimation.cardFlipHalf) { flipScaleX[i] = 0.0 }
+            try? await Task.sleep(for: .milliseconds(290))  // wait for first half to complete
             showFace[i] = true              // identity becomes visible at the half-flip
-            withAnimation(AppAnimation.cardFlip) { flipScaleX[i] = 1.0 }
-            try? await Task.sleep(for: .milliseconds(140))
+            withAnimation(AppAnimation.cardFlipHalf) { flipScaleX[i] = 1.0 }
+            try? await Task.sleep(for: .milliseconds(290))  // wait for second half to complete
         }
         state = .faceUp
     }
@@ -259,7 +281,7 @@ final class CardThreeMonteController {
         guard case .lifted(let held) = state, held == intensity else { return }
         state = .confirming(intensity)
         confirmHapticTrigger.toggle()
-        dealTask = Task { @MainActor in
+        pocketTask = Task { @MainActor in
             let cornerX = screenSize.width  - AppLayout.cornerDeckRight - AppLayout.cornerDeckWidth  / 2
             let cornerY = AppLayout.cornerDeckTop + AppLayout.cornerDeckHeight / 2
             let cardWidth = AppLayout.obTableCardWidth(in: screenSize.width)
@@ -278,5 +300,37 @@ final class CardThreeMonteController {
         }
     }
 
-    func cancel() { dealTask?.cancel() }
+    // MARK: - Entrance Sequence
+
+    /// Runs the full entrance: deal → showSwiftUIBacks → organize → (shuffle unless reduceMotion) → reveal.
+    /// The task is stored so `cancel()` can interrupt it at any await point.
+    func runEntrance(screenSize: CGSize, backImage: UIImage, reduceMotion: Bool) {
+        sequenceTask?.cancel()
+        sequenceTask = Task { @MainActor in
+            await deal(screenSize: screenSize, backImage: backImage)
+            guard !Task.isCancelled else { return }
+
+            // Hand-off: sprites cleared, SwiftUI backs appear at exact row positions.
+            // Instant alpha swap (no animation) for zero flicker.
+            showSwiftUIBacks()
+
+            guard !Task.isCancelled else { return }
+            await organize(screenSize: screenSize)
+            guard !Task.isCancelled else { return }
+
+            if !reduceMotion {
+                await shuffle(screenSize: screenSize)
+                guard !Task.isCancelled else { return }
+            }
+
+            await reveal()
+        }
+    }
+
+    // MARK: - Cancel
+
+    func cancel() {
+        pocketTask?.cancel()
+        sequenceTask?.cancel()
+    }
 }

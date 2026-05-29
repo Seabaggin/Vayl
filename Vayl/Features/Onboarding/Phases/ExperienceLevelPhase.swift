@@ -54,6 +54,7 @@ struct ExperienceLevelPhase: View {
             TimelineView(.animation) { tl in
                 let t = reduceMotion ? 0 : tl.date.timeIntervalSinceReferenceDate
                 ForEach(0..<3, id: \.self) { i in
+                    let s = AppElevation.cardShadow(elevation: monte.elevations[i])
                     Group {
                         if monte.showFace[i] {
                             VaylCardFace(content: .candle(intensity: monte.intensities[i], time: t))
@@ -69,11 +70,7 @@ struct ExperienceLevelPhase: View {
                     .offset(monte.offsets[i])
                     .opacity(monte.alphas[i])
                     .zIndex(monte.zIndices[i])
-                    .shadow(
-                        color:  AppElevation.cardShadow(elevation: monte.elevations[i]).color,
-                        radius: AppElevation.cardShadow(elevation: monte.elevations[i]).radius,
-                        y:      AppElevation.cardShadow(elevation: monte.elevations[i]).y
-                    )
+                    .shadow(color: s.color, radius: s.radius, y: s.y)
                     .onTapGesture {
                         withAnimation(AppAnimation.standard) {
                             monte.lift(monte.intensities[i], screenSize: screenSize)
@@ -102,7 +99,7 @@ struct ExperienceLevelPhase: View {
             monte.placeRowFaceDown(screenSize: screenSize)
 
             // Reduce Motion: skip deal-in and shuffle theatre; show backs + tidy row + reveal.
-            guard !reduceMotion else {
+            if reduceMotion {
                 monte.showSwiftUIBacks()
                 Task {
                     await monte.organize(screenSize: screenSize)
@@ -111,45 +108,32 @@ struct ExperienceLevelPhase: View {
                 return
             }
 
-            Task {
-                // Snapshot the card back for SpriteKit textures.
-                // Uses UIWindowScene.screen (iOS 26 compliant — no UIScreen.main).
-                let scale = UIApplication.shared.connectedScenes
-                    .compactMap { $0 as? UIWindowScene }
-                    .first?.screen.scale ?? 2.0
-                let renderer = ImageRenderer(
-                    content: VaylCardBack().frame(width: cardW, height: cardH)
-                )
-                renderer.scale = scale
+            // Snapshot the card back for SpriteKit textures.
+            // Uses UIWindowScene.screen (iOS 26 compliant — no UIScreen.main).
+            let scale = UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .first?.screen.scale ?? 2.0
+            let renderer = ImageRenderer(
+                content: VaylCardBack().frame(width: cardW, height: cardH)
+            )
+            renderer.scale = scale
 
-                guard let backImage = renderer.uiImage else {
-                    // Snapshot failed — fall back to instant row reveal.
-                    monte.showSwiftUIBacks()
-                    await monte.reveal()
-                    return
-                }
-
-                // 1. Fly cards in via SpriteKit (alphas = 0; sprites carry visual).
-                await monte.deal(screenSize: screenSize, backImage: backImage)
-
-                // 2. Hand-off: sprites cleared, SwiftUI backs appear at exact row positions.
-                //    Instant alpha swap (no animation) for zero flicker.
-                //    State is now .organizing — SpriteKit layer hidden, SwiftUI cards visible.
+            guard let backImage = renderer.uiImage else {
+                // Snapshot failed — fall back to instant row reveal.
                 monte.showSwiftUIBacks()
-
-                // 3. Tidy to exact clean row (SwiftUI face-down cards animate).
-                await monte.organize(screenSize: screenSize)
-
-                // 4. Shuffle theatre (SwiftUI face-down cards; SpriteKit stays hidden).
-                await monte.shuffle(screenSize: screenSize)
-
-                // 5. Flip reveal L→R.
-                await monte.reveal()
+                Task { await monte.reveal() }
+                return
             }
+
+            // Full entrance: deal → showSwiftUIBacks → organize → shuffle → reveal.
+            // The sequence is owned by the controller so it can be cancelled on disappear.
+            monte.runEntrance(screenSize: screenSize, backImage: backImage, reduceMotion: false)
         }
         .onDisappear {
+            // cancel() stops both sequenceTask and pocketTask.
+            // clearAllCards() is NOT called here — deal()'s cancellation path clears
+            // sprites itself, and the normal completion path in deal() clears them too.
             monte.cancel()
-            monte.flightScene.clearAllCards()
         }
         .accessibilityLabel("Experience level phase")
     }
