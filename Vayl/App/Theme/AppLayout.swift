@@ -231,6 +231,32 @@ struct AppLayout {
         return [mid - pitch, mid, mid + pitch]
     }
 
+    /// Width of a card in the ExperienceLevel fanned hand. Larger than the on-table
+    /// row card because the fan cards overlap — the overlap absorbs the extra width.
+    static func obFanCardWidth(in screenWidth: CGFloat) -> CGFloat {
+        min(screenWidth * 0.42, 280)
+    }
+
+    /// Height of a fan card. Derived at the 3:2 portrait ratio.
+    static func obFanCardHeight(in screenWidth: CGFloat) -> CGFloat {
+        obFanCardWidth(in: screenWidth) * 1.5
+    }
+
+    /// Per-slot (offset-from-center, angle-degrees) for the three fanned-hand cards.
+    /// Slot 0 = left, 1 = center (upright, on top), 2 = right. Offsets are relative to
+    /// screen center; the caller adds the fan center Y (`obTableCardCenterY`).
+    static func monteFanLayout(in containerWidth: CGFloat) -> [(offset: CGSize, angle: Double)] {
+        let fanW = obFanCardWidth(in: containerWidth)
+        let fanH = obFanCardHeight(in: containerWidth)
+        let dx   = fanW * 0.46     // horizontal spread (overlap < 1.0 → cards overlap)
+        let rise = fanH * 0.04     // outer cards lift slightly (held-hand arc)
+        return [
+            (CGSize(width: -dx, height: -rise), -12),
+            (CGSize(width:   0, height:     0),   0),
+            (CGSize(width:  dx, height: -rise),  12),
+        ]
+    }
+
     /// Cinematic zoom applied to the on-table card during the NamePhase deal sequence.
     /// Scales `obTableCardWidth` from 30% to ~45% of screen width, matching the HTML
     /// prototype's visual proportion (195px card in a 430px max-width container).

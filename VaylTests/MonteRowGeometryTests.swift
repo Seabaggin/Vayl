@@ -3,29 +3,17 @@ import XCTest
 
 final class MonteRowGeometryTests: XCTestCase {
 
-    func test_threeCentersReturned() {
-        XCTAssertEqual(AppLayout.monteRowCenters(in: 393).count, 3)
-    }
-
-    func test_symmetricAroundMidpoint() {
-        let c = AppLayout.monteRowCenters(in: 393)
-        XCTAssertEqual(c[1], 393 / 2, accuracy: 0.001)
-        XCTAssertEqual(c[0] + c[2], 393, accuracy: 0.001)
-    }
-
-    func test_pitchIsCardWidthPlusSmallGap() {
-        let w: CGFloat = 393
-        let expectedPitch = AppLayout.obTableCardWidth(in: w) + AppSpacing.sm
-        let c = AppLayout.monteRowCenters(in: w)
-        XCTAssertEqual(c[1] - c[0], expectedPitch, accuracy: 0.001)
-        XCTAssertEqual(c[2] - c[1], expectedPitch, accuracy: 0.001)
-    }
-
-    func test_rowFitsOnSmallestPhone() {
-        let w: CGFloat = 320
-        let c = AppLayout.monteRowCenters(in: w)
-        let halfCard = AppLayout.obTableCardWidth(in: w) / 2
-        XCTAssertGreaterThanOrEqual(c[0] - halfCard, 0)
-        XCTAssertLessThanOrEqual(c[2] + halfCard, w)
+    func test_monteFanLayout_centerIsUpright_outerAnglesAreSymmetric() {
+        let layout = AppLayout.monteFanLayout(in: 393)
+        XCTAssertEqual(layout.count, 3)
+        // Center slot: no rotation, no horizontal offset.
+        XCTAssertEqual(layout[1].angle, 0, accuracy: 0.001)
+        XCTAssertEqual(layout[1].offset.width, 0, accuracy: 0.001)
+        // Outer slots: mirror-image angles and offsets.
+        XCTAssertEqual(layout[0].angle, -layout[2].angle, accuracy: 0.001)
+        XCTAssertEqual(layout[0].offset.width, -layout[2].offset.width, accuracy: 0.001)
+        // Fan fits with margin: outer card center within half a fan-card of the edge.
+        let fanW = AppLayout.obFanCardWidth(in: 393)
+        XCTAssertLessThan(abs(layout[2].offset.width) + fanW / 2, 393 / 2)
     }
 }
