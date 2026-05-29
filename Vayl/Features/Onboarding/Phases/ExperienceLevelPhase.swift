@@ -28,13 +28,12 @@ struct ExperienceLevelPhase: View {
     }
 
     var body: some View {
+        // NOTE: AppColors.void, AtmosphereView, and TableSurfaceView are provided by
+        // OnboardingCanvasView — phases render as transparent overlays on top.
         ZStack {
-            AppColors.void.ignoresSafeArea()
-
             // ── Layer: SpriteKit card flight ──────────────────────────────────
-            // Visible during .dealing/.organizing only (sprites carry the cards).
-            // Hidden once .revealing starts — SwiftUI backs take over at same positions.
-            // Matches the hosting convention used by OnboardingCanvasView Layer 4b.
+            // Visible only during .dealing (sprites carry the cards in flight).
+            // Hidden once .organizing starts — SwiftUI backs take over at row positions.
             SpriteView(
                 scene:   monte.flightScene,
                 options: [.allowsTransparency]
@@ -48,47 +47,50 @@ struct ExperienceLevelPhase: View {
             }
 
             // ── Layer: SwiftUI cards ──────────────────────────────────────────
-            // alphas[i] = 0 during flight (set by placeRowFaceDown).
-            // alphas[i] = 1 after deal completes (set by showSwiftUIBacks),
-            // so SwiftUI backs appear at the exact row positions where sprites stopped.
+            // Wrapped in an explicit ZStack inside TimelineView so the ForEach
+            // items overlay each other (ZStack layout) rather than stacking
+            // vertically (TimelineView's implicit multi-view layout).
             TimelineView(.animation) { tl in
                 let t = reduceMotion ? 0 : tl.date.timeIntervalSinceReferenceDate
-                ForEach(0..<3, id: \.self) { i in
-                    let s = AppElevation.cardShadow(elevation: monte.elevations[i])
-                    Group {
-                        if monte.showFace[i] {
-                            VaylCardFace(content: .candle(intensity: monte.intensities[i], time: t))
-                                .frame(width: cardW, height: cardH)
-                        } else {
-                            VaylCardBack()
-                                .frame(width: cardW, height: cardH)
-                        }
-                    }
-                    .scaleEffect(x: monte.flipScaleX[i], y: 1, anchor: .center)
-                    .scaleEffect(monte.scales[i])
-                    .rotationEffect(.degrees(monte.angles[i]))
-                    .offset(monte.offsets[i])
-                    .opacity(monte.alphas[i])
-                    .zIndex(monte.zIndices[i])
-                    .shadow(color: s.color, radius: s.radius, y: s.y)
-                    .onTapGesture {
-                        withAnimation(AppAnimation.standard) {
-                            monte.lift(monte.intensities[i], screenSize: screenSize)
-                        }
-                    }
-                    .gesture(
-                        DragGesture().onEnded { v in
-                            if case .lifted(let held) = monte.state,
-                               held == monte.intensities[i],
-                               v.translation.height < -55,
-                               abs(v.translation.width) < 80 {
-                                monte.confirm(held, screenSize: screenSize) {
-                                    director.commitExperienceLevel($0)
-                                }
+                ZStack {
+                    ForEach(0..<3, id: \.self) { i in
+                        let s = AppElevation.cardShadow(elevation: monte.elevations[i])
+                        Group {
+                            if monte.showFace[i] {
+                                VaylCardFace(content: .candle(intensity: monte.intensities[i], time: t))
+                                    .frame(width: cardW, height: cardH)
+                            } else {
+                                VaylCardBack()
+                                    .frame(width: cardW, height: cardH)
                             }
                         }
-                    )
+                        .scaleEffect(x: monte.flipScaleX[i], y: 1, anchor: .center)
+                        .scaleEffect(monte.scales[i])
+                        .rotationEffect(.degrees(monte.angles[i]))
+                        .offset(monte.offsets[i])
+                        .opacity(monte.alphas[i])
+                        .zIndex(monte.zIndices[i])
+                        .shadow(color: s.color, radius: s.radius, y: s.y)
+                        .onTapGesture {
+                            withAnimation(AppAnimation.standard) {
+                                monte.lift(monte.intensities[i], screenSize: screenSize)
+                            }
+                        }
+                        .gesture(
+                            DragGesture().onEnded { v in
+                                if case .lifted(let held) = monte.state,
+                                   held == monte.intensities[i],
+                                   v.translation.height < -55,
+                                   abs(v.translation.width) < 80 {
+                                    monte.confirm(held, screenSize: screenSize) {
+                                        director.commitExperienceLevel($0)
+                                    }
+                                }
+                            }
+                        )
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
