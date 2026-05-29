@@ -127,7 +127,7 @@ struct ExperienceLevelPhase: View {
 
             // Full entrance: deal → showSwiftUIBacks → organize → shuffle → reveal.
             // The sequence is owned by the controller so it can be cancelled on disappear.
-            monte.runEntrance(screenSize: screenSize, backImage: backImage, reduceMotion: false)
+            monte.runEntrance(screenSize: screenSize, backImage: backImage, reduceMotion: reduceMotion)
         }
         .onDisappear {
             // cancel() stops both sequenceTask and pocketTask.
