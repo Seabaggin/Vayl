@@ -70,6 +70,20 @@ struct ContextPhase: View {
         VStack(spacing: 0) {
             Spacer()
 
+            // Spectrum progress line — fills the top void, grounds position.
+            // barHeight omitted: OnboardingProgressBar defaults it to
+            // ProgressBarConstants.defaultBarHeight (that enum is private to
+            // its file and not referenceable here).
+            OnboardingProgressBar(
+                currentStep: physics.currentIndex + 1,
+                totalSteps:  options.count,
+                totalWidth:  screenSize.width * 0.34
+            )
+            .padding(.bottom, AppSpacing.xl)
+            .opacity(entered && !exiting ? 1 : 0)
+            .animation(AppAnimation.standard, value: physics.currentIndex)
+            .accessibilityHidden(true)
+
             VaylCardCarousel(
                 count:          options.count,
                 cardSize:       cardSize,
@@ -101,6 +115,31 @@ struct ContextPhase: View {
             .accessibilityLabel(a11yLabel)
             .accessibilityHint("Swipe left or right to browse. Double-tap to select. After selecting, swipe up to continue.")
 
+            Spacer().frame(height: AppSpacing.xxl)
+
+            // Hybrid detail panel.
+            // Subtitle: live on swipe.  Detail: revealed only after confirm.
+            VStack(spacing: AppSpacing.sm) {
+                Text(options[physics.currentIndex].subtitle)
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(AppColors.textBody)
+                    .multilineTextAlignment(.center)
+                    .id("subtitle-\(physics.currentIndex)")
+                    .transition(.opacity)
+
+                Text(confirmedIndex != nil ? options[confirmedIndex!].detail : " ")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
+                    .opacity(confirmedIndex != nil ? 1 : 0)
+            }
+            .padding(.horizontal, AppSpacing.lg)
+            .frame(minHeight: screenSize.height * 0.14, alignment: .top)
+            .opacity(entered && !exiting ? 1 : 0)
+            .animation(AppAnimation.standard, value: physics.currentIndex)
+            .animation(AppAnimation.standard, value: confirmedIndex)
+
             Spacer()
 
             Text(reassuranceText)
@@ -124,6 +163,7 @@ struct ContextPhase: View {
         }
         .frame(width: screenSize.width, height: screenSize.height)
         .sensoryFeedback(.impact(weight: .light), trigger: confirmedIndex)
+        .sensoryFeedback(.selection, trigger: physics.currentIndex)
         .onAppear(perform: runEntrance)
         .onDisappear { tugTask?.cancel() }
         .accessibilityLabel("Context phase")
