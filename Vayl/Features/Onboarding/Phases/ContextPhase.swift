@@ -41,6 +41,7 @@ struct ContextPhase: View {
     @State private var defocusOthers:  Bool    = false
     @State private var hintOffset:     CGFloat = 0
     @State private var confirmTug:     CGFloat = 0
+    @State private var confirmPulse:   Bool    = false
     @State private var tugTask:        Task<Void, Never>? = nil
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -67,6 +68,25 @@ struct ContextPhase: View {
     // MARK: - Body
     var body: some View {
         ZStack {
+        // Live accent glow — tinted by the front card's accent, crossfades on swipe.
+        RadialGradient(
+            colors: [
+                tint(for: options[physics.currentIndex].accent)
+                    .opacity(confirmPulse ? 0.42 : 0.26),
+                Color.clear,
+            ],
+            center: .center,
+            startRadius: 0,
+            endRadius: cardSize.width * (confirmPulse ? 1.5 : 1.2)
+        )
+        .frame(width: cardSize.width * 2.2, height: cardSize.width * 2.2)
+        .blur(radius: cardSize.width * 0.20)
+        .offset(y: -cardSize.height * 0.10)
+        .opacity(entered && !exiting ? 1 : 0)
+        .animation(AppAnimation.standard, value: physics.currentIndex)
+        .animation(AppAnimation.spring, value: confirmPulse)
+        .allowsHitTesting(false)
+
         VStack(spacing: 0) {
             Spacer()
 
@@ -94,6 +114,7 @@ struct ContextPhase: View {
                 defocusUnselected:  defocusOthers,
                 content: { index, isFront in
                     let o = options[index]
+                    let isUndecided = (index == options.count - 1)
                     VaylCardFace(
                         content: .context(
                             number:   String(format: "%02d", index + 1),
@@ -103,6 +124,7 @@ struct ContextPhase: View {
                         ),
                         isFront: isFront
                     )
+                    .opacity(isUndecided ? 0.82 : 1.0)
                 },
                 onConfirm:   handleConfirm,
                 onUnconfirm: handleUnconfirm,
@@ -120,6 +142,17 @@ struct ContextPhase: View {
             // Hybrid detail panel.
             // Subtitle: live on swipe.  Detail: revealed only after confirm.
             VStack(spacing: AppSpacing.sm) {
+                Rectangle()
+                    .fill(LinearGradient(
+                        colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+                        startPoint: .leading, endPoint: .trailing
+                    ))
+                    .frame(width: screenSize.width * 0.34, height: 1)
+                    .opacity(0.5)
+                    .spectrumBorderGlow(intensity: confirmedIndex != nil ? 0.72 : 0)
+                    .padding(.bottom, AppSpacing.xs)
+                    .animation(AppAnimation.standard, value: confirmedIndex)
+
                 Text(options[physics.currentIndex].subtitle)
                     .font(AppFonts.bodyMedium)
                     .foregroundStyle(AppColors.textBody)
@@ -225,17 +258,35 @@ struct ContextPhase: View {
         }
     }
 
+    // Maps the decorative CardAccent to spectrum tokens (no raw colors).
+    private func tint(for accent: CardAccent) -> Color {
+        switch accent {
+        case .ember:   return AppColors.spectrumCyan
+        case .spark:   return AppColors.spectrumCyan
+        case .flame:   return AppColors.spectrumPurple
+        case .inferno: return AppColors.spectrumMagenta
+        case .nova:    return AppColors.spectrumMagenta
+        }
+    }
+
     // MARK: - Selection
     private func handleConfirm(_ index: Int) {
         guard !exiting else { return }
         withAnimation(AppAnimation.spring) { confirmedIndex = index }
         startConfirmTug()
+        guard !reduceMotion else { return }
+        Task { @MainActor in
+            withAnimation(AppAnimation.spring) { confirmPulse = true }
+            try? await Task.sleep(for: .milliseconds(450))
+            withAnimation(AppAnimation.slow) { confirmPulse = false }
+        }
     }
 
     private func handleUnconfirm() {
         guard !exiting else { return }
         stopConfirmTug()
         withAnimation(AppAnimation.spring) { confirmedIndex = nil }
+        withAnimation(AppAnimation.spring) { confirmPulse = false }
     }
 
     // MARK: - Swipe-up hint (sparse — user has done this gesture 4 times already)
