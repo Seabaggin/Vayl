@@ -223,8 +223,8 @@ responsive exit line, deck weighting, and Compass derivation continue to work as
 | id | context | title | subtitle | detail |
 |---|---|---|---|---|
 | single_curious | singleCurious | I'm single | NM is new territory for me | No relationship to navigate — just you and your curiosity. We'll start with the fundamentals and let you explore at your own pace. |
-| partnered_supportive_curious | partneredSupportiveCurious | I have a partner | They know I'm looking into this | You've opened the door — we'll help you figure out what you actually want before the bigger conversations begin. |
-| partnered_undisclosed | partneredUndisclosed | I have a partner | I haven't brought it up yet | You're still figuring out what this means to you. We'll help you get clarity before you decide whether or how to start the conversation. |
+| partnered_supportive_curious | partneredSupportiveCurious | My partner knows | They're supportive of me looking into this | You've opened the door — we'll help you figure out what you actually want before the bigger conversations begin. |
+| partnered_undisclosed | partneredUndisclosed | I haven't told them yet | I have a partner, but the conversation hasn't happened | You're still figuring out what this means to you. We'll help you get clarity before you decide whether or how to start the conversation. |
 | solo_curious_undecided | soloCuriousUndecided | I'm still finding the words | My situation doesn't quite fit any of these | That's okay — most people's lives are messier than a list of options. Start here and we'll help you figure out the rest as you go. |
 
 ### Solo × Exploring
