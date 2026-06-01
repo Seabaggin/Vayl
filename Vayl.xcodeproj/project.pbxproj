@@ -27,6 +27,7 @@
 		3DE993A32F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */; };
 		AA000001AAAA000000000001 /* MonteRowGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */; };
 		AA000002AAAA000000000001 /* CandleIntensityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000002AAAA000000000002 /* CandleIntensityTests.swift */; };
+		AA000003AAAA000000000001 /* ContextOptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000003AAAA000000000002 /* ContextOptionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,6 +65,7 @@
 		3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Open Lightly — LLM Audit Prompts.md"; sourceTree = "<group>"; };
 		AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonteRowGeometryTests.swift; sourceTree = "<group>"; };
 		AA000002AAAA000000000002 /* CandleIntensityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandleIntensityTests.swift; sourceTree = "<group>"; };
+		AA000003AAAA000000000002 /* ContextOptionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextOptionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -72,7 +74,6 @@
 			membershipExceptions = (
 				Features/Onboarding/Views/OnboardingBrandView.swift,
 				Features/Onboarding/Views/OnboardingCardRevealView.swift,
-				Features/Onboarding/Views/OnboardingContextView.swift,
 				Features/Onboarding/Views/OnboardingCuriosityPickerView.swift,
 				Features/Onboarding/Views/OnboardingFlowView.swift,
 				Features/Onboarding/Views/OnboardingGroundRulesView.swift,
@@ -171,6 +172,7 @@
 			children = (
 				AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */,
 				AA000002AAAA000000000002 /* CandleIntensityTests.swift */,
+				AA000003AAAA000000000002 /* ContextOptionTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -368,6 +370,7 @@
 			files = (
 				AA000001AAAA000000000001 /* MonteRowGeometryTests.swift in Sources */,
 				AA000002AAAA000000000001 /* CandleIntensityTests.swift in Sources */,
+				AA000003AAAA000000000001 /* ContextOptionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
