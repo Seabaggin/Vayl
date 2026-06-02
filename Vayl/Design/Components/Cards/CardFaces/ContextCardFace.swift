@@ -34,12 +34,22 @@ struct ContextCardFace: View {
 
             VStack(alignment: .leading, spacing: 0) {
 
-                // Signature object — fills the upper region, leaves room below.
+                Spacer(minLength: 0)
+
+                // Signature object — the map + pushpin
                 MapObject()
                     .frame(maxWidth: .infinity)
-                    .frame(height: h * 0.46)
+                    .frame(height: h * 0.44)
 
-                Spacer(minLength: 0)
+                // Spectrum hairline — ties the object to the header
+                Rectangle()
+                    .fill(LinearGradient(
+                        colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+                        startPoint: .leading, endPoint: .trailing))
+                    .frame(height: 1)
+                    .opacity(0.5)
+                    .padding(.top, h * 0.035)
+                    .padding(.bottom, h * 0.03)
 
                 // Header — number overline + title headline
                 Text(number)
@@ -52,6 +62,8 @@ struct ContextCardFace: View {
                     .foregroundStyle(AppColors.spectrumText)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, w * 0.02)
+
+                Spacer(minLength: 0)
             }
             .padding(pad)
             .frame(width: geo.size.width, height: geo.size.height, alignment: .leading)
