@@ -33,6 +33,16 @@ struct VaylCardFace: View {
     var content:    VaylCardContent?             = nil
     var onAction:   ((VaylCardAction) -> Void)?  = nil
 
+    /// True when this card is the frontmost card in a browsable stack.
+    /// Only consulted by content faces that reveal extra detail when frontmost
+    /// (currently `.context`). Ignored by all other faces. Defaults true.
+    var isFront:    Bool                         = true
+
+    /// Signed scroll offset of this card from carousel center (0 = centered).
+    /// Forwarded to `.context` so its book page turns in sync with a swipe.
+    /// Ignored by all other faces.
+    var pageTurn:   CGFloat                      = 0
+
     var body: some View {
         GeometryReader { geo in
             let size      = geo.size
@@ -99,6 +109,15 @@ struct VaylCardFace: View {
                         )
                     case .candle(let intensity, let time):
                         CandleCardFace(intensity: intensity, time: time)
+                    case .context(let number, let title, let subtitle, let detail):
+                        ContextCardFace(
+                            number:   number,
+                            title:    title,
+                            subtitle: subtitle,
+                            detail:   detail,
+                            isFront:  isFront,
+                            pageTurn: pageTurn
+                        )
                     default:
                         EmptyView()
                     }
@@ -132,22 +151,48 @@ struct VaylCardFace: View {
 
             }
             .contentShape(RoundedRectangle(cornerRadius: radius))
-            .onTapGesture {
-                onAction?(.tapped)
-            }
-            .gesture(
-                DragGesture(minimumDistance: 10)
-                    .onEnded { value in
-                        let velocity    = value.predictedEndLocation.y - value.location.y
-                        let translation = value.translation.height
-                        if translation <= -(geo.size.height * 0.14) || velocity <= -400 {
-                            onAction?(.swipedUp)
-                        }
-                    }
-            )
+            // Built-in tap/swipe-up gestures attach ONLY when the caller wants
+            // to receive actions. With `onAction == nil` (e.g. a card embedded in
+            // a carousel that owns its own browse gestures) the face is fully
+            // inert and never swallows the parent's drag.
+            .modifier(FaceGestures(
+                enabled:    onAction != nil,
+                cardHeight: geo.size.height,
+                onAction:   onAction
+            ))
             .clipShape(RoundedRectangle(cornerRadius: radius))
         }
         .drawingGroup() // rasterize ZStack of gradients + strokes to Metal texture for card transforms
+    }
+}
+
+// MARK: - FaceGestures
+
+/// Conditionally attaches the card's built-in tap (`.tapped`) and swipe-up
+/// (`.swipedUp`) gestures. When `enabled` is false the face passes all touches
+/// straight through — used when a parent (e.g. a carousel) owns the gestures.
+private struct FaceGestures: ViewModifier {
+    let enabled:    Bool
+    let cardHeight: CGFloat
+    let onAction:   ((VaylCardAction) -> Void)?
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content
+                .onTapGesture { onAction?(.tapped) }
+                .gesture(
+                    DragGesture(minimumDistance: 10)
+                        .onEnded { value in
+                            let velocity    = value.predictedEndLocation.y - value.location.y
+                            let translation = value.translation.height
+                            if translation <= -(cardHeight * 0.14) || velocity <= -400 {
+                                onAction?(.swipedUp)
+                            }
+                        }
+                )
+        } else {
+            content
+        }
     }
 }
 

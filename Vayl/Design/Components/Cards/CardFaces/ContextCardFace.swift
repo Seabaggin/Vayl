@@ -28,12 +28,11 @@ struct ContextCardFace: View {
     let subtitle: String
     let detail:   String
     var isFront:  Bool = true
+    /// Signed scroll offset from carousel center (0 = centered). Drives the
+    /// page turn so it tracks the swipe between cards.
+    var pageTurn: CGFloat = 0
 
-    // Page-turn one-shot, fired when this card becomes front. 1.0 = settled.
-    @State private var turnProgress: CGFloat = 1
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private var animate: Bool { isFront && !reduceMotion }
 
     var body: some View {
         GeometryReader { geo in
@@ -45,7 +44,8 @@ struct ContextCardFace: View {
 
                 Spacer(minLength: 0)
 
-                BookObject(animate: animate, turnProgress: turnProgress)
+                BookObject(animate: isFront && !reduceMotion,
+                           offset: pageTurn, motion: !reduceMotion)
                     .frame(maxWidth: .infinity)
                     .frame(height: h * 0.44)
 
@@ -74,27 +74,20 @@ struct ContextCardFace: View {
             .padding(pad)
             .frame(width: geo.size.width, height: geo.size.height, alignment: .leading)
         }
-        .onAppear { if isFront { firePageTurn() } }
-        .onChange(of: isFront) { _, front in if front { firePageTurn() } }
-    }
-
-    /// One page flip when the card becomes front (a chapter turned to).
-    private func firePageTurn() {
-        guard !reduceMotion else { turnProgress = 1; return }
-        turnProgress = 0
-        withAnimation(.easeInOut(duration: 0.6)) { turnProgress = 1 }
     }
 }
 
 // MARK: - Book object (Canvas line illustration)
 
-/// Open book + ribbon. While `animate` is true a TimelineView drives the idle
-/// ribbon sway and samples `turnProgress` so the one-shot page flip renders.
-/// When false the book is fully static (ribbon centered, no flip).
+/// Open book + ribbon. `offset` is the card's signed distance from carousel
+/// center — the page turn tracks it so it flips as the user swipes. While
+/// `animate` (front + motion) a TimelineView drives the idle ribbon sway.
+/// `motion` gates the flip entirely (off under Reduce Motion).
 private struct BookObject: View {
 
-    let animate:      Bool
-    let turnProgress: CGFloat
+    let animate: Bool
+    let offset:  CGFloat
+    let motion:  Bool
 
     var body: some View {
         if animate {
@@ -102,19 +95,19 @@ private struct BookObject: View {
                 let t = tl.date.timeIntervalSinceReferenceDate
                 Canvas { ctx, size in
                     draw(&ctx, size: size, ribbon: CGFloat(sin(t / 2.8 * 2 * .pi)),
-                         turn: turnProgress, animate: true)
+                         offset: offset, drawFlip: true)
                 }
             }
         } else {
             Canvas { ctx, size in
-                draw(&ctx, size: size, ribbon: 0, turn: 1, animate: false)
+                draw(&ctx, size: size, ribbon: 0, offset: offset, drawFlip: motion)
             }
         }
     }
 
     // Viewbox 160 × 110 (ported from docs/mockups/book-mock.html, ÷5 of 800×600).
     private func draw(_ context: inout GraphicsContext, size: CGSize,
-                      ribbon: CGFloat, turn: CGFloat, animate: Bool) {
+                      ribbon: CGFloat, offset: CGFloat, drawFlip: Bool) {
 
         let s = min(size.width / 160, size.height / 110)
         context.translateBy(x: (size.width - 160 * s) / 2, y: (size.height - 110 * s) / 2)
@@ -178,17 +171,21 @@ private struct BookObject: View {
         ribbonPath.addLine(to: p(78, 29))
         ribbonPath.closeSubpath()
 
-        // ── Page flip (one-shot, only mid-turn) ───────────────────
+        // ── Page flip — tracks the swipe: a page on the leading side lifts and
+        //    settles as the card crosses toward center (peaks mid half-step). ──
         var flip = Path(); var flipOpacity = 0.0
-        if animate && turn > 0.001 && turn < 0.999 {
-            let ex = 135 + (25 - 135) * turn
-            let lift = sin(Double(turn) * .pi)
-            let etopY = 30 - CGFloat(lift) * 7
-            let ebotY = 90 - CGFloat(lift) * 4
-            let ctrlX = 80 + (ex - 80) * 0.5
+        let a = min(0.5, abs(offset))
+        let prog = a / 0.5                       // 0 centered → 1 a half-step away
+        if drawFlip && prog > 0.02 {
+            let lift = sin(Double(prog) * .pi)   // 0 → 1 → 0 across the half-step
+            let dir: CGFloat = offset >= 0 ? 1 : -1
+            let outerX: CGFloat = dir > 0 ? 135 : 25
+            let etopY = 30 - CGFloat(lift) * 12
+            let ebotY = 90 - CGFloat(lift) * 8
+            let ctrlX = 80 + (outerX - 80) * 0.55
             flip.move(to: p(80, 30))
-            flip.addQuadCurve(to: p(ex, etopY), control: p(ctrlX, etopY - CGFloat(lift) * 4))
-            flip.addLine(to: p(ex, ebotY))
+            flip.addQuadCurve(to: p(outerX, etopY), control: p(ctrlX, etopY - CGFloat(lift) * 6))
+            flip.addLine(to: p(outerX, ebotY))
             flip.addQuadCurve(to: p(80, 96), control: p(ctrlX, ebotY + 4))
             flip.closeSubpath()
             flipOpacity = lift * 0.85
