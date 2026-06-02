@@ -112,12 +112,12 @@ private struct BookObject: View {
         }
     }
 
-    // Viewbox 160 × 96.
+    // Viewbox 160 × 110 (ported from docs/mockups/book-mock.html, ÷5 of 800×600).
     private func draw(_ context: inout GraphicsContext, size: CGSize,
                       ribbon: CGFloat, turn: CGFloat, animate: Bool) {
 
-        let s: CGFloat = size.width / 160
-        context.translateBy(x: 0, y: max(0, (size.height - 96 * s) / 2))
+        let s = min(size.width / 160, size.height / 110)
+        context.translateBy(x: (size.width - 160 * s) / 2, y: (size.height - 110 * s) / 2)
         func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x * s, y: y * s) }
 
         let shading = GraphicsContext.Shading.linearGradient(
@@ -126,75 +126,78 @@ private struct BookObject: View {
                 .init(color: AppColors.spectrumPurple,  location: 0.50),
                 .init(color: AppColors.spectrumMagenta, location: 1.00),
             ]),
-            startPoint: .zero, endPoint: CGPoint(x: 160 * s, y: 96 * s))
+            startPoint: .zero, endPoint: CGPoint(x: 160 * s, y: 110 * s))
 
-        // ── Pages (splayed open book) ─────────────────────────────
+        // ── Pages ─────────────────────────────────────────────────
         var leftPage = Path()
         leftPage.move(to: p(80, 30))
-        leftPage.addCurve(to: p(14, 21), control1: p(58, 26), control2: p(31, 21))
-        leftPage.addCurve(to: p(12, 79), control1: p(9, 43),  control2: p(9, 61))
-        leftPage.addCurve(to: p(80, 75), control1: p(35, 84), control2: p(59, 81))
-        leftPage.closeSubpath()
-
+        leftPage.addCurve(to: p(25, 30), control1: p(60, 24), control2: p(30, 28))
+        leftPage.addLine(to: p(20, 90))
+        leftPage.addCurve(to: p(80, 96), control1: p(30, 88), control2: p(60, 84))
         var rightPage = Path()
         rightPage.move(to: p(80, 30))
-        rightPage.addCurve(to: p(146, 21), control1: p(102, 26), control2: p(129, 21))
-        rightPage.addCurve(to: p(148, 79), control1: p(151, 43), control2: p(151, 61))
-        rightPage.addCurve(to: p(80, 75),  control1: p(125, 84), control2: p(101, 81))
-        rightPage.closeSubpath()
+        rightPage.addCurve(to: p(135, 30), control1: p(100, 24), control2: p(130, 28))
+        rightPage.addLine(to: p(140, 90))
+        rightPage.addCurve(to: p(80, 96), control1: p(130, 88), control2: p(100, 84))
+        var spine = Path(); spine.move(to: p(80, 30)); spine.addLine(to: p(80, 96))
 
-        var spine = Path(); spine.move(to: p(80, 30)); spine.addLine(to: p(80, 75))
+        // ── Cover / page-block (trapezoidal, wider at bottom) ─────
+        var coverL1 = Path(); coverL1.move(to: p(80, 102))
+        coverL1.addCurve(to: p(14, 98), control1: p(60, 96), control2: p(24, 98)); coverL1.addLine(to: p(21, 32))
+        var coverL2 = Path(); coverL2.move(to: p(78, 98))
+        coverL2.addCurve(to: p(17, 94), control1: p(60, 92), control2: p(26, 94)); coverL2.addLine(to: p(23, 31))
+        var coverR1 = Path(); coverR1.move(to: p(80, 102))
+        coverR1.addCurve(to: p(146, 98), control1: p(100, 96), control2: p(136, 98)); coverR1.addLine(to: p(139, 32))
+        var coverR2 = Path(); coverR2.move(to: p(82, 98))
+        coverR2.addCurve(to: p(143, 94), control1: p(100, 92), control2: p(134, 94)); coverR2.addLine(to: p(137, 31))
+        var gusset = Path(); gusset.move(to: p(74, 99))
+        gusset.addCurve(to: p(86, 99), control1: p(74, 103), control2: p(86, 103))
 
-        // ── Page-block thickness (shallow nested smile) ───────────
-        var block1 = Path()
-        block1.move(to: p(12, 79))
-        block1.addCurve(to: p(80, 81),  control1: p(35, 88),  control2: p(59, 86))
-        block1.addCurve(to: p(148, 79), control1: p(101, 86), control2: p(125, 88))
-        var block2 = Path()
-        block2.move(to: p(13, 78.5))
-        block2.addCurve(to: p(80, 79),    control1: p(36, 85),    control2: p(59, 83.5))
-        block2.addCurve(to: p(147, 78.5), control1: p(101, 83.5), control2: p(124, 85))
-        var tickL = Path(); tickL.move(to: p(12, 79));  tickL.addLine(to: p(14, 82))
-        var tickR = Path(); tickR.move(to: p(148, 79)); tickR.addLine(to: p(146, 82))
-
-        // ── Text lines (perspective: rise toward outer edge) ──────
-        let leftLines: [(CGFloat, CGFloat, CGFloat, CGFloat, CGFloat, CGFloat)] = [
-            (75, 37, 46, 35, 18, 32), (75, 44, 46, 42, 16.5, 39), (75, 51, 46, 49, 15.5, 46),
-            (75, 58, 46, 56, 15.5, 53.5), (75, 65, 46, 63.5, 16.5, 61.5),
-        ]
+        // ── Text lines (perspective; right top line is short) ─────
         func line(_ x0: CGFloat, _ y0: CGFloat, _ cxp: CGFloat, _ cyp: CGFloat, _ x1: CGFloat, _ y1: CGFloat) -> Path {
             var pa = Path(); pa.move(to: p(x0, y0)); pa.addQuadCurve(to: p(x1, y1), control: p(cxp, cyp)); return pa
         }
+        let textLines: [Path] = [
+            line(26, 38, 50, 34, 76, 40), line(25, 46, 50, 42, 76, 48),
+            line(24, 54, 50, 50, 76, 56), line(23, 62, 50, 58, 76, 64),
+            line(22, 70, 50, 66, 76, 72), line(21, 78, 50, 74, 76, 80),
+            line(20, 86, 50, 82, 76, 88),
+            line(110, 38, 120, 36, 132, 38),   // short heading
+            line(84, 46, 110, 40, 133, 46), line(84, 54, 110, 48, 134, 54),
+            line(84, 62, 110, 56, 135, 62), line(84, 70, 110, 64, 136, 70),
+            line(84, 78, 110, 72, 137, 78), line(84, 86, 110, 80, 138, 86),
+        ]
 
         // ── Ribbon (band + swallowtail; lower part sways) ─────────
-        let sway = ribbon * 4
+        let sway = ribbon * 3
         var ribbonPath = Path()
-        ribbonPath.move(to: p(77.5, 23))
-        ribbonPath.addLine(to: p(77.5 + sway, 56))
-        ribbonPath.addLine(to: p(80 + sway, 52.5))     // notch
-        ribbonPath.addLine(to: p(82.5 + sway, 56))
-        ribbonPath.addLine(to: p(82.5, 23))
+        ribbonPath.move(to: p(72, 27))
+        ribbonPath.addLine(to: p(72 + sway, 78))
+        ribbonPath.addLine(to: p(75 + sway, 73))      // notch
+        ribbonPath.addLine(to: p(78 + sway, 78))
+        ribbonPath.addLine(to: p(78, 29))
+        ribbonPath.closeSubpath()
 
         // ── Page flip (one-shot, only mid-turn) ───────────────────
         var flip = Path(); var flipOpacity = 0.0
         if animate && turn > 0.001 && turn < 0.999 {
-            let ex = 146 + (14 - 146) * turn
+            let ex = 135 + (25 - 135) * turn
             let lift = sin(Double(turn) * .pi)
-            let etopY = 21 - CGFloat(lift) * 10
-            let ebotY = 79 - CGFloat(lift) * 6
+            let etopY = 30 - CGFloat(lift) * 7
+            let ebotY = 90 - CGFloat(lift) * 4
             let ctrlX = 80 + (ex - 80) * 0.5
             flip.move(to: p(80, 30))
-            flip.addQuadCurve(to: p(ex, etopY), control: p(ctrlX, etopY - CGFloat(lift) * 5))
+            flip.addQuadCurve(to: p(ex, etopY), control: p(ctrlX, etopY - CGFloat(lift) * 4))
             flip.addLine(to: p(ex, ebotY))
-            flip.addQuadCurve(to: p(80, 75), control: p(ctrlX, ebotY + 4))
+            flip.addQuadCurve(to: p(80, 96), control: p(ctrlX, ebotY + 4))
             flip.closeSubpath()
-            flipOpacity = lift * 0.9
+            flipOpacity = lift * 0.85
         }
 
         // ── Strokes ───────────────────────────────────────────────
-        let pageStroke = StrokeStyle(lineWidth: 1.3 * s, lineCap: .round, lineJoin: .round)
+        let pageStroke = StrokeStyle(lineWidth: 1.4 * s, lineCap: .round, lineJoin: .round)
         let thinStroke = StrokeStyle(lineWidth: 0.8 * s, lineCap: .round)
-        let ribStroke  = StrokeStyle(lineWidth: 1.6 * s, lineCap: .round, lineJoin: .round)
+        let ribStroke  = StrokeStyle(lineWidth: 1.5 * s, lineCap: .round, lineJoin: .round)
 
         // Pass 1: glow
         context.drawLayer { ctx in
@@ -206,16 +209,15 @@ private struct BookObject: View {
         }
 
         // Pass 2: crisp
-        var textCtx = context; textCtx.opacity = 0.4
-        for l in leftLines {
-            textCtx.stroke(line(l.0, l.1, l.2, l.3, l.4, l.5), with: shading, style: thinStroke)
-            textCtx.stroke(line(160 - l.0, l.1, 160 - l.2, l.3, 160 - l.4, l.5), with: shading, style: thinStroke)
+        var coverCtx = context; coverCtx.opacity = 0.5
+        for pa in [coverL1, coverL2, coverR1, coverR2, gusset] {
+            coverCtx.stroke(pa, with: shading, style: thinStroke)
         }
 
-        var blockCtx = context; blockCtx.opacity = 0.5
-        for pa in [block1, block2, tickL, tickR] { blockCtx.stroke(pa, with: shading, style: thinStroke) }
+        var textCtx = context; textCtx.opacity = 0.38
+        for pa in textLines { textCtx.stroke(pa, with: shading, style: thinStroke) }
 
-        var spineCtx = context; spineCtx.opacity = 0.5
+        var spineCtx = context; spineCtx.opacity = 0.55
         spineCtx.stroke(spine, with: shading, style: thinStroke)
 
         context.stroke(leftPage,  with: shading, style: pageStroke)
@@ -226,6 +228,8 @@ private struct BookObject: View {
             fc.stroke(flip, with: shading, style: pageStroke)
         }
 
+        // Ribbon — fills the card bg so it reads in front of the pages
+        context.fill(ribbonPath, with: .color(AppColors.cardBg))
         context.stroke(ribbonPath, with: shading, style: ribStroke)
     }
 }
