@@ -230,17 +230,17 @@ responsive exit line, deck weighting, and Compass derivation continue to work as
 ### Solo × Exploring
 | id | context | title | subtitle | detail |
 |---|---|---|---|---|
-| single_exploring | singleExploring | I'm single | Deepening my understanding of who I am in NM | You've moved past curiosity — now it's about building a real sense of your identity, boundaries, and what you want from connections. |
-| partnered_hands_off | partneredHandsOff | My partner's hands-off | They're supportive but not actively involved | Your partner is on board but this is your journey. We'll focus on your individual growth while keeping the relationship in view. |
-| multiple_undefined | multipleUndefined | I'm dating around | I'm dating, but nothing is fully defined yet | You're somewhere between single and partnered — multiple connections, no fixed structure. We'll help you figure out what you actually want before things crystallize. |
+| single_exploring | singleExploring | I'm single | Dating and still figuring out who I am in NM | You've moved past curiosity — now it's about building a real sense of your identity, boundaries, and what you want from connections. |
+| partnered_hands_off | partneredHandsOff | Partnered, but here on my own | I have a partner — exploring the app on my own | Your partner is on board but this is your journey. We'll focus on your individual growth while keeping the relationship in view. |
+| multiple_undefined | multipleUndefined | I have multiple partners | Here to navigate it on my own | You're holding more than one connection and steering it yourself. We'll help you navigate the balance — communication, time, and what you actually want from each. |
 | solo_exploring_undecided | soloExploringUndecided | None of these quite fit | My situation is hard to pin down right now | You know you're exploring — you're just not sure which box fits. That's fine. We'll meet you where you are and let the label catch up later. |
 
 ### Solo × Experienced
 | id | context | title | subtitle | detail |
 |---|---|---|---|---|
-| single_experienced | singleExperienced | I'm single | I know who I am in NM | You've done the work. This is about staying intentional, continuing to grow, and finding the connections that fit the life you've built. |
-| partnered_aware | partneredAware | My partner's not part of this | They know my NM identity — they're just not part of this | Your partner is aware and supportive, but your NM journey is yours to navigate. We'll focus on depth, skill, and continued self-awareness. |
-| solo_poly_independent | soloPolyIndependent | I navigate independently | Multiple relationships, no anchor partnership | You move through connections on your own terms. We'll support the craft of that — communication, transitions, autonomy, and care without hierarchy. |
+| single_experienced | singleExperienced | I'm single | Solo, and clear on who I am in NM | You've done the work. This is about staying intentional, continuing to grow, and finding the connections that fit the life you've built. |
+| partnered_aware | partneredAware | I have an established partner | We're solid — this is my own space to manage it | Your partner is aware and supportive, but your NM journey is yours to navigate. We'll focus on depth, skill, and continued self-awareness. |
+| solo_poly_independent | soloPolyIndependent | I have multiple partners | Solo poly — multiple relationships, no hierarchy | You move through connections on your own terms. We'll support the craft of that — communication, transitions, autonomy, and care without hierarchy. |
 | solo_experienced_undecided | soloExperiencedUndecided | None of these quite fit | My structure shifts and none of these fully capture it | Experienced doesn't always mean settled. If your situation is genuinely fluid, start here — we'll build around what's true right now. |
 
 ### Couple × Curious
