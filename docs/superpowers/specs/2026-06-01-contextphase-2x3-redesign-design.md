@@ -225,7 +225,7 @@ responsive exit line, deck weighting, and Compass derivation continue to work as
 | single_curious | singleCurious | I'm single | NM is new territory for me | No relationship to navigate — just you and your curiosity. We'll start with the fundamentals and let you explore at your own pace. |
 | partnered_supportive_curious | partneredSupportiveCurious | My partner's on board | They're supportive of me looking into this | You've opened the door — we'll help you figure out what you actually want before the bigger conversations begin. |
 | partnered_undisclosed | partneredUndisclosed | I haven't brought it up | I have a partner, but the conversation hasn't happened | You're still figuring out what this means to you. We'll help you get clarity before you decide whether or how to start the conversation. |
-| solo_curious_undecided | soloCuriousUndecided | None of these quite fit | My situation doesn't quite fit any of these | That's okay — most people's lives are messier than a list of options. Start here and we'll help you figure out the rest as you go. |
+| solo_curious_undecided | soloCuriousUndecided | None of these quite fit | Real life rarely fits neat boxes | That's okay — most people's lives are messier than a list of options. Start here and we'll help you figure out the rest as you go. |
 
 ### Solo × Exploring
 | id | context | title | subtitle | detail |
@@ -233,7 +233,7 @@ responsive exit line, deck weighting, and Compass derivation continue to work as
 | single_exploring | singleExploring | I'm single | Dating and still figuring out who I am in NM | You've moved past curiosity — now it's about building a real sense of your identity, boundaries, and what you want from connections. |
 | partnered_hands_off | partneredHandsOff | Partnered, but here on my own | I have a partner — exploring the app on my own | Your partner is on board but this is your journey. We'll focus on your individual growth while keeping the relationship in view. |
 | multiple_undefined | multipleUndefined | I have multiple partners | Here to navigate it on my own | You're holding more than one connection and steering it yourself. We'll help you navigate the balance — communication, time, and what you actually want from each. |
-| solo_exploring_undecided | soloExploringUndecided | None of these quite fit | My situation is hard to pin down right now | You know you're exploring — you're just not sure which box fits. That's fine. We'll meet you where you are and let the label catch up later. |
+| solo_exploring_undecided | soloExploringUndecided | None of these quite fit | Still taking shape — that's okay | You know you're exploring — you're just not sure which box fits. That's fine. We'll meet you where you are and let the label catch up later. |
 
 ### Solo × Experienced
 | id | context | title | subtitle | detail |
@@ -241,7 +241,7 @@ responsive exit line, deck weighting, and Compass derivation continue to work as
 | single_experienced | singleExperienced | I'm single | Solo, and clear on who I am in NM | You've done the work. This is about staying intentional, continuing to grow, and finding the connections that fit the life you've built. |
 | partnered_aware | partneredAware | I have an established partner | We're solid — this is my own space to manage it | Your partner is aware and supportive, but your NM journey is yours to navigate. We'll focus on depth, skill, and continued self-awareness. |
 | solo_poly_independent | soloPolyIndependent | I have multiple partners | Solo poly — multiple relationships, no hierarchy | You move through connections on your own terms. We'll support the craft of that — communication, transitions, autonomy, and care without hierarchy. |
-| solo_experienced_undecided | soloExperiencedUndecided | None of these quite fit | My structure shifts and none of these fully capture it | Experienced doesn't always mean settled. If your situation is genuinely fluid, start here — we'll build around what's true right now. |
+| solo_experienced_undecided | soloExperiencedUndecided | None of these quite fit | Your structure shifts with the season | Experienced doesn't always mean settled. If your situation is genuinely fluid, start here — we'll build around what's true right now. |
 
 ### Couple × Curious
 | id | context | title | subtitle | detail |
@@ -249,7 +249,7 @@ responsive exit line, deck weighting, and Compass derivation continue to work as
 | couple_symmetric_curious | coupleSymmetricCurious | We're both curious | Neither of us has done this before | You're starting from the same place, which is a real advantage. We'll build shared language and give you both room to think out loud before any decisions get made. |
 | couple_asymmetric_curious | coupleAsymmetricCurious | One of us brought this up | The other is open, but still processing | The interest isn't equal yet — and that's okay. We'll help both of you find your footing without pushing anyone faster than they're ready to go. |
 | couple_stalled_conversation | coupleStalledConversation | We talked, but it stalled | But the conversation never really went anywhere | Something got in the way — timing, fear, uncertainty. We'll help you pick up the thread and figure out why it stalled before trying again. |
-| couple_curious_undecided | coupleCuriousUndecided | None of these quite fit | Our situation is a little bit of all of these | That's more common than you'd think. Start here — you don't need to have it figured out to begin figuring it out together. |
+| couple_curious_undecided | coupleCuriousUndecided | None of these quite fit | You don't need it figured out to start | That's more common than you'd think. Start here — you don't need to have it figured out to begin figuring it out together. |
 
 ### Couple × Exploring
 | id | context | title | subtitle | detail |
@@ -257,7 +257,7 @@ responsive exit line, deck weighting, and Compass derivation continue to work as
 | couple_solidifying | coupleSolidifying | We're ready to go deeper | Now we want to go deeper with intention | You've moved past curiosity — now it's about building a shared identity in NM. We'll help you name what's working, what isn't, and where you want to go. |
 | couple_reorienting | coupleReorienting | Something has shifted | We're figuring out our footing again | Your dynamic has changed — a new connection, a boundary that isn't working, or just a feeling that things are off. We'll help you recalibrate together. |
 | couple_parallel_exploring | coupleParallelExploring | We explore in parallel | Together, but each on our own path | You're a couple but your NM journeys run in parallel. We'll support both your individual growth and the connection that holds it all together. |
-| couple_exploring_undecided | coupleExploringUndecided | None of these quite fit | We're somewhere between all of these right now | Exploring rarely looks like one clean thing. If your dynamic is layered or shifting, start here — we'll help you make sense of it as you go. |
+| couple_exploring_undecided | coupleExploringUndecided | None of these quite fit | Layered and shifting — that's normal | Exploring rarely looks like one clean thing. If your dynamic is layered or shifting, start here — we'll help you make sense of it as you go. |
 
 ### Couple × Experienced
 | id | context | title | subtitle | detail |
@@ -265,7 +265,7 @@ responsive exit line, deck weighting, and Compass derivation continue to work as
 | couple_fresh_intentional | coupleFreshIntentional | We know what we're doing | We want to stay intentional and keep it alive | Experience doesn't make things automatic. We'll help you stay curious about each other and your dynamic without letting it run on autopilot. |
 | couple_skill_building | coupleSkillBuilding | Better at the hard stuff | Communication, conflict, care — the meta-skills | You're good at NM. Now you want to be excellent at the relationship craft underneath it — the conversations, the repairs, the emotional fluency. |
 | couple_evolving | coupleEvolving | We're rethinking our structure | Expanding, reorienting, or rebuilding our dynamic | Something about how you've set this up needs to evolve. We'll help you think through what that means and how to move through it without losing what matters. |
-| couple_experienced_undecided | coupleExperiencedUndecided | None of these quite fit | We just want to keep growing in whatever way fits | That's a legitimate place to be. You don't need a category — we'll focus on what's useful and let you steer. |
+| couple_experienced_undecided | coupleExperiencedUndecided | None of these quite fit | Past labels, just here to grow | That's a legitimate place to be. You don't need a category — we'll focus on what's useful and let you steer. |
 
 ---
 

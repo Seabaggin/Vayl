@@ -174,7 +174,7 @@ final class VaylDirector {
         case .gender:          runGenderEntry()
         case .experienceLevel: runExperienceLevelEntry()
         case .context:         runContextEntry()
-        case .quiz:            runQuizEntry()
+        case .compass:         runCompassEntry()
         case .curiosity:       runCuriosityEntry()
         case .confirmation:    runConfirmationEntry()
         case .buildDeck:       runBuildDeckEntry()
@@ -198,15 +198,104 @@ final class VaylDirector {
         // Controller is View-owned (@State in ExperienceLevelPhase); nothing to reset here.
     }
 
-    /// Called by ExperienceLevelPhase on confirm. Writes nmStage and advances.
+    /// Called by ExperienceLevelPhase on confirm. Writes nmStage, adds the collected
+    /// card to the corner deck (so the "X / 6" count grows), pulses the deck, then advances.
     func commitExperienceLevel(_ intensity: CandleIntensity) {
         onboardingData.nmStage = intensity.nmStage
-        advance(to: .context)
+
+        let collected = VaylCardModel()
+        collected.credential = .experienceLevel
+        cornerDeckCards.append(collected)
+        withAnimation(AppAnimation.deckReceive) { deckPulse = true }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
+            deckPulse = false
+        }
+        // NOTE: advance to .context is NOT fired here. This method is the "receive"
+        // step — it must coincide with the winner card landing in the deck. The phase
+        // advance flows from ExperienceLevelPhase's `.done` state observer, after the
+        // controller has cleared the two discards and held a settle beat.
     }
     private func runContextEntry() {
-        showDealerLine("Tell me where you're at.")
+        resetSlotPool()
+        // Entrance copy + table recede are sequenced by ContextPhase.onAppear, so the
+        // felt carries over from ExperienceLevel and only dissolves once the dealer
+        // headline has greeted (earned transition, not an abrupt yank).
     }
-    private func runQuizEntry() {}
+
+    /// Bridging line that opens ContextPhase. Fires on the clean, still-present
+    /// felt and auto-fades at 2.8s — copy and carousel arrival overlap by design.
+    /// Built here, never raw from View.
+    func showContextHeadline() {
+        let copy = onboardingData.appMode == .together
+            ? "Where are you two starting from?"
+            : "Where are you starting from?"
+        showDealerLine(copy, hideAfter: 2.8)
+    }
+
+    /// Selection-dependent exit line shown at the end of ExperienceLevelPhase,
+    /// before the phase advances to Context. Fires on the clean table after the
+    /// deck pulse. Director-owned — never raw in the View.
+    func showExpLevelExitLine(_ intensity: CandleIntensity) {
+        let copy: String
+        switch intensity {
+        case .curious:     copy = "Good place to start."
+        case .exploring:   copy = "There's a lot to work with."
+        case .experienced: copy = "Let's build on that."
+        }
+        showDealerLine(copy, hideAfter: 2.4)
+    }
+
+    /// Fades the felt fully out so the context carousel reads as suspended *away
+    /// from* the table. Safe to call from `ContextPhase.onAppear` as well as
+    /// `runContextEntry()` — guarantees the fade regardless of how the phase was
+    /// entered (real advance vs. direct phase set). The table (and corner deck)
+    /// re-emerge at exit when the confirmed card is pocketed (see commitContext).
+    func recedeTableForContext() {
+        withAnimation(AppAnimation.tableRecede.reduceMotionSafe) { tableFade = 0.0 }
+    }
+
+
+    /// Called by ContextPhase once the cards have begun their exit. Writes the
+    /// chosen relationship context + situational register, adds the `.context`
+    /// credential to the corner deck, re-emerges the felt, projects a dealer line
+    /// that responds to the choice, then advances to CompassPhase after a copy beat.
+    /// `advance` stays the sole phase gate. NOTE: ContextPhase never writes
+    /// `emotionalRegister` — that belongs to CompassPhase Q3 exclusively.
+    func concludeContext(relationshipContext: RelationshipContext,
+                         situationalRegister: SituationalRegister) {
+        onboardingData.relationshipContext = relationshipContext.rawValue
+        onboardingData.situationalRegister = situationalRegister.rawValue
+
+        let collected = VaylCardModel()
+        collected.credential = .context
+        cornerDeckCards.append(collected)
+
+        // Felt re-emerges and the corner deck receives the card.
+        withAnimation(AppAnimation.tableRecede.reduceMotionSafe) { tableFade = 1.0 }
+        withAnimation(AppAnimation.deckReceive) { deckPulse = true }
+        showDealerLine(contextResponse(for: situationalRegister))
+
+        sequenceAttempt += 1
+        let current = sequenceAttempt
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
+            deckPulse = false
+            try? await Task.sleep(for: .milliseconds(2000)) // let the responsive line land
+            guard current == self.sequenceAttempt else { return }
+            advance(to: .compass)
+        }
+    }
+
+    /// Dealer line that responds to the chosen situational register.
+    private func contextResponse(for register: SituationalRegister) -> String {
+        switch register {
+        case .anxious:  return "We'll take this slow."
+        case .excited:  return "Let's keep that momentum."
+        case .flexible: return "Good — let's find the shape of it."
+        }
+    }
+    private func runCompassEntry() {}
     private func runCuriosityEntry() { showDealerLine("Sweep away what you aren't ready for.") }
     private func runConfirmationEntry() {}
     private func runBuildDeckEntry() { foilIntegrity = 1.0; foilTears = [] }
@@ -521,7 +610,10 @@ final class VaylDirector {
     }
 
     func evaluateOpenerDeckType() {
-        let hasHeavyContext   = onboardingData.emotionalRegister == "anxious"
+        // "Heavy context" = the user's situation (ContextPhase), not the aspirational
+        // Q3 register. Keys off situationalRegister so the signal is unchanged by the
+        // emotionalRegister → CompassPhase migration.
+        let hasHeavyContext   = onboardingData.situationalRegister == SituationalRegister.anxious.rawValue
         let hasMoreSelections = onboardingData.curiositySelections.count >= 4
         openerDeckType = hasHeavyContext && !hasMoreSelections ? .anxious : .excited
         onboardingData.openerDeckType = openerDeckType
@@ -1008,6 +1100,7 @@ final class VaylDirector {
             // Solo or together spin 2 — pocket the card and advance
             withAnimation(AppAnimation.fast.reduceMotionSafe) { genderPickerVisible = false }
             withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { genderCardVisible = false }
+            dissolutionT       = 0             // clear table warp the moment card pockets
             genderShouldPocket = true
         } else {
             // Together spin 1 — reset machine for partner

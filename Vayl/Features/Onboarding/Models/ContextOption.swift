@@ -72,7 +72,7 @@ extension ContextOption {
               title: "I haven't brought it up", subtitle: "I have a partner, but the conversation hasn't happened",
               detail: "You're still figuring out what this means to you. We'll help you get clarity before you decide whether or how to start the conversation."),
         .init(id: "solo_curious_undecided", context: .soloCuriousUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "My situation doesn't quite fit any of these",
+              title: "None of these quite fit", subtitle: "Real life rarely fits neat boxes",
               detail: "That's okay — most people's lives are messier than a list of options. Start here and we'll help you figure out the rest as you go."),
     ]
 
@@ -88,7 +88,7 @@ extension ContextOption {
               title: "I have multiple partners", subtitle: "Here to navigate it on my own",
               detail: "You're holding more than one connection and steering it yourself. We'll help you navigate the balance — communication, time, and what you actually want from each."),
         .init(id: "solo_exploring_undecided", context: .soloExploringUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "My situation is hard to pin down right now",
+              title: "None of these quite fit", subtitle: "Still taking shape — that's okay",
               detail: "You know you're exploring — you're just not sure which box fits. That's fine. We'll meet you where you are and let the label catch up later."),
     ]
 
@@ -104,7 +104,7 @@ extension ContextOption {
               title: "I have multiple partners", subtitle: "Solo poly — multiple relationships, no hierarchy",
               detail: "You move through connections on your own terms. We'll support the craft of that — communication, transitions, autonomy, and care without hierarchy."),
         .init(id: "solo_experienced_undecided", context: .soloExperiencedUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "My structure shifts and none of these fully capture it",
+              title: "None of these quite fit", subtitle: "Your structure shifts with the season",
               detail: "Experienced doesn't always mean settled. If your situation is genuinely fluid, start here — we'll build around what's true right now."),
     ]
 
@@ -120,7 +120,7 @@ extension ContextOption {
               title: "We talked, but it stalled", subtitle: "But the conversation never really went anywhere",
               detail: "Something got in the way — timing, fear, uncertainty. We'll help you pick up the thread and figure out why it stalled before trying again."),
         .init(id: "couple_curious_undecided", context: .coupleCuriousUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "Our situation is a little bit of all of these",
+              title: "None of these quite fit", subtitle: "You don't need it figured out to start",
               detail: "That's more common than you'd think. Start here — you don't need to have it figured out to begin figuring it out together."),
     ]
 
@@ -136,7 +136,7 @@ extension ContextOption {
               title: "We explore in parallel", subtitle: "Together, but each on our own path",
               detail: "You're a couple but your NM journeys run in parallel. We'll support both your individual growth and the connection that holds it all together."),
         .init(id: "couple_exploring_undecided", context: .coupleExploringUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "We're somewhere between all of these right now",
+              title: "None of these quite fit", subtitle: "Layered and shifting — that's normal",
               detail: "Exploring rarely looks like one clean thing. If your dynamic is layered or shifting, start here — we'll help you make sense of it as you go."),
     ]
 
@@ -152,7 +152,7 @@ extension ContextOption {
               title: "We're rethinking our structure", subtitle: "Expanding, reorienting, or rebuilding our dynamic",
               detail: "Something about how you've set this up needs to evolve. We'll help you think through what that means and how to move through it without losing what matters."),
         .init(id: "couple_experienced_undecided", context: .coupleExperiencedUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "We just want to keep growing in whatever way fits",
+              title: "None of these quite fit", subtitle: "Past labels, just here to grow",
               detail: "That's a legitimate place to be. You don't need a category — we'll focus on what's useful and let you steer."),
     ]
 }
