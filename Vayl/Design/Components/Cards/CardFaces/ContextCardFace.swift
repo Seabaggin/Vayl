@@ -122,22 +122,33 @@ private struct MapObject: View {
             route.addCurve(to: p(70, 66), control1: p(44, 84), control2: p(56, 70))
             route.addCurve(to: p(104, 58), control1: p(84, 62), control2: p(96, 60))
 
-            // 5. Location pin — circular head + downward pointer + inner dot
-            let pinCx: CGFloat = 104, pinHeadCy: CGFloat = 40, pinR: CGFloat = 10
-            let pinHead = Path(ellipseIn: CGRect(
-                x: (pinCx - pinR) * s, y: (pinHeadCy - pinR) * s,
-                width: pinR * 2 * s, height: pinR * 2 * s))
-            var pinPoint = Path()
-            pinPoint.move(to: p(pinCx - 6, pinHeadCy + 7))
-            pinPoint.addLine(to: p(pinCx, pinHeadCy + 20))   // tip
-            pinPoint.addLine(to: p(pinCx + 6, pinHeadCy + 7))
-            let pinDotR: CGFloat = 3.4
-            let pinDot = Path(ellipseIn: CGRect(
-                x: (pinCx - pinDotR) * s, y: (pinHeadCy - pinDotR) * s,
-                width: pinDotR * 2 * s, height: pinDotR * 2 * s))
-            // Ground tick under the pin tip
+            // 5. Location pin — one smooth teardrop marker (round head → point),
+            //    like the 📍 silhouette. Sides are true tangents from the tip to the
+            //    head circle, so head and point are a single continuous outline.
+            let pinCx: CGFloat = 104, pinCy: CGFloat = 34, pinR: CGFloat = 12
+            let pinTipLen: CGFloat = 32                       // head center → tip
+            let theta = acos(pinR / pinTipLen)               // tangent half-angle
+            let tip  = p(pinCx, pinCy + pinTipLen)
+            let tanA = p(pinCx - pinR * sin(theta), pinCy + pinR * cos(theta))  // lower-left
+            let angA = atan2(pinR * cos(theta), -pinR * sin(theta))
+            let angB = atan2(pinR * cos(theta),  pinR * sin(theta))
+            var pinPath = Path()
+            pinPath.move(to: tip)
+            pinPath.addLine(to: tanA)
+            pinPath.addArc(center: p(pinCx, pinCy), radius: pinR * s,
+                           startAngle: .radians(Double(angA)),
+                           endAngle:   .radians(Double(angB) + 2 * .pi),
+                           clockwise:  false)              // over the top, back to lower-right
+            pinPath.addLine(to: tip)
+            pinPath.closeSubpath()
+            // Inner ring — the marker's hole
+            let pinHoleR: CGFloat = 4
+            let pinHole = Path(ellipseIn: CGRect(
+                x: (pinCx - pinHoleR) * s, y: (pinCy - pinHoleR) * s,
+                width: pinHoleR * 2 * s, height: pinHoleR * 2 * s))
+            // Ground tick under the tip
             let pinBase = Path(ellipseIn: CGRect(
-                x: (pinCx - 7) * s, y: (pinHeadCy + 19) * s,
+                x: (pinCx - 7) * s, y: (pinCy + pinTipLen - 1) * s,
                 width: 14 * s, height: 4 * s))
 
             // ── Stroke styles ─────────────────────────────────────────
@@ -151,9 +162,8 @@ private struct MapObject: View {
             context.drawLayer { ctx in
                 ctx.addFilter(.blur(radius: 3 * s))
                 ctx.opacity = 0.26
-                ctx.stroke(mapPath,  with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
-                ctx.stroke(pinHead,  with: shading, style: StrokeStyle(lineWidth: 5 * s))
-                ctx.stroke(pinPoint, with: shading, style: StrokeStyle(lineWidth: 5 * s, lineJoin: .round))
+                ctx.stroke(mapPath, with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
+                ctx.stroke(pinPath, with: shading, style: StrokeStyle(lineWidth: 5 * s, lineJoin: .round))
             }
 
             // ── Pass 2: Crisp ─────────────────────────────────────────
@@ -178,15 +188,14 @@ private struct MapObject: View {
             // Map outline — full
             context.stroke(mapPath, with: shading, style: mapStroke)
 
-            // Pin base tick — dim
+            // Pin base tick — dim (dropped-on-map feel)
             var baseCtx = context
             baseCtx.opacity = 0.30
             baseCtx.stroke(pinBase, with: shading, style: contourStroke)
 
-            // Pin — bold (the focal point)
-            context.stroke(pinPoint, with: shading, style: pinStroke)
-            context.stroke(pinHead,  with: shading, style: pinStroke)
-            context.fill(pinDot, with: shading)
+            // Pin — bold teardrop marker (the focal point) + inner hole
+            context.stroke(pinPath, with: shading, style: pinStroke)
+            context.stroke(pinHole, with: shading, style: StrokeStyle(lineWidth: 1.1 * s))
         }
     }
 }
