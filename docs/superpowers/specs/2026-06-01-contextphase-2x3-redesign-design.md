@@ -130,15 +130,23 @@ Undecided cards → `.flexible` (matches the spec's "lowest-stakes, most generat
 
 ---
 
-## 5. Card Face (simplify)
+## 5. Card Face (signature object + header)
 
-- `VaylCardContent.context` case → signature shrinks to `.context(number:title:)`
-  (drop `subtitle` / `detail`). This is a content-case change, not a shell change.
-- `ContextCardFace` renders **number + title only** — title larger, vertically
-  centered, so the card reads as a headline. Removes the subtitle/detail blocks and
-  their `isFront`-gated reveal (that responsibility moves to the phase's bottom panel).
-- All geometry remains proportional to card width (OB card-face rule). Spectrum stroke
-  language unchanged.
+- The `VaylCardContent.context` case **keeps its 4-param signature**
+  `.context(number:title:subtitle:detail:)` (subtitle/detail unused by the face but
+  retained so the call site compiles — lower blast radius than changing the enum).
+- `ContextCardFace` is a composed card: a **signature object** (Canvas line
+  illustration) in the upper region → a **spectrum hairline** → the **number + title
+  header** beneath, as one vertically-centered block.
+- **Signature object = open book + bookmark ribbon** (the phase's identity, like
+  name=typewriter / mode=controller / gender=slot-machine / experience=candle). Pure
+  Canvas, spectrum strokes, two-pass glow+crisp.
+- **Life (front card only, Reduce-Motion-guarded):** text lines write in (a spectrum
+  write-head sweeps the page lines, self-driven by `TimelineView(.animation)`),
+  bookmark ribbon sways, and a one-shot page-turn settles when the card becomes front
+  (`turnProgress` driven on `isFront`).
+- Subtitle/detail are presented by ContextPhase in its bottom panel, not on the card.
+- All geometry proportional to card width (OB card-face rule).
 
 ---
 
