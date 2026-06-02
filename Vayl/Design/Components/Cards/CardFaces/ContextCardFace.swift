@@ -122,34 +122,29 @@ private struct MapObject: View {
             route.addCurve(to: p(70, 66), control1: p(44, 84), control2: p(56, 70))
             route.addCurve(to: p(104, 58), control1: p(84, 62), control2: p(96, 60))
 
-            // 5. Location pin — one smooth teardrop marker (round head → point),
-            //    like the 📍 silhouette. Sides are true tangents from the tip to the
-            //    head circle, so head and point are a single continuous outline.
-            let pinCx: CGFloat = 104, pinCy: CGFloat = 34, pinR: CGFloat = 12
-            let pinTipLen: CGFloat = 32                       // head center → tip
-            let theta = acos(pinR / pinTipLen)               // tangent half-angle
-            let tip  = p(pinCx, pinCy + pinTipLen)
-            let tanA = p(pinCx - pinR * sin(theta), pinCy + pinR * cos(theta))  // lower-left
-            let angA = atan2(pinR * cos(theta), -pinR * sin(theta))
-            let angB = atan2(pinR * cos(theta),  pinR * sin(theta))
-            var pinPath = Path()
-            pinPath.move(to: tip)
-            pinPath.addLine(to: tanA)
-            pinPath.addArc(center: p(pinCx, pinCy), radius: pinR * s,
-                           startAngle: .radians(Double(angA)),
-                           endAngle:   .radians(Double(angB) + 2 * .pi),
-                           clockwise:  false)              // over the top, back to lower-right
-            pinPath.addLine(to: tip)
-            pinPath.closeSubpath()
-            // Inner ring — the marker's hole
-            let pinHoleR: CGFloat = 4
-            let pinHole = Path(ellipseIn: CGRect(
-                x: (pinCx - pinHoleR) * s, y: (pinCy - pinHoleR) * s,
-                width: pinHoleR * 2 * s, height: pinHoleR * 2 * s))
+            // 5. Location pin — round pushpin (📌): a spherical head on a thin
+            //    straight needle. Ball drawn on top of the needle so the needle
+            //    tucks under it; a short crescent suggests the sphere's highlight.
+            let pinCx: CGFloat = 104, pinBallCy: CGFloat = 30, pinBallR: CGFloat = 13
+            let needleTopY = pinBallCy + pinBallR - 3        // tuck under the ball
+            let needleTipY = pinBallCy + pinBallR + 32       // sharp point below
+            let needleHalfW: CGFloat = 2.4
+            let ballHead = Path(ellipseIn: CGRect(
+                x: (pinCx - pinBallR) * s, y: (pinBallCy - pinBallR) * s,
+                width: pinBallR * 2 * s, height: pinBallR * 2 * s))
+            var needle = Path()
+            needle.move(to:    p(pinCx - needleHalfW, needleTopY))
+            needle.addLine(to: p(pinCx, needleTipY))         // tip
+            needle.addLine(to: p(pinCx + needleHalfW, needleTopY))
+            needle.closeSubpath()
+            // Spherical highlight — short crescent, upper-left of the ball
+            var highlight = Path()
+            highlight.addArc(center: p(pinCx, pinBallCy), radius: pinBallR * 0.58 * s,
+                             startAngle: .degrees(200), endAngle: .degrees(256), clockwise: false)
             // Ground tick under the tip
             let pinBase = Path(ellipseIn: CGRect(
-                x: (pinCx - 7) * s, y: (pinCy + pinTipLen - 1) * s,
-                width: 14 * s, height: 4 * s))
+                x: (pinCx - 6) * s, y: (needleTipY - 1) * s,
+                width: 12 * s, height: 3.5 * s))
 
             // ── Stroke styles ─────────────────────────────────────────
             let mapStroke     = StrokeStyle(lineWidth: 1.3 * s, lineCap: .round, lineJoin: .round)
@@ -162,8 +157,9 @@ private struct MapObject: View {
             context.drawLayer { ctx in
                 ctx.addFilter(.blur(radius: 3 * s))
                 ctx.opacity = 0.26
-                ctx.stroke(mapPath, with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
-                ctx.stroke(pinPath, with: shading, style: StrokeStyle(lineWidth: 5 * s, lineJoin: .round))
+                ctx.stroke(mapPath,  with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
+                ctx.stroke(ballHead, with: shading, style: StrokeStyle(lineWidth: 5 * s))
+                ctx.stroke(needle,   with: shading, style: StrokeStyle(lineWidth: 4 * s, lineJoin: .round))
             }
 
             // ── Pass 2: Crisp ─────────────────────────────────────────
@@ -193,9 +189,15 @@ private struct MapObject: View {
             baseCtx.opacity = 0.30
             baseCtx.stroke(pinBase, with: shading, style: contourStroke)
 
-            // Pin — bold teardrop marker (the focal point) + inner hole
-            context.stroke(pinPath, with: shading, style: pinStroke)
-            context.stroke(pinHole, with: shading, style: StrokeStyle(lineWidth: 1.1 * s))
+            // Needle (drawn first so the ball sits on top)
+            context.stroke(needle, with: shading,
+                           style: StrokeStyle(lineWidth: 1.4 * s, lineCap: .round, lineJoin: .round))
+            // Ball head — bold focal point
+            context.stroke(ballHead, with: shading, style: pinStroke)
+            // Spherical highlight — dim crescent
+            var hiCtx = context
+            hiCtx.opacity = 0.5
+            hiCtx.stroke(highlight, with: shading, style: StrokeStyle(lineWidth: 1.0 * s, lineCap: .round))
         }
     }
 }
