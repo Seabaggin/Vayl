@@ -3,22 +3,19 @@
 // Content face for the relationship-context cards (ContextPhase carousel).
 // Rendered by VaylCardFace when its content is `.context(...)`.
 //
-// Signature object: an OPEN BOOK with page thickness + a bookmark ribbon — the
-// phase's identity ("Where are you starting from?" → which chapter of your
-// story), mirroring NamePhase=typewriter / ModeSelect=controller /
-// Gender=slot-machine / ExperienceLevel=candle. Pure Canvas line illustration in
-// the spectrum language (two passes: blurred glow + crisp stroke), upper region;
-// number + title sit beneath as the header.
+// Signature object: an OPEN BOOK (splayed pages, page-block thickness) with a
+// bookmark ribbon — the phase's identity ("Where are you starting from?" → which
+// chapter of your story), mirroring NamePhase=typewriter / ModeSelect=controller
+// / Gender=slot-machine / ExperienceLevel=candle. Pure Canvas line illustration
+// in the spectrum language (two passes: blurred glow + crisp stroke), upper
+// region; number + title sit beneath as the header. Geometry ported from a
+// browser SVG reference (docs/mockups/book-mock.html), halved to a 160-unit box.
 //
-// Life (only the FRONT card animates; all guarded by Reduce Motion):
-//   · text lines write in  — a spectrum "write head" sweeps down the page lines
-//   · bookmark ribbon sway — the ribbon tail drifts gently
-//   · page flip (looping)  — a page continuously lifts from the right, arcs over
-//                            the spine, and lands left; repeats forever
-// All three are self-driven by TimelineView while the card is front, so the flip
-// keeps looping no matter how many times the user cycles cards 1–4.
+// Motion (front card only, Reduce-Motion guarded):
+//   · ribbon sway — the idle "alive" animation while the user rests on a card
+//   · page turn   — a one-shot page flip each time a card BECOMES the front card
+//                   (i.e. when the user swipes between cards)
 //
-// Dark-only, spectrum language. Geometry proportional to card width (OB rule).
 // `subtitle`/`detail` are retained props (unused) so the 4-param `.context` call
 // site in VaylCardFace keeps compiling.
 
@@ -32,7 +29,10 @@ struct ContextCardFace: View {
     let detail:   String
     var isFront:  Bool = true
 
+    // Page-turn one-shot, fired when this card becomes front. 1.0 = settled.
+    @State private var turnProgress: CGFloat = 1
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private var animate: Bool { isFront && !reduceMotion }
 
     var body: some View {
@@ -45,7 +45,7 @@ struct ContextCardFace: View {
 
                 Spacer(minLength: 0)
 
-                BookObject(animate: animate)
+                BookObject(animate: animate, turnProgress: turnProgress)
                     .frame(maxWidth: .infinity)
                     .frame(height: h * 0.44)
 
@@ -74,148 +74,129 @@ struct ContextCardFace: View {
             .padding(pad)
             .frame(width: geo.size.width, height: geo.size.height, alignment: .leading)
         }
+        .onAppear { if isFront { firePageTurn() } }
+        .onChange(of: isFront) { _, front in if front { firePageTurn() } }
+    }
+
+    /// One page flip when the card becomes front (a chapter turned to).
+    private func firePageTurn() {
+        guard !reduceMotion else { turnProgress = 1; return }
+        turnProgress = 0
+        withAnimation(.easeInOut(duration: 0.6)) { turnProgress = 1 }
     }
 }
 
 // MARK: - Book object (Canvas line illustration)
 
-/// Open book + page thickness + bookmark ribbon. While `animate` is true the
-/// motion (text write-in, ribbon sway, looping page flip) is self-driven by a
-/// TimelineView; when false the book is fully static (lines bright, ribbon
-/// centered, no flip).
+/// Open book + ribbon. While `animate` is true a TimelineView drives the idle
+/// ribbon sway and samples `turnProgress` so the one-shot page flip renders.
+/// When false the book is fully static (ribbon centered, no flip).
 private struct BookObject: View {
 
-    let animate: Bool
+    let animate:      Bool
+    let turnProgress: CGFloat
 
     var body: some View {
         if animate {
             TimelineView(.animation) { tl in
                 let t = tl.date.timeIntervalSinceReferenceDate
                 Canvas { ctx, size in
-                    draw(&ctx, size: size,
-                         textPhase: CGFloat((t / 2.6).truncatingRemainder(dividingBy: 1)),
-                         ribbon:    CGFloat(sin(t / 2.8 * 2 * .pi)),
-                         flipPhase: CGFloat((t / 3.4).truncatingRemainder(dividingBy: 1)),
-                         full: false)
+                    draw(&ctx, size: size, ribbon: CGFloat(sin(t / 2.8 * 2 * .pi)),
+                         turn: turnProgress, animate: true)
                 }
             }
         } else {
             Canvas { ctx, size in
-                draw(&ctx, size: size, textPhase: 0, ribbon: 0, flipPhase: -1, full: true)
+                draw(&ctx, size: size, ribbon: 0, turn: 1, animate: false)
             }
         }
     }
 
-    // Viewbox 160 × 100. `flipPhase` < 0 disables the flipping page.
+    // Viewbox 160 × 96.
     private func draw(_ context: inout GraphicsContext, size: CGSize,
-                      textPhase: CGFloat, ribbon: CGFloat, flipPhase: CGFloat, full: Bool) {
+                      ribbon: CGFloat, turn: CGFloat, animate: Bool) {
 
         let s: CGFloat = size.width / 160
-        let drawnH = 100 * s
-        context.translateBy(x: 0, y: max(0, (size.height - drawnH) / 2))
+        context.translateBy(x: 0, y: max(0, (size.height - 96 * s) / 2))
         func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x * s, y: y * s) }
 
-        let specGrad = Gradient(stops: [
-            .init(color: AppColors.spectrumCyan,    location: 0.00),
-            .init(color: AppColors.spectrumPurple,  location: 0.50),
-            .init(color: AppColors.spectrumMagenta, location: 1.00),
-        ])
         let shading = GraphicsContext.Shading.linearGradient(
-            specGrad, startPoint: .zero, endPoint: CGPoint(x: 160 * s, y: 100 * s))
+            Gradient(stops: [
+                .init(color: AppColors.spectrumCyan,    location: 0.00),
+                .init(color: AppColors.spectrumPurple,  location: 0.50),
+                .init(color: AppColors.spectrumMagenta, location: 1.00),
+            ]),
+            startPoint: .zero, endPoint: CGPoint(x: 160 * s, y: 96 * s))
 
-        // Key points
-        let cx: CGFloat = 80
-        let spineTopY: CGFloat = 20, spineBotY: CGFloat = 80
-
-        // ── Page surfaces (curved quads) ──────────────────────────
-        // Left page: spine-top → domed top edge → outer-top → outer edge →
-        //            outer-bottom → concave bottom edge → spine-bottom.
+        // ── Pages (splayed open book) ─────────────────────────────
         var leftPage = Path()
-        leftPage.move(to: p(cx, spineTopY))
-        leftPage.addQuadCurve(to: p(12, 30), control: p(46, 14))   // top edge domes up
-        leftPage.addLine(to: p(16, 70))                            // outer edge
-        leftPage.addQuadCurve(to: p(cx, spineBotY), control: p(46, 80)) // bottom sags
+        leftPage.move(to: p(80, 30))
+        leftPage.addCurve(to: p(14, 21), control1: p(58, 26), control2: p(31, 21))
+        leftPage.addCurve(to: p(12, 79), control1: p(9, 43),  control2: p(9, 61))
+        leftPage.addCurve(to: p(80, 75), control1: p(35, 84), control2: p(59, 81))
         leftPage.closeSubpath()
 
         var rightPage = Path()
-        rightPage.move(to: p(cx, spineTopY))
-        rightPage.addQuadCurve(to: p(148, 30), control: p(114, 14))
-        rightPage.addLine(to: p(144, 70))
-        rightPage.addQuadCurve(to: p(cx, spineBotY), control: p(114, 80))
+        rightPage.move(to: p(80, 30))
+        rightPage.addCurve(to: p(146, 21), control1: p(102, 26), control2: p(129, 21))
+        rightPage.addCurve(to: p(148, 79), control1: p(151, 43), control2: p(151, 61))
+        rightPage.addCurve(to: p(80, 75),  control1: p(125, 84), control2: p(101, 81))
         rightPage.closeSubpath()
 
-        // ── Page-block thickness (stacked edges under each page) ───
-        func thicknessCurve(outerX: CGFloat, outerTopY: CGFloat, outerBotY: CGFloat,
-                            ctrlX: CGFloat, dy: CGFloat) -> Path {
-            var pa = Path()
-            pa.move(to: p(outerX, outerBotY + dy))
-            pa.addQuadCurve(to: p(cx, spineBotY + dy), control: p(ctrlX, spineBotY + dy + 6))
-            return pa
-        }
-        // Two offset bottom curves per side = the closed page block.
-        let leftThick1  = thicknessCurve(outerX: 16,  outerTopY: 30, outerBotY: 70, ctrlX: 46,  dy: 4)
-        let leftThick2  = thicknessCurve(outerX: 16,  outerTopY: 30, outerBotY: 70, ctrlX: 46,  dy: 8)
-        let rightThick1 = thicknessCurve(outerX: 144, outerTopY: 30, outerBotY: 70, ctrlX: 114, dy: 4)
-        let rightThick2 = thicknessCurve(outerX: 144, outerTopY: 30, outerBotY: 70, ctrlX: 114, dy: 8)
-        // Short outer-edge ticks (the page block's outer face)
-        var leftTick = Path();  leftTick.move(to: p(16, 70));  leftTick.addLine(to: p(16, 78))
-        var rightTick = Path(); rightTick.move(to: p(144, 70)); rightTick.addLine(to: p(144, 78))
+        var spine = Path(); spine.move(to: p(80, 30)); spine.addLine(to: p(80, 75))
 
-        // Spine + binding nub
-        var spine = Path()
-        spine.move(to: p(cx, spineTopY)); spine.addLine(to: p(cx, spineBotY))
-        let nub = Path(roundedRect: CGRect(x: (cx - 6) * s, y: (spineBotY) * s,
-                                           width: 12 * s, height: 6 * s), cornerRadius: 2 * s)
+        // ── Page-block thickness (shallow nested smile) ───────────
+        var block1 = Path()
+        block1.move(to: p(12, 79))
+        block1.addCurve(to: p(80, 81),  control1: p(35, 88),  control2: p(59, 86))
+        block1.addCurve(to: p(148, 79), control1: p(101, 86), control2: p(125, 88))
+        var block2 = Path()
+        block2.move(to: p(13, 78.5))
+        block2.addCurve(to: p(80, 79),    control1: p(36, 85),    control2: p(59, 83.5))
+        block2.addCurve(to: p(147, 78.5), control1: p(101, 83.5), control2: p(124, 85))
+        var tickL = Path(); tickL.move(to: p(12, 79));  tickL.addLine(to: p(14, 82))
+        var tickR = Path(); tickR.move(to: p(148, 79)); tickR.addLine(to: p(146, 82))
 
-        // ── Curved text lines ─────────────────────────────────────
-        let lineYs: [CGFloat] = [30, 38, 46, 54, 62, 70]
-        let bandY = 28 + (72 - 28) * textPhase
-        func brightness(_ y: CGFloat) -> Double {
-            if full { return 0.85 }
-            return 0.20 + 0.70 * Double(max(0, 1 - abs(y - bandY) / 8))
-        }
-        func line(_ x0: CGFloat, _ x1: CGFloat, _ y: CGFloat) -> Path {
-            var pa = Path(); pa.move(to: p(x0, y))
-            pa.addQuadCurve(to: p(x1, y), control: p((x0 + x1) / 2, y + 3)) // gentle sag
-            return pa
+        // ── Text lines (perspective: rise toward outer edge) ──────
+        let leftLines: [(CGFloat, CGFloat, CGFloat, CGFloat, CGFloat, CGFloat)] = [
+            (75, 37, 46, 35, 18, 32), (75, 44, 46, 42, 16.5, 39), (75, 51, 46, 49, 15.5, 46),
+            (75, 58, 46, 56, 15.5, 53.5), (75, 65, 46, 63.5, 16.5, 61.5),
+        ]
+        func line(_ x0: CGFloat, _ y0: CGFloat, _ cxp: CGFloat, _ cyp: CGFloat, _ x1: CGFloat, _ y1: CGFloat) -> Path {
+            var pa = Path(); pa.move(to: p(x0, y0)); pa.addQuadCurve(to: p(x1, y1), control: p(cxp, cyp)); return pa
         }
 
-        // ── Bookmark ribbon (sways) ───────────────────────────────
-        let ribTopY: CGFloat = 14, ribW: CGFloat = 6, tailY: CGFloat = 58
-        let sway = ribbon * 5
+        // ── Ribbon (band + swallowtail; lower part sways) ─────────
+        let sway = ribbon * 4
         var ribbonPath = Path()
-        ribbonPath.move(to: p(cx - ribW / 2, ribTopY))
-        ribbonPath.addLine(to: p(cx - ribW / 2 + sway, tailY))
-        ribbonPath.addLine(to: p(cx + sway, tailY - 6))                 // swallowtail notch
-        ribbonPath.addLine(to: p(cx + ribW / 2 + sway, tailY))
-        ribbonPath.addLine(to: p(cx + ribW / 2, ribTopY))
+        ribbonPath.move(to: p(77.5, 23))
+        ribbonPath.addLine(to: p(77.5 + sway, 56))
+        ribbonPath.addLine(to: p(80 + sway, 52.5))     // notch
+        ribbonPath.addLine(to: p(82.5 + sway, 56))
+        ribbonPath.addLine(to: p(82.5, 23))
 
-        // ── Looping page flip ─────────────────────────────────────
-        // A page lifts off the right, arcs up over the spine, and lands left.
-        // Invisible at the ends (aligns with the static pages); peaks mid-flip.
-        var flipPage = Path()
-        var flipOpacity = 0.0
-        if !full && flipPhase >= 0 {
-            let ex = 148 + (12 - 148) * flipPhase           // outer edge sweeps R→L
-            let lift = sin(Double(flipPhase) * .pi)         // 0→1→0
-            let topY = 30 - CGFloat(lift) * 16
-            let botY = 70 - CGFloat(lift) * 10
-            let ctrlTopX = cx + (ex - cx) * 0.5
-            flipPage.move(to: p(cx, spineTopY))
-            flipPage.addQuadCurve(to: p(ex, topY), control: p(ctrlTopX, topY - CGFloat(lift) * 8))
-            flipPage.addLine(to: p(ex, botY))
-            flipPage.addQuadCurve(to: p(cx, spineBotY), control: p(ctrlTopX, botY + 6))
-            flipPage.closeSubpath()
+        // ── Page flip (one-shot, only mid-turn) ───────────────────
+        var flip = Path(); var flipOpacity = 0.0
+        if animate && turn > 0.001 && turn < 0.999 {
+            let ex = 146 + (14 - 146) * turn
+            let lift = sin(Double(turn) * .pi)
+            let etopY = 21 - CGFloat(lift) * 10
+            let ebotY = 79 - CGFloat(lift) * 6
+            let ctrlX = 80 + (ex - 80) * 0.5
+            flip.move(to: p(80, 30))
+            flip.addQuadCurve(to: p(ex, etopY), control: p(ctrlX, etopY - CGFloat(lift) * 5))
+            flip.addLine(to: p(ex, ebotY))
+            flip.addQuadCurve(to: p(80, 75), control: p(ctrlX, ebotY + 4))
+            flip.closeSubpath()
             flipOpacity = lift * 0.9
         }
 
-        // ── Stroke styles ─────────────────────────────────────────
-        let pageStroke  = StrokeStyle(lineWidth: 1.3 * s, lineCap: .round, lineJoin: .round)
-        let thinStroke  = StrokeStyle(lineWidth: 0.8 * s, lineCap: .round)
-        let lineStroke  = StrokeStyle(lineWidth: 0.8 * s, lineCap: .round)
-        let ribStroke   = StrokeStyle(lineWidth: 1.6 * s, lineCap: .round, lineJoin: .round)
+        // ── Strokes ───────────────────────────────────────────────
+        let pageStroke = StrokeStyle(lineWidth: 1.3 * s, lineCap: .round, lineJoin: .round)
+        let thinStroke = StrokeStyle(lineWidth: 0.8 * s, lineCap: .round)
+        let ribStroke  = StrokeStyle(lineWidth: 1.6 * s, lineCap: .round, lineJoin: .round)
 
-        // ── Pass 1: Glow ──────────────────────────────────────────
+        // Pass 1: glow
         context.drawLayer { ctx in
             ctx.addFilter(.blur(radius: 3 * s))
             ctx.opacity = 0.24
@@ -224,37 +205,27 @@ private struct BookObject: View {
             ctx.stroke(ribbonPath, with: shading, style: StrokeStyle(lineWidth: 5 * s, lineJoin: .round))
         }
 
-        // ── Pass 2: Crisp ─────────────────────────────────────────
-        // Text lines (under page edges)
-        for y in lineYs {
-            var lc = context; lc.opacity = brightness(y)
-            lc.stroke(line(22, 70, y),  with: shading, style: lineStroke)
-            var rc = context; rc.opacity = brightness(y)
-            rc.stroke(line(90, 138, y), with: shading, style: lineStroke)
+        // Pass 2: crisp
+        var textCtx = context; textCtx.opacity = 0.4
+        for l in leftLines {
+            textCtx.stroke(line(l.0, l.1, l.2, l.3, l.4, l.5), with: shading, style: thinStroke)
+            textCtx.stroke(line(160 - l.0, l.1, 160 - l.2, l.3, 160 - l.4, l.5), with: shading, style: thinStroke)
         }
 
-        // Page-block thickness — dim
-        var thickCtx = context; thickCtx.opacity = 0.45
-        for pa in [leftThick1, leftThick2, rightThick1, rightThick2, leftTick, rightTick] {
-            thickCtx.stroke(pa, with: shading, style: thinStroke)
-        }
+        var blockCtx = context; blockCtx.opacity = 0.5
+        for pa in [block1, block2, tickL, tickR] { blockCtx.stroke(pa, with: shading, style: thinStroke) }
 
-        // Spine — dim
         var spineCtx = context; spineCtx.opacity = 0.5
         spineCtx.stroke(spine, with: shading, style: thinStroke)
-        spineCtx.stroke(nub,   with: shading, style: thinStroke)
 
-        // Pages — full
         context.stroke(leftPage,  with: shading, style: pageStroke)
         context.stroke(rightPage, with: shading, style: pageStroke)
 
-        // Flipping page — mid-flip only
         if flipOpacity > 0.01 {
             var fc = context; fc.opacity = flipOpacity
-            fc.stroke(flipPage, with: shading, style: pageStroke)
+            fc.stroke(flip, with: shading, style: pageStroke)
         }
 
-        // Ribbon — bold focal accent
         context.stroke(ribbonPath, with: shading, style: ribStroke)
     }
 }

@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html,body { margin:0; height:100%; background:#0a0a12; }
+  .wrap { display:flex; gap:40px; align-items:center; justify-content:center; height:100%; flex-wrap:wrap; }
+  .card {
+    width: 300px; height: 340px;
+    border:1px solid #2a2540; border-radius:18px;
+    background: radial-gradient(120% 90% at 50% 30%, #16121f 0%, #0a0a12 70%);
+    display:flex; align-items:center; justify-content:center;
+  }
+  svg { width: 86%; overflow: visible; }
+  .lbl { color:#6a6a80; font:12px ui-sans-serif; text-align:center; margin-top:8px; }
+  /* ribbon idle sway */
+  @keyframes sway { 0%,100% { transform: translateX(-5px) } 50% { transform: translateX(5px) } }
+  #ribbon-tail { transform-box: fill-box; transform-origin: top center; animation: sway 2.8s ease-in-out infinite; }
+  /* page turn (loop just to view the silhouette) */
+  @keyframes turn {
+    0%   { opacity:0; transform: scaleX(1) }
+    10%  { opacity:.9 }
+    90%  { opacity:.9 }
+    100% { opacity:0; transform: scaleX(0) }
+  }
+  #flip { transform-box: fill-box; transform-origin: left center; animation: turn 3.4s linear infinite; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <div class="card">
+      <svg viewBox="0 0 320 230">
+        <defs>
+          <linearGradient id="spec" x1="0" y1="0" x2="320" y2="230" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#37e6ff"/>
+            <stop offset="0.5" stop-color="#9b5cff"/>
+            <stop offset="1" stop-color="#ff4fd8"/>
+          </linearGradient>
+        </defs>
+        <g fill="none" stroke="url(#spec)" stroke-linecap="round" stroke-linejoin="round">
+
+          <!-- ===== PAGE BLOCK THICKNESS (shallow, below page bottoms) ===== -->
+          <g stroke-width="1.3" opacity="0.5">
+            <path d="M24,158 C70,176 118,172 160,162 C202,172 250,176 296,158"/>
+            <path d="M26,157 C72,170 118,167 160,158 C202,167 248,170 294,157"/>
+            <path d="M24,158 L28,164"/>
+            <path d="M296,158 L292,164"/>
+          </g>
+
+          <!-- ===== LEFT PAGE (splayed: tall outer, pinched gutter) ===== -->
+          <path stroke-width="2"
+            d="M160,60
+               C116,52 62,42 28,42
+               C18,86 18,122 24,158
+               C70,168 118,162 160,150 Z"/>
+          <!-- ===== RIGHT PAGE ===== -->
+          <path stroke-width="2"
+            d="M160,60
+               C204,52 258,42 292,42
+               C302,86 302,122 296,158
+               C250,168 202,162 160,150 Z"/>
+
+          <!-- spine gutter -->
+          <path stroke-width="1.4" opacity="0.55" d="M160,60 L160,150"/>
+
+          <!-- ===== TEXT LINES (perspective: rise toward outer edge) ===== -->
+          <g stroke-width="1.2" opacity="0.4">
+            <!-- left: gutter(right) lower → outer(left) higher -->
+            <path d="M150,74 Q92,70 36,64"/>
+            <path d="M150,88 Q92,84 33,78"/>
+            <path d="M150,102 Q92,98 31,92"/>
+            <path d="M150,116 Q92,112 31,107"/>
+            <path d="M150,130 Q92,127 33,123"/>
+            <!-- right: mirror -->
+            <path d="M170,74 Q228,70 284,64"/>
+            <path d="M170,88 Q228,84 287,78"/>
+            <path d="M170,102 Q228,98 289,92"/>
+            <path d="M170,116 Q228,112 289,107"/>
+            <path d="M170,130 Q228,127 287,123"/>
+          </g>
+
+          <!-- ===== RIBBON (band with swallowtail) ===== -->
+          <path id="ribbon-tail" stroke-width="1.8"
+            d="M155,46 L155,112 L160,105 L165,112 L165,46"/>
+        </g>
+      </svg>
+    </div>
+    <div class="lbl">book mock — match to reference</div>
+  </div>
+</div>
+</body>
+</html>
