@@ -3,135 +3,103 @@
 <head>
 <meta charset="utf-8">
 <style>
-  html,body { margin:0; height:100%; background:#0a0a12; }
-  .wrap { display:flex; gap:40px; align-items:center; justify-content:center; height:100%; flex-wrap:wrap; }
-  .card {
-    width: 300px; height: 340px;
-    border:1px solid #2a2540; border-radius:18px;
-    background: radial-gradient(120% 90% at 50% 30%, #16121f 0%, #0a0a12 70%);
-    display:flex; align-items:center; justify-content:center;
-  }
-  svg { width: 86%; overflow: visible; }
-  .lbl { color:#6a6a80; font:12px ui-sans-serif; text-align:center; margin-top:8px; }
-  /* ribbon idle sway */
-  @keyframes sway { 0%,100% { transform: translateX(-5px) } 50% { transform: translateX(5px) } }
-  #ribbon-tail { transform-box: fill-box; transform-origin: top center; animation: sway 2.8s ease-in-out infinite; }
-  /* page turn (loop just to view the silhouette) */
-  @keyframes turn {
-    0%   { opacity:0; transform: scaleX(1) }
-    10%  { opacity:.9 }
-    90%  { opacity:.9 }
-    100% { opacity:0; transform: scaleX(0) }
-  }
-  #flip { transform-box: fill-box; transform-origin: left center; animation: turn 3.4s linear infinite; }
+  html,body { margin:0; height:100%; background:#0a0a12; overflow:hidden; }
+  .stage { position:relative; width:340px; height:380px; margin:60px auto 0; }
+  .card  { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+           border:1px solid #2a2540; border-radius:18px;
+           background: radial-gradient(120% 90% at 50% 30%, #16121f 0%, #0a0a12 70%); }
+  .card svg { width:86%; overflow:visible; }
+  .ctl { position:fixed; bottom:24px; left:0; right:0; text-align:center; color:#8a8aa0; font:13px ui-sans-serif; }
+  input[type=range] { width:60%; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div>
-    <div class="card">
-      <svg viewBox="0 0 800 600">
-        <defs>
-          <linearGradient id="spec" x1="0" y1="0" x2="800" y2="600" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stop-color="#37e6ff"/>
-            <stop offset="0.5" stop-color="#9b5cff"/>
-            <stop offset="1" stop-color="#ff4fd8"/>
-          </linearGradient>
-        </defs>
-        <g stroke="url(#spec)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <!-- cover / page-block (left + right, two edges each) -->
-          <g opacity="0.5">
-            <path d="M 400 510 C 300 480, 120 490, 70 490 L 105 160"/>
-            <path d="M 390 490 C 300 460, 130 470, 85 470 L 115 155"/>
-            <path d="M 400 510 C 500 480, 680 490, 730 490 L 695 160"/>
-            <path d="M 410 490 C 500 460, 670 470, 715 470 L 685 155"/>
-            <path d="M 370 495 C 370 515, 430 515, 430 495"/>
-          </g>
-          <!-- pages -->
-          <path d="M 400 150 C 300 120, 150 140, 125 150 L 100 450 C 150 440, 300 420, 400 480"/>
-          <path d="M 400 150 C 500 120, 650 140, 675 150 L 700 450 C 650 440, 500 420, 400 480"/>
-          <path stroke-width="2.5" opacity="0.6" d="M 400 150 L 400 480"/>
-          <!-- text lines -->
-          <g stroke-width="2.4" opacity="0.4">
-            <path d="M 130 190 Q 250 170 380 200"/>
-            <path d="M 125 230 Q 250 210 380 240"/>
-            <path d="M 120 270 Q 250 250 380 280"/>
-            <path d="M 115 310 Q 250 290 380 320"/>
-            <path d="M 110 350 Q 250 330 380 360"/>
-            <path d="M 105 390 Q 250 370 380 400"/>
-            <path d="M 100 430 Q 250 410 380 440"/>
-            <path d="M 550 190 Q 600 180 660 190"/>
-            <path d="M 420 230 Q 550 200 665 230"/>
-            <path d="M 420 270 Q 550 240 670 270"/>
-            <path d="M 420 310 Q 550 280 675 310"/>
-            <path d="M 420 350 Q 550 320 680 350"/>
-            <path d="M 420 390 Q 550 360 685 390"/>
-            <path d="M 420 430 Q 550 400 690 430"/>
-          </g>
-        </g>
-        <!-- ribbon (fills bg to sit over the pages) -->
-        <path id="ribbon-tail" d="M 360 135 L 360 390 L 375 365 L 390 390 L 390 145 Z"
-              fill="#0a0a12" stroke="url(#spec)" stroke-width="3.5"
-              stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <svg style="display:none" viewBox="0 0 320 230">
-        <defs>
-          <linearGradient id="specOld" x1="0" y1="0" x2="320" y2="230" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stop-color="#37e6ff"/>
-            <stop offset="0.5" stop-color="#9b5cff"/>
-            <stop offset="1" stop-color="#ff4fd8"/>
-          </linearGradient>
-        </defs>
-        <g fill="none" stroke="url(#spec)" stroke-linecap="round" stroke-linejoin="round">
-
-          <!-- ===== PAGE BLOCK THICKNESS (shallow, below page bottoms) ===== -->
-          <g stroke-width="1.3" opacity="0.5">
-            <path d="M24,158 C70,176 118,172 160,162 C202,172 250,176 296,158"/>
-            <path d="M26,157 C72,170 118,167 160,158 C202,167 248,170 294,157"/>
-            <path d="M24,158 L28,164"/>
-            <path d="M296,158 L292,164"/>
-          </g>
-
-          <!-- ===== LEFT PAGE (splayed: tall outer, pinched gutter) ===== -->
-          <path stroke-width="2"
-            d="M160,60
-               C116,52 62,42 28,42
-               C18,86 18,122 24,158
-               C70,168 118,162 160,150 Z"/>
-          <!-- ===== RIGHT PAGE ===== -->
-          <path stroke-width="2"
-            d="M160,60
-               C204,52 258,42 292,42
-               C302,86 302,122 296,158
-               C250,168 202,162 160,150 Z"/>
-
-          <!-- spine gutter -->
-          <path stroke-width="1.4" opacity="0.55" d="M160,60 L160,150"/>
-
-          <!-- ===== TEXT LINES (perspective: rise toward outer edge) ===== -->
-          <g stroke-width="1.2" opacity="0.4">
-            <!-- left: gutter(right) lower → outer(left) higher -->
-            <path d="M150,74 Q92,70 36,64"/>
-            <path d="M150,88 Q92,84 33,78"/>
-            <path d="M150,102 Q92,98 31,92"/>
-            <path d="M150,116 Q92,112 31,107"/>
-            <path d="M150,130 Q92,127 33,123"/>
-            <!-- right: mirror -->
-            <path d="M170,74 Q228,70 284,64"/>
-            <path d="M170,88 Q228,84 287,78"/>
-            <path d="M170,102 Q228,98 289,92"/>
-            <path d="M170,116 Q228,112 289,107"/>
-            <path d="M170,130 Q228,127 287,123"/>
-          </g>
-
-          <!-- ===== RIBBON (band with swallowtail) ===== -->
-          <path id="ribbon-tail" stroke-width="1.8"
-            d="M155,46 L155,112 L160,105 L165,112 L165,46"/>
-        </g>
-      </svg>
-    </div>
-    <div class="lbl">book mock — match to reference</div>
+  <div class="stage" id="stage"></div>
+  <div class="ctl">
+    position <span id="pv">0.50</span><br>
+    <input id="pos" type="range" min="0" max="2" step="0.01" value="0.5">
   </div>
-</div>
+<script>
+const SPEC = `<defs><linearGradient id="spec" x1="0" y1="0" x2="800" y2="600" gradientUnits="userSpaceOnUse">
+  <stop offset="0" stop-color="#37e6ff"/><stop offset="0.5" stop-color="#9b5cff"/><stop offset="1" stop-color="#ff4fd8"/>
+</linearGradient></defs>`;
+
+const BOOK = `
+  <g stroke="url(#spec)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g opacity="0.5">
+      <path d="M 400 510 C 300 480, 120 490, 70 490 L 105 160"/>
+      <path d="M 390 490 C 300 460, 130 470, 85 470 L 115 155"/>
+      <path d="M 400 510 C 500 480, 680 490, 730 490 L 695 160"/>
+      <path d="M 410 490 C 500 460, 670 470, 715 470 L 685 155"/>
+      <path d="M 370 495 C 370 515, 430 515, 430 495"/>
+    </g>
+    <path d="M 400 150 C 300 120, 150 140, 125 150 L 100 450 C 150 440, 300 420, 400 480"/>
+    <path d="M 400 150 C 500 120, 650 140, 675 150 L 700 450 C 650 440, 500 420, 400 480"/>
+    <path stroke-width="2.5" opacity="0.6" d="M 400 150 L 400 480"/>
+    <g stroke-width="2.4" opacity="0.4">
+      <path d="M 130 190 Q 250 170 380 200"/><path d="M 125 230 Q 250 210 380 240"/>
+      <path d="M 120 270 Q 250 250 380 280"/><path d="M 115 310 Q 250 290 380 320"/>
+      <path d="M 110 350 Q 250 330 380 360"/><path d="M 105 390 Q 250 370 380 400"/>
+      <path d="M 100 430 Q 250 410 380 440"/>
+      <path d="M 550 190 Q 600 180 660 190"/><path d="M 420 230 Q 550 200 665 230"/>
+      <path d="M 420 270 Q 550 240 670 270"/><path d="M 420 310 Q 550 280 675 310"/>
+      <path d="M 420 350 Q 550 320 680 350"/><path d="M 420 390 Q 550 360 685 390"/>
+      <path d="M 420 430 Q 550 400 690 430"/>
+    </g>
+  </g>`;
+
+const RIBBON = `<path d="M 360 135 L 360 390 L 375 365 L 390 390 L 390 145 Z"
+  fill="#0a0a12" stroke="url(#spec)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+function flip(thetaDeg, opacity){
+  const th = thetaDeg*Math.PI/180, s=Math.sin(th); let c=Math.cos(th);
+  const gx=400, lift=s*70;
+  // Keep a minimum projected width so the page never goes fully edge-on.
+  const cc = c>=0 ? Math.max(c,0.25) : Math.min(c,-0.25);
+  const ox  = gx+(675-gx)*cc, obx = gx+(700-gx)*cc;
+  const topY=150-lift, botY=450-lift*0.55, cTopX=gx+(ox-gx)*0.5;
+  const d = `M 400 150 Q ${cTopX} ${130-lift} ${ox} ${topY} L ${obx} ${botY} Q ${cTopX} ${botY+18} 400 480 Z`;
+  return `<path d="${d}" fill="#0a0a12" stroke="url(#spec)" stroke-width="3.5"
+    stroke-linecap="round" stroke-linejoin="round" opacity="${opacity}"/>`;
+}
+
+// Directional handoff: leaving book (delta<0) lifts its right page 0→90°;
+// arriving book (delta>0) lays the page 90→180° onto the left (over the ribbon),
+// merging into the static pages at the ends (opacity ~ sin θ).
+function turnFor(delta){
+  const ad = Math.abs(delta);
+  if (ad > 0.5 || ad < 0.02) return '';
+  const theta = delta < 0 ? (ad*180) : ((1-ad)*180);
+  return flip(theta, Math.sin(theta*Math.PI/180)*0.98);
+}
+
+function svgEl(markup){
+  const doc = new DOMParser().parseFromString(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">${markup}</svg>`, 'image/svg+xml');
+  return doc.documentElement;
+}
+
+function card(delta){
+  const ad=Math.abs(delta), sign=delta>=0?1:-1, sp=300*0.33;
+  const x = ad<0.001?0: sign*(sp*0.55+ad*sp*0.55);
+  const scale=Math.max(1-ad*0.11,0.7), op=Math.max(1-ad*0.5,0), rot=delta*2.5;
+  const div=document.createElement('div'); div.className='card';
+  div.style.transform=`translateX(${x}px) translateY(${ad*300*0.07}px) scale(${scale}) rotate(${rot}deg)`;
+  div.style.opacity=op; div.style.zIndex=Math.round(100-ad*10);
+  div.appendChild(svgEl(`${SPEC}${BOOK}${RIBBON}${turnFor(delta)}`));
+  return div;
+}
+
+function render(p){
+  const stage=document.getElementById('stage'); stage.replaceChildren();
+  const order=[-1,0,1,2,3].map(i=>({i,d:i-p})).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+  for(const {d} of order){ if(Math.abs(d)<=1.6) stage.appendChild(card(d)); }
+  document.getElementById('pv').textContent=p.toFixed(2);
+}
+const slider=document.getElementById('pos');
+slider.addEventListener('input',()=>render(parseFloat(slider.value)));
+window.render=render;
+render(0.5);
+</script>
 </body>
 </html>

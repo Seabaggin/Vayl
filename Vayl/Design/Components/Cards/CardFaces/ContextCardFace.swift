@@ -161,8 +161,8 @@ private struct BookObject: View {
             line(84, 78, 110, 72, 137, 78), line(84, 86, 110, 80, 138, 86),
         ]
 
-        // ── Ribbon (band + swallowtail; lower part sways) ─────────
-        let sway = ribbon * 3
+        // ── Ribbon (band + swallowtail; sways only when ~settled) ─
+        let sway = ribbon * 3 * max(0, 1 - abs(offset) * 5)
         var ribbonPath = Path()
         ribbonPath.move(to: p(72, 27))
         ribbonPath.addLine(to: p(72 + sway, 78))
@@ -171,24 +171,29 @@ private struct BookObject: View {
         ribbonPath.addLine(to: p(78, 29))
         ribbonPath.closeSubpath()
 
-        // ── Page flip — tracks the swipe: a page on the leading side lifts and
-        //    settles as the card crosses toward center (peaks mid half-step). ──
+        // ── Page flip — one page handing off across the swipe. Leaving book
+        //    lifts its right page (0→90°); arriving book lays it onto the left
+        //    over the ribbon (90→180°), merging into the static pages at the
+        //    ends. Min projected width (cc) keeps it readable at vertical.
+        //    Tuned in docs/mockups/book-mock.html. ──
         var flip = Path(); var flipOpacity = 0.0
-        let a = min(0.5, abs(offset))
-        let prog = a / 0.5                       // 0 centered → 1 a half-step away
-        if drawFlip && prog > 0.02 {
-            let lift = sin(Double(prog) * .pi)   // 0 → 1 → 0 across the half-step
-            let dir: CGFloat = offset >= 0 ? 1 : -1
-            let outerX: CGFloat = dir > 0 ? 135 : 25
-            let etopY = 30 - CGFloat(lift) * 12
-            let ebotY = 90 - CGFloat(lift) * 8
-            let ctrlX = 80 + (outerX - 80) * 0.55
+        let ad = abs(offset)
+        if drawFlip && ad > 0.02 && ad <= 0.5 {
+            let thetaDeg = offset < 0 ? ad * 180 : (1 - ad) * 180
+            let th = Double(thetaDeg) * .pi / 180
+            let cc = CGFloat((cos(th) >= 0 ? 1.0 : -1.0) * max(0.25, abs(cos(th))))
+            let lift  = CGFloat(sin(th)) * 14
+            let ox    = 80 + 55 * cc
+            let obx   = 80 + 60 * cc
+            let topY  = 30 - lift
+            let botY  = 90 - lift * 0.55
+            let ctrlX = 80 + (ox - 80) * 0.5
             flip.move(to: p(80, 30))
-            flip.addQuadCurve(to: p(outerX, etopY), control: p(ctrlX, etopY - CGFloat(lift) * 6))
-            flip.addLine(to: p(outerX, ebotY))
-            flip.addQuadCurve(to: p(80, 96), control: p(ctrlX, ebotY + 4))
+            flip.addQuadCurve(to: p(ox, topY), control: p(ctrlX, 26 - lift))
+            flip.addLine(to: p(obx, botY))
+            flip.addQuadCurve(to: p(80, 96), control: p(ctrlX, botY + 3.6))
             flip.closeSubpath()
-            flipOpacity = lift * 0.85
+            flipOpacity = sin(th) * 0.98
         }
 
         // ── Strokes ───────────────────────────────────────────────
@@ -220,14 +225,18 @@ private struct BookObject: View {
         context.stroke(leftPage,  with: shading, style: pageStroke)
         context.stroke(rightPage, with: shading, style: pageStroke)
 
-        if flipOpacity > 0.01 {
-            var fc = context; fc.opacity = flipOpacity
-            fc.stroke(flip, with: shading, style: pageStroke)
-        }
-
         // Ribbon — fills the card bg so it reads in front of the pages
         context.fill(ribbonPath, with: .color(AppColors.cardBg))
         context.stroke(ribbonPath, with: shading, style: ribStroke)
+
+        // Turning page — drawn LAST and bg-filled so it covers the ribbon as it
+        // lays over the gutter mid-turn; the ribbon is revealed again as the
+        // page settles and the flip fades out.
+        if flipOpacity > 0.01 {
+            var fc = context; fc.opacity = flipOpacity
+            fc.fill(flip, with: .color(AppColors.cardBg))
+            fc.stroke(flip, with: shading, style: pageStroke)
+        }
     }
 }
 
