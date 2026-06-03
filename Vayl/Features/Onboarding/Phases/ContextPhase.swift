@@ -122,8 +122,9 @@ struct ContextPhase: View {
                             subtitle: o.subtitle,
                             detail:   o.detail
                         ),
-                        isFront:  isFront,
-                        pageTurn: pageOffset(for: index)
+                        isFront:   isFront,
+                        pageTurn:  pageOffset(for: index),
+                        confirmed: confirmedIndex == index
                     )
                     .opacity(isUndecided ? 0.82 : 1.0)
                 },

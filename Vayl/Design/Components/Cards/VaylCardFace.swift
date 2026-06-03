@@ -43,6 +43,10 @@ struct VaylCardFace: View {
     /// Ignored by all other faces.
     var pageTurn:   CGFloat                      = 0
 
+    /// True when this card is the confirmed selection. Forwarded to `.context`
+    /// so the bookmark ribbon drops in on confirm. Ignored by all other faces.
+    var confirmed:  Bool                         = false
+
     var body: some View {
         GeometryReader { geo in
             let size      = geo.size
@@ -109,6 +113,19 @@ struct VaylCardFace: View {
                         )
                     case .candle(let intensity, let time):
                         CandleCardFace(intensity: intensity, time: time)
+                    case .compassOption(let label):
+                        CompassOptionCardFace(
+                            cardWidth:  size.width,
+                            cardHeight: size.height,
+                            label:      label
+                        )
+                    case .compassSlider(let value, let dragging):
+                        CompassSliderCardFace(
+                            cardWidth:  size.width,
+                            cardHeight: size.height,
+                            value:      value,
+                            dragging:   dragging
+                        )
                     case .context(let number, let title, let subtitle, let detail):
                         ContextCardFace(
                             number:   number,
@@ -116,7 +133,8 @@ struct VaylCardFace: View {
                             subtitle: subtitle,
                             detail:   detail,
                             isFront:  isFront,
-                            pageTurn: pageTurn
+                            pageTurn: pageTurn,
+                            confirmed: confirmed
                         )
                     default:
                         EmptyView()
