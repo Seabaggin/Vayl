@@ -38,11 +38,6 @@ struct VaylCardFace: View {
     /// (currently `.context`). Ignored by all other faces. Defaults true.
     var isFront:    Bool                         = true
 
-    /// Signed scroll offset of this card from carousel center (0 = centered).
-    /// Forwarded to `.context` so its book page turns in sync with a swipe.
-    /// Ignored by all other faces.
-    var pageTurn:   CGFloat                      = 0
-
     /// True when this card is the confirmed selection. Forwarded to `.context`
     /// so the bookmark ribbon drops in on confirm. Ignored by all other faces.
     var confirmed:  Bool                         = false
@@ -133,7 +128,6 @@ struct VaylCardFace: View {
                             subtitle: subtitle,
                             detail:   detail,
                             isFront:  isFront,
-                            pageTurn: pageTurn,
                             confirmed: confirmed
                         )
                     default:

@@ -19,7 +19,7 @@
 //     gutter (drop with overshoot + damped pendulum settle), and lifts out on
 //     deselect. The only at-rest motion; a resting unconfirmed card is calm.
 //
-// `subtitle`/`detail`/`pageTurn` are retained props (unused for rendering) so the
+// `subtitle`/`detail` are retained props (unused for rendering) so the
 // VaylCardFace `.context` call site keeps compiling.
 
 import SwiftUI
@@ -31,7 +31,6 @@ struct ContextCardFace: View {
     let subtitle: String
     let detail:   String
     var isFront:  Bool    = true
-    var pageTurn: CGFloat = 0          // (legacy; turn is now triggered on focus)
     var confirmed: Bool   = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -110,8 +109,8 @@ private struct BookObject: View {
     let ribbonStart: Date
 
     private let turnDur = 0.6
-    private let dropDur: CGFloat = 0.5
-    private let liftDur: CGFloat = 0.3
+    private let dropDur: CGFloat = 0.95   // slow, ceremonious drape-in
+    private let liftDur: CGFloat = 0.45
 
     var body: some View {
         if live {
@@ -148,7 +147,7 @@ private struct BookObject: View {
             let re = CGFloat(now.timeIntervalSince(ribbonStart))
             if confirmed {
                 reveal = easeOutBack(clamp01(re / dropDur))
-                sway   = re < 1.4 ? exp(-re * 4) * sin(re * 12) : 0   // damped pendulum
+                sway   = re < 3.0 ? exp(-re * 2.4) * sin(re * 8) : 0   // slow damped pendulum
             } else {
                 reveal = 1 - easeOut(clamp01(re / liftDur))           // 1→0 (lift out)
             }

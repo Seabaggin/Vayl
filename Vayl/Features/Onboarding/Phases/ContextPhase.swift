@@ -123,7 +123,6 @@ struct ContextPhase: View {
                             detail:   o.detail
                         ),
                         isFront:   isFront,
-                        pageTurn:  pageOffset(for: index),
                         confirmed: confirmedIndex == index
                     )
                     .opacity(isUndecided ? 0.82 : 1.0)
@@ -209,15 +208,6 @@ struct ContextPhase: View {
         return "\(o.title). \(o.subtitle). \(o.detail)"
     }
 
-    /// Signed shortest distance (in cards) of `index` from the carousel center.
-    /// 0 = centered; drives each card's book page turn so it tracks the swipe.
-    private func pageOffset(for index: Int) -> CGFloat {
-        let n = Double(options.count)
-        var d = (Double(index) - physics.position).truncatingRemainder(dividingBy: n)
-        if d >  n / 2 { d -= n }
-        if d < -n / 2 { d += n }
-        return CGFloat(d)
-    }
 
     // MARK: - Entrance (earned transition)
     // The felt carries over from ExperienceLevel. The dealer headline greets first;
