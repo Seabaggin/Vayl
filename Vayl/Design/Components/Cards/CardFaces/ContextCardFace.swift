@@ -83,11 +83,14 @@ struct ContextCardFace: View {
         }
         .onAppear { ribbonReveal = confirmed ? 1 : 0 }
         .onChange(of: confirmed) { _, isConfirmed in
-            let target: CGFloat = isConfirmed ? 1 : 0
             if reduceMotion {
-                ribbonReveal = target
+                ribbonReveal = isConfirmed ? 1 : 0
+            } else if isConfirmed {
+                // Ceremonious drop-in: the bookmark drapes down with a soft settle.
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { ribbonReveal = 1 }
             } else {
-                withAnimation(.spring(response: 0.42, dampingFraction: 0.72)) { ribbonReveal = target }
+                // Elegant retract: lifts out and fades, no overshoot.
+                withAnimation(.easeOut(duration: 0.28)) { ribbonReveal = 0 }
             }
         }
     }
@@ -173,35 +176,43 @@ private struct BookObject: View {
         var ribbonPath = Path()
         let hasRibbon = ribbonReveal > 0.01
         if hasRibbon {
-            let tailY  = 34 + (78 - 34) * ribbonReveal
-            let notchY = tailY - 5
-            ribbonPath.move(to: p(72, 27))
-            ribbonPath.addLine(to: p(72, tailY))
-            ribbonPath.addLine(to: p(75, notchY))     // swallowtail notch
-            ribbonPath.addLine(to: p(78, tailY))
-            ribbonPath.addLine(to: p(78, 29))
+            // Drapes into the gutter: the tail unfurls down the page as reveal
+            // 0→1 (slight overshoot from the spring); gentle outward bow reads as
+            // draped fabric. Tuned in docs/mockups/book-mock.html (÷5 of 800-box).
+            let topY: CGFloat = 27
+            let tailY  = 30 + 58 * ribbonReveal
+            let notchY = tailY - 4.8
+            let lx: CGFloat = 72.6, rx: CGFloat = 78.2, mid: CGFloat = 75.4, bow: CGFloat = 1.2
+            ribbonPath.move(to: p(lx, topY))
+            ribbonPath.addCurve(to: p(lx, tailY), control1: p(lx, topY + 12), control2: p(lx - bow, tailY - 14))
+            ribbonPath.addLine(to: p(mid, notchY))      // swallowtail notch
+            ribbonPath.addLine(to: p(rx, tailY))
+            ribbonPath.addCurve(to: p(rx, topY), control1: p(rx + bow, tailY - 14), control2: p(rx, topY + 12))
             ribbonPath.closeSubpath()
         }
 
-        // ── Page flip — one page handing off across the swipe (see header). ──
+        // ── Page turn — a single curled page on the LEAVING card (offset<0) sweeps
+        //    right → up over the top → left as you swipe away (t = -offset, 0→1),
+        //    reading as turning the page of the book you're on. Tuned in
+        //    docs/mockups/book-mock.html (÷5 of the 800-unit box). ──
         var flip = Path(); var flipOpacity = 0.0
-        let ad = abs(offset)
-        if flipEnabled && ad > 0.02 && ad <= 0.5 {
-            let thetaDeg = offset < 0 ? ad * 180 : (1 - ad) * 180
-            let th = Double(thetaDeg) * .pi / 180
-            let cc = CGFloat((cos(th) >= 0 ? 1.0 : -1.0) * max(0.25, abs(cos(th))))
-            let lift  = CGFloat(sin(th)) * 14
-            let ox    = 80 + 55 * cc
-            let obx   = 80 + 60 * cc
-            let topY  = 30 - lift
-            let botY  = 90 - lift * 0.55
-            let ctrlX = 80 + (ox - 80) * 0.5
+        if flipEnabled && offset < -0.02 && offset >= -1.0 {
+            let t   = Double(-offset)                 // 0 (flat right) → 1 (laid left)
+            let ang = t * .pi
+            let cA  = CGFloat(cos(ang)), arc = CGFloat(sin(ang))   // arc: 0→1→0
+            let fx  = 80 + 55 * cA                    // free edge X: 135 → 80 → 25
+            let fbx = 80 + 60 * cA
+            let topY = 30 - arc * 19                  // arcs up over the top
+            let botY = 90 - arc * 6
+            let curl = arc * 14 * (cA >= 0 ? 1 : -1)  // bow toward the leading side
+            let cTopX = (80 + fx)  / 2 + curl
+            let cBotX = (80 + fbx) / 2 + curl
             flip.move(to: p(80, 30))
-            flip.addQuadCurve(to: p(ox, topY), control: p(ctrlX, 26 - lift))
-            flip.addLine(to: p(obx, botY))
-            flip.addQuadCurve(to: p(80, 96), control: p(ctrlX, botY + 3.6))
+            flip.addQuadCurve(to: p(fx, topY),  control: p(cTopX, topY - arc * 11))
+            flip.addLine(to: p(fbx, botY))
+            flip.addQuadCurve(to: p(80, 96), control: p(cBotX, botY + arc * 4.4))
             flip.closeSubpath()
-            flipOpacity = sin(th) * 0.98
+            flipOpacity = sin(t * .pi) * 0.95
         }
 
         // ── Strokes ───────────────────────────────────────────────
@@ -216,7 +227,7 @@ private struct BookObject: View {
             ctx.stroke(leftPage,  with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
             ctx.stroke(rightPage, with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
             if hasRibbon {
-                var rc = ctx; rc.opacity = 0.24 * ribbonReveal
+                var rc = ctx; rc.opacity = 0.24 * min(1, ribbonReveal)
                 rc.stroke(ribbonPath, with: shading, style: StrokeStyle(lineWidth: 5 * s, lineJoin: .round))
             }
         }
@@ -239,7 +250,7 @@ private struct BookObject: View {
         // Ribbon — bg-filled so it reads in front of the pages
         if hasRibbon {
             context.fill(ribbonPath, with: .color(AppColors.cardBg))
-            var rc = context; rc.opacity = ribbonReveal
+            var rc = context; rc.opacity = min(1, ribbonReveal)
             rc.stroke(ribbonPath, with: shading, style: ribStroke)
         }
 
