@@ -4,24 +4,23 @@
 // Rendered by VaylCardFace when its content is `.context(...)`.
 //
 // Signature object: an OPEN BOOK (splayed pages, page-block thickness) — the
-// phase's identity ("Where are you starting from?" → which chapter of your
-// story), mirroring NamePhase=typewriter / ModeSelect=controller /
-// Gender=slot-machine / ExperienceLevel=candle. Pure Canvas line illustration in
-// the spectrum language (two passes: blurred glow + crisp stroke), upper region;
-// number + title sit beneath as the header. Geometry ported from a browser SVG
-// reference (docs/mockups/book-mock.html), halved to a 160-unit box.
+// phase's identity ("Where are you starting from?"), mirroring NamePhase=
+// typewriter / ModeSelect=controller / Gender=slot-machine / ExpLevel=candle.
+// Pure Canvas line illustration in the spectrum language (two passes: blurred
+// glow + crisp stroke); number + title sit beneath as the header. Geometry
+// ported from a browser SVG reference (docs/mockups/book-mock.html, ÷5 of 800).
 //
-// Motion:
-//   · page turn — single-page handoff across a swipe, tracking the carousel
-//     scroll offset (`pageTurn`): the leaving book lifts its right page (0→90°),
-//     the arriving book lays it onto the left (90→180°). Position-driven, so a
-//     fast flick riffles. Gated off under Reduce Motion.
-//   · bookmark ribbon — hidden while browsing; on CONFIRM it drops into the
-//     gutter ("the page I chose") and retracts on unconfirm. The only at-rest
-//     motion; a resting unconfirmed card is calm.
+// Motion (front card only; a TimelineView clock drives the Canvas with
+// time-based easing — a plain @State does NOT animate a Canvas smoothly):
+//   · page turn — fires when a card BECOMES front (a curled page sweeps right →
+//     up over the top → left, "turning to this page"). Fixed ~0.6s, so it always
+//     plays fully even on a fast swipe.
+//   · bookmark ribbon — hidden while browsing; on CONFIRM it DRAPES into the
+//     gutter (drop with overshoot + damped pendulum settle), and lifts out on
+//     deselect. The only at-rest motion; a resting unconfirmed card is calm.
 //
-// `subtitle`/`detail` are retained props (unused) so the 4-param `.context` call
-// site in VaylCardFace keeps compiling.
+// `subtitle`/`detail`/`pageTurn` are retained props (unused for rendering) so the
+// VaylCardFace `.context` call site keeps compiling.
 
 import SwiftUI
 
@@ -31,16 +30,13 @@ struct ContextCardFace: View {
     let title:    String
     let subtitle: String
     let detail:   String
-    var isFront:  Bool = true
-    /// Signed scroll offset from carousel center (0 = centered). Drives the
-    /// page turn so it tracks the swipe between cards.
-    var pageTurn: CGFloat = 0
-    /// True when this card is the confirmed selection — drops the ribbon in.
-    var confirmed: Bool = false
+    var isFront:  Bool    = true
+    var pageTurn: CGFloat = 0          // (legacy; turn is now triggered on focus)
+    var confirmed: Bool   = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var ribbonReveal: CGFloat = 0   // 0→1 drop-in length
-    @State private var ribbonSway:   CGFloat = 0   // damped pendulum settle
+    @State private var turnStart:   Date = .distantPast
+    @State private var ribbonStart: Date = .distantPast
 
     var body: some View {
         GeometryReader { geo in
@@ -52,8 +48,9 @@ struct ContextCardFace: View {
 
                 Spacer(minLength: 0)
 
-                BookObject(offset: pageTurn, ribbonReveal: ribbonReveal,
-                           ribbonSway: ribbonSway, flipEnabled: !reduceMotion)
+                BookObject(live: isFront && !reduceMotion,
+                           confirmed: confirmed,
+                           turnStart: turnStart, ribbonStart: ribbonStart)
                     .frame(maxWidth: .infinity)
                     .frame(height: h * 0.44)
 
@@ -82,47 +79,52 @@ struct ContextCardFace: View {
             .padding(pad)
             .frame(width: geo.size.width, height: geo.size.height, alignment: .leading)
         }
-        .onAppear { ribbonReveal = confirmed ? 1 : 0 }
-        .onChange(of: confirmed) { _, isConfirmed in
-            if reduceMotion {
-                ribbonReveal = isConfirmed ? 1 : 0
-                ribbonSway = 0
-            } else if isConfirmed {
-                // Drape: the bookmark drops in solid (no fade) and its tail swings
-                // to rest (damped pendulum) — fabric being laid onto the page.
-                var kick = Transaction(); kick.disablesAnimations = true
-                withTransaction(kick) { ribbonSway = 1 }
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.62)) { ribbonReveal = 1 }
-                withAnimation(.spring(response: 0.62, dampingFraction: 0.32)) { ribbonSway = 0 }
-            } else {
-                // Lift out: the bookmark slides back up and away, no overshoot.
-                withAnimation(.easeOut(duration: 0.3)) { ribbonReveal = 0 }
-                withAnimation(.easeOut(duration: 0.3)) { ribbonSway = 0 }
-            }
-        }
+        // Trigger the page turn when this card becomes the front card.
+        .onChange(of: isFront) { _, front in if front { turnStart = Date() } }
+        // Trigger ribbon drape-in / lift-out on confirm change.
+        .onChange(of: confirmed) { _, _ in ribbonStart = Date() }
     }
+}
+
+// MARK: - Easing helpers
+
+private func clamp01(_ x: CGFloat) -> CGFloat { min(1, max(0, x)) }
+private func easeInOut(_ t: CGFloat) -> CGFloat { t < 0.5 ? 2*t*t : 1 - pow(-2*t + 2, 2)/2 }
+private func easeOut(_ t: CGFloat) -> CGFloat { 1 - pow(1 - t, 2) }
+private func easeOutBack(_ t: CGFloat) -> CGFloat {
+    let c1: CGFloat = 1.70158, c3 = 1.70158 + 1
+    return 1 + c3 * pow(t - 1, 3) + c1 * pow(t - 1, 2)
 }
 
 // MARK: - Book object (Canvas line illustration)
 
-/// Open book. `offset` is the card's signed distance from carousel center — the
-/// page turn tracks it (flips as the user swipes). `ribbonReveal` (0→1) drops the
-/// bookmark into the gutter on confirm. `flipEnabled` gates the page turn (off
-/// under Reduce Motion). Plain Canvas — re-renders via carousel position changes
-/// (turn) and the ribbon-reveal animation; no per-frame clock.
+/// Static open book + time-driven page turn and ribbon. When `live` (front card,
+/// motion allowed) a TimelineView clock re-renders the Canvas each frame so the
+/// turn/ribbon animate from elapsed time. When not live it draws the settled
+/// state (no turn; ribbon present iff confirmed).
 private struct BookObject: View {
 
-    let offset:       CGFloat
-    let ribbonReveal: CGFloat
-    let ribbonSway:   CGFloat
-    let flipEnabled:  Bool
+    let live:        Bool
+    let confirmed:   Bool
+    let turnStart:   Date
+    let ribbonStart: Date
+
+    private let turnDur = 0.6
+    private let dropDur: CGFloat = 0.5
+    private let liftDur: CGFloat = 0.3
 
     var body: some View {
-        Canvas { ctx, size in draw(&ctx, size: size) }
+        if live {
+            TimelineView(.animation) { tl in
+                Canvas { ctx, size in draw(&ctx, size: size, now: tl.date) }
+            }
+        } else {
+            Canvas { ctx, size in draw(&ctx, size: size, now: nil) }
+        }
     }
 
-    // Viewbox 160 × 110 (ported from docs/mockups/book-mock.html, ÷5 of 800×600).
-    private func draw(_ context: inout GraphicsContext, size: CGSize) {
+    // Viewbox 160 × 110.
+    private func draw(_ context: inout GraphicsContext, size: CGSize, now: Date?) {
 
         let s = min(size.width / 160, size.height / 110)
         context.translateBy(x: (size.width - 160 * s) / 2, y: (size.height - 110 * s) / 2)
@@ -135,6 +137,22 @@ private struct BookObject: View {
                 .init(color: AppColors.spectrumMagenta, location: 1.00),
             ]),
             startPoint: .zero, endPoint: CGPoint(x: 160 * s, y: 110 * s))
+
+        // ── Animation state from the clock ────────────────────────
+        var turnT: CGFloat = -1          // -1 = no turn
+        var reveal: CGFloat = confirmed ? 1 : 0
+        var sway: CGFloat = 0
+        if let now {
+            let te = CGFloat(now.timeIntervalSince(turnStart))
+            if te >= 0 && te <= CGFloat(turnDur) { turnT = easeInOut(te / CGFloat(turnDur)) }
+            let re = CGFloat(now.timeIntervalSince(ribbonStart))
+            if confirmed {
+                reveal = easeOutBack(clamp01(re / dropDur))
+                sway   = re < 1.4 ? exp(-re * 4) * sin(re * 12) : 0   // damped pendulum
+            } else {
+                reveal = 1 - easeOut(clamp01(re / liftDur))           // 1→0 (lift out)
+            }
+        }
 
         // ── Pages ─────────────────────────────────────────────────
         var leftPage = Path()
@@ -161,42 +179,36 @@ private struct BookObject: View {
         var gusset = Path(); gusset.move(to: p(74, 99))
         gusset.addCurve(to: p(86, 99), control1: p(74, 103), control2: p(86, 103))
 
-        // ── Text lines — straight ruled lines (control = midpoint). Right page
-        //    gets a full-width top line (no more short heading stub). ─────────
+        // ── Text lines — straight ruled lines (control = midpoint) ─
         func line(_ x0: CGFloat, _ y0: CGFloat, _ x1: CGFloat, _ y1: CGFloat) -> Path {
             var pa = Path(); pa.move(to: p(x0, y0))
             pa.addQuadCurve(to: p(x1, y1), control: p((x0 + x1) / 2, (y0 + y1) / 2))
             return pa
         }
         let textLines: [Path] = [
-            // left page
             line(26, 38, 76, 40), line(25, 46, 76, 48), line(24, 54, 76, 56),
             line(23, 62, 76, 64), line(22, 70, 76, 72), line(21, 78, 76, 80),
             line(20, 86, 76, 88),
-            // right page (full-width straight lines, slightly wider toward bottom)
             line(84, 40, 134, 40), line(84, 48, 134, 48), line(84, 56, 135, 56),
             line(84, 64, 135, 64), line(84, 72, 136, 72), line(84, 80, 137, 80),
             line(84, 88, 138, 88),
         ]
 
-        // ── Ribbon — drops into the gutter on confirm (ribbonReveal 0→1). The
-        //    tail extends downward and fades in; no sway. ──────────────────────
+        // ── Ribbon — drapes into the gutter (reveal 0→1 with overshoot) and the
+        //    tail swings to rest (sway). Anchored at the spine top. ────────────
         var ribbonPath = Path()
-        let hasRibbon = ribbonReveal > 0.01
+        let hasRibbon = reveal > 0.01
         if hasRibbon {
-            // Drapes into the gutter: the tail unfurls down the page as reveal
-            // 0→1 (slight overshoot from the spring); gentle outward bow reads as
-            // draped fabric. Tuned in docs/mockups/book-mock.html (÷5 of 800-box).
             let topY: CGFloat = 27
-            let tailY  = 30 + 58 * ribbonReveal
+            let tailY  = 30 + 58 * reveal
             let notchY = tailY - 4.8
-            let sx = ribbonSway * 4    // pendulum: tail swings, anchored at the top
+            let sx = sway * 5                       // pendulum offset at the tail
             let lx: CGFloat = 72.6, rx: CGFloat = 78.2, mid: CGFloat = 75.4, bow: CGFloat = 1.2
             ribbonPath.move(to: p(lx, topY))
             ribbonPath.addCurve(to: p(lx + sx, tailY),
                                 control1: p(lx, topY + 12),
                                 control2: p(lx - bow + sx * 0.7, tailY - 14))
-            ribbonPath.addLine(to: p(mid + sx, notchY))      // swallowtail notch
+            ribbonPath.addLine(to: p(mid + sx, notchY))
             ribbonPath.addLine(to: p(rx + sx, tailY))
             ribbonPath.addCurve(to: p(rx, topY),
                                 control1: p(rx + bow + sx * 0.7, tailY - 14),
@@ -204,20 +216,16 @@ private struct BookObject: View {
             ribbonPath.closeSubpath()
         }
 
-        // ── Page turn — a single curled page on the LEAVING card (offset<0) sweeps
-        //    right → up over the top → left as you swipe away (t = -offset, 0→1),
-        //    reading as turning the page of the book you're on. Tuned in
-        //    docs/mockups/book-mock.html (÷5 of the 800-unit box). ──
+        // ── Page turn — curled page sweeping right → over the top → left. ──────
         var flip = Path(); var flipOpacity = 0.0
-        if flipEnabled && offset < -0.02 && offset >= -1.0 {
-            let t   = Double(-offset)                 // 0 (flat right) → 1 (laid left)
-            let ang = t * .pi
-            let cA  = CGFloat(cos(ang)), arc = CGFloat(sin(ang))   // arc: 0→1→0
-            let fx  = 80 + 55 * cA                    // free edge X: 135 → 80 → 25
+        if turnT > 0.02 && turnT < 0.98 {
+            let ang = Double(turnT) * .pi
+            let cA  = CGFloat(cos(ang)), arc = CGFloat(sin(ang))
+            let fx  = 80 + 55 * cA
             let fbx = 80 + 60 * cA
-            let topY = 30 - arc * 19                  // arcs up over the top
+            let topY = 30 - arc * 19
             let botY = 90 - arc * 6
-            let curl = arc * 14 * (cA >= 0 ? 1 : -1)  // bow toward the leading side
+            let curl = arc * 14 * (cA >= 0 ? 1 : -1)
             let cTopX = (80 + fx)  / 2 + curl
             let cBotX = (80 + fbx) / 2 + curl
             flip.move(to: p(80, 30))
@@ -225,7 +233,7 @@ private struct BookObject: View {
             flip.addLine(to: p(fbx, botY))
             flip.addQuadCurve(to: p(80, 96), control: p(cBotX, botY + arc * 4.4))
             flip.closeSubpath()
-            flipOpacity = sin(t * .pi) * 0.95
+            flipOpacity = sin(Double(turnT) * .pi) * 0.95
         }
 
         // ── Strokes ───────────────────────────────────────────────
@@ -233,15 +241,14 @@ private struct BookObject: View {
         let thinStroke = StrokeStyle(lineWidth: 0.8 * s, lineCap: .round)
         let ribStroke  = StrokeStyle(lineWidth: 1.5 * s, lineCap: .round, lineJoin: .round)
 
-        // Pass 1: glow (pages always; ribbon only when present)
+        // Pass 1: glow
         context.drawLayer { ctx in
             ctx.addFilter(.blur(radius: 3 * s))
             ctx.opacity = 0.24
             ctx.stroke(leftPage,  with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
             ctx.stroke(rightPage, with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
             if hasRibbon {
-                var rc = ctx; rc.opacity = 0.24 * min(1, ribbonReveal * 6)
-                rc.stroke(ribbonPath, with: shading, style: StrokeStyle(lineWidth: 5 * s, lineJoin: .round))
+                ctx.stroke(ribbonPath, with: shading, style: StrokeStyle(lineWidth: 5 * s, lineJoin: .round))
             }
         }
 
@@ -250,10 +257,8 @@ private struct BookObject: View {
         for pa in [coverL1, coverL2, coverR1, coverR2, gusset] {
             coverCtx.stroke(pa, with: shading, style: thinStroke)
         }
-
         var textCtx = context; textCtx.opacity = 0.38
         for pa in textLines { textCtx.stroke(pa, with: shading, style: thinStroke) }
-
         var spineCtx = context; spineCtx.opacity = 0.55
         spineCtx.stroke(spine, with: shading, style: thinStroke)
 
@@ -263,8 +268,7 @@ private struct BookObject: View {
         // Ribbon — bg-filled so it reads in front of the pages
         if hasRibbon {
             context.fill(ribbonPath, with: .color(AppColors.cardBg))
-            var rc = context; rc.opacity = min(1, ribbonReveal * 6)   // solid almost immediately — drape, don't fade
-            rc.stroke(ribbonPath, with: shading, style: ribStroke)
+            context.stroke(ribbonPath, with: shading, style: ribStroke)
         }
 
         // Turning page — bg-filled so it occludes the pages as it sweeps
