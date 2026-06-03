@@ -39,7 +39,8 @@ struct ContextCardFace: View {
     var confirmed: Bool = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var ribbonReveal: CGFloat = 0
+    @State private var ribbonReveal: CGFloat = 0   // 0→1 drop-in length
+    @State private var ribbonSway:   CGFloat = 0   // damped pendulum settle
 
     var body: some View {
         GeometryReader { geo in
@@ -52,7 +53,7 @@ struct ContextCardFace: View {
                 Spacer(minLength: 0)
 
                 BookObject(offset: pageTurn, ribbonReveal: ribbonReveal,
-                           flipEnabled: !reduceMotion)
+                           ribbonSway: ribbonSway, flipEnabled: !reduceMotion)
                     .frame(maxWidth: .infinity)
                     .frame(height: h * 0.44)
 
@@ -85,12 +86,18 @@ struct ContextCardFace: View {
         .onChange(of: confirmed) { _, isConfirmed in
             if reduceMotion {
                 ribbonReveal = isConfirmed ? 1 : 0
+                ribbonSway = 0
             } else if isConfirmed {
-                // Ceremonious drop-in: the bookmark drapes down with a soft settle.
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { ribbonReveal = 1 }
+                // Drape: the bookmark drops in solid (no fade) and its tail swings
+                // to rest (damped pendulum) — fabric being laid onto the page.
+                var kick = Transaction(); kick.disablesAnimations = true
+                withTransaction(kick) { ribbonSway = 1 }
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.62)) { ribbonReveal = 1 }
+                withAnimation(.spring(response: 0.62, dampingFraction: 0.32)) { ribbonSway = 0 }
             } else {
-                // Elegant retract: lifts out and fades, no overshoot.
-                withAnimation(.easeOut(duration: 0.28)) { ribbonReveal = 0 }
+                // Lift out: the bookmark slides back up and away, no overshoot.
+                withAnimation(.easeOut(duration: 0.3)) { ribbonReveal = 0 }
+                withAnimation(.easeOut(duration: 0.3)) { ribbonSway = 0 }
             }
         }
     }
@@ -107,6 +114,7 @@ private struct BookObject: View {
 
     let offset:       CGFloat
     let ribbonReveal: CGFloat
+    let ribbonSway:   CGFloat
     let flipEnabled:  Bool
 
     var body: some View {
@@ -182,12 +190,17 @@ private struct BookObject: View {
             let topY: CGFloat = 27
             let tailY  = 30 + 58 * ribbonReveal
             let notchY = tailY - 4.8
+            let sx = ribbonSway * 4    // pendulum: tail swings, anchored at the top
             let lx: CGFloat = 72.6, rx: CGFloat = 78.2, mid: CGFloat = 75.4, bow: CGFloat = 1.2
             ribbonPath.move(to: p(lx, topY))
-            ribbonPath.addCurve(to: p(lx, tailY), control1: p(lx, topY + 12), control2: p(lx - bow, tailY - 14))
-            ribbonPath.addLine(to: p(mid, notchY))      // swallowtail notch
-            ribbonPath.addLine(to: p(rx, tailY))
-            ribbonPath.addCurve(to: p(rx, topY), control1: p(rx + bow, tailY - 14), control2: p(rx, topY + 12))
+            ribbonPath.addCurve(to: p(lx + sx, tailY),
+                                control1: p(lx, topY + 12),
+                                control2: p(lx - bow + sx * 0.7, tailY - 14))
+            ribbonPath.addLine(to: p(mid + sx, notchY))      // swallowtail notch
+            ribbonPath.addLine(to: p(rx + sx, tailY))
+            ribbonPath.addCurve(to: p(rx, topY),
+                                control1: p(rx + bow + sx * 0.7, tailY - 14),
+                                control2: p(rx, topY + 12))
             ribbonPath.closeSubpath()
         }
 
@@ -227,7 +240,7 @@ private struct BookObject: View {
             ctx.stroke(leftPage,  with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
             ctx.stroke(rightPage, with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
             if hasRibbon {
-                var rc = ctx; rc.opacity = 0.24 * min(1, ribbonReveal)
+                var rc = ctx; rc.opacity = 0.24 * min(1, ribbonReveal * 6)
                 rc.stroke(ribbonPath, with: shading, style: StrokeStyle(lineWidth: 5 * s, lineJoin: .round))
             }
         }
@@ -250,7 +263,7 @@ private struct BookObject: View {
         // Ribbon — bg-filled so it reads in front of the pages
         if hasRibbon {
             context.fill(ribbonPath, with: .color(AppColors.cardBg))
-            var rc = context; rc.opacity = min(1, ribbonReveal)
+            var rc = context; rc.opacity = min(1, ribbonReveal * 6)   // solid almost immediately — drape, don't fade
             rc.stroke(ribbonPath, with: shading, style: ribStroke)
         }
 
