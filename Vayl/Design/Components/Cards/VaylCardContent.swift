@@ -43,6 +43,10 @@ public enum VaylCardContent: Equatable {
     /// Slot machine symbol face — used during GenderPhase.
     case slotMachine
 
+    /// Vintage radio tuner face — used during GenderPhase.
+    /// signalStrength 0.0 (scanning) → 1.0 (locked). Dial progress 0.0–1.0.
+    case radioTuner(signalStrength: Double, leftDialProgress: Double, rightDialProgress: Double)
+
     /// Solo controller card face — used for Solo Discovery mode selection.
     case controller(activeButtons: Set<Int> = [])
 

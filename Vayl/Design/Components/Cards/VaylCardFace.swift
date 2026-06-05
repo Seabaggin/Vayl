@@ -84,6 +84,14 @@ struct VaylCardFace: View {
                             cardWidth:  size.width,
                             cardHeight: size.height
                         )
+                    case .radioTuner(let sig, let left, let right):
+                        RadioTunerCardFace(
+                            cardWidth:         size.width,
+                            cardHeight:        size.height,
+                            signalStrength:    sig,
+                            leftDialProgress:  left,
+                            rightDialProgress: right
+                        )
                     case .controller(let activeButtons):
                         ControllerCardFace(
                             cardWidth:     size.width,
