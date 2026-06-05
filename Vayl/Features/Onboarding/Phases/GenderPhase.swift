@@ -218,6 +218,8 @@ struct GenderPhase: View {
                             cardWidth:         cardWidth,
                             cardHeight:        cardHeight,
                             signalStrength:    director.genderSignalStrength,
+                            scanPhase:         Double(drumBaseOffset + drumDragOffset
+                                                    + pronounsBaseOffset + pronounsDragOffset),
                             leftDialProgress:  director.genderOptions.isEmpty ? 0 :
                                 Double(director.genderSelectedIndex) / Double(max(1, director.genderOptions.count - 1)),
                             rightDialProgress: director.genderPronounsOptions.isEmpty ? 0 :
@@ -282,7 +284,9 @@ struct GenderPhase: View {
     }
 
     private var pronounsInitialOffset: CGFloat {
-        CGFloat((director.genderPronounsOptions.count - 1) / 2) * drumItemH
+        // Float division required — (n-1)/2.0 correctly centres item 0 for even-count lists.
+        // Integer division (n-1)/2 is off by 0.5 slots for even n (6 pronouns → gap between items).
+        CGFloat(director.genderPronounsOptions.count - 1) / 2.0 * drumItemH
     }
 
     private var pronounsScrollPosition: CGFloat {

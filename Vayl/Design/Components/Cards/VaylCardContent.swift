@@ -45,7 +45,8 @@ public enum VaylCardContent: Equatable {
 
     /// Vintage radio tuner face — used during GenderPhase.
     /// signalStrength 0.0 (scanning) → 1.0 (locked). Dial progress 0.0–1.0.
-    case radioTuner(signalStrength: Double, leftDialProgress: Double, rightDialProgress: Double)
+    /// scanPhase shifts sine waves as user scrolls drum pickers.
+    case radioTuner(signalStrength: Double, scanPhase: Double, leftDialProgress: Double, rightDialProgress: Double)
 
     /// Solo controller card face — used for Solo Discovery mode selection.
     case controller(activeButtons: Set<Int> = [])

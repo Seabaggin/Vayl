@@ -28,6 +28,7 @@ struct RadioTunerCardFace: View {
     let cardHeight: CGFloat
 
     var signalStrength:    Double = 0  // 0.0 = searching/static, 1.0 = signal locked
+    var scanPhase:         Double = 0  // shifts sine waves as user scrolls drums
     var leftDialProgress:  Double = 0  // 0.0–1.0 across gender options
     var rightDialProgress: Double = 0  // 0.0–1.0 across pronoun options
 
@@ -105,15 +106,35 @@ struct RadioTunerCardFace: View {
                 width: grilleW, height: grilleH
             ), cornerRadius: grilleR)
 
-            // 6 evenly-spaced horizontal lines inside grille (clipped)
-            let lineCount = 6
+            // 3 sine wave paths inside grille (clipped).
+            // Each wave sits at a different vertical lane and has a slightly different
+            // frequency so they don't constructively overlap. scanPhase shifts all three
+            // as the user scrolls the drum pickers.
+            let lineCount  = 3
             let linePad:   CGFloat = 4 * s
-            let lineSpacing = (grilleH - linePad * 2) / CGFloat(lineCount - 1)
-            var grilleLinesPath = Path()
-            for i in 0..<lineCount {
-                let ly = grilleY + linePad + CGFloat(i) * lineSpacing
-                grilleLinesPath.move(to:    CGPoint(x: grilleX + linePad,        y: ly))
-                grilleLinesPath.addLine(to: CGPoint(x: grilleX + grilleW - linePad, y: ly))
+            let waveAmp:   CGFloat = grilleH * 0.055   // ±5.5% grille height
+            let waveW:     CGFloat = grilleW - linePad * 2
+            let waveSteps  = max(40, Int(waveW / s))   // enough segments to look smooth
+
+            // Per-wave tuning: (vertical lane fraction, cycles across width, phase offset)
+            let waveConfig: [(CGFloat, Double, Double)] = [
+                (0.22, 1.8, 0.0),
+                (0.50, 2.4, .pi * 0.6),
+                (0.78, 1.5, .pi * 1.3),
+            ]
+
+            var sineWavePaths: [Path] = []
+            for (laneFrac, freq, phaseOff) in waveConfig {
+                let laneY = grilleY + grilleH * laneFrac
+                var path = Path()
+                for step in 0...waveSteps {
+                    let t  = Double(step) / Double(waveSteps)
+                    let x  = grilleX + linePad + CGFloat(t) * waveW
+                    let y  = laneY + waveAmp * CGFloat(sin(2 * .pi * freq * t + scanPhase * 0.04 + phaseOff))
+                    if step == 0 { path.move(to: CGPoint(x: x, y: y)) }
+                    else          { path.addLine(to: CGPoint(x: x, y: y)) }
+                }
+                sineWavePaths.append(path)
             }
 
             // ── Dials ──────────────────────────────────────────────────
@@ -214,12 +235,14 @@ struct RadioTunerCardFace: View {
             // 3. Speaker grille outline
             context.stroke(grillePath, with: shading, style: grilleStroke)
 
-            // 4. Grille lines — clipped to grille shape, subordinate
+            // 4. Sine waves — clipped to grille shape
             var grilleCtx = context
             grilleCtx.clip(to: grillePath)
-            var grilleLnCtx = grilleCtx
-            grilleLnCtx.opacity = 0.36
-            grilleLnCtx.stroke(grilleLinesPath, with: shading, style: grilleLnStroke)
+            for wavePath in sineWavePaths {
+                var waveCtx = grilleCtx
+                waveCtx.opacity = 0.38
+                waveCtx.stroke(wavePath, with: shading, style: grilleLnStroke)
+            }
 
             // 5. Left dial outline
             context.stroke(leftDialPath, with: shading, style: dialStroke)
