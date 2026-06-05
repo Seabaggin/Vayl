@@ -76,7 +76,7 @@ struct ModeSelectPhase: View {
     // MARK: — Lift copy overlay
 
     private func liftCopyLayer(text: String, side: MirrorCard) -> some View {
-        let title = side == .left ? "Solo" : "Shared Journey"
+        let title = side == .left ? "Just me for now" : "We're both here"
 
         return ZStack {
             VStack(spacing: AppSpacing.sm) {
@@ -352,8 +352,8 @@ struct ModeSelectPhase: View {
             try? await Task.sleep(for: .milliseconds(120))
             guard !Task.isCancelled else { return }
             let text = side == .left
-                ? "I'm looking for clarity."           // PLACEHOLDER
-                : "Starting the conversation together." // PLACEHOLDER
+                ? "Starting on my own — for now."
+                : "We're doing this together."
             withAnimation(AppAnimation.standard) {
                 liftedText = text
                 liftedSide = side
