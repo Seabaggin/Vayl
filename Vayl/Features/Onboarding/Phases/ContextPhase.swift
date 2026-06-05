@@ -1,7 +1,7 @@
 // Features/Onboarding/Phases/ContextPhase.swift
 //
 // OB Phase — Context · "Where are you right now?"
-// Sits after ExperienceLevelPhase, advances to CompassPhase.
+// Sits after ExperienceLevelPhase, advances to CuriosityPhase.
 //
 // A browsable card stack (VaylCardCarousel + CarouselPhysics): the user swipes
 // to browse relationship-context cards, taps the front card to confirm, and
@@ -321,7 +321,7 @@ struct ContextPhase: View {
     // MARK: - Exit timeline
     // swipe-up → confirmed card lifts/fades + others drop away → (beat) → director
     // returns the felt, pockets the credential, and projects a responsive line →
-    // (beat) → advance to .compass (handled inside concludeContext).
+    // (beat) → advance to .curiosity (handled inside concludeContext).
     private func handleExit() {
         guard let index = confirmedIndex, !exiting else { return }
         stopConfirmTug()

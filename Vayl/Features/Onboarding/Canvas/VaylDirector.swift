@@ -174,7 +174,6 @@ final class VaylDirector {
         case .gender:          runGenderEntry()
         case .experienceLevel: runExperienceLevelEntry()
         case .context:         runContextEntry()
-        case .compass:         runCompassEntry()
         case .curiosity:       runCuriosityEntry()
         case .confirmation:    runConfirmationEntry()
         case .buildDeck:       runBuildDeckEntry()
@@ -259,9 +258,8 @@ final class VaylDirector {
     /// Called by ContextPhase once the cards have begun their exit. Writes the
     /// chosen relationship context + situational register, adds the `.context`
     /// credential to the corner deck, re-emerges the felt, projects a dealer line
-    /// that responds to the choice, then advances to CompassPhase after a copy beat.
-    /// `advance` stays the sole phase gate. NOTE: ContextPhase never writes
-    /// `emotionalRegister` — that belongs to CompassPhase Q3 exclusively.
+    /// that responds to the choice, then advances to CuriosityPhase after a copy beat.
+    /// `advance` stays the sole phase gate.
     func concludeContext(relationshipContext: RelationshipContext,
                          situationalRegister: SituationalRegister) {
         onboardingData.relationshipContext = relationshipContext.rawValue
@@ -283,7 +281,7 @@ final class VaylDirector {
             deckPulse = false
             try? await Task.sleep(for: .milliseconds(2000)) // let the responsive line land
             guard current == self.sequenceAttempt else { return }
-            advance(to: .compass)
+            advance(to: .curiosity)
         }
     }
 
@@ -295,7 +293,6 @@ final class VaylDirector {
         case .flexible: return "Good — let's find the shape of it."
         }
     }
-    private func runCompassEntry() {}
     private func runCuriosityEntry() { showDealerLine("Sweep away what you aren't ready for.") }
     private func runConfirmationEntry() {}
     private func runBuildDeckEntry() { foilIntegrity = 1.0; foilTears = [] }

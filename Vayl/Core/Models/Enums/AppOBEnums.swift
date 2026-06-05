@@ -28,7 +28,6 @@ enum OBPhase: CaseIterable {
     case gender             // slot machine drag, reel spin, card tear, drum picker → deck[3]
     case experienceLevel    // Monte deal, shuffle, flip, candle face, swipe up → deck[4]
     case context            // deal face-up, table fades, carousel, swipe up → deck[5]
-    case compass            // three-question calibration (agency/motivation/register) — no deck card
     case curiosity          // tinder swipe, two rounds, dealer copy between — deck[6] full
     case confirmation       // cards fan from corner, review, edit, swipe right → build
     case buildDeck          // foil materializes, dealer types, tear to accept → letter

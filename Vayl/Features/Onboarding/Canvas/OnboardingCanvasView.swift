@@ -204,10 +204,6 @@ private struct PhaseOverlayView: View {
                 ContextPhase(director: director, screenSize: screenSize)
                     .transition(.opacity)
 
-            case .compass:
-                CompassPhase(director: director, screenSize: screenSize)
-                    .transition(.opacity)
-
             case .curiosity:
                 CuriosityPhase(director: director, screenSize: screenSize)
                     .transition(.opacity)
