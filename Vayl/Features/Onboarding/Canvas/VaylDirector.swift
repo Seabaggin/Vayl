@@ -724,23 +724,19 @@ final class VaylDirector {
             genderCardVisible        = true
             dissolutionT             = 1
             genderCardSettled        = true
-            genderDealerLineVisible  = true
+            genderDealerLineVisible  = false
             genderCardFaceUp         = true
             genderCardFlipScaleX     = 1.0
             genderBeatComplete       = true
-            genderHandleOffset       = 38
-            genderHandlePullComplete = true
-            genderReelOffsets        = [0, 0, 0]
-            genderReelsSpinning      = false
-            genderSettledSymbols     = [0, 0, 0]
-            genderActiveReel         = nil
-            genderReelSettleComplete = true
-            genderSwipeHintActive    = false   // no looping hint under reduce motion
-            genderDealerLineVisible  = false
+            genderSignalStrength     = 0
+            genderSwipeHintActive    = false
             genderPickerVisible      = true
             genderDrumOffset         = 0
             genderSelectedIndex      = 0
             genderDrumSettled        = false
+            genderPronounsDrumOffset    = 0
+            genderPronounsSelectedIndex = 0
+            genderPronounsDrumSettled   = false
             genderShouldPocket       = false
             return
         }
@@ -798,17 +794,13 @@ final class VaylDirector {
         await runGenderFlipAndSpin()
     }
 
-    /// Beat B through Segment 7 — flip card, pull handle, spin + settle reels, show picker.
+    /// Beat B through Segment 7 — flip card face-up, power-on beat, show picker.
     ///
     /// Called immediately after the dealer line has been shown and a 300ms beat has passed.
     ///
     /// Preconditions on entry:
     ///   genderCardFaceUp         = false   (flip will reveal face)
     ///   genderDealerLineVisible  = true    (caller showed it)
-    ///   genderHandleOffset       = 0
-    ///   genderHandlePullComplete = false
-    ///   genderSettledSymbols     = [nil, nil, nil]
-    @MainActor
     private func runGenderFlipAndSpin() async {
 
         // ── Flip half 1 — collapse scaleX to 0 ───────────────────────────────
@@ -828,138 +820,32 @@ final class VaylDirector {
         try? await Task.sleep(for: .milliseconds(300))
         guard !Task.isCancelled else { return }
 
-        // Beat C: hold (300ms after flip)
+        // Beat: hold so the radio face registers before dealer line fades
         try? await Task.sleep(for: .milliseconds(300))
         guard !Task.isCancelled else { return }
         genderBeatComplete = true
 
-        // ── SEGMENTS 4+5+6 — Handle pull + reel spin + staggered settle ──────
-        //
-        // One drive loop covers all three phases so offsets are continuous:
-        //   Phase 1 (0–500ms)  — handle pulls; reels join at 100ms elapsed
-        //   Phase 2 (+300ms)   — coast: reels spin freely after pull settles
-        //   Phase 3 (3 × 80ms) — stagger settle; unsettled reels spin until locked
-
-        // 300ms beat post-flip
-        try? await Task.sleep(for: .milliseconds(300))
-        guard !Task.isCancelled else { return }
-
-        let pullDuration:    Double    = 0.500
-        let pullTarget:      CGFloat   = 38
-        let reelSpeed:       CGFloat   = 600    // pts/s — fast enough to blur symbols
-        let spinDelay:       Double    = 0.100  // reels start 100ms into the pull
-        let coastDuration:   Double    = 0.300
-        let staggerInterval: Double    = 0.080  // seconds between reel settles
-        let reelFactors:     [CGFloat] = [1.0, 1.07, 0.94]  // per-reel speed variation
-
-        let masterStart = Date()
-        var spinStart: Date? = nil
-
-        // Phase 1 — Handle pull + reel start
-        while !Task.isCancelled {
-            let elapsed = -masterStart.timeIntervalSinceNow
-            let t       = min(elapsed / pullDuration, 1.0)
-            let eased   = CGFloat(1 - pow(1 - t, 3))  // ease-out cubic
-
-            genderHandleOffset = pullTarget * eased
-
-            if elapsed >= spinDelay {
-                if spinStart == nil {
-                    spinStart = Date()
-                    genderReelsSpinning = true
-                    // Picker and dealer line transition together the moment reels start.
-                    withAnimation(AppAnimation.textProject.reduceMotionSafe) {
-                        genderDealerLineVisible = false
-                    }
-                    withAnimation(AppAnimation.standard.reduceMotionSafe) {
-                        genderPickerVisible = true
-                    }
-                }
-                let re = CGFloat(-spinStart!.timeIntervalSinceNow)
-                genderReelOffsets = reelFactors.map { re * reelSpeed * $0 }
-                let rawDrum1      = genderReelOffsets[0] / 0.68
-                let drumCycle     = CGFloat(genderOptions.count) * symbolSlotH
-                genderDrumOffset  = rawDrum1.truncatingRemainder(dividingBy: drumCycle)
-            }
-
-            if t >= 1.0 { break }
-            try? await Task.sleep(for: .milliseconds(14))
-        }
-
-        guard !Task.isCancelled else { return }
-        genderHandleOffset       = pullTarget
-        genderHandlePullComplete = true
-
-        // Phase 2 — Coast
-        let coastEnd = Date().addingTimeInterval(coastDuration)
-        while !Task.isCancelled {
-            if let s = spinStart {
-                let re            = CGFloat(-s.timeIntervalSinceNow)
-                genderReelOffsets = reelFactors.map { re * reelSpeed * $0 }
-                let rawDrum2      = genderReelOffsets[0] / 0.68
-                let drumCycle2    = CGFloat(genderOptions.count) * symbolSlotH
-                genderDrumOffset  = rawDrum2.truncatingRemainder(dividingBy: drumCycle2)
-            }
-            if Date() >= coastEnd { break }
-            try? await Task.sleep(for: .milliseconds(14))
-        }
-
-        guard !Task.isCancelled else { return }
-
-        // Phase 3 — Staggered settle
-        // Random symbols for now — picker selection overwrites via settleGenderDrum.
-        let settleTargets: [Int] = [
-            Int.random(in: 0..<genderOptions.count),
-            Int.random(in: 0..<genderOptions.count),
-            Int.random(in: 0..<genderOptions.count),
-        ]
-
-        for i in 0..<3 {
-            guard !Task.isCancelled else { return }
-
-            // Snap reel i — canvas centres it from settledSymbols; reelOffset ignored.
-            genderSettledSymbols[i] = settleTargets[i]
-            genderActiveReel        = i     // triggers .sensoryFeedback in GenderPhase
-
-            if i < 2 {
-                // Keep unsettled reels live during the stagger window.
-                let nextSettle = Date().addingTimeInterval(staggerInterval)
-                while !Task.isCancelled {
-                    if let s = spinStart {
-                        let re = CGFloat(-s.timeIntervalSinceNow)
-                        // Settled reels: canvas ignores reelOffsets — safe to write full array.
-                        genderReelOffsets = reelFactors.map { re * reelSpeed * $0 }
-                        let rawDrum3      = genderReelOffsets[0] / 0.68
-                        let drumCycle3    = CGFloat(genderOptions.count) * symbolSlotH
-                        genderDrumOffset  = rawDrum3.truncatingRemainder(dividingBy: drumCycle3)
-                    }
-                    if Date() >= nextSettle { break }
-                    try? await Task.sleep(for: .milliseconds(14))
-                }
-                guard !Task.isCancelled else { return }
-            }
-        }
-
-        guard !Task.isCancelled else { return }
-
-        // Brief hold so the final reel glow reads before it clears.
+        // ── Power-on beat — brief pause before picker appears ─────────────────
+        // Radio face is visible at signalStrength=0 (searching look).
+        // Dealer line fades out, picker fades in after a short beat.
         try? await Task.sleep(for: .milliseconds(400))
         guard !Task.isCancelled else { return }
 
-        genderActiveReel         = nil
-        genderReelsSpinning      = false
-        genderReelSettleComplete = true
-        genderSelectedIndex      = settleTargets[0]   // picker snaps to match settled reel
-        genderDrumSettled        = true               // pronouns + confirm reveal
+        withAnimation(AppAnimation.textProject.reduceMotionSafe) {
+            genderDealerLineVisible = false
+        }
+        try? await Task.sleep(for: .milliseconds(180))
+        guard !Task.isCancelled else { return }
+
+        withAnimation(AppAnimation.standard.reduceMotionSafe) {
+            genderPickerVisible = true
+        }
     }
 
     // MARK: - Gender Drum Interaction
     //
     // The only paths through which GenderPhase may write back to director state.
-    // All reel-sync math lives here — zero logic in View.
-
-    /// Internal canvas units per reel symbol slot. Must match SlotMachineCardFace.symbolSlotH.
-    private let symbolSlotH: CGFloat = 58
+    // All drum-sync math lives here — zero logic in View.
 
     /// Called every frame while the gender drum is dragged.
     func updateGenderDrum(offset: CGFloat) {

@@ -97,21 +97,17 @@ struct GenderPhase: View {
             pickerLayer
         }
         .frame(width: screenSize.width, height: screenSize.height)
-        .sensoryFeedback(.impact(weight: .medium), trigger: director.genderActiveReel) { _, new in
-            new != nil
-        }
         .sensoryFeedback(.success, trigger: confirmedTrigger)
         .onAppear   { director.startGenderSequence(screenSize: screenSize, reduceMotion: reduceMotion) }
         .onDisappear { director.cancelGenderSequence() }
-        .onChange(of: director.genderReelsSpinning) { _, spinning in
-            guard !spinning else { return }
-            // Reels stopped — snap drum strip to the autonomously settled index.
+        .onChange(of: director.genderPickerVisible) { _, visible in
+            guard visible else { return }
+            // Picker appeared — snap drum strip to index 0 (no autonomous spin to sync from).
             withAnimation(AppAnimation.spring.reduceMotionSafe) {
-                drumBaseOffset = drumInitialOffset - CGFloat(director.genderSelectedIndex) * drumItemH
+                drumBaseOffset = drumInitialOffset
                 drumDragOffset = 0
             }
-            // Sync haptic tracker so first user drag doesn't fire a spurious tick.
-            lastCenteredIndex = director.genderSelectedIndex
+            lastCenteredIndex = 0
         }
         .onChange(of: director.genderShouldPocket) { _, pocket in
             // Director has animated card away (cardPocket ≈ 520ms).
@@ -245,20 +241,9 @@ struct GenderPhase: View {
                 )
                 .opacity(density * sharp)
             } else {
-                // VaylCardFace() provides the card shell (cardBg, atmosphere, border,
-                // hairlines). SlotMachineCardFace is overlaid with the animated
-                // handleOffset so the director can drive it without touching VaylCardContent.
+                // Task 6 will overlay RadioTunerCardFace here.
+                // Plain VaylCardFace shell compiles Task 5 cleanly.
                 VaylCardFace()
-                    .overlay(
-                        SlotMachineCardFace(
-                            cardWidth:      cardWidth,
-                            cardHeight:     cardHeight,
-                            handleOffset:   director.genderHandleOffset,
-                            reelOffsets:    director.genderReelOffsets,
-                            settledSymbols: director.genderSettledSymbols,
-                            activeReel:     director.genderActiveReel
-                        )
-                    )
                     .opacity(density * sharp)
             }
         }
@@ -269,12 +254,12 @@ struct GenderPhase: View {
             DragGesture(minimumDistance: 30)
                 .onChanged { _ in
                     // User has grabbed the card — kill the swipe hint immediately.
-                    guard director.genderReelSettleComplete else { return }
+                    guard director.genderPickerVisible else { return }
                     director.endGenderSwipeHint()
                 }
                 .onEnded { value in
-                    // Only active after reels have settled.
-                    guard director.genderReelSettleComplete else { return }
+                    // Only active after picker is visible (power-on beat complete).
+                    guard director.genderPickerVisible else { return }
                     // Require an upward swipe (negative height) with limited horizontal drift.
                     guard value.translation.height < -55  else { return }
                     guard abs(value.translation.width) < 80 else { return }
@@ -308,16 +293,10 @@ struct GenderPhase: View {
     }
 
     /// Index of the option currently closest to the selection band.
-    /// During spin: derived from genderDrumOffset so highlight tracks reel motion.
-    /// During drag / settled: derived from drumBaseOffset + drumDragOffset.
+    /// Derived from drumBaseOffset + drumDragOffset (no autonomous spin to track).
     private var currentCenteredIndex: Int {
         let n = director.genderOptions.count
         guard n > 0 else { return 0 }
-        if director.genderReelsSpinning {
-            let cycle = CGFloat(n) * drumItemH
-            let norm  = director.genderDrumOffset.truncatingRemainder(dividingBy: cycle)
-            return max(0, min(n - 1, Int(norm / drumItemH) % n))
-        }
         let raw = (drumInitialOffset - drumBaseOffset - drumDragOffset) / drumItemH
         return max(0, min(n - 1, Int(raw.rounded())))
     }
@@ -328,19 +307,9 @@ struct GenderPhase: View {
         director.genderCardOffset.height - cardHeight / 2 - AppSpacing.xxl - drumWindowH / 2
     }
 
-    /// Strip Y-offset — reel-driven during autonomous spin; user/gesture-driven after settle.
-    ///
-    /// During spin: wraps genderDrumOffset into [0, cycle) and inverts it so the strip
-    /// scrolls in the same visual direction as the reel symbols.
-    /// After settle or during user drag: standard drumBaseOffset + drumDragOffset.
+    /// Strip Y-offset — user/gesture-driven via drumBaseOffset + drumDragOffset.
     private var drumStripOffset: CGFloat {
-        guard director.genderReelsSpinning else {
-            return drumBaseOffset + drumDragOffset
-        }
-        let cycle = CGFloat(director.genderOptions.count) * drumItemH
-        guard cycle > 0 else { return drumBaseOffset + drumDragOffset }
-        let norm = director.genderDrumOffset.truncatingRemainder(dividingBy: cycle)
-        return drumInitialOffset - norm
+        drumBaseOffset + drumDragOffset
     }
 
     // MARK: — Picker layer
