@@ -49,19 +49,8 @@ final class VaylDirector {
     /// Dealer line copy shown above the card. Set before the phase opens.
     var genderDealerLine:         String = "Let's find your place at the table."
 
-    // Segment 4 — handle pull
-    var genderHandleOffset:       CGFloat = 0     // internal illustration units; drives SlotMachineCardFace.handleOffset
-    var genderHandlePullComplete: Bool    = false
-
-    // Segments 5+6 — reel spin + staggered settle
-    var genderReelOffsets:        [CGFloat]  = [0, 0, 0]         // screen pts per reel; drives SlotMachineCardFace.reelOffsets
-    var genderReelsSpinning:      Bool       = false
-    var genderSettledSymbols:     [Int?]     = [nil, nil, nil]   // per-reel symbol index; nil = still spinning
-    var genderActiveReel:         Int?       = nil               // which reel glows; triggers haptic in GenderPhase
-    var genderReelSettleComplete: Bool       = false
-
-    // Swipe-hint loop flag — true after the reels settle and the winning-glow haptics
-    // finish; false the moment the user grabs the card or confirms. Drives the looping
+    // Swipe-hint loop flag — true after both drums settle and fireBothSettled() fires;
+    // false the moment the user grabs the card or confirms. Drives the looping
     // "swipe me right" affordance in GenderPhase (rightward drift + clockwise tip).
     var genderSwipeHintActive:    Bool       = false
 
@@ -76,6 +65,16 @@ final class VaylDirector {
     var genderDrumOffset:     CGFloat  = 0
     var genderSelectedIndex:  Int      = 0
     var genderDrumSettled:    Bool     = false
+
+    // Radio tuner signal state
+    var genderSignalStrength:        Double   = 0
+    // Pronouns drum (mirrors gender drum)
+    var genderPronounsOptions:       [String] = ["she/her", "he/him", "they/them", "ze/zir", "any pronouns", "prefer not to say"]
+    var genderPronounsDrumOffset:    CGFloat  = 0
+    var genderPronounsSelectedIndex: Int      = 0
+    var genderPronounsDrumSettled:   Bool     = false
+
+    var genderBothSettled: Bool { genderDrumSettled && genderPronounsDrumSettled }
 
     // Segment 8 — confirm logic (single spin, all modes)
     var genderShouldPocket:      Bool   = false  // GenderPhase observes; advances on true
@@ -679,13 +678,8 @@ final class VaylDirector {
         dissolutionT             = 0
         genderDealerLineVisible  = false
         genderBeatComplete       = false
-        genderHandleOffset       = 0
-        genderHandlePullComplete = false
-        genderReelOffsets        = [0, 0, 0]
-        genderReelsSpinning      = false
-        genderSettledSymbols     = [nil, nil, nil]
-        genderActiveReel         = nil
-        genderReelSettleComplete = false
+        genderDealerLine         = "Let's find your place at the table."
+        genderSignalStrength     = 0
         genderSwipeHintActive    = false
         genderPickerVisible      = false
         genderOptions            = [
@@ -694,6 +688,9 @@ final class VaylDirector {
         genderDrumOffset         = 0
         genderSelectedIndex      = 0
         genderDrumSettled        = false
+        genderPronounsDrumOffset    = 0
+        genderPronounsSelectedIndex = 0
+        genderPronounsDrumSettled   = false
         genderShouldPocket       = false
     }
 
@@ -964,43 +961,52 @@ final class VaylDirector {
     /// Internal canvas units per reel symbol slot. Must match SlotMachineCardFace.symbolSlotH.
     private let symbolSlotH: CGFloat = 58
 
-    /// Called every frame while the drum is dragged.
-    /// Syncs reels at a 0.68× ratio so they visually track the drum without matching it exactly.
+    /// Called every frame while the gender drum is dragged.
     func updateGenderDrum(offset: CGFloat) {
         genderDrumOffset  = offset
         genderDrumSettled = false
-        genderSettledSymbols = [nil, nil, nil]  // resume scroll mode
-        genderActiveReel  = nil
-        let reelOffset = offset * 0.68
-        genderReelOffsets = [0, 1, 2].map { _ in
-            reelOffset.truncatingRemainder(
-                dividingBy: CGFloat(genderOptions.count) * symbolSlotH
-            )
+        genderSwipeHintActive = false
+        if genderSignalStrength > 0 {
+            withAnimation(AppAnimation.standard) { genderSignalStrength = 0 }
+            withAnimation(AppAnimation.textProject.reduceMotionSafe) { genderDealerLineVisible = false }
+        }
+    }
+
+    /// Called every frame while the pronouns drum is dragged.
+    func updateGenderPronounsDrum(offset: CGFloat) {
+        genderPronounsDrumOffset  = offset
+        genderPronounsDrumSettled = false
+        genderSwipeHintActive     = false
+        if genderSignalStrength > 0 {
+            withAnimation(AppAnimation.standard) { genderSignalStrength = 0 }
+            withAnimation(AppAnimation.textProject.reduceMotionSafe) { genderDealerLineVisible = false }
         }
     }
 
     /// Called when the drum snaps to a gender option.
-    /// Settles all three reels on the corresponding symbol and plays the winning glow sequence.
     func settleGenderDrum(index: Int) {
-        genderSelectedIndex  = index
-        genderDrumSettled    = true
-        // All three reels agree on the selection.
-        // index is always in [0, genderOptions.count-1] (clamped by drum snapping logic).
-        // % genderOptions.count is defensive — ensures canvas never receives an out-of-range index.
-        genderSettledSymbols = [
-            index % genderOptions.count,
-            index % genderOptions.count,
-            index % genderOptions.count,
-        ]
-        // Winning glow — reuse active-reel animation briefly (triggers impact haptics in View)
-        Task { @MainActor in
-            for i in 0..<3 {
-                genderActiveReel = i
-                try? await Task.sleep(for: .milliseconds(80))
-            }
-            try? await Task.sleep(for: .milliseconds(300))
-            genderActiveReel = nil
+        genderSelectedIndex = index
+        genderDrumSettled   = true
+        if genderBothSettled { fireBothSettled() }
+    }
+
+    /// Called when the pronouns drum snaps to a selection.
+    func settleGenderPronounsDrum(index: Int) {
+        genderPronounsSelectedIndex = index
+        genderPronounsDrumSettled   = true
+        if genderBothSettled { fireBothSettled() }
+    }
+
+    /// Fires once both drums have settled. Shows signal lock and the dealer confirmation line.
+    private func fireBothSettled() {
+        withAnimation(AppAnimation.standard) {
+            genderSignalStrength = 1.0
         }
+        withAnimation(AppAnimation.textProject.reduceMotionSafe) {
+            genderDealerLine        = "Found it."
+            genderDealerLineVisible = true
+        }
+        beginGenderSwipeHint()
     }
 
     // MARK: - Gender Swipe Hint
@@ -1021,16 +1027,15 @@ final class VaylDirector {
     /// Pockets the card and sets genderShouldPocket so GenderPhase's onChange
     /// observer waits for the cardPocket animation then advances to .experienceLevel.
     func confirmGenderSelection(pronouns: String?) {
-        // Card is being swiped — the hint loop has done its job.
         genderSwipeHintActive = false
-
-        // Persist self gender/pronouns. Partner gender arrives via pairing — never here.
         onboardingData.genderA   = genderOptions[genderSelectedIndex]
-        onboardingData.pronounsA = pronouns
-
-        // Pocket the card and advance (GenderPhase's genderShouldPocket observer handles advance).
-        withAnimation(AppAnimation.fast.reduceMotionSafe) { genderPickerVisible = false }
-        withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { genderCardVisible = false }
+        onboardingData.pronounsA = pronouns ?? (
+            genderPronounsOptions.indices.contains(genderPronounsSelectedIndex)
+                ? genderPronounsOptions[genderPronounsSelectedIndex]
+                : nil
+        )
+        withAnimation(AppAnimation.fast.reduceMotionSafe)       { genderPickerVisible = false }
+        withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { genderCardVisible   = false }
         dissolutionT       = 0
         genderShouldPocket = true
     }
