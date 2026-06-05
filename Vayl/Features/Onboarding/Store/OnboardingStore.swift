@@ -100,7 +100,7 @@ final class OnboardingStore {
         profile.pronouns               = data.pronounsA.map { [$0] } ?? []
 
         // Gender + pronouns — partner (GenderPhase spin 2, together mode only)
-        // nil for solo / browsing users, or if the partner skipped the field.
+        // nil for solo users, or if the partner skipped the field.
         profile.partnerGenderIdentity  = data.genderB
         profile.partnerPronouns        = data.pronounsB
 

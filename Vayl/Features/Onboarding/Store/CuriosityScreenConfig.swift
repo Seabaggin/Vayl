@@ -90,17 +90,7 @@ extension CuriosityScreenConfig {
 
 // MARK: - OnboardingData Extension
 
-// PENDING: curiosityScreenConfig needs to be rewritten against AppMode.
-// extension OnboardingData {
-//     var curiosityScreenConfig: CuriosityScreenConfig {
-//         switch appMode {
-//         case .solo:     return .soloSingleConfig
-//         case .together: return .coupleNotTalkedConfig
-//         case .browsing: return .browsingConfig
-//         case nil:       return .browsingConfig
-//         }
-//     }
-// }
+// PENDING: curiosityScreenConfig needs to be rewritten against AppMode (together / solo).
 
 // MARK: - Static Config Instances
 
@@ -302,36 +292,6 @@ extension CuriosityScreenConfig {
         showSection2: true
     )
 
-    // MARK: Browsing (no explorationMode set)
-
-    static let browsingConfig = CuriosityScreenConfig(
-        section1Label:    "What do you want to learn about?",
-        section1Sublabel: "Pick everything that interests you.",
-        section2Label:    "What would you like to try?",
-        section2Sublabel: "These open up quizzes and personalized paths.",
-        section3Label:    "What would success look like?",
-        section3Sublabel: "Pick the one that matters most.",
-        section1Options: [
-            CuriosityOption(id: "not_what_accepted",      label: "What I want — not what I've accepted",                      isEmphasized: false, contentType: .communicationGoal),
-            CuriosityOption(id: "why_i_respond",          label: "Why I respond to people the way I do",                      isEmphasized: false, contentType: .communicationGoal),
-            CuriosityOption(id: "nm_right_for_me",        label: "I'm curious whether non-monogamy could be right for me",    isEmphasized: false, contentType: .communicationGoal),
-            CuriosityOption(id: "map_desires",            label: "I want to map my own desires before anything else",         isEmphasized: false, contentType: .communicationGoal),
-            CuriosityOption(id: "jealousy_past",          label: "I've felt jealousy in past relationships and want to understand it", isEmphasized: false, contentType: .communicationGoal),
-            CuriosityOption(id: "asking_what_want",       label: "What it actually means to ask for what I want",             isEmphasized: false, contentType: .communicationGoal),
-            CuriosityOption(id: "same_place_diff_person", label: "I keep ending up in the same place with different people",  isEmphasized: false, contentType: .communicationGoal),
-            CuriosityOption(id: "reactions_surprise",     label: "My reactions in intimacy surprise me sometimes",            isEmphasized: false, contentType: .communicationGoal),
-        ],
-        section2Options: [
-            CuriosityOption(id: "agreements",          label: "How couples build agreements that hold",              isEmphasized: false, contentType: .educationTrack),
-            CuriosityOption(id: "desire_map",          label: "I want to map my own desires before anything else",   isEmphasized: true,  contentType: .desireMap),
-            CuriosityOption(id: "cnm_style_discovery", label: "I'm curious what kind of relationships might suit me", isEmphasized: true,  contentType: .quiz(.cnmStyleDiscovery)),
-            CuriosityOption(id: "attachment_style",    label: "What my attachment style means for how I connect",    isEmphasized: false, contentType: .quiz(.attachmentStyle)),
-            CuriosityOption(id: "cnm_readiness",       label: "Whether non-monogamy could actually work for me",     isEmphasized: false, contentType: .quiz(.cnmReadiness)),
-            CuriosityOption(id: "jealousy_anatomy",    label: "The anatomy of jealousy — and what mine is made of",  isEmphasized: false, contentType: .quiz(.jealousyAnatomy)),
-        ],
-        section3Options: [],
-        showSection2: true
-    )
 }
 
 extension CuriosityScreenConfig {
@@ -422,7 +382,6 @@ extension CuriosityScreenConfig {
             .coupleTalkingConfig,
             .coupleSomeExperienceConfig,
             .coupleNeedsResetConfig,
-            .browsingConfig,
         ]
         for config in allConfigs {
             for opt in config.section1Options + config.section2Options + config.section3Options {

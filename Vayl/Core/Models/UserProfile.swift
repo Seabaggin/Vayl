@@ -30,7 +30,7 @@ final class UserProfile {
     var pronouns: [String]          // user's own pronouns; empty if skipped
 
     // Partner — collected in GenderPhase spin 2 (together mode only)
-    // nil for solo / browsing users, or if the partner skipped the field.
+    // nil for solo users, or if the partner skipped the field.
     var partnerGenderIdentity: String?
     var partnerPronouns: String?
 
@@ -39,7 +39,7 @@ final class UserProfile {
     // MARK: - Onboarding Routing
 
     var nmStage: NMStage                        // curious / exploring / experienced
-    var appMode: AppMode                        // together / solo / browsing
+    var appMode: AppMode                        // together / solo
     var relationshipContext: String?            // ContextPhase — maps to RelationshipContext enum
     var situationalRegister: String?            // ContextPhase — maps to SituationalRegister enum
     var emotionalRegister: String?              // CompassPhase Q3 — maps to EmotionalRegister enum (NOT ContextPhase)

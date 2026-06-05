@@ -49,15 +49,15 @@ struct ContextOption: Identifiable {
 
 extension ContextOption {
 
-    /// Total resolver. `.browsing` falls back to the solo set.
+    /// Total resolver. Returns the option set for (AppMode, NMStage).
     static func options(appMode: AppMode, stage: NMStage) -> [ContextOption] {
         switch (appMode, stage) {
         case (.together, .curious):     return coupleCurious
         case (.together, .exploring):   return coupleExploring
         case (.together, .experienced): return coupleExperienced
-        case (.solo, .curious),    (.browsing, .curious):     return soloCurious
-        case (.solo, .exploring),  (.browsing, .exploring):   return soloExploring
-        case (.solo, .experienced),(.browsing, .experienced): return soloExperienced
+        case (.solo, .curious):         return soloCurious
+        case (.solo, .exploring):       return soloExploring
+        case (.solo, .experienced):     return soloExperienced
         }
     }
 

@@ -23,13 +23,12 @@ struct OnboardingData {
     // Together: both A and B set after spin 2.
     var genderA:   String? = nil
     var pronounsA: String? = nil
-    var genderB:   String? = nil   // nil for solo / browsing
-    var pronounsB: String? = nil   // nil for solo / browsing
+    var genderB:   String? = nil   // nil for solo — partner self-provides via pairing
+    var pronounsB: String? = nil   // nil for solo — partner self-provides via pairing
 
     // ── ModeSelectPhase ──────────────────────────────────────────────
     // together: both partners talked, doing this as a couple
     // solo: in a relationship, conversation hasn't happened yet
-    // browsing: just looking, two-tab experience
     var appMode: AppMode = .solo
 
     // ── ExperienceLevelPhase ─────────────────────────────────────────
@@ -84,7 +83,7 @@ struct OnboardingData {
     }
 
     /// Whether this user goes through the full onboarding path.
-    /// Browsing users have a shorter path — no curiosity or context phases.
+    /// All users (together / solo) go through the full path including context and curiosity phases.
     var isFullOnboarding: Bool {
         appMode == .together || appMode == .solo
     }
@@ -93,8 +92,6 @@ struct OnboardingData {
     /// VaylDirector checks this before calling OnboardingStore.commit().
     var isReadyToComplete: Bool {
         switch appMode {
-        case .browsing:
-            return !displayName.trimmingCharacters(in: .whitespaces).isEmpty
         case .together, .solo:
             return !displayName.trimmingCharacters(in: .whitespaces).isEmpty
                 && situationalRegister != nil

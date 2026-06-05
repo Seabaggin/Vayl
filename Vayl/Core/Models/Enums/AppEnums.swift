@@ -48,17 +48,14 @@ enum NMStage: String, CaseIterable, Codable {
 /// The mode the user selected in ModeSelectView.
 /// Drives onboarding path, tab structure, and content routing.
 /// Mutable — user can switch between together and solo in Settings.
-/// browsing users cannot switch to together/solo without completing full onboarding.
 enum AppMode: String, CaseIterable, Codable {
     case together   // both partners talked, doing this as a couple
     case solo       // in a relationship, conversation hasn't happened yet
-    case browsing   // just looking, two-tab experience
 
     var displayName: String {
         switch self {
         case .together: return "Shared Journey"
         case .solo:     return "Solo Discovery"
-        case .browsing: return "Safe Learning"
         }
     }
 }
