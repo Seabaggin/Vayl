@@ -13,14 +13,12 @@
 
 import SwiftUI
 
-/// OB Phase — Curiosity (Round 1 and Round 2)
+/// OB Phase — Curiosity (two rounds handled internally)
 /// Stub for routing verification. Cosmetics in visual pass.
-/// Round 1 advances to .curiosityRound2.
-/// Round 2 advances to .buildingPath.
+/// Advances to .confirmation via director.
 struct CuriosityPhase: View {
 
     let director:   VaylDirector
-    let round:      Int
     let screenSize: CGSize
 
     var body: some View {
@@ -31,16 +29,12 @@ struct CuriosityPhase: View {
             VStack(spacing: AppSpacing.xl) {
                 Spacer()
 
-                Text("Curiosity Phase — Round \(round)")
+                Text("Curiosity Phase")
                     .font(Font.custom("ClashDisplay-Medium", size: 24, relativeTo: .title))
                     .foregroundStyle(AppColors.textPrimary)
 
                 Button("Continue") {
-                    if round == 1 {
-                        director.advance(to: .curiosityRound2)
-                    } else {
-                        director.advance(to: .buildingPath)
-                    }
+                    director.advance(to: .confirmation)
                 }
                 .font(Font.custom("ClashDisplay-Medium", size: 17, relativeTo: .body))
                 .foregroundStyle(AppColors.textPrimary)
@@ -50,6 +44,6 @@ struct CuriosityPhase: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .accessibilityLabel("Curiosity phase round \(round)")
+        .accessibilityLabel("Curiosity phase")
     }
 }

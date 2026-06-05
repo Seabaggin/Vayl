@@ -143,3 +143,24 @@ extension AppLayout {
         safeAreaInsets.top > 20
     }
 }
+
+// MARK: - Real Safe Area Environment Key
+//
+// Captures the real hardware safe area before it is consumed by .ignoresSafeArea()
+// ancestor chains. Injected by OnboardingCanvasWrapper; read in all phase views
+// via @Environment(\.realSafeArea).
+//
+// Default value is EdgeInsets() so standalone phase previews (which have no wrapper)
+// receive zero insets — correct because those previews place the phase GR *inside*
+// the safe area region, so no inset compensation is needed.
+
+private struct RealSafeAreaKey: EnvironmentKey {
+    static let defaultValue = EdgeInsets()
+}
+
+extension EnvironmentValues {
+    var realSafeArea: EdgeInsets {
+        get { self[RealSafeAreaKey.self] }
+        set { self[RealSafeAreaKey.self] = newValue }
+    }
+}

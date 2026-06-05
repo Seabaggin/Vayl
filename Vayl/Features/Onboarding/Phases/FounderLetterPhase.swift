@@ -15,7 +15,7 @@ import SwiftUI
 
 /// OB Phase — Founder Letter
 /// Stub for routing verification. Cosmetics in visual pass.
-/// Advances to .appArrival via director.
+/// Terminal phase — commit fires in director.runFounderLetterEntry().
 struct FounderLetterPhase: View {
 
     let director: VaylDirector
@@ -33,7 +33,7 @@ struct FounderLetterPhase: View {
                     .foregroundStyle(AppColors.textPrimary)
 
                 Button("Continue") {
-                    director.advance(to: .appArrival)
+                    // Terminal phase — no further advance; commit already fired on entry.
                 }
                 .font(Font.custom("ClashDisplay-Medium", size: 17, relativeTo: .body))
                 .foregroundStyle(AppColors.textPrimary)

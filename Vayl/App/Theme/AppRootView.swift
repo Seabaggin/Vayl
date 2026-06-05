@@ -1,5 +1,11 @@
 import SwiftUI
 
+#if DEBUG
+/// Set to true to always route to OnboardingCanvasView on launch.
+/// Flip to false to restore normal auth/onboarding routing.
+private let forceOnboarding = true
+#endif
+
 // ─────────────────────────────────────────────────────────────
 // AppRootView — top-level routing gate.
 //
@@ -32,6 +38,20 @@ struct AppRootView: View {
 
     @ViewBuilder
     private var postSplashDestination: some View {
+        #if DEBUG
+        if forceOnboarding {
+            OnboardingCanvasWrapper()
+                .themedRoot()
+        } else {
+            routedDestination
+        }
+        #else
+        routedDestination
+        #endif
+    }
+
+    @ViewBuilder
+    private var routedDestination: some View {
         if authService.isAuthenticated {
             AppShell()
                 .themedRoot()
@@ -39,7 +59,7 @@ struct AppRootView: View {
             SignInView(authService: authService)
                 .themedRoot()
         } else {
-            OnboardingCanvasView()
+            OnboardingCanvasWrapper()
                 .themedRoot()
         }
     }

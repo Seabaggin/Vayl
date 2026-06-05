@@ -1,7 +1,7 @@
 # Vayl — File Tree & Descriptions
 
-_Last updated: 2026-05-16_  
-_~180 Swift files + Metal shaders across 40+ directories_
+_Last updated: 2026-05-19_  
+_~185 Swift files + Metal shaders across 42+ directories_
 
 ---
 
@@ -57,6 +57,9 @@ Vayl/
 │   │       ├── AppEnums.swift           — Shared enums (ExperienceType, LinkState, GenderIdentity, etc.).
 │   │       └── AppTab.swift             — Tab enum (home, play, map, learn).
 │   │
+│   ├── Debug/
+│   │   └── DiagnosticOverlay.swift      — #if DEBUG only; drop-in view overlays (CTAPositionMarker, measurePosition) for layout debugging during development.
+│   │
 │   ├── Persistence/
 │   │   ├── DataStore.swift              — Migrated; SwiftData persistence layer; CRUD operations for models.
 │   │   └── ModelContext+Extensions.swift — Fetch helper extensions for ModelContext.
@@ -104,10 +107,13 @@ Vayl/
 │       │   ├── SettingsCard.swift              — Settings panel card; key-value display.
 │       │   ├── VaylCardBack.swift              — New spectrum card back with Vayl branding.
 │       │   ├── VaylCardFace.swift              — New spectrum card front face.
-│       │   └── VaylCardRenderer.swift          — Card render orchestrator; handles flipping, animation, state.
+│       │   ├── VaylCardRenderer.swift          — Card render orchestrator; handles flipping, animation, state.
+│       │   └── CardPhysics/
+│       │       └── CardFlightScene.swift       — SpriteKit scene driving card flight animations; fires per-card callbacks on @MainActor when each flight completes.
 │       │
 │       ├── Effects/
 │       │   ├── AuroraGlowField.swift           — Aurora shimmer background; animates soft glow across screen.
+│       │   ├── VaylFlourishView.swift          — Signature decorative flourish; two paths orbiting a center node, encoding duality.
 │       │   ├── FilamentMode.swift              — Metal shader effect; creates filament/thread visual pattern.
 │       │   ├── FlameAura.swift                 — Flame-like aura effect; orange/red gradient glow.
 │       │   ├── FloatingCard.swift              — Card floating in space; bobbing animation, perspective.
@@ -206,6 +212,7 @@ Vayl/
 │   │
 │   ├── Onboarding/
 │   │   ├── Canvas/
+│   │   │   ├── OBDeepCardFace.swift            — Onboarding card face driven by a continuous elapsed-time param via TimelineView; powers the holographic deep-time shader.
 │   │   │   ├── OnboardingCanvasView.swift      — Top-level onboarding canvas; orchestrates phases.
 │   │   │   ├── TableSurfaceView.swift          — Background table surface for onboarding.
 │   │   │   └── VaylDirector.swift              — Orchestrates onboarding flow; routes between phases.
@@ -224,6 +231,7 @@ Vayl/
 │   │   ├── Layout/
 │   │   │   └── OnboardingLayout.swift          — Layout constants and geometry for onboarding.
 │   │   ├── Models/
+│   │   │   ├── CardLandingSlot.swift           — Predefined landing zones for the OB card deal; position/angle as screen fractions, resolved at runtime.
 │   │   │   ├── FoilTear.swift                  — Animation model for foil tear effect.
 │   │   │   ├── OnboardingData.swift            — Data structure for onboarding content.
 │   │   │   └── VaylCardModel.swift             — Card model specific to onboarding.
@@ -357,6 +365,13 @@ State management, sync, auth, data persistence.
 - **Brand**: `SplashScreenView.swift`
 - **Pulse**: `PulseDotSummary.swift`, `TierGuideSheet.swift`
 - **Components**: `CornerDeckView.swift`, `CornerMarksView.swift`
+
+### New (2026-05-19)
+- **Card Physics**: `CardPhysics/CardFlightScene.swift` — new subfolder under `Cards/`
+- **Effects**: `VaylFlourishView.swift`
+- **Onboarding Canvas**: `OBDeepCardFace.swift` (pre-existing, previously untracked)
+- **Onboarding Models**: `CardLandingSlot.swift`
+- **Debug**: `Core/Debug/DiagnosticOverlay.swift` — new folder; debug-only layout overlays
 
 ### Removed/Archived
 - `CardFrontView.swift` (functionality merged into `VaylCardFace.swift`)

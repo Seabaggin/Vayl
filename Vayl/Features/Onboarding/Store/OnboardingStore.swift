@@ -53,7 +53,7 @@ final class OnboardingStore {
     }
 
     // MARK: - Commit
-    // Called by VaylDirector at appArrival phase.
+    // Called by VaylDirector at founderLetter phase.
     // Creates a fresh ModelContext at call time — never stored on self.
     // On success: mirrors into AppState and sets didComplete = true.
     // On failure: sets lastCommitError only — never sets didComplete.
@@ -95,10 +95,25 @@ final class OnboardingStore {
 
         // Write every field from OnboardingData
         profile.displayName            = data.displayName
-        profile.genderIdentity         = data.genderIdentity
+        // Gender + pronouns — self (GenderPhase spin 1, always collected)
+        profile.genderIdentity         = data.genderA
+        profile.pronouns               = data.pronounsA.map { [$0] } ?? []
+
+        // Gender + pronouns — partner (GenderPhase spin 2, together mode only)
+        // nil for solo / browsing users, or if the partner skipped the field.
+        profile.partnerGenderIdentity  = data.genderB
+        profile.partnerPronouns        = data.pronounsB
+
         profile.appMode                = data.appMode
         profile.nmStage                = data.nmStage
+        // ContextPhase signals
+        profile.relationshipContext    = data.relationshipContext
+        profile.situationalRegister    = data.situationalRegister
+        // CompassPhase signals (Q3 emotionalRegister written fresh — not ContextPhase)
         profile.emotionalRegister      = data.emotionalRegister
+        profile.agency                 = data.agency
+        profile.motivation             = data.motivation
+        profile.compassNotes           = data.compassNotes
         profile.curiositySelections    = data.curiositySelections
         profile.openerDeckType         = data.openerDeckType
         profile.hasCompletedOnboarding = true
@@ -107,8 +122,7 @@ final class OnboardingStore {
         // Fields not written here:
         // groundRulesAcceptedAt — written from home screen flow
         // acknowledgementAcceptedAt — written from 3-card modal
-        // nmCardResponse — old flow only, not collected in new OB
-        // pronouns — not collected in new OB canvas flow
+        // nmCardResponse — old flow only, not collected in new OB canvas flow
 
         do {
             try context.saveWithLogging()

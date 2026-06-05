@@ -238,12 +238,13 @@ struct AppLayout {
     static func monteFanLayout(in containerWidth: CGFloat) -> [(offset: CGSize, angle: Double)] {
         let fanW = obFanCardWidth(in: containerWidth)
         let fanH = obFanCardHeight(in: containerWidth)
-        let dx   = fanW * 0.46     // horizontal spread (overlap < 1.0 → cards overlap)
-        let rise = fanH * 0.04     // outer cards lift slightly (held-hand arc)
+        let dx   = fanW * 0.58     // horizontal spread — wider so the outer cards peek out more
+        let rise = fanH * 0.05     // outer cards lift slightly (held-hand arc)
+        let tilt = 17.0            // outer-card fan angle (deg) — steeper = more spread
         return [
-            (CGSize(width: -dx, height: -rise), -12),
-            (CGSize(width:   0, height:     0),   0),
-            (CGSize(width:  dx, height: -rise),  12),
+            (CGSize(width: -dx, height: -rise), -tilt),
+            (CGSize(width:   0, height:     0),    0),
+            (CGSize(width:  dx, height: -rise),  tilt),
         ]
     }
 

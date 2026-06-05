@@ -8,7 +8,6 @@ private enum CardDealPhase: Equatable {
     case resting
     case flipping
     case pausing
-    case lifting
     case nameInput
     case collecting
 }
@@ -19,111 +18,147 @@ struct NamePhase: View {
     let screenSize:  CGSize
     @Binding var tableRimBurst: Double
 
-    @State private var dealTask:             Task<Void, Never>? = nil
-    @State private var inputFocusTask:       Task<Void, Never>? = nil
-    @State private var autoAdvanceTask:      Task<Void, Never>? = nil
-    @State private var collapseEffectsTask:  Task<Void, Never>? = nil
-    @State private var dealPhase:  CardDealPhase      = .idle
-    @State private var cardOffset: CGSize             = .zero
-    @State private var cardAngle:  Double             = 0
-    @State private var cardAlpha:  Double             = 0
+    // MARK: — Task handles
 
-    @State private var flipScaleX:    Double = 1.0
-    @State private var showFace:      Bool   = false
-    @State private var faceStartDate: Date?  = nil
+    @State private var dealTask:         Task<Void, Never>? = nil
+    @State private var inputFocusTask:   Task<Void, Never>? = nil
+    @State private var keyAnimationTask: Task<Void, Never>? = nil
+    @State private var dealerTypingTask: Task<Void, Never>? = nil
 
-    @State private var cardScale:       Double = 1.0
-    @State private var cardScreenAlpha: Double = 1.0
-    @State private var cardBlur:        Double = 0
+    // MARK: — Dealer typing
+
+    @State private var dealerDisplayed: String  = ""
+    @State private var dealerAlpha:     Double  = 0.0
+    @State private var dealerOffsetY:   CGFloat = 0.0
+    @State private var dealerLine3Done: Bool    = false
+
+    // MARK: — Card animation
+
+    @State private var dealPhase:       CardDealPhase = .idle
+    @State private var cardOffset:      CGSize        = .zero
+    @State private var cardAngle:       Double        = 0
+    @State private var cardAlpha:       Double        = 0
+    @State private var flipScaleX:      Double        = 1.0
+    @State private var showFace:        Bool          = false
+    @State private var cardScale:       Double        = 1.0
+    @State private var cardScreenAlpha: Double        = 1.0
+    @State private var cardBlur:        Double        = 0
+
+    // MARK: — Effects
 
     @State private var impactRingProgress: Double = 0
     @State private var flipBurstProgress:  Double = 0
 
-    @State private var name:           String  = ""
-    @State private var uiAlpha:        Double  = 0
-    @State private var dragY:          CGFloat = 0
-    @State private var nudgeOffset:    CGFloat = 0
-    @State private var hintArrowAlpha: Double  = 0
+    // MARK: — Typewriter
 
-    @State private var fieldCollapsed:       Bool                    = false
-    @State private var greetingVisible:      Bool                    = false
-    @State private var greetingOwnsName:     Bool                    = false
-    @State private var nameTextOpacity:      Double                  = 1.0
-    @State private var typingDebounceTask:   Task<Void, Never>?      = nil
-    @State private var lineBounceTask:       Task<Void, Never>?      = nil
-    @FocusState private var nameFieldFocused: Bool
+    @State private var activeKeyIndex:   Int     = -1
+    @State private var carriageProgress: CGFloat = 0
 
-    @State private var headerText:  String  = "acquainted."
-    @State private var headerFaded: Bool    = false
+    // MARK: — Name input
 
-    @State private var glowPulseScale: CGFloat = 1.0
+    @State private var name:    String = ""
+    @State private var uiAlpha: Double = 0
 
     @State private var lineRevealProgress: CGFloat = 0
     @State private var hasSweptLine:       Bool    = false
     @State private var lineBounce:         CGFloat = 0
 
-    @State private var nameShimmerActive: Bool = false
+    // MARK: — Card return demo (post-name submission)
+    //
+    // After the greeting fades and the card flips back, the dealer asks for the
+    // card back. The card demonstrates swipe-up twice, then waitingForCardReturn
+    // enables the gesture. This is the gesture tutorial for the whole flow —
+    // every subsequent phase closes the same way.
+
+    @State private var waitingForCardReturn:  Bool    = false
+    @State private var cardReturnHintOffset:  CGFloat = 0
+
+    // MARK: — Beat 3 greeting
+
+    @State private var showGreeting:  Bool   = false
+    @State private var greetingName:  String = ""
+    @State private var greetingAlpha: Double = 0.0
+    @State private var nameVisible:   Bool   = false
+
     @State private var impactMedium = UIImpactFeedbackGenerator(style: .medium)
     @State private var impactHeavy  = UIImpactFeedbackGenerator(style: .heavy)
 
-    @State private var coachMarkAlpha:    Double  = 0
-    @State private var coachMarkOffset:   CGFloat = 0
-    @State private var hasShownCoachMark: Bool    = false
+    @FocusState private var nameFieldFocused: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.displayScale) private var displayScale
+    @Environment(\.displayScale)              private var displayScale
 
-    @State private var landingAngleDeg: Double  = 0
-    @State private var landingOffset:   CGSize  = .zero
-    @State private var seedGenerated:   Bool    = false
-
-    private var cardWidth:  CGFloat {
+    private var cardWidth: CGFloat {
         AppLayout.obTableCardWidth(in: screenSize.width) * AppLayout.obTableCardCinematicScale
     }
     private var cardHeight: CGFloat {
         AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale
     }
 
+    // MARK: — Body
+
     var body: some View {
-        GeometryReader { geo in
-            let safeAreaInsets = geo.safeAreaInsets
-            ZStack {
-                effectsLayer
+        ZStack {
+            // Layer 1 — always present
+            effectsLayer
 
-                TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { tl in
-                    let t: Double = {
-                        guard showFace, let start = faceStartDate else { return 0 }
-                        return tl.date.timeIntervalSince(start)
-                    }()
-                    cardLayer(deepT: t)
-                }
+            // Layer 2 — always present
+            cardLayer()
 
-                if dealPhase == .nameInput || dealPhase == .collecting {
-                    nameInputLayer(safeAreaInsets: safeAreaInsets)
-                        .opacity(uiAlpha)
-                }
-
+            // Layer 3 — dealer copy, one line at a time via shuffle transitions
+            if !dealerDisplayed.isEmpty {
+                dealerCopyView
             }
-            .frame(width: screenSize.width, height: screenSize.height)
+
+            // Layer 4 — Beat 3 greeting (replaces dealer copy after submit)
+            if showGreeting {
+                greetingView
+            }
+
+            // Layer 5 — name input, fades in after Beat 2 types
+            if dealPhase == .nameInput || dealPhase == .collecting {
+                dealerZone
+                    .opacity(uiAlpha)
+            }
+
+            // Layer 6 — swipe-up chevron: appears after return demo, disappears on swipe
+            if waitingForCardReturn {
+                Image(systemName: AppIcons.chevronUp)
+                    .font(AppFonts.body(18, weight: .semibold, relativeTo: .title3))
+                    .foregroundStyle(AppColors.spectrumText)
+                    .position(
+                        x: screenSize.width  / 2,
+                        y: screenSize.height * 0.55 - cardHeight / 2 - AppSpacing.lg
+                    )
+                    .transition(.opacity.animation(AppAnimation.standard))
+                    .allowsHitTesting(false)
+            }
+        }
+        .frame(width: screenSize.width, height: screenSize.height)
+        .gesture(
+            DragGesture()
+                .onChanged { _ in }
+                .onEnded { v in
+                    handleSwipe(v.translation)
+                }
+        )
         .onAppear {
-            dealTask = Task { await runDealSequence() }
+            dealTask = Task { await runDealerIntro() }
         }
         .onDisappear {
-            typingDebounceTask?.cancel()
-            typingDebounceTask = nil
-            lineBounceTask?.cancel()
-            lineBounceTask = nil
+            dealerTypingTask?.cancel()
+            dealerTypingTask = nil
             dealTask?.cancel()
             inputFocusTask?.cancel()
             inputFocusTask = nil
-            autoAdvanceTask?.cancel()
-            autoAdvanceTask = nil
-            collapseEffectsTask?.cancel()
-            collapseEffectsTask = nil
-            seedGenerated = false
-        }
+            keyAnimationTask?.cancel()
+            keyAnimationTask = nil
+            waitingForCardReturn  = false
+            cardReturnHintOffset  = 0
         }
     }
+
+    // MARK: — Effects layer
 
     private var effectsLayer: some View {
         Canvas { context, size in
@@ -174,296 +209,368 @@ struct NamePhase: View {
         .ignoresSafeArea()
     }
 
-    // ARCH NOTE: This card lives entirely in phase state — not in director.tableCards.
-    // It is rendered alongside the SpriteKit in-flight card during the deal handoff.
-    // FIXME: SPEC GAP — OBDeepCardFace vs VaylCardFace unreconciled.
-    // DO NOT SHIP until design+eng confirms which component is correct for this screen.
-    // See audit finding F034. Assigned: Bryan, due before next TestFlight build.
-    private func cardLayer(deepT: Double) -> some View {
+    // MARK: — Card layer
+
+    private func cardLayer() -> some View {
         Group {
             if !showFace {
                 VaylCardBack()
             } else {
-                OBDeepCardFace(deepT: deepT)
+                VaylCardFace(content: .typewriter(
+                    activeKey:        activeKeyIndex,
+                    carriageProgress: carriageProgress
+                ))
             }
         }
-        .drawingGroup() // rasterize cinematic card layers to Metal texture
+        .drawingGroup()
         .frame(width: cardWidth, height: cardHeight)
         .scaleEffect(x: flipScaleX, y: 1.0)
         .scaleEffect(cardScale)
         .rotationEffect(.degrees(cardAngle))
         .offset(cardOffset)
+        // Return-demo drift — upward hint applied on top of positional offset
+        .offset(y: cardReturnHintOffset)
         .blur(radius: cardBlur)
         .opacity(cardAlpha * cardScreenAlpha)
     }
 
-    private func nameInputLayer(safeAreaInsets: EdgeInsets) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Spacer().frame(height: safeAreaInsets.top + AppSpacing.lg) // AppSafeArea modifier — see TODO in audit F002
+    // MARK: — Dealer zone (name input — no header)
+    //
+    // Beat 2 "Let's get acquainted." remains visible in dealerCopyView
+    // while this input zone is shown. The two layers coexist intentionally.
+    // dealerZone is positioned at 0.30 — below the Beat 2 copy at 0.22,
+    // above the card center at 0.55. submitName() clears the copy instantly.
 
-            Color.clear
-                .frame(maxWidth: .infinity)
-                .frame(height: AppLayout.swipeZoneHeight)
-                .contentShape(Rectangle())
-                .accessibilityLabel("Swipe down to confirm your name")
-                .accessibilityHint("Confirms the name you entered and continues setup")
-                .accessibilityAddTraits(.isButton)
-                .simultaneousGesture(
-                    DragGesture()
-                        .onChanged { v in
-                            guard dealPhase == .nameInput else { return }
-                            if v.translation.height > 0 { dragY = v.translation.height }
-                        }
-                        .onEnded { v in handleSwipeDown(v.translation.height) }
-                )
-                .overlay {
-                    ZStack {
-                        VStack(spacing: AppSpacing.xs) {
-                            Image(systemName: "hand.point.down.fill")
-                                .font(AppFonts.cardTitle) // light weight not in type scale, using cardTitle
-                                .foregroundStyle(AppColors.textSecondary)
-
-                            VStack(spacing: 3) { // 3pt glyph constant — below spacing grid, intentional
-                                Circle().fill(AppColors.textHint).frame(width: 3, height: 3) // 3pt glyph constant — below spacing grid, intentional
-                                Circle().fill(AppColors.textTertiary).frame(width: 3, height: 3)
-                                Circle().fill(AppColors.textMuted).frame(width: 3, height: 3)
-                            }
-                        }
-                        .offset(y: coachMarkOffset)
-                        .opacity(coachMarkAlpha)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: AppLayout.swipeZoneHeight)
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
-                }
-
-            VStack(alignment: .leading, spacing: 0) {
-                if headerText == "Good to meet you." {
-                    Text("Good to meet you.")
-                        .font(AppFonts.obPhaseTitle)
-                        .foregroundStyle(AppColors.textPrimary)
-                        .opacity(headerFaded ? 0 : 1)
-                        .animation(AppAnimation.headerFade, value: headerFaded)
-                } else {
-                    Text("Let's get")
-                        .font(AppFonts.obPhaseTitle)
-                        .foregroundStyle(AppColors.textPrimary)
-                        .opacity(headerFaded ? 0 : 1)
-                        .animation(AppAnimation.headerFade, value: headerFaded)
-                    Text("acquainted.")
-                        .font(AppFonts.obPhaseTitle)
-                        .foregroundStyle(AppColors.spectrumText)
-                        .opacity(headerFaded ? 0 : 1)
-                        .animation(AppAnimation.headerFade, value: headerFaded)
-                }
-            }
-            .padding(.bottom, AppSpacing.xl)
-
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                Text("What should we call you?")
-                    .font(AppFonts.display(22, weight: .semibold, relativeTo: .title2))
-                    .foregroundStyle(AppColors.textSecondary)
-                    .opacity(fieldCollapsed ? 0 : 1)
-                    .animation(AppAnimation.fast.delay(0.05), value: fieldCollapsed)
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
-
-                TextField(
-                    "",
-                    text: $name,
-                    prompt: Text("Enter name")
-                        .font(AppFonts.display(28, weight: .semibold, relativeTo: .title))
-                        .foregroundColor(AppColors.textPrimary.opacity(0.28))
-                )
+    private var dealerZone: some View {
+        VStack(alignment: .center, spacing: AppSpacing.md) {
+            TextField(
+                "",
+                text: $name,
+                prompt: Text("Enter name")
                     .font(AppFonts.display(28, weight: .semibold, relativeTo: .title))
-                    .foregroundColor(AppColors.textPrimary.opacity(nameTextOpacity))
-                    .tint(name.isEmpty ? .clear : AppColors.accentPrimary)
-                    .focused($nameFieldFocused)
-                    .textInputAutocapitalization(.words)
-                    .autocorrectionDisabled()
-                    .submitLabel(.done)
-                    .accessibilityLabel("What should we call you?")
-                    .onSubmit {
-                        nameFieldFocused = false
-                        triggerCollapse(keyboardSubmit: true)
-                    }
-                    .opacity(fieldCollapsed ? 0 : 1)
-                    .animation(AppAnimation.standard, value: fieldCollapsed)
-                    .disabled(fieldCollapsed)
-                    .onChange(of: name) { _, newValue in
-                        let trimmed = newValue.trimmingCharacters(in: .whitespaces)
-                        if trimmed.count > AppLayout.maxNameLength {
-                            name = String(trimmed.prefix(AppLayout.maxNameLength))
-                        }
-                        typingDebounceTask?.cancel()
-                        guard !trimmed.isEmpty else {
-                            withAnimation(AppAnimation.fast) {
-                                greetingVisible  = false
-                                greetingOwnsName = false
-                            }
-                            withAnimation(AppAnimation.standard.delay(0.15)) {
-                                fieldCollapsed  = false
-                                nameTextOpacity = 1.0
-                            }
-                            return
-                        }
-                        if !reduceMotion {
-                            withAnimation(AppAnimation.keystrokeBounce) { lineBounce = -1.5 }
-                            lineBounceTask?.cancel()
-                            lineBounceTask = Task { @MainActor in
-                                try? await Task.sleep(for: .milliseconds(80))
-                                guard !Task.isCancelled else { return }
-                                withAnimation(AppAnimation.keystrokeBounceReturn) { lineBounce = 0 }
-                            }
-                        }
-                        typingDebounceTask = Task { @MainActor in
-                            try? await Task.sleep(for: .milliseconds(1500))
-                            guard !Task.isCancelled else { return }
-                            triggerCollapse()
-                        }
-                    }
-                    .onChange(of: nameFieldFocused) { _, isFocused in
-                        if isFocused && greetingOwnsName {
-                            withAnimation(AppAnimation.fast) {
-                                greetingVisible  = false
-                                greetingOwnsName = false
-                            }
-                            withAnimation(AppAnimation.standard.delay(0.15)) {
-                                fieldCollapsed  = false
-                                nameTextOpacity = 1.0
-                            }
-                        }
-                        if isFocused && !hasSweptLine {
-                            hasSweptLine = true
-                            withAnimation(AppAnimation.lineReveal) {
-                                lineRevealProgress = 1.0
-                            }
-                        } else if isFocused {
-                            lineRevealProgress = 1.0
-                        }
-                    }
-                    .overlay(alignment: .bottom) {
-                        ZStack {
-                            Rectangle()
-                                .fill(AnyShapeStyle(AppColors.spectrumBorder))
-                                .frame(height: 1)
-
-                            Rectangle()
-                                .fill(LinearGradient(
-                                    colors: [
-                                        AppColors.accentPrimary.opacity(0.6),
-                                        AppColors.accentSecondary.opacity(0.9),
-                                        AppColors.accentTertiary.opacity(0.8),
-                                        AppColors.accentPrimary.opacity(0.6)
-                                    ],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                ))
-                                .frame(height: 3)
-                                .blur(radius: 4)
-
-                            Rectangle()
-                                .fill(LinearGradient(
-                                    colors: [
-                                        AppColors.accentPrimary.opacity(0.2),
-                                        AppColors.accentSecondary.opacity(0.35),
-                                        AppColors.accentTertiary.opacity(0.3),
-                                        AppColors.accentPrimary.opacity(0.2)
-                                    ],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                ))
-                                .frame(height: 8)
-                                .blur(radius: 6)
-                        }
-                        .scaleEffect(x: lineRevealProgress, anchor: .leading)
-                        .offset(y: lineBounce)
-                        .opacity(fieldCollapsed ? 0 : 1)
-                        .animation(AppAnimation.standard, value: fieldCollapsed)
-                    }
-            }
-            .padding(.bottom, AppSpacing.xs)
-
-            // Greeting — springs in after 1.5s typing pause
-            HStack(alignment: .firstTextBaseline, spacing: AppSpacing.sm) {
-                Spacer()
-
-                Text("Hi ")
-                    // .regular weight not supported by ClashDisplay; .semibold used pending typeface audit
-                    .font(AppFonts.display(28, weight: .semibold, relativeTo: .title))
-                    .foregroundStyle(AppColors.textPrimary.opacity(0.94))
-
-                Text(name.trimmingCharacters(in: .whitespaces))
-                    .font(AppFonts.display(36, weight: .bold, relativeTo: .title))
-                    .foregroundStyle(AppColors.textPrimary)
-                    .modifier(GlowUnderline(isLight: false))
-                    .tracking(AppLayout.nameLetterSpacing)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .scaleEffect(x: glowPulseScale, y: 1.0, anchor: .center)
-                    .overlay {
-                        if nameShimmerActive {
-                            HolographicShimmer()
-                                .transition(.opacity)
-                        }
-                    }
-
-                Spacer()
-            }
-            .frame(maxWidth: .infinity)
-            .frame(minHeight: 44)
-            .contentShape(Rectangle())
-            .accessibilityElement(children: .combine)
-            .onChange(of: greetingVisible) { _, visible in
-                guard visible else { return }
-                let trimmed = name.trimmingCharacters(in: .whitespaces)
-                UIAccessibility.post(notification: .announcement, argument: "Hi \(trimmed). Swipe down to continue.")
-            }
-            .opacity(greetingVisible ? 1 : 0)
-            .offset(y: greetingVisible
-                ? AppLayout.greetingOffsetVisible(in: screenSize.height)
-                : AppLayout.greetingOffsetHidden(in: screenSize.height)
+                    .foregroundColor(AppColors.textTertiary)
             )
-            .animation(AppAnimation.greetingSettle, value: greetingVisible)
-            .padding(.top, AppSpacing.sm)
-            .padding(.bottom, AppSpacing.xl)
-            .onTapGesture {
-                nudgeOffset    = 0
-                hintArrowAlpha = 0
-                coachMarkAlpha  = 0
-                coachMarkOffset = 0
-                headerText     = "acquainted."
-                headerFaded    = false
-                withAnimation(AppAnimation.fast) {
-                    greetingVisible  = false
-                    greetingOwnsName = false
+            .font(AppFonts.display(28, weight: .semibold, relativeTo: .title))
+            .foregroundStyle(AppColors.textPrimary)
+            .tint(name.isEmpty ? .clear : AppColors.accentPrimary)
+            .multilineTextAlignment(.center)
+            .focused($nameFieldFocused)
+            .textInputAutocapitalization(.words)
+            .autocorrectionDisabled()
+            .submitLabel(.done)
+            .onSubmit {
+                nameFieldFocused = false
+                submitName()
+            }
+            .onChange(of: name) { _, newValue in
+                // ── Length guard ──────────────────────────────────
+                let trimmed = newValue.trimmingCharacters(in: .whitespaces)
+                if trimmed.count > AppLayout.maxNameLength {
+                    name = String(trimmed.prefix(AppLayout.maxNameLength))
                 }
-                withAnimation(AppAnimation.standard.delay(0.15)) {
-                    fieldCollapsed  = false
-                    nameTextOpacity = 1.0
+
+                // ── Typewriter keystroke animation ────────────────
+                let isSpace = newValue.last == " "
+                carriageProgress = CGFloat(newValue.count) / CGFloat(AppLayout.maxNameLength)
+                activeKeyIndex = isSpace
+                    ? 15
+                    : (newValue.count > 0 ? (newValue.count - 1) % 15 : -1)
+
+                keyAnimationTask?.cancel()
+                keyAnimationTask = Task {
+                    try? await Task.sleep(for: .milliseconds(120))
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run { activeKeyIndex = -1 }
                 }
-                inputFocusTask?.cancel()
-                inputFocusTask = Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(350))
-                    guard !Task.isCancelled, dealPhase == .nameInput else { return }
-                    nameFieldFocused = true
+
+                // ── Write line bounce ─────────────────────────────
+                withAnimation(.interpolatingSpring(stiffness: 600, damping: 12)) {
+                    lineBounce = -3.0
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                    withAnimation(.interpolatingSpring(stiffness: 400, damping: 18)) {
+                        lineBounce = 0
+                    }
+                }
+
+                // No auto-submit — user commits via Done key or swipe up.
+            }
+            .onChange(of: nameFieldFocused) { _, isFocused in
+                if isFocused && !hasSweptLine {
+                    hasSweptLine = true
+                    withAnimation(.easeOut(duration: 0.45)) {
+                        lineRevealProgress = 1.0
+                    }
+                } else if isFocused {
+                    lineRevealProgress = 1.0
                 }
             }
+            .overlay(alignment: .bottom) {
+                ZStack {
+                    // Spectrum hairline — 1.5pt rule
+                    Rectangle()
+                        .fill(AnyShapeStyle(AppColors.spectrumBorder))
+                        .frame(height: 1.5)
 
-            Image(systemName: "chevron.down")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textTertiary)
-                .opacity(hintArrowAlpha)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, AppSpacing.sm)
-                .accessibilityHidden(true)
+                    // Glow layer 1 — tight
+                    Rectangle()
+                        .fill(LinearGradient(
+                            colors: [
+                                AppColors.accentPrimary.opacity(0.6),
+                                AppColors.accentSecondary.opacity(0.9),
+                                AppColors.accentTertiary.opacity(0.8),
+                                AppColors.accentPrimary.opacity(0.6),
+                            ],
+                            startPoint: .leading,
+                            endPoint:   .trailing
+                        ))
+                        .frame(height: 3)
+                        .blur(radius: 4)
 
-            Spacer().frame(height: safeAreaInsets.bottom + AppSpacing.lg)
+                    // Glow layer 2 — wide soft bloom
+                    Rectangle()
+                        .fill(LinearGradient(
+                            colors: [
+                                AppColors.accentPrimary.opacity(0.2),
+                                AppColors.accentSecondary.opacity(0.35),
+                                AppColors.accentTertiary.opacity(0.3),
+                                AppColors.accentPrimary.opacity(0.2),
+                            ],
+                            startPoint: .leading,
+                            endPoint:   .trailing
+                        ))
+                        .frame(height: 8)
+                        .blur(radius: 6)
+                }
+                .frame(width: cardWidth)
+                .scaleEffect(x: lineRevealProgress, anchor: .leading)
+                .offset(y: lineBounce)
+            }
         }
-        .padding(.horizontal, AppSpacing.xl)
-        .offset(y: dragY + nudgeOffset)
+        .frame(width: cardWidth)
+        .position(
+            x: screenSize.width  / 2,
+            y: screenSize.height * 0.30
+        )
     }
+
+    // MARK: — Dealer copy view
+
+    private var dealerCopyView: some View {
+        Text(dealerDisplayed)
+            .font(Font.custom(
+                AppDealerTyping.fontName,
+                size: AppDealerTyping.fontSize,
+                relativeTo: .title2
+            ))
+            .foregroundStyle(AppColors.textPrimary)
+            .multilineTextAlignment(.center)
+            .frame(width: screenSize.width * 0.82)
+            .opacity(dealerAlpha)
+            .offset(y: dealerOffsetY)
+            .position(
+                x: screenSize.width / 2,
+                y: screenSize.height * 0.22
+            )
+    }
+
+    // MARK: — Beat 3 greeting view
+    //
+    // Occupies the same Y anchor as dealerCopyView (0.22).
+    // Shown after submitName() clears the dealer copy.
+    // "Welcome to the table," and "." are static Volkhov lines.
+    // The name line fades in separately after a 200ms breath.
+
+    private var greetingView: some View {
+        VStack(spacing: AppSpacing.xs) {
+            Text("Welcome to the table,")
+                .font(Font.custom(
+                    AppDealerTyping.fontName,
+                    size: AppDealerTyping.fontSize,
+                    relativeTo: .title2
+                ))
+                .foregroundStyle(AppColors.textPrimary)
+
+            if nameVisible {
+                Text(greetingName)
+                    .font(AppFonts.display(28, weight: .bold, relativeTo: .title))
+                    .foregroundStyle(AppColors.spectrumText)
+                    .transition(.opacity)
+            }
+
+        
+        }
+        .opacity(greetingAlpha)
+        .position(
+            x: screenSize.width / 2,
+            y: screenSize.height * 0.22
+        )
+    }
+
+    // MARK: — Typing engine
+
+    @MainActor
+    private func typeDealerLine(_ text: String) async {
+        var prev: Character? = nil
+        for char in text {
+            guard !Task.isCancelled else { return }
+            let delay = AppDealerTyping.charDelay(char, prev: prev)
+            try? await Task.sleep(for: .milliseconds(Int(delay)))
+            guard !Task.isCancelled else { return }
+            dealerDisplayed.append(char)
+            prev = char
+        }
+    }
+
+    // MARK: — Shuffle transitions
+
+    @MainActor
+    private func shuffleExitDealer() async {
+        withAnimation(AppDealerTyping.shuffleExitAnim) {
+            dealerAlpha   = 0.0
+            dealerOffsetY = -22
+        }
+        try? await Task.sleep(for: .milliseconds(AppDealerTyping.shuffleExitMs))
+        guard !Task.isCancelled else { return }
+        dealerDisplayed = ""
+        dealerOffsetY   = 0
+    }
+
+    @MainActor
+    private func shuffleEnterDealer() async {
+        dealerAlpha   = 0.0
+        dealerOffsetY = -18
+        try? await Task.sleep(for: .milliseconds(AppDealerTyping.shuffleGapMs))
+        guard !Task.isCancelled else { return }
+        withAnimation(AppDealerTyping.shuffleEnterAnim) {
+            dealerAlpha   = 1.0
+            dealerOffsetY = 0
+        }
+        try? await Task.sleep(for: .milliseconds(AppDealerTyping.shuffleEnterMs))
+    }
+
+    @MainActor
+    private func fadeFinalDealer() async {
+        withAnimation(AppDealerTyping.finalFadeAnim) {
+            dealerAlpha = 0.0
+        }
+        try? await Task.sleep(for: .milliseconds(AppDealerTyping.finalFadeMs))
+        guard !Task.isCancelled else { return }
+        dealerDisplayed = ""
+        dealerAlpha     = 1.0
+    }
+
+    // MARK: — Dealer intro sequence
+
+    @MainActor
+    private func runDealerIntro() async {
+        // Wait for Segment 1 to complete:
+        // 900ms void + 1600ms table fade = 2500ms
+        try? await Task.sleep(for: .milliseconds(2500))
+        guard !Task.isCancelled else { return }
+
+        // ── Line 1 ────────────────────────────────────────────────
+        dealerDisplayed = ""
+        await shuffleEnterDealer()
+        guard !Task.isCancelled else { return }
+
+        await typeDealerLine("The things worth learning about yourself...")
+        guard !Task.isCancelled else { return }
+
+        try? await Task.sleep(for: .milliseconds(AppDealerTyping.hangLong))
+        guard !Task.isCancelled else { return }
+
+        await shuffleExitDealer()
+        guard !Task.isCancelled else { return }
+
+        // ── Line 2 ────────────────────────────────────────────────
+        dealerDisplayed = ""
+        await shuffleEnterDealer()
+        guard !Task.isCancelled else { return }
+
+        await typeDealerLine("they rarely surface on their own.")
+        guard !Task.isCancelled else { return }
+
+        try? await Task.sleep(for: .milliseconds(AppDealerTyping.hangMedium))
+        guard !Task.isCancelled else { return }
+
+        await shuffleExitDealer()
+        guard !Task.isCancelled else { return }
+
+        // ── Card deals silently during gap ────────────────────────
+        // Card is in flight while line 3 types — arrives on table
+        // before the flip fires. No await — runs in background.
+        try? await Task.sleep(for: .milliseconds(200))
+        guard !Task.isCancelled else { return }
+
+        Task { await dealCard() }
+
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
+
+        // ── Line 3 ────────────────────────────────────────────────
+        dealerDisplayed = ""
+        await shuffleEnterDealer()
+        guard !Task.isCancelled else { return }
+
+        await typeDealerLine("Consider this your introduction.")
+        guard !Task.isCancelled else { return }
+
+        try? await Task.sleep(for: .milliseconds(AppDealerTyping.hangShort))
+        guard !Task.isCancelled else { return }
+
+        dealerLine3Done = true
+
+        // 200ms breath
+        try? await Task.sleep(for: .milliseconds(200))
+        guard !Task.isCancelled else { return }
+
+        // ── Center + fade + flip — safe sequential fire ───────────
+        //
+        // centerCard() fires its spring animation and returns immediately —
+        // the card is sliding to center while the next lines execute.
+        //
+        // fadeFinalDealer() fires the fade animation, waits 350ms for it
+        // to complete, then clears the text. During that 350ms the card
+        // is still sliding (spring: 0.72s). Both animations are in flight
+        // simultaneously with zero concurrency risk.
+        //
+        // performFlipWithBurst() starts after the fade settles — the card
+        // is centered (or very nearly so) at this point.
+        await centerCard()
+        await fadeFinalDealer()
+        await performFlipWithBurst()
+        guard !Task.isCancelled else { return }
+
+        // 300ms — typewriter face briefly visible before Beat 2
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
+
+        // ── Beat 2 dealer copy ────────────────────────────────────
+        // "Let's get acquainted." types and stays on screen.
+        // It does NOT fade before the keyboard rises.
+        // submitName() clears it instantly when the user submits.
+        dealerDisplayed = ""
+        await shuffleEnterDealer()
+        guard !Task.isCancelled else { return }
+        await typeDealerLine("Let's get acquainted.")
+        guard !Task.isCancelled else { return }
+        try? await Task.sleep(for: .milliseconds(AppDealerTyping.hangShort))
+        guard !Task.isCancelled else { return }
+
+        // ── Inline name input entry ───────────────────────────────
+        // Beat 2 copy remains visible at 0.22.
+        // TextField rises at 0.30 — 56pt clear of the copy bottom.
+        dealPhase = .nameInput
+        director.placeGenderCardSilently(screenSize: screenSize)
+        withAnimation(.easeOut(duration: 0.52)) { uiAlpha = 1.0 }
+        impactHeavy.prepare()
+        try? await Task.sleep(for: .milliseconds(200))
+        guard !Task.isCancelled else { return }
+        nameFieldFocused = true
+    }
+
+    // MARK: — Card snapshot
 
     @MainActor
     private func snapshotCardBack(scale: CGFloat) -> UIImage? {
@@ -475,58 +582,55 @@ struct NamePhase: View {
         return renderer.uiImage
     }
 
+    // MARK: — Card deal
+
     @MainActor
-    private func runDealSequence() async {
-
-        if !seedGenerated {
-            landingAngleDeg = Double.random(in: -7...7)
-            landingOffset   = CGSize(
-                width:  CGFloat.random(in: -40...40),
-                height: CGFloat.random(in: -40...40)
-            )
-            seedGenerated   = true
-        }
-
-        if reduceMotion {
-            triggerNameInput()
+    private func dealCard() async {
+        guard !reduceMotion else {
+            cardAlpha = 1
+            dealPhase = .resting
+            await fadeFinalDealer()
+            await centerCard()
             return
         }
 
         guard let cardImage = snapshotCardBack(scale: displayScale) else { return }
 
-        // ── Claim a landing slot ──────────────────────────────────
-        let slot          = director.claimLandingSlot(screenSize: screenSize)
         let flightID      = UUID().uuidString
         let startAngleDeg = Double.random(in: 11.0...16.0)
 
-        // NOTE: Spec says origin y: -15% (off-screen top).
-        // Current: y: 8% (visible but cardAlpha is 0).
-        // Card is not physically off-screen — it is invisible at this position.
-        // Visual result is equivalent; physical origin is a spec deviation.
-        // Tracked for reconciliation.
-        let origin = CGPoint(
-            x: screenSize.width  * 1.05,
-            y: screenSize.height * 0.08
+        // Launch from off-screen left or right at table horizon height.
+        // Wide X spread gives each deal a different diagonal angle.
+        let launchX = screenSize.width * CGFloat.random(in: -0.45...1.45)
+        let origin  = CGPoint(
+            x: launchX,
+            y: screenSize.height * AppLayout.tableHorizonYFrac
         )
-        let destination = slot.position
 
-        // SpriteKit CCW-positive radians; negate for clockwise SwiftUI tilt.
+        // Enforce minimum travel distance — retry up to 4 times before accepting.
+        let minTravelDistance = screenSize.width * 0.75
+        var slot = director.claimLandingSlot(screenSize: screenSize)
+        for _ in 0..<4 {
+            let dist = hypot(slot.position.x - origin.x,
+                             slot.position.y - origin.y)
+            if dist >= minTravelDistance { break }
+            slot = director.claimLandingSlot(screenSize: screenSize)
+        }
+
+        // Overshoot eligibility — only if the overshoot position would
+        // clear at least 1/3 of the card width past the screen edge.
+        let overshootDist   = slot.position.x + (slot.position.x - origin.x) * 0.22
+        let cardThird       = cardWidth / 3
+        let wouldClearLeft  = overshootDist < -cardThird
+        let wouldClearRight = overshootDist > screenSize.width + cardThird
+        let canOvershoot    = wouldClearLeft || wouldClearRight
+        let shouldOvershoot = canOvershoot && Double.random(in: 0...1) < 0.60
+
+        director.cardFlightScene.pendingShouldOvershoot = shouldOvershoot
+
         let skInitialAngle = CGFloat(-startAngleDeg * .pi / 180)
-        let skFinalAngle   = CGFloat(-slot.angleDeg * .pi / 180)
+        let skFinalAngle   = CGFloat(-slot.angleDeg  * .pi / 180)
 
-        // ── Pre-deal: empty table + dealer copy ───────────────────
-        // TODO: replace with final copy
-        director.showDealerLineManual("The cards remember what you tell them.")
-
-        try? await Task.sleep(for: .milliseconds(2600))
-        guard !Task.isCancelled else { return }
-
-        director.hideDealerLine()
-
-        try? await Task.sleep(for: .milliseconds(500))
-        guard !Task.isCancelled else { return }
-
-        // ── SWIPE ─────────────────────────────────────────────────
         dealPhase = .swiping
         cardAlpha = 0
 
@@ -534,38 +638,29 @@ struct NamePhase: View {
             cardID:       flightID,
             image:        cardImage,
             from:         origin,
-            to:           destination,
+            to:           slot.position,
             sceneSize:    screenSize,
-            duration:     0.92,
+            duration:     0.45,
             initialAngle: skInitialAngle,
             finalAngle:   skFinalAngle
         )
         guard !Task.isCancelled else { return }
 
-        // ── Handoff ───────────────────────────────────────────────
-        // Atomic: sprite gone and SwiftUI card live in the same render pass.
-        dealPhase = .resting
+        // Handoff SpriteKit → SwiftUI
+        dealPhase  = .resting
         cardOffset = CGSize(
             width:  restPos.x - screenSize.width  / 2,
             height: restPos.y - screenSize.height / 2
         )
         cardAngle = restRot
-        director.cardFlightScene.clearCard(id: flightID)
         cardAlpha = 1
+        // One frame overlap to eliminate the SpriteKit → SwiftUI flash
+        try? await Task.sleep(for: .milliseconds(32))
+        director.cardFlightScene.clearCard(id: flightID)
+    }
 
-        try? await Task.sleep(for: .milliseconds(460))
-        guard !Task.isCancelled else { return }
-
-        fireImpactRing()
-        tableRimBurst = 1.0
-        withAnimation(AppAnimation.rimBurstDecay) {
-            tableRimBurst = 0.0
-        }
-
-        // Pause for the landing to breathe, then the invisible hand centers the card.
-        try? await Task.sleep(for: .milliseconds(520))
-        guard !Task.isCancelled else { return }
-
+    @MainActor
+    private func centerCard() async {
         let tableCenter = CGPoint(
             x: screenSize.width  * 0.50,
             y: screenSize.height * 0.55
@@ -575,28 +670,19 @@ struct NamePhase: View {
                 width:  tableCenter.x - screenSize.width  / 2,
                 height: tableCenter.y - screenSize.height / 2
             )
-            cardAngle  = 0
+            cardAngle = 0
         }
+    }
 
-        try? await Task.sleep(for: .milliseconds(950))
-        guard !Task.isCancelled else { return }
+    // MARK: — Flip mechanics
 
+    @MainActor
+    private func performFlipWithBurst() async {
         dealPhase = .flipping
+        fireImpactRing()
+        tableRimBurst = 1.0
+        withAnimation(AppAnimation.rimBurstDecay) { tableRimBurst = 0.0 }
         await performFlip()
-        guard !Task.isCancelled else { return }
-
-        dealPhase = .pausing
-        fireFlipBurst()
-
-        // Pause to breathe after the flip.
-        try? await Task.sleep(for: .milliseconds(900))
-        guard !Task.isCancelled else { return }
-
-        dealPhase = .lifting
-        await performLift()
-        guard !Task.isCancelled else { return }
-
-        triggerNameInput()
     }
 
     @MainActor
@@ -607,8 +693,7 @@ struct NamePhase: View {
         try? await Task.sleep(for: .milliseconds(290))
         guard !Task.isCancelled else { return }
 
-        showFace      = true
-        faceStartDate = Date()
+        showFace = true
 
         withAnimation(AppAnimation.cardFlipHalf) {
             flipScaleX = -1.0
@@ -619,8 +704,7 @@ struct NamePhase: View {
     @MainActor
     private func performFlipBack() async {
         if reduceMotion {
-            showFace = false
-            faceStartDate = nil
+            showFace   = false
             flipScaleX = 1.0
             return
         }
@@ -629,8 +713,7 @@ struct NamePhase: View {
         }
         try? await Task.sleep(for: .milliseconds(290))
 
-        showFace   = false
-        faceStartDate = nil
+        showFace = false
 
         withAnimation(AppAnimation.cardFlipHalf) {
             flipScaleX = 1.0
@@ -638,10 +721,10 @@ struct NamePhase: View {
         try? await Task.sleep(for: .milliseconds(290))
     }
 
+    // MARK: — Card collect
+
     @MainActor
     private func performCardCollect() async {
-        // Reveal the deck on the canvas just before the card flies in.
-        // The next phase entry (runGenderEntry) will set it back to false.
         director.cornerDeckVisible = true
 
         let cornerX = screenSize.width  - AppLayout.cornerDeckRight - AppLayout.cornerDeckWidth  / 2
@@ -652,14 +735,14 @@ struct NamePhase: View {
                 width:  cornerX - screenSize.width  / 2,
                 height: cornerY - screenSize.height / 2
             )
-            cardScale  = AppLayout.cornerDeckWidth / cardWidth
-            cardAlpha  = 0
+            cardScale = AppLayout.cornerDeckWidth / cardWidth
+            cardAlpha = 0
         }
 
         try? await Task.sleep(for: .milliseconds(380))
 
-        // Register in the corner deck so the counter appears.
         let collected = VaylCardModel()
+        collected.credential = .name
         director.cornerDeckCards.append(collected)
         withAnimation(AppAnimation.deckReceive) {
             director.deckPulse = true
@@ -670,37 +753,7 @@ struct NamePhase: View {
         }
     }
 
-    @MainActor
-    private func performLift() async {
-        // Push the card past the camera plane — diveMultiplier× screen-widths deep.
-        let diveScale = (screenSize.width * AppLayout.cardLiftDiveMultiplier) / cardWidth
-
-        withAnimation(AppAnimation.tableFadeOut) {
-            director.tableFade = 0.0
-        }
-        // Card rushes toward the camera — caustics fill the lens.
-        withAnimation(AppAnimation.cardLift) {
-            cardScale  = diveScale
-            cardOffset = .zero
-            cardAngle  = 0
-        }
-
-        // At ~300ms the card has grown past 1.5× screen width.
-        // The lens is inside the water — blur ramps in hard.
-        try? await Task.sleep(for: .milliseconds(300))
-        guard !Task.isCancelled else { return }
-        withAnimation(AppAnimation.liftBlurRamp) {
-            cardBlur = AppLayout.cardLiftBlurRadius
-        }
-
-        // 100ms later the user is submerged. Fade the card out.
-        // The blur makes the fade imperceptible — reads as dissolving into the water.
-        try? await Task.sleep(for: .milliseconds(100))
-        guard !Task.isCancelled else { return }
-        withAnimation(AppAnimation.liftCardFade) {
-            cardScreenAlpha = 0.0
-        }
-    }
+    // MARK: — Effects helpers
 
     @MainActor
     private func fireImpactRing() {
@@ -718,172 +771,143 @@ struct NamePhase: View {
         }
     }
 
-    @MainActor
-    private func triggerNameInput() {
-        dealPhase = .nameInput
-        withAnimation(reduceMotion ? .linear(duration: 0.1) : AppAnimation.uiFadeIn) {
-            uiAlpha = 1.0
-        }
-        impactHeavy.prepare()
-        inputFocusTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(750))
-            guard !Task.isCancelled else { return }
-            nameFieldFocused = true
-        }
-    }
+    // MARK: — Swipe handler
+    //
+    // Handles two distinct swipe-up moments:
+    //   1. During nameInput  — upward swipe submits the name (matches all other phase gestures).
+    //   2. waitingForCardReturn — upward swipe gives the card to the dealer and advances.
+    //
+    // Both gates require an upward swipe (negative height). The phases are mutually exclusive —
+    // waitingForCardReturn is only true after dealPhase has moved past nameInput.
 
     @MainActor
-    private func triggerCollapse(keyboardSubmit: Bool = false) {
-        inputFocusTask?.cancel()
-        inputFocusTask = nil
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-        typingDebounceTask?.cancel()
-        withAnimation(AppAnimation.standard) {
-            nameTextOpacity = 0
-            fieldCollapsed  = true
-        }
-        if reduceMotion {
-            // Under reduce motion: show greeting with opacity only, skip spring offset.
-            withAnimation(AppAnimation.standard) {
-                greetingVisible  = true
-                greetingOwnsName = true
-            }
-        } else {
-            withAnimation(AppAnimation.spring.delay(0.28)) {
-                greetingVisible  = true
-                greetingOwnsName = true
-            }
-        }
-        collapseEffectsTask?.cancel()
-        collapseEffectsTask = Task { @MainActor in
-            await withTaskGroup(of: Void.self) { group in
+    private func handleSwipe(_ translation: CGSize) {
+        guard translation.height < -AppLayout.swipeSubmitThreshold else { return }
 
-                // Nudge + hint arrow sequence (swipe-path only)
-                if !keyboardSubmit {
-                    group.addTask { @MainActor in
-                        guard !reduceMotion else { return } // positional — skip entirely
-                        try? await Task.sleep(for: .milliseconds(600))
-                        guard !Task.isCancelled else { return }
-                        withAnimation(AppAnimation.screenNudge) { nudgeOffset = 14 }
-                        try? await Task.sleep(for: .milliseconds(220))
-                        withAnimation(AppAnimation.screenNudgeReturn) { nudgeOffset = 0 }
-                        try? await Task.sleep(for: .milliseconds(180))
-                        withAnimation(AppAnimation.hintArrowIn) { hintArrowAlpha = 1.0 }
-                        try? await Task.sleep(for: .milliseconds(900))
-                        withAnimation(AppAnimation.hintArrowOut) { hintArrowAlpha = 0.0 }
-                    }
-                }
-
-                // Header crossfade
-                group.addTask { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(900))
-                    guard !Task.isCancelled else { return }
-                    withAnimation(AppAnimation.headerFade) { headerFaded = true }
-                    try? await Task.sleep(for: .milliseconds(350))
-                    headerText = "Good to meet you."
-                    withAnimation(AppAnimation.headerFade) { headerFaded = false }
-                }
-
-                // Glow pulse
-                group.addTask { @MainActor in
-                    guard !reduceMotion else { return }
-                    try? await Task.sleep(for: .milliseconds(1100))
-                    guard !Task.isCancelled else { return }
-                    withAnimation(AppAnimation.glowPulse) { glowPulseScale = 1.04 }
-                    try? await Task.sleep(for: .milliseconds(550))
-                    withAnimation(AppAnimation.glowPulse) { glowPulseScale = 1.0 }
-                }
-
-                // Coach mark sequence (swipe-path only, first time only)
-                if !keyboardSubmit {
-                    group.addTask { @MainActor in
-                        guard !hasShownCoachMark, !reduceMotion else { return }
-                        hasShownCoachMark = true
-                        try? await Task.sleep(for: .milliseconds(1400))
-                        guard !Task.isCancelled else { return }
-                        coachMarkOffset = 0
-                        withAnimation(AppAnimation.coachMarkIn) { coachMarkAlpha = 1.0 }
-                        try? await Task.sleep(for: .milliseconds(300))
-                        withAnimation(AppAnimation.coachMarkTravel) { coachMarkOffset = 38 }
-                        try? await Task.sleep(for: .milliseconds(450))
-                        withAnimation(AppAnimation.coachMarkOut) { coachMarkAlpha = 0.0 }
-                        try? await Task.sleep(for: .milliseconds(400))
-                        coachMarkOffset = 0
-                    }
-                }
-            }
-        }
-
-        if keyboardSubmit {
-            // Keyboard-submit path: greeting shows for ~1.5 s then card collects automatically.
-            // The swipe gesture can cancel this and submit early.
-            autoAdvanceTask = Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(1500))
-                guard !Task.isCancelled else { return }
-                submitName()
-            }
-        }
-    }
-
-    @MainActor
-    private func handleSwipeDown(_ translationY: CGFloat) {
-        guard dealPhase == .nameInput, translationY > AppLayout.swipeSubmitThreshold else {
-            withAnimation(AppAnimation.spring) { dragY = 0 }
+        if waitingForCardReturn {
+            waitingForCardReturn = false
+            completeCardReturn()
             return
         }
+
+        guard dealPhase == .nameInput else { return }
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty else {
             impactMedium.impactOccurred()
-            withAnimation(AppAnimation.spring) { dragY = 0 }
             return
         }
-        autoAdvanceTask?.cancel()
-        autoAdvanceTask = nil
         submitName()
     }
 
+    // MARK: — Submit
+    //
+    // Collects the name, runs the greeting beat, flips the card back, then
+    // plays the return-demo sequence. Task ends at waitingForCardReturn = true.
+    // completeCardReturn() (triggered by swipe-up gesture) finishes the phase.
+
     @MainActor
     private func submitName() {
-        autoAdvanceTask?.cancel()
-        autoAdvanceTask = nil
         guard dealPhase != .collecting else { return }
-        typingDebounceTask?.cancel()
-        typingDebounceTask = nil
+        inputFocusTask?.cancel()
+        inputFocusTask = nil
         nameFieldFocused = false
-        impactHeavy.impactOccurred()
-        director.onboardingData.displayName = name.trimmingCharacters(in: .whitespaces)
 
-        nameShimmerActive = true
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(300))
-            nameShimmerActive = false
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else {
+            impactMedium.impactOccurred()
+            return
         }
-        nudgeOffset    = 0
-        hintArrowAlpha = 0
-        coachMarkAlpha  = 0
-        coachMarkOffset = 0
-        headerText     = "acquainted."
-        headerFaded    = false
+
+        impactHeavy.impactOccurred()
+        director.onboardingData.displayName = trimmed
         dealPhase = .collecting
 
-        // UI slides off; card cross-fades back in at table size simultaneously.
-        withAnimation(AppAnimation.exit)   { uiAlpha = 0 }
-        withAnimation(AppAnimation.spring) { dragY = screenSize.height * AppLayout.dragExitMultiplier }
-        // Scale and angle reset instantly — animating from diveScale would produce a zoom-in.
-        cardScale = 1.0
-        cardAngle = 0
-        withAnimation(AppAnimation.cardRestore) {
-            cardScreenAlpha = 1.0
-            cardBlur        = 0
+        Task { @MainActor in
+            // Dismiss input zone
+            withAnimation(AppAnimation.exit) { uiAlpha = 0 }
+
+            // Instantly clear Beat 2 copy — no fade, no delay
+            dealerDisplayed = ""
+            dealerAlpha     = 0
+
+            // ── Beat 3 — greeting rises ───────────────────────────
+            greetingName = trimmed
+            nameVisible  = false
+            showGreeting = true
+            withAnimation(AppAnimation.textProject.reduceMotionSafe) {
+                greetingAlpha = 1.0
+            }
+
+            try? await Task.sleep(for: .milliseconds(200))
+            withAnimation(AppAnimation.standard.reduceMotionSafe) { nameVisible = true }
+            try? await Task.sleep(for: .milliseconds(800))
+
+            withAnimation(AppAnimation.textProject.reduceMotionSafe) { greetingAlpha = 0.0 }
+            try? await Task.sleep(for: .milliseconds(350))
+            showGreeting = false
+            nameVisible  = false
+
+            // Flip back to card back
+            await performFlipBack()
+            try? await Task.sleep(for: .milliseconds(200))
+
+            // ── Return demo — dealer asks, card demonstrates swipe-up twice ────
+            //
+            // This is the gesture tutorial for the entire flow. The dealer asks
+            // for the card back; the card drifts upward twice so even a first-time
+            // user understands exactly what "slide it up" means. Every subsequent
+            // credential phase closes the same way — no re-teaching required.
+            dealerDisplayed = ""
+            await shuffleEnterDealer()
+            await typeDealerLine("May I have that back?")
+
+            if !reduceMotion {
+                // Demo 1 — light upward drift + spring return
+                try? await Task.sleep(for: .milliseconds(320))
+                withAnimation(.easeOut(duration: 0.30)) {
+                    cardReturnHintOffset = -(cardHeight * 0.12)
+                }
+                try? await Task.sleep(for: .milliseconds(420))
+                withAnimation(AppAnimation.spring) { cardReturnHintOffset = 0 }
+                try? await Task.sleep(for: .milliseconds(480))
+
+                // Demo 2 — same motion, slightly more deliberate
+                withAnimation(.easeOut(duration: 0.30)) {
+                    cardReturnHintOffset = -(cardHeight * 0.12)
+                }
+                try? await Task.sleep(for: .milliseconds(420))
+                withAnimation(AppAnimation.spring) { cardReturnHintOffset = 0 }
+                try? await Task.sleep(for: .milliseconds(300))
+            }
+
+            // Dealer line stays on screen. Chevron appears via Layer 6 transition.
+            // Task ends here — gesture resumes the sequence.
+            waitingForCardReturn = true
         }
+    }
+
+    // MARK: — Complete card return (called by swipe-up gesture after demo)
+
+    @MainActor
+    private func completeCardReturn() {
+        // Snap any residual hint offset
+        cardReturnHintOffset = 0
+
+        // Clear dealer line
+        withAnimation(AppDealerTyping.finalFadeAnim) { dealerAlpha = 0 }
+        dealerDisplayed = ""
+
+        impactHeavy.impactOccurred()
 
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(480))
-            await performFlipBack()
-            try? await Task.sleep(for: .milliseconds(160))
             await performCardCollect()
+
+            assert(
+                !director.cornerDeckCards.isEmpty,
+                "cornerDeckCards must have ≥1 card before advancing to modeSelect"
+            )
+
             try? await Task.sleep(for: .milliseconds(420))
-            director.advance(to: .gender)
+            director.advance(to: .modeSelect)
         }
     }
 }

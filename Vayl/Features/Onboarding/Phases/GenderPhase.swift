@@ -38,7 +38,7 @@
 //   (Pronouns removed — not needed for Vayl's use case.)
 //
 // Stub (not yet built):
-//   ✓ Card swipe-right confirm + auto-tug border pulse (Tasks 2)
+//   ✓ Card swipe-right confirm + intermittent swipe-hint flick (starts after user settles drum)
 //   ✗ User-drag → flip + reel spin
 
 import SwiftUI
@@ -55,9 +55,11 @@ struct GenderPhase: View {
 
     @State private var drumBaseOffset:   CGFloat = 0   // settled strip offset; resets on picker appear
     @State private var drumDragOffset:   CGFloat = 0   // live delta during current drag
-    @State private var confirmedTrigger: Bool    = false
-    @State private var cardTugOffset:        CGFloat = 0   // horizontal nudge for tug hint
-    @State private var borderPulseIntensity: Double  = 0   // 0→1→0 during tug sequence
+    @State private var confirmedTrigger:      Bool                    = false
+    @State private var hintOffset:            CGFloat                 = 0    // live y-offset for the swipe-hint flick (negative = upward)
+    @State private var hintTask:              Task<Void, Never>?      = nil  // intermittent flick loop; cancelled on grab / re-scroll
+    @State private var lastCenteredIndex:     Int                     = 0    // tracks previous item for selection haptic
+    @State private var drumHapticGen:         UISelectionFeedbackGenerator = UISelectionFeedbackGenerator()
 
     // MARK: — Dimensions (derived, not stored)
 
@@ -67,6 +69,12 @@ struct GenderPhase: View {
     private var cardHeight: CGFloat {
         AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale
     }
+
+    // Swipe-hint flick distance — proportional to card height so it scales across devices.
+    // -0.10 ≈ a confident upward throw that clearly reads "swipe up," not a twitch.
+    // Negative = upward in SwiftUI coordinate space.
+    // Felt value — verify the travel on device.
+    private var hintFlickY: CGFloat { -cardHeight * 0.10 }
 
     // MARK: — Body
 
@@ -87,6 +95,10 @@ struct GenderPhase: View {
 
             // Picker — fades in after reel settle, driven by genderPickerVisible
             pickerLayer
+
+            // Together-mode handoff beat — shown between spin 1 and spin 2.
+            // Fades in with the card flip-back so the partner knows it's their turn.
+            handoffLayer
         }
         .frame(width: screenSize.width, height: screenSize.height)
         .sensoryFeedback(.impact(weight: .medium), trigger: director.genderActiveReel) { _, new in
@@ -102,32 +114,39 @@ struct GenderPhase: View {
                 drumBaseOffset = drumInitialOffset - CGFloat(director.genderSelectedIndex) * drumItemH
                 drumDragOffset = 0
             }
+            // Sync haptic tracker so first user drag doesn't fire a spurious tick.
+            lastCenteredIndex = director.genderSelectedIndex
         }
         .onChange(of: director.genderShouldPocket) { _, pocket in
             // Director has animated card away (cardPocket ≈ 520ms).
             // Wait for the animation to complete then advance the phase.
+            // 600ms = 520ms animation + 80ms buffer for frame jitter on slower devices.
             guard pocket else { return }
             Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(550))
+                try? await Task.sleep(for: .milliseconds(600))
                 director.advance(to: .experienceLevel)
             }
         }
-        .onChange(of: director.genderReelSettleComplete) { _, complete in
-            guard complete, !reduceMotion else { return }
-            Task { @MainActor in
-                // Wait for the winning-glow haptic burst to finish before hinting.
-                try? await Task.sleep(for: .milliseconds(800))
-                // Border pulse: spectrum glow charges up.
-                withAnimation(.easeIn(duration: 0.18)) { borderPulseIntensity = 1.0 }
-                try? await Task.sleep(for: .milliseconds(200))
-                // Tug card right — fast, bouncy spring.
-                withAnimation(.spring(response: 0.22, dampingFraction: 0.50)) { cardTugOffset = 22 }
-                try? await Task.sleep(for: .milliseconds(230))
-                // Spring back.
-                withAnimation(AppAnimation.spring.reduceMotionSafe) { cardTugOffset = 0 }
-                try? await Task.sleep(for: .milliseconds(320))
-                // Border pulse fades out.
-                withAnimation(.easeOut(duration: 0.28)) { borderPulseIntensity = 0.0 }
+        .onChange(of: director.genderSwipeHintActive) { _, active in
+            hintTask?.cancel()
+            guard active, !reduceMotion else {
+                // Stopped (user grabbed the card or re-scrolled the drum) — settle back to rest Y.
+                withAnimation(AppAnimation.spring.reduceMotionSafe) { hintOffset = 0 }
+                return
+            }
+            // Intermittent swipe demo: flick right → spring home → pause → repeat.
+            // Cadence lives in Task.sleep (not animation tokens) per the codebase pattern.
+            hintTask = Task { @MainActor in
+                // Beat after the drum-settle haptics before the first flick.
+                try? await Task.sleep(for: .milliseconds(600))
+                while !Task.isCancelled {
+                    withAnimation(AppAnimation.swipeHintFlick) { hintOffset = hintFlickY }
+                    try? await Task.sleep(for: .milliseconds(380))   // 260ms flick + 120ms peak hold
+                    guard !Task.isCancelled else { break }
+                    withAnimation(AppAnimation.spring) { hintOffset = 0 }
+                    try? await Task.sleep(for: .milliseconds(1900))  // ~500ms settle + ~1.4s rest
+                    guard !Task.isCancelled else { break }
+                }
             }
         }
     }
@@ -147,6 +166,27 @@ struct GenderPhase: View {
             .opacity(director.genderDealerLineVisible ? 1.0 : 0.0)
             .offset(y: director.genderCardOffset.height - cardHeight / 2 - AppSpacing.xl)
             .allowsHitTesting(false)
+    }
+
+    // MARK: — Handoff Beat (together mode only)
+
+    /// Shown between spin 1 and spin 2 in together mode, simultaneously with the
+    /// card flipping back to its back face. Positioned below the card so it reads
+    /// as a caption to the flip action — distinctly separated from the dealer line
+    /// (which sits above the card). Driven by director.genderHandoffVisible.
+    private var handoffLayer: some View {
+        Group {
+            if director.genderHandoffVisible {
+                Text(director.genderHandoffCopy)
+                    .font(AppFonts.sectionHeading)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, AppSpacing.xl)
+                    .transition(.opacity)
+            }
+        }
+        .position(x: screenSize.width / 2, y: screenSize.height * 0.76)
+        .allowsHitTesting(false)
     }
 
     // MARK: — Bloom
@@ -252,24 +292,26 @@ struct GenderPhase: View {
         .scaleEffect(x: director.genderCardFlipScaleX, y: 1.0)
         .gesture(
             DragGesture(minimumDistance: 30)
+                .onChanged { _ in
+                    // User has grabbed the card — kill the swipe hint immediately.
+                    guard director.genderReelSettleComplete else { return }
+                    director.endGenderSwipeHint()
+                }
                 .onEnded { value in
                     // Only active after reels have settled.
                     guard director.genderReelSettleComplete else { return }
-                    // Require a rightward swipe with limited vertical drift.
-                    guard value.translation.width  >  55  else { return }
-                    guard abs(value.translation.height) < 80 else { return }
+                    // Require an upward swipe (negative height) with limited horizontal drift.
+                    guard value.translation.height < -55  else { return }
+                    guard abs(value.translation.width) < 80 else { return }
                     confirmedTrigger.toggle()   // triggers .sensoryFeedback(.success) in body
                     director.confirmGenderSelection(pronouns: nil)
                 }
         )
+        // Swipe-hint flick — pure rightward translation (no tilt) that intermittently
+        // throws the card right and springs it home, demonstrating the swipe gesture.
+        // hintOffset is driven by the intermittent loop in .onChange(genderSwipeHintActive).
         .offset(director.genderCardOffset)
-        .offset(x: cardTugOffset)
-        .overlay {
-            RoundedRectangle(cornerRadius: AppRadius.obCard)
-                .spectrumBorderGlow(intensity: borderPulseIntensity * 2.5)
-                .opacity(borderPulseIntensity)
-                .allowsHitTesting(false)
-        }
+        .offset(y: hintOffset)
     }
 
     // MARK: — Picker
@@ -332,8 +374,16 @@ struct GenderPhase: View {
         Group {
             if director.genderPickerVisible {
                 drumPickerView
-                    .onAppear { drumBaseOffset = drumInitialOffset }
-                    .transition(.opacity.animation(AppAnimation.standard.reduceMotionSafe))
+                    .onAppear {
+                        drumBaseOffset = drumInitialOffset
+                        // Pre-warm the Taptic Engine so first drum tick fires without latency.
+                        drumHapticGen.prepare()
+                    }
+                    // Plain .opacity transition — the fade is driven solely by the
+                    // withAnimation(.standard) that flips genderPickerVisible in the director.
+                    // A transition-local .animation() here double-drives the insert and pops
+                    // the picker to full opacity for one frame. Single animation source = no flash.
+                    .transition(.opacity)
             }
         }
         .offset(y: pickerOffsetY)
@@ -355,13 +405,16 @@ struct GenderPhase: View {
             VStack(spacing: 0) {
                 ForEach(Array(director.genderOptions.enumerated()), id: \.offset) { idx, option in
                     Text(option)
-                        .font(AppFonts.prompt)
+                        .font(idx == currentCenteredIndex
+                            ? AppFonts.prompt.weight(.semibold)
+                            : AppFonts.prompt)
                         .foregroundStyle(
                             idx == currentCenteredIndex
                                 ? AppColors.textPrimary
                                 : AppColors.textSecondary
                         )
                         .frame(height: drumItemH)
+                        .animation(.none, value: currentCenteredIndex)
                 }
             }
             .offset(y: drumStripOffset)
@@ -399,13 +452,22 @@ struct GenderPhase: View {
     private var drumGesture: some Gesture {
         DragGesture()
             .onChanged { value in
+                // User is re-engaging the drum — pause the swipe hint until they settle again.
+                director.endGenderSwipeHint()
                 drumDragOffset = value.translation.height
+                let nowIdx = currentCenteredIndex
+                if nowIdx != lastCenteredIndex {
+                    lastCenteredIndex = nowIdx
+                    drumHapticGen.selectionChanged()
+                }
                 director.updateGenderDrum(offset: drumScrollPosition)
             }
             .onEnded { value in
                 let n = director.genderOptions.count
                 guard n > 0 else { return }
-                let raw      = (drumInitialOffset - drumBaseOffset - drumDragOffset) / drumItemH
+                // predictedEndTranslation extrapolates natural deceleration (iOS 16+).
+                // Using it instead of raw translation gives the drum momentum when flicked.
+                let raw      = (drumInitialOffset - drumBaseOffset - value.predictedEndTranslation.height) / drumItemH
                 let snapped  = max(0, min(n - 1, Int(raw.rounded())))
                 let newBase  = drumInitialOffset - CGFloat(snapped) * drumItemH
 
@@ -413,7 +475,10 @@ struct GenderPhase: View {
                     drumBaseOffset = newBase
                     drumDragOffset = 0
                 }
+                lastCenteredIndex = snapped   // keep haptic tracking in sync after snap
                 director.settleGenderDrum(index: snapped)
+                // User has actively chosen a gender — they've earned the swipe prompt.
+                director.beginGenderSwipeHint()
             }
     }
 

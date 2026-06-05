@@ -27,7 +27,7 @@ final class Couple {
 
     // MARK: - Connection Type
 
-    var connectionType: ConnectionType  // primary ($24.99) / additional ($7.99)
+    var connectionType: ConnectionPlan  // primary ($24.99) / additional ($7.99)
 
     // MARK: - Shared Config
 
@@ -42,7 +42,7 @@ final class Couple {
     // Lives on Couple — one purchase unlocks both partners.
     // purchasedBy recorded for support only — never surfaced to either partner.
 
-    var entitlementTier: EntitlementTier    // free / core / pro
+    var entitlementTier: AccessTier    // free / core / pro
     var coreUnlockedAt: Date?
     var coreUnlockedBy: UUID?               // support use only
     var isFoundingMember: Bool              // first year Pro free when Act 2 launches
@@ -63,7 +63,7 @@ final class Couple {
     init(
         partnerAId: UUID,
         partnerBId: UUID,
-        connectionType: ConnectionType = .primary
+        connectionType: ConnectionPlan = .primary
     ) {
         self.id = UUID()
         self.partnerAId = partnerAId

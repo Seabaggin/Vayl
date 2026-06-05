@@ -54,6 +54,16 @@ public enum VaylCardContent: Equatable {
 
     /// Experience-level candle face. `time` is the shared flame clock from the phase.
     case candle(intensity: CandleIntensity, time: Double)
+
+    /// CompassPhase Q1/Q2 answer card — one option label per card.
+    /// Revealed by the flip cascade after the 2×2 grid settles.
+    case compassOption(label: String)
+
+    /// CompassPhase Q3 register card — felt-state slider on the card face.
+    /// `value` 0.0 ("I want to feel safer") → 1.0 ("I want to feel more alive").
+    /// `dragging` scales the thumb while the user is actively dragging.
+    /// The drag gesture itself is an overlay owned by the phase — this only draws.
+    case compassSlider(value: Double, dragging: Bool)
 }
 
 /// Visual style for the glass bar motif on mode cards.

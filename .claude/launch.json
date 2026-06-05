@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mockup",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["docs/mockups/server.js"],
+      "port": 7331
+    },
+    {
+      "name": "roadmap",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["docs/roadmap/server.js"],
+      "port": 7332
+    }
+  ]
+}

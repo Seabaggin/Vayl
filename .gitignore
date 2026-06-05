@@ -69,3 +69,7 @@ project.xcworkspace/xcuserdata/
 Config.swift
 .aider*
 .worktrees/
+
+# ── Generated / Tooling State ───────────────────────────────
+repomix-output.xml
+.superpowers/

@@ -62,7 +62,7 @@ final class SessionRecord {
     /// Cascade delete rule: deleting a SessionRecord automatically
     /// deletes all of its child RatingRecords — no orphaned data.
     @Relationship(deleteRule: .cascade)
-  
+    var ratings: [RatingRecord] = []
 
     // MARK: - Init
 

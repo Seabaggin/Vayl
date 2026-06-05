@@ -175,7 +175,7 @@ struct VaylFlourishView: View {
         ]
 
         for (path, gradient, start, end, lineWidth) in strokes {
-            var ctx = context
+            let ctx = context
             ctx.stroke(
                 path,
                 with: .linearGradient(

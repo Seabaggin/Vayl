@@ -38,7 +38,7 @@ final class MilestoneRecord {
 
     var id: UUID
     var userId: UUID
-    var milestone: MilestoneType
+    var milestone: Milestone
     var completedAt: Date
 
     // MARK: - Supplementary Data
@@ -52,7 +52,7 @@ final class MilestoneRecord {
 
     init(
         userId: UUID,
-        milestone: MilestoneType,
+        milestone: Milestone,
         beaconItemsRead: [String]? = nil
     ) {
         self.id = UUID()

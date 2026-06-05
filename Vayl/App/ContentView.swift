@@ -16,17 +16,17 @@ private let logger = Logger(
     category: "ContentView"
 )
 
+#if DEBUG
+/// Set to true to always route to OnboardingCanvasView on launch.
+/// Flip to false to restore normal auth/onboarding routing.
+private let forceOnboarding = true
+#endif
+
 struct ContentView: View {
 
     // MARK: - Onboarding Gate
 
     @AppStorage("isOnboardingComplete") private var hasCompletedOnboarding = false
-
-    #if DEBUG
-    private let forceOnboarding = false
-    #else
-    private let forceOnboarding = false
-    #endif
 
     // MARK: - Dependencies
 
@@ -36,11 +36,23 @@ struct ContentView: View {
     // MARK: - Body
 
     var body: some View {
-        if hasCompletedOnboarding && !forceOnboarding {
+        #if DEBUG
+        if forceOnboarding {
+            OnboardingCanvasView()
+        } else {
+            if hasCompletedOnboarding {
+                AppShell()
+            } else {
+                OnboardingCanvasView()
+            }
+        }
+        #else
+        if hasCompletedOnboarding {
             AppShell()
         } else {
             OnboardingCanvasView()
         }
+        #endif
     }
 }
 

@@ -13,6 +13,10 @@ final class CardFlightScene: SKScene {
     private var cardNodes: [String: SKSpriteNode] = [:]
     private var restedIDs: Set<String>            = []
 
+    /// Set by the caller before invoking dealCard to control overshoot for that deal.
+    /// Consumed on use and reset to false automatically — no cleanup needed.
+    var pendingShouldOvershoot: Bool = false
+
     override func didMove(to view: SKView) {
         backgroundColor = .clear
         physicsWorld.gravity = .zero
@@ -50,6 +54,14 @@ final class CardFlightScene: SKScene {
         let dx = destination.x - sx, dy = destination.y - sy
         let da = finalAngle - initialAngle
 
+        // Consume the caller's overshoot decision — reset immediately so
+        // a subsequent call without a new assignment defaults to false.
+        let shouldOvershoot = pendingShouldOvershoot
+        pendingShouldOvershoot = false
+        let overshootAmount = shouldOvershoot
+            ? Double.random(in: 1.12...1.22)  // vary the overshoot distance
+            : 1.0                              // no overshoot — clean stop
+
         node.run(SKAction.customAction(withDuration: duration) { node, elapsed in
             let t = min(Double(elapsed) / duration, 1.0)
 
@@ -73,8 +85,8 @@ final class CardFlightScene: SKScene {
             //               (leaves this much distance left to slide)
             // ─────────────────────────────────────────────────────────────
 
-            let landingT    = 0.50   // impact at 50% — gives the slide room to breathe
-            let landingFrac = 0.50   // card is 50% there at impact; long slide distance
+            let landingT    = 0.10   // impact at 10% — card barely has a flight phase
+            let landingFrac = 0.30   // card is 30% there at impact; 70% is pure felt slide
 
             let positionFrac: Double
             if t < landingT {
@@ -83,12 +95,31 @@ final class CardFlightScene: SKScene {
                 let tN = t / landingT
                 positionFrac = (tN * tN * tN) * landingFrac
             } else {
-                // Slide: power-5 ease-out — bites hard immediately so friction
-                // reads clearly even in a ~0.275s slide window.
-                let tN    = (t - landingT) / (1.0 - landingT)
-                let invTN = 1.0 - tN
-                let slide = 1.0 - (invTN * invTN * invTN * invTN * invTN)
-                positionFrac = landingFrac + (1.0 - landingFrac) * slide
+                let tN     = (t - landingT) / (1.0 - landingT)
+                let splitT = 0.70
+
+                if shouldOvershoot && tN < splitT {
+                    // Fast slide to overshoot position
+                    let tA    = tN / splitT
+                    let invTA = 1.0 - tA
+                    let slideA = 1.0 - (invTA * invTA)
+                    positionFrac = landingFrac +
+                        (1.0 - landingFrac) * slideA * overshootAmount
+                } else if shouldOvershoot && tN >= splitT {
+                    // Snap back from overshoot to final position
+                    let tB    = (tN - splitT) / (1.0 - splitT)
+                    let invTB = 1.0 - tB
+                    let snapback = overshootAmount -
+                        (overshootAmount - 1.0) * (1.0 - invTB * invTB * invTB)
+                    positionFrac = landingFrac +
+                        (1.0 - landingFrac) * snapback
+                } else {
+                    // Clean stop — power-2 ease-out
+                    let invTN = 1.0 - tN
+                    let slide = 1.0 - (invTN * invTN * invTN * invTN)
+                    positionFrac = landingFrac +
+                        (1.0 - landingFrac) * slide
+                }
             }
 
             node.position = CGPoint(x: sx + dx * CGFloat(positionFrac),

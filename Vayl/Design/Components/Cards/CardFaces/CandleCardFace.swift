@@ -79,11 +79,19 @@ struct CandleCardFace: View {
     var time: Double = 0
     var reduceMotion: Bool = false
 
-    @State private var pulse = false
+    /// Rest scale = the candle at full size; contracted scale = the bottom of an inhale.
+    /// Kept small (~1.5%) so the breath reads as quiet life, not a pulse.
+    private static let restScale:       CGFloat = 1.0
+    private static let contractedScale: CGFloat = 0.985
 
-    private var curiousScale: CGFloat {
-        guard intensity == .curious, !reduceMotion else { return 1.0 }
-        return pulse ? 1.0 : 0.88
+    @State private var contracted = false
+    @State private var breatheTask: Task<Void, Never>?
+
+    /// Subtle breathing scale applied to every candle (all three intensities) so the
+    /// hand reads as one living set. Driven intermittently (see runBreathing).
+    private var breatheScale: CGFloat {
+        guard !reduceMotion else { return Self.restScale }
+        return contracted ? Self.contractedScale : Self.restScale
     }
 
     var body: some View {
@@ -92,11 +100,31 @@ struct CandleCardFace: View {
                                 intensity: intensity, time: time,
                                 reduceMotion: reduceMotion)
         }
-        .scaleEffect(curiousScale)
-        .ambientAnimation(AppAnimation.cardBreathe, value: pulse)
+        .scaleEffect(breatheScale)
         .drawingGroup()   // CLAUDE.md: required on card faces — never remove
-        .onAppear {
-            if intensity == .curious && !reduceMotion { pulse = true }
+        .onAppear { runBreathing() }
+        .onDisappear { breatheTask?.cancel() }
+    }
+
+    /// Intermittent breath loop: inhale → exhale → rest, repeat. Unlike a continuous
+    /// repeatForever autoreverse, the rest between breaths makes the motion occasional
+    /// and calm. A small random start offset keeps the three cards out of lockstep.
+    /// Skipped entirely under Reduce Motion.
+    private func runBreathing() {
+        guard !reduceMotion else { return }
+        breatheTask?.cancel()
+        breatheTask = Task { @MainActor in
+            // Desync the fan so the three candles don't breathe in unison.
+            try? await Task.sleep(for: .seconds(Double.random(in: 0...AppAnimation.candleBreathHold)))
+            let breath: Animation = .easeInOut(duration: AppAnimation.candleBreathDuration)
+            while !Task.isCancelled {
+                withAnimation(breath) { contracted = true }   // inhale
+                try? await Task.sleep(for: .seconds(AppAnimation.candleBreathDuration))
+                withAnimation(breath) { contracted = false }  // exhale
+                try? await Task.sleep(for: .seconds(AppAnimation.candleBreathDuration))
+                // Intermittent rest before the next breath.
+                try? await Task.sleep(for: .seconds(AppAnimation.candleBreathHold))
+            }
         }
     }
 }
@@ -353,6 +381,14 @@ enum CandleRenderer {
         let w = size.width, h = size.height, S = w / 160
         let g = CandleGeo(w: w, h: h)
         let cfg = FlameCfg.of(intensity)
+
+        // Exploring/experienced carry tall flames that push their visual mass upward,
+        // so the lit silhouette reads as sitting too high. Nudge the whole candle down
+        // so the flame-to-body composition is vertically centered in the card. Curious
+        // has only a tiny flame + smoke wisp, so it already reads centered (no nudge).
+        if intensity != .curious {
+            ctx.translateBy(x: 0, y: h * 0.06)
+        }
 
         let bodyShade = spectrum(g, topY: g.bY, botY: g.bBY)
         let body = bodyPath(g, S: S, intensity: intensity)

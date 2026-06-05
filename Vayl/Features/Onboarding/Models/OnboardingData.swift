@@ -19,7 +19,12 @@ struct OnboardingData {
     // ── GenderPhase ──────────────────────────────────────────────────
     // Optional — "Prefer not to say" is a valid selection.
     // nil means the user has not yet reached this phase.
-    var genderIdentity: String? = nil
+    // Solo:     genderA / pronounsA set; genderB / pronounsB remain nil.
+    // Together: both A and B set after spin 2.
+    var genderA:   String? = nil
+    var pronounsA: String? = nil
+    var genderB:   String? = nil   // nil for solo / browsing
+    var pronounsB: String? = nil   // nil for solo / browsing
 
     // ── ModeSelectPhase ──────────────────────────────────────────────
     // together: both partners talked, doing this as a couple
@@ -31,9 +36,24 @@ struct OnboardingData {
     var nmStage: NMStage = .curious
 
     // ── ContextPhase ─────────────────────────────────────────────────
-    // The emotional register card the user selected.
+    // The relationship-context card the user selected, plus the situational
+    // register derived from it. ContextPhase NEVER writes emotionalRegister —
+    // that field belongs to CompassPhase Q3 exclusively.
     // nil means the user has not yet reached this phase.
-    var emotionalRegister: String? = nil
+    var relationshipContext: String? = nil   // RelationshipContext.rawValue
+    var situationalRegister: String? = nil   // SituationalRegister.rawValue
+
+    // ── CompassPhase (CUT from OB flow) ──────────────────────────────
+    // CompassPhase was removed from onboarding: Context already infers register,
+    // and asking agency/motivation cold up front was redundant. These signals are
+    // relocated — agency is gauged later in the DesireMap (observed, not asked),
+    // motivation is deferred to in-app behavior. ContextPhase is now the sole OB
+    // calibration. These fields are RETAINED (likely reused by the DesireMap) but
+    // are NOT written during onboarding. Do NOT re-add a Compass-style OB ask.
+    var agency: String?            = nil   // AgencySignal.rawValue
+    var motivation: String?        = nil   // MotivationShape.rawValue
+    var emotionalRegister: String? = nil   // EmotionalRegister.rawValue — Compass Q3
+    var compassNotes: [String]     = []
 
     // ── CuriosityPhase ───────────────────────────────────────────────
     // Round 1 — "What keeps coming up for you?"
@@ -75,7 +95,7 @@ struct OnboardingData {
             return !displayName.trimmingCharacters(in: .whitespaces).isEmpty
         case .together, .solo:
             return !displayName.trimmingCharacters(in: .whitespaces).isEmpty
-                && emotionalRegister != nil
+                && situationalRegister != nil
                 && !curiositySelections.isEmpty
         }
     }

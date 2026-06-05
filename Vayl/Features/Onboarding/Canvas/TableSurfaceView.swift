@@ -86,6 +86,14 @@ struct TableSurfaceView: View {
     /// Caller drives — VaylDirector does not own this value.
     var rimBurst: Double = 0
 
+    /// 0.0–0.52 — topo lines pulled inward toward card footprint (early dissolution).
+    /// Driven by VaylDirector.dissolutionWarp. Zero when no card is crystallising.
+    var dissolutionWarp: Double = 0
+
+    /// 0.0–1.0 — topo lines deflect around card rounded-rect boundary (later dissolution).
+    /// Driven by VaylDirector.dissolutionFlowOut. Zero when no card is crystallising.
+    var dissolutionFlowOut: Double = 0
+
     // ── Body ──────────────────────────────────────────────────────────────────
 
     var body: some View {
@@ -117,7 +125,9 @@ struct TableSurfaceView: View {
             drawTopoLines(
                 context: context, size: size,
                 cx: cx, cy: cy, tableR: tableR,
-                TY: TY, W: W, H: H
+                TY: TY, W: W, H: H,
+                dissolutionWarp:    dissolutionWarp,
+                dissolutionFlowOut: dissolutionFlowOut
             )
             drawCompassStar(
                 context: context,
@@ -306,19 +316,39 @@ private extension TableSurfaceView {
 private extension TableSurfaceView {
 
     func drawTopoLines(
-        context: GraphicsContext,
-        size:    CGSize,
-        cx:      CGFloat,
-        cy:      CGFloat,
-        tableR:  CGFloat,
-        TY:      CGFloat,
-        W:       CGFloat,
-        H:       CGFloat
+        context:            GraphicsContext,
+        size:               CGSize,
+        cx:                 CGFloat,
+        cy:                 CGFloat,
+        tableR:             CGFloat,
+        TY:                 CGFloat,
+        W:                  CGFloat,
+        H:                  CGFloat,
+        dissolutionWarp:    Double = 0,
+        dissolutionFlowOut: Double = 0
     ) {
         // 62 — topo line count. Rendering constant — produces the correct
         // visual density of contour lines across the felt surface.
         let lineCount     = 62
         let tableRSqInner = (tableR - 2) * (tableR - 2)
+
+        // ── Card geometry for dissolution warp + flow-around ──────────────────
+        // Computed once per drawTopoLines call — not inside the inner loop.
+        // Derived entirely from AppLayout tokens — no raw geometry values.
+        let cardW:      CGFloat = AppLayout.obTableCardWidth(in: W) * AppLayout.obTableCardCinematicScale
+        let cardH:      CGFloat = cardW * 1.5   // 3:2 portrait ratio — matches obTableCardHeight derivation
+        let cardCX:     CGFloat = W * 0.50
+        let cardCY:     CGFloat = H * AppLayout.obGenderCardRestYFrac
+        let cardRadius: CGFloat = AppRadius.obCard
+
+        // Tuning constants — named locals matching existing TableSurfaceView comment style.
+        // Rendering constants — calibrated against the HTML prototype.
+        let warpPullStrength:    CGFloat = 0.55  // inward pull magnitude at influence edge
+        let flowInsidePush:      CGFloat = 0.92  // push-to-boundary strength inside card
+        let flowOutsideBend:     CGFloat = 0.70  // tangential bend strength outside card
+        let flowInfluenceRadius: CGFloat = 0.38  // influence zone as fraction of cardW
+
+        let activeWarp = dissolutionWarp > 0.001 || dissolutionFlowOut > 0.001
 
         for li in 0 ..< lineCount {
             let t      = CGFloat(li) / CGFloat(lineCount - 1)
@@ -363,7 +393,56 @@ private extension TableSurfaceView {
                 // lines are tighter at the horizon, more organic at depth.
                 let noiseAmp: CGFloat = 10 + depthT * 26
                 let noiseX            = (n1 + n2 * 0.45 + n3 * 0.20) * noiseAmp
-                let px                = startX - sweep - fanBias + noiseX
+                var px                = startX - sweep - fanBias + noiseX
+
+                // ── Dissolution warp + flow-around ────────────────────────────
+                // Only runs when the gender card is crystallising.
+                // Skipped entirely when dissolutionWarp and dissolutionFlowOut are both 0.
+                if activeWarp {
+                    // — Phase 1: WARP — topo lines pulled inward toward card centre.
+                    // Decays as flowOut rises — warp gives way to flow-around.
+                    let netWarp = CGFloat(dissolutionWarp) * (1 - CGFloat(dissolutionFlowOut))
+                    if netWarp > 0.001 {
+                        let wdx = px - cardCX
+                        let wdy = py - cardCY
+                        let wd  = sqrt(wdx*wdx + wdy*wdy)
+                        // 0.85 — warp influence radius as fraction of cardW.
+                        // Rendering constant — lines beyond this distance are unaffected.
+                        let wr = cardW * 0.85
+                        if wd < wr && wd > 0.001 {
+                            let wf = pow(1 - wd/wr, 2.2)
+                            px -= wdx * netWarp * wf * warpPullStrength
+                        }
+                    }
+
+                    // — Phase 2: FLOW-AROUND — deflect lines at card rounded-rect boundary.
+                    // SDF gives the signed distance to the card outline:
+                    //   < 0 = inside card   → push point to nearest boundary
+                    //   > 0 = outside, near → bend tangentially along boundary
+                    let netFlow = CGFloat(dissolutionFlowOut) * 0.68
+                    if netFlow > 0.001 {
+                        let sdf        = rrSDF(px: px, py: py,
+                                               cx: cardCX, cy: cardCY,
+                                               w: cardW,   h: cardH, r: cardRadius)
+                        let influenceR = cardW * flowInfluenceRadius
+
+                        if sdf < influenceR {
+                            let rawProx  = 1 - max(0, min(1, sdf / influenceR))
+                            // Smoothstep — prevents hard edge at influence boundary.
+                            let smoothP  = rawProx * rawProx * (3 - 2 * rawProx)
+                            let bx = nearestOnRRx(px: px, py: py,
+                                                  cx: cardCX, cy: cardCY,
+                                                  w: cardW,   h: cardH, r: cardRadius)
+                            if sdf < 0 {
+                                // Inside card: push all the way to the boundary.
+                                px += (bx - px) * netFlow * smoothP * flowInsidePush
+                            } else {
+                                // Outside but close: gentle tangential bend.
+                                px += (bx - px) * netFlow * smoothP * flowOutsideBend
+                            }
+                        }
+                    }
+                }
 
                 let dx     = px - cx
                 let dyCir  = py - cy
@@ -398,6 +477,61 @@ private extension TableSurfaceView {
                     lineWidth: lineWidth
                 )
             }
+        }
+    }
+}
+
+// MARK: — Dissolution SDF Helpers
+
+private extension TableSurfaceView {
+
+    /// Signed distance field for a rounded rectangle.
+    /// Returns < 0 if `(px, py)` is inside, > 0 if outside.
+    /// Used by drawTopoLines to determine which flow-around force to apply.
+    func rrSDF(px: CGFloat, py: CGFloat,
+               cx: CGFloat, cy: CGFloat,
+               w:  CGFloat, h:  CGFloat,
+               r:  CGFloat) -> CGFloat {
+        let qx = abs(px - cx) - w / 2 + r
+        let qy = abs(py - cy) - h / 2 + r
+        return sqrt(max(qx, 0) * max(qx, 0) + max(qy, 0) * max(qy, 0))
+             + min(max(qx, qy), 0) - r
+    }
+
+    /// X coordinate of the nearest point on the rounded-rect boundary to `(px, py)`.
+    /// For inside points: returns the x of the nearest face centre.
+    /// For outside points: returns the x of the nearest corner arc tangent point.
+    func nearestOnRRx(px: CGFloat, py: CGFloat,
+                      cx: CGFloat, cy: CGFloat,
+                      w:  CGFloat, h:  CGFloat,
+                      r:  CGFloat) -> CGFloat {
+        let hw = w / 2
+        let hh = h / 2
+        let dx = px - cx
+        let dy = py - cy
+        let qx = abs(dx) - hw + r
+        let qy = abs(dy) - hh + r
+
+        if qx <= 0 && qy <= 0 {
+            // Inside: push to nearest vertical face (left/right wall).
+            // If the horizontal distance to the face is smaller, push there;
+            // otherwise leave x unchanged (point will push to top/bottom face via y).
+            let toFace = hw - abs(dx)
+            let toTop  = hh - abs(dy)
+            if toFace < toTop {
+                return cx + (dx >= 0 ? hw : -hw)
+            } else {
+                return px
+            }
+        } else {
+            // Outside: project from the nearest corner circle centre.
+            let cornerCX = cx + (dx >= 0 ? (hw - r) : -(hw - r))
+            let cornerCY = cy + (dy >= 0 ? (hh - r) : -(hh - r))
+            let dcx = px - cornerCX
+            let dcy = py - cornerCY
+            let dl  = sqrt(dcx * dcx + dcy * dcy)
+            guard dl > 0.001 else { return cornerCX + r }
+            return cornerCX + dcx / dl * r
         }
     }
 }

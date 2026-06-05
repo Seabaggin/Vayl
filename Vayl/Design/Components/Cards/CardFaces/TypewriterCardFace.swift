@@ -2,26 +2,48 @@
 
 import SwiftUI
 
+/// Typewriter symbol face for NamePhase.
+///
+/// Pure Canvas illustration — owns nothing but pixels.
+/// No @State, no gestures, no text rendering.
+/// All live state (activeKey, carriageProgress) passes in from NamePhase
+/// via VaylCardContent.typewriter and VaylCardFace.
+///
+/// Canvas geometry
+/// ───────────────
+/// Frame:         cardWidth × cardHeight  (full card face)
+/// Illustration:  cardWidth × 0.82       (82% of card width)
+/// Viewbox:       160 × 130 internal units
+/// Scale:         s = (cardWidth * 0.82) / 160
+/// Centering:     context.translateBy — illustration floats in the card
+///
+/// The canvas is transparent. VaylCardFace layer 1 owns cardBg.
+/// VaylCardFace layer 2 atmosphere shows in the card margins.
 struct TypewriterCardFace: View {
 
     let cardWidth:        CGFloat
     let cardHeight:       CGFloat
-    let name:             String
-    let activeKey:        Int      // -1 = none, 0–11 = letter key, 12 = space bar
+    let activeKey:        Int      // -1 = none, 0–14 = letter keys, 15 = space bar
     let carriageProgress: CGFloat  // 0.0 (left) → 1.0 (right)
+
+    private var illustrationWidth:  CGFloat { cardWidth * 0.68 }
+    private var illustrationHeight: CGFloat { illustrationWidth * (130.0 / 160.0) }
 
     var body: some View {
         Canvas { context, size in
-            let w = size.width
-            let h = size.height
 
-            // ── Card background ──────────────────────────────────────
-            context.fill(
-                Path(roundedRect: CGRect(origin: .zero, size: size), cornerRadius: AppRadius.obCard),
-                with: .color(AppColors.cardBg)
-            )
+            // Scale factor: maps 160-unit viewbox → illustrationWidth points.
+            // Every spec coordinate × s = rendered point.
+            let s: CGFloat = illustrationWidth / 160
 
-            // ── Spectrum gradient (diagonal, card-relative) ──────────
+            // Center illustration within the full card canvas.
+            // yOffset * 0.48 sits the illustration slightly above card center,
+            // leaving more breathing room at the bottom.
+            let xOffset = (size.width  - illustrationWidth)  / 2
+            let yOffset = (size.height - illustrationHeight) * 0.44
+            context.translateBy(x: xOffset, y: yOffset)
+
+            // ── Spectrum gradient — illustration-relative ─────────────
             let specGrad = Gradient(stops: [
                 .init(color: AppColors.spectrumCyan,    location: 0.00),
                 .init(color: AppColors.spectrumPurple,  location: 0.50),
@@ -29,182 +51,226 @@ struct TypewriterCardFace: View {
             ])
             let shading = GraphicsContext.Shading.linearGradient(
                 specGrad,
-                startPoint: CGPoint(x: 0, y: 0),
-                endPoint:   CGPoint(x: w, y: h)
+                startPoint: CGPoint(x: 0,                y: 0),
+                endPoint:   CGPoint(x: illustrationWidth, y: illustrationHeight)
             )
 
-            // ── Geometry — all values proportional to card size ──────
-            let bodyW      = w * 0.82
-            let bodyH      = h * 0.38
-            let bodyX      = (w - bodyW) / 2
-            let bodyY      = h * 0.28
-            let keySize    = bodyW * 0.09
-            let platenH    = bodyH * 0.14
-            let platenW    = bodyW * 0.92
-            let platenX    = (w - platenW) / 2
-            let platenY    = bodyY - platenH * 0.5
-            let leverArmW  = bodyW * 0.22
-            let leverBallR = leverArmW * 0.12
+            // ── Geometry — 160×130 viewbox, all values × s ────────────
 
-            // ── Build paths ──────────────────────────────────────────
+            // Platen roller bounds (used by several derived elements)
+            let px: CGFloat =   6 * s
+            let py: CGFloat =  18 * s
+            let pw: CGFloat = 148 * s
+            let ph: CGFloat =  12 * s
 
-            // Paper sheet — two vertical edges + top horizontal rule
-            let paperTopY = platenY - h * 0.12
-            let paperW    = bodyW * 0.52
-            let paperX    = (w - paperW) / 2
-            var paperPath = Path()
-            paperPath.move(to:    CGPoint(x: paperX,          y: paperTopY))
-            paperPath.addLine(to: CGPoint(x: paperX,          y: platenY + platenH * 0.55))
-            paperPath.move(to:    CGPoint(x: paperX + paperW, y: paperTopY))
-            paperPath.addLine(to: CGPoint(x: paperX + paperW, y: platenY + platenH * 0.55))
-            paperPath.move(to:    CGPoint(x: paperX,          y: paperTopY))
-            paperPath.addLine(to: CGPoint(x: paperX + paperW, y: paperTopY))
+            // Cabinet body bounds (used by several derived elements)
+            let bx: CGFloat =   6 * s
+            let by: CGFloat =  30 * s
+            let bw: CGFloat = 148 * s
+            let bh: CGFloat =  88 * s
 
-            // Platen roller (rounded rect — curved element)
-            let platenRect = CGRect(x: platenX, y: platenY, width: platenW, height: platenH)
-            let platenPath = Path(roundedRect: platenRect, cornerRadius: platenH * 0.32)
+            // Key grid dimensions
+            let numCols = 5
+            let numRows = 3
+            let keyGapX = 4 * s
+            let keyGapY = 4 * s
+            let kw       = (bw * 0.80 - CGFloat(numCols - 1) * keyGapX) / CGFloat(numCols)
+            let kh       = kw * 0.72
+            let kTotalW  = CGFloat(numCols) * kw + CGFloat(numCols - 1) * keyGapX
+            let kTotalH  = CGFloat(numRows) * kh + CGFloat(numRows - 1) * keyGapY
+            let kStartX  = bx + (bw - kTotalW) / 2
+            let kStartY  = by + (bh - kTotalH) / 2 - 4 * s  // slightly above body center
 
-            // Carriage indicator — vertical tick that travels across the platen
-            let carriageX = platenX + platenW * 0.08 + (platenW * 0.84) * carriageProgress
+            // ── Build paths ───────────────────────────────────────────
+
+            // 1. Paper sheet
+            let paperPath = Path(roundedRect: CGRect(
+                x: 48 * s, y: 0,
+                width: 64 * s, height: 18 * s
+            ), cornerRadius: 1 * s)
+
+            // 2. Platen roller
+            let platenPath = Path(roundedRect: CGRect(
+                x: px, y: py, width: pw, height: ph
+            ), cornerRadius: 6 * s)
+
+            // 3. Carriage tick — vertical line that travels across the platen
+            let carriageX = (px + 10 * s) + (pw - 20 * s) * carriageProgress
             var carriagePath = Path()
-            carriagePath.move(to:    CGPoint(x: carriageX, y: platenY - 3))
-            carriagePath.addLine(to: CGPoint(x: carriageX, y: platenY + platenH + 3))
+            carriagePath.move(to:    CGPoint(x: carriageX, y: py - 4 * s))
+            carriagePath.addLine(to: CGPoint(x: carriageX, y: py + ph + 4 * s))
 
-            // Cabinet body (rectangular — straight-line element)
-            let bodyRect = CGRect(x: bodyX, y: bodyY, width: bodyW, height: bodyH)
-            let bodyPath = Path(roundedRect: bodyRect, cornerRadius: AppRadius.sm)
+            // 4. Ribbon spools — flank platen ends, partially clipped at canvas edges
+            let spR: CGFloat      = 7 * s
+            let spInnerR: CGFloat = 4 * s
+            let sp1cx: CGFloat    =   2 * s
+            let sp1cy: CGFloat    =  24 * s
+            let sp2cx: CGFloat    = 158 * s
+            let sp2cy: CGFloat    =  24 * s
 
-            // Mechanism rail — subtle horizontal divide inside body
-            let railY = bodyY + bodyH * 0.18
+            let spool1Outer = Path(ellipseIn: CGRect(
+                x: sp1cx - spR,      y: sp1cy - spR,      width: spR * 2,      height: spR * 2))
+            let spool2Outer = Path(ellipseIn: CGRect(
+                x: sp2cx - spR,      y: sp2cy - spR,      width: spR * 2,      height: spR * 2))
+            let spool1Inner = Path(ellipseIn: CGRect(
+                x: sp1cx - spInnerR, y: sp1cy - spInnerR, width: spInnerR * 2, height: spInnerR * 2))
+            let spool2Inner = Path(ellipseIn: CGRect(
+                x: sp2cx - spInnerR, y: sp2cy - spInnerR, width: spInnerR * 2, height: spInnerR * 2))
+
+            // 5. Cabinet body
+            let bodyPath = Path(roundedRect: CGRect(
+                x: bx, y: by, width: bw, height: bh
+            ), cornerRadius: 6 * s)
+
+            // 6. Interior rail — structural divide, subordinate
+            let railY = by + bh * 0.17
             var railPath = Path()
-            railPath.move(to:    CGPoint(x: bodyX + bodyW * 0.04, y: railY))
-            railPath.addLine(to: CGPoint(x: bodyX + bodyW * 0.96, y: railY))
+            railPath.move(to:    CGPoint(x: bx + 10 * s,      y: railY))
+            railPath.addLine(to: CGPoint(x: bx + bw - 10 * s, y: railY))
 
-            // Carriage return lever — arm extends from right side of body, ball at tip
-            let leverStartX  = bodyX + bodyW
-            let leverStartY  = platenY + platenH * 0.5
-            let leverArmEndX = leverStartX + leverArmW - leverBallR * 2.4
+            // 7. Carriage return lever — angled arm from body top-right, ball at tip.
+            //    Arm extends past the 160-unit viewbox right edge — clipped by canvas.
+            let lx1: CGFloat = bx + bw
+            let ly1: CGFloat = py + ph * 0.5
+            let lx2: CGFloat = lx1 + 14 * s
+            let ly2: CGFloat = ly1 -  9 * s
             var leverPath = Path()
-            leverPath.move(to:    CGPoint(x: leverStartX,  y: leverStartY))
-            leverPath.addLine(to: CGPoint(x: leverArmEndX, y: leverStartY))
-            let ballRect = CGRect(
-                x: leverArmEndX,
-                y: leverStartY - leverBallR,
-                width:  leverBallR * 2,
-                height: leverBallR * 2
-            )
-            let leverBallPath = Path(ellipseIn: ballRect)
+            leverPath.move(to:    CGPoint(x: lx1, y: ly1))
+            leverPath.addLine(to: CGPoint(x: lx2, y: ly2))
+            let leverBallR: CGFloat = 2.2 * s
+            let leverBallPath = Path(ellipseIn: CGRect(
+                x: lx2 - leverBallR, y: ly2 - leverBallR,
+                width: leverBallR * 2, height: leverBallR * 2
+            ))
 
-            // Keys — 3 rows × 4 cols = indices 0–11
-            let numCols   = 4
-            let numRows   = 3
-            let keyAreaY  = bodyY + bodyH * 0.24
-            let keyAreaH  = bodyH * 0.62
-            let keySpX    = bodyW * 0.84 / CGFloat(numCols)
-            let keySpY    = keyAreaH  / CGFloat(numRows)
-            let keyStartX = bodyX + bodyW * 0.08
-
+            // 8. Key grid — 5 × 3 = indices 0–14
             var keyPaths: [(path: Path, active: Bool)] = []
             for row in 0..<numRows {
                 for col in 0..<numCols {
                     let idx      = row * numCols + col
                     let isActive = idx == activeKey
-                    let kx = keyStartX + keySpX * CGFloat(col) + keySpX * 0.5
-                    let ky = keyAreaY  + keySpY  * CGFloat(row) + keySpY  * 0.5
-                             + (isActive ? 3 : 0)
-                    let r  = CGRect(x: kx - keySize / 2, y: ky - keySize / 2, width: keySize, height: keySize)
-                    keyPaths.append((Path(roundedRect: r, cornerRadius: keySize * 0.28), isActive))
+                    let kx = kStartX + CGFloat(col) * (kw + keyGapX)
+                    let ky = kStartY + CGFloat(row) * (kh + keyGapY) + (isActive ? 2 * s : 0)
+                    keyPaths.append((
+                        Path(roundedRect: CGRect(x: kx, y: ky, width: kw, height: kh),
+                             cornerRadius: 2.5 * s),
+                        isActive
+                    ))
                 }
             }
 
-            // Space bar
-            let spBarY     = keyAreaY + keyAreaH + keySize * 0.32
-            let spBarW     = bodyW * 0.48
-            let spBarH     = keySize * 0.52
-            let spBarX     = (w - spBarW) / 2
-            let isSpActive = activeKey == 12
-            let spaceRect  = CGRect(
+            // 9. Space bar — index 15
+            let isSpActive = activeKey == 15
+            let spBarW = kTotalW * 0.50
+            let spBarH = kh * 0.70
+            let spBarX = bx + (bw - spBarW) / 2
+            let spBarY = kStartY + CGFloat(numRows) * (kh + keyGapY) + 5 * s
+            let spacePath = Path(roundedRect: CGRect(
                 x: spBarX,
-                y: spBarY + (isSpActive ? 3 : 0),
-                width:  spBarW,
-                height: spBarH
-            )
-            let spacePath  = Path(roundedRect: spaceRect, cornerRadius: spBarH * 0.32)
+                y: spBarY + (isSpActive ? 2 * s : 0),
+                width: spBarW, height: spBarH
+            ), cornerRadius: 2.5 * s)
 
-            // ── Stroke styles ────────────────────────────────────────
-            // .round on curved elements (platen, lever ball, carriage)
-            // .square on straight geometric elements (body, keys, lever arm)
-            let roundStroke    = StrokeStyle(lineWidth: 1.2, lineCap: .round,  lineJoin: .round)
-            let squareStroke   = StrokeStyle(lineWidth: 1.2, lineCap: .square, lineJoin: .miter)
-            let carriageStroke = StrokeStyle(lineWidth: 2.0, lineCap: .round)
-            let activeStroke   = StrokeStyle(lineWidth: 2.0, lineCap: .square)
+            // ── Stroke styles ─────────────────────────────────────────
+            // Curves  (.round):  platen, carriage, spools, lever, paper
+            // Straights (.square): body, rail, keys, space bar
+            let paperStroke     = StrokeStyle(lineWidth: 0.7  * s, lineCap: .round)
+            let platenStroke    = StrokeStyle(lineWidth: 1.1  * s, lineCap: .round,  lineJoin: .round)
+            let carriageStroke  = StrokeStyle(lineWidth: 2.0  * s, lineCap: .round)
+            let spoolStroke     = StrokeStyle(lineWidth: 1.1  * s, lineCap: .round)
+            let spoolInnerStyle = StrokeStyle(lineWidth: 0.55 * s, lineCap: .round)
+            let bodyStroke      = StrokeStyle(lineWidth: 1.2  * s, lineCap: .square, lineJoin: .miter)
+            let railStroke      = StrokeStyle(lineWidth: 0.55 * s)
+            let leverStroke     = StrokeStyle(lineWidth: 1.1  * s, lineCap: .round)
+            let keyActiveStroke = StrokeStyle(lineWidth: 1.4  * s, lineCap: .square)
+            let keyDimStroke    = StrokeStyle(lineWidth: 0.95 * s, lineCap: .square)
 
-            // ── Glow pass — blurred, 0.35 opacity ───────────────────
-            // All paths drawn into a single layer, then blurred and composited.
+            // ── Pass 1: Glow — body, platen, spools only ──────────────
+            // Keys and lever are detail, not primary read — excluded from glow.
+            // Wider stroke widths spread the bloom before blur is applied.
             context.drawLayer { ctx in
-                ctx.addFilter(.blur(radius: 6))
-                ctx.opacity = 0.35
-
-                ctx.stroke(platenPath,    with: shading, style: roundStroke)
-                ctx.stroke(carriagePath,  with: shading, style: carriageStroke)
-                ctx.stroke(bodyPath,      with: shading, style: squareStroke)
-                ctx.stroke(leverPath,     with: shading, style: squareStroke)
-                ctx.stroke(leverBallPath, with: shading, style: roundStroke)
-
-                for (kp, isActive) in keyPaths {
-                    ctx.stroke(kp, with: shading, style: isActive ? activeStroke : squareStroke)
-                }
-                ctx.stroke(spacePath, with: shading, style: isSpActive ? activeStroke : squareStroke)
+                ctx.addFilter(.blur(radius: 3 * s))
+                ctx.opacity = 0.26
+                ctx.stroke(bodyPath,    with: shading, style: StrokeStyle(lineWidth: 7 * s))
+                ctx.stroke(platenPath,  with: shading, style: StrokeStyle(lineWidth: 5 * s))
+                ctx.stroke(spool1Outer, with: shading, style: StrokeStyle(lineWidth: 5 * s))
+                ctx.stroke(spool2Outer, with: shading, style: StrokeStyle(lineWidth: 5 * s))
             }
 
-            // ── Crisp pass — full opacity ────────────────────────────
+            // ── Pass 2: Crisp — all elements in draw order ────────────
 
-            // Paper — always drawn dim (it is background context, not a primary element)
+            // 1. Paper — dim, communicates feed
             var paperCtx = context
-            paperCtx.opacity = 0.38
-            paperCtx.stroke(paperPath, with: shading, style: StrokeStyle(lineWidth: 1.0, lineCap: .round))
+            paperCtx.opacity = 0.28
+            paperCtx.stroke(paperPath, with: shading, style: paperStroke)
 
-            // Platen — round linecap (curved element)
-            context.stroke(platenPath, with: shading, style: roundStroke)
+            // 2. Platen roller
+            context.stroke(platenPath, with: shading, style: platenStroke)
 
-            // Carriage indicator — round linecap
+            // 3. Carriage tick
             context.stroke(carriagePath, with: shading, style: carriageStroke)
 
-            // Body — square linecap (rectangular element)
-            context.stroke(bodyPath, with: shading, style: squareStroke)
+            // 4. Ribbon spools — outer ring full, inner hub ring dim
+            context.stroke(spool1Outer, with: shading, style: spoolStroke)
+            context.stroke(spool2Outer, with: shading, style: spoolStroke)
+            var spoolHubCtx = context
+            spoolHubCtx.opacity = 0.36
+            spoolHubCtx.stroke(spool1Inner, with: shading, style: spoolInnerStyle)
+            spoolHubCtx.stroke(spool2Inner, with: shading, style: spoolInnerStyle)
 
-            // Rail — dim, no linecap distinction needed at this weight
+            // 5. Cabinet body
+            context.stroke(bodyPath, with: shading, style: bodyStroke)
+
+            // 6. Interior rail — dim structural hint
             var railCtx = context
             railCtx.opacity = 0.22
-            railCtx.stroke(railPath, with: shading, style: StrokeStyle(lineWidth: 1.0))
+            railCtx.stroke(railPath, with: shading, style: railStroke)
 
-            // Lever arm — square; lever ball — round
-            context.stroke(leverPath,     with: shading, style: squareStroke)
-            context.stroke(leverBallPath, with: shading, style: roundStroke)
+            // 7. Carriage return lever — arm then ball
+            context.stroke(leverPath,     with: shading, style: leverStroke)
+            context.stroke(leverBallPath, with: shading, style: leverStroke)
 
-            // Keys — square linecap; active key gets fill + brighter stroke
+            // 8. Keys
             for (kp, isActive) in keyPaths {
                 if isActive {
                     context.fill(kp, with: .color(AppColors.accentPrimary.opacity(0.18)))
-                    context.stroke(kp, with: shading, style: activeStroke)
+                    context.stroke(kp, with: shading, style: keyActiveStroke)
                 } else {
                     var dimCtx = context
-                    dimCtx.opacity = 0.55
-                    dimCtx.stroke(kp, with: shading, style: squareStroke)
+                    dimCtx.opacity = 0.62
+                    dimCtx.stroke(kp, with: shading, style: keyDimStroke)
                 }
             }
 
-            // Space bar
+            // 9. Space bar
             if isSpActive {
                 context.fill(spacePath, with: .color(AppColors.accentPrimary.opacity(0.18)))
-                context.stroke(spacePath, with: shading, style: activeStroke)
+                context.stroke(spacePath, with: shading, style: keyActiveStroke)
             } else {
                 var dimCtx = context
-                dimCtx.opacity = 0.55
-                dimCtx.stroke(spacePath, with: shading, style: squareStroke)
+                dimCtx.opacity = 0.62
+                dimCtx.stroke(spacePath, with: shading, style: keyDimStroke)
             }
         }
         .frame(width: cardWidth, height: cardHeight)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.obCard))
     }
+}
+
+// MARK: - Preview
+
+#Preview {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        VaylCardFace(
+            content: .typewriter(
+                activeKey:        3,
+                carriageProgress: 0.45
+            )
+        )
+        .frame(
+            width:  AppLayout.obCardWidth(in: 390),
+            height: AppLayout.obCardHeight(in: 390)
+        )
+    }
+    .preferredColorScheme(.dark)
 }

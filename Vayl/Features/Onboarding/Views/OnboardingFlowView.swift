@@ -81,12 +81,13 @@ struct OnboardingFlowView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
 
             case .contextSelect:
-                OnboardingContextView(
-                    data:       $store.data,
-                    onContinue: { store.advance() },
-                    onBack:     { store.goBack() }
-                )
-                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                // Legacy flow retired — OnboardingContextView was removed during the
+                // ContextPhase (canvas OB) migration. This branch is dead: the live app
+                // routes only through OnboardingCanvasView. Kept as a no-op so the
+                // otherwise-unused legacy switch stays exhaustive. (Full retirement of
+                // OnboardingFlowView is tracked separately.)
+                Color.clear
+                    .transition(.opacity)
 
             case .curiosityPicker:
                 OnboardingCuriosityPickerView(

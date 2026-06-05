@@ -41,6 +41,7 @@ struct VaylCardRenderer: View {
                     .scaleEffect(x: -1) // mirror to correct face-up orientation
             }
         }
+        .drawingGroup() // rasterize composite card layers to Metal texture each frame
         .frame(width: cardW, height: cardH)
         .scaleEffect(x: card.scaleX, y: card.scale)
         .rotationEffect(.degrees(card.rotation))

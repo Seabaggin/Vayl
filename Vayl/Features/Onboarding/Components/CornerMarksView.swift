@@ -20,13 +20,12 @@ import SwiftUI
 /// Fixed position. No animation. No interaction.
 struct CornerMarksView: View {
 
-    // Physics constants — position from screen edges
-    // Not tokens — these are specific to the corner mark geometry
-    private let topOffset:    CGFloat = 17
-    private let bottomOffset: CGFloat = 17
-    private let sideOffset:   CGFloat = 21
-    private let fontSize:     CGFloat = 9
-    private let opacity:      Double  = 0.09
+    // Visual constants — not on the 4/8pt grid; specific to corner mark geometry
+    private let topOffset:    CGFloat = 17  // token pending AppLayout.cornerMarkTopOffset
+    private let bottomOffset: CGFloat = 17  // token pending AppLayout.cornerMarkBottomOffset
+    private let sideOffset:   CGFloat = 21  // token pending AppLayout.cornerMarkSideOffset
+    private let fontSize:     CGFloat = 9   // sub-grid glyph size — token pending AppFonts
+    private let opacity:      Double  = 0.09 // structural mark opacity — token pending AppColors
 
     var body: some View {
         GeometryReader { geo in
@@ -55,7 +54,8 @@ struct CornerMarksView: View {
 
     private var mark: some View {
         Text("✦")
-            .font(.system(size: fontSize, weight: .regular))
-            .foregroundStyle(Color.white.opacity(opacity))
+            .font(AppFonts.meta) // 9pt not in type scale — using meta(10pt) as closest token, pending AppFonts.cornerDeckCount
+            // 0.09 intentional — marks are structural not readable
+            .foregroundStyle(AppColors.textMuted)
     }
 }

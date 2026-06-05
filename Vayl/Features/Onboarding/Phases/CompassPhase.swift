@@ -1,22 +1,18 @@
 //
-//  QuizPhase.swift
-//  Vayl
-//
-//  Created by Bryan Jorden on 5/10/26.
-//
-
-
-//
-//  QuizPhase.swift
+//  CompassPhase.swift
 //  Vayl
 //
 
 import SwiftUI
 
-/// OB Phase — Quiz
-/// Stub for routing verification. Cosmetics in visual pass.
-/// Advances to .curiosityRound1 via director.
-struct QuizPhase: View {
+/// OB Phase — Compass (replaces the former Quiz phase).
+/// Three-question calibration (agency / motivation / emotional register) dealt at
+/// the table. Ephemeral — no corner-deck card.
+///
+/// STUB: routing target for the ContextPhase handoff. The full three-question
+/// sequence (MC cards + slider, CompassStore, couple derivation) is a dedicated
+/// follow-up build. Advances to .curiosity via the director.
+struct CompassPhase: View {
 
     let director:   VaylDirector
     let screenSize: CGSize
@@ -29,12 +25,12 @@ struct QuizPhase: View {
             VStack(spacing: AppSpacing.xl) {
                 Spacer()
 
-                Text("Quiz Phase")
+                Text("Compass Phase")
                     .font(Font.custom("ClashDisplay-Medium", size: 24, relativeTo: .title))
                     .foregroundStyle(AppColors.textPrimary)
 
                 Button("Continue") {
-                    director.advance(to: .curiosityRound1)
+                    director.advance(to: .curiosity)
                 }
                 .font(Font.custom("ClashDisplay-Medium", size: 17, relativeTo: .body))
                 .foregroundStyle(AppColors.textPrimary)
@@ -44,6 +40,6 @@ struct QuizPhase: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .accessibilityLabel("Quiz phase")
+        .accessibilityLabel("Compass phase")
     }
 }

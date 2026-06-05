@@ -15,7 +15,7 @@ import SwiftUI
 
 /// OB Phase — Building Path
 /// Stub for routing verification. Cosmetics in visual pass.
-/// Advances to .foil via director.
+/// Advances to .buildDeck via director.
 struct BuildingPathPhase: View {
 
     let director: VaylDirector
@@ -33,7 +33,7 @@ struct BuildingPathPhase: View {
                     .foregroundStyle(AppColors.textPrimary)
 
                 Button("Continue") {
-                    director.advance(to: .foil)
+                    director.advance(to: .buildDeck)
                 }
                 .font(Font.custom("ClashDisplay-Medium", size: 17, relativeTo: .body))
                 .foregroundStyle(AppColors.textPrimary)

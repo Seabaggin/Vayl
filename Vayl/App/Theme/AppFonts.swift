@@ -93,6 +93,18 @@ struct AppFonts {
         display(24, weight: .semibold, relativeTo: .title)
     }
 
+    /// Onboarding phase headline. One per OB phase screen.
+    /// Used for the cinematic opening statement on each onboarding phase —
+    /// "Let's get acquainted.", "Good to meet you.", and equivalent lines
+    /// on subsequent phases. Larger than screenTitle to anchor the emotional
+    /// beat of each phase as a hero statement, not a navigation label.
+    /// Never use outside the Onboarding canvas.
+    /// relativeTo: .largeTitle — scales against the largest Dynamic Type style
+    /// so the statement remains dominant at all accessibility sizes.
+    static var obPhaseTitle: Font {
+        display(32, weight: .semibold, relativeTo: .largeTitle)
+    }
+
     /// Primary text inside a card surface. Never the screen title.
     static var cardTitle: Font {
         display(22, weight: .semibold, relativeTo: .title2)

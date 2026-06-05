@@ -99,6 +99,77 @@ enum EmotionalRegister: String, CaseIterable, Codable {
         case .unknown:  return "Unsure"
         }
     }
+
+    /// Maps a Q3 slider value (0.0 = "I want to feel safer" … 1.0 = "more alive")
+    /// to a register. 0–35% → .anxious · 36–64% → .flexible · 65–100% → .excited.
+    /// `.unknown` is set separately via the "not sure yet" escape — never the slider.
+    static func from(sliderValue v: Double) -> EmotionalRegister {
+        switch v {
+        case ..<0.36: return .anxious
+        case 0.65...: return .excited
+        default:      return .flexible
+        }
+    }
+}
+
+/// How chosen being here feels for this user — CompassPhase Q1.
+/// The most load-bearing Compass signal: governs personal pacing and, in couple
+/// mode, sets the shared-deck pacing floor (slowest partner governs — never averaged).
+/// Written EXCLUSIVELY by CompassPhase Q1. Never shown to the user as a label.
+enum AgencySignal: String, CaseIterable, Codable {
+    case fullyIn       // "I'm genuinely excited about this"
+    case cautiouslyIn  // "I'm curious but a little nervous"
+    case hesitant      // "I'm here, but I'm not totally sure yet"
+    case goingAlong    // "Honestly, I'm going along with it"
+
+    var label: String {
+        switch self {
+        case .fullyIn:      return "I'm genuinely excited about this"
+        case .cautiouslyIn: return "I'm curious but a little nervous"
+        case .hesitant:     return "I'm here, but I'm not totally sure yet"
+        case .goingAlong:   return "Honestly, I'm going along with it"
+        }
+    }
+
+    /// Dealt-card order for the 2×2 grid (reading order: top-left → bottom-right).
+    static var ordered: [AgencySignal] { [.fullyIn, .cautiouslyIn, .hesitant, .goingAlong] }
+}
+
+/// What would feel like a win for this user — CompassPhase Q2.
+/// Drives card-category priority individually; in couple mode the gap between
+/// partners' motivations seeds the first shared deck topic. ONE enum — the option
+/// SET shown depends on appMode. Written EXCLUSIVELY by CompassPhase Q2.
+enum MotivationShape: String, CaseIterable, Codable {
+    case connection       // couple: "Understanding my partner better"
+    case selfClarity      // both:   "Feeling more confident in myself" / "…about all of this"
+    case alignment        // couple: "Finding a pace that works for both of us"
+    case selfDiscovery    // both:   "Figuring out / Knowing what I actually want"
+    case readiness        // solo:   "Finding the words to bring this up"
+    case openExploration  // solo:   "Just exploring — no agenda yet"
+
+    /// Couple-mode option order (top-left → bottom-right).
+    static var coupleOptions: [MotivationShape] { [.connection, .selfClarity, .alignment, .selfDiscovery] }
+    /// Solo-mode option order.
+    static var soloOptions:   [MotivationShape] { [.selfDiscovery, .readiness, .selfClarity, .openExploration] }
+
+    /// Option order for the given app mode.
+    static func options(for mode: AppMode) -> [MotivationShape] {
+        mode == .together ? coupleOptions : soloOptions
+    }
+
+    /// Mode-dependent label — selfClarity / selfDiscovery read differently per mode.
+    func label(for mode: AppMode) -> String {
+        switch (self, mode) {
+        case (.connection, _):            return "Understanding my partner better"
+        case (.alignment, _):             return "Finding a pace that works for both of us"
+        case (.readiness, _):             return "Finding the words to bring this up"
+        case (.openExploration, _):       return "Just exploring — no agenda yet"
+        case (.selfClarity, .together):   return "Feeling more confident in myself"
+        case (.selfClarity, _):           return "Feeling more confident about all of this"
+        case (.selfDiscovery, .together): return "Figuring out what I actually want"
+        case (.selfDiscovery, _):         return "Knowing what I actually want"
+        }
+    }
 }
 
 /// What situation this user is dealing with — the situational register.
@@ -117,13 +188,13 @@ enum SituationalRegister: String, CaseIterable, Codable {
 /// Governs the content category entry point.
 enum RelationshipContext: String, CaseIterable, Codable {
     // Solo × Curious
-    case singleCurious, partneredSupportiveCurious, partneredUndisclosed, soloCuriousUndecided
+    case singleCurious, partneredSupportiveCurious, partneredUndisclosed, partneredHesitantCurious, soloCuriousUndecided
     // Solo × Exploring
     case singleExploring, partneredHandsOff, multipleUndefined, soloExploringUndecided
     // Solo × Experienced
     case singleExperienced, partneredAware, soloPolyIndependent, soloExperiencedUndecided
-    // Couple × Curious
-    case coupleSymmetricCurious, coupleAsymmetricCurious, coupleStalledConversation, coupleCuriousUndecided
+    // Couple × Curious — first-person: initiator / processing capture asymmetry by comparison
+    case coupleSymmetricCurious, coupleInitiatorCurious, coupleProcessingCurious, coupleStalledConversation, coupleCuriousUndecided
     // Couple × Exploring
     case coupleSolidifying, coupleReorienting, coupleParallelExploring, coupleExploringUndecided
     // Couple × Experienced

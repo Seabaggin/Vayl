@@ -299,9 +299,6 @@ struct CardCarousel: View {
                 .animation(AppAnimation.slow, value: activeIndex)
 
             if phase == .carousel && !reduceMotion {
-                let incoming = dragOffset < 0
-                    ? (activeIndex + 1) % cards.count
-                    : (activeIndex - 1 + cards.count) % cards.count
                 let bleed = min(abs(dragOffset) / 320, 1.0)
                 Ellipse()
                     .fill(RadialGradient(

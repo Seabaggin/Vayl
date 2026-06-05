@@ -39,7 +39,7 @@ struct Deck: Codable, Identifiable {
     // MARK: - Derived
 
     /// Whether this deck is available to the given entitlement tier.
-    func isAvailable(for tier: EntitlementTier) -> Bool {
+    func isAvailable(for tier: AccessTier) -> Bool {
         guard let required = requiredEntitlement else { return true }
         switch required {
         case "core": return tier == .core || tier == .pro

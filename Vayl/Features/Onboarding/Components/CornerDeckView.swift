@@ -28,17 +28,18 @@ import SwiftUI
 struct CornerDeckView: View {
     let cards:      [VaylCardModel]
     let screenSize: CGSize
+    let deckPulse:  Bool
 
     // Stack offsets for up to 6 cards — index 0 is front card
     // Physics constants — not tokens. These are specific to the
     // corner deck stacking geometry.
     private let stackOffsets: [(x: CGFloat, y: CGFloat, rot: Double)] = [
-        ( 0, 0,   0.0),   // card 1 — front
-        (-1, -2, -1.5),   // card 2
-        ( 1, -4,  1.2),   // card 3
-        (-1, -6, -0.8),   // card 4
-        ( 0, -8,  0.5),   // card 5
-        (-1, -10, -0.3),  // card 6
+        ( 0,   0, 0.0),   // card 1 — front
+        (-1,  -3, -1.5),  // card 2
+        ( 1,  -5,  1.2),  // card 3
+        (-1,  -7, -0.8),  // card 4
+        ( 0,  -9,  0.5),  // card 5
+        (-1, -11, -0.3),  // card 6
     ]
 
     var body: some View {
@@ -48,38 +49,39 @@ struct CornerDeckView: View {
                 let offsetIndex = min(index, stackOffsets.count - 1)
                 let offset      = stackOffsets[offsetIndex]
 
-                RoundedRectangle(cornerRadius: AppRadius.cornerCard)
-                    .fill(AppColors.cardBg)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: AppRadius.cornerCard)
-                            .strokeBorder(
-                                AppColors.spectrumPurple.opacity(0.27),
-                                lineWidth: 0.5
-                            )
-                    }
+                // Render the real VaylCardBack at a reference frame sized so
+                // its internal AppRadius.obCard (14pt) corner radius scales to
+                // exactly AppRadius.cornerCard (4pt) at the mini-card display size.
+                // ref = cornerDeckWidth / (cornerCard / obCard) = 38 / (4/14) = 133pt
+                // scale = cornerDeckWidth / refW = 38 / 133 ≈ 0.286
+                // 14pt × 0.286 ≈ 4pt — matches AppRadius.cornerCard exactly.
+                let refW: CGFloat = 133
+                let refH: CGFloat = 200
+                VaylCardBack()
+                    .frame(width: refW, height: refH)
+                    .scaleEffect(AppLayout.cornerDeckWidth / refW)
                     .frame(
                         width:  AppLayout.cornerDeckWidth,
                         height: AppLayout.cornerDeckHeight
                     )
                     .rotationEffect(.degrees(offset.rot))
                     .offset(x: offset.x, y: offset.y)
-                    // TODO: spectrum hairline top edge
-                    // TODO: glow pulse on landing
             }
 
             // Count label — only visible when cards present
             if !cards.isEmpty {
                 Text("\(cards.count) / 6")
-                    .font(.system(size: 9, weight: .medium))
-                    // TODO: replace with AppFonts.tertiaryText()
-                    .foregroundStyle(Color.white.opacity(0.38))
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textSecondary)
                     .offset(y: AppLayout.cornerDeckHeight / 2 + 6)
             }
         }
+        .cornerDeckGlow(visible: deckPulse)
         .position(
             x: screenSize.width  - AppLayout.cornerDeckRight - AppLayout.cornerDeckWidth  / 2,
             y: AppLayout.cornerDeckTop                       + AppLayout.cornerDeckHeight / 2
         )
         .animation(AppAnimation.deckReceive, value: cards.count)
+        .animation(AppAnimation.deckReceive, value: deckPulse)
     }
 }
