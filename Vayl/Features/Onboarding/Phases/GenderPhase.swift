@@ -6,40 +6,14 @@
 // View contract:
 //   .onAppear  → director.startGenderSequence(screenSize:)
 //   .onDisappear → director.cancelGenderSequence()
-//   Gestures    → director methods only (Segments 3+)
 //
-// Segment 1 — Card rises from table    ✓
-//   Card materializes at center screen, rises from felt, bloom at base.
-//   No SpriteKit. No slot pool. No flight.
-//
-// Segment 2 — Dealer line + auto flip  ✓
-//   Dealer line fades in above card (200ms after settled).
-//   Card flips via two-half scaleX sequence to reveal SlotMachineCardFace.
-//   All autonomous — no user input.
-//
-// Segment 4 — Autonomous handle pull   ✓
-//   300ms after genderBeatComplete, handle pulls down over 500ms (ease-out cubic).
-//   Reels start spinning 100ms into the pull.
-//
-// Segment 5 — Reel spin                ✓
-//   Reels spin during handle pull; continuous 300ms coast after pull completes.
-//   genderReelOffsets drives SlotMachineCardFace.reelOffsets via overlay.
-//
-// Segment 6 — Staggered reel settle    ✓
-//   Reels settle 80ms apart (reel 0 → 1 → 2); unsettled reels stay live.
-//   Medium haptic fires per reel via .sensoryFeedback on genderActiveReel.
-//   Active reel glow holds 400ms then clears.
-//
-// Segment 7 — Picker + reel sync       ✓
-//   Dealer line fades out, picker fades in (AppAnimation.standard).
-//   3-item drum wheel; options sourced from director.genderOptions only.
-//   Drum scroll calls director.updateGenderDrum — reels sync at 0.68× ratio.
-//   Drum settle calls director.settleGenderDrum — winning glow + 3× haptic.
-//   (Pronouns removed — not needed for Vayl's use case.)
-//
-// Stub (not yet built):
-//   ✓ Card swipe-right confirm + intermittent swipe-hint flick (starts after user settles drum)
-//   ✗ User-drag → flip + reel spin
+// Segment 1 — Card rises from table (crystallisation)
+// Segment 2 — Dealer line + auto flip → RadioTunerCardFace revealed
+// Segment 3 — Power-on beat → two drum pickers appear
+// Segment 4 — User tunes left drum (gender) + right drum (pronouns)
+//             Dials on card face track progress in real time.
+//             When both settled: signal locks, "Found it." dealer line.
+// Segment 5 — Swipe up to confirm → card pockets → .experienceLevel
 
 import SwiftUI
 
@@ -60,6 +34,12 @@ struct GenderPhase: View {
     @State private var hintTask:              Task<Void, Never>?      = nil  // intermittent flick loop; cancelled on grab / re-scroll
     @State private var lastCenteredIndex:     Int                     = 0    // tracks previous item for selection haptic
     @State private var drumHapticGen:         UISelectionFeedbackGenerator = UISelectionFeedbackGenerator()
+
+    // Pronouns drum state (mirrors gender drum)
+    @State private var pronounsBaseOffset:   CGFloat = 0
+    @State private var pronounsDragOffset:   CGFloat = 0
+    @State private var pronounsLastCentered: Int     = 0
+    @State private var pronounsHapticGen:    UISelectionFeedbackGenerator = UISelectionFeedbackGenerator()
 
     // MARK: — Dimensions (derived, not stored)
 
@@ -93,22 +73,13 @@ struct GenderPhase: View {
                     .transition(.opacity)
             }
 
-            // Picker — fades in after reel settle, driven by genderPickerVisible
+            // Picker — fades in after power-on beat, driven by genderPickerVisible
             pickerLayer
         }
         .frame(width: screenSize.width, height: screenSize.height)
         .sensoryFeedback(.success, trigger: confirmedTrigger)
         .onAppear   { director.startGenderSequence(screenSize: screenSize, reduceMotion: reduceMotion) }
         .onDisappear { director.cancelGenderSequence() }
-        .onChange(of: director.genderPickerVisible) { _, visible in
-            guard visible else { return }
-            // Picker appeared — snap drum strip to index 0 (no autonomous spin to sync from).
-            withAnimation(AppAnimation.spring.reduceMotionSafe) {
-                drumBaseOffset = drumInitialOffset
-                drumDragOffset = 0
-            }
-            lastCenteredIndex = 0
-        }
         .onChange(of: director.genderShouldPocket) { _, pocket in
             // Director has animated card away (cardPocket ≈ 520ms).
             // Wait for the animation to complete then advance the phase.
@@ -126,7 +97,7 @@ struct GenderPhase: View {
                 withAnimation(AppAnimation.spring.reduceMotionSafe) { hintOffset = 0 }
                 return
             }
-            // Intermittent swipe demo: flick right → spring home → pause → repeat.
+            // Intermittent swipe demo: flick up → spring home → pause → repeat.
             // Cadence lives in Task.sleep (not animation tokens) per the codebase pattern.
             hintTask = Task { @MainActor in
                 // Beat after the drum-settle haptics before the first flick.
@@ -241,9 +212,18 @@ struct GenderPhase: View {
                 )
                 .opacity(density * sharp)
             } else {
-                // Task 6 will overlay RadioTunerCardFace here.
-                // Plain VaylCardFace shell compiles Task 5 cleanly.
                 VaylCardFace()
+                    .overlay(
+                        RadioTunerCardFace(
+                            cardWidth:         cardWidth,
+                            cardHeight:        cardHeight,
+                            signalStrength:    director.genderSignalStrength,
+                            leftDialProgress:  director.genderOptions.isEmpty ? 0 :
+                                Double(director.genderSelectedIndex) / Double(max(1, director.genderOptions.count - 1)),
+                            rightDialProgress: director.genderPronounsOptions.isEmpty ? 0 :
+                                Double(director.genderPronounsSelectedIndex) / Double(max(1, director.genderPronounsOptions.count - 1))
+                        )
+                    )
                     .opacity(density * sharp)
             }
         }
@@ -254,12 +234,12 @@ struct GenderPhase: View {
             DragGesture(minimumDistance: 30)
                 .onChanged { _ in
                     // User has grabbed the card — kill the swipe hint immediately.
-                    guard director.genderPickerVisible else { return }
+                    guard director.genderBothSettled else { return }
                     director.endGenderSwipeHint()
                 }
                 .onEnded { value in
-                    // Only active after picker is visible (power-on beat complete).
-                    guard director.genderPickerVisible else { return }
+                    // Only active after both drums have settled.
+                    guard director.genderBothSettled else { return }
                     // Require an upward swipe (negative height) with limited horizontal drift.
                     guard value.translation.height < -55  else { return }
                     guard abs(value.translation.width) < 80 else { return }
@@ -267,8 +247,8 @@ struct GenderPhase: View {
                     director.confirmGenderSelection(pronouns: nil)
                 }
         )
-        // Swipe-hint flick — pure rightward translation (no tilt) that intermittently
-        // throws the card right and springs it home, demonstrating the swipe gesture.
+        // Swipe-hint flick — pure upward translation that intermittently
+        // throws the card up and springs it home, demonstrating the swipe gesture.
         // hintOffset is driven by the intermittent loop in .onChange(genderSwipeHintActive).
         .offset(director.genderCardOffset)
         .offset(y: hintOffset)
@@ -301,15 +281,25 @@ struct GenderPhase: View {
         return max(0, min(n - 1, Int(raw.rounded())))
     }
 
+    private var pronounsInitialOffset: CGFloat {
+        CGFloat((director.genderPronounsOptions.count - 1) / 2) * drumItemH
+    }
+
+    private var pronounsScrollPosition: CGFloat {
+        pronounsInitialOffset - pronounsBaseOffset - pronounsDragOffset
+    }
+
+    private var pronounsCurrentCenteredIndex: Int {
+        let n = director.genderPronounsOptions.count
+        guard n > 0 else { return 0 }
+        let raw = (pronounsInitialOffset - pronounsBaseOffset - pronounsDragOffset) / drumItemH
+        return max(0, min(n - 1, Int(raw.rounded())))
+    }
+
     /// Y-offset from ZStack centre to the drum centre.
     /// Positions the drum in the open space between the card top and the screen top.
     private var pickerOffsetY: CGFloat {
         director.genderCardOffset.height - cardHeight / 2 - AppSpacing.xxl - drumWindowH / 2
-    }
-
-    /// Strip Y-offset — user/gesture-driven via drumBaseOffset + drumDragOffset.
-    private var drumStripOffset: CGFloat {
-        drumBaseOffset + drumDragOffset
     }
 
     // MARK: — Picker layer
@@ -317,17 +307,41 @@ struct GenderPhase: View {
     private var pickerLayer: some View {
         Group {
             if director.genderPickerVisible {
-                drumPickerView
-                    .onAppear {
-                        drumBaseOffset = drumInitialOffset
-                        // Pre-warm the Taptic Engine so first drum tick fires without latency.
-                        drumHapticGen.prepare()
-                    }
-                    // Plain .opacity transition — the fade is driven solely by the
-                    // withAnimation(.standard) that flips genderPickerVisible in the director.
-                    // A transition-local .animation() here double-drives the insert and pops
-                    // the picker to full opacity for one frame. Single animation source = no flash.
-                    .transition(.opacity)
+                HStack(spacing: AppSpacing.xl) {
+                    drumPickerView(
+                        options:        director.genderOptions,
+                        baseOffset:     $drumBaseOffset,
+                        dragOffset:     $drumDragOffset,
+                        lastCentered:   $lastCenteredIndex,
+                        hapticGen:      drumHapticGen,
+                        initialOffset:  drumInitialOffset,
+                        centeredIndex:  currentCenteredIndex,
+                        onUpdate:       { director.updateGenderDrum(offset: $0) },
+                        onSettle:       { director.settleGenderDrum(index: $0) }
+                    )
+                    drumPickerView(
+                        options:        director.genderPronounsOptions,
+                        baseOffset:     $pronounsBaseOffset,
+                        dragOffset:     $pronounsDragOffset,
+                        lastCentered:   $pronounsLastCentered,
+                        hapticGen:      pronounsHapticGen,
+                        initialOffset:  pronounsInitialOffset,
+                        centeredIndex:  pronounsCurrentCenteredIndex,
+                        onUpdate:       { director.updateGenderPronounsDrum(offset: $0) },
+                        onSettle:       { director.settleGenderPronounsDrum(index: $0) }
+                    )
+                }
+                .onAppear {
+                    drumBaseOffset     = drumInitialOffset
+                    pronounsBaseOffset = pronounsInitialOffset
+                    drumHapticGen.prepare()
+                    pronounsHapticGen.prepare()
+                }
+                // Plain .opacity transition — the fade is driven solely by the
+                // withAnimation(.standard) that flips genderPickerVisible in the director.
+                // A transition-local .animation() here double-drives the insert and pops
+                // the picker to full opacity for one frame. Single animation source = no flash.
+                .transition(.opacity)
             }
         }
         .offset(y: pickerOffsetY)
@@ -336,32 +350,46 @@ struct GenderPhase: View {
 
     // MARK: — Drum
 
-    /// 3-item scrollable drum showing genderOptions from the director.
+    /// Single scrollable drum. Called twice by pickerLayer — once for gender, once for pronouns.
     /// Gradient mask fades options that scroll toward the window edges.
-    /// drumGesture lives on the container so the full frame area receives touches —
+    /// The gesture lives on the container so the full frame area receives touches —
     /// the inner strip VStack does not have a gesture to avoid any conflict.
-    private var drumPickerView: some View {
-        ZStack {
+    private func drumPickerView(
+        options:       [String],
+        baseOffset:    Binding<CGFloat>,
+        dragOffset:    Binding<CGFloat>,
+        lastCentered:  Binding<Int>,
+        hapticGen:     UISelectionFeedbackGenerator,
+        initialOffset: CGFloat,
+        centeredIndex: Int,
+        onUpdate:      @escaping (CGFloat) -> Void,
+        onSettle:      @escaping (Int) -> Void
+    ) -> some View {
+        let currentBase = baseOffset.wrappedValue
+        let currentDrag = dragOffset.wrappedValue
+        let stripOffset = currentBase + currentDrag
+
+        return ZStack {
             // Full-frame touch target — transparent but receives all touches in the window
             Color.clear
 
             // Options strip — visual only, no gesture
             VStack(spacing: 0) {
-                ForEach(Array(director.genderOptions.enumerated()), id: \.offset) { idx, option in
+                ForEach(Array(options.enumerated()), id: \.offset) { idx, option in
                     Text(option)
-                        .font(idx == currentCenteredIndex
+                        .font(idx == centeredIndex
                             ? AppFonts.prompt.weight(.semibold)
                             : AppFonts.prompt)
                         .foregroundStyle(
-                            idx == currentCenteredIndex
+                            idx == centeredIndex
                                 ? AppColors.textPrimary
                                 : AppColors.textSecondary
                         )
                         .frame(height: drumItemH)
-                        .animation(.none, value: currentCenteredIndex)
+                        .animation(.none, value: centeredIndex)
                 }
             }
-            .offset(y: drumStripOffset)
+            .offset(y: stripOffset)
             .allowsHitTesting(false)
             .mask(
                 LinearGradient(
@@ -377,53 +405,41 @@ struct GenderPhase: View {
 
             // Selection band — two hairlines bounding the centre slot; outside mask
             VStack(spacing: drumItemH - 1) {
-                Rectangle()
-                    .fill(AppColors.spectrumBorder)
-                    .frame(height: 0.5)
-                Rectangle()
-                    .fill(AppColors.spectrumBorder)
-                    .frame(height: 0.5)
+                Rectangle().fill(AppColors.spectrumBorder).frame(height: 0.5)
+                Rectangle().fill(AppColors.spectrumBorder).frame(height: 0.5)
             }
             .frame(height: drumItemH)
             .allowsHitTesting(false)
         }
-        .frame(width: screenSize.width * 0.62, height: drumWindowH)
-        .contentShape(Rectangle())    // full frame receives touches (not just text bounds)
+        .frame(width: screenSize.width * 0.28, height: drumWindowH)
+        .contentShape(Rectangle())
         .clipped()
-        .gesture(drumGesture)         // on container, not strip — no gesture conflict
-    }
-
-    private var drumGesture: some Gesture {
-        DragGesture()
-            .onChanged { value in
-                // User is re-engaging the drum — pause the swipe hint until they settle again.
-                director.endGenderSwipeHint()
-                drumDragOffset = value.translation.height
-                let nowIdx = currentCenteredIndex
-                if nowIdx != lastCenteredIndex {
-                    lastCenteredIndex = nowIdx
-                    drumHapticGen.selectionChanged()
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    director.endGenderSwipeHint()
+                    dragOffset.wrappedValue = value.translation.height
+                    let nowIdx = centeredIndex
+                    if nowIdx != lastCentered.wrappedValue {
+                        lastCentered.wrappedValue = nowIdx
+                        hapticGen.selectionChanged()
+                    }
+                    onUpdate(initialOffset - currentBase - value.translation.height)
                 }
-                director.updateGenderDrum(offset: drumScrollPosition)
-            }
-            .onEnded { value in
-                let n = director.genderOptions.count
-                guard n > 0 else { return }
-                // predictedEndTranslation extrapolates natural deceleration (iOS 16+).
-                // Using it instead of raw translation gives the drum momentum when flicked.
-                let raw      = (drumInitialOffset - drumBaseOffset - value.predictedEndTranslation.height) / drumItemH
-                let snapped  = max(0, min(n - 1, Int(raw.rounded())))
-                let newBase  = drumInitialOffset - CGFloat(snapped) * drumItemH
-
-                withAnimation(AppAnimation.spring.reduceMotionSafe) {
-                    drumBaseOffset = newBase
-                    drumDragOffset = 0
+                .onEnded { value in
+                    let n = options.count
+                    guard n > 0 else { return }
+                    let raw     = (initialOffset - currentBase - value.predictedEndTranslation.height) / drumItemH
+                    let snapped = max(0, min(n - 1, Int(raw.rounded())))
+                    let newBase = initialOffset - CGFloat(snapped) * drumItemH
+                    withAnimation(AppAnimation.spring.reduceMotionSafe) {
+                        baseOffset.wrappedValue = newBase
+                        dragOffset.wrappedValue = 0
+                    }
+                    lastCentered.wrappedValue = snapped
+                    onSettle(snapped)
                 }
-                lastCenteredIndex = snapped   // keep haptic tracking in sync after snap
-                director.settleGenderDrum(index: snapped)
-                // User has actively chosen a gender — they've earned the swipe prompt.
-                director.beginGenderSwipeHint()
-            }
+        )
     }
 
 }
