@@ -42,6 +42,8 @@ struct OnboardingData {
     // nil means the user has not yet reached this phase.
     var relationshipContext: String? = nil   // RelationshipContext.rawValue
     var situationalRegister: String? = nil   // SituationalRegister.rawValue
+    var ageRange: AgeRange? = nil            // set in the relationalContext phase (later segment)
+    var relationshipTenure: RelationshipTenure? = nil  // together mode only; nil for solo
 
     // ── CompassPhase (CUT from OB flow) ──────────────────────────────
     // CompassPhase was removed from onboarding: Context already infers register,

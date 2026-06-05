@@ -43,6 +43,7 @@ final class UserProfile {
     var relationshipContext: String?            // ContextPhase — maps to RelationshipContext enum
     var situationalRegister: String?            // ContextPhase — maps to SituationalRegister enum
     var emotionalRegister: String?              // CompassPhase Q3 — maps to EmotionalRegister enum (NOT ContextPhase)
+    var ageRange: AgeRange?                     // ContextPhase — set during relationalContext step
     var agency: String?                         // CompassPhase Q1 — maps to AgencySignal enum
     var motivation: String?                     // CompassPhase Q2 — maps to MotivationShape enum
     var compassNotes: [String]                  // CompassPhase optional notes — user only, never routed
@@ -82,6 +83,7 @@ final class UserProfile {
         relationshipContext: String? = nil,
         situationalRegister: String? = nil,
         emotionalRegister: String? = nil,
+        ageRange: AgeRange? = nil,
         agency: String? = nil,
         motivation: String? = nil,
         compassNotes: [String] = [],
@@ -103,6 +105,7 @@ final class UserProfile {
         self.relationshipContext = relationshipContext
         self.situationalRegister = situationalRegister
         self.emotionalRegister = emotionalRegister
+        self.ageRange = ageRange
         self.agency = agency
         self.motivation = motivation
         self.compassNotes = compassNotes
@@ -145,7 +148,8 @@ final class UserProfile {
         pronouns: ["they/them"],
         nmStage: .curious,
         appMode: .together,
-        emotionalRegister: nil
+        emotionalRegister: nil,
+        ageRange: nil
     )
 
     static let soloExample = UserProfile(
@@ -154,7 +158,8 @@ final class UserProfile {
         pronouns: ["she/her"],
         nmStage: .curious,
         appMode: .solo,
-        emotionalRegister: nil
+        emotionalRegister: nil,
+        ageRange: nil
     )
 
     static let linkedExample: UserProfile = {
@@ -165,7 +170,8 @@ final class UserProfile {
             partnerGenderIdentity: "woman",
             nmStage: .exploring,
             appMode: .together,
-            emotionalRegister: nil
+            emotionalRegister: nil,
+            ageRange: nil
         )
         p.isLinked = true
         p.coupleId = UUID()

@@ -32,6 +32,7 @@ final class Couple {
     // MARK: - Shared Config
 
     var sharedSafeWord: String          // default "red" — only shared config
+    var relationshipTenure: RelationshipTenure?  // set by first together-mode partner during OB
 
     // MARK: - Desire Map State
 
@@ -63,7 +64,8 @@ final class Couple {
     init(
         partnerAId: UUID,
         partnerBId: UUID,
-        connectionType: ConnectionPlan = .primary
+        connectionType: ConnectionPlan = .primary,
+        relationshipTenure: RelationshipTenure? = nil
     ) {
         self.id = UUID()
         self.partnerAId = partnerAId
@@ -71,6 +73,7 @@ final class Couple {
         self.createdAt = Date()
         self.connectionType = connectionType
         self.sharedSafeWord = "red"
+        self.relationshipTenure = relationshipTenure
         self.matchesRevealed = false
         self.desireMapRevealedAt = nil
         self.entitlementTier = .free

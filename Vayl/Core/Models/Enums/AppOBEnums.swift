@@ -129,3 +129,48 @@ enum OpenerDeckType: String, Codable {
     case anxious    // lower stakes, builds safety first — emotionalRegister == anxious + fewer curiosity selections
     case excited    // goes deeper faster — all other signal combinations
 }
+
+// MARK: - Age Range
+
+enum AgeRange: String, CaseIterable, Codable {
+    case under25     = "under_25"
+    case range25to35 = "25_35"
+    case range35to45 = "35_45"
+    case over45      = "over_45"
+
+    var displayLabel: String {
+        switch self {
+        case .under25:     return "Under 25"
+        case .range25to35: return "25–35"
+        case .range35to45: return "35–45"
+        case .over45:      return "45+"
+        }
+    }
+}
+
+// MARK: - Relationship Tenure
+
+enum RelationshipTenure: String, CaseIterable, Codable {
+    case earlyDays    = "early_days"
+    case findingShape = "finding_shape"
+    case shifted      = "something_shifted"
+    case beenThrough  = "been_through_it"
+
+    var stageLabel: String {
+        switch self {
+        case .earlyDays:    return "Still figuring each other out"
+        case .findingShape: return "Finding our shape"
+        case .shifted:      return "Something's shifted"
+        case .beenThrough:  return "We've been through it"
+        }
+    }
+
+    var timeLabel: String {
+        switch self {
+        case .earlyDays:    return "under 1 year"
+        case .findingShape: return "1–3 years"
+        case .shifted:      return "3–7 years"
+        case .beenThrough:  return "7+ years"
+        }
+    }
+}
