@@ -607,12 +607,22 @@ final class VaylDirector {
     }
 
     func evaluateOpenerDeckType() {
-        // "Heavy context" = the user's situation (ContextPhase), not the aspirational
-        // Q3 register. Keys off situationalRegister so the signal is unchanged by the
-        // emotionalRegister → CompassPhase migration.
-        let hasHeavyContext   = onboardingData.situationalRegister == SituationalRegister.anxious.rawValue
-        let hasMoreSelections = onboardingData.curiositySelections.count >= 4
-        openerDeckType = hasHeavyContext && !hasMoreSelections ? .anxious : .excited
+        // NMStage-keyed opener selection. Mode-independent BY DESIGN — keys on
+        // experience + register + curiosity, never appMode.
+        let register = SituationalRegister(rawValue: onboardingData.situationalRegister ?? "") ?? .flexible
+        let stage    = onboardingData.nmStage
+        let richCuriosity = onboardingData.curiositySelections.count >= 4
+
+        switch (stage, register) {
+        case (.experienced, .anxious):
+            openerDeckType = .reflectiveCalm
+        case (.experienced, _):
+            openerDeckType = .reflectiveOpen
+        case (_, .anxious) where !richCuriosity:
+            openerDeckType = .anxious
+        default:
+            openerDeckType = .excited
+        }
         onboardingData.openerDeckType = openerDeckType
     }
 

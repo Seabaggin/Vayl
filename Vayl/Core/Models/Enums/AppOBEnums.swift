@@ -125,8 +125,10 @@ internal enum AppDealerTyping {
 /// end of CuriosityPhase round 2. Never shown to the user in any form.
 /// Drives card sequencing and tone in the first session deck.
 enum OpenerDeckType: String, Codable {
-    case anxious    // lower stakes, builds safety first — emotionalRegister == anxious + fewer curiosity selections
-    case excited    // goes deeper faster — all other signal combinations
+    case anxious          // newer + anxious register → reassurance-first, anticipatory
+    case excited          // newer + other register → expansion-first, anticipatory
+    case reflectiveCalm   // experienced + anxious register → retrospective, measured
+    case reflectiveOpen   // experienced + other register → retrospective, expansive
 }
 
 // MARK: - Age Range
