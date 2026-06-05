@@ -25,12 +25,12 @@ final class UserProfile {
     var accountId: String?          // Sign in with Apple subject
     var displayName: String
 
-    // Self — collected in GenderPhase spin 1
+    // Self — collected in GenderPhase (single spin, all modes)
     var genderIdentity: String?     // nil if user skipped or hasn't reached GenderPhase
     var pronouns: [String]          // user's own pronouns; empty if skipped
 
-    // Partner — collected in GenderPhase spin 2 (together mode only)
-    // nil for solo users, or if the partner skipped the field.
+    // Partner — collected via pairing flow, never in GenderPhase
+    // nil until partner completes their own onboarding and pairing syncs.
     var partnerGenderIdentity: String?
     var partnerPronouns: String?
 

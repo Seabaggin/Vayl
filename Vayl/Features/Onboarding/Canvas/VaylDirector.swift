@@ -77,16 +77,8 @@ final class VaylDirector {
     var genderSelectedIndex:  Int      = 0
     var genderDrumSettled:    Bool     = false
 
-    // Segment 8 — confirm logic (solo vs together)
-    var genderSpinCount:         Int    = 1      // 1 for solo, 2 for together; set in runGenderEntry
-    var genderSpinIndex:         Int    = 0      // 0 = player A, 1 = player B
-    var genderDealerLinePartner: String = "And your partner?"
+    // Segment 8 — confirm logic (single spin, all modes)
     var genderShouldPocket:      Bool   = false  // GenderPhase observes; advances on true
-
-    // Together-mode spin 1 → spin 2 handoff beat.
-    // Shown simultaneously with the card flip-back so the partner knows it's their turn.
-    var genderHandoffVisible:    Bool   = false
-    var genderHandoffCopy:       String = "Now let's find theirs."
 
     // MARK: — Dissolution computed curves
     //
@@ -702,10 +694,7 @@ final class VaylDirector {
         genderDrumOffset         = 0
         genderSelectedIndex      = 0
         genderDrumSettled        = false
-        genderSpinCount          = onboardingData.appMode == .together ? 2 : 1
-        genderSpinIndex          = 0
         genderShouldPocket       = false
-        genderHandoffVisible     = false
     }
 
     /// Called by GenderPhase.onAppear. Safe to call multiple times.
@@ -755,8 +744,6 @@ final class VaylDirector {
             genderDrumOffset         = 0
             genderSelectedIndex      = 0
             genderDrumSettled        = false
-            genderSpinCount          = onboardingData.appMode == .together ? 2 : 1
-            genderSpinIndex          = 0
             genderShouldPocket       = false
             return
         }
@@ -817,8 +804,6 @@ final class VaylDirector {
     /// Beat B through Segment 7 — flip card, pull handle, spin + settle reels, show picker.
     ///
     /// Called immediately after the dealer line has been shown and a 300ms beat has passed.
-    /// Shared between the initial spin (called by runGenderRise) and the partner spin
-    /// (called by runGenderSpin2 after the partner dealer line + 600ms hold).
     ///
     /// Preconditions on entry:
     ///   genderCardFaceUp         = false   (flip will reveal face)
@@ -971,60 +956,6 @@ final class VaylDirector {
         genderDrumSettled        = true               // pronouns + confirm reveal
     }
 
-    /// Partner spin — runs after together-mode spin 1 confirm.
-    ///
-    /// 1. Flips card back to the back face.
-    /// 2. Resets handle + reel + drum state.
-    /// 3. Shows the partner dealer line.
-    /// 4. Calls runGenderFlipAndSpin() for the full B-through-7 sequence.
-    @MainActor
-    private func runGenderSpin2() async {
-
-        // ── Flip card back + show handoff copy simultaneously ─────────────────
-        // The handoff copy appears as the card flips so the partner has something
-        // to read during the transition. It echoes spin 1's dealer line copy.
-        withAnimation(AppAnimation.cardFlipHalf.reduceMotionSafe) { genderCardFlipScaleX = 0 }
-        withAnimation(AppAnimation.textProject.reduceMotionSafe) { genderHandoffVisible = true }
-        try? await Task.sleep(for: .milliseconds(300))
-        guard !Task.isCancelled else { return }
-
-        genderCardFaceUp = false
-
-        withAnimation(AppAnimation.cardFlipHalf.reduceMotionSafe) { genderCardFlipScaleX = 1 }
-        try? await Task.sleep(for: .milliseconds(300))
-        guard !Task.isCancelled else { return }
-
-        // ── Reset handle + reel + drum state (handoff still visible) ─────────
-        withAnimation(AppAnimation.spring.reduceMotionSafe) { genderHandleOffset = 0 }
-        genderSettledSymbols     = [nil, nil, nil]
-        genderReelOffsets        = [0, 0, 0]
-        genderHandlePullComplete = false
-        genderReelSettleComplete = false
-        genderSwipeHintActive    = false
-        genderDrumSettled        = false
-        genderSelectedIndex      = 0
-
-        // Hold the handoff copy for a beat after the flip settles.
-        try? await Task.sleep(for: .milliseconds(900))
-        guard !Task.isCancelled else { return }
-
-        // ── Handoff fades out; partner dealer line crossfades in ──────────────
-        withAnimation(AppAnimation.textProject.reduceMotionSafe) { genderHandoffVisible = false }
-        try? await Task.sleep(for: .milliseconds(350)) // let textProject fade before dealer line
-        guard !Task.isCancelled else { return }
-
-        genderDealerLine = genderDealerLinePartner
-        withAnimation(AppAnimation.textProject.reduceMotionSafe) {
-            genderDealerLineVisible = true
-        }
-
-        try? await Task.sleep(for: .milliseconds(600))
-        guard !Task.isCancelled else { return }
-
-        genderBeatComplete = false
-        await runGenderFlipAndSpin()
-    }
-
     // MARK: - Gender Drum Interaction
     //
     // The only paths through which GenderPhase may write back to director state.
@@ -1084,38 +1015,24 @@ final class VaylDirector {
 
     /// Called when the user swipes to confirm their gender selection.
     ///
-    /// Writes genderA/B + pronounsA/B to onboardingData — the only place these fields are set.
+    /// Persists self gender/pronouns to onboardingData (genderA/pronounsA).
+    /// Partner gender arrives via pairing — never set here.
     ///
-    /// Solo / together spin 2:  hides picker + card, sets genderShouldPocket.
-    ///   GenderPhase onChange observer waits for cardPocket duration then calls advance.
-    ///
-    /// Together spin 1:  hides picker, cancels current sequence, starts runGenderSpin2().
+    /// Pockets the card and sets genderShouldPocket so GenderPhase's onChange
+    /// observer waits for the cardPocket animation then advances to .experienceLevel.
     func confirmGenderSelection(pronouns: String?) {
         // Card is being swiped — the hint loop has done its job.
         genderSwipeHintActive = false
 
-        // Persist selection for the current player
-        if genderSpinIndex == 0 {
-            onboardingData.genderA   = genderOptions[genderSelectedIndex]
-            onboardingData.pronounsA = pronouns
-        } else {
-            onboardingData.genderB   = genderOptions[genderSelectedIndex]
-            onboardingData.pronounsB = pronouns
-        }
+        // Persist self gender/pronouns. Partner gender arrives via pairing — never here.
+        onboardingData.genderA   = genderOptions[genderSelectedIndex]
+        onboardingData.pronounsA = pronouns
 
-        if genderSpinCount == 1 || genderSpinIndex == 1 {
-            // Solo or together spin 2 — pocket the card and advance
-            withAnimation(AppAnimation.fast.reduceMotionSafe) { genderPickerVisible = false }
-            withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { genderCardVisible = false }
-            dissolutionT       = 0             // clear table warp the moment card pockets
-            genderShouldPocket = true
-        } else {
-            // Together spin 1 — reset machine for partner
-            genderSpinIndex = 1
-            withAnimation(AppAnimation.fast.reduceMotionSafe) { genderPickerVisible = false }
-            genderSequenceTask?.cancel()
-            genderSequenceTask = Task { await runGenderSpin2() }
-        }
+        // Pocket the card and advance (GenderPhase's genderShouldPocket observer handles advance).
+        withAnimation(AppAnimation.fast.reduceMotionSafe) { genderPickerVisible = false }
+        withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { genderCardVisible = false }
+        dissolutionT       = 0
+        genderShouldPocket = true
     }
 
 }

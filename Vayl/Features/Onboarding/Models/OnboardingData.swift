@@ -19,8 +19,8 @@ struct OnboardingData {
     // ── GenderPhase ──────────────────────────────────────────────────
     // Optional — "Prefer not to say" is a valid selection.
     // nil means the user has not yet reached this phase.
-    // Solo:     genderA / pronounsA set; genderB / pronounsB remain nil.
-    // Together: both A and B set after spin 2.
+    // genderA / pronounsA set during GenderPhase (single spin, all modes).
+    // genderB / pronounsB remain nil here — populated via pairing flow.
     var genderA:   String? = nil
     var pronounsA: String? = nil
     var genderB:   String? = nil   // nil for solo — partner self-provides via pairing

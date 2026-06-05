@@ -95,10 +95,6 @@ struct GenderPhase: View {
 
             // Picker — fades in after reel settle, driven by genderPickerVisible
             pickerLayer
-
-            // Together-mode handoff beat — shown between spin 1 and spin 2.
-            // Fades in with the card flip-back so the partner knows it's their turn.
-            handoffLayer
         }
         .frame(width: screenSize.width, height: screenSize.height)
         .sensoryFeedback(.impact(weight: .medium), trigger: director.genderActiveReel) { _, new in
@@ -166,27 +162,6 @@ struct GenderPhase: View {
             .opacity(director.genderDealerLineVisible ? 1.0 : 0.0)
             .offset(y: director.genderCardOffset.height - cardHeight / 2 - AppSpacing.xl)
             .allowsHitTesting(false)
-    }
-
-    // MARK: — Handoff Beat (together mode only)
-
-    /// Shown between spin 1 and spin 2 in together mode, simultaneously with the
-    /// card flipping back to its back face. Positioned below the card so it reads
-    /// as a caption to the flip action — distinctly separated from the dealer line
-    /// (which sits above the card). Driven by director.genderHandoffVisible.
-    private var handoffLayer: some View {
-        Group {
-            if director.genderHandoffVisible {
-                Text(director.genderHandoffCopy)
-                    .font(AppFonts.sectionHeading)
-                    .foregroundStyle(AppColors.textPrimary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, AppSpacing.xl)
-                    .transition(.opacity)
-            }
-        }
-        .position(x: screenSize.width / 2, y: screenSize.height * 0.76)
-        .allowsHitTesting(false)
     }
 
     // MARK: — Bloom
