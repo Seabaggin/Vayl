@@ -148,4 +148,5 @@ enum HomeState: Equatable {
     case waiting        // reflection done, partner not done
     case matchReady     // both done, reveal not triggered
     case dashboard      // fully unlocked home
+    case soloUnpaired   // solo user, OB complete, no partner yet — starter deck reachable, Desire Map gated
 }
