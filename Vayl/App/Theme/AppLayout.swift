@@ -132,6 +132,16 @@ struct AppLayout {
     /// Applied to the outer ScrollView or VStack container of every screen.
     static let screenHPad: CGFloat = 18
 
+    /// 24pt — Horizontal margin applied to the OB canvas content column.
+    /// Wider than screenHPad (18pt) — the OB canvas uses a more spacious
+    /// margin appropriate for cinematic phase layouts.
+    static let screenMargin: CGFloat = 24
+
+    /// 32pt — Horizontal inset for the primary CTA on OB screens.
+    /// Intentionally wider than screenMargin so the CTA button sits visually
+    /// inside the content column rather than spanning edge-to-edge.
+    static let ctaHorizontalMargin: CGFloat = 32
+
     /// 20pt — Vertical padding at the top of every screen's scroll content.
     /// Provides breathing room below the header before the first card.
     static let screenVPad: CGFloat = 20
@@ -198,6 +208,51 @@ struct AppLayout {
     static func obCardHeight(in screenWidth: CGFloat) -> CGFloat {
         obCardWidth(in: screenWidth) * 1.5
     }
+    /// Width of a card sitting on the OB table during the deal sequence.
+    /// ~30% of screen width — small enough to read as a physical card on a surface.
+    /// Distinct from obCardWidth (72%) which is used for the full-bleed expanded state.
+    /// Never use obTableCardWidth for any state other than the on-table resting position.
+    static func obTableCardWidth(in screenWidth: CGFloat) -> CGFloat {
+        min(screenWidth * 0.30, 195)
+    }
+
+    /// Height of the on-table card. Derived from obTableCardWidth at 3:2 portrait ratio.
+    static func obTableCardHeight(in screenWidth: CGFloat) -> CGFloat {
+        obTableCardWidth(in: screenWidth) * 1.5
+    }
+
+    /// Width of a card in the ExperienceLevel fanned hand. Larger than the on-table
+    /// row card because the fan cards overlap — the overlap absorbs the extra width.
+    static func obFanCardWidth(in screenWidth: CGFloat) -> CGFloat {
+        min(screenWidth * 0.42, 280)
+    }
+
+    /// Height of a fan card. Derived at the 3:2 portrait ratio.
+    static func obFanCardHeight(in screenWidth: CGFloat) -> CGFloat {
+        obFanCardWidth(in: screenWidth) * 1.5
+    }
+
+    /// Per-slot (offset-from-center, angle-degrees) for the three fanned-hand cards.
+    /// Slot 0 = left, 1 = center (upright, on top), 2 = right. Offsets are relative to
+    /// screen center; the caller adds the fan center Y (`obTableCardCenterY`).
+    static func monteFanLayout(in containerWidth: CGFloat) -> [(offset: CGSize, angle: Double)] {
+        let fanW = obFanCardWidth(in: containerWidth)
+        let fanH = obFanCardHeight(in: containerWidth)
+        let dx   = fanW * 0.58     // horizontal spread — wider so the outer cards peek out more
+        let rise = fanH * 0.05     // outer cards lift slightly (held-hand arc)
+        let tilt = 17.0            // outer-card fan angle (deg) — steeper = more spread
+        return [
+            (CGSize(width: -dx, height: -rise), -tilt),
+            (CGSize(width:   0, height:     0),    0),
+            (CGSize(width:  dx, height: -rise),  tilt),
+        ]
+    }
+
+    /// Cinematic zoom applied to the on-table card during the NamePhase deal sequence.
+    /// Scales `obTableCardWidth` from 30% to ~45% of screen width, matching the HTML
+    /// prototype's visual proportion (195px card in a 430px max-width container).
+    /// Only NamePhase applies this. Do not use in other table card contexts.
+    static let obTableCardCinematicScale: CGFloat = 1.5
 
     /// Width of a session card (horizontal orientation).
     /// Clamps at 480pt. Used in the main app session flow, never in OB.
@@ -216,17 +271,26 @@ struct AppLayout {
     // from NamePhase onward. These constants define its frame and position.
     // The top-right ✦ mark is replaced by the corner deck — never overlap them.
 
-    /// 30pt — Width of the corner deck mini-card stack.
-    static let cornerDeckWidth:  CGFloat = 30
+    /// 48pt — Width of the corner deck mini-card stack.
+    static let cornerDeckWidth:  CGFloat = 48
 
-    /// 45pt — Height of the corner deck mini-card stack.
-    static let cornerDeckHeight: CGFloat = 45
+    /// 72pt — Height of the corner deck mini-card stack.
+    static let cornerDeckHeight: CGFloat = 72
 
-    /// 14pt — Distance from the top safe-area edge to the top of the corner deck.
-    static let cornerDeckTop:    CGFloat = 14
+    /// 56pt — Distance from the top safe-area edge to the top of the corner deck.
+    /// Sits just below the Dynamic Island with breathing room.
+    /// Bump to 64 or 72 if it still reads too high on device.
+    static let cornerDeckTop:    CGFloat = 56
 
-    /// 18pt — Distance from the right screen edge to the right of the corner deck.
-    static let cornerDeckRight:  CGFloat = 18
+    /// 24pt — Distance from the right screen edge to the right of the corner deck.
+    static let cornerDeckRight:  CGFloat = 24
+
+    // MARK: - OB Gender Card Rest Position
+
+    /// 0.52 — Vertical position of the gender card's rest state as a fraction of screen height.
+    /// Card is placed HERE from frame 0 during the dissolution sequence — it never moves.
+    /// Used by VaylDirector (restY calculation) and GenderPhase (bloom layer center Y).
+    static let obGenderCardRestYFrac: CGFloat = 0.52
 
     // MARK: - OB Deal Point Geometry
     // The deal point is the origin from which all OB cards are launched.
@@ -250,13 +314,126 @@ struct AppLayout {
     /// entire table world simultaneously.
     static let tableHorizonYFrac: CGFloat = 0.32
 
-    /// 0.52 — Arc peak Y fraction for the circular table surface.
+    /// 0.34 — Arc peak Y fraction for the circular table surface.
+    /// Matches the HTML reference prototype where the table edge sits at H*0.34,
+    /// giving the "zoomed in on the table" perspective the user wants.
     /// Distinct from tableHorizonYFrac (0.32) which is the trapezoid horizon.
     /// Used by TableSurfaceView arc geometry only.
-    static let tableArcPeakYFrac: CGFloat = 0.52
+    static let tableArcPeakYFrac: CGFloat = 0.34
 
     /// 1.05 — Table circle radius as a fraction of screen height.
     /// Large radius ensures only the top cap of the circle is visible.
     /// Used by TableSurfaceView arc geometry only.
     static let tableArcRadiusFrac: CGFloat = 1.05
+
+    // MARK: - OB Card Landing Slots
+    // Five predefined landing configurations for the OB deal sequence.
+    // Cards pick from the available pool so no two cards in the same round
+    // share a landing zone. Slots are defined in screen-fraction space so
+    // they adapt to any device size.
+
+    static let obCardLandingSlots: [CardLandingSlot] = [
+
+        // Slot 0 — Center settle: classic deal, card rests just right of center
+        CardLandingSlot(
+            id: 0,
+            xFrac: 0.50, yFrac: 0.535,
+            angleDeg:  1.8,
+            jitterX: 12, jitterY: 8, jitterAngle: 1.0
+        ),
+
+        // Slot 1 — Left lean: card drifts wide left, slight CCW tilt
+        CardLandingSlot(
+            id: 1,
+            xFrac: 0.30, yFrac: 0.61,
+            angleDeg: -6.0,
+            jitterX: 12, jitterY: 8, jitterAngle: 1.5
+        ),
+
+        // Slot 2 — Deep slide: card overshoots toward the player, steep CW,
+        // bottom third of card clips off-screen
+        CardLandingSlot(
+            id: 2,
+            xFrac: 0.52, yFrac: 0.74,
+            angleDeg:  13.0,
+            jitterX: 14, jitterY: 10, jitterAngle: 2.0
+        ),
+
+        // Slot 3 — Hard right: card cuts right, steep CCW, right edge off-screen
+        CardLandingSlot(
+            id: 3,
+            xFrac: 0.80, yFrac: 0.64,
+            angleDeg: -19.0,
+            jitterX: 12, jitterY: 8, jitterAngle: 2.0
+        ),
+
+        // Slot 4 — Bottom-left diagonal: card curves lower-left, partially off-screen
+        CardLandingSlot(
+            id: 4,
+            xFrac: 0.24, yFrac: 0.70,
+            angleDeg: -11.0,
+            jitterX: 12, jitterY: 10, jitterAngle: 2.5
+        ),
+    ]
+
+    /// Returns the Y coordinate of the optical center of the felt table surface.
+    /// Derived from tableArcPeakYFrac — the fraction where the spectrum rim arc peaks.
+    /// The table surface runs from that point to the bottom of the screen.
+    /// Card center is the midpoint of that zone.
+    /// Use this for every card resting position in the OB sequence.
+    /// Never hardcode 0.55 or any raw Y fraction for card positioning.
+    static func obTableCardCenterY(in screenHeight: CGFloat) -> CGFloat {
+        let arcPeakY    = screenHeight * tableArcPeakYFrac
+        let tableHeight = screenHeight - arcPeakY
+        return arcPeakY + (tableHeight * 0.50)
+    }
+
+    // MARK: - OB NamePhase Layout Tokens
+    // Exclusive to NamePhase. Never use in main-app screens.
+
+    /// 80pt — Height of the swipe-to-submit zone above the name input field.
+    static let swipeZoneHeight: CGFloat = 80
+
+    /// 80pt — Translation threshold for a swipe-down to register as a submit gesture.
+    static let swipeSubmitThreshold: CGFloat = 80
+
+    /// 1.2 — Multiplier applied to screen height for the dragY exit translation on submit.
+    /// Ensures the UI travels well past the screen bottom before disappearing.
+    static let dragExitMultiplier: CGFloat = 1.2
+
+    /// 30 — Maximum character count for a user-entered display name.
+    static let maxNameLength: Int = 30
+
+    /// 28pt — Blur radius applied to the card during the lift-toward-camera sequence.
+    static let cardLiftBlurRadius: CGFloat = 28.0
+
+    /// 4.5 — Scale multiplier for the card diving toward the camera during performLift.
+    /// At 4.5× the card exceeds the screen width — the lens is inside the surface.
+    static let cardLiftDiveMultiplier: CGFloat = 4.5
+
+    /// 0.5pt — Letter-spacing applied to the user's name in the greeting display.
+    static let nameLetterSpacing: CGFloat = 0.5
+
+    // MARK: - OB Flourish Geometry
+    // Exclusive to VaylFlourishView. Never use in main-app screens.
+
+    /// 280pt — Width of the VaylFlourishView decorative component.
+    static let flourishWidth: CGFloat = 280
+
+    /// 72pt — Height of the VaylFlourishView decorative component.
+    static let flourishHeight: CGFloat = 72
+
+    /// 1.015 — Scale factor for the ambient breathing pulse on VaylFlourishView.
+    static let flourishPulseScale: CGFloat = 1.015
+
+    /// Visible position offset for the greeting row. Negative = moves up.
+    /// Proportional to screen height for correct positioning across device sizes.
+    static func greetingOffsetVisible(in screenHeight: CGFloat) -> CGFloat {
+        -(screenHeight * 0.07)
+    }
+
+    /// Hidden/resting position offset for the greeting row.
+    static func greetingOffsetHidden(in screenHeight: CGFloat) -> CGFloat {
+        screenHeight * 0.017
+    }
 }

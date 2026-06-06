@@ -24,15 +24,29 @@ final class UserProfile {
     var id: UUID
     var accountId: String?          // Sign in with Apple subject
     var displayName: String
-    var pronouns: [String]
-    var genderIdentity: String?     // collected in GenderPhase — nil if not provided
+
+    // Self — collected in GenderPhase (single spin, all modes)
+    var genderIdentity: String?     // nil if user skipped or hasn't reached GenderPhase
+    var pronouns: [String]          // user's own pronouns; empty if skipped
+
+    // Partner — collected via pairing flow, never in GenderPhase
+    // nil until partner completes their own onboarding and pairing syncs.
+    var partnerGenderIdentity: String?
+    var partnerPronouns: String?
+
     var createdAt: Date
 
     // MARK: - Onboarding Routing
 
     var nmStage: NMStage                        // curious / exploring / experienced
-    var appMode: AppMode                        // together / solo / browsing
-    var emotionalRegister: String?              // collected in ContextPhase — maps to EmotionalRegister enum when phase is fully designed
+    var appMode: AppMode                        // together / solo
+    var relationshipContext: String?            // ContextPhase — maps to RelationshipContext enum
+    var situationalRegister: String?            // ContextPhase — maps to SituationalRegister enum
+    var emotionalRegister: String?              // CompassPhase Q3 — maps to EmotionalRegister enum (NOT ContextPhase)
+    var ageRange: AgeRange?                     // ContextPhase — set during relationalContext step
+    var agency: String?                         // CompassPhase Q1 — maps to AgencySignal enum
+    var motivation: String?                     // CompassPhase Q2 — maps to MotivationShape enum
+    var compassNotes: [String]                  // CompassPhase optional notes — user only, never routed
     var archetype: ArchetypeTag                 // internal only — never shown
     var curiositySelections: [String]
     var nmCardResponse: String?                 // Card Reveal pill selection — nil if skipped. Kept for existing profiles.
@@ -60,11 +74,19 @@ final class UserProfile {
 
     init(
         displayName: String = "",
-        pronouns: [String] = [],
         genderIdentity: String? = nil,
+        pronouns: [String] = [],
+        partnerGenderIdentity: String? = nil,
+        partnerPronouns: String? = nil,
         nmStage: NMStage = .curious,
         appMode: AppMode = .together,
+        relationshipContext: String? = nil,
+        situationalRegister: String? = nil,
         emotionalRegister: String? = nil,
+        ageRange: AgeRange? = nil,
+        agency: String? = nil,
+        motivation: String? = nil,
+        compassNotes: [String] = [],
         archetype: ArchetypeTag = .curious,
         curiositySelections: [String] = [],
         nmCardResponse: String? = nil,
@@ -73,12 +95,20 @@ final class UserProfile {
         self.id = UUID()
         self.accountId = nil
         self.displayName = displayName
-        self.pronouns = pronouns
         self.genderIdentity = genderIdentity
+        self.pronouns = pronouns
+        self.partnerGenderIdentity = partnerGenderIdentity
+        self.partnerPronouns = partnerPronouns
         self.createdAt = Date()
         self.nmStage = nmStage
         self.appMode = appMode
+        self.relationshipContext = relationshipContext
+        self.situationalRegister = situationalRegister
         self.emotionalRegister = emotionalRegister
+        self.ageRange = ageRange
+        self.agency = agency
+        self.motivation = motivation
+        self.compassNotes = compassNotes
         self.archetype = archetype
         self.curiositySelections = curiositySelections
         self.nmCardResponse = nmCardResponse
@@ -114,30 +144,34 @@ final class UserProfile {
 
     static let example = UserProfile(
         displayName: "Jordan",
-        pronouns: ["they/them"],
         genderIdentity: "non-binary",
+        pronouns: ["they/them"],
         nmStage: .curious,
         appMode: .together,
-        emotionalRegister: nil
+        emotionalRegister: nil,
+        ageRange: nil
     )
 
     static let soloExample = UserProfile(
         displayName: "Riley",
-        pronouns: ["she/her"],
         genderIdentity: "woman",
+        pronouns: ["she/her"],
         nmStage: .curious,
         appMode: .solo,
-        emotionalRegister: nil
+        emotionalRegister: nil,
+        ageRange: nil
     )
 
     static let linkedExample: UserProfile = {
         let p = UserProfile(
             displayName: "Alex",
-            pronouns: ["he/him"],
             genderIdentity: "man",
+            pronouns: ["he/him"],
+            partnerGenderIdentity: "woman",
             nmStage: .exploring,
             appMode: .together,
-            emotionalRegister: nil
+            emotionalRegister: nil,
+            ageRange: nil
         )
         p.isLinked = true
         p.coupleId = UUID()

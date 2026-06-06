@@ -89,4 +89,13 @@ final class VaylCardModel: Identifiable {
     /// moment scaleX crosses zero (flipProgress == 0.5).
     /// Do not use for any purpose other than flip axis rendering.
     var scaleX: Double = 1.0
+
+    // MARK: - Layout State
+
+    /// Stacking order within the canvas ZStack. VaylDirector assigns this at deal time.
+    /// Single-card deals stay at 0. Multi-card deals use 0, 1, 2 … for natural pile order.
+    var zIndex: Int = 0
+
+    /// Landing slot ID claimed for this card. -1 = not yet assigned.
+    var slotID: Int = -1
 }

@@ -22,7 +22,7 @@ struct GravLiftView: View {
             let layout = AppLayout.from(geo)
             let w = layout.screenWidth
             let h = layout.screenHeight
-            let cx = w / 2
+            let _cx = w / 2
 
             ZStack {
 

@@ -123,6 +123,19 @@ internal enum AppAnimation {
     /// Reduce motion: remove the animation entirely — shimmer is purely decorative.
     static let ambientShimmer: Double = 1.2
 
+    /// 2.2s — Duration of one direction of a candle's breath (in OR out). Build the
+    /// animation at the call site with `.easeInOut(duration: AppAnimation.candleBreathDuration)`
+    /// and sleep the same span between toggles so each inhale/exhale fully completes.
+    /// The candle breathes in, then out, then RESTS (see candleBreathHold) rather than
+    /// oscillating continuously — keeps the hand calm with occasional, subtle motion.
+    /// Pair the amplitude small (~1.5–2%) so the breath reads as life, not a pulse.
+    /// Reduce motion: no breathing; the candle holds its static frame.
+    static let candleBreathDuration: Double = 2.2
+
+    /// 3.0s — Intermittent rest between candle breaths. After a full in/out breath the
+    /// candle holds still for this long before the next, so the motion is occasional.
+    static let candleBreathHold: Double = 3.0
+
     // MARK: — Border Effect
         // Used by VaylBorderEffect. Applied to the spectrum stroke fill and glow pop
         // on VaylButton, SelectablePill, sheets, and any bordered surface.
@@ -286,6 +299,14 @@ internal enum AppAnimation {
     /// Reduce motion: replace with .easeOut(duration: 0.15) — skip the physical settle.
     static let cardSettle: Animation = .spring(response: 0.55, dampingFraction: 0.92)
 
+    /// Spring — Card sliding from table scatter position to center-screen.
+    /// response: 0.72, dampingFraction: 1.0 — critically damped, zero wobble per spec.
+    /// Communicates the card arriving with impossible smoothness — no physical bounce.
+    /// Fired after the landing breath pause in NamePhase.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — centers without travel.
+    // critically damped — zero wobble per spec. was response:0.6, dampingFraction:0.75
+    static let cardCenter: Animation = .spring(response: 0.72, dampingFraction: 1.0)
+
     /// 0.52s custom ease — Card pocketing to the corner deck.
     /// Cubic bezier (0.4, 0, 1, 1): eases into motion then accelerates off-screen.
     /// The asymmetric exit communicates the card is being filed away, not dismissed.
@@ -349,6 +370,119 @@ internal enum AppAnimation {
     /// This is an ambient animation — remove entirely under reduce motion.
     /// Use .ambientAnimation(AppAnimation.cardBreathe, value:) at every call site.
     static let cardBreathe: Animation = .easeInOut(duration: 3.2).repeatForever(autoreverses: true)
+
+    /// 0.29s per half — One half of a card flip (scaleX 1→0 or 0→-1).
+    /// Two halves compose the full 0.58s cardFlip total.
+    /// Reduce motion: skip flip entirely — face swaps without rotation.
+    static let cardFlipHalf: Animation = .timingCurve(0.4, 0, 0.6, 1, duration: 0.29)
+
+    /// 0.60s custom ease — Table rim burst decaying after card lands.
+    /// Cubic bezier (0.2, 0.8, 0.4, 1.0). was 0.50s — corrected to spec.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let rimBurstDecay: Animation = .timingCurve(0.2, 0.8, 0.4, 1.0, duration: 0.60)
+
+    /// 0.55s ease-in — Blur ramping in as card lifts toward the camera.
+    /// Also used for tableFade during the same lift sequence.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let liftBlurRamp: Animation = .easeIn(duration: 0.55)
+
+    /// 0.40s ease-in — Card screen alpha fading out at peak of lift sequence.
+    /// Ease-in communicates the card accelerating away from the user's plane.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let liftCardFade: Animation = .easeIn(duration: 0.40)
+
+    /// 0.55s ease-in — Table surface fading during the lift sequence.
+    static let tableFadeOut: Animation = .easeIn(duration: 0.55)
+
+    /// 0.45s ease-out — Card surface properties restoring after name is submitted.
+    /// Scale and angle are reset instantly before this fires — only opacity
+    /// and blur animate, producing a cross-fade rather than a zoom-in.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let cardRestore: Animation = .easeOut(duration: 0.45)
+
+    /// 0.52s ease-out — Name input UI fading in after card lift sequence.
+    /// Reduce motion: replaced with .linear(duration: 0.1) at call site.
+    static let uiFadeIn: Animation = .easeOut(duration: 0.52)
+
+    /// Spring — Greeting "Hi [name]" row settling into view after typing pause.
+    /// response: 1.1, dampingFraction: 0.88 — slow deliberate arrival with
+    /// minimal overshoot. The greeting should feel earned, not snappy.
+    /// Reduce motion: replace with AppAnimation.standard at call site.
+    static let greetingSettle: Animation = .spring(response: 1.1, dampingFraction: 0.88)
+
+    /// 0.35s ease-in-out — Header text fading out/in during the crossfade
+    /// sequence after the name is confirmed. Applied per-line.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let headerFade: Animation = .easeInOut(duration: 0.35)
+
+    /// Spring — Keystroke micro-bounce on underline. High stiffness, low damping —
+    /// snappy downward kick that reads as the line reacting to each character arriving.
+    /// Reduce motion: skip entirely — no bounce fires under reduce motion.
+    static let keystrokeBounce: Animation = .interpolatingSpring(stiffness: 600, damping: 12)
+
+    /// Spring — Underline returning to baseline after keystroke bounce.
+    /// Lower stiffness than keystrokeBounce — the return is softer than the kick.
+    /// Reduce motion: skip entirely — no bounce fires under reduce motion.
+    static let keystrokeBounceReturn: Animation = .interpolatingSpring(stiffness: 400, damping: 18)
+
+    /// 0.40s ease-out — Impact ring expanding outward after card lands on table.
+    static let impactRingDecay: Animation = .easeOut(duration: 0.40)
+
+    /// 0.35s ease-out — Radial burst fading after card flip completes.
+    static let flipBurstDecay: Animation = .easeOut(duration: 0.35)
+
+    /// 0.45s ease-out — Spectrum underline sweeping in on first field focus.
+    static let lineReveal: Animation = .easeOut(duration: 0.45)
+
+    /// 0.30s ease-in — Coach mark or hint element fading into view.
+    static let coachMarkIn: Animation = .easeIn(duration: 0.30)
+
+    /// 0.55s ease-in-out — Coach mark travelling downward during the hint sequence.
+    static let coachMarkTravel: Animation = .easeInOut(duration: 0.55)
+
+    /// 0.35s ease-out — Coach mark or hint element fading out of view.
+    static let coachMarkOut: Animation = .easeOut(duration: 0.35)
+
+    /// Spring — Screen nudging downward to hint at the swipe affordance.
+    /// response: 0.45, dampingFraction: 0.62 — perceptible overshoot that
+    /// communicates the screen is moveable.
+    static let screenNudge: Animation = .spring(response: 0.45, dampingFraction: 0.62)
+
+    /// Spring — Screen returning to baseline after the nudge hint.
+    /// Higher damping than screenNudge — the return is settled, not bouncy.
+    static let screenNudgeReturn: Animation = .spring(response: 0.55, dampingFraction: 0.78)
+
+    /// 0.25s ease-in — Hint arrow chevron fading into view.
+    static let hintArrowIn: Animation = .easeIn(duration: 0.25)
+
+    /// 0.45s ease-out — Hint arrow chevron fading out of view.
+    static let hintArrowOut: Animation = .easeOut(duration: 0.45)
+
+    /// 0.55s ease-in-out — Name glow pulse expanding on the greeting.
+    /// Applied in both directions: scale up and scale back to 1.0.
+    static let glowPulse: Animation = .easeInOut(duration: 0.55)
+
+    /// 4.0s ease-in-out — VaylFlourishView ambient breathing pulse.
+    /// Apply .repeatForever(autoreverses: true) at the call site.
+    /// This is an ambient animation — remove entirely under reduce motion.
+    static let flourishBreath: Animation = .easeInOut(duration: 4.0)
+
+    // MARK: — Gender Phase: Swipe Hint
+    // An intermittent "swipe right" demo that runs only after the user has settled the
+    // gender drum — i.e. has actively made a choice and earned the prompt. The card
+    // flicks right then springs home, pauses, and repeats, modeled on how dating apps
+    // demonstrate a right-swipe. No rotation: pure directional translation so it reads
+    // as the swipe gesture itself, not a tilt. Stops the instant the user grabs the card
+    // or re-scrolls the drum.
+    // Ambient: suppressed entirely under reduce motion (guarded at the call site by
+    // the View's accessibilityReduceMotion value). Settle to rest with the spring /
+    // AppAnimation.standard when the hint stops.
+
+    /// 0.26s ease-out — Card throwing right during one swipe-hint flick.
+    /// Fast departure that reads as the start of a real right-swipe; paired with
+    /// AppAnimation.spring for the settle back home, then a still pause before repeating.
+    /// Reduce motion: never fires — the start branch is guarded by reduceMotion.
+    static let swipeHintFlick: Animation = .easeOut(duration: 0.26)
 }
 
 // MARK: — Reduce Motion Helpers

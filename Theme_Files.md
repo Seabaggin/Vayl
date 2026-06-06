@@ -3,16 +3,16 @@
 > **Scope: All theme tokens, primitives, and modifiers.**
 >
 > Contents:
->   [1] Color, Font, Spacing, Layout, Grid, Radius, Elevation, SafeArea tokens
->       → AppColors / AppFonts / AppSpacing / AppLayout / AppGrid / AppRadius / AppElevation / AppSafeArea
+>   [1] Color, Font, Spacing, Layout, Grid, Radius, Elevation, SafeArea, Glows tokens
+>       → AppColors / AppFonts / AppSpacing / AppLayout / AppGrid / AppRadius / AppElevation / AppSafeArea / AppGlows
 >   [2] Animation + Theme entry point
 >       → AppAnimation / AppTheme
 >   [3] Theme manager + view modifiers
 >       → ThemeManager / ThemeModifiers
->   [4] Vayl design primitives
->       → VaylPrimitives
+>   [4] Root view + Vayl design primitives
+>       → AppRootView / VaylPrimitives
 >
-> Generated: 2026-05-12 09:02:08 PDT
+> Generated: 2026-05-25 17:25:50 PDT
 
 ---
 
@@ -26,12 +26,13 @@
   6. [`Vayl/App/Theme/AppGrid.swift`](#file-vayl-app-theme-appgrid-swift)
   7. [`Vayl/App/Theme/AppLayout.swift`](#file-vayl-app-theme-applayout-swift)
   8. [`Vayl/App/Theme/AppRadius.swift`](#file-vayl-app-theme-appradius-swift)
-  9. [`Vayl/App/Theme/AppSafeArea.swift`](#file-vayl-app-theme-appsafearea-swift)
-  10. [`Vayl/App/Theme/AppSpacing.swift`](#file-vayl-app-theme-appspacing-swift)
-  11. [`Vayl/App/Theme/AppTheme.swift`](#file-vayl-app-theme-apptheme-swift)
-  12. [`Vayl/App/Theme/ThemeManager.swift`](#file-vayl-app-theme-thememanager-swift)
-  13. [`Vayl/App/Theme/ThemeModifiers.swift`](#file-vayl-app-theme-thememodifiers-swift)
-  14. [`Vayl/App/Theme/VaylPrimitives.swift`](#file-vayl-app-theme-vaylprimitives-swift)
+  9. [`Vayl/App/Theme/AppRootView.swift`](#file-vayl-app-theme-approotview-swift)
+  10. [`Vayl/App/Theme/AppSafeArea.swift`](#file-vayl-app-theme-appsafearea-swift)
+  11. [`Vayl/App/Theme/AppSpacing.swift`](#file-vayl-app-theme-appspacing-swift)
+  12. [`Vayl/App/Theme/AppTheme.swift`](#file-vayl-app-theme-apptheme-swift)
+  13. [`Vayl/App/Theme/ThemeManager.swift`](#file-vayl-app-theme-thememanager-swift)
+  14. [`Vayl/App/Theme/ThemeModifiers.swift`](#file-vayl-app-theme-thememodifiers-swift)
+  15. [`Vayl/App/Theme/VaylPrimitives.swift`](#file-vayl-app-theme-vaylprimitives-swift)
 
 ---
 
@@ -103,6 +104,18 @@ internal enum AppAnimation {
     /// Reduce motion: replace with .easeOut(duration: 0.15).
     /// Do not use for UI response animations — those use slow or enter.
     static let cinematic: Double = 1.2
+
+    /// Cinematic ease-out — TableSurfaceView fade in/out.
+    /// Use this instead of constructing .easeOut(duration: AppAnimation.cinematic) inline.
+    static let cinematicFade: Animation = .easeOut(duration: AppAnimation.cinematic)
+
+    /// 0.35s material expand — Citation panel expand and collapse.
+    /// timingCurve (0.4, 0, 0.2, 1): standard deceleration curve — element
+    /// enters fast and eases into its resting position. Used for the expandable
+    /// citation card in StatPhase. Not a general-purpose animation token — do
+    /// not use outside StatPhase without deliberate intent.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let materialExpand: Animation = .timingCurve(0.4, 0, 0.2, 1, duration: 0.35)
 
     /// Spring — Physical, elastic responses to direct manipulation.
     /// Use for card lifts, pill selections, drag release snapping, and any interaction
@@ -314,6 +327,14 @@ internal enum AppAnimation {
     /// Reduce motion: replace with .easeOut(duration: 0.15) — skip the physical settle.
     static let cardSettle: Animation = .spring(response: 0.55, dampingFraction: 0.92)
 
+    /// Spring — Card sliding from table scatter position to center-screen.
+    /// response: 0.72, dampingFraction: 1.0 — critically damped, zero wobble per spec.
+    /// Communicates the card arriving with impossible smoothness — no physical bounce.
+    /// Fired after the landing breath pause in NamePhase.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — centers without travel.
+    // critically damped — zero wobble per spec. was response:0.6, dampingFraction:0.75
+    static let cardCenter: Animation = .spring(response: 0.72, dampingFraction: 1.0)
+
     /// 0.52s custom ease — Card pocketing to the corner deck.
     /// Cubic bezier (0.4, 0, 1, 1): eases into motion then accelerates off-screen.
     /// The asymmetric exit communicates the card is being filed away, not dismissed.
@@ -377,6 +398,102 @@ internal enum AppAnimation {
     /// This is an ambient animation — remove entirely under reduce motion.
     /// Use .ambientAnimation(AppAnimation.cardBreathe, value:) at every call site.
     static let cardBreathe: Animation = .easeInOut(duration: 3.2).repeatForever(autoreverses: true)
+
+    /// 0.29s per half — One half of a card flip (scaleX 1→0 or 0→-1).
+    /// Two halves compose the full 0.58s cardFlip total.
+    /// Reduce motion: skip flip entirely — face swaps without rotation.
+    static let cardFlipHalf: Animation = .timingCurve(0.4, 0, 0.6, 1, duration: 0.29)
+
+    /// 0.60s custom ease — Table rim burst decaying after card lands.
+    /// Cubic bezier (0.2, 0.8, 0.4, 1.0). was 0.50s — corrected to spec.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let rimBurstDecay: Animation = .timingCurve(0.2, 0.8, 0.4, 1.0, duration: 0.60)
+
+    /// 0.55s ease-in — Blur ramping in as card lifts toward the camera.
+    /// Also used for tableFade during the same lift sequence.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let liftBlurRamp: Animation = .easeIn(duration: 0.55)
+
+    /// 0.40s ease-in — Card screen alpha fading out at peak of lift sequence.
+    /// Ease-in communicates the card accelerating away from the user's plane.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let liftCardFade: Animation = .easeIn(duration: 0.40)
+
+    /// 0.55s ease-in — Table surface fading during the lift sequence.
+    static let tableFadeOut: Animation = .easeIn(duration: 0.55)
+
+    /// 0.45s ease-out — Card surface properties restoring after name is submitted.
+    /// Scale and angle are reset instantly before this fires — only opacity
+    /// and blur animate, producing a cross-fade rather than a zoom-in.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let cardRestore: Animation = .easeOut(duration: 0.45)
+
+    /// 0.52s ease-out — Name input UI fading in after card lift sequence.
+    /// Reduce motion: replaced with .linear(duration: 0.1) at call site.
+    static let uiFadeIn: Animation = .easeOut(duration: 0.52)
+
+    /// Spring — Greeting "Hi [name]" row settling into view after typing pause.
+    /// response: 1.1, dampingFraction: 0.88 — slow deliberate arrival with
+    /// minimal overshoot. The greeting should feel earned, not snappy.
+    /// Reduce motion: replace with AppAnimation.standard at call site.
+    static let greetingSettle: Animation = .spring(response: 1.1, dampingFraction: 0.88)
+
+    /// 0.35s ease-in-out — Header text fading out/in during the crossfade
+    /// sequence after the name is confirmed. Applied per-line.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let headerFade: Animation = .easeInOut(duration: 0.35)
+
+    /// Spring — Keystroke micro-bounce on underline. High stiffness, low damping —
+    /// snappy downward kick that reads as the line reacting to each character arriving.
+    /// Reduce motion: skip entirely — no bounce fires under reduce motion.
+    static let keystrokeBounce: Animation = .interpolatingSpring(stiffness: 600, damping: 12)
+
+    /// Spring — Underline returning to baseline after keystroke bounce.
+    /// Lower stiffness than keystrokeBounce — the return is softer than the kick.
+    /// Reduce motion: skip entirely — no bounce fires under reduce motion.
+    static let keystrokeBounceReturn: Animation = .interpolatingSpring(stiffness: 400, damping: 18)
+
+    /// 0.40s ease-out — Impact ring expanding outward after card lands on table.
+    static let impactRingDecay: Animation = .easeOut(duration: 0.40)
+
+    /// 0.35s ease-out — Radial burst fading after card flip completes.
+    static let flipBurstDecay: Animation = .easeOut(duration: 0.35)
+
+    /// 0.45s ease-out — Spectrum underline sweeping in on first field focus.
+    static let lineReveal: Animation = .easeOut(duration: 0.45)
+
+    /// 0.30s ease-in — Coach mark or hint element fading into view.
+    static let coachMarkIn: Animation = .easeIn(duration: 0.30)
+
+    /// 0.55s ease-in-out — Coach mark travelling downward during the hint sequence.
+    static let coachMarkTravel: Animation = .easeInOut(duration: 0.55)
+
+    /// 0.35s ease-out — Coach mark or hint element fading out of view.
+    static let coachMarkOut: Animation = .easeOut(duration: 0.35)
+
+    /// Spring — Screen nudging downward to hint at the swipe affordance.
+    /// response: 0.45, dampingFraction: 0.62 — perceptible overshoot that
+    /// communicates the screen is moveable.
+    static let screenNudge: Animation = .spring(response: 0.45, dampingFraction: 0.62)
+
+    /// Spring — Screen returning to baseline after the nudge hint.
+    /// Higher damping than screenNudge — the return is settled, not bouncy.
+    static let screenNudgeReturn: Animation = .spring(response: 0.55, dampingFraction: 0.78)
+
+    /// 0.25s ease-in — Hint arrow chevron fading into view.
+    static let hintArrowIn: Animation = .easeIn(duration: 0.25)
+
+    /// 0.45s ease-out — Hint arrow chevron fading out of view.
+    static let hintArrowOut: Animation = .easeOut(duration: 0.45)
+
+    /// 0.55s ease-in-out — Name glow pulse expanding on the greeting.
+    /// Applied in both directions: scale up and scale back to 1.0.
+    static let glowPulse: Animation = .easeInOut(duration: 0.55)
+
+    /// 4.0s ease-in-out — VaylFlourishView ambient breathing pulse.
+    /// Apply .repeatForever(autoreverses: true) at the call site.
+    /// This is an ambient animation — remove entirely under reduce motion.
+    static let flourishBreath: Animation = .easeInOut(duration: 4.0)
 }
 
 // MARK: — Reduce Motion Helpers
@@ -510,6 +627,48 @@ struct AppColors {
     )
 
     // ─────────────────────────────────────────────
+    // MARK: OB StatPhase — ethos gradient
+    //
+    // Exclusive to EthosTextView in StatPhase.
+    // Bakes the per-mode accent colors and their specific opacity values
+    // into tokens so no numeric opacity literals appear in the View layer.
+    // ─────────────────────────────────────────────
+
+    /// Ethos gradient lead stop. accentPrimary at near-opaque presence.
+    /// 10% transparency softens the hard start of the gradient sweep.
+    static let ethosGradientLead = Color.dynamic(
+        light: VaylPrimitives.magenta.withAlphaComponent(0.90),
+        dark:  VaylPrimitives.cyan.withAlphaComponent(0.90)
+    )
+
+    /// Ethos gradient trail stop. accentSecondary at softened presence.
+    /// 20% drop from lead produces a gentle luminosity fade across the short phrase.
+    static let ethosGradientTrail = Color.dynamic(
+        light: VaylPrimitives.purple.withAlphaComponent(0.80),
+        dark:  VaylPrimitives.purple.withAlphaComponent(0.80)
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: OB Flourish — decorative component
+    //
+    // These tokens are exclusive to VaylFlourishView.
+    // Sourced from the same hue palette as the "1 in 5" headline gradient
+    // so the flourish reads as an extension of that typography.
+    // ─────────────────────────────────────────────
+
+    /// Flourish gradient left stop — purple end, mirrors accentSecondary palette.
+    static let flourishLeft: Color = Color(uiColor: VaylPrimitives.purpleLight)
+
+    /// Flourish gradient midpoint — lavender bridge between purple and coral.
+    static let flourishMid: Color = Color(uiColor: VaylPrimitives.purpleBright)
+
+    /// Flourish gradient right stop — coral/pink end, mirrors accentTertiary palette.
+    static let flourishRight: Color = Color(uiColor: VaylPrimitives.magentaLight)
+
+    /// Flourish Canvas layer base opacity. Renders as subtle texture, not decoration.
+    static let flourishBaseOpacity: Double = 0.75
+
+    // ─────────────────────────────────────────────
     // MARK: OB Canvas
     //
     // These tokens are exclusive to the Onboarding canvas.
@@ -541,6 +700,59 @@ struct AppColors {
     )
 
     // ─────────────────────────────────────────────
+    // MARK: OB Table Surface — rendering constants
+    //
+    // These tokens are exclusive to TableSurfaceView.
+    // They simulate physical light on baize and an overhead
+    // lamp — they are rendering constants, not brand colors.
+    // They must never appear in any other view or component.
+    //
+    // Light-mode values mirror dark until OB Dawn is designed.
+    // ─────────────────────────────────────────────
+
+    /// Felt fill gradient — center stop. TableSurfaceView use only.
+    static let tableFeltCore = Color.dynamic(
+        light: VaylPrimitives.tableFeltCore,
+        dark:  VaylPrimitives.tableFeltCore
+    )
+
+    /// Felt fill gradient — mid stop. TableSurfaceView use only.
+    static let tableFeltMid = Color.dynamic(
+        light: VaylPrimitives.tableFeltMid,
+        dark:  VaylPrimitives.tableFeltMid
+    )
+
+    /// Felt fill gradient — outer stop. TableSurfaceView use only.
+    static let tableFeltOuter = Color.dynamic(
+        light: VaylPrimitives.tableFeltOuter,
+        dark:  VaylPrimitives.tableFeltOuter
+    )
+
+    /// Felt fill gradient — trailing edge stop. TableSurfaceView use only.
+    static let tableFeltEdge = Color.dynamic(
+        light: VaylPrimitives.tableFeltEdge,
+        dark:  VaylPrimitives.tableFeltEdge
+    )
+
+    /// Topo contour line stroke. TableSurfaceView use only.
+    static let tableTopoLine = Color.dynamic(
+        light: VaylPrimitives.tableTopoLine,
+        dark:  VaylPrimitives.tableTopoLine
+    )
+
+    /// Compass star base color. TableSurfaceView use only.
+    static let tableCompassStar = Color.dynamic(
+        light: VaylPrimitives.tableCompassStar,
+        dark:  VaylPrimitives.tableCompassStar
+    )
+
+    /// Amber overhead lamp pool center stop. TableSurfaceView use only.
+    static let tableAmberPool = Color.dynamic(
+        light: VaylPrimitives.tableAmberPool,
+        dark:  VaylPrimitives.tableAmberPool
+    )
+
+    // ─────────────────────────────────────────────
     // MARK: Spectrum — fixed accent values
     //
     // These three tokens resolve the fixed spectrum anchor colors
@@ -558,6 +770,10 @@ struct AppColors {
 
     /// Spectrum magenta anchor. #FF006A. Hairlines, glows, accents.
     static let spectrumMagenta = Color(uiColor: VaylPrimitives.magenta)
+
+    /// Mid-spectrum gradient bridge. Wordmark and spectrum sweep use only.
+    /// Sits between cyan and magenta on the gradient arc — not a standalone accent.
+    static let spectrumBridge  = Color(uiColor: VaylPrimitives.spectrumBridge)
 
     // ─────────────────────────────────────────────
     // MARK: Text — hierarchy
@@ -1170,6 +1386,30 @@ internal enum AppElevation {
         )
     }
 
+    // MARK: — Citation Panel
+    // Exclusive to the expandable citation card in StatPhase.
+    // Lighter radius than card elevation — the panel is a secondary
+    // surface attached to inline copy, not a first-class card.
+
+    enum citationPanel {
+
+        /// Dawn mode — purple-tinted shadow matching the warm palette.
+        static let dawnShadow = Shadow(
+            color:  AppColors.shadowPurple,
+            radius: 16,
+            x:      0,
+            y:      4
+        )
+
+        /// Midnight mode — deep shadow with slightly more spread.
+        static let midnightShadow = Shadow(
+            color:  AppColors.shadowDeep,
+            radius: 20,
+            x:      0,
+            y:      6
+        )
+    }
+
     // MARK: — OB Card Physics Elevation
     // These tokens are exclusive to the Onboarding canvas.
     // They must never appear in main-app screens — the table metaphor
@@ -1380,6 +1620,18 @@ struct AppFonts {
     /// One per screen. Top of content area, primary screen identifier.
     static var screenTitle: Font {
         display(24, weight: .semibold, relativeTo: .title)
+    }
+
+    /// Onboarding phase headline. One per OB phase screen.
+    /// Used for the cinematic opening statement on each onboarding phase —
+    /// "Let's get acquainted.", "Good to meet you.", and equivalent lines
+    /// on subsequent phases. Larger than screenTitle to anchor the emotional
+    /// beat of each phase as a hero statement, not a navigation label.
+    /// Never use outside the Onboarding canvas.
+    /// relativeTo: .largeTitle — scales against the largest Dynamic Type style
+    /// so the statement remains dominant at all accessibility sizes.
+    static var obPhaseTitle: Font {
+        display(32, weight: .semibold, relativeTo: .largeTitle)
     }
 
     /// Primary text inside a card surface. Never the screen title.
@@ -1608,12 +1860,12 @@ internal enum AppGlows {
         /// 1.8pt — Active fill stroke during arc draw-on.
         /// Marginally heavier than resting — the energy reads as
         /// luminosity from the glow, not physical stroke weight.
-        static let strokeActive:   CGFloat = 1.8
+        static let strokeActive:   CGFloat = 2.2
 
         /// 2.0pt — Glowing stroke at full glow intensity.
         /// Minimal additional weight — the glow layer creates the
         /// perception of thickness. The stroke itself stays contained.
-        static let strokeGlowing:  CGFloat = 2.0
+        static let strokeGlowing:  CGFloat = 2.8
 
         // ─── Hairline geometry ─────────────────────────────
         // The resting-state hairline is a separate visual element
@@ -1621,15 +1873,13 @@ internal enum AppGlows {
         // Shape stroke, so its thickness is a frame height value
         // rather than a lineWidth.
 
-        /// 1.2pt — Hairline strip height in the resting state.
-        static let hairlineHeight: CGFloat = 1.2
+        /// 1.8pt — Hairline strip height in the resting state.
+        static let hairlineHeight: CGFloat = 1.8
 
         // ─── Hairline opacity ──────────────────────────────
 
-        /// 0.85 — Hairline opacity in the resting state.
-        /// Not fully opaque — the hairline is a whisper,
-        /// not a solid border.
-        static let hairlineOpacity: Double = 0.85
+        /// 1.0 — Hairline opacity in the resting state.
+        static let hairlineOpacity: Double = 1.0
     }
 
     // ─────────────────────────────────────────────
@@ -1696,6 +1946,37 @@ internal enum AppGlows {
     }
 
     // ─────────────────────────────────────────────
+    // MARK: Lift Copy Glow
+    //
+    // Tight emissive glow on the gradient text that appears
+    // above the table when a card is lifted in ModeSelectPhase.
+    // Two layers — inner core hugs the letterforms,
+    // outer is a soft falloff. Never a broad radial bloom.
+    //
+    // Applied to: ModeSelectPhase liftCopyLayer VStack
+    // Trigger: card lift state
+    // ─────────────────────────────────────────────
+
+    enum liftCopy {
+
+        /// Tight inner core — cyan channel.
+        /// Hugs letterforms. Reads as text emitting light.
+        static let inner = GlowLayer(
+            color:  AppColors.spectrumCyan.opacity(0.18),
+            radius: 2
+        )
+
+        /// Soft outer falloff — purple channel.
+        /// Feathers the glow edge without creating a halo box.
+        static let outer = GlowLayer(
+            color:  AppColors.spectrumPurple.opacity(0.08),
+            radius: 5
+        )
+
+        static let layers: [GlowLayer] = [inner, outer]
+    }
+
+    // ─────────────────────────────────────────────
     // MARK: Safety Glow
     //
     // Reserved exclusively for safe word and warning surfaces.
@@ -1718,6 +1999,46 @@ internal enum AppGlows {
         )
 
         static let layers: [GlowLayer] = [inner, outer]
+    }
+
+    // ─────────────────────────────────────────────
+    // MARK: Compass Star Glow
+    //
+    // Soft radial glow drawn behind the compass star
+    // on the OB table surface. Simulates ambient light
+    // scattering from an overhead point source onto the felt.
+    //
+    // Applied to: TableSurfaceView compass star layer
+    // Not animated — static rendering constant
+    // ─────────────────────────────────────────────
+
+    enum compassStarGlow {
+        /// Base color sourced from the compass star token.
+        /// Opacity 0.14 — present as atmosphere, not as a visible halo.
+        static let color: Color              = AppColors.tableCompassStar.opacity(0.14)
+        /// Caller computes starSize × radiusMultiplier for the actual radius.
+        static let radiusMultiplier: CGFloat = 2.2
+    }
+
+    // ─────────────────────────────────────────────
+    // MARK: Table Rim Inner Glow
+    //
+    // Radial glow that sits behind the spectrum rim arc
+    // on the OB table surface. Gives the rim the appearance
+    // of an emissive light source rather than a painted line.
+    //
+    // Applied to: TableSurfaceView spectrum rim layer
+    // inner radius: tableR - innerInset
+    // outer radius: tableR + outerInset
+    // peak stop position: peakPosition
+    // ─────────────────────────────────────────────
+
+    enum tableRimInnerGlow {
+        /// Purple at 10% — suggests refracted light bleeding inward from the rim.
+        static let color: Color          = AppColors.spectrumPurple.opacity(0.10)
+        static let innerInset: CGFloat   = 28
+        static let outerInset: CGFloat   = 6
+        static let peakPosition: CGFloat = 0.55
     }
 }
 
@@ -1807,6 +2128,25 @@ extension View {
             )
             .shadow(
                 color:  visible ? layers[1].color : .clear,
+                radius: layers[1].radius,
+                x:      layers[1].x,
+                y:      layers[1].y
+            )
+    }
+
+    /// Applies the lift copy text glow.
+    /// Use on the VStack in ModeSelectPhase.liftCopyLayer only.
+    func liftCopyGlow() -> some View {
+        let layers = AppGlows.liftCopy.layers
+        return self
+            .shadow(
+                color:  layers[0].color,
+                radius: layers[0].radius,
+                x:      layers[0].x,
+                y:      layers[0].y
+            )
+            .shadow(
+                color:  layers[1].color,
                 radius: layers[1].radius,
                 x:      layers[1].x,
                 y:      layers[1].y
@@ -2082,6 +2422,16 @@ struct AppLayout {
     /// Applied to the outer ScrollView or VStack container of every screen.
     static let screenHPad: CGFloat = 18
 
+    /// 24pt — Horizontal margin applied to the OB canvas content column.
+    /// Wider than screenHPad (18pt) — the OB canvas uses a more spacious
+    /// margin appropriate for cinematic phase layouts.
+    static let screenMargin: CGFloat = 24
+
+    /// 32pt — Horizontal inset for the primary CTA on OB screens.
+    /// Intentionally wider than screenMargin so the CTA button sits visually
+    /// inside the content column rather than spanning edge-to-edge.
+    static let ctaHorizontalMargin: CGFloat = 32
+
     /// 20pt — Vertical padding at the top of every screen's scroll content.
     /// Provides breathing room below the header before the first card.
     static let screenVPad: CGFloat = 20
@@ -2122,6 +2472,11 @@ struct AppLayout {
     /// 4pt — Height of the drag handle on a bottom sheet.
     static let dragHandleH: CGFloat = 4
 
+    /// 300pt — Maximum width of the expandable citation panel in StatPhase.
+    /// Constrains the dense citation copy to a readable measure regardless of
+    /// screen width. Matches the visual design at standard iPhone widths.
+    static let citationPanelMaxWidth: CGFloat = 300
+
     // MARK: - OB Card Geometry
     // These values are exclusive to the Onboarding canvas.
     // They must never appear in main-app screens — the table metaphor
@@ -2135,7 +2490,7 @@ struct AppLayout {
     /// Clamps at 320pt to preserve card proportions on Pro Max devices.
     /// Vertical cards are OB/personal only. Horizontal cards are session/shared.
     static func obCardWidth(in screenWidth: CGFloat) -> CGFloat {
-        min(screenWidth * 0.72, 320)
+        screenWidth * 1.14
     }
 
     /// Height of a full-size OB vertical card.
@@ -2143,6 +2498,24 @@ struct AppLayout {
     static func obCardHeight(in screenWidth: CGFloat) -> CGFloat {
         obCardWidth(in: screenWidth) * 1.5
     }
+    /// Width of a card sitting on the OB table during the deal sequence.
+    /// ~30% of screen width — small enough to read as a physical card on a surface.
+    /// Distinct from obCardWidth (72%) which is used for the full-bleed expanded state.
+    /// Never use obTableCardWidth for any state other than the on-table resting position.
+    static func obTableCardWidth(in screenWidth: CGFloat) -> CGFloat {
+        min(screenWidth * 0.30, 195)
+    }
+
+    /// Height of the on-table card. Derived from obTableCardWidth at 3:2 portrait ratio.
+    static func obTableCardHeight(in screenWidth: CGFloat) -> CGFloat {
+        obTableCardWidth(in: screenWidth) * 1.5
+    }
+
+    /// Cinematic zoom applied to the on-table card during the NamePhase deal sequence.
+    /// Scales `obTableCardWidth` from 30% to ~45% of screen width, matching the HTML
+    /// prototype's visual proportion (195px card in a 430px max-width container).
+    /// Only NamePhase applies this. Do not use in other table card contexts.
+    static let obTableCardCinematicScale: CGFloat = 1.5
 
     /// Width of a session card (horizontal orientation).
     /// Clamps at 480pt. Used in the main app session flow, never in OB.
@@ -2161,17 +2534,19 @@ struct AppLayout {
     // from NamePhase onward. These constants define its frame and position.
     // The top-right ✦ mark is replaced by the corner deck — never overlap them.
 
-    /// 30pt — Width of the corner deck mini-card stack.
-    static let cornerDeckWidth:  CGFloat = 30
+    /// 48pt — Width of the corner deck mini-card stack.
+    static let cornerDeckWidth:  CGFloat = 48
 
-    /// 45pt — Height of the corner deck mini-card stack.
-    static let cornerDeckHeight: CGFloat = 45
+    /// 72pt — Height of the corner deck mini-card stack.
+    static let cornerDeckHeight: CGFloat = 72
 
-    /// 14pt — Distance from the top safe-area edge to the top of the corner deck.
-    static let cornerDeckTop:    CGFloat = 14
+    /// 56pt — Distance from the top safe-area edge to the top of the corner deck.
+    /// Sits just below the Dynamic Island with breathing room.
+    /// Bump to 64 or 72 if it still reads too high on device.
+    static let cornerDeckTop:    CGFloat = 56
 
-    /// 18pt — Distance from the right screen edge to the right of the corner deck.
-    static let cornerDeckRight:  CGFloat = 18
+    /// 24pt — Distance from the right screen edge to the right of the corner deck.
+    static let cornerDeckRight:  CGFloat = 24
 
     // MARK: - OB Deal Point Geometry
     // The deal point is the origin from which all OB cards are launched.
@@ -2194,6 +2569,129 @@ struct AppLayout {
     /// all derive from this single fraction. Change this value to reposition the
     /// entire table world simultaneously.
     static let tableHorizonYFrac: CGFloat = 0.32
+
+    /// 0.34 — Arc peak Y fraction for the circular table surface.
+    /// Matches the HTML reference prototype where the table edge sits at H*0.34,
+    /// giving the "zoomed in on the table" perspective the user wants.
+    /// Distinct from tableHorizonYFrac (0.32) which is the trapezoid horizon.
+    /// Used by TableSurfaceView arc geometry only.
+    static let tableArcPeakYFrac: CGFloat = 0.34
+
+    /// 1.05 — Table circle radius as a fraction of screen height.
+    /// Large radius ensures only the top cap of the circle is visible.
+    /// Used by TableSurfaceView arc geometry only.
+    static let tableArcRadiusFrac: CGFloat = 1.05
+
+    // MARK: - OB Card Landing Slots
+    // Five predefined landing configurations for the OB deal sequence.
+    // Cards pick from the available pool so no two cards in the same round
+    // share a landing zone. Slots are defined in screen-fraction space so
+    // they adapt to any device size.
+
+    static let obCardLandingSlots: [CardLandingSlot] = [
+
+        // Slot 0 — Center settle: classic deal, card rests just right of center
+        CardLandingSlot(
+            id: 0,
+            xFrac: 0.50, yFrac: 0.535,
+            angleDeg:  1.8,
+            jitterX: 12, jitterY: 8, jitterAngle: 1.0
+        ),
+
+        // Slot 1 — Left lean: card drifts wide left, slight CCW tilt
+        CardLandingSlot(
+            id: 1,
+            xFrac: 0.30, yFrac: 0.61,
+            angleDeg: -6.0,
+            jitterX: 12, jitterY: 8, jitterAngle: 1.5
+        ),
+
+        // Slot 2 — Deep slide: card overshoots toward the player, steep CW,
+        // bottom third of card clips off-screen
+        CardLandingSlot(
+            id: 2,
+            xFrac: 0.52, yFrac: 0.74,
+            angleDeg:  13.0,
+            jitterX: 14, jitterY: 10, jitterAngle: 2.0
+        ),
+
+        // Slot 3 — Hard right: card cuts right, steep CCW, right edge off-screen
+        CardLandingSlot(
+            id: 3,
+            xFrac: 0.80, yFrac: 0.64,
+            angleDeg: -19.0,
+            jitterX: 12, jitterY: 8, jitterAngle: 2.0
+        ),
+
+        // Slot 4 — Bottom-left diagonal: card curves lower-left, partially off-screen
+        CardLandingSlot(
+            id: 4,
+            xFrac: 0.24, yFrac: 0.70,
+            angleDeg: -11.0,
+            jitterX: 12, jitterY: 10, jitterAngle: 2.5
+        ),
+    ]
+
+    /// Returns the Y coordinate of the optical center of the felt table surface.
+    /// Derived from tableArcPeakYFrac — the fraction where the spectrum rim arc peaks.
+    /// The table surface runs from that point to the bottom of the screen.
+    /// Card center is the midpoint of that zone.
+    /// Use this for every card resting position in the OB sequence.
+    /// Never hardcode 0.55 or any raw Y fraction for card positioning.
+    static func obTableCardCenterY(in screenHeight: CGFloat) -> CGFloat {
+        let arcPeakY    = screenHeight * tableArcPeakYFrac
+        let tableHeight = screenHeight - arcPeakY
+        return arcPeakY + (tableHeight * 0.50)
+    }
+
+    // MARK: - OB NamePhase Layout Tokens
+    // Exclusive to NamePhase. Never use in main-app screens.
+
+    /// 80pt — Height of the swipe-to-submit zone above the name input field.
+    static let swipeZoneHeight: CGFloat = 80
+
+    /// 80pt — Translation threshold for a swipe-down to register as a submit gesture.
+    static let swipeSubmitThreshold: CGFloat = 80
+
+    /// 1.2 — Multiplier applied to screen height for the dragY exit translation on submit.
+    /// Ensures the UI travels well past the screen bottom before disappearing.
+    static let dragExitMultiplier: CGFloat = 1.2
+
+    /// 30 — Maximum character count for a user-entered display name.
+    static let maxNameLength: Int = 30
+
+    /// 28pt — Blur radius applied to the card during the lift-toward-camera sequence.
+    static let cardLiftBlurRadius: CGFloat = 28.0
+
+    /// 4.5 — Scale multiplier for the card diving toward the camera during performLift.
+    /// At 4.5× the card exceeds the screen width — the lens is inside the surface.
+    static let cardLiftDiveMultiplier: CGFloat = 4.5
+
+    /// 0.5pt — Letter-spacing applied to the user's name in the greeting display.
+    static let nameLetterSpacing: CGFloat = 0.5
+
+    // MARK: - OB Flourish Geometry
+    // Exclusive to VaylFlourishView. Never use in main-app screens.
+
+    /// 280pt — Width of the VaylFlourishView decorative component.
+    static let flourishWidth: CGFloat = 280
+
+    /// 72pt — Height of the VaylFlourishView decorative component.
+    static let flourishHeight: CGFloat = 72
+
+    /// 1.015 — Scale factor for the ambient breathing pulse on VaylFlourishView.
+    static let flourishPulseScale: CGFloat = 1.015
+
+    /// Visible position offset for the greeting row. Negative = moves up.
+    /// Proportional to screen height for correct positioning across device sizes.
+    static func greetingOffsetVisible(in screenHeight: CGFloat) -> CGFloat {
+        -(screenHeight * 0.07)
+    }
+
+    /// Hidden/resting position offset for the greeting row.
+    static func greetingOffsetHidden(in screenHeight: CGFloat) -> CGFloat {
+        screenHeight * 0.017
+    }
 }
 
 ```
@@ -2292,6 +2790,103 @@ internal enum AppRadius {
 
 ---
 
+## File: `Vayl/App/Theme/AppRootView.swift` {#file-vayl-app-theme-approotview-swift}
+
+```swift
+import SwiftUI
+
+#if DEBUG
+/// Set to true to always route to OnboardingCanvasView on launch.
+/// Flip to false to restore normal auth/onboarding routing.
+private let forceOnboarding = true
+#endif
+
+// ─────────────────────────────────────────────────────────────
+// AppRootView — top-level routing gate.
+//
+// Responsibilities:
+//   1. Show SplashScreenView once per cold launch.
+//      Suppressed on foreground resume from background —
+//      scenePhase gate sets splashDone = true when the app
+//      moves to background so the next foreground is treated
+//      as a resume, not a cold launch.
+//   2. After splash, route to auth or onboarding based on
+//      persistent state read from UserDefaults / AuthService.
+//
+// Does NOT own app-level stores — those live in VaylApp and
+// flow down via environment. This view only reads environment
+// values it needs for routing decisions.
+// ─────────────────────────────────────────────────────────────
+
+struct AppRootView: View {
+
+    // MARK: - Environment
+
+    @Environment(AuthService.self) private var authService
+    @Environment(\.scenePhase)     private var scenePhase
+
+    // MARK: - State
+
+    @State private var splashDone = false
+
+    // MARK: - Routing
+
+    @ViewBuilder
+    private var postSplashDestination: some View {
+        #if DEBUG
+        if forceOnboarding {
+            OnboardingCanvasWrapper()
+                .themedRoot()
+        } else {
+            routedDestination
+        }
+        #else
+        routedDestination
+        #endif
+    }
+
+    @ViewBuilder
+    private var routedDestination: some View {
+        if authService.isAuthenticated {
+            AppShell()
+                .themedRoot()
+        } else if UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
+            SignInView(authService: authService)
+                .themedRoot()
+        } else {
+            OnboardingCanvasWrapper()
+                .themedRoot()
+        }
+    }
+
+    // MARK: - Body
+
+    var body: some View {
+        Group {
+            if !splashDone {
+                SplashScreenView(
+                    onComplete:  { splashDone = true },
+                    onTearBegan: {},
+                    destination: AnyView(postSplashDestination)
+                )
+            } else {
+                postSplashDestination
+            }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            // App moved to background — next foreground is a resume, not a cold
+            // launch. Mark splash done so it does not replay on return.
+            if newPhase == .background {
+                splashDone = true
+            }
+        }
+    }
+}
+
+```
+
+---
+
 ## File: `Vayl/App/Theme/AppSafeArea.swift` {#file-vayl-app-theme-appsafearea-swift}
 
 ```swift
@@ -2341,7 +2936,7 @@ extension View {
     ///         content
     ///     }
     ///     .stickyBottomCTA {
-    ///         HoloCTAButton("Continue") { ... }
+    ///         VaylButton("Continue") { ... }
     ///     }
     ///
     /// The spacing between the CTA and the home indicator is AppSpacing.md (16pt).
@@ -2438,6 +3033,27 @@ extension AppLayout {
     /// 20pt is the standard status bar height on non-notched devices.
     var hasNotchOrIsland: Bool {
         safeAreaInsets.top > 20
+    }
+}
+
+// MARK: - Real Safe Area Environment Key
+//
+// Captures the real hardware safe area before it is consumed by .ignoresSafeArea()
+// ancestor chains. Injected by OnboardingCanvasWrapper; read in all phase views
+// via @Environment(\.realSafeArea).
+//
+// Default value is EdgeInsets() so standalone phase previews (which have no wrapper)
+// receive zero insets — correct because those previews place the phase GR *inside*
+// the safe area region, so no inset compensation is needed.
+
+private struct RealSafeAreaKey: EnvironmentKey {
+    static let defaultValue = EdgeInsets()
+}
+
+extension EnvironmentValues {
+    var realSafeArea: EdgeInsets {
+        get { self[RealSafeAreaKey.self] }
+        set { self[RealSafeAreaKey.self] = newValue }
     }
 }
 
@@ -2701,13 +3317,24 @@ class ThemeManager {
     }
 
     init() {
-        var saved = UserDefaults.standard.string(forKey: "appThemeMode") ?? "system"
-        // Migrate legacy "amoled" value to "dark"
+        var saved = UserDefaults.standard.string(forKey: "appThemeMode") ?? "dark"
+
+        // Migrate legacy "amoled" value → "dark"
         if saved == "amoled" {
             saved = "dark"
             UserDefaults.standard.set("dark", forKey: "appThemeMode")
         }
-        self.mode = ThemeMode(rawValue: saved) ?? .system
+
+        // Migrate stale "light" value when onboarding is not yet complete.
+        // Light mode is unavailable in Act 1 — if "light" is stored and the
+        // user has not finished onboarding, it leaked from a dev/test session.
+        // Reset to "dark" so cold launch always starts with the Midnight palette.
+        if saved == "light" && !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
+            saved = "dark"
+            UserDefaults.standard.set("dark", forKey: "appThemeMode")
+        }
+
+        self.mode = ThemeMode(rawValue: saved) ?? .dark
     }
 
     func palette(for systemScheme: ColorScheme) -> AppPalette {
@@ -2730,7 +3357,10 @@ class ThemeManager {
 // MARK: - Environment Key
 
 private struct PaletteKey: EnvironmentKey {
-    static let defaultValue: AppPalette = .light
+    // .dark — any view outside .themedRoot() gets Midnight, not Dawn.
+    // Previously .light caused unthemed routes (SignIn, OB) to render
+    // the warm palette even on dark-mode devices.
+    static let defaultValue: AppPalette = .dark
 }
 
 extension EnvironmentValues {
@@ -2779,23 +3409,23 @@ extension View {
 // MARK: - Card Modifier
 
 struct ThemedCardModifier: ViewModifier {
-    @Environment(\.theme) private var t
+    @Environment(\.colorScheme) private var colorScheme
     var selected: Bool = false
 
     func body(content: Content) -> some View {
         content
-            .background(t.surface1)
+            .background(AppColors.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.lg)
                     .stroke(
-                        selected ? t.cyan : t.cardBorder,
+                        selected ? AppColors.accentPrimary : AppColors.borderSubtle,
                         lineWidth: selected ? 2 : 1.5
                     )
             )
             .shadow(
-                color: selected && t.isDark
-                    ? t.glowCyan
+                color: selected && colorScheme == .dark
+                    ? AppColors.accentPrimary.opacity(0.20)
                     : .clear,
                 radius: selected ? 8 : 0
             )
@@ -2868,6 +3498,7 @@ enum VaylPrimitives {
     static let purpleBright   = UIColor(hex: "#C084FC")
     static let purpleVivid    = UIColor(hex: "#9333EA")
     static let electricViolet = UIColor(hex: "#8B5CF6")
+    static let spectrumBridge = UIColor(hex: "#8B6FD4") // mid-spectrum gradient bridge — cyan to magenta wordmark sweep
 
     static let magenta        = UIColor(hex: "#FF006A")
     static let magentaLight   = UIColor(hex: "#FF4D94")
@@ -2899,6 +3530,14 @@ enum VaylPrimitives {
     // Light-mode equivalents are placeholders until OB Dawn is designed.
     static let inkVoid        = UIColor(hex: "#0a0810")  // OB canvas void floor
     static let inkCardOB      = UIColor(hex: "#120f1a")  // OB card glass surface
+
+    static let tableFeltCore    = UIColor(red: 22/255,  green: 17/255,  blue: 38/255,  alpha: 0.95) // felt fill center
+    static let tableFeltMid     = UIColor(red: 18/255,  green: 14/255,  blue: 33/255,  alpha: 0.90) // felt fill mid
+    static let tableFeltOuter   = UIColor(red: 14/255,  green: 11/255,  blue: 26/255,  alpha: 0.85) // felt fill outer
+    static let tableFeltEdge    = UIColor(red: 10/255,  green:  8/255,  blue: 18/255,  alpha: 0.10) // felt fill trailing edge
+    static let tableTopoLine    = UIColor(red: 150/255, green: 132/255, blue: 208/255, alpha: 1)    // topo contour stroke
+    static let tableCompassStar = UIColor(red: 232/255, green: 228/255, blue: 222/255, alpha: 1)    // compass star
+    static let tableAmberPool   = UIColor(red: 255/255, green: 235/255, blue: 180/255, alpha: 0.055) // amber pool center
 
     // ── Tinted card darks ─────────────────────────────────────
     static let tintCyan       = UIColor(hex: "#061018")

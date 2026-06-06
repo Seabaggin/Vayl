@@ -205,6 +205,37 @@ internal enum AppGlows {
     }
 
     // ─────────────────────────────────────────────
+    // MARK: Lift Copy Glow
+    //
+    // Tight emissive glow on the gradient text that appears
+    // above the table when a card is lifted in ModeSelectPhase.
+    // Two layers — inner core hugs the letterforms,
+    // outer is a soft falloff. Never a broad radial bloom.
+    //
+    // Applied to: ModeSelectPhase liftCopyLayer VStack
+    // Trigger: card lift state
+    // ─────────────────────────────────────────────
+
+    enum liftCopy {
+
+        /// Tight inner core — cyan channel.
+        /// Hugs letterforms. Reads as text emitting light.
+        static let inner = GlowLayer(
+            color:  AppColors.spectrumCyan.opacity(0.18),
+            radius: 2
+        )
+
+        /// Soft outer falloff — purple channel.
+        /// Feathers the glow edge without creating a halo box.
+        static let outer = GlowLayer(
+            color:  AppColors.spectrumPurple.opacity(0.08),
+            radius: 5
+        )
+
+        static let layers: [GlowLayer] = [inner, outer]
+    }
+
+    // ─────────────────────────────────────────────
     // MARK: Safety Glow
     //
     // Reserved exclusively for safe word and warning surfaces.
@@ -356,6 +387,25 @@ extension View {
             )
             .shadow(
                 color:  visible ? layers[1].color : .clear,
+                radius: layers[1].radius,
+                x:      layers[1].x,
+                y:      layers[1].y
+            )
+    }
+
+    /// Applies the lift copy text glow.
+    /// Use on the VStack in ModeSelectPhase.liftCopyLayer only.
+    func liftCopyGlow() -> some View {
+        let layers = AppGlows.liftCopy.layers
+        return self
+            .shadow(
+                color:  layers[0].color,
+                radius: layers[0].radius,
+                x:      layers[0].x,
+                y:      layers[0].y
+            )
+            .shadow(
+                color:  layers[1].color,
                 radius: layers[1].radius,
                 x:      layers[1].x,
                 y:      layers[1].y

@@ -123,14 +123,7 @@ struct CardCarousel: View {
         .frame(height: cardH + 120)
         // No .clipped() — cards must overflow upward during lifted/carousel phases.
         .animation(AppAnimation.spring, value: phase)
-        .background {
-            Rectangle()
-                .fill(Color.black.opacity(isLight ? 0.35 : 0.75))
-                .frame(width: 3000, height: 3000)
-                .opacity((phase == .floating || phase == .spread) ? 0 : 1)
-                .allowsHitTesting(phase != .floating && phase != .spread)
-                .onTapGesture { handleDismissQuickview() }
-        }
+        .background { dimmingBackdrop }
         .gesture(
             DragGesture(minimumDistance: 40)
                 .onEnded { value in
@@ -141,19 +134,12 @@ struct CardCarousel: View {
         )
         .overlay { glassTrackpad }
         .scaleEffect(phase == .spread ? 0.75 : 1.0)
-        .offset(y: phase == .spread ? 0 : (phase == .floating ? 0 : -20))
+        .offset(y: cardStackOffsetY)
         // Phase-driven negative bottom padding — intentional carousel layout mechanics.
         // Each value controls how much the card container bleeds into content below
         // for that phase. These are not AppSpacing candidates.
-        .padding(.bottom, phase == .carousel ? -40 : phase == .spread ? -60 : phase == .floating ? -100 : -20)
-        .animation(
-            reduceMotion
-                ? AppAnimation.standard
-                // Slow phase spring — intentional above AppAnimation.spring ceiling.
-                // response: 0.95 gives the card stack deliberate weight during transitions.
-                : .spring(response: 0.95, dampingFraction: 0.85),
-            value: phase
-        )
+        .padding(.bottom, cardStackBottomPadding)
+        .animation(cardStackPhaseAnimation, value: phase)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(cardStackA11yLabel)
         .accessibilityHint(cardStackA11yHint)
@@ -165,6 +151,39 @@ struct CardCarousel: View {
             @unknown default: break
             }
         }
+    }
+
+    // Phase-driven layout values hoisted out of the `cardStack` modifier chain so
+    // each nested ternary is type-checked in isolation (chain was 600ms inline).
+
+    private var dimmingBackdrop: some View {
+        Rectangle()
+            .fill(Color.black.opacity(isLight ? 0.35 : 0.75))
+            .frame(width: 3000, height: 3000)
+            .opacity((phase == .floating || phase == .spread) ? 0 : 1)
+            .allowsHitTesting(phase != .floating && phase != .spread)
+            .onTapGesture { handleDismissQuickview() }
+    }
+
+    private var cardStackOffsetY: CGFloat {
+        phase == .spread ? 0 : (phase == .floating ? 0 : -20)
+    }
+
+    private var cardStackBottomPadding: CGFloat {
+        switch phase {
+        case .carousel: return -40
+        case .spread:   return -60
+        case .floating: return -100
+        default:        return -20
+        }
+    }
+
+    private var cardStackPhaseAnimation: Animation {
+        // Slow phase spring — intentional above AppAnimation.spring ceiling.
+        // response: 0.95 gives the card stack deliberate weight during transitions.
+        reduceMotion
+            ? AppAnimation.standard
+            : .spring(response: 0.95, dampingFraction: 0.85)
     }
 
     private var cardStackA11yLabel: String {
@@ -299,9 +318,6 @@ struct CardCarousel: View {
                 .animation(AppAnimation.slow, value: activeIndex)
 
             if phase == .carousel && !reduceMotion {
-                let incoming = dragOffset < 0
-                    ? (activeIndex + 1) % cards.count
-                    : (activeIndex - 1 + cards.count) % cards.count
                 let bleed = min(abs(dragOffset) / 320, 1.0)
                 Ellipse()
                     .fill(RadialGradient(

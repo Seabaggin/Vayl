@@ -30,6 +30,19 @@ import SwiftUI
 /// The caller (VaylCardRenderer) controls all transforms.
 struct VaylCardBack: View {
 
+    /// Override the hex moiré rotation angle (degrees).
+    /// `nil` = default behaviour (±8° portrait, ±6° landscape).
+    /// During dissolution, GenderPhase passes `director.dissolutionHexAngle` (0→8°).
+    var hexAngleOverride: CGFloat? = nil
+
+    /// Hex cell size multiplier. 1.0 = normal. >1.0 = sparser grid (topo-frequency phase).
+    /// During dissolution, GenderPhase passes `director.dissolutionHexSpacing` (2.2→1.0).
+    var hexSpacingMul: CGFloat = 1.0
+
+    /// Wordmark opacity multiplier. 1.0 = fully visible. 0.0 = invisible.
+    /// During dissolution, GenderPhase passes `director.dissolutionMark` (0→1).
+    var wordmarkOpacity: Double = 1.0
+
     var body: some View {
         GeometryReader { geo in
             let W = geo.size.width
@@ -62,6 +75,7 @@ struct VaylCardBack: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: R))
         }
+        .drawingGroup() // rasterize Canvas + overlay to Metal texture for card transforms
     }
 }
 
@@ -139,6 +153,7 @@ private extension VaylCardBack {
 private extension VaylCardBack {
 
     func drawWordmark(context: GraphicsContext, size: CGSize, W: CGFloat, H: CGFloat) {
+        guard wordmarkOpacity > 0 else { return }
         let short     = min(W, H)
         let fontSize  = (short * 0.050).rounded() // 5% larger than original 0.048
         let cx        = W / 2
@@ -164,64 +179,58 @@ private extension VaylCardBack {
             .init(color: AppColors.spectrumMagenta, location: 1.00),
         ])
 
+        let wm = wordmarkOpacity // local alias — avoids repeated `self.` in closures
+
         // Pass 1 — outer bloom. Tight radius — geometric sans needs minimal spread.
-        // 0.15 — low opacity. Atmosphere only, not fog.
+        // 0.15 — low opacity. Atmosphere only, not fog. Scaled by wordmarkOpacity.
         var outerBloom = context
         outerBloom.addFilter(.blur(radius: 5))
         outerBloom.draw(
             resolvedText(size: fontSize + 2)
-                .foregroundStyle(AppColors.spectrumPurple.opacity(0.15)),
+                .foregroundStyle(AppColors.spectrumPurple.opacity(0.15 * wm)),
             at: CGPoint(x: cx, y: cy),
             anchor: .center
         )
 
         // Pass 2 — inner edge glow. Very tight. Gives the stroke face a lit quality.
-        // 0.22 — enough to read as emissive edge without bleeding.
+        // 0.22 — enough to read as emissive edge without bleeding. Scaled by wordmarkOpacity.
         var innerGlow = context
         innerGlow.addFilter(.blur(radius: 1.5))
         innerGlow.draw(
             resolvedText(size: fontSize)
-                .foregroundStyle(Color.white.opacity(0.22)),
+                .foregroundStyle(Color.white.opacity(0.22 * wm)),
             at: CGPoint(x: cx, y: cy),
             anchor: .center
         )
 
-        // Pass 2.5a — emboss shadow. Offset down-right, dark.
-        // Simulates the shadow cast inside an engraved letterform.
-        // x: +0.8, y: +0.9 — sub-pixel offset so the shadow reads as
-        // depth without visibly displacing the letterform.
-        // 0.55 — dark enough to read as shadow, not a duplicate glyph.
+        // Pass 2.5a — emboss shadow. Offset down-right, dark. Scaled by wordmarkOpacity.
         var shadowPass = context
         shadowPass.addFilter(.blur(radius: 0.8))
         shadowPass.drawLayer { layerContext in
             layerContext.draw(
                 resolvedText(size: fontSize)
-                    .foregroundStyle(Color.black.opacity(0.55)),
+                    .foregroundStyle(Color.black.opacity(0.55 * wm)),
                 at: CGPoint(x: cx + 0.8, y: cy + 0.9),
                 anchor: .center
             )
         }
 
-        // Pass 2.5b — emboss highlight. Offset up-left, bright white.
-        // Simulates the overhead light catching the top edge of the engraving.
-        // x: -0.7, y: -0.8 — mirrors the shadow offset direction.
-        // 0.45 — bright enough to read as specular, not a ghost glyph.
+        // Pass 2.5b — emboss highlight. Offset up-left, bright white. Scaled by wordmarkOpacity.
         var highlightPass = context
         highlightPass.addFilter(.blur(radius: 0.6))
         highlightPass.drawLayer { layerContext in
             layerContext.draw(
                 resolvedText(size: fontSize)
-                    .foregroundStyle(Color.white.opacity(0.45)),
+                    .foregroundStyle(Color.white.opacity(0.45 * wm)),
                 at: CGPoint(x: cx - 0.7, y: cy - 0.8),
                 anchor: .center
             )
         }
 
         // Pass 3 — sharp core via clipToLayer gradient mask.
-        // 0.90 — near-opaque core so letterforms read as solid emissive objects.
-        // clipToLayer is the only reliable way to get a multi-stop gradient on Canvas text.
+        // clipToLayer opacity scaled by wordmarkOpacity.
         var coreContext = context
-        coreContext.clipToLayer(opacity: 0.90) { clip in
+        coreContext.clipToLayer(opacity: 0.90 * wm) { clip in
             clip.draw(
                 resolvedText(size: fontSize)
                     .foregroundStyle(Color.white),
@@ -246,6 +255,7 @@ private extension VaylCardBack {
 
     /// Draws one hex grid layer rotated by `degrees` around the card center.
     /// Two calls with opposing rotation produce the moiré interference pattern.
+    /// `hexSize` is pre-scaled by the caller — pass `15 * hexSpacingMul` for dissolution.
     func drawHexLayer(
         context:  GraphicsContext,
         W:        CGFloat,
@@ -317,7 +327,13 @@ private extension VaylCardBack {
         let isHorizontal = W > H
         // Rotation angle reduces from ±8° to ±6° in landscape — the shallower
         // angle reads better across the wider field. Matches SVG isHoriz logic.
-        let angle: CGFloat = isHorizontal ? 6 : 8
+        // During dissolution hexAngleOverride replaces this (0°→8° drift).
+        let naturalAngle: CGFloat = isHorizontal ? 6 : 8
+        let angle = hexAngleOverride ?? naturalAngle
+
+        // Cell size scaled by hexSpacingMul (1.0 normal, 2.2 at topo-phase).
+        // 15 — base hex cell size. Rendering constant — matches SVG prototype.
+        let hexSize: CGFloat = 15 * hexSpacingMul
 
         // Cyan grid — positive rotation.
         // 0.20 — hex grid opacity. Low enough to read as texture, not structure.
@@ -326,7 +342,8 @@ private extension VaylCardBack {
             W: W, H: H,
             degrees:  angle,
             color:    AppColors.spectrumCyan,
-            opacity:  0.20
+            opacity:  0.20,
+            hexSize:  hexSize
         )
 
         // Magenta grid — negative rotation creates the moiré interference.
@@ -336,7 +353,8 @@ private extension VaylCardBack {
             W: W, H: H,
             degrees: -angle,
             color:   AppColors.spectrumMagenta,
-            opacity: 0.18
+            opacity: 0.18,
+            hexSize: hexSize
         )
     }
 }

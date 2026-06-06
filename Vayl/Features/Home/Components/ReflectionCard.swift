@@ -15,6 +15,28 @@ struct ReflectionCard: View {
     @State private var showFullPillSheet: Bool = false
     @State private var shareWithPartner: Bool = true
 
+    // Shared CTA styling — resolves the light/dark gradient ternaries once so
+    // `fullPillSheet` stays cheap to type-check (was 189ms inline).
+    private var ctaTextColor: Color { colorScheme == .light ? AppColors.textSecondary : .white }
+
+    private var ctaFill: AnyShapeStyle {
+        colorScheme == .light
+            ? AnyShapeStyle(LinearGradient(
+                colors: [AppColors.accentTertiary.opacity(0.18), AppColors.safetyAccent.opacity(0.14)],
+                startPoint: .leading, endPoint: .trailing))
+            : AnyShapeStyle(LinearGradient(
+                colors: [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
+                startPoint: .leading, endPoint: .trailing))
+    }
+
+    private var ctaBorder: AnyShapeStyle {
+        colorScheme == .light
+            ? AnyShapeStyle(LinearGradient(
+                colors: [AppColors.accentTertiary, AppColors.safetyAccent],
+                startPoint: .leading, endPoint: .trailing))
+            : AnyShapeStyle(Color.clear)
+    }
+
     var body: some View {
         switch state {
         case .hidden:
@@ -471,36 +493,14 @@ struct ReflectionCard: View {
                     } label: {
                         Text("Done")
                             .font(AppFonts.ctaLabel)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.textSecondary
-                                : .white)
+                            .foregroundStyle(ctaTextColor)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, AppSpacing.md)
                             .background {
-                                RoundedRectangle(cornerRadius: AppRadius.md)
-                                    .fill(colorScheme == .light
-                                        ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.accentTertiary.opacity(0.18),
-                                                     AppColors.safetyAccent.opacity(0.14)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing))
-                                        : AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.accentPrimary,
-                                                     AppColors.accentSecondary,
-                                                     AppColors.accentTertiary],
-                                            startPoint: .leading,
-                                            endPoint: .trailing)))
+                                RoundedRectangle(cornerRadius: AppRadius.md).fill(ctaFill)
                             }
                             .overlay {
-                                RoundedRectangle(cornerRadius: AppRadius.md)
-                                    .stroke(colorScheme == .light
-                                        ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.accentTertiary,
-                                                     AppColors.safetyAccent],
-                                            startPoint: .leading,
-                                            endPoint: .trailing))
-                                        : AnyShapeStyle(Color.clear),
-                                        lineWidth: 1)
+                                RoundedRectangle(cornerRadius: AppRadius.md).stroke(ctaBorder, lineWidth: 1)
                             }
                     }
                     .buttonStyle(.plain)
@@ -508,9 +508,7 @@ struct ReflectionCard: View {
                 }
                 .padding(AppSpacing.md)
             }
-            .background((colorScheme == .light
-                ? AppColors.pageBackground
-                : AppColors.pageBackground).ignoresSafeArea())
+            .background(AppColors.pageBackground.ignoresSafeArea())
             .navigationTitle("How did that land?")
             .navigationBarTitleDisplayMode(.inline)
         }

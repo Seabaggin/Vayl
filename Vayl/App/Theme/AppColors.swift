@@ -80,6 +80,48 @@ struct AppColors {
     )
 
     // ─────────────────────────────────────────────
+    // MARK: OB StatPhase — ethos gradient
+    //
+    // Exclusive to EthosTextView in StatPhase.
+    // Bakes the per-mode accent colors and their specific opacity values
+    // into tokens so no numeric opacity literals appear in the View layer.
+    // ─────────────────────────────────────────────
+
+    /// Ethos gradient lead stop. accentPrimary at near-opaque presence.
+    /// 10% transparency softens the hard start of the gradient sweep.
+    static let ethosGradientLead = Color.dynamic(
+        light: VaylPrimitives.magenta.withAlphaComponent(0.90),
+        dark:  VaylPrimitives.cyan.withAlphaComponent(0.90)
+    )
+
+    /// Ethos gradient trail stop. accentSecondary at softened presence.
+    /// 20% drop from lead produces a gentle luminosity fade across the short phrase.
+    static let ethosGradientTrail = Color.dynamic(
+        light: VaylPrimitives.purple.withAlphaComponent(0.80),
+        dark:  VaylPrimitives.purple.withAlphaComponent(0.80)
+    )
+
+    // ─────────────────────────────────────────────
+    // MARK: OB Flourish — decorative component
+    //
+    // These tokens are exclusive to VaylFlourishView.
+    // Sourced from the same hue palette as the "1 in 5" headline gradient
+    // so the flourish reads as an extension of that typography.
+    // ─────────────────────────────────────────────
+
+    /// Flourish gradient left stop — purple end, mirrors accentSecondary palette.
+    static let flourishLeft: Color = Color(uiColor: VaylPrimitives.purpleLight)
+
+    /// Flourish gradient midpoint — lavender bridge between purple and coral.
+    static let flourishMid: Color = Color(uiColor: VaylPrimitives.purpleBright)
+
+    /// Flourish gradient right stop — coral/pink end, mirrors accentTertiary palette.
+    static let flourishRight: Color = Color(uiColor: VaylPrimitives.magentaLight)
+
+    /// Flourish Canvas layer base opacity. Renders as subtle texture, not decoration.
+    static let flourishBaseOpacity: Double = 0.75
+
+    // ─────────────────────────────────────────────
     // MARK: OB Canvas
     //
     // These tokens are exclusive to the Onboarding canvas.

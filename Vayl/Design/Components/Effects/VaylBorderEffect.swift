@@ -267,9 +267,8 @@ private struct PillPath: Shape {
     // pixelRound is no longer a stored closure.
     // Storing a (CGFloat) -> CGFloat closure prevents automatic Equatable
     // synthesis — SwiftUI cannot short-circuit re-renders without it.
-    // UIScreen.main.scale is a single property read; the cost is negligible.
     private func pixelRound(_ value: CGFloat) -> CGFloat {
-        let scale = UIScreen.main.scale
+        let scale = UITraitCollection.current.displayScale
         return (value * scale).rounded() / scale
     }
 

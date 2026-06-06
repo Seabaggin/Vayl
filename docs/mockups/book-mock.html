@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html,body { margin:0; height:100%; background:#0a0a12; overflow:hidden; }
+  .stage { position:relative; width:340px; height:380px; margin:60px auto 0; }
+  .card  { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+           border:1px solid #2a2540; border-radius:18px;
+           background: radial-gradient(120% 90% at 50% 30%, #16121f 0%, #0a0a12 70%); }
+  .card svg { width:86%; overflow:visible; }
+  .ctl { position:fixed; bottom:24px; left:0; right:0; text-align:center; color:#8a8aa0; font:13px ui-sans-serif; }
+  input[type=range] { width:60%; }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+  <div class="ctl">
+    position <span id="pv">0.50</span><br>
+    <input id="pos" type="range" min="0" max="2" step="0.01" value="0.5">
+  </div>
+<script>
+const SPEC = `<defs><linearGradient id="spec" x1="0" y1="0" x2="800" y2="600" gradientUnits="userSpaceOnUse">
+  <stop offset="0" stop-color="#37e6ff"/><stop offset="0.5" stop-color="#9b5cff"/><stop offset="1" stop-color="#ff4fd8"/>
+</linearGradient></defs>`;
+
+const BOOK = `
+  <g stroke="url(#spec)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g opacity="0.5">
+      <path d="M 400 510 C 300 480, 120 490, 70 490 L 105 160"/>
+      <path d="M 390 490 C 300 460, 130 470, 85 470 L 115 155"/>
+      <path d="M 400 510 C 500 480, 680 490, 730 490 L 695 160"/>
+      <path d="M 410 490 C 500 460, 670 470, 715 470 L 685 155"/>
+      <path d="M 370 495 C 370 515, 430 515, 430 495"/>
+    </g>
+    <path d="M 400 150 C 300 120, 150 140, 125 150 L 100 450 C 150 440, 300 420, 400 480"/>
+    <path d="M 400 150 C 500 120, 650 140, 675 150 L 700 450 C 650 440, 500 420, 400 480"/>
+    <path stroke-width="2.5" opacity="0.6" d="M 400 150 L 400 480"/>
+    <g stroke-width="2.4" opacity="0.4">
+      <path d="M 130 190 Q 250 170 380 200"/><path d="M 125 230 Q 250 210 380 240"/>
+      <path d="M 120 270 Q 250 250 380 280"/><path d="M 115 310 Q 250 290 380 320"/>
+      <path d="M 110 350 Q 250 330 380 360"/><path d="M 105 390 Q 250 370 380 400"/>
+      <path d="M 100 430 Q 250 410 380 440"/>
+      <path d="M 550 190 Q 600 180 660 190"/><path d="M 420 230 Q 550 200 665 230"/>
+      <path d="M 420 270 Q 550 240 670 270"/><path d="M 420 310 Q 550 280 675 310"/>
+      <path d="M 420 350 Q 550 320 680 350"/><path d="M 420 390 Q 550 360 685 390"/>
+      <path d="M 420 430 Q 550 400 690 430"/>
+    </g>
+  </g>`;
+
+// Ribbon that drapes into the gutter on confirm. reveal 0→1 unfurls the tail
+// down the page; gentle outward bow near the bottom reads as draped fabric.
+let REVEAL = 1;
+function ribbon(r){
+  if (r <= 0.01) return '';
+  const topY=135, tailY=150+(440-150)*Math.min(r,1), notch=tailY-24;
+  const lx=363, rx=391, mid=(lx+rx)/2, bow=6;
+  const d = `M ${lx} ${topY}
+             C ${lx} ${topY+60}, ${lx-bow} ${tailY-70}, ${lx} ${tailY}
+             L ${mid} ${notch} L ${rx} ${tailY}
+             C ${rx+bow} ${tailY-70}, ${rx} ${topY+60}, ${rx} ${topY} Z`;
+  return `<path d="${d}" fill="#0a0a12" stroke="url(#spec)" stroke-width="3.5"
+    stroke-linecap="round" stroke-linejoin="round" opacity="${Math.min(1,r)}"/>`;
+}
+
+// A single curled page sweeping right → up over the top → left, as a real page
+// turn. t: 0 = flat on the right (merged), 1 = laid on the left (merged), 0.5 =
+// arced up over the gutter. Curl bows the sheet so it never goes flat edge-on.
+function curledPage(t){
+  const ang = t*Math.PI;                 // 0 → π
+  const c = Math.cos(ang), arc = Math.sin(ang);  // arc: 0→1→0
+  const fx  = 400 + 275*c;               // free edge X: 675 → 400 → 125
+  const fbx = 400 + 300*c;
+  const topY = 150 - arc*95;             // arcs up over the top of the book
+  const botY = 450 - arc*30;
+  const curl = arc*70 * (c>=0 ? 1 : -1); // bow toward the leading side
+  const cTop = (400+fx)/2 + curl;
+  const cBot = (400+fbx)/2 + curl;
+  const d = `M 400 150 Q ${cTop} ${topY-arc*55} ${fx} ${topY} L ${fbx} ${botY} Q ${cBot} ${botY+arc*22} 400 480 Z`;
+  const op = Math.sin(t*Math.PI)*0.95;
+  return `<path d="${d}" fill="#0a0a12" stroke="url(#spec)" stroke-width="3.5"
+    stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
+}
+
+// Full turn concentrated on the LEAVING card (delta in [-1,0)) — the page of the
+// book you're on peels up and over as you swipe away. t = -delta (0→1).
+function turnFor(delta){
+  if (delta >= -0.02 || delta < -1) return '';
+  return curledPage(-delta);
+}
+
+function svgEl(markup){
+  const doc = new DOMParser().parseFromString(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">${markup}</svg>`, 'image/svg+xml');
+  return doc.documentElement;
+}
+
+function card(delta){
+  const ad=Math.abs(delta), sign=delta>=0?1:-1, sp=300*0.33;
+  const x = ad<0.001?0: sign*(sp*0.55+ad*sp*0.55);
+  const scale=Math.max(1-ad*0.11,0.7), op=Math.max(1-ad*0.5,0), rot=delta*2.5;
+  const div=document.createElement('div'); div.className='card';
+  div.style.transform=`translateX(${x}px) translateY(${ad*300*0.07}px) scale(${scale}) rotate(${rot}deg)`;
+  div.style.opacity=op; div.style.zIndex=Math.round(100-ad*10);
+  const rib = Math.abs(delta) < 0.1 ? ribbon(REVEAL) : '';
+  div.appendChild(svgEl(`${SPEC}${BOOK}${rib}${turnFor(delta)}`));
+  return div;
+}
+
+function render(p){
+  const stage=document.getElementById('stage'); stage.replaceChildren();
+  const order=[-1,0,1,2,3].map(i=>({i,d:i-p})).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+  for(const {d} of order){ if(Math.abs(d)<=1.6) stage.appendChild(card(d)); }
+  document.getElementById('pv').textContent=p.toFixed(2);
+}
+const slider=document.getElementById('pos');
+slider.addEventListener('input',()=>render(parseFloat(slider.value)));
+window.render=render;
+window.setReveal=(r)=>{ REVEAL=r; render(parseFloat(slider.value)); };
+render(0);
+</script>
+</body>
+</html>

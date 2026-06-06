@@ -77,81 +77,89 @@ struct OrbLayer: View {
             EmptyView()
         } else {
             GeometryReader { geo in
-                let W = geo.size.width
-                let H = geo.size.height
-
-                let aSize:   CGSize    = variant == .pulse
-                    ? CGSize(width: 220, height: 180)
-                    : CGSize(width: 200, height: 160)
-                let aAnchor: UnitPoint = variant == .pulse
-                    ? UnitPoint(x: 0.15, y: 0.22)
-                    : UnitPoint(x: 0.20, y: 0.25)
-                let aDriftX: Double  = variant == .pulse ? 0.10 : 0.12
-                let aDriftY: Double  = variant == .pulse ? 0.12 : 0.14
-                let aBlur:   CGFloat = variant == .pulse ? 18   : 20
-                let aOpMin:  Double  = variant == .pulse ? 0.14 : 0.12
-                let aOpMax:  Double  = variant == .pulse ? 0.35 : 0.32
-
+                let W: CGFloat = geo.size.width
+                let H: CGFloat = geo.size.height
                 TimelineView(.animation) { tl in
-                    let t = tl.date.timeIntervalSinceReferenceDate
-
+                    let t: Double = tl.date.timeIntervalSinceReferenceDate
                     ZStack {
-                        let axPhase = t * 0.22
-                        let ayPhase = t * 0.18 + 1.0
-                        let aBreath = (sin(t * 0.45) + 1) / 2
-                        let aOp     = aOpMin + aBreath * (aOpMax - aOpMin)
-
-                        Ellipse()
-                            .fill(
-                                RadialGradient(
-                                    stops: [
-                                        .init(color: accentColor.opacity(aOp),       location: 0.00),
-                                        .init(color: accentColor.opacity(aOp * 0.4), location: 0.55),
-                                        .init(color: .clear,                          location: 1.00),
-                                    ],
-                                    center:      .center,
-                                    startRadius: 0,
-                                    endRadius:   max(aSize.width, aSize.height) * 0.5
-                                )
-                            )
-                            .frame(width: aSize.width, height: aSize.height)
-                            .position(
-                                x: W * (aAnchor.x + sin(axPhase) * aDriftX),
-                                y: H * (aAnchor.y + sin(ayPhase) * aDriftY)
-                            )
-                            .blur(radius: aBlur)
-
+                        primaryOrb(t: t, w: W, h: H)
                         ForEach(Array(orbs.enumerated()), id: \.offset) { i, spec in
-                            let p1     = t * spec.speed + spec.phaseOffset
-                            let p2     = t * (spec.speed - 0.04) + spec.phaseOffset + 2.1
-                            let breath = (sin(t * (0.38 - Double(i) * 0.07) + spec.phaseOffset) + 1) / 2
-                            let op     = spec.opMin + breath * (spec.opMax - spec.opMin)
-
-                            Ellipse()
-                                .fill(
-                                    RadialGradient(
-                                        stops: [
-                                            .init(color: spec.color.opacity(op),       location: 0.00),
-                                            .init(color: spec.color.opacity(op * 0.4), location: 0.55),
-                                            .init(color: .clear,                        location: 1.00),
-                                        ],
-                                        center:      .center,
-                                        startRadius: 0,
-                                        endRadius:   max(spec.size.width, spec.size.height) * 0.5
-                                    )
-                                )
-                                .frame(width: spec.size.width, height: spec.size.height)
-                                .position(
-                                    x: W * (spec.anchor.x + sin(p1) * spec.driftX),
-                                    y: H * (spec.anchor.y + sin(p2) * spec.driftY)
-                                )
-                                .blur(radius: spec.blur)
+                            secondaryOrb(spec: spec, index: i, t: t, w: W, h: H)
                         }
                     }
                 }
             }
             .allowsHitTesting(false)
         }
+    }
+
+    /// Breathing primary orb — anchor/size/drift vary by `variant`.
+    /// Math is isolated here so the `body` result-builder stays trivial to type-check.
+    @ViewBuilder
+    private func primaryOrb(t: Double, w W: CGFloat, h H: CGFloat) -> some View {
+        let aSize:   CGSize    = variant == .pulse
+            ? CGSize(width: 220, height: 180)
+            : CGSize(width: 200, height: 160)
+        let aAnchor: UnitPoint = variant == .pulse
+            ? UnitPoint(x: 0.15, y: 0.22)
+            : UnitPoint(x: 0.20, y: 0.25)
+        let aDriftX: Double  = variant == .pulse ? 0.10 : 0.12
+        let aDriftY: Double  = variant == .pulse ? 0.12 : 0.14
+        let aBlur:   CGFloat = variant == .pulse ? 18   : 20
+        let aOpMin:  Double  = variant == .pulse ? 0.14 : 0.12
+        let aOpMax:  Double  = variant == .pulse ? 0.35 : 0.32
+
+        let axPhase: Double = t * 0.22
+        let ayPhase: Double = t * 0.18 + 1.0
+        let aBreath: Double = (sin(t * 0.45) + 1) / 2
+        let aOp:     Double = aOpMin + aBreath * (aOpMax - aOpMin)
+        let posX: CGFloat = W * CGFloat(Double(aAnchor.x) + sin(axPhase) * aDriftX)
+        let posY: CGFloat = H * CGFloat(Double(aAnchor.y) + sin(ayPhase) * aDriftY)
+
+        Ellipse()
+            .fill(
+                RadialGradient(
+                    stops: [
+                        .init(color: accentColor.opacity(aOp),       location: 0.00),
+                        .init(color: accentColor.opacity(aOp * 0.4), location: 0.55),
+                        .init(color: .clear,                          location: 1.00),
+                    ],
+                    center:      .center,
+                    startRadius: 0,
+                    endRadius:   max(aSize.width, aSize.height) * 0.5
+                )
+            )
+            .frame(width: aSize.width, height: aSize.height)
+            .position(x: posX, y: posY)
+            .blur(radius: aBlur)
+    }
+
+    /// Drifting secondary orb driven by its `OrbSpec`. Isolated for type-check speed.
+    @ViewBuilder
+    private func secondaryOrb(spec: OrbSpec, index i: Int, t: Double, w W: CGFloat, h H: CGFloat) -> some View {
+        let p1:     Double = t * spec.speed + spec.phaseOffset
+        let p2:     Double = t * (spec.speed - 0.04) + spec.phaseOffset + 2.1
+        let breath: Double = (sin(t * (0.38 - Double(i) * 0.07) + spec.phaseOffset) + 1) / 2
+        let op:     Double = spec.opMin + breath * (spec.opMax - spec.opMin)
+        let posX: CGFloat = W * CGFloat(Double(spec.anchor.x) + sin(p1) * spec.driftX)
+        let posY: CGFloat = H * CGFloat(Double(spec.anchor.y) + sin(p2) * spec.driftY)
+
+        Ellipse()
+            .fill(
+                RadialGradient(
+                    stops: [
+                        .init(color: spec.color.opacity(op),       location: 0.00),
+                        .init(color: spec.color.opacity(op * 0.4), location: 0.55),
+                        .init(color: .clear,                        location: 1.00),
+                    ],
+                    center:      .center,
+                    startRadius: 0,
+                    endRadius:   max(spec.size.width, spec.size.height) * 0.5
+                )
+            )
+            .frame(width: spec.size.width, height: spec.size.height)
+            .position(x: posX, y: posY)
+            .blur(radius: spec.blur)
     }
 }
 

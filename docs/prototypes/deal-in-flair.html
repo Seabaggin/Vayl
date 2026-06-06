@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Deal-in Flair Reference</title>
+<style>
+  :root {
+    --void: #07070c;
+    --panel: #11111b;
+    --cyan: #00c2ff;
+    --purple: #6c3ae0;
+    --magenta: #ff006a;
+    --text: #e7e7f0;
+    --muted: #8a8a9a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%;
+    background: var(--void);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .wrap { display: flex; height: 100vh; }
+  .stage {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(120% 80% at 50% 18%, #14141f 0%, #07070c 60%);
+  }
+  canvas {
+    border-radius: 28px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    background: #05050a;
+  }
+  .panel {
+    width: 360px; background: var(--panel); padding: 20px 22px;
+    overflow-y: auto; border-left: 1px solid #1e1e2c;
+  }
+  h1 { font-size: 15px; letter-spacing: 0.5px; margin: 0 0 4px; }
+  .sub { font-size: 11px; color: var(--muted); margin: 0 0 18px; line-height: 1.4; }
+  .ctl { margin-bottom: 16px; }
+  .ctl label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+  .ctl label b { color: var(--cyan); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--purple); }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 16px; }
+  button {
+    background: linear-gradient(90deg, var(--cyan), var(--purple), var(--magenta));
+    color: white; border: 0; border-radius: 10px; padding: 10px 14px;
+    font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;
+  }
+  button.ghost { background: #1e1e2c; color: var(--text); }
+  .btns { display: flex; gap: 10px; margin: 6px 0 18px; }
+  .out {
+    background: #07070c; border: 1px solid #1e1e2c; border-radius: 10px;
+    padding: 12px; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px; line-height: 1.5; white-space: pre; color: #b8b8c8;
+    overflow-x: auto;
+  }
+  .hint { font-size: 11px; color: var(--muted); margin: 4px 0 18px; line-height: 1.4; }
+  hr { border: 0; border-top: 1px solid #1e1e2c; margin: 18px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage"><canvas id="c"></canvas></div>
+  <div class="panel">
+    <h1>Deal-in Flair Reference</h1>
+    <p class="sub">Replicates <b>CardFlightScene</b>'s two-phase easing + the proposed
+      arc/spin/overshoot. Dial the feel, then copy the Swift values below into
+      <b>CardThreeMonte.deal()</b> / <b>CardFlightScene.dealCard()</b>.</p>
+
+    <div class="btns">
+      <button id="replay">Replay deal</button>
+      <button id="loop" class="ghost">Loop: ON</button>
+    </div>
+
+    <div class="ctl">
+      <label>Arc height <b id="arcV"></b></label>
+      <input type="range" id="arc" min="0" max="20" step="0.5" value="8" />
+    </div>
+    <div class="ctl">
+      <label>Entry tilt (spin start) <b id="tiltV"></b></label>
+      <input type="range" id="tilt" min="-40" max="40" step="1" value="14" />
+    </div>
+    <div class="ctl">
+      <label>Flight duration <b id="durV"></b></label>
+      <input type="range" id="dur" min="250" max="800" step="10" value="450" />
+    </div>
+    <div class="ctl">
+      <label>Stagger between cards <b id="stagV"></b></label>
+      <input type="range" id="stag" min="0" max="400" step="10" value="180" />
+    </div>
+
+    <hr />
+
+    <div class="toggle">
+      <input type="checkbox" id="over" checked />
+      <label for="over" style="margin:0">Overshoot (skid past, snap back)</label>
+    </div>
+    <div class="ctl">
+      <label>Overshoot amount <b id="ovaV"></b></label>
+      <input type="range" id="ova" min="1.0" max="1.30" step="0.01" value="1.17" />
+    </div>
+
+    <hr />
+
+    <div class="ctl">
+      <label>Impact point (landingT) <b id="ltV"></b></label>
+      <input type="range" id="lt" min="0.05" max="0.40" step="0.01" value="0.10" />
+    </div>
+    <div class="ctl">
+      <label>Landing distance (landingFrac) <b id="lfV"></b></label>
+      <input type="range" id="lf" min="0.15" max="0.55" step="0.01" value="0.30" />
+    </div>
+    <p class="hint">landingT = when the card "contacts" the table (fraction of flight).
+      landingFrac = how far along it is at contact; the rest is felt-slide.</p>
+
+    <hr />
+    <h1 style="font-size:13px;">Swift values</h1>
+    <div class="out" id="out"></div>
+  </div>
+</div>
+
+<script>
+// ── Phone geometry (mirrors AppLayout, iPhone-class 393×852) ──────────────
+const PHONE_W = 393, PHONE_H = 852;
+const cardW = Math.min(PHONE_W * 0.42, 280);   // obFanCardWidth
+const cardH = cardW * 1.5;                      // obFanCardHeight
+const dx    = cardW * 0.46;                      // fan spread
+const rise  = cardH * 0.04;                      // outer-card lift
+const DEAL_Y_FRAC = 0.32;                        // dealPointYFrac
+const FAN_CENTER_Y = PHONE_H * 0.67;             // obTableCardCenterY (arcPeak 0.34)
+
+// Fan slots: offset-from-center (x,y) + final angle in SCREEN degrees (CW+).
+const FAN = [
+  { ox: -dx, oy: -rise, ang: -12 },  // slot 0 — left
+  { ox:   0, oy:    0,  ang:   0 },  // slot 1 — center (on top)
+  { ox:  dx, oy: -rise, ang:  12 },  // slot 2 — right
+];
+const DEAL_ORDER = [0, 2, 1];        // left, right, center-last
+const SPLIT_T = 0.70;                // overshoot skid/snap split (matches Swift)
+
+// ── Controls ──────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const ctrls = {
+  arc: $('arc'), tilt: $('tilt'), dur: $('dur'), stag: $('stag'),
+  over: $('over'), ova: $('ova'), lt: $('lt'), lf: $('lf'),
+};
+function P() {
+  return {
+    arcPct: +ctrls.arc.value,
+    tiltDeg: +ctrls.tilt.value,
+    durMs: +ctrls.dur.value,
+    stagMs: +ctrls.stag.value,
+    over: ctrls.over.checked,
+    ova: +ctrls.ova.value,
+    lt: +ctrls.lt.value,
+    lf: +ctrls.lf.value,
+  };
+}
+function syncLabels() {
+  const p = P();
+  $('arcV').textContent  = p.arcPct.toFixed(1) + '% (' + Math.round(PHONE_H * p.arcPct/100) + 'pt)';
+  $('tiltV').textContent = p.tiltDeg + '°';
+  $('durV').textContent  = p.durMs + ' ms';
+  $('stagV').textContent = p.stagMs + ' ms';
+  $('ovaV').textContent  = '×' + p.ova.toFixed(2);
+  $('ltV').textContent   = p.lt.toFixed(2);
+  $('lfV').textContent   = p.lf.toFixed(2);
+  $('ova').disabled = !p.over;
+  updateSwift();
+}
+Object.values(ctrls).forEach(c => c.addEventListener('input', syncLabels));
+
+// ── Easing (verbatim port of CardFlightScene.dealCard) ──────────────────────
+function positionFrac(t, p) {
+  if (t < p.lt) {
+    const tN = t / p.lt;
+    return (tN * tN * tN) * p.lf;          // power-3 ease-in flight
+  }
+  const tN = (t - p.lt) / (1.0 - p.lt);
+  if (p.over && tN < SPLIT_T) {
+    const tA = tN / SPLIT_T, inv = 1 - tA;
+    const slideA = 1 - inv * inv;
+    return p.lf + (1 - p.lf) * slideA * p.ova;
+  } else if (p.over && tN >= SPLIT_T) {
+    const tB = (tN - SPLIT_T) / (1 - SPLIT_T), inv = 1 - tB;
+    const snap = p.ova - (p.ova - 1) * (1 - inv * inv * inv);
+    return p.lf + (1 - p.lf) * snap;
+  } else {
+    const inv = 1 - tN;
+    const slide = 1 - inv * inv * inv * inv;  // power-2->4 ease-out
+    return p.lf + (1 - p.lf) * slide;
+  }
+}
+function rotSlide(t) { const inv = 1 - t; return 1 - inv*inv*inv*inv*inv; } // power-5
+
+// ── Animation state ─────────────────────────────────────────────────────────
+let startTime = null, looping = true;
+function beginDeal() { startTime = performance.now(); }
+
+$('replay').onclick = beginDeal;
+$('loop').onclick = () => {
+  looping = !looping;
+  $('loop').textContent = 'Loop: ' + (looping ? 'ON' : 'OFF');
+  $('loop').classList.toggle('ghost', !looping);
+};
+
+// ── Canvas setup ────────────────────────────────────────────────────────────
+const canvas = $('c'), ctx = canvas.getContext('2d');
+function fitCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const maxH = window.innerHeight - 40;
+  const scale = maxH / PHONE_H;
+  canvas.style.width = (PHONE_W * scale) + 'px';
+  canvas.style.height = (PHONE_H * scale) + 'px';
+  canvas.width = PHONE_W * dpr;
+  canvas.height = PHONE_H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', fitCanvas);
+
+// ── Card-back drawing ───────────────────────────────────────────────────────
+function spectrumStroke(x0, y0, x1, y1) {
+  const g = ctx.createLinearGradient(x0, y0, x1, y1);
+  g.addColorStop(0, '#00c2ff'); g.addColorStop(0.5, '#6c3ae0'); g.addColorStop(1, '#ff006a');
+  return g;
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function drawCardBack(cx, cy, angDeg) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angDeg * Math.PI / 180);
+  const w = cardW, h = cardH, x = -w/2, y = -h/2, r = 14;
+  // fill
+  ctx.fillStyle = '#0a0a14';
+  roundRect(x, y, w, h, r); ctx.fill();
+  // outer spectrum border (glow)
+  ctx.lineWidth = 6; ctx.globalAlpha = 0.22;
+  ctx.strokeStyle = spectrumStroke(x, y, x, y + h);
+  roundRect(x + 5, y + 5, w - 10, h - 10, r); ctx.stroke();
+  // crisp border
+  ctx.globalAlpha = 0.9; ctx.lineWidth = 1.4;
+  roundRect(x + 5, y + 5, w - 10, h - 10, r); ctx.stroke();
+  // inner monogram diamond
+  ctx.globalAlpha = 0.7; ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(0, -h*0.12); ctx.lineTo(w*0.10, 0);
+  ctx.lineTo(0, h*0.12); ctx.lineTo(-w*0.10, 0); ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+function drawDealerPoint() {
+  const x = PHONE_W/2, y = PHONE_H * DEAL_Y_FRAC;
+  ctx.save();
+  ctx.globalAlpha = 0.35; ctx.fillStyle = '#6c3ae0';
+  ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+// ── Main loop ───────────────────────────────────────────────────────────────
+function frame(now) {
+  const p = P();
+  ctx.clearRect(0, 0, PHONE_W, PHONE_H);
+  drawDealerPoint();
+
+  if (startTime === null) startTime = now;
+  const elapsed = now - startTime;
+  const dealerX = PHONE_W/2, dealerY = PHONE_H * DEAL_Y_FRAC;
+
+  // total sequence length: last card starts at (order index * stagger), flies dur.
+  const lastStart = (DEAL_ORDER.length - 1) * p.stagMs;
+  const seqEnd = lastStart + p.durMs;
+  const HOLD = 900;
+
+  // Draw in fan z-order (slot 0 bottom, 2 mid, 1 top) — DEAL_ORDER independent.
+  const drawSlots = [0, 2, 1];
+  for (const slot of drawSlots) {
+    const fan = FAN[slot];
+    const restX = PHONE_W/2 + fan.ox;
+    const restY = FAN_CENTER_Y + fan.oy;
+    const orderIdx = DEAL_ORDER.indexOf(slot);
+    const cardStart = orderIdx * p.stagMs;
+    const tMs = elapsed - cardStart;
+
+    if (tMs < 0) continue;                 // not dealt yet — invisible
+    if (tMs >= p.durMs) {                   // landed — resting back
+      drawCardBack(restX, restY, fan.ang);
+      continue;
+    }
+    // in flight
+    const t = tMs / p.durMs;
+    const pf = positionFrac(t, p);
+    const fx = dealerX + (restX - dealerX) * pf;
+    let   fy = dealerY + (restY - dealerY) * pf;
+    fy -= (PHONE_H * p.arcPct/100) * Math.sin(pf * Math.PI);  // parabolic lift
+    // rotation: entry tilt -> final fan angle, power-5 ease-out
+    const ang = p.tiltDeg + (fan.ang - p.tiltDeg) * rotSlide(t);
+    drawCardBack(fx, fy, ang);
+  }
+
+  if (looping && elapsed > seqEnd + HOLD) startTime = now;
+  requestAnimationFrame(frame);
+}
+
+function updateSwift() {
+  const p = P();
+  const arcExpr = (p.arcPct/100).toFixed(3);
+  const initRad = (-p.tiltDeg * Math.PI / 180).toFixed(3);
+  const txt =
+`// CardThreeMonte.deal() — per card:
+flightScene.pendingShouldOvershoot = ${p.over}
+flightScene.dealCard(
+    id:           "monte-\\(slot)",
+    image:        backImage,
+    from:         dealerSK,
+    to:           destSK,
+    initialAngle: ${initRad},          // ${p.tiltDeg}° screen entry tilt
+    finalAngle:   CGFloat(-fan[slot].angle * .pi / 180),
+    arcHeight:    screenSize.height * ${arcExpr},   // ${p.arcPct}%
+    zPosition:    CGFloat(zIndices[slot]),
+    duration:     ${(p.durMs/1000).toFixed(2)}
+)
+// stagger between deals: ${p.stagMs} ms
+
+// CardFlightScene.dealCard() constants:
+let landingT    = ${p.lt.toFixed(2)}
+let landingFrac = ${p.lf.toFixed(2)}
+let overshootAmount = ${p.over ? p.ova.toFixed(2) : '1.00'}  // Double.random near this`;
+  $('out').textContent = txt;
+}
+
+fitCanvas();
+syncLabels();
+beginDeal();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

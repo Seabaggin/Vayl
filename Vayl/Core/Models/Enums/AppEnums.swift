@@ -48,17 +48,14 @@ enum NMStage: String, CaseIterable, Codable {
 /// The mode the user selected in ModeSelectView.
 /// Drives onboarding path, tab structure, and content routing.
 /// Mutable — user can switch between together and solo in Settings.
-/// browsing users cannot switch to together/solo without completing full onboarding.
 enum AppMode: String, CaseIterable, Codable {
     case together   // both partners talked, doing this as a couple
     case solo       // in a relationship, conversation hasn't happened yet
-    case browsing   // just looking, two-tab experience
 
     var displayName: String {
         switch self {
         case .together: return "Shared Journey"
         case .solo:     return "Solo Discovery"
-        case .browsing: return "Safe Learning"
         }
     }
 }
@@ -80,21 +77,125 @@ enum PronounOption: String, CaseIterable, Identifiable, Hashable {
     var id: String { rawValue }
 }
 
-/// How this user experiences emotional content.
+/// How this user wants to feel — the aspirational register.
+/// Written EXCLUSIVELY by CompassPhase Q3. ContextPhase never touches this.
 /// Collected during onboarding. Lives on UserProfile.
 /// User-adjustable in Settings at any time.
+/// Governs tone and warmth of card copy — never content category or pacing.
 enum EmotionalRegister: String, CaseIterable, Codable {
-    case anxious    // reassurance-first, safety-focused
-    case excited    // expansion-first, pleasure-focused
-    case flexible   // calibrated blend — default
+    case anxious    // "I want to feel safer"      → reassurance-first tone
+    case excited    // "I want to feel more alive" → expansion-first tone
+    case flexible   // midpoint / neither          → clarity-first tone
+    case unknown    // "Honestly, I'm not sure yet" → defers to AgencySignal
 
     var displayName: String {
         switch self {
         case .anxious:  return "Thoughtful"
         case .excited:  return "Expansive"
         case .flexible: return "Flexible"
+        case .unknown:  return "Unsure"
         }
     }
+
+    /// Maps a Q3 slider value (0.0 = "I want to feel safer" … 1.0 = "more alive")
+    /// to a register. 0–35% → .anxious · 36–64% → .flexible · 65–100% → .excited.
+    /// `.unknown` is set separately via the "not sure yet" escape — never the slider.
+    static func from(sliderValue v: Double) -> EmotionalRegister {
+        switch v {
+        case ..<0.36: return .anxious
+        case 0.65...: return .excited
+        default:      return .flexible
+        }
+    }
+}
+
+/// How chosen being here feels for this user — CompassPhase Q1.
+/// The most load-bearing Compass signal: governs personal pacing and, in couple
+/// mode, sets the shared-deck pacing floor (slowest partner governs — never averaged).
+/// Written EXCLUSIVELY by CompassPhase Q1. Never shown to the user as a label.
+enum AgencySignal: String, CaseIterable, Codable {
+    case fullyIn       // "I'm genuinely excited about this"
+    case cautiouslyIn  // "I'm curious but a little nervous"
+    case hesitant      // "I'm here, but I'm not totally sure yet"
+    case goingAlong    // "Honestly, I'm going along with it"
+
+    var label: String {
+        switch self {
+        case .fullyIn:      return "I'm genuinely excited about this"
+        case .cautiouslyIn: return "I'm curious but a little nervous"
+        case .hesitant:     return "I'm here, but I'm not totally sure yet"
+        case .goingAlong:   return "Honestly, I'm going along with it"
+        }
+    }
+
+    /// Dealt-card order for the 2×2 grid (reading order: top-left → bottom-right).
+    static var ordered: [AgencySignal] { [.fullyIn, .cautiouslyIn, .hesitant, .goingAlong] }
+}
+
+/// What would feel like a win for this user — CompassPhase Q2.
+/// Drives card-category priority individually; in couple mode the gap between
+/// partners' motivations seeds the first shared deck topic. ONE enum — the option
+/// SET shown depends on appMode. Written EXCLUSIVELY by CompassPhase Q2.
+enum MotivationShape: String, CaseIterable, Codable {
+    case connection       // couple: "Understanding my partner better"
+    case selfClarity      // both:   "Feeling more confident in myself" / "…about all of this"
+    case alignment        // couple: "Finding a pace that works for both of us"
+    case selfDiscovery    // both:   "Figuring out / Knowing what I actually want"
+    case readiness        // solo:   "Finding the words to bring this up"
+    case openExploration  // solo:   "Just exploring — no agenda yet"
+
+    /// Couple-mode option order (top-left → bottom-right).
+    static var coupleOptions: [MotivationShape] { [.connection, .selfClarity, .alignment, .selfDiscovery] }
+    /// Solo-mode option order.
+    static var soloOptions:   [MotivationShape] { [.selfDiscovery, .readiness, .selfClarity, .openExploration] }
+
+    /// Option order for the given app mode.
+    static func options(for mode: AppMode) -> [MotivationShape] {
+        mode == .together ? coupleOptions : soloOptions
+    }
+
+    /// Mode-dependent label — selfClarity / selfDiscovery read differently per mode.
+    func label(for mode: AppMode) -> String {
+        switch (self, mode) {
+        case (.connection, _):            return "Understanding my partner better"
+        case (.alignment, _):             return "Finding a pace that works for both of us"
+        case (.readiness, _):             return "Finding the words to bring this up"
+        case (.openExploration, _):       return "Just exploring — no agenda yet"
+        case (.selfClarity, .together):   return "Feeling more confident in myself"
+        case (.selfClarity, _):           return "Feeling more confident about all of this"
+        case (.selfDiscovery, .together): return "Figuring out what I actually want"
+        case (.selfDiscovery, _):         return "Knowing what I actually want"
+        }
+    }
+}
+
+/// What situation this user is dealing with — the situational register.
+/// Written EXCLUSIVELY by ContextPhase (derived from the chosen option).
+/// Distinct from EmotionalRegister (Compass Q3): different field, no overlap.
+/// Governs content category weights and deck topic priority — never tone or pacing.
+enum SituationalRegister: String, CaseIterable, Codable {
+    case anxious    // hard situation / needs repair
+    case excited    // momentum / moving forward
+    case flexible   // early or neutral — default
+}
+
+/// Where this user's relationship actually stands — the concrete starting point.
+/// Written EXCLUSIVELY by ContextPhase (1:1 with the chosen option).
+/// Together and solo modes draw from disjoint subsets of these cases.
+/// Governs the content category entry point.
+enum RelationshipContext: String, CaseIterable, Codable {
+    // Solo × Curious
+    case singleCurious, partneredSupportiveCurious, partneredUndisclosed, partneredHesitantCurious, soloCuriousUndecided
+    // Solo × Exploring
+    case singleExploring, partneredHandsOff, multipleUndefined, soloExploringUndecided
+    // Solo × Experienced
+    case singleExperienced, partneredAware, soloPolyIndependent, soloExperiencedUndecided
+    // Couple × Curious — first-person: initiator / processing capture asymmetry by comparison
+    case coupleSymmetricCurious, coupleInitiatorCurious, coupleProcessingCurious, coupleStalledConversation, coupleCuriousUndecided
+    // Couple × Exploring
+    case coupleSolidifying, coupleReorienting, coupleParallelExploring, coupleExploringUndecided
+    // Couple × Experienced
+    case coupleFreshIntentional, coupleSkillBuilding, coupleEvolving, coupleExperiencedUndecided
 }
 
 /// Internal routing tag. Never shown to the user in any form.
@@ -112,57 +213,7 @@ enum ArchetypeTag: String, Codable {
     case builder
 }
 
-// ─────────────────────────────────────────────────────────────
-// MARK: - OB Canvas
-//
-// These enums are exclusive to the Onboarding canvas system.
-// They must never be referenced in main-app features.
-// VaylDirector is the only thing that reads and writes OBPhase.
-// Phase overlays read director.phase — they never hold it.
-// ─────────────────────────────────────────────────────────────
 
-/// The complete sequence of phases in the Onboarding canvas.
-/// VaylDirector advances through these in order.
-/// No phase may be skipped — each has a gate condition.
-/// intro and appArrival have no overlay — the canvas itself is the content.
-enum OBPhase {
-    case stat               // "1 in 5", "Ready to begin?", fade to black
-    case name               // card deals/flips/lifts, name form, swipe up → deck[1]
-    case gender             // same pattern, gender pills, swipe up → deck[2]
-    case modeSelect         // 3 cards, dealer line, raise-confirm → deck[3]
-    case experienceLevel    // weave shuffle, fan, 3 cards, raise-confirm → deck[4]
-    case context            // deal, hand raise, carousel, swipe up → deck[5]
-    case quiz               // mid-arc flip, full-bleed, dissolves — no deck card
-    case curiosityRound1    // 5 cards, select freely, swipe up → deck partial
-    case curiosityRound2    // 5 new cards, select freely, swipe up → deck[6] full
-    case buildingPath       // slot machine copy, deck assembles, foil wraps
-    case foil               // tap to tear 3-5×, spectrum particles, deck revealed
-    case founderLetter      // letter rises, reads, single swipe → app arrives
-    case appArrival         // home screen rises, table fades, OB done — no overlay
-}
-
-/// The data credentials collected across all OB phases.
-/// Each case maps to exactly one field on OnboardingData.
-/// Used to tag VaylCardModel with what credential it carries
-/// when it pockets to the corner deck.
-/// CaseIterable allows the corner deck to verify all six are present.
-enum OBCredential: String, CaseIterable {
-    case name               // OnboardingData.displayName — deck[1]
-    case gender             // OnboardingData.genderIdentity — deck[2]
-    case mode               // OnboardingData.appMode — deck[3]
-    case experienceLevel    // OnboardingData.nmStage — deck[4]
-    case context            // OnboardingData.emotionalRegister — deck[5]
-    case curiosity          // OnboardingData.curiositySelections — deck[6]
-}
-
-/// Which opener deck sequence is assigned after OB data collection.
-/// Evaluated silently by VaylDirector.evaluateOpenerDeckType() at the
-/// end of CuriosityPhase round 2. Never shown to the user in any form.
-/// Drives card sequencing and tone in the first session deck.
-enum OpenerDeckType: String, Codable {
-    case anxious    // lower stakes, builds safety first — emotionalRegister == anxious + fewer curiosity selections
-    case excited    // goes deeper faster — all other signal combinations
-}
 
 // ─────────────────────────────────────────────────────────────
 // MARK: - Home State
@@ -197,515 +248,7 @@ extension PartnerChipState: Equatable {
     }
 }
 
-/// State of the Desire Map indicator on the home dashboard.
-/// Computed by HomeEventEngine. Never stored directly.
-enum DesireMapState {
-    case hidden                                             // partner not yet linked
-    case gated                                              // linked but neither has started
-    case yourTurn                                           // this user has not completed
-    case youDone(partnerName: String)                       // this user done, partner not yet
-    case waiting                                            // generic waiting state
-    case bothReady                                          // both complete, reveal not triggered
-    case freeRevealSeen(matchCount: Int)                    // free reveal viewed
-    case matchReady                                         // paywall cleared, ready to show
-    case redoInProgress(partnerName: String, matchCount: Int) // redo underway
-    case revealed                                           // full reveal complete
-    case fullyUnlocked                                      // all access granted
-}
 
-extension DesireMapState: Equatable {
-    static func == (lhs: DesireMapState, rhs: DesireMapState) -> Bool {
-        switch (lhs, rhs) {
-        case (.hidden, .hidden),
-             (.gated, .gated),
-             (.yourTurn, .yourTurn),
-             (.waiting, .waiting),
-             (.bothReady, .bothReady),
-             (.matchReady, .matchReady),
-             (.revealed, .revealed),
-             (.fullyUnlocked, .fullyUnlocked):
-            return true
-        case (.youDone(let a), .youDone(let b)):
-            return a == b
-        case (.freeRevealSeen(let a), .freeRevealSeen(let b)):
-            return a == b
-        case (.redoInProgress(let a, let b), .redoInProgress(let c, let d)):
-            return a == c && b == d
-        default:
-            return false
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────
-// MARK: - Card System
-// ─────────────────────────────────────────────────────────────
-
-/// What kind of card this is.
-/// Determines how the session renders it and what mechanic fires.
-enum CardType: String, CaseIterable, Codable {
-
-    // ── Conversation ──────────────────────────────────────────
-    case prompt         // standard discussion card
-    case reflect        // individual reflection before sharing
-
-    // ── Reveal mechanics (Living Cards) ───────────────────────
-    case whisper        // both type privately → simultaneous reveal
-    case unspoken       // both place on spectrum → simultaneous reveal
-    case mirror         // A answers for self, B guesses A's answer → reveal
-    case snapshot       // one word only, both private, simultaneous reveal
-
-    // ── Playful & generative ──────────────────────────────────
-    case dare           // small physical or verbal act done together now
-    case greenLight     // one partner names want, other says "tell me more"
-    case whatIf         // one hypothetical, whisper mechanic underneath
-
-    // ── Emotional temperature ─────────────────────────────────
-    case appreciationInterrupt  // tonal reset after heavy cards
-    case permissionCard         // statement of permission, not a question
-    case bodyCheck              // locate where conversation lives physically
-    case coolOff                // warm connecting card, pressure valve
-
-    // ── Memory & time ─────────────────────────────────────────
-    case timeCapsule    // sealed, returns in 30/60/90 days
-    case echo           // pulls quote from earlier session as prompt
-    case callback       // references a card marked not ready previously
-    case beforeAfter    // same question at start and end of deck
-
-    // ── Shared creation ───────────────────────────────────────
-    case sharedCanvas   // both contribute to same artifact simultaneously
-    case spectrum       // both place on same visual axis simultaneously
-    case wordCloud      // both add words to shared cloud in real time
-
-    // ── Structural & ceremonial ───────────────────────────────
-    case openingRitual  // moment before card one
-    case closingRitual  // final card — each deck gets its own, never reused
-    case pause          // designed silence, no prompt
-}
-
-/// Emotional intensity of a card or deck.
-/// 8 levels — void is entry, supernova is most intense.
-/// Int rawValue enables sorting and range checks.
-/// Visual properties live in AppColors.swift as an extension.
-enum CardIntensity: Int, CaseIterable, Identifiable, Codable, Comparable {
-    case void        = 1
-    case deepOcean   = 2
-    case emberFloor  = 3
-    case split       = 4
-    case nebula      = 5
-    case auroraBand  = 6
-    case deepSpace   = 7
-    case supernova   = 8
-
-    var id: Int { rawValue }
-
-    static func < (lhs: CardIntensity, rhs: CardIntensity) -> Bool {
-        lhs.rawValue < rhs.rawValue
-    }
-
-    var displayName: String {
-        switch self {
-        case .void:        return "Void"
-        case .deepOcean:   return "Deep Ocean"
-        case .emberFloor:  return "Ember Floor"
-        case .split:       return "Split"
-        case .nebula:      return "Nebula"
-        case .auroraBand:  return "Aurora Band"
-        case .deepSpace:   return "Deep Space"
-        case .supernova:   return "Supernova"
-        }
-    }
-
-    var difficultyLabel: String {
-        switch self {
-        case .void, .deepOcean:         return "Easy"
-        case .emberFloor, .split:       return "Medium"
-        case .nebula, .auroraBand:      return "Deep"
-        case .deepSpace:                return "Sensitive"
-        case .supernova:                return "Ultimate"
-        }
-    }
-
-    /// Maps a string difficulty label from JSON content to an intensity level.
-    static func from(difficulty: String) -> CardIntensity {
-        switch difficulty.lowercased() {
-        case "easy":      return .void
-        case "light":     return .deepOcean
-        case "medium":    return .split
-        case "deep":      return .nebula
-        case "sensitive": return .deepSpace
-        case "ultimate":  return .supernova
-        default:          return .deepOcean
-        }
-    }
-
-    /// Maps a numeric score to an intensity level.
-    static func from(score: Int) -> CardIntensity {
-        switch score {
-        case 1...2:  return .void
-        case 3:      return .deepOcean
-        case 4:      return .emberFloor
-        case 5:      return .split
-        case 6:      return .nebula
-        case 7:      return .auroraBand
-        case 8:      return .deepSpace
-        case 9...10: return .supernova
-        default:     return .deepOcean
-        }
-    }
-}
-
-/// Per-card result status tracked in CardResult.
-enum CardStatus: String, CaseIterable, Codable {
-    case discussed
-    case skipped
-    case bookmarked
-
-    var displayName: String {
-        switch self {
-        case .discussed:  return "Discussed"
-        case .skipped:    return "Skipped"
-        case .bookmarked: return "Bookmarked"
-        }
-    }
-}
-
-/// Who initiates a card — which partner goes first, or both together.
-/// Replaces TurnOrder. Adds solo for prep deck cards.
-enum WhoStarts: String, CaseIterable, Codable {
-    case partnerA
-    case partnerB
-    case both
-    case solo       // solo prep deck cards only
-
-    var displayName: String {
-        switch self {
-        case .partnerA: return "Partner A"
-        case .partnerB: return "Partner B"
-        case .both:     return "Together"
-        case .solo:     return "Solo"
-        }
-    }
-}
-
-/// Which gender dynamic a gendered card is written for.
-/// nil on non-gendered cards.
-enum GenderDynamic: String, CaseIterable, Codable {
-    case mf
-    case mm
-    case ff
-    case flexible
-
-    var displayName: String {
-        switch self {
-        case .mf:       return "Man + Woman"
-        case .mm:       return "Man + Man"
-        case .ff:       return "Woman + Woman"
-        case .flexible: return "Flexible"
-        }
-    }
-}
-
-/// Pre-card context beat type.
-/// Banner is brief and auto-dismisses.
-/// Interstitial is full screen and user-controlled.
-/// Both appear before the card arrives — never on it.
-enum ContextBeatType: String, Codable {
-    case banner         // 1-2 lines, auto-dismiss 5 seconds, card dimmed behind
-    case interstitial   // full screen, user controls dismissal
-}
-
-// ─────────────────────────────────────────────────────────────
-// MARK: - Deck System
-// ─────────────────────────────────────────────────────────────
-
-/// Which category a deck belongs to.
-/// Drives library organization and deck recommendations.
-enum DeckCategory: String, CaseIterable, Codable {
-    case foundationEntry        // The Opener, The Bridge, The Check-In
-    case relationshipCore       // Communication, Sex, Trust, Resentment
-    case nmSpecific             // Jealousy, Flavors, Desire Map Conversations
-    case styleSpecific          // Swinging, Poly, Open, Monogamish
-    case experienceArc          // Before Tonight, After Last Night, First Time
-    case identityDynamics       // Gender Dynamic, Autonomy, Desire & Identity
-    case advancedExperienced    // Audit, Unfinished Business, NRE
-    case soloPrep               // 5-card solo prep deck — unlinked users only
-    case wildcard               // Right Now, Hypothetical, Appreciation, Body
-    case multiPerson            // Network, Metamour — requires $7.99 connection
-
-    var displayName: String {
-        switch self {
-        case .foundationEntry:     return "Foundation"
-        case .relationshipCore:    return "Relationship Core"
-        case .nmSpecific:          return "NM Specific"
-        case .styleSpecific:       return "Style"
-        case .experienceArc:       return "Experience Arc"
-        case .identityDynamics:    return "Identity & Dynamics"
-        case .advancedExperienced: return "Advanced"
-        case .soloPrep:            return "Solo Prep"
-        case .wildcard:            return "Wildcard"
-        case .multiPerson:         return "Multi-Person"
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────
-// MARK: - Desire Map
-// ─────────────────────────────────────────────────────────────
-
-/// How a partner rates a Desire Map item.
-/// notForUs NEVER leaves the device under any circumstances.
-/// Three enforcement layers — all three must hold simultaneously:
-///   1. Swift: notForUs never included in any Supabase write payload
-///   2. Edge Function: filters before writing to desire_matches table
-///   3. Supabase RLS: partner cannot query desire_map_entries at all
-enum DesireRatingValue: String, CaseIterable, Codable {
-    case yes
-    case curious
-    case notForUs   // NEVER leaves device — three layer enforcement above
-
-    var displayName: String {
-        switch self {
-        case .yes:      return "Yes"
-        case .curious:  return "Curious"
-        case .notForUs: return "Not For Us"
-        }
-    }
-}
-
-/// The type of match computed by the Edge Function.
-/// Only positive matches are ever stored.
-/// notForUs combinations are never written to desire_matches.
-enum DesireMatchType: String, CaseIterable, Codable {
-    case mutual     // both rated yes
-    case adjacent   // one yes, one curious
-
-    var displayName: String {
-        switch self {
-        case .mutual:   return "Mutual"
-        case .adjacent: return "Worth Exploring"
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────
-// MARK: - Pulse
-// ─────────────────────────────────────────────────────────────
-
-/// What created a pulse entry.
-/// All three sources write to the same PulseEntry store.
-enum PulseSource: String, CaseIterable, Codable {
-    case manual
-    case lockIn
-    case postSession
-
-    var displayName: String {
-        switch self {
-        case .manual:      return "Manual"
-        case .lockIn:      return "Lock In"
-        case .postSession: return "Post Session"
-        }
-    }
-}
-
-/// The type of insight generated from pulse data.
-/// Insights are observational — never evaluative.
-/// "Your bandwidth has been lower this week" not "You seem stressed."
-enum InsightType: String, CaseIterable, Codable {
-    case weeklyPattern
-    case trending
-    case anomaly
-}
-
-/// Color tier for a pulse entry — maps to AppColors in AppColors.swift extension.
-/// Names and tiers are not final — revisit when PulseEntry shape is confirmed.
-enum PulseCapacityColor: String, Codable, CaseIterable {
-    case rose       // tier 1 — lowest
-    case magenta    // tier 2
-    case indigo     // tier 3
-    case cyan       // tier 4 — highest
-
-    var label: String {
-        switch self {
-        case .rose:    return "Empty"
-        case .magenta: return "Low"
-        case .indigo:  return "Good"
-        case .cyan:    return "Abundant"
-        }
-    }
-}
-
-/// Tier derived from pulse capacityScore.
-/// Names are not final — revisit when PulseEntry shape is confirmed.
-/// Visual properties (color, lightColor) live in AppColors.swift extension.
-enum PulseTier: String, CaseIterable, Codable {
-    case expansive   // 3.5+
-    case sovereign   // 2.5–3.5
-    case friction    // 1.5–2.5
-    case protective  // below 1.5
-
-    static func tier(for score: Double) -> PulseTier {
-        switch score {
-        case 3.5...: return .expansive
-        case 2.5...: return .sovereign
-        case 1.5...: return .friction
-        default:     return .protective
-        }
-    }
-
-    var label: String {
-        switch self {
-        case .expansive:  return "The Expansive Space"
-        case .sovereign:  return "The Sovereign Space"
-        case .friction:   return "The Friction Space"
-        case .protective: return "The Protective Space"
-        }
-    }
-
-    var color: Color {
-        switch self {
-        case .expansive:  return AppColors.pulseTierExpansive
-        case .sovereign:  return AppColors.pulseTierSovereign
-        case .friction:   return AppColors.pulseTierFriction
-        case .protective: return AppColors.pulseTierProtective
-        }
-    }
-
-    var sublabel: String {
-        switch self {
-        case .expansive:  return "Connected · Adventurous"
-        case .sovereign:  return "Grounded · Secure"
-        case .friction:   return "Anxious · Defensive"
-        case .protective: return "Overwhelmed · Need Space"
-        }
-    }
-}
-
-/// Time window for pulse graph display.
-/// widgetDefault drives the home screen widget.
-/// Full window selector appears in PulseFullView only.
-enum PulseWindow: String, CaseIterable, Identifiable {
-    case oneWeek      = "1W"
-    case twoWeeks     = "2W"
-    case oneMonth     = "1M"
-    case threeMonths  = "3M"
-    case sixMonths    = "6M"
-    case oneYear      = "1Y"
-    case twoYears     = "2Y"
-    case lifetime     = "All"
-
-    var id: String { rawValue }
-
-    var startDate: Date? {
-        guard self != .lifetime else { return nil }
-        return Calendar.current.date(
-            byAdding: .day,
-            value: -days,
-            to: Date()
-        )
-    }
-
-    func includes(_ date: Date) -> Bool {
-        guard let start = startDate else { return true }
-        return date >= start
-    }
-
-    func filter(_ entries: [PulseEntry]) -> [PulseEntry] {
-        guard let start = startDate else { return entries }
-        return entries.filter { $0.date >= start }
-    }
-
-    var days: Int {
-        switch self {
-        case .oneWeek:     return 7
-        case .twoWeeks:    return 14
-        case .oneMonth:    return 30
-        case .threeMonths: return 90
-        case .sixMonths:   return 180
-        case .oneYear:     return 365
-        case .twoYears:    return 730
-        case .lifetime:    return Int.max
-        }
-    }
-
-    var graphWidth: CGFloat {
-        switch self {
-        case .oneWeek:     return 320
-        case .twoWeeks:    return 320
-        case .oneMonth:    return 480
-        case .threeMonths: return 640
-        case .sixMonths:   return 960
-        case .oneYear:     return 1400
-        case .twoYears:    return 2400
-        case .lifetime:    return 2400
-        }
-    }
-
-    var label: String { rawValue }
-
-    var accessibilityLabel: String {
-        switch self {
-        case .oneWeek:     return "One week"
-        case .twoWeeks:    return "Two weeks"
-        case .oneMonth:    return "One month"
-        case .threeMonths: return "Three months"
-        case .sixMonths:   return "Six months"
-        case .oneYear:     return "One year"
-        case .twoYears:    return "Two years"
-        case .lifetime:    return "All time"
-        }
-    }
-
-    static let widgetDefault: PulseWindow = .twoWeeks
-}
-
-// ─────────────────────────────────────────────────────────────
-// MARK: - Entitlements
-// ─────────────────────────────────────────────────────────────
-
-/// The three entitlement tiers.
-/// Lives on Couple — one purchase covers both partners.
-/// pro is Act 2 — not active in V1.
-enum EntitlementTier: String, CaseIterable, Codable {
-    case free
-    case core   // $24.99 lifetime — Act 1
-    case pro    // $6.99-9.99/mo — Act 2, not yet active
-
-    var displayName: String {
-        switch self {
-        case .free: return "Free"
-        case .core: return "Core"
-        case .pro:  return "Pro"
-        }
-    }
-}
-
-/// Whether this is a primary couple connection or an additional one.
-/// Primary is the main couple. Additional is $7.99 permanent per connection.
-enum ConnectionType: String, CaseIterable, Codable {
-    case primary    // $24.99 — main couple
-    case additional // $7.99 — permanent, per additional connection
-}
-
-// ─────────────────────────────────────────────────────────────
-// MARK: - Milestones
-// ─────────────────────────────────────────────────────────────
-
-/// One-time milestone events. Never reset once completed.
-/// acknowledgedGroundRules gates Card 2.
-/// readThreeResearchOrbs requires tracking specific Beacon
-/// items — not just a count.
-/// Milestone completion fires a visible in-app moment —
-/// never a silent flag update.
-enum MilestoneType: String, CaseIterable, Codable {
-    case openedFirstDeck
-    case completedFirstCard
-    case firstPulseEntry
-    case readThreeResearchOrbs      // tracks specific items, not a count
-    case acknowledgedGroundRules    // gates Card 2
-    case linkedPartner              // first time partner link completes
-    case completedSoloDeck          // solo prep deck finished
-}
 
 // ─────────────────────────────────────────────────────────────
 // MARK: - UI Constants

@@ -114,41 +114,7 @@ private struct GrainCanvas: View {
 
     var body: some View {
         Canvas { ctx, size in
-            let tileW = Int(tileWidth)
-            let tileH = Int(tileHeight)
-            guard tileW > 0, tileH > 0 else { return }
-
-            var pixels = [UInt8](repeating: 0, count: tileW * tileH * 4)
-            for y in 0 ..< tileH {
-                for x in 0 ..< tileW {
-                    let n = fbmNoise(
-                        x: Float(x) / Float(tileW) * frequency,
-                        y: Float(y) / Float(tileH) * (frequency / xStretch),
-                        octaves: octaves
-                    )
-                    let v = UInt8(((n * 0.5 + 0.5) * 255).clamped(to: 0...255))
-                    let i = (y * tileW + x) * 4
-                    pixels[i]     = v
-                    pixels[i + 1] = v
-                    pixels[i + 2] = v
-                    pixels[i + 3] = 255
-                }
-            }
-
-            let cfData   = CFDataCreate(nil, pixels, pixels.count)!
-            let provider = CGDataProvider(data: cfData)!
-            let cgImage  = CGImage(
-                width: tileW, height: tileH,
-                bitsPerComponent: 8, bitsPerPixel: 32,
-                bytesPerRow: tileW * 4,
-                space: CGColorSpaceCreateDeviceRGB(),
-                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-                provider: provider,
-                decode: nil, shouldInterpolate: false,
-                intent: .defaultIntent
-            )!
-
-            let tile = Image(cgImage, scale: 1, label: Text(""))
+            guard let tile = makeTile() else { return }
             var xOff: CGFloat = 0
             while xOff < size.width {
                 var yOff: CGFloat = 0
@@ -159,6 +125,46 @@ private struct GrainCanvas: View {
                 xOff += tileWidth
             }
         }
+    }
+
+    /// Builds one fbm-noise grain tile. Extracted from the Canvas closure so the
+    /// drawing closure stays trivial to type-check (was 188ms inline).
+    private func makeTile() -> Image? {
+        let tileW = Int(tileWidth)
+        let tileH = Int(tileHeight)
+        guard tileW > 0, tileH > 0 else { return nil }
+
+        var pixels = [UInt8](repeating: 0, count: tileW * tileH * 4)
+        for y in 0 ..< tileH {
+            for x in 0 ..< tileW {
+                let n = fbmNoise(
+                    x: Float(x) / Float(tileW) * frequency,
+                    y: Float(y) / Float(tileH) * (frequency / xStretch),
+                    octaves: octaves
+                )
+                let v = UInt8(((n * 0.5 + 0.5) * 255).clamped(to: 0...255))
+                let i = (y * tileW + x) * 4
+                pixels[i]     = v
+                pixels[i + 1] = v
+                pixels[i + 2] = v
+                pixels[i + 3] = 255
+            }
+        }
+
+        let cfData   = CFDataCreate(nil, pixels, pixels.count)!
+        let provider = CGDataProvider(data: cfData)!
+        let cgImage  = CGImage(
+            width: tileW, height: tileH,
+            bitsPerComponent: 8, bitsPerPixel: 32,
+            bytesPerRow: tileW * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+            provider: provider,
+            decode: nil, shouldInterpolate: false,
+            intent: .defaultIntent
+        )!
+
+        return Image(cgImage, scale: 1, label: Text(""))
     }
 
     private func fbmNoise(x: Float, y: Float, octaves: Int) -> Float {

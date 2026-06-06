@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vayl — Solo Play Tab</title>
+<style>
+  :root {
+    --void: #05040a;
+    --card-bg: #0e0b1a;
+    --surface: rgba(255,255,255,0.035);
+    --hairline: rgba(255,255,255,0.07);
+    --cyan: #3dd9f5;
+    --purple: #8b5cf6;
+    --magenta: #e040a0;
+    --text-primary: #f4f1ff;
+    --text-body: rgba(244,241,255,0.78);
+    --text-secondary: rgba(244,241,255,0.42);
+    --spectrum: linear-gradient(135deg, #3dd9f5, #8b5cf6, #e040a0);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: #010009;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  }
+
+  /* ─── Phone shell ─── */
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: var(--void);
+    border-radius: 50px;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    position: relative;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04) inset,
+      0 40px 120px rgba(0,0,0,0.8),
+      0 0 60px rgba(139,92,246,0.12);
+  }
+
+  /* ─── Screen system ─── */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    background: var(--void);
+  }
+  .screen.active { display: flex; }
+
+  /* ─── Atmosphere ─── */
+  .atmo {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .atmo-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+  }
+
+  /* ─── Status bar ─── */
+  .sb {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+  .sb-time { font-size: 15px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.02em; }
+  .sb-right { display: flex; gap: 5px; align-items: center; }
+  .sb-icon { width: 16px; height: 11px; background: var(--text-primary); border-radius: 2px; opacity: 0.7; }
+  .sb-icon.wifi { width: 14px; height: 11px; clip-path: polygon(50% 100%, 0% 30%, 100% 30%); background: transparent; border: 2px solid rgba(244,241,255,0.7); border-bottom: none; }
+  .sb-battery { width: 22px; height: 11px; border: 1.5px solid rgba(244,241,255,0.7); border-radius: 2px; position: relative; }
+  .sb-battery::after { content: ''; position: absolute; right: -4px; top: 3px; width: 2px; height: 5px; background: rgba(244,241,255,0.5); border-radius: 0 1px 1px 0; }
+  .sb-battery-fill { position: absolute; inset: 2px; right: 4px; background: var(--text-primary); border-radius: 1px; width: 65%; }
+
+  /* ─── Content ─── */
+  .content { flex: 1; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+
+  /* ─── Tab bar ─── */
+  .tabbar {
+    height: 82px;
+    background: rgba(6,4,14,0.94);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 4px 18px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 18px;
+    cursor: pointer;
+    opacity: 0.35;
+    transition: opacity 0.2s;
+    user-select: none;
+  }
+  .tab.on { opacity: 1; }
+  .tab-ic { font-size: 20px; line-height: 1; }
+  .tab-lb {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+  }
+  .tab.on .tab-lb {
+    background: var(--spectrum);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ═══════════════════════════════════════
+     SCREEN 1 — MAP
+  ═══════════════════════════════════════ */
+
+  #s-map .atmo-blob:nth-child(1) {
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(61,217,245,0.07), transparent 70%);
+    top: -60px; left: -40px;
+  }
+  #s-map .atmo-blob:nth-child(2) {
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(224,64,160,0.06), transparent 70%);
+    bottom: 80px; right: -30px;
+  }
+  #s-map .atmo-blob:nth-child(3) {
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(139,92,246,0.08), transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+  }
+
+  .map-header {
+    padding: 4px 24px 12px;
+    position: relative;
+    z-index: 2;
+  }
+  .map-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .map-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    margin-top: 2px;
+  }
+
+  /* The map canvas */
+  .map-canvas {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* SVG lines */
+  .map-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  /* Territory nodes */
+  .node {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s;
+    z-index: 2;
+  }
+  .node:active { transform: scale(0.93); }
+
+  .node-ring {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: box-shadow 0.3s;
+  }
+
+  /* — unexplored — */
+  .node.dim .node-ring {
+    width: 50px; height: 50px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  /* — surface explored — */
+  .node.surf .node-ring {
+    width: 56px; height: 56px;
+    background: rgba(61,217,245,0.07);
+    border: 1px solid rgba(61,217,245,0.28);
+    box-shadow: 0 0 18px rgba(61,217,245,0.14);
+  }
+
+  /* — deep explored — */
+  .node.deep .node-ring {
+    width: 58px; height: 58px;
+    background: rgba(139,92,246,0.1);
+    border: 1.5px solid rgba(139,92,246,0.45);
+    box-shadow: 0 0 22px rgba(139,92,246,0.2), 0 0 6px rgba(224,64,160,0.1);
+  }
+
+  /* — center / active — */
+  .node.core .node-ring {
+    width: 72px; height: 72px;
+    background: rgba(139,92,246,0.12);
+    border: 1.5px solid rgba(139,92,246,0.5);
+    box-shadow: 0 0 32px rgba(139,92,246,0.28), 0 0 10px rgba(61,217,245,0.12);
+    animation: corePulse 3.5s ease-in-out infinite;
+  }
+  @keyframes corePulse {
+    0%,100% { box-shadow: 0 0 32px rgba(139,92,246,0.28), 0 0 10px rgba(61,217,245,0.12); }
+    50%      { box-shadow: 0 0 42px rgba(139,92,246,0.42), 0 0 18px rgba(61,217,245,0.22); }
+  }
+
+  .node-icon { font-size: 20px; line-height: 1; position: relative; z-index: 1; }
+  .node.dim .node-icon { opacity: 0.22; }
+
+  .node-lbl {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .node.core .node-lbl,
+  .node.deep .node-lbl { color: var(--text-primary); }
+  .node.surf .node-lbl { color: rgba(61,217,245,0.9); }
+
+  /* depth badge */
+  .node-badge {
+    position: absolute;
+    top: -3px; right: -3px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    font-size: 8px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--void);
+  }
+  .node-badge.s { background: var(--cyan); color: #000; }
+  .node-badge.d { background: var(--spectrum); color: #fff; }
+
+  /* — orbit ring on core — */
+  .node.core .node-ring::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1px solid rgba(139,92,246,0.2);
+    animation: orbit 8s linear infinite;
+  }
+  @keyframes orbit {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* Session resume card */
+  .resume-card {
+    margin: 0 18px 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--hairline);
+    border-radius: 16px;
+    padding: 13px 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    transition: background 0.18s;
+  }
+  .resume-card:active { background: rgba(255,255,255,0.055); }
+  .resume-pip {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--spectrum);
+    flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(61,217,245,0.7);
+    animation: pipPulse 2s ease-in-out infinite;
+  }
+  @keyframes pipPulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .resume-text { flex: 1; }
+  .resume-eyebrow { font-size: 10px; color: var(--text-secondary); }
+  .resume-name { font-size: 14px; font-weight: 500; color: var(--text-primary); margin-top: 1px; }
+  .resume-arrow { font-size: 16px; color: var(--text-secondary); }
+
+  /* ═══════════════════════════════════════
+     SCREEN 2 — TERRITORY DETAIL
+  ═══════════════════════════════════════ */
+
+  #s-territory .atmo-blob:nth-child(1) {
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(61,217,245,0.07), transparent 70%);
+    top: -80px; left: -60px;
+  }
+
+  .td-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 22px;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    width: fit-content;
+    user-select: none;
+  }
+  .back-btn:active { opacity: 0.6; }
+
+  .td-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0 20px;
+  }
+  .td-hero-node {
+    width: 82px; height: 82px;
+    border-radius: 50%;
+    background: rgba(61,217,245,0.07);
+    border: 1.5px solid rgba(61,217,245,0.32);
+    box-shadow: 0 0 30px rgba(61,217,245,0.16);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 14px;
+  }
+  .td-hero-name {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .td-hero-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.55;
+    max-width: 280px;
+  }
+
+  /* Depth track */
+  .dt {
+    margin-bottom: 20px;
+  }
+  .dt-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+  }
+  .dt-track {
+    display: flex;
+    align-items: center;
+  }
+  .dt-node {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 1px solid var(--hairline);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  .dt-node.done {
+    background: rgba(61,217,245,0.12);
+    border-color: rgba(61,217,245,0.45);
+    color: var(--cyan);
+    font-size: 10px;
+  }
+  .dt-node.cur {
+    background: rgba(139,92,246,0.18);
+    border-color: rgba(139,92,246,0.6);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(139,92,246,0.3);
+  }
+  .dt-line {
+    flex: 1;
+    height: 1px;
+    background: var(--hairline);
+    margin: 0 3px;
+  }
+  .dt-line.done { background: rgba(61,217,245,0.28); }
+  .dt-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+  }
+  .dt-lbl {
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-align: center;
+    width: 52px;
+  }
+
+  /* Last insight */
+  .last-insight {
+    background: rgba(139,92,246,0.05);
+    border: 1px solid rgba(139,92,246,0.16);
+    border-radius: 13px;
+    padding: 13px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .last-insight::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5), transparent);
+  }
+  .li-eyebrow {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(139,92,246,0.75);
+    margin-bottom: 6px;
+  }
+  .li-text {
+    font-size: 13px;
+    color: var(--text-body);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  .enter-btn {
+    width: 100%;
+    background: rgba(139,92,246,0.18);
+    border: 1px solid rgba(139,92,246,0.38);
+    border-radius: 15px;
+    padding: 15px;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.18s;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .enter-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.6), rgba(224,64,160,0.4), transparent);
+  }
+  .enter-btn:active { background: rgba(139,92,246,0.3); }
+
+  /* ═══════════════════════════════════════
+     SCREEN 3 — SCENARIO
+  ═══════════════════════════════════════ */
+
+  #s-scenario .atmo-blob:nth-child(1) {
+    width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(61,217,245,0.05), transparent 70%);
+    top: -40px; right: -40px;
+  }
+  #s-scenario .atmo-blob:nth-child(2) {
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(224,64,160,0.05), transparent 70%);
+    bottom: 100px; left: -30px;
+  }
+
+  .sc-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+  }
+
+  .sc-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px 14px;
+  }
+  .sc-territory {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .sc-depth-pill {
+    font-size: 10px;
+    color: rgba(61,217,245,0.85);
+    background: rgba(61,217,245,0.08);
+    border: 1px solid rgba(61,217,245,0.2);
+    border-radius: 20px;
+    padding: 4px 10px;
+  }
+
+  /* The main scenario card */
+  .sc-card {
+    margin: 0 18px;
+    flex: 1;
+    background: var(--card-bg);
+    border: 1px solid var(--hairline);
+    border-radius: 26px;
+    padding: 26px 22px 22px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 8px 40px rgba(0,0,0,0.5),
+      0 0 0 0.5px rgba(255,255,255,0.06) inset;
+  }
+  .sc-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at top left, rgba(61,217,245,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(224,64,160,0.04) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .sc-card-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .sc-card-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--spectrum);
+    background-size: 200% 200%;
+  }
+  .sc-card-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .sc-text {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text-body);
+    flex: 1;
+  }
+  .sc-question {
+    font-size: 13px;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--hairline);
+    padding-top: 14px;
+    margin-top: 16px;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  /* Choices */
+  .choices {
+    padding: 12px 18px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .choice {
+    background: rgba(255,255,255,0.028);
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    padding: 13px 15px;
+    font-size: 14px;
+    color: var(--text-body);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    text-align: left;
+    line-height: 1.4;
+    user-select: none;
+  }
+  .choice:active {
+    background: rgba(139,92,246,0.1);
+    border-color: rgba(139,92,246,0.3);
+  }
+
+  /* ═══════════════════════════════════════
+     SCREEN 4 — LORE CARD
+  ═══════════════════════════════════════ */
+
+  #s-lore .atmo-blob:nth-child(1) {
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(139,92,246,0.1), transparent 70%);
+    top: -40px; left: -40px;
+  }
+  #s-lore .atmo-blob:nth-child(2) {
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(224,64,160,0.07), transparent 70%);
+    bottom: 80px; right: -30px;
+  }
+
+  .lore-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 18px;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+  }
+
+  .lore-eyebrow {
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 0.08em;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  .lore-card {
+    background: rgba(139,92,246,0.06);
+    border: 1px solid rgba(139,92,246,0.22);
+    border-radius: 26px;
+    padding: 26px 22px;
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-shadow:
+      0 0 40px rgba(139,92,246,0.1),
+      0 8px 32px rgba(0,0,0,0.4),
+      0 0 0 0.5px rgba(255,255,255,0.05) inset;
+  }
+  .lore-card-hairline {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 5%, rgba(139,92,246,0.6) 30%, rgba(224,64,160,0.5) 70%, transparent 95%);
+  }
+  .lore-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top, rgba(139,92,246,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .lore-icon-wrap {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    background: rgba(139,92,246,0.14);
+    border: 1px solid rgba(139,92,246,0.28);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .lore-card-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(139,92,246,0.85);
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .lore-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-body);
+    position: relative;
+    z-index: 1;
+    flex: 1;
+  }
+  .lore-text strong { color: var(--text-primary); font-weight: 600; }
+
+  .lore-source {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Save / continue */
+  .lore-actions {
+    display: flex;
+    gap: 9px;
+    padding: 12px 0 0;
+  }
+  .save-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    padding: 14px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s;
+    user-select: none;
+  }
+  .save-btn:active { background: rgba(255,255,255,0.07); }
+  .cont-btn {
+    flex: 2;
+    background: rgba(139,92,246,0.18);
+    border: 1px solid rgba(139,92,246,0.36);
+    border-radius: 14px;
+    padding: 14px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+  }
+  .cont-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent);
+  }
+  .cont-btn:active { background: rgba(139,92,246,0.3); }
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+  <!-- ══════════════════════════════════════════
+       SCREEN 1 · MAP
+  ══════════════════════════════════════════ -->
+  <div class="screen active" id="s-map">
+    <div class="atmo">
+      <div class="atmo-blob"></div>
+      <div class="atmo-blob"></div>
+      <div class="atmo-blob"></div>
+    </div>
+
+    <div class="sb">
+      <span class="sb-time">9:41</span>
+      <div class="sb-right">
+        <div class="sb-icon wifi"></div>
+        <div class="sb-battery"><div class="sb-battery-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="map-header">
+        <div class="map-eyebrow">Solo · Play</div>
+        <div class="map-title">The World</div>
+      </div>
+
+      <div class="map-canvas">
+
+        <!-- Connection lines -->
+        <svg class="map-svg" viewBox="0 0 390 340" preserveAspectRatio="none">
+          <!-- Center to all -->
+          <line x1="195" y1="150" x2="90"  y2="75"  stroke="rgba(255,255,255,0.055)" stroke-width="1"/>
+          <line x1="195" y1="150" x2="300" y2="75"  stroke="rgba(255,255,255,0.055)" stroke-width="1"/>
+          <line x1="195" y1="150" x2="64"  y2="188" stroke="rgba(61,217,245,0.18)"   stroke-width="1"/>
+          <line x1="195" y1="150" x2="326" y2="188" stroke="rgba(255,255,255,0.055)" stroke-width="1"/>
+          <line x1="195" y1="150" x2="108" y2="292" stroke="rgba(139,92,246,0.2)"    stroke-width="1"/>
+          <line x1="195" y1="150" x2="282" y2="292" stroke="rgba(255,255,255,0.055)" stroke-width="1"/>
+          <line x1="195" y1="150" x2="195" y2="308" stroke="rgba(255,255,255,0.055)" stroke-width="1"/>
+        </svg>
+
+        <!-- CORE: Desire -->
+        <div class="node core" style="left:159px; top:114px;" onclick="goTo('s-territory')">
+          <div class="node-ring"><span class="node-icon">✦</span></div>
+          <span class="node-lbl">Desire</span>
+        </div>
+
+        <!-- SURFACE: Jealousy -->
+        <div class="node surf" style="left:36px; top:160px;" onclick="goTo('s-territory')">
+          <div class="node-ring">
+            <span class="node-icon">🜁</span>
+            <span class="node-badge s">2</span>
+          </div>
+          <span class="node-lbl">Jealousy</span>
+        </div>
+
+        <!-- DEEP: Communication -->
+        <div class="node deep" style="left:78px; top:260px;" onclick="goTo('s-territory')">
+          <div class="node-ring">
+            <span class="node-icon">◎</span>
+            <span class="node-badge d">✓</span>
+          </div>
+          <span class="node-lbl">Communication</span>
+        </div>
+
+        <!-- UNEXPLORED -->
+        <div class="node dim" style="left:63px; top:42px;">
+          <div class="node-ring"><span class="node-icon">◈</span></div>
+          <span class="node-lbl">Compersion</span>
+        </div>
+
+        <div class="node dim" style="left:268px; top:42px;">
+          <div class="node-ring"><span class="node-icon">⬡</span></div>
+          <span class="node-lbl">Agreements</span>
+        </div>
+
+        <div class="node dim" style="left:296px; top:160px;">
+          <div class="node-ring"><span class="node-icon">∞</span></div>
+          <span class="node-lbl">Structures</span>
+        </div>
+
+        <div class="node dim" style="left:250px; top:260px;">
+          <div class="node-ring"><span class="node-icon">◐</span></div>
+          <span class="node-lbl">Solo Dynamics</span>
+        </div>
+
+        <div class="node dim" style="left:159px; top:278px;">
+          <div class="node-ring"><span class="node-icon">☽</span></div>
+          <span class="node-lbl">Intimacy</span>
+        </div>
+
+      </div><!-- /map-canvas -->
+
+      <!-- Resume card -->
+      <div class="resume-card" onclick="goTo('s-scenario')">
+        <div class="resume-pip"></div>
+        <div class="resume-text">
+          <div class="resume-eyebrow">In progress · Desire · Surface</div>
+          <div class="resume-name">The gap between want and ask</div>
+        </div>
+        <div class="resume-arrow">›</div>
+      </div>
+
+    </div><!-- /content -->
+
+    <div class="tabbar">
+      <div class="tab"><span class="tab-ic">⌂</span><span class="tab-lb">Home</span></div>
+      <div class="tab on"><span class="tab-ic">✦</span><span class="tab-lb">Play</span></div>
+      <div class="tab"><span class="tab-ic">◎</span><span class="tab-lb">Explore</span></div>
+      <div class="tab"><span class="tab-ic">◷</span><span class="tab-lb">Progress</span></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN 2 · TERRITORY DETAIL
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-territory">
+    <div class="atmo">
+      <div class="atmo-blob"></div>
+    </div>
+
+    <div class="sb">
+      <span class="sb-time">9:41</span>
+      <div class="sb-right"><div class="sb-battery"><div class="sb-battery-fill"></div></div></div>
+    </div>
+
+    <div class="td-inner">
+      <div class="back-btn" onclick="goTo('s-map')">← &nbsp;The World</div>
+
+      <div class="td-hero">
+        <div class="td-hero-node">✦</div>
+        <div class="td-hero-name">Desire</div>
+        <div class="td-hero-desc">What you actually want — separate from what you've been given permission to want. The gap between the two is where this goes.</div>
+      </div>
+
+      <!-- Depth track -->
+      <div class="dt">
+        <div class="dt-eyebrow">Your depth in this territory</div>
+        <div class="dt-track">
+          <div class="dt-node done">✓</div>
+          <div class="dt-line done"></div>
+          <div class="dt-node cur">2</div>
+          <div class="dt-line"></div>
+          <div class="dt-node">3</div>
+          <div class="dt-line"></div>
+          <div class="dt-node">4</div>
+          <div class="dt-line"></div>
+          <div class="dt-node" style="font-size:8px;">∞</div>
+        </div>
+        <div class="dt-labels">
+          <div class="dt-lbl">Surface</div>
+          <div class="dt-lbl">Naming</div>
+          <div class="dt-lbl">The gap</div>
+          <div class="dt-lbl">The ask</div>
+          <div class="dt-lbl">Deep</div>
+        </div>
+      </div>
+
+      <!-- Last insight -->
+      <div class="last-insight">
+        <div class="li-eyebrow">Last insight collected</div>
+        <div class="li-text">"Most people can describe what they've accepted. Very few can describe what they actually want without that filter."</div>
+      </div>
+
+      <div style="flex:1;"></div>
+
+      <div class="enter-btn" onclick="goTo('s-scenario')">Continue Exploring →</div>
+    </div>
+
+    <div class="tabbar">
+      <div class="tab"><span class="tab-ic">⌂</span><span class="tab-lb">Home</span></div>
+      <div class="tab on"><span class="tab-ic">✦</span><span class="tab-lb">Play</span></div>
+      <div class="tab"><span class="tab-ic">◎</span><span class="tab-lb">Explore</span></div>
+      <div class="tab"><span class="tab-ic">◷</span><span class="tab-lb">Progress</span></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN 3 · SCENARIO
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-scenario">
+    <div class="atmo">
+      <div class="atmo-blob"></div>
+      <div class="atmo-blob"></div>
+    </div>
+
+    <div class="sb">
+      <span class="sb-time">9:41</span>
+      <div class="sb-right"><div class="sb-battery"><div class="sb-battery-fill"></div></div></div>
+    </div>
+
+    <div class="sc-inner">
+      <div class="sc-top">
+        <span class="sc-territory">Desire · Depth 2</span>
+        <span class="sc-depth-pill">The gap</span>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-top">
+          <div class="sc-card-dot"></div>
+          <span class="sc-card-label">Scenario</span>
+        </div>
+        <div class="sc-text">
+          Alex has known what they want for a long time. They've just never said it — not because it's too much, but because they're not sure they're allowed to want it. Their partner has no idea this thing exists.
+        </div>
+        <div class="sc-question">
+          Alex is about to bring it up for the first time. What does Alex do first?
+        </div>
+      </div>
+
+      <div class="choices">
+        <div class="choice" onclick="goTo('s-lore')">Figures out exactly how to say it before saying anything</div>
+        <div class="choice" onclick="goTo('s-lore')">Starts with how long they've been sitting with it</div>
+        <div class="choice" onclick="goTo('s-lore')">Asks a question to see where their partner is first</div>
+      </div>
+    </div>
+
+    <div class="tabbar">
+      <div class="tab"><span class="tab-ic">⌂</span><span class="tab-lb">Home</span></div>
+      <div class="tab on"><span class="tab-ic">✦</span><span class="tab-lb">Play</span></div>
+      <div class="tab"><span class="tab-ic">◎</span><span class="tab-lb">Explore</span></div>
+      <div class="tab"><span class="tab-ic">◷</span><span class="tab-lb">Progress</span></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN 4 · LORE CARD
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-lore">
+    <div class="atmo">
+      <div class="atmo-blob"></div>
+      <div class="atmo-blob"></div>
+    </div>
+
+    <div class="sb">
+      <span class="sb-time">9:41</span>
+      <div class="sb-right"><div class="sb-battery"><div class="sb-battery-fill"></div></div></div>
+    </div>
+
+    <div class="lore-inner">
+      <div class="lore-eyebrow">Something surfaced in that territory</div>
+
+      <div class="lore-card">
+        <div class="lore-card-hairline"></div>
+        <div class="lore-icon-wrap">✦</div>
+        <div class="lore-card-label">Insight · Desire</div>
+        <div class="lore-text">
+          The instinct to <strong>figure out how to say something</strong> before saying it often isn't about clarity — it's about pre-emptive protection. Getting the words perfect is a way of controlling the response before it happens.<br><br>
+          Research on desire disclosure consistently finds that starting with <strong>duration</strong> — "I've been sitting with this for a while" — reduces defensive responses significantly more than leading with the want itself.
+        </div>
+        <div class="lore-source">— Gottman Institute · longitudinal relationship research</div>
+      </div>
+
+      <div class="lore-actions">
+        <div class="save-btn" onclick="goTo('s-map')">Save insight</div>
+        <div class="cont-btn" onclick="goTo('s-map')">Keep exploring →</div>
+      </div>
+    </div>
+
+    <div class="tabbar">
+      <div class="tab"><span class="tab-ic">⌂</span><span class="tab-lb">Home</span></div>
+      <div class="tab on"><span class="tab-ic">✦</span><span class="tab-lb">Play</span></div>
+      <div class="tab"><span class="tab-ic">◎</span><span class="tab-lb">Explore</span></div>
+      <div class="tab"><span class="tab-ic">◷</span><span class="tab-lb">Progress</span></div>
+    </div>
+  </div>
+
+</div><!-- /phone -->
+
+<script>
+  function goTo(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vayl — Dev Roadmap</title>
+<style>
+  :root {
+    --void: #0a0a0f;
+    --panel: #14141d;
+    --panel-2: #1b1b27;
+    --hairline: #2a2a3a;
+    --text: #ECECF2;
+    --text-2: #A9A9BC;
+    --text-3: #6E6E84;
+    --cyan: #4FD8E6;
+    --purple: #9A7BFF;
+    --magenta: #FF6FD8;
+    --done: #4ADE80;
+    --inprogress: #FBBF24;
+    --blocked: #FB7185;
+    --todo: #5B5B72;
+    --t-onboarding: #9A7BFF;
+    --t-sessions:  #4FD8E6;
+    --t-home:      #FF6FD8;
+    --t-pml:       #6EE7B7;
+    --t-backend:   #60A5FA;
+    --t-testing:   #FBBF24;
+    --t-release:   #F472B6;
+    --t-growth:    #FB923C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(154,123,255,0.12), transparent 60%),
+      radial-gradient(1000px 500px at 110% 0%, rgba(79,216,230,0.10), transparent 55%),
+      var(--void);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.45;
+    padding: 32px 20px 80px;
+  }
+  .wrap { max-width: 1160px; margin: 0 auto; }
+
+  header { margin-bottom: 28px; }
+  .title-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  h1 {
+    font-size: 30px; margin: 0; letter-spacing: -0.5px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple), var(--magenta));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .weekof { color: var(--text-3); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .subtitle { color: var(--text-2); font-size: 14px; margin-top: 4px; }
+
+  .overall {
+    margin-top: 20px; padding: 18px; border: 1px solid var(--hairline);
+    border-radius: 16px; background: linear-gradient(180deg, var(--panel), var(--void));
+  }
+  .overall-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .big-pct { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .bar { flex: 1; min-width: 200px; height: 12px; border-radius: 8px; background: var(--panel-2); overflow: hidden; border: 1px solid var(--hairline); }
+  .bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--purple), var(--magenta)); border-radius: 8px; transition: width .4s ease; }
+  .counts { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: 13px; color: var(--text-2); }
+  .count-chip { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  .focus { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--hairline); }
+  .focus-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+  .focus-item { font-size: 14px; color: var(--text); display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+
+  .legends { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 18px; font-size: 12px; color: var(--text-2); }
+  .legend-group { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .legend-group b { color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 10px; }
+  .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+  .pill-mini { padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+
+  .act { margin-top: 28px; border: 1px solid var(--hairline); border-radius: 18px; overflow: hidden; background: var(--panel); }
+  .act-head { display: flex; align-items: center; gap: 14px; padding: 18px 20px; cursor: pointer; user-select: none; }
+  .act-head:hover { background: var(--panel-2); }
+  .act-chevron { transition: transform .2s ease; color: var(--text-3); font-size: 14px; }
+  .act.collapsed .act-chevron { transform: rotate(-90deg); }
+  .act-title { font-size: 19px; font-weight: 700; }
+  .act-thesis { color: var(--text-2); font-size: 13px; font-style: italic; }
+  .act-meta { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .act-bar { width: 140px; height: 8px; border-radius: 6px; background: var(--panel-2); overflow: hidden; border: 1px solid var(--hairline); }
+  .act-bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--purple)); }
+  .act-pct { font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; min-width: 38px; text-align: right; }
+  .act-body { padding: 4px 16px 18px; }
+  .act.collapsed .act-body { display: none; }
+
+  .track-group { margin-top: 14px; }
+  .track-head { display: flex; align-items: center; gap: 8px; margin: 12px 4px 8px; }
+  .track-chip { padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .3px; }
+  .track-count { color: var(--text-3); font-size: 12px; }
+
+  .task { border: 1px solid var(--hairline); border-radius: 12px; background: var(--panel-2); margin: 8px 0; overflow: hidden; }
+  .task-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; }
+  .task-head:hover { background: rgba(255,255,255,0.02); }
+  .task.expanded { border-color: var(--purple); }
+  .status-pill { padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .task-title { font-size: 14.5px; font-weight: 600; flex: 1; }
+  .focus-flag { color: var(--inprogress); }
+  .task-track-chip { padding: 1px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; opacity: .9; }
+  .task-chevron { color: var(--text-3); font-size: 12px; transition: transform .2s; }
+  .task.expanded .task-chevron { transform: rotate(90deg); }
+  .task-body { display: none; padding: 4px 16px 16px 16px; border-top: 1px solid var(--hairline); }
+  .task.expanded .task-body { display: block; }
+  .spec-row { margin: 12px 0 0; }
+  .spec-label { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-3); margin-bottom: 3px; }
+  .spec-val { font-size: 13.5px; color: var(--text); }
+  .spec-val.muted { color: var(--text-2); }
+  .spec-val code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 5px; font-size: 12px; color: var(--cyan); }
+  .constraints { border-left: 2px solid var(--blocked); padding-left: 10px; }
+
+  .log { margin-top: 36px; border: 1px solid var(--hairline); border-radius: 18px; background: var(--panel); padding: 20px; }
+  .log h2 { margin: 0 0 4px; font-size: 18px; }
+  .log .hint { color: var(--text-3); font-size: 12px; margin-bottom: 14px; }
+  .log-entry { padding: 10px 0; border-top: 1px solid var(--hairline); }
+  .log-entry:first-of-type { border-top: none; }
+  .log-week { font-size: 12px; color: var(--cyan); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .log-text { font-size: 13.5px; color: var(--text-2); margin-top: 2px; }
+
+  footer { margin-top: 30px; color: var(--text-3); font-size: 12px; text-align: center; }
+  footer code { color: var(--text-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title-row">
+      <h1>Vayl — Dev Roadmap</h1>
+      <span class="weekof" id="weekOf"></span>
+    </div>
+    <div class="subtitle">Day 1 → Day 7 → Day 30 lifecycle. Click any task to read its embedded spec.</div>
+
+    <div class="overall">
+      <div class="overall-top">
+        <div class="big-pct" id="overallPct">0%</div>
+        <div class="bar"><i id="overallBar" style="width:0%"></i></div>
+      </div>
+      <div class="counts" id="counts"></div>
+      <div class="focus">
+        <div class="focus-label">Current focus</div>
+        <div id="focusList"></div>
+      </div>
+    </div>
+
+    <div class="legends" id="legends"></div>
+  </header>
+
+  <main id="acts"></main>
+
+  <section class="log">
+    <h2>Weekly Log</h2>
+    <div class="hint">Each week we stamp what moved. Newest first.</div>
+    <div id="logList"></div>
+  </section>
+
+  <footer>
+    Single source of truth. To update progress, edit the <code>ROADMAP_DATA</code> block at the top of this file's
+    <code>&lt;script&gt;</code> — statuses drive every number on this page automatically.
+  </footer>
+</div>
+
+<script>
+/* ============================================================================
+   ROADMAP_DATA — THE ONLY THING TO EDIT WEEKLY.
+   ----------------------------------------------------------------------------
+   - Change a task's `status` ("done" | "inprogress" | "blocked" | "todo")
+     and every progress bar / percentage on the page recomputes on reload.
+   - Flag 1–2 tasks `focus: true` for the "Current focus" callout.
+   - Add a new entry to `log` (newest goes at the TOP of the array).
+   - Bump `weekOf` to the current Monday.
+   - Add new tasks by appending to `tasks` with the right `act` + `track` id.
+   - Backtick `like this` inside spec text renders as inline code.
+   ========================================================================== */
+const ROADMAP_DATA = {
+  weekOf: "2026-06-01",
+
+  acts: [
+    { id: "day1",  title: "Act I · Day 1",   thesis: "The core loop works once." },
+    { id: "day7",  title: "Act II · Day 7",  thesis: "They come back." },
+    { id: "day30", title: "Act III · Day 30", thesis: "Depth & growth." }
+  ],
+
+  tracks: [
+    { id: "onboarding", label: "Onboarding",     color: "var(--t-onboarding)" },
+    { id: "sessions",   label: "Sessions/Decks", color: "var(--t-sessions)" },
+    { id: "home",       label: "Home",           color: "var(--t-home)" },
+    { id: "pml",        label: "Play/Map/Learn", color: "var(--t-pml)" },
+    { id: "backend",    label: "Backend/Data",   color: "var(--t-backend)" },
+    { id: "testing",    label: "Testing",        color: "var(--t-testing)" },
+    { id: "release",    label: "Release/Compliance", color: "var(--t-release)" },
+    { id: "growth",     label: "Growth",         color: "var(--t-growth)" }
+  ],
+
+  tasks: [
+    /* ════════════════ ACT I — DAY 1 ════════════════ */
+    {
+      id: "ob-polish", act: "day1", track: "onboarding", status: "inprogress", focus: true,
+      title: "Finish remaining onboarding phase polish",
+      goal: "Each onboarding phase feels finished on device — timing, motion, and copy locked.",
+      accept: "Every phase run on device; 'feel is correct' confirmed by Bryan (not just build-succeeds).",
+      touches: "Vayl/Features/Onboarding/** (Canvas, Views, VaylDirector, OnboardingStore)",
+      constraints: "director.advance() is the ONLY phase-change path. tableFade written ONLY by VaylDirector. No View writes to VaylCardModel. Don't touch VaylCardFace shell. Verify timing in a reference before writing Swift values.",
+      tests: "Walk all 3 modes (together/solo/browsing) start→finish on device. Reduce Motion fallback on every looping animation.",
+      notes: ""
+    },
+    {
+      id: "ob-migration", act: "day1", track: "onboarding", status: "todo", focus: true,
+      title: "Verify OnboardingData → UserProfile migration (all 3 modes)",
+      goal: "Every field collected during onboarding lands correctly on the persisted UserProfile via OnboardingStore.commit().",
+      accept: "Field-by-field checklist passes for together / solo / browsing. No field silently dropped or mis-mapped.",
+      touches: "OnboardingStore.commit(), Vayl/Core/Models/UserProfile.swift, Vayl/Features/Onboarding/Models/OnboardingData.swift",
+      constraints: "Commit happens only via OnboardingStore (Store layer) — no View writes UserProfile. archetype stays invisible (never shown). emotionalRegister comes from CompassPhase Q3 ONLY, never ContextPhase.",
+      tests: "CHECKLIST: displayName · genderA→genderIdentity · pronounsA→pronouns · genderB/pronounsB (together only)→partnerGenderIdentity/partnerPronouns · appMode · nmStage · relationshipContext · situationalRegister · agency · motivation · emotionalRegister · compassNotes · curiositySelections (combined comm+learning goals) · openerDeckType · nmCardResponse. EDGE: 'Prefer not to say' = nil not empty-string; browsing path skips context/curiosity; solo leaves partner fields nil.",
+      notes: "Divergence to confirm: OnboardingData keeps communicationGoals + learningGoals separately, but UserProfile stores combined curiositySelections only. Make sure both rounds flow into curiositySelections."
+    },
+    {
+      id: "be-profile-roundtrip", act: "day1", track: "backend", status: "todo", focus: false,
+      title: "ProfileService round-trips UserProfile to Supabase + gate survives relaunch",
+      goal: "Profile writes/reads to Supabase, SIWA accountId persists, and the onboarding gate is correct after force-quit.",
+      accept: "Create profile → kill app → relaunch → lands in app (not onboarding). Profile readable from Supabase.",
+      touches: "Core/Services/ProfileService.swift, AuthService.swift, SupabaseManager.swift, AppState.swift",
+      constraints: "Services have no reference to Stores/Views. AppState owns the gate. Use URLSession (no NSURLConnection). Scene-based session, no UIApplication.shared.keyWindow.",
+      tests: "EDGE: offline at commit (queue + retry), SIWA cancelled mid-flow, accountId nil fallback, second device same Apple ID.",
+      notes: ""
+    },
+    {
+      id: "sessions-full-loop", act: "day1", track: "sessions", status: "todo", focus: false,
+      title: "Complete one full card/deck session top-to-bottom",
+      goal: "A user/couple opens a deck, goes through every card, and a SessionRecord is written + synced.",
+      accept: "Run a full session on device end-to-end; SessionRecord persisted; SessionSyncService pushes it to Supabase.",
+      touches: "ContentLoader.swift, SessionStore, Vayl/Core/Models/{Deck,SessionRecord}.swift, SessionSyncService.swift, Sessions UI",
+      constraints: "Views read Store, call Store methods only. Deck is read-only (never persisted). No raw colors/fonts/spacing — design tokens only. Every tappable: press state + haptic + action.",
+      tests: "EDGE: empty deck, last-card completion, app backgrounded mid-session, deck JSON malformed. Empty state required on the deck screen.",
+      notes: ""
+    },
+    {
+      id: "home-firstrun", act: "day1", track: "home", status: "inprogress", focus: false,
+      title: "First-run Home dashboard + opening to-dos",
+      goal: "After onboarding, Home renders the correct gate/router state and the opening to-do list.",
+      accept: "Fresh user lands on Home with gate states resolving correctly (router → gate → dashboard).",
+      touches: "Features/Home/** (HomeStore, HomeRouterView, HomeGateView, HomeDashboardView, opening to-dos)",
+      constraints: "HomeStore owns state; Views call Store methods only. Every screen: AppColors.void + AtmosphereView(). Empty state on every data surface.",
+      tests: "States: not-linked, linked-waiting, match-ready. Relaunch keeps correct state.",
+      notes: ""
+    },
+    {
+      id: "pairing-couple", act: "day1", track: "backend", status: "todo", focus: false,
+      title: "Together-mode pairing creates a Couple + links both profiles",
+      goal: "Invite/join flow produces a Couple via Supabase RPC and sets isLinked/coupleId on both UserProfiles.",
+      accept: "Two devices pair successfully; both profiles show isLinked=true, same coupleId, linkedAt set.",
+      touches: "Core/Services/PairingService.swift, PairingStore, Features/Pairing/**, Core/Models/Couple.swift",
+      constraints: "pairingCode lives in Supabase only — never persisted locally beyond the flow. linkedAt never deleted. Service has no Store/View refs.",
+      tests: "EDGE: expired/invalid code, self-pairing blocked, both tap join simultaneously, network drop mid-pair.",
+      notes: ""
+    },
+    {
+      id: "test-commit-path", act: "day1", track: "testing", status: "inprogress", focus: false,
+      title: "Unit tests on onboarding-commit path + enum routing",
+      goal: "Cover the OnboardingData→UserProfile mapping and the routing enums with unit tests.",
+      accept: "Tests assert each field maps correctly per mode; existing enum tests still green.",
+      touches: "VaylTests/** (extend beyond CandleIntensity / ContextOption / MonteRowGeometry)",
+      constraints: "Test the Store mapping logic, not Views. Keep tests fast + deterministic (no live Supabase).",
+      tests: "Add: commit-mapping test per mode, 'Prefer not to say'→nil, openerDeckType assignment, defaultIntensity derivation.",
+      notes: "Baseline: 3 enum tests exist today."
+    },
+    {
+      id: "release-testflight", act: "day1", track: "release", status: "todo", focus: false,
+      title: "First real TestFlight build + crash-free launch + iOS 26 audit",
+      goal: "Ship an internal TestFlight build that launches clean on a physical device and passes the banned-API audit.",
+      accept: "Build uploaded, installs via TestFlight, launches with zero crashes; audit checklist clean.",
+      touches: "Xcode project settings, signing, App Store Connect, archive/upload",
+      constraints: "iOS 26 SDK mandatory. NO UIScreen.main / UIApplication.shared.keyWindow / UIWebView / NSURLConnection / UNAuthorizationOptionAlert. No armv7 slices. Use AppLayout.from(geo).",
+      tests: "Cold launch, no-network launch, low-storage install. Verify scene-based window access only.",
+      notes: ""
+    },
+
+    /* ════════════════ ACT II — DAY 7 ════════════════ */
+    {
+      id: "pulse-loop", act: "day7", track: "home", status: "inprogress", focus: false,
+      title: "Pulse daily check-in loop + returning-user Home states",
+      goal: "Returning user does a daily Pulse check-in and Home reflects their return + streak.",
+      accept: "Day-2 open shows yesterday's pulse, today's prompt, and updated returning-user surfaces.",
+      touches: "Features/Pulse/** (PulseStore, DailyCheckInView, PulseGraph), Home returning states",
+      constraints: "PulseEntry is UserDefaults-cached Codable (NOT SwiftData) — keep it that way. Design tokens only. .ambientAnimation() on loops.",
+      tests: "EDGE: missed a day (gap in graph), multiple check-ins same day, timezone change at midnight.",
+      notes: ""
+    },
+    {
+      id: "streaks", act: "day7", track: "home", status: "todo", focus: false,
+      title: "Streak + reflection surfaces",
+      goal: "Track and display streaks; surface reflection cards after sessions.",
+      accept: "Streak increments correctly across days; reflection card appears post-session on device.",
+      touches: "StreakRecord (stub — needs migration), ReflectionCard, ReflectionBannerView, PostMapReflectionView",
+      constraints: "StreakRecord migration is pending — design the model before wiring UI. No View writes models directly.",
+      tests: "EDGE: streak reset after gap, day-boundary correctness, reflection dismissal persistence.",
+      notes: "StreakRecord is currently a stub awaiting migration."
+    },
+    {
+      id: "play-tab", act: "day7", track: "pml", status: "todo", focus: false,
+      title: "Play tab: placeholder → working deck-launch surface",
+      goal: "Play tab lists available decks and launches a session — replacing the placeholder text.",
+      accept: "Tapping a deck in Play opens the session flow on device.",
+      touches: "Features/Play/PlayView.swift (currently placeholder), wire to SessionStore/ContentLoader",
+      constraints: "View calls Store only. Decks read-only from ContentLoader. Empty state required. Tokens only.",
+      tests: "EDGE: no decks for entitlement tier, locked decks (gating), deck load failure.",
+      notes: "PlayView is placeholder text today."
+    },
+    {
+      id: "sessions-edge", act: "day7", track: "sessions", status: "todo", focus: false,
+      title: "Session edge cases — safe word, interrupt, resume, intensity gating",
+      goal: "Sessions handle safe-word exit, interruption/resume, and difficulty gating by NMStage.",
+      accept: "Safe word ends a session cleanly + records it; interrupted session resumes or closes gracefully.",
+      touches: "SessionStore, SessionRecord (completion status), Couple.safeWord, CardIntensity gating",
+      constraints: "safeWord lives on Couple (shared config). defaultIntensity always derived from nmStage, never stored. No View writes models.",
+      tests: "EDGE: safe word mid-card, force-quit mid-session, intensity above stage hidden, resume after relaunch.",
+      notes: ""
+    },
+    {
+      id: "sync-resilience", act: "day7", track: "backend", status: "todo", focus: false,
+      title: "Offline / sync resilience + conflict handling",
+      goal: "SyncManager persists its queue, retries on reconnect, and resolves sync conflicts sanely.",
+      accept: "Make edits offline → reconnect → all changes sync; no duplicates, no lost writes.",
+      touches: "Core/Services/SyncManager.swift, DesireSyncService.swift, SessionSyncService.swift, DataStore.swift",
+      constraints: "DesireMatch reveal stays server-authoritative (isFreeReveal not client-set). DesireRating is local-only, never crossed with partner client-side. Services have no Store/View refs.",
+      tests: "EDGE: airplane mode round-trip, partial sync failure, conflicting edits both devices, retry backoff.",
+      notes: ""
+    },
+    {
+      id: "test-integration", act: "day7", track: "testing", status: "todo", focus: false,
+      title: "Integration tests: pairing + sync; UI smoke test of core loop",
+      goal: "Automated coverage for the pairing flow, sync round-trip, and a happy-path core-loop UI test.",
+      accept: "Integration tests pass against a test backend; UI smoke test runs the onboarding→session loop.",
+      touches: "VaylTests/ + new UI test target",
+      constraints: "Mock or sandbox Supabase — no production data. Keep deterministic.",
+      tests: "Pairing creates couple; session syncs; onboarding completes and lands on Home.",
+      notes: ""
+    },
+
+    /* ════════════════ ACT III — DAY 30 ════════════════ */
+    {
+      id: "map-tab", act: "day30", track: "pml", status: "todo", focus: false,
+      title: "Map tab — content & navigation",
+      goal: "Map tab becomes a real navigable surface (currently PrismView/MapView stubs).",
+      accept: "Map renders real content and navigates on device.",
+      touches: "Features/Map/** (PrismView, MapView)",
+      constraints: "Store-driven if it holds state. Tokens only. Empty state required.",
+      tests: "EDGE: no data, deep-link into map, back navigation.",
+      notes: "Stubs only today."
+    },
+    {
+      id: "learn-tab", act: "day30", track: "pml", status: "todo", focus: false,
+      title: "Learn tab — educational content & navigation",
+      goal: "Learn tab delivers educational content with working navigation.",
+      accept: "Learn content lists + opens detail on device.",
+      touches: "Features/Learn/** (two minimal views today)",
+      constraints: "Tokens only. Research ticker / orbs follow existing patterns. Empty state required.",
+      tests: "EDGE: content load failure, mark-as-read persistence (readThreeResearchOrbs milestone).",
+      notes: "Minimal infrastructure today."
+    },
+    {
+      id: "milestones-progress", act: "day30", track: "home", status: "todo", focus: false,
+      title: "Milestones + Progress dashboard",
+      goal: "Record one-time milestones and surface progress in the Progress dashboard.",
+      accept: "Milestones fire once and persist; Progress dashboard shows real data.",
+      touches: "Core/Models/MilestoneRecord.swift, Features/Progress/ProgressDashboardView.swift",
+      constraints: "MilestoneRecord is device-only, cascade-deletes with parent. No View writes models. Empty state required.",
+      tests: "EDGE: milestone fires exactly once, dashboard with zero data, cascade delete on parent removal.",
+      notes: "Progress has no store yet."
+    },
+    {
+      id: "desire-entitlements", act: "day30", track: "backend", status: "todo", focus: false,
+      title: "Desire Map matches + entitlements (free/core/pro)",
+      goal: "Server-authoritative desire matches reveal correctly; entitlement tiers gate features.",
+      accept: "Mutual match reveals per server; tier (free/core/pro) controls access; EntitlementRecord integrated.",
+      touches: "DesireMapStore, DesireSyncService, Core/Models/{DesireMatch,DesireRating,EntitlementRecord}.swift, Couple.entitlement",
+      constraints: "isFreeReveal is server-authoritative — never client-set. DesireRating local-only. EntitlementRecord integration is pending.",
+      tests: "EDGE: free-reveal vs paid gating, tier downgrade, match before partner rates, entitlement expiry.",
+      notes: "EntitlementRecord not yet fully integrated."
+    },
+    {
+      id: "settings-depth", act: "day30", track: "release", status: "inprogress", focus: false,
+      title: "Settings depth — account, privacy, safe word, theme",
+      goal: "Settings covers account management, privacy controls, safe-word config, and theme.",
+      accept: "Each settings action works on device; safe word edits propagate to Couple.",
+      touches: "Features/Settings/** (SettingsView, ThemePickerView), ThemeManager, Couple.safeWord",
+      constraints: "Settings is accessed outside the tab bar (per product decision). safeWord on Couple. Tokens only.",
+      tests: "EDGE: sign out clears state, delete account, safe-word change mid-session, theme persistence.",
+      notes: ""
+    },
+    {
+      id: "appstore-readiness", act: "day30", track: "release", status: "todo", focus: false,
+      title: "App Store readiness — privacy, age rating, metadata, review notes",
+      goal: "All App Store Connect requirements met for a mature couples/intimacy app.",
+      accept: "Privacy nutrition labels, age rating, screenshots, metadata, and review notes complete + submittable.",
+      touches: "App Store Connect, Info.plist privacy strings, marketing assets",
+      constraints: "Mature content age rating accurate. Review notes must explain couples/intimacy context to avoid rejection. iOS 26 SDK mandatory for submission.",
+      tests: "Pre-submission checklist; TestFlight external review; privacy-label accuracy vs actual data use.",
+      notes: ""
+    },
+    {
+      id: "growth-waitlist", act: "day30", track: "growth", status: "todo", focus: false,
+      title: "Waitlist signup (landing + capture)",
+      goal: "A public landing page captures waitlist signups ahead of/during beta.",
+      accept: "Visitor submits email → stored → confirmation. (No waitlist code exists today.)",
+      touches: "New: landing page + capture backend (Supabase table or form service)",
+      constraints: "Keep separate from app auth. Privacy-compliant capture (consent). Don't bloat the app target.",
+      tests: "EDGE: duplicate email, invalid email, spam/bot protection, export list.",
+      notes: "Greenfield — no waitlist code currently."
+    },
+    {
+      id: "growth-social", act: "day30", track: "growth", status: "todo", focus: false,
+      title: "Social accounts + optional additional sign-in providers",
+      goal: "Establish social presence and optionally add sign-in providers beyond SIWA.",
+      accept: "Social accounts live; if added, a second sign-in provider works end-to-end.",
+      touches: "Social platform setup; optionally AuthService + SupabaseManager for new provider",
+      constraints: "Keep SIWA as primary. Any new provider goes through AuthService (Store/Service boundary intact). No keyWindow/UIScreen.main.",
+      tests: "EDGE: account linking across providers, provider cancel, duplicate account same email.",
+      notes: "SIWA-only today."
+    }
+  ],
+
+  log: [
+    { week: "2026-06-01", entry: "Roadmap created. Baseline captured: onboarding maturing, Supabase backend + SwiftData in place, Play/Map/Learn/Progress are stubs, 3 enum unit tests, no waitlist, SIWA-only auth. Current focus set to onboarding polish + the OnboardingData→UserProfile migration verification." }
+  ]
+};
+
+/* ============================================================================
+   RENDERING — safe DOM construction (no innerHTML). No need to touch below.
+   ========================================================================== */
+const STATUS = {
+  done:       { label: "Done",        color: "var(--done)",       weight: 1.0 },
+  inprogress: { label: "In Progress", color: "var(--inprogress)", weight: 0.5 },
+  blocked:    { label: "Blocked",     color: "var(--blocked)",    weight: 0.0 },
+  todo:       { label: "Todo",        color: "var(--todo)",       weight: 0.0 }
+};
+
+const D = ROADMAP_DATA;
+const trackById = Object.fromEntries(D.tracks.map(t => [t.id, t]));
+const $ = (id) => document.getElementById(id);
+
+/* el(tag, props, children) — children are nodes or strings (auto text nodes). */
+function el(tag, props = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (v == null) continue;
+    if (k === "class") node.className = v;
+    else if (k === "style") node.setAttribute("style", v);
+    else if (k === "onclick") node.addEventListener("click", v);
+    else if (k === "text") node.textContent = v;
+    else node.setAttribute(k, v);
+  }
+  for (const c of [].concat(children)) {
+    if (c == null) continue;
+    node.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  }
+  return node;
+}
+
+/* Turn `backtick`-marked spec text into an array of text + <code> nodes. */
+function richNodes(s) {
+  const out = [];
+  String(s ?? "").split(/`([^`]+)`/).forEach((part, i) => {
+    if (part === "") return;
+    out.push(i % 2 ? el("code", { text: part }) : document.createTextNode(part));
+  });
+  return out;
+}
+
+function pct(tasks) {
+  if (!tasks.length) return 0;
+  const sum = tasks.reduce((a, t) => a + (STATUS[t.status]?.weight ?? 0), 0);
+  return Math.round((sum / tasks.length) * 100);
+}
+
+function statusPill(status, mini) {
+  const s = STATUS[status] || STATUS.todo;
+  return el("span", {
+    class: mini ? "pill-mini" : "status-pill",
+    style: `background:${s.color}22;color:${s.color};border:1px solid ${s.color}55`,
+    text: s.label
+  });
+}
+
+function trackChip(tr, cls) {
+  return el("span", {
+    class: cls,
+    style: `background:${tr.color}22;color:${tr.color};border:1px solid ${tr.color}55`,
+    text: tr.label
+  });
+}
+
+function specRow(label, value, valClass) {
+  return el("div", { class: "spec-row" }, [
+    el("div", { class: "spec-label", text: label }),
+    el("div", { class: "spec-val" + (valClass ? " " + valClass : "") }, richNodes(value))
+  ]);
+}
+
+function taskNode(t) {
+  const tr = trackById[t.track] || { color: "var(--text-3)", label: t.track };
+
+  const titleNode = el("span", { class: "task-title" });
+  if (t.focus) titleNode.appendChild(el("span", { class: "focus-flag", text: "★ " }));
+  titleNode.appendChild(document.createTextNode(t.title));
+
+  const head = el("div", { class: "task-head" }, [
+    statusPill(t.status),
+    titleNode,
+    el("span", { class: "task-track-chip", style: `background:${tr.color}22;color:${tr.color}`, text: tr.label }),
+    el("span", { class: "task-chevron", text: "▸" })
+  ]);
+
+  const body = el("div", { class: "task-body" }, [
+    specRow("Goal", t.goal),
+    specRow("Acceptance / Done condition", t.accept),
+    specRow("Touches", t.touches, "muted"),
+    specRow("Constraints — may NOT touch / must respect", t.constraints, "muted constraints"),
+    specRow("Test / edge cases", t.tests, "muted"),
+    t.notes ? specRow("Notes", t.notes, "muted") : null
+  ]);
+
+  const task = el("div", { class: "task" }, [head, body]);
+  head.addEventListener("click", () => task.classList.toggle("expanded"));
+  return task;
+}
+
+function actNode(act) {
+  const actTasks = D.tasks.filter(t => t.act === act.id);
+  const p = pct(actTasks);
+
+  const groups = D.tracks
+    .map(tr => ({ tr, items: actTasks.filter(t => t.track === tr.id) }))
+    .filter(g => g.items.length)
+    .map(g => el("div", { class: "track-group" }, [
+      el("div", { class: "track-head" }, [
+        trackChip(g.tr, "track-chip"),
+        el("span", { class: "track-count", text: `${g.items.length} · ${pct(g.items)}%` })
+      ]),
+      ...g.items.map(taskNode)
+    ]));
+
+  const head = el("div", { class: "act-head" }, [
+    el("span", { class: "act-chevron", text: "▼" }),
+    el("div", {}, [
+      el("div", { class: "act-title", text: act.title }),
+      el("div", { class: "act-thesis", text: act.thesis })
+    ]),
+    el("div", { class: "act-meta" }, [
+      el("div", { class: "act-bar" }, [el("i", { style: `width:${p}%` })]),
+      el("div", { class: "act-pct", text: p + "%" })
+    ])
+  ]);
+
+  const section = el("section", { class: "act" }, [
+    head,
+    el("div", { class: "act-body" }, groups)
+  ]);
+  head.addEventListener("click", () => section.classList.toggle("collapsed"));
+  return section;
+}
+
+function render() {
+  $("weekOf").textContent = "Week of " + D.weekOf;
+
+  $("overallPct").textContent = pct(D.tasks) + "%";
+  $("overallBar").style.width = pct(D.tasks) + "%";
+
+  const counts = $("counts");
+  Object.keys(STATUS).forEach(k => {
+    const n = D.tasks.filter(t => t.status === k).length;
+    counts.appendChild(el("span", { class: "count-chip" }, [
+      el("span", { class: "dot", style: `background:${STATUS[k].color}` }),
+      `${STATUS[k].label}: ${n}`
+    ]));
+  });
+
+  const focusList = $("focusList");
+  const focused = D.tasks.filter(t => t.focus);
+  if (focused.length) {
+    focused.forEach(t => focusList.appendChild(
+      el("div", { class: "focus-item" }, [
+        el("span", { class: "focus-flag", text: "★" }),
+        t.title + "  ",
+        statusPill(t.status, true)
+      ])
+    ));
+  } else {
+    focusList.appendChild(el("div", { class: "focus-item", style: "color:var(--text-3)" },
+      ["No tasks flagged. Set focus: true in ROADMAP_DATA."]));
+  }
+
+  const legends = $("legends");
+  const statusGroup = el("div", { class: "legend-group" }, [el("b", { text: "Status" })]);
+  Object.keys(STATUS).forEach(k => statusGroup.appendChild(
+    el("span", { class: "legend-item" }, [statusPill(k, true)])));
+  const trackGroup = el("div", { class: "legend-group" }, [el("b", { text: "Tracks" })]);
+  D.tracks.forEach(tr => trackGroup.appendChild(
+    el("span", { class: "legend-item" }, [trackChip(tr, "pill-mini")])));
+  legends.appendChild(statusGroup);
+  legends.appendChild(trackGroup);
+
+  const acts = $("acts");
+  D.acts.forEach(act => acts.appendChild(actNode(act)));
+
+  const logList = $("logList");
+  D.log.forEach(l => logList.appendChild(
+    el("div", { class: "log-entry" }, [
+      el("div", { class: "log-week", text: "Week of " + l.week }),
+      el("div", { class: "log-text", text: l.entry })
+    ])
+  ));
+}
+
+render();
+</script>
+</body>
+</html>

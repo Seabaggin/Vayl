@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3D01604A2FBBFA4B00492968 /* CLAUDE.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D0160492FBBFA4400492968 /* CLAUDE.md */; };
 		3D0635572F8AF7370098DE65 /* gather_audit_home.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3D0635562F8AF7340098DE65 /* gather_audit_home.sh */; };
 		3D0635592F8AF7570098DE65 /* gather_audit_pulse_carousel.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3D0635582F8AF7530098DE65 /* gather_audit_pulse_carousel.sh */; };
 		3D51D7432F5FB8D7002488A7 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D7422F5FB8D7002488A7 /* Auth */; };
@@ -24,6 +25,9 @@
 		3DE73B002FA687E000BF22F1 /* migrate_animations.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */; };
 		3DE73D1C2FB0555000BF22F1 /* gather_theme.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3DE73D1B2FB0554700BF22F1 /* gather_theme.sh */; };
 		3DE993A32F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */; };
+		AA000001AAAA000000000001 /* MonteRowGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */; };
+		AA000002AAAA000000000001 /* CandleIntensityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000002AAAA000000000002 /* CandleIntensityTests.swift */; };
+		AA000003AAAA000000000001 /* ContextOptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000003AAAA000000000002 /* ContextOptionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,6 +48,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		3D0160492FBBFA4400492968 /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 		3D0635562F8AF7340098DE65 /* gather_audit_home.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_audit_home.sh; sourceTree = "<group>"; };
 		3D0635582F8AF7530098DE65 /* gather_audit_pulse_carousel.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_audit_pulse_carousel.sh; sourceTree = "<group>"; };
 		3D58E6DC2F6227E800210EB6 /* Vayl.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Vayl.xcconfig; sourceTree = "<group>"; };
@@ -58,21 +63,16 @@
 		3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = migrate_animations.sh; sourceTree = "<group>"; };
 		3DE73D1B2FB0554700BF22F1 /* gather_theme.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_theme.sh; sourceTree = "<group>"; };
 		3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Open Lightly — LLM Audit Prompts.md"; sourceTree = "<group>"; };
+		AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonteRowGeometryTests.swift; sourceTree = "<group>"; };
+		AA000002AAAA000000000002 /* CandleIntensityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandleIntensityTests.swift; sourceTree = "<group>"; };
+		AA000003AAAA000000000002 /* ContextOptionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextOptionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		3DE73D382FB100DE00BF22F1 /* Exceptions for "Vayl" folder in "Vayl" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Features/Onboarding/Views/OnboardingBrandView.swift,
-				Features/Onboarding/Views/OnboardingCardRevealView.swift,
-				Features/Onboarding/Views/OnboardingContextView.swift,
-				Features/Onboarding/Views/OnboardingCuriosityPickerView.swift,
-				Features/Onboarding/Views/OnboardingFlowView.swift,
-				Features/Onboarding/Views/OnboardingGroundRulesView.swift,
-				Features/Onboarding/Views/OnboardingModeSelectView.swift,
-				Features/Onboarding/Views/OnboardingNameView.swift,
-				Features/Onboarding/Views/OnboardingStatView.swift,
+				Vayl.plist,
 			);
 			target = 3D767EB12F5D520D00F2D70F /* Vayl */;
 		};
@@ -130,6 +130,7 @@
 		3D767EA92F5D520D00F2D70F = {
 			isa = PBXGroup;
 			children = (
+				3D0160492FBBFA4400492968 /* CLAUDE.md */,
 				3DE73D1B2FB0554700BF22F1 /* gather_theme.sh */,
 				3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */,
 				3D807B932F8DC7450021F080 /* .aider.conf.yml */,
@@ -141,6 +142,7 @@
 				3D767EF92F5D562100F2D70F /* RULES.md */,
 				3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */,
 				3D767EB42F5D520D00F2D70F /* Vayl */,
+				AA000001AAAA000000000003 /* VaylTests */,
 				3D51D74E2F5FBA71002488A7 /* Frameworks */,
 				3D767EB32F5D520D00F2D70F /* Products */,
 				3D58E6DC2F6227E800210EB6 /* Vayl.xcconfig */,
@@ -155,6 +157,16 @@
 				3D767ECB2F5D520E00F2D70F /* VaylUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		AA000001AAAA000000000003 /* VaylTests */ = {
+			isa = PBXGroup;
+			children = (
+				AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */,
+				AA000002AAAA000000000002 /* CandleIntensityTests.swift */,
+				AA000003AAAA000000000002 /* ContextOptionTests.swift */,
+			);
+			path = VaylTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -291,6 +303,7 @@
 				3D0635592F8AF7570098DE65 /* gather_audit_pulse_carousel.sh in Resources */,
 				3DE73B002FA687E000BF22F1 /* migrate_animations.sh in Resources */,
 				3D0635572F8AF7370098DE65 /* gather_audit_home.sh in Resources */,
+				3D01604A2FBBFA4B00492968 /* CLAUDE.md in Resources */,
 				3DE993A32F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -314,7 +327,6 @@
 /* Begin PBXShellScriptBuildPhase section */
 		3DE73B012FA69E0E00BF22F1 /* SwiftLint */ = {
 			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -328,10 +340,11 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/swiftlint.timestamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if test -d \"/opt/homebrew/bin/\"; then\n  PATH=\"/opt/homebrew/bin/:${PATH}\"\nfi\n\nexport PATH\n\nif which swiftlint > /dev/null; then\n  swiftlint\nelse\n  echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
+			shellScript = "if test -d \"/opt/homebrew/bin/\"; then\n  PATH=\"/opt/homebrew/bin/:${PATH}\"\nfi\n\nexport PATH\n\nif which swiftlint > /dev/null; then\n  swiftlint\nelse\n  echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\ntouch \"${DERIVED_FILE_DIR}/swiftlint.timestamp\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -347,6 +360,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA000001AAAA000000000001 /* MonteRowGeometryTests.swift in Sources */,
+				AA000002AAAA000000000001 /* CandleIntensityTests.swift in Sources */,
+				AA000003AAAA000000000001 /* ContextOptionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

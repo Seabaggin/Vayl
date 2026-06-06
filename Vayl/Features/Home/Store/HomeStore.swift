@@ -109,6 +109,9 @@ final class HomeStore {
     /// Resolves the current HomeState from completion flags.
     /// Each guard gates the next state — order is intentional.
     private func resolveHomeState() -> HomeState {
+        // Solo users with no partner yet reach their starter deck directly —
+        // the Desire Map is a paired-couple surface and must not gate them.
+        if isSolo && appState.linkState == .unlinked { return .soloUnpaired }
         guard myMapComplete      else { return .gated }
         guard postReflectionDone else { return .postReflection }
         guard partnerMapComplete  else { return .waiting }
@@ -121,6 +124,8 @@ final class HomeStore {
         switch homeState {
         case .dashboard:
             return false
+        case .soloUnpaired:
+            return tab == .map   // starter deck (play) reachable; Desire Map locked until paired
         default:
             return tab == .play || tab == .map
         }

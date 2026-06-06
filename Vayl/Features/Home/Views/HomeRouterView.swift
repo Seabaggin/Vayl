@@ -97,6 +97,10 @@ struct HomeRouterView: View {
             case .dashboard:
                 dashboardContent(store: store)
                     .transition(.opacity)
+
+            case .soloUnpaired:
+                dashboardContent(store: store)
+                    .transition(.opacity)
             }
         }
         .animation(AppAnimation.enter, value: store.homeState)

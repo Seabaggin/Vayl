@@ -183,7 +183,7 @@ class SyncManager: ObservableObject {
     /// Checks for any failed syncs from previous sessions and retries them.
     ///
     /// WHEN TO CALL:
-    /// In your app's root view (e.g., `ContentView` or `Open_LightlyApp.swift`),
+    /// In your app's root view (e.g., `AppRootView` / `VaylApp`),
     /// inside a `.task { }` modifier that runs on app launch:
     ///
     /// ```swift

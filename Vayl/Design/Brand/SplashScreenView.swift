@@ -9,22 +9,6 @@ private struct LOriginKey: PreferenceKey {
     }
 }
 
-// MARK: - Animation Definitions
-
-private enum SplashAnimation {
-    static let slit           = Animation.easeIn(duration: 0.10)
-    static let bloomCreep     = Animation.easeInOut(duration: 0.30)
-    static let ignitionReveal = Animation.timingCurve(0.22, 1, 0.36, 1, duration: 0.58)
-    static let ignitionBloom  = Animation.timingCurve(0.22, 1, 0.36, 1, duration: 0.52)
-    static let holdSettle     = Animation.easeOut(duration: 0.45)
-    static let textFade       = Animation.easeOut(duration: 0.22)
-    static let zoom           = Animation.timingCurve(0.55, 0, 0.1, 1, duration: 0.35)
-    static let tearCharge     = Animation.easeIn(duration: 0.40)
-    static let tear           = Animation.timingCurve(0.55, 0.0, 0.2, 1.0, duration: 0.55)
-    static let tearFade       = Animation.linear(duration: 0.08)
-    static let dismiss        = Animation.easeOut(duration: 0.30)
-}
-
 // MARK: - Splash Screen View
 
 struct SplashScreenView<Destination: View>: View {
@@ -64,6 +48,8 @@ struct SplashScreenView<Destination: View>: View {
     @State private var animationTask:      Task<Void, Never>?
     @State private var capturedLineY:      CGFloat = 0
     @State private var capturedTearDist:   CGFloat = 0
+
+    @State private var hasAnimated:    Bool    = false
 
     @State private var wordmarkFrame:  CGRect  = .zero
     @State private var lGlyphOriginX:  CGFloat = 0
@@ -109,7 +95,7 @@ struct SplashScreenView<Destination: View>: View {
                 guard screenW > 0, screenH > 0 else { return }
                 launchSequence()
             }
-            .onChange(of: geo.size) { newSize in
+            .onChange(of: geo.size) { _, newSize in
                 let previousW = screenW
                 screenW = newSize.width
                 screenH = newSize.height
@@ -152,6 +138,8 @@ struct SplashScreenView<Destination: View>: View {
     // MARK: - Sequence launcher
 
     private func launchSequence() {
+        guard !hasAnimated else { return }
+        hasAnimated      = true
         capturedLineY    = lineY
         capturedTearDist = tearDistance
 
@@ -258,7 +246,7 @@ struct SplashScreenView<Destination: View>: View {
                             .onAppear {
                                 wordmarkFrame = proxy.frame(in: .named("panel"))
                             }
-                            .onChange(of: proxy.size) { _ in
+                            .onChange(of: proxy.size) { _, _ in
                                 if capturedLineLeft == 0 {
                                     wordmarkFrame = proxy.frame(in: .named("panel"))
                                 }
@@ -629,26 +617,26 @@ struct SplashScreenView<Destination: View>: View {
 
         // ── APPEAR ───────────────────────────────────────────────────────
         await lockLineGeometry()
-        withAnimation(SplashAnimation.slit)           { lineOpacity = 1 }
-        withAnimation(SplashAnimation.ignitionReveal) { revealProgress = 1.0 }
-        withAnimation(SplashAnimation.bloomCreep)     { lineBloom = 0.58 }
+        withAnimation(AppAnimation.splashLineAppear)                  { lineOpacity = 1 }
+        withAnimation(AppAnimation.splashReveal)                      { revealProgress = 1.0 }
+        withAnimation(.easeInOut(duration: 0.30)) /* TODO: AppAnimation.splashBloomCreep — no token, spec gap */ { lineBloom = 0.58 }
 
         // ── IGNITION BLOOM ────────────────────────────────────────────────
         try? await sleep(ms: 600)
         guard !Task.isCancelled else { return }
-        withAnimation(SplashAnimation.ignitionBloom) { lineBloom = 1.0; linePulse = 1.6 }
+        withAnimation(AppAnimation.splashBloomIgnite) { lineBloom = 1.0; linePulse = 1.6 }
 
         // ── HOLD SETTLE ───────────────────────────────────────────────────
         try? await sleep(ms: 600)
         guard !Task.isCancelled else { return }
-        withAnimation(SplashAnimation.holdSettle) { lineBloom = 0.65; linePulse = 1.0 }
+        withAnimation(AppAnimation.splashBloomSettle) { lineBloom = 0.65; linePulse = 1.0 }
 
         // ── ZOOM ──────────────────────────────────────────────────────────
         try? await sleep(ms: 450)
         guard !Task.isCancelled else { return }
-        withAnimation(SplashAnimation.textFade)   { textOpacity = 0 }
-        withAnimation(SplashAnimation.zoom)       { zoomScale = 3.5; lineBloom = 3.0; linePulse = 1.4 }
-        withAnimation(SplashAnimation.tearCharge) { tearIntensity = 0.8 }
+        withAnimation(.easeOut(duration: 0.22)) /* TODO: AppAnimation token — textFade has no spec equivalent */ { textOpacity = 0 }
+        withAnimation(AppAnimation.splashZoom)          { zoomScale = 3.5; lineBloom = 3.0; linePulse = 1.4 }
+        withAnimation(AppAnimation.splashZoomAnticipate) { tearIntensity = 0.8 }
 
         // 350 ms zoom — tear fires 50 ms early so zoom momentum transfers
         // directly into the rip with no dead-air pause.
@@ -657,24 +645,24 @@ struct SplashScreenView<Destination: View>: View {
 
         // ── TEAR ──────────────────────────────────────────────────────────
         onTearBegan()
-        withAnimation(.easeIn(duration: 0.30))  { destinationOpacity = 1.0 }
-        withAnimation(SplashAnimation.tear)     { tearOffset = capturedTearDist; backgroundOpacity = 0 }
-        withAnimation(.easeOut(duration: 0.10)) { tearIntensity = 1.0 }
+        withAnimation(.easeIn(duration: 0.30)) /* TODO: AppAnimation token — destination reveal has no spec equivalent */ { destinationOpacity = 1.0 }
+        withAnimation(AppAnimation.splashTear)          { tearOffset = capturedTearDist; backgroundOpacity = 0 }
+        withAnimation(.easeOut(duration: 0.10)) /* TODO: AppAnimation token — tearIntensity spike has no spec equivalent */ { tearIntensity = 1.0 }
 
         // FIX 1: line vaporizes instantly the moment the seam opens.
         // The tearEdgeGlow on the parting panels immediately inherits the
         // visual energy — no zombie line floating in the void.
-        withAnimation(.easeOut(duration: 0.25)) { lineOpacity = 0 }
+        withAnimation(.easeOut(duration: 0.25)) /* TODO: AppAnimation token — line vaporize has no spec equivalent */ { lineOpacity = 0 }
 
         try? await sleep(ms: 100)
         guard !Task.isCancelled else { return }
-        withAnimation(.easeIn(duration: 0.35))  { tearIntensity = 0 }
-        withAnimation(SplashAnimation.tearFade) { lineBloom = 0; linePulse = 1.0 }
+        withAnimation(.easeIn(duration: 0.35)) /* TODO: AppAnimation token — tearIntensity decay has no spec equivalent */ { tearIntensity = 0 }
+        withAnimation(.linear(duration: 0.08)) /* TODO: AppAnimation.splashTearFade — no token, spec gap */              { lineBloom = 0; linePulse = 1.0 }
 
         // Wait for panels to mostly clear before dismissing the overlay.
         try? await sleep(ms: 250)
         guard !Task.isCancelled else { return }
-        withAnimation(SplashAnimation.dismiss) { splashOpacity = 0 }
+        withAnimation(.easeOut(duration: 0.30)) /* TODO: AppAnimation.splashDismiss — no token, spec gap */ { splashOpacity = 0 }
 
         // ── COMPLETE ──────────────────────────────────────────────────────
         try? await sleep(ms: 300)
@@ -702,7 +690,7 @@ struct SplashScreenView<Destination: View>: View {
         // Previously destinationOpacity was never set, leaving the caller
         // trapped on a transparent screen after splashOpacity reached zero.
         onTearBegan()
-        withAnimation(.easeIn(duration: Double(fadeDurationMs) / 1000.0)) {
+        withAnimation(AppAnimation.standard) {
             destinationOpacity = 1.0
             splashOpacity      = 0
         }

@@ -33,15 +33,16 @@ struct ProjectedTextView: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 15, weight: .regular, design: .serif))
+            .font(.system(.body, design: .serif))
             // TODO: replace with full felt projection styling
             .italic()
-            .foregroundStyle(Color.white.opacity(0.90))
+            // Token: warm amber (rgba 245,235,215,0.90) pending AppColors.tableProjectedText
+            .foregroundStyle(AppColors.textPrimary)
             .multilineTextAlignment(.center)
             .padding(.horizontal, AppLayout.screenHPad)
             .position(
                 x: screenSize.width  * 0.50,
-                y: screenSize.height * AppLayout.tableHorizonYFrac - 28
+                y: screenSize.height * AppLayout.tableHorizonYFrac - 28 // -28pt optical offset — token pending AppLayout.projectedTextOffset
             )
             .allowsHitTesting(false)
     }

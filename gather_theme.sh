@@ -9,9 +9,9 @@
 # Output: theme_files.md
 #
 # Scope: All theme tokens and primitives
-#   [1] Color, Font, Spacing, Layout tokens
+#   [1] Color, Font, Spacing, Layout, Glows tokens
 #   [2] Theme manager + modifiers
-#   [3] Vayl primitives
+#   [3] Root view + Vayl primitives
 # ─────────────────────────────────────────────────────────────────────────────
 
 OUTPUT_FILE="theme_files.md"
@@ -30,6 +30,7 @@ TARGET_FILES=(
   "$SOURCE_ROOT/App/Theme/AppGrid.swift"
   "$SOURCE_ROOT/App/Theme/AppLayout.swift"
   "$SOURCE_ROOT/App/Theme/AppRadius.swift"
+  "$SOURCE_ROOT/App/Theme/AppRootView.swift"
   "$SOURCE_ROOT/App/Theme/AppSafeArea.swift"
   "$SOURCE_ROOT/App/Theme/AppSpacing.swift"
   "$SOURCE_ROOT/App/Theme/AppTheme.swift"
@@ -67,14 +68,14 @@ fi
   echo "> **Scope: All theme tokens, primitives, and modifiers.**"
   echo ">"
   echo "> Contents:"
-  echo ">   [1] Color, Font, Spacing, Layout, Grid, Radius, Elevation, SafeArea tokens"
-  echo ">       → AppColors / AppFonts / AppSpacing / AppLayout / AppGrid / AppRadius / AppElevation / AppSafeArea"
+  echo ">   [1] Color, Font, Spacing, Layout, Grid, Radius, Elevation, SafeArea, Glows tokens"
+  echo ">       → AppColors / AppFonts / AppSpacing / AppLayout / AppGrid / AppRadius / AppElevation / AppSafeArea / AppGlows"
   echo ">   [2] Animation + Theme entry point"
   echo ">       → AppAnimation / AppTheme"
   echo ">   [3] Theme manager + view modifiers"
   echo ">       → ThemeManager / ThemeModifiers"
-  echo ">   [4] Vayl design primitives"
-  echo ">       → VaylPrimitives"
+  echo ">   [4] Root view + Vayl design primitives"
+  echo ">       → AppRootView / VaylPrimitives"
   echo ">"
   echo "> Generated: $(date '+%Y-%m-%d %H:%M:%S %Z')"
   echo ""
@@ -161,7 +162,7 @@ if [ ${#WARNINGS[@]} -gt 0 ]; then
   for W in "${WARNINGS[@]}"; do echo "     → $W"; done
   echo ""
   echo "  Quick check — run this to find actual locations:"
-  echo "    find \"$SOURCE_ROOT\" -name \"AppColors.swift\" -o \\"
-  echo "                        -name \"VaylPrimitives.swift\""
+  echo "    find \"$SOURCE_ROOT\" -name \"AppGlows.swift\" -o \\"
+  echo "                        -name \"AppRootView.swift\""
   echo ""
 fi

@@ -77,12 +77,12 @@ final class PairingStore {
     init(
         modelContainer: ModelContainer,
         appState: AppState,
-        pairingService: PairingService = PairingService(),
+        pairingService: PairingService? = nil,
         initialState: PairingLinkState = .idle
     ) {
         self.modelContainer = modelContainer
         self.appState = appState
-        self.pairingService = pairingService
+        self.pairingService = pairingService ?? PairingService()
         self.linkState = initialState
     }
 

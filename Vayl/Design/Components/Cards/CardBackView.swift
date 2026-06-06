@@ -134,185 +134,16 @@ struct CardBackView: View {
                 )
 
             // ── Border ────────────────────────────────────────────────────
-            if isLight {
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .strokeBorder(
-                        AppColors.spectrumBorder,
-                        lineWidth: selectedBorderWidth
-                    )
-            } else {
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .strokeBorder(
-                        AppColors.spectrumBorder,
-                        lineWidth: selectedBorderWidth
-                    )
-            }
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .strokeBorder(AppColors.spectrumBorder, lineWidth: selectedBorderWidth)
 
             // ── ∞ Watermark (always visible) ──────────────────────────────
             // Shown in both deck mode and interactive mode.
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Text("∞")
-                        .font(Font.custom("Switzer-Regular", size: 28, relativeTo: .title))
-                        .foregroundStyle(
-                            isLight
-                                ? AppColors.accentSecondary.opacity(0.08)
-                                : AppColors.accentSecondary.opacity(0.10)
-                        )
-                        .padding(AppSpacing.md)
-                        .allowsHitTesting(false)
-                }
-            }
+            watermark
 
             // ── Interactive content — suppressed in deck mode ─────────────
             if !deckMode {
-                VStack(spacing: 0) {
-
-                    // Heading
-                    VStack(spacing: AppSpacing.xs) {
-                        Text("Something came up.")
-                            .font(AppFonts.body(20, weight: .semibold, relativeTo: .title3))
-                            .foregroundStyle(
-                                isLight
-                                    ? AppColors.textBody
-                                    : AppColors.textPrimary
-                            )
-                            .multilineTextAlignment(.center)
-
-                        Text("What's it closest to?")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(
-                                isLight
-                                    ? AppColors.textBody.opacity(0.50)
-                                    : AppColors.textSecondary
-                            )
-                    }
-                    .padding(.top, AppSpacing.lg)
-                    .opacity(revealed ? 1 : 0)
-                    .offset(y: revealed ? 0 : 6)
-                    .animation(AppAnimation.standard, value: revealed)
-
-                    Spacer()
-
-                    // Pills
-                    VStack(spacing: AppSpacing.sm) {
-                        ForEach(
-                            Array(CardRevealPill.allCases.enumerated()),
-                            id: \.element
-                        ) { index, pill in
-                            Button {
-                                guard selectedPill == nil else { return }
-                                UIImpactFeedbackGenerator(style: .light)
-                                    .impactOccurred()
-                                onSelect(pill)
-                            } label: {
-                                Text(pill.rawValue)
-                                    .font(AppFonts.bodyMedium)
-                                    .foregroundStyle(
-                                        selectedPill == pill
-                                            ? (isLight
-                                                ? AppColors.textBody
-                                                : AppColors.textPrimary)
-                                            : (isLight
-                                                ? AppColors.textSecondary
-                                                : Color.white.opacity(0.75))
-                                    )
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 44)
-                                    .background(
-                                        Capsule()
-                                            .fill(
-                                                selectedPill == pill
-                                                    ? (isLight
-                                                        ? AnyShapeStyle(AppColors.glassFrostPillSelected)
-                                                        : AnyShapeStyle(Color.white.opacity(0.10)))
-                                                    : (isLight
-                                                        ? AnyShapeStyle(AppColors.glassFrostPill)
-                                                        : AnyShapeStyle(AppColors.cardBackground))
-                                            )
-                                    )
-                                    .overlay(
-                                        Group {
-                                            if selectedPill == pill {
-                                                if isLight {
-                                                    Capsule()
-                                                        .strokeBorder(
-                                                            AppColors.spectrumBorder,
-                                                            lineWidth: 2.0
-                                                        )
-                                                } else {
-                                                    Capsule()
-                                                        .strokeBorder(
-                                                            AppColors.spectrumBorder,
-                                                            lineWidth: 2.0
-                                                        )
-                                                }
-                                            } else {
-                                                Capsule()
-                                                    .strokeBorder(
-                                                        isLight
-                                                            ? AppColors.borderSubtle
-                                                            : AppColors.borderSubtle,
-                                                        lineWidth: 1.5
-                                                    )
-                                            }
-                                        }
-                                    )
-                                    .clipShape(Capsule())
-                            }
-                            .buttonStyle(.plain)
-                            .scaleEffect(
-                                selectedPill == pill ? selectedScale : 1.0
-                            )
-                            .animation(AppAnimation.spring, value: selectedScale)
-                            .opacity({
-                                if selectedPill != nil && selectedPill != pill {
-                                    return unselectedVisible ? 1 : 0
-                                }
-                                return revealed ? 1 : 0
-                            }())
-                            .offset(y: revealed ? 0 : 10)
-                            .animation(
-                                AppAnimation.standard
-                                    .delay(Double(index) * 0.07 + 0.12),
-                                value: revealed
-                            )
-                            // easeIn exit — 0.35s intentional: pill deselect fade-out
-                            // slightly longer than AppAnimation.exit (0.2s) to read as
-                            // deliberate removal rather than an instant dismissal.
-                            .animation(
-                                AppAnimation.standard,
-                                value: unselectedVisible
-                            )
-                            .disabled(
-                                selectedPill != nil && selectedPill != pill
-                            )
-                            .background(
-                                Capsule()
-                                    .fill(
-                                        isLight
-                                            ? AppColors.glassFrostPill
-                                            : AppColors.cardBackground
-                                    )
-                            )
-                        }
-                    }
-                    .padding(.horizontal, AppSpacing.md)
-
-                    Spacer()
-
-                    Text("✦")
-                        .font(AppFonts.overline)
-                        .foregroundStyle(AppColors.textTertiary.opacity(0.5))
-                        .opacity(revealed ? 0.6 : 0)
-                        .animation(
-                            AppAnimation.enter.delay(0.5),
-                            value: revealed
-                        )
-                        .padding(.bottom, AppSpacing.lg)
-                }
+                interactiveContent
             } // end !deckMode
         }
         .frame(width: cardSize.width, height: cardSize.height)
@@ -325,6 +156,120 @@ struct CardBackView: View {
         .opacity(deckMode ? _deckOpacity : 1.0)
         // Shadows — only on interactive mode; deck mode uses caller-side shadow
         .if(!deckMode) { $0.cardShadows(isLight: isLight) }
+    }
+
+    // MARK: - Body subviews
+    // Extracted from `body` so each is type-checked in isolation — the inline
+    // ZStack with its nested isLight/selectedPill ternaries was 537ms.
+
+    private var watermark: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                Text("∞")
+                    .font(Font.custom("Switzer-Regular", size: 28, relativeTo: .title))
+                    .foregroundStyle(
+                        isLight
+                            ? AppColors.accentSecondary.opacity(0.08)
+                            : AppColors.accentSecondary.opacity(0.10)
+                    )
+                    .padding(AppSpacing.md)
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+
+    private var interactiveContent: some View {
+        VStack(spacing: 0) {
+            heading
+                .padding(.top, AppSpacing.lg)
+                .opacity(revealed ? 1 : 0)
+                .offset(y: revealed ? 0 : 6)
+                .animation(AppAnimation.standard, value: revealed)
+
+            Spacer()
+
+            VStack(spacing: AppSpacing.sm) {
+                ForEach(Array(CardRevealPill.allCases.enumerated()), id: \.element) { index, pill in
+                    pillButton(index: index, pill: pill)
+                }
+            }
+            .padding(.horizontal, AppSpacing.md)
+
+            Spacer()
+
+            Text("✦")
+                .font(AppFonts.overline)
+                .foregroundStyle(AppColors.textTertiary.opacity(0.5))
+                .opacity(revealed ? 0.6 : 0)
+                .animation(AppAnimation.enter.delay(0.5), value: revealed)
+                .padding(.bottom, AppSpacing.lg)
+        }
+    }
+
+    private var heading: some View {
+        let titleColor:    Color = isLight ? AppColors.textBody : AppColors.textPrimary
+        let subtitleColor: Color = isLight ? AppColors.textBody.opacity(0.50) : AppColors.textSecondary
+
+        return VStack(spacing: AppSpacing.xs) {
+            Text("Something came up.")
+                .font(AppFonts.body(20, weight: .semibold, relativeTo: .title3))
+                .foregroundStyle(titleColor)
+                .multilineTextAlignment(.center)
+
+            Text("What's it closest to?")
+                .font(AppFonts.caption)
+                .foregroundStyle(subtitleColor)
+        }
+    }
+
+    private func pillButton(index: Int, pill: CardRevealPill) -> some View {
+        let isSelected: Bool = selectedPill == pill
+        let dimmed: Bool     = selectedPill != nil && selectedPill != pill
+
+        let textColor: Color = isSelected
+            ? (isLight ? AppColors.textBody : AppColors.textPrimary)
+            : (isLight ? AppColors.textSecondary : Color.white.opacity(0.75))
+
+        let fillStyle: AnyShapeStyle = isSelected
+            ? (isLight ? AnyShapeStyle(AppColors.glassFrostPillSelected) : AnyShapeStyle(Color.white.opacity(0.10)))
+            : (isLight ? AnyShapeStyle(AppColors.glassFrostPill) : AnyShapeStyle(AppColors.cardBackground))
+
+        let borderWidth: CGFloat = isSelected ? 2.0 : 1.5
+        let borderStyle: AnyShapeStyle = isSelected
+            ? AnyShapeStyle(AppColors.spectrumBorder)
+            : AnyShapeStyle(AppColors.borderSubtle)
+
+        let pillOpacity: Double = dimmed ? (unselectedVisible ? 1 : 0) : (revealed ? 1 : 0)
+
+        return Button {
+            guard selectedPill == nil else { return }
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            onSelect(pill)
+        } label: {
+            Text(pill.rawValue)
+                .font(AppFonts.bodyMedium)
+                .foregroundStyle(textColor)
+                .frame(maxWidth: .infinity)
+                .frame(height: 44)
+                .background(Capsule().fill(fillStyle))
+                .overlay(
+                    Capsule().strokeBorder(borderStyle, lineWidth: borderWidth)
+                )
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .scaleEffect(isSelected ? selectedScale : 1.0)
+        .animation(AppAnimation.spring, value: selectedScale)
+        .opacity(pillOpacity)
+        .offset(y: revealed ? 0 : 10)
+        .animation(AppAnimation.standard.delay(Double(index) * 0.07 + 0.12), value: revealed)
+        .animation(AppAnimation.standard, value: unselectedVisible)
+        .disabled(dimmed)
+        .background(
+            Capsule().fill(isLight ? AppColors.glassFrostPill : AppColors.cardBackground)
+        )
     }
 
     // MARK: - Card fill
