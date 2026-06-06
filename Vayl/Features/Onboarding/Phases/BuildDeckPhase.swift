@@ -1,22 +1,14 @@
 //
-//  FoilPhase.swift
-//  Vayl
-//
-//  Created by Bryan Jorden on 5/10/26.
-//
-
-
-//
-//  FoilPhase.swift
+//  BuildDeckPhase.swift
 //  Vayl
 //
 
 import SwiftUI
 
-/// OB Phase — Foil
+/// OB Phase — Build Deck (renders OBPhase.buildDeck)
 /// Stub for routing verification. Cosmetics in visual pass.
 /// Advances to .founderLetter via director.
-struct FoilPhase: View {
+struct BuildDeckPhase: View {
 
     let director:   VaylDirector
     let screenSize: CGSize
@@ -29,7 +21,7 @@ struct FoilPhase: View {
             VStack(spacing: AppSpacing.xl) {
                 Spacer()
 
-                Text("Foil Phase")
+                Text("Build Deck Phase")
                     .font(Font.custom("ClashDisplay-Medium", size: 24, relativeTo: .title))
                     .foregroundStyle(AppColors.textPrimary)
 
@@ -44,6 +36,6 @@ struct FoilPhase: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .accessibilityLabel("Foil phase")
+        .accessibilityLabel("Build deck phase")
     }
 }

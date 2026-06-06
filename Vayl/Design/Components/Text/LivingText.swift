@@ -35,116 +35,120 @@ struct LivingText: View {
     var body: some View {
         Group {
             if UIAccessibility.isReduceMotionEnabled {
-                // Static gradient — respects color scheme.
-                Text(text)
-                    .font(font)
-                    .foregroundStyle(LinearGradient(
-                        colors: colorScheme == .light
-                            ? [AppColors.accentTertiary, AppColors.progressBarLeading, AppColors.safetyAccent]
-                            : [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ))
+                staticText
             } else {
-                TimelineView(.animation) { timeline in
-                    let elapsed = timeline.date.timeIntervalSinceReferenceDate
-
-                    // Glow breath — 4.3s cycle.
-                    // Drives all three bloom layers in unison.
-                    let glowCycle = 4.3
-                    let glowPhase = CGFloat(
-                        elapsed.truncatingRemainder(dividingBy: glowCycle)
-                        / glowCycle
-                    )
-                    let intensity = CGFloat(sin(glowPhase * .pi * 2) * 0.5 + 0.5)
-
-                    // Scale breath — 5.0s cycle, independent of glow.
-                    // Sub-perceptual as movement but adds physical presence.
-                    let scaleCycle = 5.0
-                    let scalePhase = CGFloat(
-                        elapsed.truncatingRemainder(dividingBy: scaleCycle)
-                        / scaleCycle
-                    )
-                    let scaleIntensity = CGFloat(sin(scalePhase * .pi * 2) * 0.5 + 0.5)
-
-                    // Tri-color glow — each color blooms at a different phase.
-                    // On dark: cyan peaks at 0°, magenta at 120°, purple at 240°.
-                    // The three glows are never in the same state simultaneously
-                    // so the text always feels alive without a visible loop point.
-                    let cyanPhase    = CGFloat(elapsed / 3.0)
-                        .truncatingRemainder(dividingBy: 1.0)
-                    let magentaPhase = CGFloat(elapsed / 4.0)
-                        .truncatingRemainder(dividingBy: 1.0)
-                    let midPhase     = CGFloat(elapsed / 5.0)
-                        .truncatingRemainder(dividingBy: 1.0)
-
-                    let cyanGlow    = CGFloat(sin(cyanPhase    * .pi * 2) * 0.5 + 0.5)
-                    let magentaGlow = CGFloat(sin(magentaPhase * .pi * 2) * 0.5 + 0.5)
-                    let midGlow     = CGFloat(sin(midPhase     * .pi * 2) * 0.5 + 0.5)
-
-                    // Animated gradient — static stops, opacity of each color
-                    // breathes independently via tri-color phase offsets.
-                    let animatedStops: [Color] = colorScheme == .light
-                        ? [
-                            AppColors.accentTertiary.opacity(0.75 + cyanGlow * 0.25),
-                            AppColors.progressBarLeading.opacity(0.75 + midGlow * 0.25),
-                            AppColors.progressBarTrailing.opacity(0.75 + magentaGlow * 0.25),
-                          ]
-                        : [
-                            AppColors.accentPrimary.opacity(0.70 + cyanGlow * 0.30),
-                            AppColors.accentSecondary.opacity(0.70 + midGlow * 0.30),
-                            AppColors.accentTertiary.opacity(0.70 + magentaGlow * 0.30),
-                          ]
-
-                    let baseGradient = LinearGradient(
-                        colors: animatedStops,
-                        startPoint: .leading,
-                        endPoint:   .trailing
-                    )
-
-                    let glowOpacity = colorScheme == .light
-                        ? 0.20 + Double(intensity) * 0.22
-                        : 0.28 + Double(intensity) * 0.30
-
-                    let glowBlur = colorScheme == .light
-                        ? 5.0 + intensity * 4.0
-                        : 8.0 + intensity * 7.0
-
-                    // Scale breath — 1.000 → 1.008, barely perceptible.
-                    let breathScale = colorScheme == .light
-                        ? 1.0 + scaleIntensity * 0.008
-                        : 1.0 + scaleIntensity * 0.010
-
-                    ZStack {
-                        // Outer bloom — wide, atmospheric.
-                        Text(text)
-                            .font(font)
-                            .foregroundStyle(baseGradient)
-                            .blur(radius: glowBlur * 1.6)
-                            .opacity(glowOpacity * 0.40)
-                            .accessibilityHidden(true)
-
-                        // Inner glow — tighter halo ring.
-                        Text(text)
-                            .font(font)
-                            .foregroundStyle(baseGradient)
-                            .blur(radius: glowBlur * 0.45)
-                            .opacity(glowOpacity * 0.80)
-                            .accessibilityHidden(true)
-
-                        // Primary crisp layer — full opacity, no blur.
-                        // Scale breath applied here only so blur layers
-                        // do not scale (which would spread them too wide).
-                        Text(text)
-                            .font(font)
-                            .foregroundStyle(baseGradient)
-                            .scaleEffect(breathScale)
-                    }
-                }
+                animatedText
             }
         }
         .fixedSize()
         .accessibilityLabel(text)
+    }
+
+    // Static gradient — respects color scheme.
+    private var staticText: some View {
+        let stops: [Color] = colorScheme == .light
+            ? [AppColors.accentTertiary, AppColors.progressBarLeading, AppColors.safetyAccent]
+            : [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary]
+        return Text(text)
+            .font(font)
+            .foregroundStyle(LinearGradient(colors: stops, startPoint: .leading, endPoint: .trailing))
+    }
+
+    // Animated tri-color breathing text. Per-frame math lives in `Frame` so the
+    // TimelineView closure stays trivial to type-check (was 216ms inline).
+    private var animatedText: some View {
+        TimelineView(.animation) { timeline in
+            let f = Frame(
+                elapsed: timeline.date.timeIntervalSinceReferenceDate,
+                isLight: colorScheme == .light
+            )
+            let baseGradient = LinearGradient(colors: f.stops, startPoint: .leading, endPoint: .trailing)
+
+            ZStack {
+                // Outer bloom — wide, atmospheric.
+                Text(text)
+                    .font(font)
+                    .foregroundStyle(baseGradient)
+                    .blur(radius: f.glowBlur * 1.6)
+                    .opacity(f.glowOpacity * 0.40)
+                    .accessibilityHidden(true)
+
+                // Inner glow — tighter halo ring.
+                Text(text)
+                    .font(font)
+                    .foregroundStyle(baseGradient)
+                    .blur(radius: f.glowBlur * 0.45)
+                    .opacity(f.glowOpacity * 0.80)
+                    .accessibilityHidden(true)
+
+                // Primary crisp layer — full opacity, no blur.
+                // Scale breath applied here only so blur layers
+                // do not scale (which would spread them too wide).
+                Text(text)
+                    .font(font)
+                    .foregroundStyle(baseGradient)
+                    .scaleEffect(f.breathScale)
+            }
+        }
+    }
+}
+
+// MARK: - LivingText per-frame values
+
+/// Precomputed per-frame animation values for `LivingText`. Every property is an
+/// explicitly-typed stored value resolved in `init`, so the type-checker handles
+/// each statement independently rather than as one giant closure.
+private struct Frame {
+    let stops:       [Color]
+    let glowBlur:    CGFloat
+    let glowOpacity: Double
+    let breathScale: CGFloat
+
+    init(elapsed: TimeInterval, isLight: Bool) {
+        // Glow breath — 4.3s cycle. Drives all three bloom layers in unison.
+        let glowCycle: Double  = 4.3
+        let glowPhase: CGFloat = CGFloat(elapsed.truncatingRemainder(dividingBy: glowCycle) / glowCycle)
+        let intensity: CGFloat = CGFloat(sin(glowPhase * .pi * 2) * 0.5 + 0.5)
+
+        // Scale breath — 5.0s cycle, independent of glow.
+        let scaleCycle: Double  = 5.0
+        let scalePhase: CGFloat = CGFloat(elapsed.truncatingRemainder(dividingBy: scaleCycle) / scaleCycle)
+        let scaleIntensity: CGFloat = CGFloat(sin(scalePhase * .pi * 2) * 0.5 + 0.5)
+
+        // Tri-color glow — each color blooms at a different phase.
+        let cyanPhase:    CGFloat = CGFloat(elapsed / 3.0).truncatingRemainder(dividingBy: 1.0)
+        let magentaPhase: CGFloat = CGFloat(elapsed / 4.0).truncatingRemainder(dividingBy: 1.0)
+        let midPhase:     CGFloat = CGFloat(elapsed / 5.0).truncatingRemainder(dividingBy: 1.0)
+
+        let cyanGlow:    CGFloat = CGFloat(sin(cyanPhase    * .pi * 2) * 0.5 + 0.5)
+        let magentaGlow: CGFloat = CGFloat(sin(magentaPhase * .pi * 2) * 0.5 + 0.5)
+        let midGlow:     CGFloat = CGFloat(sin(midPhase     * .pi * 2) * 0.5 + 0.5)
+
+        // Animated gradient stops — opacity of each color breathes independently.
+        self.stops = isLight
+            ? [
+                AppColors.accentTertiary.opacity(0.75 + cyanGlow * 0.25),
+                AppColors.progressBarLeading.opacity(0.75 + midGlow * 0.25),
+                AppColors.progressBarTrailing.opacity(0.75 + magentaGlow * 0.25),
+              ]
+            : [
+                AppColors.accentPrimary.opacity(0.70 + cyanGlow * 0.30),
+                AppColors.accentSecondary.opacity(0.70 + midGlow * 0.30),
+                AppColors.accentTertiary.opacity(0.70 + magentaGlow * 0.30),
+              ]
+
+        self.glowOpacity = isLight
+            ? 0.20 + Double(intensity) * 0.22
+            : 0.28 + Double(intensity) * 0.30
+
+        self.glowBlur = isLight
+            ? 5.0 + intensity * 4.0
+            : 8.0 + intensity * 7.0
+
+        // Scale breath — 1.000 → 1.008, barely perceptible.
+        self.breathScale = isLight
+            ? 1.0 + scaleIntensity * 0.008
+            : 1.0 + scaleIntensity * 0.010
     }
 }
 

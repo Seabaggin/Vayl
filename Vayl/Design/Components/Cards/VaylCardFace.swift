@@ -70,78 +70,11 @@ struct VaylCardFace: View {
                     .padding(0.75)
 
                 // ── 4 · Content face — when VaylCardContent is provided ─
+                // Extracted to contentFace(for:size:) so the GeometryReader body
+                // remains a short expression — long switch statements inside
+                // GeometryReader cause quadratic Swift type-checking overhead.
                 if let content {
-                    switch content {
-                    case .typewriter(let activeKey, let carriageProgress):
-                        TypewriterCardFace(
-                            cardWidth:        size.width,
-                            cardHeight:       size.height,
-                            activeKey:        activeKey,
-                            carriageProgress: carriageProgress
-                        )
-                    case .slotMachine:
-                        SlotMachineCardFace(
-                            cardWidth:  size.width,
-                            cardHeight: size.height
-                        )
-                    case .radioTuner(let sig, let phase, let left, let right):
-                        RadioTunerCardFace(
-                            cardWidth:         size.width,
-                            cardHeight:        size.height,
-                            signalStrength:    sig,
-                            scanPhase:         phase,
-                            leftDialProgress:  left,
-                            rightDialProgress: right
-                        )
-                    case .controller(let activeButtons):
-                        ControllerCardFace(
-                            cardWidth:     size.width,
-                            cardHeight:    size.height,
-                            activeButtons: activeButtons
-                        )
-                    case .dualController(let front, let back):
-                        DualControllerCardFace(
-                            cardWidth:          size.width,
-                            cardHeight:         size.height,
-                            activeButtonsFront: front,
-                            activeButtonsBack:  back
-                        )
-                    case .mode(let title, let subtitle, let motif):
-                        ModeFaceContent(
-                            title:    title,
-                            subtitle: subtitle,
-                            motif:    motif,
-                            cardSize: size,
-                            lifted:   false,
-                            onAction: onAction
-                        )
-                    case .candle(let intensity, let time):
-                        CandleCardFace(intensity: intensity, time: time)
-                    case .compassOption(let label):
-                        CompassOptionCardFace(
-                            cardWidth:  size.width,
-                            cardHeight: size.height,
-                            label:      label
-                        )
-                    case .compassSlider(let value, let dragging):
-                        CompassSliderCardFace(
-                            cardWidth:  size.width,
-                            cardHeight: size.height,
-                            value:      value,
-                            dragging:   dragging
-                        )
-                    case .context(let number, let title, let subtitle, let detail):
-                        ContextCardFace(
-                            number:   number,
-                            title:    title,
-                            subtitle: subtitle,
-                            detail:   detail,
-                            isFront:  isFront,
-                            confirmed: confirmed
-                        )
-                    default:
-                        EmptyView()
-                    }
+                    contentFace(for: content, size: size)
                 }
 
                 // ── 5 · Question text ──────────────────────────────
@@ -184,6 +117,94 @@ struct VaylCardFace: View {
             .clipShape(RoundedRectangle(cornerRadius: radius))
         }
         .drawingGroup() // rasterize ZStack of gradients + strokes to Metal texture for card transforms
+    }
+
+    // MARK: - Content face router
+    //
+    // Extracted from body so the GeometryReader closure stays short.
+    // Long switch statements inside a GeometryReader body compound the
+    // result-builder type-check cost — pulling the switch into a named
+    // @ViewBuilder function lets the compiler handle each in isolation.
+
+    @ViewBuilder
+    private func contentFace(for content: VaylCardContent, size: CGSize) -> some View {
+        switch content {
+        case .typewriter(let activeKey, let carriageProgress):
+            TypewriterCardFace(
+                cardWidth:        size.width,
+                cardHeight:       size.height,
+                activeKey:        activeKey,
+                carriageProgress: carriageProgress
+            )
+        case .slotMachine:
+            SlotMachineCardFace(
+                cardWidth:  size.width,
+                cardHeight: size.height
+            )
+        case .radioTuner(let sig, let phase, let left, let right):
+            RadioTunerCardFace(
+                cardWidth:         size.width,
+                cardHeight:        size.height,
+                signalStrength:    sig,
+                scanPhase:         phase,
+                leftDialProgress:  left,
+                rightDialProgress: right
+            )
+        case .controller(let activeButtons):
+            ControllerCardFace(
+                cardWidth:     size.width,
+                cardHeight:    size.height,
+                activeButtons: activeButtons
+            )
+        case .dualController(let front, let back):
+            DualControllerCardFace(
+                cardWidth:          size.width,
+                cardHeight:         size.height,
+                activeButtonsFront: front,
+                activeButtonsBack:  back
+            )
+        case .mode(let title, let subtitle, let motif):
+            ModeFaceContent(
+                title:    title,
+                subtitle: subtitle,
+                motif:    motif,
+                cardSize: size,
+                lifted:   false,
+                onAction: onAction
+            )
+        case .candle(let intensity, let time):
+            CandleCardFace(intensity: intensity, time: time)
+        case .compassOption(let label):
+            CompassOptionCardFace(
+                cardWidth:  size.width,
+                cardHeight: size.height,
+                label:      label
+            )
+        case .compassSlider(let value, let dragging):
+            CompassSliderCardFace(
+                cardWidth:  size.width,
+                cardHeight: size.height,
+                value:      value,
+                dragging:   dragging
+            )
+        case .context(let number, let title, let subtitle, let detail):
+            ContextCardFace(
+                number:    number,
+                title:     title,
+                subtitle:  subtitle,
+                detail:    detail,
+                isFront:   isFront,
+                confirmed: confirmed
+            )
+        case .curiosity(let category):
+            CuriosityCardFace(
+                cardWidth:  size.width,
+                cardHeight: size.height,
+                topic:      category
+            )
+        default:
+            EmptyView()
+        }
     }
 }
 

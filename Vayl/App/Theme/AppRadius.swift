@@ -76,7 +76,7 @@ internal enum AppRadius {
     /// Never use for full-size cards.
     static let cornerCard: CGFloat = 4
 
-    /// 16pt — Foil wrapper overlay in FoilPhase.
+    /// 16pt — Foil wrapper overlay in BuildDeckPhase.
     /// Applied to FoilRenderer as it wraps the assembled deck.
     /// Matches lg intentionally — the foil sits over the deck surface and its
     /// edge radius must align with the card stack beneath it.

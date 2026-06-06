@@ -142,7 +142,11 @@ final class AppState {
     // MARK: - Persistence Keys
 
     private enum PersistenceKey: String {
-        case onboardingComplete  = "isOnboardingComplete"
+        // Canonical app-wide onboarding-completion flag — the SAME key read/written by
+        // AppRootView, VaylApp, ThemeManager, SettingsView, SyncManager, and OnboardingStore.
+        // (AppState previously used a divergent "isOnboardingComplete", which desynced on
+        // partial-update paths like the DEBUG reset and SyncManager.)
+        case onboardingComplete  = "hasCompletedOnboarding"
         case displayName         = "displayName"
         case linkState           = "linkState"
         case appMode             = "appMode"

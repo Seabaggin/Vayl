@@ -91,6 +91,15 @@ struct PrismView: View {
     // MARK: - Derived
     private var modeColor: Color { activeMode.color }
 
+    // Hoisted color choices. Resolving these isLight ternaries once (as typed
+    // computed properties) keeps the agreements/pill view bodies cheap to
+    // type-check — inline they forced repeated Color + CGFloat/Double inference.
+    private var labelMutedColor:     Color { isLight ? AppColors.textTertiary : AppColors.textMuted }
+    private var secondaryQuoteColor: Color { AppColors.textSecondary.opacity(0.65) }
+    private var cardFillColor:       Color { isLight ? Color.black.opacity(0.03) : Color.white.opacity(0.03) }
+    private var pillBackgroundColor: Color { isLight ? Color.black.opacity(0.04) : Color.white.opacity(0.03) }
+    private var pillBorderColor:     Color { isLight ? Color.black.opacity(0.07) : AppColors.borderSubtle }
+
     // MARK: - Body
     // Zero chrome — HomeWidgetShell owns surface, rim, border, shadows.
     // Content only rendered here.
@@ -575,114 +584,100 @@ struct PrismView: View {
 
     // MARK: - Agreements Content
 
-    @ViewBuilder
-    private var agreementsContent: some View {
-        let agreements: [(date: String, text: String)] = [
+    private var agreementsData: [(date: String, text: String)] {
+        [
             (date: "Jun 12", text: "We check in before making plans that affect both of us."),
             (date: "Jun 8",  text: "Sleepovers with new connections need 48 hours notice."),
             (date: "May 28", text: "No phones during our first hour back together."),
         ]
+    }
 
+    @ViewBuilder
+    private var agreementsContent: some View {
         VStack(alignment: .leading, spacing: 0) {
             if !expanded {
-
-                Text("\"\(agreements[0].text)\"")
-                    .font(AppFonts.body(14, weight: .regular, relativeTo: .callout))
-                    .foregroundStyle(
-                        isLight
-                            ? AppColors.textSecondary.opacity(0.65)
-                            : AppColors.textSecondary.opacity(0.65)
-                    )
-                    .lineSpacing(4)
-                    .padding(.bottom, AppSpacing.md)
-
-                HStack {
-                    Text("Added \(agreements[0].date) · \(agreements.count) total")
-                        .font(AppFonts.overline)
-                        .tracking(1.2)
-                        .foregroundStyle(
-                            isLight
-                                ? AppColors.textTertiary
-                                : AppColors.textMuted
-                        )
-
-                    Spacer()
-
-                    Button {
-                        withAnimation(AppAnimation.spring) {
-                            expanded = true
-                        }
-                    } label: {
-                        Text("View all →")
-                            .font(AppFonts.body(12, weight: .medium, relativeTo: .caption))
-                            .foregroundStyle(AppColors.accentTertiary.opacity(0.65))
-                    }
-                }
-                .padding(.bottom, AppSpacing.xs)
-
+                collapsedAgreements
             } else {
-
-                VStack(spacing: AppSpacing.sm) {
-                    ForEach(Array(agreements.enumerated()), id: \.offset) { i, a in
-                        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                            Text(a.date)
-                                .font(AppFonts.overline)
-                                .tracking(1.2)
-                                .foregroundStyle(
-                                    isLight
-                                        ? AppColors.textTertiary
-                                        : AppColors.textMuted
-                                )
-
-                            Text("\"\(a.text)\"")
-                                .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
-                                .foregroundStyle(
-                                    isLight
-                                        ? AppColors.textSecondary.opacity(0.70)
-                                        : AppColors.textSecondary.opacity(0.70)
-                                )
-                                .lineSpacing(3)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(AppSpacing.md)
-                        .background(
-                            isLight
-                                ? Color.black.opacity(0.03)
-                                : Color.white.opacity(0.03)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                                .strokeBorder(
-                                    i == 0
-                                        ? AppColors.accentTertiary.opacity(0.25)
-                                        : (isLight
-                                            ? Color.black.opacity(0.07)
-                                            : AppColors.borderSubtle),
-                                    lineWidth: 1
-                                )
-                        )
-                    }
-
-                    HStack {
-                        Text("Changes made in Map tab")
-                            .font(AppFonts.body(11, weight: .regular, relativeTo: .caption2))
-                            .foregroundStyle(
-                                isLight
-                                    ? AppColors.textTertiary
-                                    : AppColors.textMuted
-                            )
-                        Spacer()
-                        Text("Go to Map →")
-                            .font(AppFonts.body(11, weight: .medium, relativeTo: .caption2))
-                            .foregroundStyle(AppColors.accentTertiary.opacity(0.55))
-                    }
-                    .padding(.horizontal, AppSpacing.xs)
-                    .padding(.top, AppSpacing.xs)
-                    .padding(.bottom, AppSpacing.xs)
-                }
+                expandedAgreements
             }
         }
+    }
+
+    @ViewBuilder
+    private var collapsedAgreements: some View {
+        let first = agreementsData[0]
+
+        Text("\"\(first.text)\"")
+            .font(AppFonts.body(14, weight: .regular, relativeTo: .callout))
+            .foregroundStyle(secondaryQuoteColor)
+            .lineSpacing(4)
+            .padding(.bottom, AppSpacing.md)
+
+        HStack {
+            Text("Added \(first.date) · \(agreementsData.count) total")
+                .font(AppFonts.overline)
+                .tracking(1.2)
+                .foregroundStyle(labelMutedColor)
+
+            Spacer()
+
+            Button {
+                withAnimation(AppAnimation.spring) {
+                    expanded = true
+                }
+            } label: {
+                Text("View all →")
+                    .font(AppFonts.body(12, weight: .medium, relativeTo: .caption))
+                    .foregroundStyle(AppColors.accentTertiary.opacity(0.65))
+            }
+        }
+        .padding(.bottom, AppSpacing.xs)
+    }
+
+    @ViewBuilder
+    private var expandedAgreements: some View {
+        VStack(spacing: AppSpacing.sm) {
+            ForEach(Array(agreementsData.enumerated()), id: \.offset) { i, a in
+                agreementRow(index: i, date: a.date, text: a.text)
+            }
+
+            HStack {
+                Text("Changes made in Map tab")
+                    .font(AppFonts.body(11, weight: .regular, relativeTo: .caption2))
+                    .foregroundStyle(labelMutedColor)
+                Spacer()
+                Text("Go to Map →")
+                    .font(AppFonts.body(11, weight: .medium, relativeTo: .caption2))
+                    .foregroundStyle(AppColors.accentTertiary.opacity(0.55))
+            }
+            .padding(.horizontal, AppSpacing.xs)
+            .padding(.top, AppSpacing.xs)
+            .padding(.bottom, AppSpacing.xs)
+        }
+    }
+
+    private func agreementRow(index i: Int, date: String, text: String) -> some View {
+        let border: Color = i == 0 ? AppColors.accentTertiary.opacity(0.25) : pillBorderColor
+
+        return VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            Text(date)
+                .font(AppFonts.overline)
+                .tracking(1.2)
+                .foregroundStyle(labelMutedColor)
+
+            Text("\"\(text)\"")
+                .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
+                .foregroundStyle(AppColors.textSecondary.opacity(0.70))
+                .lineSpacing(3)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(AppSpacing.md)
+        .background(cardFillColor)
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                .strokeBorder(border, lineWidth: 1)
+        )
     }
 
     // MARK: - Pill Switcher
@@ -690,55 +685,15 @@ struct PrismView: View {
     private var pillSwitcher: some View {
         HStack(spacing: AppSpacing.sm) {
             ForEach(PrismMode.allCases, id: \.label) { mode in
-                let isActive = mode == activeMode
-                Button {
-                    withAnimation(AppAnimation.spring) {
-                        activeMode  = mode
-                        expanded    = false
-                        cardDrawn   = false
-                        journalText = ""
-                    }
-                } label: {
-                    Text(mode.label)
-                        .font(AppFonts.body(11, weight: isActive ? .semibold : .regular, relativeTo: .caption2))
-                        .foregroundStyle(
-                            isActive
-                                ? mode.color
-                                : (isLight
-                                    ? AppColors.textTertiary
-                                    : AppColors.textTertiary)
-                        )
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, AppSpacing.sm)
-                        .background {
-                            if isActive {
-                                RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
-                                    .fill(mode.color.opacity(0.12))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
-                                            .strokeBorder(mode.color.opacity(0.35), lineWidth: 1.0)
-                                    )
-                                    .matchedGeometryEffect(id: "pill", in: pillNamespace)
-                            }
-                        }
-                }
+                pillButton(for: mode)
             }
         }
         .padding(AppSpacing.sm)
-        .background(
-            isLight
-                ? Color.black.opacity(0.04)
-                : Color.white.opacity(0.03)
-        )
+        .background(pillBackgroundColor)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                .strokeBorder(
-                    isLight
-                        ? Color.black.opacity(0.07)
-                        : AppColors.borderSubtle,
-                    lineWidth: 1
-                )
+                .strokeBorder(pillBorderColor, lineWidth: 1)
         )
         .gesture(
             DragGesture(minimumDistance: 20)
@@ -761,6 +716,37 @@ struct PrismView: View {
                     }
                 }
         )
+    }
+
+    private func pillButton(for mode: PrismMode) -> some View {
+        let isActive: Bool = mode == activeMode
+        let labelColor: Color = isActive ? mode.color : AppColors.textTertiary
+
+        return Button {
+            withAnimation(AppAnimation.spring) {
+                activeMode  = mode
+                expanded    = false
+                cardDrawn   = false
+                journalText = ""
+            }
+        } label: {
+            Text(mode.label)
+                .font(AppFonts.body(11, weight: isActive ? .semibold : .regular, relativeTo: .caption2))
+                .foregroundStyle(labelColor)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.sm)
+                .background {
+                    if isActive {
+                        RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
+                            .fill(mode.color.opacity(0.12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
+                                    .strokeBorder(mode.color.opacity(0.35), lineWidth: 1.0)
+                            )
+                            .matchedGeometryEffect(id: "pill", in: pillNamespace)
+                    }
+                }
+        }
     }
 
     // MARK: - Helpers

@@ -42,29 +42,25 @@ struct PickUpCard: View {
     }
 
     private func itemCard(_ item: PickUpItem) -> some View {
-        HStack(spacing: AppSpacing.md) {
+        let accent: Color        = colorScheme == .light ? AppColors.accentTertiary : AppColors.accentPrimary
+        let capsuleFill: Color   = colorScheme == .light ? AppColors.accentTertiary.opacity(0.08) : AppColors.accentPrimary.opacity(0.12)
+        let capsuleBorder: Color = colorScheme == .light ? AppColors.accentTertiary.opacity(0.20) : AppColors.accentPrimary.opacity(0.25)
+        let cardFill: Color      = colorScheme == .light ? AppColors.glassFrostCard : AppColors.cardBackground
+
+        return HStack(spacing: AppSpacing.md) {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 HStack(spacing: AppSpacing.sm) {
                     Text(item.contentType.label)
                         .font(AppFonts.overline)
                         .tracking(1.0)
-                        .foregroundStyle(colorScheme == .light
-                            ? AppColors.accentTertiary
-                            : AppColors.accentPrimary)
+                        .foregroundStyle(accent)
                         .padding(.horizontal, AppSpacing.sm)
                         .padding(.vertical, AppSpacing.xs)
                         .background {
-                            Capsule()
-                                .fill(colorScheme == .light
-                                    ? AppColors.accentTertiary.opacity(0.08)
-                                    : AppColors.accentPrimary.opacity(0.12))
+                            Capsule().fill(capsuleFill)
                         }
                         .overlay {
-                            Capsule()
-                                .stroke(colorScheme == .light
-                                    ? AppColors.accentTertiary.opacity(0.20)
-                                    : AppColors.accentPrimary.opacity(0.25),
-                                    lineWidth: 1)
+                            Capsule().stroke(capsuleBorder, lineWidth: 1)
                         }
 
                     Spacer()
@@ -87,30 +83,21 @@ struct PickUpCard: View {
 
                 Text(item.contextLine)
                     .font(AppFonts.caption)
-                    .foregroundStyle(colorScheme == .light
-                        ? AppColors.textTertiary
-                        : AppColors.textTertiary)
+                    .foregroundStyle(AppColors.textTertiary)
 
                 Text(item.title)
                     .font(AppFonts.bodyText)
-                    .foregroundStyle(colorScheme == .light
-                        ? AppColors.textSecondary
-                        : AppColors.textSecondary)
+                    .foregroundStyle(AppColors.textSecondary)
                     .lineLimit(2)
 
                 Text(item.actionLabel)
                     .font(AppFonts.caption)
-                    .foregroundStyle(colorScheme == .light
-                        ? AppColors.accentTertiary
-                        : AppColors.accentPrimary)
+                    .foregroundStyle(accent)
             }
         }
         .padding(AppSpacing.md)
         .background {
-            RoundedRectangle(cornerRadius: AppRadius.md)
-                .fill(colorScheme == .light
-                    ? AppColors.glassFrostCard
-                    : AppColors.cardBackground)
+            RoundedRectangle(cornerRadius: AppRadius.md).fill(cardFill)
         }
         .overlay {
             RoundedRectangle(cornerRadius: AppRadius.md)

@@ -26,6 +26,7 @@ struct ExperienceLevelPhase: View {
     @State private var hintTask:    Task<Void, Never>? = nil
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.displayScale)              private var displayScale
 
     // ── Card dimensions (fan tokens) ─────────────────────────────
     private var cardW: CGFloat { AppLayout.obFanCardWidth(in: screenSize.width) }
@@ -60,6 +61,48 @@ struct ExperienceLevelPhase: View {
         monte.state == .dealing
     }
 
+    /// One fan card. Extracted from the `body` TimelineView so the per-card math +
+    /// modifier chain is type-checked in isolation (the inline ForEach was 159ms).
+    @ViewBuilder
+    private func candleCard(slot i: Int, t: TimeInterval) -> some View {
+        let lifted = isLifted(i)
+        // Resting lift affordance — while face-up & idle, the cards sit
+        // slightly raised with a deeper shadow (a static "floating, ready
+        // to pick" look). No looping motion. The tapped card rises further
+        // via monte.lift(); receded cards drop back to a flat fan.
+        let restingUp: CGFloat = (monte.state == .faceUp) ? -6 : 0
+        let restElevation: Double = (monte.state == .faceUp)
+            ? max(monte.elevations[i], 0.5)
+            : monte.elevations[i]
+        let s = AppElevation.cardShadow(elevation: restElevation)
+        let offsetY: CGFloat = monte.offsets[i].height + restingUp + tugOffset(for: i)
+
+        Group {
+            if monte.showFace[i] {
+                // VaylCardFace owns the tap/swipe gestures internally and
+                // forwards them via onAction — routing through it avoids the
+                // inner gesture silently swallowing taps (nil onAction).
+                VaylCardFace(
+                    content:  .candle(intensity: monte.intensities[i], time: t),
+                    onAction: { handleCardAction($0, slot: i) }
+                )
+                .frame(width: cardW, height: cardH)
+                .overlay(liftHalo(visible: lifted))
+            } else {
+                VaylCardBack()
+                    .frame(width: cardW, height: cardH)
+            }
+        }
+        .scaleEffect(x: monte.flipScaleX[i], y: 1, anchor: .center)
+        .scaleEffect(monte.scales[i])
+        .rotationEffect(.degrees(monte.angles[i]))
+        .offset(x: monte.offsets[i].width, y: offsetY)
+        .opacity(monte.alphas[i])
+        .zIndex(monte.zIndices[i])
+        .shadow(color: s.color, radius: s.radius, y: s.y)
+        .animation(AppAnimation.standard, value: monte.state)
+    }
+
     var body: some View {
         // NOTE: AppColors.void, AtmosphereView, and TableSurfaceView are provided by
         // OnboardingCanvasView — phases render as transparent overlays on top.
@@ -84,41 +127,7 @@ struct ExperienceLevelPhase: View {
                 let t = reduceMotion ? 0 : tl.date.timeIntervalSinceReferenceDate
                 ZStack {
                     ForEach(0..<3, id: \.self) { i in
-                        let lifted = isLifted(i)
-                        // Resting lift affordance — while face-up & idle, the cards sit
-                        // slightly raised with a deeper shadow (a static "floating, ready
-                        // to pick" look). No looping motion. The tapped card rises further
-                        // via monte.lift(); receded cards drop back to a flat fan.
-                        let restingUp: CGFloat = (monte.state == .faceUp) ? -6 : 0
-                        let restElevation = (monte.state == .faceUp)
-                            ? max(monte.elevations[i], 0.5)
-                            : monte.elevations[i]
-                        let s = AppElevation.cardShadow(elevation: restElevation)
-                        Group {
-                            if monte.showFace[i] {
-                                // VaylCardFace owns the tap/swipe gestures internally and
-                                // forwards them via onAction — routing through it avoids the
-                                // inner gesture silently swallowing taps (nil onAction).
-                                VaylCardFace(
-                                    content:  .candle(intensity: monte.intensities[i], time: t),
-                                    onAction: { handleCardAction($0, slot: i) }
-                                )
-                                .frame(width: cardW, height: cardH)
-                                .overlay(liftHalo(visible: lifted))
-                            } else {
-                                VaylCardBack()
-                                    .frame(width: cardW, height: cardH)
-                            }
-                        }
-                        .scaleEffect(x: monte.flipScaleX[i], y: 1, anchor: .center)
-                        .scaleEffect(monte.scales[i])
-                        .rotationEffect(.degrees(monte.angles[i]))
-                        .offset(x: monte.offsets[i].width,
-                                y: monte.offsets[i].height + restingUp + tugOffset(for: i))
-                        .opacity(monte.alphas[i])
-                        .zIndex(monte.zIndices[i])
-                        .shadow(color: s.color, radius: s.radius, y: s.y)
-                        .animation(AppAnimation.standard, value: monte.state)
+                        candleCard(slot: i, t: t)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -173,11 +182,8 @@ struct ExperienceLevelPhase: View {
                 return
             }
 
-            // Snapshot the card back for SpriteKit textures.
-            // Uses UIWindowScene.screen (iOS 26 compliant — no UIScreen.main).
-            let scale = UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .first?.screen.scale ?? 2.0
+            // Snapshot the card back for SpriteKit textures at the display's native scale.
+            let scale = displayScale
             let renderer = ImageRenderer(
                 content: VaylCardBack().frame(width: cardW, height: cardH)
             )

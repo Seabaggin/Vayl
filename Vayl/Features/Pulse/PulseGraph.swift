@@ -640,72 +640,82 @@ private struct PulseGraphCanvas: View, Animatable {
 
     private var dotsOverlay: some View {
         ZStack {
-            ForEach(sampledIndices.dropLast(), id: \.self) { i in
-                let point = pointForIndex(i)
-                let entry = entries[i]
-                Circle()
-                    .fill(isLight
-                        ? Color.black.opacity(0.22)
-                        : Color.white.opacity(0.28))
-                    .frame(width: 5, height: 5)
-                    .position(point)
-                    .onTapGesture { onDotTapped?(entry, point) }
-                    .accessibilityLabel(dotAccessibilityLabel(for: entry))
-                    .accessibilityAddTraits(.isButton)
-                    .accessibilityHint("Double tap to see full summary")
-            }
+            sampledDots
+            lastEntryDot
+            liveBreathingDot
+        }
+    }
 
-            if let lastEntry = entries.last {
-                let lastIndex = entries.count - 1
-                let point     = pointForIndex(lastIndex)
-                let color     = lineColors[2]
+    @ViewBuilder
+    private var sampledDots: some View {
+        let dotFill: Color = isLight ? Color.black.opacity(0.22) : Color.white.opacity(0.28)
+        ForEach(sampledIndices.dropLast(), id: \.self) { i in
+            let point = pointForIndex(i)
+            let entry = entries[i]
+            Circle()
+                .fill(dotFill)
+                .frame(width: 5, height: 5)
+                .position(point)
+                .onTapGesture { onDotTapped?(entry, point) }
+                .accessibilityLabel(dotAccessibilityLabel(for: entry))
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint("Double tap to see full summary")
+        }
+    }
 
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 20, height: 20)
-                    .position(point)
-                    .allowsHitTesting(false)
+    @ViewBuilder
+    private var lastEntryDot: some View {
+        if let lastEntry = entries.last {
+            let lastIndex = entries.count - 1
+            let point     = pointForIndex(lastIndex)
+            let color     = lineColors[2]
 
-                Circle()
-                    .fill(isLight ? AppColors.cardBackground : AppColors.cardBackground)
-                    .overlay(Circle().stroke(color, lineWidth: 2))
-                    .frame(width: 10, height: 10)
-                    .position(point)
-                    .onTapGesture { onDotTapped?(lastEntry, point) }
-                    .accessibilityLabel(dotAccessibilityLabel(for: lastEntry))
-                    .accessibilityAddTraits(.isButton)
-                    .accessibilityHint("Double tap to see full summary")
-            }
+            Circle()
+                .fill(color.opacity(0.15))
+                .frame(width: 20, height: 20)
+                .position(point)
+                .allowsHitTesting(false)
 
-            if liveScore == nil, let lastEntry = entries.last {
-                let lastIndex = entries.count - 1
-                let point     = pointForIndex(lastIndex)
-                let color     = lineColors[2]
-
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.12 + breathPhase * 0.10))
-                        .frame(
-                            width:  28 + CGFloat(breathPhase) * 4,
-                            height: 28 + CGFloat(breathPhase) * 4
-                        )
-                    Circle()
-                        .fill(color.opacity(0.22 + breathPhase * 0.12))
-                        .frame(width: 18, height: 18)
-                    Circle()
-                        .fill(color)
-                        .frame(width: 12, height: 12)
-                        .shadow(
-                            color:  color.opacity(0.6 + breathPhase * 0.3),
-                            radius: 6 + CGFloat(breathPhase) * 4
-                        )
-                }
+            Circle()
+                .fill(AppColors.cardBackground)
+                .overlay(Circle().stroke(color, lineWidth: 2))
+                .frame(width: 10, height: 10)
                 .position(point)
                 .onTapGesture { onDotTapped?(lastEntry, point) }
                 .accessibilityLabel(dotAccessibilityLabel(for: lastEntry))
                 .accessibilityAddTraits(.isButton)
                 .accessibilityHint("Double tap to see full summary")
+        }
+    }
+
+    @ViewBuilder
+    private var liveBreathingDot: some View {
+        if liveScore == nil, let lastEntry = entries.last {
+            let lastIndex = entries.count - 1
+            let point     = pointForIndex(lastIndex)
+            let color     = lineColors[2]
+            let haloSize: CGFloat = 28 + CGFloat(breathPhase) * 4
+
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.12 + breathPhase * 0.10))
+                    .frame(width: haloSize, height: haloSize)
+                Circle()
+                    .fill(color.opacity(0.22 + breathPhase * 0.12))
+                    .frame(width: 18, height: 18)
+                Circle()
+                    .fill(color)
+                    .frame(width: 12, height: 12)
+                    .shadow(
+                        color:  color.opacity(0.6 + breathPhase * 0.3),
+                        radius: 6 + CGFloat(breathPhase) * 4
+                    )
             }
+            .position(point)
+            .onTapGesture { onDotTapped?(lastEntry, point) }
+            .accessibilityLabel(dotAccessibilityLabel(for: lastEntry))
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint("Double tap to see full summary")
         }
     }
 

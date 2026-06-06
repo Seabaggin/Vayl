@@ -25,7 +25,11 @@ final class VaylDirector {
     var tableFade:          Double = 0.0
     var dealPointIntensity: Double = 0.0
 
-    var cardFlightScene: CardFlightScene = CardFlightScene()
+    // Lazy — deferred until first access so previews and unit tests that
+    // create VaylDirector() don't spin up a SpriteKit scene unnecessarily.
+    // @ObservationIgnored is safe because the scene object never changes;
+    // only its contents mutate (handled internally by CardFlightScene itself).
+    @ObservationIgnored lazy var cardFlightScene: CardFlightScene = CardFlightScene()
 
     var projectedText:        String? = nil
     var projectedTextVisible: Bool    = false
@@ -85,55 +89,63 @@ final class VaylDirector {
     // Views read these; they are never stored individually.
     // Easing: eIO3 = ease-in-out cubic, eO5 = ease-out quint, eO7 = ease-out sept.
 
-    /// nm: normalise t within a window [start, start+dur], clamp 0…1.
-    private func nm(_ t: Double, _ s: Double, _ d: Double) -> Double {
-        max(0, min(1, (t - s) / d))
-    }
-    private func eIO3(_ x: Double) -> Double {
-        x < 0.5 ? 4*x*x*x : 1 - pow(-2*x+2, 3)/2
-    }
-    private func eO5(_ x: Double) -> Double { 1 - pow(max(0, 1-x), 5) }
-    private func eO7(_ x: Double) -> Double { 1 - pow(max(0, 1-x), 7) }
-
     /// 0→1 — ambient density stir before anything visible.
-    var dissolutionPre:      Double { eIO3(nm(dissolutionT, 0,    0.12)) }
+    var dissolutionPre:      Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0,    0.12)) }
 
     /// 0→0.52 — topo lines pulled inward toward card footprint.
-    var dissolutionWarp:     Double { eIO3(nm(dissolutionT, 0.08, 0.20)) * 0.52 }
+    var dissolutionWarp:     Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0.08, 0.20)) * 0.52 }
 
     /// 0→1 — card body density (felt-matched mass emerging).
-    var dissolutionDensity:  Double { eO5(nm(dissolutionT, 0.18, 0.36)) }
+    var dissolutionDensity:  Double { CanvasEasing.eO5(CanvasEasing.nm(dissolutionT, 0.18, 0.36)) }
 
     /// 0→1 — card material sharpness (blur + colour shift felt → void).
-    var dissolutionSharp:    Double { eO7(nm(dissolutionT, 0.42, 0.32)) }
+    var dissolutionSharp:    Double { CanvasEasing.eO7(CanvasEasing.nm(dissolutionT, 0.42, 0.32)) }
 
     /// 0°→8° — hex grid angle drift (phase-matched → native card moiré).
-    var dissolutionHexAngle: Double { eIO3(nm(dissolutionT, 0.24, 0.42)) * 8.0 }
+    var dissolutionHexAngle: Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0.24, 0.42)) * 8.0 }
 
     /// 2.2→1.0 — hex cell spacing multiplier (topo frequency → card size).
-    var dissolutionHexSpacing: Double { 2.2 + (1.0 - 2.2) * eIO3(nm(dissolutionT, 0.24, 0.44)) }
+    var dissolutionHexSpacing: Double { 2.2 + (1.0 - 2.2) * CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0.24, 0.44)) }
 
     /// 0→1 — topo lines relax outward, flowing around card boundary.
-    var dissolutionFlowOut:  Double { eIO3(nm(dissolutionT, 0.50, 0.30)) }
+    var dissolutionFlowOut:  Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0.50, 0.30)) }
 
     /// 0→1 — wordmark crystallises last.
-    var dissolutionMark:     Double { eO7(nm(dissolutionT, 0.62, 0.26)) }
+    var dissolutionMark:     Double { CanvasEasing.eO7(CanvasEasing.nm(dissolutionT, 0.62, 0.26)) }
 
     /// Task handle for the gender visual sequence. Not observed — internal bookkeeping only.
     @ObservationIgnored var genderSequenceTask: Task<Void, Never>? = nil
 
+    // MARK: - Curiosity Phase
+
+    /// Remaining unseen cards in the current round. Index 0 = top of pile (interactive).
+    var curiosityPile:               [CuriositySortCard] = []
+    /// 0 = Round 1 (communicationGoals), 1 = Round 2 (learningGoals).
+    var curiosityRoundIndex:         Int               = 0
+    var curiosityKeptRound1:         [String]          = []
+    var curiosityKeptRound2:         [String]          = []
+    /// Live drag offset of the top card. View reads this; director writes it.
+    var curiosityDragOffset:         CGSize            = .zero
+    /// Flips whenever the drag crosses the 95pt commit threshold. Triggers .selection haptic in View.
+    var curiosityThresholdCrossed:   Bool              = false
+    /// Toggled to trigger the deal animation in CuriosityPhase. View observes via onChange.
+    var curiosityDealTrigger:        Bool              = false
+    /// Prevents double-fire during the 1100ms round-gap beat.
+    var curiosityRoundTransitioning: Bool              = false
+    /// True while the 2-card auto-swipe tutorial is running. View disables user gesture when set.
+    var curiosityDemoActive:         Bool              = false
+
+    @ObservationIgnored var curiositySequenceTask: Task<Void, Never>? = nil
+
     var foilIntegrity: Double     = 1.0
     var foilTears:     [FoilTear] = []
 
-    var cornerDeckVisible: Bool = false
     var deckPulse: Bool = false
 
     private var sequenceAttempt:   Int = 0
     private var dealerLineAttempt: Int = 0
 
-    // Slot pool — tracks which landing zones are still available this round.
-    // Starts full; shrinks as cards are dealt; auto-resets when exhausted.
-    private var availableSlotIDs: [Int] = AppLayout.obCardLandingSlots.map(\.id)
+    @ObservationIgnored lazy var cardFlightEngine: CardFlightEngine = CardFlightEngine(director: self)
 
     // ARCH: Injected via direct assignment from OnboardingCanvasView.onAppear.
     // commit() is a no-op until assigned — Director must be initialized before founderLetter fires.
@@ -173,7 +185,7 @@ final class VaylDirector {
     }
 
     private func runNameEntry() {
-        resetSlotPool()
+        cardFlightEngine.resetSlotPool()
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(900))
             withAnimation(.easeIn(duration: 1.6)) { tableFade = 1.0 }
@@ -188,26 +200,34 @@ final class VaylDirector {
         // Controller is View-owned (@State in ExperienceLevelPhase); nothing to reset here.
     }
 
-    /// Called by ExperienceLevelPhase on confirm. Writes nmStage, adds the collected
-    /// card to the corner deck (so the "X / 6" count grows), pulses the deck, then advances.
-    func commitExperienceLevel(_ intensity: CandleIntensity) {
-        onboardingData.nmStage = intensity.nmStage
-
-        let collected = VaylCardModel()
-        collected.credential = .experienceLevel
-        cornerDeckCards.append(collected)
+    /// The single path for crediting the corner deck. Appends a freshly-collected
+    /// credential card and plays the "deck receives a card" pulse. Phases call this
+    /// instead of mutating `cornerDeckCards` / `deckPulse` directly — keeps card-state
+    /// ownership in the director (Views never write card models).
+    func receiveCredential(_ credential: OBCredential) {
+        let card = VaylCardModel()
+        card.credential = credential
+        cornerDeckCards.append(card)
         withAnimation(AppAnimation.deckReceive) { deckPulse = true }
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(600))
             deckPulse = false
         }
+    }
+
+    /// Called by ExperienceLevelPhase on confirm. Writes nmStage, adds the collected
+    /// card to the corner deck (so the "X / 6" count grows), pulses the deck, then advances.
+    func commitExperienceLevel(_ intensity: CandleIntensity) {
+        onboardingData.nmStage = intensity.nmStage
+
+        receiveCredential(.experienceLevel)
         // NOTE: advance to .context is NOT fired here. This method is the "receive"
         // step — it must coincide with the winner card landing in the deck. The phase
         // advance flows from ExperienceLevelPhase's `.done` state observer, after the
         // controller has cleared the two discards and held a settle beat.
     }
     private func runContextEntry() {
-        resetSlotPool()
+        cardFlightEngine.resetSlotPool()
         // Entrance copy + table recede are sequenced by ContextPhase.onAppear, so the
         // felt carries over from ExperienceLevel and only dissolves once the dealer
         // headline has greeted (earned transition, not an abrupt yank).
@@ -256,21 +276,15 @@ final class VaylDirector {
         onboardingData.relationshipContext = relationshipContext.rawValue
         onboardingData.situationalRegister = situationalRegister.rawValue
 
-        let collected = VaylCardModel()
-        collected.credential = .context
-        cornerDeckCards.append(collected)
-
         // Felt re-emerges and the corner deck receives the card.
         withAnimation(AppAnimation.tableRecede.reduceMotionSafe) { tableFade = 1.0 }
-        withAnimation(AppAnimation.deckReceive) { deckPulse = true }
+        receiveCredential(.context)
         showDealerLine(contextResponse(for: situationalRegister))
 
         sequenceAttempt += 1
         let current = sequenceAttempt
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(600))
-            deckPulse = false
-            try? await Task.sleep(for: .milliseconds(2000)) // let the responsive line land
+            try? await Task.sleep(for: .milliseconds(2600)) // deck pulse (600) + let the responsive line land (2000)
             guard current == self.sequenceAttempt else { return }
             advance(to: .curiosity)
         }
@@ -284,7 +298,213 @@ final class VaylDirector {
         case .flexible: return "Good — let's find the shape of it."
         }
     }
-    private func runCuriosityEntry() { showDealerLine("Sweep away what you aren't ready for.") }
+    private func runCuriosityEntry() {
+        curiositySequenceTask?.cancel()
+        curiositySequenceTask = nil
+
+        // Load the two tutorial demo cards. The real round-1 pile is built by
+        // beginCuriosityDemo() after the auto-swipe sequence finishes.
+        curiosityPile = [
+            CuriositySortCard(id: "demo_keep", text: "This card fits you.",       round: 1),
+            CuriositySortCard(id: "demo_pass", text: "This card... not so much.", round: 1),
+        ]
+        curiosityRoundIndex         = 0
+        curiosityKeptRound1         = []
+        curiosityKeptRound2         = []
+        curiosityDragOffset         = .zero
+        curiosityThresholdCrossed   = false
+        curiosityDealTrigger        = false
+        curiosityRoundTransitioning = false
+        curiosityDemoActive         = true
+        // beginCuriosityDemo() is called from CuriosityPhase.onAppear and drives
+        // the full deal + auto-swipe + real-pile sequence from there.
+    }
+
+    /// Runs the two-card auto-swipe tutorial, then deals the real Round 1 pile.
+    /// Called from CuriosityPhase.onAppear — the view triggers it once the phase is visible.
+    func beginCuriosityDemo(screenWidth: CGFloat) {
+        guard curiosityDemoActive else { return }
+
+        curiositySequenceTask?.cancel()
+        curiositySequenceTask = Task { @MainActor in
+
+            // ── Deal demo cards ──────────────────────────────────────────
+            try? await Task.sleep(for: .milliseconds(50))
+            self.curiosityDealTrigger.toggle()
+
+            // Wait for the staggered deal animation to settle
+            try? await Task.sleep(for: .milliseconds(750))
+
+            // ── Explain the mechanic ─────────────────────────────────────
+            self.showDealerLine("Swipe right if a card feels true for you.", hideAfter: 4.0)
+            try? await Task.sleep(for: .milliseconds(1300))
+
+            // ── Auto-swipe right (demo card 1: "This card fits you.") ────
+            withAnimation(.easeIn(duration: 0.22)) {
+                self.curiosityDragOffset = CGSize(width: screenWidth * 0.28, height: 0)
+            }
+            try? await Task.sleep(for: .milliseconds(220))
+            withAnimation(.easeOut(duration: 0.32)) {
+                self.curiosityDragOffset = CGSize(width: screenWidth * 1.6, height: 0)
+            }
+            try? await Task.sleep(for: .milliseconds(380))
+            if !self.curiosityPile.isEmpty { self.curiosityPile.removeFirst() }
+            self.curiosityDragOffset = .zero
+
+            // ── Brief pause before second demo card ──────────────────────
+            try? await Task.sleep(for: .milliseconds(350))
+
+            // ── Explain left swipe ───────────────────────────────────────
+            self.showDealerLine("Left if it doesn't.", hideAfter: 4.0)
+            try? await Task.sleep(for: .milliseconds(1100))
+
+            // ── Auto-swipe left (demo card 2: "This card... not so much.") ──
+            withAnimation(.easeIn(duration: 0.22)) {
+                self.curiosityDragOffset = CGSize(width: -(screenWidth * 0.28), height: 0)
+            }
+            try? await Task.sleep(for: .milliseconds(220))
+            withAnimation(.easeOut(duration: 0.32)) {
+                self.curiosityDragOffset = CGSize(width: -(screenWidth * 1.6), height: 0)
+            }
+            try? await Task.sleep(for: .milliseconds(380))
+            if !self.curiosityPile.isEmpty { self.curiosityPile.removeFirst() }
+            self.curiosityDragOffset = .zero
+
+            // ── End demo, hand off to user ───────────────────────────────
+            self.curiosityDemoActive = false
+            try? await Task.sleep(for: .milliseconds(350))
+
+            // Intro line fires when the real pile arrives so it frames the sort
+            self.showDealerLine("What keeps coming up for you? Sweep through — keep what pulls at you.", hideAfter: 5.0)
+            try? await Task.sleep(for: .milliseconds(600))
+
+            // ── Deal real Round 1 pile ────────────────────────────────────
+            self.curiosityPile = self.buildCuriosityPile(round: 1)
+            self.curiosityDealTrigger.toggle()
+        }
+    }
+
+    // MARK: - Curiosity Phase Methods
+
+    private func buildCuriosityPile(round: Int) -> [CuriositySortCard] {
+        if round == 1 {
+            return [
+                CuriositySortCard(id: "comm_dont_know_what_i_want",  text: "I don't know what I actually want",      round: 1),
+                CuriositySortCard(id: "comm_want_different_things",   text: "We want different things",               round: 1),
+                CuriositySortCard(id: "comm_wouldnt_know_how_to_ask", text: "I wouldn't know how to ask for it",      round: 1),
+                CuriositySortCard(id: "comm_jealousy_gets_stuck",     text: "Jealousy comes up and gets stuck",       round: 1),
+                CuriositySortCard(id: "comm_lost_connection",         text: "We've lost some of our connection",      round: 1),
+                CuriositySortCard(id: "comm_same_place",              text: "I keep ending up in the same place",     round: 1),
+                CuriositySortCard(id: "comm_reactions_surprise_me",   text: "My reactions in intimacy surprise me",   round: 1),
+            ]
+        } else {
+            return [
+                CuriositySortCard(id: "learn_what_i_want",           text: "What I want — not what I've settled for",          round: 2),
+                CuriositySortCard(id: "learn_why_i_respond",         text: "Why I respond to people the way I do",             round: 2),
+                CuriositySortCard(id: "learn_jealousy_telling_me",   text: "What jealousy is actually telling me",             round: 2),
+                CuriositySortCard(id: "learn_opening_up",            text: "Whether opening up could work for us",             round: 2),
+                CuriositySortCard(id: "learn_ask_what_i_want",       text: "What it means to ask for what I want",             round: 2),
+                CuriositySortCard(id: "learn_mapping_what_we_want",  text: "Mapping what we each want",                        round: 2),
+                CuriositySortCard(id: "learn_brings_them_joy",       text: "Feeling good about what brings them joy",          round: 2),
+                CuriositySortCard(id: "learn_what_our_agreements",   text: "What our agreements should look like",             round: 2),
+            ]
+        }
+    }
+
+    /// Called by the View on every drag change. Updates offset and fires threshold flip for haptics.
+    func onCuriosityDrag(offset: CGSize) {
+        curiosityDragOffset = offset
+        let crossed = abs(offset.width) >= 95
+        if crossed != curiosityThresholdCrossed {
+            curiosityThresholdCrossed = crossed
+        }
+    }
+
+    /// Flings the top card off-screen, then after 300 ms pops it and checks for round exhaustion.
+    func commitCuriositySwipe(screenSize: CGSize) {
+        guard !curiosityPile.isEmpty, !curiosityRoundTransitioning else { return }
+
+        let isKeep = curiosityDragOffset.width > 0
+        let keptID = curiosityPile[0].id
+        let flingX: CGFloat = isKeep ? screenSize.width * 1.6 : -screenSize.width * 1.6
+        let flingY: CGFloat = curiosityDragOffset.height * 0.5
+
+        withAnimation(.easeOut(duration: 0.36)) {
+            curiosityDragOffset = CGSize(width: flingX, height: flingY)
+        }
+
+        sequenceAttempt += 1
+        let current = sequenceAttempt
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            guard current == self.sequenceAttempt else { return }
+
+            if isKeep {
+                if self.curiosityRoundIndex == 0 {
+                    self.curiosityKeptRound1.append(keptID)
+                } else {
+                    self.curiosityKeptRound2.append(keptID)
+                }
+            }
+
+            if !self.curiosityPile.isEmpty { self.curiosityPile.removeFirst() }
+            self.curiosityDragOffset      = .zero
+            self.curiosityThresholdCrossed = false
+
+            if self.curiosityPile.isEmpty {
+                if self.curiosityRoundIndex == 0 {
+                    self.onCuriosityRound1Exhausted()
+                } else {
+                    self.onCuriosityRound2Exhausted()
+                }
+            }
+        }
+    }
+
+    /// Snaps the top card back to pile center when released below threshold.
+    func snapBackCuriosityCard() {
+        withAnimation(AppAnimation.cardSettle) { curiosityDragOffset = .zero }
+        curiosityThresholdCrossed = false
+    }
+
+    private func onCuriosityRound1Exhausted() {
+        guard !curiosityRoundTransitioning else { return }
+        curiosityRoundTransitioning = true
+
+        curiositySequenceTask?.cancel()
+        curiositySequenceTask = Task { @MainActor in
+            self.showDealerLine("Good.", hideAfter: 2.0)
+            try? await Task.sleep(for: .milliseconds(1100))
+
+            self.showDealerLine("Now — what pulls your curiosity?", hideAfter: 2.5)
+            try? await Task.sleep(for: .milliseconds(300))
+
+            self.curiosityRoundIndex = 1
+            self.curiosityPile       = self.buildCuriosityPile(round: 2)
+            self.curiosityDealTrigger.toggle()
+            self.curiosityRoundTransitioning = false
+        }
+    }
+
+    private func onCuriosityRound2Exhausted() {
+        onboardingData.communicationGoals  = curiosityKeptRound1
+        onboardingData.learningGoals       = curiosityKeptRound2
+        onboardingData.curiositySelections = curiosityKeptRound1 + curiosityKeptRound2
+        evaluateOpenerDeckType()
+
+        receiveCredential(.curiosity)
+
+        showDealerLine("Good pile.", hideAfter: 3.0)
+
+        sequenceAttempt += 1
+        let current = sequenceAttempt
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1500)) // deck pulse (600) + settle (900)
+            guard current == self.sequenceAttempt else { return }
+            self.advance(to: .confirmation)
+        }
+    }
+
     private func runConfirmationEntry() {}
     private func runBuildDeckEntry() { foilIntegrity = 1.0; foilTears = [] }
     private func runFounderLetterEntry() {
@@ -320,11 +540,17 @@ final class VaylDirector {
         withAnimation(AppAnimation.textProject.reduceMotionSafe) { projectedTextVisible = false }
     }
 
-    // MARK: - Card Flight
+    // MARK: - Card Flight Engine Forwarding
 
-    /// Flies a single card via SpriteKit and returns its rested position and rotation.
-    /// The `cardID` is threaded into the per-card callback so the continuation only
-    /// resumes for the correct card, even if multiple sailCard calls overlap.
+    @MainActor
+    func dealSingleCard(screenSize: CGSize, scale: CGFloat) async -> (offset: CGSize, angle: Double, flightID: String)? {
+        await cardFlightEngine.dealSingleCard(screenSize: screenSize, scale: scale)
+    }
+
+    func claimLandingSlot(screenSize: CGSize) -> CardLandingSlot.Resolved {
+        cardFlightEngine.claimLandingSlot(screenSize: screenSize)
+    }
+
     func sailCard(
         cardID:       String,
         image:        UIImage,
@@ -336,248 +562,11 @@ final class VaylDirector {
         finalAngle:   CGFloat      = 0.0314,
         zPosition:    CGFloat      = 0
     ) async -> (CGPoint, CGFloat) {
-        if cardFlightScene.size == .zero || cardFlightScene.size != sceneSize {
-            cardFlightScene.size = sceneSize
-        }
-
-        let skOrigin = CGPoint(x: from.x, y: sceneSize.height - from.y)
-        let skDest   = CGPoint(x: to.x,   y: sceneSize.height - to.y)
-
-        return await withCheckedContinuation { continuation in
-            cardFlightScene.onCardRested[cardID] = { [weak self] cbID, pos, rot in
-                guard let _ = self else { return }
-                let swiftUIPos = CGPoint(x: pos.x, y: sceneSize.height - pos.y)
-                continuation.resume(returning: (swiftUIPos, -rot * (180 / .pi)))
-            }
-            cardFlightScene.dealCard(
-                id:           cardID,
-                image:        image,
-                from:         skOrigin,
-                to:           skDest,
-                initialAngle: initialAngle,
-                finalAngle:   finalAngle,
-                zPosition:    zPosition,
-                duration:     duration
-            )
-        }
-    }
-
-    /// Deals a single card to a natural landing slot via CardFlightScene.
-    ///
-    /// Encapsulates the repeated pattern shared by every phase that cinematic-deals
-    /// one card: snapshot → random launch point → slot claim with travel-distance
-    /// guard → overshoot eligibility → SpriteKit flight.
-    ///
-    /// Returns `(offset, angle, flightID)` for the SwiftUI handoff.
-    /// **Caller is responsible for:**
-    ///   1. Setting `cardOffset = offset`, `cardAngle = angle`, `cardAlpha = 1`.
-    ///   2. The 32 ms flash fix: `Task.sleep(32 ms)` → `cardFlightScene.clearCard(id: flightID)`.
-    ///   3. Marking `cardSettled = true` (or equivalent phase flag).
-    ///
-    /// Returns `nil` if the VaylCardBack snapshot fails (caller should guard-return cleanly).
-    /// Does **not** handle Reduce Motion — caller checks `reduceMotion` and branches before calling.
-    @MainActor
-    func dealSingleCard(
-        screenSize: CGSize
-    ) async -> (offset: CGSize, angle: Double, flightID: String)? {
-
-        let cardW = AppLayout.obTableCardWidth(in: screenSize.width)  * AppLayout.obTableCardCinematicScale
-        let cardH = AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale
-
-        let scale = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.screen.scale ?? 2.0
-
-        let renderer = ImageRenderer(
-            content: VaylCardBack().frame(width: cardW, height: cardH)
+        await cardFlightEngine.sailCard(
+            cardID: cardID, image: image, from: from, to: to,
+            sceneSize: sceneSize, duration: duration,
+            initialAngle: initialAngle, finalAngle: finalAngle, zPosition: zPosition
         )
-        renderer.scale = scale
-        guard let cardImage = renderer.uiImage else {
-            print("[VaylDirector] dealSingleCard: VaylCardBack snapshot failed")
-            return nil
-        }
-
-        let flightID      = UUID().uuidString
-        let startAngleDeg = Double.random(in: 11.0...16.0)
-        let launchX       = screenSize.width * CGFloat.random(in: -0.45...1.45)
-
-        let origin = CGPoint(
-            x: launchX,
-            y: screenSize.height * AppLayout.tableHorizonYFrac
-        )
-
-        // Travel-distance guard — retry up to 4 times before accepting.
-        let minTravelDistance = screenSize.width * 0.75
-        var slot = claimLandingSlot(screenSize: screenSize)
-        for _ in 0..<4 {
-            let dist = hypot(slot.position.x - origin.x,
-                             slot.position.y - origin.y)
-            if dist >= minTravelDistance { break }
-            slot = claimLandingSlot(screenSize: screenSize)
-        }
-
-        // Overshoot eligibility — only when the overshoot projection clears
-        // at least 1/3 of the card width past the screen edge.
-        let overshootDist   = slot.position.x + (slot.position.x - origin.x) * 0.22
-        let cardThird       = cardW / 3
-        let wouldClearLeft  = overshootDist < -cardThird
-        let wouldClearRight = overshootDist > screenSize.width + cardThird
-        let canOvershoot    = wouldClearLeft || wouldClearRight
-        cardFlightScene.pendingShouldOvershoot = canOvershoot && Double.random(in: 0...1) < 0.60
-
-        let skInitialAngle = CGFloat(-startAngleDeg * .pi / 180)
-        let skFinalAngle   = CGFloat(-slot.angleDeg  * .pi / 180)
-
-        let (restPos, restRot) = await sailCard(
-            cardID:       flightID,
-            image:        cardImage,
-            from:         origin,
-            to:           slot.position,
-            sceneSize:    screenSize,
-            duration:     0.45,
-            initialAngle: skInitialAngle,
-            finalAngle:   skFinalAngle
-        )
-
-        let offset = CGSize(
-            width:  restPos.x - screenSize.width  / 2,
-            height: restPos.y - screenSize.height / 2
-        )
-        return (offset, Double(restRot), flightID)
-    }
-
-    /// Slides a card from the deal point to a destination without SpriteKit flight.
-    /// Used for non-cinematic deals (e.g. credential cards after the main sequence).
-    func dealCard(_ card: VaylCardModel, to destination: CGPoint, screenSize: CGSize) {
-        let dealOrigin = CGPoint(x: screenSize.width * 0.50, y: screenSize.height * AppLayout.dealPointYFrac)
-        card.position = dealOrigin
-        card.opacity  = 0
-        card.zIndex   = 0
-        tableCards.append(card)
-        withAnimation(AppAnimation.cardSlide.reduceMotionSafe) {
-            card.position = destination
-            card.opacity  = 1
-        }
-    }
-
-    /// Deals N cards with 150 ms stagger between launches.
-    ///
-    /// Slots and zIndex are pre-assigned before any async work so the stagger
-    /// loop never contends with the slot pool. Each card hands off
-    /// SpriteKit → SwiftUI independently the frame it rests.
-    func dealCards(_ models: [VaylCardModel], screenSize: CGSize) {
-        guard !models.isEmpty else { return }
-        if cardFlightScene.size == .zero || cardFlightScene.size != screenSize {
-            cardFlightScene.size = screenSize
-        }
-
-        let skLaunch   = CGPoint(x: screenSize.width * 1.05, y: screenSize.height * 0.08)
-        let dealOrigin = CGPoint(x: screenSize.width * 0.50, y: screenSize.height * AppLayout.dealPointYFrac)
-
-        // Pre-assign all slots and z-order before launching any Tasks.
-        let assignments: [(model: VaylCardModel, slot: CardLandingSlot.Resolved, z: Int)] =
-            models.enumerated().map { index, model in
-                let slot = claimLandingSlot(screenSize: screenSize)
-                model.zIndex = index
-                model.slotID = index
-                return (model, slot, index)
-            }
-
-        // Register all as in-flight at opacity 0 so Layer 6 holds space immediately.
-        for (model, _, _) in assignments {
-            model.position = dealOrigin
-            model.opacity  = 0
-            inFlightCards.append(model)
-        }
-
-        // Per-card callbacks: each rested card transitions inFlight → table independently,
-        // without waiting for the other cards to land. Registered per-id so sailCard
-        // handlers running concurrently are never overwritten.
-        for (model, _, _) in assignments {
-            let id = model.id.uuidString
-            cardFlightScene.onCardRested[id] = { [weak self] cbID, pos, rot in
-                guard let self else { return }
-                let swiftUIPos = CGPoint(x: pos.x, y: screenSize.height - pos.y)
-                let degrees    = -rot * (180.0 / .pi)
-                if let m = self.inFlightCards.first(where: { $0.id.uuidString == cbID }) {
-                    m.position = swiftUIPos
-                    m.rotation = degrees
-                    m.opacity  = 1
-                    self.inFlightCards.removeAll { $0.id.uuidString == cbID }
-                    self.tableCards.append(m)
-                }
-                self.cardFlightScene.clearCard(id: cbID)
-            }
-        }
-
-        for (model, slot, z) in assignments {
-            let id           = model.id.uuidString
-            let delayMS      = z * 150
-            let skDest       = CGPoint(x: slot.position.x, y: screenSize.height - slot.position.y)
-            let initialAngle = CGFloat(-Double.random(in: 11.0...16.0) * .pi / 180)
-            let finalAngle   = CGFloat(-slot.angleDeg * .pi / 180)
-
-            Task { @MainActor in
-                if delayMS > 0 { try? await Task.sleep(for: .milliseconds(delayMS)) }
-                guard !Task.isCancelled else { return }
-                guard let cardImage = self.snapshotCardBack(screenSize: screenSize) else {
-                    print("[VaylDirector] dealCards: skipping card \(id) — snapshot failed")
-                    return
-                }
-                self.cardFlightScene.dealCard(
-                    id:           id,
-                    image:        cardImage,
-                    from:         skLaunch,
-                    to:           skDest,
-                    initialAngle: initialAngle,
-                    finalAngle:   finalAngle,
-                    zPosition:    CGFloat(z),
-                    duration:     0.92
-                )
-            }
-        }
-    }
-
-    @MainActor
-    private func snapshotCardBack(screenSize: CGSize) -> UIImage? {
-        let w        = AppLayout.obTableCardWidth(in: screenSize.width)
-        let h        = AppLayout.obTableCardHeight(in: screenSize.width)
-        let renderer = ImageRenderer(content: VaylCardBack().frame(width: w, height: h))
-        let scale = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.screen.scale ?? 2.0
-        renderer.scale = scale
-        guard let image = renderer.uiImage else {
-            // Non-fatal: card flight will show blank sprite.
-            // This should never happen in production — log for diagnostics.
-            print("[VaylDirector] snapshotCardBack returned nil — ImageRenderer failed")
-            return nil
-        }
-        return image
-    }
-
-    func pocketToCornerDeck(_ card: VaylCardModel, screenSize: CGSize) {
-        let cornerTarget = CGPoint(
-            x: screenSize.width  - AppLayout.cornerDeckRight - AppLayout.cornerDeckWidth  / 2,
-            y: AppLayout.cornerDeckTop + AppLayout.cornerDeckHeight / 2
-        )
-        sequenceAttempt += 1
-        let current = sequenceAttempt
-        withAnimation(AppAnimation.cardPocket.reduceMotionSafe) {
-            card.position = cornerTarget
-            card.scale    = 0.22
-            card.opacity  = 0
-        }
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(550)) // pocket duration
-            guard current == self.sequenceAttempt else { return }
-            tableCards.removeAll    { $0.id == card.id }
-            inFlightCards.removeAll { $0.id == card.id }
-            let corner = VaylCardModel()
-            corner.credential = card.credential
-            cornerDeckCards.append(corner)
-        }
-        
     }
 
     @MainActor
@@ -617,27 +606,6 @@ final class VaylDirector {
         onboardingData.openerDeckType = openerDeckType
     }
 
-    // MARK: - Landing Slot Pool
-
-    /// Picks a random unused slot from the pool, removes it so the next call gets
-    /// a different zone, and returns a resolved position + angle for `screenSize`.
-    /// When all slots are exhausted the pool resets automatically, so a long flow
-    /// that deals more than 5 cards simply cycles through all zones again.
-    func claimLandingSlot(screenSize: CGSize) -> CardLandingSlot.Resolved {
-        if availableSlotIDs.isEmpty {
-            availableSlotIDs = AppLayout.obCardLandingSlots.map(\.id)
-        }
-        let pickIndex  = availableSlotIDs.indices.randomElement()!
-        let slotID     = availableSlotIDs.remove(at: pickIndex)
-        let slot       = AppLayout.obCardLandingSlots.first(where: { $0.id == slotID })!
-        return slot.resolve(in: screenSize)
-    }
-
-    /// Resets the slot pool so the next deal sequence starts fresh.
-    /// Call this when entering a new OB phase that deals cards.
-    func resetSlotPool() {
-        availableSlotIDs = AppLayout.obCardLandingSlots.map(\.id)
-    }
 
     func addFoilTear(at point: CGPoint) {
         let tear = FoilTear(tapPoint: point)

@@ -12,6 +12,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["docs/roadmap/server.js"],
       "port": 7332
+    },
+    {
+      "name": "prototypes",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "7333"],
+      "port": 7333
     }
   ]
 }

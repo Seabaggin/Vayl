@@ -372,6 +372,39 @@ enum CandleRenderer {
         return (shoulder, run, term)
     }
 
+    // MARK: - Shading builders
+    // Extracted from `draw` so the main draw method stays under the type-check
+    // limit — these multi-stop gradient literals are otherwise inline cost.
+
+    /// Warm gold → magenta → purple → cyan, wick base to flame tip.
+    static func flameWarmShading(g: CandleGeo, tipY: CGFloat) -> GraphicsContext.Shading {
+        GraphicsContext.Shading.linearGradient(
+            Gradient(stops: [
+                .init(color: Color(red: 1,     green: 0.843, blue: 0.314), location: 0.0),
+                .init(color: CandlePalette.magenta,                         location: 0.3),
+                .init(color: CandlePalette.purple,                          location: 0.7),
+                .init(color: CandlePalette.cyan,                            location: 1.0),
+            ]),
+            startPoint: CGPoint(x: g.cx, y: g.wickTip),
+            endPoint:   CGPoint(x: g.cx, y: tipY))
+    }
+
+    /// Soft purple radial bloom behind the candle body (non-dim intensities).
+    static func warmAmbientShading(g: CandleGeo, glowAlpha: Double) -> GraphicsContext.Shading {
+        GraphicsContext.Shading.radialGradient(
+            Gradient(stops: [
+                .init(color: Color(red: 0.424, green: 0.227, blue: 0.878,
+                                   opacity: glowAlpha * 0.22), location: 0.0),
+                .init(color: Color(red: 0.424, green: 0.227, blue: 0.878,
+                                   opacity: glowAlpha * 0.04), location: 0.6),
+                .init(color: Color(red: 0.424, green: 0.227, blue: 0.878,
+                                   opacity: 0),               location: 1.0),
+            ]),
+            center: CGPoint(x: g.cx, y: g.bY),
+            startRadius: 0,
+            endRadius: g.bW * 2.8)
+    }
+
     // MARK: - Main draw (full mockup draw order, line 76–95)
     static func draw(into ctx: inout GraphicsContext, size: CGSize,
                      intensity: CandleIntensity, time: Double, reduceMotion: Bool) {
@@ -408,32 +441,13 @@ enum CandleRenderer {
         // flameGrad: cyan → purple → magenta, tip to wick base
         let flameShade = spectrum(g, topY: tipY, botY: g.wickTip)
         // flameGradWarm: warm gold → magenta → purple → cyan (bottom to top, i.e. wick to tip)
-        let flameWarmShade = GraphicsContext.Shading.linearGradient(
-            Gradient(stops: [
-                .init(color: Color(red: 1,     green: 0.843, blue: 0.314), location: 0.0),
-                .init(color: CandlePalette.magenta,                         location: 0.3),
-                .init(color: CandlePalette.purple,                          location: 0.7),
-                .init(color: CandlePalette.cyan,                            location: 1.0),
-            ]),
-            startPoint: CGPoint(x: g.cx, y: g.wickTip),
-            endPoint:   CGPoint(x: g.cx, y: tipY))
+        let flameWarmShade = flameWarmShading(g: g, tipY: tipY)
 
         // ------------------------------------------------------------------
         // PASS 1 — Ambient warm radial (non-dim intensities only) [line 76]
         // ------------------------------------------------------------------
         if !cfg.dim {
-            let warmShade = GraphicsContext.Shading.radialGradient(
-                Gradient(stops: [
-                    .init(color: Color(red: 0.424, green: 0.227, blue: 0.878,
-                                       opacity: glowAlpha * 0.22), location: 0.0),
-                    .init(color: Color(red: 0.424, green: 0.227, blue: 0.878,
-                                       opacity: glowAlpha * 0.04), location: 0.6),
-                    .init(color: Color(red: 0.424, green: 0.227, blue: 0.878,
-                                       opacity: 0),               location: 1.0),
-                ]),
-                center: CGPoint(x: g.cx, y: g.bY),
-                startRadius: 0,
-                endRadius: g.bW * 2.8)
+            let warmShade = warmAmbientShading(g: g, glowAlpha: glowAlpha)
             ctx.fill(Path(CGRect(x: 0, y: 0, width: w, height: h)), with: warmShade)
         }
 

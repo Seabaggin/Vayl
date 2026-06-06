@@ -16,7 +16,11 @@ struct CategoryTileView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let barWidth: CGFloat    = CGFloat(max(1.0, progress * 64))
+        let borderColor: Color   = colorScheme == .dark ? Color.white.opacity(0.04) : Color.clear
+        let shadowColor: Color   = colorScheme == .dark ? .clear : Color.black.opacity(0.06)
+
+        return VStack(alignment: .leading, spacing: 0) {
             // Emoji icon
             Text(emoji)
                 .font(Font.custom("ClashDisplay-Bold", size: 28, relativeTo: .title))
@@ -39,7 +43,7 @@ struct CategoryTileView: View {
                     .frame(height: 3)
                 Capsule()
                     .fill(AppColors.spectrumBorder)
-                    .frame(width: max(1, progress * 64), height: 3)
+                    .frame(width: barWidth, height: 3)
             }
             .frame(height: 3)
         }
@@ -51,16 +55,9 @@ struct CategoryTileView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: AppRadius.md)
-                .stroke(
-                    colorScheme == .dark ? Color.white.opacity(0.04) : Color.clear,
-                    lineWidth: 1.5
-                )
+                .stroke(borderColor, lineWidth: 1.5)
         )
-        .shadow(
-            color: colorScheme == .dark ? .clear : Color.black.opacity(0.06),
-            radius: 12,
-            y: 4
-        )
+        .shadow(color: shadowColor, radius: 12, y: 4)
         .aspectRatio(1/1.2, contentMode: .fit)
     }
 }

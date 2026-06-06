@@ -81,9 +81,18 @@ final class ThreeCardFanController {
                 return
             }
 
-            let destX   = screenSize.width / 2 + fan[slot].offset.width
-            let destYAbs = restYAbs + fan[slot].offset.height
-            let destSK  = CGPoint(x: destX, y: screenSize.height - destYAbs)
+            let destX:    CGFloat = screenSize.width / 2 + fan[slot].offset.width
+            let destYAbs: CGFloat = restYAbs + fan[slot].offset.height
+            let destSK            = CGPoint(x: destX, y: screenSize.height - destYAbs)
+
+            // SpriteKit is y-up (positive zRotation = CCW); SwiftUI's
+            // .rotationEffect is y-down (positive = CW). The position math
+            // already flips y (screenSize.height - destYAbs), so the angle
+            // must be negated too — otherwise the resting sprite tilts the
+            // opposite way from the SwiftUI VaylCardBack and the card visibly
+            // snaps ~2× the fan angle at the sprite→SwiftUI handoff.
+            let finalAngle: CGFloat = CGFloat(-fan[slot].angle * .pi / 180)
+            let zPos:       CGFloat = CGFloat(zIndices[slot])
 
             await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
                 var fired = false
@@ -96,14 +105,8 @@ final class ThreeCardFanController {
                     from:         dealerSK,
                     to:           destSK,
                     initialAngle: -0.24,
-                    // SpriteKit is y-up (positive zRotation = CCW); SwiftUI's
-                    // .rotationEffect is y-down (positive = CW). The position math
-                    // already flips y (screenSize.height - destYAbs), so the angle
-                    // must be negated too — otherwise the resting sprite tilts the
-                    // opposite way from the SwiftUI VaylCardBack and the card visibly
-                    // snaps ~2× the fan angle at the sprite→SwiftUI handoff.
-                    finalAngle:   CGFloat(-fan[slot].angle * .pi / 180),
-                    zPosition:    CGFloat(zIndices[slot]),
+                    finalAngle:   finalAngle,
+                    zPosition:    zPos,
                     duration:     0.45
                 )
             }

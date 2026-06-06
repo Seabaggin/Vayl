@@ -35,12 +35,12 @@ struct ConversationCard: View {
     private let lineWidth: CGFloat = 1.5
 
     private var cardWidth: CGFloat {
-        ((UIApplication.shared.connectedScenes
+        let scenes: [UIWindowScene] = UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
-            .first(where: { $0.activationState == .foregroundActive })
-            ?? UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .first)?.screen.bounds.width ?? 390) - 48
+        let scene: UIWindowScene? = scenes.first(where: { $0.activationState == .foregroundActive })
+            ?? scenes.first
+        let screenWidth: CGFloat = scene?.screen.bounds.width ?? 390
+        return screenWidth - 48
     }
 
     var cardSize: CGSize {

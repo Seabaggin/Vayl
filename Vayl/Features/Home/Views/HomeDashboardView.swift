@@ -247,76 +247,92 @@ struct HomeDashboardView: View {
             }
             .simultaneousGesture(DragGesture(minimumDistance: 10))
 
-            if showReflectionBanner {
-                VStack {
-                    ReflectionBannerView(
-                        sessionLabel: bannerSessionLabel,
-                        partnerName: bannerPartnerName,
-                        onDone: onReflectionDone,
-                        onDismiss: onReflectionBannerDismiss
-                    )
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.top, AppSpacing.sm)
-                    Spacer()
-                }
-                .transition(
-                    .asymmetric(
-                        insertion: .move(edge: .top).combined(with: .opacity),
-                        removal:   .move(edge: .top).combined(with: .opacity)
-                    )
-                )
-                .animation(AppAnimation.spring, value: showReflectionBanner)
-            }
+            reflectionBanner
 
             #if DEBUG
-            if showDebugGrid {
-                DebugGridOverlay()
-
-                VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                    Text("SCROLL MATH")
-                        .font(Font.custom("Switzer-Bold", size: 10, relativeTo: .caption2))
-                        .foregroundStyle(.yellow)
-                        .padding(.bottom, AppSpacing.xxs)
-                    Text("offset:       \(scrollOffset, specifier: "%.1f")")
-                    Text("exitProgress: \(greetingExitProgress, specifier: "%.3f")")
-                    Text("greetingVis:  \(greetingVisible ? "TRUE" : "FALSE")")
-                    Text("pulseVis:     \(pulseVisible ? "TRUE" : "FALSE")")
-                    Text("deckFocused:  \(deckFocused ? "TRUE" : "FALSE")")
-                    Text("breathPhase:  \(breathPhase, specifier: "%.3f")")
-                }
-                .font(Font.custom("Switzer-Medium", size: 11, relativeTo: .caption2))
-                .foregroundStyle(.white)
-                .padding(AppSpacing.sm)
-                .background(Color.black.opacity(0.75))
-                .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
-                .overlay(RoundedRectangle(cornerRadius: AppRadius.sm).stroke(Color.white.opacity(0.1), lineWidth: 1))
-                .topClearance(layout)
-                .padding(.leading, AppSpacing.md)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .allowsHitTesting(false)
-            }
-
-            VStack {
-                Spacer()
-                HStack {
-                    Button { showDebugGrid.toggle() } label: {
-                        Image(systemName: showDebugGrid ? "grid.circle.fill" : "grid.circle")
-                            .font(Font.custom("Switzer-Regular", size: 22, relativeTo: .title3))
-                            .foregroundStyle(showDebugGrid ? Color.cyan : Color.white.opacity(0.4))
-                            .padding(AppSpacing.sm)
-                            .background(Color.black.opacity(0.4))
-                            .clipShape(Circle())
-                    }
-                    .padding(.leading, AppSpacing.md)
-                    .bottomContentInset(layout)
-                    Spacer()
-                }
-            }
+            debugOverlay(layout: layout)
             #endif
         }
         .onAppear { runEntranceAnimations() }
         }
     }
+
+    // MARK: - Body subviews
+    // Extracted from `body` so each is type-checked in isolation — the inline
+    // ZStack (scroll column + banner + debug overlay) was 348ms.
+
+    @ViewBuilder
+    private var reflectionBanner: some View {
+        if showReflectionBanner {
+            VStack {
+                ReflectionBannerView(
+                    sessionLabel: bannerSessionLabel,
+                    partnerName: bannerPartnerName,
+                    onDone: onReflectionDone,
+                    onDismiss: onReflectionBannerDismiss
+                )
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.top, AppSpacing.sm)
+                Spacer()
+            }
+            .transition(
+                .asymmetric(
+                    insertion: .move(edge: .top).combined(with: .opacity),
+                    removal:   .move(edge: .top).combined(with: .opacity)
+                )
+            )
+            .animation(AppAnimation.spring, value: showReflectionBanner)
+        }
+    }
+
+    #if DEBUG
+    @ViewBuilder
+    private func debugOverlay(layout: AppLayout) -> some View {
+        if showDebugGrid {
+            DebugGridOverlay()
+
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                Text("SCROLL MATH")
+                    .font(Font.custom("Switzer-Bold", size: 10, relativeTo: .caption2))
+                    .foregroundStyle(.yellow)
+                    .padding(.bottom, AppSpacing.xxs)
+                Text("offset:       \(scrollOffset, specifier: "%.1f")")
+                Text("exitProgress: \(greetingExitProgress, specifier: "%.3f")")
+                Text("greetingVis:  \(greetingVisible ? "TRUE" : "FALSE")")
+                Text("pulseVis:     \(pulseVisible ? "TRUE" : "FALSE")")
+                Text("deckFocused:  \(deckFocused ? "TRUE" : "FALSE")")
+                Text("breathPhase:  \(breathPhase, specifier: "%.3f")")
+            }
+            .font(Font.custom("Switzer-Medium", size: 11, relativeTo: .caption2))
+            .foregroundStyle(.white)
+            .padding(AppSpacing.sm)
+            .background(Color.black.opacity(0.75))
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
+            .overlay(RoundedRectangle(cornerRadius: AppRadius.sm).stroke(Color.white.opacity(0.1), lineWidth: 1))
+            .topClearance(layout)
+            .padding(.leading, AppSpacing.md)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .allowsHitTesting(false)
+        }
+
+        VStack {
+            Spacer()
+            HStack {
+                Button { showDebugGrid.toggle() } label: {
+                    Image(systemName: showDebugGrid ? "grid.circle.fill" : "grid.circle")
+                        .font(Font.custom("Switzer-Regular", size: 22, relativeTo: .title3))
+                        .foregroundStyle(showDebugGrid ? Color.cyan : Color.white.opacity(0.4))
+                        .padding(AppSpacing.sm)
+                        .background(Color.black.opacity(0.4))
+                        .clipShape(Circle())
+                }
+                .padding(.leading, AppSpacing.md)
+                .bottomContentInset(layout)
+                Spacer()
+            }
+        }
+    }
+    #endif
 
     // MARK: - Section Divider
 
@@ -558,66 +574,80 @@ struct HomeDashboardView: View {
 
 #if DEBUG
 private struct DebugGridOverlay: View {
+    private let unit: CGFloat = 8
+
     var body: some View {
         GeometryReader { geo in
             let width  = geo.size.width
             let height = geo.size.height
-            let unit: CGFloat = 8
 
             ZStack(alignment: .topLeading) {
-                ForEach(0..<Int(height / unit), id: \.self) { i in
-                    let y       = CGFloat(i) * unit
-                    let isMajor = i % 8 == 0
-                    Rectangle()
-                        .fill(Color.cyan.opacity(isMajor ? 0.18 : 0.06))
-                        .frame(height: 1)
-                        .offset(y: y)
-                }
-                ForEach(0..<Int(width / unit), id: \.self) { i in
-                    let x       = CGFloat(i) * unit
-                    let isMajor = i % 8 == 0
-                    Rectangle()
-                        .fill(Color.cyan.opacity(isMajor ? 0.18 : 0.06))
-                        .frame(width: 1)
-                        .offset(x: x)
-                }
-                Rectangle()
-                    .fill(Color(red: 1, green: 0, blue: 1).opacity(0.55))
-                    .frame(width: 1)
-                    .offset(x: width / 2)
-                Rectangle()
-                    .fill(Color.yellow.opacity(0.45))
-                    .frame(width: 1)
-                    .offset(x: 20)
-                Rectangle()
-                    .fill(Color.yellow.opacity(0.45))
-                    .frame(width: 1)
-                    .offset(x: width - 20)
-                Rectangle()
-                    .fill(Color.orange.opacity(0.35))
-                    .frame(width: 1)
-                    .offset(x: 24)
-                Rectangle()
-                    .fill(Color.orange.opacity(0.35))
-                    .frame(width: 1)
-                    .offset(x: width - 24)
-
-                VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                    Label("center axis", systemImage: "circle.fill").foregroundStyle(Color(red: 1, green: 0, blue: 1))
-                    Label("20pt margin", systemImage: "circle.fill").foregroundStyle(.yellow)
-                    Label("24pt margin", systemImage: "circle.fill").foregroundStyle(.orange)
-                    Label("8pt grid",    systemImage: "circle.fill").foregroundStyle(.cyan)
-                }
-                .font(Font.custom("Switzer-Medium", size: 9, relativeTo: .caption2))
-                .padding(AppSpacing.sm)
-                .background(.black.opacity(0.6))
-                .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
-                .offset(x: 8, y: 8)
+                gridLines(width: width, height: height)
+                marginGuides(width: width)
+                legend
             }
             .frame(width: width, height: height, alignment: .topLeading)
         }
         .allowsHitTesting(false)
         .ignoresSafeArea()
+    }
+
+    @ViewBuilder
+    private func gridLines(width: CGFloat, height: CGFloat) -> some View {
+        ForEach(0..<Int(height / unit), id: \.self) { i in
+            let y: CGFloat   = CGFloat(i) * unit
+            let isMajor: Bool = i % 8 == 0
+            Rectangle()
+                .fill(Color.cyan.opacity(isMajor ? 0.18 : 0.06))
+                .frame(height: 1)
+                .offset(y: y)
+        }
+        ForEach(0..<Int(width / unit), id: \.self) { i in
+            let x: CGFloat   = CGFloat(i) * unit
+            let isMajor: Bool = i % 8 == 0
+            Rectangle()
+                .fill(Color.cyan.opacity(isMajor ? 0.18 : 0.06))
+                .frame(width: 1)
+                .offset(x: x)
+        }
+    }
+
+    @ViewBuilder
+    private func marginGuides(width: CGFloat) -> some View {
+        Rectangle()
+            .fill(Color(red: 1, green: 0, blue: 1).opacity(0.55))
+            .frame(width: 1)
+            .offset(x: width / 2)
+        Rectangle()
+            .fill(Color.yellow.opacity(0.45))
+            .frame(width: 1)
+            .offset(x: 20)
+        Rectangle()
+            .fill(Color.yellow.opacity(0.45))
+            .frame(width: 1)
+            .offset(x: width - 20)
+        Rectangle()
+            .fill(Color.orange.opacity(0.35))
+            .frame(width: 1)
+            .offset(x: 24)
+        Rectangle()
+            .fill(Color.orange.opacity(0.35))
+            .frame(width: 1)
+            .offset(x: width - 24)
+    }
+
+    private var legend: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            Label("center axis", systemImage: "circle.fill").foregroundStyle(Color(red: 1, green: 0, blue: 1))
+            Label("20pt margin", systemImage: "circle.fill").foregroundStyle(.yellow)
+            Label("24pt margin", systemImage: "circle.fill").foregroundStyle(.orange)
+            Label("8pt grid",    systemImage: "circle.fill").foregroundStyle(.cyan)
+        }
+        .font(Font.custom("Switzer-Medium", size: 9, relativeTo: .caption2))
+        .padding(AppSpacing.sm)
+        .background(.black.opacity(0.6))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
+        .offset(x: 8, y: 8)
     }
 }
 #endif

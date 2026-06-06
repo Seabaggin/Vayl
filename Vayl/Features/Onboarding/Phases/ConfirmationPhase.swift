@@ -1,22 +1,14 @@
 //
-//  BuildingPathPhase.swift
-//  Vayl
-//
-//  Created by Bryan Jorden on 5/10/26.
-//
-
-
-//
-//  BuildingPathPhase.swift
+//  ConfirmationPhase.swift
 //  Vayl
 //
 
 import SwiftUI
 
-/// OB Phase — Building Path
+/// OB Phase — Confirmation (renders OBPhase.confirmation)
 /// Stub for routing verification. Cosmetics in visual pass.
 /// Advances to .buildDeck via director.
-struct BuildingPathPhase: View {
+struct ConfirmationPhase: View {
 
     let director: VaylDirector
 
@@ -28,7 +20,7 @@ struct BuildingPathPhase: View {
             VStack(spacing: AppSpacing.xl) {
                 Spacer()
 
-                Text("Building Path Phase")
+                Text("Confirmation Phase")
                     .font(Font.custom("ClashDisplay-Medium", size: 24, relativeTo: .title))
                     .foregroundStyle(AppColors.textPrimary)
 
@@ -43,6 +35,6 @@ struct BuildingPathPhase: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .accessibilityLabel("Building path phase")
+        .accessibilityLabel("Confirmation phase")
     }
 }

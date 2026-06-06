@@ -76,20 +76,9 @@ struct OnboardingData {
 
     // ── Derived — never stored independently ─────────────────────────
 
-    /// Default card intensity derived from NM stage.
-    /// Always derived — never stored.
-    var defaultIntensity: CardIntensity {
-        nmStage.defaultDifficulty
-    }
-
-    /// Whether this user goes through the full onboarding path.
-    /// All users (together / solo) go through the full path including context and curiosity phases.
-    var isFullOnboarding: Bool {
-        appMode == .together || appMode == .solo
-    }
-
     /// Whether enough data exists to commit to UserProfile.
-    /// VaylDirector checks this before calling OnboardingStore.commit().
+    /// Intended commit gate — not yet wired (the founder-letter commit currently
+    /// fires unconditionally; reintroduce as the guard when commit-error handling lands).
     var isReadyToComplete: Bool {
         switch appMode {
         case .together, .solo:

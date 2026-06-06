@@ -200,7 +200,7 @@ struct AppLayout {
     /// Clamps at 320pt to preserve card proportions on Pro Max devices.
     /// Vertical cards are OB/personal only. Horizontal cards are session/shared.
     static func obCardWidth(in screenWidth: CGFloat) -> CGFloat {
-        screenWidth * 1.14
+        min(screenWidth * 0.72, 320)
     }
 
     /// Height of a full-size OB vertical card.

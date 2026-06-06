@@ -34,6 +34,7 @@ struct OnboardingCanvasView: View {
         case .name:         return .name
         case .gender:       return .name        // no distinct gender config — name atmosphere
         case .modeSelect:   return .modeSelect
+        case .curiosity:    return .curiosityPicker
         default:            return .name         // all remaining phases use name atmosphere
         }
     }
@@ -209,11 +210,11 @@ private struct PhaseOverlayView: View {
                     .transition(.opacity)
 
             case .confirmation:
-                BuildingPathPhase(director: director)
+                ConfirmationPhase(director: director)
                     .transition(.opacity)
 
             case .buildDeck:
-                FoilPhase(director: director, screenSize: screenSize)
+                BuildDeckPhase(director: director, screenSize: screenSize)
                     .transition(.opacity)
 
             case .founderLetter:
@@ -236,7 +237,7 @@ private struct PhaseOverlayView: View {
 #Preview("Full OB Flow") {
     let appState = AppState()
     let store = OnboardingStore(
-        modelContainer: ModelContainer.appContainer,
+        modelContainer: ModelContainer.previewContainer,  // in-memory — never hits disk in previews
         appState: appState
     )
 

@@ -19,6 +19,45 @@ struct ReflectionBannerView: View {
     @GestureState private var dragOffset: CGFloat = 0
     @State private var isVisible: Bool = false
 
+    // Shared CTA / panel styling. Resolving these light/dark gradient ternaries
+    // once (as typed properties) keeps `body` and `fullPillSheet` cheap to
+    // type-check — inline they each rebuilt the same AnyShapeStyle gradients.
+    private var ctaTextColor: Color { colorScheme == .light ? AppColors.textSecondary : .white }
+
+    private var ctaFill: AnyShapeStyle {
+        colorScheme == .light
+            ? AnyShapeStyle(LinearGradient(
+                colors: [AppColors.accentTertiary.opacity(0.18), AppColors.safetyAccent.opacity(0.14)],
+                startPoint: .leading, endPoint: .trailing))
+            : AnyShapeStyle(LinearGradient(
+                colors: [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary],
+                startPoint: .leading, endPoint: .trailing))
+    }
+
+    private var ctaBorder: AnyShapeStyle {
+        colorScheme == .light
+            ? AnyShapeStyle(LinearGradient(
+                colors: [AppColors.accentTertiary, AppColors.safetyAccent],
+                startPoint: .leading, endPoint: .trailing))
+            : AnyShapeStyle(Color.clear)
+    }
+
+    private var panelBorder: AnyShapeStyle {
+        colorScheme == .light
+            ? AnyShapeStyle(AppColors.spectrumBorder.opacity(0.5))
+            : AnyShapeStyle(LinearGradient(
+                colors: [AppColors.accentPrimary.opacity(0.4), AppColors.accentSecondary.opacity(0.3), AppColors.accentTertiary.opacity(0.2)],
+                startPoint: .topLeading, endPoint: .bottomTrailing))
+    }
+
+    private var panelShadow: Color {
+        colorScheme == .light ? AppColors.shadowPurple : AppColors.accentSecondary.opacity(0.12)
+    }
+
+    private var accentEmphasis: Color {
+        colorScheme == .light ? AppColors.accentTertiary : AppColors.accentPrimary
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Drag handle
@@ -131,36 +170,14 @@ struct ReflectionBannerView: View {
                     } label: {
                         Text("Done")
                             .font(AppFonts.ctaLabel)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.textSecondary
-                                : .white)
+                            .foregroundStyle(ctaTextColor)
                             .padding(.horizontal, AppSpacing.lg)
                             .padding(.vertical, AppSpacing.sm)
                             .background {
-                                Capsule()
-                                    .fill(colorScheme == .light
-                                        ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.accentTertiary.opacity(0.18),
-                                                     AppColors.safetyAccent.opacity(0.14)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing))
-                                        : AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.accentPrimary,
-                                                     AppColors.accentSecondary,
-                                                     AppColors.accentTertiary],
-                                            startPoint: .leading,
-                                            endPoint: .trailing)))
+                                Capsule().fill(ctaFill)
                             }
                             .overlay {
-                                Capsule()
-                                    .stroke(colorScheme == .light
-                                        ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.accentTertiary,
-                                                     AppColors.safetyAccent],
-                                            startPoint: .leading,
-                                            endPoint: .trailing))
-                                        : AnyShapeStyle(Color.clear),
-                                        lineWidth: 1)
+                                Capsule().stroke(ctaBorder, lineWidth: 1)
                             }
                     }
                     .buttonStyle(.plain)
@@ -181,22 +198,9 @@ struct ReflectionBannerView: View {
         }
         .overlay(alignment: .top) {
             RoundedRectangle(cornerRadius: AppRadius.xl)
-                .stroke(colorScheme == .light
-                    ? AnyShapeStyle(AppColors.spectrumBorder.opacity(0.5))
-                    : AnyShapeStyle(LinearGradient(
-                        colors: [AppColors.accentPrimary.opacity(0.4),
-                                 AppColors.accentSecondary.opacity(0.3),
-                                 AppColors.accentTertiary.opacity(0.2)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing)),
-                    lineWidth: 1.5)
+                .stroke(panelBorder, lineWidth: 1.5)
         }
-        .shadow(
-            color: colorScheme == .light
-                ? AppColors.shadowPurple
-                : AppColors.accentSecondary.opacity(0.12),
-            radius: 20, y: 6
-        )
+        .shadow(color: panelShadow, radius: 20, y: 6)
         .offset(y: dragOffset)
         .gesture(
             DragGesture()
@@ -340,36 +344,14 @@ struct ReflectionBannerView: View {
                     } label: {
                         Text("Done")
                             .font(AppFonts.ctaLabel)
-                            .foregroundStyle(colorScheme == .light
-                                ? AppColors.textSecondary
-                                : .white)
+                            .foregroundStyle(ctaTextColor)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, AppSpacing.md)
                             .background {
-                                RoundedRectangle(cornerRadius: AppRadius.md)
-                                    .fill(colorScheme == .light
-                                        ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.accentTertiary.opacity(0.18),
-                                                     AppColors.safetyAccent.opacity(0.14)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing))
-                                        : AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.accentPrimary,
-                                                     AppColors.accentSecondary,
-                                                     AppColors.accentTertiary],
-                                            startPoint: .leading,
-                                            endPoint: .trailing)))
+                                RoundedRectangle(cornerRadius: AppRadius.md).fill(ctaFill)
                             }
                             .overlay {
-                                RoundedRectangle(cornerRadius: AppRadius.md)
-                                    .stroke(colorScheme == .light
-                                        ? AnyShapeStyle(LinearGradient(
-                                            colors: [AppColors.accentTertiary,
-                                                     AppColors.safetyAccent],
-                                            startPoint: .leading,
-                                            endPoint: .trailing))
-                                        : AnyShapeStyle(Color.clear),
-                                        lineWidth: 1)
+                                RoundedRectangle(cornerRadius: AppRadius.md).stroke(ctaBorder, lineWidth: 1)
                             }
                     }
                     .buttonStyle(.plain)

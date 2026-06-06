@@ -98,134 +98,9 @@ struct AuroraGlowField: View {
             let global = config.globalOpacity
 
             ZStack {
-
-                // ── Tier 1: Top zone — heavy, asymmetric ──────────────────
-                //
-                // CHANGE (v2): Was single upper-left orange blob.
-                // Now two blobs: dominant gold top-right + strong pink top-left.
-                // This matches the mockup's asymmetric top-heavy distribution
-                // and introduces gold into the upper field for brandView harmony.
-
-                // Gold — dominant top-right
-                blob(.auroraGold, 0.82 * config.topOpacityMult * global, 340, 280, 80, 0)
-                    .offset(
-                        x: sin(blobPhase[0] * .pi * 2) * 14,
-                        y: sin(blobPhase[0] * .pi * 2 + .pi / 3) * 10
-                    )
-                    .position(x: w * 0.78, y: h * 0.14)
-
-                // Pink — strong top-left
-                blob(.auroraPink, 0.76 * config.topOpacityMult * global, 280, 240, 72, 1)
-                    .offset(
-                        x: sin(blobPhase[1] * .pi * 2) * -10,
-                        y: sin(blobPhase[1] * .pi * 2 + .pi / 4) * 12
-                    )
-                    .position(x: w * 0.18, y: h * 0.17)
-
-                // ── Tier 2: Mid zone — supporting, moderate opacity ────────
-                //
-                // CHANGE (v2): Added purple blob center-right — bridges the
-                // wine/pink and gold colors. Was absent in v1 entirely.
-                // Wine blob repositioned from center to center-left so the
-                // mid zone has left/right color separation rather than one
-                // central mass.
-
-                // Purple — center-right (new)
-                blob(.auroraPurple, 0.70 * config.midOpacityMult * global, 300, 260, 78, 2)
-                    .scaleEffect(
-                        blobVisible[2]
-                            ? 1 + 0.05 * sin(blobPhase[2] * .pi * 2)
-                            : 0.7
-                    )
-                    .offset(x: sin(blobPhase[2] * .pi * 2) * 8)
-                    .position(x: w * 0.80, y: h * 0.36)
-
-                // Wine — center-left (was: center w * 0.50)
-                blob(.auroraWine, 0.67 * config.midOpacityMult * global, 320, 280, 78, 3)
-                    .scaleEffect(
-                        blobVisible[3]
-                            ? 1 + 0.06 * sin(blobPhase[3] * .pi * 2)
-                            : 0.7
-                    )
-                    .offset(x: sin(blobPhase[3] * .pi * 2) * 5)
-                    .position(x: w * 0.28, y: h * 0.40)
-
-                // Orange — warm mid accent (unchanged position, opacity tuned)
-                blob(.auroraOrange, 0.42 * config.midOpacityMult * global, 200, 180, 80, 4)
-                    .offset(
-                        x: sin(blobPhase[4] * .pi) * 8,
-                        y: sin(blobPhase[4] * .pi) * -6
-                    )
-                    .position(x: w * 0.55, y: h * 0.50)
-
-                // ── Tier 3: Lower zone — faint, wide ──────────────────────
-                //
-                // CHANGE (v2): WineLo blob repositioned from w*0.18 h*0.60
-                // to w*0.22 h*0.64 — slightly more centered so the lower
-                // field doesn't feel left-only.
-                // Floor wash y moved from h*0.80 → h*0.86 for brandView
-                // so it doesn't bleed into the tagline zone at h*0.595.
-                // Bottom orange accent opacity reduced — less competition
-                // with the tagline text at the bottom of the brand screen.
-
-                // WineLo — lower left
-                blob(.auroraWineLo, 0.67 * config.midOpacityMult * global, 280, 200, 85, 5)
-                    .scaleEffect(
-                        blobVisible[5]
-                            ? 1 + 0.05 * sin(blobPhase[5] * .pi * 2)
-                            : 0.7
-                    )
-                    .offset(
-                        x: sin(blobPhase[5] * .pi) * 8,
-                        y: sin(blobPhase[5] * .pi) * -5
-                    )
-                    .position(x: w * 0.22, y: h * 0.64)
-
-                // Floor wash — wide radial sweep across bottom
-                Ellipse()
-                    .fill(RadialGradient(
-                        stops: [
-                            .init(
-                                color: Color.auroraWine.opacity(
-                                    0.48 * config.bottomOpacityMult * global
-                                ),
-                                location: 0
-                            ),
-                            .init(
-                                color: Color.auroraPink.opacity(
-                                    0.28 * config.bottomOpacityMult * global
-                                ),
-                                location: 0.4
-                            ),
-                            .init(color: .clear, location: 0.7)
-                        ],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 200
-                    ))
-                    .frame(width: 420, height: 180)
-                    .blur(radius: 90)
-                    .scaleEffect(
-                        blobVisible[6]
-                            ? 1 + 0.06 * sin(blobPhase[6] * .pi * 2)
-                            : 0.7
-                    )
-                    .opacity(blobVisible[6] ? 1 : 0)
-                    .offset(x: sin(blobPhase[6] * .pi * 2) * 4)
-                    .position(x: w * 0.5, y: h * 0.86)
-
-                // Orange — bottom accent (opacity reduced v1→v2: 0.324→0.22)
-                blob(.auroraOrange, 0.35 * config.bottomOpacityMult * global, 220, 140, 88, 7)
-                    .offset(x: sin(blobPhase[7] * .pi * 2) * -8)
-                    .position(x: w * 0.46, y: h * 0.91)
-
-                // Gold — bottom-right faint accent (new in v2)
-                // Anchors the gold presence in the lower field so the
-                // warm arc (gold top-right → gold bottom-right) reads as
-                // intentional, not a single isolated blob.
-                blob(.auroraGold, 0.26 * config.bottomOpacityMult * global, 200, 140, 85, 8)
-                    .offset(x: sin(blobPhase[8] * .pi * 2) * 6)
-                    .position(x: w * 0.80, y: h * 0.88)
+                topTier(w: w, h: h, global: global)
+                midTier(w: w, h: h, global: global)
+                lowerTier(w: w, h: h, global: global)
             }
         }
         .allowsHitTesting(false)
@@ -235,6 +110,119 @@ struct AuroraGlowField: View {
             hasStarted = true
             startAtmosphere()
         }
+    }
+
+    // MARK: - Tiers
+    // Split from `body` so each group is type-checked in isolation — the inline
+    // 10-blob ZStack with per-blob sin offsets was 210ms.
+
+    @ViewBuilder
+    private func topTier(w: CGFloat, h: CGFloat, global: Double) -> some View {
+        // Gold — dominant top-right
+        blob(.auroraGold, 0.82 * config.topOpacityMult * global, 340, 280, 80, 0)
+            .offset(
+                x: sin(blobPhase[0] * .pi * 2) * 14,
+                y: sin(blobPhase[0] * .pi * 2 + .pi / 3) * 10
+            )
+            .position(x: w * 0.78, y: h * 0.14)
+
+        // Pink — strong top-left
+        blob(.auroraPink, 0.76 * config.topOpacityMult * global, 280, 240, 72, 1)
+            .offset(
+                x: sin(blobPhase[1] * .pi * 2) * -10,
+                y: sin(blobPhase[1] * .pi * 2 + .pi / 4) * 12
+            )
+            .position(x: w * 0.18, y: h * 0.17)
+    }
+
+    @ViewBuilder
+    private func midTier(w: CGFloat, h: CGFloat, global: Double) -> some View {
+        // Purple — center-right
+        blob(.auroraPurple, 0.70 * config.midOpacityMult * global, 300, 260, 78, 2)
+            .scaleEffect(
+                blobVisible[2]
+                    ? 1 + 0.05 * sin(blobPhase[2] * .pi * 2)
+                    : 0.7
+            )
+            .offset(x: sin(blobPhase[2] * .pi * 2) * 8)
+            .position(x: w * 0.80, y: h * 0.36)
+
+        // Wine — center-left
+        blob(.auroraWine, 0.67 * config.midOpacityMult * global, 320, 280, 78, 3)
+            .scaleEffect(
+                blobVisible[3]
+                    ? 1 + 0.06 * sin(blobPhase[3] * .pi * 2)
+                    : 0.7
+            )
+            .offset(x: sin(blobPhase[3] * .pi * 2) * 5)
+            .position(x: w * 0.28, y: h * 0.40)
+
+        // Orange — warm mid accent
+        blob(.auroraOrange, 0.42 * config.midOpacityMult * global, 200, 180, 80, 4)
+            .offset(
+                x: sin(blobPhase[4] * .pi) * 8,
+                y: sin(blobPhase[4] * .pi) * -6
+            )
+            .position(x: w * 0.55, y: h * 0.50)
+    }
+
+    @ViewBuilder
+    private func lowerTier(w: CGFloat, h: CGFloat, global: Double) -> some View {
+        // WineLo — lower left
+        blob(.auroraWineLo, 0.67 * config.midOpacityMult * global, 280, 200, 85, 5)
+            .scaleEffect(
+                blobVisible[5]
+                    ? 1 + 0.05 * sin(blobPhase[5] * .pi * 2)
+                    : 0.7
+            )
+            .offset(
+                x: sin(blobPhase[5] * .pi) * 8,
+                y: sin(blobPhase[5] * .pi) * -5
+            )
+            .position(x: w * 0.22, y: h * 0.64)
+
+        // Floor wash — wide radial sweep across bottom
+        Ellipse()
+            .fill(RadialGradient(
+                stops: [
+                    .init(
+                        color: Color.auroraWine.opacity(
+                            0.48 * config.bottomOpacityMult * global
+                        ),
+                        location: 0
+                    ),
+                    .init(
+                        color: Color.auroraPink.opacity(
+                            0.28 * config.bottomOpacityMult * global
+                        ),
+                        location: 0.4
+                    ),
+                    .init(color: .clear, location: 0.7)
+                ],
+                center: .center,
+                startRadius: 0,
+                endRadius: 200
+            ))
+            .frame(width: 420, height: 180)
+            .blur(radius: 90)
+            .scaleEffect(
+                blobVisible[6]
+                    ? 1 + 0.06 * sin(blobPhase[6] * .pi * 2)
+                    : 0.7
+            )
+            .opacity(blobVisible[6] ? 1 : 0)
+            .offset(x: sin(blobPhase[6] * .pi * 2) * 4)
+            .position(x: w * 0.5, y: h * 0.86)
+
+        // Orange — bottom accent
+        blob(.auroraOrange, 0.35 * config.bottomOpacityMult * global, 220, 140, 88, 7)
+            .offset(x: sin(blobPhase[7] * .pi * 2) * -8)
+            .position(x: w * 0.46, y: h * 0.91)
+
+        // Gold — bottom-right faint accent
+        blob(.auroraGold, 0.26 * config.bottomOpacityMult * global, 200, 140, 85, 8)
+            .offset(x: sin(blobPhase[8] * .pi * 2) * 6)
+            .position(x: w * 0.80, y: h * 0.88)
     }
 
     // MARK: - Blob builder

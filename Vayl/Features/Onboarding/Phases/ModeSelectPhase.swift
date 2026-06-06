@@ -268,15 +268,8 @@ struct ModeSelectPhase: View {
                 cardWidth:  cardWidth,
                 onLanded: { confirmedCard in
                     // Confirmed card has visually arrived at the corner deck (~740ms after swipe).
-                    // Append the model and pulse now — count updates as the card lands, not after.
-                    let modeCard = VaylCardModel()
-                    modeCard.credential = .mode
-                    director.cornerDeckCards.append(modeCard)
-                    withAnimation(AppAnimation.deckReceive) { director.deckPulse = true }
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .milliseconds(600))
-                        director.deckPulse = false
-                    }
+                    // Credit the deck now — count updates as the card lands, not after.
+                    director.receiveCredential(.mode)
 
                     // Set appMode now — data is ready, rejected card is still exiting.
                     let mode: AppMode = confirmedCard == .left ? .solo : .together

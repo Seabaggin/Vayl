@@ -236,9 +236,7 @@ struct PulseSheetView: View {
                 Text("THE PULSE")
                     .font(AppFonts.overline)
                     .tracking(2.5)
-                    .foregroundStyle(
-                        isLight ? AppColors.textTertiary : AppColors.textTertiary
-                    )
+                    .foregroundStyle(AppColors.textTertiary)
 
                 LivingText(
                     text: "The \(currentTier.label) Space",
@@ -247,49 +245,35 @@ struct PulseSheetView: View {
 
                 Text(currentTier.sublabel)
                     .font(AppFonts.caption)
-                    .foregroundStyle(
-                        isLight
-                            ? AppColors.textSecondary.opacity(0.75)
-                            : AppColors.textSecondary.opacity(0.75)
-                    )
+                    .foregroundStyle(AppColors.textSecondary.opacity(0.75))
             }
 
             Spacer()
 
-            Button {
-                onDismiss?()
-            } label: {
-                Image(systemName: AppIcons.close)
-                    // .caption scales with Dynamic Type — correct for
-                    // icon-only close buttons at this visual weight.
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(
-                        isLight ? AppColors.textTertiary : AppColors.textTertiary
-                    )
-                    .frame(width: 30, height: 30)
-                    .background {
-                        Circle()
-                            .fill(
-                                isLight
-                                    ? Color.black.opacity(0.05)
-                                    : Color.white.opacity(0.07)
-                            )
-                    }
-                    .overlay {
-                        Circle()
-                            .strokeBorder(
-                                isLight
-                                    ? Color.black.opacity(0.07)
-                                    : Color.white.opacity(0.08),
-                                lineWidth: 1
-                            )
-                    }
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Close")
-            .padding(.top, AppSpacing.xs)
+            closeButton
+                .padding(.top, AppSpacing.xs)
         }
+    }
+
+    private var closeButton: some View {
+        let fillColor:   Color = isLight ? Color.black.opacity(0.05) : Color.white.opacity(0.07)
+        let borderColor: Color = isLight ? Color.black.opacity(0.07) : Color.white.opacity(0.08)
+
+        return Button {
+            onDismiss?()
+        } label: {
+            Image(systemName: AppIcons.close)
+                // .caption scales with Dynamic Type — correct for
+                // icon-only close buttons at this visual weight.
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(AppColors.textTertiary)
+                .frame(width: 30, height: 30)
+                .background { Circle().fill(fillColor) }
+                .overlay { Circle().strokeBorder(borderColor, lineWidth: 1) }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Close")
     }
 
     // MARK: - Stats Row
@@ -361,49 +345,43 @@ struct PulseSheetView: View {
     private var windowSelector: some View {
         HStack(spacing: AppSpacing.xs) {
             ForEach(PulseWindow.allCases) { window in
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    withAnimation(AppAnimation.fast) {
-                        selectedWindow = window
-                    }
-                } label: {
-                    Text(window.rawValue)
-                        .font(AppFonts.buttonLabelSmall)
-                        .foregroundStyle(
-                            selectedWindow == window
-                                ? AppColors.accentSecondary
-                                : (isLight
-                                    ? AppColors.textTertiary
-                                    : AppColors.textTertiary)
-                        )
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, AppSpacing.sm)
-                        .background {
-                            RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
-                                .fill(
-                                    selectedWindow == window
-                                        ? (isLight
-                                            ? AppColors.accentSecondary.opacity(0.10)
-                                            : AppColors.accentSecondary.opacity(0.20))
-                                        : Color.clear
-                                )
-                        }
-                        .overlay {
-                            RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
-                                .strokeBorder(
-                                    selectedWindow == window
-                                        ? AppColors.accentSecondary.opacity(isLight ? 0.35 : 0.40)
-                                        : (isLight
-                                            ? Color.black.opacity(0.07)
-                                            : Color.white.opacity(0.07)),
-                                    lineWidth: 1
-                                )
-                        }
-                }
-                .buttonStyle(.plain)
-                .animation(AppAnimation.fast, value: selectedWindow)
+                windowButton(for: window)
             }
         }
+    }
+
+    private func windowButton(for window: PulseWindow) -> some View {
+        let isSelected: Bool = selectedWindow == window
+        let labelColor: Color = isSelected ? AppColors.accentSecondary : AppColors.textTertiary
+        let fillColor: Color = isSelected
+            ? (isLight ? AppColors.accentSecondary.opacity(0.10) : AppColors.accentSecondary.opacity(0.20))
+            : Color.clear
+        let borderColor: Color = isSelected
+            ? AppColors.accentSecondary.opacity(isLight ? 0.35 : 0.40)
+            : (isLight ? Color.black.opacity(0.07) : Color.white.opacity(0.07))
+
+        return Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            withAnimation(AppAnimation.fast) {
+                selectedWindow = window
+            }
+        } label: {
+            Text(window.rawValue)
+                .font(AppFonts.buttonLabelSmall)
+                .foregroundStyle(labelColor)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.sm)
+                .background {
+                    RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
+                        .fill(fillColor)
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
+                        .strokeBorder(borderColor, lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
+        .animation(AppAnimation.fast, value: selectedWindow)
     }
 
     // MARK: - Graph Card

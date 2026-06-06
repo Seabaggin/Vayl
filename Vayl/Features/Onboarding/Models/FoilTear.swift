@@ -16,7 +16,7 @@
 import CoreGraphics
 import Foundation
 
-/// A single tear in the foil surface during FoilPhase.
+/// A single tear in the foil surface during BuildDeckPhase.
 /// Created by VaylDirector when the user taps the foil.
 /// FoilRenderer reads the tap point and path to draw the tear.
 /// Age drives the dissolve progress after the integrity threshold is crossed.

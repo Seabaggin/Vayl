@@ -570,18 +570,6 @@ struct NamePhase: View {
         nameFieldFocused = true
     }
 
-    // MARK: — Card snapshot
-
-    @MainActor
-    private func snapshotCardBack(scale: CGFloat) -> UIImage? {
-        let renderer = ImageRenderer(
-            content: VaylCardBack()
-                .frame(width: cardWidth, height: cardHeight)
-        )
-        renderer.scale = scale
-        return renderer.uiImage
-    }
-
     // MARK: — Card deal
 
     @MainActor
@@ -594,69 +582,22 @@ struct NamePhase: View {
             return
         }
 
-        guard let cardImage = snapshotCardBack(scale: displayScale) else { return }
-
-        let flightID      = UUID().uuidString
-        let startAngleDeg = Double.random(in: 11.0...16.0)
-
-        // Launch from off-screen left or right at table horizon height.
-        // Wide X spread gives each deal a different diagonal angle.
-        let launchX = screenSize.width * CGFloat.random(in: -0.45...1.45)
-        let origin  = CGPoint(
-            x: launchX,
-            y: screenSize.height * AppLayout.tableHorizonYFrac
-        )
-
-        // Enforce minimum travel distance — retry up to 4 times before accepting.
-        let minTravelDistance = screenSize.width * 0.75
-        var slot = director.claimLandingSlot(screenSize: screenSize)
-        for _ in 0..<4 {
-            let dist = hypot(slot.position.x - origin.x,
-                             slot.position.y - origin.y)
-            if dist >= minTravelDistance { break }
-            slot = director.claimLandingSlot(screenSize: screenSize)
-        }
-
-        // Overshoot eligibility — only if the overshoot position would
-        // clear at least 1/3 of the card width past the screen edge.
-        let overshootDist   = slot.position.x + (slot.position.x - origin.x) * 0.22
-        let cardThird       = cardWidth / 3
-        let wouldClearLeft  = overshootDist < -cardThird
-        let wouldClearRight = overshootDist > screenSize.width + cardThird
-        let canOvershoot    = wouldClearLeft || wouldClearRight
-        let shouldOvershoot = canOvershoot && Double.random(in: 0...1) < 0.60
-
-        director.cardFlightScene.pendingShouldOvershoot = shouldOvershoot
-
-        let skInitialAngle = CGFloat(-startAngleDeg * .pi / 180)
-        let skFinalAngle   = CGFloat(-slot.angleDeg  * .pi / 180)
-
+        // Card-flight physics now lives in CardFlightEngine (via the director). This
+        // phase only triggers the deal and applies the rested transform to its card.
         dealPhase = .swiping
         cardAlpha = 0
 
-        let (restPos, restRot) = await director.sailCard(
-            cardID:       flightID,
-            image:        cardImage,
-            from:         origin,
-            to:           slot.position,
-            sceneSize:    screenSize,
-            duration:     0.45,
-            initialAngle: skInitialAngle,
-            finalAngle:   skFinalAngle
-        )
+        guard let deal = await director.dealSingleCard(screenSize: screenSize, scale: displayScale) else { return }
         guard !Task.isCancelled else { return }
 
         // Handoff SpriteKit → SwiftUI
         dealPhase  = .resting
-        cardOffset = CGSize(
-            width:  restPos.x - screenSize.width  / 2,
-            height: restPos.y - screenSize.height / 2
-        )
-        cardAngle = restRot
-        cardAlpha = 1
+        cardOffset = deal.offset
+        cardAngle  = deal.angle
+        cardAlpha  = 1
         // One frame overlap to eliminate the SpriteKit → SwiftUI flash
         try? await Task.sleep(for: .milliseconds(32))
-        director.cardFlightScene.clearCard(id: flightID)
+        director.cardFlightScene.clearCard(id: deal.flightID)
     }
 
     @MainActor
@@ -725,8 +666,6 @@ struct NamePhase: View {
 
     @MainActor
     private func performCardCollect() async {
-        director.cornerDeckVisible = true
-
         let cornerX = screenSize.width  - AppLayout.cornerDeckRight - AppLayout.cornerDeckWidth  / 2
         let cornerY = AppLayout.cornerDeckTop + AppLayout.cornerDeckHeight / 2
 
@@ -741,16 +680,7 @@ struct NamePhase: View {
 
         try? await Task.sleep(for: .milliseconds(380))
 
-        let collected = VaylCardModel()
-        collected.credential = .name
-        director.cornerDeckCards.append(collected)
-        withAnimation(AppAnimation.deckReceive) {
-            director.deckPulse = true
-        }
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(600))
-            director.deckPulse = false
-        }
+        director.receiveCredential(.name)
     }
 
     // MARK: — Effects helpers
