@@ -114,12 +114,39 @@ has run before the reveal renders.
 - `beginFoilDissolve`'s auto-advance to `.founderLetter` → reveal carousel,
   letter handoff per Beat 7
 
+## Resolved issues (folded in pre-implementation)
+
+- **Seam is double-broken today**: confirmation cards exit FACE-UP at 50%
+  scale; BuildDeck's deck is full-size backs. Fix in segment 1: cards **turn
+  face-down as they collapse** (their truths going private as they're
+  submitted) and settle at the canonical `obCardWidth` deck scale at table
+  center — both sides of the boundary meet at face-down / obCard size /
+  feltCenter / angle 0.
+- **Sheet continuity across the phase swap**: expand FULLY first, advance
+  second — `advance(to: .founderLetter)` fires only once the sheet covers the
+  screen, so the phase swap happens behind the curtain. A shared letterhead
+  component guarantees the covering frame is identical on both sides.
+- **Flat pose stresses the foil shader**: at rx ≈ −90° the front quad is
+  near-degenerate (invBilinear noise, lattice aliasing at grazing angles).
+  Mitigation designed in: the lattice + band FADE IN during the flat-to-
+  vertical rise — the material wakes up as the deck stands.
+- **Crack tears stored in face space**: `FoilTear` tap points convert to
+  face-local UV at tap time (the foil's inverse-bilinear machinery) so cracks
+  stick to the case while it floats — never screen-anchored.
+- **Case embossing**: the sealed case wears **VAYL** (the house seals the
+  gift); the starter deck's name lands at Beat 6 as a genuine reveal.
+- **Duration budget**: the non-interactive stretch (confirm → invitation)
+  targets **≤ 9s total**; every beat earns its milliseconds at the feel gates.
+- Beat 6 content (starter prompt cards per `openerDeckType`) is trusted to a
+  later content pass; segment 7 may ship against designed placeholders.
+
 ## Build segments (Build Protocol — each feel-verified on device before the next)
 
-1. **Seam stitch** — BuildDeckPhase opens with a real-card-back deck at the
-   exact collapse point. Done: tapping the CTA shows no detectable boundary.
-   Constraints: BuildDeckPhase + (if needed) a shared deck-stack component;
-   no director changes.
+1. **Seam stitch** — confirmation exit: cards flip face-down mid-collapse and
+   settle at obCard deck scale; BuildDeckPhase opens with a real card-back
+   deck (VaylCardBack stack) pixel-matched at the same point. Done: tapping
+   the CTA shows no detectable boundary. Constraints: ConfirmationPhase exit
+   choreography + BuildDeckPhase deck prop; no director changes.
 2. **The dissolve-down** — deck dissolves through the felt (GenderPhase verb,
    improved) + haptic. Done: deck believably passes under the table.
    Constraints: BuildDeckPhase only.
