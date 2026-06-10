@@ -51,6 +51,27 @@ Deflection `d ∈ [-1, 1]` = horizontal drag ÷ commit threshold (95pt), clamped
 - All geometry proportional to the illustration zone; no fixed pixels.
 - Card layout unchanged: top 44% illustration, bottom 56% topic text.
 
+## Typography layer (round 2 — "instrument readout")
+
+The first build paired the compass with plain centered text, which read flat next
+to ContextCardFace's editorial anatomy (illustration → hairline rule → overline →
+gradient title). Decision: derive that anatomy rather than port it — each
+typographic element becomes part of the instrument, driven by the same deflection:
+
+- **Heading ruler** replaces the hairline rule: spectrum baseline + bearing ticks,
+  with an index triangle that slides with the needle (`±0.44 × rule width`).
+- **Live bearing readout** replaces the overline: `BRG 000°` at rest (spectrumText
+  at 0.55, matching the context number), `BRG 042° E — KEEP` in cyan / `W — PASS`
+  in magenta past a ±0.08 neutral dead band.
+- **Topic title** uses the context card's exact treatment: display 24 semibold,
+  spectrumText gradient, left-aligned.
+
+Swipe physics are Tinder-style and were already in place: the card follows the
+finger freely on both axes, nothing commits until release beyond the 95pt
+threshold, below it the card (and needle, ruler index) spring back via
+cardSettle. Rejected: straight context-layout port (coherent but inert), chart-room
+graticule background (fights the atmosphere layer).
+
 ## Code changes
 
 1. `CuriosityCardFace.swift` → deleted; new `CompassCardFace.swift` in
