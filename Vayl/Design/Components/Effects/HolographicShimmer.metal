@@ -474,7 +474,8 @@ half4 hexFoilSurface(float2 position,
                      float  grooveW,          // groove half-width, cell units (~0.10)
                      float  bandSharp,        // band specular exponent (~10)
                      float  bandGain,         // band strength (~0.9)
-                     float  glintGain)        // per-cell glint strength (~0.5)
+                     float  glintGain,        // per-cell glint strength (~0.5)
+                     float  latticeFade)      // 0…1 — material wakes during the rise
 {
     half a = currentColor.a;
     if (a < 0.01h) return currentColor;                  // leave the void alone
@@ -513,15 +514,17 @@ half4 hexFoilSurface(float2 position,
     float2 cell  = cellHash(id);
     float  twink = 0.75 + 0.25 * sin(cell.x * 6.2832 + phase * (1.0 + cell.y));
 
-    float lit    = groove * max(0.0,  facing) * (0.16 + band * bandGain) * twink;
-    float shadow = groove * max(0.0, -facing) * 0.55;
-    float glint  = groove * band * smoothstep(0.60, 0.95, twink) * glintGain;
+    // latticeFade gates ALL carved-structure light — at 0 (lying flat, grazing
+    // angles) the case is plain anodized metal; the lattice wakes as it rises.
+    float lit    = groove * max(0.0,  facing) * (0.16 + band * bandGain) * twink * latticeFade;
+    float shadow = groove * max(0.0, -facing) * 0.55 * latticeFade;
+    float glint  = groove * band * smoothstep(0.60, 0.95, twink) * glintGain * latticeFade;
 
     float3 col = base
         + ink * lit                              // lit flank ignites in the colorway
         - base * shadow                          // shadow flank carves below base
         + mix(ink, float3(1.0), 0.5) * glint     // hot glints where band crosses cells
-        + ink * band * 0.05;                     // faint sheen on flats — band stays legible
+        + ink * band * 0.05 * latticeFade;       // faint sheen on flats — band stays legible
     col = clamp(col, 0.0, 1.0);
     return half4(half3(col * float(a)), a);
 }

@@ -52,6 +52,20 @@ struct MetallicCaseView: View {
     var bandTravel:     Double = 0.35    // band phase per degree of Y tilt
     var theme: FoilDeckTheme   = .vayl
 
+    // Arrival pose (ceremony spec Beat 3): nil = full float pose (default for
+    // previews and any consumer that doesn't choreograph an arrival). Set to a
+    // Date to drive the flat-on-the-felt → vertical rise from that moment; the
+    // lattice + band fade in WITH the rise (latticeFade uniform) so the
+    // near-degenerate flat quad never shows aliased grooves.
+    var riseStart:    Date?  = nil
+    var riseDuration: Double = 1.4
+
+    init(theme: FoilDeckTheme = .vayl, riseStart: Date? = nil, riseDuration: Double = 1.4) {
+        self.theme = theme
+        self.riseStart = riseStart
+        self.riseDuration = riseDuration
+    }
+
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -68,12 +82,25 @@ struct MetallicCaseView: View {
         let frontQuad: [CGPoint] // front face TL, TR, BR, BL (proj[0...3])
     }
 
-    private func caseGeometry(size: CGSize, t: Double, motion: Bool) -> CaseGeometry {
+    /// 0 = lying flat on the felt · 1 = full float pose. Smoothstep-eased from
+    /// `riseStart`; Reduce Motion (motion == false) snaps to the final pose.
+    private func risePose(t: Double, motion: Bool) -> Double {
+        guard motion, let riseStart else { return 1 }
+        let elapsed = t - riseStart.timeIntervalSinceReferenceDate
+        let p = min(1, max(0, elapsed / riseDuration))
+        return p * p * (3 - 2 * p)
+    }
+
+    private func caseGeometry(size: CGSize, t: Double, motion: Bool, pose: Double) -> CaseGeometry {
         // float — biased to a clear 3/4 view (static angle shows the 3D), with only a
         // gentle drift on top so it reads as floating without "moving too much".
-        let osc = motion ? 1.0 : 0.0
-        let ryDeg = 21.0 + osc * tiltAmplitude        * dsin(t * 0.42 * floatSpeed)
-        let rxDeg = -16.0 + osc * tiltAmplitude * 0.4 * dcos(t * 0.31 * floatSpeed)
+        // `pose` mixes from the flat-on-the-felt arrival (rx ≈ −86°, minimal yaw,
+        // no oscillation) to the floating ¾ view.
+        let osc = (motion ? 1.0 : 0.0) * pose
+        let ryDeg = (2.0 + (21.0 - 2.0) * pose)
+                  + osc * tiltAmplitude        * dsin(t * 0.42 * floatSpeed)
+        let rxDeg = (-86.0 + (-16.0 + 86.0) * pose)
+                  + osc * tiltAmplitude * 0.4 * dcos(t * 0.31 * floatSpeed)
         let rx = rxDeg * .pi / 180, ry = ryDeg * .pi / 180
 
         // box dimensions — fit a 3:2 portrait face into the frame with margin
@@ -108,7 +135,8 @@ struct MetallicCaseView: View {
 
     @ViewBuilder
     private func foilLayer(size: CGSize, t: Double, motion: Bool) -> some View {
-        let geo = caseGeometry(size: size, t: t, motion: motion)
+        let pose = risePose(t: t, motion: motion)
+        let geo = caseGeometry(size: size, t: t, motion: motion, pose: pose)
         Canvas { ctx, _ in drawCase(&ctx, size: size, geo: geo) }
             // Debossed hex foil — the band phase is driven by the FLOAT TILT, not
             // time, so the light only moves because the box moves (and Reduce
@@ -126,7 +154,8 @@ struct MetallicCaseView: View {
                 .float(Float(grooveWidth)),
                 .float(Float(bandSharpness)),
                 .float(Float(bandGain)),
-                .float(Float(glintGain))
+                .float(Float(glintGain)),
+                .float(Float(pose))
             ))
     }
 
