@@ -44,33 +44,48 @@ has run before the reveal renders.
 - **Beat 0 · Confirm & collapse** *(exists — keep)*: CTA dissolves; fan sweeps
   into a squared deck at table center. `exitDeckPoint` and `feltCenter` already
   agree; only the prop is wrong across the boundary.
-- **Beat 1 · The swallow**: the deck sinks into the felt — slight scale-down,
-  a glowing slit opens where it enters, soft thunk haptic. Anchor: card into a
-  dealer's shoe.
-- **Beat 2 · The forge** *(the interim)*: a roaming under-felt glow with
-  escalating spectrum pulses along the table horizon (light under a door /
-  under ice). Dealer retimed to the pulses: "From everything you've shown me…"
-  → "…I'm building a deck that's yours alone."
-- **Beat 3 · The eruption**: the slit flares; the case punches up through the
-  felt with spring overshoot and light bleeding around the punch-through; lands
-  floating where the hex foil catches its first band sweep. Heavy impact
-  haptic. Reduce Motion: dignified fade-up, no punch.
+- **Beat 1 · The dissolve-down**: the deck dissolves DOWN through the felt —
+  no violence, no slit: the dissolve verb GenderPhase already established
+  (`dissolution*` driver family), improved past its current 7/10 (directional
+  wipe along the descent, dissolve-edge energy). Soft thunk haptic as the last
+  of it goes under.
+- **Beat 2 · The table's hero moment** *(the interim)*: the TABLE performs,
+  using ornaments it already owns — the spectrum horizon and contour lines
+  pulse/converge around the point where the deck went under ("something is
+  happening under there"). No new props; the stage is the effect. Dealer
+  retimed to the pulses: "From everything you've shown me…" → "…I'm building
+  a deck that's yours alone."
+- **Beat 3 · The arrival — three calm impossibilities**: (a) the cased deck
+  **dissolves UP from the felt, lying flat** on the table (where cards belong);
+  (b) it **rises from flat to fully vertical** (the case presents itself — the
+  existing 3D projection already supports the rx sweep); (c) it **floats up as
+  the table fades** in the background — ContextPhase's established grammar
+  ("the table dissolves as the carousel assembles"). First band-sweep on the
+  hex foil lands during the float. Each step breaks one more rule of physics
+  while staying serene. Reduce Motion: cross-dissolve to the floating pose.
 - **Beat 4 · The invitation**: ~0.8s of stillness, then dealer: "This one's
   yours. Break it open." + **LiftHalo on the case** — the affordance taught in
-  NamePhase paying off (cf. Opal's "tap to reveal your gem": explicit words +
-  glow cue).
+  NamePhase paying off (cf. Opal's milestone gem reveal: explicit words + glow
+  cue).
 - **Beat 5 · The crack ceremony**: wire the existing engine — taps →
   `director.addFoilTear`; tears render on the case with colorway light-bleed
   escalating per tap; haptics escalate; third tap → bloom-flood → shatter.
-  (Lattice-snapped cracks along hex grooves: later enhancement per the foil
-  spec.)
+  Tap threshold stays tunable (feel-test 2 vs 3; could not verify Opal's
+  count — 3 chosen for ritual arc: one is a button, two a coincidence, three
+  a ritual). (Lattice-snapped cracks along hex grooves: later enhancement per
+  the foil spec.)
 - **Beat 6 · The reveal**: out of the bloom, the starter prompt deck presents
-  in a card carousel (reuse `VaylCardCarousel`); browse freely.
-- **Beat 7 · The letter**: the founder letter rises as a pull-up sheet over the
-  carousel, deck still visible beneath. **Trigger deliberately open** (browsed-
-  all vs dwell vs subtle CTA) until the user reviews their inspiration app.
-  The current auto-advance 1.8s after the third crack is removed regardless —
-  it would steamroll the carousel.
+  in a card carousel (reuse `VaylCardCarousel`); **deck title appears above
+  with a one-line description of the deck's purpose** (from `openerDeckType`).
+  Browse freely — examine and play, no timer pressure.
+- **Beat 7 · The letter — delayed CTA**: after the user browses a few cards OR
+  idles ~5–6s, a quiet dealer-voiced pill fades in beneath ("Take your deck",
+  not "Continue"). Tapping it squares the carousel back into the deck and the
+  founder letter sheet rises through a soft fade — the deck stays visible
+  beneath the sheet, preserving the throughline to the end. The current
+  auto-advance 1.8s after the third crack is removed regardless. Exact copy +
+  trigger thresholds feel-tuned; user may still refine after reviewing their
+  inspiration app.
 
 ## What dies
 
@@ -89,13 +104,19 @@ has run before the reveal renders.
    exact collapse point. Done: tapping the CTA shows no detectable boundary.
    Constraints: BuildDeckPhase + (if needed) a shared deck-stack component;
    no director changes.
-2. **The swallow** — sink + slit glow + haptic. Done: deck believably enters
-   the table. Constraints: BuildDeckPhase only.
-3. **The forge** — under-felt roaming glow + pulses + retimed dealer lines.
-   Done: the interim reads as something being made. Constraints: BuildDeckPhase
+2. **The dissolve-down** — deck dissolves through the felt (GenderPhase verb,
+   improved) + haptic. Done: deck believably passes under the table.
+   Constraints: BuildDeckPhase only.
+3. **The table's hero moment** — horizon + contour ornaments pulse/converge on
+   the forge point; retimed dealer lines. Done: the interim reads as something
+   being made by the table itself. Constraints: BuildDeckPhase (+ canvas/table
+   ornament hooks if the ornaments live there; tableFade still director-only)
    (+ DeckWrapView retire/repurpose).
-4. **The eruption** — punch-through, spring landing, light burst, Reduce Motion
-   fallback. Done: arrival feels caused, not silly. Constraints: BuildDeckPhase.
+4. **The arrival** — dissolve-up flat on the felt → flat-to-vertical rise →
+   float as the table fades (ContextPhase grammar); Reduce Motion
+   cross-dissolve. Done: three calm impossibilities land serenely; first
+   band-sweep during the float. Constraints: BuildDeckPhase + MetallicCaseView
+   pose driving (rx sweep).
 5. **The invitation** — stillness beat, dealer line, LiftHalo on the case.
    Done: a stranger knows to tap within 2 seconds. Constraints: BuildDeckPhase
    + LiftHalo reuse.
@@ -104,11 +125,14 @@ has run before the reveal renders.
    mounting tension. Constraints: BuildDeckPhase, MetallicCaseView (tear
    overlay), VaylDirector (remove auto-advance only — `advance()` remains the
    sole phase gate).
-7. **The reveal** — shatter bloom → starter prompt carousel; ensure
-   `evaluateOpenerDeckType()` ran. Done: payoff lands, cards browseable.
-   Constraints: BuildDeckPhase + VaylCardCarousel reuse.
-8. **Letter handoff** — pull-up sheet rises over the carousel; trigger decided
-   after inspo review. Done: smooth auto-proceed, no steamroll.
+7. **The reveal** — shatter bloom → starter prompt carousel + deck title and
+   one-line purpose; ensure `evaluateOpenerDeckType()` ran. Done: payoff lands,
+   cards browseable, the deck has a name. Constraints: BuildDeckPhase +
+   VaylCardCarousel reuse.
+8. **Letter handoff — delayed CTA** — browse-or-idle trigger fades in the
+   dealer-voiced pill; tap squares the carousel into the deck and the founder
+   letter sheet rises through a soft fade, deck visible beneath. Done: the exit
+   never steamrolls play, and the throughline holds to the last frame.
    Constraints: BuildDeckPhase, FounderLetterPhase entry, director.
 
 ## Architecture constraints
@@ -134,4 +158,6 @@ per-beat in isolation, before segment 8 closes.
 
 - Lattice-snapped crack paths + hex shatter plates (foil spec follow-up).
 - FounderLetterPhase content/visuals (separate design pass).
-- Beat 7 trigger choice — decided after the user reviews their inspiration app.
+- Final Beat 7 copy + trigger thresholds — feel-tuned; user may refine after
+  reviewing their inspiration app.
+- Deck title/description copy per `openerDeckType` variant (content pass).
