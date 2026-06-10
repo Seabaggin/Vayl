@@ -36,7 +36,6 @@ struct MetallicCaseView: View {
     var ambient:        Double  = 0.28   // floor brightness on faces away from light (low = box reads in 3D)
     var hueOffset:      Double  = 90     // pick the single metal colour (deg) — ≈ deep purple
     var hueShift:       Double  = 1.4    // how much that one colour shifts as it tilts
-    var emblemOpacity:  Double  = 0.55
     var boxScale:       CGFloat = 0.70   // box size as fraction of the fitting square
 
     // Foil surface — holographic foil shader (no drawn lines).
@@ -198,9 +197,9 @@ struct MetallicCaseView: View {
             ctx.fill(face, with: shading)
         }
 
-        // embossed emblem on the front face
+        // embossed brand layer (deck name + hairline frame) on the front face
         if let front = visible.first(where: { $0.f.isFront }) {
-            drawEmblem(&ctx, frontCorners: front.f.idx.map { proj[$0] })
+            drawBrand(&ctx, quad: front.f.idx.map { proj[$0] })
         }
     }
 
@@ -248,29 +247,88 @@ struct MetallicCaseView: View {
             startPoint: a, endPoint: c)
     }
 
-    // MARK: - Emblem
+    // MARK: - Brand layer (embossed deck name + hairline frame)
 
-    private func drawEmblem(_ ctx: inout GraphicsContext, frontCorners pts: [CGPoint]) {
-        guard pts.count == 4 else { return }
-        // approximate centre + radius from the projected front quad (flat — fine at low tilt)
-        let cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4
-        let cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4
-        let edge = hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y)
-        let R = edge * 0.20
-        let centre = CGPoint(x: cx, y: cy - edge * 0.10)
+    /// Affine map of the unit square onto the projected front quad (TL,TR,BR,BL).
+    /// Drops perspective — acceptable at this float's low tilt, same approximation
+    /// the old emblem used.
+    private func frontFaceTransform(_ q: [CGPoint]) -> CGAffineTransform {
+        let o = q[0], bx = q[1], by = q[3]
+        return CGAffineTransform(a: bx.x - o.x, b: bx.y - o.y,
+                                 c: by.x - o.x, d: by.y - o.y,
+                                 tx: o.x, ty: o.y)
+    }
 
-        var ec = ctx
-        ec.blendMode = .softLight
-        ec.opacity = emblemOpacity
-        let stroke = GraphicsContext.Shading.color(.white)
+    private func drawBrand(_ ctx: inout GraphicsContext, quad: [CGPoint]) {
+        guard quad.count == 4 else { return }
+        let edgeW = hypot(quad[1].x - quad[0].x, quad[1].y - quad[0].y)
+        guard edgeW > 1 else { return }
 
-        for r in [R, R * 0.66] {
-            ec.stroke(Path(ellipseIn: CGRect(x: centre.x - r, y: centre.y - r, width: r * 2, height: r * 2)),
-                      with: stroke, lineWidth: max(0.8, edge * 0.006))
+        // — hairline inset frame, colorway gradient, drawn in unit-face space —
+        // (unit square maps to the w × 1.5w face, so y-insets divide by 1.5)
+        var fc = ctx
+        fc.concatenate(frontFaceTransform(quad))
+        let inset = 9.0 / edgeW                   // matches the card back's 9pt inset
+        let frame = Path(roundedRect: CGRect(x: inset, y: inset * (2.0 / 3.0),
+                                             width: 1 - inset * 2,
+                                             height: 1 - inset * (4.0 / 3.0)),
+                         cornerRadius: 0.03)
+        fc.stroke(
+            frame,
+            with: .linearGradient(
+                Gradient(stops: [
+                    .init(color: theme.colorway.c0.opacity(0.27), location: 0.0),
+                    .init(color: theme.colorway.c1.opacity(0.27), location: 0.5),
+                    .init(color: theme.colorway.c2.opacity(0.27), location: 1.0),
+                ]),
+                startPoint: CGPoint(x: inset, y: 0.5),
+                endPoint:   CGPoint(x: 1 - inset, y: 0.5)
+            ),
+            lineWidth: 0.6 / edgeW
+        )
+
+        // — embossed deck name, screen space at the projected anchor (low-center) —
+        let cx = (quad[0].x + quad[1].x + quad[2].x + quad[3].x) / 4
+        let cy = (quad[0].y + quad[1].y + quad[2].y + quad[3].y) / 4
+        let anchor   = CGPoint(x: cx, y: cy + edgeW * 0.52)
+        let fontSize = edgeW * 0.085
+
+        func nameText(_ fs: CGFloat) -> Text {
+            Text(theme.deckName)
+                .font(AppFonts.display(fs, weight: .medium, relativeTo: .title))
+                .tracking(fontSize * 0.45)
         }
 
-        ec.draw(Text("VAYL").font(.system(size: edge * 0.085, weight: .light, design: .serif))
-            .foregroundColor(.white), at: CGPoint(x: cx, y: cy + edge * 0.30))
+        // emboss passes — same recipe as the VaylCardBack wordmark
+        var shadowPass = ctx
+        shadowPass.addFilter(.blur(radius: 0.8))
+        shadowPass.draw(nameText(fontSize).foregroundStyle(Color.black.opacity(0.55)),
+                        at: CGPoint(x: anchor.x + 0.8, y: anchor.y + 0.9), anchor: .center)
+
+        var highlightPass = ctx
+        highlightPass.addFilter(.blur(radius: 0.6))
+        highlightPass.draw(nameText(fontSize).foregroundStyle(Color.white.opacity(0.45)),
+                           at: CGPoint(x: anchor.x - 0.7, y: anchor.y - 0.8), anchor: .center)
+
+        var corePass = ctx
+        corePass.clipToLayer(opacity: 0.90) { clip in
+            clip.draw(nameText(fontSize).foregroundStyle(Color.white),
+                      at: anchor, anchor: .center)
+        }
+        let bounds = CGRect(x: anchor.x - fontSize * 4, y: anchor.y - fontSize,
+                            width: fontSize * 8, height: fontSize * 2)
+        corePass.fill(
+            Path(bounds),
+            with: .linearGradient(
+                Gradient(stops: [
+                    .init(color: theme.colorway.c0, location: 0.0),
+                    .init(color: theme.colorway.c1, location: 0.4),
+                    .init(color: theme.colorway.c2, location: 1.0),
+                ]),
+                startPoint: CGPoint(x: bounds.minX, y: anchor.y),
+                endPoint:   CGPoint(x: bounds.maxX, y: anchor.y)
+            )
+        )
     }
 
     // MARK: - 3D math
