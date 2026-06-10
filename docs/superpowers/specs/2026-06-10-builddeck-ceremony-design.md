@@ -78,14 +78,19 @@ has run before the reveal renders.
   in a card carousel (reuse `VaylCardCarousel`); **deck title appears above
   with a one-line description of the deck's purpose** (from `openerDeckType`).
   Browse freely — examine and play, no timer pressure.
-- **Beat 7 · The letter — delayed CTA**: after the user browses a few cards OR
-  idles ~5–6s, a quiet dealer-voiced pill fades in beneath ("Take your deck",
-  not "Continue"). Tapping it squares the carousel back into the deck and the
-  founder letter sheet rises through a soft fade — the deck stays visible
-  beneath the sheet, preserving the throughline to the end. The current
-  auto-advance 1.8s after the third crack is removed regardless. Exact copy +
-  trigger thresholds feel-tuned; user may still refine after reviewing their
-  inspiration app.
+- **Beat 7 · The letter — sheet peek**: after the user browses a few cards OR
+  idles ~5–6s, the founder letter itself rises a sliver from the bottom — an
+  iOS bottom-sheet peek, letterhead just visible, with a quiet label ("A note
+  from the founder" / dealer: "One more thing…"). The carousel stays fully
+  interactive above it. Pull or tap expands the sheet — that IS the
+  transition: the peek renders in BuildDeck; full expansion fires
+  `advance(to: .founderLetter)` where FounderLetterPhase owns the sheet. The
+  carousel squares back into the deck beneath as the sheet rises, preserving
+  the throughline to the last frame. The current auto-advance 1.8s after the
+  third crack is removed regardless. The affordance is the destination — no
+  button symbol. **Documented fallback:** if the peek feels busy under the
+  carousel on device, swap to a delayed dealer-voiced CTA pill ("Take your
+  deck") — the trigger logic is identical either way.
 
 ## What dies
 
@@ -129,11 +134,13 @@ has run before the reveal renders.
    one-line purpose; ensure `evaluateOpenerDeckType()` ran. Done: payoff lands,
    cards browseable, the deck has a name. Constraints: BuildDeckPhase +
    VaylCardCarousel reuse.
-8. **Letter handoff — delayed CTA** — browse-or-idle trigger fades in the
-   dealer-voiced pill; tap squares the carousel into the deck and the founder
-   letter sheet rises through a soft fade, deck visible beneath. Done: the exit
-   never steamrolls play, and the throughline holds to the last frame.
-   Constraints: BuildDeckPhase, FounderLetterPhase entry, director.
+8. **Letter handoff — sheet peek** — browse-or-idle trigger raises the founder
+   letter to a labeled peek; pull/tap expands it (carousel squares into the
+   deck beneath; expansion fires `advance(to: .founderLetter)`). Done: the exit
+   never steamrolls play, proceeding is one obvious pull or tap, and the
+   throughline holds to the last frame. Fallback if busy on device: delayed
+   dealer-voiced CTA pill, same trigger. Constraints: BuildDeckPhase,
+   FounderLetterPhase entry, director.
 
 ## Architecture constraints
 
