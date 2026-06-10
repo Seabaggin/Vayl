@@ -423,6 +423,24 @@ struct MetallicCaseView: View {
     .preferredColorScheme(.dark)
 }
 
+// Reuse-contract proof: a different colorway + deck name with ZERO code changes.
+// Ramp deliberately reuses existing tokens in a different order — the real
+// category legend (sex, jealousy, …) is defined later.
+#Preview("Alt deck theme") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        MetallicCaseView(theme: FoilDeckTheme(
+            colorway: FoilColorway(
+                c0: AppColors.spectrumMagenta,
+                c1: AppColors.spectrumPurple,
+                c2: AppColors.spectrumCyan
+            ),
+            deckName: "JEALOUSY"
+        ))
+    }
+    .preferredColorScheme(.dark)
+}
+
 // Temporary verification harness — judge every foil segment against the card
 // back it must complement. Same footprint for both so value range, spectrum
 // order, and texture family compare directly.
