@@ -4,12 +4,14 @@
 //
 //  FoilOpen module — Layer 1 (reusable, content-agnostic).
 //
-//  The sealed deck's 3D metallic tuck-box. A `Canvas` projects a 3D box (front +
-//  visible side + top faces) and fills each face with a SOLID metallic gradient
-//  keyed to that face's angle — so the case reads as multichrome (cyan↔purple↔
-//  magenta) chameleon metal, no pattern. A slow `TimelineView` float tilts the box
-//  in space, which is what makes the metal shift colour. A subtly embossed sunburst
-//  emblem sits on the front face.
+//  The sealed deck's 3D tuck-box: near-void anodized metal with the card back's
+//  hex lattice DEBOSSED into the front face. A `Canvas` projects the box (front +
+//  visible side + top faces, painter-sorted, per-face brightness = the 3D read);
+//  the `hexFoilSurface` shader maps pixels into face-local UV over the projected
+//  front quad and lights the groove flanks with one tilt-driven anisotropic band
+//  in the deck's colorway (`FoilDeckTheme`). Light lives in the carved structure —
+//  flats stay dark. The deck name is embossed low on the face in ClashDisplay,
+//  same emboss recipe as the VaylCardBack wordmark.
 //
 //  Drawing the box in a Canvas (rather than nested rotation3DEffect, which SwiftUI
 //  can't composite into a shared 3D scene) means the later crack/disintegrate pass
@@ -38,16 +40,10 @@ struct MetallicCaseView: View {
     var hueShift:       Double  = 1.4    // how much that one colour shifts as it tilts
     var boxScale:       CGFloat = 0.70   // box size as fraction of the fitting square
 
-    // Foil surface — holographic foil shader (no drawn lines).
+    // Foil surface — debossed hex lattice (hexFoilSurface). Light lives in the
+    // carved structure: groove flanks ignite in the deck colorway as one
+    // tilt-driven band sweeps the face. No noise, no time-driven animation.
     var cornerSoftness: Double  = 0.14   // gentle rounding of the box SILHOUETTE (soft tuck-box corners)
-    var holoScale:      Double  = 9      // crinkle / facet frequency (holoFoilSurface)
-    var holoIntensity:  Double  = 0.52   // strength of the deep holographic colour
-    var holoSharpness:  Double  = 7      // specular sharpness — higher = sharper jagged glints
-    var holoSpeed:      Double  = 0.25   // holographic shimmer speed as it floats
-    var holoShine:      Double  = 0.45   // glossy specular core (spectrum-tinted, controlled)
-    var pattern:        Double  = 0      // foil surface: 0 = dark holographic · 1 = liquid chrome
-
-    // Debossed hex foil surface (hexFoilSurface)
     var latticeColumns: Double = 13      // hex columns across the face width
     var grooveWidth:    Double = 0.10    // groove half-width in cell units
     var bandSharpness:  Double = 10      // band specular exponent
