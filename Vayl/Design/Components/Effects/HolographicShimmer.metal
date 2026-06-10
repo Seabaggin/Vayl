@@ -447,6 +447,20 @@ static float3 ramp3(float t, float3 c0, float3 c1, float3 c2) {
     return t < 0.5 ? mix(c0, c1, t * 2.0) : mix(c1, c2, (t - 0.5) * 2.0);
 }
 
+// Nearest hex edge for a point in cell-local coords. Returns
+// (distance-to-edge, outward edge normal xy). Grid: pointy-top hexes tiled
+// on r = (1, √3); cell centers sit at distance 0.5 from each edge.
+static float3 hexEdge(float2 gv) {
+    float2 p  = abs(gv);
+    float2 n1 = normalize(float2(1.0, 1.7320508));
+    float  c  = dot(p, n1);
+    float  d  = 0.5 - max(c, p.x);
+    float2 n  = (p.x > c) ? float2(1.0, 0.0) : n1;
+    n = float2(gv.x < 0.0 ? -n.x : n.x,
+               gv.y < 0.0 ? -n.y : n.y);
+    return float3(d, n.x, n.y);
+}
+
 [[stitchable]]
 half4 hexFoilSurface(float2 position,
                      half4  currentColor,
@@ -479,7 +493,35 @@ half4 hexFoilSurface(float2 position,
 
     float3 ink = ramp3(cpn, float3(rampA.rgb), float3(rampB.rgb), float3(rampC.rgb));
 
-    float3 col = base + ink * band * (0.30 * bandGain);  // flat-metal sheen (lattice lands next)
+    // ---- debossed hex lattice in face space (v spans 1.5× the face width) ----
+    const float2 r   = float2(1.0, 1.7320508);
+    float2 huv = float2(uvq.x, uvq.y * 1.5) * lattice;
+    float2 ga  = foilMod2(huv, r) - r * 0.5;
+    float2 gb  = foilMod2(huv - r * 0.5, r) - r * 0.5;
+    float2 gv  = dot(ga, ga) < dot(gb, gb) ? ga : gb;
+    float2 id  = huv - gv;                       // cell id — per-cell variation
+    float3 e   = hexEdge(gv);                    // x: dist to edge · yz: outward normal
+
+    // V-groove: 1 at the edge line, 0 on the flats
+    float groove = 1.0 - smoothstep(0.0, grooveW, e.x);
+
+    // emboss flanks: lit toward the sweep axis, shadowed away — the relief read
+    float facing = dot(float2(e.y, e.z), dir);
+
+    // per-cell shimmer: deterministic phase offset so cells ignite in sequence,
+    // not in unison, as the band crosses (light over cut glass)
+    float2 cell  = cellHash(id);
+    float  twink = 0.75 + 0.25 * sin(cell.x * 6.2832 + phase * (1.0 + cell.y));
+
+    float lit    = groove * max(0.0,  facing) * (0.16 + band * bandGain) * twink;
+    float shadow = groove * max(0.0, -facing) * 0.55;
+    float glint  = groove * band * smoothstep(0.60, 0.95, twink) * glintGain;
+
+    float3 col = base
+        + ink * lit                              // lit flank ignites in the colorway
+        - base * shadow                          // shadow flank carves below base
+        + mix(ink, float3(1.0), 0.5) * glint     // hot glints where band crosses cells
+        + ink * band * 0.05;                     // faint sheen on flats — band stays legible
     col = clamp(col, 0.0, 1.0);
     return half4(half3(col * float(a)), a);
 }
