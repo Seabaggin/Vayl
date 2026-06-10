@@ -43,8 +43,16 @@ struct BuildDeckPhase: View {
     @State private var sheetDrag:     CGFloat = 0
     private let peekHeight: CGFloat = 76
 
-    private var deckW:    CGFloat { AppLayout.obCardWidth(in: screenSize.width) }
+    // Mirrors ConfirmationPhase.cardWidth(in:) — the deck arrives at FAN-card
+    // scale (the collapse never grows the cards). The size change to the hero
+    // case happens as a camera zoom during the float, not object growth.
+    private var deckW:    CGFloat { min(screenSize.width * 0.32, 230) }
     private var deckSize: CGSize  { CGSize(width: deckW, height: deckW * 1.5) }
+
+    /// Camera dolly-in during Beat 3c: the case scales up WHILE the felt
+    /// recedes beneath it — object-up + background-away reads as the camera
+    /// moving closer, never as the object inflating. Feel-tunable.
+    private let floatZoom: CGFloat = 2.0
     private var feltCenter:  CGPoint { CGPoint(x: screenSize.width / 2, y: AppLayout.obTableCardCenterY(in: screenSize.height)) }
     private var floatCenter: CGPoint { CGPoint(x: screenSize.width / 2, y: screenSize.height * 0.42) }
     /// Where the deck enters the felt — its bottom edge on the table.
@@ -72,10 +80,12 @@ struct BuildDeckPhase: View {
                     .position(feltCenter)
             }
 
-            // Beat 3 — the cased deck: dissolves up flat, rises, floats
+            // Beat 3 — the cased deck: dissolves up flat AT DECK SCALE, rises,
+            // then the camera dollies in as it floats (scale + felt recede).
             if caseShown {
                 MetallicCaseView(riseStart: caseRiseStart)
-                    .frame(width: deckSize.width * 1.45, height: deckSize.height * 1.45)
+                    .frame(width: deckSize.width, height: deckSize.height)
+                    .scaleEffect(caseFloat ? floatZoom : 1.0)
                     .position(caseFloat ? floatCenter : feltCenter)
                     .opacity(caseOpacity)
             }
@@ -120,43 +130,47 @@ struct BuildDeckPhase: View {
     private func runSequence() {
         Task { @MainActor in
             // settle — the deck just arrived from confirmation; let it sit
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 1.0))
-            director.showDealerLine("From everything you've shown me…", hideAfter: 2.4)
             try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 1.5))
+            director.showDealerLine("From everything you've shown me…", hideAfter: 2.6)
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 2.0))
 
             // Beat 1 — the deck melts down through the felt
-            withAnimation(.easeIn(duration: 2.0).reduceMotionSafe) { deckMelt = 1 }
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 2.0))
+            withAnimation(.easeIn(duration: 2.6).reduceMotionSafe) { deckMelt = 1 }
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 2.6))
             meltDone = true
             deckShown = false
 
+            // breath — the table is quiet for a moment before the work begins
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.1 : 0.7))
+
             // Beat 2 — the table works (pulses converge while the dealer speaks)
             withAnimation(AppAnimation.standard.reduceMotionSafe) { forgeStart = .now }
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.1 : 0.8))
-            director.showDealerLine("…I'm building a deck that's yours alone.", hideAfter: 2.8)
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.3 : 3.2))
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.1 : 1.2))
+            director.showDealerLine("…I'm building a deck that's yours alone.", hideAfter: 3.0)
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.3 : 4.0))
 
             // Beat 3a — the cased deck dissolves up, lying flat on the felt
             caseShown = true
-            withAnimation(.easeOut(duration: 1.0).reduceMotionSafe) { caseOpacity = 1 }
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 1.4))
+            withAnimation(.easeOut(duration: 1.3).reduceMotionSafe) { caseOpacity = 1 }
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 1.8))
 
             // Beat 3b — it rises from flat to vertical (pose driver in the case view)
             caseRiseStart = .now
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.1 : 1.6))
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.1 : 1.9))
 
-            // Beat 3c — it takes the air; the felt recedes beneath it
-            withAnimation(.easeInOut(duration: 1.6).reduceMotionSafe) { caseFloat = true }
+            // Beat 3c — the camera dollies in: the case takes the air and scales
+            // up WHILE the felt recedes beneath it (zoom, not growth)
+            withAnimation(.easeInOut(duration: 2.0).reduceMotionSafe) { caseFloat = true }
             director.recedeTableForForge()
             withAnimation(AppAnimation.exit.reduceMotionSafe) { forgeStart = nil }
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.3 : 2.2))
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.3 : 2.8))
 
             // Beat 4 — stillness already passed; the invitation
             director.showDealerLine("This one's yours. Break it open.", hideAfter: 3.4)
 
             // Interim wiring: the peek arrives after a dwell. Moves behind the
             // browse-or-idle trigger once crack + reveal land (segments 5–7).
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.5 : 4.5))
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.5 : 5.0))
             withAnimation(AppAnimation.enter.reduceMotionSafe) { peekShown = true }
         }
     }

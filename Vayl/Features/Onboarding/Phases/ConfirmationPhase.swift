@@ -63,11 +63,12 @@ struct ConfirmationPhase: View {
         let corner = cornerOrigin(in: size)
         let pos    = exiting ? exitDeckPoint(in: size) : target.position
         let ang    = exiting ? 0   : (shown ? target.angle : -18)
-        // Exit scale targets the canonical OB deck size — both sides of the
-        // confirmation→buildDeck boundary meet at face-down / obCard scale /
-        // table center, so the phase swap is undetectable (ceremony spec, seam).
-        let scl    = exiting ? AppLayout.obCardWidth(in: size.width) / w
-                             : (shown ? 1 : 0.55)
+        // Exit keeps the cards at their fan size — they sweep and flip into a
+        // deck WITHOUT growing (growth reads as inflation, not gathering).
+        // BuildDeckPhase opens its deck at this same fan-card scale; the later
+        // size change is a camera zoom during the float, never object growth
+        // (ceremony spec, seam).
+        let scl    = exiting ? 1.0 : (shown ? 1 : 0.55)
         let opa    = shown ? 1.0 : 0.0
         // Flip container — CuriosityFlipCard idiom: two pre-rotated faces,
         // opacity crossfade, both driven by `exiting` through the exit animation.
