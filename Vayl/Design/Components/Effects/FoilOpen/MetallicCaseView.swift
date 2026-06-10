@@ -48,6 +48,15 @@ struct MetallicCaseView: View {
     var holoShine:      Double  = 0.45   // glossy specular core (spectrum-tinted, controlled)
     var pattern:        Double  = 0      // foil surface: 0 = dark holographic · 1 = liquid chrome
 
+    // Debossed hex foil surface (hexFoilSurface)
+    var latticeColumns: Double = 13      // hex columns across the face width
+    var grooveWidth:    Double = 0.10    // groove half-width in cell units
+    var bandSharpness:  Double = 10      // band specular exponent
+    var bandGain:       Double = 0.9     // band strength
+    var glintGain:      Double = 0.5     // per-cell glint strength
+    var bandTravel:     Double = 0.35    // band phase per degree of Y tilt
+    var theme: FoilDeckTheme   = .vayl
+
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -106,17 +115,23 @@ struct MetallicCaseView: View {
     private func foilLayer(size: CGSize, t: Double, motion: Bool) -> some View {
         let geo = caseGeometry(size: size, t: t, motion: motion)
         Canvas { ctx, _ in drawCase(&ctx, size: size, geo: geo) }
-            // Electric holographic foil — sharp iridescent specular + crinkle, alpha-gated.
-            // Wrap time small: a huge absolute timestamp loses float32 precision and kills
-            // both the spatial rainbow and the animation.
-            .colorEffect(ShaderLibrary.holoFoilSurface(
-                .float2(size),
-                .float(Float((t * holoSpeed).truncatingRemainder(dividingBy: 600))),
-                .float(Float(holoIntensity)),
-                .float(Float(holoScale)),
-                .float(Float(holoSharpness)),
-                .float(Float(holoShine)),
-                .float(Float(pattern))
+            // Debossed hex foil — the band phase is driven by the FLOAT TILT, not
+            // time, so the light only moves because the box moves (and Reduce
+            // Motion freezes both together). No absolute timestamps reach the GPU.
+            .colorEffect(ShaderLibrary.hexFoilSurface(
+                .float2(geo.frontQuad[0]),
+                .float2(geo.frontQuad[1]),
+                .float2(geo.frontQuad[2]),
+                .float2(geo.frontQuad[3]),
+                .color(theme.colorway.c0),
+                .color(theme.colorway.c1),
+                .color(theme.colorway.c2),
+                .float(Float(geo.ryDeg * bandTravel)),
+                .float(Float(latticeColumns)),
+                .float(Float(grooveWidth)),
+                .float(Float(bandSharpness)),
+                .float(Float(bandGain)),
+                .float(Float(glintGain))
             ))
     }
 
