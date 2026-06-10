@@ -91,6 +91,17 @@ has run before the reveal renders.
   button symbol. **Documented fallback:** if the peek feels busy under the
   carousel on device, swap to a delayed dealer-voiced CTA pill ("Take your
   deck") — the trigger logic is identical either way.
+- **Beat 8 · The curtain (dismissal contract)**: expanded, the letter holds a
+  single full detent (no medium stop, no accidental flick-away mid-signature)
+  but pull-down stays available throughout — it is the COMPLETION gesture, not
+  a cancel. While the sheet covers the screen, the stage behind it changes:
+  table fades, home assembles (the existing `finishOnboarding()` mechanics,
+  choreographed under the sheet). Pull-down → commit fires → on success the
+  sheet completes its descent revealing HOME (theater curtain: the set changed
+  behind it); on failure the sheet settles back up with a quiet retry surface
+  (`commitFailed`) — nothing lost. Never hold the sheet hostage to the
+  signature animation; speed-runners may dismiss unread because the letter is
+  permanently re-readable from Settings/About (add that entry).
 
 ## What dies
 
