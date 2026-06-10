@@ -26,6 +26,14 @@ shares a door with the corresponding appearance: the deck sinks INTO the felt,
 the case erupts OUT of it — the table is the forge, and the interim glow is the
 work being made. Anchor moments get stillness before and after.
 
+**Narrative north star (user's words):** the cards fanned in ConfirmationPhase
+*become* the deck we handle the rest of the way — a single perceived
+deck-object: confirmed → squared → taken by the table → magic happens → bam,
+their starter deck. The contents transform (credentials in, starter prompts
+out); the OBJECT never breaks continuity. Even though the decks don't connect
+in reality, the user is none the wiser — that perceived throughline IS the
+trick, and every segment is judged against preserving it.
+
 **Contents decision (user-confirmed):** the case contains the **starter prompt
 deck** (`openerDeckType`), not the six credential cards. Their truths go into
 the table; a gift forged from them comes out. Ensure `evaluateOpenerDeckType()`
