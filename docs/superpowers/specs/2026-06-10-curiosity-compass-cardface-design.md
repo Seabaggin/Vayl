@@ -72,6 +72,42 @@ threshold, below it the card (and needle, ruler index) spring back via
 cardSettle. Rejected: straight context-layout port (coherent but inert), chart-room
 graticule background (fights the atmosphere layer).
 
+## Topic content budget & type scale (round 3)
+
+The sort cards are small — `obTableCardWidth` (30% of screen, max 195) × cinematic
+scale 1.5 ≈ **176 × 263pt on a 390pt phone** — far smaller than the 280pt context
+cards. A fixed display-24 title overflowed: long topics clipped or pushed the
+compass.
+
+**Type scale:** title = `0.085 × cardWidth` (≈ context's display-24 at 280pt,
+≈ 15pt on device), `lineLimit(3)`, `minimumScaleFactor(0.8)`, rendered in a
+fixed-height zone (`0.24 × cardHeight`, top-leading) so text can never displace
+the instrument. Bearing overline: `lineLimit(1)` + min scale 0.7.
+
+**Content budget for topic strings (authoring rule):**
+- ≤ **45 characters** including spaces, ≤ **9 words**
+- target 2 rendered lines; 3 lines is the hard ceiling before auto-shrink
+- current worst case: "What I want — not what I've settled for" (41 chars,
+  9 words) — fits
+
+The device-size preview in CompassCardFace.swift renders the longest topic at the
+real 176×263 footprint, so budget violations are visible at design time.
+
+## Swipe physics (round 3)
+
+Two upgrades toward Tinder/Bumble feel:
+1. **Velocity commit** — release commits if travelled ≥ 95pt OR
+   `predictedEndTranslation` ≥ 95 × 1.6. A short confident flick commits; slow
+   drift still has to cross the line.
+2. **Grab-point torque** — rotation is scaled by where the finger grabbed the
+   card: +1 at top edge, −1 at bottom edge (inverted tilt, like a real card
+   pivoting under the fingertip), 0 at dead center (pure slide). Defaults to +1
+   so the director's gesture-less demo swipes keep the classic tilt.
+
+Deferred (follow-up candidates): vertical drag damping (~0.5×), fling inheriting
+release velocity. Rejected: rubber-band resistance past threshold — commit
+already has three signals (haptic, stamps, bearing tint).
+
 ## Code changes
 
 1. `CuriosityCardFace.swift` → deleted; new `CompassCardFace.swift` in
