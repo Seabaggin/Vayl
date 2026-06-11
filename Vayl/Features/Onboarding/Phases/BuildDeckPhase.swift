@@ -25,6 +25,8 @@ struct BuildDeckPhase: View {
     /// The table's spectrum rim — phases drive it (NamePhase/GenderPhase
     /// pattern). During the forge it oscillates: the TABLE is the performer.
     @Binding var tableRimBurst: Double
+    /// Topo-line sway — the felt's contour lines breathe while the table works.
+    @Binding var tableForgeEnergy: Double
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -150,7 +152,10 @@ struct BuildDeckPhase: View {
             // settles as the table lets it go
             withAnimation(.easeInOut(duration: 2.0).reduceMotionSafe) { caseFloat = true }
             director.recedeTableForForge()
-            withAnimation(.easeOut(duration: 1.4).reduceMotionSafe) { tableRimBurst = 0 }
+            withAnimation(.easeOut(duration: 1.4).reduceMotionSafe) {
+                tableRimBurst = 0
+                tableForgeEnergy = 0
+            }
             try? await Task.sleep(for: .seconds(reduceMotion ? 0.3 : 2.2))
 
             // …and the hex material wakes upon zoom-in
@@ -167,14 +172,19 @@ struct BuildDeckPhase: View {
         }
     }
 
-    /// The table's working glow: the spectrum rim oscillates while the forge
-    /// is active. Reduce Motion: a steady mid glow instead of the oscillation.
+    /// The table works: the spectrum rim glow and the topo-line sway oscillate
+    /// together while the forge is active (TableSurfaceView is Animatable, so
+    /// the repeatForever genuinely interpolates). Reduce Motion: steady mid
+    /// glow, still lines.
     private func startRimOscillation() {
         if reduceMotion {
             tableRimBurst = 0.3
         } else {
             withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
                 tableRimBurst = 0.55
+            }
+            withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) {
+                tableForgeEnergy = 1.0
             }
         }
     }
@@ -249,16 +259,22 @@ private struct MeltThroughFelt: ViewModifier {
     var size: CGSize
 
     func body(content: Content) -> some View {
+        // Container includes the deck stack's layer spread (offsets reach
+        // ~8pt past the top card) — at rest NOTHING is clipped or faded, so
+        // the deck is pixel-identical to ConfirmationPhase's landed cards.
+        let H = size.height + 12
+        // Absorption band fades IN as the melt begins; fully opaque at rest.
+        let bandTop = 1.0 - 0.15 * min(1.0, progress * 6.0)
         content
-            .offset(y: CGFloat(progress) * size.height * 1.08)
-            .frame(width: size.width + 10, height: size.height, alignment: .top)
+            .offset(y: CGFloat(progress) * H * 1.1)
+            .frame(width: size.width + 14, height: H, alignment: .top)
             .clipped()
             .mask(
                 LinearGradient(
                     stops: [
                         .init(color: .black, location: 0.00),
-                        .init(color: .black, location: 0.85),
-                        .init(color: .clear, location: 1.00),
+                        .init(color: .black, location: bandTop),
+                        .init(color: progress > 0.001 ? .clear : .black, location: 1.00),
                     ],
                     startPoint: .top, endPoint: .bottom
                 )

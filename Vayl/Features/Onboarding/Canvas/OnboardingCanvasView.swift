@@ -19,6 +19,7 @@ struct OnboardingCanvasView: View {
 
     @State var director: VaylDirector
     @State private var tableRimBurst: Double = 0
+    @State private var tableForgeEnergy: Double = 0
 
     @MainActor init() {
         self._director = State(initialValue: VaylDirector())
@@ -60,7 +61,8 @@ struct OnboardingCanvasView: View {
                     fade:               director.tableFade,
                     rimBurst:           tableRimBurst,
                     dissolutionWarp:    director.gender.dissolutionWarp,
-                    dissolutionFlowOut: director.gender.dissolutionFlowOut
+                    dissolutionFlowOut: director.gender.dissolutionFlowOut,
+                    forgeEnergy:        tableForgeEnergy
                 )
                 .ignoresSafeArea()
 
@@ -132,7 +134,9 @@ struct OnboardingCanvasView: View {
                 }
 
                 // ── Layer 9: Phase overlays ───────────────────────
-                PhaseOverlayView(director: director, screenSize: size, tableRimBurst: $tableRimBurst)
+                PhaseOverlayView(director: director, screenSize: size,
+                                 tableRimBurst: $tableRimBurst,
+                                 tableForgeEnergy: $tableForgeEnergy)
                     .frame(width: size.width, height: size.height)
                     .ignoresSafeArea()
 
@@ -187,6 +191,7 @@ private struct PhaseOverlayView: View {
     let director:   VaylDirector
     let screenSize: CGSize
     @Binding var tableRimBurst: Double
+    @Binding var tableForgeEnergy: Double
 
     var body: some View {
         ZStack {
@@ -224,7 +229,9 @@ private struct PhaseOverlayView: View {
                     .transition(.opacity)
 
             case .buildDeck:
-                BuildDeckPhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
+                BuildDeckPhase(director: director, screenSize: screenSize,
+                               tableRimBurst: $tableRimBurst,
+                               tableForgeEnergy: $tableForgeEnergy)
                     .transition(.opacity)
 
             case .founderLetter:

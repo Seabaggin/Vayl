@@ -74,14 +74,14 @@ private func domainWarp(_ x: CGFloat, _ y: CGFloat, _ warpStrength: CGFloat) -> 
 /// Visibility is controlled entirely by fade — never by conditional rendering.
 /// VaylDirector writes fade. SwiftUI animates it. This view never animates itself.
 /// This view never responds to gestures and never holds state.
-struct TableSurfaceView: View {
+struct TableSurfaceView: View, Animatable {
 
     // ── Parameter ─────────────────────────────────────────────────────────────
 
     /// 0.0 = invisible, 1.0 = fully present.
     /// Never animated by this view — caller drives the value.
     /// VaylDirector is the only thing that writes this.
-    let fade: Double
+    var fade: Double
     /// 0.0 = resting spectrum rim. 1.0 = full impact flare.
     /// Caller drives — VaylDirector does not own this value.
     var rimBurst: Double = 0
@@ -93,6 +93,23 @@ struct TableSurfaceView: View {
     /// 0.0–1.0 — topo lines deflect around card rounded-rect boundary (later dissolution).
     /// Driven by VaylDirector.dissolutionFlowOut. Zero when no card is crystallising.
     var dissolutionFlowOut: Double = 0
+
+    /// 0.0–1.0 — the table "works": topo lines sway laterally with a per-line
+    /// phase (forge ceremony). BuildDeckPhase oscillates this while the deck
+    /// is being forged under the felt. Zero everywhere else.
+    var forgeEnergy: Double = 0
+
+    // Without Animatable conformance a Canvas view receives only the FINAL
+    // value of a withAnimation change — fades pop and oscillations freeze.
+    // Conforming makes fade / rimBurst / forgeEnergy genuinely interpolate.
+    var animatableData: AnimatablePair<Double, AnimatablePair<Double, Double>> {
+        get { AnimatablePair(fade, AnimatablePair(rimBurst, forgeEnergy)) }
+        set {
+            fade        = newValue.first
+            rimBurst    = newValue.second.first
+            forgeEnergy = newValue.second.second
+        }
+    }
 
     // ── Body ──────────────────────────────────────────────────────────────────
 
@@ -127,7 +144,8 @@ struct TableSurfaceView: View {
                 cx: cx, cy: cy, tableR: tableR,
                 TY: TY, W: W, H: H,
                 dissolutionWarp:    dissolutionWarp,
-                dissolutionFlowOut: dissolutionFlowOut
+                dissolutionFlowOut: dissolutionFlowOut,
+                forgeEnergy:        forgeEnergy
             )
             drawCompassStar(
                 context: context,
@@ -325,7 +343,8 @@ private extension TableSurfaceView {
         W:                  CGFloat,
         H:                  CGFloat,
         dissolutionWarp:    Double = 0,
-        dissolutionFlowOut: Double = 0
+        dissolutionFlowOut: Double = 0,
+        forgeEnergy:        Double = 0
     ) {
         // 62 — topo line count. Rendering constant — produces the correct
         // visual density of contour lines across the felt surface.
@@ -394,6 +413,15 @@ private extension TableSurfaceView {
                 let noiseAmp: CGFloat = 10 + depthT * 26
                 let noiseX            = (n1 + n2 * 0.45 + n3 * 0.20) * noiseAmp
                 var px                = startX - sweep - fanBias + noiseX
+
+                // ── Forge sway — the table works (BuildDeck ceremony) ─────────
+                // Each line breathes laterally with its own phase; amplitude
+                // scales with forgeEnergy so the felt is dead-still at 0.
+                // 4.5 — max sway amplitude (pt). Rendering constant.
+                if forgeEnergy > 0.001 {
+                    let fe = CGFloat(forgeEnergy)
+                    px += sin(depthT * 5.2 + seed * 4.7 + fe * .pi * 2) * 4.5 * fe
+                }
 
                 // ── Dissolution warp + flow-around ────────────────────────────
                 // Only runs when the gender card is crystallising.
