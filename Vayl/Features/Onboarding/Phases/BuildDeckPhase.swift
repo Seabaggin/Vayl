@@ -120,9 +120,9 @@ struct BuildDeckPhase: View {
     /// breathes during the forge, flares again for the arrival, dies after.
     private var slotGlowOpacity: Double {
         if caseFloat { return 0 }
-        if caseShown { return 0.85 }
-        if forgeStart != nil { return 0.55 }
-        return deckMelt * 0.8
+        if caseShown { return 0.7 }
+        if forgeStart != nil { return 0.45 }
+        return deckMelt * 0.55
     }
 
     // MARK: - Sequence (Beats 1–4 + interim peek)
@@ -235,23 +235,28 @@ private struct DeckStack: View {
 
 // MARK: - Beat 1: melt-through mask
 
-/// The deck sinks straight down through a slot at its own bottom edge: the
-/// visible region keeps its bottom pinned at the entry line while the top
-/// descends — erased by the felt as it passes under.
+/// The deck sinks straight down through the felt: a fixed clipping window
+/// whose bottom edge IS the entry line — the deck genuinely translates
+/// downward and is clipped as it passes under, with a soft absorption fade
+/// over the last stretch so the edge melts rather than slices.
 private struct MeltThroughFelt: ViewModifier {
     var progress: Double   // 0 intact → 1 fully under
     var size: CGSize
 
     func body(content: Content) -> some View {
         content
-            .offset(y: CGFloat(progress) * size.height)
+            .offset(y: CGFloat(progress) * size.height * 1.08)
+            .frame(width: size.width + 10, height: size.height, alignment: .top)
+            .clipped()
             .mask(
-                Rectangle()
-                    .frame(height: max(0, size.height * (1 - progress)), alignment: .top)
-                    .frame(maxHeight: .infinity, alignment: .top)
-                    // counter the content offset so the mask stays pinned in
-                    // screen space at the felt entry line
-                    .offset(y: -CGFloat(progress) * size.height)
+                LinearGradient(
+                    stops: [
+                        .init(color: .black, location: 0.00),
+                        .init(color: .black, location: 0.85),
+                        .init(color: .clear, location: 1.00),
+                    ],
+                    startPoint: .top, endPoint: .bottom
+                )
             )
     }
 }
@@ -276,8 +281,8 @@ private struct SlotGlow: View {
                     endPoint:   .trailing
                 )
             )
-            .frame(width: width, height: 14)
-            .blur(radius: 6)
+            .frame(width: width, height: 10)
+            .blur(radius: 5)
             .position(center)
             .allowsHitTesting(false)
     }
