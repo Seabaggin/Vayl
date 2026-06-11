@@ -61,7 +61,14 @@ struct ConfirmationPhase: View {
         let shown  = dealt || reduceMotion
         let w      = cardWidth(in: size.width)
         let corner = cornerOrigin(in: size)
-        let pos    = exiting ? exitDeckPoint(in: size) : target.position
+        // Each card lands on ITS OWN layer of the deck stack — offsets mirror
+        // BuildDeckPhase.DeckStack exactly (top card index 0 at zero offset),
+        // so the phase swap exchanges identical pixels, no visible object change.
+        let pos    = exiting
+            ? { let b = exitDeckPoint(in: size)
+                return CGPoint(x: b.x + CGFloat(index) * 1.2,
+                               y: b.y + CGFloat(index) * 1.6) }()
+            : target.position
         let ang    = exiting ? 0   : (shown ? target.angle : -18)
         // Exit keeps the cards at their fan size — they sweep and flip into a
         // deck WITHOUT growing (growth reads as inflation, not gathering).

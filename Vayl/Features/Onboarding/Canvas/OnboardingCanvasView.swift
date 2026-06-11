@@ -39,10 +39,6 @@ struct OnboardingCanvasView: View {
         }
     }
 
-    // OnboardingStore is injected from the environment at the root.
-    // VaylDirector needs a reference to it for commit() at founderLetter.
-    @Environment(OnboardingStore.self) private var onboardingStore
-
     var body: some View {
         GeometryReader { geo in
             let size = geo.size
@@ -63,8 +59,8 @@ struct OnboardingCanvasView: View {
                 TableSurfaceView(
                     fade:               director.tableFade,
                     rimBurst:           tableRimBurst,
-                    dissolutionWarp:    director.dissolutionWarp,
-                    dissolutionFlowOut: director.dissolutionFlowOut
+                    dissolutionWarp:    director.gender.dissolutionWarp,
+                    dissolutionFlowOut: director.gender.dissolutionFlowOut
                 )
                 .ignoresSafeArea()
 
@@ -121,7 +117,11 @@ struct OnboardingCanvasView: View {
                 // cover it — deck is only visible during canvas/table moments.
                 // Corner deck follows the table world — visible when tableFade > 0 and a card has been collected.
                 // Never independently toggled; visibility is purely derived from state.
-                if director.tableFade > 0.01 && !director.cornerDeckCards.isEmpty {
+                // Hidden during .confirmation — the credential cards deal out of the
+                // corner into the review fan (ConfirmationPhase), so the source deck
+                // would otherwise double up with them.
+                if director.tableFade > 0.01 && !director.cornerDeckCards.isEmpty
+                    && director.phase != .confirmation {
                     CornerDeckView(
                         cards:      director.cornerDeckCards,
                         screenSize: size,
@@ -146,7 +146,6 @@ struct OnboardingCanvasView: View {
         }
         .ignoresSafeArea()
         .onAppear {
-            director.onboardingStore = onboardingStore
             director.start()
         }
     }
@@ -160,11 +159,22 @@ struct OnboardingCanvasView: View {
 // on Face ID phones). Those values are injected into the environment before the
 // canvas's own .ignoresSafeArea() gets to consume them.
 struct OnboardingCanvasWrapper: View {
+    @State private var director = VaylDirector()
+
     var body: some View {
-        GeometryReader { geo in
-            OnboardingCanvasView()
+        @Bindable var director = director
+        return GeometryReader { geo in
+            OnboardingCanvasView(director: director)
                 .environment(\.realSafeArea, geo.safeAreaInsets)
                 .ignoresSafeArea()
+        }
+        // ConfirmationPhase edit sheet. Hosted HERE — outside the canvas boundary,
+        // which forbids .sheet — and driven by director.editingCredential. The
+        // native sheet gives .medium detent + scrim-tap / swipe-down dismiss for free.
+        .sheet(item: $director.editingCredential) { credential in
+            CredentialEditorSheet(director: director, credential: credential)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.hidden)   // custom spectrum handle instead of the gray grabber
         }
     }
 }
@@ -214,7 +224,7 @@ private struct PhaseOverlayView: View {
                     .transition(.opacity)
 
             case .buildDeck:
-                BuildDeckPhase(director: director, screenSize: screenSize)
+                BuildDeckPhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
                     .transition(.opacity)
 
             case .founderLetter:
@@ -246,7 +256,8 @@ private struct PhaseOverlayView: View {
         @State private var menuVisible = true
 
         var body: some View {
-            GeometryReader { geo in
+            @Bindable var director = director
+            return GeometryReader { geo in
             ZStack(alignment: .bottom) {
                 OnboardingCanvasView(director: director)
                     .environment(\.realSafeArea, geo.safeAreaInsets)
@@ -305,6 +316,13 @@ private struct PhaseOverlayView: View {
                 }
             }
             } // GeometryReader
+            // Mirror OnboardingCanvasWrapper so the ConfirmationPhase edit sheet
+            // works in the preview too (the canvas itself forbids .sheet).
+            .sheet(item: $director.editingCredential) { credential in
+                CredentialEditorSheet(director: director, credential: credential)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.hidden)
+            }
         }
     }
 

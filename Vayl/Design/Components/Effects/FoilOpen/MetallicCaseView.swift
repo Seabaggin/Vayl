@@ -60,10 +60,20 @@ struct MetallicCaseView: View {
     var riseStart:    Date?  = nil
     var riseDuration: Double = 1.4
 
-    init(theme: FoilDeckTheme = .vayl, riseStart: Date? = nil, riseDuration: Double = 1.4) {
+    /// When the hex lattice + band WAKE (ceremony: "start the hex animation
+    /// upon zoom-in"). `.distantPast` (default) = awake from the first frame;
+    /// `.distantFuture` = asleep (plain anodized metal) until the caller
+    /// assigns a real date, after which the material fades in over ~1.2s.
+    var latticeWakeStart: Date = .distantPast
+
+    init(theme: FoilDeckTheme = .vayl,
+         riseStart: Date? = nil,
+         riseDuration: Double = 1.4,
+         latticeWakeStart: Date = .distantPast) {
         self.theme = theme
         self.riseStart = riseStart
         self.riseDuration = riseDuration
+        self.latticeWakeStart = latticeWakeStart
     }
 
 
@@ -84,10 +94,23 @@ struct MetallicCaseView: View {
 
     /// 0 = lying flat on the felt · 1 = full float pose. Smoothstep-eased from
     /// `riseStart`; Reduce Motion (motion == false) snaps to the final pose.
+    /// A caller that wants the case to MOUNT flat passes `.distantFuture` and
+    /// later assigns the real lift moment.
     private func risePose(t: Double, motion: Bool) -> Double {
-        guard motion, let riseStart else { return 1 }
+        guard let riseStart else { return 1 }
+        guard motion else { return 1 }
         let elapsed = t - riseStart.timeIntervalSinceReferenceDate
         let p = min(1, max(0, elapsed / riseDuration))
+        return p * p * (3 - 2 * p)
+    }
+
+    /// 0 = lattice asleep (plain anodized metal) · 1 = fully awake.
+    /// Reduce Motion: snaps to the terminal state (awake unless still pending).
+    private func latticeWake(t: Double, motion: Bool) -> Double {
+        if latticeWakeStart == .distantFuture { return 0 }
+        guard motion else { return 1 }
+        let e = (t - latticeWakeStart.timeIntervalSinceReferenceDate) / 1.2
+        let p = min(1, max(0, e))
         return p * p * (3 - 2 * p)
     }
 
@@ -136,6 +159,7 @@ struct MetallicCaseView: View {
     @ViewBuilder
     private func foilLayer(size: CGSize, t: Double, motion: Bool) -> some View {
         let pose = risePose(t: t, motion: motion)
+        let wake = latticeWake(t: t, motion: motion)
         let geo = caseGeometry(size: size, t: t, motion: motion, pose: pose)
         Canvas { ctx, _ in drawCase(&ctx, size: size, geo: geo) }
             // Debossed hex foil — the band phase is driven by the FLOAT TILT, not
@@ -155,7 +179,7 @@ struct MetallicCaseView: View {
                 .float(Float(bandSharpness)),
                 .float(Float(bandGain)),
                 .float(Float(glintGain)),
-                .float(Float(pose))
+                .float(Float(wake))
             ))
     }
 
