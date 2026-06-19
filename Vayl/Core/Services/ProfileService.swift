@@ -135,34 +135,31 @@ final class ProfileService: ObservableObject {
     /// and pronouns — nothing else. The full SupabaseProfile is never
     /// fetched or transmitted to the requesting client.
     func lookupPairingCode(_ code: String) async throws -> PartnerPreview? {
+        // Current pairing_codes schema: created_by (the creator's AUTH id); no `used` column.
         struct PairingCodeRecord: Codable {
-            let code: String
-            let userId: UUID
-            let used: Bool
-
+            let createdBy: UUID
             enum CodingKeys: String, CodingKey {
-                case code
-                case userId = "user_id"
-                case used
+                case createdBy = "created_by"
             }
         }
 
+        let normalized = code.trimmingCharacters(in: .whitespaces).uppercased()
+
         let records: [PairingCodeRecord] = try await supabase
             .from("pairing_codes")
-            .select()
-            .eq("code", value: code)
-            .eq("used", value: false)
+            .select("created_by")
+            .eq("code", value: normalized)
             .execute()
             .value
 
         guard let record = records.first else { return nil }
 
-        // Fetch ONLY name and pronouns — all other columns are excluded
-        // from the projection so they are never transmitted to the client.
+        // created_by is the creator's AUTH id → look up their profile by auth_id.
+        // Project ONLY name + pronouns so nothing else reaches the client.
         let previews: [PartnerPreview] = try await supabase
             .from("user_profiles")
             .select("name,pronouns")
-            .eq("id", value: record.userId.uuidString)
+            .eq("auth_id", value: record.createdBy.uuidString)
             .execute()
             .value
 
@@ -196,6 +193,43 @@ final class ProfileService: ObservableObject {
                 .execute()
         }
     
+    // MARK: - Update Identity (P3 — partner-visible fields)
+
+    /// Pushes the user's display identity (name + pronouns) to their remote
+    /// `user_profiles` row, matched by `auth_id`. The rich onboarding profile lives
+    /// only in local SwiftData; this syncs the two partner-visible fields so a
+    /// linked partner can read them (via the `get-partner` function). Idempotent
+    /// partial UPDATE — safe to call repeatedly (pairing entry, linked-screen load).
+    /// RLS permits it (`auth_id = auth.uid()`).
+    func updateIdentity(name: String?, pronouns: String?) async throws {
+        let authId = try await supabase.auth.session.user.id
+        var patch: [String: String] = [:]
+        if let name, !name.isEmpty { patch["name"] = name }
+        if let pronouns, !pronouns.isEmpty { patch["pronouns"] = pronouns }
+        guard !patch.isEmpty else { return }
+        try await supabase
+            .from("user_profiles")
+            .update(patch)
+            .eq("auth_id", value: authId.uuidString)
+            .execute()
+    }
+
+    // MARK: - Update NM Stage (Desire Map — couple cohort-resolution)
+
+    /// Pushes the user's NM stage (curious / exploring / experienced) to their remote
+    /// `user_profiles.nm_stage`, matched by `auth_id`. The `compute-desire-matches` edge
+    /// function reads BOTH partners' nm_stage to resolve the couple's Desire Map track.
+    /// Idempotent partial UPDATE; RLS permits it (`auth_id = auth.uid()`).
+    func updateNMStage(_ stage: String) async throws {
+        guard !stage.isEmpty else { return }
+        let authId = try await supabase.auth.session.user.id
+        try await supabase
+            .from("user_profiles")
+            .update(["nm_stage": stage])
+            .eq("auth_id", value: authId.uuidString)
+            .execute()
+    }
+
     // MARK: - Ensure Profile Exists
 
     /// Checks if a profile exists for the given authId. If not, throws an error.

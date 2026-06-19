@@ -68,6 +68,31 @@ internal enum AppAnimation {
     /// Use this instead of constructing .easeOut(duration: AppAnimation.cinematic) inline.
     static let cinematicFade: Animation = .easeOut(duration: AppAnimation.cinematic)
 
+    // MARK: — StatPhase Arrival Ignition
+    // The "1 in 5" hero fires a one-time light-catch as it seats: a bright specular
+    // sweep crosses the numeral, the glow blooms past its resting level then settles,
+    // and a soft haptic lands. Tuned in docs/prototypes/statphase-arrival.html.
+    // Reduce motion: skip the sweep + bloom entirely (visual only); the soft land
+    // haptic still fires (haptics are not motion).
+
+    /// 0.76s — Delay from the stat's cascade entrance to the ignition firing, so the
+    /// light catches the numeral as it *seats* rather than on first appearance.
+    static let statIgnitionDelay: Double = 0.76
+
+    /// 0.68s ease-out — The one bright specular sweep travelling across the numeral on land.
+    static let statIgnitionSweep: Animation = .easeOut(duration: 0.68)
+
+    /// 0.14s ease-out — Glow blooming up to its ignition peak as the numeral seats.
+    static let statGlowBloomIn: Animation = .easeOut(duration: 0.14)
+
+    /// 0.16s — Hold at the bloom peak before it settles back to the resting glow.
+    /// Must exceed statGlowBloomIn (0.14s) or the settle retargets the bloom mid-flight.
+    static let statGlowBloomHold: Double = 0.16
+
+    /// 0.46s settle — Glow easing back down from the ignition peak to its resting level.
+    /// timingCurve (0.22, 1, 0.36, 1): snappy ease-out, no overshoot.
+    static let statGlowBloomSettle: Animation = .timingCurve(0.22, 1, 0.36, 1, duration: 0.46)
+
     /// 0.35s material expand — Citation panel expand and collapse.
     /// timingCurve (0.4, 0, 0.2, 1): standard deceleration curve — element
     /// enters fast and eases into its resting position. Used for the expandable
@@ -312,6 +337,20 @@ internal enum AppAnimation {
     /// The asymmetric exit communicates the card is being filed away, not dismissed.
     /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity — card disappears in place.
     static let cardPocket: Animation = .timingCurve(0.4, 0, 1, 1, duration: 0.52)
+
+    /// 0.36s custom ease — Curiosity sort card flung off-screen on a keep/pass commit.
+    /// Cubic bezier (0.4, 0, 0.5, 1): eases off the release point then accelerates
+    /// away — the card is thrown clear of the pile, not filed. Value is the locked
+    /// feel reference (docs/prototypes/curiosity-swipe-prototype.html, --throw-ms).
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — card exits without travel.
+    static let curiosityThrow: Animation = .timingCurve(0.4, 0, 0.5, 1, duration: 0.36)
+
+    /// 0.22s custom ease — Next curiosity card rising into the top slot after a commit.
+    /// Cubic bezier (0.2, 0.8, 0.2, 1): high initial velocity decelerating into place —
+    /// the card snaps up crisply rather than settling with spring overshoot. Matches the
+    /// locked feel reference (docs/prototypes/curiosity-swipe-prototype.html, commit()).
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — card appears in place.
+    static let curiosityRise: Animation = .timingCurve(0.2, 0.8, 0.2, 1, duration: 0.22)
 
     /// 0.58s custom ease — Card flipping face-up or face-down.
     /// Cubic bezier (0.4, 0, 0.6, 1): symmetric ease creates the sense of rotation

@@ -83,6 +83,14 @@ struct AppFonts {
         display(64, weight: .bold, relativeTo: .largeTitle)
     }
 
+    /// StatPhase "1 in 5" holographic hero. Larger than displayHero (64) and
+    /// responsive — the size comes from AppLayout.statHeroSize(usableHeight:screenWidth:),
+    /// never an inline literal. relativeTo: .largeTitle so Dynamic Type still scales it.
+    /// Exclusive to the StatPhase arrival hero; one per app.
+    static func statHero(_ size: CGFloat) -> Font {
+        display(size, weight: .bold, relativeTo: .largeTitle)
+    }
+
     /// Numeric data display — scores, counts, codes. Never prose.
     static var scoreDisplay: Font {
         display(32, weight: .bold, relativeTo: .title)
@@ -187,6 +195,24 @@ struct AppFonts {
     /// Timestamps, counts, secondary metadata. Never primary content.
     static var meta: Font {
         body(10, weight: .regular, relativeTo: .caption2)
+    }
+
+    // ─────────────────────────────────────────────
+    // MARK: Founder letter — Menlo monospace
+    //
+    // One-screen use only: FounderLetterPhase.
+    // Monospace signals "written by a person" —
+    // subconscious dealer/typewriter register.
+    // ─────────────────────────────────────────────
+
+    /// Founder letter body. Size is geometry-driven — use letterFont(for:) in FounderLetterPhase.
+    static func founderLetter(_ size: CGFloat) -> Font {
+        Font.custom("Menlo-Regular", size: size, relativeTo: .body)
+    }
+
+    /// Founder letter sign-off weight. Heavier than body to anchor the close.
+    static func founderLetterBold(_ size: CGFloat) -> Font {
+        Font.custom("Menlo-Bold", size: size, relativeTo: .body)
     }
 
     // ─────────────────────────────────────────────

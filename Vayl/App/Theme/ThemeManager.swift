@@ -29,7 +29,7 @@ class ThemeManager {
         // Light mode is unavailable in Act 1 — if "light" is stored and the
         // user has not finished onboarding, it leaked from a dev/test session.
         // Reset to "dark" so cold launch always starts with the Midnight palette.
-        if saved == "light" && !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
+        if saved == "light" && !UserDefaults.standard.bool(forKey: UserDefaultsKey.hasCompletedOnboarding) {
             saved = "dark"
             UserDefaults.standard.set("dark", forKey: "appThemeMode")
         }

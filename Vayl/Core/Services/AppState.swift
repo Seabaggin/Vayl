@@ -5,6 +5,7 @@
 
 import Foundation
 import OSLog
+import SwiftData
 
 private let logger = Logger(
     subsystem: "com.vayl.app",
@@ -20,9 +21,13 @@ final class AppState {
 
     // MARK: - Onboarding
 
-    var isOnboardingComplete: Bool {
+    /// The single in-memory read surface for onboarding completion. Read-only from
+    /// outside — mutated only by the onboarding writers below, so it can never desync
+    /// from the durable truth (UserProfile). Its didSet is the ONLY UserDefaults
+    /// cache-write site.
+    private(set) var isOnboardingComplete: Bool {
         didSet {
-            persist(isOnboardingComplete, forKey: .onboardingComplete)
+            UserDefaults.standard.set(isOnboardingComplete, forKey: UserDefaultsKey.hasCompletedOnboarding)
             logger.info("Onboarding complete: \(self.isOnboardingComplete)")
         }
     }
@@ -80,7 +85,7 @@ final class AppState {
     init() {
         // isOnboardingComplete
         self.isOnboardingComplete = UserDefaults.standard.bool(
-            forKey: PersistenceKey.onboardingComplete.rawValue
+            forKey: UserDefaultsKey.hasCompletedOnboarding
         )
 
         // displayName
@@ -129,24 +134,56 @@ final class AppState {
         }
     }
 
+    // MARK: - Onboarding Writers
+    //
+    // The ONLY writers of onboarding completion. UserProfile is the durable truth;
+    // isOnboardingComplete is the in-memory surface; the UserDefaults cache is written
+    // by the surface's didSet. Setting all three here — and only here — is what makes
+    // completion impossible to desync.
+
+    /// Marks onboarding complete across truth (UserProfile) + surface + cache.
+    /// The single completion writer. Callers pass the profile + the context it was
+    /// fetched on so truth and surface commit together.
+    func markOnboardingComplete(_ profile: UserProfile, context: ModelContext) {
+        profile.hasCompletedOnboarding = true
+        profile.onboardingCompletedAt  = Date()
+        try? context.save()
+        isOnboardingComplete = true   // didSet writes the UserDefaults cache
+    }
+
+    /// Clears onboarding completion across truth + surface + cache. The single reset.
+    /// Pass nil profile/context to clear only the surface + cache (e.g. when no
+    /// profile exists yet) — though a launch reconcile would re-derive from truth.
+    func resetOnboarding(_ profile: UserProfile?, context: ModelContext?) {
+        profile?.hasCompletedOnboarding = false
+        profile?.onboardingCompletedAt  = nil
+        if let context { try? context.save() }
+        isOnboardingComplete = false
+    }
+
+    /// Reconciles the in-memory surface (and thus the cache) against the durable
+    /// truth at launch — UserProfile wins. `init` reads the UserDefaults cache for
+    /// instant synchronous routing; this corrects any drift (e.g. from remote sync).
+    /// Call once at startup.
+    func hydrateOnboardingState(from container: ModelContainer) {
+        let context = ModelContext(container)
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
+        if isOnboardingComplete != profile.hasCompletedOnboarding {
+            isOnboardingComplete = profile.hasCompletedOnboarding
+        }
+    }
+
     // MARK: - Private Helpers
 
     private func persist(_ value: String, forKey key: PersistenceKey) {
         UserDefaults.standard.set(value, forKey: key.rawValue)
     }
 
-    private func persist(_ value: Bool, forKey key: PersistenceKey) {
-        UserDefaults.standard.set(value, forKey: key.rawValue)
-    }
-
     // MARK: - Persistence Keys
 
+    // Note: the onboarding-completion flag is keyed by the shared
+    // `UserDefaultsKey.hasCompletedOnboarding` (see isOnboardingComplete), not this enum.
     private enum PersistenceKey: String {
-        // Canonical app-wide onboarding-completion flag — the SAME key read/written by
-        // AppRootView, VaylApp, ThemeManager, SettingsView, SyncManager, and OnboardingStore.
-        // (AppState previously used a divergent "isOnboardingComplete", which desynced on
-        // partial-update paths like the DEBUG reset and SyncManager.)
-        case onboardingComplete  = "hasCompletedOnboarding"
         case displayName         = "displayName"
         case linkState           = "linkState"
         case appMode             = "appMode"

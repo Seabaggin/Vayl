@@ -50,6 +50,7 @@ final class AuthService: NSObject {
             
             self.userId = session.user.id
             self.isAuthenticated = true
+            await ensureRemoteProfile()
         } catch {
             self.isAuthenticated = false
             self.userId = nil
@@ -89,6 +90,28 @@ final class AuthService: NSObject {
     // MARK: - Helpers
 
     var currentAuthId: UUID? { userId }
+
+    // MARK: - Remote Profile Guarantee
+
+    /// Guarantees a remote `user_profiles` row exists for the signed-in user.
+    ///
+    /// Pairing's edge function 409s if either partner has no profile row, but
+    /// nothing else creates one for a brand-new user (onboarding persists only
+    /// to local SwiftData; the SyncManager retry loop never primes itself). This
+    /// closes that gap by creating the row the moment auth is confirmed —
+    /// fresh sign-in and session restore both route through here.
+    ///
+    /// Idempotent: short-circuits once the profile id is cached, so it's at most
+    /// one round-trip per install. `SyncManager.syncProfileToSupabase` wraps the
+    /// select-before-insert `fetchOrCreateProfile` (no duplicate row even without
+    /// an `auth_id` unique index) and flags a retry on failure. Errors are
+    /// swallowed here — a transient failure leaves the cache nil, so the next
+    /// launch retries, and we must never block the user from getting past auth.
+    private func ensureRemoteProfile() async {
+        guard UserDefaults.standard.string(forKey: "supabaseProfileId") == nil,
+              let authId = userId else { return }
+        _ = try? await SyncManager.shared.syncProfileToSupabase(authId: authId)
+    }
 
     // MARK: - Nonce
 
@@ -141,6 +164,7 @@ extension AuthService: ASAuthorizationControllerDelegate {
                 self.userId = session.user.id
                 self.isAuthenticated = true
                 self.isLoading = false
+                await ensureRemoteProfile()
             } catch {
                 self.error = error.localizedDescription
                 self.isLoading = false

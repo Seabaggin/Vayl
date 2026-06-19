@@ -38,7 +38,8 @@ enum SchemaV1: VersionedSchema {
         ConnectionEntitlement.self,
         LockInSession.self,
         AcknowledgementRecord.self,
-        MilestoneRecord.self
+        MilestoneRecord.self,
+        SessionPlan.self
     ]
 }
 

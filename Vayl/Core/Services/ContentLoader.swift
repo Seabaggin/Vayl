@@ -118,7 +118,7 @@ struct ContentLoader {
         try load([String: String].self, from: "assessment_questions")
     }
 
-    static func loadDesireItems() throws -> [[String: String]] {
-        try load([String: String].self, from: "desire_items")
+    static func loadDesireItems() throws -> [DesireItem] {
+        try load(DesireItem.self, from: "desire_items")
     }
 }
