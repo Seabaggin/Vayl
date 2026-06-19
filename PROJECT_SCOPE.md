@@ -1,8 +1,11 @@
 # Vayl — V1 Master Project Scope
 
-> Single source of truth. Last updated May 2026.
+> Single source of truth. Last updated June 2026 (2026-06-07).
 > Codebase governs over this document when they conflict.
 > Update this document when the codebase changes intentionally.
+>
+> Note: the shorter `Vayl — V1 Scope.md` and any external copy of this file
+> are now stale relative to this version — re-sync them from here.
 
 ---
 
@@ -91,7 +94,7 @@ Completed onboarding. No partner linked yet.
 **Available in State 1:**
 - Desire Map — complete their own side privately
 - Solo prep deck — 5 cards, free, no purchase required
-  (surfaces automatically for `partneredHidden` context users)
+  (intended to surface automatically for `partneredUndisclosed` context users)
 - Learn tab — full, no gate
 - Pulse — unlimited logging
 - Onboarding-derived content routing based on NMStage and context
@@ -118,53 +121,74 @@ while maintaining individual profiles and private data.
 
 ## Onboarding
 
-### Status: Built
+### Status: Built — 10-phase canvas flow
 
-All 9 screens present and wired in sequence. `appMode` and
-`isOnboardingComplete` correctly set on completion via
-`OnboardingStore.mirrorIntoAppState()`.
+All 10 phases present and wired in sequence by `VaylDirector` over the
+`OBPhase` enum (`Vayl/Core/Models/Enums/AppOBEnums.swift`). `appMode` and
+`isOnboardingComplete` are set on completion via
+`OnboardingStore.commit(data:)`, which calls `persist(data:)` (writes
+SwiftData) and `mirrorIntoAppState(data:)` (sets AppState properties).
 
 Onboarding is always completed alone. Partner linking never happens
 during onboarding — always after. Both partners complete their own
 onboarding independently before linking.
 
-### Screen Sequence
+### Phase Sequence
 
-| # | Screen | View | Data Collected |
+Onboarding is a single continuous dealer-table "canvas," not 9 discrete
+screens. Data fields are defined on `OnboardingData.swift` and persisted to
+`UserProfile`.
+
+| # | Phase (`OBPhase`) | View | Data Collected |
 |---|---|---|---|
-| 1 | Stats | `OnboardingStatView` | None — normalisation, shame reduction |
-| 2 | Brand | `OnboardingBrandView` | None — Vayl logo animation |
-| 3 | Name | `OnboardingNameView` | `displayName`, pronouns |
-| 4 | Mode select | `OnboardingModeSelectView` | `nmStage` (curious / exploring / experienced) |
-| 5 | Context | `OnboardingContextView` | `relationshipContext` — 3 options (see below) |
-| 6 | Curiosity picker | `OnboardingCuriosityPickerView` | `curiositySelections` |
-| 7 | Card reveal | `OnboardingCardRevealView` | `nmCardResponse` (nil if skipped) |
-| 8 | Building path | `OnboardingBuildingPathView` | Auto-advance ~7.5s, derives content difficulty |
-| 9 | Ground rules | `OnboardingGroundRulesView` | `groundRulesAcceptedAt`, `isOnboardingComplete` |
+| 1 | `stat` | OnboardingCanvas | None — normalisation, shame reduction |
+| 2 | `name` | `NamePhase` | `displayName`, `pronounsA` |
+| 3 | `modeSelect` | `ModeSelectPhase` | `appMode` (`.together` / `.solo`) |
+| 4 | `gender` | `GenderPhase` | `genderA` / `pronounsA` (+ `genderB` / `pronounsB` in together mode) — radio-tuner power-on + pronouns drum |
+| 5 | `experienceLevel` | `ExperienceLevelPhase` | `nmStage` (`.curious` / `.exploring` / `.experienced`) |
+| 6 | `context` | `ContextPhase` | `relationshipContext` + `situationalRegister` / `ageRange` / `relationshipTenure` (together) — 2×3 matrix carousel (see below) |
+| 7 | `curiosity` | `CuriosityPhase` | `communicationGoals`, `learningGoals` → `curiositySelections` |
+| 8 | `confirmation` | `ConfirmationPhase` + `CredentialEditorSheet` | Review / edit collected credentials — no new data (context + curiosity edit still stubbed) |
+| 9 | `buildDeck` | `BuildDeckPhase` | Auto-advance ~7.5s; derives `openerDeckType` |
+| 10 | `founderLetter` | `FounderLetterPhase` | Sets `onboardingCompletedAt`; commits via `OnboardingStore.commit(data:)` |
 
-`finish()` commits all data to SwiftData and sets AppState properties.
-Ground Rules, BuildingPath, and CardReveal have no back button.
+**Changed from the earlier 9-screen plan:**
+- **Brand** (logo animation) — never built; cut.
+- **Card reveal** / `nmCardResponse` — old flow only; no longer collected.
+- **Ground rules** — moved out of onboarding. `groundRulesAcceptedAt` still
+  exists on `UserProfile` but is never written during OB (code comment:
+  "written from home screen flow"); `founderLetter` is the terminal phase.
+- The old "Mode select" row conflated two things now split into separate
+  phases: `modeSelect` (`appMode`) and `experienceLevel` (`nmStage`).
+- **Gender** is now a dedicated phase (absent from the old table).
 
-### Context Screen — 3 Options (V1)
+### Context Screen — 2×3 Matrix (NOT 3 Options)
 
-The context screen reflects the V1 reality: every user is in a
-relationship. The three contexts route content tone and surface the
-solo prep deck where appropriate.
+The earlier 3-option model (`doingThisTogether` / `oneStepAhead` /
+`partneredHidden`) **no longer exists**. Context is now a 2×3 matrix keyed on
+**`AppMode` × `nmStage`** (6 cells), each surfacing ~4 concrete options plus an
+"undecided" fallback — 26 `RelationshipContext` cases in total. Defined in
+`ContextOption.swift` over the `RelationshipContext` enum (`AppEnums.swift`).
+Each option carries `id` (snake_case string), `context`, `accent`, copy, and a
+`derivedRegister` (`SituationalRegister`).
 
-| ID | Title | Subtitle | Triggers |
-|---|---|---|---|
-| `doingThisTogether` | "We're doing this together" | Both partners are on board and ready | Standard couple onboarding path |
-| `oneStepAhead` | "I'm a step ahead" | Ready to explore, partner doesn't have the app yet | Waiting-to-link path, partner invite prompt on Home |
-| `partneredHidden` | "I haven't brought it up yet" | Curious, but the conversation hasn't happened | Solo prep deck surfaces automatically |
+| Cell (AppMode × nmStage) | Representative `RelationshipContext` cases |
+|---|---|
+| Solo × Curious | `singleCurious`, `partneredSupportiveCurious`, `partneredUndisclosed`, `partneredHesitantCurious`, `soloCuriousUndecided` |
+| Solo × Exploring | `singleExploring`, `partneredHandsOff`, `multipleUndefined`, `soloExploringUndecided` |
+| Solo × Experienced | `singleExperienced`, `partneredAware`, `soloPolyIndependent`, `soloExperiencedUndecided` |
+| Couple × Curious | `coupleSymmetricCurious`, `coupleInitiatorCurious`, `coupleProcessingCurious`, `coupleStalledConversation`, `coupleCuriousUndecided` |
+| Couple × Exploring | `coupleSolidifying`, `coupleReorienting`, `coupleParallelExploring`, `coupleExploringUndecided` |
+| Couple × Experienced | `coupleFreshIntentional`, `coupleSkillBuilding`, `coupleEvolving`, `coupleExperiencedUndecided` |
 
 `relationshipContext` is saved permanently on `UserProfile`. It is not
-discarded after onboarding — it informs content tone and routing
-throughout the user's history.
+discarded after onboarding — it informs content tone and routing throughout
+the user's history.
 
 ### NMStage
 
-Collected during onboarding for every user. Persists on `UserProfile`.
-Drives content difficulty defaults and deck ordering.
+Collected during onboarding for every user (in the `experienceLevel` phase).
+Persists on `UserProfile`. Drives content difficulty defaults and deck ordering.
 
 | Value | Meaning | Default Content |
 |---|---|---|
@@ -172,13 +196,19 @@ Drives content difficulty defaults and deck ordering.
 | `.exploring` | Some context, some conversations | Medium depth |
 | `.experienced` | Actively practicing | Advanced, skips basics |
 
+### Other Onboarding Fields (collected, previously undocumented)
+
+Also collected during the flow and persisted on `UserProfile`:
+`situationalRegister`, `emotionalRegister`, `ageRange`, `relationshipTenure`,
+`agency`, `motivation`, `compassNotes`, `openerDeckType`, and an internal
+archetype routing tag.
+
 ### Scoped Work
 
 - Push notification permission request must be added (entirely absent
   from codebase)
-- Context screen options must be updated to the 3 V1 options above
-- Solo prep deck must surface automatically for `partneredHidden` context
-  after onboarding completes
+- Solo prep deck must surface automatically for the `partneredUndisclosed`
+  context (formerly `partneredHidden`) after onboarding completes
 
 ---
 
@@ -186,11 +216,14 @@ Drives content difficulty defaults and deck ordering.
 
 Home  |  Play  |  Map  |  Learn
 Custom `RacetrackTabBar`. Animated pill draws/reverses between tabs
-(0.35s per direction, 0.10s handoff overlap). Haptic on selection.
+(0.35s per direction, 0.10s handoff overlap — verified). Haptic on
+selection (verified).
 
-**Tab locking:** Play and Map are inaccessible in State 1 (unlinked)
-and before Home reaches `.dashboard` state in State 2. Currently not
-implemented — must be added before V1.
+**Tab locking:** Play and Map should be inaccessible in State 1 (unlinked)
+and before Home reaches `.dashboard` state in State 2. The guard *logic*
+exists — `HomeStore.isTabLocked(_:)` — but is **not wired into the UI**:
+`AppShell` / `RacetrackTabBar` never call it, so all four tabs are always
+selectable. Wiring + visual locked state must be added before V1.
 
 ---
 
@@ -204,11 +237,15 @@ Central daily dashboard. Scroll-driven greeting fades at scroll threshold.
 
 **State 1 — Unlinked:**
 
-| Context | Screen |
+State-1 routing now resolves through `HomeState.soloUnpaired` (solo user,
+OB complete, no partner yet) rather than the retired 3 context IDs. The
+intended context-driven emphasis still holds:
+
+| Context group | Emphasis |
 |---|---|
-| `partneredHidden` | Solo prep deck prominent, partner invite CTA |
-| `oneStepAhead` | Partner invite CTA prominent, Desire Map available |
-| `doingThisTogether` | Partner invite CTA, Desire Map available |
+| `partneredUndisclosed` (curious, hasn't brought it up) | Solo prep deck prominent, partner invite CTA |
+| Ready-to-link contexts (e.g. `partneredSupportiveCurious`) | Partner invite CTA prominent, Desire Map available |
+| Couple contexts (`couple*`) | Partner invite CTA, Desire Map available |
 
 All unlinked users can access their Desire Map side, the solo prep deck
 (if applicable), Learn tab, and Pulse. Card sessions with a partner
@@ -218,21 +255,27 @@ are not available until linked.
 
 | State | Condition | Screen |
 |---|---|---|
+| `.soloUnpaired` | Solo user, OB complete, no partner yet | starter deck reachable, Desire Map gated |
 | `.gated` | Desire Map not started | `HomeGateView` |
 | `.postReflection` | Map complete, reflection pending | `PostMapReflectionView` |
 | `.waiting` | Reflection done, partner not complete | `HomeWaitingView` |
 | `.matchReady` | Both complete, reveal not triggered | `HomeMatchReadyView` |
 | `.dashboard` | Fully unlocked | `HomeDashboardView` |
 
-Resolution logic (evaluated in order):
+Resolution logic (`HomeStore.resolveHomeState()`, evaluated in order):
+if isSolo && unlinked    → .soloUnpaired   ← checked first
 guard myMapComplete      → .gated
 guard postReflectionDone → .postReflection
 guard partnerMapComplete → .waiting
 guard revealDone         → .matchReady
 → .dashboard
-**Debug override risk:** `HomeStore.init()` hardcodes all flags to
-`true` in `#if DEBUG`. The full state progression is never exercised
-in debug builds. Remove before release testing.
+**Not yet reachable from real data:** `partnerMapComplete` is never updated
+from `DesireMapStatus` (TODO in `HomeStore`), so `.waiting` / `.matchReady`
+only occur via the debug overrides below.
+
+**Debug override risk:** `HomeStore.init()` hardcodes all completion flags
+to `true` in `#if DEBUG` (lines ~74–82). The full state progression is never
+exercised in debug builds. Remove before release testing.
 
 ### Dashboard Widgets (State 2, top to bottom)
 
@@ -323,9 +366,11 @@ All four sections require content authoring before V1 ships.
 
 ### Triggers
 
-Surfaces automatically after onboarding completes for users with
-`partneredHidden` context. Also accessible to `oneStepAhead` users
-who want to do solo preparation before their partner joins.
+Intended to surface automatically after onboarding completes for users with
+`partneredUndisclosed` context (formerly `partneredHidden`). Also accessible
+to other solo/curious "ready-to-link" contexts (e.g.
+`partneredSupportiveCurious`) who want to do solo preparation before their
+partner joins. (Auto-surface wiring is still scoped work — see below.)
 
 ### Properties
 
@@ -358,11 +403,12 @@ who want to do solo preparation before their partner joins.
 | Deck | Cards | Tier | Status |
 |---|---|---|---|
 | `the-opener` — The Opener | 10 | Free (first sitting) then Deck 2 gate | Bundled JSON, real production content |
-| `solo-prep` — Solo Prep | 5 | Always free | Must be authored |
+| `solo-prep` — Solo Prep | 5 | Always free | ❌ Not authored — no JSON in bundle |
 
-One couple deck and one solo prep deck must be in the bundle at V1
-launch. Deck 2 through N for couple sessions must also be authored —
-Deck 2 is required for the primary conversion moment.
+Only `the-opener.json` is currently bundled; `Resources/Decks/deck-index.json`
+lists `["the-opener"]` alone. The solo prep deck, Deck 2, and Deck 3–N for
+couple sessions must still be authored — Deck 2 is required for the primary
+conversion moment.
 
 ### Session Lifecycle
 
@@ -386,9 +432,10 @@ Session entry points:
 
 ### Silent Failure — Must Fix Before V1
 
-`SessionStore.saveSession()` silently returns if `coupleId` is nil.
-The entire session is lost with no error and no user notification.
-Must surface a user-visible error state before V1 ships.
+`SessionStore.saveSession()` logs a warning and returns if `coupleId` is nil.
+The entire session is lost with no user-visible error or notification (a log
+line is not a user surface). Must surface a user-visible error state before
+V1 ships.
 
 ---
 
@@ -397,7 +444,9 @@ Must surface a user-visible error state before V1 ships.
 ### Status: Architecture-only
 
 `LockInSession` `@Model` compiles and is in SchemaV1. No UI exists.
-Not wired into the session flow.
+Not wired into the session flow. `CardSession` already carries
+`lockInBandwidthA` / `lockInBandwidthB` fields for this, but they are never
+set by any code.
 
 Lock In is always free — never paywalled. Any feature that facilitates
 the conversation is free.
@@ -424,10 +473,19 @@ Mutual reveal requires both partners to be linked and both sides complete.
 
 **Not built:**
 - `DesireMapStatus` never written after completion
-- HomeState flags not updated on map completion
-- Reveal flow does not exist
-- Match calculation does not exist
+- HomeState flags not updated on map completion (`partnerMapComplete` TODO)
+- Reveal flow does not exist (`HomeMatchReadyView` has a CTA stub only — no
+  reveal detail / match-list view)
+- Match calculation does not exist (deferred to Supabase Edge Function)
 - Paywall gate does not exist
+
+**Architecture debt:**
+- `DesireMapStore.swift` exists but is **empty** (header comment only);
+  `DesireMapView` still reads/writes through `DataStore` directly (TODO).
+- `DesireMapEntry` `@Model` exists and is registered but **unused** — a second
+  persistence path parallel to the legacy `DataStore` ratings.
+- `DesireMapView` references `AppIcons.chevronDown`, which is **not yet
+  defined** in `AppIcons` (will not compile until added).
 
 ### Content Requirement
 
@@ -544,13 +602,20 @@ Free tier: unlimited logging. Insights locked (lock state UI needed).
 | Profile — name input | ✅ Built |
 | Partner pairing — code display, entry, Link Partner | ✅ Built |
 | Appearance — theme picker, haptic toggle | ✅ Built |
-| Privacy — screenshot protection toggle | ✅ Built |
+| Privacy — screenshot protection toggle | ✅ Built (raw `@AppStorage` key; TODO migrate to `UserDefaultsKey` enum) |
 | Data — Export My Data | ✅ Built |
 | Danger Zone — Reset All Data | ✅ Built |
 | App info footer | ✅ Built |
 | Debug — Log Out & Reset Onboarding | ✅ Debug only |
 | Delete Account | ❌ Not built — required for App Store |
 | Restore Purchases | ❌ Not built — requires StoreKit first |
+
+**New in-flight infrastructure (untracked by earlier versions of this doc):**
+- `UserDefaultsKey.swift` (`Core/Models/Enums/`) — canonical enum for
+  UserDefaults string keys (currently houses `hasCompletedOnboarding`).
+- `CredentialEditorSheet.swift` (`Features/Onboarding/Phases/`) — edit
+  half-sheets for the `confirmation` phase (name / gender / mode / experience
+  working; context + curiosity edit stubbed).
 
 ---
 
@@ -756,7 +821,9 @@ adjustable in Settings.
 ### Scoped Work
 
 - `UNUserNotificationCenter` authorization during onboarding
-- Remote push entitlement in `Vayl.entitlements`
+- Remote push entitlement in `Vayl.entitlements` — currently holds only
+  `applesignin` + `default-data-protection` (NSFileProtectionComplete); no
+  `aps-environment` key yet
 - Notification payloads for all four triggers above
 
 ---
@@ -774,11 +841,14 @@ adjustable in Settings.
 | Purchase flow | ❌ Not implemented |
 | Entitlement check on gated content | ❌ Not implemented |
 | Restore Purchases | ❌ Not implemented |
-| Paywall UI | ❌ Folder exists, empty |
+| Paywall UI | ❌ No Paywall folder exists yet — must be created |
 
 ### Scoped Work
 
 - Product IDs: `com.vayl.lifetime` ($24.99), `com.vayl.connection` ($7.99)
+  ⚠️ **Mismatch to reconcile:** `EntitlementRecord.swift` currently hardcodes
+  `com.vayl.core.lifetime`, not `com.vayl.lifetime`. Pick one canonical ID
+  before StoreKit wiring.
 - Purchase flow UI — paywall sheets at Deck 2 gate and Desire Map reveal
 - `EntitlementRecord` write on successful purchase
 - Server-side receipt validation
@@ -834,19 +904,39 @@ No hardcoded values anywhere in view files.
 
 ### Banned Patterns
 
-- `UIScreen.main` — use `GeometryReader` + `AppLayout.from(geo)`
-- `@Published` + `ObservableObject` — use `@Observable`
-- `DispatchQueue.main.async` — use `@MainActor` or `await MainActor.run`
-- `try? context.save()` — use throwing saves with error propagation
-- Force unwrap `!` on anything that can realistically be nil
-- Hardcoded colors, fonts, spacing, or animation values in view files
+Rule, then current compliance reality:
+
+- `UIScreen.main` — use `GeometryReader` + `AppLayout.from(geo)`.
+  ✅ **Compliant** — 0 uses (only referenced in comments).
+- `@Published` + `ObservableObject` — use `@Observable`.
+  ✅ **Compliant** — 0 uses; all stores use `@Observable`.
+- `DispatchQueue.main.async` — prefer `@MainActor` / `await MainActor.run`.
+  ⚠️ **~39 instances remain** (animation sequencing in `RacetrackTabBar` + OB
+  phases). Acceptable for V1; modernization candidate.
+- `try? context.save()` — use throwing saves with error propagation.
+  ❌ **7 instances in `DataStore.swift`** (legacy module); newer code uses
+  `saveWithLogging()`. See Open Issues.
+- Force unwrap `!` on anything that can realistically be nil.
+  ⚠️ ~10 instances; most safe (guaranteed-non-empty arrays, guarded nils), a
+  few worth auditing (`try! AttributedString(markdown:)` in `ConversationCard`,
+  slot lookup in `CardFlightEngine`).
+- Hardcoded colors, fonts, spacing, or animation values in view files.
+  ✅ Broadly compliant via the token system.
 
 ### SwiftData Rules
 
 - Explicit store URL: `Application Support/Vayl.store`
 - `NSFileProtectionComplete` entitlement set
-- `AppMigrationPlan` updated for any non-additive model change
-- All saves throw and propagate errors — no silent failures
+- `AppMigrationPlan` updated for any non-additive model change (currently
+  empty stages — pre-launch)
+- All saves throw and propagate errors — no silent failures (aspirational;
+  `DataStore.swift` still uses `try?` — see Open Issues)
+
+**SchemaV1 registered `@Model`s** (`App/ModelContainer.swift`, 14 total):
+`Couple`, `DesireMatch`, `UserProfile`, `CardSession`, `CardResult`,
+`SoloSession`, `DeckProgress`, `DesireMapEntry`, `DesireMapStatus`,
+`EntitlementRecord`, `ConnectionEntitlement`, `LockInSession`,
+`AcknowledgementRecord`, `MilestoneRecord`.
 
 ### Security Rules
 
@@ -864,7 +954,7 @@ No hardcoded values anywhere in view files.
 | Feature | Status | When |
 |---|---|---|
 | Solo NM management (independent solo exp) | Architecture routing present | Act 2/3 |
-| Vayl Pro subscription | `EntitlementRecord` has subscription field | Act 2 |
+| Vayl Pro subscription | `EntitlementRecord` has `expiresAt` + `isFoundingMember` (no subscription field yet — needs a new model in Act 2) | Act 2 |
 | Jealousy mapping | Not in codebase | Act 2 |
 | Agreements evolution timeline | Scoped, not built | Act 2 |
 | AI coach | Not in codebase | Act 3 |
@@ -875,6 +965,7 @@ No hardcoded values anywhere in view files.
 | Constellation carousel full view | Map tab stub | Act 2 |
 | Post-conversation replay / communication coaching | Not in codebase | Act 2+ |
 | `SoloSession` SwiftData model | Registered, never instantiated | Act 2/3 |
+| Per-deck metallic case finishes | Foil-Open ceremony ships with one finish (Vayl spectrum metallic) for the OB starter deck; each unlocked deck should later get its own metallic multichrome derived from `Deck.intensity`. `MetallicCaseView` already takes a `finish` input — wire per-deck finishes when the deck library/unlock flow is built. | Act 2 |
 
 ---
 
@@ -883,11 +974,11 @@ No hardcoded values anywhere in view files.
 | Issue | Severity | Location | Fix Required |
 |---|---|---|---|
 | Silent session loss when `coupleId` is nil | HIGH | `SessionStore.saveSession()` | Throw error, surface to user |
-| 5× silent `try? context.save()` | HIGH | `DataStore.swift` lines 126, 189, 203, 224, 260 | Replace with throwing saves |
+| 7× silent `try? context.save()` | HIGH | `DataStore.swift` lines 126, 189, 203, 218, 224, 232, 260 | Replace with throwing saves |
 | `deleteAllData()` partial deletion | CRITICAL | `DataStore.swift:260` | Throw on failure, warn user |
 | Debug overrides mask full state machine | HIGH | `HomeStore.init():74–82` | Remove before release testing |
 | `DesireMapStatus` never written | HIGH | `DesireMapView.swift` | Write completion flags on map save |
-| Tab locking not implemented | MEDIUM | `RacetrackTabBar` | Guard Play and Map before `.dashboard` |
+| Tab locking logic exists but not wired to UI | MEDIUM | `HomeStore.isTabLocked()` defined; no call sites in `AppShell`/`RacetrackTabBar` | Wire guard + visual locked state |
 | Push notifications entirely absent | HIGH | Entire codebase | `UNUserNotificationCenter` + onboarding permission |
 | StoreKit entirely absent | HIGH | Entire codebase | Full purchase flow implementation |
 | `SessionSyncService` is a stub | MEDIUM | `SessionSyncService.swift` | Implement session record sync |
@@ -901,5 +992,8 @@ No hardcoded values anywhere in view files.
 | Map tab is a test harness | HIGH | `MapView.swift` | Full build |
 | Delete Account missing | MEDIUM | `SettingsView.swift` | Required for App Store compliance |
 | Restore Purchases missing | MEDIUM | `SettingsView.swift` | Add after StoreKit is wired |
-| Context screen options are outdated | HIGH | `OnboardingContextView.swift` | Update to 3 V1 options |
-| `partneredHidden` does not trigger solo prep deck | HIGH | Post-onboarding routing | Wire solo prep deck surface logic |
+| `partneredUndisclosed` (was `partneredHidden`) does not trigger solo prep deck | HIGH | Post-onboarding routing | Wire solo prep deck surface logic |
+| `DesireMapStore` empty; `DesireMapEntry` unused (parallel persistence) | MEDIUM | `DesireMapStore.swift`, `DesireMapView.swift` | Move data access into store; unify on one persistence path |
+| `AppIcons.chevronDown` referenced but undefined | HIGH | `DesireMapView.swift`, `AppIcons.swift` | Add token (blocks compile of Desire Map) |
+| `CredentialEditorSheet` context + curiosity edit stubbed | MEDIUM | `CredentialEditorSheet.swift` | Implement remaining two editors |
+| Product-ID mismatch (`com.vayl.core.lifetime` vs doc's `com.vayl.lifetime`) | MEDIUM | `EntitlementRecord.swift` | Pick canonical ID before StoreKit wiring |

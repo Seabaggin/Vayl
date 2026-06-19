@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vayl — Build Playbook</title>
+<style>
+  :root {
+    --void: #0a0a0f;
+    --panel: #14141d;
+    --panel-2: #1b1b27;
+    --hairline: #2a2a3a;
+    --text: #ECECF2;
+    --text-2: #A9A9BC;
+    --text-3: #6E6E84;
+    --cyan: #4FD8E6;
+    --purple: #9A7BFF;
+    --magenta: #FF6FD8;
+    --done: #4ADE80;
+    --inprogress: #FBBF24;
+    --verifying: #4FD8E6;
+    --blocked: #FB7185;
+    --todo: #5B5B72;
+    /* lens accents */
+    --lens-dod: #4FD8E6;
+    --lens-data: #60A5FA;
+    --lens-design: #FF6FD8;
+    --lens-deps: #FBBF24;
+    --lens-compliance: #F472B6;
+    /* who */
+    --who-claude: #4FD8E6;
+    --who-bryan: #9A7BFF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(154,123,255,0.12), transparent 60%),
+      radial-gradient(1000px 500px at 110% 0%, rgba(79,216,230,0.10), transparent 55%),
+      var(--void);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.45;
+    padding: 32px 20px 90px;
+  }
+  .wrap { max-width: 1160px; margin: 0 auto; }
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header { margin-bottom: 24px; }
+  .title-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  h1 {
+    font-size: 30px; margin: 0; letter-spacing: -0.5px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple), var(--magenta));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .countdown { color: var(--text-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .countdown b { color: var(--magenta); }
+  .subtitle { color: var(--text-2); font-size: 14px; margin-top: 6px; max-width: 760px; }
+  .howto { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .howto-step { font-size: 12px; color: var(--text-2); background: var(--panel-2); border: 1px solid var(--hairline); border-radius: 999px; padding: 3px 11px; }
+  .howto-step b { color: var(--cyan); }
+
+  /* ── projection banner ── */
+  .proj {
+    margin-top: 20px; border: 1px solid var(--hairline); border-radius: 18px; overflow: hidden;
+    background: linear-gradient(135deg, rgba(79,216,230,0.10), rgba(154,123,255,0.08) 45%, rgba(255,111,216,0.08));
+    display: grid; grid-template-columns: minmax(220px, 1fr) 1.3fr; gap: 0;
+  }
+  @media (max-width: 760px) { .proj { grid-template-columns: 1fr; } }
+  .proj-main { padding: 20px 22px; border-right: 1px solid var(--hairline); }
+  @media (max-width: 760px) { .proj-main { border-right: none; border-bottom: 1px solid var(--hairline); } }
+  .proj-label { font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--text-3); font-weight: 700; }
+  .proj-date {
+    font-size: 38px; font-weight: 800; letter-spacing: -1px; margin: 2px 0 4px; line-height: 1;
+    background: linear-gradient(90deg, var(--cyan), var(--purple)); -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .proj-band { font-size: 12.5px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .proj-band b { color: var(--text); }
+  .proj-side { padding: 18px 22px; display: flex; flex-direction: column; gap: 12px; justify-content: center; }
+  .proj-metrics { display: flex; gap: 26px; flex-wrap: wrap; }
+  .proj-metric .pm-num { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .proj-metric .pm-lbl { font-size: 10.5px; letter-spacing: .6px; text-transform: uppercase; color: var(--text-3); margin-top: 1px; }
+  .proj-bar { height: 8px; border-radius: 999px; background: var(--panel-2); overflow: hidden; border: 1px solid var(--hairline); }
+  .proj-bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--purple), var(--magenta)); }
+  .proj-cal { font-size: 11.5px; color: var(--text-3); line-height: 1.5; }
+  .proj-cal b { color: var(--cyan); }
+  .proj-cal .warn { color: var(--inprogress); }
+
+  /* ── phase rail ── */
+  .rail { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  @media (max-width: 760px) { .rail { grid-template-columns: 1fr 1fr; } }
+  .rail-chip {
+    border: 1px solid var(--hairline); border-radius: 14px; padding: 12px 13px; cursor: pointer;
+    background: linear-gradient(180deg, var(--panel), var(--void)); position: relative; overflow: hidden;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .rail-chip:hover { transform: translateY(-2px); border-color: var(--purple); }
+  .rail-chip .rc-top { display: flex; align-items: center; gap: 7px; justify-content: space-between; }
+  .rail-chip .rc-n { font-size: 11px; font-weight: 800; color: var(--void); background: var(--text-3); border-radius: 6px; padding: 1px 6px; }
+  .rail-chip .rc-hrs { font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .rail-chip .rc-title { font-size: 13.5px; font-weight: 700; margin-top: 7px; color: var(--text); }
+  .rail-chip .rc-status { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; margin-top: 5px; font-weight: 700; }
+  .rail-chip .rc-mini-bar { height: 4px; border-radius: 999px; background: var(--panel-2); overflow: hidden; margin-top: 8px; }
+  .rail-chip .rc-mini-bar > span { display: block; height: 100%; background: var(--done); }
+  .rail-chip.active { border-color: var(--cyan); box-shadow: 0 0 0 1px rgba(79,216,230,0.4), 0 6px 24px -10px rgba(79,216,230,0.5); }
+  .rail-chip.active .rc-n { background: linear-gradient(90deg, var(--cyan), var(--purple)); }
+  .rail-chip .rc-spectrum { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, var(--cyan), var(--purple), var(--magenta)); opacity: .25; }
+  .rail-chip.active .rc-spectrum { opacity: 1; }
+
+  /* ── legend ── */
+  .legends { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 20px; font-size: 12px; color: var(--text-2); align-items: center; }
+  .legend-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .legend-group b { color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 10px; }
+  .pill-mini { padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; border: 1px solid transparent; }
+
+  /* ── phase section ── */
+  .phase { margin-top: 22px; border: 1px solid var(--hairline); border-radius: 18px; overflow: hidden; background: var(--panel); }
+  .phase-head { display: flex; align-items: center; gap: 14px; padding: 18px 20px; cursor: pointer; user-select: none; }
+  .phase-head:hover { background: var(--panel-2); }
+  .phase-chevron { transition: transform .2s ease; color: var(--text-3); font-size: 14px; }
+  .phase.collapsed .phase-chevron { transform: rotate(-90deg); }
+  .phase-n { font-size: 12px; font-weight: 800; color: var(--void); border-radius: 7px; padding: 2px 8px; background: linear-gradient(90deg, var(--cyan), var(--purple)); }
+  .phase-title { font-size: 19px; font-weight: 700; }
+  .phase-why { color: var(--text-2); font-size: 13px; font-style: italic; }
+  .phase-meta { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+  .phase-hrs { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 8px; }
+  .phase-hrs .ph-bar { width: 70px; height: 5px; border-radius: 999px; background: var(--panel-2); overflow: hidden; }
+  .phase-hrs .ph-bar > span { display: block; height: 100%; background: var(--done); }
+  .phase-body { padding: 0 18px 20px; }
+  .phase.collapsed .phase-body { display: none; }
+  .phase-goal { font-size: 14px; color: var(--text); margin: 4px 2px 14px; }
+  .phase-goal .gl { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-3); margin-right: 8px; }
+
+  /* visual direction band */
+  .vis { border: 1px solid var(--hairline); border-left: 3px solid var(--magenta); border-radius: 12px; background: linear-gradient(180deg, rgba(255,111,216,0.06), transparent); padding: 12px 14px; margin: 0 0 16px; }
+  .vis-label { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--magenta); font-weight: 700; margin-bottom: 5px; }
+  .vis-text { font-size: 13.5px; color: var(--text); }
+  .vis-refs { margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; }
+
+  /* ── segment card ── */
+  .seg { border: 1px solid var(--hairline); border-radius: 12px; background: var(--panel-2); margin: 9px 0; overflow: hidden; }
+  .seg-head { display: flex; align-items: center; gap: 11px; padding: 12px 14px; cursor: pointer; }
+  .seg-head:hover { background: rgba(255,255,255,0.02); }
+  .seg.expanded { border-color: var(--purple); }
+  .status-pill { padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; border: 1px solid transparent; }
+  .seg-id { font-size: 11px; font-weight: 800; color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .seg-title { font-size: 14.5px; font-weight: 600; flex: 1; }
+  .seg-est { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .seg-est b { color: var(--text-2); }
+  .seg-est .act { color: var(--done); }
+  .seg-qcount { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+  .seg-qcount b { color: var(--purple); }
+  .seg-chevron { color: var(--text-3); font-size: 12px; transition: transform .2s; }
+  .seg.expanded .seg-chevron { transform: rotate(90deg); }
+  .seg-body { display: none; padding: 6px 16px 16px; border-top: 1px solid var(--hairline); }
+  .seg.expanded .seg-body { display: block; }
+
+  .anat { display: grid; grid-template-columns: 110px 1fr; gap: 6px 14px; margin-top: 12px; }
+  @media (max-width: 620px) { .anat { grid-template-columns: 1fr; gap: 2px 0; } .anat .a-val { margin-bottom: 8px; } }
+  .a-label { font-size: 10px; letter-spacing: 1.1px; text-transform: uppercase; color: var(--text-3); padding-top: 2px; }
+  .a-val { font-size: 13.5px; color: var(--text); }
+  .a-val code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 5px; font-size: 12px; color: var(--cyan); }
+  .a-val.constraints { border-left: 2px solid var(--blocked); padding-left: 10px; color: var(--text-2); }
+  .a-val.risk { border-left: 2px solid var(--inprogress); padding-left: 10px; color: var(--text-2); }
+  .a-val.done-cond { color: var(--done); }
+
+  /* checklist */
+  .chk-wrap { margin-top: 14px; border-top: 1px dashed var(--hairline); padding-top: 12px; }
+  .chk-group { font-size: 10px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--purple); margin: 10px 0 7px; font-weight: 700; }
+  .chk-group:first-child { margin-top: 0; }
+  .chk { display: flex; gap: 9px; align-items: flex-start; padding: 4px 0; cursor: pointer; font-size: 13px; color: var(--text); }
+  .chk .box { flex-shrink: 0; width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid var(--text-3); display: grid; place-items: center; font-size: 11px; color: transparent; margin-top: 1px; transition: all .12s; }
+  .chk.on .box { background: var(--done); border-color: var(--done); color: var(--void); }
+  .chk.on .chk-txt { color: var(--text-3); text-decoration: line-through; }
+
+  /* questions */
+  .q-wrap { margin-top: 16px; border-top: 1px dashed var(--hairline); padding-top: 12px; }
+  .q-head { font-size: 10px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--text-3); margin-bottom: 9px; }
+  .q { display: flex; gap: 9px; align-items: flex-start; padding: 7px 0; border-top: 1px solid rgba(255,255,255,0.04); }
+  .q:first-of-type { border-top: none; }
+  .q-tags { display: flex; gap: 5px; flex-shrink: 0; padding-top: 1px; }
+  .q-lens { font-size: 9.5px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; padding: 1px 6px; border-radius: 5px; border: 1px solid transparent; white-space: nowrap; }
+  .q-who { font-size: 9.5px; font-weight: 800; letter-spacing: .3px; padding: 1px 6px; border-radius: 5px; white-space: nowrap; }
+  .q-who.claude { color: var(--who-claude); border: 1px solid rgba(79,216,230,0.4); }
+  .q-who.bryan { color: var(--who-bryan); border: 1px solid rgba(154,123,255,0.45); background: rgba(154,123,255,0.08); }
+  .q-text { font-size: 13px; color: var(--text); }
+
+  /* parking lot */
+  .lot { margin-top: 34px; border: 1px solid var(--hairline); border-radius: 18px; background: var(--panel); padding: 20px; }
+  .lot h2 { margin: 0 0 4px; font-size: 18px; }
+  .lot .hint { color: var(--text-3); font-size: 12px; margin-bottom: 12px; }
+  .lot-item { display: flex; gap: 9px; align-items: flex-start; padding: 9px 0; border-top: 1px solid var(--hairline); }
+  .lot-item:first-of-type { border-top: none; }
+  .lot-text { font-size: 13.5px; color: var(--text-2); }
+
+  footer { margin-top: 30px; color: var(--text-3); font-size: 12px; text-align: center; }
+  footer code { color: var(--text-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title-row">
+      <h1>Vayl — Build Playbook</h1>
+      <span class="countdown" id="countdown"></span>
+    </div>
+    <div class="subtitle">Per-phase build guide. For each segment: <b>build it</b> → <b>make it feel right</b> → and most importantly, <b>close the gaps before you start</b>. The <b>likely-ready date</b> below is computed from per-segment effort estimates and self-corrects as you finish work — mark a segment <code>done</code> (and log its real hours) and the projection re-derives.</div>
+    <div class="howto">
+      <span class="howto-step"><b>①</b> Read the phase goal + visual direction</span>
+      <span class="howto-step"><b>②</b> Open each segment card</span>
+      <span class="howto-step"><b>③</b> Answer its questions <i>before</i> coding</span>
+      <span class="howto-step"><b>④</b> Build to the done-condition, on device</span>
+      <span class="howto-step"><b>⑤</b> Mark <code>done</code> + log <code>actual</code> hours → date re-derives</span>
+    </div>
+    <div class="proj" id="projection"></div>
+    <div class="rail" id="rail"></div>
+    <div class="legends" id="legends"></div>
+  </header>
+
+  <main id="phases"></main>
+
+  <section class="lot">
+    <h2>Cross-phase open questions</h2>
+    <div class="hint">Decisions that span phases — settle these early; they ripple.</div>
+    <div id="lotList"></div>
+  </section>
+
+  <footer>
+    Single source of truth: edit the <code>BUILD_ROADMAP</code> block at the top of this file's <code>&lt;script&gt;</code>.
+    Projection, the phase rail, and all hour rollups derive from <code>est</code> / <code>actual</code> / <code>status</code>.
+    Checklist ticks persist in your browser (localStorage). Serve with <code>node server.js</code> or open directly.
+  </footer>
+</div>
+
+<script>
+/* ============================================================================
+   BUILD_ROADMAP — THE ONLY THING TO EDIT.
+   ----------------------------------------------------------------------------
+   - phases[].status:  "active" | "next" | "later" | "done"
+   - segment.status:   "done" | "inprogress" | "verifying" | "todo" | "blocked" | "later"
+                       ("later" = deferred / out of V1 → excluded from the projection)
+   - segment.est:      my honest raw effort estimate, in focused hours
+   - segment.actual:   real hours it took (fill in when you mark it done) — feeds calibration
+   - segment.cal:      false → this segment is NOT rescaled by the velocity factor k
+                       (use for unfamiliar / externally-paced work: StoreKit, legal, review)
+   - segment.checklist:[{ done, text, group }]  optional working checklist (ticks saved locally)
+   - question.lens:    "dod" | "data" | "design" | "deps" | "compliance" | "content" | "test"
+   - question.who:     "claude"  (I go find out)  |  "bryan"  (you decide)
+   - Backtick `like this` in any text renders as inline code.
+   - meta.current marks the live phase/segment (gets the rail ring + auto-expand).
+   - meta.workHoursPerDay / workDaysPerWeek / trustPrior / baseSpread tune the estimator.
+   ========================================================================== */
+const BUILD_ROADMAP = {
+  meta: {
+    updated: "2026-06-16",
+    deadline: "2026-07-24",        // hard submit target — shown for reference, not used to schedule
+    workHoursPerDay: 4,            // your focused hours/day toward Vayl
+    workDaysPerWeek: 6,            // productive days/week (calendar conversion)
+    trustPrior: 6,                 // λ — hours of "perfectly-estimated" prior; keeps k≈1 until real data accrues
+    baseSpread: 0.45,             // base uncertainty band; tightens as you complete more
+    current: { phase: "desire", segment: "DA" }
+  },
+
+  phases: [
+    /* ════════════════ PHASE 1 — PAIRING ════════════════ */
+    {
+      id: "pairing", n: 1, title: "Pairing — the hinge",
+      status: "done",
+      goal: "A real couple forms in prod, both partners see each other, and couple-scoped writes aren't silently blocked.",
+      why: "The app is single-player without it; highest technical risk; unblocks every couple feature.",
+      visual: {
+        text: "Mostly utility UI (invite / join) — but the connect moment is the product's first emotional beat. The 'linked' confirmation should feel like a ceremonial handshake, not a form submit: a brief spectrum pulse, the partner's name arriving warmly. Keep the OB void+spectrum language.",
+        refs: [
+          { label: "PairingInviteView.swift", href: "../../Vayl/Features/Pairing/PairingInviteView.swift" },
+          { label: "PairingJoinView.swift", href: "../../Vayl/Features/Pairing/PairingJoinView.swift" },
+          { label: "PartnerChip.swift", href: "../../Vayl/Features/Home/Components/PartnerChip.swift" }
+        ]
+      },
+      segments: [
+        {
+          id: "P1", title: "Deploy FK-fixed `rapid-task`", status: "done", est: 6, actual: 1.5,
+          oneThing: "Replace the live auth-id edge function with the repo's profile-id version.",
+          build: "✅ Done 2026-06-16 — deployed `rapid-task` v4; it resolves profile ids before inserting (the old version inserted auth ids into `couples.user_a/user_b` and FK-violated, so no couple ever formed).",
+          feel: "Backend — no surface.",
+          done: "✅ Verified on 2 devices — Bryan + Mylena linked; live `couples` 0→1 (couple `e1f6d035`), both profiles stamped, code deleted.",
+          constraints: "`supabase/functions/rapid-task/` only. No Swift, no schema, no RLS.",
+          risk: "Both users must already have a `user_profiles` row (function guard). The leftover prod code `594692` is expired — generate a fresh one.",
+          refs: [{ label: "rapid-task/index.ts", href: "../../supabase/functions/rapid-task/index.ts" }],
+          questions: [
+            { lens: "dod", who: "claude", q: "After the device test, confirm the `couples` row carries profile ids (not auth ids) and both profiles linked — I'll query prod." },
+            { lens: "dod", who: "bryan", q: "Are your two test devices each signed into a distinct Apple ID with a profile row? (verified: yes — auth 4f69… and dc68…)" },
+            { lens: "deps", who: "claude", q: "Does the creator's `pollForClaim` pick up `couple_id` within one 3s cycle on real hardware?" }
+          ]
+        },
+        {
+          id: "P2", title: "Reliable profile creation", status: "done", est: 8, actual: 1.5,
+          oneThing: "Guarantee a `user_profiles` row exists before a new user reaches Pairing.",
+          build: "✅ Done 2026-06-16 — `AuthService.ensureRemoteProfile()` creates the remote row at sign-in via `SyncManager`→`fetchOrCreateProfile` (idempotent on the cached profile id; backed by a new `auth_id` unique index).",
+          feel: "Invisible / silent — unless we choose a small 'setting up your space' beat.",
+          done: "✅ Verified — a fresh Apple sign-in created the `user_profiles` row in prod before Pairing was reachable.",
+          constraints: "`AuthService` / `ProfileService` + one launch-or-OB hook. No pairing UI, no schema.",
+          risk: "`user_profiles.auth_id` has NO unique constraint → a non-idempotent create can duplicate rows for one user.",
+          refs: [
+            { label: "ProfileService.swift", href: "../../Vayl/Core/Services/ProfileService.swift" },
+            { label: "AuthService.swift", href: "../../Vayl/Core/Services/AuthService.swift" }
+          ],
+          questions: [
+            { lens: "data", who: "claude", q: "What actually inserts a profile row today — sign-in, OB-finish, or only the debug PlayView path? (I'll trace it)" },
+            { lens: "dod", who: "bryan", q: "Is the bar 'profile exists by the time Pairing opens', or must it exist at sign-in for other reasons?" },
+            { lens: "design", who: "bryan", q: "Auto-create the profile silently on first sign-in, or only persist at the end of onboarding?" },
+            { lens: "deps", who: "claude", q: "Does wiring this also close the onboarding→Supabase sync gap, or do we keep them as separate segments?" },
+            { lens: "data", who: "claude", q: "Make `fetchOrCreateProfile` idempotent on `auth_id` — should we also add a unique constraint to back it?" }
+          ]
+        },
+        {
+          id: "P3", title: "Partner identity read", status: "done", est: 8, actual: 2,
+          oneThing: "After linking, each partner can see the other's real name.",
+          build: "✅ Done 2026-06-16 — `get-partner` edge fn (service role, name+pronouns only) deployed; identity pushed to remote at pairing-time + read into the linked views + settings ('your partner' fallback when null). Found + fixed the deeper gap: the OB name was never synced to remote.",
+          feel: "The partner's name appearing IS the payoff of pairing — make it land (PartnerChip already exists). Warm, personal, not a data row.",
+          done: "✅ Verified — both phones show the partner's real name (Bryan ↔ Mylena).",
+          constraints: "New edge function + linked-state view binding + `PairingStore`. No couple-creation changes.",
+          risk: "RLS can't column-scope `user_profiles`, so a broad cross-partner SELECT policy over-exposes — the edge function is safer. One test profile (auth 4f69…) has `name = null` → needs a fallback.",
+          refs: [],
+          questions: [
+            { lens: "design", who: "bryan", q: "What does a partner see — name + pronouns only, or more (avatar, NM flavor)?" },
+            { lens: "data", who: "claude", q: "Edge function vs a scoped cross-partner RLS policy — confirm approach (I recommend the edge function for column scoping)." },
+            { lens: "dod", who: "bryan", q: "If the partner's name is null, show a placeholder or prompt them to set it?" },
+            { lens: "compliance", who: "bryan", q: "Privacy: is exposing pronouns to the linked partner acceptable under your data model?" }
+          ]
+        },
+        {
+          id: "P4", title: "Join-flow robustness", status: "done", est: 6, actual: 1.5,
+          oneThing: "Bound the infinite poll → timeout + expiry surfacing + regenerate.",
+          build: "✅ Done 2026-06-16 — `pollForClaim(deadline:)` is bounded (couple_id / captured deadline / live DB expiry → throws expiredCode); waiting state got a live countdown, ambient breathe, and a 'Code expired → Generate new code' state.",
+          feel: "'Waiting for partner' should feel alive, not a spinner — ambient spectrum breathing, a clear 'expires in Xh', graceful regenerate.",
+          done: "✅ Verified — force-expiring the live code flipped the screen to 'Code expired' in ~3s; regenerate minted a fresh code.",
+          constraints: "`PairingService.pollForClaim` + `PairingInviteView` waiting state + `PairingStore`. No edge/schema changes.",
+          risk: "Poll is cancelled on view-dismiss with no resume; push isn't wired anywhere, so 'notify when joined' would be in-app only.",
+          refs: [{ label: "PairingService.swift", href: "../../Vayl/Core/Services/PairingService.swift" }],
+          questions: [
+            { lens: "design", who: "bryan", q: "On expiry while waiting: auto-regenerate, or prompt? And what's the code TTL (currently 24h)?" },
+            { lens: "dod", who: "bryan", q: "Desired waiting experience — in-app poll only, or a push notification when the partner joins?" },
+            { lens: "deps", who: "claude", q: "Push notifications are absent project-wide — is notify-on-join in scope here, or deferred?" }
+          ]
+        },
+        {
+          id: "P5", title: "Backend reproducibility + RLS hygiene", status: "done", est: 10, actual: 2.5,
+          oneThing: "Capture the true live schema into repo migrations and clean the duplicate/wrong RLS so repo == prod.",
+          build: "✅ Done 2026-06-16 — baseline-dumped the schema (repo==prod, history reconciled to one migration), dropped 6 dead `desire_*` policies, locked anon out of all existing + future tables, scoped policies to `authenticated`, added the `auth_id` unique index, pinned a function search_path. Advisor warns 38→24 (rest intentional/Supabase-internal).",
+          feel: "Backend — no surface.",
+          done: "✅ Verified — `migration list` shows Local==Remote; anon has 0 table grants; no cross-user leak, no entitlement-tamper vector.",
+          constraints: "`supabase/migrations/` only. No app code.",
+          risk: "Migration history is currently EMPTY — a naive `db push` would try to recreate existing tables. Must baseline carefully (mark-as-applied / idempotent).",
+          refs: [{ label: "supabase/migrations/", href: "../../supabase/migrations/" }],
+          questions: [
+            { lens: "compliance", who: "bryan", q: "OK to baseline live prod as the migration source of truth?" },
+            { lens: "data", who: "claude", q: "Drop the wrong `desire_*` policies now, or defer to Desire-Map week? (harmless today — correct policies coexist and win)" },
+            { lens: "compliance", who: "bryan", q: "Advisors flagged anon GraphQL exposure + SECURITY DEFINER execute on `rls_auto_enable`/`is_couple_member` — fix here or in App-Store week?" }
+          ]
+        },
+        {
+          id: "P6", title: "Couple-model + security hardening (defer)", status: "later", est: 8,
+          oneThing: "Reconcile the non-entitlement `Couple` phantom fields and clear advisor security WARNs.",
+          build: "Reconcile or annotate the ~13-field Swift `Couple` @Model (not decoded from the `couples` table anywhere — local SwiftData, so latent not blocking); revoke anon GraphQL SELECT; tighten SECURITY DEFINER EXECUTE on `rls_auto_enable`/`is_couple_member`. Entitlement/tier columns are NOT here — they ship in Monetization M1.",
+          feel: "Backend — no surface.",
+          done: "Model decodes cleanly; advisor WARNs cleared. Schedule into the App-Store / security week.",
+          constraints: "Hygiene pass — schedule into the App-Store / security week, not now.",
+          risk: "Low — latent, not blocking.",
+          refs: [],
+          questions: []
+        }
+      ]
+    },
+
+    /* ════════════════ PHASE 2 — DESIRE MAP ════════════════ */
+    {
+      id: "desire", n: 2, title: "Desire-Map Moment",
+      status: "active",
+      goal: "The cohort-adaptive Desire Map works end-to-end: rate desires (right track + wording) → sync → compute match → reveal vs partner (couple-symmetric for V1).",
+      why: "Couple richness IS the Desire Map; the reveal is the primary conversion event. A single universal questionnaire is psychologically wrong for NM — Curious couples answer aspirationally, Established couples reflectively — so the SET + wording adapt by cohort while the stored 4-point weight stays fixed (the compare engine is untouched).",
+      visual: {
+        text: "Two tracks — Curious 18 / Established 12 — driven by `nmStage`, over the same fixed 4-point weight (① excitedAboutIt … ④ notForMe). The rater is an intimate self-inventory, one item at a time, no progress-bar anxiety; wording meets the couple where they are. The reveal is a CELEBRATION of alignment — where they align wholeheartedly + where they're 1–2 points off — never a table of rows. Big mismatches (e.g. a 1 vs a 4) are simply NOT shown. A user who wants to know about a hidden question can send a REQUEST — and even then the UI shows only THEIR OWN answer + the request, NEVER the partner's score. (This is the product model, not a privacy layer — couples just never see each other's raw maps; they see where they meet.) Prototype motion BEFORE Swift. Canonical copy lives in the proto.",
+        refs: [
+          { label: "★ Cohort redesign spec", href: "../superpowers/specs/2026-06-16-desire-map-cohort-adaptive-redesign.md" },
+          { label: "desire-rater proto", href: "../prototypes/desire-rater.html" },
+          { label: "data-flow spec (2026-06-15)", href: "../superpowers/specs/2026-06-15-desire-map-implementation-spec.md" }
+        ]
+      },
+      segments: [
+        {
+          id: "D1", title: "Route + rebind the two-track rater", status: "done", est: 9,
+          oneThing: "Cohort-adaptive rater: the right question set + wording for the couple's track, saved as a fixed 4-point weight.",
+          build: "✅ Built + compiled 2026-06-17 (two-phone device test pending). Restructure `desire_items.json` to the new `DesireItem` shape (Curious 18 / Established 12, 11 items shared with two answer sets). Add `DesireItem` (Codable: `tracks` + per-track `answers`) and rename `DesireRatingValue` to the 4-point weight (`excitedAboutIt/openToIt/probablyNot/notForMe`). Build `DesireMapStore` (resolve track from local `UserProfile.nmStage`, filter by `tracks`, upsert one `DesireMapEntry` per item with the chosen weight). Rewrite `DesireMapView` to the proto's card rater; route `onStartMap` from Home — reachable for paired AND solo users.",
+          feel: "Intimate, one item at a time — a quiet self-inventory, not a quiz. The wording meets the couple where they are: aspirational for Curious, reflective for Established.",
+          done: "Open the rater from Home (paired or solo), rate the track's items, persists to `DesireMapEntry` (upsert, not duplicate). Toggling `nmStage` changes the set + the wording.",
+          constraints: "`DesireMapView` / `DesireMapStore` / `HomeRouterView` / `ContentLoader` / `desire_items.json` + the CHECK migration. No sync, no edge fn, no reveal.",
+          risk: "🐞→✅ Vocab now RESOLVED to the 4-point weight. Migration: replace the stale `kink_ratings_rating_check` with `desire_ratings_rating_check` (4 weights incl. `notForMe`) BEFORE D2 sync. Weight DIRECTION must stay cohort-independent (①=excited … ④=notForMe) or the mixed-cohort compare breaks.",
+          refs: [
+            { label: "★ Cohort redesign spec", href: "../superpowers/specs/2026-06-16-desire-map-cohort-adaptive-redesign.md" },
+            { label: "desire-rater proto", href: "../prototypes/desire-rater.html" }
+          ],
+          checklist: [
+            { group: "Content", done: false, text: "Restructure `desire_items.json` → `DesireItem` shape (Curious 18 / Established 12; 11 shared items carry both answer sets)" },
+            { group: "Model", done: false, text: "`DesireItem` Codable: `tracks` + `answers` keyed by track; `DesireRatingValue` → 4 weights `excitedAboutIt/openToIt/probablyNot/notForMe`" },
+            { group: "Data", done: false, text: "DB CHECK migration: `kink_ratings_rating_check` → `desire_ratings_rating_check` (4 weights incl. `notForMe`)" },
+            { group: "Store", done: false, text: "`DesireMapStore` resolves track from local `nmStage`, filters by `tracks`, upserts `DesireMapEntry` by `(userId,itemId)`" },
+            { group: "Front-end", done: false, text: "Rewrite `DesireMapView` to the proto card rater; route from Home for paired AND solo users" },
+            { group: "Compare model", done: true, text: "REVISED (Bryan): `notForMe` is NOT secret — it syncs. The COMPARE only celebrates alignment; big gaps are hidden + requestable, and the partner's raw answer is never shown. So `isSyncable` no longer filters." }
+          ],
+          questions: [
+            { lens: "data", who: "claude", q: "RESOLVED — 4-point weight `excitedAboutIt/openToIt/probablyNot/notForMe`; DB CHECK migrates to match. (Was the yes/curious vs love/neutral mismatch.)" },
+            { lens: "content", who: "bryan", q: "Are the Curious 18 / Established 12 sets + wording final, or still drafting in the proto?" },
+            { lens: "deps", who: "claude", q: "Couple cohort-resolution needs BOTH partners' `nmStage` — confirmed it lands at compare time (D3); D1 uses the local user's own `nmStage`." }
+          ]
+        },
+        {
+          id: "D2", title: "Wire `DesireSyncService`", status: "done", est: 5,
+          oneThing: "Sync ALL of a user's weights to prod on completion (+ nm_stage).",
+          build: "✅ Built + compiled 2026-06-17 (two-phone device test pending). `syncRatings` takes a value snapshot of `[DesireMapEntry]` (no SwiftData `@Model` touched across an await) and UPSERTS all weights — incl. `notForMe` — on `(user_id, desire_item_id)` with `user_id` = profile id. Also syncs `nm_stage` (the match fn needs both partners'). Fires on completion via `SyncManager.syncDesireMap`, which then invokes the match fn; `pendingDesireSync` retry re-syncs on next rater open.",
+          feel: "n/a — correctness.",
+          done: "✅ A user's weights (incl. `notForMe`) upsert to prod `desire_ratings` with `user_id` = profile id; re-rating updates in place; `nm_stage` synced.",
+          constraints: "`DesireSyncService` + `ProfileService` (nm_stage) + `SyncManager` + Store call site.",
+          risk: "✅ CHECK migration applied. REVISED (Bryan): `notForMe` is NOT secret — it syncs. Privacy = the compare only ever surfaces alignment (RLS keeps raw rows own-profile; the edge fn writes only matches), so a partner never reads the other's answers.",
+          refs: [],
+          checklist: [
+            { group: "Back-end", done: true, text: "`syncRatings` takes a `[DesireMapEntry]` snapshot, upserts ALL weights (incl. `notForMe`) on `(user_id, desire_item_id)`" },
+            { group: "Back-end", done: true, text: "Fires on completion via `SyncManager`; `pendingDesireSync` retry on next rater open; `nm_stage` synced" },
+            { group: "Compare model", done: true, text: "REVISED: no Swift-layer `notForMe` filter — boundaries are handled by the compare (alignment-only), not withheld from sync" }
+          ],
+          questions: [
+            { lens: "data", who: "claude", q: "RESOLVED — privacy reframed: partner never sees raw answers because the compare only surfaces alignment + RLS is own-profile; `notForMe` may sync." }
+          ]
+        },
+        {
+          id: "D3", title: "Match edge fn + couple cohort-resolution", status: "done", est: 11,
+          oneThing: "Server-side compute alignment when both have rated — using the couple's resolved track.",
+          build: "✅ Built + DEPLOYED to prod 2026-06-17 (two-phone device test pending). `compute-desire-matches` (service role), invoked on a partner's completion → marks that side complete in `desire_map_status`, resolves the couple track from BOTH `nm_stage` (either Curious → Curious; else Established), and when both are done computes positives (mutual = both Excited; adjacent = both ≥ Open) over items they BOTH rated, EXCLUDING any item where either said `notForMe`, writes `desire_matches`, flags exactly ONE `isFreeReveal`. `desire_map_status` table + couple-scoped RLS added (HTTP 401 guard verified). HARDENED 2026-06-17: stores NO raw partner values/gap (the couple reads only alignment). Read-back built — `fetchMatches`/`fetchStatus` → `HomeStore.partnerMapComplete`. Companion-card stubs scaffolded (`CompanionCard` + `CompanionCardStore` + `bridgeCardId`).",
+          feel: "n/a — server authority.",
+          done: "✅ Deployed. Both rated → `desire_matches` rows on the resolved track; exactly one free-reveal; completion in `desire_map_status` readable by both. (Match rows verified on the two-phone test.)",
+          constraints: "Edge function + schema. No client-side match logic; `isFreeReveal` never client-set.",
+          risk: "REFINE for D4: current logic writes only wholehearted/close-positive matches; the gap 1–2 'mostly aligned' tier + the REQUEST mechanic for hidden (gap-3) items land with D4. (Partner raw values already stripped — they never reach the client.)",
+          refs: [{ label: "DesireMatch.swift", href: "../../Vayl/Core/Models/DesireMatch.swift" }, { label: "compute-desire-matches", href: "../../supabase/functions/compute-desire-matches/index.ts" }],
+          checklist: [
+            { group: "Edge fn", done: true, text: "Compute on both-rated; mutual / adjacent on the shared weight; exclude `notForMe`; exactly one `isFreeReveal`" },
+            { group: "Edge fn", done: true, text: "Couple cohort-resolution from both `nm_stage` (either Curious → Curious; else Established)" },
+            { group: "Data", done: true, text: "`desire_map_status` table + RLS: `partner_x_complete` + `full_reveal_unlocked` + `full_reveal_at`" },
+            { group: "Round-trip", done: true, text: "Hardened (no raw partner values/gap stored); read-back (`fetchMatches`/`fetchStatus` → `HomeStore.partnerMapComplete`); companion-card stubs scaffolded" },
+            { group: "Refine (D4)", done: false, text: "Add gap 1–2 'mostly aligned' tier + the REQUEST mechanic for hidden gap-3 items" }
+          ],
+          questions: [
+            { lens: "compliance", who: "bryan", q: "RESOLVED — not a privacy layer. The compare celebrates alignment; big gaps hidden + requestable; partner's raw answer never shown. `notForMe` may sync." },
+            { lens: "dod", who: "bryan", q: "RESOLVED (default) — computes on the second partner's completion (the app invokes the fn on local completion)." },
+            { lens: "data", who: "bryan", q: "RESOLVED — `desire_map_status` table (not `couples` columns)." }
+          ]
+        },
+        {
+          id: "D4", title: "Reveal / compare UI — celebration of alignment + request", status: "verifying", est: 12,
+          oneThing: "The magic moment — a celebration of where the couple aligns, never a table of raw answers.",
+          build: "STUB SCAFFOLD BUILT (2026-06-17): `DesireRevealStore` (reads `fetchMatches` — alignment only, no raw values; resolves the free/locked split via `EntitlementStore.isCore`) + `DesireRevealView` (header · unlocked match cards w/ 'Mutual'/'Worth Exploring' + celebration line · locked/blurred teaser + unlock CTA · request stub · loading/empty/error), every state + #Previews; wired into HomeRouterView's `matchReady` onReveal + `seeReveal` step via an `activeReveal` fullScreenCover. Compiles clean. REMAINING (Bryan styles): feel/composition/motion pass; the 'what does a request DO' decision; M5 unlock wiring (StoreKit → grant-entitlement); bridge-card nav; D5 Map-tab hosting; `.vaylCover` migration when the nav spec lands. Original intent (unchanged): CELEBRATES alignment (wholehearted + 1–2 off), hides gap-3, request shows only the user's OWN answer, couple-symmetric free→1→buy→all.",
+          feel: "Held-breath unveil; spectrum prism; warm + celebratory — 'here's where you meet,' never a scorecard. The asymmetric Option-C waiting/7-day/nudge is DEFERRED (M6) — but the model scaffolds it (`DesireMapStatus.waitingStateSince`), so don't delete that.",
+          done: "Two rated partners → a reveal that celebrates alignment; 1 free match visible, rest gated (M5); hidden mismatches show a 'request' affordance + the user's own answer only.",
+          constraints: "Reveal feature + `DesireMapState`. Refine D3's match tiers here (add gap 1–2). Partner raw values never reach the client. No Map-tab housing yet.",
+          risk: "Needs a feel-reference before Swift. NEVER render the partner's raw answer (not even on request) — show the user's own answer + a request. Cross-device simultaneity needs realtime — may simplify to single-device for V1.",
+          refs: [],
+          checklist: [
+            { group: "Feel-first", done: false, text: "Prototype the reveal motion (held-breath prism unveil) BEFORE Swift" },
+            { group: "Model", done: true, text: "Celebrate alignment (wholehearted + 1–2 off); hide gap-3 mismatches; never show the partner's raw answer — stub renders alignment-only matches + celebration lines" },
+            { group: "Front-end", done: false, text: "Hidden mismatch → a REQUEST affordance + the user's OWN answer only — affordance stubbed; the request FLOW is the open decision" },
+            { group: "Front-end", done: true, text: "1 free match shown; rest gated in M5 — stub shows 1 free + blurred locked teasers + unlock CTA (M5 wires the purchase)" }
+          ],
+          questions: [
+            { lens: "design", who: "bryan", q: "Reveal visual — blended prism / progressive unveil? (needs a feel reference)" },
+            { lens: "dod", who: "bryan", q: "What does a 'request' DO — open a conversation/companion card, ping the partner, or just unlock the user's own framing? Define the request flow." }
+          ]
+        },
+        {
+          id: "D5", title: "Map tab houses the compare", status: "todo", est: 5,
+          oneThing: "Replace the `PairingSettingsView` stub with the real couples surface.",
+          build: "Make `MapView` host D4's reveal + the ongoing desire map (today it just renders `PairingSettingsView`, a 'temporary P2 test harness'). Compose D4 — don't duplicate reveal logic. (`PrismView` is unrelated Home chrome — leave it.)",
+          feel: "The couple's shared surface — calm, returnable, a place the relationship lives.",
+          done: "Map tab shows the couple's desire map + entry to the reveal.",
+          constraints: "Map feature. Reuse the reveal mechanic — no new reveal logic. (Coordinates with Tabs phase T3.)",
+          risk: "Overlaps the Tabs-phase Map segment (T3) — build the desire surface here, the broader Map dashboard there.",
+          refs: [],
+          checklist: [
+            { group: "Front-end", done: false, text: "`MapView` hosts the D4 reveal + ongoing desire map (replace the `PairingSettingsView` stub)" },
+            { group: "Front-end", done: false, text: "Reuse D4's reveal — no duplicated reveal logic; coordinate scope with Tabs T3" }
+          ],
+          questions: [
+            { lens: "design", who: "bryan", q: "What else lives on Map beyond the compare — shared agreements, session history, safe word?" }
+          ]
+        },
+        {
+          id: "DA", title: "Getting Started — 'The Path' activation", status: "verifying", est: 8,
+          oneThing: "Day-1 Home shows the dashboard with a 'Your first steps' card that expands OUT into a Path overlay over a blurred Home.",
+          build: "✅ CODE-COMPLETE 2026-06-17 — compile-verified (app + test targets); expand-out feel + commit pending Bryan's device test. Home renders the full dashboard from day one (route `.gated` → dashboard, not `HomeGateView`); a compact `GettingStartedEntryCard` ('Your first steps' + progress ring) expands OUTWARD via `matchedGeometryEffect(anchor: .center)` into `GettingStartedPathView` (the spectrum step journey) over a blurred Home, dismissing back into the card. Steps derive from a pure `GettingStarted.resolve(...)` model off `HomeStore` flags (already added); step taps route (Map → rater, Invite → Map tab, Reveal → D4). `homeState`/`isTabLocked` unchanged — tabs stay gated.",
+          feel: "The bar MORPHS into the popup, expanding OUT (not down); Home blurs behind; warm + ceremonial. The empty-state Pulse is now a spectrum 'heartbeat' (`PulseGraph.drawDemo`) that draws itself in + glows on a ~15s loop — BUILT.",
+          done: "Day-one Home → dashboard + 'Your first steps' card → tap → expand-out morph into the Path over a blurred Home → steps route → dismiss morphs back. (Expand-out feel tuned by Bryan on device.)",
+          constraints: "Home feature — UI only, NO backend. Reuse the `CardChestContainer` matched-geometry pattern. Don't disrupt later state-machine views (only `.gated` becomes the dashboard).",
+          risk: "matchedGeometryEffect can flicker if source+dest are briefly both source — toggle `isSource` (entry when closed, path when open). Feel-before-Swift: tune the expand-out on device, not in code.",
+          refs: [
+            { label: "★ implementation plan", href: "../superpowers/plans/2026-06-17-getting-started-path-activation.md" },
+            { label: "Path-overlay proto", href: "../prototypes/desire-home-path-overlay.html" }
+          ],
+          checklist: [
+            { group: "Feel", done: true, text: "Heartbeat Pulse empty-state (`PulseGraph.drawDemo`: spectrum EKG draw-in + glow, ~15s loop) — BUILT" },
+            { group: "Feel", done: true, text: "Path-overlay + expand-out morph proto approved (`desire-home-path-overlay.html`)" },
+            { group: "Model", done: true, text: "`GettingStarted.resolve(...)` + `HomeStore.gettingStarted` — added" },
+            { group: "Front-end", done: true, text: "`GettingStartedEntryCard` + `GettingStartedPathView` + matched-geometry expand-out overlay; route `.gated` → dashboard; blur Home behind" },
+            { group: "Front-end", done: true, text: "Wire step taps (Map → rater, Invite → Map tab, Reveal → D4-locked)" }
+          ],
+          questions: [
+            { lens: "design", who: "bryan", q: "Centered card (current mock) vs a bottom sheet for the overlay? Easing/speed of the expand-out?" },
+            { lens: "dod", who: "bryan", q: "Does DA extend past `.gated` (Path also shows in postReflection/waiting), or stay day-1 only?" }
+          ]
+        },
+        {
+          id: "DB", title: "Activation follow-ons — Moments + solo funnel", status: "todo", est: 4,
+          oneThing: "The two activation behaviors 'The Path' (DA) deliberately stubbed: warm step-completion Moments + the solo→pairing funnel.",
+          build: "Split out of the old 'activation + living Pulse' DA, now fully superseded by 'The Path' (its banner/checklist shipped there; the Pulse heartbeat empty-state is BUILT). Two genuine leftovers remain. (1) Moments: when `gettingStarted` advances a step (e.g. map → invite), fire a brief warm beat — 'The Path' left a `TODO(Moments)` marker in `HomeRouterView.handleStep`. NO points / XP / badges. (2) Solo funnel: an unpaired user can still complete + bank the desire map ('invite someone to see what you share'), and Home funnels toward pairing — the entry card already renders for solo, but the banked-reveal framing + pairing funnel don't exist yet.",
+          feel: "Game STRUCTURE, never game tone — a rare, warm 'first spark', not a score (Safety doc: 'therapist, not video game'). The banked solo reveal is the carrot that pulls toward inviting a partner.",
+          done: "Advancing a step fires a warm Moment (no points); an unpaired user completes + banks the map and is funneled toward pairing to unlock the reveal.",
+          constraints: "Home + a (future) Moments surface. No points system. Builds on DA — `GettingStartedEntryCard` + `handleStep` already exist.",
+          risk: "Don't turn completions into a chore list or scoreboard — Moments stay rare + warm. The real (data-driven) Pulse is NOT here; it lives in the Map/Tabs phase.",
+          refs: [
+            { label: "★ Cohort redesign spec §4", href: "../superpowers/specs/2026-06-16-desire-map-cohort-adaptive-redesign.md" },
+            { label: "handleStep TODO(Moments)", href: "../../Vayl/Features/Home/Views/HomeRouterView.swift" }
+          ],
+          checklist: [
+            { group: "Back-end", done: false, text: "Step completions fire warm Moments (no points / XP / badges) — replace the `TODO(Moments)` stub in `handleStep`" },
+            { group: "Solo", done: false, text: "Unpaired: desire map completable + banked ('invite someone to see what you share'); Home funnels to pairing" }
+          ],
+          questions: [
+            { lens: "dod", who: "bryan", q: "What surfaces a Moment — Home banner, card, or toast — and does it fire on every step or only map → invite?" },
+            { lens: "design", who: "bryan", q: "Pulse 7-day trend data source — what does the real graph measure once data exists? (lives in Map direction; parked here so it isn't lost)" }
+          ]
+        }
+      ]
+    },
+
+    /* ════════════════ PHASE 3 — MONETIZATION ════════════════ */
+    {
+      id: "money", n: 3, title: "Monetization — couple-core",
+      status: "next",
+      goal: "Free-tier gating + $24.99 lifetime (one purchase → BOTH partners unlock) live, with the two conversion moments. Couple-symmetric only for V1.",
+      why: "The reveal is the primary conversion event; this turns the emotional peak into revenue. Couple-core only — asymmetric / multi-connection deferred (M6).",
+      visual: {
+        text: "Paywall = void + spectrum + glass; copy is always 'own your experience' / 'yours forever' — NEVER 'pay to unlock.' Desire before friction: the ceremony/reveal plants the want before the ask. Locked states read as 'not yet,' never 'denied.' Lock In and Learn are NEVER paywalled. → If StoreKit / App Store Connect are new to you, follow the linked zero-to-shipped guide step by step.",
+        refs: [
+          { label: "★ StoreKit & App Store Connect — zero-to-shipped guide", href: "storekit-appstore-connect-guide.md" },
+          { label: "Monetization spec", href: "../superpowers/specs/2026-06-15-monetization-implementation-spec.md" },
+          { label: "EntitlementRecord.swift", href: "../../Vayl/Core/Models/EntitlementRecord.swift" }
+        ]
+      },
+      segments: [
+        {
+          id: "M1", title: "Couple-level entitlement schema + sync", status: "done", est: 8,
+          oneThing: "One purchase persists as the couple's tier; both partners read it.",
+          build: "BUILT (2026-06-17): `entitlements` ledger (service-role-only — `purchased_by`/`transaction_id` never client-readable) + `couples.access_tier`/`core_unlocked_at`/`is_founding_member`. Couple-scoped RLS via `is_couple_member`; couples stays client-read-only (no UPDATE policy). `grant-entitlement` edge fn = the ONLY writer (service role): server-side StoreKit-2-JWS seam FAIL-CLOSED until M2, + admin-secret path for support/founding grants. Swift `EntitlementService` (reads `couples.access_tier`; invokes grant) + central `EntitlementStore` (`tier`/`isCore`, mirrors local Couple) wired at the app root.",
+          feel: "n/a — the unlock must feel instant + shared, not transactional.",
+          done: "✅ VERIFIED on prod 2026-06-17 — one service-role grant flips `couples.access_tier`; BOTH partners read `core`, a stranger reads nothing, clients cannot write the tier, `entitlements` is service-role-only (authenticated → permission denied). Swift compiles clean. (M2 wires StoreKit + real Apple JWS verification + the `ENTITLEMENT_GRANT_SECRET` env.)",
+          constraints: "Schema + entitlement read store. No StoreKit, no paywall UI.",
+          risk: "Must be couple-scoped or the non-buyer stays locked; `couples` has no tier column today.",
+          refs: [],
+          questions: [
+            { lens: "data", who: "bryan", q: "Separate `entitlements` table vs `couples.access_tier` column? → RESOLVED: BOTH — service-role-only ledger + denormalized couples columns the gates/RLS read." },
+            { lens: "compliance", who: "bryan", q: "Server-side receipt validation now, or trust StoreKit 2 `Transaction.verified`? → RESOLVED: server-side JWS verification (edge fn), built fail-closed; completed in M2." }
+          ]
+        },
+        {
+          id: "M2", title: "StoreKit 2 purchase + restore", status: "verifying", est: 12, cal: false,
+          oneThing: "A real $24.99 lifetime purchase unlocks `core`; restore works on reinstall.",
+          build: "CLIENT LAYER BUILT (2026-06-17, compiles clean): `StoreKitService` (load `com.vayl.core.lifetime`, `purchase()` → verified `Transaction` + JWS, `currentEntitlements`, `Transaction.updates` listener, `restore()` via `AppStore.sync()`); `EntitlementStore` gains `bootstrap()`/`purchase()`/`restore()` + `isCore` = server couple-tier OR local StoreKit ownership (guide Part D — buyer offline-safe, partner via server); a verified purchase pushes the JWS to `grant-entitlement` (writes the couple row → partner unlocks). D4 reveal's unlock CTA now runs `purchase()`. Local `Vayl.storekit` added for simulator purchase/restore. REMAINING (yours): create the ASC product + price tier; select `Vayl.storekit` in the scheme (Edit Scheme → Run → Options → StoreKit Configuration); a device sandbox purchase test; + the server-verification-posture decision (Q below). Guide: storekit-appstore-connect-guide.md.",
+          feel: "The moment of purchase is the moment of commitment — keep it calm and certain.",
+          done: "A sandbox purchase unlocks `core` on device; restore works after a reinstall.",
+          constraints: "StoreKit service + App Store Connect product. No gates, no conversion UI yet. (Estimated at full cost — new domain, not rescaled by your velocity factor.)",
+          risk: "Zero StoreKit in the codebase today; you're new to StoreKit + ASC. The guide de-risks this — don't freehand it.",
+          refs: [{ label: "★ StoreKit & ASC guide", href: "storekit-appstore-connect-guide.md" }],
+          questions: [
+            { lens: "deps", who: "bryan", q: "Is `com.vayl.core.lifetime` + its price tier created in App Store Connect yet? (guide walks the setup)" },
+            { lens: "dod", who: "bryan", q: "SERVER-VERIFICATION POSTURE (decide for V1): (A) the edge fn RE-VERIFIES the StoreKit 2 JWS server-side [your M1 pick — strongest; needs Apple root certs + a device sandbox txn to test; grant-entitlement's Apple path is built FAIL-CLOSED awaiting it], or (B) TRUST StoreKit 2's on-device `.verified` + write the couple row server-side [the guide's V1 rec — ships now, re-verify as a fast-follow]. Buyer-side unlock already works either way via local StoreKit ownership; this only governs the server grant that unlocks the PARTNER." }
+          ]
+        },
+        {
+          id: "M3", title: "Free-tier gates across surfaces", status: "todo", est: 8,
+          oneThing: "A free couple sees exactly the free tier; upgrading flips everything on.",
+          build: "One central `tier` read (M1's `EntitlementStore`) consumed by the Stores. Gate behind `core`: Deck 2+, pulse insights, Agreements, Roadmap, games beyond 1. Keep FREE: Deck 1, Lock In, Learn, journaling, pulse logging, full OB + Desire-Map input + 1 match.",
+          feel: "Locked states say 'not yet,' never 'denied' — no guilt, door stays open.",
+          done: "A free couple sees exactly the spec's free tier; upgrading flips everything on.",
+          constraints: "Gate reads only — centralize through `EntitlementStore`. Never gate Lock In or Learn (north-star violation).",
+          risk: "Gating sprawl — Views must never check purchases directly.",
+          refs: [],
+          questions: [
+            { lens: "design", who: "bryan", q: "Which game is the free '1 game unlock'?" }
+          ]
+        },
+        {
+          id: "M4", title: "Conversion moment 1 — Deck 2 unwrap", status: "todo", est: 6,
+          oneThing: "Completing the first sitting surfaces Deck 2's unwrap → gate.",
+          build: "When the first sitting completes (real conversation), Deck 2's unwrap becomes visible on Home. Reaching for it → unwrap ceremony (cards partially visible — desire before friction) → paywall. Copy: 'You're ready for this one' → 'Unlock everything — $24.99, yours forever.' Escape: 'Not yet' — no re-prompt.",
+          feel: "Earned, not interrupted — the unwrap is a reward for showing up, with a soft ask.",
+          done: "Completing a sitting surfaces the unwrap; tapping through converts or dismisses cleanly.",
+          constraints: "Home + a paywall sheet + entitlement read. Builds on the card-session flow (Card Session phase, S4/S6).",
+          risk: "Depends on a real 'completed sitting' signal existing (Card Session S6 post-session).",
+          refs: [],
+          questions: [
+            { lens: "dod", who: "bryan", q: "What counts as a completed 'sitting' — a card count, or an explicit end-session?" }
+          ]
+        },
+        {
+          id: "M5", title: "Conversion moment 2 — Desire-Map reveal gate", status: "todo", est: 8,
+          oneThing: "Free couple sees 1 match + blurred rest; buying unlocks all for both.",
+          build: "Sits on the D4 reveal mechanic. Reveal exactly ONE mutual match free (`isFreeReveal == true`, server-set); blur the rest with 'You have X more mutual matches — unlock everything, $24.99, yours forever.' On purchase: set `fullRevealUnlocked` (+ `couples.matches_revealed`) and full-reveal for BOTH partners.",
+          feel: "The blur is longing, not a wall — you can feel there's more behind it.",
+          done: "A free couple sees 1 match + blurred rest; buying unlocks all matches for both partners.",
+          constraints: "Reveal gate only. Do NOT build the asymmetric Option-C waiting/7-day/nudge here — that's M6.",
+          risk: "Depends on D4. Cross-device simultaneous full reveal needs realtime — single-device may be acceptable for launch.",
+          refs: [],
+          questions: [
+            { lens: "dod", who: "bryan", q: "Simultaneous cross-device full reveal in V1 (needs realtime), or single-device acceptable for launch?" }
+          ]
+        },
+        {
+          id: "M6", title: "Asymmetric reveal + multi-connection (defer)", status: "later", est: 16,
+          oneThing: "Option-C asymmetric waiting + 7-day escape + $7.99 connection + Pro.",
+          build: "Option-C asymmetric waiting + 7-day escape hatch + personal nudge tool (a pre-written iMessage Person A sends — never a Vayl push) + Person-C free-tier invite; $7.99 additional connection (`ConnectionEntitlement` exists) + Network/Metamour decks; Vayl Pro + founding-member benefit. Fires only for asymmetric accounts. — ENTITLEMENT LIFECYCLE (decided 2026-06-17; backend resolve ALREADY built + verified with M1): tier is PAYER-PORTABLE — a couple is `core` if it holds an active entitlement OR a member is the purchaser of one (`resolve_couple_access_tier`), so when the buyer re-pairs, the new couple inherits Core automatically (`recompute_couple_entitlement` runs in `rapid-task` at pairing). Couple data is per-couple → new partner = clean slate; an already-unlocked couple's artifacts stay unlocked for BOTH members forever (the mutual premise). STILL DEFERRED (blocked on an unlink feature that doesn't exist yet): the unlink ACTION, the non-coercive 'leaving ends your access' warning to the non-payer, and archived-couple read access.",
+          feel: "Out of V1 — solo-poly / invite phase.",
+          done: "Out of V1 scope — ships with the solo-poly / invite phase. (Exception: the entitlement-lifecycle RESOLVE logic — payer-portable + refund-aware — was built + verified 2026-06-17 alongside M1; only the unlink UX waits on the unlink feature.)",
+          constraints: "Deferred — do not build for V1. (Entitlement-resolve logic excepted — already live.)",
+          risk: "—",
+          refs: [],
+          questions: [
+            { lens: "deps", who: "bryan", q: "When does the solo-poly / invite model come — fast-follow, or a later act?" },
+            { lens: "product", who: "bryan", q: "Unlink semantics → RESOLVED 2026-06-17: payer-portable (buyer keeps Core + re-grants the new partner); non-payer reverts to free on leave (warned, non-coercively); data made together stays unlocked for both." }
+          ]
+        }
+      ]
+    },
+
+    /* ════════════════ PHASE 4 — CARD SESSION SYSTEM ════════════════ */
+    {
+      id: "sessions", n: 4, title: "Card Session System — the core loop",
+      status: "later",
+      goal: "The couple curated card session works end-to-end on two devices: server-authoritative + real-time, from the Airlock 'both here' handshake through a synced player to post-session reflection.",
+      why: "This IS the product's core loop — the actual 'sitting' the whole app orchestrates toward — and it was nearly missed in the plan. The data layer already exists; the real work is the experience flow + the two-device real-time tissue, which is NEW to this stack (it has only ever polled). So the build de-risks real-time FIRST, then layers UI, Player, Builder, post-session.",
+      visual: {
+        text: "The session is a shared ceremony, not a slideshow — an Airlock 'both here' handshake (presence + bandwidth + consent), synced cards in lockstep, gentle timers that nudge and never hard-cut, simultaneous reveals. Entry lives on Home / Deck Library — `PlayView` is reserved for GENERATIVE tools and is off-limits here. Tokens only: `.cardStyle()` / `.themedCard()` / `SpectrumHairline` (NOT glassCard/hairline/AtmosphereView — they don't exist).",
+        refs: [
+          { label: "★ Curated-session build plan", href: "../superpowers/specs/2026-06-16-curated-session-system-build-plan.md" },
+          { label: "SessionStore.swift", href: "../../Vayl/Features/Sessions/SessionStore.swift" },
+          { label: "PairingStore.swift (template)", href: "../../Vayl/Features/Pairing/PairingStore.swift" }
+        ]
+      },
+      segments: [
+        {
+          id: "S1", title: "Data & schema groundwork", status: "todo", est: 10,
+          oneThing: "`SessionPlan` model + `curated_sessions` live table + a REST session service (no realtime channel yet).",
+          build: "Add `SessionPlan` `@Model` (+ `.stub` factory) and register it in `SchemaV1.models`. Create the `curated_sessions` authoritative live table + partial unique index (one live session per couple) + RLS (couple-members) + add it to the `supabase_realtime` publication, captured as a VERSIONED migration (schema is un-versioned today). Build `RealtimeSessionService` with `CuratedSessionDTO`/`SessionPresence` + REST CRUD (`openSession`/`fetchOpenSession`/`setBandwidth`/`setConsent`/`setStatus`/`advance` conditional-update).",
+          feel: "Backend — no surface (temp debug trigger only).",
+          done: "`SessionPlan.stub` creates + fetches in SwiftData (console); a dashboard-inserted `curated_sessions` row respects RLS + shows under Realtime; the debug trigger runs every REST mutator (dashboard-verified).",
+          constraints: "Phase-A only. No realtime channel APIs, no Stores/Views beyond a temp debug button. Don't touch existing model fields or the legacy `couple_session_records` / `SessionSyncService`.",
+          risk: "A2 (table + RLS + publication) is a HARD prerequisite for the whole real-time phase. Schema is un-versioned — capture as a migration or it drifts.",
+          refs: [{ label: "ModelContainer.swift", href: "../../Vayl/App/ModelContainer.swift" }],
+          checklist: [
+            { group: "Model", done: false, text: "`SessionPlan` `@Model` + `.stub` factory; register `SessionPlan.self` in `SchemaV1.models`" },
+            { group: "Data", done: false, text: "`curated_sessions` table + partial unique index + RLS (couple-members) + add to `supabase_realtime`; save as versioned migration" },
+            { group: "Service", done: false, text: "`RealtimeSessionService` REST CRUD (`openSession`/`fetch`/`setBandwidth`/`setConsent`/`setStatus`/`advance` conditional-update) + DTOs" },
+            { group: "Verify", done: false, text: "Dashboard row respects RLS + appears under Realtime; debug trigger mutates it" }
+          ],
+          questions: [
+            { lens: "data", who: "bryan", q: "OK to baseline `curated_sessions` as a versioned migration (the schema is un-versioned today)?" },
+            { lens: "compliance", who: "claude", q: "Confirm `curated_sessions` RLS scopes to the couple's two ids and reveal answers are unreadable pre-reveal." }
+          ]
+        },
+        {
+          id: "S2", title: "Real-time handshake (the risky core)", status: "todo", est: 16,
+          oneThing: "Two devices reach a server-authoritative 'both here → active' handshake over Supabase Realtime, with a poll fallback.",
+          build: "`channel(coupleId:)` presence (track AFTER subscribe; listeners registered BEFORE subscribe — verified supabase-swift 2.41.1); postgres-changes stream of `curated_sessions` UPDATEs → DTO; `AirlockStore` (`@Observable @MainActor`, modeled on `PairingStore`) orchestrating `lobby → airlock → active`, role from `Couple.partnerAId == myUserId`, idempotent active-flip EXACTLY once when both present + both consented; `pollOpenSession` fallback (per `PairingService.pollForClaim`) with `a_present`/`b_present` heartbeat.",
+          feel: "Debug UI only — the feel comes in C2.",
+          done: "Two devices: presence joins/leaves; A mutates row → B sees within ~1s; both present + bandwidth + consent → row flips `active` exactly once, both Stores reach `.active`. With Realtime disabled, the same handshake completes via poll.",
+          constraints: "Handshake only — no Player, no Builder, debug UI only. Adding poll must NOT regress the realtime path.",
+          risk: "Real-time is NEW to this stack (only ever polled) — the highest-risk segment, de-risked here first. Listener-before-subscribe / track-after-subscribe ordering and the conditional-update advance guard are load-bearing. Sim Sign-in-with-Apple is flaky → verify the final handshake on ≥1 physical device.",
+          refs: [{ label: "PairingService.swift (poll template)", href: "../../Vayl/Core/Services/PairingService.swift" }],
+          checklist: [
+            { group: "Realtime", done: false, text: "Channel + presence (joins/leaves); `track` after subscribe" },
+            { group: "Realtime", done: false, text: "postgres-changes UPDATE stream → DTO (listener registered before subscribe)" },
+            { group: "Store", done: false, text: "`AirlockStore` state machine (lobby→airlock→active), role A/B, idempotent single active-flip" },
+            { group: "Fallback", done: false, text: "`pollOpenSession` + `a_present`/`b_present` heartbeat; switch on subscribe failure" },
+            { group: "Verify", done: false, text: "Handshake completes on 2 devices via realtime AND via poll (no realtime regression)" }
+          ],
+          questions: [
+            { lens: "deps", who: "claude", q: "Confirm the supabase-swift Realtime ordering (listeners before `subscribeWithError`, `track` after) holds on-device." },
+            { lens: "dod", who: "bryan", q: "Final handshake verified on ≥1 physical device (sim Sign-in-with-Apple is flaky) — agreed?" }
+          ]
+        },
+        {
+          id: "S3", title: "Entry + Airlock UI", status: "todo", est: 10,
+          oneThing: "Real entry from Home / Deck Library + the Lobby / Airlock real UI (bandwidth + consent).",
+          build: "Entry on Home / Deck Library (`fetchOpenSession` on `.task`/`scenePhase==.active`; present via `.sheet(item:)` per `HomeRouterView`) + a partner pending-session banner. Replace the debug UI with `SessionLobbyView` (consent to the session shape) + `AirlockView` (presence 'both here' + bandwidth sliders + ~3s hold + consent; `.screenshotProtected()`); persist bandwidth via `LockInSession`.",
+          feel: "The Airlock is the session's first emotional beat — 'both here' should feel like a held breath before the dive, not a loading screen.",
+          done: "A starts from Home; B's Home shows a pending banner → opens the lobby; two devices run the full Airlock with real UI to `active`; `LockInSession` rows written.",
+          constraints: "Replaces debug UI; navigate to a placeholder 'active' screen (Player is S4). `PlayView` OFF-LIMITS (generative). `AppShell` uses local `@State selectedTab` — may need wiring to route a partner into a pending session.",
+          risk: "`AppShell` local `selectedTab` (not `appState`) — wiring needed to route a partner into a pending session.",
+          refs: [{ label: "HomeRouterView.swift", href: "../../Vayl/Features/Home/Views/HomeRouterView.swift" }],
+          checklist: [
+            { group: "Front-end", done: false, text: "Home / Deck Library entry (`fetchOpenSession` on `.task`/`scenePhase`) + partner pending banner via `.sheet(item:)`" },
+            { group: "Front-end", done: false, text: "`SessionLobbyView` — the session shape to consent to" },
+            { group: "Front-end", done: false, text: "`AirlockView` — presence 'both here' + bandwidth sliders + ~3s hold + consent; `.screenshotProtected()`" },
+            { group: "Back-end", done: false, text: "Persist bandwidth via `LockInSession`" }
+          ],
+          questions: [
+            { lens: "design", who: "bryan", q: "Lobby — does the joining partner see the full session shape (deck, card count, timers) before consenting, or just 'X invited you'?" },
+            { lens: "deps", who: "claude", q: "`AppShell` uses local `@State selectedTab` — confirm the wiring to route a partner into a pending session." }
+          ]
+        },
+        {
+          id: "S4", title: "Player core (synced cards, timer, reveal, safety)", status: "todo", est: 18,
+          oneThing: "Both devices render the same card in lockstep — server-authoritative advance, synced gentle timer, one reveal mechanic, safety + presence cues.",
+          build: "`CuratedPlayerStore` + extend `SessionView`: render `card_ids[current_index]` from the update stream; Next/Skip → `advance` (conditional update, no double-advance); completion writes `CardSession`/`CardResult`/`DeckProgress` (the `saveSession` pattern). Synced per-card timer from `timer_started_at`+`per_card_timer` (soft chime + 'wrap up' / 'keep going' via Broadcast, never hard-cut). One reveal — Whisper: private text → both seal → simultaneous 3-2-1 (answers exchanged at reveal via Broadcast, NOT stored). Keep-awake + dim via `connectedScenes`; safe word 'red' (sets `safe_word_used`, graceful dual exit) + pause; active-listener role + soft turn cue per card.",
+          feel: "Lockstep should feel like two people holding the same object — when one turns the card, both feel it move. Timers nudge gently; the reveal is a held-breath 3-2-1, never a jump-scare.",
+          done: "Same card on both; either advances, both move together; simultaneous taps don't double-advance; completion persists `CardSession`. Synced countdown → at zero, chime + 'wrap up' (no auto-advance); 'keep going' clears both. Whisper: neither sees the other until both seal; simultaneous reveal; answers not persisted. Screen stays awake, dims after idle, restores on tap; 'red' ends both; pause works; cues render.",
+          constraints: "Player only. Don't touch the legacy `couple_session_records`. No `UIScreen.main`. No mic / audio capture.",
+          risk: "Simultaneous-advance double-fire — the conditional-update guard is load-bearing. Reveal answers must NEVER persist (privacy).",
+          refs: [],
+          checklist: [
+            { group: "D1 sync", done: false, text: "Synced card display from the update stream; server-authoritative `advance` (conditional, no double-advance); completion persists `CardSession`/`CardResult`/`DeckProgress`" },
+            { group: "D2 timer", done: false, text: "Synced per-card gentle timer (soft chime + wrap-up / keep-going via Broadcast, never hard-cut)" },
+            { group: "D3 reveal", done: false, text: "Whisper — private text → both seal → simultaneous 3-2-1; answers exchanged at reveal, not stored" },
+            { group: "D4 safety", done: false, text: "Keep-awake + dim (`connectedScenes`); safe word 'red' dual-exit + pause; active-listener turn cue" }
+          ],
+          questions: [
+            { lens: "design", who: "bryan", q: "Is Whisper the right single reveal mechanic to ship first, or a different living-card type?" },
+            { lens: "dod", who: "bryan", q: "When one partner advances, does the other get a brief 'moving on…' beat, or instant lockstep?" }
+          ]
+        },
+        {
+          id: "S5", title: "Builder + fast paths", status: "todo", est: 14,
+          oneThing: "Produce real `SessionPlan`s — authored order by default, customizable, with quick / save / reuse / preset fast paths.",
+          build: "`SessionBuilderStore` + `SessionBuilderView`: seed `orderedCardIds` from `deck.orderedCards` (rituals included); `openSession` snapshots it (replaces the stub). Reorder / drop cards (authored order = default); per-card / global timers; settings (depth ceiling, together/apart → `isLDR`, sensitive, safe word); live time estimate; soft over-length nudge + opt-in firm cap. Fast paths: quick auto-pick (depth + length), save (persist a `SessionPlan`), same-as-last (`lastUsedAt`), presets (clone authored decks).",
+          feel: "Customization is an invitation, never an obligation — the authored order is right there, ready to play; tweaking is for those who want it.",
+          done: "Build + play a real 'the-opener' session in authored order (replacing the stub) with ZERO transport/Airlock changes; a custom session reflects order/timers/settings in the Player; rituals remain by default; the cap nudge fires when long; each fast path produces a valid `SessionPlan` that plays identically.",
+          constraints: "Don't touch the transport / Airlock interfaces or the Player internals. Multi-deck is gated by content.",
+          risk: "Authored-order must stay the DEFAULT — don't force customization.",
+          refs: [],
+          checklist: [
+            { group: "E1", done: false, text: "Authored-order `SessionPlan` from `deck.orderedCards` (rituals incl.); `openSession` snapshots it; replaces the stub" },
+            { group: "E2", done: false, text: "Reorder / trim + per-card / global timers + settings (depth / LDR / sensitive / safe word) + live estimate + soft cap nudge" },
+            { group: "E3", done: false, text: "Fast paths — quick / save & reuse / same-as-last / presets" }
+          ],
+          questions: [
+            { lens: "content", who: "bryan", q: "Naming nit — Content Bible 'The Starting Line' vs code `the-opener`. Which ships?" },
+            { lens: "design", who: "bryan", q: "Default depth ceiling + the over-length threshold for the soft nudge?" }
+          ]
+        },
+        {
+          id: "S6", title: "Post-session reflection", status: "todo", est: 6,
+          oneThing: "Close the loop — reflection + bandwidth capture + progress.",
+          build: "Post-session screen: capture reflection + per-partner bandwidth into `CardSession`; update `DeckProgress`; offer save / reuse.",
+          feel: "A gentle landing, not a scorecard — what you shared mattered; here's a soft place to set it down.",
+          done: "Completing a session shows post-session; data persists; progress reflects it.",
+          constraints: "No LDR / notifications here (deferred S7).",
+          risk: "Low.",
+          refs: [],
+          checklist: [
+            { group: "Front-end", done: false, text: "Post-session reflection + per-partner bandwidth capture" },
+            { group: "Back-end", done: false, text: "Persist into `CardSession`; update `DeckProgress`; offer save / reuse" }
+          ],
+          questions: [
+            { lens: "design", who: "bryan", q: "Is post-session a shared joint summary (both see it) or a private per-partner reflection?" }
+          ]
+        },
+        {
+          id: "S7", title: "LDR · presence surfaces · solo · full living-card engine (defer)", status: "later", est: 30,
+          oneThing: "Deferred — deep-link invites, Live Activities / Dynamic Island, SharePlay, solo derivation, the rest of the living-card mechanics.",
+          build: "Session-link deep-link invites (iMessage / Discord); Live Activities / Dynamic Island (`VaylSessionAttributes`) incl. evaluating an 'eyes-up' presence mode as a possible default for all couples; SharePlay; push / APNs; solo derivation from the couple model; the full living-card engine (emotional-temperature / playful / memory-with-consent / real-time co-creation — Word Cloud / Shared Canvas / Spectrum). G3 is gated by the content track.",
+          feel: "Out of V1 core.",
+          done: "Out of V1 core scope.",
+          constraints: "Deferred — don't over-build the Player before content exists.",
+          risk: "—",
+          refs: [],
+          questions: [
+            { lens: "design", who: "bryan", q: "Dynamic-Island 'eyes-up' presence as the default for all couples — decide AFTER the Player exists." }
+          ]
+        }
+      ]
+    },
+
+    /* ════════════════ PHASE 5 — TABS: FRONT & BACK ════════════════ */
+    {
+      id: "tabs", n: 5, title: "Tabs — Front & Back",
+      status: "later",
+      goal: "Every surface (Home · Play · Map · Learn · Settings) is truthful and wired: real data behind it, real states in front of it, no debug overrides.",
+      why: "A lot of polished UI is built-but-dead — hardcoded chrome, DEBUG flags masking the state machine. Cheap, high-impact once couples + desire data exist. This phase absorbs the old 'Wire the Shell' work.",
+      visual: {
+        text: "No new surfaces — make existing ones tell the truth. Replace hardcoded chrome ('Last session 2 days ago', partner 'Alex') with derived values. Remove the `HomeStore` DEBUG override that masks the gating state machine in dev builds. Each tab: front-end (UI / states / feel) AND back-end (data / sync / store) must both be real.",
+        refs: [
+          { label: "HomeStore.swift", href: "../../Vayl/Features/Home/Store/HomeStore.swift" },
+          { label: "Home redesign protos", href: "../prototypes/" },
+          { label: "Map dashboard mockup", href: "../prototypes/map-dashboard.html" },
+          { label: "Play arcade mockup", href: "../mockups/" },
+          { label: "Learn tab mockup", href: "../mockups/learn-tab.html" }
+        ]
+      },
+      segments: [
+        {
+          id: "T1", title: "Home — wire routing + truthful state", status: "todo", est: 8,
+          oneThing: "Make Home route through the real gated→reveal state machine with working CTAs.",
+          build: "Remove the DEBUG override and wire the no-op CTAs; derive partner-completion from real data, not stubs. (Absorbs old W1 + W2.)",
+          feel: "Home already feels premium — this just makes it tell the truth. The levitating prompt-card hero (per the home redesign) is the real centerpiece.",
+          done: "On device, Home routes real gated → waiting → matchReady → dashboard states; CTAs navigate; a real paired couple legitimately reaches `.matchReady` without the override.",
+          constraints: "Home feature + the partner-read path (Pairing P3) + desire sync (D2). No new UI chrome.",
+          risk: "Removing the override exposes gating bugs hidden until now — expect a debugging tail. Sequence after P3 + D2.",
+          refs: [{ label: "HomeRouterView.swift", href: "../../Vayl/Features/Home/Views/HomeRouterView.swift" }],
+          checklist: [
+            { group: "Front-end", done: false, text: "Hero (levitating prompt card) + real CTA destinations wired (`onStartMap` / `onReveal` / `onInvite`)" },
+            { group: "Front-end", done: false, text: "Empty / loading / pre-pair states render correctly for a solo user" },
+            { group: "Front-end", done: false, text: "Replace hardcoded chrome ('Last session 2 days ago', partner 'Alex') with derived copy" },
+            { group: "Back-end", done: false, text: "Delete the `HomeStore.init()` `#if DEBUG` completion-flag + partner override" },
+            { group: "Back-end", done: false, text: "Derive `partnerMapComplete` from `desire_matches` / partner profile (freshness model defined)" }
+          ],
+          questions: [
+            { lens: "dod", who: "bryan", q: "Confirm we remove the DEBUG override (HomeStore.swift:74–82) — ready for the real state machine to drive dev builds?" },
+            { lens: "deps", who: "claude", q: "What's the refresh model for partner-completion (no live observation today — poll, on-appear, or realtime)?" }
+          ]
+        },
+        {
+          id: "T2", title: "Play — generative arcade + session entry", status: "todo", est: 6,
+          oneThing: "Build the Play arcade shell + the deck-library entry that launches the Card Session system.",
+          build: "Build the Play arcade per the mockup (split-disc mode-dial + flat-builddeck deck language). BOUNDARY: the curated-session ENGINE + transport is the Card Session phase (S1–S6); session persistence (`CardSession`/`DeckProgress`) is owned there — don't duplicate it here. Per that spec, curated-session entry lives on Home / Deck Library and `PlayView` is reserved for GENERATIVE tools (the Simulator). So this segment builds the arcade shell, the deck shelf, and whichever session-entry we land on (see the reconciliation question).",
+          feel: "Opal-style hero, ceremony reserved for the opening; the decks are flat versions of the BuildDeck deck language. Tap/swipe the dial between Cards and Simulator.",
+          done: "Play renders the dial + deck shelf; selecting a deck reaches the Airlock / session flow (built in the Card Session phase); the Simulator (generative) side is reachable.",
+          constraints: "Play shell + deck library. The session engine + transport live in the Card Session phase — don't duplicate. `PlayView` stays the generative shell.",
+          risk: "Overlaps the Card Session phase — Play provides the entry + shell, Sessions provides the engine; keep the boundary clean. The mockup put 'Cards' on Play, but the session spec says entry is Home / Deck Library + Play is generative-only — resolve before building.",
+          refs: [{ label: "Curated-session plan", href: "../superpowers/specs/2026-06-16-curated-session-system-build-plan.md" }],
+          checklist: [
+            { group: "Front-end", done: false, text: "Split-disc mode-dial (Cards | Simulator) — tap + swipe, sized per mockup" },
+            { group: "Front-end", done: false, text: "Flat-builddeck deck language for the deck shelf" },
+            { group: "Front-end", done: false, text: "Empty state when no decks unlocked / no couple yet" },
+            { group: "Front-end", done: false, text: "Deck selection launches the Card Session Airlock flow (S3 entry); Simulator side reachable" }
+          ],
+          questions: [
+            { lens: "design", who: "bryan", q: "Reconcile entry: curated-session start on Home / Deck Library (session spec — Play = generative-only) vs the 'Cards' side of the Play dial (arcade mockup). Which is the real entry?" },
+            { lens: "design", who: "bryan", q: "Confirm the rotary dial + semicircle sizing from the mockup (you flagged the semicircle was ~40–50% too large)." }
+          ]
+        },
+        {
+          id: "T3", title: "Map — 'Your Mirror' dashboard + Pulse", status: "todo", est: 10,
+          oneThing: "Map becomes the individual mirror: pulse, shareable card, the vault.",
+          build: "Build the Map dashboard per the mockup — Pulse hero (no streaks) + shareable card (invite=growth) + the Vault (Desire Map + Agreements) with a consent-unlock → discussion card. Migrate Pulse off UserDefaults (`pulse.entries.v1`, lost on reinstall) to Supabase; decide partner visibility. Houses the D5 desire compare. (Absorbs old W4.)",
+          feel: "Map = INDIVIDUAL 'Your Mirror,' a calm returnable place. Keep the existing check-in cinematics — only the storage changes.",
+          done: "Map shows the mirror dashboard; Pulse entries survive reinstall (in prod); the desire compare (D5) is reachable here; partner-visibility behaves per decision.",
+          constraints: "Map + Pulse stores + a new pulse table/migration. Compose D5's reveal — don't duplicate it.",
+          risk: "Pulse question set + tier enums flagged 'not final' — lock content (Phase 5) before the schema hardens.",
+          refs: [{ label: "PulseStore.swift", href: "../../Vayl/Features/Pulse/Store/PulseStore.swift" }],
+          checklist: [
+            { group: "Front-end", done: false, text: "Pulse hero (no streaks) + check-in cinematics preserved" },
+            { group: "Front-end", done: false, text: "Shareable card (invite = growth) surface" },
+            { group: "Front-end", done: false, text: "The Vault (Desire Map + Agreements) with consent-unlock → discussion card" },
+            { group: "Front-end", done: false, text: "Empty state for a solo / not-yet-rated user" },
+            { group: "Back-end", done: false, text: "Migrate Pulse `pulse.entries.v1` (UserDefaults) → Supabase table (survives reinstall)" },
+            { group: "Back-end", done: false, text: "Partner-visibility decision wired (see each other's check-ins or solo)" }
+          ],
+          questions: [
+            { lens: "design", who: "bryan", q: "Pulse partner-visibility in V1 (see each other's check-ins), or keep it solo?" },
+            { lens: "dod", who: "bryan", q: "Pulse cadence — daily prompt or user-set? (today it's open/unlimited; push is absent)" }
+          ]
+        },
+        {
+          id: "T4", title: "Learn — real tab, lift the Constellation", status: "todo", est: 6,
+          oneThing: "Learn becomes a real tab with credible, research-backed content.",
+          build: "Build a real Learn tab — today it's `Text(\"Learn\")` and the real Constellation component is stranded on Home. Lift Constellation into its own tab; add the flavor-quiz hero + boundary pill + research directory + tabbed content hub (books/watch/listen/voices) per the mockup. Decide static-bundled vs Supabase-driven.",
+          feel: "Learn = calm, credible, research-backed. Real iTunes/book artwork makes it feel alive.",
+          done: "Learn tab shows real content (Constellation + at least the 6-study seed + content hub).",
+          constraints: "Learn feature + content source decision. Learn is NEVER paywalled.",
+          risk: "Content source (static vs Supabase) affects future updates — decide before authoring.",
+          refs: [{ label: "LearnView.swift", href: "../../Vayl/Features/Learn/Views/LearnView.swift" }],
+          checklist: [
+            { group: "Front-end", done: false, text: "Lift Constellation off Home into the Learn tab" },
+            { group: "Front-end", done: false, text: "Flavor-quiz hero + boundary pill" },
+            { group: "Front-end", done: false, text: "Research directory + tabbed hub (books / watch / listen / voices) with real artwork" },
+            { group: "Back-end", done: false, text: "Content source wired (static bundle for V1, or Supabase) — 6-study seed loads" }
+          ],
+          questions: [
+            { lens: "content", who: "bryan", q: "Learn static-bundled or Supabase-driven for V1?" }
+          ]
+        },
+        {
+          id: "T5", title: "Settings — real page (not a tab)", status: "todo", est: 6,
+          oneThing: "Settings is a complete, truthful page: profile, pairing entry, account actions.",
+          build: "Finalize the Settings page (its own route, not in the tabbar): profile edit (name/pronouns sync to remote), partner-pairing entry, theme, and the account-action host. Account Delete + release Sign Out themselves ship in App-Store A1 — Settings provides their home here.",
+          feel: "Calm, legible, trustworthy — the place the user feels in control of their data.",
+          done: "Settings shows real profile data, edits sync to remote, pairing is reachable, and the account-action section is present (wired in A1).",
+          constraints: "Settings + Profile/Auth services. The Delete/Sign-Out logic lands in A1 — here just the surface + profile edit.",
+          risk: "Profile edits must sync to remote (the OB name→remote gap was a real bug found in P3) — verify edits propagate.",
+          refs: [{ label: "SettingsView.swift", href: "../../Vayl/Features/Settings/SettingsView.swift" }],
+          checklist: [
+            { group: "Front-end", done: false, text: "Profile edit (name / pronouns) UI" },
+            { group: "Front-end", done: false, text: "Partner-pairing entry point + linked-partner display" },
+            { group: "Front-end", done: false, text: "Account-actions section present (Sign Out / Delete — logic in A1)" },
+            { group: "Back-end", done: false, text: "Profile edits sync to remote `user_profiles` (verify propagation)" }
+          ],
+          questions: [
+            { lens: "design", who: "bryan", q: "What lives in Settings for V1 beyond profile / pairing / account / theme (notifications, safe word, data export)?" }
+          ]
+        }
+      ]
+    },
+
+    /* ════════════════ PHASE 6 — CONTENT ════════════════ */
+    {
+      id: "content", n: 6, title: "Content",
+      status: "later",
+      goal: "Ship enough real, human content; finalize the desire / assessment / pulse question sets.",
+      why: "Only 1 deck / 10 cards today. Content is 30–50h of authoring and must not be compressed into the final week.",
+      visual: {
+        text: "Authoring, not pixels — but card copy IS the product's voice: human, never clinical. The legacy `cards.json` placeholders literally say 'replace with clinical content' — that's the wrong direction. Match The Opener's tone.",
+        refs: [
+          { label: "the-opener.json", href: "../../Vayl/Resources/Decks/the-opener.json" },
+          { label: "ContentLoader.swift", href: "../../Vayl/Core/Services/ContentLoader.swift" }
+        ]
+      },
+      segments: [
+        {
+          id: "C1", title: "Decks / cards to launch volume", status: "todo", est: 20,
+          oneThing: "Author enough decks to feel like a product, not a demo.",
+          build: "Expand beyond the single 10-card 'The Opener' deck. Decide the launch set and write to the existing `Card`/`Deck` JSON schema.",
+          feel: "Every card is the product's voice — warm, curious, never clinical or instructional.",
+          done: "Launch deck set authored, loads via ContentLoader, plays on device.",
+          constraints: "Content JSON + index. No model changes (schema is mature).",
+          risk: "25 CardTypes + 10 DeckCategories exist in code with zero content — don't let the model's ambition set the content scope.",
+          refs: [],
+          questions: [
+            { lens: "content", who: "bryan", q: "How many decks/cards for launch, and who writes them — you, a writer, or AI-assisted drafts you edit?" },
+            { lens: "dod", who: "bryan", q: "Ship content in-bundle (current) or seed to Supabase so copy can change without an app update?" }
+          ]
+        },
+        {
+          id: "C2", title: "Finalize desire + assessment content", status: "todo", est: 8,
+          oneThing: "Lock the desire items and assessment questions.",
+          build: "Finalize `desire_items.json` (17 today) and `assessment_questions.json` (20, some placeholder-flagged).",
+          feel: "Precise, non-judgmental language — these drive the magic moment.",
+          done: "Both sets reviewed, de-placeholdered, and locked.",
+          constraints: "Content only.",
+          risk: "Changing desire items after D2 ships means re-syncing/recomputing — lock before Phase 2 hardens.",
+          refs: [{ label: "assessment_questions.json", href: "../../Vayl/Resources/Content/assessment_questions.json" }],
+          questions: [
+            { lens: "content", who: "bryan", q: "Are the desire items final, and do they need gendered / NM-flavor variants for V1?" }
+          ]
+        },
+        {
+          id: "C3", title: "Finalize pulse + Learn content", status: "todo", est: 8,
+          oneThing: "Lock pulse questions and the Learn seed content.",
+          build: "Finalize the pulse question set + tier model (flagged 'not final'). Lock the Learn seed content (the tab itself is built in T4).",
+          feel: "Pulse = light, honest check-ins; Learn = calm, credible, research-backed.",
+          done: "Pulse set locked; Learn seed content reviewed and final.",
+          constraints: "Content only (Learn tab UI is T4).",
+          risk: "Pulse content feeds the T3 schema — lock before that table hardens.",
+          refs: [],
+          questions: [
+            { lens: "content", who: "bryan", q: "Final pulse question set + tiers? And the Learn seed study list?" }
+          ]
+        }
+      ]
+    },
+
+    /* ════════════════ PHASE 7 — PATH VERIFICATION & TESTS ════════════════ */
+    {
+      id: "verify", n: 7, title: "Path Verification & Tests",
+      status: "later",
+      goal: "Prove both real journeys end-to-end on device, and stand up a safety net of unit tests around the logic that must never silently break.",
+      why: "Pairing taught the lesson: a thing can 'build + look done' and still be broken in prod (couples stayed 0 for months). Before submission, walk the SOLO and COUPLE paths as a user, and lock the invariants with tests.",
+      visual: {
+        text: "Not pixels — confidence. The solo path must degrade gracefully (no dead ends for an unpaired user); the couple path must complete the full arc (pair → rate → reveal → pay → unlock) on two real devices. Tests target the invariants that would silently corrupt data or money if they regress.",
+        refs: [
+          { label: "Pairing spec", href: "../superpowers/specs/2026-06-15-pairing-implementation-spec.md" }
+        ]
+      },
+      segments: [
+        {
+          id: "V1", title: "Solo path — end-to-end on device", status: "todo", est: 6,
+          oneThing: "An unpaired solo user has a complete, graceful journey with zero dead ends.",
+          build: "Walk the whole solo arc on device and fix every dead end: install → onboarding → solo 'get ready to bring it up' on-ramp → every tab degrades gracefully with no partner (clear empty states, no crashes, no hardcoded partner). Confirm the solo positioning actually holds.",
+          feel: "A solo user should feel invited, never locked out — 'get ready,' not 'come back with a partner.'",
+          done: "A fresh solo user completes onboarding and can use every tab without a partner; no dead ends, no debug leakage, no crash.",
+          constraints: "Verification + targeted fixes across features. No new features.",
+          risk: "Solo degradation is scattered across every tab — easy to miss one surface. Depends on Tabs phase done.",
+          refs: [],
+          checklist: [
+            { group: "Walk it", done: false, text: "Install → onboarding completes for a brand-new solo user" },
+            { group: "Walk it", done: false, text: "Solo on-ramp ('get ready to bring it up') is reachable + coherent" },
+            { group: "Walk it", done: false, text: "Home / Play / Map / Learn / Settings each show a real solo empty state (no 'Alex', no crash)" },
+            { group: "Walk it", done: false, text: "Pairing entry is discoverable from the solo state" },
+            { group: "Walk it", done: false, text: "No DEBUG override leaks into a release build" }
+          ],
+          questions: [
+            { lens: "dod", who: "bryan", q: "How gracefully must couple features degrade for a solo user — fully usable, or teaser + invite CTA?" }
+          ]
+        },
+        {
+          id: "V2", title: "Couple path — end-to-end on two devices", status: "todo", est: 8,
+          oneThing: "Two real devices complete the entire couple arc, including the purchase.",
+          build: "Walk the full couple journey on two devices: pair → both onboard → both rate the Desire Map → both complete → reveal fires → 1 free match → paywall → sandbox purchase → both unlock all matches → card session persists. Fix anything that breaks in the chain.",
+          feel: "This is the product's whole promise in one sitting — it must feel unbroken from connect to reveal to unlock.",
+          done: "Two devices complete pair → rate → reveal → sandbox-purchase → both-unlock → session-persist, with prod rows proving each step.",
+          constraints: "Verification across Pairing + Desire + Monetization + Tabs. No new features.",
+          risk: "The integration seams (sync timing, reveal trigger, cross-device unlock) are where it breaks — needs real hardware, not sim. Depends on D4 + M5.",
+          refs: [],
+          checklist: [
+            { group: "Walk it", done: false, text: "Pair on 2 devices → `couples` row + both profiles linked" },
+            { group: "Walk it", done: false, text: "Both rate Desire Map → `desire_ratings` rows (couple-scoped, no `notForUs` leak)" },
+            { group: "Walk it", done: false, text: "Both complete → `desire_matches` computed, exactly one `isFreeReveal`" },
+            { group: "Walk it", done: false, text: "Reveal fires; 1 free match shown, rest blurred" },
+            { group: "Walk it", done: false, text: "Sandbox purchase → couple tier `core`; BOTH devices unlock all" },
+            { group: "Walk it", done: false, text: "Card session persists to `card_progress`; survives reinstall" }
+          ],
+          questions: [
+            { lens: "dod", who: "bryan", q: "Acceptable for V1 if full reveal isn't perfectly simultaneous across devices (one taps refresh)?" }
+          ]
+        },
+        {
+          id: "V3", title: "Unit tests — lock the invariants", status: "todo", est: 14,
+          oneThing: "Cover the logic that would silently corrupt data, privacy, or money if it regressed.",
+          build: "Stand up an XCTest target (none meaningful today) and test the invariants — not the UI. Prioritize: the privacy guarantee (`notForUs` never in a sync payload), entitlement resolution (one purchase → both read `core`), the Home gating state machine, sync idempotency (no duplicate profiles/ratings), and match computation (mutual/adjacent, exactly one free reveal). Mock the Services so Store logic is tested in isolation.",
+          feel: "n/a — this is the safety net that lets you refactor without fear before launch.",
+          done: "An XCTest suite runs green in CI/local covering the listed invariants; a deliberately-broken invariant turns a test red.",
+          constraints: "Test target + light testability seams (protocol-ize Services for mocking). Minimal production changes.",
+          risk: "Over-testing UI wastes the budget — target pure logic + the money/privacy invariants. Stores are `@MainActor` — tests must hop the actor.",
+          refs: [],
+          checklist: [
+            { group: "Must-cover", done: false, text: "Privacy: `notForUs` is never present in any sync DTO" },
+            { group: "Must-cover", done: false, text: "Entitlement: one couple purchase → both partners resolve `core`" },
+            { group: "Must-cover", done: false, text: "Home gating state machine transitions (gated → waiting → matchReady → dashboard)" },
+            { group: "Must-cover", done: false, text: "Sync idempotency: re-running profile/rating sync creates no duplicates" },
+            { group: "Must-cover", done: false, text: "Match compute: mutual vs adjacent classification; exactly one `isFreeReveal`" },
+            { group: "Scaffolding", done: false, text: "XCTest target exists; Services protocol-ized enough to mock; runs in CI or one command" }
+          ],
+          questions: [
+            { lens: "test", who: "bryan", q: "Target a CI runner (GitHub Actions) for tests, or local-only `xcodebuild test` for V1?" },
+            { lens: "test", who: "claude", q: "Confirm which Services need protocol seams for mocking — I'll map the smallest set." }
+          ]
+        }
+      ]
+    },
+
+    /* ════════════════ PHASE 8 — APP STORE ════════════════ */
+    {
+      id: "appstore", n: 8, title: "App Store",
+      status: "later",
+      goal: "Clear every submission blocker, run TestFlight, and submit by Jul 23 (one day of reset buffer).",
+      why: "Hard deadline. Prep must start regardless of feature completeness; TestFlight needs 3–5 days.",
+      visual: {
+        text: "Screenshots are your marketing — the desire-reveal moment and the OB ceremony are the hero shots. Feature-freeze ~Jul 16. StoreKit / ASC product setup overlaps Monetization — the linked guide covers the App-Store-Connect side end to end.",
+        refs: [
+          { label: "PROJECT_SCOPE.md (checklist)", href: "../../PROJECT_SCOPE.md" },
+          { label: "★ StoreKit & ASC guide", href: "storekit-appstore-connect-guide.md" }
+        ]
+      },
+      segments: [
+        {
+          id: "A1", title: "Delete Account + release Sign Out", status: "todo", est: 6,
+          oneThing: "Ship the account actions Apple requires.",
+          build: "Add Delete Account (absent — a hard App-Store blocker) and a release Sign Out (today only in DEBUG). Surfaces live in Settings (T5).",
+          feel: "Calm, reversible-feeling confirmations; deletion is serious — confirm clearly.",
+          done: "A user can sign out and delete their account from a release build.",
+          constraints: "Settings + Auth/Profile services.",
+          risk: "Couples data has a partner — deletion must define what happens to the couple + the other person.",
+          refs: [{ label: "SettingsView.swift", href: "../../Vayl/Features/Settings/SettingsView.swift" }],
+          questions: [
+            { lens: "compliance", who: "bryan", q: "Delete Account — hard delete vs anonymize? And what happens to the linked partner + couple record?" }
+          ]
+        },
+        {
+          id: "A2", title: "Legal + privacy disclosures", status: "todo", est: 8, cal: false,
+          oneThing: "Privacy policy, ToS, nutrition label, CCPA.",
+          build: "Author + host the privacy policy and ToS; complete the App Store privacy nutrition label; CCPA disclosure.",
+          feel: "n/a.",
+          done: "All legal docs live and linked; nutrition label submitted.",
+          constraints: "Docs + App Store Connect. (Externally paced — not rescaled by your velocity factor.)",
+          risk: "Easy to forget, hard-blocks submission. Intimate data category needs careful disclosure.",
+          refs: [],
+          questions: [
+            { lens: "compliance", who: "bryan", q: "Privacy policy + ToS source (template / lawyer / generator), and where do they get hosted?" },
+            { lens: "compliance", who: "bryan", q: "Nutrition label — which data types do we disclose (auth, profile, intimate preferences, couple linkage)?" }
+          ]
+        },
+        {
+          id: "A3", title: "States sweep + crash/analytics", status: "todo", est: 10,
+          oneThing: "Empty / loading / error states + crash reporting.",
+          build: "Add the missing empty/loading/error states (0 dedicated empty-state components today; loading/error sparse) and wire crash + analytics (Crashlytics / Firebase). The Tabs phase covers per-tab empties — this is the cross-cutting sweep + SDK.",
+          feel: "Every data screen needs a graceful empty state — required by the design contract.",
+          done: "Key data screens have empty + loading + error UI; crashes report to a dashboard.",
+          constraints: "Cross-feature polish + analytics SDK.",
+          risk: "Scope creep — target the screens a reviewer/user actually hits in week one.",
+          refs: [],
+          questions: [
+            { lens: "deps", who: "bryan", q: "Crash/analytics tool of choice (Crashlytics vs Firebase vs other)?" }
+          ]
+        },
+        {
+          id: "A4", title: "Assets + TestFlight + submit", status: "todo", est: 10, cal: false,
+          oneThing: "Screenshots, icon, age rating → TestFlight → submit.",
+          build: "Produce screenshots (all device sizes), audit the icon at all sizes, set the age rating, run TestFlight 3–5 days, then submit.",
+          feel: "Hero shots: the reveal + the OB.",
+          done: "Submitted to App Review no later than Jul 23.",
+          constraints: "App Store Connect + TestFlight. (Externally paced — review + TestFlight windows aren't compressible by velocity.)",
+          risk: "Review can reset on rejection — submit with a day of buffer.",
+          refs: [],
+          questions: [
+            { lens: "compliance", who: "bryan", q: "Age rating answers (intimate but not explicit)? And is anyone external on the TestFlight beta?" },
+            { lens: "deps", who: "bryan", q: "Push entitlements only matter if notifications ship — are they in V1 at all?" }
+          ]
+        }
+      ]
+    }
+  ],
+
+  /* Cross-phase decisions that ripple — settle early. */
+  parkingLot: [
+    { who: "bryan", q: "SEED THE ESTIMATOR: roughly how many total hours did Pairing (P1–P5) actually take? I seeded placeholder actuals (~9h total). Correct them and the calibration factor k — and your likely-ready date — re-derive from real data." },
+    { who: "claude", q: "STRUCTURAL: the Card Session system (the core loop) was elevated from V2-deferred to a full Phase 4 (S1–S6, ~74h) — it's the biggest single addition and the main reason the date moved. Real-time is NEW to this stack, so S2 (handshake) is the highest-risk segment and is de-risked first. Open tension for you: the curated-session ENTRY — Home / Deck Library (session spec, Play = generative-only) vs the 'Cards' side of the Play dial (arcade mockup). Resolve before Tabs T2 / Session S3." },
+    { who: "claude", q: "Calibration caveat: k is GLOBAL (learned mostly from backend pairing work, your wheelhouse). New-domain segments (StoreKit M2, legal A2, submit A4) are marked `cal:false` so they're charged at full estimate, not compressed. If you want a domain that ISN'T compressing as fast, tell me and I'll flag it `cal:false` too." },
+    { who: "bryan", q: "Push notifications in V1 at all? Absent project-wide. The reveal nudge is a personal iMessage (not a push, per the spec), so this is really about pulse reminders + pairing notify-on-join + the Apple entitlement you declare." },
+    { who: "bryan", q: "Solo on-ramp: how gracefully must couple features degrade for a solo, unpaired user pre-pairing? (your positioning leans on a solo 'get ready to bring it up' path) — now has a home in V1 (solo-path verification)." },
+    { who: "claude", q: "Velocity check under 'hold date AND full scope': the long poles are the Desire-Map Moment (Phase 2) AND Monetization (Phase 3) back-to-back. If we slip, M5's reveal-gate is the first I'd simplify — single-device reveal, defer cross-device simultaneity." }
+  ]
+};
+
+/* ============================================================================
+   RENDER + ESTIMATION — derives everything from BUILD_ROADMAP. No edits needed below.
+   ========================================================================== */
+const LENS = {
+  dod:        { label: "Done",        color: "var(--lens-dod)" },
+  data:       { label: "Data",        color: "var(--lens-data)" },
+  design:     { label: "Design",      color: "var(--lens-design)" },
+  deps:       { label: "Deps",        color: "var(--lens-deps)" },
+  compliance: { label: "Compliance",  color: "var(--lens-compliance)" },
+  content:    { label: "Content",     color: "var(--lens-design)" },
+  test:       { label: "Test",        color: "var(--done)" }
+};
+const SEG_STATUS = {
+  done:       { label: "Done",        color: "var(--done)" },
+  inprogress: { label: "In progress", color: "var(--inprogress)" },
+  verifying:  { label: "Verifying",   color: "var(--verifying)" },
+  todo:       { label: "To do",       color: "var(--todo)" },
+  blocked:    { label: "Blocked",     color: "var(--blocked)" },
+  later:      { label: "Deferred",    color: "var(--todo)" }
+};
+const PHASE_STATUS = {
+  active: { label: "Active now", color: "var(--cyan)" },
+  next:   { label: "Up next",    color: "var(--purple)" },
+  later:  { label: "Later",      color: "var(--todo)" },
+  done:   { label: "Done",       color: "var(--done)" }
+};
+const ACTIVE = ["todo", "inprogress", "verifying", "blocked"]; // counts toward remaining work
+
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function md(s){ return esc(s).replace(/`([^`]+)`/g, "<code>$1</code>"); }
+function tint(color, pct){ return `color-mix(in srgb, ${color} ${pct}%, transparent)`; }
+function pill(label, color){
+  return `<span class="status-pill" style="color:${color};border-color:${color};background:${tint(color,12)}">${label}</span>`;
+}
+function refsHTML(refs){
+  if(!refs || !refs.length) return "";
+  return `<div class="vis-refs">` + refs.map(r => `<a href="${r.href}">${esc(r.label)} ↗</a>`).join("") + `</div>`;
+}
+
+const D = BUILD_ROADMAP;
+const allSegs = D.phases.flatMap(p => p.segments);
+
+/* ── estimation engine ────────────────────────────────────────────────────
+   k  = (Σactual + λ) / (Σest + λ)   over done segments that logged an actual.
+        λ (trustPrior) keeps k≈1 until real data accrues; then k → your true velocity.
+   remaining = Σ(est·k) for calibratable todo segs + Σ(est) for cal:false segs.
+   spread shrinks as you complete more of the total estimated work.            */
+function computeProjection(){
+  let estDoneLogged = 0, actDoneLogged = 0;     // for k (only done segs with actual)
+  let calPool = 0, fixedPool = 0;               // remaining hours, split by calibratability
+  let activeEst = 0, totalEst = 0;              // for the spread term
+  let doneCount = 0, activeCount = 0;
+
+  allSegs.forEach(s => {
+    const est = s.est || 0;
+    if (s.status === "done") {
+      doneCount++;
+      totalEst += est;
+      if (s.actual != null) { actDoneLogged += s.actual; estDoneLogged += est; }
+    } else if (ACTIVE.includes(s.status)) {
+      activeCount++; activeEst += est; totalEst += est;
+      if (s.cal === false) fixedPool += est; else calPool += est;
+    }
+    // status "later" → excluded entirely
+  });
+
+  const lambda = D.meta.trustPrior ?? 6;
+  const k = (actDoneLogged + lambda) / (estDoneLogged + lambda);
+  const remHours = calPool * k + fixedPool;
+
+  const baseSpread = D.meta.baseSpread ?? 0.45;
+  const spread = totalEst > 0 ? baseSpread * Math.sqrt(activeEst / totalEst) : 0;
+  const optHours  = remHours * (1 - spread);
+  const cautHours = remHours * (1 + spread);
+
+  const hpd = D.meta.workHoursPerDay || 4;
+  const dpw = D.meta.workDaysPerWeek || 6;
+  const calDays = h => Math.ceil((h / hpd) * (7 / dpw));
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const addDays = (n) => { const d = new Date(today); d.setDate(d.getDate() + n); return d; };
+  const fmt = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const fmtY = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  return {
+    k, remHours, optHours, cautHours, spread,
+    doneCount, activeCount,
+    hoursDone: actDoneLogged + allSegs.filter(s=>s.status==="done" && s.actual==null).reduce((a,s)=>a+(s.est||0),0),
+    likely: fmtY(addDays(calDays(remHours))),
+    opt: fmt(addDays(calDays(optHours))),
+    caut: fmt(addDays(calDays(cautHours))),
+    calDaysLikely: calDays(remHours),
+    hpd, dpw
+  };
+}
+
+/* projection banner */
+(function(){
+  const P = computeProjection();
+  const submit = new Date(D.meta.deadline + "T00:00:00");
+  const today = new Date(); today.setHours(0,0,0,0);
+  const daysToDeadline = Math.ceil((submit - today) / 86400000);
+  const fasterTxt = P.k < 0.995
+    ? `you're running ~<b>${(1/P.k).toFixed(1)}×</b> faster than my raw estimates`
+    : (P.k > 1.005 ? `tracking ~<b>${P.k.toFixed(2)}×</b> my estimates` : `no calibration data yet (k=1)`);
+
+  document.getElementById("countdown").innerHTML =
+    `updated ${D.meta.updated} · hard deadline <b>${D.meta.deadline}</b> · ${daysToDeadline} days out`;
+
+  document.getElementById("projection").innerHTML = `
+    <div class="proj-main">
+      <div class="proj-label">Likely ready</div>
+      <div class="proj-date">${P.likely}</div>
+      <div class="proj-band">band: <b>${P.opt}</b> (optimistic) → <b>${P.caut}</b> (cautious) · ~${P.calDaysLikely} days out</div>
+    </div>
+    <div class="proj-side">
+      <div class="proj-metrics">
+        <div class="proj-metric"><div class="pm-num">${P.doneCount}<span style="color:var(--text-3);font-size:14px">/${P.doneCount+P.activeCount}</span></div><div class="pm-lbl">segments done</div></div>
+        <div class="proj-metric"><div class="pm-num">${Math.round(P.remHours)}h</div><div class="pm-lbl">calibrated remaining</div></div>
+        <div class="proj-metric"><div class="pm-num">${P.hpd}h<span style="color:var(--text-3);font-size:14px">/day</span></div><div class="pm-lbl">${P.dpw} days/wk</div></div>
+      </div>
+      <div class="proj-bar"><span style="width:${Math.round(100*P.doneCount/Math.max(1,P.doneCount+P.activeCount))}%"></span></div>
+      <div class="proj-cal">Calibration: ${fasterTxt} · ${fmtList()} · StoreKit / legal / review charged at full estimate (won't compress). <b>Seed me your real Pairing hours</b> (parking lot) to sharpen this.</div>
+    </div>`;
+
+  function fmtList(){
+    return `${D.meta.deadline} deadline is ${daysToDeadline > P.calDaysLikely ? `<b style="color:var(--done)">${daysToDeadline - P.calDaysLikely} days of buffer</b>` : `<b class="warn">${P.calDaysLikely - daysToDeadline} days tight</b>`}`;
+  }
+})();
+
+/* phase rail */
+function phaseRollup(p){
+  let done = 0, total = 0, doneC = 0, totalC = 0;
+  p.segments.forEach(s => {
+    if (s.status === "later") return;
+    total += s.est || 0; totalC++;
+    if (s.status === "done") { done += s.est || 0; doneC++; }
+  });
+  return { done, total, doneC, totalC, pct: total > 0 ? Math.round(100*done/total) : 0 };
+}
+
+document.getElementById("rail").innerHTML = D.phases.map(p => {
+  const st = PHASE_STATUS[p.status] || PHASE_STATUS.later;
+  const isActive = p.id === D.meta.current.phase;
+  const r = phaseRollup(p);
+  return `<div class="rail-chip ${isActive ? "active" : ""}" data-jump="${p.id}">
+    <div class="rc-top"><span class="rc-n">${p.n}</span><span class="rc-hrs">${r.doneC}/${r.totalC} · ${r.total}h</span></div>
+    <div class="rc-title">${esc(p.title)}</div>
+    <div class="rc-status" style="color:${st.color}">${st.label}</div>
+    <div class="rc-mini-bar"><span style="width:${r.pct}%"></span></div>
+    <div class="rc-spectrum"></div>
+  </div>`;
+}).join("");
+
+/* legends */
+document.getElementById("legends").innerHTML = `
+  <div class="legend-group"><b>Lens</b>${
+    Object.values(LENS).filter((v,i,a)=>a.findIndex(x=>x.label===v.label)===i)
+      .map(l => `<span class="pill-mini" style="color:${l.color};border-color:${l.color};background:${tint(l.color,12)}">${l.label}</span>`).join("")
+  }</div>
+  <div class="legend-group"><b>Answers</b>
+    <span class="q-who claude">CLAUDE</span><span style="color:var(--text-3);font-size:11px">I go find out</span>
+    <span class="q-who bryan">BRYAN</span><span style="color:var(--text-3);font-size:11px">you decide</span>
+  </div>`;
+
+/* phases */
+document.getElementById("phases").innerHTML = D.phases.map(p => {
+  const st = PHASE_STATUS[p.status] || PHASE_STATUS.later;
+  const collapsed = (p.status === "later" || p.status === "done") ? "collapsed" : "";
+  const r = phaseRollup(p);
+  const segHTML = p.segments.map(s => {
+    const ss = SEG_STATUS[s.status] || SEG_STATUS.todo;
+    const expanded = (s.id === D.meta.current.segment) ? "expanded" : "";
+    const bryanCount = (s.questions||[]).filter(q => q.who === "bryan").length;
+
+    const estTxt = s.status === "done"
+      ? `<span class="seg-est"><b>${s.est||0}h</b> est${s.actual!=null?` · <span class="act">${s.actual}h actual</span>`:""}</span>`
+      : (s.status === "later" ? `` : `<span class="seg-est"><b>${s.est||0}h</b> est${s.cal===false?` · full`:``}</span>`);
+
+    /* checklist (ticks persist in localStorage, keyed by segment id) */
+    let chkHTML = "";
+    if (s.checklist && s.checklist.length) {
+      let lastGroup = null;
+      chkHTML = `<div class="chk-wrap">` + s.checklist.map((c, i) => {
+        const key = `vayl.chk.${s.id}.${i}`;
+        const stored = (typeof localStorage !== "undefined") ? localStorage.getItem(key) : null;
+        const on = stored != null ? stored === "1" : !!c.done;
+        const groupHdr = (c.group && c.group !== lastGroup) ? `<div class="chk-group">${esc(c.group)}</div>` : "";
+        lastGroup = c.group || lastGroup;
+        return `${groupHdr}<label class="chk ${on?"on":""}" data-chk="${key}">
+          <span class="box">✓</span><span class="chk-txt">${md(c.text)}</span></label>`;
+      }).join("") + `</div>`;
+    }
+
+    const qHTML = (s.questions||[]).map(q => {
+      const l = LENS[q.lens] || { label: q.lens, color: "var(--text-3)" };
+      return `<div class="q">
+        <div class="q-tags">
+          <span class="q-lens" style="color:${l.color};border-color:${l.color};background:${tint(l.color,12)}">${l.label}</span>
+          <span class="q-who ${q.who}">${q.who.toUpperCase()}</span>
+        </div>
+        <div class="q-text">${md(q.q)}</div>
+      </div>`;
+    }).join("");
+
+    return `<div class="seg ${expanded}">
+      <div class="seg-head" data-toggle="seg">
+        ${pill(ss.label, ss.color)}
+        <span class="seg-id">${s.id}</span>
+        <span class="seg-title">${md(s.title)}</span>
+        ${estTxt}
+        <span class="seg-qcount">${(s.questions||[]).length} q${bryanCount?` · <b>${bryanCount} for you</b>`:""}</span>
+        <span class="seg-chevron">▶</span>
+      </div>
+      <div class="seg-body">
+        <div class="anat">
+          <div class="a-label">One thing</div><div class="a-val">${md(s.oneThing)}</div>
+          <div class="a-label">Build</div><div class="a-val">${md(s.build)}</div>
+          <div class="a-label">Visual / feel</div><div class="a-val">${md(s.feel)}</div>
+          <div class="a-label">Done</div><div class="a-val done-cond">${md(s.done)}</div>
+          <div class="a-label">Constraints</div><div class="a-val constraints">${md(s.constraints)}</div>
+          <div class="a-label">Risk</div><div class="a-val risk">${md(s.risk)}</div>
+        </div>
+        ${refsHTML(s.refs)}
+        ${chkHTML}
+        ${qHTML ? `<div class="q-wrap"><div class="q-head">Close these before you build</div>${qHTML}</div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+
+  return `<section class="phase ${collapsed}" id="phase-${p.id}">
+    <div class="phase-head" data-toggle="phase">
+      <span class="phase-chevron">▼</span>
+      <span class="phase-n">${p.n}</span>
+      <div>
+        <div class="phase-title">${esc(p.title)}</div>
+        <div class="phase-why">${esc(p.why)}</div>
+      </div>
+      <div class="phase-meta">
+        <span class="phase-hrs">${r.doneC}/${r.totalC} segs · ${r.done}/${r.total}h<span class="ph-bar"><span style="width:${r.pct}%"></span></span></span>
+        ${pill(st.label, st.color)}
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-goal"><span class="gl">Goal</span>${md(p.goal)}</div>
+      <div class="vis">
+        <div class="vis-label">Visual direction</div>
+        <div class="vis-text">${md(p.visual.text)}</div>
+        ${refsHTML(p.visual.refs)}
+      </div>
+      ${segHTML}
+    </div>
+  </section>`;
+}).join("");
+
+/* parking lot */
+document.getElementById("lotList").innerHTML = D.parkingLot.map(item => `
+  <div class="lot-item">
+    <span class="q-who ${item.who}">${item.who.toUpperCase()}</span>
+    <span class="lot-text">${md(item.q)}</span>
+  </div>`).join("");
+
+/* interactions */
+document.addEventListener("click", e => {
+  const chk = e.target.closest(".chk");
+  if (chk) {
+    e.preventDefault();
+    const on = chk.classList.toggle("on");
+    try { localStorage.setItem(chk.dataset.chk, on ? "1" : "0"); } catch(_) {}
+    return;
+  }
+  const segHead = e.target.closest(".seg-head");
+  if (segHead) { segHead.parentElement.classList.toggle("expanded"); return; }
+  const phaseHead = e.target.closest(".phase-head");
+  if (phaseHead) { phaseHead.parentElement.classList.toggle("collapsed"); return; }
+  const chip = e.target.closest(".rail-chip");
+  if (chip) {
+    const target = document.getElementById("phase-" + chip.dataset.jump);
+    if (target) { target.classList.remove("collapsed"); target.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  }
+});
+</script>
+</body>
+</html>

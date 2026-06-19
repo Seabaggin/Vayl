@@ -10,7 +10,7 @@ const MIME = {
 };
 
 http.createServer((req, res) => {
-  const file = req.url === '/' ? '/vayl-build-roadmap.html' : req.url;
+  const file = req.url === '/' ? '/confirmation-phase.html' : req.url;
   const fp   = path.join(dir, file);
   if (!fp.startsWith(dir)) { res.writeHead(403); return res.end(); }
   fs.readFile(fp, (err, data) => {
@@ -19,4 +19,4 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': MIME[ext] || 'text/plain' });
     res.end(data);
   });
-}).listen(7332, () => console.log('Roadmap server: http://localhost:7332'));
+}).listen(7333, () => console.log('Prototypes server: http://localhost:7333'));

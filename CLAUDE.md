@@ -43,6 +43,31 @@ Build succeeds is not done. Feel is correct is done.
 
 ---
 
+## Product Reality Check — This App Is Not the Center of Anyone's Life
+
+Vayl occupies a **small, optional corner** of a user's real life. People pick it up
+occasionally; the relationship itself happens off-app, in the real world. Design from
+that humility — this is minuscule in the grand scheme of someone living their life.
+
+**When proposing any feature or system-design choice, contextualize it against how
+humans actually live — not against an imagined user who is always in the app.** Most of
+what matters to a couple happens where Vayl can't see it and doesn't need to.
+
+- Don't build features that assume Vayl is the primary channel for relationship events,
+  or that the user is always-on / dependent on it.
+- A breakup does not need an in-app notification. People know they're broken up long
+  before the app could tell them. If a feature only makes sense when you assume the app
+  matters more than it does, **cut it.**
+- Bias toward the **minimum necessary** feature set that earns a small, respected place.
+  Avoid engagement-maximizing mechanics — streaks, push spam, "open the app to find out"
+  hooks, self-important alerts.
+
+**The test, before proposing a feature:** *In a realistic context — a couple living
+their actual lives — is this genuinely necessary, or does it only make sense if Vayl is
+the center of their world?* Default to the humbler answer.
+
+---
+
 ## iOS 26 / Xcode 26 — Mandatory Compliance
 
 Apple skipped versions 19–25 to align iOS 26 with the year 2026.
@@ -78,6 +103,31 @@ to prevent hallucination of ancient APIs the iOS 26 compiler will reject.
 ### Already Compliant in Vayl
 - `AppLayout.from(geo)` — never uses `UIScreen.main.bounds` ✅
 - Scene-based window access already enforced in AppLayout ✅
+
+---
+
+## Presentation Grammar — Navigation Contract
+
+**The presentation pattern must match the user's mental state.** Choose by what the user
+is doing, not by habit. Route every modal through the `.vaylCover` / `.vaylSheet`
+modifiers — never raw `.fullScreenCover` / `.sheet` in feature views (same discipline as
+tokens: no raw primitives).
+
+| Mental state | Pattern | Use for |
+|---|---|---|
+| Scrolling / discovering | inline expand | Home dashboard, Getting Started, deck grid |
+| Drilling a real hierarchy | **push** (`NavigationStack`) | Learn → research → finding · Settings → pairing |
+| Previewing something you return *from* | **`.vaylSheet`** | match preview, deck inspect, Pulse history |
+| Completing a discrete task | **`.vaylSheet`** | profile edit, add agreement, pairing code |
+| Entering a protected, immersive mode | **`.vaylCover`** | Card Session, Desire rater, Pulse check-in, OB |
+
+- **Card Session is always a `.vaylCover`, never a sheet.** It is the most protected
+  experience in the app (two-device, safe-worded) — interactive-dismiss disabled,
+  confirm-on-exit (Duolingo-lesson logic). A swipe-away sheet mid-session is a violation.
+- `.vaylCover` = full-screen cover + dismiss-guard + confirm-on-exit.
+  `.vaylSheet` = sheet + standard detents / background / grabber.
+- Define/extend both in `Vayl/Design/Components/Navigation/VaylPresentation.swift`
+  (front-end UX spec, 2026-06-17).
 
 ---
 
@@ -188,3 +238,6 @@ Empty states — required on every data screenIcon (AppColors.textTertiary) + he
  .drawingGroup() on VaylCardFace — never remove
  Reduce Motion fallbacks on all animations
  Empty state on every data screen
+ Presentation via .vaylCover / .vaylSheet — never raw .fullScreenCover / .sheet
+ Card Session is a .vaylCover (protected, confirm-on-exit) — never a sheet
+ Right-size every feature — none that assumes Vayl is the center of the user's life
