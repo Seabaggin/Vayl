@@ -8,8 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		3D01604A2FBBFA4B00492968 /* CLAUDE.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D0160492FBBFA4400492968 /* CLAUDE.md */; };
-		3D0635572F8AF7370098DE65 /* gather_audit_home.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3D0635562F8AF7340098DE65 /* gather_audit_home.sh */; };
-		3D0635592F8AF7570098DE65 /* gather_audit_pulse_carousel.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3D0635582F8AF7530098DE65 /* gather_audit_pulse_carousel.sh */; };
 		3D51D7432F5FB8D7002488A7 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D7422F5FB8D7002488A7 /* Auth */; };
 		3D51D7452F5FB8D7002488A7 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D7442F5FB8D7002488A7 /* Functions */; };
 		3D51D7472F5FB8D7002488A7 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D7462F5FB8D7002488A7 /* PostgREST */; };
@@ -20,14 +18,11 @@
 		3D767EFA2F5D562900F2D70F /* RULES.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EF92F5D562100F2D70F /* RULES.md */; };
 		3D767EFC2F5D565700F2D70F /* PROJECT_SCOPE.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */; };
 		3D807B942F8DC74B0021F080 /* .aider.conf.yml in Resources */ = {isa = PBXBuildFile; fileRef = 3D807B932F8DC7450021F080 /* .aider.conf.yml */; };
-		3D83007B2F84981B001F650B /* gather_checkin_context.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3D83007A2F849817001F650B /* gather_checkin_context.sh */; };
 		3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */; };
-		3DE73B002FA687E000BF22F1 /* migrate_animations.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */; };
-		3DE73D1C2FB0555000BF22F1 /* gather_theme.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3DE73D1B2FB0554700BF22F1 /* gather_theme.sh */; };
-		3DE993A32F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */; };
 		AA000001AAAA000000000001 /* MonteRowGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */; };
 		AA000002AAAA000000000001 /* CandleIntensityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000002AAAA000000000002 /* CandleIntensityTests.swift */; };
 		AA000003AAAA000000000001 /* ContextOptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000003AAAA000000000002 /* ContextOptionTests.swift */; };
+		AA000004AAAA000000000001 /* GettingStartedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000004AAAA000000000002 /* GettingStartedTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,8 +44,6 @@
 
 /* Begin PBXFileReference section */
 		3D0160492FBBFA4400492968 /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
-		3D0635562F8AF7340098DE65 /* gather_audit_home.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_audit_home.sh; sourceTree = "<group>"; };
-		3D0635582F8AF7530098DE65 /* gather_audit_pulse_carousel.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_audit_pulse_carousel.sh; sourceTree = "<group>"; };
 		3D58E6DC2F6227E800210EB6 /* Vayl.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Vayl.xcconfig; sourceTree = "<group>"; };
 		3D767EB22F5D520D00F2D70F /* Vayl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vayl.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D767EC12F5D520E00F2D70F /* VaylTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VaylTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -58,14 +51,11 @@
 		3D767EF92F5D562100F2D70F /* RULES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = RULES.md; sourceTree = "<group>"; };
 		3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PROJECT_SCOPE.md; sourceTree = "<group>"; };
 		3D807B932F8DC7450021F080 /* .aider.conf.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .aider.conf.yml; sourceTree = "<group>"; };
-		3D83007A2F849817001F650B /* gather_checkin_context.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_checkin_context.sh; sourceTree = "<group>"; };
 		3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DESIGN_DOC.md; sourceTree = "<group>"; };
-		3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = migrate_animations.sh; sourceTree = "<group>"; };
-		3DE73D1B2FB0554700BF22F1 /* gather_theme.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = gather_theme.sh; sourceTree = "<group>"; };
-		3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Open Lightly — LLM Audit Prompts.md"; sourceTree = "<group>"; };
 		AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonteRowGeometryTests.swift; sourceTree = "<group>"; };
 		AA000002AAAA000000000002 /* CandleIntensityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandleIntensityTests.swift; sourceTree = "<group>"; };
 		AA000003AAAA000000000002 /* ContextOptionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextOptionTests.swift; sourceTree = "<group>"; };
+		AA000004AAAA000000000002 /* GettingStartedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GettingStartedTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -131,16 +121,10 @@
 			isa = PBXGroup;
 			children = (
 				3D0160492FBBFA4400492968 /* CLAUDE.md */,
-				3DE73D1B2FB0554700BF22F1 /* gather_theme.sh */,
-				3DE73AFF2FA687DA00BF22F1 /* migrate_animations.sh */,
 				3D807B932F8DC7450021F080 /* .aider.conf.yml */,
-				3D0635582F8AF7530098DE65 /* gather_audit_pulse_carousel.sh */,
-				3D0635562F8AF7340098DE65 /* gather_audit_home.sh */,
-				3D83007A2F849817001F650B /* gather_checkin_context.sh */,
 				3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */,
 				3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */,
 				3D767EF92F5D562100F2D70F /* RULES.md */,
-				3DE993A22F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md */,
 				3D767EB42F5D520D00F2D70F /* Vayl */,
 				AA000001AAAA000000000003 /* VaylTests */,
 				3D51D74E2F5FBA71002488A7 /* Frameworks */,
@@ -165,6 +149,7 @@
 				AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */,
 				AA000002AAAA000000000002 /* CandleIntensityTests.swift */,
 				AA000003AAAA000000000002 /* ContextOptionTests.swift */,
+				AA000004AAAA000000000002 /* GettingStartedTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -295,16 +280,10 @@
 			files = (
 				3D767EFC2F5D565700F2D70F /* PROJECT_SCOPE.md in Resources */,
 				3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */,
-				3DE73D1C2FB0555000BF22F1 /* gather_theme.sh in Resources */,
-				3D83007B2F84981B001F650B /* gather_checkin_context.sh in Resources */,
 				3D58E6DD2F6227E800210EB6 /* Vayl.xcconfig in Resources */,
 				3D767EFA2F5D562900F2D70F /* RULES.md in Resources */,
 				3D807B942F8DC74B0021F080 /* .aider.conf.yml in Resources */,
-				3D0635592F8AF7570098DE65 /* gather_audit_pulse_carousel.sh in Resources */,
-				3DE73B002FA687E000BF22F1 /* migrate_animations.sh in Resources */,
-				3D0635572F8AF7370098DE65 /* gather_audit_home.sh in Resources */,
 				3D01604A2FBBFA4B00492968 /* CLAUDE.md in Resources */,
-				3DE993A32F7B323700D7FD11 /* Open Lightly — LLM Audit Prompts.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -363,6 +342,7 @@
 				AA000001AAAA000000000001 /* MonteRowGeometryTests.swift in Sources */,
 				AA000002AAAA000000000001 /* CandleIntensityTests.swift in Sources */,
 				AA000003AAAA000000000001 /* ContextOptionTests.swift in Sources */,
+				AA000004AAAA000000000001 /* GettingStartedTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -73,3 +73,7 @@ Config.swift
 # ── Generated / Tooling State ───────────────────────────────
 repomix-output.xml
 .superpowers/
+
+# ── Scratch / Screen Recordings (never commit to the app repo) ──
+*.mov
+*.mp4
