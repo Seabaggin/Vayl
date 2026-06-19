@@ -30,7 +30,6 @@ struct NamePhase: View {
     @State private var dealerDisplayed: String  = ""
     @State private var dealerAlpha:     Double  = 0.0
     @State private var dealerOffsetY:   CGFloat = 0.0
-    @State private var dealerLine3Done: Bool    = false
 
     // MARK: — Card animation
 
@@ -42,7 +41,6 @@ struct NamePhase: View {
     @State private var showFace:        Bool          = false
     @State private var cardScale:       Double        = 1.0
     @State private var cardScreenAlpha: Double        = 1.0
-    @State private var cardBlur:        Double        = 0
 
     // MARK: — Effects
 
@@ -72,6 +70,12 @@ struct NamePhase: View {
 
     @State private var waitingForCardReturn:  Bool    = false
     @State private var cardReturnHintOffset:  CGFloat = 0
+    // Guided lesson: the dealer says "pick it up" → tap lifts the card (same LiftHalo
+    // the selection phases use) → "slide it up to me" → swipe. waitingForCardLift gates
+    // the tap; cardLifted drives the shared lift affordance.
+    @State private var waitingForCardLift:    Bool    = false
+    @State private var cardLifted:            Bool    = false
+    @State private var liftTeachTask: Task<Void, Never>? = nil
 
     // MARK: — Beat 3 greeting
 
@@ -80,6 +84,7 @@ struct NamePhase: View {
     @State private var greetingAlpha: Double = 0.0
     @State private var nameVisible:   Bool   = false
 
+    @State private var impactSoft   = UIImpactFeedbackGenerator(style: .soft)
     @State private var impactMedium = UIImpactFeedbackGenerator(style: .medium)
     @State private var impactHeavy  = UIImpactFeedbackGenerator(style: .heavy)
 
@@ -105,10 +110,11 @@ struct NamePhase: View {
             // Layer 2 — always present
             cardLayer()
 
-            // Layer 3 — dealer copy, one line at a time via shuffle transitions
-            if !dealerDisplayed.isEmpty {
-                dealerCopyView
-            }
+            // Layer 3 — dealer copy, one line at a time via shuffle transitions.
+            // Always mounted (empty Text renders nothing) — gating on
+            // dealerDisplayed unmounted the view during shuffleEnterDealer,
+            // so the 0.2s slide-in animated nothing and lines popped in.
+            dealerCopyView
 
             // Layer 4 — Beat 3 greeting (replaces dealer copy after submit)
             if showGreeting {
@@ -121,18 +127,6 @@ struct NamePhase: View {
                     .opacity(uiAlpha)
             }
 
-            // Layer 6 — swipe-up chevron: appears after return demo, disappears on swipe
-            if waitingForCardReturn {
-                Image(systemName: AppIcons.chevronUp)
-                    .font(AppFonts.body(18, weight: .semibold, relativeTo: .title3))
-                    .foregroundStyle(AppColors.spectrumText)
-                    .position(
-                        x: screenSize.width  / 2,
-                        y: screenSize.height * 0.55 - cardHeight / 2 - AppSpacing.lg
-                    )
-                    .transition(.opacity.animation(AppAnimation.standard))
-                    .allowsHitTesting(false)
-            }
         }
         .frame(width: screenSize.width, height: screenSize.height)
         .gesture(
@@ -143,17 +137,22 @@ struct NamePhase: View {
                 }
         )
         .onAppear {
+            director.hideDealerLine()   // clear any canvas line carried over from Demo's exit
             dealTask = Task { await runDealerIntro() }
         }
         .onDisappear {
             dealerTypingTask?.cancel()
             dealerTypingTask = nil
             dealTask?.cancel()
+            liftTeachTask?.cancel()
+            liftTeachTask = nil
             inputFocusTask?.cancel()
             inputFocusTask = nil
             keyAnimationTask?.cancel()
             keyAnimationTask = nil
             waitingForCardReturn  = false
+            waitingForCardLift    = false
+            cardLifted            = false
             cardReturnHintOffset  = 0
         }
     }
@@ -224,14 +223,21 @@ struct NamePhase: View {
         }
         .drawingGroup()
         .frame(width: cardWidth, height: cardHeight)
+        // Shared lift affordance — the exact spectrum ring the selection phases use,
+        // so the gesture the dealer teaches here transfers to them by sight.
+        // The lift itself is driven through cardOffset/cardScale (see handleLiftTap),
+        // matching ThreeCardFanController.lift — y 0.42, scale 1.12, on cardLift.
+        .overlay(LiftHalo(visible: cardLifted))
         .scaleEffect(x: flipScaleX, y: 1.0)
         .scaleEffect(cardScale)
         .rotationEffect(.degrees(cardAngle))
         .offset(cardOffset)
         // Return-demo drift — upward hint applied on top of positional offset
         .offset(y: cardReturnHintOffset)
-        .blur(radius: cardBlur)
         .opacity(cardAlpha * cardScreenAlpha)
+        // Tap the card to pick it up (only live during the guided lesson; a drag
+        // still bubbles to the screen-level swipe handler).
+        .onTapGesture { handleLiftTap() }
     }
 
     // MARK: — Dealer zone (name input — no header)
@@ -284,13 +290,11 @@ struct NamePhase: View {
                 }
 
                 // ── Write line bounce ─────────────────────────────
-                withAnimation(.interpolatingSpring(stiffness: 600, damping: 12)) {
-                    lineBounce = -3.0
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-                    withAnimation(.interpolatingSpring(stiffness: 400, damping: 18)) {
-                        lineBounce = 0
-                    }
+                // Single self-settling spring — the old asyncAfter(0.08) settle
+                // fired uncancelled after teardown on a fast submit.
+                lineBounce = -3.0
+                withAnimation(.interpolatingSpring(stiffness: 320, damping: 16)) {
+                    lineBounce = 0
                 }
 
                 // No auto-submit — user commits via Done key or swipe up.
@@ -356,13 +360,18 @@ struct NamePhase: View {
 
     // MARK: — Dealer copy view
 
+    /// Vertical anchor for the dealer copy. At rest it sits at 0.22; once the card is
+    /// lifted (the swipe-up step) it rises to 0.16 — the same anchor the selection phases
+    /// (ModeSelect / ExperienceLevel) use for their lift copy — so it clears the hovered
+    /// card and the lesson matches what those phases do by sight. Animates in sync with
+    /// the lift because `cardLifted` flips inside the cardLift withAnimation.
+    private var dealerCopyY: CGFloat {
+        cardLifted ? screenSize.height * 0.16 : screenSize.height * 0.22
+    }
+
     private var dealerCopyView: some View {
         Text(dealerDisplayed)
-            .font(Font.custom(
-                AppDealerTyping.fontName,
-                size: AppDealerTyping.fontSize,
-                relativeTo: .title2
-            ))
+            .font(AppDealerTyping.font)
             .foregroundStyle(AppColors.textPrimary)
             .multilineTextAlignment(.center)
             .frame(width: screenSize.width * 0.82)
@@ -370,7 +379,7 @@ struct NamePhase: View {
             .offset(y: dealerOffsetY)
             .position(
                 x: screenSize.width / 2,
-                y: screenSize.height * 0.22
+                y: dealerCopyY
             )
     }
 
@@ -384,11 +393,7 @@ struct NamePhase: View {
     private var greetingView: some View {
         VStack(spacing: AppSpacing.xs) {
             Text("Welcome to the table,")
-                .font(Font.custom(
-                    AppDealerTyping.fontName,
-                    size: AppDealerTyping.fontSize,
-                    relativeTo: .title2
-                ))
+                .font(AppDealerTyping.font)
                 .foregroundStyle(AppColors.textPrimary)
 
             if nameVisible {
@@ -436,6 +441,20 @@ struct NamePhase: View {
         dealerOffsetY   = 0
     }
 
+    /// Gentle exit for the lift-lesson prompt: the line drifts up and fades on a long
+    /// ease-out so it "floats away," rather than snapping out like the shuffle swap.
+    @MainActor
+    private func floatAwayDealer() async {
+        withAnimation(AppDealerTyping.floatAwayAnim) {
+            dealerAlpha   = 0.0
+            dealerOffsetY = AppDealerTyping.floatAwayDrift
+        }
+        try? await Task.sleep(for: .milliseconds(AppDealerTyping.floatAwayMs))
+        guard !Task.isCancelled else { return }
+        dealerDisplayed = ""
+        dealerOffsetY   = 0
+    }
+
     @MainActor
     private func shuffleEnterDealer() async {
         dealerAlpha   = 0.0
@@ -446,7 +465,10 @@ struct NamePhase: View {
             dealerAlpha   = 1.0
             dealerOffsetY = 0
         }
-        try? await Task.sleep(for: .milliseconds(AppDealerTyping.shuffleEnterMs))
+        // Short beat, NOT the full enter duration — the first characters type
+        // while the container is still gliding in, so the entrance reads as
+        // motion. Waiting the slide out meant it animated an empty Text.
+        try? await Task.sleep(for: .milliseconds(AppDealerTyping.shuffleGapMs))
     }
 
     @MainActor
@@ -464,93 +486,36 @@ struct NamePhase: View {
 
     @MainActor
     private func runDealerIntro() async {
-        // Wait for Segment 1 to complete:
-        // 900ms void + 1600ms table fade = 2500ms
-        try? await Task.sleep(for: .milliseconds(2500))
+        try? await Task.sleep(for: .milliseconds(500))
         guard !Task.isCancelled else { return }
 
-        // ── Line 1 ────────────────────────────────────────────────
-        dealerDisplayed = ""
-        await shuffleEnterDealer()
-        guard !Task.isCancelled else { return }
-
-        await typeDealerLine("The things worth learning about yourself...")
-        guard !Task.isCancelled else { return }
-
-        try? await Task.sleep(for: .milliseconds(AppDealerTyping.hangLong))
-        guard !Task.isCancelled else { return }
-
-        await shuffleExitDealer()
-        guard !Task.isCancelled else { return }
-
-        // ── Line 2 ────────────────────────────────────────────────
-        dealerDisplayed = ""
-        await shuffleEnterDealer()
-        guard !Task.isCancelled else { return }
-
-        await typeDealerLine("they rarely surface on their own.")
-        guard !Task.isCancelled else { return }
-
-        try? await Task.sleep(for: .milliseconds(AppDealerTyping.hangMedium))
-        guard !Task.isCancelled else { return }
-
-        await shuffleExitDealer()
-        guard !Task.isCancelled else { return }
-
-        // ── Card deals silently during gap ────────────────────────
-        // Card is in flight while line 3 types — arrives on table
-        // before the flip fires. No await — runs in background.
-        try? await Task.sleep(for: .milliseconds(200))
-        guard !Task.isCancelled else { return }
-
+        // ── Card deals while Line 1 types ─────────────
         Task { await dealCard() }
-
-        try? await Task.sleep(for: .milliseconds(300))
-        guard !Task.isCancelled else { return }
-
-        // ── Line 3 ────────────────────────────────────────────────
+        
         dealerDisplayed = ""
         await shuffleEnterDealer()
         guard !Task.isCancelled else { return }
-
-        await typeDealerLine("Consider this your introduction.")
+        await typeDealerLine("That's a good place to begin.")
         guard !Task.isCancelled else { return }
-
+        
+        // Wait a short breath after typing.
         try? await Task.sleep(for: .milliseconds(AppDealerTyping.hangShort))
         guard !Task.isCancelled else { return }
 
-        dealerLine3Done = true
-
-        // 200ms breath
-        try? await Task.sleep(for: .milliseconds(200))
-        guard !Task.isCancelled else { return }
-
-        // ── Center + fade + flip — safe sequential fire ───────────
-        //
-        // centerCard() fires its spring animation and returns immediately —
-        // the card is sliding to center while the next lines execute.
-        //
-        // fadeFinalDealer() fires the fade animation, waits 350ms for it
-        // to complete, then clears the text. During that 350ms the card
-        // is still sliding (spring: 0.72s). Both animations are in flight
-        // simultaneously with zero concurrency risk.
-        //
-        // performFlipWithBurst() starts after the fade settles — the card
-        // is centered (or very nearly so) at this point.
         await centerCard()
-        await fadeFinalDealer()
+        try? await Task.sleep(for: .milliseconds(420))
+        guard !Task.isCancelled else { return }
         await performFlipWithBurst()
         guard !Task.isCancelled else { return }
 
-        // 300ms — typewriter face briefly visible before Beat 2
+        // 300ms — typewriter face briefly visible before Line 2
         try? await Task.sleep(for: .milliseconds(300))
         guard !Task.isCancelled else { return }
 
         // ── Beat 2 dealer copy ────────────────────────────────────
-        // "Let's get acquainted." types and stays on screen.
-        // It does NOT fade before the keyboard rises.
-        // submitName() clears it instantly when the user submits.
-        dealerDisplayed = ""
+        await shuffleExitDealer()
+        guard !Task.isCancelled else { return }
+        
         await shuffleEnterDealer()
         guard !Task.isCancelled else { return }
         await typeDealerLine("Let's get acquainted.")
@@ -562,9 +527,12 @@ struct NamePhase: View {
         // Beat 2 copy remains visible at 0.22.
         // TextField rises at 0.30 — 56pt clear of the copy bottom.
         dealPhase = .nameInput
-        director.placeGenderCardSilently(screenSize: screenSize)
+        // (Removed director.gender.placeCardSilently — a cross-phase reach into the
+        // gender sequencer that wrote a pendingCard nothing ever reads. GenderPhase
+        // crystallises its card from dissolution state, not pendingCard.)
         withAnimation(.easeOut(duration: 0.52)) { uiAlpha = 1.0 }
         impactHeavy.prepare()
+        impactSoft.prepare()
         try? await Task.sleep(for: .milliseconds(200))
         guard !Task.isCancelled else { return }
         nameFieldFocused = true
@@ -675,10 +643,16 @@ struct NamePhase: View {
                 height: cornerY - screenSize.height / 2
             )
             cardScale = AppLayout.cornerDeckWidth / cardWidth
+        }
+        // Alpha rides its own late curve: the card stays visible for ~90% of
+        // the travel and dissolves INTO the deck. Fading alongside the whole
+        // flight made it vanish in ~0.15s — the handoff never visibly arrived.
+        withAnimation(.easeIn(duration: 0.2).delay(0.32)) {
             cardAlpha = 0
         }
 
-        try? await Task.sleep(for: .milliseconds(380))
+        // Pulse the deck as the card lands (travel ends at 520ms), not before.
+        try? await Task.sleep(for: .milliseconds(480))
 
         director.receiveCredential(.name)
     }
@@ -772,47 +746,69 @@ struct NamePhase: View {
             try? await Task.sleep(for: .milliseconds(800))
 
             withAnimation(AppAnimation.textProject.reduceMotionSafe) { greetingAlpha = 0.0 }
-            try? await Task.sleep(for: .milliseconds(350))
+            // Full textProject duration — unmounting at 350ms cut the fade.
+            try? await Task.sleep(for: .milliseconds(500))
             showGreeting = false
             nameVisible  = false
 
-            // Flip back to card back
-            await performFlipBack()
-            try? await Task.sleep(for: .milliseconds(200))
+            // Card stays FACE UP through the lesson — the user picks up and hands back
+            // their own card, exactly like the face-up cards in the selection phases.
 
-            // ── Return demo — dealer asks, card demonstrates swipe-up twice ────
+            // ── The dealer's one-time lesson: how cards work at his table ──────
             //
-            // This is the gesture tutorial for the entire flow. The dealer asks
-            // for the card back; the card drifts upward twice so even a first-time
-            // user understands exactly what "slide it up" means. Every subsequent
-            // credential phase closes the same way — no re-teaching required.
+            // He walks the user through the two gestures the whole flow uses —
+            // tap to pick a card up, swipe up to hand it to him — on their first
+            // card. Step 1 here ("pick it up"); the tap handler lifts the card and
+            // continues to step 2 ("slide it up to me"). Every later phase reuses
+            // the identical LiftHalo + swipe, so this teaches the entire onboarding.
             dealerDisplayed = ""
             await shuffleEnterDealer()
-            await typeDealerLine("May I have that back?")
+            await typeDealerLine("Tap the card to pick it up.")
+            try? await Task.sleep(for: .milliseconds(300))
 
-            if !reduceMotion {
-                // Demo 1 — light upward drift + spring return
-                try? await Task.sleep(for: .milliseconds(320))
-                withAnimation(.easeOut(duration: 0.30)) {
-                    cardReturnHintOffset = -(cardHeight * 0.12)
-                }
-                try? await Task.sleep(for: .milliseconds(420))
-                withAnimation(AppAnimation.spring) { cardReturnHintOffset = 0 }
-                try? await Task.sleep(for: .milliseconds(480))
-
-                // Demo 2 — same motion, slightly more deliberate
-                withAnimation(.easeOut(duration: 0.30)) {
-                    cardReturnHintOffset = -(cardHeight * 0.12)
-                }
-                try? await Task.sleep(for: .milliseconds(420))
-                withAnimation(AppAnimation.spring) { cardReturnHintOffset = 0 }
-                try? await Task.sleep(for: .milliseconds(300))
-            }
-
-            // Dealer line stays on screen. Chevron appears via Layer 6 transition.
-            // Task ends here — gesture resumes the sequence.
-            waitingForCardReturn = true
+            // Hand off to the tap. Task ends here; handleLiftTap() drives the rest.
+            waitingForCardLift = true
         }
+    }
+
+    // MARK: — Guided lesson (tap to lift, then swipe to hand back)
+
+    /// Step 1 → 2: the user taps the card. It lifts with the shared affordance,
+    /// then the dealer prompts the swipe.
+    @MainActor
+    private func handleLiftTap() {
+        guard waitingForCardLift else { return }
+        waitingForCardLift = false
+        impactSoft.impactOccurred()
+        // Lift exactly like the selection phases (ThreeCardFanController.lift): the
+        // card rises to screen y = 0.42, centered, scaled 1.12, on cardLift.
+        withAnimation(AppAnimation.cardLift.reduceMotionSafe) {
+            cardLifted = true
+            cardOffset = CGSize(width: 0, height: screenSize.height * 0.42 - screenSize.height / 2)
+            cardScale  = 1.12
+        }
+
+        liftTeachTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(420))   // let the lift settle
+            guard !Task.isCancelled else { return }
+            await teachSwipeUp()
+        }
+    }
+
+    /// Step 2: the dealer asks for the card, then the swipe becomes live
+    /// (waitingForCardReturn shows the chevron and routes handleSwipe → return).
+    @MainActor
+    private func teachSwipeUp() async {
+        // Let the "Tap the card" line float away — a gentle upward drift + fade, instead
+        // of the quick shuffle-swap used between ordinary lines — then the next line enters.
+        await floatAwayDealer()
+        guard !Task.isCancelled else { return }
+        await shuffleEnterDealer()
+        guard !Task.isCancelled else { return }
+        await typeDealerLine("Now swipe up to hand it to me.")
+        guard !Task.isCancelled else { return }
+        try? await Task.sleep(for: .milliseconds(300))
+        waitingForCardReturn = true
     }
 
     // MARK: — Complete card return (called by swipe-up gesture after demo)
@@ -822,21 +818,24 @@ struct NamePhase: View {
         // Snap any residual hint offset
         cardReturnHintOffset = 0
 
-        // Clear dealer line
+        // Fade the dealer line — text is cleared after the collect (≥350ms),
+        // so the fade renders instead of the view emptying on the same frame.
         withAnimation(AppDealerTyping.finalFadeAnim) { dealerAlpha = 0 }
-        dealerDisplayed = ""
 
         impactHeavy.impactOccurred()
 
         Task { @MainActor in
             await performCardCollect()
 
+            dealerDisplayed = ""
+            dealerAlpha     = 1.0
+
             assert(
                 !director.cornerDeckCards.isEmpty,
                 "cornerDeckCards must have ≥1 card before advancing to modeSelect"
             )
 
-            try? await Task.sleep(for: .milliseconds(420))
+            try? await Task.sleep(for: .milliseconds(250))
             director.advance(to: .modeSelect)
         }
     }

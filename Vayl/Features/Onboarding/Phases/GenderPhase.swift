@@ -4,16 +4,19 @@
 // All visual state lives on VaylDirector.
 //
 // View contract:
-//   .onAppear  → director.startGenderSequence(screenSize:)
-//   .onDisappear → director.cancelGenderSequence()
+//   .onAppear  → director.gender.startSequence(screenSize:)
+//   .onDisappear → director.gender.cancelSequence()
 //
-// Segment 1 — Card rises from table (crystallisation)
-// Segment 2 — Dealer line + auto flip → RadioTunerCardFace revealed
-// Segment 3 — Power-on beat → two drum pickers appear
-// Segment 4 — User tunes left drum (gender) + right drum (pronouns)
-//             Dials on card face track progress in real time.
-//             When both settled: signal locks, "Found it." dealer line.
-// Segment 5 — Swipe up to confirm → card pockets → .experienceLevel
+// Segment 1 — Card crystallises out of the felt; dealer line types DURING
+//             formation (canvas-projected — one dealer voice for all phases)
+// Segment 2 — Auto flip → RadioTunerCardFace revealed → drum pickers appear
+// Segment 3 — User tunes left drum (gender) + right drum (pronouns).
+//             Dials on card face track progress in real time. Defaults are a
+//             valid selection — nothing is gated on drum interaction.
+//             Both drums settled on a choice: signal locks + "lined up" thud.
+// Segment 4 — Tap card to lift (LiftHalo, drums fade) → swipe up to confirm →
+//             card flies to the corner deck → .experienceLevel.
+//             Tap the lifted card again to set it down and keep tuning.
 
 import SwiftUI
 
@@ -30,6 +33,7 @@ struct GenderPhase: View {
     @State private var drumBaseOffset:   CGFloat = 0   // settled strip offset; resets on picker appear
     @State private var drumDragOffset:   CGFloat = 0   // live delta during current drag
     @State private var confirmedTrigger:      Bool                    = false
+    @State private var liftHaptic:            Bool                    = false  // .selection on lift/lower, sibling parity
     @State private var hintOffset:            CGFloat                 = 0    // live y-offset for the swipe-hint flick (negative = upward)
     @State private var hintTask:              Task<Void, Never>?      = nil  // intermittent flick loop; cancelled on grab / re-scroll
     @State private var lastCenteredIndex:     Int                     = 0    // tracks previous item for selection haptic
@@ -63,12 +67,9 @@ struct GenderPhase: View {
             // Bloom behind card — Canvas drawn, zero hit-testing
             bloomLayer
 
-            // Dealer line + card — both gated on genderCardVisible.
-            // .transition(.opacity) lets withAnimation(cardPocket) in confirmGenderSelection
-            // animate the removal using the active animation context.
-            if director.genderCardVisible {
-                dealerLineLayer
-                    .transition(.opacity)
+            // Card — gated on genderCardVisible. The dealer line is canvas-projected
+            // (ProjectedTextView via the stage) — no phase-local dealer text.
+            if director.gender.cardVisible {
                 cardLayer
                     .transition(.opacity)
             }
@@ -78,19 +79,27 @@ struct GenderPhase: View {
         }
         .frame(width: screenSize.width, height: screenSize.height)
         .sensoryFeedback(.success, trigger: confirmedTrigger)
-        .onAppear   { director.startGenderSequence(screenSize: screenSize, reduceMotion: reduceMotion) }
-        .onDisappear { director.cancelGenderSequence() }
-        .onChange(of: director.genderShouldPocket) { _, pocket in
-            // Director has animated card away (cardPocket ≈ 520ms).
-            // Wait for the animation to complete then advance the phase.
-            // 600ms = 520ms animation + 80ms buffer for frame jitter on slower devices.
+        .sensoryFeedback(.selection, trigger: liftHaptic)
+        .sensoryFeedback(.impact(weight: .medium), trigger: director.gender.lockThudTrigger)
+        .onAppear   { director.gender.startSequence(screenSize: screenSize, reduceMotion: reduceMotion) }
+        .onDisappear { director.gender.cancelSequence() }
+        .onChange(of: director.gender.shouldPocket) { _, pocket in
+            // Card is flying to the corner deck (cardPocket ≈ 520ms). Credit the
+            // deck as it lands — the pulse is the arrival, not a forecast of it.
             guard pocket else { return }
             Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(600))
+                try? await Task.sleep(for: .milliseconds(480))
+                director.receiveCredential(.gender)
+                try? await Task.sleep(for: .milliseconds(270))
+                // Heal the felt — the card has landed in the deck, so the
+                // dissolution flow-around must stop deflecting the topo lines
+                // before the table carries into ExperienceLevel. (Reset under the
+                // advance cross-fade; if it reads abrupt on device, tick it down.)
+                director.gender.resetDissolution()
                 director.advance(to: .experienceLevel)
             }
         }
-        .onChange(of: director.genderSwipeHintActive) { _, active in
+        .onChange(of: director.gender.swipeHintActive) { _, active in
             hintTask?.cancel()
             guard active, !reduceMotion else {
                 // Stopped (user grabbed the card or re-scrolled the drum) — settle back to rest Y.
@@ -114,30 +123,13 @@ struct GenderPhase: View {
         }
     }
 
-    // MARK: — Dealer Line
-
-    /// Copy sourced from director.genderDealerLine — no raw strings in View.
-    /// Positioned above the card top edge by AppSpacing.xl.
-    /// Opacity is driven by director.genderDealerLineVisible via the director's
-    /// withAnimation(AppAnimation.textProject) — no explicit animation modifier needed here.
-    private var dealerLineLayer: some View {
-        Text(director.genderDealerLine)
-            .font(AppFonts.prompt)
-            .foregroundStyle(AppColors.textSecondary)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, AppSpacing.xl)
-            .opacity(director.genderDealerLineVisible ? 1.0 : 0.0)
-            .offset(y: director.genderCardOffset.height - cardHeight / 2 - AppSpacing.xl)
-            .allowsHitTesting(false)
-    }
-
     // MARK: — Bloom
 
     /// Dimensional disturbance — radiates from card center as topo lines flow around it.
-    /// Driven by director.dissolutionFlowOut — peaks as the card boundary becomes real.
+    /// Driven by director.gender.dissolutionFlowOut — peaks as the card boundary becomes real.
     private var bloomLayer: some View {
         Canvas { context, size in
-            let opacity = director.dissolutionFlowOut
+            let opacity = director.gender.dissolutionFlowOut
             guard opacity > 0 else { return }
 
             let cardCenterY = size.height * AppLayout.obGenderCardRestYFrac
@@ -178,8 +170,8 @@ struct GenderPhase: View {
     /// Blur on the whole stack starts at 28 (felt-level) and clears as the card sharpens.
     /// No `.drawingGroup()` on the outer ZStack — VaylCardBack/Face each rasterise themselves.
     private var cardLayer: some View {
-        let density = director.dissolutionDensity
-        let sharp   = director.dissolutionSharp
+        let density = director.gender.dissolutionDensity
+        let sharp   = director.gender.dissolutionSharp
 
         // 28 — Rendering constant. Felt-level blur at sharp=0; 0 when fully crystallised.
         let blur = CGFloat(28.0 * (1.0 - sharp))
@@ -202,13 +194,13 @@ struct GenderPhase: View {
 
             // ── Layer 3: card face / back ───────────────────────────────────────
             // Conditional flip handled here — flip logic driven by director.
-            if !director.genderCardFaceUp {
+            if !director.gender.cardFaceUp {
                 // hex and wordmark params wire into VaylCardBack — defaults preserve
                 // existing behaviour at dissolution=1.0 (angle=8°, spacing=1.0, mark=1.0).
                 VaylCardBack(
-                    hexAngleOverride: CGFloat(director.dissolutionHexAngle),
-                    hexSpacingMul:    CGFloat(director.dissolutionHexSpacing),
-                    wordmarkOpacity:  director.dissolutionMark
+                    hexAngleOverride: CGFloat(director.gender.dissolutionHexAngle),
+                    hexSpacingMul:    CGFloat(director.gender.dissolutionHexSpacing),
+                    wordmarkOpacity:  director.gender.dissolutionMark
                 )
                 .opacity(density * sharp)
             } else {
@@ -217,13 +209,13 @@ struct GenderPhase: View {
                         RadioTunerCardFace(
                             cardWidth:         cardWidth,
                             cardHeight:        cardHeight,
-                            signalStrength:    director.genderSignalStrength,
+                            signalStrength:    director.gender.signalStrength,
                             scanPhase:         Double(drumBaseOffset + drumDragOffset
                                                     + pronounsBaseOffset + pronounsDragOffset),
-                            leftDialProgress:  director.genderOptions.isEmpty ? 0 :
-                                Double(director.genderSelectedIndex) / Double(max(1, director.genderOptions.count - 1)),
-                            rightDialProgress: director.genderPronounsOptions.isEmpty ? 0 :
-                                Double(director.genderPronounsSelectedIndex) / Double(max(1, director.genderPronounsOptions.count - 1))
+                            leftDialProgress:  director.gender.options.isEmpty ? 0 :
+                                Double(director.gender.selectedIndex) / Double(max(1, director.gender.options.count - 1)),
+                            rightDialProgress: director.gender.pronounsOptions.isEmpty ? 0 :
+                                Double(director.gender.pronounsSelectedIndex) / Double(max(1, director.gender.pronounsOptions.count - 1))
                         )
                     )
                     .opacity(density * sharp)
@@ -231,28 +223,49 @@ struct GenderPhase: View {
         }
         .blur(radius: blur)
         .frame(width: cardWidth, height: cardHeight)
-        .scaleEffect(x: director.genderCardFlipScaleX, y: 1.0)
+        // Lift affordance — the same ring taught in NamePhase. Scales with the card.
+        .overlay(LiftHalo(visible: director.gender.cardLifted))
+        .scaleEffect(x: director.gender.cardFlipScaleX, y: 1.0)
+        .scaleEffect(director.gender.cardScale)
+        .opacity(director.gender.cardAlpha)
+        // Tap-to-lift → swipe-up — the grammar taught in NamePhase. Tap again
+        // while lifted to set the card down and keep tuning the drums.
+        .onTapGesture {
+            if director.gender.cardLifted {
+                liftHaptic.toggle()
+                withAnimation(AppAnimation.cardLift.reduceMotionSafe) {
+                    director.gender.lowerCard(screenSize: screenSize)
+                }
+            } else if director.gender.pickerVisible {
+                liftHaptic.toggle()
+                withAnimation(AppAnimation.cardLift.reduceMotionSafe) {
+                    director.gender.liftCard(screenSize: screenSize)
+                }
+            }
+        }
         .gesture(
             DragGesture(minimumDistance: 30)
                 .onChanged { _ in
-                    // User has grabbed the card — kill the swipe hint immediately.
-                    guard director.genderBothSettled else { return }
-                    director.endGenderSwipeHint()
+                    // User has grabbed the lifted card — kill the swipe hint immediately.
+                    guard director.gender.cardLifted else { return }
+                    director.gender.endSwipeHint()
                 }
                 .onEnded { value in
-                    // Only active after both drums have settled.
-                    guard director.genderBothSettled else { return }
-                    // Require an upward swipe (negative height) with limited horizontal drift.
-                    guard value.translation.height < -55  else { return }
+                    // Swipe-up confirms only while lifted (sibling-phase gate:
+                    // distance OR a committed flick, limited horizontal drift).
+                    guard director.gender.cardLifted else { return }
+                    let dy  = value.translation.height
+                    let pdy = value.predictedEndTranslation.height
+                    guard dy < -cardHeight * 0.14 || pdy < -cardHeight * 0.5 else { return }
                     guard abs(value.translation.width) < 80 else { return }
                     confirmedTrigger.toggle()   // triggers .sensoryFeedback(.success) in body
-                    director.confirmGenderSelection(pronouns: nil)
+                    director.gender.confirmSelection(screenSize: screenSize, cardWidth: cardWidth)
                 }
         )
         // Swipe-hint flick — pure upward translation that intermittently
-        // throws the card up and springs it home, demonstrating the swipe gesture.
+        // throws the lifted card up and springs it home, cueing the confirm swipe.
         // hintOffset is driven by the intermittent loop in .onChange(genderSwipeHintActive).
-        .offset(director.genderCardOffset)
+        .offset(director.gender.cardOffset)
         .offset(y: hintOffset)
     }
 
@@ -266,7 +279,9 @@ struct GenderPhase: View {
     /// Strip offset that centres item 0 in the 3-item window.
     /// Formula: (n-1)/2 items of padding above item 0 when n is odd.
     private var drumInitialOffset: CGFloat {
-        CGFloat((director.genderOptions.count - 1) / 2) * drumItemH
+        // Float division — integer (n-1)/2 drops half a slot for even counts (see
+        // pronounsInitialOffset). Identical at the current 5 options; correct if a 6th is added.
+        CGFloat(director.gender.options.count - 1) / 2.0 * drumItemH
     }
 
     /// Scroll position passed to the director (0 = first item, grows as user scrolls forward).
@@ -277,7 +292,7 @@ struct GenderPhase: View {
     /// Index of the option currently closest to the selection band.
     /// Derived from drumBaseOffset + drumDragOffset (no autonomous spin to track).
     private var currentCenteredIndex: Int {
-        let n = director.genderOptions.count
+        let n = director.gender.options.count
         guard n > 0 else { return 0 }
         let raw = (drumInitialOffset - drumBaseOffset - drumDragOffset) / drumItemH
         return max(0, min(n - 1, Int(raw.rounded())))
@@ -286,7 +301,7 @@ struct GenderPhase: View {
     private var pronounsInitialOffset: CGFloat {
         // Float division required — (n-1)/2.0 correctly centres item 0 for even-count lists.
         // Integer division (n-1)/2 is off by 0.5 slots for even n (6 pronouns → gap between items).
-        CGFloat(director.genderPronounsOptions.count - 1) / 2.0 * drumItemH
+        CGFloat(director.gender.pronounsOptions.count - 1) / 2.0 * drumItemH
     }
 
     private var pronounsScrollPosition: CGFloat {
@@ -294,7 +309,7 @@ struct GenderPhase: View {
     }
 
     private var pronounsCurrentCenteredIndex: Int {
-        let n = director.genderPronounsOptions.count
+        let n = director.gender.pronounsOptions.count
         guard n > 0 else { return 0 }
         let raw = (pronounsInitialOffset - pronounsBaseOffset - pronounsDragOffset) / drumItemH
         return max(0, min(n - 1, Int(raw.rounded())))
@@ -303,36 +318,36 @@ struct GenderPhase: View {
     /// Y-offset from ZStack centre to the drum centre.
     /// Positions the drum in the open space between the card top and the screen top.
     private var pickerOffsetY: CGFloat {
-        director.genderCardOffset.height - cardHeight / 2 - AppSpacing.xxl - drumWindowH / 2
+        director.gender.cardOffset.height - cardHeight / 2 - AppSpacing.xxl - drumWindowH / 2
     }
 
     // MARK: — Picker layer
 
     private var pickerLayer: some View {
         Group {
-            if director.genderPickerVisible {
+            if director.gender.pickerVisible {
                 HStack(spacing: AppSpacing.xl) {
                     drumPickerView(
-                        options:        director.genderOptions,
+                        options:        director.gender.options,
                         baseOffset:     $drumBaseOffset,
                         dragOffset:     $drumDragOffset,
                         lastCentered:   $lastCenteredIndex,
                         hapticGen:      drumHapticGen,
                         initialOffset:  drumInitialOffset,
                         centeredIndex:  currentCenteredIndex,
-                        onUpdate:       { director.updateGenderDrum(offset: $0) },
-                        onSettle:       { director.settleGenderDrum(index: $0) }
+                        onUpdate:       { director.gender.updateDrum(offset: $0) },
+                        onSettle:       { director.gender.settleDrum(index: $0) }
                     )
                     drumPickerView(
-                        options:        director.genderPronounsOptions,
+                        options:        director.gender.pronounsOptions,
                         baseOffset:     $pronounsBaseOffset,
                         dragOffset:     $pronounsDragOffset,
                         lastCentered:   $pronounsLastCentered,
                         hapticGen:      pronounsHapticGen,
                         initialOffset:  pronounsInitialOffset,
                         centeredIndex:  pronounsCurrentCenteredIndex,
-                        onUpdate:       { director.updateGenderPronounsDrum(offset: $0) },
-                        onSettle:       { director.settleGenderPronounsDrum(index: $0) }
+                        onUpdate:       { director.gender.updatePronounsDrum(offset: $0) },
+                        onSettle:       { director.gender.settlePronounsDrum(index: $0) }
                     )
                 }
                 .onAppear {
@@ -349,7 +364,13 @@ struct GenderPhase: View {
             }
         }
         .offset(y: pickerOffsetY)
-        .allowsHitTesting(director.genderPickerVisible)
+        // Drums fade while the card is lifted — the selection is "in hand."
+        // Opacity only (never unmount): pickerLayer.onAppear resets the drum
+        // base offsets, so unmounting on lift would wipe the user's selection
+        // position when the card is set back down.
+        .opacity(director.gender.cardLifted ? 0.0 : 1.0)
+        .animation(AppAnimation.standard.reduceMotionSafe, value: director.gender.cardLifted)
+        .allowsHitTesting(director.gender.pickerVisible && !director.gender.cardLifted)
     }
 
     // MARK: — Drum
@@ -421,7 +442,7 @@ struct GenderPhase: View {
         .gesture(
             DragGesture()
                 .onChanged { value in
-                    director.endGenderSwipeHint()
+                    director.gender.endSwipeHint()
                     dragOffset.wrappedValue = value.translation.height
                     let nowIdx = centeredIndex
                     if nowIdx != lastCentered.wrappedValue {

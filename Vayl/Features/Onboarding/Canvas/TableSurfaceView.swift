@@ -163,7 +163,10 @@ struct TableSurfaceView: View, Animatable {
             )
         }
         .opacity(fade)
-        .animation(AppAnimation.cinematicFade, value: fade)
+        // No .animation(value: fade) here — the Animatable conformance already
+        // interpolates fade per-frame under the CALLER's withAnimation curve.
+        // A view-level animation would retarget every interpolated frame and
+        // low-pass all table fades to ~cinematicFade regardless of caller intent.
         .allowsHitTesting(false)
         .ignoresSafeArea()
     }

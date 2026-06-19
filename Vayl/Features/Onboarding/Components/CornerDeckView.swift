@@ -16,8 +16,8 @@
 import SwiftUI
 
 /// The corner deck — top right of the OB canvas.
-/// Visible from NamePhase onward. Shows collected credential cards.
-/// Maximum 6 cards — one per OBCredential case.
+/// Visible from DemoPhase onward. Shows collected credential cards.
+/// Maximum 7 cards — one per OBCredential case.
 ///
 /// Full visual implementation — TODO:
 ///   - Spectrum hairline on each mini-card top edge
@@ -30,7 +30,7 @@ struct CornerDeckView: View {
     let screenSize: CGSize
     let deckPulse:  Bool
 
-    // Stack offsets for up to 6 cards — index 0 is front card
+    // Stack offsets for up to 7 cards — index 0 is front card
     // Physics constants — not tokens. These are specific to the
     // corner deck stacking geometry.
     private let stackOffsets: [(x: CGFloat, y: CGFloat, rot: Double)] = [
@@ -40,6 +40,7 @@ struct CornerDeckView: View {
         (-1,  -7, -0.8),  // card 4
         ( 0,  -9,  0.5),  // card 5
         (-1, -11, -0.3),  // card 6
+        ( 1, -13,  0.9),  // card 7
     ]
 
     var body: some View {
@@ -70,7 +71,7 @@ struct CornerDeckView: View {
 
             // Count label — only visible when cards present
             if !cards.isEmpty {
-                Text("\(cards.count) / 6")
+                Text("\(cards.count) / 7")
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textSecondary)
                     .offset(y: AppLayout.cornerDeckHeight / 2 + 6)

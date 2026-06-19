@@ -40,7 +40,15 @@ struct StatPhase: View {
     @State private var holoShiftPhase:  CGFloat = -0.35
     @State private var holoFlashOffset: CGFloat =  2.5
     @State private var glowPulseHigh  = false
-    @State private var castPulseHigh  = false
+
+    // Arrival ignition — one-time light-catch fired as the numeral seats (~0.76s).
+    @State private var igniteGlow:   Double  = 0     // additive glow bloom, 0 at rest
+    @State private var igniteSweepX: CGFloat = 2.5    // bright sweep parked off-screen right
+    @State private var softHaptic = UIImpactFeedbackGenerator(style: .soft)
+
+    // Ignition rendering constants — felt on device, not AppColors candidates.
+    private let kGlowBloomBoost: Double  = 0.40   // additive peak → ~0.80 composite over resting 0.40
+    private let kLandScaleFrom:  CGFloat = 0.90   // hero scales up from 0.90 as it seats
 
     // Entrance cascade — fires in sequence via startAllAnimations()
     @State private var showStat      = false
@@ -74,12 +82,9 @@ struct StatPhase: View {
             let usableH  = geo.size.height - safeArea.top - safeArea.bottom
             let scale    = usableH / kReferenceHeight
 
-            // TODO: 100/140/164pt outside AppFonts type scale.
-            // AppFonts.heroTitle (42pt) and displayHero (64pt) are the largest tokens.
-            // A dedicated AppFonts.statHero token is required. Tracked as spec gap.
-            let statFontSize: CGFloat = usableH <= 700
-                ? 100
-                : (screenW > 390 ? 164 : 140)
+            // Hero numeral size resolves from AppLayout (responsive by usable height +
+            // width) and renders via AppFonts.statHero — no inline literals in the View.
+            let statFontSize = AppLayout.statHeroSize(usableHeight: usableH, screenWidth: screenW)
 
             ZStack {
                 // Phase inherits void and atmosphere from OnboardingCanvasView.
@@ -132,9 +137,11 @@ struct StatPhase: View {
                                 hasAdvanced = true
                                 withAnimation(.easeOut(duration: 0.65)) { statAlpha = 0.0 }
                                 Task { @MainActor in
-                                    // Brief beat — just enough for the fade to land, not a hitch
-                                    try? await Task.sleep(for: .milliseconds(150))
-                                    director.advance(to: .name)
+                                    // Hold until the fade is ~88% done (easeOut) — the
+                                    // 0.3s phase cross-fade absorbs the tail. Advancing
+                                    // earlier unmounts the view and renders as a hard cut.
+                                    try? await Task.sleep(for: .milliseconds(450))
+                                    director.advance(to: .demo)
                                 }
                             }
                         )
@@ -153,7 +160,9 @@ struct StatPhase: View {
         .onAppear {
             guard !hasAnimated else { return }
             hasAnimated = true
+            softHaptic.prepare()
             startAllAnimations()
+            fireIgnitionOnLand()
         }
         .task {
             // One runloop after onAppear so SwiftUI commits the initial @State
@@ -165,11 +174,13 @@ struct StatPhase: View {
             holoShiftPhase  = 0.65
             holoFlashOffset = -0.5
             glowPulseHigh   = true
-            castPulseHigh   = true
         }
         .onDisappear {
             hasAnimated = false
             statAlpha   = 1.0
+            // Reset ignition so a re-entry (e.g. dev phase-jump) lands clean.
+            igniteGlow   = 0
+            igniteSweepX = 2.5
             // hasAdvanced intentionally NOT reset.
             // One-way latch — prevents double-fire of director.advance.
         }
@@ -196,7 +207,8 @@ struct StatPhase: View {
                 holoShiftPhase:  holoShiftPhase,
                 holoFlashOffset: holoFlashOffset,
                 glowPulseHigh:   glowPulseHigh,
-                castPulseHigh:   castPulseHigh,
+                igniteSweepX:    igniteSweepX,
+                igniteGlow:      igniteGlow,
                 fontSize:        statFontSize
             )
             .ambientAnimation(
@@ -211,12 +223,8 @@ struct StatPhase: View {
                 .easeInOut(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: true),
                 value: glowPulseHigh
             )
-            .ambientAnimation(
-                .easeInOut(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: true),
-                value: castPulseHigh
-            )
             .opacity(showStat ? 1 : 0)
-            .scaleEffect(showStat ? 1.0 : 0.94)
+            .scaleEffect(showStat ? 1.0 : kLandScaleFrom)
             .accessibilityLabel("1 in 5 Americans have engaged in consensual non-monogamy at some point in their lives.")
             .accessibilityAddTraits(.isStaticText)
             // Stat is a declaration, not a header — needs air below.
@@ -279,7 +287,6 @@ struct StatPhase: View {
             holoShiftPhase  = 0.3
             holoFlashOffset = 0
             glowPulseHigh   = true
-            castPulseHigh   = true
             showStat        = true
             showStatLabel   = true
             showCiteTap     = true
@@ -294,13 +301,36 @@ struct StatPhase: View {
         }
     }
 
+    // MARK: - Arrival Ignition
+    //
+    // Fires once, ~0.76s into the stat's land, so the light catches the numeral as it
+    // seats: a bright specular sweep crosses it, the glow blooms past its resting level
+    // then settles, and a soft haptic lands. Reduce motion: the soft tap still fires
+    // (haptics are not motion), but the sweep + bloom are skipped.
+
+    private func fireIgnitionOnLand() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(AppAnimation.statIgnitionDelay))
+            guard !hasAdvanced else { return }   // user already tapped Begin — don't ignite a leaving screen
+
+            softHaptic.impactOccurred()          // soft land tap
+            guard !reduceMotion else { return }  // skip the visual ignition under reduce motion
+
+            withAnimation(AppAnimation.statIgnitionSweep) { igniteSweepX = -2.5 }
+            withAnimation(AppAnimation.statGlowBloomIn)   { igniteGlow   = kGlowBloomBoost }
+            try? await Task.sleep(for: .seconds(AppAnimation.statGlowBloomHold))
+            withAnimation(AppAnimation.statGlowBloomSettle) { igniteGlow = 0 }
+        }
+    }
+
     // MARK: - Stat Number (Holographic "1 in 5")
 
     private struct StatNumberView: View {
         let holoShiftPhase:  CGFloat
         let holoFlashOffset: CGFloat
         let glowPulseHigh:   Bool
-        let castPulseHigh:   Bool
+        let igniteSweepX:    CGFloat   // bright one-time sweep position (parked off-screen at rest)
+        let igniteGlow:      Double    // additive ignition bloom opacity (0 at rest)
 
         var fontSize: CGFloat = 140
 
@@ -311,32 +341,19 @@ struct StatPhase: View {
         private let kGlowPulseHigh: CGFloat = 0.40  // breathe peak — glow without washing out numeral
         private let kGlowPulseLow:  CGFloat = 0.25  // breathe floor — minimum presence at rest
 
-        // Cast shadow pulse opacity. Same rationale as glow breathe constants.
-        private let kCastPulseHigh: CGFloat = 1.00  // shadow at full presence when numeral breathes up
-        private let kCastPulseLow:  CGFloat = 0.70  // 70% retains shadow at rest without disappearing
-
         // Specular highlight physics constants. Simulate light reflectance on a
         // holographic surface — not semantic tokens, not design decisions.
         private let kSpecularPrimary:   CGFloat = 0.30  // primary highlight peak
         private let kSpecularSecondary: CGFloat = 0.18  // secondary highlight
 
-        // Cast shadow radial gradient opacity stops. Atmospheric rendering constants.
-        private let kCastShadowPrimary:   CGFloat = 0.18  // cast shadow primary stop
-        private let kCastShadowSecondary: CGFloat = 0.10  // cast shadow secondary stop
-
         private var fnt: Font {
-            AppFonts.display(fontSize, weight: .bold, relativeTo: .largeTitle)
+            AppFonts.statHero(fontSize)
         }
 
         // -3.2 × (fontSize / 140) — tracking scaled proportionally to font size.
         // -3.2 is the base tracking at 140pt. Geometry-relative constant, not
         // an AppSpacing candidate — letterform spacing, not UI element spacing.
         private var trk: CGFloat { -3.2 * (fontSize / 140) }
-
-        // Cast ellipse geometry — all proportional to fontSize.
-        private var castWidth:  CGFloat { 300 * (fontSize / 140) }
-        private var castHeight: CGFloat { 55  * (fontSize / 140) }
-        private var castOffset: CGFloat { 70  * (fontSize / 140) }
 
         // Negative padding prevents the blurred glow duplicate from hard-clipping
         // at the view boundary. Rendering artefact bleed offset — not a spacing token.
@@ -377,18 +394,14 @@ struct StatPhase: View {
                     .padding(kGlowBleedPad)
                     .accessibilityHidden(true)
 
-                // Ground cast shadow — ellipse beneath numeral.
-                Ellipse()
-                    .fill(RadialGradient(stops: [
-                        .init(color: AppColors.accentSecondary.opacity(kCastShadowPrimary),   location: 0),
-                        .init(color: AppColors.accentPrimary.opacity(kCastShadowSecondary),   location: 0.4),
-                        .init(color: .clear, location: 0.7)
-                    ], center: .center, startRadius: 0, endRadius: 150))
-                    .frame(width: castWidth, height: castHeight)
-                    .blur(radius: 20)
-                    .scaleEffect(x: castPulseHigh ? 1.12 : 1.0, y: 1.0)
-                    .opacity(castPulseHigh ? kCastPulseHigh : kCastPulseLow)
-                    .offset(y: castOffset)
+                // Ignition bloom — additive blurred duplicate that swells once on land,
+                // boosting the resting glow to its ignition peak, then settles to 0.
+                baseText
+                    .foregroundStyle(.clear)
+                    .overlay { activeGradient.mask { baseText } }
+                    .blur(radius: 16)
+                    .opacity(igniteGlow)
+                    .padding(kGlowBleedPad)
                     .accessibilityHidden(true)
 
                 // Core gradient numeral — visual representation only.
@@ -418,6 +431,27 @@ struct StatPhase: View {
                         )
                         .frame(width: 800)
                         .offset(x: holoFlashOffset * 320)
+                        .mask { baseText }
+                    }
+                    .clipped()
+                    .accessibilityHidden(true)
+
+                // Ignition sweep — one bright band that crosses the numeral as it seats.
+                // Parked off-screen (igniteSweepX = 2.5) at rest; sweeps to -2.5 on land.
+                baseText
+                    .foregroundStyle(.clear)
+                    .overlay {
+                        LinearGradient(
+                            stops: [
+                                .init(color: .clear,                       location: 0.42),
+                                .init(color: Color.white.opacity(0.95),    location: 0.50),
+                                .init(color: .clear,                       location: 0.58),
+                            ],
+                            startPoint: UnitPoint(x: -0.1, y:  1.0),
+                            endPoint:   UnitPoint(x:  1.1, y: -0.25)
+                        )
+                        .frame(width: 700)
+                        .offset(x: igniteSweepX * 320)
                         .mask { baseText }
                     }
                     .clipped()

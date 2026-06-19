@@ -43,6 +43,7 @@ struct ContextPhase: View {
     @State private var confirmTug:     CGFloat = 0
     @State private var confirmPulse:   Bool    = false
     @State private var tugTask:        Task<Void, Never>? = nil
+    @State private var hintTask:       Task<Void, Never>? = nil  // one-shot browse nudge; cancelled on confirm
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -199,7 +200,7 @@ struct ContextPhase: View {
         .sensoryFeedback(.impact(weight: .light), trigger: confirmedIndex)
         .sensoryFeedback(.selection, trigger: physics.currentIndex)
         .onAppear(perform: runEntrance)
-        .onDisappear { tugTask?.cancel() }
+        .onDisappear { tugTask?.cancel(); hintTask?.cancel() }
         .accessibilityLabel("Context phase")
     }
 
@@ -223,26 +224,38 @@ struct ContextPhase: View {
             director.recedeTableForContext()
             entered = true
             director.showContextHeadline()
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(2500))
+                director.hideDealerLine()
+            }
             return
         }
 
         Task { @MainActor in
-            // 1. Silent beat — clean felt, no copy. Context arrived to a clean table.
-            try? await Task.sleep(for: .milliseconds(700))
+            // 1. Silent beat — the clean felt (and the 5/6 deck) get their moment.
+            try? await Task.sleep(for: .milliseconds(900))
             guard !entered else { return }
 
-            // 2. Single strong bridging line. Fires on the still-present felt.
-            //    Auto-fades at 2.8s — intentionally overlaps the carousel arrival.
-            director.showContextHeadline()
+            // 2. Single strong bridging line, typed on the STILL-PRESENT felt.
+            let line = director.showContextHeadline()
 
-            // 3. Let it breathe (~1.6s), then felt dissolves and carousel assembles
-            //    simultaneously — copy is still fading as the carousel arrives.
-            try? await Task.sleep(for: .milliseconds(1600))
+            // 3. Hold until the question lands + a read beat — only then does
+            //    the table give way. (The old fixed 1.6s recede cut into the
+            //    type and ran recede + assembly + typing as one rushed beat.)
+            try? await Task.sleep(for: .milliseconds(AppDealerTyping.typeDuration(line) + 500))
             guard !entered else { return }
+
+            // 4. Table recedes as its own visible beat; the carousel assembles
+            //    250ms INTO the recede, so the felt dissolves into the carousel.
             director.recedeTableForContext()
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !entered else { return }
             withAnimation(AppAnimation.spring) { entered = true }
 
-            // 4. No further copy — the carousel is the question. Just schedule hint.
+            // 5. Headline fades over the rising cards.
+            director.hideDealerLine()
+
+            // 6. No further copy — the carousel is the question. Just schedule hint.
             try? await Task.sleep(for: .milliseconds(800))
             guard !exiting, confirmedIndex == nil else { return }
             scheduleHint()
@@ -250,10 +263,13 @@ struct ContextPhase: View {
     }
 
     private func scheduleHint() {
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(1200))
-            guard confirmedIndex == nil, !exiting, !reduceMotion else { return }
-            withAnimation(AppAnimation.fast) { hintOffset = -18 }
+        hintTask?.cancel()
+        hintTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
+            guard confirmedIndex == nil, !exiting, !reduceMotion,
+                  !Task.isCancelled else { return }
+            // Browse nudge — proportional, ≈18pt on current widths. Felt value.
+            withAnimation(AppAnimation.fast) { hintOffset = -screenSize.width * 0.045 }
             try? await Task.sleep(for: .milliseconds(250))
             guard !Task.isCancelled else { return }
             withAnimation(AppAnimation.spring) { hintOffset = 0 }
@@ -274,12 +290,18 @@ struct ContextPhase: View {
     // MARK: - Selection
     private func handleConfirm(_ index: Int) {
         guard !exiting else { return }
+        // Kill the one-shot browse nudge — confirming during its hold window
+        // must not let the spring-home fire against the confirmed transform.
+        hintTask?.cancel()
+        withAnimation(AppAnimation.spring) { hintOffset = 0 }
         withAnimation(AppAnimation.spring) { confirmedIndex = index }
         startConfirmTug()
         guard !reduceMotion else { return }
         Task { @MainActor in
             withAnimation(AppAnimation.spring) { confirmPulse = true }
-            try? await Task.sleep(for: .milliseconds(450))
+            // 650ms — the pulse spring needs ~0.65s to peak; releasing at 450
+            // retargeted it mid-flight.
+            try? await Task.sleep(for: .milliseconds(650))
             withAnimation(AppAnimation.slow) { confirmPulse = false }
         }
     }
@@ -303,7 +325,7 @@ struct ContextPhase: View {
             try? await Task.sleep(for: .milliseconds(2200))
             while !Task.isCancelled {
                 withAnimation(AppAnimation.swipeHintFlick) { confirmTug = flickY }
-                try? await Task.sleep(for: .milliseconds(320))
+                try? await Task.sleep(for: .milliseconds(380))   // 260 flick + 120 peak hold — sibling cadence
                 guard !Task.isCancelled else { break }
                 withAnimation(AppAnimation.spring) { confirmTug = 0 }
                 try? await Task.sleep(for: .milliseconds(6000))
@@ -333,7 +355,7 @@ struct ContextPhase: View {
 
         Task { @MainActor in
             // Step 2 — a beat later, the rest drift out of focus (as the hero flies).
-            try? await Task.sleep(for: .milliseconds(150))
+            try? await Task.sleep(for: .milliseconds(350))
             withAnimation(AppAnimation.exit.reduceMotionSafe) { defocusOthers = true }
 
             // Hero has cleared — return the felt, receive the credential, respond.

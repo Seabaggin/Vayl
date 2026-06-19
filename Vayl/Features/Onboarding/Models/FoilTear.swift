@@ -2,24 +2,15 @@
 //  FoilTear.swift
 //  Vayl
 //
-//  Created by Bryan Jorden on 5/9/26.
-//
-
-
-//
-//  FoilTear.swift
-//  Vayl
-//
 
 // Features/Onboarding/Models/FoilTear.swift
 
 import CoreGraphics
 import Foundation
 
-/// A single tear in the foil surface during BuildDeckPhase.
-/// Created by VaylDirector when the user taps the foil.
-/// FoilRenderer reads the tap point and path to draw the tear.
-/// Age drives the dissolve progress after the integrity threshold is crossed.
+/// A single crack in the sealed case during BuildDeckPhase.
+/// Created by VaylDirector when the user taps the case (Beat 5, crack ceremony).
+/// Three tears → the foil integrity collapses and the case shatters.
 struct FoilTear: Identifiable {
 
     // MARK: - Identity
@@ -28,23 +19,22 @@ struct FoilTear: Identifiable {
 
     // MARK: - Geometry
 
-    /// The screen point where the user tapped to create this tear.
-    /// FoilRenderer uses this as the origin for the tear path and
-    /// the center of the particle scatter on dissolve.
-    let tapPoint: CGPoint
+    /// The tap point in FACE-LOCAL UV (u across the case front, v down it).
+    /// Stored in face space — never screen space — so the crack sticks to the
+    /// case while it floats and tilts (ceremony spec: tears convert to
+    /// face-local UV at tap time).
+    let faceUV: CGPoint
 
-    /// The computed tear shape in screen coordinates.
-    /// nil until FoilRenderer computes it on first render.
-    /// The path represents the split in the foil surface —
-    /// tear edges receive a bright spectrum line (1pt, 80% opacity).
-    var path: CGPath? = nil
+    /// Authored dominant orientation of this crack's main fracture, in degrees
+    /// (0 = horizontal across the face, 90 = vertical down it). Each sequence
+    /// gives its three strikes deliberately different orientations.
+    let angleDeg: Double
 
-    // MARK: - Dissolve State
+    /// Stable seed for the tear's generated branch geometry — the crack
+    /// pattern is procedural but identical frame to frame.
+    let seed: UInt64 = .random(in: .min ... .max)
 
-    /// Dissolve progress for this individual tear.
-    /// 0.0 = tear just created, fully visible
-    /// 1.0 = fully dissolved — particle scatter complete
-    /// Driven by VaylDirector after the foil integrity threshold is crossed.
-    /// AppAnimation.foilDissolve governs the transition.
-    var age: Double = 0
+    /// When the strike landed — drives the crack's propagation animation
+    /// (cracks travel outward from the finger; they don't appear formed).
+    let struck: Date = .now
 }

@@ -34,52 +34,88 @@ struct FounderLetterPhase: View {
     /// Pull-down distance that commits. Feel-tunable.
     private let dismissThreshold: CGFloat = 140
 
+    /// The sheet rests inset from the top — a card sheet, not an edge-to-edge
+    /// fill — so the void/table shows in the strip above (One Year grammar).
+    /// Fraction of screen height; MUST equal BuildDeckPhase.expandedTopInsetFrac
+    /// so the peek→full phase swap stays pixel-identical.
+    private let topInsetFrac: CGFloat = 0.15
+
     var body: some View {
         GeometryReader { geo in
-            FounderLetterSheet { letterBody }
-                .frame(width: geo.size.width, height: geo.size.height)
-                .offset(y: departing ? geo.size.height : max(0, dismissDrag))
+            let topInset = geo.size.height * topInsetFrac
+            FounderLetterSheet { letterBody(height: geo.size.height) }
+                // maxWidth: .infinity (NOT geo.size.width) — the nested geo can
+                // report the safe width, which inset the sheet and left side
+                // gaps. Filling the parent guarantees true edge-to-edge.
+                .frame(maxWidth: .infinity)
+                .frame(height: geo.size.height - topInset)
+                .offset(y: departing ? geo.size.height : topInset + max(0, dismissDrag))
                 .gesture(dismissGesture)
                 .sensoryFeedback(.impact(weight: .medium), trigger: departing)
                 .accessibilityAction(named: "Finish") { finish() }
         }
-        .ignoresSafeArea(edges: .bottom)
+        .ignoresSafeArea()
         .accessibilityLabel("Founder letter")
     }
 
     // MARK: - Letter
 
-    private var letterBody: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.lg) {
-            // Placeholder copy — the real letter + signature animation land in
-            // the content/visual pass. The mechanics (detent, curtain, retry)
-            // are final.
-            Text("Welcome to Vayl.")
-                .font(AppFonts.screenTitle)
-                .foregroundStyle(AppColors.textPrimary)
+    private func letterFont(for height: CGFloat) -> Font {
+        switch height {
+        case ..<700: return AppFonts.founderLetter(13)
+        case ..<900: return AppFonts.founderLetter(15)
+        default:     return AppFonts.founderLetter(16)
+        }
+    }
 
-            Text("You just built something most couples never put into words. Whatever pace you take from here, the deck in your hands was made from your own answers — there is no one else's version of it.")
-                .font(AppFonts.bodyText)
-                .foregroundStyle(AppColors.textBody)
+    @ViewBuilder
+    private func letterBody(height: CGFloat) -> some View {
+        let font = letterFont(for: height)
+        VStack(spacing: AppSpacing.md) {
 
-            Text("— Bryan")
-                .font(AppFonts.prompt)
-                .foregroundStyle(AppColors.textSecondary)
+            VaylGradientWordmark()
+
+            // Paragraphs — kept tight so the sign-off + signature stay on-page
+            VStack(spacing: AppSpacing.md) {
+                Text("Non-monogamy is my life. For the past three years, everything I've built has been in service to my community.")
+                    .font(font)
+                    .foregroundStyle(AppColors.textBody)
+
+                Text("I'm of the mind that most relationship conflicts boil down to information asymmetry, and unlike monogamy, NM can be far more consequential when that asymmetry goes unaddressed.")
+                    .font(font)
+                    .foregroundStyle(AppColors.textBody)
+
+                Text("Vayl is what I wish I had at the beginning of my journey: a way to explore myself, uncover hidden truths, and do it alongside my partner.")
+                    .font(font)
+                    .foregroundStyle(AppColors.textBody)
+
+                Text("Before your journey begins, whether it takes you further than you ever imagined or you realize where you've been is where you were always meant to be, thank you for following your curiosity here.")
+                    .font(font)
+                    .foregroundStyle(AppColors.textBody)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+
+            // Sign-off
+            VStack(spacing: AppSpacing.xs) {
+                Text("Forever Grateful,")
+                    .font(AppFonts.founderLetterBold(14))
+                    .foregroundStyle(AppColors.textPrimary)
+
+                // Signature — Native SwiftUI animated draw-on, plays once.
+                // Fits its own bounds, so the frame sets the rendered size.
+                AnimatedSignature()
+                    .frame(width: 280, height: 110)
+                    .padding(.top, AppSpacing.md)
+                    .padding(.bottom, AppSpacing.md)
+            }
 
             if director.commitFailed {
                 Text("Couldn't save — pull down to retry.")
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.destructive)
             }
-
-            Spacer(minLength: 0)
-
-            Text("Pull down when you're ready.")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textHint)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.bottom, AppSpacing.xxl)
         }
+        .multilineTextAlignment(.center)
         .padding(.horizontal, AppSpacing.xl)
         .padding(.top, AppSpacing.xl)
     }
@@ -105,14 +141,37 @@ struct FounderLetterPhase: View {
             }
     }
 
+    // MARK: - Gradient wordmark
+
+    fileprivate struct VaylGradientWordmark: View {
+        var body: some View {
+            VStack(spacing: AppSpacing.xs) {
+                Text("Welcome To")
+                    .font(AppFonts.display(24, weight: .bold, relativeTo: .title2))
+                    .foregroundStyle(AppColors.textPrimary)
+
+                LivingText(
+                    text: "VAYL",
+                    font: AppFonts.display(48, weight: .bold, relativeTo: .largeTitle)
+                )
+
+                SpectrumHairline()
+                    .padding(.horizontal, AppSpacing.lg)
+            }
+        }
+    }
+
     private func finish() {
         director.finishOnboarding(using: onboardingStore)
         if director.commitFailed {
             // bounce back — retry surface is in letterBody, nothing lost
             withAnimation(AppAnimation.spring.reduceMotionSafe) { dismissDrag = 0 }
         } else {
-            // the set changed behind the curtain — complete the descent
-            withAnimation(AppAnimation.exit.reduceMotionSafe) {
+            // the set changed behind the curtain — complete the descent.
+            // 0.45s easeInOut: the OB's final gesture deserves a settled fall,
+            // not the 0.2s easeIn snap (AppAnimation.exit) — half its own
+            // 0.4s arrival, the most abrupt animation in the flow.
+            withAnimation(.easeInOut(duration: 0.45).reduceMotionSafe) {
                 departing = true
                 dismissDrag = 0
             }

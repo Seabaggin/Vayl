@@ -19,12 +19,26 @@ struct ModeSelectPhase: View {
 
     @State private var deal              = CardMirrorDealController()
     @State private var speechTask:       Task<Void, Never>? = nil
+    @State private var questionTask:     Task<Void, Never>? = nil
     @State private var liftTextTask:     Task<Void, Never>? = nil
     @State private var liftedText:       String?       = nil
     @State private var liftedSide:       MirrorCard?   = nil
     @State private var hasDealt:         Bool         = false
     @State private var liftHaptic:       Bool         = false
     @State private var deselectHaptic:   Bool         = false
+
+    // ── Question gate ────────────────────────────────────────────────
+    // The cards answer "Anyone at the table with you?" — they must not be
+    // tappable until the dealer has finished asking it. questionShown latches
+    // the line fire; questionAsked opens interaction at type-complete + 250ms.
+    @State private var questionShown:    Bool         = false
+    @State private var questionAsked:    Bool         = false
+
+    // ── Swipe-up hint — the lifted card tugs upward to cue the confirm gesture ──
+    // ModeSelect is the first phase to reuse Name's "lift → swipe up" lesson, so it
+    // needs the same cross-phase cue ExperienceLevel/Gender carry. See startSwipeHint.
+    @State private var hintOffset:       CGFloat            = 0
+    @State private var hintTask:         Task<Void, Never>? = nil
 
     // ── Cheat code button animation ──────────────────────────────────
     @State private var leftActiveButtons:      Set<Int> = []
@@ -42,17 +56,21 @@ struct ModeSelectPhase: View {
         AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale
     }
 
+    /// Upward tug distance for the swipe-up hint — proportional to card height so it
+    /// scales across devices. Negative = upward. Mirrors the sibling phases. Felt value.
+    private var hintFlickY: CGFloat { -cardHeight * 0.10 }
+
     // MARK: — Body
 
     var body: some View {
         ZStack {
             cardsLayer
 
-            if director.projectedTextVisible, let copy = director.projectedText {
-                ProjectedTextView(text: copy, screenSize: screenSize)
-                    .transition(.opacity.combined(with: .offset(y: -6)))
-                    .zIndex(18)
-            }
+            // NOTE: the projected dealer line is rendered once at the canvas level
+            // (OnboardingCanvasView, projectedText layer). It is intentionally NOT
+            // re-rendered here — a second copy at the same position composites the text
+            // twice (doubled shadow/glow). The canvas-level render is the single source,
+            // matching ExperienceLevelPhase.
 
             if let text = liftedText, let side = liftedSide {
                 liftCopyLayer(text: text, side: side)
@@ -67,8 +85,10 @@ struct ModeSelectPhase: View {
         .onAppear    { runEntrance() }
         .onDisappear {
             speechTask?.cancel()
+            questionTask?.cancel()
             liftTextTask?.cancel()
             cheatCodeTask?.cancel()
+            hintTask?.cancel()
             deal.cancel()
         }
     }
@@ -164,36 +184,7 @@ struct ModeSelectPhase: View {
                     .allowsHitTesting(false)
             }
         }
-        .overlay(
-            ZStack {
-                // Halo — blurred spectrum stroke, outward bleed only
-                RoundedRectangle(cornerRadius: AppRadius.obCard)
-                    .stroke(
-                        LinearGradient(
-                            colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-                            startPoint: .topLeading,
-                            endPoint:   .bottomTrailing
-                        ),
-                        lineWidth: AppGlows.spectrumBorder.strokeActive
-                    )
-                    .blur(radius: 7)
-                    .opacity(isLifted ? 0.50 : 0)
-
-                // Crisp border stroke with layered spectrum glow
-                RoundedRectangle(cornerRadius: AppRadius.obCard)
-                    .stroke(
-                        LinearGradient(
-                            colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-                            startPoint: .topLeading,
-                            endPoint:   .bottomTrailing
-                        ),
-                        lineWidth: AppGlows.spectrumBorder.strokeGlowing
-                    )
-                    .opacity(isLifted ? 0.92 : 0)
-                    .spectrumBorderGlow(intensity: isLifted ? 0.72 : 0)
-            }
-            .animation(AppAnimation.standard, value: isLifted)
-        )
+        .overlay(LiftHalo(visible: isLifted))
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
@@ -207,7 +198,7 @@ struct ModeSelectPhase: View {
         .scaleEffect(x: flipScaleX * (showBack ? deal.rejectedFlipScaleX : 1.0), y: 1.0)
         .scaleEffect(scale)
         .rotationEffect(.degrees(angle))
-        .offset(offset)
+        .offset(CGSize(width: offset.width, height: offset.height + tugOffset(for: side)))
         .opacity(alpha)
         .zIndex(isLifted ? 10 : side == .right ? 6 : 4)
     }
@@ -219,6 +210,13 @@ struct ModeSelectPhase: View {
         return false
     }
 
+    /// y-offset contribution from the swipe-up tug for `side` — only the currently
+    /// lifted card tugs. Reads `deal.state`, so the tug auto-follows when the user
+    /// switches the lifted card (no restart needed).
+    private func tugOffset(for side: MirrorCard) -> CGFloat {
+        isCardLifted(side) ? hintOffset : 0
+    }
+
     private func isCardRejected(_ side: MirrorCard) -> Bool {
         if case .exiting(let confirmed) = deal.state { return confirmed != side }
         if case .done(let selected)     = deal.state { return selected   != side }
@@ -227,7 +225,7 @@ struct ModeSelectPhase: View {
 
     private func canInteract(_ side: MirrorCard) -> Bool {
         switch deal.state {
-        case .faceUp: return true
+        case .faceUp: return questionAsked
         case .lifted: return true
         default:      return false
         }
@@ -241,15 +239,18 @@ struct ModeSelectPhase: View {
             switch deal.state {
             case .faceUp:
                 stopCheatCode()
-                withAnimation(AppAnimation.cardLift) { deal.lift(card: side) }
+                withAnimation(AppAnimation.cardLift.reduceMotionSafe) { deal.lift(card: side) }
                 liftHaptic.toggle()
                 speechTask?.cancel()
                 director.hideDealerLine()
                 scheduleLiftText(for: side)
+                // Cue the confirm gesture — the lifted card tugs upward (the tug
+                // auto-follows on switchLift since tugOffset reads deal.state).
+                startSwipeHint()
             case .lifted(let current):
                 if current != side {
                     stopCheatCode()
-                    withAnimation(AppAnimation.cardLift) { deal.switchLift(to: side) }
+                    withAnimation(AppAnimation.cardLift.reduceMotionSafe) { deal.switchLift(to: side) }
                     deselectHaptic.toggle()
                     liftTextTask?.cancel()
                     withAnimation(AppAnimation.fast) { liftedText = nil; liftedSide = nil }
@@ -262,12 +263,13 @@ struct ModeSelectPhase: View {
 
         case .swipedUp:
             guard case .lifted(let current) = deal.state, current == side else { return }
+            stopSwipeHint()
             deal.confirm(
                 card:       side,
                 screenSize: screenSize,
                 cardWidth:  cardWidth,
                 onLanded: { confirmedCard in
-                    // Confirmed card has visually arrived at the corner deck (~740ms after swipe).
+                    // Confirmed card has visually arrived at the corner deck (~520ms after swipe).
                     // Credit the deck now — count updates as the card lands, not after.
                     director.receiveCredential(.mode)
 
@@ -276,7 +278,7 @@ struct ModeSelectPhase: View {
                     director.onboardingData.appMode = mode
                 },
                 onConfirm: { confirmedCard in
-                    // Rejected card has fully exited (~1160ms after swipe). Clean up UI and advance.
+                    // Rejected card has fully exited (~940ms after swipe). Clean up UI and advance.
                     liftTextTask?.cancel()
                     withAnimation(AppAnimation.fast) { liftedText = nil; liftedSide = nil }
                     director.hideDealerLine()
@@ -310,30 +312,45 @@ struct ModeSelectPhase: View {
                 deal.leftAlpha   = 1;  deal.rightAlpha = 1
                 deal.leftShowFace = true; deal.rightShowFace = true
                 deal.state       = .faceUp
-                director.showDealerLineManual("Anyone at the table with you?")
-                scheduleLineFade()
+                askQuestion()
             }
             return
         }
 
+        // Table breathes before cards arrive — a beat, not a wait. The dealer
+        // line fires from the controller's onFaceUp, so the question types
+        // onto settled face-up cards instead of competing with the flips.
         speechTask = Task { @MainActor in
-            // Table breathes before cards arrive
-            try? await Task.sleep(for: .milliseconds(800))
+            try? await Task.sleep(for: .milliseconds(400))
             guard !Task.isCancelled else { return }
-            deal.deal(screenSize: screenSize, cardWidth: cardWidth)
-            // Dealer line after deal completes (~880ms deal + buffer)
-            try? await Task.sleep(for: .milliseconds(1180))
-            guard !Task.isCancelled else { return }
-            director.showDealerLineManual("Anyone at the table with you?")
-            scheduleLineFade()
+            deal.deal(screenSize: screenSize, cardWidth: cardWidth) {
+                askQuestion()
+            }
         }
     }
 
-    private func scheduleLineFade() {
-        speechTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(3000))
+    /// Shows the phase question once and opens the interaction gate when it has
+    /// finished typing (+ a read beat: 500ms, or 250ms under Reduce Motion). The
+    /// line then persists until the user picks a card (handleAction hides it on
+    /// tap) — it's the only label on the deliberately label-free cards, so it must
+    /// not auto-hide out from under a deliberating user.
+    @MainActor
+    private func askQuestion() {
+        guard !questionShown else { return }
+        questionShown = true
+        let line = "Anyone at the table with you?"
+        director.showDealerLineManual(line)
+        let gateMs = reduceMotion ? 250 : AppDealerTyping.typeDuration(line) + 500
+        // Own handle (not speechTask) — reusing speechTask orphaned the deal task's
+        // handle, so an interrupted deal→question handoff couldn't be cancelled and
+        // could project a stale line into the next phase.
+        questionTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(gateMs))
             guard !Task.isCancelled else { return }
-            director.hideDealerLine()
+            questionAsked = true
+            // No auto-hide: the cards are intentionally label-free, so this line is
+            // the ONLY signifier of the choice. It persists until the user picks
+            // (handleAction hides it on tap) — never timed out from under them.
         }
     }
 
@@ -352,6 +369,39 @@ struct ModeSelectPhase: View {
                 liftedSide = side
             }
         }
+    }
+
+    // MARK: — Swipe-up hint (consistent cross-phase cue)
+
+    /// Intermittent upward tug on the lifted card: flick up → spring home → rest → repeat.
+    /// Mirrors ExperienceLevelPhase / GenderPhase so the confirm gesture reads the same
+    /// everywhere. Cadence lives in Task.sleep (not animation tokens) per the codebase pattern.
+    /// ModeSelect is an early reuse (the user has swiped up only once, in Name), so it uses a
+    /// more frequent reminder than ExperienceLevel's sparse lifted-state cadence.
+    private func startSwipeHint(initialDelayMs: UInt64 = 600, restMs: UInt64 = 1900) {
+        hintTask?.cancel()
+        guard !reduceMotion else {
+            withAnimation(AppAnimation.spring.reduceMotionSafe) { hintOffset = 0 }
+            return
+        }
+        hintOffset = 0
+        hintTask = Task { @MainActor in
+            // Let the lift settle before the first tug.
+            try? await Task.sleep(for: .milliseconds(initialDelayMs))
+            while !Task.isCancelled {
+                withAnimation(AppAnimation.swipeHintFlick) { hintOffset = hintFlickY }
+                try? await Task.sleep(for: .milliseconds(380))
+                guard !Task.isCancelled else { break }
+                withAnimation(AppAnimation.spring) { hintOffset = 0 }
+                try? await Task.sleep(for: .milliseconds(restMs))
+                guard !Task.isCancelled else { break }
+            }
+        }
+    }
+
+    private func stopSwipeHint() {
+        hintTask?.cancel()
+        withAnimation(AppAnimation.spring.reduceMotionSafe) { hintOffset = 0 }
     }
 
     // MARK: — Cheat code

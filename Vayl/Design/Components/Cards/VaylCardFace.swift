@@ -187,6 +187,15 @@ struct VaylCardFace: View {
                 value:      value,
                 dragging:   dragging
             )
+        case .snapshot(let verb, let noun, let toneProgress, let sealProgress):
+            SnapshotCardFace(
+                cardWidth:    size.width,
+                cardHeight:   size.height,
+                verb:         verb,
+                noun:         noun,
+                toneProgress: toneProgress,
+                sealProgress: sealProgress
+            )
         case .context(let number, let title, let subtitle, let detail):
             ContextCardFace(
                 number:    number,
@@ -196,11 +205,12 @@ struct VaylCardFace: View {
                 isFront:   isFront,
                 confirmed: confirmed
             )
-        case .curiosity(let category):
-            CuriosityCardFace(
+        case .curiosity(let category, let deflection):
+            CompassCardFace(
                 cardWidth:  size.width,
                 cardHeight: size.height,
-                topic:      category
+                topic:      category,
+                deflection: deflection
             )
         default:
             EmptyView()

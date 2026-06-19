@@ -13,6 +13,14 @@ import Foundation
 
 struct OnboardingData {
 
+    // ── DemoPhase (Snapshot Card) ────────────────────────────────────
+    // The user's first card: "I [verb] [noun]." The verb (need/want/desire) and
+    // the typed noun are kept raw; the derived EmotionalRegister is written into
+    // `emotionalRegister` below (reviving the cut CompassPhase Q3 signal). nil
+    // until the user reaches and seals the demo card.
+    var demoVerb: String? = nil   // DemoVerb.rawValue
+    var demoNoun: String? = nil
+
     // ── NamePhase ────────────────────────────────────────────────────
     var displayName: String = ""
 
@@ -53,7 +61,9 @@ struct OnboardingData {
     // are NOT written during onboarding. Do NOT re-add a Compass-style OB ask.
     var agency: String?            = nil   // AgencySignal.rawValue
     var motivation: String?        = nil   // MotivationShape.rawValue
-    var emotionalRegister: String? = nil   // EmotionalRegister.rawValue — Compass Q3
+    // EmotionalRegister.rawValue. Formerly Compass Q3 (cut); now written by the
+    // DemoPhase snapshot card via DemoDictionary.register(verb:noun:).
+    var emotionalRegister: String? = nil
     var compassNotes: [String]     = []
 
     // ── CuriosityPhase ───────────────────────────────────────────────
@@ -77,8 +87,8 @@ struct OnboardingData {
     // ── Derived — never stored independently ─────────────────────────
 
     /// Whether enough data exists to commit to UserProfile.
-    /// Intended commit gate — not yet wired (the founder-letter commit currently
-    /// fires unconditionally; reintroduce as the guard when commit-error handling lands).
+    /// Wired as the commit gate in OnboardingStore.commit(data:): commit is blocked
+    /// (returns false, sets lastCommitError = .incompleteData) when this is false.
     var isReadyToComplete: Bool {
         switch appMode {
         case .together, .solo:

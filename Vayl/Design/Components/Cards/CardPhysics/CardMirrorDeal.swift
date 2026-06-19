@@ -59,9 +59,6 @@ public final class CardMirrorDealController {
     public var rejectedShowBack:   Bool   = false
     public var rejectedExitAlpha:  Double = 1.0
 
-    // ── Border charge ──────────────────────────────────────────────
-    public var borderCharging: Bool = false
-
     // ── Haptic triggers — observed by ModeSelectPhase .sensoryFeedback ─
     public var confirmHapticTrigger: Bool = false
 
@@ -85,7 +82,8 @@ public final class CardMirrorDealController {
     /// Right card: from x = +(screenWidth * 0.65 + cardWidth / 2), angle +18°
     /// Both animate to resting positions at the same time — no stagger.
     /// Landing haptics: left tap then right tap 80ms apart.
-    public func deal(screenSize: CGSize, cardWidth: CGFloat) {
+    public func deal(screenSize: CGSize, cardWidth: CGFloat,
+                     onFaceUp: (() -> Void)? = nil) {
         guard state == .idle else { return }
         state = .dealing
 
@@ -122,7 +120,9 @@ public final class CardMirrorDealController {
                 rightAngle  =  14
             }
 
-            try? await Task.sleep(for: .milliseconds(780))
+            // Travel ends at 16+880ms — the tick must land WITH the visual
+            // stop, not 100ms ahead of it (the hand felt it before the eye).
+            try? await Task.sleep(for: .milliseconds(860))
             guard !Task.isCancelled else { return }
 
             // Landing haptics — both cards land at same moment, 80ms stagger
@@ -136,21 +136,25 @@ public final class CardMirrorDealController {
             try? await Task.sleep(for: .milliseconds(500))
             guard !Task.isCancelled else { return }
 
-            // Left card flips face-up
+            // Left card flips face-up. The face swap waits the FULL half-flip
+            // (290ms = cardFlipHalf) so it happens edge-on at scaleX = 0 —
+            // swapping earlier popped the face in at ~25% width and retargeted
+            // the in-flight first half.
             withAnimation(AppAnimation.cardFlipHalf) { leftFlipScaleX = 0.0 }
-            try? await Task.sleep(for: .milliseconds(160))
+            try? await Task.sleep(for: .milliseconds(290))
             leftShowFace = true
             withAnimation(AppAnimation.cardFlipHalf) { leftFlipScaleX = 1.0 }
 
             // Right card flips 120ms after left
             try? await Task.sleep(for: .milliseconds(120))
             withAnimation(AppAnimation.cardFlipHalf) { rightFlipScaleX = 0.0 }
-            try? await Task.sleep(for: .milliseconds(160))
+            try? await Task.sleep(for: .milliseconds(290))
             rightShowFace = true
             withAnimation(AppAnimation.cardFlipHalf) { rightFlipScaleX = 1.0 }
 
             try? await Task.sleep(for: .milliseconds(290))
             state = .faceUp
+            onFaceUp?()
         }
     }
 
@@ -249,12 +253,10 @@ public final class CardMirrorDealController {
         state = .confirming(card: card)
 
         confirmTask = Task { @MainActor in
-            // 1. Border charge (~220ms)
-            withAnimation(.easeOut(duration: 0.15)) { borderCharging = true }
-            try? await Task.sleep(for: .milliseconds(220))
-            guard !Task.isCancelled else { return }
-            withAnimation(.easeOut(duration: 0.08)) { borderCharging = false }
-
+            // Confirm responds AT release — the swipe's own momentum is the
+            // anticipation. (A 220ms held-breath sleep lived here as residue of
+            // the removed border-charge animation; it rendered as input lag.)
+            // Downstream: onLanded fires at ~520ms, onConfirm at ~940ms.
             confirmHapticTrigger.toggle()
             state = .exiting(confirmed: card)
 

@@ -116,6 +116,10 @@ final class ThreeCardFanController {
                 return
             }
 
+            // Landing tick — every other deal in the OB lands with one; the
+            // monte was the only silent deal.
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
             // Leave the card as a resting sprite on the flight layer. The SwiftUI
             // back is NOT revealed until every card has landed (see runEntrance) —
             // otherwise a later-dealt card flies beneath an already-handed-off
@@ -163,18 +167,15 @@ final class ThreeCardFanController {
         if Task.isCancelled { resetFan(screenSize: screenSize); return }
 
         // ── 2. Sweep sway — rigid group rotation; no relative motion, cannot clip. ──
+        // ONE sweep. This is the third consecutive deal ceremony in the OB —
+        // a double sway repeated the motif past its welcome.
         shuffleHapticTrigger.toggle()
         withAnimation(.easeInOut(duration: 0.28)) { sweep = -10 }
         try? await Task.sleep(for: .milliseconds(300))
         if Task.isCancelled { resetFan(screenSize: screenSize); return }
 
-        shuffleHapticTrigger.toggle()
-        withAnimation(.easeInOut(duration: 0.36)) { sweep = 10 }
-        try? await Task.sleep(for: .milliseconds(380))
-        if Task.isCancelled { resetFan(screenSize: screenSize); return }
-
         withAnimation(.easeInOut(duration: 0.28)) { sweep = 0 }
-        try? await Task.sleep(for: .milliseconds(280))
+        try? await Task.sleep(for: .milliseconds(310))   // 280 anim + frame-drop buffer
         if Task.isCancelled { resetFan(screenSize: screenSize); return }
 
         // ── 3. Close — back to the canonical fan. ──────────────────────────────────
@@ -186,7 +187,7 @@ final class ThreeCardFanController {
                 scales[i]  = 1.0
             }
         }
-        try? await Task.sleep(for: .milliseconds(350))   // settle quietly before the reveal
+        try? await Task.sleep(for: .milliseconds(380))   // 350 anim + frame-drop buffer; settle quietly before the reveal
     }
 
     /// Snap the cards back to the canonical fan — used if the flourish is cancelled mid-way.
@@ -219,7 +220,10 @@ final class ThreeCardFanController {
             try? await Task.sleep(for: .milliseconds(290))  // wait for first half to complete
             showFace[i] = true              // identity becomes visible at the half-flip
             withAnimation(AppAnimation.cardFlipHalf) { flipScaleX[i] = 1.0 }
-            try? await Task.sleep(for: .milliseconds(290))  // wait for second half to complete
+            // Cascade: the next card's flip starts 120ms into this one's second
+            // half, so the reveal reads as one ripple across the fan rather than
+            // three separate 580ms events. The last card waits its half out.
+            try? await Task.sleep(for: .milliseconds(i == 2 ? 320 : 120))
         }
         state = .faceUp
     }
@@ -290,8 +294,15 @@ final class ThreeCardFanController {
                         offsets[idx] = CGSize(width: cornerX - screenSize.width  / 2,
                                               height: cornerY - screenSize.height / 2)
                         scales[idx]  = AppLayout.cornerDeckWidth / cardWidth
+                    } else {
+                        alphas[idx] = 0
                     }
-                    alphas[idx]  = 0
+                }
+                // Alpha rides its own late curve so the card stays visible for
+                // ~90% of the flight and dissolves INTO the deck — fading with
+                // the whole travel made it vanish at launch.
+                if !reduceMotion {
+                    withAnimation(.easeIn(duration: 0.2).delay(0.32)) { alphas[idx] = 0 }
                 }
             }
             try? await Task.sleep(for: .milliseconds(520))
@@ -304,7 +315,7 @@ final class ThreeCardFanController {
             withAnimation(AppAnimation.exit.reduceMotionSafe) {
                 for i in 0..<3 where i != chosenIdx { alphas[i] = 0 }
             }
-            try? await Task.sleep(for: .milliseconds(350))
+            try? await Task.sleep(for: .milliseconds(250))
             guard !Task.isCancelled else { return }
 
             // 4. Settle beat over the cleared felt.

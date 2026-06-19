@@ -108,9 +108,15 @@ struct OnboardingCanvasView: View {
                 }
 
                 // ── Layer 7: Projected dealer text ────────────────
+                // Suppressed during .context — ContextPhase renders its OWN copy
+                // above its card stack (this canvas layer sits below the phase
+                // overlay), so rendering both double-composites the dealer line.
+                // Mirrors the corner-deck phase guard below.
                 if director.projectedTextVisible,
-                   let text = director.projectedText {
-                    ProjectedTextView(text: text, screenSize: size)
+                   let text = director.projectedText,
+                   director.phase != .context {
+                    ProjectedTextView(text: text, screenSize: size,
+                                      anchorYFrac: director.projectedTextAnchorYFrac)
                         .transition(.opacity)
                 }
 
@@ -168,17 +174,22 @@ struct OnboardingCanvasWrapper: View {
     var body: some View {
         @Bindable var director = director
         return GeometryReader { geo in
-            OnboardingCanvasView(director: director)
-                .environment(\.realSafeArea, geo.safeAreaInsets)
-                .ignoresSafeArea()
-        }
-        // ConfirmationPhase edit sheet. Hosted HERE — outside the canvas boundary,
-        // which forbids .sheet — and driven by director.editingCredential. The
-        // native sheet gives .medium detent + scrim-tap / swipe-down dismiss for free.
-        .sheet(item: $director.editingCredential) { credential in
-            CredentialEditorSheet(director: director, credential: credential)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.hidden)   // custom spectrum handle instead of the gray grabber
+            ZStack {
+                OnboardingCanvasView(director: director)
+                    .environment(\.realSafeArea, geo.safeAreaInsets)
+                    .ignoresSafeArea()
+
+                // ConfirmationPhase edit sheet. Hosted HERE — outside the canvas
+                // boundary — and driven by director.editingCredential. A CUSTOM
+                // full-bleed, medium-detent bottom sheet (not native .sheet):
+                // iOS 26 native sheets inset to floating cards, so this is the
+                // only way to get edge-to-edge full width. Medium detent keeps
+                // the review fan visible above it.
+                if let credential = director.editingCredential {
+                    CredentialEditorOverlay(director: director, credential: credential)
+                }
+            }
+            .animation(AppAnimation.standard.reduceMotionSafe, value: director.editingCredential)
         }
     }
 }
@@ -198,6 +209,10 @@ private struct PhaseOverlayView: View {
             switch director.phase {
             case .stat:
                 StatPhase(director: director)
+                    .transition(.opacity)
+
+            case .demo:
+                DemoPhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
                     .transition(.opacity)
 
             case .name:
@@ -321,15 +336,15 @@ private struct PhaseOverlayView: View {
                     }
                     Spacer()
                 }
+
+                // Mirror OnboardingCanvasWrapper's custom editor overlay so the
+                // ConfirmationPhase edit sheet works in the preview too.
+                if let credential = director.editingCredential {
+                    CredentialEditorOverlay(director: director, credential: credential)
+                }
             }
             } // GeometryReader
-            // Mirror OnboardingCanvasWrapper so the ConfirmationPhase edit sheet
-            // works in the preview too (the canvas itself forbids .sheet).
-            .sheet(item: $director.editingCredential) { credential in
-                CredentialEditorSheet(director: director, credential: credential)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.hidden)
-            }
+            .animation(AppAnimation.standard, value: director.editingCredential)
         }
     }
 

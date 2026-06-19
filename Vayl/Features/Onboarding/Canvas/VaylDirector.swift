@@ -33,6 +33,10 @@ final class VaylDirector: OnboardingStage {
 
     var projectedText:        String? = nil
     var projectedTextVisible: Bool    = false
+    /// Vertical anchor for the projected dealer line — set per-line by
+    /// showDealerLine. Defaults to the table horizon; beats whose hero occupies
+    /// the horizon band (BuildDeck Beat 4 float) project above it instead.
+    var projectedTextAnchorYFrac: CGFloat = AppLayout.tableHorizonYFrac
 
     // MARK: - Gender Phase  (extracted → GenderSequencer)
     //
@@ -65,6 +69,20 @@ final class VaylDirector: OnboardingStage {
     var curiosityRoundTransitioning: Bool              = false
     /// True while the 2-card auto-swipe tutorial is running. View disables user gesture when set.
     var curiosityDemoActive:         Bool              = false
+    /// Demo-only commit thunk — the user path's commit haptic is view-owned; this
+    /// fires the same impact for the dealer's demonstration swipes.
+    var curiosityDemoCommitTrigger:  Bool              = false
+
+    // The forged summary card — "your yeses build one card." Materialises at the
+    // pile position after the last commit, then takes the standard cardPocket
+    // flight to the corner deck. Rendered by CuriosityPhase.
+    var curiositySummaryVisible: Bool   = false
+    var curiositySummaryOffset:  CGSize = .zero
+    var curiositySummaryScale:   Double = 1.0
+    var curiositySummaryAlpha:   Double = 1.0
+    /// True while the forged deck sits in the user's hand (lift anchor + halo)
+    /// awaiting the swipe-up handoff. Gates the deck's gesture + tug hint.
+    var curiositySummaryPresented: Bool = false
 
     @ObservationIgnored var curiositySequenceTask: Task<Void, Never>? = nil
     /// Cancellation token for the flying-card clear timer — bumped on each commit so a
@@ -96,6 +114,13 @@ final class VaylDirector: OnboardingStage {
     func advance(to next: OBPhase) {
         guard !isTransitioning else { return }
         isTransitioning = true
+        // No dealer line outlives its phase: hide it AT advance and invalidate
+        // any pending hide timer. The next phase may show its own line from
+        // entry — an outgoing phase's teardown (onDisappear fires ~300ms later,
+        // mid cross-fade) must never be the thing that clears the canvas line,
+        // or it wipes the incoming phase's copy.
+        dealerLineAttempt += 1
+        hideDealerLine()
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(50)) // advance debounce — double-fire guard only
             phase = next
@@ -107,6 +132,7 @@ final class VaylDirector: OnboardingStage {
     private func handlePhaseEntry(_ phase: OBPhase) {
         switch phase {
         case .stat:            break
+        case .demo:            runDemoEntry()
         case .name:            runNameEntry()
         case .modeSelect:      runModeSelectEntry()
         case .gender:          gender.runEntry()
@@ -122,9 +148,40 @@ final class VaylDirector: OnboardingStage {
     private func runNameEntry() {
         cardFlightEngine.resetSlotPool()
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(900))
-            withAnimation(.easeIn(duration: 1.6)) { tableFade = 1.0 }
+            // One breath after the cross-fade, then the felt blooms. easeOut so
+            // the table is perceptible immediately — easeIn held it at near-zero
+            // for the first half and the world arrived after the dealer spoke.
+            try? await Task.sleep(for: .milliseconds(200))
+            // DemoPhase now owns the table fade-in (it precedes name). If the felt
+            // is already up, don't re-animate to the same value — guard so the
+            // carry-over from demo stays seamless. Re-fading 1.0→1.0 is a visual
+            // no-op, but the guard keeps the intent explicit.
+            guard tableFade < 1.0 else { return }
+            withAnimation(.easeOut(duration: 1.2)) { tableFade = 1.0 }
         }
+    }
+
+    /// DemoPhase entry — owns only the table fade-in (moved off name). The full
+    /// scene (intro lines → deal → flip → tap-lift → compose → swipe-seal) is
+    /// driven by DemoPhase itself, mirroring how NamePhase owns runDealerIntro.
+    private func runDemoEntry() {
+        cardFlightEngine.resetSlotPool()
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(200))
+            withAnimation(.easeOut(duration: 1.2)) { tableFade = 1.0 }
+        }
+    }
+
+    /// Called by DemoPhase when the snapshot seals (card landed in the deck).
+    /// Derives the EmotionalRegister from verb × noun, writes the snapshot data,
+    /// and credits the corner deck. The phase owns the visual seal/dissolve/pocket
+    /// and fires the advance to .name after its closing beat.
+    func commitDemoSnapshot(verb: DemoVerb, noun: String) {
+        let trimmed = noun.trimmingCharacters(in: .whitespaces)
+        onboardingData.demoVerb          = verb.rawValue
+        onboardingData.demoNoun          = trimmed
+        onboardingData.emotionalRegister = DemoDictionary.register(verb: verb, noun: trimmed).rawValue
+        receiveCredential(.snapshot)
     }
 
     private func runModeSelectEntry() {
@@ -169,26 +226,34 @@ final class VaylDirector: OnboardingStage {
     }
 
     /// Bridging line that opens ContextPhase. Fires on the clean, still-present
-    /// felt and auto-fades at 2.8s — copy and carousel arrival overlap by design.
+    /// felt. No hide timer — ContextPhase holds for the returned copy's type
+    /// time, then sequences the recede/assembly and hides the line itself.
     /// Built here, never raw from View.
-    func showContextHeadline() {
+    @discardableResult
+    func showContextHeadline() -> String {
         let copy = onboardingData.appMode == .together
             ? "Where are you two starting from?"
             : "Where are you starting from?"
-        showDealerLine(copy, hideAfter: 2.8)
+        showDealerLineManual(copy)
+        return copy
     }
 
     /// Selection-dependent exit line shown at the end of ExperienceLevelPhase,
     /// before the phase advances to Context. Fires on the clean table after the
-    /// deck pulse. Director-owned — never raw in the View.
-    func showExpLevelExitLine(_ intensity: CandleIntensity) {
+    /// deck pulse. Director-owned — never raw in the View. No hide timer: the
+    /// phase holds for the returned copy's type time, then advance() fades the
+    /// line into the cross-fade. Returns the copy so the caller can compute
+    /// that hold via AppDealerTyping.typeDuration.
+    @discardableResult
+    func showExpLevelExitLine(_ intensity: CandleIntensity) -> String {
         let copy: String
         switch intensity {
         case .curious:     copy = "Good place to start."
         case .exploring:   copy = "There's a lot to work with."
         case .experienced: copy = "Let's build on that."
         }
-        showDealerLine(copy, hideAfter: 2.4)
+        showDealerLineManual(copy)
+        return copy
     }
 
     /// Fades the felt fully out so the context carousel reads as suspended *away
@@ -211,15 +276,26 @@ final class VaylDirector: OnboardingStage {
         onboardingData.relationshipContext = relationshipContext.rawValue
         onboardingData.situationalRegister = situationalRegister.rawValue
 
-        // Felt re-emerges and the corner deck receives the card.
+        // Felt re-emerges; the responsive line types over it.
         withAnimation(AppAnimation.tableRecede.reduceMotionSafe) { tableFade = 1.0 }
-        receiveCredential(.context)
-        showDealerLine(contextResponse(for: situationalRegister))
+        let reply = contextResponse(for: situationalRegister)
+        showDealerLineManual(reply)
 
         sequenceAttempt += 1
         let current = sequenceAttempt
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(2600)) // deck pulse (600) + let the responsive line land (2000)
+            // Deck credit waits for the felt to be back on stage — the corner
+            // deck is tableFade-gated, so an instant pulse fired on a deck that
+            // was barely visible. 400ms ≈ mid-recede, deck clearly present.
+            try? await Task.sleep(for: .milliseconds(400))
+            guard current == self.sequenceAttempt else { return }
+            receiveCredential(.context)
+
+            // Hold for the reply to land + a read beat; advance() fades the
+            // line into the cross-fade toward Curiosity.
+            try? await Task.sleep(for: .milliseconds(
+                AppDealerTyping.typeDuration(reply) + 300
+            ))
             guard current == self.sequenceAttempt else { return }
             advance(to: .curiosity)
         }
@@ -253,12 +329,17 @@ final class VaylDirector: OnboardingStage {
         curiosityDealTrigger        = false
         curiosityRoundTransitioning = false
         curiosityDemoActive         = true
+        curiositySummaryVisible     = false
+        curiositySummaryOffset      = .zero
+        curiositySummaryScale       = 1.0
+        curiositySummaryAlpha       = 1.0
+        curiositySummaryPresented   = false
         // beginCuriosityDemo() is called from CuriosityPhase.onAppear and drives
         // the full deal + auto-swipe + real-pile sequence from there.
     }
 
-    /// Runs the two-card auto-swipe tutorial, then deals the real Round 1 pile.
-    /// Called from CuriosityPhase.onAppear — the view triggers it once the phase is visible.
+    /// Runs the two-card auto-swipe tutorial, then deals the FULL deck (both
+    /// halves) in one cascade. Called from CuriosityPhase.onAppear.
     func beginCuriosityDemo(screenWidth: CGFloat) {
         guard curiosityDemoActive else { return }
 
@@ -273,54 +354,61 @@ final class VaylDirector: OnboardingStage {
             try? await Task.sleep(for: .milliseconds(750))
 
             // ── Explain the mechanic ─────────────────────────────────────
-            self.showDealerLine("Swipe right if a card feels true for you.", hideAfter: 4.0)
-            try? await Task.sleep(for: .milliseconds(1300))
+            // The instruction finishes typing + a read beat BEFORE the gesture
+            // it explains — the demo's entire job is to be read. (Fixed sleeps
+            // used to fire the swipe at ~50% of the sentence.)
+            let keepLine = "Swipe right if a card feels true for you."
+            self.showDealerLineManual(keepLine)
+            try? await Task.sleep(for: .milliseconds(AppDealerTyping.typeDuration(keepLine) + 450))
 
-            // ── Auto-swipe right (demo card 1: "This card fits you.") ────
-            withAnimation(.easeIn(duration: 0.22)) {
-                self.curiosityDragOffset = CGSize(width: screenWidth * 0.28, height: 0)
-            }
-            try? await Task.sleep(for: .milliseconds(220))
-            // Hand off to the same departure mechanic the user gets:
-            // the card flies clear while the next card rises into its place.
-            self.advanceCuriosityTopCard(
-                flingTo:      CGSize(width: screenWidth * 1.6, height: 0),
-                startingFrom: self.curiosityDragOffset
-            )
-            try? await Task.sleep(for: .milliseconds(520))
+            await self.demoSwipe(right: true, screenWidth: screenWidth)
 
-            // ── Brief pause before second demo card ──────────────────────
+            // ── Line swap with a real fade, not an instant text replace ──
+            self.hideDealerLine()
             try? await Task.sleep(for: .milliseconds(350))
 
-            // ── Explain left swipe ───────────────────────────────────────
-            self.showDealerLine("Left if it doesn't.", hideAfter: 4.0)
-            try? await Task.sleep(for: .milliseconds(1100))
+            let passLine = "Left if it doesn't."
+            self.showDealerLineManual(passLine)
+            try? await Task.sleep(for: .milliseconds(AppDealerTyping.typeDuration(passLine) + 450))
 
-            // ── Auto-swipe left (demo card 2: "This card... not so much.") ──
-            withAnimation(.easeIn(duration: 0.22)) {
-                self.curiosityDragOffset = CGSize(width: -(screenWidth * 0.28), height: 0)
-            }
-            try? await Task.sleep(for: .milliseconds(220))
-            self.advanceCuriosityTopCard(
-                flingTo:      CGSize(width: -(screenWidth * 1.6), height: 0),
-                startingFrom: self.curiosityDragOffset
-            )
-            try? await Task.sleep(for: .milliseconds(520))
+            await self.demoSwipe(right: false, screenWidth: screenWidth)
 
             // ── End demo, hand off to user ───────────────────────────────
             self.curiosityDemoActive = false
+            self.hideDealerLine()
             try? await Task.sleep(for: .milliseconds(350))
 
-            // Intro line fires when the real pile arrives so it frames the sort
-            self.showDealerLine("What keeps coming up for you? Sweep through — keep what pulls at you.", hideAfter: 5.0)
-            try? await Task.sleep(for: .milliseconds(600))
-
-            // ── Deal real Round 1 pile ────────────────────────────────────
-            self.curiosityFlyingCard   = nil
-            self.curiosityDragOffset    = .zero
-            self.curiosityPile          = self.buildCuriosityPile(round: 1)
+            // ── ONE deal — the full deck, both halves, one tall cascade. ──
+            // The first question frames the sort as the waterfall lands.
+            self.curiosityFlyingCard = nil
+            self.curiosityDragOffset = .zero
+            self.curiosityPile       = self.buildCuriosityPile(round: 1)
+                                     + self.buildCuriosityPile(round: 2)
             self.curiosityDealTrigger.toggle()
+            try? await Task.sleep(for: .milliseconds(400))
+            self.showDealerLineManual("What keeps coming up for you?")
         }
+    }
+
+    /// One demonstration swipe, wearing the same physical signature it teaches:
+    /// the threshold tick as the drag crosses the commit line, the commit thunk
+    /// at release, and the standard departure mechanic.
+    private func demoSwipe(right: Bool, screenWidth: CGFloat) async {
+        let dir: CGFloat = right ? 1 : -1
+        withAnimation(.easeIn(duration: 0.22)) {
+            curiosityDragOffset = CGSize(width: dir * screenWidth * 0.28, height: 0)
+        }
+        // Drag covers ~0.28·W over 220ms; it crosses the 95pt threshold late.
+        try? await Task.sleep(for: .milliseconds(160))
+        curiosityThresholdCrossed = true
+        try? await Task.sleep(for: .milliseconds(60))
+        curiosityDemoCommitTrigger.toggle()
+        advanceCuriosityTopCard(
+            flingTo:      CGSize(width: dir * screenWidth * 1.6, height: 0),
+            startingFrom: curiosityDragOffset
+        )
+        curiosityThresholdCrossed = false
+        try? await Task.sleep(for: .milliseconds(520))
     }
 
     // MARK: - Curiosity Phase Methods
@@ -367,14 +455,16 @@ final class VaylDirector: OnboardingStage {
     func commitCuriositySwipe(screenSize: CGSize) {
         guard !curiosityPile.isEmpty, !curiosityRoundTransitioning else { return }
 
-        let isKeep = curiosityDragOffset.width > 0
-        let keptID = curiosityPile[0].id
+        let topCard = curiosityPile[0]
+        let isKeep  = curiosityDragOffset.width > 0
         let flingX: CGFloat = isKeep ? screenSize.width * 1.6 : -screenSize.width * 1.6
         let flingY: CGFloat = curiosityDragOffset.height * 0.5
 
+        // Keeps recorded by the CARD's round, not a phase counter — the
+        // bookkeeping cannot drift from what's visually on the pile.
         if isKeep {
-            if curiosityRoundIndex == 0 { curiosityKeptRound1.append(keptID) }
-            else                        { curiosityKeptRound2.append(keptID) }
+            if topCard.round == 1 { curiosityKeptRound1.append(topCard.id) }
+            else                  { curiosityKeptRound2.append(topCard.id) }
         }
 
         advanceCuriosityTopCard(
@@ -383,7 +473,15 @@ final class VaylDirector: OnboardingStage {
         )
         curiosityThresholdCrossed = false
 
-        // Pile is now post-removal. If that emptied the round, advance after a beat.
+        // Pile is now post-removal.
+        // Mid-deck boundary: last round-1 card committed, round-2 card surfacing —
+        // pause the deck and swap the question.
+        if topCard.round == 1, curiosityPile.first?.round == 2 {
+            onCuriosityRoundBoundary()
+            return
+        }
+
+        // Full deck done — forge the credential and conclude.
         guard curiosityPile.isEmpty else { return }
 
         sequenceAttempt += 1
@@ -391,11 +489,7 @@ final class VaylDirector: OnboardingStage {
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(260))
             guard current == self.sequenceAttempt else { return }
-            if self.curiosityRoundIndex == 0 {
-                self.onCuriosityRound1Exhausted()
-            } else {
-                self.onCuriosityRound2Exhausted()
-            }
+            self.onCuriosityDeckExhausted(screenSize: screenSize)
         }
     }
 
@@ -442,41 +536,96 @@ final class VaylDirector: OnboardingStage {
         curiosityThresholdCrossed = false
     }
 
-    private func onCuriosityRound1Exhausted() {
+    /// Mid-deck pause — same deck, new question. The last round-1 card has
+    /// committed and a round-2 card is surfacing: swiping locks
+    /// (curiosityRoundTransitioning gates the top card's hit-testing), the held
+    /// beat is the punctuation, then the second question types and unlocks.
+    private func onCuriosityRoundBoundary() {
         guard !curiosityRoundTransitioning else { return }
         curiosityRoundTransitioning = true
+        hideDealerLine()
 
         curiositySequenceTask?.cancel()
         curiositySequenceTask = Task { @MainActor in
-            self.showDealerLine("Good.", hideAfter: 2.0)
-            try? await Task.sleep(for: .milliseconds(1100))
-
-            self.showDealerLine("Now — what pulls your curiosity?", hideAfter: 2.5)
-            try? await Task.sleep(for: .milliseconds(300))
-
+            try? await Task.sleep(for: .milliseconds(600))
             self.curiosityRoundIndex = 1
-            self.curiosityFlyingCard = nil
-            self.curiosityDragOffset = .zero
-            self.curiosityPile       = self.buildCuriosityPile(round: 2)
-            self.curiosityDealTrigger.toggle()
+            let line = "Now — what pulls your curiosity?"
+            self.showDealerLineManual(line)
+            // Swiping unlocks once the new question has landed + a beat.
+            try? await Task.sleep(for: .milliseconds(AppDealerTyping.typeDuration(line) + 250))
             self.curiosityRoundTransitioning = false
         }
     }
 
-    private func onCuriosityRound2Exhausted() {
+    /// Full deck sorted. The kept cards compress into the squared deck, which
+    /// the dealer places IN THE USER'S HAND — lift anchor + halo, the taught
+    /// "ready to give" state. The user completes the phase by handing it over
+    /// (swipe-up → handoffCuriosityDeck). The credential is the only one the
+    /// user assembles themselves; it should also be one they choose to give.
+    private func onCuriosityDeckExhausted(screenSize: CGSize) {
         onboardingData.communicationGoals  = curiosityKeptRound1
         onboardingData.learningGoals       = curiosityKeptRound2
         onboardingData.curiositySelections = curiosityKeptRound1 + curiosityKeptRound2
         evaluateOpenerDeckType()
 
-        receiveCredential(.curiosity)
-
-        showDealerLine("Good pile.", hideAfter: 3.0)
+        hideDealerLine()
 
         sequenceAttempt += 1
         let current = sequenceAttempt
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(1500)) // deck pulse (600) + settle (900)
+            // Last fling clears the stage.
+            try? await Task.sleep(for: .milliseconds(350))
+            guard current == self.sequenceAttempt else { return }
+
+            // Materialise straight into the hand — spring from 0.82 to the
+            // standard lift scale at the lift anchor, halo following.
+            self.curiositySummaryOffset = CGSize(
+                width:  0,
+                height: screenSize.height * 0.42 - screenSize.height / 2
+            )
+            self.curiositySummaryScale   = 0.82
+            self.curiositySummaryAlpha   = 0
+            self.curiositySummaryVisible = true
+            withAnimation(AppAnimation.spring.reduceMotionSafe) {
+                self.curiositySummaryScale = 1.12
+                self.curiositySummaryAlpha = 1.0
+            }
+            try? await Task.sleep(for: .milliseconds(600))
+            guard current == self.sequenceAttempt else { return }
+            self.curiositySummaryPresented = true
+        }
+    }
+
+    /// The user hands the forged deck to the dealer (swipe-up on the presented
+    /// deck). Standard pocket flight with late alpha; deck pulses 6/6 on
+    /// landing, the dealer receipts the collection, then the phase advances.
+    func handoffCuriosityDeck(screenSize: CGSize) {
+        guard curiositySummaryPresented else { return }
+        curiositySummaryPresented = false
+
+        sequenceAttempt += 1
+        let current = sequenceAttempt
+        Task { @MainActor in
+            let cardW   = AppLayout.obTableCardWidth(in: screenSize.width)
+                        * AppLayout.obTableCardCinematicScale
+            let cornerX = screenSize.width  - AppLayout.cornerDeckRight - AppLayout.cornerDeckWidth  / 2
+            let cornerY = AppLayout.cornerDeckTop + AppLayout.cornerDeckHeight / 2
+            withAnimation(AppAnimation.cardPocket.reduceMotionSafe) {
+                self.curiositySummaryOffset = CGSize(width:  cornerX - screenSize.width  / 2,
+                                                     height: cornerY - screenSize.height / 2)
+                self.curiositySummaryScale  = AppLayout.cornerDeckWidth / cardW
+            }
+            withAnimation(.easeIn(duration: 0.2).delay(0.32).reduceMotionSafe) {
+                self.curiositySummaryAlpha = 0
+            }
+            try? await Task.sleep(for: .milliseconds(480))
+            guard current == self.sequenceAttempt else { return }
+            self.receiveCredential(.curiosity)
+            self.curiositySummaryVisible = false
+
+            let line = "That's everything I need."
+            self.showDealerLineManual(line)
+            try? await Task.sleep(for: .milliseconds(AppDealerTyping.typeDuration(line) + 700))
             guard current == self.sequenceAttempt else { return }
             self.advance(to: .confirmation)
         }
@@ -492,6 +641,7 @@ final class VaylDirector: OnboardingStage {
         tableFade = 1.0   // the felt stays as the stage — the forge happens ON it
         foilIntegrity = 1.0
         foilTears = []
+        rollStrikeSequence()   // this ceremony's authored composition
     }
 
     /// Called by BuildDeckPhase as the cased deck leaves the table (ceremony
@@ -504,6 +654,14 @@ final class VaylDirector: OnboardingStage {
         // explicit user action via finishOnboarding(), so it reflects intent rather
         // than a side effect of arriving at the phase. FounderLetter visuals are a
         // later design pass; they invoke finishOnboarding() and read commitFailed.
+        //
+        // Restore the felt INSTANTLY behind the now-opaque letter sheet. The forge
+        // receded the table (Beat 3c) and nothing brought it back — so the curtain
+        // pull-down had nothing to reveal, and finishOnboarding's cinematicFade
+        // animated 0→0 (a no-op; the OB ended on a black frame). With the felt
+        // present behind the sheet, the pull-down reveals the warm table and the
+        // cinematicFade genuinely dissolves it as routing carries the user home.
+        tableFade = 1.0
     }
 
     /// Called by FounderLetterPhase when the user finishes onboarding.
@@ -522,15 +680,20 @@ final class VaylDirector: OnboardingStage {
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(100)) // post-commit settle
             guard current == self.sequenceAttempt else { return }
+            // The set changes behind the descending letter: the warm felt
+            // (restored in runFounderLetterEntry) dissolves to void as reactive
+            // routing swaps in Home. (No deckPulse here — it was an orphan write
+            // that never reset and pulsed a corner deck that isn't on stage.)
             withAnimation(AppAnimation.cinematicFade.reduceMotionSafe) { self.tableFade = 0 }
-            withAnimation(AppAnimation.spring.reduceMotionSafe) { self.deckPulse = true }
         }
     }
 
-    func showDealerLine(_ text: String, hideAfter seconds: Double = 4.0) {
+    func showDealerLine(_ text: String, hideAfter seconds: Double = 4.0,
+                        anchorYFrac: CGFloat = AppLayout.tableHorizonYFrac) {
         dealerLineAttempt += 1
         let current = dealerLineAttempt
         projectedText = text
+        projectedTextAnchorYFrac = anchorYFrac
         withAnimation(AppAnimation.textProject.reduceMotionSafe) { projectedTextVisible = true }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(seconds))
@@ -539,8 +702,9 @@ final class VaylDirector: OnboardingStage {
         }
     }
 
-    func showDealerLineManual(_ text: String) {
+    func showDealerLineManual(_ text: String, anchorYFrac: CGFloat = AppLayout.tableHorizonYFrac) {
         projectedText = text
+        projectedTextAnchorYFrac = anchorYFrac
         withAnimation(AppAnimation.textProject.reduceMotionSafe) { projectedTextVisible = true }
     }
 
@@ -598,23 +762,72 @@ final class VaylDirector: OnboardingStage {
     }
 
 
-    func addFoilTear(at point: CGPoint) {
-        let tear = FoilTear(tapPoint: point)
-        foilTears.append(tear)
+    /// Authored strike SEQUENCES — Opal grammar: the tap is a TRIGGER, not an
+    /// author. Each ceremony plays one of three vetted compositions (picked at
+    /// phase entry, optionally mirrored — six visual outcomes), each placing
+    /// one strike per horizontal third of the face with min pairwise spread
+    /// ≥ 0.47 width-units and the centroid near face center. The KILL (strike
+    /// 3, the bloom origin) lands somewhere different in every sequence —
+    /// that's where the uniqueness reads.
+    /// Each strike carries an authored ORIENTATION too (degrees; 0 = horizontal,
+    /// 90 = vertical): the crack's main fracture runs along it, and within a
+    /// sequence the three orientations are ≥ 40° apart — never two horizontals
+    /// in one ceremony. Mirroring flips angles with the zones (180 − θ).
+    private static let strikeSequences: [[(zone: CGPoint, angleDeg: Double)]] = [
+        // The Descent — diagonal march downward; the case dies at its base
+        [(CGPoint(x: 0.28, y: 0.233),  10),
+         (CGPoint(x: 0.74, y: 0.480), 125),
+         (CGPoint(x: 0.45, y: 0.747),  85)],
+        // The Pincer — opposite corners first (≈ the full face diagonal),
+        // the kill lands in the heart
+        [(CGPoint(x: 0.72, y: 0.200), 150),
+         (CGPoint(x: 0.27, y: 0.773),  15),
+         (CGPoint(x: 0.50, y: 0.480),  90)],
+        // The Crown — starts low and rises; the final blow strikes the crown
+        [(CGPoint(x: 0.70, y: 0.787), 175),
+         (CGPoint(x: 0.26, y: 0.467),  80),
+         (CGPoint(x: 0.52, y: 0.200),  35)],
+    ]
+    private var strikeSequenceIndex: Int  = 0
+    private var strikeMirrored:      Bool = false
+
+    /// Roll this ceremony's composition — called on buildDeck entry.
+    private func rollStrikeSequence() {
+        strikeSequenceIndex = Int.random(in: 0..<Self.strikeSequences.count)
+        strikeMirrored      = Bool.random()
+    }
+
+    /// Crack ceremony (Beat 5) — the view forwards each tap on the sealed case
+    /// as a face-local UV point. Three tears collapse the foil integrity.
+    func addFoilTear(atFaceUV uv: CGPoint) {
+        guard foilIntegrity > 0.5, foilTears.count < 3 else { return }
+        // the composed zone does the placement; the tap only STEERS within a
+        // tight radius — strikes can never stack and the composition can't break
+        let spec = Self.strikeSequences[strikeSequenceIndex][foilTears.count]
+        var zone = spec.zone
+        var angle = spec.angleDeg
+        if strikeMirrored {
+            zone.x = 1 - zone.x
+            angle = 180 - angle
+        }
+        let pulled = CGPoint(x: uv.x + (zone.x - uv.x) * 0.75,
+                             y: uv.y + (zone.y - uv.y) * 0.75)
+        let dx = pulled.x - zone.x, dy = pulled.y - zone.y
+        let offset = (dx * dx + dy * dy).squareRoot()
+        let maxOffset: CGFloat = 0.10
+        let strike = offset <= maxOffset ? pulled
+            : CGPoint(x: zone.x + dx / offset * maxOffset,
+                      y: zone.y + dy / offset * maxOffset)
+        foilTears.append(FoilTear(faceUV: strike, angleDeg: angle))
         if foilTears.count >= 3 { beginFoilDissolve() }
     }
 
     private func beginFoilDissolve() {
-        sequenceAttempt += 1
-        let current = sequenceAttempt
+        // Integrity is the state of record; the bloom-flood + shatter visuals
+        // are Date-driven in the case view. No auto-advance — what happens
+        // after the shatter belongs to the reveal / letter peek, and
+        // `advance()` fires only on user action (ceremony spec, segment 6).
         withAnimation(AppAnimation.foilDissolve.reduceMotionSafe) { self.foilIntegrity = 0 }
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(800)) // foil dissolve delay
-            guard current == self.sequenceAttempt else { return }
-            try? await Task.sleep(for: .seconds(1))
-            guard current == self.sequenceAttempt else { return }
-            self.advance(to: .founderLetter)
-        }
     }
 
 }

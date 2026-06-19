@@ -9,9 +9,11 @@ import SwiftUI
 ///
 /// Entry: the felt settles + prompt breathes in → held beat → the six credential
 /// cards deal out of the top-right corner deck onto the table along a bézier
-/// corner-sweep (rightmost first, leftmost ends on top) → "This is me" CTA fades in.
+/// corner-sweep (rightmost first, leftmost ends on top).
 /// Tapping a settled card opens its edit half-sheet (via `director.editingCredential`).
-/// Confirming collapses the fan into a deck, then advances to `.buildDeck`.
+/// Confirming is a SWIPE RIGHT on the fan — the keep gesture from CuriosityPhase,
+/// asked of the whole hand ("does this feel true?"). Commit collapses the fan
+/// into a deck, then advances to `.buildDeck`. No CTA chrome on the felt.
 ///
 /// This view renders its own `VaylCardFace` symbol cards and never writes
 /// VaylCardModel physics — `tableFade` is raised by the director's `runConfirmationEntry`.
@@ -22,11 +24,18 @@ struct ConfirmationPhase: View {
     @Environment(\.realSafeArea)               private var safeArea
     @Environment(\.accessibilityReduceMotion)  private var reduceMotion
 
-    @State private var copyShown  = false
     @State private var dealt      = false
-    @State private var ctaShown   = false
-    @State private var pressedCTA = false
     @State private var exiting    = false
+
+    // ── Swipe-right confirm (the CuriosityPhase keep gesture, fan-wide) ──
+    @State private var armed            = false           // fan settled — swipe live
+    @State private var fanDragX:        CGFloat = 0       // damped follow during the drag
+    @State private var thresholdCrossed = false           // → .selection tick (both ways)
+    @State private var commitThunk      = false           // → .impact(.medium) on commit
+    @State private var nudgeX:          CGFloat = 0       // idle rightward cue
+    @State private var nudgeTask:       Task<Void, Never>? = nil
+    @State private var dealTickTask:    Task<Void, Never>? = nil   // landing-haptic loop
+    @State private var exitTask:        Task<Void, Never>? = nil   // collapse → advance
 
     private let credentials  = OBCredential.allCases   // name, gender, mode, experienceLevel, context, curiosity
 
@@ -35,22 +44,74 @@ struct ConfirmationPhase: View {
     private let dealStagger:  Double = 0.19
     private let dealArc:      Double = 13              // % of screen height — bézier sweep peak
     private let breatheHold:  Double = 1.4
-    private let dealSpan:     Double = 1.3
-    private let exitDuration: Double = 0.4
+    private let dealSpan:     Double = 1.9             // deal stagger tail + spring settle — swipe arms on a still fan
+    private let exitStagger:  Double = 0.12   // per-card delay, leftmost first — the gather reads card by card
+    private let exitSpan:     Double = 1.6    // stagger tail (0.6) + spring settle before the swap
+    /// Same commit physics as CuriosityPhase — distance, or a committed flick.
+    private let commitThreshold: CGFloat = 95
 
     var body: some View {
         GeometryReader { geo in
             let size = geo.size
             ZStack {
-                ForEach(Array(credentials.enumerated()), id: \.element) { index, credential in
-                    cardView(index: index, credential: credential, size: size)
+                // The fan moves as one hand: damped drag-follow + idle nudge.
+                ZStack {
+                    ForEach(Array(credentials.enumerated()), id: \.element) { index, credential in
+                        cardView(index: index, credential: credential, size: size)
+                    }
                 }
-                overlayCopy(size: size)
+                .offset(x: fanDragX + nudgeX)
+                // simultaneousGesture — VaylCardFace owns its own tap/drag, so a
+                // plain .gesture here would lose drags that start on a card
+                // (which is most of them). Card taps still edit; card-level
+                // swipe events are ignored by tapHandler.
+                .simultaneousGesture(fanSwipe(size: size))
+
             }
             .frame(width: size.width, height: size.height)
-            .task { await runEntry() }
+            .sensoryFeedback(.selection, trigger: thresholdCrossed)
+            .sensoryFeedback(.impact(weight: .medium), trigger: commitThunk)
+            .task { await runEntry(size: size) }
+        }
+        .onDisappear {
+            nudgeTask?.cancel()
+            dealTickTask?.cancel()
+            exitTask?.cancel()
         }
         .accessibilityLabel("Confirmation phase")
+        .accessibilityAction(named: "Confirm — this is me") { startExit() }
+    }
+
+    // MARK: - Fan swipe (the keep gesture, asked of the whole hand)
+
+    private func fanSwipe(size: CGSize) -> some Gesture {
+        DragGesture(minimumDistance: 25)
+            .onChanged { value in
+                guard armed, !exiting, director.editingCredential == nil else { return }
+                nudgeTask?.cancel()
+                withAnimation(AppAnimation.spring.reduceMotionSafe) { nudgeX = 0 }
+                let x = value.translation.width
+                // Rightward follows damped; leftward rubber-bands hard — there
+                // is no "pass" on yourself here, only the keep direction.
+                fanDragX = x > 0 ? min(x * 0.5, size.width * 0.35) : x * 0.15
+                let crossed = x >= commitThreshold
+                if crossed != thresholdCrossed { thresholdCrossed = crossed }
+            }
+            .onEnded { value in
+                thresholdCrossed = false
+                guard armed, !exiting, director.editingCredential == nil else {
+                    withAnimation(AppAnimation.cardSettle.reduceMotionSafe) { fanDragX = 0 }
+                    return
+                }
+                let travelled = value.translation.width
+                let projected = value.predictedEndTranslation.width
+                if travelled >= commitThreshold || projected >= commitThreshold * 1.6 {
+                    commitThunk.toggle()
+                    startExit()
+                } else {
+                    withAnimation(AppAnimation.cardSettle.reduceMotionSafe) { fanDragX = 0 }
+                }
+            }
     }
 
     // MARK: - Card (extracted to keep the body type-checkable)
@@ -82,15 +143,20 @@ struct ConfirmationPhase: View {
         // The cards turn face-down as they collapse: their truths go private
         // as they're submitted to the table.
         ZStack {
+            // +180 — the card turns over its RIGHT edge, the way a card flips
+            // when pushed rightward; the commit gesture is a swipe right.
             VaylCardFace(content: content(for: credential), onAction: tapHandler(for: credential))
-                .rotation3DEffect(.degrees(exiting ? -180 : 0),
+                .rotation3DEffect(.degrees(exiting ? 180 : 0),
                                   axis: (x: 0, y: 1, z: 0), perspective: 0.6)
                 .opacity(exiting ? 0 : 1)
             VaylCardBack()
-                .rotation3DEffect(.degrees(exiting ? 0 : 180),
+                .rotation3DEffect(.degrees(exiting ? 0 : -180),
                                   axis: (x: 0, y: 1, z: 0), perspective: 0.6)
                 .opacity(exiting ? 1 : 0)
         }
+            // flip is scoped tighter + faster than the sweep — cards arrive at
+            // the deck already face-down, not flipping at the last instant
+            .animation(exitFlipAnimation(index: index, count: credentials.count), value: exiting)
             .frame(width: w, height: w * 1.5)
             .rotationEffect(.degrees(ang))
             .scaleEffect(scl)
@@ -102,7 +168,7 @@ struct ConfirmationPhase: View {
                                   control:  dealControl(corner: corner, target: target.position, size: size)))
             .zIndex(Double(credentials.count - index))   // index 0 (leftmost) on top
             .animation(dealAnimation(index: index, count: credentials.count), value: dealt)
-            .animation(.easeIn(duration: exitDuration).reduceMotionSafe, value: exiting)
+            .animation(exitMoveAnimation(index: index, count: credentials.count), value: exiting)
     }
 
     private func tapHandler(for credential: OBCredential) -> ((VaylCardAction) -> Void)? {
@@ -112,66 +178,86 @@ struct ConfirmationPhase: View {
         }
     }
 
-    // MARK: - Prompt + CTA
-
-    @ViewBuilder
-    private func overlayCopy(size: CGSize) -> some View {
-        VStack(spacing: 0) {
-            Text("Everything look right?")
-                .font(AppFonts.prompt)
-                .foregroundStyle(AppColors.textBody)
-                .padding(.top, safeArea.top + AppSpacing.xl)
-                .opacity(copyShown && !exiting ? 1 : 0)
-                .animation(AppAnimation.slow.reduceMotionSafe, value: copyShown)
-                .animation(AppAnimation.fast.reduceMotionSafe, value: exiting)
-
-            Spacer()
-
-            ctaButton
-                .padding(.bottom, safeArea.bottom + AppSpacing.xl)
-                .opacity(ctaShown && !exiting ? 1 : 0)
-                .animation(AppAnimation.slow.reduceMotionSafe, value: ctaShown)
-                .animation(AppAnimation.fast.reduceMotionSafe, value: exiting)
-        }
-    }
-
-    private var ctaButton: some View {
-        Text("This is me")
-            .font(AppFonts.ctaLabel)
-            .foregroundStyle(AppColors.textPrimary)
-            .padding(.vertical, AppSpacing.md)
-            .padding(.horizontal, AppSpacing.xl)
-            .background(Capsule().strokeBorder(AppColors.spectrumBorder, lineWidth: 1.6))
-            .scaleEffect(pressedCTA ? 0.96 : 1.0)
-            .animation(AppAnimation.fast, value: pressedCTA)
-            .sensoryFeedback(.impact(weight: .light), trigger: pressedCTA)
-            .onTapGesture { startExit() }
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in pressedCTA = true }
-                    .onEnded   { _ in pressedCTA = false }
-            )
-            .accessibilityAddTraits(.isButton)
-            .accessibilityLabel("This is me")
-    }
-
     // MARK: - Sequences
 
     @MainActor
-    private func runEntry() async {
-        withAnimation(AppAnimation.slow.reduceMotionSafe) { copyShown = true }
-        try? await Task.sleep(for: .seconds(reduceMotion ? 0.05 : breatheHold))
-        dealt = true   // cards animate via their per-card dealAnimation
-        try? await Task.sleep(for: .seconds(reduceMotion ? 0.05 : dealSpan))
-        withAnimation(AppAnimation.slow.reduceMotionSafe) { ctaShown = true }
+    private func runEntry(size: CGSize) async {
+        // The prompt is DEALER copy — typed Menlo via the canvas projection,
+        // never a phase-local Text in a display face (one dealer, one voice).
+        director.showDealerLineManual("Everything look right?")
+
+        if reduceMotion {
+            // Cards are visible from the first frame under RM — no beats to wait out.
+            dealt = true
+            armed = true
+        } else {
+            try? await Task.sleep(for: .seconds(breatheHold))
+            dealt = true   // cards animate via their per-card dealAnimation
+
+            // One light tick per landing, riding the deal stagger — the fan
+            // was the only silent deal in the OB. First (rightmost) card
+            // arrives ≈0.45s into its spring.
+            dealTickTask = Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.45))
+                let tick = UIImpactFeedbackGenerator(style: .light)
+                tick.prepare()
+                for _ in credentials.indices {
+                    guard !exiting else { break }
+                    tick.impactOccurred()
+                    try? await Task.sleep(for: .seconds(dealStagger))
+                }
+            }
+
+            try? await Task.sleep(for: .seconds(dealSpan))
+            armed = true   // fan settled — the swipe is live
+        }
+
+        // Idle cue — if the user hasn't engaged after a beat, the dealer names
+        // the gesture once and the fan nudges rightward on a sparse cadence.
+        try? await Task.sleep(for: .seconds(reduceMotion ? 0.5 : 2.5))
+        guard !exiting, director.editingCredential == nil else { return }
+        director.hideDealerLine()
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !exiting, director.editingCredential == nil else { return }
+        // Persistent (manual) — the directional cue stays coupled to the nudge
+        // instead of auto-hiding while the fan keeps twitching silently. This is
+        // the only swipe-RIGHT in the OB (every prior confirm was swipe-up), so
+        // its worded cue must not time out. Hidden on commit (startExit).
+        director.showDealerLineManual("If that's you — swipe right.")
+        startNudge(amplitude: size.width * 0.055)
+    }
+
+    /// Sparse rightward nudge on the whole fan — the curiosity keep direction.
+    private func startNudge(amplitude: CGFloat) {
+        nudgeTask?.cancel()
+        guard !reduceMotion else { return }
+        nudgeTask = Task { @MainActor in
+            while !Task.isCancelled {
+                withAnimation(AppAnimation.swipeHintFlick.reduceMotionSafe) { nudgeX = amplitude }
+                try? await Task.sleep(for: .milliseconds(380))
+                guard !Task.isCancelled else { break }
+                withAnimation(AppAnimation.spring.reduceMotionSafe) { nudgeX = 0 }
+                try? await Task.sleep(for: .milliseconds(6000))
+                guard !Task.isCancelled else { break }
+            }
+        }
     }
 
     /// Confirm — collapse the fan into a deck, then hand off to buildDeck.
     private func startExit() {
         guard !exiting else { return }
-        exiting = true   // cards collapse via the exit animation modifier
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.05 : exitDuration))
+        exiting = true   // cards collapse via the exit animation modifiers
+        nudgeTask?.cancel()
+        director.hideDealerLine()
+        // The committed drag offset bleeds out on a slow ease UNDER the gather —
+        // a spring snap-back here moved the whole fan leftward, against the
+        // swipe that just committed. The deck still lands at the seam point.
+        withAnimation(.easeOut(duration: exitSpan).reduceMotionSafe) {
+            fanDragX = 0
+            nudgeX   = 0
+        }
+        exitTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.05 : exitSpan))
             director.advance(to: .buildDeck)
         }
     }
@@ -182,6 +268,28 @@ struct ConfirmationPhase: View {
         if reduceMotion { return AppAnimation.fast }
         let delay = Double(count - 1 - index) * dealStagger
         return .spring(response: 0.55, dampingFraction: 0.86).delay(delay)
+    }
+
+    // MARK: - Exit animation (rightmost card leaves first — the deal grammar, reversed home)
+
+    /// Sweep into the deck: per-card staggered spring so the fan GATHERS card by
+    /// card and each one decelerates INTO the stack. LEFTMOST first — the commit
+    /// is a swipe right, so the closing wave travels left→right WITH the gesture
+    /// (the swipe shoves the hand shut from its left edge).
+    private func exitMoveAnimation(index: Int, count: Int) -> Animation {
+        if reduceMotion { return AppAnimation.fast }
+        let delay = Double(index) * exitStagger
+        // 0.8 response — this is the keystone object moment (six credentials
+        // become THE deck); at 0.5 the whole collapse read in ~0.35s, a snap.
+        return .spring(response: 0.8, dampingFraction: 0.85).delay(delay)
+    }
+
+    /// The face-down flip rides the same stagger but resolves ~60% through the
+    /// sweep — their truths go private on the way to the deck, not at arrival.
+    private func exitFlipAnimation(index: Int, count: Int) -> Animation {
+        if reduceMotion { return AppAnimation.fast }
+        let delay = Double(index) * exitStagger
+        return .spring(response: 0.5, dampingFraction: 0.9).delay(delay)
     }
 
     // MARK: - Geometry
@@ -227,6 +335,13 @@ struct ConfirmationPhase: View {
     private func content(for credential: OBCredential) -> VaylCardContent {
         let data = director.onboardingData
         switch credential {
+        case .snapshot:
+            // The one credential that IS the user's own words — show the sealed
+            // sentence back, not an abstract symbol.
+            let verb = DemoVerb(rawValue: data.demoVerb ?? "") ?? .want
+            return .snapshot(verb: verb, noun: data.demoNoun ?? "",
+                             toneProgress: verb.toneProgress, sealProgress: 1.0)
+
         case .name:
             return .typewriter(activeKey: -1, carriageProgress: 1.0)
 

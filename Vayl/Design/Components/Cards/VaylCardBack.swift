@@ -32,15 +32,15 @@ struct VaylCardBack: View {
 
     /// Override the hex moiré rotation angle (degrees).
     /// `nil` = default behaviour (±8° portrait, ±6° landscape).
-    /// During dissolution, GenderPhase passes `director.dissolutionHexAngle` (0→8°).
+    /// During dissolution, GenderPhase passes `director.gender.dissolutionHexAngle` (0→8°).
     var hexAngleOverride: CGFloat? = nil
 
     /// Hex cell size multiplier. 1.0 = normal. >1.0 = sparser grid (topo-frequency phase).
-    /// During dissolution, GenderPhase passes `director.dissolutionHexSpacing` (2.2→1.0).
+    /// During dissolution, GenderPhase passes `director.gender.dissolutionHexSpacing` (2.2→1.0).
     var hexSpacingMul: CGFloat = 1.0
 
     /// Wordmark opacity multiplier. 1.0 = fully visible. 0.0 = invisible.
-    /// During dissolution, GenderPhase passes `director.dissolutionMark` (0→1).
+    /// During dissolution, GenderPhase passes `director.gender.dissolutionMark` (0→1).
     var wordmarkOpacity: Double = 1.0
 
     var body: some View {

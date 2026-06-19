@@ -17,38 +17,20 @@ struct FounderLetterSheet<Content: View>: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Spectrum grab handle.
+            // Native iOS dimensions: 36x5pt, 5pt from the top edge.
             Capsule()
-                .fill(AppColors.textTertiary)
+                .fill(AppColors.spectrumBorder)
                 .frame(width: 36, height: 5)
-                .padding(.top, AppSpacing.sm)
-
-            Text("A note from the founder")
-                .font(AppFonts.overline)
-                .foregroundStyle(AppColors.textSecondary)
-                .padding(.top, AppSpacing.sm)
+                .opacity(0.6)
+                .padding(.top, 8)
 
             content()
 
             Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(
-            UnevenRoundedRectangle(
-                topLeadingRadius:  AppRadius.container,
-                topTrailingRadius: AppRadius.container
-            )
-            .fill(AppColors.modalBackground)
-            .ignoresSafeArea(edges: .bottom)
-        )
-        .overlay(
-            UnevenRoundedRectangle(
-                topLeadingRadius:  AppRadius.container,
-                topTrailingRadius: AppRadius.container
-            )
-            .strokeBorder(AppColors.spectrumBorder, lineWidth: 1)
-            .opacity(0.4)
-        )
-        .modalElevation()
+        // Native-style chrome — identical to the edit sheet.
+        .obSheetChrome()
     }
 }
 
