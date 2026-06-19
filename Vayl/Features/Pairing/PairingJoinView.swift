@@ -194,7 +194,7 @@ struct PairingJoinView: View {
                     .font(AppFonts.screenTitle)
                     .foregroundStyle(AppColors.textPrimary) // was isLight ? x : x — same both sides
 
-                Text("You've successfully connected\nwith your partner.")
+                Text("\(store.partnerDisplayName) is ready to begin with you.")
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
                     .multilineTextAlignment(.center)

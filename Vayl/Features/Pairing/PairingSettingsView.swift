@@ -24,6 +24,10 @@ struct PairingSettingsView: View {
     @State private var showInviteView: Bool = false
     @State private var showJoinView: Bool = false
 
+    // MARK: - Partner Identity (P3)
+
+    @State private var partnerName: String? = nil
+
     // MARK: - Body
 
     var body: some View {
@@ -50,6 +54,15 @@ struct PairingSettingsView: View {
             }
             .navigationTitle("Partner Linking")
             .navigationBarTitleDisplayMode(.inline)
+            .task {
+                // P3: if already linked, push our own identity + read the partner's
+                // name so the status line shows who, not a generic label. A
+                // transient store keeps this View → Store → Service compliant.
+                guard appState.linkState == .linked else { return }
+                let store = PairingStore(modelContainer: modelContext.container, appState: appState)
+                await store.refreshPartner()
+                partnerName = store.partnerName
+            }
             .sheet(isPresented: $showInviteView) {
                 PairingInviteView(
                     store: PairingStore(
@@ -91,7 +104,9 @@ struct PairingSettingsView: View {
                     .frame(width: 10, height: 10)
                     .accessibilityHidden(true)      // status communicated by adjacent text
 
-                Text(appState.linkState == .linked ? "Linked with partner" : "Not linked")
+                Text(appState.linkState == .linked
+                        ? "Linked with \(partnerName ?? "partner")"
+                        : "Not linked")
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textPrimary) // was isLight ? x : x — same both sides
 
