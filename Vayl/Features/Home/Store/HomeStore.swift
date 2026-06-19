@@ -29,6 +29,16 @@ final class HomeStore {
     /// View reads this. View never writes this.
     var homeState: HomeState { resolveHomeState() }
 
+    /// The post-onboarding "first steps" activation, derived from the same flags as `homeState`.
+    var gettingStarted: GettingStarted {
+        GettingStarted.resolve(
+            myMapComplete: myMapComplete,
+            isPaired: isPaired,
+            partnerMapComplete: partnerMapComplete,
+            revealDone: revealDone
+        )
+    }
+
     // MARK: - Map Completion
 
     var myMapComplete: Bool = false
@@ -147,9 +157,21 @@ final class HomeStore {
     /// Call once on appear from HomeRouterView.
     func loadAll() async {
         await loadProfile()
+        await loadDesireStatus()
         await loadDeckProgress()
         await loadReflectionState()
         await loadDeck()
+    }
+
+    // MARK: - Desire Status Load (D-read)
+
+    /// Reads the couple's `desire_map_status` to drive the waiting → match-ready flow.
+    /// `partnerMapComplete` is derived from `bothComplete` — we only reach the partner gate
+    /// once our own map is done, so `bothComplete` equals the partner's completion at that point.
+    private func loadDesireStatus() async {
+        guard appState.appMode == .together, let coupleId = appState.coupleId else { return }
+        guard let status = try? await DesireSyncService.shared.fetchStatus(coupleId: coupleId) else { return }
+        partnerMapComplete = status.bothComplete
     }
 
     // MARK: - Profile Load

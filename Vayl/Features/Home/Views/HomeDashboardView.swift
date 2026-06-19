@@ -29,6 +29,16 @@ struct HomeDashboardView: View {
     var isSolo: Bool = false
     var showReflectionBanner: Bool = false
 
+    // MARK: - Getting Started Activation
+    // Optional namespace so the existing #Previews still compile (Namespace.ID has no public
+    // initializer); the real call site (HomeRouterView) always supplies it.
+    var gettingStarted: GettingStarted = GettingStarted.resolve(
+        myMapComplete: false, isPaired: false, partnerMapComplete: false, revealDone: false
+    )
+    var pathNamespace: Namespace.ID? = nil
+    var pathOpen: Bool = false
+    var onOpenPath: (() -> Void)? = nil
+
     // MARK: - Callbacks
 
     var onRemindPartner: (() -> Void)? = nil
@@ -130,6 +140,18 @@ struct HomeDashboardView: View {
                         .animation(AppAnimation.slow, value: greetingVisible)
                         .animation(focusAnimation, value: deckFocused)
 
+                    if !gettingStarted.isComplete, let ns = pathNamespace {
+                        GettingStartedEntryCard(
+                            gettingStarted: gettingStarted,
+                            namespace: ns,
+                            isHidden: pathOpen,
+                            onTap: { onOpenPath?() }
+                        )
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.top, AppSpacing.lg)
+                        .opacity(greetingVisible ? 1 : 0)   // ride the existing entrance stagger
+                    }
+
                     Color.clear
                         .frame(height: max(0, 8 - (max(0, scrollOffset) * 0.3)))
 
@@ -158,7 +180,9 @@ struct HomeDashboardView: View {
                     .animation(AppAnimation.slow, value: sessionVisible)
                     .zIndex(10)
 
-                    if desireMapState != .hidden && desireMapState != .fullyUnlocked {
+                    // Gated on activation-complete so a day-1 user isn't shown a second "map your
+                    // desires" prompt — the entry card above already represents that step.
+                    if gettingStarted.isComplete && desireMapState != .hidden && desireMapState != .fullyUnlocked {
                         Spacer(minLength: AppSpacing.xxl)
                         DesireMapIndicator(
                             state: desireMapState,
@@ -254,6 +278,8 @@ struct HomeDashboardView: View {
             #endif
         }
         .onAppear { runEntranceAnimations() }
+        .blur(radius: pathOpen ? 9 : 0)
+        .animation(AppAnimation.spring, value: pathOpen)
         }
     }
 

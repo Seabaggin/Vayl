@@ -14,6 +14,7 @@ import SwiftData
 struct HomeRouterView: View {
 
     @Environment(AppState.self) private var appState
+    @Environment(EntitlementStore.self) private var entitlements
     @Environment(\.modelContext) private var modelContext
 
     @State private var store: HomeStore? = nil
@@ -22,6 +23,22 @@ struct HomeRouterView: View {
     // Created here because HomeRouterView owns appState and modelContext.
     // Presented as a sheet over the home content.
     @State private var activeSession: SessionStore? = nil
+
+    // ── Desire Map rater presentation ────────────────────────────────────
+    // Full-screen so the rater is an immersive, unhurried beat.
+    // Reachable for unpaired users too (head-start hook).
+    @State private var activeMap: DesireMapStore? = nil
+
+    // ── Desire-Map reveal presentation (D4) ──────────────────────────────
+    // Full-screen "magic moment" — celebrates where the couple aligns (free/locked split).
+    @State private var activeReveal: DesireRevealStore? = nil
+
+    // ── Getting Started "Path" overlay ───────────────────────────────────
+    // The day-1 activation expands the dashboard entry card (matched geometry)
+    // into a Path overlay over a blurred Home. Hosted here — not a cover — so
+    // the blurred Home shows behind it.
+    @Namespace private var pathNamespace
+    @State private var showPath = false
 
     // MARK: - Body
 
@@ -45,6 +62,12 @@ struct HomeRouterView: View {
         .sheet(item: $activeSession) { session in
             SessionView(store: session)
         }
+        .fullScreenCover(item: $activeMap) { mapStore in
+            DesireMapView(store: mapStore)
+        }
+        .fullScreenCover(item: $activeReveal) { revealStore in
+            DesireRevealView(store: revealStore)
+        }
     }
 
     // MARK: - Routed Content
@@ -55,11 +78,11 @@ struct HomeRouterView: View {
             switch store.homeState {
 
             case .gated:
-                HomeGateView(
-                    isPaired: store.isPaired,
-                    onStartMap: { /* route to DesireMapView */ }
-                )
-                .transition(.opacity)
+                // Dashboard from day one — the activation Path lives on it (replaces HomeGateView,
+                // which is retired from routing but kept on disk). The map rater is reached via the
+                // Path overlay's "Map your desires" step → handleStep(.mapDesires).
+                dashboardContent(store: store)
+                    .transition(.opacity)
 
             case .postReflection:
                 PostMapReflectionView(
@@ -90,7 +113,7 @@ struct HomeRouterView: View {
 
             case .matchReady:
                 HomeMatchReadyView(
-                    onReveal: { /* route to reveal / paywall */ }
+                    onReveal: { presentReveal() }
                 )
                 .transition(.opacity)
 
@@ -102,8 +125,29 @@ struct HomeRouterView: View {
                 dashboardContent(store: store)
                     .transition(.opacity)
             }
+
+            // The Path overlay sits above the dashboard so the blurred Home shows behind it.
+            if showPath {
+                Color.black.opacity(0.45)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .onTapGesture { withAnimation(AppAnimation.spring) { showPath = false } }
+
+                GettingStartedPathView(
+                    gettingStarted: store.gettingStarted,
+                    namespace: pathNamespace,
+                    onSelect: { kind in
+                        withAnimation(AppAnimation.spring) { showPath = false }
+                        handleStep(kind, store: store)
+                    },
+                    onClose: { withAnimation(AppAnimation.spring) { showPath = false } }
+                )
+                .padding(.horizontal, AppSpacing.lg)
+                .transition(.opacity)
+            }
         }
         .animation(AppAnimation.enter, value: store.homeState)
+        .animation(AppAnimation.spring, value: showPath)
         .task {
             await store.loadAll()
         }
@@ -162,6 +206,10 @@ struct HomeRouterView: View {
                 cardsCompleted:      store.cardsCompleted,
                 recentEvents:        [],
                 isSolo:              store.isSolo,
+                gettingStarted:      store.gettingStarted,
+                pathNamespace:       pathNamespace,
+                pathOpen:            showPath,
+                onOpenPath:          { withAnimation(AppAnimation.spring) { showPath = true } },
                 onCardAction:        { card, action in
                     handleCardAction(card: card, action: action, deck: loadedDeck, store: store)
                 },
@@ -193,6 +241,34 @@ struct HomeRouterView: View {
         default:
             break
         }
+    }
+
+    // MARK: - Getting Started Step Router
+
+    /// Routes a tapped Path step to its destination. Only `.active` steps are tappable
+    /// (enforced in GettingStartedPathView), so this just opens the right surface.
+    private func handleStep(_ kind: GettingStartedStepKind, store: HomeStore) {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        // TODO(Moments): when gettingStarted advances a step (e.g. map → invite), fire a warm
+        // HomeEvent/Moment ("First Spark") via the (future) Moments surface. No silent flag.
+        switch kind {
+        case .mapDesires:
+            activeMap = DesireMapStore(
+                modelContainer: modelContext.container,
+                appState: appState
+            )
+        case .invitePartner:
+            appState.selectedTab = .map     // pairing lives on the Map tab today (PairingSettingsView)
+        case .seeReveal:
+            presentReveal()                  // D4 reveal (stub) — full-screen "magic moment"
+        case .profile:
+            break                            // profile already done
+        }
+    }
+
+    /// Presents the Desire-Map reveal (D4). Reads matches + the entitlement gate via the store.
+    private func presentReveal() {
+        activeReveal = DesireRevealStore(appState: appState, entitlements: entitlements)
     }
 
     // MARK: - Store Bootstrap
