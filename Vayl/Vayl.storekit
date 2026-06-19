@@ -1,0 +1,32 @@
+{
+  "identifier" : "5C3A1E20-0000-4000-A000-00000000C0DE",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "24.99",
+      "familyShareable" : false,
+      "internalID" : "5C3A1E20-0000-4000-A000-00000000F00D",
+      "localizations" : [
+        {
+          "description" : "Own your experience, forever.",
+          "displayName" : "Vayl Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.vayl.core.lifetime",
+      "referenceName" : "Vayl Core Lifetime",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
