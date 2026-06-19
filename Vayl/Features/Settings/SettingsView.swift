@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SettingsView: View {
 
@@ -52,6 +53,14 @@ struct SettingsView: View {
                     dangerZone
                     appInfo
                     #if DEBUG
+                    NavigationLink {
+                        PresenceDebugView()
+                    } label: {
+                        Text("🔌 DEV: Presence Debug (B1)")
+                            .font(AppFonts.bodyMedium)
+                            .foregroundColor(AppColors.accentPrimary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                     DebugLogoutView()
                     #endif
                 }
@@ -268,14 +277,17 @@ struct SettingsView: View {
 #if DEBUG
 struct DebugLogoutView: View {
     @Environment(AuthService.self) private var authService
-    @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
-    // TODO: migrate key to UserDefaultsKey.hasCompletedOnboarding
+    @Environment(AppState.self)    private var appState
+    @Environment(\.modelContext)   private var modelContext
 
     var body: some View {
         Button("⚠️ DEV: Log Out & Reset Onboarding") {
             Task {
                 await authService.signOut()
-                hasCompletedOnboarding = false
+                // Reset the durable truth too — not just the surface — so the launch
+                // reconcile can't flip onboarding back to complete.
+                let profile = (try? modelContext.fetch(FetchDescriptor<UserProfile>()))?.first
+                appState.resetOnboarding(profile, context: modelContext)
             }
         }
         .foregroundColor(.red)
@@ -288,4 +300,6 @@ struct DebugLogoutView: View {
     SettingsView()
         .preferredColorScheme(.dark)
         .environment(AuthService())
+        .environment(AppState())
+        .modelContainer(ModelContainer.previewContainer)
 }

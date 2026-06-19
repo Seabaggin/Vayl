@@ -48,6 +48,7 @@ struct PulseGraph: View {
     @State private var breathPhase:   Double  = 0
     @State private var demoProgress:  CGFloat = 0
     @State private var demoOpacity:   Double  = 1
+    @State private var heartbeatPhase: Double = 0
     @State private var touchGlow:     Double  = 0
     @State private var showTierGuide: Bool    = false
 
@@ -68,6 +69,7 @@ struct PulseGraph: View {
                     breathPhase:       breathPhase,
                     demoProgress:      demoProgress,
                     demoOpacity:       demoOpacity,
+                    heartbeatPhase:    heartbeatPhase,
                     touchGlow:         touchGlow,
                     onDotTapped:       onDotTapped,
                     onTierBadgeTapped: { showTierGuide = true }
@@ -86,6 +88,7 @@ struct PulseGraph: View {
                         breathPhase:       breathPhase,
                         demoProgress:      demoProgress,
                         demoOpacity:       demoOpacity,
+                        heartbeatPhase:    heartbeatPhase,
                         touchGlow:         touchGlow,
                         onDotTapped:       onDotTapped,
                         onTierBadgeTapped: { showTierGuide = true }
@@ -94,23 +97,28 @@ struct PulseGraph: View {
                 .buttonStyle(GraphGlowButtonStyle(touchGlow: $touchGlow))
             }
         }
-        // Demo loop — empty state
-        // Note: reduce motion guard is missing from the demo loop.
-        // TODO: Add reduceMotion check before demo withAnimation calls
-        // to match the pattern used on the breath task below.
+        // Empty-state "heartbeat" — a spectrum EKG trace that draws itself in like a heart-monitor
+        // sweep, holds while glowing, fades, and redraws. Reduce-motion → static, fully drawn.
         .task(id: entries.isEmpty) {
             guard entries.isEmpty else { return }
+            if reduceMotion { demoProgress = 1.0; demoOpacity = 1.0; return }
+            // ── Cycle timing (tune to feel) ─────────────────────────────────
+            let drawIn = 6.0, hold = 6.0, fadeOut = 2.0, pause = 1.0          // ≈ 15s total
             while !Task.isCancelled {
-                withAnimation(AppAnimation.slow) { demoProgress = 1.0 }
-                try? await Task.sleep(for: .seconds(5.0))
+                demoProgress = 0.0; demoOpacity = 1.0                          // reset (invisible — nothing drawn yet)
+                withAnimation(.easeInOut(duration: drawIn)) { demoProgress = 1.0 }   // the sweep draws in
+                try? await Task.sleep(for: .seconds(drawIn + hold))
                 guard !Task.isCancelled else { break }
-                withAnimation(AppAnimation.slow) { demoOpacity = 0.0 }
-                try? await Task.sleep(for: .seconds(0.9))
+                withAnimation(.easeInOut(duration: fadeOut)) { demoOpacity = 0.0 }   // fade the trace
+                try? await Task.sleep(for: .seconds(fadeOut + pause))
                 guard !Task.isCancelled else { break }
-                demoProgress = 0.0
-                demoOpacity  = 0.0
-                withAnimation(AppAnimation.slow) { demoOpacity = 1.0 }
-                try? await Task.sleep(for: .seconds(1.0))
+            }
+        }
+        // Heartbeat glow — a soft pulse on the trace + leading node. ~1.2s beat (tune the 0.6).
+        .task(id: reduceMotion) {
+            guard !reduceMotion else { heartbeatPhase = 0; return }
+            withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+                heartbeatPhase = 1.0
             }
         }
         // Breath — continuous sine, no idle gap, no jitter.
@@ -151,6 +159,7 @@ private struct PulseGraphCanvas: View, Animatable {
     var breathPhase:  Double  = 0
     var demoProgress: CGFloat = 0
     var demoOpacity:  Double  = 1
+    var heartbeatPhase: Double = 0
     var touchGlow:    Double  = 0
 
     var animatableData: CGFloat {
@@ -603,18 +612,61 @@ private struct PulseGraphCanvas: View, Animatable {
             }
         }
 
-        var blurred = context
-        blurred.addFilter(.blur(radius: 3))
-        blurred.stroke(
-            trimmed,
-            with:  .color(Color.white.opacity(0.08 * demoOpacity)),
-            style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [4, 6])
+        let gradient = GraphicsContext.Shading.linearGradient(
+            lineGradient, startPoint: gradientStartPoint, endPoint: gradientEndPoint
         )
-        context.stroke(
-            trimmed,
-            with:  .color(Color.white.opacity(0.12 * demoOpacity)),
-            style: StrokeStyle(lineWidth: 1.5, lineCap: .round, dash: [4, 6])
-        )
+        let alpha = demoOpacity
+
+        // Soft outer glow — pulses with the heartbeat.
+        var glow = context
+        glow.addFilter(.blur(radius: 4 + heartbeatPhase * 3))
+        glow.opacity = alpha * (0.20 + heartbeatPhase * 0.22)
+        glow.stroke(trimmed, with: gradient,
+                    style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+
+        // Crisp trace.
+        var crisp = context
+        crisp.opacity = alpha * 0.85
+        crisp.stroke(trimmed, with: gradient,
+                     style: StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
+
+        // Leading-edge "pulse" node — the heartbeat tracing the line as it draws.
+        if demoProgress > 0.02 && demoProgress < 0.99 {
+            let pathPts = [CGPoint(x: 0, y: demoPoints[0].y)] + demoPoints
+            let tip = pointAlong(pathPts, progress: demoProgress)
+            let color = lineColors[2]
+            let haloR = 5.0 + heartbeatPhase * 6.0
+
+            var halo = context
+            halo.addFilter(.blur(radius: 6))
+            halo.opacity = alpha * (0.45 + heartbeatPhase * 0.30)
+            halo.fill(Path(ellipseIn: CGRect(x: tip.x - haloR, y: tip.y - haloR,
+                                             width: haloR * 2, height: haloR * 2)),
+                      with: .color(color))
+
+            var core = context
+            core.opacity = alpha
+            core.fill(Path(ellipseIn: CGRect(x: tip.x - 3, y: tip.y - 3, width: 6, height: 6)),
+                      with: .color(color))
+        }
+    }
+
+    /// Point along a polyline at 0…1 progress (length-parameterized) — for the leading pulse node.
+    private func pointAlong(_ pts: [CGPoint], progress: CGFloat) -> CGPoint {
+        guard pts.count > 1 else { return pts.first ?? .zero }
+        let segs = zip(pts, pts.dropFirst()).map { hypot($1.x - $0.x, $1.y - $0.y) }
+        let total = segs.reduce(0, +)
+        guard total > 0 else { return pts[0] }
+        var target = max(0, min(1, progress)) * total
+        for (i, len) in segs.enumerated() {
+            if target <= len {
+                let t = len > 0 ? target / len : 0
+                let a = pts[i], b = pts[i + 1]
+                return CGPoint(x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t)
+            }
+            target -= len
+        }
+        return pts.last ?? .zero
     }
 
     // MARK: - Dot Sampling
