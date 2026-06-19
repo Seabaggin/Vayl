@@ -1,205 +1,241 @@
 [
   {
-    "id": "desire_opening_relationship",
-    "name": "Opening Our Relationship",
-    "description": "Exploring some form of consensual non-monogamy together — dating, playing, or connecting with others beyond your partnership.",
-    "category": "nm_structures",
-    "subcategory": "general",
-    "layer": "core",
+    "id": "opening",
+    "name": "Exploring an Open Relationship",
+    "description": "How actively you want to start exploring openness — the appetite and the pace, not whether.",
+    "category": "structures",
+    "sensitivity": 1,
     "sortOrder": 1,
-    "isFree": true,
-    "sensitivityLevel": 1
+    "tracks": ["curious"],
+    "answers": {
+      "curious": ["Yes — I want to start exploring", "Curious, but slowly", "Just the idea for now", "I'm only ready to think about it"]
+    }
   },
-
   {
-    "id": "desire_swinging_together",
+    "id": "recalibrating",
+    "name": "Where We Take This Next",
+    "description": "How you feel about where your relationship is now — and where you want it to go from here.",
+    "category": "structures",
+    "sensitivity": 2,
+    "sortOrder": 2,
+    "tracks": ["established"],
+    "answers": {
+      "established": ["Let's keep growing it", "Happy holding where we are", "I want to slow things down", "I need us to de-escalate"]
+    }
+  },
+  {
+    "id": "swinging",
     "name": "Swinging or Playing Together",
     "description": "Sexual experiences with others that you share as a couple — same room, same event, together.",
-    "category": "nm_structures",
-    "subcategory": "swinging",
-    "layer": "core",
-    "sortOrder": 2,
-    "isFree": true,
-    "sensitivityLevel": 1
-  },
-
-  {
-    "id": "desire_dating_separately",
-    "name": "Dating Separately",
-    "description": "Each partner having the freedom to go on dates or form connections with others independently.",
-    "category": "nm_structures",
-    "subcategory": "independent",
-    "layer": "core",
+    "category": "structures",
+    "sensitivity": 1,
     "sortOrder": 3,
-    "isFree": true,
-    "sensitivityLevel": 2
+    "tracks": ["curious"],
+    "answers": {
+      "curious": ["Yes — that excites me", "I'm curious to try it", "I'm nervous about it", "Not for me"]
+    }
   },
-
   {
-    "id": "desire_polyamory",
-    "name": "Polyamory — Loving More Than One",
-    "description": "The possibility of developing deep romantic love with more than one person, with everyone's knowledge and consent.",
-    "category": "nm_structures",
-    "subcategory": "polyamory",
-    "layer": "core",
+    "id": "trips_apart",
+    "name": "Taking Trips Apart",
+    "description": "Spending holidays, vacations, or major events apart rather than always together.",
+    "category": "structures",
+    "sensitivity": 2,
     "sortOrder": 4,
-    "isFree": true,
-    "sensitivityLevel": 2
+    "tracks": ["curious"],
+    "answers": {
+      "curious": ["I'd love that freedom", "Open to small steps first", "The idea makes me anxious", "I need us together for those"]
+    }
   },
-
   {
-    "id": "desire_hierarchy",
-    "name": "Our Relationship Comes First",
-    "description": "Maintaining a clear hierarchy where your partnership is the 'primary' relationship, and other connections come second.",
-    "category": "nm_structures",
-    "subcategory": "hierarchy",
-    "layer": "core",
+    "id": "polyamory",
+    "name": "Polyamory — Loving More Than One",
+    "description": "Developing deep romantic love with more than one person, with everyone's knowledge and consent.",
+    "category": "structures",
+    "sensitivity": 2,
     "sortOrder": 5,
-    "isFree": true,
-    "sensitivityLevel": 2
+    "tracks": ["curious"],
+    "answers": {
+      "curious": ["This really calls to me", "I'm curious about it", "Probably not for me", "Not for me"]
+    }
   },
-
   {
-    "id": "desire_emotional_connections",
-    "name": "Emotional Connections With Others",
-    "description": "Forming meaningful emotional bonds — not just sexual ones — with people outside your partnership.",
-    "category": "emotional",
-    "subcategory": "emotional_intimacy",
-    "layer": "core",
+    "id": "hierarchy",
+    "name": "Our Relationship Comes First",
+    "description": "Keeping your partnership the clear 'primary,' with other connections second.",
+    "category": "structures",
+    "sensitivity": 2,
     "sortOrder": 6,
-    "isFree": true,
-    "sensitivityLevel": 2
+    "tracks": ["curious"],
+    "answers": {
+      "curious": ["Yes — we always come first", "Mostly, with some flex", "I'd rather not rank it", "I don't want a hierarchy"]
+    }
   },
-
   {
-    "id": "desire_nre",
-    "name": "New Relationship Energy (NRE)",
-    "description": "The excitement and intensity that comes with a new connection — the butterflies, the constant texting, the giddiness.",
+    "id": "emotional_connections",
+    "name": "Emotional Connections With Others",
+    "description": "Forming meaningful emotional bonds — not just sexual ones — outside your partnership.",
     "category": "emotional",
-    "subcategory": "nre",
-    "layer": "core",
+    "sensitivity": 2,
     "sortOrder": 7,
-    "isFree": true,
-    "sensitivityLevel": 2
+    "tracks": ["curious"],
+    "answers": {
+      "curious": ["Yes — I want that depth", "I'm open to it", "I'd keep it lighter", "Not for me"]
+    }
   },
-
   {
-    "id": "desire_partner_falling_in_love",
-    "name": "Your Partner Falling in Love",
-    "description": "The possibility that your partner could develop deep romantic feelings for another person.",
+    "id": "nre",
+    "name": "New Relationship Energy (NRE)",
+    "description": "The excitement and intensity of a new connection — the butterflies, the giddiness — yours or theirs.",
     "category": "emotional",
-    "subcategory": "romantic_love",
-    "layer": "core",
+    "sensitivity": 2,
     "sortOrder": 8,
-    "isFree": true,
-    "sensitivityLevel": 3
+    "tracks": ["curious", "established"],
+    "answers": {
+      "curious": ["I welcome it", "I can work with it", "It's hard for me", "I can't be okay with it"],
+      "established": ["I ride it well now", "I manage it with reassurance", "Past NRE destabilized us", "I won't go through that again"]
+    }
   },
-
   {
-    "id": "desire_group_sexual",
-    "name": "Group Sexual Experiences",
-    "description": "Sexual experiences involving more than two people — threesomes, moresomes, or group play.",
-    "category": "sexual",
-    "subcategory": "group",
-    "layer": "core",
-    "sortOrder": 9,
-    "isFree": true,
-    "sensitivityLevel": 2
-  },
-
-  {
-    "id": "desire_safer_sex",
-    "name": "Safer Sex Boundaries",
-    "description": "Having clear agreements about protection, testing, and barriers with outside partners — and sticking to them.",
-    "category": "boundaries",
-    "subcategory": "sexual_health",
-    "layer": "core",
-    "sortOrder": 10,
-    "isFree": true,
-    "sensitivityLevel": 1
-  },
-
-  {
-    "id": "desire_overnight_stays",
-    "name": "Overnight Stays With Others",
-    "description": "The possibility of you or your partner spending the night at someone else's place after a date or encounter.",
-    "category": "boundaries",
-    "subcategory": "logistics",
-    "layer": "core",
-    "sortOrder": 11,
-    "isFree": true,
-    "sensitivityLevel": 2
-  },
-
-  {
-    "id": "desire_time_attention",
-    "name": "Time and Attention",
-    "description": "How you divide your time — evenings, weekends, trips — when other connections are part of your life.",
-    "category": "boundaries",
-    "subcategory": "time_management",
-    "layer": "core",
-    "sortOrder": 12,
-    "isFree": true,
-    "sensitivityLevel": 2
-  },
-
-  {
-    "id": "desire_veto_power",
-    "name": "Veto Power",
-    "description": "Either partner having the ability to say 'no' to a specific person or situation, and that decision is final.",
-    "category": "boundaries",
-    "subcategory": "control",
-    "layer": "core",
-    "sortOrder": 13,
-    "isFree": true,
-    "sensitivityLevel": 2
-  },
-
-  {
-    "id": "desire_full_disclosure",
-    "name": "Full Disclosure — Knowing Everything",
-    "description": "Wanting to hear all the details about your partner's experiences with others — what happened, how it felt, what they enjoyed.",
-    "category": "communication",
-    "subcategory": "disclosure",
-    "layer": "core",
-    "sortOrder": 14,
-    "isFree": true,
-    "sensitivityLevel": 2
-  },
-
-  {
-    "id": "desire_meeting_metamours",
-    "name": "Meeting Your Partner's Other Connections",
-    "description": "Getting to know the people your partner dates or is involved with — meeting metamours, sharing social time, or building a broader community.",
-    "category": "communication",
-    "subcategory": "metamours",
-    "layer": "core",
-    "sortOrder": 15,
-    "isFree": true,
-    "sensitivityLevel": 1
-  },
-
-  {
-    "id": "desire_social_disclosure",
-    "name": "Who Knows About Us",
-    "description": "Being open with friends, family, or your community about practicing non-monogamy.",
-    "category": "communication",
-    "subcategory": "outness",
-    "layer": "core",
-    "sortOrder": 16,
-    "isFree": true,
-    "sensitivityLevel": 1
-  },
-
-  {
-    "id": "desire_handling_jealousy",
-    "name": "Handling Jealousy Together",
-    "description": "Working through jealous feelings as a team — seeing jealousy as information, not a crisis.",
+    "id": "partner_falling_in_love",
+    "name": "Your Partner Falling in Love",
+    "description": "The possibility that your partner develops deep romantic feelings for someone else.",
     "category": "emotional",
-    "subcategory": "jealousy",
-    "layer": "core",
+    "sensitivity": 3,
+    "sortOrder": 9,
+    "tracks": ["curious", "established"],
+    "answers": {
+      "curious": ["I'd be happy for them", "I could grow into it", "That scares me", "I couldn't accept that"],
+      "established": ["I've seen it and we're solid", "Okay, with our usual support", "It's been hard before", "I can't do that again"]
+    }
+  },
+  {
+    "id": "jealousy",
+    "name": "Handling Jealousy Together",
+    "description": "Whether you work through jealous feelings as a team, or handle them on your own.",
+    "category": "emotional",
+    "sensitivity": 2,
+    "sortOrder": 10,
+    "tracks": ["curious", "established"],
+    "answers": {
+      "curious": ["Let's face it as a team", "I'll bring things to you", "I tend to hide it", "I'd rather deal with it alone"],
+      "established": ["Our teamwork carries us", "I self-soothe, then share", "I've learned to process alone", "I expect full emotional independence"]
+    }
+  },
+  {
+    "id": "group_sexual",
+    "name": "Group Sexual Experiences",
+    "description": "Sexual experiences involving more than two people — threesomes, moresomes, group play.",
+    "category": "sexual",
+    "sensitivity": 2,
+    "sortOrder": 11,
+    "tracks": ["curious"],
+    "answers": {
+      "curious": ["Excited to explore", "I'm curious", "Probably not", "Not for me"]
+    }
+  },
+  {
+    "id": "intimate_details",
+    "name": "Hearing the Intimate Details of Dates",
+    "description": "How much you want to know about your partner's experiences with others.",
+    "category": "communication",
+    "sensitivity": 2,
+    "sortOrder": 12,
+    "tracks": ["curious", "established"],
+    "answers": {
+      "curious": ["Tell me everything", "The general picture", "Just the essentials", "I'd rather not know"],
+      "established": ["I still want the full story", "High-level summaries are enough", "Less detail than before", "Only what affects my health"]
+    }
+  },
+  {
+    "id": "safer_sex",
+    "name": "Safer Sex Boundaries",
+    "description": "How firm your agreements are about protection, testing, and barriers with others.",
+    "category": "health",
+    "sensitivity": 1,
+    "sortOrder": 13,
+    "tracks": ["curious", "established"],
+    "answers": {
+      "curious": ["Non-negotiable for me", "Important to me", "Somewhat flexible", "I'm relaxed about it"],
+      "established": ["Still non-negotiable", "Firm, with trusted exceptions", "More flexible than we were", "We're relaxed about it now"]
+    }
+  },
+  {
+    "id": "overnight_stays",
+    "name": "Overnight Stays With Others",
+    "description": "You or your partner spending the night at someone else's place after a date.",
+    "category": "logistics",
+    "sensitivity": 2,
+    "sortOrder": 14,
+    "tracks": ["curious", "established"],
+    "answers": {
+      "curious": ["Totally fine with me", "I'm open to it", "I'd prefer not", "Not okay with me"],
+      "established": ["Completely comfortable", "Fine with a heads-up", "I've found it hard", "I'd rather they didn't"]
+    }
+  },
+  {
+    "id": "time_attention",
+    "name": "Time and Attention",
+    "description": "How you share time — evenings, weekends, trips — when other connections are in the picture.",
+    "category": "logistics",
+    "sensitivity": 2,
+    "sortOrder": 15,
+    "tracks": ["curious", "established"],
+    "answers": {
+      "curious": ["I trust we'll balance it", "We can work it out", "I worry about it", "This is a dealbreaker"],
+      "established": ["We balance it well", "Mostly good, needs tending", "It's been a strain", "I need more of your time back"]
+    }
+  },
+  {
+    "id": "finances",
+    "name": "Joint Finances for Outside Dates",
+    "description": "Whether shared money funds dating others, or outside dates stay self-funded.",
+    "category": "logistics",
+    "sensitivity": 2,
+    "sortOrder": 16,
+    "tracks": ["curious", "established"],
+    "answers": {
+      "curious": ["Shared money is fine", "Okay, with a budget", "I'd prefer separate fun money", "Outside dates must be self-funded"],
+      "established": ["Our shared system works", "Works, but let's revisit budgets", "I've felt resentment about it", "We need separate finances for this"]
+    }
+  },
+  {
+    "id": "reconnection",
+    "name": "Reconnection Time After a Date",
+    "description": "Whether you want a ritual to reconnect after a date, or space to decompress alone.",
+    "category": "emotional",
+    "sensitivity": 1,
     "sortOrder": 17,
-    "isFree": true,
-    "sensitivityLevel": 2
+    "tracks": ["curious", "established"],
+    "answers": {
+      "curious": ["I'll want to reconnect right away", "A check-in would help", "I think I'll need space", "Leave me alone afterward"],
+      "established": ["Our rituals ground me", "I like it, don't need it", "I just decompress alone now", "I won't do forced rituals"]
+    }
+  },
+  {
+    "id": "metamours",
+    "name": "Meeting Your Partner's Other Connections",
+    "description": "Getting to know the people your partner dates or is involved with (metamours).",
+    "category": "communication",
+    "sensitivity": 1,
+    "sortOrder": 18,
+    "tracks": ["curious", "established"],
+    "answers": {
+      "curious": ["I'd love to", "I'm open to it", "I'd keep my distance", "I'd rather not"],
+      "established": ["I value knowing them", "Open, case by case", "I prefer more separation now", "I keep metamours at arm's length"]
+    }
+  },
+  {
+    "id": "social_disclosure",
+    "name": "Who Knows About Us",
+    "description": "How open you are with friends, family, or community about being non-monogamous.",
+    "category": "communication",
+    "sensitivity": 1,
+    "sortOrder": 19,
+    "tracks": ["curious", "established"],
+    "answers": {
+      "curious": ["Fully open about it", "Some people can know", "Keep it very private", "No one can know"],
+      "established": ["We're openly out", "Out to our circle", "More private than before", "I need this kept private"]
+    }
   }
 ]

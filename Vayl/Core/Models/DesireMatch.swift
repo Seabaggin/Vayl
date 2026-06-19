@@ -36,6 +36,7 @@ final class DesireMatch {
 
     var isFreeReveal: Bool      // the one free match — set by Edge Function only
     var revealedAt: Date?       // nil until paywall cleared
+    var bridgeCardId: String?   // stub link to a CompanionCard (the desire-map → deck/conversation bridge)
 
     // MARK: - Init
 
@@ -51,6 +52,7 @@ final class DesireMatch {
         self.computedAt = Date()
         self.isFreeReveal = false   // always set by Edge Function — never client
         self.revealedAt = nil
+        self.bridgeCardId = nil
     }
 
     // MARK: - Computed

@@ -55,22 +55,25 @@ extension DesireMapState: Equatable {
 // MARK: - Desire Map
 // ─────────────────────────────────────────────────────────────
 
-/// How a partner rates a Desire Map item.
-/// notForUs NEVER leaves the device under any circumstances.
+/// How a partner rates a Desire Map item — a fixed 4-point weight (the displayed
+/// answer copy is cohort-adaptive; only this stored weight crosses to matching).
+/// notForMe is the sacred boundary and NEVER leaves the device under any circumstances.
 /// Three enforcement layers — all three must hold simultaneously:
-///   1. Swift: notForUs never included in any Supabase write payload
+///   1. Swift: notForMe never included in any Supabase write payload
 ///   2. Edge Function: filters before writing to desire_matches table
 ///   3. Supabase RLS: partner cannot query desire_map_entries at all
 enum DesireRatingValue: String, CaseIterable, Codable {
-    case yes
-    case curious
-    case notForUs   // NEVER leaves device — three layer enforcement above
+    case excitedAboutIt
+    case openToIt
+    case probablyNot
+    case notForMe   // sacred boundary — NEVER leaves device (3-layer enforcement above)
 
     var displayName: String {
         switch self {
-        case .yes:      return "Yes"
-        case .curious:  return "Curious"
-        case .notForUs: return "Not For Us"
+        case .excitedAboutIt: return "Excited About It"
+        case .openToIt:       return "Open To It"
+        case .probablyNot:    return "Probably Not"
+        case .notForMe:       return "Not For Me"
         }
     }
 }

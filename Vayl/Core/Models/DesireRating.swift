@@ -12,12 +12,12 @@ import SwiftData
 //
 // CRITICAL — Most sensitive data in the app.
 // Three enforcement layers — all three must hold simultaneously:
-//   1. Swift: notForUs never included in any Supabase write payload
+//   1. Swift: notForMe never included in any Supabase write payload
 //   2. Edge Function: filters before writing to desire_matches table
 //   3. Supabase RLS: partner cannot query desire_map_entries at all, ever
 //
 // userId is PRIVATE — never crosses to the partner's device or view.
-// notForUs ratings NEVER leave the device under any circumstances.
+// notForMe ratings NEVER leave the device under any circumstances.
 
 @Model
 final class DesireMapEntry {
@@ -43,9 +43,9 @@ final class DesireMapEntry {
     // MARK: - Computed
 
     /// Whether this entry should ever be included in a sync payload.
-    /// notForUs entries always return false — they never leave the device.
+    /// notForMe entries always return false — the sacred boundary never leaves the device.
     var isSyncable: Bool {
-        rating != .notForUs
+        rating != .notForMe
     }
 }
 
