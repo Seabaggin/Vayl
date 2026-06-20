@@ -29,6 +29,10 @@ struct HomeRouterView: View {
     // Reachable for unpaired users too (head-start hook).
     @State private var activeMap: DesireMapStore? = nil
 
+    // Captured when the rater opens, so the dismiss handler can tell whether the user JUST
+    // completed (false → true) and should see the one-shot completion beat.
+    @State private var mapWasCompleteOnOpen = false
+
     // ── Desire-Map reveal presentation (D4) ──────────────────────────────
     // Full-screen "magic moment" — celebrates where the couple aligns (free/locked split).
     @State private var activeReveal: DesireRevealStore? = nil
@@ -62,7 +66,7 @@ struct HomeRouterView: View {
         .sheet(item: $activeSession) { session in
             SessionView(store: session)
         }
-        .fullScreenCover(item: $activeMap, onDismiss: { Task { await store?.loadAll() } }) { mapStore in
+        .fullScreenCover(item: $activeMap, onDismiss: handleRaterDismiss) { mapStore in
             DesireMapView(store: mapStore)
         }
         .fullScreenCover(item: $activeReveal) { revealStore in
@@ -83,39 +87,6 @@ struct HomeRouterView: View {
                 // Path overlay's "Map your desires" step → handleStep(.mapDesires).
                 dashboardContent(store: store)
                     .transition(.opacity)
-
-            case .postReflection:
-                PostMapReflectionView(
-                    step: Binding(
-                        get: { store.reflectionStep },
-                        set: { _ in }
-                    ),
-                    onComplete: {
-                        withAnimation(AppAnimation.enter) {
-                            store.markPostReflectionDone()
-                        }
-                    },
-                    onSkipAll: {
-                        withAnimation(AppAnimation.enter) {
-                            store.markPostReflectionDone()
-                        }
-                    }
-                )
-                .transition(.opacity)
-
-            case .waiting:
-                HomeWaitingView(
-                    isPaired: store.isPaired,
-                    partnerName: store.partnerName ?? "your partner",
-                    onInvite: { /* open share sheet */ }
-                )
-                .transition(.opacity)
-
-            case .matchReady:
-                HomeMatchReadyView(
-                    onReveal: { presentReveal() }
-                )
-                .transition(.opacity)
 
             case .dashboard:
                 dashboardContent(store: store)
@@ -145,9 +116,20 @@ struct HomeRouterView: View {
                 .padding(.horizontal, AppSpacing.lg)
                 .transition(.opacity)
             }
+
+            // One-shot completion beat — a brief moment over the dashboard, never a home state.
+            if store.showCompletionBeat {
+                MapCompletionBeatView(
+                    partnerName: store.partnerName,
+                    onDone: { withAnimation(AppAnimation.exit) { store.dismissCompletionBeat() } }
+                )
+                .transition(.opacity)
+                .zIndex(1)
+            }
         }
         .animation(AppAnimation.enter, value: store.homeState)
         .animation(AppAnimation.spring, value: showPath)
+        .animation(AppAnimation.enter, value: store.showCompletionBeat)
         .task {
             await store.loadAll()
         }
@@ -253,6 +235,7 @@ struct HomeRouterView: View {
         // HomeEvent/Moment ("First Spark") via the (future) Moments surface. No silent flag.
         switch kind {
         case .mapDesires:
+            mapWasCompleteOnOpen = store.myMapComplete
             activeMap = DesireMapStore(
                 modelContainer: modelContext.container,
                 appState: appState
@@ -269,6 +252,18 @@ struct HomeRouterView: View {
     /// Presents the Desire-Map reveal (D4). Reads matches + the entitlement gate via the store.
     private func presentReveal() {
         activeReveal = DesireRevealStore(appState: appState, entitlements: entitlements)
+    }
+
+    /// On rater close: refresh Home, then — if the map just flipped to complete — play the
+    /// one-shot completion beat over the dashboard. The map is a moment, not a home state.
+    private func handleRaterDismiss() {
+        Task {
+            let wasComplete = mapWasCompleteOnOpen
+            await store?.loadAll()
+            if !wasComplete, store?.myMapComplete == true {
+                store?.celebrateMapCompletion()
+            }
+        }
     }
 
     // MARK: - Store Bootstrap

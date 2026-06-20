@@ -141,12 +141,11 @@ enum HomeEvent {
 
 /// The routing state that drives HomeRouterView.
 /// Computed by HomeStore — never set directly by the view.
-/// Order matters — each case gates the next.
+/// Home always leads with the dashboard; the desire-map progression (your turn → waiting →
+/// reveal-ready) is surfaced in the Getting Started tracker + partner pill, not as routing
+/// states. The both-complete celebration is a separate screen (Segment 3).
 enum HomeState: Equatable {
-    case gated          // desire map not started
-    case postReflection // desire map done, reflection not done
-    case waiting        // reflection done, partner not done
-    case matchReady     // both done, reveal not triggered
-    case dashboard      // fully unlocked home
-    case soloUnpaired   // solo user, OB complete, no partner yet — starter deck reachable, Desire Map gated
+    case gated          // vestigial — renders the dashboard (resolveHomeState no longer returns it)
+    case dashboard      // the home dashboard (paired)
+    case soloUnpaired   // solo user, OB complete, no partner yet — Desire Map gated
 }

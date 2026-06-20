@@ -48,6 +48,11 @@ final class HomeStore {
     var partnerName: String? = nil
     var reflectionStep: Int = 1
 
+    /// One-shot: set when the user just completed their Desire Map in the rater they closed.
+    /// The dashboard plays a brief completion beat once, then clears it — the map is a moment,
+    /// never a persistent home state.
+    var showCompletionBeat: Bool = false
+
     // MARK: - Deck Loading
 
     var deck: Deck? = nil
@@ -119,13 +124,16 @@ final class HomeStore {
     /// Resolves the current HomeState from completion flags.
     /// Each guard gates the next state — order is intentional.
     private func resolveHomeState() -> HomeState {
-        // Solo users with no partner yet reach their starter deck directly —
-        // the Desire Map is a paired-couple surface and must not gate them.
+        // Home ALWAYS leads with the card dashboard — the deck is the premiere product; the
+        // Desire Map is secondary and must never gate Home. The post-map progression (your turn →
+        // waiting on partner → reveal-ready) is surfaced quietly in the Getting Started path and a
+        // one-shot completion beat — not as a full-screen takeover. The reveal itself stays
+        // reachable via the Getting Started `seeReveal` step (gated on both maps, inherently).
+        // Home always leads with the dashboard. `.gated` is vestigial (renders the dashboard);
+        // `.postReflection/.waiting/.matchReady` are removed — "waiting on your partner" is driven
+        // by the Getting Started tracker + partner pill, and the both-complete celebration is a
+        // separate screen (Segment 3).
         if isSolo && appState.linkState == .unlinked { return .soloUnpaired }
-        guard myMapComplete      else { return .gated }
-        guard postReflectionDone else { return .postReflection }
-        guard partnerMapComplete  else { return .waiting }
-        guard revealDone          else { return .matchReady }
         return .dashboard
     }
 
@@ -145,6 +153,16 @@ final class HomeStore {
 
     func markPostReflectionDone() {
         postReflectionDone = true
+    }
+
+    /// Trigger the one-shot map-completion beat (called by the router when the rater the user
+    /// just closed flipped the map false → true).
+    func celebrateMapCompletion() {
+        showCompletionBeat = true
+    }
+
+    func dismissCompletionBeat() {
+        showCompletionBeat = false
     }
 
     func advanceReflectionStep() {
