@@ -39,6 +39,7 @@ struct PaywallSheet: View {
     @State private var hapticTick  = 0
     @State private var restoring   = false
     @State private var showRestoreFailedAlert = false
+    @State private var legalDoc: LegalDoc?
 
     private let bullets = [
         "Understand what you each want",
@@ -82,6 +83,9 @@ struct PaywallSheet: View {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text("We couldn't find a purchase to restore on this Apple ID. If you've bought Vayl, make sure you're signed in with the same Apple ID you used to purchase.")
+            }
+            .sheet(item: $legalDoc) { doc in
+                SafariView(url: doc.url)
             }
     }
 
@@ -393,7 +397,7 @@ struct PaywallSheet: View {
         }
     }
 
-    // MARK: - Legal / restore actions (stubs; wiring points so these aren't forgotten)
+    // MARK: - Legal / restore actions
 
     private func restorePurchases() {
         guard !restoring else { return }
@@ -412,14 +416,12 @@ struct PaywallSheet: View {
 
     private func openTerms() {
         hapticTick += 1
-        // TODO(legal): present the Terms of Service (in-app SFSafariViewController or external
-        // Link). URL not defined yet; needs a real Terms page before submission.
+        legalDoc = .terms
     }
 
     private func openPrivacy() {
         hapticTick += 1
-        // TODO(legal): present the Privacy Policy (in-app SFSafariViewController or external
-        // Link). URL not defined yet; needs a real Privacy page before submission.
+        legalDoc = .privacy
     }
 }
 
@@ -432,6 +434,19 @@ struct PaywallSheet: View {
         PaywallSheet(entry: .reveal)
     }
     .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Reveal door — AX5 Dynamic Type (scroll backstop)") {
+    // Forces the largest accessibility text size so the content overflows the screen: ViewThatFits
+    // drops to the ScrollView fallback, and the CTA + footer stay reachable by scrolling instead
+    // of clipping. Flip between this and the content-height preview to confirm both behaviours.
+    ZStack(alignment: .bottom) {
+        AppColors.void.ignoresSafeArea()
+        PaywallSheet(entry: .reveal)
+    }
+    .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
+    .environment(\.dynamicTypeSize, .accessibility5)
     .preferredColorScheme(.dark)
 }
 #endif

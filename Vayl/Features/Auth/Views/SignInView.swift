@@ -11,6 +11,8 @@ struct SignInView: View {
 
     var authService: AuthService
 
+    @State private var legalDoc: LegalDoc?
+
     // MARK: - Body
 
     var body: some View {
@@ -94,12 +96,20 @@ struct SignInView: View {
                                 .transition(.opacity)
                         }
 
-                        // Legal footnote
-                        Text("By continuing you agree to our Terms & Privacy Policy")
+                        // Legal footnote — Terms / Privacy are tappable (open in-app Safari).
+                        // Custom-scheme markdown links are intercepted below so they open the
+                        // SafariView sheet instead of leaving the app.
+                        Text("By continuing you agree to our [Terms](vayl-legal://terms) & [Privacy Policy](vayl-legal://privacy)")
                             .font(AppFonts.meta)
+                            .tint(AppColors.textSecondary)
                             .foregroundStyle(AppColors.textMuted)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, AppSpacing.xxl)
+                            .environment(\.openURL, OpenURLAction { url in
+                                guard url.scheme == "vayl-legal" else { return .systemAction }
+                                legalDoc = (url.host == "privacy") ? .privacy : .terms
+                                return .handled
+                            })
                     }
                     .animation(AppAnimation.standard, value: authService.isLoading)
                     .animation(AppAnimation.standard, value: authService.error)
@@ -111,6 +121,9 @@ struct SignInView: View {
             }
         }
         .ignoresSafeArea()
+        .sheet(item: $legalDoc) { doc in
+            SafariView(url: doc.url)
+        }
     }
 
     // MARK: - Atmosphere
