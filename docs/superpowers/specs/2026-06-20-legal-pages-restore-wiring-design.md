@@ -1,36 +1,36 @@
-# Legal Pages + Restore Wiring — Design Spec
+# Legal Links + Restore Wiring (Technical Pass) — Design Spec
 
 - **Date:** 2026-06-20
-- **Status:** Awaiting review
+- **Status:** Approved — implementing
 - **Author:** Bryan (with Claude)
-- **Topic:** Wire the three stubbed paywall-footer controls (Restore · Terms · Privacy) to real behavior, create the legal pages that don't yet exist, and make the flat sign-in legal line tappable.
-- **Blocker context:** App Store submission blocker list (app-routing-map): *Delete Account · Restore Purchases · Privacy Policy + Terms links*. This spec covers **Restore Purchases** and **Privacy Policy + Terms links**. **Delete Account is explicitly out of scope** (separate follow-up).
+- **Scope this pass:** Wire the *mechanism* so every stubbed paywall-footer control (Restore · Terms · Privacy) and the flat sign-in legal line **actually route**, using **placeholder URLs**. Real legal copy, hosting, and App Store Connect setup are **deferred to a later "App Store Ready" pass** (Bryan's call).
+
+> **Scope note (2026-06-20):** Originally scoped to also author + host the real legal docs. Bryan narrowed it: he'll do one dedicated App Store Ready pass for all Apple-approval needs later. **Now = technical placeholders that genuinely route.** Deferred items are tracked in §8 so the later pass has a checklist.
 
 ---
 
 ## 1. Problem
 
-`PaywallSheet.swift` has three tappable footer controls with stubbed actions:
-
+`PaywallSheet.swift` has three footer controls with dead stub actions:
 - `restorePurchases()` — `TODO(monetization)`: no StoreKit restore wired.
-- `openTerms()` / `openPrivacy()` — `TODO(legal)`: no Terms/Privacy page or URL exists *anywhere* in the app.
+- `openTerms()` / `openPrivacy()` — `TODO(legal)`: no Terms/Privacy URL or page exists anywhere.
 
-The same Terms/Privacy must back the currently-flat text at `SignInView.swift:98` ("By continuing you agree to our Terms & Privacy Policy"), which is not tappable today.
+The same Terms/Privacy must back the flat, non-tappable text at `SignInView.swift:98`.
 
-Two of these are App Store hard blockers: Apple rejects a paywalled non-consumable app without a working **Restore Purchases**, and rejects any app without a reachable **Privacy Policy** (a public Privacy Policy **URL** is also a required App Store Connect metadata field).
+Right now the goal is **functional routing**: taps fire the real navigation path (Safari sheet opens; restore runs the real backend) with placeholder content — not a dead stub.
 
 ---
 
 ## 2. Findings (verified in code)
 
-- **Restore is already built in the Store/Service layers** — only the View stub is unwired:
+- **Restore is already built** in the Store/Service layers — only the View stub is unwired:
   - `StoreKitService.restore()` → `AppStore.sync()` then returns the verified Core entitlement (`StoreKitService.swift:86`).
-  - `EntitlementStore.restore()` → calls the service, re-grants the **couple** server-side (so the partner unlocks too), `refresh()`es, returns `isCore` (`EntitlementStore.swift:145`).
-  - ⇒ `restorePurchases()` only needs to **call `entitlements.restore()`** and reflect loading + result.
-- **No legal URL/page exists** anywhere; no `SafariServices` import anywhere. The only URL plumbing is `Config.swift` (Supabase creds).
-- **No analytics/tracking SDK** — the only third-party SPM dependency is `supabase-swift` (+ its Apple/pointfree transitive deps). No Firebase/Amplitude/Sentry/AppTrackingTransparency. ⇒ the Privacy Policy can honestly state "no third-party analytics, no ad tracking, no ATT."
+  - `EntitlementStore.restore()` → service call, re-grants the **couple** server-side (partner unlocks too), `refresh()`, returns `isCore` (`EntitlementStore.swift:145`).
+  - ⇒ `restorePurchases()` only needs to **call `entitlements.restore()`** + reflect loading/result. **This is real, not placeholder.**
+- **No legal URL/page exists**; no `SafariServices` import anywhere. Only URL plumbing is `Config.swift` (Supabase creds).
 - **`Vayl.storekit` test config exists** ⇒ restore is testable in the StoreKit sandbox on-device.
-- **`.vaylSheet` / `.vaylCover` do not exist.** They are aspirational in CLAUDE.md (same gotcha as `.glassCard()`). The app presents modals with **raw `.sheet` / `.fullScreenCover`** everywhere (HomeRouterView, PulseGraph, PairingSettingsView, …). `OBSheetChrome` (`.obSheetChrome()`) is a *styling* modifier for sheet **content**, not a presentation method.
+- **`.vaylSheet` / `.vaylCover` do not exist** (aspirational in CLAUDE.md). The app presents modals with **raw `.sheet` / `.fullScreenCover`** everywhere. `OBSheetChrome` (`.obSheetChrome()`) is a *content-styling* modifier, not a presentation method.
+- **Technical constraint:** `SFSafariViewController` loads only a live `https://` URL — it **cannot** display bundled/local HTML. ⇒ a visible placeholder must point at a reachable URL.
 
 ---
 
@@ -38,109 +38,90 @@ Two of these are App Store hard blockers: Apple rejects a paywalled non-consumab
 
 | # | Decision | Rationale |
 |---|---|---|
-| D1 | **I draft** both legal docs from the app's real data practices; Bryan (ideally a lawyer) reviews. | Bryan's call; accuracy requires knowledge of the actual stack. Not a substitute for legal counsel. |
-| D2 | Canonical docs = **host-ready static HTML** (no Markdown mirror). | One source of truth → no drift between in-app render and the ASC-required public URL. |
-| D3 | Bryan **hosts** the two pages (free static host now, or `vayl.app` later) and supplies the two live URLs. | App Store Connect hard-requires a public Privacy Policy URL regardless of in-app behavior. |
-| D4 | In-app render = **`SFSafariViewController`** with **on-brand HTML** (dark-void + spectrum body that I author) and a tinted Safari toolbar. | The mainstream pattern; stays in-app; single source of truth with the hosted URL. The HTML I control supplies the Vayl look; only the slim Safari bar is system chrome. |
-| D5 | Presentation = **raw native `.sheet(item:)`** (matching the app's real convention). Building the `.vaylSheet`/`.vaylCover` contract is **out of scope**. | Don't balloon scope; match reality, not the aspirational contract. |
-| D6 | Restore result feedback = **`.alert`** for "nothing to restore" and "error"; **success** = unlock + sheet closes (the gate opening is the confirmation). | StoreKit-conventional; restore is a deliberate yes/no action that demands a guaranteed-visible answer. |
-| D7 | URL source-of-truth = a single Swift `enum LegalLinks`. | One place to update post-hosting; mirrors the `Config.swift` static-config pattern. |
+| D1 | **This pass = technical wiring only.** Real legal copy, hosting, ASC = deferred App Store pass. | Bryan's split: one dedicated Apple-approval pass later. |
+| D2 | In-app render = **`SFSafariViewController`** via raw native **`.sheet(item:)`**. | Mainstream pattern; matches the app's real presentation convention. Building `.vaylSheet` is out of scope. |
+| D3 | **Placeholder URLs = live Apple stand-ins** that render cleanly now, swapped later: **Terms → Apple standard EULA** (`https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`), **Privacy → Apple privacy policy** (`https://www.apple.com/legal/privacy/`). | SFSafariVC needs a live URL; Apple legal pages are stable, real, and obviously placeholders. Nothing looks broken in dev. |
+| D4 | URL source-of-truth = a single Swift `enum LegalLinks` (the two values + an `Identifiable` doc enum), loudly marked as placeholders. | One place to swap during the App Store pass; mirrors the `Config.swift` static-config pattern. |
+| D5 | Restore feedback = **`.alert`** for "nothing to restore" + "error"; **success** = unlock + sheet closes. | StoreKit-conventional; a deliberate yes/no action needs a guaranteed-visible answer. |
+| D6 | On-brand HTML styling of the legal body is **deferred** (it lives in the hosted page, authored in the App Store pass). Apple stand-ins are used as-is now. | No throwaway styling work; the real page gets the Vayl treatment later. |
 
 ---
 
-## 4. Data practices the Privacy Policy must encode (accurate to the build)
-
-- **Account / auth:** Sign in with Apple. App receives an Apple user identifier; name/email only if the user shares (Apple may relay a private/proxy email). Used to create + identify the account.
-- **Backend processor:** Supabase (Postgres). Stores profile, pairing/couple linkage, and the couple's content: Desire Map responses, Agreements, Pulse check-ins, post-session reflections, and the entitlement tier. Named as a third-party processor; data may be processed in the US.
-- **Sensitive data, explicitly acknowledged:** this is intimate personal data about sexuality, boundaries, and relationships. Describe **partner sharing** (a paired partner can see content the user chooses to reveal/share — e.g. a revealed Desire Map, shared Agreements) and **safeguards** (row-level security scoping, in-transit encryption/HTTPS, on-device screenshot protection, user-paced reveal).
-- **Purchases:** Apple In-App Purchase / StoreKit. **Apple processes payment**; the app stores only the resulting **entitlement tier** (couple-level). The app never sees card data.
-- **Local storage:** SwiftData on-device mirror.
-- **No tracking:** no third-party analytics SDKs, no ad networks, no ATT/IDFA tracking, no sale of data.
-- **Age:** 18+ only; not directed to children.
-- **Data rights / deletion:** users can request full deletion by contacting us; **in-app Account Deletion is being added** (tracked separately — see §8). Do not claim in-app deletion exists yet.
-- **Standard clauses:** security, international processing, changes-to-policy + last-updated date, contact.
-
-**Terms of Service** essentials: 18+ eligibility; license to use; acceptable-use (consent-centered — not for coercing/harassing a partner); IAP terms (one-time couple-level Core unlock; refunds handled by Apple; references Apple's standard EULA / Licensed Application EULA); **not professional advice** (educational, "grounded in research" ≠ therapy/medical/legal advice); limitation of liability; governing law; changes; contact.
-
-### Fill-ins Bryan must supply (marked loudly in the docs + README)
-1. Legal entity name (Bryan as sole proprietor, or an LLC)
-2. Governing-law jurisdiction (state / country)
-3. Contact email
-4. Effective / last-updated date
-5. The two hosted URLs (after hosting)
-
----
-
-## 5. Component design
+## 4. Component design (this pass)
 
 | Piece | File | Responsibility | Interface |
 |---|---|---|---|
-| URL source-of-truth | `Vayl/Core/Services/LegalLinks.swift` *(new)* | Holds the two public URLs + an `Identifiable` doc enum for `.sheet(item:)`. | `enum LegalLinks { static let terms: URL; static let privacy: URL }`; `enum LegalDoc: Identifiable { case terms, privacy; var url: URL; var id: ... }` |
-| Safari wrapper | `Vayl/Design/Components/Navigation/SafariView.swift` *(new)* | `UIViewControllerRepresentable` over `SFSafariViewController`, tinted to Vayl colors (`preferredControlTintColor` = accent, `preferredBarTintColor` = modal/void via `UIColor(AppColors…)`). | `struct SafariView: UIViewControllerRepresentable { let url: URL }` |
-| Legal HTML | `docs/legal/privacy.html`, `docs/legal/terms.html`, `docs/legal/README.md` *(new)* | Canonical host-ready docs (self-contained inline CSS, dark-void + spectrum, responsive, accessible: semantic headings, AA contrast). README = hosting steps + the §4 fill-in checklist. | n/a (static assets) |
+| URL source-of-truth | `Vayl/Core/Services/LegalLinks.swift` *(new)* | The two placeholder URLs + `Identifiable` doc enum for `.sheet(item:)`. Loud `// PLACEHOLDER — swap during App Store pass` marker. | `enum LegalLinks { static let terms: URL; static let privacy: URL }`; `enum LegalDoc: Identifiable { case terms, privacy; var url: URL; var id: Self }` |
+| Safari wrapper | `Vayl/Design/Components/Navigation/SafariView.swift` *(new)* | `UIViewControllerRepresentable` over `SFSafariViewController`, tinted to Vayl colors via `UIColor(AppColors…)` (`preferredControlTintColor` = accent; `preferredBarTintColor` = modal/void). | `struct SafariView: UIViewControllerRepresentable { let url: URL }` |
 | Paywall wiring | `Vayl/Features/Monetization/Views/PaywallSheet.swift` *(edit)* | `restorePurchases()` → `entitlements.restore()` + `restoring` flag + `.alert`; `openTerms/openPrivacy()` → set `@State legalDoc` → `.sheet(item:)`. Remove all 3 TODOs. | — |
-| Sign-in wiring | `Vayl/Features/Auth/Views/SignInView.swift` *(edit)* | Flat line → tappable Terms / Privacy. Markdown links in the `Text` + `.environment(\.openURL, OpenURLAction{…})` intercepting two custom-scheme links → set `@State legalDoc` → same `SafariView` via `.sheet(item:)`. | — |
+| Sign-in wiring | `Vayl/Features/Auth/Views/SignInView.swift` *(edit)* | Flat line → tappable Terms / Privacy: markdown links in the `Text` + `.environment(\.openURL, OpenURLAction{…})` intercepting two custom-scheme links → set `@State legalDoc` → same `SafariView` via `.sheet(item:)`. | — |
 
-**No shared wrapper view** for the two consumers — each needs only one `@State legalDoc` + one `.sheet(item:)` modifier; abstracting that is over-engineering. The shared units are `LegalLinks`, `LegalDoc`, and `SafariView`.
+**No shared wrapper view** — each consumer needs only one `@State legalDoc` + one `.sheet(item:)`; the shared units are `LegalLinks`, `LegalDoc`, `SafariView`.
 
 ### Data flow
-- **Legal:** tap → set `legalDoc` → `.sheet(item: $legalDoc) { SafariView(url: $0.url) }` (URL from `LegalLinks`). Stacked sheet over the paywall (iOS 16+), dismisses back. Identical mechanism in SignInView (top-level sheet, pre-auth — fine).
+- **Legal:** tap → set `legalDoc` → `.sheet(item: $legalDoc) { SafariView(url: $0.url) }` (URL from `LegalLinks`). Stacked over the paywall (iOS 16+), dismisses back. Same mechanism in SignInView (top-level, pre-auth).
 - **Restore:** tap → `restoring = true` → `await entitlements.restore()` → `restoring = false`. `true` ⇒ `onUnlocked()`. `false` && no `loadError` ⇒ alert "No purchases found." `loadError != nil` ⇒ alert with the message.
 
 ---
 
-## 6. Build segments (each independently verifiable — Build Protocol)
+## 5. Build segments (each independently verifiable — Build Protocol)
 
-**Seg A — Restore wiring** *(smallest, independent of legal)*
+**Seg A — Restore wiring** *(smallest, independent)*
 - Touches: `PaywallSheet.swift` only.
-- Do: local `@State restoring`; `restorePurchases()` calls `await entitlements.restore()`; success → `onUnlocked()`; non-success → `.alert`. Remove `TODO(monetization)`.
+- Do: local `@State restoring`; `restorePurchases()` → `await entitlements.restore()`; success → `onUnlocked()`; non-success → `.alert`. Remove `TODO(monetization)`.
 - **Done:** compiles; on device w/ StoreKit sandbox — owned account → unlocks; un-owned → "No purchases found" alert.
 - May NOT touch: `EntitlementStore`, `StoreKitService`, tokens, OBSheetChrome.
 
-**Seg B — Legal content**
-- Touches: `docs/legal/*` only (no Swift, no device).
-- Do: author `privacy.html` + `terms.html` (§4) + `README.md` (hosting + fill-ins). On-brand, self-contained, accessible.
-- **Done:** Bryan reads + approves the copy (lawyer review encouraged).
-- May NOT touch: any Swift.
-
-**Seg C — Legal plumbing**
+**Seg B — Legal plumbing**
 - Touches: `LegalLinks.swift` + `SafariView.swift` (new).
-- Do: define URLs (placeholder, loudly marked) + `LegalDoc`; build the tinted `SafariView`.
-- **Done:** compiles; a throwaway preview opens a doc URL.
+- Do: define the two placeholder URLs (loud marker) + `LegalDoc`; build the tinted `SafariView`.
+- **Done:** compiles; a throwaway preview opens a placeholder URL in the Safari sheet.
 - May NOT touch: feature views, tokens, OBSheetChrome.
 
-**Seg D — Wire legal links**
+**Seg C — Wire all consumers**
 - Touches: `PaywallSheet.swift` + `SignInView.swift`.
 - Do: `openTerms/openPrivacy()` → `legalDoc`; SignInView tappable line + `openURL` interception; both get `.sheet(item:)`. Remove both `TODO(legal)`.
-- **Done:** compiles; on device both footer links + the sign-in line open the in-app Safari sheet over the right page.
+- **Done:** compiles; on device both footer links + the sign-in line open the Safari sheet over the right Apple stand-in page and dismiss back.
 - May NOT touch: `LegalLinks`/`SafariView` internals (consume only), tokens, OBSheetChrome.
 
-**Seg E — Bryan (outside code)**
-- Host the two pages → paste real URLs into `LegalLinks.swift` → add the Privacy URL to App Store Connect → fill the §4 placeholders.
-- **Done:** live URLs resolve; ASC Privacy field set.
-
-Suggested order: **A → B → C → D → E** (A first: smallest, clears a standalone blocker; B can run anytime as it's Swift-free).
+Order: **A → B → C**.
 
 ---
 
-## 7. Verification
+## 6. Verification
 
-- **Claude:** build-verify (compile) only — Bryan runs on device (per standing preference). No sim runs by Claude.
-- **Restore:** Bryan, on device, via the `Vayl.storekit` sandbox config (owned vs un-owned Apple ID).
-- **Legal links:** Bryan, on device — tap each control, confirm the correct page opens in the Safari sheet and dismisses back.
-- **iOS 26 compliance:** `SafariServices` is a system framework (no new SPM dep); `UIColor(_: Color)` for tints (no `UIScreen.main`); no banned APIs.
+- **Claude:** build-verify (compile) only — Bryan runs on device (standing preference). No sim runs by Claude.
+- **Restore:** Bryan, on device, via the `Vayl.storekit` sandbox (owned vs un-owned Apple ID).
+- **Legal links:** Bryan, on device — tap each control + the sign-in line, confirm the correct Apple stand-in opens in the Safari sheet and dismisses back.
+- **iOS 26 compliance:** `SafariServices` is a system framework (no new SPM dep); `UIColor(_: Color)` for tints; no banned APIs; new files under `Vayl/` auto-join the synchronized group (no pbxproj surgery).
 
 ---
 
-## 8. Out of scope / dependencies
+## 7. Out of scope (this pass)
 
-- **In-app Account Deletion** — an App Store blocker, but a **separate** task. The Privacy Policy references a deletion *right* + contact path and notes in-app deletion is forthcoming; it must not claim the in-app feature exists. Flag as the next blocker to schedule.
-- **Building `.vaylSheet` / `.vaylCover`** — the aspirational presentation contract is not built here.
-- **Generator services** (Termly/iubenda) — not used; we self-author + self-host.
-- **Subscription-style "Terms must be embedded in the binary"** strictness — N/A; Core is a one-time non-consumable. Both links are still provided (best practice + own blocker list).
+- Building `.vaylSheet` / `.vaylCover`.
+- Generator services (Termly/iubenda).
+- On-brand HTML styling of the legal body (lives in the hosted page).
+
+## 8. Deferred — "App Store Ready" pass checklist (NOT this pass)
+
+When Bryan does the Apple-approval pass, this work remains:
+
+1. **Author the real Terms + Privacy** content. The Privacy Policy must accurately describe the real stack (reference, verified this pass):
+   - Sign in with Apple (Apple user id; name/email only if shared; possible relay email).
+   - **Supabase** backend processor — stores profile, pairing/couple, Desire Map, Agreements, Pulse, reflections, entitlement tier; US processing.
+   - **Sensitive intimacy data** + partner-sharing (revealed Desire Map, shared Agreements) + safeguards (RLS, HTTPS, on-device screenshot protection, user-paced reveal).
+   - Apple-processed IAP — app stores only the couple **tier**, never card data.
+   - Local **SwiftData** mirror.
+   - **No third-party analytics / ads / ATT tracking** (verified: only `supabase-swift` dependency).
+   - 18+; data-deletion right + contact.
+2. **Host** the two pages (free static host or `vayl.app`) → replace the two placeholder values in `LegalLinks.swift`.
+3. **App Store Connect:** set the required Privacy Policy URL.
+4. **Fill-ins:** legal entity name, governing-law jurisdiction, contact email, effective date.
+5. **In-app Account Deletion** — a *separate* App Store blocker (not legal links). The future real Privacy Policy references the deletion right + notes in-app deletion; it must not claim the in-app feature exists until built.
+6. Optional: give the legal page body the on-brand (dark-void + spectrum) HTML treatment + tinted Safari toolbar.
 
 ## 9. Risks
 
-- **Placeholder URLs ship dead until Seg E.** Mitigation: the spec/plan makes "host + set URLs" an explicit pre-submission gate; the `LegalLinks` placeholder is loudly commented as the one value to replace.
-- **Legal accuracy.** The draft is grounded in the real stack but is **not legal advice**; Bryan should have it reviewed before submission.
-- **Stacked sheets** (Safari sheet over PaywallSheet). Standard iOS 16+ behavior; verified on device in Seg D.
+- **Placeholder pages are Apple's, not Vayl's** — intentional + loudly marked; the App Store pass swaps them. Risk = forgetting to swap → mitigated by the loud `LegalLinks` marker + this checklist.
+- **Stacked sheets** (Safari over PaywallSheet) — standard iOS 16+; verified on device in Seg C.
