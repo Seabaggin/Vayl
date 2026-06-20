@@ -571,7 +571,7 @@ const BUILD_ROADMAP = {
         {
           id: "M2", title: "StoreKit 2 purchase + restore", status: "verifying", est: 12, cal: false,
           oneThing: "A real $24.99 lifetime purchase unlocks `core`; restore works on reinstall.",
-          build: "CLIENT LAYER BUILT (2026-06-17, compiles clean): `StoreKitService` (load `com.vayl.core.lifetime`, `purchase()` → verified `Transaction` + JWS, `currentEntitlements`, `Transaction.updates` listener, `restore()` via `AppStore.sync()`); `EntitlementStore` gains `bootstrap()`/`purchase()`/`restore()` + `isCore` = server couple-tier OR local StoreKit ownership (guide Part D — buyer offline-safe, partner via server); a verified purchase pushes the JWS to `grant-entitlement` (writes the couple row → partner unlocks). D4 reveal's unlock CTA now runs `purchase()`. Local `Vayl.storekit` added for simulator purchase/restore. REMAINING (yours): create the ASC product + price tier; select `Vayl.storekit` in the scheme (Edit Scheme → Run → Options → StoreKit Configuration); a device sandbox purchase test; + the server-verification-posture decision (Q below). Guide: storekit-appstore-connect-guide.md.",
+          build: "CLIENT LAYER BUILT (2026-06-17, compiles clean): `StoreKitService` (load `com.vayl.core.lifetime`, `purchase()` → verified `Transaction` + JWS, `currentEntitlements`, `Transaction.updates` listener, `restore()` via `AppStore.sync()`); `EntitlementStore` gains `bootstrap()`/`purchase()`/`restore()` + `isCore` = server couple-tier OR local StoreKit ownership (guide Part D — buyer offline-safe, partner via server); a verified purchase pushes the JWS to `grant-entitlement` (writes the couple row → partner unlocks). D4 reveal's unlock CTA now runs `purchase()`. Local `Vayl.storekit` added for simulator purchase/restore. REMAINING (yours): create the ASC product + price tier; select `Vayl.storekit` in the scheme (Edit Scheme → Run → Options → StoreKit Configuration); a device sandbox purchase test; + the server-verification-posture decision (Q below); + wire the PaywallSheet footer Restore button (`restorePurchases` stub, `TODO(monetization)`) to the built `restore()`. Guide: storekit-appstore-connect-guide.md.",
           feel: "The moment of purchase is the moment of commitment — keep it calm and certain.",
           done: "A sandbox purchase unlocks `core` on device; restore works after a reinstall.",
           constraints: "StoreKit service + App Store Connect product. No gates, no conversion UI yet. (Estimated at full cost — new domain, not rescaled by your velocity factor.)",
@@ -1073,7 +1073,7 @@ const BUILD_ROADMAP = {
         {
           id: "A2", title: "Legal + privacy disclosures", status: "todo", est: 8, cal: false,
           oneThing: "Privacy policy, ToS, nutrition label, CCPA.",
-          build: "Author + host the privacy policy and ToS; complete the App Store privacy nutrition label; CCPA disclosure.",
+          build: "Author + host the privacy policy and ToS; complete the App Store privacy nutrition label; CCPA disclosure. CONSUMERS ALREADY WAITING (2026-06-20): the paywall footer (`PaywallSheet.openTerms`/`openPrivacy`, `TODO(legal)`) and the sign-in legal line (`SignInView.swift:98`, flat text) both need these URLs wired once they exist; the tappable affordances are already built as stubs (task chip `task_bb5734b7`).",
           feel: "n/a.",
           done: "All legal docs live and linked; nutrition label submitted.",
           constraints: "Docs + App Store Connect. (Externally paced — not rescaled by your velocity factor.)",
