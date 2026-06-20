@@ -66,23 +66,24 @@ struct PaywallSheet: View {
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
                     header
                     bulletList
-                    SpectrumHairline()
-                        .padding(.vertical, AppSpacing.xs)
+                    glowDivider
                     priceRow
-                    if showDetails { detailsPanel }
                     cta
                     coversBoth
-                    footer
                 }
                 .padding(.horizontal, AppSpacing.xl)
-                .padding(.bottom, AppSpacing.xl)
+                .padding(.top, AppSpacing.xxl)
             }
+            // Footer pinned to the bottom edge so there's no dead gap below the content.
+            footer
+                .padding(.horizontal, AppSpacing.xl)
+                .padding(.bottom, AppSpacing.md)
         }
         .frame(maxWidth: .infinity)
         .obSheetChrome()
+        .overlay { if showDetails { detailsPopOut } }
         .screenshotProtected()
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTick)
-        .animation(AppAnimation.standard, value: showDetails)
     }
 
     // MARK: - Grab handle + Restore
@@ -109,24 +110,26 @@ struct PaywallSheet: View {
             .padding(.horizontal, AppSpacing.xl)
         }
         .padding(.top, AppSpacing.md)
-        .padding(.bottom, AppSpacing.md)
+        .padding(.bottom, AppSpacing.sm)
     }
 
     // MARK: - Header (hook + hero + subheader)
 
     private var header: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            LivingText(text: entry.hook)
+            LivingText(text: entry.hook,
+                       font: AppFonts.display(34, weight: .bold, relativeTo: .largeTitle))
+                .frame(maxWidth: .infinity, alignment: .center)
 
             Text("One payment, yours forever. Never a subscription. Opens everything you two explore.")
-                .font(AppFonts.bodyText)
+                .font(AppFonts.body(18, weight: .regular, relativeTo: .body))
                 .foregroundStyle(AppColors.textBody)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Explore with less guesswork")
-                .font(AppFonts.overline)
+                .font(AppFonts.body(16, weight: .bold, relativeTo: .headline))
                 .textCase(.uppercase)
-                .foregroundStyle(AppColors.textTertiary)
+                .foregroundStyle(AppColors.spectrumPurple)
                 .padding(.top, AppSpacing.xs)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -137,8 +140,21 @@ struct PaywallSheet: View {
     private var bulletList: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             ForEach(Array(bullets.enumerated()), id: \.offset) { i, line in
-                SpectrumBulletRow(text: line, phaseOffset: Double(i) * 0.22)
+                SpectrumBulletRow(text: line,
+                                  phaseOffset: Double(i) * 0.22,
+                                  font: AppFonts.body(20, weight: .medium, relativeTo: .body))
             }
+        }
+    }
+
+    // MARK: - Glowing divider (premium accent — crisp spectrum line over a soft bloom)
+
+    private var glowDivider: some View {
+        ZStack {
+            SpectrumHairline()
+                .blur(radius: 6)
+                .opacity(0.9)
+            SpectrumHairline()
         }
     }
 
@@ -147,27 +163,43 @@ struct PaywallSheet: View {
     private var priceRow: some View {
         HStack(alignment: .firstTextBaseline, spacing: AppSpacing.xs) {
             Text(priceText)
-                .font(AppFonts.cardTitle)
+                .font(AppFonts.display(30, weight: .bold, relativeTo: .title))
                 .foregroundStyle(AppColors.textPrimary)
             Text("· one time · yours forever")
-                .font(AppFonts.caption)
+                .font(AppFonts.body(15, weight: .regular, relativeTo: .subheadline))
                 .foregroundStyle(AppColors.textSecondary)
             Button {
                 hapticTick += 1
-                showDetails.toggle()
+                withAnimation(AppAnimation.standard) { showDetails = true }
             } label: {
-                Image(systemName: showDetails ? "info.circle.fill" : "info.circle")
-                    .font(AppFonts.bodyMedium)
-                    .foregroundStyle(AppColors.spectrumPurple)
+                Image(systemName: "info.circle")
+                    .font(AppFonts.body(19, weight: .regular, relativeTo: .body))
+                    .foregroundStyle(AppColors.spectrumText)
             }
             .buttonStyle(.plain)
-            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
-    // MARK: - Details panel (receipt + how access works) — behind the info button
+    // MARK: - Details pop-out (StatPhase-style: dimmed scrim + centered spectrum card)
 
-    private var detailsPanel: some View {
+    private var detailsPopOut: some View {
+        ZStack {
+            Color.black.opacity(0.62)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    hapticTick += 1
+                    withAnimation(AppAnimation.standard) { showDetails = false }
+                }
+            detailsCard
+                .padding(.horizontal, AppSpacing.xl)
+        }
+        .transition(.opacity)
+        .zIndex(50)
+    }
+
+    private var detailsCard: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 Text("Everything included, forever")
@@ -192,17 +224,17 @@ struct PaywallSheet: View {
                 .font(AppFonts.meta)
                 .foregroundStyle(AppColors.textMuted)
         }
-        .padding(AppSpacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(AppSpacing.lg)
+        .frame(maxWidth: AppLayout.citationPanelMaxWidth, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: AppRadius.md)
+            RoundedRectangle(cornerRadius: AppRadius.lg)
                 .fill(AppColors.cardBg)
                 .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.md)
-                        .stroke(AppColors.borderSubtle, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: AppRadius.lg)
+                        .stroke(AppColors.spectrumBorder, lineWidth: 1)
                 )
         )
-        .transition(.opacity.combined(with: .move(edge: .top)))
+        .modalElevation()
     }
 
     private func detailRow(_ text: String) -> some View {
@@ -221,7 +253,7 @@ struct PaywallSheet: View {
     // MARK: - CTA + reassurance (badge UNDER the button)
 
     private var cta: some View {
-        VaylButton(label: "Unlock everything · \(priceText)", isLoading: purchasing) {
+        VaylButton(label: "Unlock everything", isLoading: purchasing) {
             hapticTick += 1
             purchase()
         }
@@ -232,10 +264,10 @@ struct PaywallSheet: View {
     private var coversBoth: some View {
         HStack(spacing: AppSpacing.xs) {
             Image(systemName: "person.2.fill")
-                .font(AppFonts.caption)
+                .font(AppFonts.body(15, weight: .regular, relativeTo: .subheadline))
                 .foregroundStyle(AppColors.spectrumPurple)
             Text("covers both of you, your partner pays nothing")
-                .font(AppFonts.caption)
+                .font(AppFonts.body(15, weight: .regular, relativeTo: .subheadline))
                 .foregroundStyle(AppColors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .center)
@@ -246,17 +278,16 @@ struct PaywallSheet: View {
     private var footer: some View {
         VStack(spacing: AppSpacing.sm) {
             Text("Restore purchase · Terms · Privacy")
-                .font(AppFonts.caption)
+                .font(AppFonts.body(14, weight: .regular, relativeTo: .footnote))
                 .foregroundStyle(AppColors.textTertiary)
-            HStack(spacing: AppSpacing.xxs) {
+            HStack(spacing: AppSpacing.xs) {
                 Image(systemName: "books.vertical")
-                Text("grounded in real research")
+                Text("grounded in research")
             }
-            .font(AppFonts.meta)
-            .foregroundStyle(AppColors.textMuted)
+            .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
+            .foregroundStyle(AppColors.textSecondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, AppSpacing.sm)
     }
 
     // MARK: - Purchase
@@ -273,10 +304,13 @@ struct PaywallSheet: View {
 }
 
 #if DEBUG
-#Preview("Reveal door") {
+#Preview("Reveal door — content-height bottom sheet") {
     ZStack(alignment: .bottom) {
         AppColors.void.ignoresSafeArea()
         PaywallSheet(entry: .reveal)
+            // Proportional height that scales with the screen, full-width (no GeometryReader —
+            // that was insetting the width). Tune the fraction.
+            .containerRelativeFrame(.vertical) { height, _ in height * 0.88 }
     }
     .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
     .preferredColorScheme(.dark)

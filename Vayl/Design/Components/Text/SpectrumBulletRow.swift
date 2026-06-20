@@ -22,6 +22,8 @@ struct SpectrumBulletRow: View {
     /// Per-row delay (set by index) so the light cascades DOWN the list — the first bullet sweeps,
     /// then the next, and so on. Higher value = later.
     var phaseOffset: Double = 0
+    /// The label font (default body-medium; consumers can size it up, e.g. the paywall).
+    var font: Font = AppFonts.bodyMedium
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -29,7 +31,7 @@ struct SpectrumBulletRow: View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             orb
             Text(text)
-                .font(AppFonts.bodyMedium)
+                .font(font)
                 .foregroundStyle(AppColors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
