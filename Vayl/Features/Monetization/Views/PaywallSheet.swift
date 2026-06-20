@@ -71,13 +71,35 @@ struct PaywallSheet: View {
     // MARK: - Body
 
     var body: some View {
+        sizedSheet
+            .ignoresSafeArea(.container, edges: .bottom)
+            .overlay { if showDetails { detailsPopOut } }
+            .screenshotProtected()
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTick)
+    }
+
+    // Content-height when it fits; scrolls when it can't (large Dynamic Type / small screens).
+    // ViewThatFits uses the .fixedSize (content-height) layout if it fits the proposed height,
+    // else the scrollable fallback. obSheetChrome forces maxHeight:.infinity (shared, off-limits),
+    // so the chrome wraps BOTH candidates: with .fixedSize it hugs content; inside the ScrollView
+    // it fills the screen and the content scrolls (the CTA + footer stay reachable).
+    @ViewBuilder private var sizedSheet: some View {
+        ViewThatFits(in: .vertical) {
+            sheetStack
+                .obSheetChrome()
+                // .fixedSize(vertical) overrides the chrome's maxHeight:.infinity so the sheet hugs
+                // content; horizontal:false keeps full-bleed width (no GeometryReader, no width bug).
+                .fixedSize(horizontal: false, vertical: true)
+            ScrollView(showsIndicators: false) { sheetStack }
+                .obSheetChrome()
+        }
+    }
+
+    // The sheet content, shared by both ViewThatFits candidates. The bloom lives here so it stays
+    // with the hook whether the sheet hugs content or scrolls.
+    private var sheetStack: some View {
         VStack(spacing: 0) {
             grabHandle
-            // Content-height: no ScrollView. It greedily filled the fixed-height sheet and
-            // pinned content to the top, so the gap above the footer was an uncontrolled
-            // leftover (bigger on tall devices, gone + scrolling on small ones). Now the sheet
-            // hugs its content via .fixedSize below, and every seam is an explicit gap.
-            // The scroll-on-overflow backstop (large Dynamic Type) lands in the Dynamic Type segment.
             VStack(alignment: .leading, spacing: 0) {
                 header                                          // hook + hero
                 sectionHeading.padding(.top, AppSpacing.lg)     // air between value prop and label — premium apps breathe here
@@ -97,17 +119,6 @@ struct PaywallSheet: View {
         }
         .frame(maxWidth: .infinity)
         .background(alignment: .top) { headerBloom }
-        .obSheetChrome()
-        // Hug the content height. obSheetChrome forces maxHeight:.infinity (shared, off-limits);
-        // .fixedSize(vertical) overrides that so the sheet is exactly as tall as its content.
-        // horizontal:false keeps the full-bleed width (no GeometryReader, so no width gotcha).
-        .fixedSize(horizontal: false, vertical: true)
-        // Bottom sheet owns the bottom edge: extend through the home-indicator safe area so the
-        // footer sits close to the bottom (footer adds its own clearance above the indicator).
-        .ignoresSafeArea(.container, edges: .bottom)
-        .overlay { if showDetails { detailsPopOut } }
-        .screenshotProtected()
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTick)
     }
 
     // MARK: - Grab handle + Restore
@@ -119,6 +130,7 @@ struct PaywallSheet: View {
             .frame(maxWidth: .infinity)
             .padding(.top, AppSpacing.md)
             .padding(.bottom, AppSpacing.sm)
+            .accessibilityHidden(true)
     }
 
     // MARK: - Header (hook + hero + subheader)
@@ -200,6 +212,7 @@ struct PaywallSheet: View {
             Text("· one time · yours forever")
                 .font(AppFonts.body(15, weight: .regular, relativeTo: .subheadline))
                 .foregroundStyle(AppColors.textSecondary)
+                .accessibilityLabel("one time, yours forever")   // read clean; drop the · dividers
             Button {
                 hapticTick += 1
                 withAnimation(AppAnimation.standard) { showDetails = true }
@@ -209,6 +222,8 @@ struct PaywallSheet: View {
                     .foregroundStyle(AppColors.spectrumText)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("What's included")
+            .accessibilityHint("Shows everything the purchase unlocks and how access works")
         }
         .frame(maxWidth: .infinity, alignment: .center)
     }
@@ -302,6 +317,8 @@ struct PaywallSheet: View {
                 .foregroundStyle(AppColors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .center)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Covers both of you. Your partner pays nothing.")
     }
 
     // MARK: - Footer

@@ -51,6 +51,7 @@ struct SpectrumBulletRow: View {
             }
             .clipShape(Circle())
             .spectrumBorderGlow(intensity: 0.6)
+            .accessibilityHidden(true)   // decorative marker; the row's text carries the label
     }
 
     /// A diagonal white band that sweeps across the disc once per cycle, then parks off-screen

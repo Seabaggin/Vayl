@@ -611,7 +611,7 @@ const BUILD_ROADMAP = {
         {
           id: "M5", title: "Conversion moment 2 — Desire-Map reveal gate", status: "todo", est: 8,
           oneThing: "Free couple sees 1 match + blurred rest; buying unlocks all for both.",
-          build: "Sits on the D4 reveal mechanic. Reveal exactly ONE mutual match free (`isFreeReveal == true`, server-set); blur the rest with 'You have X more mutual matches — unlock everything, $24.99, yours forever.' On purchase: set `fullRevealUnlocked` (+ `couples.matches_revealed`) and full-reveal for BOTH partners.",
+          build: "Reusable `PaywallSheet` UI BUILT + polished (2026-06-20, committed `a5faeff`): `Features/Monetization/Views/PaywallSheet.swift` is ONE Core-scoped sheet for all three doors (reveal / Settings / Play locked-deck), on the OB custom-bottom-sheet chrome. Content-height via `.fixedSize` with a `ViewThatFits` scroll backstop for large Dynamic Type; paywall-only spectrum header bloom (from the shared `GlowOrb`); curiosity-payoff hero ('Made to take your curiosity somewhere deeper. Follow it together, and see where it leads.'); the one-time/forever terms live ONLY in the price row (de-duped); VoiceOver labels on the info disclosure + badge + footer; footer Restore/Terms/Privacy are tappable STUBS (greppable `TODO(monetization)`/`TODO(legal)`; no legal URLs exist yet, task chip planted). Spec: ../superpowers/specs/2026-06-19-desire-reveal-paywall-design.md. M5 ITSELF = the GATE that presents this sheet: sits on the D4 reveal mechanic; reveal exactly ONE mutual match free (`isFreeReveal == true`, server-set); blur the rest with the count ('You have X more mutual matches'); 3-beat choreography (match lands → gap opens → sheet); on purchase set `fullRevealUnlocked` (+ `couples.matches_revealed`) and full-reveal for BOTH partners.",
           feel: "The blur is longing, not a wall — you can feel there's more behind it.",
           done: "A free couple sees 1 match + blurred rest; buying unlocks all matches for both partners.",
           constraints: "Reveal gate only. Do NOT build the asymmetric Option-C waiting/7-day/nudge here — that's M6.",
@@ -1152,7 +1152,7 @@ const PHASE_STATUS = {
   later:  { label: "Later",      color: "var(--todo)" },
   done:   { label: "Done",       color: "var(--done)" }
 };
-const ACTIVE = ["todo", "inprogress", "verifying", "blocked"]; // counts toward remaining work
+const ACTIVE = ["todo", "inprogress", "blocked"]; // counts toward remaining work (verifying = built, out of remaining, awaiting device check)
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function md(s){ return esc(s).replace(/`([^`]+)`/g, "<code>$1</code>"); }
@@ -1177,12 +1177,16 @@ function computeProjection(){
   let estDoneLogged = 0, actDoneLogged = 0;     // for k (only done segs with actual)
   let calPool = 0, fixedPool = 0;               // remaining hours, split by calibratability
   let activeEst = 0, totalEst = 0;              // for the spread term
-  let doneCount = 0, activeCount = 0;
+  let doneCount = 0, verifyingCount = 0, activeCount = 0;
 
   allSegs.forEach(s => {
     const est = s.est || 0;
     if (s.status === "done") {
       doneCount++;
+      totalEst += est;
+      if (s.actual != null) { actDoneLogged += s.actual; estDoneLogged += est; }
+    } else if (s.status === "verifying") {
+      verifyingCount++;                                  // build labor spent — out of remaining, awaiting device check
       totalEst += est;
       if (s.actual != null) { actDoneLogged += s.actual; estDoneLogged += est; }
     } else if (ACTIVE.includes(s.status)) {
@@ -1212,8 +1216,8 @@ function computeProjection(){
 
   return {
     k, remHours, optHours, cautHours, spread,
-    doneCount, activeCount,
-    hoursDone: actDoneLogged + allSegs.filter(s=>s.status==="done" && s.actual==null).reduce((a,s)=>a+(s.est||0),0),
+    doneCount, verifyingCount, activeCount,
+    hoursDone: actDoneLogged + allSegs.filter(s=>(s.status==="done"||s.status==="verifying") && s.actual==null).reduce((a,s)=>a+(s.est||0),0),
     likely: fmtY(addDays(calDays(remHours))),
     opt: fmt(addDays(calDays(optHours))),
     caut: fmt(addDays(calDays(cautHours))),
@@ -1243,12 +1247,12 @@ function computeProjection(){
     </div>
     <div class="proj-side">
       <div class="proj-metrics">
-        <div class="proj-metric"><div class="pm-num">${P.doneCount}<span style="color:var(--text-3);font-size:14px">/${P.doneCount+P.activeCount}</span></div><div class="pm-lbl">segments done</div></div>
+        <div class="proj-metric"><div class="pm-num">${P.doneCount+P.verifyingCount}<span style="color:var(--text-3);font-size:14px">/${P.doneCount+P.verifyingCount+P.activeCount}</span></div><div class="pm-lbl">${P.verifyingCount?`built · ${P.doneCount} verified`:`segments done`}</div></div>
         <div class="proj-metric"><div class="pm-num">${Math.round(P.remHours)}h</div><div class="pm-lbl">calibrated remaining</div></div>
         <div class="proj-metric"><div class="pm-num">${P.hpd}h<span style="color:var(--text-3);font-size:14px">/day</span></div><div class="pm-lbl">${P.dpw} days/wk</div></div>
       </div>
-      <div class="proj-bar"><span style="width:${Math.round(100*P.doneCount/Math.max(1,P.doneCount+P.activeCount))}%"></span></div>
-      <div class="proj-cal">Calibration: ${fasterTxt} · ${fmtList()} · StoreKit / legal / review charged at full estimate (won't compress). <b>Seed me your real Pairing hours</b> (parking lot) to sharpen this.</div>
+      <div class="proj-bar"><span style="width:${Math.round(100*(P.doneCount+P.verifyingCount)/Math.max(1,P.doneCount+P.verifyingCount+P.activeCount))}%"></span></div>
+      <div class="proj-cal">Calibration: ${fasterTxt} · ${fmtList()} · StoreKit / legal / review charged at full estimate (won't compress).${P.verifyingCount?` <b class="warn">${P.verifyingCount} built — awaiting your 2-phone device test.</b>`:``} <b>Seed me your real Pairing hours</b> (parking lot) to sharpen this.</div>
     </div>`;
 
   function fmtList(){
@@ -1262,7 +1266,7 @@ function phaseRollup(p){
   p.segments.forEach(s => {
     if (s.status === "later") return;
     total += s.est || 0; totalC++;
-    if (s.status === "done") { done += s.est || 0; doneC++; }
+    if (s.status === "done" || s.status === "verifying") { done += s.est || 0; doneC++; }
   });
   return { done, total, doneC, totalC, pct: total > 0 ? Math.round(100*done/total) : 0 };
 }
@@ -1301,7 +1305,7 @@ document.getElementById("phases").innerHTML = D.phases.map(p => {
     const expanded = (s.id === D.meta.current.segment) ? "expanded" : "";
     const bryanCount = (s.questions||[]).filter(q => q.who === "bryan").length;
 
-    const estTxt = s.status === "done"
+    const estTxt = (s.status === "done" || s.status === "verifying")
       ? `<span class="seg-est"><b>${s.est||0}h</b> est${s.actual!=null?` · <span class="act">${s.actual}h actual</span>`:""}</span>`
       : (s.status === "later" ? `` : `<span class="seg-est"><b>${s.est||0}h</b> est${s.cal===false?` · full`:``}</span>`);
 
