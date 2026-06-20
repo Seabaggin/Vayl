@@ -53,8 +53,8 @@ The **body is identical at every door.** Only the **hook line** and the **warm-u
 The purchase is the full Act-1 Core unlock (every deck, all games, the full Desire Map, Pulse insights, Agreements vault, Roadmap) — **not** just the remaining matches. One payment, both partners unlock. The reveal is the *hook*; the value presented is *all of Core*. (Narrowly-scoped "$25 for 3 more matches" undersells.)
 
 ### Refined structure (the settled design — reveal door)
-- **Hook header:** "Reveal your map"
-- **Hero line** (lead with the no-subscription promise): *"One payment. Yours forever — never a subscription. It opens everything you two explore together."*
+- **Hook header:** "Reveal Your Map"
+- **Hero line** (the curiosity payoff; the one-time/forever terms live in the decision block below, so the hero never restates them): *"Made to take your curiosity somewhere deeper. Follow it together, and see where it leads."*
 - **"What you'll do together" — FOUR outcome lines:**
   1. See everywhere your desires meet
   2. Talk openly about sex, boundaries & what-ifs

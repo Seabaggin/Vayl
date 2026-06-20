@@ -21,7 +21,7 @@ struct PaywallSheet: View {
 
         var hook: String {
             switch self {
-            case .reveal:             return "Reveal your map"
+            case .reveal:             return "Reveal Your Map"
             case .settings:           return "Yours, together"
             case .playDeck(let name): return "Unlock \(name)"
             }
@@ -65,7 +65,7 @@ struct PaywallSheet: View {
     private let bloomCoreSize:  CGFloat = 300   // purple core diameter
     private let bloomFlankSize: CGFloat = 210   // cyan / magenta flank diameter
     private let bloomFlankDX:   CGFloat = 72    // horizontal spread of the flanks
-    private let bloomVOffset:   CGFloat = -20   // nudge the halo up (-) / down (+) behind the hook
+    private let bloomVOffset:   CGFloat = -52   // halo tracks the hook up after the top tightened (was -20)
     private let bloomIntensity: Double  = 1.0   // overall opacity over GlowOrb's own falloff
 
     // MARK: - Body
@@ -73,26 +73,38 @@ struct PaywallSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             grabHandle
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                    header
-                    bulletList
-                    glowDivider
-                    priceRow
-                    cta
-                    coversBoth
-                }
-                .padding(.horizontal, AppSpacing.xl)
-                .padding(.top, AppSpacing.xxl)
+            // Content-height: no ScrollView. It greedily filled the fixed-height sheet and
+            // pinned content to the top, so the gap above the footer was an uncontrolled
+            // leftover (bigger on tall devices, gone + scrolling on small ones). Now the sheet
+            // hugs its content via .fixedSize below, and every seam is an explicit gap.
+            // The scroll-on-overflow backstop (large Dynamic Type) lands in the Dynamic Type segment.
+            VStack(alignment: .leading, spacing: 0) {
+                header                                          // hook + hero
+                sectionHeading.padding(.top, AppSpacing.lg)     // air between value prop and label — premium apps breathe here
+                bulletList.padding(.top, AppSpacing.sm)         // small breathe between label and list
+                glowDivider.padding(.top, AppSpacing.lg)        // the value / decision break
+                priceRow.padding(.top, AppSpacing.lg)           // price leads the decision zone — more air = more weight
+                cta.padding(.top, AppSpacing.md)                // price + CTA read as one unit
+                coversBoth.padding(.top, AppSpacing.sm)         // badge hugs the button it reassures
             }
-            // Footer pinned to the bottom edge so there's no dead gap below the content.
+            .padding(.horizontal, AppSpacing.xl)
+            .padding(.top, AppSpacing.md)                       // tightened top (was xxl); bloom tracks via bloomVOffset
+
             footer
                 .padding(.horizontal, AppSpacing.xl)
-                .padding(.bottom, AppSpacing.md)
+                .padding(.top, AppSpacing.lg)                   // clear separation between decision zone and legal footer
+                .padding(.bottom, AppSpacing.sm)                // minimal clearance above home indicator
         }
         .frame(maxWidth: .infinity)
         .background(alignment: .top) { headerBloom }
         .obSheetChrome()
+        // Hug the content height. obSheetChrome forces maxHeight:.infinity (shared, off-limits);
+        // .fixedSize(vertical) overrides that so the sheet is exactly as tall as its content.
+        // horizontal:false keeps the full-bleed width (no GeometryReader, so no width gotcha).
+        .fixedSize(horizontal: false, vertical: true)
+        // Bottom sheet owns the bottom edge: extend through the home-indicator safe area so the
+        // footer sits close to the bottom (footer adds its own clearance above the indicator).
+        .ignoresSafeArea(.container, edges: .bottom)
         .overlay { if showDetails { detailsPopOut } }
         .screenshotProtected()
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTick)
@@ -101,28 +113,12 @@ struct PaywallSheet: View {
     // MARK: - Grab handle + Restore
 
     private var grabHandle: some View {
-        ZStack(alignment: .top) {
-            Capsule()
-                .fill(AppColors.spectrumBorder)
-                .frame(width: 40, height: 5)
-                .frame(maxWidth: .infinity)
-
-            HStack {
-                Spacer()
-                Button {
-                    hapticTick += 1
-                    // TODO(monetization): wire StoreKit restore-purchases here.
-                } label: {
-                    Text("Restore")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textTertiary)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, AppSpacing.xl)
-        }
-        .padding(.top, AppSpacing.md)
-        .padding(.bottom, AppSpacing.sm)
+        Capsule()
+            .fill(AppColors.spectrumBorder)
+            .frame(width: 40, height: 5)
+            .frame(maxWidth: .infinity)
+            .padding(.top, AppSpacing.md)
+            .padding(.bottom, AppSpacing.sm)
     }
 
     // MARK: - Header (hook + hero + subheader)
@@ -130,21 +126,26 @@ struct PaywallSheet: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             LivingText(text: entry.hook,
-                       font: AppFonts.display(34, weight: .bold, relativeTo: .largeTitle))
+                       font: AppFonts.display(38, weight: .bold, relativeTo: .largeTitle))
                 .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, -AppSpacing.md)   // widen past the body inset so 38pt stays one line
 
-            Text("One payment, yours forever. Never a subscription. Opens everything you two explore.")
-                .font(AppFonts.body(18, weight: .regular, relativeTo: .body))
+            Text("Made to take your curiosity somewhere deeper. Follow it together, and see where it leads.")
+                .font(AppFonts.body(20, weight: .medium, relativeTo: .body))
                 .foregroundStyle(AppColors.textBody)
                 .fixedSize(horizontal: false, vertical: true)
-
-            Text("Explore with less guesswork")
-                .font(AppFonts.body(16, weight: .bold, relativeTo: .headline))
-                .textCase(.uppercase)
-                .foregroundStyle(AppColors.spectrumPurple)
-                .padding(.top, AppSpacing.xs)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Section heading (introduces the bullets)
+
+    private var sectionHeading: some View {
+        Text("Explore with less guesswork")
+            .font(AppFonts.body(18, weight: .bold, relativeTo: .headline))
+            .textCase(.uppercase)
+            .foregroundStyle(AppColors.spectrumPurple)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Header bloom (paywall-only spectrum halo behind the hook)
@@ -289,7 +290,6 @@ struct PaywallSheet: View {
             purchase()
         }
         .fixedSize(horizontal: false, vertical: true)
-        .padding(.top, AppSpacing.sm)
     }
 
     private var coversBoth: some View {
@@ -308,17 +308,43 @@ struct PaywallSheet: View {
 
     private var footer: some View {
         VStack(spacing: AppSpacing.sm) {
-            Text("Restore purchase · Terms · Privacy")
-                .font(AppFonts.body(14, weight: .regular, relativeTo: .footnote))
-                .foregroundStyle(AppColors.textTertiary)
+            // Legal trio: real tappable controls now (stubbed actions) so the wiring points exist.
+            // App Store requires Restore Purchases + Terms + Privacy to be reachable. Actions are
+            // the stub methods below (TODO(monetization) / TODO(legal)).
+            HStack(spacing: AppSpacing.xs) {
+                footerLink("Restore purchase", hint: "Restores a purchase you already made", action: restorePurchases)
+                footerDot
+                footerLink("Terms", hint: "Opens the Terms of Service", action: openTerms)
+                footerDot
+                footerLink("Privacy", hint: "Opens the Privacy Policy", action: openPrivacy)
+            }
             HStack(spacing: AppSpacing.xs) {
                 Image(systemName: "books.vertical")
-                Text("grounded in research")
+                Text("Grounded In Research")
             }
             .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
             .foregroundStyle(AppColors.textSecondary)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// One footnote-styled, tappable footer control (plain so it reads like text, not button chrome).
+    private func footerLink(_ label: String, hint: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(AppFonts.body(14, weight: .regular, relativeTo: .footnote))
+                .foregroundStyle(AppColors.textTertiary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(hint)
+    }
+
+    /// Decorative "·" divider between footer links (hidden from VoiceOver).
+    private var footerDot: some View {
+        Text("·")
+            .font(AppFonts.body(14, weight: .regular, relativeTo: .footnote))
+            .foregroundStyle(AppColors.textTertiary)
+            .accessibilityHidden(true)
     }
 
     // MARK: - Purchase
@@ -332,16 +358,35 @@ struct PaywallSheet: View {
             if ok { onUnlocked() }
         }
     }
+
+    // MARK: - Legal / restore actions (stubs; wiring points so these aren't forgotten)
+
+    private func restorePurchases() {
+        hapticTick += 1
+        // TODO(monetization): wire StoreKit restore (AppStore.sync() + refresh EntitlementStore
+        // entitlements), then reflect the unlocked state. App Store requires a working Restore.
+    }
+
+    private func openTerms() {
+        hapticTick += 1
+        // TODO(legal): present the Terms of Service (in-app SFSafariViewController or external
+        // Link). URL not defined yet; needs a real Terms page before submission.
+    }
+
+    private func openPrivacy() {
+        hapticTick += 1
+        // TODO(legal): present the Privacy Policy (in-app SFSafariViewController or external
+        // Link). URL not defined yet; needs a real Privacy page before submission.
+    }
 }
 
 #if DEBUG
 #Preview("Reveal door — content-height bottom sheet") {
     ZStack(alignment: .bottom) {
         AppColors.void.ignoresSafeArea()
+        // Content-height: the sheet hugs its content (see .fixedSize in the body), so the host
+        // no longer forces a height fraction. Bottom-anchored bottom sheet.
         PaywallSheet(entry: .reveal)
-            // Proportional height that scales with the screen, full-width (no GeometryReader —
-            // that was insetting the width). Tune the fraction.
-            .containerRelativeFrame(.vertical) { height, _ in height * 0.88 }
     }
     .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
     .preferredColorScheme(.dark)
