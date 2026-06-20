@@ -57,6 +57,17 @@ struct PaywallSheet: View {
     /// StoreKit-localized price when available; falls back to the catalog price.
     private var priceText: String { entitlements.corePriceText ?? "$24.99" }
 
+    // MARK: - Header bloom tuning
+    //
+    // Bloom-rendering constants (size / offset / intensity) for the paywall-only spectrum halo
+    // behind the hook. NOT design tokens; same convention as OBSheetChrome's purpleTint/darken.
+    // Tune on device; they never leave this file.
+    private let bloomCoreSize:  CGFloat = 300   // purple core diameter
+    private let bloomFlankSize: CGFloat = 210   // cyan / magenta flank diameter
+    private let bloomFlankDX:   CGFloat = 72    // horizontal spread of the flanks
+    private let bloomVOffset:   CGFloat = -20   // nudge the halo up (-) / down (+) behind the hook
+    private let bloomIntensity: Double  = 1.0   // overall opacity over GlowOrb's own falloff
+
     // MARK: - Body
 
     var body: some View {
@@ -80,6 +91,7 @@ struct PaywallSheet: View {
                 .padding(.bottom, AppSpacing.md)
         }
         .frame(maxWidth: .infinity)
+        .background(alignment: .top) { headerBloom }
         .obSheetChrome()
         .overlay { if showDetails { detailsPopOut } }
         .screenshotProtected()
@@ -133,6 +145,25 @@ struct PaywallSheet: View {
                 .padding(.top, AppSpacing.xs)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Header bloom (paywall-only spectrum halo behind the hook)
+    //
+    // Composed from the shared GlowOrb primitive: a purple core flanked by faint cyan/magenta,
+    // so the hook sits in a halo that echoes the spectrum border, bullets, and divider. Lives
+    // ONLY here, never in the shared obSheetChrome (FounderLetter/CredentialEditor reuse that).
+    // Static (GlowOrb doesn't animate, so no Reduce Motion concern).
+    private var headerBloom: some View {
+        ZStack {
+            GlowOrb(color: AppColors.spectrumCyan,    size: bloomFlankSize)
+                .offset(x: -bloomFlankDX, y: bloomVOffset)
+            GlowOrb(color: AppColors.spectrumMagenta, size: bloomFlankSize)
+                .offset(x:  bloomFlankDX, y: bloomVOffset)
+            GlowOrb(color: AppColors.spectrumPurple,  size: bloomCoreSize)   // dominant: drawn last, on top
+                .offset(y: bloomVOffset)
+        }
+        .opacity(bloomIntensity)
+        .allowsHitTesting(false)
     }
 
     // MARK: - Bullets (cascading shimmer down the list)
