@@ -58,9 +58,14 @@ final class DesireMapStore: Identifiable {
         resolveProfile()
         loadItems()
         loadExistingRatings()
-        // Offline-retry: if a prior completion failed to sync, retry now that the rater is open.
-        if isComplete && UserDefaults.standard.bool(forKey: "pendingDesireSync") {
-            triggerSync()
+        if isComplete {
+            // Self-heal: a map completed before the completion flag was written still marks
+            // the profile complete (idempotent).
+            markProfileComplete()
+            // Offline-retry: if a prior completion failed to sync, retry now that the rater is open.
+            if UserDefaults.standard.bool(forKey: "pendingDesireSync") {
+                triggerSync()
+            }
         }
     }
 
@@ -116,8 +121,30 @@ final class DesireMapStore: Identifiable {
         try? context.save()
         ratings[itemId] = rating
 
-        // Sync the full map on completion (and on any re-rate once complete).
-        if isComplete { triggerSync() }
+        // On completion: durably mark the local profile complete (the truth the rest of the app
+        // reads — HomeStore.myMapComplete, Getting Started, desireMapState), THEN sync. Local-first:
+        // the flag is set independently of sync success (sync is best-effort and retried on reopen).
+        if isComplete {
+            markProfileComplete()
+            triggerSync()
+        }
+    }
+
+    // MARK: - Completion flag
+
+    /// Durably mark the local profile's Desire Map complete — the single source of truth the rest
+    /// of the app reads (`HomeStore.myMapComplete`, Getting Started, `desireMapState`). Set on
+    /// completion, independently of remote sync. Idempotent.
+    private func markProfileComplete() {
+        guard let userId else { return }
+        let context = ModelContext(modelContainer)
+        let descriptor = FetchDescriptor<UserProfile>(
+            predicate: #Predicate { $0.id == userId }
+        )
+        guard let profile = try? context.fetch(descriptor).first,
+              !profile.hasCompletedDesireMap else { return }
+        profile.hasCompletedDesireMap = true
+        try? context.save()
     }
 
     // MARK: - Sync (D2)

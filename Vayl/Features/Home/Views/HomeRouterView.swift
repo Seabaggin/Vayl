@@ -62,7 +62,7 @@ struct HomeRouterView: View {
         .sheet(item: $activeSession) { session in
             SessionView(store: session)
         }
-        .fullScreenCover(item: $activeMap) { mapStore in
+        .fullScreenCover(item: $activeMap, onDismiss: { Task { await store?.loadAll() } }) { mapStore in
             DesireMapView(store: mapStore)
         }
         .fullScreenCover(item: $activeReveal) { revealStore in
