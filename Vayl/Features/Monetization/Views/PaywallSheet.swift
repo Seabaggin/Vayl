@@ -37,6 +37,8 @@ struct PaywallSheet: View {
     @State private var showDetails = false
     @State private var purchasing  = false
     @State private var hapticTick  = 0
+    @State private var restoring   = false
+    @State private var showRestoreFailedAlert = false
 
     private let bullets = [
         "Understand what you each want",
@@ -76,6 +78,11 @@ struct PaywallSheet: View {
             .overlay { if showDetails { detailsPopOut } }
             .screenshotProtected()
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTick)
+            .alert("Nothing to restore", isPresented: $showRestoreFailedAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("We couldn't find a purchase to restore on this Apple ID. If you've bought Vayl, make sure you're signed in with the same Apple ID you used to purchase.")
+            }
     }
 
     // Content-height when it fits; scrolls when it can't (large Dynamic Type / small screens).
@@ -325,11 +332,21 @@ struct PaywallSheet: View {
 
     private var footer: some View {
         VStack(spacing: AppSpacing.sm) {
-            // Legal trio: real tappable controls now (stubbed actions) so the wiring points exist.
-            // App Store requires Restore Purchases + Terms + Privacy to be reachable. Actions are
-            // the stub methods below (TODO(monetization) / TODO(legal)).
+            // Legal trio — wired controls: Restore runs EntitlementStore.restore() (spinner while
+            // in flight); Terms/Privacy open the in-app Safari sheet. App Store requires all three.
             HStack(spacing: AppSpacing.xs) {
-                footerLink("Restore purchase", hint: "Restores a purchase you already made", action: restorePurchases)
+                if restoring {
+                    HStack(spacing: AppSpacing.xxs) {
+                        ProgressView()
+                            .controlSize(.mini)
+                            .tint(AppColors.textTertiary)
+                        Text("Restoring…")
+                            .font(AppFonts.body(14, weight: .regular, relativeTo: .footnote))
+                            .foregroundStyle(AppColors.textTertiary)
+                    }
+                } else {
+                    footerLink("Restore purchase", hint: "Restores a purchase you already made", action: restorePurchases)
+                }
                 footerDot
                 footerLink("Terms", hint: "Opens the Terms of Service", action: openTerms)
                 footerDot
@@ -379,9 +396,18 @@ struct PaywallSheet: View {
     // MARK: - Legal / restore actions (stubs; wiring points so these aren't forgotten)
 
     private func restorePurchases() {
+        guard !restoring else { return }
         hapticTick += 1
-        // TODO(monetization): wire StoreKit restore (AppStore.sync() + refresh EntitlementStore
-        // entitlements), then reflect the unlocked state. App Store requires a working Restore.
+        restoring = true
+        Task {
+            let unlocked = await entitlements.restore()   // AppStore.sync() → couple re-grant → refresh
+            restoring = false
+            if unlocked {
+                onUnlocked()                              // gate opens = the confirmation
+            } else {
+                showRestoreFailedAlert = true             // nothing owned / couldn't restore
+            }
+        }
     }
 
     private func openTerms() {
