@@ -348,6 +348,8 @@ struct PaywallSheet: View {
                             .font(AppFonts.body(14, weight: .regular, relativeTo: .footnote))
                             .foregroundStyle(AppColors.textTertiary)
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Restoring purchase")
                 } else {
                     footerLink("Restore purchase", hint: "Restores a purchase you already made", action: restorePurchases)
                 }
@@ -400,7 +402,7 @@ struct PaywallSheet: View {
     // MARK: - Legal / restore actions
 
     private func restorePurchases() {
-        guard !restoring else { return }
+        guard !restoring, !purchasing else { return }   // ignore a tap while a purchase is in flight (avoids a false "nothing to restore")
         hapticTick += 1
         restoring = true
         Task {

@@ -38,12 +38,4 @@ enum LegalDoc: String, Identifiable {
         case .privacy: LegalLinks.privacy
         }
     }
-
-    /// Human title (accessibility / fallbacks).
-    var title: String {
-        switch self {
-        case .terms:   "Terms of Service"
-        case .privacy: "Privacy Policy"
-        }
-    }
 }
