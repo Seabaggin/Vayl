@@ -1,7 +1,7 @@
 // Features/Learn/Views/Sections/QuizCarouselSection.swift
 //
-// Section 1 — self-discovery quizzes as a horizontal carousel. STUB:
-// a horizontal ScrollView of quiz cards; paging/snap feel is deferred.
+// Section 1 — self-discovery quizzes as an auto-advancing, infinite-loop
+// paging carousel (InfiniteCarousel). Cyan section hairline.
 
 import SwiftUI
 
@@ -17,13 +17,9 @@ struct QuizCarouselSection: View {
                 .tracking(1.5)
                 .foregroundStyle(AppColors.textSecondary)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: AppSpacing.md) {
-                    ForEach(quizzes) { quiz in
-                        Button { onSelect(quiz) } label: { quizCard(quiz) }
-                            .buttonStyle(.plain)
-                    }
-                }
+            InfiniteCarousel(items: quizzes, interval: 5, height: 232) { quiz in
+                Button { onSelect(quiz) } label: { quizCard(quiz) }
+                    .buttonStyle(.plain)
             }
         }
     }
@@ -36,20 +32,33 @@ struct QuizCarouselSection: View {
             Text(quiz.title)
                 .font(AppFonts.cardTitle)
                 .foregroundStyle(AppColors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
             Text(quiz.subtitle)
-                .font(AppFonts.caption)
+                .font(AppFonts.bodyMedium)
                 .foregroundStyle(AppColors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
+            HStack(spacing: AppSpacing.xs) {
+                Text("Take the quiz")
+                Image(systemName: "arrow.right")
+            }
+            .font(AppFonts.buttonLabel)
+            .foregroundStyle(AppColors.textPrimary)
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.vertical, AppSpacing.sm)
+            .background(
+                Capsule()
+                    .fill(AppColors.spectrumCyan.opacity(0.16))
+                    .overlay(Capsule().stroke(AppColors.spectrumCyan.opacity(0.35), lineWidth: 1))
+            )
         }
-        .padding(AppSpacing.md)
-        .frame(width: 260, height: 150, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(AppSpacing.lg)
         .background(
             RoundedRectangle(cornerRadius: AppRadius.xl)
                 .fill(AppColors.cardBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.xl)
-                        .stroke(AppColors.spectrumCyan.opacity(0.28), lineWidth: 1)
-                )
+                .overlay(RoundedRectangle(cornerRadius: AppRadius.xl)
+                    .stroke(AppColors.spectrumCyan.opacity(0.28), lineWidth: 1))
         )
     }
 }
@@ -58,8 +67,8 @@ struct QuizCarouselSection: View {
     ZStack {
         AppColors.pageBackground.ignoresSafeArea()
         QuizCarouselSection(quizzes: [
-            LearnQuiz(id: "flavor", kind: "flavor", title: "What's Your Flavor of NM?", subtitle: "Where you actually land.", questionCount: 12),
-            LearnQuiz(id: "boundary", kind: "boundary", title: "Where Are Your Lines?", subtitle: "Boundaries as a spectrum.", questionCount: 12)
+            LearnQuiz(id: "flavor", kind: "flavor", title: "What's Your Flavor of NM?", subtitle: "Where you actually land — not where you think you should.", questionCount: 12),
+            LearnQuiz(id: "boundary", kind: "boundary", title: "Where Are Your Lines?", subtitle: "Boundaries as a spectrum, not a checklist.", questionCount: 12)
         ])
         .padding()
     }

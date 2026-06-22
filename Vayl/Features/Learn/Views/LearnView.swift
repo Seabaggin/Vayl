@@ -25,8 +25,7 @@ struct LearnView: View {
                     header
                     QuizCarouselSection(quizzes: store.quizzes)
                     ResearchSection(
-                        featured: store.featuredFinding,
-                        carousel: store.carouselFindings,
+                        findings: store.findings,
                         totalCount: store.findingCount,
                         onOpenDatabase: { showDatabase = true },
                         onOpenFinding: { selectedFinding = $0 }
