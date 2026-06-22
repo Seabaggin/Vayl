@@ -23,7 +23,7 @@ struct AppShell: View {
                     case .map:
                         TabContentWrapper { MapView() }
                     case .learn:
-                        TabContentWrapper { LearnView() }
+                        TabContentWrapper { LearnRouterView() }
                     }
                 }
                 .ignoresSafeArea(edges: .bottom)
