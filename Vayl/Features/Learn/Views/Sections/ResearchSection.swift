@@ -49,10 +49,7 @@ struct ResearchSection: View {
             .padding(.vertical, AppSpacing.sm)
             .padding(.horizontal, AppSpacing.md)
             .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: AppRadius.lg)
-                    .stroke(AppColors.borderSubtle, lineWidth: 1)
-            )
+            .learnCard(AppColors.spectrumPurple, cornerRadius: AppRadius.lg)
         }
         .buttonStyle(.plain)
     }
@@ -88,12 +85,7 @@ struct ResearchSection: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(AppSpacing.lg)
-        .background(
-            RoundedRectangle(cornerRadius: AppRadius.xl)
-                .fill(AppColors.cardBackground)
-                .overlay(RoundedRectangle(cornerRadius: AppRadius.xl)
-                    .stroke(AppColors.spectrumPurple.opacity(0.18), lineWidth: 1))
-        )
+        .learnCard(AppColors.spectrumPurple)
     }
 }
 

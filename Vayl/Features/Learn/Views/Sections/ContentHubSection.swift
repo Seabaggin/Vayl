@@ -62,12 +62,7 @@ struct ContentHubSection: View {
                         .foregroundStyle(AppColors.textTertiary)
                 }
                 .padding(AppSpacing.md)
-                .background(
-                    RoundedRectangle(cornerRadius: AppRadius.lg)
-                        .fill(AppColors.cardBackground)
-                        .overlay(RoundedRectangle(cornerRadius: AppRadius.lg)
-                            .stroke(AppColors.spectrumMagenta.opacity(0.16), lineWidth: 1))
-                )
+                .learnCard(AppColors.spectrumMagenta, cornerRadius: AppRadius.lg)
             }
         }
     }

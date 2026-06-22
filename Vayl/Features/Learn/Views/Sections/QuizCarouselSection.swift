@@ -54,12 +54,7 @@ struct QuizCarouselSection: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(AppSpacing.lg)
-        .background(
-            RoundedRectangle(cornerRadius: AppRadius.xl)
-                .fill(AppColors.cardBackground)
-                .overlay(RoundedRectangle(cornerRadius: AppRadius.xl)
-                    .stroke(AppColors.spectrumCyan.opacity(0.28), lineWidth: 1))
-        )
+        .learnCard(AppColors.spectrumCyan)
     }
 }
 

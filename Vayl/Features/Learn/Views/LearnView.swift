@@ -71,13 +71,17 @@ struct LearnView: View {
             Spacer()
             Button { showResources = true } label: {
                 HStack(spacing: AppSpacing.xs) {
-                    Image(systemName: "lifepreserver").foregroundStyle(AppColors.spectrumCyan)
-                    Text("Resources").font(AppFonts.buttonLabel).foregroundStyle(AppColors.textBody)
+                    Image(systemName: "lifepreserver")
+                        .foregroundStyle(AppColors.spectrumText)   // gradient symbol (in place of a gradient border)
+                    Text("Resources")
+                        .font(AppFonts.buttonLabel)
+                        .foregroundStyle(Color.white)
                 }
                 .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.sm)
-                .background(Capsule().fill(AppColors.cardBackground)
-                    .overlay(Capsule().stroke(AppColors.borderSubtle, lineWidth: 1)))
+                .background(HolographicShimmer().opacity(0.7))      // same shimmer as the CTA
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(AppColors.borderSubtle, lineWidth: 1))  // plain hairline, not gradient
             }
             .buttonStyle(.plain)
         }
