@@ -1,8 +1,8 @@
 // Features/Learn/Views/Sections/ContentHubSection.swift
 //
-// Section 3 — Content Hub. STUB: a segmented control (Books / Watch /
-// Listen / Voices); Voices carries a Creators ⇄ Researchers filter.
-// Magenta hairline.
+// Section 3 — Content Hub (magenta). A custom segmented control over four
+// panels: Books (cover shelf), Watch + Listen (media rows), Voices (circular
+// avatars + a Creators/Researchers filter). Mirrors the HTML mockup's hub.
 
 import SwiftUI
 
@@ -12,58 +12,230 @@ struct ContentHubSection: View {
     @State private var tab: HubTab = .books
     @State private var voiceFilter: VoiceKind = .creator
 
+    private let accent = AppColors.spectrumMagenta
+
     enum HubTab: String, CaseIterable, Identifiable {
-        case books = "Books", watch = "Watch", listen = "Listen", voices = "Voices"
+        case books, watch, listen, voices
         var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .books: return "Books"; case .watch: return "Watch"
+            case .listen: return "Listen"; case .voices: return "Voices"
+            }
+        }
+        var icon: String {
+            switch self {
+            case .books: return "books.vertical"; case .watch: return "play.rectangle"
+            case .listen: return "waveform"; case .voices: return "person.2"
+            }
+        }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            SectionHairline(color: AppColors.spectrumMagenta)
+            SectionHairline(color: accent)
             Text("CONTENT HUB")
                 .font(AppFonts.overline)
                 .tracking(1.5)
                 .foregroundStyle(AppColors.textSecondary)
 
-            Picker("", selection: $tab) {
-                ForEach(HubTab.allCases) { Text($0.rawValue).tag($0) }
-            }
-            .pickerStyle(.segmented)
+            LearnSegmented(
+                items: HubTab.allCases.map { .init($0, $0.label, icon: $0.icon) },
+                selection: $tab,
+                accent: accent
+            )
 
             switch tab {
-            case .books:  list(store.media(.book).map(\.title))
-            case .watch:  list(store.media(.show).map(\.title))
-            case .listen: list(store.media(.podcast).map(\.title))
+            case .books:  bookShelf
+            case .watch:  mediaList(.show, tag: "Watch")
+            case .listen: mediaList(.podcast, tag: "Listen")
             case .voices: voicesPanel
             }
         }
     }
 
-    private var voicesPanel: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Picker("", selection: $voiceFilter) {
-                Text("Creators").tag(VoiceKind.creator)
-                Text("Researchers").tag(VoiceKind.researcher)
+    // MARK: - Books
+
+    private var bookShelf: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(alignment: .top, spacing: AppSpacing.sm) {
+                ForEach(store.media(.book)) { book in
+                    Button {} label: { bookCover(book) }
+                        .buttonStyle(.plain)
+                }
             }
-            .pickerStyle(.segmented)
-            list(store.voices(voiceFilter).map(\.name))
+            .padding(.vertical, AppSpacing.xxs)
         }
     }
 
-    private func list(_ titles: [String]) -> some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            ForEach(titles, id: \.self) { title in
-                HStack {
-                    Text(title)
-                        .font(AppFonts.bodyMedium)
+    private func bookCover(_ b: LearnMediaItem) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            ZStack(alignment: .topLeading) {
+                coverImage(b.artworkUrl)
+                    .frame(width: 118, height: 172)
+                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
+                    .overlay(RoundedRectangle(cornerRadius: AppRadius.md)
+                        .stroke(AppColors.borderSubtle, lineWidth: 1))
+                if let tier = b.tier {
+                    Text(tier.uppercased())
+                        .font(AppFonts.label)
                         .foregroundStyle(AppColors.textPrimary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(AppColors.textTertiary)
+                        .padding(.horizontal, AppSpacing.xs)
+                        .padding(.vertical, AppSpacing.xxs)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .overlay(Capsule().stroke(AppColors.borderSubtle, lineWidth: 1))
+                        .padding(AppSpacing.xs)
                 }
-                .padding(AppSpacing.md)
-                .learnCard(AppColors.spectrumMagenta, cornerRadius: AppRadius.lg)
             }
+            Text(b.title)
+                .font(AppFonts.caption).bold()
+                .foregroundStyle(AppColors.textPrimary)
+                .lineLimit(2)
+            Text(b.positioning)
+                .font(AppFonts.meta)
+                .foregroundStyle(AppColors.textSecondary)
+                .lineLimit(2)
+        }
+        .frame(width: 118, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func coverImage(_ url: String?) -> some View {
+        if let url, let u = URL(string: url) {
+            AsyncImage(url: u) { img in
+                img.resizable().aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Rectangle().fill(AppColors.cardBackground)
+            }
+        } else {
+            Rectangle().fill(AppColors.cardBackground)
+        }
+    }
+
+    // MARK: - Media rows (Watch / Listen)
+
+    private func mediaList(_ kind: MediaKind, tag: String) -> some View {
+        VStack(spacing: AppSpacing.sm) {
+            ForEach(store.media(kind)) { item in
+                Button {} label: { mediaRow(item, tag: tag) }
+                    .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func mediaRow(_ m: LearnMediaItem, tag: String) -> some View {
+        HStack(spacing: AppSpacing.md) {
+            thumb(url: m.artworkUrl, icon: kindIcon(m.kind), circle: false)
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                Text(tag.uppercased())
+                    .font(AppFonts.label)
+                    .foregroundStyle(AppColors.textTertiary)
+                Text(m.title)
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(1)
+                Text(m.positioning)
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .lineLimit(2)
+                if let platform = m.platform { platformBadge(platform) }
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right").foregroundStyle(AppColors.textTertiary)
+        }
+        .padding(AppSpacing.sm)
+        .learnCard(accent, cornerRadius: AppRadius.lg)
+    }
+
+    // MARK: - Voices
+
+    private var voicesPanel: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            LearnSegmented(
+                items: [.init(VoiceKind.creator, "Creators"), .init(VoiceKind.researcher, "Researchers")],
+                selection: $voiceFilter,
+                accent: accent
+            )
+            ForEach(store.voices(voiceFilter)) { voice in
+                Button {} label: { voiceRow(voice) }
+                    .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func voiceRow(_ v: Voice) -> some View {
+        HStack(spacing: AppSpacing.md) {
+            thumb(url: nil, icon: "person.fill", circle: true)
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                Text(v.role.uppercased())
+                    .font(AppFonts.label)
+                    .foregroundStyle(AppColors.textTertiary)
+                Text(v.name)
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(1)
+                Text(v.blurb)
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .lineLimit(2)
+                platformBadge(v.platform)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right").foregroundStyle(AppColors.textTertiary)
+        }
+        .padding(AppSpacing.sm)
+        .learnCard(accent, cornerRadius: AppRadius.lg)
+    }
+
+    // MARK: - Shared bits
+
+    @ViewBuilder
+    private func thumb(url: String?, icon: String, circle: Bool) -> some View {
+        let base = coverOrIcon(url: url, icon: icon).frame(width: 52, height: 52)
+        if circle {
+            base.clipShape(Circle())
+                .overlay(Circle().stroke(accent.opacity(0.22), lineWidth: 1))
+        } else {
+            base.clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
+                .overlay(RoundedRectangle(cornerRadius: AppRadius.md).stroke(accent.opacity(0.2), lineWidth: 1))
+        }
+    }
+
+    @ViewBuilder
+    private func coverOrIcon(url: String?, icon: String) -> some View {
+        if let url, let u = URL(string: url) {
+            AsyncImage(url: u) { img in
+                img.resizable().aspectRatio(contentMode: .fill)
+            } placeholder: { iconTile(icon) }
+        } else {
+            iconTile(icon)
+        }
+    }
+
+    private func iconTile(_ icon: String) -> some View {
+        ZStack {
+            accent.opacity(0.08)
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundStyle(accent)
+        }
+    }
+
+    private func platformBadge(_ text: String) -> some View {
+        Text(text)
+            .font(AppFonts.meta)
+            .foregroundStyle(AppColors.textSecondary)
+            .padding(.horizontal, AppSpacing.sm)
+            .padding(.vertical, AppSpacing.xxs)
+            .background(Capsule().fill(Color.white.opacity(0.04))
+                .overlay(Capsule().stroke(AppColors.borderSubtle, lineWidth: 1)))
+    }
+
+    private func kindIcon(_ kind: MediaKind) -> String {
+        switch kind {
+        case .book: return "book.closed.fill"
+        case .show: return "play.rectangle.fill"
+        case .podcast: return "waveform"
         }
     }
 }
@@ -71,6 +243,6 @@ struct ContentHubSection: View {
 #Preview {
     ZStack {
         AppColors.pageBackground.ignoresSafeArea()
-        ContentHubSection(store: LearnStore()).padding()
+        ScrollView { ContentHubSection(store: LearnStore()).padding() }
     }
 }
