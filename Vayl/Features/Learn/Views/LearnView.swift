@@ -33,7 +33,7 @@ struct LearnView: View {
                 }
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.top, AppSpacing.md)
-                // tab-bar clearance is handled by TabContentWrapper — no extra bottom padding
+                .padding(.bottom, AppSpacing.lg)   // breathing room only; tab-bar clearance is TabContentWrapper's job
             }
         }
         .vaylCover(isPresented: $showDatabase, confirmOnExit: false) {
