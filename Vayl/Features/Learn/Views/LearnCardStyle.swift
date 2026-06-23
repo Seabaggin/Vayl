@@ -43,7 +43,7 @@ private struct LearnCardStyle: ViewModifier {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(accent.opacity(0.30), lineWidth: 1)
+                    .stroke(accent.opacity(0.45), lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
     }

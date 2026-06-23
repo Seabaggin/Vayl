@@ -33,7 +33,7 @@ struct LearnView: View {
                 }
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.top, AppSpacing.md)
-                .padding(.bottom, 120)   // clears the floating RacetrackTabBar
+                // tab-bar clearance is handled by TabContentWrapper — no extra bottom padding
             }
         }
         .vaylCover(isPresented: $showDatabase, confirmOnExit: false) {
