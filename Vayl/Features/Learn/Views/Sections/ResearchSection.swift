@@ -13,18 +13,24 @@ struct ResearchSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack {
                 Text("THE RESEARCH")
                     .font(AppFonts.display(16, weight: .semibold, relativeTo: .title3))
                     .foregroundStyle(AppColors.spectrumPurple)
                 Spacer()
                 Button { onOpenDatabase() } label: {
-                    HStack(spacing: AppSpacing.xxs) {
+                    HStack(spacing: AppSpacing.xs) {
+                        Image(systemName: "rectangle.stack")
+                            .foregroundStyle(AppColors.spectrumPurple)   // purple symbol (section is purple-only)
                         Text("Browse all")
-                        Image(systemName: "chevron.right")
+                            .font(AppFonts.buttonLabel)
+                            .foregroundStyle(Color.white)
                     }
-                    .font(AppFonts.buttonLabel)
-                    .foregroundStyle(AppColors.spectrumPurple)
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.vertical, AppSpacing.xs)
+                    .background(HolographicShimmer().opacity(0.7))        // same shimmer as the Resources pill
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(AppColors.borderSubtle, lineWidth: 1))
                 }
                 .buttonStyle(PressableCardStyle())
             }
