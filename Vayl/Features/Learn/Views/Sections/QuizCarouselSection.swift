@@ -17,9 +17,9 @@ struct QuizCarouselSection: View {
                 .tracking(1.5)
                 .foregroundStyle(AppColors.textSecondary)
 
-            InfiniteCarousel(items: quizzes, interval: 5, height: 232) { quiz in
+            InfiniteCarousel(items: quizzes, interval: 5, height: 288) { quiz in
                 Button { onSelect(quiz) } label: { quizCard(quiz) }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressableCardStyle())
             }
         }
     }
@@ -37,6 +37,7 @@ struct QuizCarouselSection: View {
                 .font(AppFonts.bodyMedium)
                 .foregroundStyle(AppColors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+            if quiz.kind == "flavor" { flavorPills }
             Spacer(minLength: 0)
             HStack(spacing: AppSpacing.xs) {
                 Text("Take the quiz")
@@ -54,7 +55,38 @@ struct QuizCarouselSection: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(AppSpacing.lg)
+        .background(quizGlow)
         .learnCard(AppColors.spectrumCyan)
+    }
+
+    // Flavor-type teaser pills. Content-coupled to the flavor quiz — the quiz
+    // model doesn't carry these yet; lift to data in the quiz-flow pass.
+    private var flavorPills: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            HStack(spacing: AppSpacing.xs) { flavorPill("The Explorer"); flavorPill("The Architect") }
+            HStack(spacing: AppSpacing.xs) { flavorPill("The Catalyst"); flavorPill("The Anchor") }
+        }
+        .padding(.top, AppSpacing.xs)
+    }
+
+    private func flavorPill(_ text: String) -> some View {
+        Text(text)
+            .font(AppFonts.label)
+            .foregroundStyle(AppColors.spectrumCyan)
+            .padding(.horizontal, AppSpacing.sm)
+            .padding(.vertical, AppSpacing.xs)
+            .background(Capsule().fill(AppColors.spectrumCyan.opacity(0.08))
+                .overlay(Capsule().stroke(AppColors.spectrumCyan.opacity(0.28), lineWidth: 1)))
+    }
+
+    // Soft corner glow inside the card (clipped by learnCard).
+    private var quizGlow: some View {
+        ZStack {
+            RadialGradient(colors: [AppColors.spectrumCyan.opacity(0.16), .clear],
+                           center: .topTrailing, startRadius: 0, endRadius: 200)
+            RadialGradient(colors: [AppColors.spectrumMagenta.opacity(0.10), .clear],
+                           center: .bottomLeading, startRadius: 0, endRadius: 160)
+        }
     }
 }
 

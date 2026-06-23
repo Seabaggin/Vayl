@@ -83,7 +83,7 @@ struct LearnView: View {
                 .clipShape(Capsule())
                 .overlay(Capsule().stroke(AppColors.borderSubtle, lineWidth: 1))  // plain hairline, not gradient
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableCardStyle())
         }
     }
 }

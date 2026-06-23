@@ -46,7 +46,7 @@ struct LearnSegmented<Value: Hashable>: View {
                     )
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressableCardStyle())
             }
         }
         .padding(AppSpacing.xxs)

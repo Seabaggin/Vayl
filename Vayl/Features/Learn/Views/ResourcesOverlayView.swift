@@ -59,7 +59,7 @@ struct ResourcesOverlayView: View {
                                 .stroke(accent.opacity(which == .crisis ? 0.2 : 0.12), lineWidth: 1))
                     )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressableCardStyle())
             }
         }
     }

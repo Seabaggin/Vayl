@@ -1,8 +1,9 @@
 // Features/Learn/Views/ResearchDatabaseView.swift
 //
-// The "browse all research" database. STUB: a scrollable list of
-// findings (topic chips + filter sheet deferred). Tapping a row opens
-// the finding detail.
+// The "browse all research" database: search + topic chips + sort/Filters
+// affordances over the finding list. The chips/sort/filter are VISUAL for now
+// — the actual filtering engine is the deeper pass (chips derive from corpus
+// `topics` tags). Tapping a row opens the finding detail.
 
 import SwiftUI
 
@@ -10,21 +11,22 @@ struct ResearchDatabaseView: View {
     let store: LearnStore
     var onOpenFinding: (ResearchFinding) -> Void = { _ in }
 
+    @State private var selectedTopic: String = "All"
+
+    private var topics: [String] {
+        ["All"] + Array(Set(store.findings.flatMap(\.topics))).sorted()
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("The Research")
-                        .font(AppFonts.screenTitle)
-                        .foregroundStyle(AppColors.textPrimary)
-                    Spacer()
-                    Text("\(store.findingCount) findings")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textSecondary)
-                }
+                header
+                searchField
+                topicChips
+                controlRow
                 ForEach(store.findings) { f in
                     Button { onOpenFinding(f) } label: { row(f) }
-                        .buttonStyle(.plain)
+                        .buttonStyle(PressableCardStyle())
                 }
             }
             .padding(AppSpacing.lg)
@@ -32,10 +34,79 @@ struct ResearchDatabaseView: View {
         .background(AppColors.modalBackground)
     }
 
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text("The Research")
+                .font(AppFonts.screenTitle)
+                .foregroundStyle(AppColors.spectrumText)
+            Spacer()
+            Text("\(store.findingCount) findings")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+        }
+    }
+
+    private var searchField: some View {
+        HStack(spacing: AppSpacing.sm) {
+            Image(systemName: "magnifyingglass").foregroundStyle(AppColors.textSecondary)
+            Text("Search findings, authors…")
+                .font(AppFonts.bodyText)
+                .foregroundStyle(AppColors.textTertiary)
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, AppSpacing.sm)
+        .padding(.horizontal, AppSpacing.md)
+        .background(RoundedRectangle(cornerRadius: AppRadius.md)
+            .fill(Color.white.opacity(0.04))
+            .overlay(RoundedRectangle(cornerRadius: AppRadius.md).stroke(AppColors.borderSubtle, lineWidth: 1)))
+    }
+
+    private var topicChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: AppSpacing.sm) {
+                ForEach(topics, id: \.self) { topic in
+                    let on = topic == selectedTopic
+                    Button { withAnimation(AppAnimation.standard) { selectedTopic = topic } } label: {
+                        Text(topic.capitalized)
+                            .font(AppFonts.buttonLabelSmall)
+                            .foregroundStyle(on ? AppColors.textPrimary : AppColors.textSecondary)
+                            .padding(.horizontal, AppSpacing.md)
+                            .padding(.vertical, AppSpacing.sm)
+                            .background(Capsule()
+                                .fill(on ? AppColors.spectrumPurple.opacity(0.2) : Color.white.opacity(0.03))
+                                .overlay(Capsule().stroke(on ? AppColors.spectrumPurple.opacity(0.45) : AppColors.borderSubtle, lineWidth: 1)))
+                    }
+                    .buttonStyle(PressableCardStyle())
+                }
+            }
+        }
+    }
+
+    private var controlRow: some View {
+        HStack {
+            HStack(spacing: AppSpacing.xs) {
+                Text("Newest").font(AppFonts.bodyMedium).foregroundStyle(AppColors.textBody)
+                Image(systemName: "chevron.down").font(AppFonts.caption).foregroundStyle(AppColors.textSecondary)
+            }
+            Spacer()
+            HStack(spacing: AppSpacing.xs) {
+                Image(systemName: "line.3.horizontal.decrease")
+                Text("Filters")
+            }
+            .font(AppFonts.buttonLabel)
+            .foregroundStyle(AppColors.textPrimary)
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.vertical, AppSpacing.xs)
+            .background(Capsule()
+                .fill(AppColors.spectrumPurple.opacity(0.14))
+                .overlay(Capsule().stroke(AppColors.spectrumPurple.opacity(0.3), lineWidth: 1)))
+        }
+    }
+
     private func row(_ f: ResearchFinding) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             if let stat = f.stat {
-                Text(stat).font(AppFonts.cardTitle).foregroundStyle(AppColors.spectrumCyan)
+                Text(stat).font(AppFonts.cardTitle).foregroundStyle(AppColors.spectrumText)
                     .frame(width: 64, alignment: .leading)
             } else {
                 Image(systemName: f.type.sfSymbol)
@@ -51,7 +122,7 @@ struct ResearchDatabaseView: View {
         }
         .padding(AppSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: AppRadius.lg).fill(AppColors.cardBackground))
+        .learnCard(AppColors.spectrumPurple, cornerRadius: AppRadius.lg)
     }
 }
 

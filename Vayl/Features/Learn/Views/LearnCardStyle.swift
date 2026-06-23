@@ -17,6 +17,19 @@ extension View {
     }
 }
 
+/// Tap feedback for Learn buttons — the CLAUDE.md trio (press-scale + light
+/// haptic on press + the button's action). Use in place of `.buttonStyle(.plain)`.
+struct PressableCardStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(AppAnimation.fast, value: configuration.isPressed)
+            .sensoryFeedback(trigger: configuration.isPressed) { _, pressed in
+                pressed ? .impact(weight: .light) : nil
+            }
+    }
+}
+
 private struct LearnCardStyle: ViewModifier {
     let accent: Color
     let cornerRadius: CGFloat

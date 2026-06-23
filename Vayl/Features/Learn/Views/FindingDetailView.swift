@@ -50,7 +50,7 @@ struct FindingDetailView: View {
                     ForEach(finding.connected, id: \.self) { id in
                         if let c = store.finding(id: id) {
                             Button { onOpenFinding(c) } label: { connectedRow(c) }
-                                .buttonStyle(.plain)
+                                .buttonStyle(PressableCardStyle())
                         }
                     }
                 }

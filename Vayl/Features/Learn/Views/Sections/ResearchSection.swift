@@ -22,7 +22,7 @@ struct ResearchSection: View {
 
             InfiniteCarousel(items: findings, interval: 5.5, height: 212) { finding in
                 Button { onOpenFinding(finding) } label: { findingCard(finding) }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressableCardStyle())
             }
 
             browseRow
@@ -51,7 +51,7 @@ struct ResearchSection: View {
             .frame(maxWidth: .infinity)
             .learnCard(AppColors.spectrumPurple, cornerRadius: AppRadius.lg)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableCardStyle())
     }
 
     private func typeChip(_ f: ResearchFinding) -> some View {
@@ -72,7 +72,7 @@ struct ResearchSection: View {
             if let stat = f.stat {
                 Text(stat)
                     .font(AppFonts.scoreDisplay)
-                    .foregroundStyle(AppColors.spectrumPurple)
+                    .foregroundStyle(AppColors.spectrumText)
             }
             Text(f.finding)
                 .font(AppFonts.bodyText)

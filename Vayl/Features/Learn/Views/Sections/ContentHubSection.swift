@@ -39,18 +39,25 @@ struct ContentHubSection: View {
                 .tracking(1.5)
                 .foregroundStyle(AppColors.textSecondary)
 
-            LearnSegmented(
-                items: HubTab.allCases.map { .init($0, $0.label, icon: $0.icon) },
-                selection: $tab,
-                accent: accent
-            )
+            VStack(spacing: AppSpacing.md) {
+                LearnSegmented(
+                    items: HubTab.allCases.map { .init($0, $0.label, icon: $0.icon) },
+                    selection: $tab,
+                    accent: accent
+                )
 
-            switch tab {
-            case .books:  bookShelf
-            case .watch:  mediaList(.show, tag: "Watch")
-            case .listen: mediaList(.podcast, tag: "Listen")
-            case .voices: voicesPanel
+                Group {
+                    switch tab {
+                    case .books:  bookShelf
+                    case .watch:  mediaList(.show, tag: "Watch")
+                    case .listen: mediaList(.podcast, tag: "Listen")
+                    case .voices: voicesPanel
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .padding(AppSpacing.md)
+            .learnCard(accent)
         }
     }
 
@@ -61,7 +68,7 @@ struct ContentHubSection: View {
             HStack(alignment: .top, spacing: AppSpacing.sm) {
                 ForEach(store.media(.book)) { book in
                     Button {} label: { bookCover(book) }
-                        .buttonStyle(.plain)
+                        .buttonStyle(PressableCardStyle())
                 }
             }
             .padding(.vertical, AppSpacing.xxs)
@@ -118,7 +125,7 @@ struct ContentHubSection: View {
         VStack(spacing: AppSpacing.sm) {
             ForEach(store.media(kind)) { item in
                 Button {} label: { mediaRow(item, tag: tag) }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressableCardStyle())
             }
         }
     }
@@ -143,8 +150,8 @@ struct ContentHubSection: View {
             Spacer(minLength: 0)
             Image(systemName: "chevron.right").foregroundStyle(AppColors.textTertiary)
         }
-        .padding(AppSpacing.sm)
-        .learnCard(accent, cornerRadius: AppRadius.lg)
+        .padding(.vertical, AppSpacing.xs)
+        .contentShape(Rectangle())
     }
 
     // MARK: - Voices
@@ -158,7 +165,7 @@ struct ContentHubSection: View {
             )
             ForEach(store.voices(voiceFilter)) { voice in
                 Button {} label: { voiceRow(voice) }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressableCardStyle())
             }
         }
     }
@@ -183,8 +190,8 @@ struct ContentHubSection: View {
             Spacer(minLength: 0)
             Image(systemName: "chevron.right").foregroundStyle(AppColors.textTertiary)
         }
-        .padding(AppSpacing.sm)
-        .learnCard(accent, cornerRadius: AppRadius.lg)
+        .padding(.vertical, AppSpacing.xs)
+        .contentShape(Rectangle())
     }
 
     // MARK: - Shared bits
