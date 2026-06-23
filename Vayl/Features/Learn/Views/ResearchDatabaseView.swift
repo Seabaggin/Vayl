@@ -11,6 +11,7 @@ struct ResearchDatabaseView: View {
     let store: LearnStore
     var onOpenFinding: (ResearchFinding) -> Void = { _ in }
 
+    @Environment(\.vaylDismiss) private var vaylDismiss
     @State private var selectedTopic: String = "All"
 
     private var topics: [String] {
@@ -18,20 +19,35 @@ struct ResearchDatabaseView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: AppSpacing.md) {
-                header
-                searchField
-                topicChips
-                controlRow
-                ForEach(store.findings) { f in
-                    Button { onOpenFinding(f) } label: { row(f) }
-                        .buttonStyle(PressableCardStyle())
+        ZStack {
+            AppColors.pageBackground.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: AppSpacing.md) {
+                    backButton
+                    header
+                    searchField
+                    topicChips
+                    controlRow
+                    ForEach(store.findings) { f in
+                        Button { onOpenFinding(f) } label: { row(f) }
+                            .buttonStyle(PressableCardStyle())
+                    }
                 }
+                .padding(AppSpacing.lg)
             }
-            .padding(AppSpacing.lg)
         }
-        .background(AppColors.modalBackground)
+    }
+
+    private var backButton: some View {
+        Button { vaylDismiss(confirm: false) } label: {
+            HStack(spacing: AppSpacing.xs) {
+                Image(systemName: "chevron.left")
+                Text("Learn")
+            }
+            .font(AppFonts.buttonLabel)
+            .foregroundStyle(AppColors.textSecondary)
+        }
+        .buttonStyle(PressableCardStyle())
     }
 
     private var header: some View {

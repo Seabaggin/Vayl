@@ -8,48 +8,32 @@ import SwiftUI
 
 struct ResearchSection: View {
     let findings: [ResearchFinding]
-    let totalCount: Int
     var onOpenDatabase: () -> Void = {}
     var onOpenFinding: (ResearchFinding) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            Text("THE RESEARCH")
-                .font(AppFonts.sectionHeading)
-                .foregroundStyle(AppColors.spectrumPurple)
+            HStack(alignment: .firstTextBaseline) {
+                Text("THE RESEARCH")
+                    .font(AppFonts.display(16, weight: .semibold, relativeTo: .title3))
+                    .foregroundStyle(AppColors.spectrumPurple)
+                Spacer()
+                Button { onOpenDatabase() } label: {
+                    HStack(spacing: AppSpacing.xxs) {
+                        Text("Browse all")
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(AppFonts.buttonLabel)
+                    .foregroundStyle(AppColors.spectrumPurple)
+                }
+                .buttonStyle(PressableCardStyle())
+            }
 
             InfiniteCarousel(items: findings, interval: 5.5, height: 212) { finding in
                 Button { onOpenFinding(finding) } label: { findingCard(finding) }
                     .buttonStyle(PressableCardStyle())
             }
-
-            browseRow
         }
-    }
-
-    // Quiet, lighter-weight than a filled card — stroke-only text row — so the
-    // carousel stays the hero while still merchandising the filterable hub.
-    private var browseRow: some View {
-        Button(action: onOpenDatabase) {
-            HStack(spacing: AppSpacing.sm) {
-                Image(systemName: "line.3.horizontal.decrease.circle")
-                    .foregroundStyle(AppColors.spectrumPurple.opacity(0.8))
-                Text("Browse all \(totalCount) findings")
-                    .font(AppFonts.bodyMedium)
-                    .foregroundStyle(AppColors.textPrimary)
-                Text("· filter by topic, author, year")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textTertiary)
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(AppColors.textTertiary)
-            }
-            .padding(.vertical, AppSpacing.sm)
-            .padding(.horizontal, AppSpacing.md)
-            .frame(maxWidth: .infinity)
-            .learnCard(AppColors.spectrumPurple, cornerRadius: AppRadius.lg)
-        }
-        .buttonStyle(PressableCardStyle())
     }
 
     private func typeChip(_ f: ResearchFinding) -> some View {
@@ -92,6 +76,6 @@ struct ResearchSection: View {
     let b = ResearchFinding(id: "conley", type: .myth, stat: nil, headline: "Monogamy myths", finding: "Monogamy isn't inherently safer for STI risk — CNM couples test and talk more.", bullets: [], limitation: "", citation: "Conley et al. (2013).", author: "Conley et al.", year: 2013, topics: [], connected: [])
     return ZStack {
         AppColors.pageBackground.ignoresSafeArea()
-        ResearchSection(findings: [a, b], totalCount: 32).padding()
+        ResearchSection(findings: [a, b]).padding()
     }
 }

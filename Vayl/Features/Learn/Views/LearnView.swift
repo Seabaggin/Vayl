@@ -26,7 +26,6 @@ struct LearnView: View {
                     QuizCarouselSection(quizzes: store.quizzes)
                     ResearchSection(
                         findings: store.findings,
-                        totalCount: store.findingCount,
                         onOpenDatabase: { showDatabase = true },
                         onOpenFinding: { selectedFinding = $0 }
                     )
@@ -37,7 +36,7 @@ struct LearnView: View {
                 .padding(.bottom, 120)   // clears the floating RacetrackTabBar
             }
         }
-        .vaylSheet(isPresented: $showDatabase, heightFraction: 0.92) {
+        .vaylCover(isPresented: $showDatabase, confirmOnExit: false) {
             ResearchDatabaseView(store: store, onOpenFinding: { f in
                 showDatabase = false
                 selectedFinding = f

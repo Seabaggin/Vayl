@@ -12,7 +12,7 @@ struct QuizCarouselSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text("DISCOVER YOURSELF")
-                .font(AppFonts.sectionHeading)
+                .font(AppFonts.display(16, weight: .semibold, relativeTo: .title3))
                 .foregroundStyle(AppColors.spectrumCyan)
 
             InfiniteCarousel(items: quizzes, interval: 5, height: 288) { quiz in
