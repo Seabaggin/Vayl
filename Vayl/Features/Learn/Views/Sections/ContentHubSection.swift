@@ -33,11 +33,9 @@ struct ContentHubSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            SectionHairline(color: accent)
             Text("CONTENT HUB")
-                .font(AppFonts.overline)
-                .tracking(1.5)
-                .foregroundStyle(AppColors.textSecondary)
+                .font(AppFonts.sectionHeading)
+                .foregroundStyle(accent)
 
             VStack(spacing: AppSpacing.md) {
                 LearnSegmented(

@@ -11,11 +11,9 @@ struct QuizCarouselSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            SectionHairline(color: AppColors.spectrumCyan)
             Text("DISCOVER YOURSELF")
-                .font(AppFonts.overline)
-                .tracking(1.5)
-                .foregroundStyle(AppColors.textSecondary)
+                .font(AppFonts.sectionHeading)
+                .foregroundStyle(AppColors.spectrumCyan)
 
             InfiniteCarousel(items: quizzes, interval: 5, height: 288) { quiz in
                 Button { onSelect(quiz) } label: { quizCard(quiz) }
@@ -79,12 +77,12 @@ struct QuizCarouselSection: View {
                 .overlay(Capsule().stroke(AppColors.spectrumCyan.opacity(0.28), lineWidth: 1)))
     }
 
-    // Soft corner glow inside the card (clipped by learnCard).
+    // Soft corner glow inside the card (clipped by learnCard) — cyan only.
     private var quizGlow: some View {
         ZStack {
-            RadialGradient(colors: [AppColors.spectrumCyan.opacity(0.16), .clear],
+            RadialGradient(colors: [AppColors.spectrumCyan.opacity(0.18), .clear],
                            center: .topTrailing, startRadius: 0, endRadius: 200)
-            RadialGradient(colors: [AppColors.spectrumMagenta.opacity(0.10), .clear],
+            RadialGradient(colors: [AppColors.spectrumCyan.opacity(0.08), .clear],
                            center: .bottomLeading, startRadius: 0, endRadius: 160)
         }
     }

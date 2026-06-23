@@ -43,7 +43,7 @@ struct LearnView: View {
                 selectedFinding = f
             })
         }
-        .vaylSheet(isPresented: $showResources, heightFraction: 0.82) {
+        .vaylSheet(isPresented: $showResources, heightFraction: 0.75) {
             ResourcesOverlayView(resources: store.supportResources)
         }
         .vaylSheet(isPresented: detailBinding, heightFraction: 0.85) {

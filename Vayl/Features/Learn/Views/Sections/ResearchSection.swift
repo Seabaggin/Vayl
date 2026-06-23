@@ -14,11 +14,9 @@ struct ResearchSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            SectionHairline(color: AppColors.spectrumPurple)
             Text("THE RESEARCH")
-                .font(AppFonts.overline)
-                .tracking(1.5)
-                .foregroundStyle(AppColors.textSecondary)
+                .font(AppFonts.sectionHeading)
+                .foregroundStyle(AppColors.spectrumPurple)
 
             InfiniteCarousel(items: findings, interval: 5.5, height: 212) { finding in
                 Button { onOpenFinding(finding) } label: { findingCard(finding) }
@@ -60,10 +58,10 @@ struct ResearchSection: View {
             Text(f.type.label.uppercased())
         }
         .font(AppFonts.label)
-        .foregroundStyle(f.type.tint)
+        .foregroundStyle(AppColors.spectrumPurple)   // section is purple-only; the icon conveys type
         .padding(.horizontal, AppSpacing.sm)
         .padding(.vertical, AppSpacing.xs)
-        .background(Capsule().fill(f.type.tint.opacity(0.1)))
+        .background(Capsule().fill(AppColors.spectrumPurple.opacity(0.1)))
     }
 
     private func findingCard(_ f: ResearchFinding) -> some View {
@@ -72,7 +70,7 @@ struct ResearchSection: View {
             if let stat = f.stat {
                 Text(stat)
                     .font(AppFonts.scoreDisplay)
-                    .foregroundStyle(AppColors.spectrumText)
+                    .foregroundStyle(AppColors.spectrumPurple)
             }
             Text(f.finding)
                 .font(AppFonts.bodyText)
