@@ -22,12 +22,12 @@ struct ResearchSection: View {
                     HStack(spacing: AppSpacing.xs) {
                         Image(systemName: "rectangle.stack")
                             .foregroundStyle(AppColors.spectrumPurple)   // purple symbol (section is purple-only)
-                        Text("Browse all")
+                        Text("Browse")
                             .font(AppFonts.buttonLabel)
                             .foregroundStyle(Color.white)
                     }
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.vertical, AppSpacing.xs)
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.sm)
                     .background(HolographicShimmer().opacity(0.7))        // same shimmer as the Resources pill
                     .clipShape(Capsule())
                     .overlay(Capsule().stroke(AppColors.borderSubtle, lineWidth: 1))
