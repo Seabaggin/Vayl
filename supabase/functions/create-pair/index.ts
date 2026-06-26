@@ -97,7 +97,6 @@ serve(async (req) => {
         user_a: requesterId,
         user_b: partnerId,
         shared_safe_word: "red",
-        matches_revealed: false,
       })
       .select()
       .single()

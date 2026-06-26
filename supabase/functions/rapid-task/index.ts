@@ -92,7 +92,6 @@ serve(async (req) => {
         user_a: profileA,
         user_b: profileB,
         shared_safe_word: "red",
-        matches_revealed: false,
         created_at: new Date().toISOString(),
       })
       .select()
