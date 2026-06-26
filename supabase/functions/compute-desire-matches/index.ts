@@ -100,8 +100,6 @@ serve(async (req) => {
       partner_b_complete: existingStatus?.partner_b_complete ?? false,
       partner_a_completed_at: existingStatus?.partner_a_completed_at ?? null,
       partner_b_completed_at: existingStatus?.partner_b_completed_at ?? null,
-      full_reveal_unlocked: existingStatus?.full_reveal_unlocked ?? false,
-      full_reveal_at: existingStatus?.full_reveal_at ?? null,
       waiting_state_since: existingStatus?.waiting_state_since ?? now,
     }
     if (callerIsA) { status.partner_a_complete = true; status.partner_a_completed_at = now }
@@ -138,15 +136,8 @@ serve(async (req) => {
         couple_id: couple.id,
         desire_item_id: itemId,
         alignment_level: mt,                 // mutual / adjacent — the shareable signal
-        // Raw partner answers + gap are NOT stored: the couple can SELECT this row, and
-        // gap + your own answer reveals the partner's exact score. The compare only ever
-        // conveys alignment, never the partner's raw answer.
-        partner_a_value: null,
-        partner_b_value: null,
-        gap_size: null,
         bridge_card_id: null,                // companion-card stub — populated later
         is_free_reveal: false,
-        revealed_at: null,
         created_at: now,
       })
     }
