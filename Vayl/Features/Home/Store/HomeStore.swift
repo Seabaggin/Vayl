@@ -59,6 +59,10 @@ final class HomeStore {
     var deckLoadError: String? = nil
     var isLoadingDeck: Bool = false
 
+    /// The deck Home leads with — the couple's most-recently-played deck, resolved
+    /// from DeckProgress.lastPlayedAt. Falls back to the opener for a fresh couple.
+    private var recentDeckId: String = "the-opener"
+
     // MARK: - Dashboard Data
 
     /// Cards completed in the active deck — derived from DeckProgress.
@@ -176,9 +180,34 @@ final class HomeStore {
     func loadAll() async {
         await loadProfile()
         await loadDesireStatus()
+        resolveRecentDeck()
         await loadDeckProgress()
         await loadReflectionState()
         await loadDeck()
+    }
+
+    // MARK: - Recent Deck
+
+    /// Picks the couple's most-recently-played deck (by lastPlayedAt, then firstOpenedAt).
+    /// Leaves `recentDeckId` at the opener default when there's no history.
+    private func resolveRecentDeck() {
+        guard let coupleId = appState.coupleId else { return }
+        let context = ModelContext(modelContainer)
+        do {
+            let all = try context.fetch(FetchDescriptor<DeckProgress>(
+                predicate: #Predicate { $0.coupleId == coupleId }
+            ))
+            let recent = all.max {
+                ($0.lastPlayedAt ?? $0.firstOpenedAt ?? .distantPast) <
+                ($1.lastPlayedAt ?? $1.firstOpenedAt ?? .distantPast)
+            }
+            if let recent, !recent.deckId.isEmpty, recent.lastPlayedAt != nil {
+                recentDeckId = recent.deckId
+                logger.info("HomeStore: recent deck = \(recent.deckId)")
+            }
+        } catch {
+            logger.error("HomeStore: recent deck resolve failed — \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Desire Status Load (D-read)
@@ -190,6 +219,8 @@ final class HomeStore {
         guard appState.appMode == .together, let coupleId = appState.coupleId else { return }
         guard let status = try? await DesireSyncService.shared.fetchStatus(coupleId: coupleId) else { return }
         partnerMapComplete = status.bothComplete
+        // fullRevealUnlocked dropped from desire_map_status (Task 4 reconciliation).
+        // revealDone now comes from desire_reveal_progress (per-user Seen) — wired in Task 6.
     }
 
     // MARK: - Profile Load
@@ -243,10 +274,11 @@ final class HomeStore {
         }
 
         let context = ModelContext(modelContainer)
+        let deckId = recentDeckId
 
         do {
             var descriptor = FetchDescriptor<DeckProgress>(
-                predicate: #Predicate { $0.coupleId == coupleId && $0.deckId == "the-opener" }
+                predicate: #Predicate { $0.coupleId == coupleId && $0.deckId == deckId }
             )
             descriptor.fetchLimit = 1
             let results = try context.fetch(descriptor)
@@ -310,12 +342,19 @@ final class HomeStore {
         deckLoadError = nil
 
         do {
-            let loaded = try ContentLoader.loadDeck(id: "the-opener")
+            let loaded = try ContentLoader.loadDeck(id: recentDeckId)
             deck = loaded
             logger.info("HomeStore: deck loaded — \(loaded.id)")
         } catch {
-            deckLoadError = error.localizedDescription
-            logger.error("HomeStore: deck load failed — \(error.localizedDescription)")
+            // Recent deck couldn't be loaded — fall back to the opener.
+            if recentDeckId != "the-opener", let fallback = try? ContentLoader.loadDeck(id: "the-opener") {
+                recentDeckId = "the-opener"
+                deck = fallback
+                logger.info("HomeStore: recent deck failed, fell back to the-opener")
+            } else {
+                deckLoadError = error.localizedDescription
+                logger.error("HomeStore: deck load failed — \(error.localizedDescription)")
+            }
         }
 
         isLoadingDeck = false

@@ -71,31 +71,6 @@ struct SupabaseDesireRating: Codable {
     }
 }
 
-// MARK: - SupabaseDesireMatch DTO
-struct SupabaseDesireMatch: Codable {
-    let id: UUID
-    let coupleId: UUID
-    let desireItemId: String
-    let alignmentLevel: String
-    let partnerAValue: String?
-    let partnerBValue: String?
-    let gapSize: Int?
-    let bridgeCardId: String?
-    let createdAt: String
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case coupleId = "couple_id"
-        case desireItemId = "desire_item_id"
-        case alignmentLevel = "alignment_level"
-        case partnerAValue = "partner_a_value"
-        case partnerBValue = "partner_b_value"
-        case gapSize = "gap_size"
-        case bridgeCardId = "bridge_card_id"
-        case createdAt = "created_at"
-    }
-}
-
 // MARK: - Service
 
 @MainActor
@@ -182,7 +157,7 @@ class DesireSyncService: ObservableObject {
     func fetchMatches(coupleId: UUID) async throws -> [DesireMatchRow] {
         try await supabase
             .from("desire_matches")
-            .select("id, desire_item_id, alignment_level, is_free_reveal, revealed_at, bridge_card_id")
+            .select("id, desire_item_id, alignment_level, is_free_reveal, bridge_card_id")
             .eq("couple_id", value: coupleId.uuidString)
             .execute()
             .value
@@ -192,11 +167,46 @@ class DesireSyncService: ObservableObject {
     func fetchStatus(coupleId: UUID) async throws -> DesireMapStatusRow? {
         let rows: [DesireMapStatusRow] = try await supabase
             .from("desire_map_status")
-            .select("track, partner_a_complete, partner_b_complete, full_reveal_unlocked")
+            .select("track, partner_a_complete, partner_b_complete")
             .eq("couple_id", value: coupleId.uuidString)
             .execute()
             .value
         return rows.first
+    }
+
+    // MARK: - Reveal progress (per-user "Seen"; own-user RLS)
+
+    /// This user's reveal viewing state for the couple, or nil if they have not opened it yet.
+    func fetchRevealProgress(coupleId: UUID) async throws -> RevealProgressRow? {
+        let authId = try await supabase.auth.session.user.id
+        let profileId = try await profileService.ensureProfileExists(authId: authId)
+        let rows: [RevealProgressRow] = try await supabase
+            .from("desire_reveal_progress")
+            .select("free_reveal_seen_at, full_reveal_seen_at")
+            .eq("user_id", value: profileId.uuidString)
+            .eq("couple_id", value: coupleId.uuidString)
+            .execute()
+            .value
+        return rows.first
+    }
+
+    /// Stamp that this user watched the reveal. `full == false` stamps the free reveal;
+    /// `full == true` stamps the post-unlock full reveal. Upsert on (user_id, couple_id);
+    /// only the named column is written, so stamping one never clears the other.
+    func markRevealSeen(coupleId: UUID, full: Bool) async throws {
+        let authId = try await supabase.auth.session.user.id
+        let profileId = try await profileService.ensureProfileExists(authId: authId)
+        let now = isoFormatter.string(from: Date())
+        var row: [String: String] = [
+            "user_id": profileId.uuidString,
+            "couple_id": coupleId.uuidString,
+            "updated_at": now,
+        ]
+        row[full ? "full_reveal_seen_at" : "free_reveal_seen_at"] = now
+        try await supabase
+            .from("desire_reveal_progress")
+            .upsert(row, onConflict: "user_id,couple_id")
+            .execute()
     }
 }
 
@@ -206,7 +216,6 @@ struct DesireMatchRow: Decodable, Identifiable, Sendable {
     let desireItemId: String
     let alignmentLevel: String     // "mutual" | "adjacent"
     let isFreeReveal: Bool
-    let revealedAt: String?
     let bridgeCardId: String?
 
     enum CodingKeys: String, CodingKey {
@@ -214,12 +223,10 @@ struct DesireMatchRow: Decodable, Identifiable, Sendable {
         case desireItemId = "desire_item_id"
         case alignmentLevel = "alignment_level"
         case isFreeReveal = "is_free_reveal"
-        case revealedAt = "revealed_at"
         case bridgeCardId = "bridge_card_id"
     }
 
     var matchType: DesireMatchType? { DesireMatchType(rawValue: alignmentLevel) }
-    var isRevealed: Bool { revealedAt != nil }
 }
 
 /// The couple's completion + reveal state, client-safe.
@@ -227,13 +234,11 @@ struct DesireMapStatusRow: Decodable, Sendable {
     let track: String?
     let partnerAComplete: Bool
     let partnerBComplete: Bool
-    let fullRevealUnlocked: Bool
 
     enum CodingKeys: String, CodingKey {
         case track
         case partnerAComplete = "partner_a_complete"
         case partnerBComplete = "partner_b_complete"
-        case fullRevealUnlocked = "full_reveal_unlocked"
     }
 
     var bothComplete: Bool { partnerAComplete && partnerBComplete }
@@ -244,4 +249,18 @@ struct ComputeMatchesResponse: Decodable {
     let status: String       // "waiting" | "computed" | "unpaired"
     let track: String?
     let matchCount: Int?
+}
+
+/// This user's reveal viewing state, client-safe (own row only).
+struct RevealProgressRow: Decodable, Sendable {
+    let freeRevealSeenAt: String?
+    let fullRevealSeenAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case freeRevealSeenAt = "free_reveal_seen_at"
+        case fullRevealSeenAt = "full_reveal_seen_at"
+    }
+
+    var hasSeenFree: Bool { freeRevealSeenAt != nil }
+    var hasSeenFull: Bool { fullRevealSeenAt != nil }
 }
