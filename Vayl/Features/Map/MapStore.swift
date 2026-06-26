@@ -1,0 +1,310 @@
+//
+//  MapStore.swift
+//  Vayl
+//
+//  The Map tab's state owner (4-layer: View -> Store -> Service -> Model). Owns the
+//  Me/Us layer toggle, derives the personal masthead, and assembles the Record
+//  (session history + category distribution) from the couple's CardSession data.
+//  Later segments extend it (Me Card, Us layer, Vault). The store fetches; views
+//  only read.
+//
+
+import Foundation
+import SwiftData
+
+@MainActor
+@Observable
+final class MapStore {
+
+    /// The two faces of the Map: your own mirror, and the couple layer.
+    enum Layer: String, CaseIterable {
+        case me, us
+    }
+
+    /// Which layer the segmented control is showing.
+    var layer: Layer = .me
+
+    // MARK: - Derived masthead
+
+    private(set) var displayName: String = ""
+    private(set) var subtitle: String = ""
+
+    /// The linked partner's name — drives the "Jordan & Alex." header toggle.
+    /// Empty when unpaired or not yet fetched (header falls back to your name only).
+    private(set) var partnerName: String = ""
+
+    // MARK: - The Record (Me layer)
+
+    struct RecordSession: Identifiable {
+        let id: UUID
+        let deckName: String
+        let category: DeckCategory
+        let date: Date
+        let cardCount: Int
+    }
+
+    struct CategoryShare: Identifiable {
+        let category: DeckCategory
+        let count: Int
+        var id: String { category.rawValue }
+    }
+
+    private(set) var sessions: [RecordSession] = []
+    private(set) var categoryShares: [CategoryShare] = []
+
+    // MARK: - The Me Card (Me layer)
+
+    struct DrawnTag: Identifiable, Hashable {
+        let name: String
+        let isShared: Bool
+        var id: String { name }
+    }
+
+    struct MeCard {
+        var flavor: Flavor = .explorer
+        var name: String = ""
+        var title: String = ""
+        var tags: [DrawnTag] = []
+    }
+
+    private(set) var meCard = MeCard()
+
+    // MARK: - The Us layer
+
+    struct UsStats {
+        var isLinked: Bool = false
+        var tenureStage: String? = nil
+        var tenureTime: String? = nil
+        var weeksOnVayl: Int = 0
+        var sessionCount: Int = 0
+    }
+
+    struct AlignItem: Identifiable {
+        let id: String
+        let name: String
+        let isMutual: Bool
+    }
+
+    private(set) var usStats = UsStats()
+    private(set) var alignItems: [AlignItem] = []
+    private(set) var lockedAlignCount: Int = 0
+
+    // MARK: - Load
+
+    /// Idempotent — safe to call on every appear.
+    func load(appState: AppState, context: ModelContext) {
+        loadMasthead(appState: appState, context: context)
+        loadRecord(coupleId: appState.coupleId, context: context)
+        loadMeCard(context: context)
+        loadUs(appState: appState, context: context)
+        Task { await loadServerAlignData(appState: appState, context: context) }
+    }
+
+    /// Async: fetches the partner's name for the header toggle. Safe to await on appear.
+    func loadPartner(appState: AppState) async {
+        // Load once, then persist — so "& Alex" fades in a single time and never
+        // flickers in/out on subsequent appears.
+        guard partnerName.isEmpty else { return }
+        if appState.linkState == .linked,
+           let identity = try? await PairingService().fetchPartner(),
+           let name = identity.name, !name.isEmpty {
+            partnerName = name
+            return
+        }
+        #if DEBUG
+        partnerName = "Alex"   // dev: show the toggle without a live paired backend
+        #else
+        partnerName = ""       // unpaired / partner has no name → just your name, no toggle
+        #endif
+    }
+
+    private func loadMasthead(appState: AppState, context: ModelContext) {
+        displayName = appState.displayName
+        let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first
+        let stageLabel = (profile?.nmStage ?? .exploring).displayName
+        subtitle = Self.subtitle(stageLabel: stageLabel, joinedAt: profile?.createdAt)
+    }
+
+    private func loadRecord(coupleId: UUID?, context: ModelContext) {
+        guard let coupleId else {
+            sessions = []
+            categoryShares = []
+            return
+        }
+
+        // Deck content is bundle JSON (not network); safe to load in the store.
+        let summaries = (try? DeckCatalogService().loadSummaries()) ?? []
+        let byId = Dictionary(summaries.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+
+        var fetch = FetchDescriptor<CardSession>(
+            predicate: #Predicate { $0.coupleId == coupleId },
+            sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
+        )
+        fetch.fetchLimit = 50
+        let raw = (try? context.fetch(fetch)) ?? []
+
+        sessions = raw.map { s in
+            let summary = byId[s.deckId]
+            return RecordSession(
+                id: s.id,
+                deckName: summary?.title ?? "A deck",
+                category: summary?.category ?? .wildcard,
+                date: s.startedAt,
+                cardCount: s.cardsDiscussed
+            )
+        }
+
+        let counts = Dictionary(grouping: sessions, by: { $0.category }).mapValues(\.count)
+        categoryShares = counts
+            .map { CategoryShare(category: $0.key, count: $0.value) }
+            .sorted { $0.count > $1.count }
+    }
+
+    private func loadMeCard(context: ModelContext) {
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else {
+            meCard = MeCard(
+                flavor: .explorer,
+                name: displayName,
+                title: Flavor.explorer.titles.first ?? "",
+                tags: []
+            )
+            return
+        }
+        let flavor = profile.flavor.flatMap(Flavor.init(rawValue:)) ?? .explorer
+        let title = profile.chosenTitle ?? flavor.titles.first ?? ""
+        let tags = Self.drawnTags(userId: profile.id, coupleId: profile.coupleId, context: context)
+        meCard = MeCard(flavor: flavor, name: profile.displayName, title: title, tags: tags)
+    }
+
+    /// Derives the "Drawn to" tags from the user's positive Desire ratings. Shared (mutual)
+    /// state is resolved asynchronously in loadServerAlignData after the server fetch arrives;
+    /// this synchronous path produces un-glowed tags as an immediate placeholder.
+    private static func drawnTags(userId: UUID, coupleId: UUID?, context: ModelContext) -> [DrawnTag] {
+        let items = (try? ContentLoader.loadDesireItems()) ?? []
+        let nameById = Dictionary(items.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+
+        let entryFetch = FetchDescriptor<DesireMapEntry>(predicate: #Predicate { $0.userId == userId })
+        let entries = (try? context.fetch(entryFetch)) ?? []
+        let positive = entries.filter { $0.rating == .excitedAboutIt || $0.rating == .openToIt }
+
+        // Shared tags are resolved in loadServerAlignData after the server fetch.
+        let sharedIds = Set<String>()
+        _ = coupleId  // coupleId retained in signature for future local-cache fast path
+
+        let tags = positive.map { entry in
+            DrawnTag(name: nameById[entry.itemId] ?? entry.itemId, isShared: sharedIds.contains(entry.itemId))
+        }
+        // Shared first, then a small cap so the card stays calm.
+        return Array(tags.sorted { $0.isShared && !$1.isShared }.prefix(5))
+    }
+
+    // MARK: - Me Card editing
+
+    func setFlavor(_ flavor: Flavor, context: ModelContext) {
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
+        profile.flavor = flavor.rawValue
+        // Drop a title that does not belong to the new flavor (falls back to default).
+        if let current = profile.chosenTitle, !flavor.titles.contains(current) {
+            profile.chosenTitle = nil
+        }
+        try? context.save()
+        loadMeCard(context: context)
+    }
+
+    func setTitle(_ title: String, context: ModelContext) {
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
+        profile.chosenTitle = title
+        try? context.save()
+        loadMeCard(context: context)
+    }
+
+    // MARK: - The Us layer
+
+    private func loadUs(appState: AppState, context: ModelContext) {
+        var stats = UsStats(isLinked: appState.linkState == .linked, sessionCount: sessions.count)
+
+        if let coupleId = appState.coupleId,
+           let couple = try? context.fetch(
+                FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
+           ).first {
+            stats.tenureStage = couple.relationshipTenure?.stageLabel
+            stats.tenureTime  = couple.relationshipTenure?.timeLabel
+            stats.weeksOnVayl = Self.weeks(since: couple.createdAt)
+        }
+        usStats = stats
+
+        // Server matches are fetched async in loadServerAlignData — local mirror is not populated.
+        alignItems = []
+        lockedAlignCount = 0
+    }
+
+    /// Fetches server desire matches and updates the Us align list and meCard tags.
+    /// Runs after loadUs so the synchronous scaffold is already in place.
+    private func loadServerAlignData(appState: AppState, context: ModelContext) async {
+        guard let coupleId = appState.coupleId else { return }
+
+        let matchRows = (try? await DesireSyncService.shared.fetchMatches(coupleId: coupleId)) ?? []
+
+        let canReveal: Bool = {
+            guard let couple = try? context.fetch(
+                FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
+            ).first else { return false }
+            return couple.canRevealDesireMap
+        }()
+
+        // Build the Us align list using the server-authoritative gate rule.
+        let items = (try? ContentLoader.loadDesireItems()) ?? []
+        let nameById = Dictionary(items.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        var revealed: [AlignItem] = []
+        var locked = 0
+        for row in matchRows {
+            if canReveal || row.isFreeReveal {
+                revealed.append(AlignItem(
+                    id: row.desireItemId,
+                    name: nameById[row.desireItemId] ?? row.desireItemId,
+                    isMutual: row.matchType == .mutual
+                ))
+            } else {
+                locked += 1
+            }
+        }
+        alignItems = revealed.sorted { $0.isMutual && !$1.isMutual }
+        lockedAlignCount = locked
+
+        // Update meCard tags: mutual shared items glow once server data arrives.
+        if let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first {
+            let sharedIds = Set(
+                matchRows
+                    .filter { (canReveal || $0.isFreeReveal) && $0.matchType == .mutual }
+                    .map(\.desireItemId)
+            )
+            // Capture the UUID into a local let so the #Predicate macro can see a plain value.
+            let profileId = profile.id
+            let entryFetch = FetchDescriptor<DesireMapEntry>(predicate: #Predicate { $0.userId == profileId })
+            let entries = (try? context.fetch(entryFetch)) ?? []
+            let positive = entries.filter { $0.rating == .excitedAboutIt || $0.rating == .openToIt }
+            let tags = positive.map { entry in
+                DrawnTag(name: nameById[entry.itemId] ?? entry.itemId, isShared: sharedIds.contains(entry.itemId))
+            }
+            meCard.tags = Array(tags.sorted { $0.isShared && !$1.isShared }.prefix(5))
+        }
+    }
+
+    private static func weeks(since date: Date) -> Int {
+        max(0, Calendar.current.dateComponents([.weekOfYear], from: date, to: Date()).weekOfYear ?? 0)
+    }
+
+    // MARK: - Helpers
+
+    /// "Exploring · 14 weeks on Vayl" once there is real tenure, otherwise the
+    /// forming variant.
+    private static func subtitle(stageLabel: String, joinedAt: Date?) -> String {
+        guard let joinedAt else { return "\(stageLabel) · your map is just beginning" }
+        let weeks = Calendar.current
+            .dateComponents([.weekOfYear], from: joinedAt, to: Date())
+            .weekOfYear ?? 0
+        guard weeks >= 1 else { return "\(stageLabel) · your map is just beginning" }
+        let unit = weeks == 1 ? "week" : "weeks"
+        return "\(stageLabel) · \(weeks) \(unit) on Vayl"
+    }
+}
