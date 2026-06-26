@@ -219,8 +219,27 @@ final class HomeStore {
         guard appState.appMode == .together, let coupleId = appState.coupleId else { return }
         guard let status = try? await DesireSyncService.shared.fetchStatus(coupleId: coupleId) else { return }
         partnerMapComplete = status.bothComplete
-        // fullRevealUnlocked dropped from desire_map_status (Task 4 reconciliation).
-        // revealDone now comes from desire_reveal_progress (per-user Seen) — wired in Task 6.
+        let progress = try? await DesireSyncService.shared.fetchRevealProgress(coupleId: coupleId)
+        revealDone = progress?.hasSeenFree ?? false
+        resolvePostStatusDesireMapState(coupleId: coupleId)
+    }
+
+    /// Refines desireMapState after server status is known (partner completion + reveal progress).
+    /// Called at the end of loadDesireStatus, after revealDone and partnerMapComplete are set.
+    /// The initial state from loadProfile/resolveDesireMapState is still useful as a fast-path
+    /// before the server responds.
+    private func resolvePostStatusDesireMapState(coupleId: UUID) {
+        guard isPaired else { return }
+        let context = ModelContext(modelContainer)
+        let canReveal = (try? context.fetch(
+            FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
+        ).first)?.canRevealDesireMap ?? false
+
+        if !myMapComplete { desireMapState = .yourTurn; return }
+        if canReveal { desireMapState = .fullyUnlocked; return }
+        if revealDone { desireMapState = .freeRevealSeen(matchCount: 0); return }
+        if partnerMapComplete { desireMapState = .bothReady; return }
+        desireMapState = .youDone(partnerName: partnerName ?? "your partner")
     }
 
     // MARK: - Profile Load
