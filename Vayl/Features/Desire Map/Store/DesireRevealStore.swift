@@ -88,6 +88,10 @@ final class DesireRevealStore: Identifiable {
                 )
             }
             phase = matches.isEmpty ? .empty : .ready
+            if !matches.isEmpty {
+                let full = entitlements.isCore
+                Task { try? await service.markRevealSeen(coupleId: coupleId, full: full) }
+            }
         } catch {
             phase = .failed(error.localizedDescription)
         }
