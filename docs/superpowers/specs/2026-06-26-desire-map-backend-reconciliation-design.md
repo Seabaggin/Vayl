@@ -34,19 +34,22 @@ Consequence today: a couple buys Core, `grant-entitlement` correctly flips `acce
 
 `DesireRevealStore` already does it the right way: `isLocked = !entitlements.isCore && !isFreeReveal` (DesireRevealStore.swift:86). This pass makes every other read site follow that same proven pattern.
 
-## 3. The model: two sources of truth, everything else derives
+## 3. The model: two couple truths + one per-user truth
 
-- **Unlocked?** → `couples.access_tier == 'core'` (sole writer: `grant-entitlement`). Surfaced client-side as `EntitlementStore.isCore`.
-- **Both finished?** → `desire_map_status.partner_a_complete && partner_b_complete` (sole writer: `compute-desire-matches`).
+Reveal is **three distinct states**, not one. Two are couple-level and server-authoritative; one is per-user. The dropped columns failed because they collapsed all three into a single couple/match flag, which is the wrong shape for a per-user viewing event.
 
-**The single shown/locked rule, used everywhere:**
+- **Available** (couple) → `desire_map_status.partner_a_complete && partner_b_complete`. Both finished rating, so the free reveal can be experienced (this is **pre-payment**). Sole writer: `compute-desire-matches`.
+- **Unlocked** (couple) → `couples.access_tier == 'core'`. The couple paid, so the locked stars open. Sole writer: `grant-entitlement`. Client-side: `EntitlementStore.isCore`.
+- **Seen** (per user) → `desire_reveal_progress.{free,full}_reveal_seen_at`. *This person* opened the screen and watched it. Keyed per (user, couple) so a re-pair replays the reveal. Written directly by the client under own-user RLS.
+
+**The single shown/locked rule (what is displayed), used everywhere:**
 
 ```
 shown  = isCore || isFreeReveal
 locked = !isCore && !isFreeReveal
 ```
 
-`revealDone` (Home) = `isCore`. No per-match `revealed_at`, no `full_reveal_unlocked` mirror, no `matches_revealed`. The free match is always visible (the proof); the rest reveal on Core.
+**Whether to play the ceremony vs show it already settled** is the separate *Seen* axis: play it when the relevant `*_reveal_seen_at` is null, then stamp it. No per-match `revealed_at`, no `full_reveal_unlocked` mirror, no `matches_revealed`.
 
 ## 4. Ratified decisions (2026-06-26)
 
@@ -54,6 +57,7 @@ locked = !isCore && !isFreeReveal
 2. **Name gating — soft (client blur).** The read path keeps returning `desire_item_id` for every match; the client blurs locked names. Acceptable for a $24.99 one-time; no server change.
 3. **Partner-finished signal — poll on foreground (V1).** The app re-fetches `desire_map_status` on foreground / Map open; the one quiet banner fires client-side when the partner's flag flips. No DB trigger, no push infra.
 4. **Privacy — ratify "syncs, obscured" + drop vestigial columns.** `notForMe` does sync to `desire_ratings` (RLS protects it; the edge fn excludes it from matches). Fix the stale "never leaves device" comment, and drop the never-populated partner-raw / gap columns so the guarantee is *structural*.
+5. **Architecture — server-authoritative, partner-scoped privacy.** The app is online-first; the server holds the truth (not the local-first "SwiftData-first, best-effort sync" pattern in the current comments). The privacy boundary that matters is **partner-vs-partner**, enforced by RLS, not app-vs-server. Consequence: reveal **Seen** persists **server-side** per (user, couple) in a new own-user table (not client-local). A follow-on pass to reduce local SwiftData mirrors is noted in §7, not bundled here. See memory `architecture_online_first_partner_privacy`.
 
 ## 5. The delta
 
@@ -79,6 +83,29 @@ alter table public.desire_map_status
 -- couples: drop dead matches_revealed (redundant with access_tier)
 alter table public.couples
   drop column if exists matches_revealed;
+
+-- NEW: per-user reveal viewing state ("Seen"), server-authoritative + benign.
+-- Keyed (user_id, couple_id) so a re-pair replays the reveal for the new map.
+-- Own-user RLS: a person can read/write ONLY their own row. Sensitive writes
+-- (completion, matches, unlock) stay service-role-only, so this adds no surface.
+create table if not exists public.desire_reveal_progress (
+  user_id             uuid not null references public.user_profiles(id) on delete cascade,
+  couple_id           uuid not null references public.couples(id) on delete cascade,
+  free_reveal_seen_at timestamptz,
+  full_reveal_seen_at timestamptz,
+  updated_at          timestamptz not null default now(),
+  primary key (user_id, couple_id)
+);
+alter table public.desire_reveal_progress enable row level security;
+create policy "own reveal progress - select" on public.desire_reveal_progress
+  for select to authenticated
+  using (user_id in (select id from public.user_profiles where auth_id = auth.uid()));
+create policy "own reveal progress - insert" on public.desire_reveal_progress
+  for insert to authenticated
+  with check (user_id in (select id from public.user_profiles where auth_id = auth.uid()));
+create policy "own reveal progress - update" on public.desire_reveal_progress
+  for update to authenticated
+  using (user_id in (select id from public.user_profiles where auth_id = auth.uid()));
 
 commit;
 ```
@@ -108,7 +135,12 @@ All edits replace dead-flag reads with the §3 rule.
   - `SupabaseDesireMatch` DTO: drop `partnerAValue`/`partnerBValue`/`gapSize` (lines 80-93). If the struct has no remaining caller, delete it.
 - **`DesireMatch.swift`** (local @Model): drop `revealedAt` + `isRevealed` (lines 38, 54, 60-62). Keep `isFreeReveal`, `matchType`, `bridgeCardId`.
 - **Server→local match sync** (wherever `DesireMatchRow` maps into the local `DesireMatch` @Model): drop the `revealedAt` mapping. (Touch point to locate during planning.)
-- **`HomeStore.swift:222`**: `revealDone = status.fullRevealUnlocked` → `revealDone = entitlements.isCore` (ensure `HomeStore` can read `EntitlementStore.isCore`).
+- **`HomeStore` reveal signals (the corrected split, replaces `revealDone = status.fullRevealUnlocked` at HomeStore.swift:222).** `revealDone` feeds `GettingStarted.resolve` → inserts the `.seeReveal` step (GettingStarted.swift:68). Tying it to payment is backwards: the free reveal is the *pre-payment* hook. Drive the `.seeReveal` CTA from the three real states:
+  - **Available** = `desire_map_status.bothComplete` (the reveal can be experienced).
+  - **Seen** = this user's `desire_reveal_progress.free_reveal_seen_at != nil` (server-read).
+  - Show `.seeReveal` when `Available && !Seen`. Map the existing `revealDone` name to **Seen** (has watched), not `isCore`.
+  - **Unlocked** (`isCore`) stays the gate for the locked stars / the Map+Vault `shown` rule, unchanged.
+- **Write Seen on screen-open.** The reveal flow (`DesireRevealStore` / the reveal cover) upserts the caller's `desire_reveal_progress` row: `free_reveal_seen_at` on first open of the free reveal, `full_reveal_seen_at` on first open after unlock. Direct client write under own-user RLS (no edge fn). Add `DesireSyncService.markRevealSeen(coupleId:, full: Bool)` + a `fetchRevealProgress(coupleId:)` read.
 - **`MapStore.swift`** `drawnTags` (line 193) + `loadUs` (line 246): replace `m.isRevealed` with the §3 rule (`shown = isCore || m.isFreeReveal`). `drawnTags` is `static` and takes `context`; thread `isCore` in. `loadUs` resolves `isCore` from the entitlement layer.
 - **`VaultStore.swift:73`**: same substitution.
 - **`Couple.swift`**: drop `matchesRevealed` (lines 39, 81).
@@ -127,6 +159,7 @@ All edits replace dead-flag reads with the §3 rule.
 - `bridge_card_id` population + the "tap any star to talk about it" discussion tool (Segment 3).
 - Vault hosting UI for the unlocked map (Segment 3).
 - Realtime / APNs upgrade of the partner-finished signal (post-V1; polling ships first).
+- Reducing the local SwiftData mirrors (e.g. the local `DesireMatch` @Model that Map/Vault read) in favor of server reads, per the online-first stance (§4.5). A separate refactor, deliberately not bundled into this delta.
 
 ## 8. Risk + verification
 
