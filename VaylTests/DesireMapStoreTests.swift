@@ -17,6 +17,14 @@ import SwiftData
 @MainActor
 final class DesireMapStoreTests: XCTestCase {
 
+    // Workaround for a Swift @MainActor isolated-deinit runtime double-free
+    // (swift_task_deinitOnExecutorImpl → POINTER_BEING_FREED_WAS_NOT_ALLOCATED) that aborts
+    // the app-hosted test host whenever an @Observable @MainActor AppState/store deallocates
+    // mid-suite. Keeping them alive for the process means the buggy isolated deinit never runs
+    // during the test run. Test-only; not a production concern (the app never deinits AppState).
+    private static var retained: [AnyObject] = []
+    private static func retain(_ objects: AnyObject...) { retained.append(contentsOf: objects) }
+
     // A box so the no-op sync seam can capture what WOULD have been pushed, without any
     // background network/SwiftData work (which would race test teardown and corrupt the heap).
     private final class SyncCapture {
@@ -27,11 +35,13 @@ final class DesireMapStoreTests: XCTestCase {
     private func makeLoadedStore() -> (DesireMapStore, ModelContainer, SyncCapture) {
         let container = ModelContainer.previewContainerWithProfile   // seeds UserProfile "Jordan", nmStage .curious
         let capture = SyncCapture()
-        let store = DesireMapStore(modelContainer: container, appState: AppState()) { payload, stage in
+        let appState = AppState()
+        let store = DesireMapStore(modelContainer: container, appState: appState) { payload, stage in
             capture.lastPayload = payload
             capture.lastStage = stage
         }
         store.load()
+        Self.retain(store, appState, capture)
         return (store, container, capture)
     }
 

@@ -14,13 +14,24 @@ import SwiftData
 @MainActor
 final class DesireRevealStoreTests: XCTestCase {
 
+    // Workaround for a Swift @MainActor isolated-deinit runtime double-free
+    // (swift_task_deinitOnExecutorImpl → POINTER_BEING_FREED_WAS_NOT_ALLOCATED) that aborts
+    // the app-hosted test host whenever an @Observable @MainActor AppState/store deallocates
+    // mid-suite. Keeping the objects alive for the process means the buggy isolated deinit
+    // never runs during the test run. Test-only; leaked objects are never released (no deinit
+    // fires at process exit either). Not a production concern — the app never deinits AppState.
+    private static var retained: [AnyObject] = []
+    private static func retain(_ objects: AnyObject...) { retained.append(contentsOf: objects) }
+
     // Free couple (entitlements resolve .free) with a free + two locked matches.
     private func freeStore() -> DesireRevealStore {
-        DesireRevealStore.previewStore(matches: [
+        let store = DesireRevealStore.previewStore(matches: [
             RevealMatch.sample("Slow mornings", .mutual, locked: false),
             RevealMatch.sample("New cities", .adjacent, locked: true),
             RevealMatch.sample("Big talks", .mutual, locked: true),
         ])
+        Self.retain(store)
+        return store
     }
 
     // MARK: - Initial state
@@ -108,6 +119,7 @@ final class DesireRevealStoreTests: XCTestCase {
         XCTAssertTrue(entitlements.isCore, "seeded Core couple resolves isCore")
 
         let store = DesireRevealStore(appState: appState, entitlements: entitlements)
+        Self.retain(store, entitlements, appState)
         store.startBeatSequence()
         XCTAssertEqual(store.beatPhase, .revealed, "Core couples skip the conversion beats")
     }
