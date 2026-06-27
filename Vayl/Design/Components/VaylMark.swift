@@ -66,6 +66,9 @@ struct VaylMark: View {
     var glow: Double = 1.0
     /// The lit centre core (the point "behind the veil").
     var showsCore: Bool = true
+    /// 0 = unstarted, 1 = fully drawn. Animate 0→1 to draw the mark on (rings trim in,
+    /// the glow blooms, the core ignites last). Defaults to 1 (static, fully drawn).
+    var drawProgress: CGFloat = 1
 
     var body: some View {
         GeometryReader { geo in
@@ -80,23 +83,27 @@ struct VaylMark: View {
                         let t = rings <= 1 ? 0 : CGFloat(i) / CGFloat(rings - 1)
                         let scale = 1.0 - t * 0.66          // outer 1.0 → inner ~0.34
                         ApertureRing(scale: scale, concavity: concavity)
+                            .trim(from: 0, to: drawProgress)
                             .stroke(
                                 AppColors.spectrumBorder,
                                 style: StrokeStyle(lineWidth: lineWidth, lineJoin: .round)
                             )
                     }
                 }
-                .spectrumBorderGlow(intensity: glow)
+                .spectrumBorderGlow(intensity: glow * Double(drawProgress))
 
                 if showsCore {
                     // Pure opaque white, theme-independent (it's a lit point, not text), with a
                     // tight white core glow so it reads as a bright anchor that accentuates the
-                    // aperture — the same lit-core idiom as DesireStarView.
+                    // aperture — the same lit-core idiom as DesireStarView. Ignites last.
+                    let coreT = max(0, min(1, (drawProgress - 0.6) / 0.4))
                     Circle()
                         .fill(.white)
                         .frame(width: dim * 0.065, height: dim * 0.065)
-                        .shadow(color: .white.opacity(glow), radius: dim * 0.02)
-                        .spectrumBorderGlow(intensity: glow)
+                        .shadow(color: .white.opacity(glow * Double(coreT)), radius: dim * 0.02)
+                        .spectrumBorderGlow(intensity: glow * Double(coreT))
+                        .scaleEffect(coreT)
+                        .opacity(Double(coreT))
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)

@@ -741,6 +741,18 @@ internal enum AppAnimation {
     /// 0.36s — A single locked teaser row fading/staggering into the gap (Beat 2).
     /// Reduce motion: falls back via `.reduceMotionSafe` to a fast opacity confirm.
     static let desireLockedRowEnter: Animation = .easeOut(duration: 0.36)
+
+    // Vayl mark ceremony — the one-shot "map charted" moment (MapChartedMoment).
+    // Reduce motion: skip both; the mark is shown fully drawn and the copy is shown at once.
+
+    /// 1.0s — The aperture draws/assembles on: rings trim in, glow blooms, core ignites.
+    static let markDraw: Animation = .easeOut(duration: 1.0)
+
+    /// 0.5s — The copy fades up after the mark has mostly assembled.
+    static let markCopyRise: Animation = .easeOut(duration: 0.5)
+
+    /// 0.9s — How long the copy waits for the mark to draw before rising (a `.delay`).
+    static let markCopyDelay: Double = 0.9
 }
 
 // MARK: — Reduce Motion Helpers
