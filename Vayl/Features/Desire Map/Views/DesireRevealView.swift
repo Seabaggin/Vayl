@@ -534,17 +534,20 @@ private struct _PressScaleStyle: ButtonStyle {
 
 #if DEBUG
 #Preview("Free reveal — 1 lit + 3 locked") {
+    let appState = AppState()
     DesireRevealView(store: .previewStore(matches: [
         .sample("New Relationship Energy", .mutual),
         .sample("Overnight Stays With Others", .adjacent, locked: true),
         .sample("Meeting Your Partner's Other Connections", .mutual, locked: true),
         .sample("Time and Attention", .adjacent, locked: true),
     ]))
-    .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
+    .environment(appState)
+    .environment(EntitlementStore(modelContainer: .previewContainer, appState: appState))
     .preferredColorScheme(.dark)
 }
 
 #Preview("Fully unlocked — 5 stars") {
+    let appState = AppState()
     DesireRevealView(store: .previewStore(matches: [
         .sample("New Relationship Energy", .mutual, free: true),
         .sample("Overnight Stays", .adjacent),
@@ -552,19 +555,24 @@ private struct _PressScaleStyle: ButtonStyle {
         .sample("Shared Space", .mutual),
         .sample("Deep Conversations", .adjacent),
     ]))
-    .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
+    .environment(appState)
+    .environment(EntitlementStore(modelContainer: .previewContainer, appState: appState))
     .preferredColorScheme(.dark)
 }
 
 #Preview("Empty") {
+    let appState = AppState()
     DesireRevealView(store: .previewStore(matches: [], phase: .empty))
-        .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
+        .environment(appState)
+        .environment(EntitlementStore(modelContainer: .previewContainer, appState: appState))
         .preferredColorScheme(.dark)
 }
 
 #Preview("Loading") {
+    let appState = AppState()
     DesireRevealView(store: .previewStore(matches: [], phase: .loading))
-        .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
+        .environment(appState)
+        .environment(EntitlementStore(modelContainer: .previewContainer, appState: appState))
         .preferredColorScheme(.dark)
 }
 #endif
