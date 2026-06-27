@@ -753,6 +753,10 @@ internal enum AppAnimation {
 
     /// 0.9s — How long the copy waits for the mark to draw before rising (a `.delay`).
     static let markCopyDelay: Double = 0.9
+
+    /// 2.8s — Hold after the copy resolves before the moment auto-advances back to Home.
+    /// Reduce motion: measured from appear (no draw lead). Consumed by Task.sleep.
+    static let markHold: Double = 2.8
 }
 
 // MARK: — Reduce Motion Helpers

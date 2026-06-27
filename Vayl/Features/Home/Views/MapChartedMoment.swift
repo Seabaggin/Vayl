@@ -33,6 +33,9 @@ struct MapChartedMoment: View {
     @State private var draw: CGFloat = 0
     @State private var copyT: CGFloat = 0
     @State private var titleGlow: Double = 0
+    @State private var contentOpacity: Double = 1
+    @State private var didDismiss = false
+    @State private var autoAdvance: Task<Void, Never>?
 
     var body: some View {
         ZStack {
@@ -54,9 +57,11 @@ struct MapChartedMoment: View {
             }
             .padding(.horizontal, AppSpacing.xl)
         }
+        .opacity(contentOpacity)
         .contentShape(Rectangle())
-        .onTapGesture { onDone() }
+        .onTapGesture { dismiss() }
         .onAppear(perform: animateIn)
+        .onDisappear { autoAdvance?.cancel() }
     }
 
     private var copyBlock: some View {
@@ -76,17 +81,45 @@ struct MapChartedMoment: View {
     }
 
     private func animateIn() {
-        guard !reduceMotion else { draw = 1; copyT = 1; titleGlow = 0.5; return }
+        if reduceMotion {
+            draw = 1; copyT = 1; titleGlow = 0.5
+        } else {
+            withAnimation(AppAnimation.markDraw) { draw = 1 }
 
-        withAnimation(AppAnimation.markDraw) { draw = 1 }
+            let copyAnimation: Animation = copyEntrance == .springRise
+                ? AppAnimation.spring
+                : AppAnimation.markCopyRise
+            withAnimation(copyAnimation.delay(AppAnimation.markCopyDelay)) { copyT = 1 }
 
-        let copyAnimation: Animation = copyEntrance == .springRise
-            ? AppAnimation.spring
-            : AppAnimation.markCopyRise
-        withAnimation(copyAnimation.delay(AppAnimation.markCopyDelay)) { copyT = 1 }
+            if copyEntrance == .glowIgnite {
+                withAnimation(AppAnimation.markCopyRise.delay(AppAnimation.markCopyDelay)) { titleGlow = 0.55 }
+            }
+        }
+        scheduleAutoAdvance()
+    }
 
-        if copyEntrance == .glowIgnite {
-            withAnimation(AppAnimation.markCopyRise.delay(AppAnimation.markCopyDelay)) { titleGlow = 0.55 }
+    /// Hold once the copy has resolved, then ease back to Home on its own. The "waiting on
+    /// your partner" status persists in the partner pill, so this moment does not linger.
+    private func scheduleAutoAdvance() {
+        let lead = reduceMotion ? 0 : AppAnimation.markCopyDelay
+        autoAdvance = Task {
+            try? await Task.sleep(for: .seconds(lead + AppAnimation.markHold))
+            guard !Task.isCancelled else { return }
+            dismiss()
+        }
+    }
+
+    /// Ease the whole moment out, then notify the presenter. Idempotent; a tap can trigger it
+    /// early (skipping the hold).
+    private func dismiss() {
+        guard !didDismiss else { return }
+        didDismiss = true
+        autoAdvance?.cancel()
+        guard !reduceMotion else { onDone(); return }
+        withAnimation(AppAnimation.exit) {
+            contentOpacity = 0
+        } completion: {
+            onDone()
         }
     }
 }
