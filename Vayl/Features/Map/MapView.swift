@@ -85,6 +85,12 @@ struct MapView: View {
                     handleNewEntry(entry)
                 }
             }
+            .onChange(of: appState.vaultOpenPending) { _, pending in
+                if pending {
+                    showVault = true
+                    appState.vaultOpenPending = false
+                }
+            }
             .vaylSheet(
                 isPresented: $showPulseSheet,
                 heightFraction: 0.92,

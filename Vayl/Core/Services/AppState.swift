@@ -78,6 +78,9 @@ final class AppState {
     // MARK: - Navigation
 
     var selectedTab: AppTab = .home
+    /// Transient flag: set true to signal MapView to auto-open the Vault.
+    /// MapView resets it to false immediately after presenting.
+    var vaultOpenPending: Bool = false
     var loadState: AppLoadState = .idle
 
     // MARK: - Init

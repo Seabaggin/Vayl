@@ -25,6 +25,7 @@ struct DesireRevealView: View {
     // Until S1.6, X is a no-op — swipe-dismiss the fullScreenCover to close during testing.
     @Environment(\.vaylDismiss) private var vaylDismiss
     @Environment(EntitlementStore.self) private var entitlements
+    @Environment(AppState.self) private var appState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var hapticTick: Int = 0
@@ -363,9 +364,16 @@ struct DesireRevealView: View {
 
             // S1.3 — star detail sheet
             if let match = store.selectedMatch {
-                DesireStarDetailSheet(match: match) {
-                    store.dismissSheets()
-                }
+                DesireStarDetailSheet(
+                    match: match,
+                    onClose: { store.dismissSheets() },
+                    onTalkTapped: {
+                        store.dismissSheets()
+                        vaylDismiss(confirm: false)
+                        appState.selectedTab = .map
+                        appState.vaultOpenPending = true
+                    }
+                )
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(AppAnimation.desireSheetRise, value: store.selectedMatch?.id)
             }

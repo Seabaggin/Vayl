@@ -15,6 +15,7 @@ struct DesireStarDetailSheet: View {
 
     let match: RevealMatch
     var onClose: () -> Void = {}
+    var onTalkTapped: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -41,7 +42,7 @@ struct DesireStarDetailSheet: View {
             // Detail body
             DesireMatchDetail(
                 match: match,
-                onTalkTapped: nil,   // stub — S1.3; bridge nav wired later
+                onTalkTapped: onTalkTapped,
                 onLearnTapped: nil   // stub — S1.3; Learn nav wired later
             )
             .padding(.horizontal, AppSpacing.lg)
