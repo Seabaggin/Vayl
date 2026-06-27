@@ -2,13 +2,8 @@
 //  CompanionCardStore.swift
 //  Vayl
 //
-//  STUB (Store layer). The connection point between a completed Desire Map and "what's next" —
-//  it maps the couple's matches to companion cards that point at a conversation and/or a deck
-//  to open together. Wires into the D4 reveal / D5 Map tab once those exist.
-//
-//  TODO: load real companion content (companion_cards.json) and resolve a real suggestedDeckId
-//        per desire item/category; persist bridgeCardId from the edge fn. For now it returns a
-//        placeholder companion per match so downstream surfaces have something to render.
+//  Resolves a tier-appropriate conversation prompt for a desire item.
+//  Owned by VaultStore. Calls ContentLoader (service layer) for content.
 //
 
 import Foundation
@@ -17,23 +12,35 @@ import Foundation
 @MainActor
 final class CompanionCardStore {
 
-    /// Suggested companions for the couple's matches. STUB: one placeholder per match.
-    func companions(for matches: [DesireMatch]) -> [CompanionCard] {
-        matches.map { match in
-            CompanionCard(
-                id: match.bridgeCardId ?? "companion_\(match.itemId)",
-                desireItemId: match.itemId,
-                title: "Talk about it together",
-                prompt: "You both leaned into this one — here's a place to start the conversation.",
-                suggestedDeckId: suggestedDeckId(for: match)
-            )
-        }
+    private var pools: [CompanionCardPool] = []
+
+    init() {
+        pools = (try? ContentLoader.loadCompanionCards()) ?? []
     }
 
-    /// The deck to suggest opening after the map for a given match.
-    /// STUB → nil until desire item/category → deck mapping is wired.
-    func suggestedDeckId(for match: DesireMatch) -> String? {
-        // TODO: map match.itemId / desire category → a real deck id (e.g. a topic deck).
-        nil
+    /// Returns a CompanionCard for a mutual or adjacent match.
+    /// Prompt selection is stable: same itemId always returns the same prompt from the tier pool.
+    func card(forItemId itemId: String, tier: CompanionCardTier) -> CompanionCard? {
+        guard let pool = pools.first(where: { $0.tier == tier }),
+              !pool.prompts.isEmpty else { return nil }
+        let idx = stableIndex(for: itemId, count: pool.prompts.count)
+        let prompt = pool.prompts[idx]
+        return CompanionCard(
+            id: "discussion_\(tier.rawValue)_\(itemId)",
+            desireItemId: itemId,
+            title: "Talk about this",
+            prompt: prompt.text,
+            suggestedDeckId: nil
+        )
+    }
+
+    // MARK: - Private
+
+    /// Deterministic index derived from the itemId string -- stable across process restarts.
+    /// Uses Unicode scalar sum (not hashValue, which is randomized in Swift).
+    private func stableIndex(for itemId: String, count: Int) -> Int {
+        guard count > 0 else { return 0 }
+        let sum = itemId.unicodeScalars.reduce(0) { $0 + Int($1.value) }
+        return abs(sum) % count
     }
 }

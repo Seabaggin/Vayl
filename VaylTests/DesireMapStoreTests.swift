@@ -155,4 +155,29 @@ final class DesireMapStoreTests: XCTestCase {
             XCTAssertFalse(pool.prompts.isEmpty, "Tier \(pool.tier.rawValue) has no prompts")
         }
     }
+
+    // MARK: - CompanionCardStore tier lookup
+
+    func test_companionCardStore_mutualMatchReturnsMutualPrompt() async throws {
+        let store = await CompanionCardStore()
+        let card = await store.card(forItemId: "desire-001", tier: .mutual)
+        XCTAssertNotNil(card)
+        XCTAssertFalse(card!.prompt.isEmpty)
+    }
+
+    func test_companionCardStore_sameItemAlwaysReturnsSamePrompt() async throws {
+        let store = await CompanionCardStore()
+        let card1 = await store.card(forItemId: "desire-003", tier: .adjacent)
+        let card2 = await store.card(forItemId: "desire-003", tier: .adjacent)
+        XCTAssertEqual(card1?.prompt, card2?.prompt)
+    }
+
+    func test_companionCardStore_consentOpenedTierUsesCorrectPool() async throws {
+        let store = await CompanionCardStore()
+        let pools = try ContentLoader.loadCompanionCards()
+        let consentPool = pools.first { $0.tier == .consentOpened }!
+        let card = await store.card(forItemId: "desire-005", tier: .consentOpened)
+        XCTAssertNotNil(card)
+        XCTAssertTrue(consentPool.prompts.map(\.text).contains(card!.prompt))
+    }
 }
