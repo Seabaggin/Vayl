@@ -121,4 +121,8 @@ struct ContentLoader {
     static func loadDesireItems() throws -> [DesireItem] {
         try load(DesireItem.self, from: "desire_items")
     }
+
+    static func loadCompanionCards() throws -> [CompanionCardPool] {
+        try load(CompanionCardPool.self, from: "companion_cards")
+    }
 }

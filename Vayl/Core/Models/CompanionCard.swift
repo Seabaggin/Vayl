@@ -17,3 +17,23 @@ struct CompanionCard: Codable, Identifiable, Hashable {
     let prompt: String          // the conversation companion prompt
     let suggestedDeckId: String?  // a deck to open next (stub link, nil until wired)
 }
+
+// MARK: - Tier
+
+enum CompanionCardTier: String, Codable {
+    case mutual
+    case adjacent
+    case consentOpened = "consent_opened"
+}
+
+// MARK: - Content pool (deserialized from companion_cards.json)
+
+struct CompanionCardPool: Codable {
+    let tier: CompanionCardTier
+    let prompts: [CompanionCardPrompt]
+}
+
+struct CompanionCardPrompt: Codable, Identifiable {
+    let id: String
+    let text: String
+}

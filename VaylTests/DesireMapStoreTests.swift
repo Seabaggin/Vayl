@@ -137,4 +137,22 @@ final class DesireMapStoreTests: XCTestCase {
         // Every rateable item ships four answers (one per DesireRatingValue) on its track.
         XCTAssertEqual(store.answers(for: item).count, DesireRatingValue.allCases.count)
     }
+
+    // MARK: - CompanionCard content loader
+
+    func test_loadCompanionCards_returnsThreeTiers() throws {
+        let pools = try ContentLoader.loadCompanionCards()
+        XCTAssertEqual(pools.count, 3)
+        let tiers = Set(pools.map(\.tier))
+        XCTAssertTrue(tiers.contains(.mutual))
+        XCTAssertTrue(tiers.contains(.adjacent))
+        XCTAssertTrue(tiers.contains(.consentOpened))
+    }
+
+    func test_loadCompanionCards_eachTierHasPrompts() throws {
+        let pools = try ContentLoader.loadCompanionCards()
+        for pool in pools {
+            XCTAssertFalse(pool.prompts.isEmpty, "Tier \(pool.tier.rawValue) has no prompts")
+        }
+    }
 }

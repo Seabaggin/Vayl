@@ -1,0 +1,32 @@
+[
+  {
+    "tier": "mutual",
+    "prompts": [
+      { "id": "m1", "text": "What part of this feels most exciting to you?" },
+      { "id": "m2", "text": "When you imagine exploring this together, what does that look like?" },
+      { "id": "m3", "text": "Is there a version of this that feels like the right starting point?" },
+      { "id": "m4", "text": "What would make this feel really good for both of you?" },
+      { "id": "m5", "text": "Has this been something you have been thinking about for a while, or is it newer?" }
+    ]
+  },
+  {
+    "tier": "adjacent",
+    "prompts": [
+      { "id": "a1", "text": "What draws you toward this, even if you are not sure yet?" },
+      { "id": "a2", "text": "Is there a part of this that feels easier to imagine than others?" },
+      { "id": "a3", "text": "What would you want me to know about how you are thinking about it?" },
+      { "id": "a4", "text": "What would make exploring this feel comfortable for you?" },
+      { "id": "a5", "text": "Are there parts of this you are more curious about than others?" }
+    ]
+  },
+  {
+    "tier": "consent_opened",
+    "prompts": [
+      { "id": "c1", "text": "No rush here. Where would you want to start?" },
+      { "id": "c2", "text": "Is there something you would want to understand better before going further?" },
+      { "id": "c3", "text": "What would make this conversation feel easy?" },
+      { "id": "c4", "text": "What matters most to you about how this goes?" },
+      { "id": "c5", "text": "What would a comfortable first step look like for you?" }
+    ]
+  }
+]
