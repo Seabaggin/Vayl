@@ -14,6 +14,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { computeMatches, freeRevealIndex } from "./match-logic.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,15 +26,6 @@ function json(body: unknown, status: number): Response {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   })
-}
-
-// Positive-match rule on the shared weight. notForMe is handled by the caller (excluded).
-// mutual = both Excited; adjacent = one Excited + one Open, or both Open. Anything weaker → no match.
-function matchType(a: string, b: string): "mutual" | "adjacent" | null {
-  const positive = (v: string) => v === "excitedAboutIt" || v === "openToIt"
-  if (a === "excitedAboutIt" && b === "excitedAboutIt") return "mutual"
-  if (positive(a) && positive(b)) return "adjacent"   // (E+O) or (O+O); (E+E) already returned
-  return null
 }
 
 serve(async (req) => {
@@ -124,29 +116,20 @@ serve(async (req) => {
       else if (r.user_id === couple.user_b) byB[r.desire_item_id] = r.rating
     }
 
-    const rows: Record<string, unknown>[] = []
-    for (const itemId of Object.keys(byA).sort()) {
-      const a = byA[itemId]
-      const b = byB[itemId]
-      if (b === undefined) continue                       // only items BOTH rated
-      if (a === "notForMe" || b === "notForMe") continue  // boundary → obscured, never surfaced
-      const mt = matchType(a, b)
-      if (!mt) continue
-      rows.push({
-        couple_id: couple.id,
-        desire_item_id: itemId,
-        alignment_level: mt,                 // mutual / adjacent — the shareable signal
-        bridge_card_id: null,                // companion-card stub — populated later
-        is_free_reveal: false,
-        created_at: now,
-      })
-    }
+    // Pure computation (see match-logic.ts): positive matches over items BOTH rated,
+    // notForMe excluded, alignment-only output.
+    const rows: Record<string, unknown>[] = computeMatches(byA, byB).map((m) => ({
+      couple_id: couple.id,
+      desire_item_id: m.desire_item_id,
+      alignment_level: m.alignment_level,  // mutual / adjacent — the shareable signal
+      bridge_card_id: null,                // companion-card stub — populated later
+      is_free_reveal: false,
+      created_at: now,
+    }))
 
     // Exactly one free reveal — prefer a mutual, else the first adjacent.
-    if (rows.length > 0) {
-      const freeIdx = Math.max(0, rows.findIndex((r) => r.alignment_level === "mutual"))
-      rows[freeIdx].is_free_reveal = true
-    }
+    const freeIdx = freeRevealIndex(rows)
+    if (freeIdx >= 0) rows[freeIdx].is_free_reveal = true
 
     // Recompute fresh: clear prior matches for this couple, then insert.
     await serviceClient.from("desire_matches").delete().eq("couple_id", couple.id)

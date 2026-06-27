@@ -62,6 +62,10 @@ final class DesireRevealStore: Identifiable {
     /// Drives the 3-beat ceremony. View observes this to choreograph the visual sequence.
     private(set) var beatPhase: BeatPhase = .idle
 
+    /// The pending auto-advance timer (held weakly inside; tracked here so a new sequence
+    /// or an unlock can cancel a stale one). Never strongly retains the store.
+    @ObservationIgnored private var autoAdvanceTask: Task<Void, Never>?
+
     // MARK: - Interaction state (sheet hosts live inside the reveal cover)
 
     /// Set when the user taps a star — drives the detail sheet.
@@ -115,6 +119,7 @@ final class DesireRevealStore: Identifiable {
     /// Tap-to-advance: skip the current hold immediately. Idempotent — safe to call at any beat.
     /// Animations are driven by the View observing beatPhase changes.
     func advanceBeat() {
+        autoAdvanceTask?.cancel()   // a tap supersedes the auto-timer; the user drives from here
         switch beatPhase {
         case .beat1: beatPhase = .beat2
         case .beat2: beatPhase = .beat3; showPaywall = true
@@ -129,9 +134,14 @@ final class DesireRevealStore: Identifiable {
         //   kHold23 (gap appears → paywall rises): 1.2s
         let kHold12: Double = 1.5
         let kHold23: Double = 1.2
-        Task {
+        // [weak self]: a fire-and-forget timer must NOT keep the store alive past the reveal.
+        // A strong capture would release the store on a background executor when the Task ends
+        // (after the cover dismissed / in tests, after the case returned), routing the
+        // @MainActor isolated deinit through the wrong executor.
+        autoAdvanceTask?.cancel()
+        autoAdvanceTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(kHold12))
-            guard beatPhase == .beat1 else { return }
+            guard let self, beatPhase == .beat1 else { return }
             beatPhase = .beat2
 
             // Wait for all locked rows to stagger in before the hold begins
@@ -238,6 +248,7 @@ final class DesireRevealStore: Identifiable {
     /// `entitlements.isCore` is already true, so `load()` resolves all matches as unlocked,
     /// lighting the constellation in place. Also stamps `full: true` seen.
     func handleUnlockSuccess() {
+        autoAdvanceTask?.cancel()
         showPaywall = false
         beatPhase = .revealed
         Task {

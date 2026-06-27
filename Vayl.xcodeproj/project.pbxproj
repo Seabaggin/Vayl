@@ -24,6 +24,9 @@
 		AA000003AAAA000000000001 /* ContextOptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000003AAAA000000000002 /* ContextOptionTests.swift */; };
 		AA000004AAAA000000000001 /* GettingStartedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000004AAAA000000000002 /* GettingStartedTests.swift */; };
 		AA000005AAAA000000000001 /* CoupleSessionPlaythroughTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000005AAAA000000000002 /* CoupleSessionPlaythroughTests.swift */; };
+		AA000006AAAA000000000001 /* DesireMapModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000006AAAA000000000002 /* DesireMapModelTests.swift */; };
+		AA000007AAAA000000000001 /* DesireRevealStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000007AAAA000000000002 /* DesireRevealStoreTests.swift */; };
+		AA000008AAAA000000000001 /* DesireMapStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000008AAAA000000000002 /* DesireMapStoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +61,9 @@
 		AA000003AAAA000000000002 /* ContextOptionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextOptionTests.swift; sourceTree = "<group>"; };
 		AA000004AAAA000000000002 /* GettingStartedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GettingStartedTests.swift; sourceTree = "<group>"; };
 		AA000005AAAA000000000002 /* CoupleSessionPlaythroughTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoupleSessionPlaythroughTests.swift; sourceTree = "<group>"; };
+		AA000006AAAA000000000002 /* DesireMapModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesireMapModelTests.swift; sourceTree = "<group>"; };
+		AA000007AAAA000000000002 /* DesireRevealStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesireRevealStoreTests.swift; sourceTree = "<group>"; };
+		AA000008AAAA000000000002 /* DesireMapStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesireMapStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -153,6 +159,9 @@
 				AA000003AAAA000000000002 /* ContextOptionTests.swift */,
 				AA000004AAAA000000000002 /* GettingStartedTests.swift */,
 				AA000005AAAA000000000002 /* CoupleSessionPlaythroughTests.swift */,
+				AA000006AAAA000000000002 /* DesireMapModelTests.swift */,
+				AA000007AAAA000000000002 /* DesireRevealStoreTests.swift */,
+				AA000008AAAA000000000002 /* DesireMapStoreTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -347,6 +356,9 @@
 				AA000003AAAA000000000001 /* ContextOptionTests.swift in Sources */,
 				AA000004AAAA000000000001 /* GettingStartedTests.swift in Sources */,
 				AA000005AAAA000000000001 /* CoupleSessionPlaythroughTests.swift in Sources */,
+				AA000006AAAA000000000001 /* DesireMapModelTests.swift in Sources */,
+				AA000007AAAA000000000001 /* DesireRevealStoreTests.swift in Sources */,
+				AA000008AAAA000000000001 /* DesireMapStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

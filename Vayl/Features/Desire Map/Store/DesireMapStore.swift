@@ -46,9 +46,21 @@ final class DesireMapStore: Identifiable {
     private var userId: UUID?      // PRIVATE local profile id — stamped on each entry
     private var nmStageRaw: String = "curious"   // raw nm_stage — synced for the match edge fn
 
-    init(modelContainer: ModelContainer, appState: AppState) {
+    /// Sync seam. Defaults to the real best-effort SyncManager push; tests inject a no-op (or a
+    /// capture) so completion never spawns a background network/SwiftData Task that races teardown.
+    /// Mirrors `CoupleSessionStore.enqueueSync`.
+    private let enqueueSync: @MainActor ([PendingDesireRating], String) -> Void
+
+    init(
+        modelContainer: ModelContainer,
+        appState: AppState,
+        enqueueSync: (@MainActor ([PendingDesireRating], String) -> Void)? = nil
+    ) {
         self.modelContainer = modelContainer
         self.appState = appState
+        self.enqueueSync = enqueueSync ?? { snapshot, stage in
+            Task { await SyncManager.shared.syncDesireMap(ratings: snapshot, nmStage: stage) }
+        }
     }
 
     // MARK: - Load
@@ -153,8 +165,7 @@ final class DesireMapStore: Identifiable {
     private func triggerSync() {
         let snapshot = entrySnapshots()
         guard !snapshot.isEmpty else { return }
-        let stage = nmStageRaw
-        Task { await SyncManager.shared.syncDesireMap(ratings: snapshot, nmStage: stage) }
+        enqueueSync(snapshot, nmStageRaw)
     }
 
     private func entrySnapshots() -> [PendingDesireRating] {
