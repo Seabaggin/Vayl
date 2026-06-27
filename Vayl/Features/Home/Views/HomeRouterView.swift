@@ -287,13 +287,24 @@ private struct HomeRouterInnerView: View {
         activeReveal = DesireRevealStore(appState: appState, entitlements: entitlements)
     }
 
-    /// On rater close: refresh Home, then — if the map just flipped to complete — play the
-    /// one-shot completion beat over the dashboard. The map is a moment, not a home state.
+    /// Gap between the rater cover dismissing and the reveal cover rising. Two covers on one
+    /// host cannot transition at once, so the reveal waits for the rater's dismiss to settle.
+    private static let raterToRevealHandoff: Double = 0.35
+
+    /// On rater close: refresh Home, then branch. If both maps are now complete and the reveal
+    /// has not been seen, hand straight off to the reveal (the second-finisher gift, or a first
+    /// finisher re-entering once their partner has finished). Otherwise, if the map JUST flipped
+    /// to complete (first finisher, partner still pending), play the one-shot completion beat.
+    /// The map is a moment, not a home state.
     private func handleRaterDismiss() {
         Task {
             let wasComplete = mapWasCompleteOnOpen
             await store.loadAll()
-            if !wasComplete, store.myMapComplete == true {
+            guard store.myMapComplete == true else { return }
+            if store.partnerMapComplete, !store.revealDone {
+                try? await Task.sleep(for: .seconds(Self.raterToRevealHandoff))
+                presentReveal()
+            } else if !wasComplete {
                 store.celebrateMapCompletion()
             }
         }

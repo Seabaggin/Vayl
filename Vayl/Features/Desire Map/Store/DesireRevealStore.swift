@@ -192,7 +192,8 @@ final class DesireRevealStore: Identifiable {
                     itemCategory: categories[row.desireItemId],
                     alignment: row.matchType,                       // mutual / adjacent
                     isLocked: !core && !row.isFreeReveal,           // free couple locks all but the free one
-                    bridgeCardId: row.bridgeCardId
+                    bridgeCardId: row.bridgeCardId,
+                    isFreeReveal: row.isFreeReveal                  // the server-set hero star
                 )
             }
             phase = matches.isEmpty ? .empty : .ready
@@ -305,6 +306,8 @@ struct RevealMatch: Identifiable, Equatable {
     let alignment: DesireMatchType?     // mutual ("Mutual") / adjacent ("Worth Exploring")
     let isLocked: Bool
     let bridgeCardId: String?
+    /// The one server-set free reveal (the emotional-peak star). Drives the hero on the unlocked sky.
+    var isFreeReveal: Bool = false
 
     /// Celebratory subtitle by alignment (mutual = wholehearted; adjacent = mostly aligned).
     var celebration: String {
@@ -316,8 +319,8 @@ struct RevealMatch: Identifiable, Equatable {
     }
 
     #if DEBUG
-    static func sample(_ name: String, _ alignment: DesireMatchType, locked: Bool = false, category: String? = "emotional") -> RevealMatch {
-        RevealMatch(id: UUID(), itemName: name, itemCategory: category, alignment: alignment, isLocked: locked, bridgeCardId: nil)
+    static func sample(_ name: String, _ alignment: DesireMatchType, locked: Bool = false, free: Bool = false, category: String? = "emotional") -> RevealMatch {
+        RevealMatch(id: UUID(), itemName: name, itemCategory: category, alignment: alignment, isLocked: locked, bridgeCardId: nil, isFreeReveal: free)
     }
     #endif
 }

@@ -328,10 +328,10 @@ struct DesireRevealView: View {
     /// Spread for the slight per-node variation around the base (non-hero nodes).
     private var revealedNodeVariation: CGFloat { 0.18 }
 
-    /// The hero match for the unlocked sky: the free-reveal match if one is unlocked
-    /// (free couples have exactly one), else the first mutual, else the first match.
+    /// The hero match for the unlocked sky: the server-set free-reveal star (the emotional
+    /// peak, the same star that led the free reveal), else the first mutual, else the first match.
     private var heroMatchId: UUID? {
-        if let free = store.unlockedMatches.first, store.unlockedMatches.count == 1 {
+        if let free = store.matches.first(where: { $0.isFreeReveal }) {
             return free.id
         }
         if let mutual = store.matches.first(where: { $0.alignment == .mutual }) {
@@ -538,7 +538,7 @@ private struct _PressScaleStyle: ButtonStyle {
 
 #Preview("Fully unlocked — 5 stars") {
     DesireRevealView(store: .previewStore(matches: [
-        .sample("New Relationship Energy", .mutual),
+        .sample("New Relationship Energy", .mutual, free: true),
         .sample("Overnight Stays", .adjacent),
         .sample("Meeting Partners", .mutual),
         .sample("Shared Space", .mutual),
