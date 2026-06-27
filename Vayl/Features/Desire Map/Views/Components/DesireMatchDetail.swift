@@ -71,9 +71,11 @@ struct DesireMatchDetail: View {
                 onLearnTapped?()
             } label: {
                 HStack(spacing: AppSpacing.sm) {
-                    Text("Explore in Learn")
+                    // Fix #6: interpolate the item name to match the mockup ("Explore "X" in Learn").
+                    Text("Explore \u{201C}\(match.itemName)\u{201D} in Learn")
                         .font(AppFonts.bodyText)
                         .foregroundStyle(AppColors.textSecondary)
+                        .lineLimit(1)
                     Spacer(minLength: 0)
                     Image(systemName: "arrow.up.right")
                         .font(AppFonts.caption)
@@ -112,7 +114,8 @@ struct DesireMatchDetail: View {
 
     private var badgeText: String {
         switch match.alignment {
-        case .mutual:   return "You both want this"
+        // Fix #6: warm sparkle glyph on the mutual badge (mockup). Adjacent/none unchanged.
+        case .mutual:   return "✦ You both want this"
         case .adjacent: return "Worth exploring"
         case .none:     return "Shared"
         }

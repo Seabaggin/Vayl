@@ -16,6 +16,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI   // AppAnimation tokens + UIAccessibility (Reduce Motion checks in the beat ceremony)
 
 @Observable
 @MainActor
@@ -106,9 +107,14 @@ final class DesireRevealStore: Identifiable {
 
     /// Kick off the reveal ceremony. No-op if a sequence is already running.
     /// Already-Core couples skip straight to .revealed (no conversion moment needed).
+    ///
+    /// Edge case (fix #2): a free couple whose ONLY match is the free one (lockedCount == 0)
+    /// has nothing to gate. Auto-advancing them to beat3 would float a paywall over an empty
+    /// locked section. Treat them like already-Core: land on the lit end-state, no ask, no gap.
+    /// (matches / lockedCount are populated by load() before .ready, which gates this call.)
     func startBeatSequence() {
         guard beatPhase == .idle else { return }
-        if isFullyUnlocked {
+        if isFullyUnlocked || lockedCount == 0 {
             beatPhase = .revealed
         } else {
             beatPhase = .beat1
@@ -118,36 +124,51 @@ final class DesireRevealStore: Identifiable {
 
     /// Tap-to-advance: skip the current hold immediately. Idempotent — safe to call at any beat.
     /// Animations are driven by the View observing beatPhase changes.
+    ///
+    /// Fix #1: a beat1 tap lands on beat2, but the beat2 → beat3 leg must still auto-arm so the
+    /// paywall eventually rises on its own. Both the auto path (scheduleAutoAdvance) and a tap
+    /// route the second leg through scheduleBeat2ToBeat3() so neither strands the ceremony.
     func advanceBeat() {
-        autoAdvanceTask?.cancel()   // a tap supersedes the auto-timer; the user drives from here
+        autoAdvanceTask?.cancel()   // a tap supersedes the current auto-timer; the user drives from here
         switch beatPhase {
-        case .beat1: beatPhase = .beat2
+        case .beat1:
+            beatPhase = .beat2
+            scheduleBeat2ToBeat3()   // re-arm the second leg so the paywall still auto-rises
         case .beat2: beatPhase = .beat3; showPaywall = true
         case .beat3: showPaywall = true  // re-open paywall if the user dismissed it without purchasing
         default: break
         }
     }
 
+    /// First leg of the ceremony: beat1 hold, then beat1 → beat2, then chains the second leg.
+    /// [weak self]: a fire-and-forget timer must NOT keep the store alive past the reveal.
+    /// A strong capture would release the store on a background executor when the Task ends
+    /// (after the cover dismissed / in tests, after the case returned), routing the
+    /// @MainActor isolated deinit through the wrong executor.
     private func scheduleAutoAdvance() {
-        // Holds from desire-reveal.html control panel (default values; feel in the mockup):
-        //   kHold12 (flip-settle → gap): 1.5s
-        //   kHold23 (gap appears → paywall rises): 1.2s
-        let kHold12: Double = 1.5
-        let kHold23: Double = 1.2
-        // [weak self]: a fire-and-forget timer must NOT keep the store alive past the reveal.
-        // A strong capture would release the store on a background executor when the Task ends
-        // (after the cover dismissed / in tests, after the case returned), routing the
-        // @MainActor isolated deinit through the wrong executor.
+        // Fix #3a: with Reduce Motion on, collapse the hold to 0 so there is no timed ceremony.
+        let hold: Double = UIAccessibility.isReduceMotionEnabled ? 0 : AppAnimation.desireBeatHold1
         autoAdvanceTask?.cancel()
         autoAdvanceTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(kHold12))
+            try? await Task.sleep(for: .seconds(hold))
             guard let self, beatPhase == .beat1 else { return }
             beatPhase = .beat2
+            scheduleBeat2ToBeat3()
+        }
+    }
 
-            // Wait for all locked rows to stagger in before the hold begins
-            let staggerDone = Double(lockedCount) * 0.08 + 0.14
-            try? await Task.sleep(for: .seconds(staggerDone + kHold23))
-            guard beatPhase == .beat2 else { return }
+    /// Second leg: wait for the locked rows to stagger in plus the beat-2 hold, then beat2 → beat3
+    /// and raise the paywall. Reusable so both the auto path and a beat1 tap reach beat3.
+    private func scheduleBeat2ToBeat3() {
+        let reduceMotion = UIAccessibility.isReduceMotionEnabled
+        // Fix #4: tokenized holds + stagger (was kHold23 1.2 / 0.08 step / 0.14 base).
+        let stagger = Double(lockedCount) * AppAnimation.desireBeatStaggerStep + AppAnimation.desireBeatStaggerBase
+        // Fix #3a: Reduce Motion collapses the hold so beat3 lands immediately (no timed ceremony).
+        let wait: Double = reduceMotion ? 0 : (stagger + AppAnimation.desireBeatHold2)
+        autoAdvanceTask?.cancel()
+        autoAdvanceTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(wait))
+            guard let self, beatPhase == .beat2 else { return }
             beatPhase = .beat3
             showPaywall = true
         }

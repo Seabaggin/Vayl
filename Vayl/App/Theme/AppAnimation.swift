@@ -722,6 +722,25 @@ internal enum AppAnimation {
     /// Not an Animation — consumed by a repeating loop at the call site.
     /// Reduce motion: loop never starts; lines hold at a faint partial-draw static state.
     static let desireHesitantSketch: Double = 4.2
+
+    // Reveal 3-beat ceremony holds (raw Double — consumed by Task.sleep in DesireRevealStore).
+    // Reduce motion: collapse both holds to ~0 so the reveal resolves instantly (no timed ceremony).
+
+    /// 1.5s — Beat 1 → Beat 2: the free star settles before the locked gap appears.
+    static let desireBeatHold1: Double = 1.5
+
+    /// 1.2s — Beat 2 → Beat 3: the gap holds before the paywall rises.
+    static let desireBeatHold2: Double = 1.2
+
+    /// 0.08s — Per-locked-row stagger step (added per locked match before the Beat-2 hold begins).
+    static let desireBeatStaggerStep: Double = 0.08
+
+    /// 0.14s — Base offset before the locked-row stagger (the first row's lead-in).
+    static let desireBeatStaggerBase: Double = 0.14
+
+    /// 0.36s — A single locked teaser row fading/staggering into the gap (Beat 2).
+    /// Reduce motion: falls back via `.reduceMotionSafe` to a fast opacity confirm.
+    static let desireLockedRowEnter: Animation = .easeOut(duration: 0.36)
 }
 
 // MARK: — Reduce Motion Helpers

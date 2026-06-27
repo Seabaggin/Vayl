@@ -257,10 +257,14 @@ private struct _LockedMatchRow: View {
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary.opacity(0.6))
 
-                Text("••••••••••")
+                // Fix #6: render the REAL item name, blurred + dimmed, so it reads as a
+                // blurred real label (mockup) rather than placeholder dots.
+                Text(match.itemName)
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textTertiary)
                     .blur(radius: 5)
+                    .lineLimit(1)
+                    .opacity(0.6)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Image(systemName: "chevron.right")

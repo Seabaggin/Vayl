@@ -162,7 +162,7 @@ struct DesireRevealView: View {
                     .tracking(1.5)
                     .padding(.top, AppSpacing.md)
                     .opacity(store.beatPhase != .idle ? 1 : 0)
-                    .animation(AppAnimation.desireStarIgnite.delay(0.10), value: store.beatPhase)
+                    .animation(AppAnimation.desireStarIgnite.delay(0.10).reduceMotionSafe, value: store.beatPhase)
 
                 // Constellation
                 ConstellationField(
@@ -179,12 +179,14 @@ struct DesireRevealView: View {
                 .frame(height: store.beatPhase.rawValue >= 2 ? 220 : 300)
                 .padding(.vertical, AppSpacing.lg)
                 .opacity(store.beatPhase != .idle ? 1 : 0)
-                .animation(AppAnimation.desireStarIgnite, value: store.beatPhase)
-                .animation(.easeOut(duration: 0.40), value: store.beatPhase.rawValue >= 2)
+                // Fix #3b: gate the ignite + height transition behind reduceMotionSafe so they
+                // fall back to a fast opacity confirm when Reduce Motion is on.
+                .animation(AppAnimation.desireStarIgnite.reduceMotionSafe, value: store.beatPhase)
+                .animation(AppAnimation.enter.reduceMotionSafe, value: store.beatPhase.rawValue >= 2)
 
                 // Bottom section: caption at beat1/revealed, locked rows at beat2/beat3
                 bottomSection
-                    .animation(.easeOut(duration: 0.40), value: store.beatPhase)
+                    .animation(AppAnimation.enter.reduceMotionSafe, value: store.beatPhase)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -199,7 +201,7 @@ struct DesireRevealView: View {
         case .beat1:
             // Caption for the free match
             VStack(spacing: AppSpacing.xs) {
-                Text("You both marked this")
+                Text("You both marked this ✦")
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -297,16 +299,45 @@ struct DesireRevealView: View {
                 )
             }
         case .revealed:
-            return store.matches.map { match in
-                ConstellationNodeData(
+            // Fix #6: preserve the mockup's hero hierarchy (screen 10) — the free/hero match is
+            // notably larger; the rest vary slightly. Sizes derive from a base × multiplier, no
+            // fixed pixel soup.
+            let heroId = heroMatchId
+            return store.matches.enumerated().map { index, match in
+                let isHero = match.id == heroId
+                // Deterministic slight variation for non-hero nodes (alternating, index-driven).
+                let variation: CGFloat = 1.0 + (CGFloat(index % 3) - 1.0) * revealedNodeVariation
+                let size = revealedNodeBaseSize * (isHero ? revealedHeroMultiplier : variation)
+                return ConstellationNodeData(
                     id: match.id.uuidString,
-                    size: 16,
+                    size: size,
                     state: .lit,
                     label: match.itemName,
                     cadence: .free
                 )
             }
         }
+    }
+
+    // MARK: - Revealed-sky node sizing (fix #6)
+
+    /// Base star diameter for the unlocked sky; hero scales up, others vary slightly around it.
+    private var revealedNodeBaseSize: CGFloat { 16 }
+    /// Hero multiplier — the free/hero match reads notably larger (mockup screen 10).
+    private var revealedHeroMultiplier: CGFloat { 1.55 }
+    /// Spread for the slight per-node variation around the base (non-hero nodes).
+    private var revealedNodeVariation: CGFloat { 0.18 }
+
+    /// The hero match for the unlocked sky: the free-reveal match if one is unlocked
+    /// (free couples have exactly one), else the first mutual, else the first match.
+    private var heroMatchId: UUID? {
+        if let free = store.unlockedMatches.first, store.unlockedMatches.count == 1 {
+            return free.id
+        }
+        if let mutual = store.matches.first(where: { $0.alignment == .mutual }) {
+            return mutual.id
+        }
+        return store.matches.first?.id
     }
 
     private var constellationLineMode: ConstellationLineMode {
@@ -443,8 +474,12 @@ private struct _LockedSection: View {
                 )
                 .opacity(isVisible ? 1 : 0)
                 .offset(y: isVisible ? 0 : 22)
+                // Fix #5: tokenized locked-row stagger (was .easeOut 0.36 / 0.08 step),
+                // reduceMotionSafe so it collapses to a fast opacity confirm.
                 .animation(
-                    .easeOut(duration: 0.36).delay(Double(i) * 0.08),
+                    AppAnimation.desireLockedRowEnter
+                        .delay(Double(i) * AppAnimation.desireBeatStaggerStep)
+                        .reduceMotionSafe,
                     value: isVisible
                 )
             }
@@ -465,8 +500,12 @@ private struct _LockedSection: View {
             .frame(maxWidth: .infinity)
             .padding(.top, AppSpacing.sm)
             .opacity(isVisible ? 1 : 0)
+            // Fix #5: tokenized count + hairline fade (was .easeOut 0.4 / 0.08 step / 0.14 base),
+            // reduceMotionSafe so it collapses to a fast opacity confirm.
             .animation(
-                .easeOut(duration: 0.4).delay(Double(min(matches.count, 4)) * 0.08 + 0.14),
+                AppAnimation.enter
+                    .delay(Double(min(matches.count, 4)) * AppAnimation.desireBeatStaggerStep + AppAnimation.desireBeatStaggerBase)
+                    .reduceMotionSafe,
                 value: isVisible
             )
         }
