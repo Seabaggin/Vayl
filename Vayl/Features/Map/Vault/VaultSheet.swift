@@ -66,6 +66,17 @@ struct VaultSheet: View {
                 store.loadLog(context: modelContext)
             })
         }
+        .vaylSheet(
+            isPresented: Binding(
+                get: { store.selectedDiscussionCard != nil },
+                set: { if !$0 { store.closeDiscussion() } }
+            ),
+            heightFraction: 0.80
+        ) {
+            if let card = store.selectedDiscussionCard {
+                DiscussionCardView(card: card, onDismiss: { store.closeDiscussion() })
+            }
+        }
     }
 
     @ViewBuilder

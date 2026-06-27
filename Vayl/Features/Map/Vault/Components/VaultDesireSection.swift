@@ -104,18 +104,28 @@ struct VaultDesireSection: View {
     }
 
     private func alignRow(_ item: MapStore.AlignItem) -> some View {
-        HStack(spacing: AppSpacing.sm) {
-            Image(systemName: "diamond")
-                .font(.system(size: 13, weight: .regular))
-                .foregroundStyle(AppColors.spectrumBridge)
-            Text(item.name)
-                .font(AppFonts.bodyMedium)
-                .foregroundStyle(AppColors.textBody)
-            Spacer()
-            badge(item.isMutual)
+        let tier: CompanionCardTier = item.isMutual ? .mutual : .adjacent
+        return Button {
+            store.openDiscussion(itemId: item.id, itemName: item.name, tier: tier)
+        } label: {
+            HStack(spacing: AppSpacing.sm) {
+                Image(systemName: "diamond")
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(AppColors.spectrumBridge)
+                Text(item.name)
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(AppColors.textBody)
+                Spacer()
+                badge(item.isMutual)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(AppColors.textTertiary)
+            }
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.vertical, AppSpacing.sm + 2)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, AppSpacing.md)
-        .padding(.vertical, AppSpacing.sm + 2)
+        .buttonStyle(PressableCardStyle())
     }
 
     private func badge(_ isMutual: Bool) -> some View {
@@ -211,18 +221,26 @@ struct VaultDesireSection: View {
     }
 
     private func openedRow(_ c: VaultStore.ConsentVM) -> some View {
-        HStack(spacing: AppSpacing.sm) {
-            Image(systemName: "bubble.left.and.bubble.right.fill")
-                .font(.system(size: 13))
-                .foregroundStyle(AppColors.spectrumCyan)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(c.itemName).font(AppFonts.bodyMedium).foregroundStyle(AppColors.textBody)
-                Text("Opened together").font(AppFonts.caption).foregroundStyle(AppColors.spectrumCyan)
+        Button {
+            store.openDiscussion(itemId: c.itemId, itemName: c.itemName, tier: .consentOpened)
+        } label: {
+            HStack(spacing: AppSpacing.sm) {
+                Image(systemName: "bubble.left.and.bubble.right.fill")
+                    .font(.system(size: 13))
+                    .foregroundStyle(AppColors.spectrumCyan)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(c.itemName).font(AppFonts.bodyMedium).foregroundStyle(AppColors.textBody)
+                    Text("Opened together").font(AppFonts.caption).foregroundStyle(AppColors.spectrumCyan)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(AppColors.textTertiary)
             }
-            Spacer()
+            .padding(AppSpacing.md)
+            .vaylGlassCard()
         }
-        .padding(AppSpacing.md)
-        .vaylGlassCard()
+        .buttonStyle(PressableCardStyle())
     }
 
     private func waitingRow(_ c: VaultStore.ConsentVM) -> some View {
