@@ -40,7 +40,7 @@ final class CompanionCardStore {
     /// Uses Unicode scalar sum (not hashValue, which is randomized in Swift).
     private func stableIndex(for itemId: String, count: Int) -> Int {
         guard count > 0 else { return 0 }
-        let sum = itemId.unicodeScalars.reduce(0) { $0 + Int($1.value) }
-        return abs(sum) % count
+        let sum = itemId.unicodeScalars.reduce(0 as UInt) { $0 &+ UInt($1.value) }
+        return Int(sum % UInt(count))
     }
 }
