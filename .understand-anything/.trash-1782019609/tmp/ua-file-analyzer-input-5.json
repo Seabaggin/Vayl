@@ -1,0 +1,31 @@
+{
+  "projectRoot": "/Users/bryanjorden/Documents/School/Code/Vayl",
+  "batchFiles": [
+    {"path": "Vayl/Core/Models/Enums/AppAccessEnums.swift", "language": "swift", "sizeLines": 55, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/Enums/AppCardEnums.swift", "language": "swift", "sizeLines": 250, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/Enums/AppDesireEnums.swift", "language": "swift", "sizeLines": 95, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/Enums/AppEnums.swift", "language": "swift", "sizeLines": 346, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/Enums/AppOBEnums.swift", "language": "swift", "sizeLines": 258, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/Enums/AppPulseEnums.swift", "language": "swift", "sizeLines": 180, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/Enums/AppTab.swift", "language": "swift", "sizeLines": 29, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/Enums/UserDefaultsKey.swift", "language": "swift", "sizeLines": 20, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/LockInSession.swift", "language": "swift", "sizeLines": 113, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/MilestoneRecord.swift", "language": "swift", "sizeLines": 101, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/PulseEntry.swift", "language": "swift", "sizeLines": 68, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/SessionRecord.swift", "language": "swift", "sizeLines": 98, "fileCategory": "code"},
+    {"path": "Vayl/Core/Models/UserProfile.swift", "language": "swift", "sizeLines": 189, "fileCategory": "code"},
+    {"path": "Vayl/Core/Persistence/DataStore.swift", "language": "swift", "sizeLines": 222, "fileCategory": "code"},
+    {"path": "Vayl/Core/Persistence/ModelContext+Extensions.swift", "language": "swift", "sizeLines": 35, "fileCategory": "code"},
+    {"path": "Vayl/Core/Services/AppState.swift", "language": "swift", "sizeLines": 201, "fileCategory": "code"},
+    {"path": "Vayl/Core/Services/AuthService.swift", "language": "swift", "sizeLines": 184, "fileCategory": "code"},
+    {"path": "Vayl/Core/Services/ContentLoader.swift", "language": "swift", "sizeLines": 124, "fileCategory": "code"},
+    {"path": "Vayl/Core/Services/DesireSyncService.swift", "language": "swift", "sizeLines": 247, "fileCategory": "code"},
+    {"path": "Vayl/Core/Services/EntitlementService.swift", "language": "swift", "sizeLines": 84, "fileCategory": "code"},
+    {"path": "Vayl/Core/Services/LegalLinks.swift", "language": "swift", "sizeLines": 41, "fileCategory": "code"},
+    {"path": "Vayl/Core/Services/PairingService.swift", "language": "swift", "sizeLines": 238, "fileCategory": "code"},
+    {"path": "Vayl/Core/Services/ProfileService.swift", "language": "swift", "sizeLines": 257, "fileCategory": "code"},
+    {"path": "Vayl/Core/Services/RealtimeSessionService.swift", "language": "swift", "sizeLines": 293, "fileCategory": "code"},
+    {"path": "Vayl/Core/Services/StoreKitService.swift", "language": "swift", "sizeLines": 109, "fileCategory": "code"}
+  ],
+  "batchImportData": {}
+}

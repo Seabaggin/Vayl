@@ -1,113 +1,111 @@
 //
 //  PlayView.swift
-//  Open Lightly
+//  Vayl — Play
 //
-//  Created by Bryan Jorden on 4/8/26.
+//  Tab root + screen. Builds the PlayStore from the environment, then lays out
+//  the Cards masthead (pinned), the active-deck hero + docked deck wall (or the
+//  expanded canvas), with the float-in-space detail, the Begin ceremony, and
+//  the session cover layered above.
 //
-
-
-// Features/Play/PlayView.swift
-// Open Lightly
 
 import SwiftUI
+import SwiftData
 
 struct PlayView: View {
-
-    #if DEBUG
+    @Environment(\.modelContext) private var modelContext
     @Environment(AppState.self) private var appState
-    @Environment(AuthService.self) private var authService
-    @State private var debugStatus = ""
-    @State private var debugBusy = false
-    #endif
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var store: PlayStore?
+    @State private var scrollY: CGFloat = 0
+    @Namespace private var deckZoom
+
+    /// Inject a store for previews; nil in the app (built from the environment).
+    var injectedStore: PlayStore? = nil
+
+    /// 0 = hero full at rest, 1 = collapsed. Mirrors Home's scroll-linked hero transform
+    /// (same ~320pt range). Reduce Motion pins it to 0 (plain scroll, no collapse).
+    private var collapse: Double {
+        reduceMotion ? 0 : min(1, max(0, Double(scrollY) / 320))
+    }
 
     var body: some View {
         ZStack {
-            AppColors.pageBackground.ignoresSafeArea()
-            VStack(spacing: AppSpacing.lg) {
-                Text("Play")
-                    .font(AppFonts.screenTitle)
-                    .foregroundStyle(AppColors.textSecondary)
-
-                #if DEBUG
-                debugSession
-                #endif
+            AppColors.void.ignoresSafeArea()
+            if let store = store ?? injectedStore {
+                content(store)
+            }
+        }
+        .task {
+            if store == nil && injectedStore == nil {
+                store = PlayStore(modelContainer: modelContext.container, appState: appState)
             }
         }
     }
 
-    #if DEBUG
-    // TEMPORARY — Phase A3 runtime check (auth + RLS + insert reach curated_sessions).
-    // Remove when Phase C1 builds the real session entry on Home / Deck Library.
     @ViewBuilder
-    private var debugSession: some View {
-        VStack(spacing: AppSpacing.sm) {
-            Button {
-                Task { await openStubSession() }
-            } label: {
-                Text(debugBusy ? "Opening…" : "DEBUG: Open stub session")
-                    .font(AppFonts.buttonLabel)
-                    .padding(.horizontal, AppSpacing.lg)
-                    .padding(.vertical, AppSpacing.sm)
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(debugBusy)
+    private func content(_ store: PlayStore) -> some View {
+        ZStack(alignment: .top) {
+            OnboardingAtmosphere(config: .stat).ignoresSafeArea()
 
-            if !debugStatus.isEmpty {
-                Text(debugStatus)
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .multilineTextAlignment(.center)
+            VStack(spacing: 0) {
+                PlayMastheadView()
                     .padding(.horizontal, AppSpacing.lg)
+                    .padding(.top, AppSpacing.xs)
+
+                if store.isEmpty {
+                    PlayEmptyState(message: store.loadError) { store.retry() }
+                } else {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: AppSpacing.xl) {
+                            PlayHeroView(store: store, collapse: collapse)
+                            DeckWallView(store: store, namespace: deckZoom)
+                        }
+                        .padding(.top, AppSpacing.sm)
+                        .padding(.bottom, AppSpacing.xxl * 2 + AppSpacing.lg)   // ~120pt tab-bar clearance
+                    }
+                    .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
+                        scrollY = y
+                    }
+                }
             }
+
+            DeckDetailView(store: store, namespace: deckZoom)
+
+            if store.ceremonyDeckID != nil {
+                DeckBeginCeremony(store: store)
+                    .transition(.opacity)
+                    .zIndex(10)
+            }
+        }
+        .animation(AppAnimation.enter, value: store.ceremonyDeckID)
+        .vaylCover(isPresented: Binding(
+            get: { store.sessionHand != nil },
+            set: { if !$0 { store.endSession() } }
+        )) {
+            CardSessionContainerView(hand: store.sessionHand ?? [])
+        }
+        .vaylSheet(
+            isPresented: Binding(
+                get: { store.paywallDeck != nil },
+                set: { if !$0 { store.dismissPaywall() } }
+            ),
+            heightFraction: 0.92
+        ) {
+            PaywallSheet(
+                entry: .playDeck(name: store.paywallDeck?.title ?? "this deck"),
+                onUnlocked: { store.dismissPaywall() }
+            )
         }
     }
 
-    @MainActor
-    private func openStubSession() async {
-        debugBusy = true
-        debugStatus = ""
-        defer { debugBusy = false }
-
-        guard let authId = authService.userId else {
-            debugStatus = "Not signed in (no auth user)."
-            return
-        }
-        let service = RealtimeSessionService()
-        do {
-            let initiatorId = try await ProfileService().ensureProfileExists(authId: authId)
-
-            // Resolve the couple: prefer linked state, else look it up in Supabase
-            // so a manually-seeded test couple works without going through pairing.
-            let coupleId: UUID
-            if let linked = appState.coupleId {
-                coupleId = linked
-            } else if let found = try await service.fetchCoupleId(forProfileId: initiatorId) {
-                coupleId = found
-            } else {
-                debugStatus = "No couple for your profile. Seed a test couple in Supabase, then retry."
-                return
-            }
-
-            if let existing = try await service.fetchOpenSession(coupleId: coupleId) {
-                debugStatus = "ℹ️ Open session exists: \(existing.id.uuidString.prefix(8))… status=\(existing.status). Delete it in Supabase to test a fresh insert."
-                return
-            }
-            let draft = CuratedSessionDraft(
-                deckId: "the-opener",
-                deckVariant: nil,
-                cardIds: ["opener-01", "opener-02", "opener-03"],
-                perCardTimer: [:],
-                globalTimerSeconds: nil
-            )
-            let dto = try await service.openSession(
-                coupleId: coupleId,
-                initiatorId: initiatorId,
-                draft: draft
-            )
-            debugStatus = "✅ Opened \(dto.id.uuidString.prefix(8))… status=\(dto.status). Check curated_sessions in Supabase."
-        } catch {
-            debugStatus = "❌ \(error.localizedDescription)"
-        }
-    }
-    #endif
 }
+
+#if DEBUG
+#Preview("Play") {
+    PlayView(injectedStore: .preview)
+        .environment(AppState())
+        .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
+        .modelContainer(.previewContainer)
+        .preferredColorScheme(.dark)
+}
+#endif

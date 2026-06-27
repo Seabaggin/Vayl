@@ -1,0 +1,369 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/App/Theme/ThemeManager.swift",
+      "type": "file",
+      "name": "ThemeManager.swift",
+      "filePath": "Vayl/App/Theme/ThemeManager.swift",
+      "summary": "Holds the app-wide color-scheme mode as an @Observable store, persisting it to UserDefaults and force-pinning Act 1 to the dark Midnight palette.",
+      "tags": ["store", "state", "observable", "design-system", "theming"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/App/Theme/ThemeManager.swift:ThemeManager",
+      "type": "class",
+      "name": "ThemeManager",
+      "filePath": "Vayl/App/Theme/ThemeManager.swift",
+      "lineRange": [10, 46],
+      "summary": "@Observable theme store owning the persisted ThemeMode; migrates legacy/leaked values and currently forces .dark as the preferred color scheme.",
+      "tags": ["store", "state", "observable", "theming"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/App/Theme/ThemeModifiers.swift",
+      "type": "file",
+      "name": "ThemeModifiers.swift",
+      "filePath": "Vayl/App/Theme/ThemeModifiers.swift",
+      "summary": "ViewModifiers and View extensions for the design system: themedRoot (color-scheme binding), themedCard (card surface), and a conditional `if` helper.",
+      "tags": ["design-system", "view-modifier", "ui", "theming", "component"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/App/Theme/ThemeModifiers.swift:ThemedRootModifier",
+      "type": "class",
+      "name": "ThemedRootModifier",
+      "filePath": "Vayl/App/Theme/ThemeModifiers.swift",
+      "lineRange": [12, 19],
+      "summary": "ViewModifier that reads the environment ThemeManager and applies its preferred color scheme to the root view tree.",
+      "tags": ["design-system", "view-modifier", "theming"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/App/Theme/ThemeModifiers.swift:ThemedCardModifier",
+      "type": "class",
+      "name": "ThemedCardModifier",
+      "filePath": "Vayl/App/Theme/ThemeModifiers.swift",
+      "lineRange": [29, 51],
+      "summary": "ViewModifier rendering the standard card surface — background, rounded clip, hairline stroke, and a selection glow shadow in dark mode.",
+      "tags": ["design-system", "view-modifier", "ui", "component"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/App/Theme/VaylPrimitives.swift",
+      "type": "file",
+      "name": "VaylPrimitives.swift",
+      "filePath": "Vayl/App/Theme/VaylPrimitives.swift",
+      "summary": "Tier-1 raw color palette (UIColor hex/RGB anchors) whose only permitted consumer is AppColors; also defines the internal UIColor(hex:) initializer.",
+      "tags": ["design-system", "color-tokens", "primitives", "theming"],
+      "complexity": "moderate",
+      "languageNotes": "Strict token layering: primitives are appearance-named UIColor constants, never referenced in views — semantic naming is reserved for AppColors."
+    },
+    {
+      "id": "class:Vayl/App/Theme/VaylPrimitives.swift:VaylPrimitives",
+      "type": "class",
+      "name": "VaylPrimitives",
+      "filePath": "Vayl/App/Theme/VaylPrimitives.swift",
+      "lineRange": [25, 135],
+      "summary": "Enum namespace of raw UIColor constants — spectrum anchors, ink neutrals, OB canvas darks, felt/table tints, wine text scale, and gold safety signals.",
+      "tags": ["design-system", "color-tokens", "primitives", "type-definition"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/App/VaylApp.swift",
+      "type": "file",
+      "name": "VaylApp.swift",
+      "filePath": "Vayl/App/VaylApp.swift",
+      "summary": "App entry point and composition root: constructs the shared AppState and injects it into the store graph, wires environment objects, and runs session/entitlement bootstrap on launch.",
+      "tags": ["entry-point", "app", "composition-root", "store"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/App/VaylApp.swift:VaylApp",
+      "type": "class",
+      "name": "VaylApp",
+      "filePath": "Vayl/App/VaylApp.swift",
+      "lineRange": [9, 69],
+      "summary": "@main App struct owning all top-level @State stores (ThemeManager, AppState, OnboardingStore, EntitlementStore, etc.); hydrates onboarding state, checks auth session, bootstraps entitlements, and retries pending syncs.",
+      "tags": ["entry-point", "app", "composition-root", "store"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/AppIconRetreival.swift",
+      "type": "file",
+      "name": "AppIconRetreival.swift",
+      "filePath": "Vayl/AppIconRetreival.swift",
+      "summary": "Fully commented-out dev utility that once rendered and exported VaylAppIcon to PNG files at standard icon sizes; currently inert dead code.",
+      "tags": ["dead-code", "tooling", "asset-export"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Assets.xcassets/AccentColor.colorset/Contents.json",
+      "type": "config",
+      "name": "Contents.json",
+      "filePath": "Vayl/Assets.xcassets/AccentColor.colorset/Contents.json",
+      "summary": "Asset catalog manifest defining the app's universal AccentColor color set.",
+      "tags": ["configuration", "asset-catalog", "color", "ios"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Assets.xcassets/AppIcon.appiconset/Contents.json",
+      "type": "config",
+      "name": "Contents.json",
+      "filePath": "Vayl/Assets.xcassets/AppIcon.appiconset/Contents.json",
+      "summary": "Asset catalog manifest declaring the universal app icon image set for iOS.",
+      "tags": ["configuration", "asset-catalog", "app-icon", "ios"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Assets.xcassets/Contents.json",
+      "type": "config",
+      "name": "Contents.json",
+      "filePath": "Vayl/Assets.xcassets/Contents.json",
+      "summary": "Root asset catalog manifest carrying Xcode authoring metadata for Assets.xcassets.",
+      "tags": ["configuration", "asset-catalog", "ios"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Assets.xcassets/gender-man.symbolset/Contents.json",
+      "type": "config",
+      "name": "Contents.json",
+      "filePath": "Vayl/Assets.xcassets/gender-man.symbolset/Contents.json",
+      "summary": "Asset catalog manifest registering the custom 'gender-man' SF Symbol used in onboarding gender selection.",
+      "tags": ["configuration", "asset-catalog", "sf-symbol", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Assets.xcassets/gender-non-binary.symbolset/Contents.json",
+      "type": "config",
+      "name": "Contents.json",
+      "filePath": "Vayl/Assets.xcassets/gender-non-binary.symbolset/Contents.json",
+      "summary": "Asset catalog manifest registering the custom 'gender-non-binary' SF Symbol used in onboarding gender selection.",
+      "tags": ["configuration", "asset-catalog", "sf-symbol", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Assets.xcassets/gender-trans.symbolset/Contents.json",
+      "type": "config",
+      "name": "Contents.json",
+      "filePath": "Vayl/Assets.xcassets/gender-trans.symbolset/Contents.json",
+      "summary": "Asset catalog manifest registering the custom 'gender-trans' SF Symbol used in onboarding gender selection.",
+      "tags": ["configuration", "asset-catalog", "sf-symbol", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Assets.xcassets/gender-woman.symbolset/Contents.json",
+      "type": "config",
+      "name": "Contents.json",
+      "filePath": "Vayl/Assets.xcassets/gender-woman.symbolset/Contents.json",
+      "summary": "Asset catalog manifest registering the custom 'gender-woman' SF Symbol used in onboarding gender selection.",
+      "tags": ["configuration", "asset-catalog", "sf-symbol", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "type": "file",
+      "name": "DiagnosticOverlay.swift",
+      "filePath": "Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "summary": "DEBUG-only suite of layout-diagnostic overlays (screen ruler, CTA position marker, safe-area bands, position reporter) for verifying OB canvas geometry on device.",
+      "tags": ["debug", "ui", "view", "diagnostics", "tooling"],
+      "complexity": "moderate",
+      "languageNotes": "Entire file is wrapped in #if DEBUG so it compiles out of release builds."
+    },
+    {
+      "id": "class:Vayl/Core/Debug/DiagnosticOverlay.swift:ScreenRuler",
+      "type": "class",
+      "name": "ScreenRuler",
+      "filePath": "Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "lineRange": [18, 52],
+      "summary": "Debug View drawing a full-height vertical ruler with tick marks and absolute Y labels along the right edge for coordinate-space inspection.",
+      "tags": ["debug", "view", "ui", "diagnostics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Debug/DiagnosticOverlay.swift:CTAPositionMarker",
+      "type": "class",
+      "name": "CTAPositionMarker",
+      "filePath": "Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "lineRange": [58, 92],
+      "summary": "Debug overlay View drawing a labeled horizontal line at a CTA button's top edge, reporting its global min/max Y in screen space.",
+      "tags": ["debug", "view", "ui", "diagnostics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Debug/DiagnosticOverlay.swift:SafeAreaBands",
+      "type": "class",
+      "name": "SafeAreaBands",
+      "filePath": "Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "lineRange": [98, 136],
+      "summary": "Debug View painting colored top/bottom bands over the safe-area insets with their measured point values.",
+      "tags": ["debug", "view", "ui", "diagnostics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Debug/DiagnosticOverlay.swift:MeasurePosition",
+      "type": "class",
+      "name": "MeasurePosition",
+      "filePath": "Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "lineRange": [141, 177],
+      "summary": "ViewModifier (plus measurePosition extension) that outlines any view and prints/overlays its global frame for layout debugging.",
+      "tags": ["debug", "view-modifier", "diagnostics"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/App/Theme/ThemeManager.swift",
+      "target": "class:Vayl/App/Theme/ThemeManager.swift:ThemeManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/ThemeModifiers.swift",
+      "target": "class:Vayl/App/Theme/ThemeModifiers.swift:ThemedRootModifier",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/ThemeModifiers.swift",
+      "target": "class:Vayl/App/Theme/ThemeModifiers.swift:ThemedCardModifier",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/App/Theme/ThemeModifiers.swift:ThemedRootModifier",
+      "target": "class:Vayl/App/Theme/ThemeManager.swift:ThemeManager",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/Theme/ThemeModifiers.swift",
+      "target": "file:Vayl/App/Theme/AppColors.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/Theme/ThemeModifiers.swift",
+      "target": "file:Vayl/App/Theme/AppRadius.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/Theme/VaylPrimitives.swift",
+      "target": "class:Vayl/App/Theme/VaylPrimitives.swift:VaylPrimitives",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppColors.swift",
+      "target": "class:Vayl/App/Theme/VaylPrimitives.swift:VaylPrimitives",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/VaylApp.swift",
+      "target": "class:Vayl/App/VaylApp.swift:VaylApp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/VaylApp.swift",
+      "target": "file:Vayl/App/Theme/ThemeManager.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/VaylApp.swift",
+      "target": "file:Vayl/Core/Services/AppState.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/VaylApp.swift",
+      "target": "file:Vayl/Core/Services/AuthService.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/VaylApp.swift",
+      "target": "file:Vayl/Features/Pulse/Store/PulseStore.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/VaylApp.swift",
+      "target": "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/VaylApp.swift",
+      "target": "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/VaylApp.swift",
+      "target": "file:Vayl/App/ModelContainer.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/VaylApp.swift",
+      "target": "file:Vayl/App/Theme/AppRootView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/App/VaylApp.swift",
+      "target": "file:Vayl/Core/Services/SyncManager.swift",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "target": "class:Vayl/Core/Debug/DiagnosticOverlay.swift:ScreenRuler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "target": "class:Vayl/Core/Debug/DiagnosticOverlay.swift:CTAPositionMarker",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "target": "class:Vayl/Core/Debug/DiagnosticOverlay.swift:SafeAreaBands",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "target": "class:Vayl/Core/Debug/DiagnosticOverlay.swift:MeasurePosition",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    }
+  ]
+}

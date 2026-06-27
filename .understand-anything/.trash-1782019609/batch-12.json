@@ -1,0 +1,689 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/ContextPhase.swift",
+      "type": "file",
+      "name": "ContextPhase.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/ContextPhase.swift",
+      "summary": "Onboarding phase View — a browsable card carousel where the user swipes relationship-context cards, taps to confirm, and swipes up to commit the selection via VaylDirector.",
+      "tags": ["view", "onboarding", "ui", "card-physics", "carousel"],
+      "complexity": "complex",
+      "languageNotes": "Drives an injected CarouselPhysics value type and choreographs entrance/exit timelines with cancellable Tasks; all phase advancement routed through director.concludeContext."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/ContextPhase.swift:ContextPhase",
+      "type": "class",
+      "name": "ContextPhase",
+      "filePath": "Vayl/Features/Onboarding/Phases/ContextPhase.swift",
+      "lineRange": [18, 392],
+      "summary": "SwiftUI View struct rendering the context-selection carousel; owns local animation state and forwards confirm/exit gestures to the director.",
+      "tags": ["view", "onboarding", "carousel", "ui"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift",
+      "type": "file",
+      "name": "CredentialEditorSheet.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift",
+      "summary": "In-canvas edit half-sheet (plus its custom CredentialEditorOverlay presenter) for revising a single onboarding credential during ConfirmationPhase, writing straight back to director.onboardingData.",
+      "tags": ["view", "onboarding", "ui", "form", "sheet"],
+      "complexity": "complex",
+      "languageNotes": "Replaces the native .sheet (which insets in iOS 26) with a full-bleed in-canvas overlay using @Bindable two-way bindings into the director's data model."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift:CredentialEditorSheet",
+      "type": "class",
+      "name": "CredentialEditorSheet",
+      "filePath": "Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift",
+      "lineRange": [17, 309],
+      "summary": "Branched editor View that routes each OBCredential case (name, gender, mode, context, curiosity, etc.) to its own selectable-row editor bound to director.onboardingData.",
+      "tags": ["view", "onboarding", "form", "ui"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift:CredentialEditorOverlay",
+      "type": "class",
+      "name": "CredentialEditorOverlay",
+      "filePath": "Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift",
+      "lineRange": [320, 372],
+      "summary": "Custom partial-height bottom-sheet presenter hosting CredentialEditorSheet as a draggable, scrim-dismissable in-canvas overlay.",
+      "tags": ["view", "onboarding", "sheet", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/CuriosityPhase.swift",
+      "type": "file",
+      "name": "CuriosityPhase.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/CuriosityPhase.swift",
+      "summary": "Onboarding phase View rendering a two-round Tinder-style card-sort pile; the user sweeps left to discard or right to keep, with all sort state owned by director.curiosity.",
+      "tags": ["view", "onboarding", "ui", "card-physics", "gesture"],
+      "complexity": "complex",
+      "languageNotes": "Identity-stable ForEach keyed by card id so the next card rises into place; the forged-deck handoff uses shared HandBackFollow finger-tracking."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/CuriosityPhase.swift:CuriosityPhase",
+      "type": "class",
+      "name": "CuriosityPhase",
+      "filePath": "Vayl/Features/Onboarding/Phases/CuriosityPhase.swift",
+      "lineRange": [19, 397],
+      "summary": "Near-pure renderer View for the curiosity card sort; forwards drag/commit gestures to director.curiosity and renders the squared-deck deal cascade.",
+      "tags": ["view", "onboarding", "card-physics", "ui"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/DemoPhase.swift",
+      "type": "file",
+      "name": "DemoPhase.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/DemoPhase.swift",
+      "summary": "Onboarding phase View for the user's first card — a sentence-completion (\"I [verb] [noun].\") that teaches tap-to-lift and swipe-to-seal while triangulating an EmotionalRegister committed via director.commitDemoSnapshot.",
+      "tags": ["view", "onboarding", "ui", "card-physics", "diagnostic"],
+      "complexity": "complex",
+      "languageNotes": "Heavy use of a Canvas effects layer (impact ring, flip burst, particle dissolve seeds) plus a hidden TextField under a LivingText overlay for caret-aligned spectrum input."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/DemoPhase.swift:DemoPhase",
+      "type": "class",
+      "name": "DemoPhase",
+      "filePath": "Vayl/Features/Onboarding/Phases/DemoPhase.swift",
+      "lineRange": [27, 654],
+      "summary": "SwiftUI View struct orchestrating the demo card's deal/flip/lift/compose/seal scene timeline and committing the derived snapshot before advancing to NamePhase.",
+      "tags": ["view", "onboarding", "card-physics", "ui"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift",
+      "type": "file",
+      "name": "ExperienceLevelPhase.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift",
+      "summary": "Onboarding phase View dealing three candle cards into a fan via ThreeCardFanController; tap lifts to reveal a level, swipe-up confirms and writes nmStage through director.commitExperienceLevel.",
+      "tags": ["view", "onboarding", "ui", "card-physics", "spritekit"],
+      "complexity": "complex",
+      "languageNotes": "Bridges a SpriteKit SpriteView (deal-in flight) into SwiftUI cards, with a 30fps TimelineView capping candle-flicker redraws and rotation3DEffect edge-turn reveals."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift:ExperienceLevelPhase",
+      "type": "class",
+      "name": "ExperienceLevelPhase",
+      "filePath": "Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift",
+      "lineRange": [13, 478],
+      "summary": "View struct driving the candle-card fan; owns a ThreeCardFanController and reacts to its state machine to ask the question, auto-select, and advance to context.",
+      "tags": ["view", "onboarding", "card-physics", "ui"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift",
+      "type": "file",
+      "name": "FounderLetterPhase.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift",
+      "summary": "Final onboarding phase View presenting the founder letter sheet; the pull-down completion gesture commits the whole onboarding via director.finishOnboarding(using: onboardingStore).",
+      "tags": ["view", "onboarding", "ui", "sheet"],
+      "complexity": "moderate",
+      "languageNotes": "Pull-down is the completion (not cancel) gesture; consumes OnboardingStore from the environment and embeds the AnimatedSignature draw-on."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift:FounderLetterPhase",
+      "type": "class",
+      "name": "FounderLetterPhase",
+      "filePath": "Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift",
+      "lineRange": [25, 177],
+      "summary": "View struct rendering the founder letter and committing onboarding completion on a threshold pull-down, with a retry surface on commit failure.",
+      "tags": ["view", "onboarding", "sheet", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/GenderPhase.swift",
+      "type": "file",
+      "name": "GenderPhase.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/GenderPhase.swift",
+      "summary": "Onboarding phase View where a radio-tuner card crystallises from the felt and the user tunes gender + pronoun drums; near-pure renderer with all visual state on director.gender.",
+      "tags": ["view", "onboarding", "ui", "card-physics", "picker"],
+      "complexity": "complex",
+      "languageNotes": "Twin scrollable drum pickers driven by manual offset math; a shared 'prefer not to say' decline bar clears both dials; confirm uses HandBackFollow hand-off tracking."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/GenderPhase.swift:GenderPhase",
+      "type": "class",
+      "name": "GenderPhase",
+      "filePath": "Vayl/Features/Onboarding/Phases/GenderPhase.swift",
+      "lineRange": [23, 553],
+      "summary": "View struct rendering the gender/pronoun tuner card and drum pickers; forwards tune/lift/confirm gestures to director.gender (the GenderSequencer).",
+      "tags": ["view", "onboarding", "picker", "ui"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift",
+      "type": "file",
+      "name": "ModeSelectPhase.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift",
+      "summary": "Onboarding phase View dealing two solo/together cards from opposite sides via CardMirrorDealController; the user lifts one and swipes up to set appMode and advance to gender.",
+      "tags": ["view", "onboarding", "ui", "card-physics", "gesture"],
+      "complexity": "complex",
+      "languageNotes": "Cards are intentionally label-free (controller illustrations are the signifier); includes a playful cheat-code button animation and couples-first default auto-lift."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift:ModeSelectPhase",
+      "type": "class",
+      "name": "ModeSelectPhase",
+      "filePath": "Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift",
+      "lineRange": [15, 483],
+      "summary": "View struct driving the mirror-deal solo-vs-together card pick; owns a CardMirrorDealController and writes director.onboardingData.appMode on confirm.",
+      "tags": ["view", "onboarding", "card-physics", "ui"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/NamePhase.swift",
+      "type": "file",
+      "name": "NamePhase.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/NamePhase.swift",
+      "summary": "The flagship onboarding phase View — deals and flips the first card, runs the typewriter name input and greeting, and teaches the universal tap-lift then swipe-up hand-back gesture lesson.",
+      "tags": ["view", "onboarding", "ui", "card-physics", "gesture-teaching"],
+      "complexity": "complex",
+      "languageNotes": "The largest phase (937 lines): a multi-beat dealer/typewriter choreography with its own CardDealPhase state machine, Canvas effects, and the canonical lift/hand-off tutorial reused by every later phase."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/NamePhase.swift:NamePhase",
+      "type": "class",
+      "name": "NamePhase",
+      "filePath": "Vayl/Features/Onboarding/Phases/NamePhase.swift",
+      "lineRange": [15, 937],
+      "summary": "View struct rendering the deal/flip/name-input/greeting/hand-back sequence and teaching the core OB gestures, advancing via director on card return.",
+      "tags": ["view", "onboarding", "card-physics", "ui"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift",
+      "type": "file",
+      "name": "SingleGreetingSheet.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift",
+      "summary": "An 'honest moment' overlay (SingleGreetingOverlay) shown when a user confirms 'I'm single' in ContextPhase, acknowledged via 'Got it' which commits the pending conclusion through director.continueFromSingleGreeting.",
+      "tags": ["view", "onboarding", "ui", "overlay"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift:SingleGreetingOverlay",
+      "type": "class",
+      "name": "SingleGreetingOverlay",
+      "filePath": "Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift",
+      "lineRange": [10, 92],
+      "summary": "Scrimmed bottom-sheet overlay View presenting the couples-first single-user message and the 'Got it' continue button.",
+      "tags": ["view", "onboarding", "overlay", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/StatPhase.swift",
+      "type": "file",
+      "name": "StatPhase.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/StatPhase.swift",
+      "summary": "Early onboarding phase View presenting the '1 in 5' hero statistic with a holographic ignition entrance cascade and a citation expander, advancing on CTA.",
+      "tags": ["view", "onboarding", "ui", "animation"],
+      "complexity": "complex",
+      "languageNotes": "Resolves a responsive hero numeral size from AppLayout and reads realSafeArea from the environment so canvas and preview contexts share identical usable height."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/StatPhase.swift:StatPhase",
+      "type": "class",
+      "name": "StatPhase",
+      "filePath": "Vayl/Features/Onboarding/Phases/StatPhase.swift",
+      "lineRange": [21, 619],
+      "summary": "View struct rendering the holographic statistic hero, entrance cascade, and citation; advances the director on the CTA.",
+      "tags": ["view", "onboarding", "animation", "ui"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Renders/AnimatedSignature.swift",
+      "type": "file",
+      "name": "AnimatedSignature.swift",
+      "filePath": "Vayl/Features/Onboarding/Renders/AnimatedSignature.swift",
+      "summary": "Native SwiftUI draw-on of the founder's three-stroke handwritten signature, each pen-stroke trim-animated with lift pauses and rendered in glow plus crisp spectrum passes.",
+      "tags": ["view", "onboarding", "ui", "animation", "render"],
+      "complexity": "moderate",
+      "languageNotes": "Per-stroke trim progress state with pen-lift cadence; follows the OB two-render-pass rule (blurred spectrum glow + crisp line)."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Renders/AnimatedSignature.swift:AnimatedSignature",
+      "type": "class",
+      "name": "AnimatedSignature",
+      "filePath": "Vayl/Features/Onboarding/Renders/AnimatedSignature.swift",
+      "lineRange": [22, 354],
+      "summary": "Self-contained View that plays the founder signature draw-on once on appear via independent per-stroke trim animations.",
+      "tags": ["view", "render", "animation", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Renders/DealPointView.swift",
+      "type": "file",
+      "name": "DealPointView.swift",
+      "filePath": "Vayl/Features/Onboarding/Renders/DealPointView.swift",
+      "summary": "Stateless render of the OB deal point — the table-horizon origin from which all onboarding cards launch, its glow intensity driven by VaylDirector.",
+      "tags": ["view", "onboarding", "render", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Renders/ProjectedTextView.swift",
+      "type": "file",
+      "name": "ProjectedTextView.swift",
+      "filePath": "Vayl/Features/Onboarding/Renders/ProjectedTextView.swift",
+      "summary": "Stateless render of the dealer's voice — text typed character-by-character onto the felt at the table horizon, driven by VaylDirector's projected text state.",
+      "tags": ["view", "onboarding", "render", "ui"],
+      "complexity": "moderate",
+      "languageNotes": "Center-grow mode reveals the real typed substring in a static full-width frame; non-center mode paints unrevealed characters clear to keep wrap geometry stable mid-type."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Renders/ProjectedTextView.swift:ProjectedTextView",
+      "type": "class",
+      "name": "ProjectedTextView",
+      "filePath": "Vayl/Features/Onboarding/Renders/ProjectedTextView.swift",
+      "lineRange": [30, 110],
+      "summary": "View struct that types dealer copy onto the felt at the shared cadence with a projection-entrance grow, never holding gesture state.",
+      "tags": ["view", "render", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "type": "file",
+      "name": "OnboardingStore.swift",
+      "filePath": "Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "summary": "Observable MainActor store that commits completed OnboardingData to SwiftData, persisting every field onto UserProfile and mirroring displayName/appMode into AppState.",
+      "tags": ["store", "state", "observable", "persistence", "onboarding"],
+      "complexity": "moderate",
+      "languageNotes": "Creates a fresh ModelContext at write time (never stored on self); AppState.markOnboardingComplete is the single completion writer."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Store/OnboardingStore.swift:OnboardingStore",
+      "type": "class",
+      "name": "OnboardingStore",
+      "filePath": "Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "lineRange": [36, 165],
+      "summary": "@Observable @MainActor store owning onboarding-completion state; commit() persists data and marks completion, with persist() and mirrorIntoAppState() helpers.",
+      "tags": ["store", "state", "observable", "persistence"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Store/OnboardingStore.swift:OnboardingError",
+      "type": "class",
+      "name": "OnboardingError",
+      "filePath": "Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "lineRange": [18, 30],
+      "summary": "LocalizedError enum for onboarding-commit failures (save failure or incomplete data).",
+      "tags": ["data-model", "type-definition", "error"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Store/OnboardingStore.swift:commit",
+      "type": "function",
+      "name": "commit",
+      "filePath": "Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "lineRange": [68, 87],
+      "summary": "Gates on data readiness, persists the profile, mirrors into AppState, and marks onboarding complete; returns false and records the error on failure.",
+      "tags": ["persistence", "state", "onboarding"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Store/OnboardingStore.swift:persist",
+      "type": "function",
+      "name": "persist",
+      "filePath": "Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "lineRange": [96, 154],
+      "summary": "Fetches or creates the UserProfile in a fresh ModelContext and writes every OnboardingData field, throwing on save failure.",
+      "tags": ["persistence", "serialization", "onboarding"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Pairing/PairingInviteView.swift",
+      "type": "file",
+      "name": "PairingInviteView.swift",
+      "filePath": "Vayl/Features/Pairing/PairingInviteView.swift",
+      "summary": "Person-A pairing View that generates an invite code and waits for a partner to join; display-only with all logic delegated to PairingStore.",
+      "tags": ["view", "pairing", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Pairing/PairingInviteView.swift:PairingInviteView",
+      "type": "class",
+      "name": "PairingInviteView",
+      "filePath": "Vayl/Features/Pairing/PairingInviteView.swift",
+      "lineRange": [18, 388],
+      "summary": "View struct showing generating/waiting/expired/error states for the invite flow, driving PairingStore.generateInvite and rendering the code.",
+      "tags": ["view", "pairing", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Pairing/PairingJoinView.swift",
+      "type": "file",
+      "name": "PairingJoinView.swift",
+      "filePath": "Vayl/Features/Pairing/PairingJoinView.swift",
+      "summary": "Person-B pairing View where the user enters a partner's code to join; display-only with all logic delegated to PairingStore.joinWithCode.",
+      "tags": ["view", "pairing", "ui", "form"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Pairing/PairingJoinView.swift:PairingJoinView",
+      "type": "class",
+      "name": "PairingJoinView",
+      "filePath": "Vayl/Features/Pairing/PairingJoinView.swift",
+      "lineRange": [18, 310],
+      "summary": "View struct rendering the code-entry field and join states, validating a 6+ character code before calling PairingStore.",
+      "tags": ["view", "pairing", "form", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Pairing/PairingSettingsView.swift",
+      "type": "file",
+      "name": "PairingSettingsView.swift",
+      "filePath": "Vayl/Features/Pairing/PairingSettingsView.swift",
+      "summary": "Partner-linking settings screen showing current link state and surfacing the invite/join actions when unlinked, reading link state from AppState.",
+      "tags": ["view", "pairing", "settings", "ui"],
+      "complexity": "moderate",
+      "languageNotes": "Hosts the invite and join flows in a NavigationStack and reads AppState.linkState from the environment."
+    },
+    {
+      "id": "class:Vayl/Features/Pairing/PairingSettingsView.swift:PairingSettingsView",
+      "type": "class",
+      "name": "PairingSettingsView",
+      "filePath": "Vayl/Features/Pairing/PairingSettingsView.swift",
+      "lineRange": [13, 228],
+      "summary": "View struct presenting link-state and action sections, gating actions on the unlinked state and navigating to invite/join views.",
+      "tags": ["view", "pairing", "settings", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Pairing/PairingStore.swift",
+      "type": "file",
+      "name": "PairingStore.swift",
+      "filePath": "Vayl/Features/Pairing/PairingStore.swift",
+      "summary": "Observable MainActor store owning the device-pairing flow — generate/regenerate/join/poll lifecycle over PairingService, persisting the couple link to SwiftData and mirroring it into AppState.",
+      "tags": ["store", "state", "observable", "pairing", "networking"],
+      "complexity": "complex",
+      "languageNotes": "Defines a PairingLinkState enum with a manual Equatable conformance; polls every 3s with a cancellable Task and back-fills partner identity via SyncManager."
+    },
+    {
+      "id": "class:Vayl/Features/Pairing/PairingStore.swift:PairingStore",
+      "type": "class",
+      "name": "PairingStore",
+      "filePath": "Vayl/Features/Pairing/PairingStore.swift",
+      "lineRange": [58, 271],
+      "summary": "@Observable @MainActor store driving the pairing state machine via PairingService and persisting the linked coupleId to UserProfile and AppState.",
+      "tags": ["store", "state", "observable", "pairing"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Pairing/PairingStore.swift:PairingLinkState",
+      "type": "class",
+      "name": "PairingLinkState",
+      "filePath": "Vayl/Features/Pairing/PairingStore.swift",
+      "lineRange": [26, 52],
+      "summary": "Equatable enum modeling the pairing lifecycle: idle, generating, waitingForPartner, joining, linked, and error.",
+      "tags": ["data-model", "type-definition", "state"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Vayl/Features/Pairing/PairingStore.swift:generateInvite",
+      "type": "function",
+      "name": "generateInvite",
+      "filePath": "Vayl/Features/Pairing/PairingStore.swift",
+      "lineRange": [109, 125],
+      "summary": "Person-A flow: pushes identity, requests a code from PairingService, moves to waitingForPartner, and begins polling for the partner.",
+      "tags": ["pairing", "networking", "async"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Pairing/PairingStore.swift:joinWithCode",
+      "type": "function",
+      "name": "joinWithCode",
+      "filePath": "Vayl/Features/Pairing/PairingStore.swift",
+      "lineRange": [144, 163],
+      "summary": "Person-B flow: validates and claims a code via PairingService, persists the resulting link, and refreshes partner identity.",
+      "tags": ["pairing", "networking", "async"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Pairing/PairingStore.swift:pollForPartner",
+      "type": "function",
+      "name": "pollForPartner",
+      "filePath": "Vayl/Features/Pairing/PairingStore.swift",
+      "lineRange": [169, 192],
+      "summary": "Polls PairingService until the partner claims the code or it expires, persisting the link and handling cancellation/expiry/error.",
+      "tags": ["pairing", "networking", "async"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Pairing/PairingStore.swift:persistLink",
+      "type": "function",
+      "name": "persistLink",
+      "filePath": "Vayl/Features/Pairing/PairingStore.swift",
+      "lineRange": [245, 270],
+      "summary": "Writes coupleId/isLinked/linkedAt to UserProfile in a fresh ModelContext and mirrors the link into AppState.",
+      "tags": ["pairing", "persistence", "state"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Play/PlayView.swift",
+      "type": "file",
+      "name": "PlayView.swift",
+      "filePath": "Vayl/Features/Play/PlayView.swift",
+      "summary": "Placeholder Play tab View; in DEBUG builds it hosts a temporary stub-session button that exercises the curated-session insert path against Supabase.",
+      "tags": ["view", "play", "ui", "debug"],
+      "complexity": "moderate",
+      "languageNotes": "The debug path uses AuthService, ProfileService, and RealtimeSessionService directly under #if DEBUG; the production tab is currently a title placeholder."
+    },
+    {
+      "id": "class:Vayl/Features/Play/PlayView.swift:PlayView",
+      "type": "class",
+      "name": "PlayView",
+      "filePath": "Vayl/Features/Play/PlayView.swift",
+      "lineRange": [14, 113],
+      "summary": "Play tab View struct with a debug-only stub-session opener that resolves the couple and inserts a curated session for runtime verification.",
+      "tags": ["view", "play", "debug", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Progress/ProgressDashboardView.swift",
+      "type": "file",
+      "name": "ProgressDashboardView.swift",
+      "filePath": "Vayl/Features/Progress/ProgressDashboardView.swift",
+      "summary": "Progress dashboard View showing exploration score, per-category breakdown, and recent activity, sourced from DataStore's streak and session records.",
+      "tags": ["view", "progress", "dashboard", "ui"],
+      "complexity": "moderate",
+      "languageNotes": "Currently rebuilds DataStore from the modelContext on each access (flagged TODO to inject via init); screenshot-protected."
+    },
+    {
+      "id": "class:Vayl/Features/Progress/ProgressDashboardView.swift:ProgressDashboardView",
+      "type": "class",
+      "name": "ProgressDashboardView",
+      "filePath": "Vayl/Features/Progress/ProgressDashboardView.swift",
+      "lineRange": [4, 207],
+      "summary": "View struct rendering the progress header, score ring, category breakdown, and recent activity from DataStore queries.",
+      "tags": ["view", "progress", "dashboard", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Pulse/CheckInShell.swift",
+      "type": "file",
+      "name": "CheckInShell.swift",
+      "filePath": "Vayl/Features/Pulse/CheckInShell.swift",
+      "summary": "Full-screen container for the Pulse check-in: PulseGraph fills the top 60% (always visible) while DailyCheckInView slides up in the bottom 40%, with camera bindings owned by PulseWidget.",
+      "tags": ["view", "pulse", "ui", "container"],
+      "complexity": "moderate",
+      "languageNotes": "Owns the background and glow field (AuroraGlowField/OnboardingAtmosphere by color scheme) and threads camera + live-score bindings down to DailyCheckInView."
+    },
+    {
+      "id": "class:Vayl/Features/Pulse/CheckInShell.swift:CheckInShell",
+      "type": "class",
+      "name": "CheckInShell",
+      "filePath": "Vayl/Features/Pulse/CheckInShell.swift",
+      "lineRange": [21, 115],
+      "summary": "View struct composing the always-visible PulseGraph and the DailyCheckInView panel over a shared atmosphere background.",
+      "tags": ["view", "pulse", "container", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Pulse/DailyCheckInView.swift",
+      "type": "file",
+      "name": "DailyCheckInView.swift",
+      "filePath": "Vayl/Features/Pulse/DailyCheckInView.swift",
+      "summary": "The 5-question daily check-in panel rendered inside CheckInShell; each pill answer moves liveScore so the live dot animates on the graph above, returning a PulseEntry on completion.",
+      "tags": ["view", "pulse", "ui", "questionnaire"],
+      "complexity": "complex",
+      "languageNotes": "Defines a CheckInPhase state machine plus private CheckInQuestion/CheckInPill models; renders no background of its own (CheckInShell owns it) and drives the graph camera via bindings."
+    },
+    {
+      "id": "class:Vayl/Features/Pulse/DailyCheckInView.swift:DailyCheckInView",
+      "type": "class",
+      "name": "DailyCheckInView",
+      "filePath": "Vayl/Features/Pulse/DailyCheckInView.swift",
+      "lineRange": [49, 699],
+      "summary": "View struct sequencing the check-in questions, animating the live dot via camera bindings, and emitting a PulseEntry to the owner.",
+      "tags": ["view", "pulse", "questionnaire", "ui"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Pulse/PulseCanvasScrollView.swift",
+      "type": "file",
+      "name": "PulseCanvasScrollView.swift",
+      "filePath": "Vayl/Features/Pulse/PulseCanvasScrollView.swift",
+      "summary": "Pure SwiftUI two-axis ScrollView wrapper for PulseGraph that anchors to the most-recent entry and locks the outer dashboard scroll while a touch is on the graph.",
+      "tags": ["view", "pulse", "ui", "scroll"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Pulse/PulseCanvasScrollView.swift:PulseCanvasScrollView",
+      "type": "class",
+      "name": "PulseCanvasScrollView",
+      "filePath": "Vayl/Features/Pulse/PulseCanvasScrollView.swift",
+      "lineRange": [17, 65],
+      "summary": "View struct embedding PulseGraph in a scrollable canvas, anchoring bottom-trailing on appear and exposing an isGraphActive scroll lock.",
+      "tags": ["view", "pulse", "scroll", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Pulse/PulseDotSummary.swift",
+      "type": "file",
+      "name": "PulseDotSummary.swift",
+      "filePath": "Vayl/Features/Pulse/PulseDotSummary.swift",
+      "summary": "Overlay View presenting a single Pulse entry's detail via a spectrum 'burn' that expands from the tapped dot, with ember particles and a smart above/below flip; dismiss collapses the burn back into the dot.",
+      "tags": ["view", "pulse", "ui", "overlay", "animation"],
+      "complexity": "complex",
+      "languageNotes": "Defines a private Ember particle model and adapts its burn color and scrim to color scheme (full spectrum in dark, warm aurora in light)."
+    },
+    {
+      "id": "class:Vayl/Features/Pulse/PulseDotSummary.swift:PulseDotSummary",
+      "type": "class",
+      "name": "PulseDotSummary",
+      "filePath": "Vayl/Features/Pulse/PulseDotSummary.swift",
+      "lineRange": [33, 648],
+      "summary": "View struct rendering the expanding spectrum burn, floating entry info, and ember particle field over PulseGraph, collapsing on dismiss.",
+      "tags": ["view", "pulse", "overlay", "animation"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    { "source": "file:Vayl/Features/Onboarding/Phases/ContextPhase.swift", "target": "class:Vayl/Features/Onboarding/Phases/ContextPhase.swift:ContextPhase", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/ContextPhase.swift", "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/ContextPhase.swift", "target": "file:Vayl/Features/Onboarding/Models/ContextOption.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/ContextPhase.swift", "target": "file:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/ContextPhase.swift", "target": "file:Vayl/Features/Onboarding/Renders/ProjectedTextView.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift", "target": "class:Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift:CredentialEditorSheet", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift", "target": "class:Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift:CredentialEditorOverlay", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift", "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift", "target": "file:Vayl/Features/Onboarding/Models/ContextOption.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Onboarding/Phases/CuriosityPhase.swift", "target": "class:Vayl/Features/Onboarding/Phases/CuriosityPhase.swift:CuriosityPhase", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/CuriosityPhase.swift", "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Onboarding/Phases/DemoPhase.swift", "target": "class:Vayl/Features/Onboarding/Phases/DemoPhase.swift:DemoPhase", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/DemoPhase.swift", "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift", "target": "class:Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift:ExperienceLevelPhase", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift", "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift", "target": "file:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift", "target": "class:Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift:FounderLetterPhase", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift", "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift", "target": "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift", "target": "file:Vayl/Features/Onboarding/Renders/AnimatedSignature.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Onboarding/Phases/GenderPhase.swift", "target": "class:Vayl/Features/Onboarding/Phases/GenderPhase.swift:GenderPhase", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/GenderPhase.swift", "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/GenderPhase.swift", "target": "file:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift", "target": "class:Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift:ModeSelectPhase", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift", "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Onboarding/Phases/NamePhase.swift", "target": "class:Vayl/Features/Onboarding/Phases/NamePhase.swift:NamePhase", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/NamePhase.swift", "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift", "target": "class:Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift:SingleGreetingOverlay", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift", "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Onboarding/Phases/StatPhase.swift", "target": "class:Vayl/Features/Onboarding/Phases/StatPhase.swift:StatPhase", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Phases/StatPhase.swift", "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Onboarding/Renders/AnimatedSignature.swift", "target": "class:Vayl/Features/Onboarding/Renders/AnimatedSignature.swift:AnimatedSignature", "type": "contains", "direction": "forward", "weight": 1.0 },
+
+    { "source": "file:Vayl/Features/Onboarding/Renders/ProjectedTextView.swift", "target": "class:Vayl/Features/Onboarding/Renders/ProjectedTextView.swift:ProjectedTextView", "type": "contains", "direction": "forward", "weight": 1.0 },
+
+    { "source": "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift", "target": "class:Vayl/Features/Onboarding/Store/OnboardingStore.swift:OnboardingStore", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift", "target": "class:Vayl/Features/Onboarding/Store/OnboardingStore.swift:OnboardingError", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift", "target": "function:Vayl/Features/Onboarding/Store/OnboardingStore.swift:commit", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift", "target": "function:Vayl/Features/Onboarding/Store/OnboardingStore.swift:persist", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "class:Vayl/Features/Onboarding/Store/OnboardingStore.swift:OnboardingStore", "target": "function:Vayl/Features/Onboarding/Store/OnboardingStore.swift:commit", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "class:Vayl/Features/Onboarding/Store/OnboardingStore.swift:OnboardingStore", "target": "function:Vayl/Features/Onboarding/Store/OnboardingStore.swift:persist", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "class:Vayl/Features/Onboarding/Store/OnboardingStore.swift:OnboardingStore", "target": "file:Vayl/Features/Onboarding/Models/OnboardingData.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Pairing/PairingInviteView.swift", "target": "class:Vayl/Features/Pairing/PairingInviteView.swift:PairingInviteView", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pairing/PairingInviteView.swift", "target": "file:Vayl/Features/Pairing/PairingStore.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "class:Vayl/Features/Pairing/PairingInviteView.swift:PairingInviteView", "target": "class:Vayl/Features/Pairing/PairingStore.swift:PairingStore", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Pairing/PairingJoinView.swift", "target": "class:Vayl/Features/Pairing/PairingJoinView.swift:PairingJoinView", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pairing/PairingJoinView.swift", "target": "file:Vayl/Features/Pairing/PairingStore.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "class:Vayl/Features/Pairing/PairingJoinView.swift:PairingJoinView", "target": "class:Vayl/Features/Pairing/PairingStore.swift:PairingStore", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Pairing/PairingSettingsView.swift", "target": "class:Vayl/Features/Pairing/PairingSettingsView.swift:PairingSettingsView", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pairing/PairingSettingsView.swift", "target": "file:Vayl/Features/Pairing/PairingInviteView.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Pairing/PairingSettingsView.swift", "target": "file:Vayl/Features/Pairing/PairingJoinView.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Pairing/PairingSettingsView.swift", "target": "file:Vayl/Core/Services/AppState.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Pairing/PairingStore.swift", "target": "class:Vayl/Features/Pairing/PairingStore.swift:PairingStore", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pairing/PairingStore.swift", "target": "class:Vayl/Features/Pairing/PairingStore.swift:PairingLinkState", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pairing/PairingStore.swift", "target": "function:Vayl/Features/Pairing/PairingStore.swift:generateInvite", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pairing/PairingStore.swift", "target": "function:Vayl/Features/Pairing/PairingStore.swift:joinWithCode", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pairing/PairingStore.swift", "target": "function:Vayl/Features/Pairing/PairingStore.swift:pollForPartner", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pairing/PairingStore.swift", "target": "function:Vayl/Features/Pairing/PairingStore.swift:persistLink", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "class:Vayl/Features/Pairing/PairingStore.swift:PairingStore", "target": "function:Vayl/Features/Pairing/PairingStore.swift:generateInvite", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "class:Vayl/Features/Pairing/PairingStore.swift:PairingStore", "target": "function:Vayl/Features/Pairing/PairingStore.swift:joinWithCode", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "class:Vayl/Features/Pairing/PairingStore.swift:PairingStore", "target": "function:Vayl/Features/Pairing/PairingStore.swift:pollForPartner", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "class:Vayl/Features/Pairing/PairingStore.swift:PairingStore", "target": "function:Vayl/Features/Pairing/PairingStore.swift:persistLink", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "class:Vayl/Features/Pairing/PairingStore.swift:PairingStore", "target": "file:Vayl/Core/Services/PairingService.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "class:Vayl/Features/Pairing/PairingStore.swift:PairingStore", "target": "file:Vayl/Core/Services/SyncManager.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "class:Vayl/Features/Pairing/PairingStore.swift:PairingStore", "target": "file:Vayl/Core/Services/AppState.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "function:Vayl/Features/Pairing/PairingStore.swift:generateInvite", "target": "file:Vayl/Core/Services/PairingService.swift", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:Vayl/Features/Pairing/PairingStore.swift:joinWithCode", "target": "file:Vayl/Core/Services/PairingService.swift", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:Vayl/Features/Pairing/PairingStore.swift:pollForPartner", "target": "file:Vayl/Core/Services/PairingService.swift", "type": "calls", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:Vayl/Features/Play/PlayView.swift", "target": "class:Vayl/Features/Play/PlayView.swift:PlayView", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Play/PlayView.swift", "target": "file:Vayl/Core/Services/AppState.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Play/PlayView.swift", "target": "file:Vayl/Core/Services/RealtimeSessionService.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Play/PlayView.swift", "target": "file:Vayl/Core/Services/ProfileService.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Progress/ProgressDashboardView.swift", "target": "class:Vayl/Features/Progress/ProgressDashboardView.swift:ProgressDashboardView", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Progress/ProgressDashboardView.swift", "target": "file:Vayl/Core/Persistence/DataStore.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Pulse/CheckInShell.swift", "target": "class:Vayl/Features/Pulse/CheckInShell.swift:CheckInShell", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pulse/CheckInShell.swift", "target": "file:Vayl/Features/Pulse/DailyCheckInView.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Pulse/CheckInShell.swift", "target": "file:Vayl/Features/Pulse/PulseGraph.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Pulse/CheckInShell.swift", "target": "file:Vayl/Core/Models/PulseEntry.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Pulse/CheckInShell.swift", "target": "file:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Pulse/CheckInShell.swift", "target": "file:Vayl/Design/Components/Effects/AuroraGlowField.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Pulse/DailyCheckInView.swift", "target": "class:Vayl/Features/Pulse/DailyCheckInView.swift:DailyCheckInView", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pulse/DailyCheckInView.swift", "target": "file:Vayl/Core/Models/PulseEntry.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Pulse/PulseCanvasScrollView.swift", "target": "class:Vayl/Features/Pulse/PulseCanvasScrollView.swift:PulseCanvasScrollView", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pulse/PulseCanvasScrollView.swift", "target": "file:Vayl/Features/Pulse/PulseGraph.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+    { "source": "file:Vayl/Features/Pulse/PulseCanvasScrollView.swift", "target": "file:Vayl/Core/Models/PulseEntry.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 },
+
+    { "source": "file:Vayl/Features/Pulse/PulseDotSummary.swift", "target": "class:Vayl/Features/Pulse/PulseDotSummary.swift:PulseDotSummary", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Vayl/Features/Pulse/PulseDotSummary.swift", "target": "file:Vayl/Core/Models/PulseEntry.swift", "type": "depends_on", "direction": "forward", "weight": 0.6 }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "projectRoot": "/Users/bryanjorden/Documents/School/Code/Vayl",
+  "batchFiles": [
+    {"path": "Vayl/Features/Onboarding/Phases/ContextPhase.swift", "language": "swift", "sizeLines": 392, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift", "language": "swift", "sizeLines": 373, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/CuriosityPhase.swift", "language": "swift", "sizeLines": 433, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/DemoPhase.swift", "language": "swift", "sizeLines": 654, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift", "language": "swift", "sizeLines": 478, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift", "language": "swift", "sizeLines": 180, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/GenderPhase.swift", "language": "swift", "sizeLines": 553, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift", "language": "swift", "sizeLines": 483, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/NamePhase.swift", "language": "swift", "sizeLines": 937, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift", "language": "swift", "sizeLines": 102, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/StatPhase.swift", "language": "swift", "sizeLines": 619, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Renders/AnimatedSignature.swift", "language": "swift", "sizeLines": 354, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Renders/DealPointView.swift", "language": "swift", "sizeLines": 43, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Renders/ProjectedTextView.swift", "language": "swift", "sizeLines": 109, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Store/OnboardingStore.swift", "language": "swift", "sizeLines": 165, "fileCategory": "code"},
+    {"path": "Vayl/Features/Pairing/PairingInviteView.swift", "language": "swift", "sizeLines": 388, "fileCategory": "code"},
+    {"path": "Vayl/Features/Pairing/PairingJoinView.swift", "language": "swift", "sizeLines": 310, "fileCategory": "code"},
+    {"path": "Vayl/Features/Pairing/PairingSettingsView.swift", "language": "swift", "sizeLines": 228, "fileCategory": "code"},
+    {"path": "Vayl/Features/Pairing/PairingStore.swift", "language": "swift", "sizeLines": 271, "fileCategory": "code"},
+    {"path": "Vayl/Features/Play/PlayView.swift", "language": "swift", "sizeLines": 113, "fileCategory": "code"},
+    {"path": "Vayl/Features/Progress/ProgressDashboardView.swift", "language": "swift", "sizeLines": 207, "fileCategory": "code"},
+    {"path": "Vayl/Features/Pulse/CheckInShell.swift", "language": "swift", "sizeLines": 148, "fileCategory": "code"},
+    {"path": "Vayl/Features/Pulse/DailyCheckInView.swift", "language": "swift", "sizeLines": 699, "fileCategory": "code"},
+    {"path": "Vayl/Features/Pulse/PulseCanvasScrollView.swift", "language": "swift", "sizeLines": 65, "fileCategory": "code"},
+    {"path": "Vayl/Features/Pulse/PulseDotSummary.swift", "language": "swift", "sizeLines": 648, "fileCategory": "code"}
+  ],
+  "batchImportData": {}
+}

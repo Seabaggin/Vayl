@@ -12,12 +12,23 @@ import SwiftUI
 ///     DeckStack predates this component; unify when next in that file).
 struct VaylDeckStack: View {
     var size: CGSize
+    /// Number of stacked backs. Default 6 (BuildDeck). Curiosity passes fewer for a
+    /// slimmer symbolic deck.
+    var count: Int = 6
+    /// When true the stack recedes straight UP behind the front card, so the front
+    /// card is anchored to the bottom and both sides. An overlaid LiftHalo then sits
+    /// flush there (the deck thickness shows only above the top edge). Default false
+    /// keeps BuildDeck's down-right bleed.
+    var bleedUp: Bool = false
     var body: some View {
         ZStack {
-            ForEach(0..<6, id: \.self) { i in
+            ForEach(0..<count, id: \.self) { i in
                 VaylCardBack()
                     .frame(width: size.width, height: size.height)
-                    .offset(x: CGFloat(5 - i) * 1.2, y: CGFloat(5 - i) * 1.6)
+                    .offset(
+                        x: bleedUp ? 0 : CGFloat(count - 1 - i) * 1.2,
+                        y: CGFloat(count - 1 - i) * (bleedUp ? -1.6 : 1.6)
+                    )
             }
         }
     }

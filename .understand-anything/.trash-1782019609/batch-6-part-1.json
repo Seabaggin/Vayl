@@ -1,0 +1,497 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Core/Services/SupabaseManager.swift",
+      "type": "file",
+      "name": "SupabaseManager.swift",
+      "filePath": "Vayl/Core/Services/SupabaseManager.swift",
+      "summary": "Singleton service that constructs and exposes the shared SupabaseClient configured from Config URL and anon key.",
+      "tags": ["service", "networking", "singleton", "supabase"],
+      "complexity": "simple",
+      "languageNotes": "Swift singleton via `static let shared` with a private init; fatalErrors on invalid URL."
+    },
+    {
+      "id": "class:Vayl/Core/Services/SupabaseManager.swift:SupabaseManager",
+      "type": "class",
+      "name": "SupabaseManager",
+      "filePath": "Vayl/Core/Services/SupabaseManager.swift",
+      "lineRange": [11, 30],
+      "summary": "Final class holding the app-wide SupabaseClient instance, the single entry point for backend access.",
+      "tags": ["service", "networking", "singleton"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Services/SyncManager.swift",
+      "type": "file",
+      "name": "SyncManager.swift",
+      "filePath": "Vayl/Core/Services/SyncManager.swift",
+      "summary": "ObservableObject service that pushes local profile, display identity, desire-map ratings, and onboarding state to Supabase and retries queued sync tasks.",
+      "tags": ["service", "networking", "state", "sync"],
+      "complexity": "complex",
+      "languageNotes": "Uses async/throws methods delegating to per-domain sync services (DesireSyncService, SessionSyncService) and caches profile id in UserDefaults."
+    },
+    {
+      "id": "class:Vayl/Core/Services/SyncManager.swift:SyncManager",
+      "type": "class",
+      "name": "SyncManager",
+      "filePath": "Vayl/Core/Services/SyncManager.swift",
+      "lineRange": [51, 307],
+      "summary": "Central remote-sync coordinator exposing isSyncing/lastSyncError state and async methods to reconcile local data with the backend.",
+      "tags": ["service", "networking", "observable", "sync"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Core/Services/SyncManager.swift:syncProfileToSupabase",
+      "type": "function",
+      "name": "syncProfileToSupabase",
+      "filePath": "Vayl/Core/Services/SyncManager.swift",
+      "lineRange": [96, 124],
+      "summary": "Creates or reconciles the remote profile row for an auth id and caches the resulting profile id.",
+      "tags": ["service", "networking", "sync"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Core/Services/SyncManager.swift:syncDesireMap",
+      "type": "function",
+      "name": "syncDesireMap",
+      "filePath": "Vayl/Core/Services/SyncManager.swift",
+      "lineRange": [149, 200],
+      "summary": "Pushes pending desire ratings and triggers match computation via DesireSyncService.",
+      "tags": ["service", "networking", "sync"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Core/Services/SyncManager.swift:retryPendingSyncs",
+      "type": "function",
+      "name": "retryPendingSyncs",
+      "filePath": "Vayl/Core/Services/SyncManager.swift",
+      "lineRange": [244, 307],
+      "summary": "Drains queued sync tasks for a user, dispatching each by task type to the relevant sync service.",
+      "tags": ["service", "networking", "sync", "retry"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Brand/SplashScreenView.swift",
+      "type": "file",
+      "name": "SplashScreenView.swift",
+      "filePath": "Vayl/Design/Brand/SplashScreenView.swift",
+      "summary": "Animated brand splash screen that plays the Vayl wordmark/logo reveal then transitions to a generic destination view.",
+      "tags": ["view", "ui", "brand", "animation"],
+      "complexity": "complex",
+      "languageNotes": "Generic over Destination: View; uses a PreferenceKey (LOriginKey) to coordinate logo origin geometry."
+    },
+    {
+      "id": "class:Vayl/Design/Brand/SplashScreenView.swift:SplashScreenView",
+      "type": "class",
+      "name": "SplashScreenView",
+      "filePath": "Vayl/Design/Brand/SplashScreenView.swift",
+      "lineRange": [14, 728],
+      "summary": "Generic SwiftUI view rendering the launch animation sequence before revealing the wrapped destination content.",
+      "tags": ["view", "ui", "brand", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Brand/VaylAppIcon.swift",
+      "type": "file",
+      "name": "VaylAppIcon.swift",
+      "filePath": "Vayl/Design/Brand/VaylAppIcon.swift",
+      "summary": "In-code rendering of the Vayl app icon artwork (lattice wordmark plus starfield) usable as a SwiftUI view for previews and export.",
+      "tags": ["view", "ui", "brand", "icon"],
+      "complexity": "complex",
+      "languageNotes": "Procedurally draws the icon with Canvas/Shapes plus a private StarFieldView seeded from StarSpec values."
+    },
+    {
+      "id": "class:Vayl/Design/Brand/VaylAppIcon.swift:VaylAppIcon",
+      "type": "class",
+      "name": "VaylAppIcon",
+      "filePath": "Vayl/Design/Brand/VaylAppIcon.swift",
+      "lineRange": [23, 598],
+      "summary": "SwiftUI view that procedurally renders the full Vayl app-icon composition.",
+      "tags": ["view", "ui", "brand", "icon"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Brand/VaylAppIcon.swift:StarFieldView",
+      "type": "class",
+      "name": "StarFieldView",
+      "filePath": "Vayl/Design/Brand/VaylAppIcon.swift",
+      "lineRange": [609, 677],
+      "summary": "Private helper view that renders the decorative starfield backdrop behind the icon wordmark.",
+      "tags": ["view", "ui", "brand", "component"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Buttons/CriticalButton.swift",
+      "type": "file",
+      "name": "CriticalButton.swift",
+      "filePath": "Vayl/Design/Components/Buttons/CriticalButton.swift",
+      "summary": "Reusable destructive/critical-action button component styled with the app's destructive feedback tokens.",
+      "tags": ["view", "component", "ui", "button"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Buttons/CriticalButton.swift:CriticalButton",
+      "type": "class",
+      "name": "CriticalButton",
+      "filePath": "Vayl/Design/Components/Buttons/CriticalButton.swift",
+      "lineRange": [11, 50],
+      "summary": "SwiftUI view for a critical-action button with press state and haptic feedback.",
+      "tags": ["view", "component", "button"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Buttons/SafeWordButton.swift",
+      "type": "file",
+      "name": "SafeWordButton.swift",
+      "filePath": "Vayl/Design/Components/Buttons/SafeWordButton.swift",
+      "summary": "Safe-word affordance button used in protected session contexts, styled with the safety accent and glow tokens.",
+      "tags": ["view", "component", "ui", "safety"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Buttons/SafeWordButton.swift:SafeWordButton",
+      "type": "class",
+      "name": "SafeWordButton",
+      "filePath": "Vayl/Design/Components/Buttons/SafeWordButton.swift",
+      "lineRange": [6, 59],
+      "summary": "SwiftUI view rendering the safe-word button with safety glow and haptic feedback.",
+      "tags": ["view", "component", "safety"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Buttons/SelectablePill.swift",
+      "type": "file",
+      "name": "SelectablePill.swift",
+      "filePath": "Vayl/Design/Components/Buttons/SelectablePill.swift",
+      "summary": "Selectable pill/chip control used for single- and multi-select option lists, with animated border and shadow modifiers reflecting selection state.",
+      "tags": ["view", "component", "ui", "selection"],
+      "complexity": "complex",
+      "languageNotes": "Selection visuals factored into private ViewModifiers (PillBorderModifier, PillShadowModifier)."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Buttons/SelectablePill.swift:SelectablePill",
+      "type": "class",
+      "name": "SelectablePill",
+      "filePath": "Vayl/Design/Components/Buttons/SelectablePill.swift",
+      "lineRange": [13, 272],
+      "summary": "SwiftUI selectable pill view with press state, haptics, and selected/unselected styling.",
+      "tags": ["view", "component", "selection"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Buttons/SelectablePill.swift:PillBorderModifier",
+      "type": "class",
+      "name": "PillBorderModifier",
+      "filePath": "Vayl/Design/Components/Buttons/SelectablePill.swift",
+      "lineRange": [273, 317],
+      "summary": "Private ViewModifier applying the pill's animated spectrum border based on selection state.",
+      "tags": ["view", "component", "design-system"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift",
+      "type": "file",
+      "name": "AtmosphericGhostDeck.swift",
+      "filePath": "Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift",
+      "summary": "Decorative background view rendering a faint stacked ghost deck of cards to add atmosphere behind primary card content.",
+      "tags": ["view", "component", "ui", "ambient"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift:AtmosphericGhostDeck",
+      "type": "class",
+      "name": "AtmosphericGhostDeck",
+      "filePath": "Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift",
+      "lineRange": [11, 88],
+      "summary": "SwiftUI view drawing layered translucent card silhouettes as ambient backdrop.",
+      "tags": ["view", "component", "ambient"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardBackView.swift",
+      "type": "file",
+      "name": "CardBackView.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardBackView.swift",
+      "summary": "Renders the back face of a card with two modes: a full interactive init for onboarding and a decorative deck-mode init for the home carousel.",
+      "tags": ["view", "component", "ui", "card"],
+      "complexity": "complex",
+      "languageNotes": "Exposes two initializers to serve interactive and decorative call sites without duplicating the view."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardBackView.swift:CardBackView",
+      "type": "class",
+      "name": "CardBackView",
+      "filePath": "Vayl/Design/Components/Cards/CardBackView.swift",
+      "lineRange": [12, 352],
+      "summary": "SwiftUI view rendering a card's back face in either interactive or deck-decorative mode.",
+      "tags": ["view", "component", "card"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardCarousel.swift",
+      "type": "file",
+      "name": "CardCarousel.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardCarousel.swift",
+      "summary": "Interactive multi-phase card carousel (floating → spread → gathering → lifted) that animates a deck of cards and surfaces card actions to the host.",
+      "tags": ["view", "component", "ui", "card", "carousel"],
+      "complexity": "complex",
+      "languageNotes": "Defines its own phase/direction/action enums (CarouselPhase, CarouselDirection, CardAction) to model gesture-driven state."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardCarousel.swift:CardCarousel",
+      "type": "class",
+      "name": "CardCarousel",
+      "filePath": "Vayl/Design/Components/Cards/CardCarousel.swift",
+      "lineRange": [48, 641],
+      "summary": "SwiftUI carousel view orchestrating card layout, gestures, and phase transitions.",
+      "tags": ["view", "component", "carousel"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardCarousel.swift:CarouselPhase",
+      "type": "class",
+      "name": "CarouselPhase",
+      "filePath": "Vayl/Design/Components/Cards/CardCarousel.swift",
+      "lineRange": [8, 15],
+      "summary": "Equatable enum enumerating the carousel's animation phases (floating, spread, gathering, lifted).",
+      "tags": ["type-definition", "data-model", "carousel"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardCarousel.swift:CardAction",
+      "type": "class",
+      "name": "CardAction",
+      "filePath": "Vayl/Design/Components/Cards/CardCarousel.swift",
+      "lineRange": [21, 47],
+      "summary": "Enum modeling the discrete actions a card in the carousel can emit to its host.",
+      "tags": ["type-definition", "data-model", "carousel"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Core/Services/SupabaseManager.swift",
+      "target": "class:Vayl/Core/Services/SupabaseManager.swift:SupabaseManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/SupabaseManager.swift",
+      "target": "class:Vayl/Core/Services/SupabaseManager.swift:SupabaseManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Core/Services/SyncManager.swift",
+      "target": "class:Vayl/Core/Services/SyncManager.swift:SyncManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/SyncManager.swift",
+      "target": "class:Vayl/Core/Services/SyncManager.swift:SyncManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Core/Services/SyncManager.swift",
+      "target": "function:Vayl/Core/Services/SyncManager.swift:syncProfileToSupabase",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/SyncManager.swift",
+      "target": "function:Vayl/Core/Services/SyncManager.swift:syncDesireMap",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/SyncManager.swift",
+      "target": "function:Vayl/Core/Services/SyncManager.swift:retryPendingSyncs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/SyncManager.swift:SyncManager",
+      "target": "function:Vayl/Core/Services/SyncManager.swift:syncProfileToSupabase",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/SyncManager.swift:SyncManager",
+      "target": "function:Vayl/Core/Services/SyncManager.swift:syncDesireMap",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/SyncManager.swift:SyncManager",
+      "target": "function:Vayl/Core/Services/SyncManager.swift:retryPendingSyncs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Brand/SplashScreenView.swift",
+      "target": "class:Vayl/Design/Brand/SplashScreenView.swift:SplashScreenView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Brand/SplashScreenView.swift",
+      "target": "class:Vayl/Design/Brand/SplashScreenView.swift:SplashScreenView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Brand/VaylAppIcon.swift",
+      "target": "class:Vayl/Design/Brand/VaylAppIcon.swift:VaylAppIcon",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Brand/VaylAppIcon.swift",
+      "target": "class:Vayl/Design/Brand/VaylAppIcon.swift:VaylAppIcon",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Brand/VaylAppIcon.swift",
+      "target": "class:Vayl/Design/Brand/VaylAppIcon.swift:StarFieldView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Design/Brand/VaylAppIcon.swift:VaylAppIcon",
+      "target": "class:Vayl/Design/Brand/VaylAppIcon.swift:StarFieldView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Buttons/CriticalButton.swift",
+      "target": "class:Vayl/Design/Components/Buttons/CriticalButton.swift:CriticalButton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Buttons/CriticalButton.swift",
+      "target": "class:Vayl/Design/Components/Buttons/CriticalButton.swift:CriticalButton",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Buttons/SafeWordButton.swift",
+      "target": "class:Vayl/Design/Components/Buttons/SafeWordButton.swift:SafeWordButton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Buttons/SafeWordButton.swift",
+      "target": "class:Vayl/Design/Components/Buttons/SafeWordButton.swift:SafeWordButton",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Buttons/SelectablePill.swift",
+      "target": "class:Vayl/Design/Components/Buttons/SelectablePill.swift:SelectablePill",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Buttons/SelectablePill.swift",
+      "target": "class:Vayl/Design/Components/Buttons/SelectablePill.swift:SelectablePill",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Buttons/SelectablePill.swift",
+      "target": "class:Vayl/Design/Components/Buttons/SelectablePill.swift:PillBorderModifier",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift",
+      "target": "class:Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift:AtmosphericGhostDeck",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift",
+      "target": "class:Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift:AtmosphericGhostDeck",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardBackView.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardBackView.swift:CardBackView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardBackView.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardBackView.swift:CardBackView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardCarousel.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardCarousel.swift:CardCarousel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardCarousel.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardCarousel.swift:CardCarousel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardCarousel.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardCarousel.swift:CarouselPhase",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardCarousel.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardCarousel.swift:CardAction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Design/Components/Cards/CardCarousel.swift:CardCarousel",
+      "target": "class:Vayl/Design/Components/Cards/CardBackView.swift:CardBackView",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

@@ -461,6 +461,19 @@ static float3 hexEdge(float2 gv) {
     return float3(d, n.x, n.y);
 }
 
+// Anodized micro-grain: smooth fine value-noise locked to face UV so it rides
+// the material through tilt (no time term → no swim, no float32 precision loss).
+// Breaks the flat solid fill into believable brushed/anodized metal.
+static float foilGrain(float2 p) {
+    float2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = cellHash(i).x;
+    float b = cellHash(i + float2(1.0, 0.0)).x;
+    float c = cellHash(i + float2(0.0, 1.0)).x;
+    float d = cellHash(i + float2(1.0, 1.0)).x;
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
 [[stitchable]]
 half4 hexFoilSurface(float2 position,
                      half4  currentColor,
@@ -475,7 +488,12 @@ half4 hexFoilSurface(float2 position,
                      float  bandSharp,        // band specular exponent (~10)
                      float  bandGain,         // band strength (~0.9)
                      float  glintGain,        // per-cell glint strength (~0.5)
-                     float  latticeFade)      // 0…1 — material wakes during the rise
+                     float  latticeFade,      // 0…1 — material wakes during the rise
+                     float  grainGain,        // anodized micro-grain amplitude (flats)
+                     float  grainScale,       // grain frequency across the face width
+                     float  fresnelGain,      // grazing-edge rim brightening (panel border)
+                     float  envGain,          // two-tone vertical environment gradient
+                     float  coreGlow)         // inner energy leaking through the groove seams
 {
     half a = currentColor.a;
     if (a < 0.01h) return currentColor;                  // leave the void alone
@@ -525,6 +543,27 @@ half4 hexFoilSurface(float2 position,
         - base * shadow                          // shadow flank carves below base
         + mix(ink, float3(1.0), 0.5) * glint     // hot glints where band crosses cells
         + ink * band * 0.05 * latticeFade;       // faint sheen on flats — band stays legible
+    // anodized micro-grain — ALWAYS on (real metal is grained awake or asleep),
+    // tinted by the metal's own colour so it reads as the surface, not an overlay.
+    float grain = (foilGrain(uvq * grainScale) - 0.5)
+                + (foilGrain(uvq * grainScale * 2.7) - 0.5) * 0.5;
+    col += base * grain * grainGain;
+    // #2 grazing/fresnel — a soft bright rim just inside the panel border (the
+    // edge catching the room). Approximation of grazing reflectance on the flat
+    // front panel: brighten toward the nearest u/v edge.
+    float2 d2  = min(uvq, 1.0 - uvq);
+    float  rim = 1.0 - smoothstep(0.0, 0.12, min(d2.x, d2.y));
+    col += mix(float3(1.0), ink, 0.4) * rim * fresnelGain;
+    // #3 two-tone environment — cool/bright "sky" up top, deeper toward the
+    // bottom: a vertical gradient the metal appears to reflect (matte → metallic).
+    col += base * (0.5 - uvq.y) * envGain;
+    // CORE GLOW — a FAINT "it's charged/armed" hint in the lattice seams, nothing
+    // more. The lattice must NEVER dominate the cracks: the real light-from-within
+    // is light PEERING THROUGH the cracks/tears as they open (Segments 3–4), not a
+    // lit lattice. Kept low so the bright white-cored cracks always read on top.
+    // Ungated by latticeFade — the energy sits behind the surface.
+    col += ink * groove * coreGlow * 0.30;
+    col += ink * coreGlow * 0.02;
     col = clamp(col, 0.0, 1.0);
     return half4(half3(col * float(a)), a);
 }

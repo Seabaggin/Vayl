@@ -1,0 +1,33 @@
+{
+  "id": "the-check-in",
+  "title": "The Check-In",
+  "subtitle": "A short, warm pulse.",
+  "category": "foundationEntry",
+  "act": 1,
+  "intensity": 1,
+  "is_locked": false,
+  "required_entitlement": null,
+  "tags": ["foundation", "free"],
+  "sort_order": 2,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "the-check-in-01",
+      "deck_id": "the-check-in",
+      "text": "Where are we, really, this week?",
+      "highlight_words": ["really"],
+      "type": "prompt",
+      "intensity": 1,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    }
+  ]
+}

@@ -1,0 +1,270 @@
+{
+  "nodes": [
+    {
+      "id": "table:supabase/migrations/20260101000000_baseline.sql",
+      "type": "table",
+      "name": "20260101000000_baseline.sql",
+      "filePath": "supabase/migrations/20260101000000_baseline.sql",
+      "summary": "Baseline schema migration that provisions the entire Vayl backend: extensions (pgcrypto, uuid-ossp, pg_cron), helper functions, and the 10 core tables (user_profiles, couples, pairing_codes, curated_sessions, desire_ratings, desire_matches, card_progress, assessment_responses/results, couple_session_records) with RLS policies scoped to couple membership.",
+      "tags": ["database", "migration", "sql", "baseline", "rls"],
+      "complexity": "complex",
+      "languageNotes": "Uses an rls_auto_enable event trigger to force row-level security on every newly created public table; all read/write policies gate on user_profiles.auth_id = auth.uid() or couple membership."
+    },
+    {
+      "id": "table:supabase/migrations/20260101000000_baseline.sql:user_profiles",
+      "type": "table",
+      "name": "user_profiles",
+      "summary": "Per-user profile keyed by auth_id, storing onboarding state, NM flavor/stage, pairing code, couple linkage, orientation and role preferences. The pivot table linking Supabase auth identities to couple-scoped data.",
+      "tags": ["database", "user", "profile", "onboarding"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "table:supabase/migrations/20260101000000_baseline.sql:couples",
+      "type": "table",
+      "name": "couples",
+      "summary": "Couple record joining two user_profiles (user_a, user_b) with a shared safe word and a matches_revealed flag; the central scoping entity that most RLS policies and foreign keys reference.",
+      "tags": ["database", "pairing", "couple"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260101000000_baseline.sql:pairing_codes",
+      "type": "table",
+      "name": "pairing_codes",
+      "summary": "Short-lived invite codes for two-device pairing, tracking creator, expiry, and who claimed the code into which couple. RLS allows the creator to manage their row and a non-creator to claim it.",
+      "tags": ["database", "pairing", "invite-code"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260101000000_baseline.sql:curated_sessions",
+      "type": "table",
+      "name": "curated_sessions",
+      "summary": "Two-device curated card-session state: deck/variant, card list, per-card and global timers, per-partner presence/bandwidth/consent flags, reveal state, and safe-word usage. A unique partial index enforces one open session per couple.",
+      "tags": ["database", "session", "realtime", "couple"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "table:supabase/migrations/20260101000000_baseline.sql:desire_ratings",
+      "type": "table",
+      "name": "desire_ratings",
+      "summary": "Per-user rating of an individual desire_item, the raw input that feeds Desire Map match computation.",
+      "tags": ["database", "desire-map", "rating"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260101000000_baseline.sql:desire_matches",
+      "type": "table",
+      "name": "desire_matches",
+      "summary": "Computed alignment between partners on a desire item: alignment level, each partner's value, gap size, and an optional bridge card. The couple-facing output of the Desire Map.",
+      "tags": ["database", "desire-map", "matching"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260101000000_baseline.sql:card_progress",
+      "type": "table",
+      "name": "card_progress",
+      "summary": "Per-couple status of each card (e.g. discussed/skipped), used to track deck progression across a couple's sessions.",
+      "tags": ["database", "progress", "cards"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260101000000_baseline.sql:couple_session_records",
+      "type": "table",
+      "name": "couple_session_records",
+      "summary": "Historical log of completed couple sessions with start/end timestamps and count of cards discussed.",
+      "tags": ["database", "session", "history"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260101000000_baseline.sql:assessment_responses",
+      "type": "table",
+      "name": "assessment_responses",
+      "summary": "Per-user raw answers to onboarding assessment questions, keyed by question_key.",
+      "tags": ["database", "assessment", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260101000000_baseline.sql:assessment_results",
+      "type": "table",
+      "name": "assessment_results",
+      "summary": "Per-user derived assessment results (result_key/result_value pairs) computed from assessment_responses.",
+      "tags": ["database", "assessment", "results"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260616223000_p5d_revoke_anon_default_privileges.sql",
+      "type": "table",
+      "name": "20260616223000_p5d_revoke_anon_default_privileges.sql",
+      "filePath": "supabase/migrations/20260616223000_p5d_revoke_anon_default_privileges.sql",
+      "summary": "Security-hardening migration (P5d) that revokes the anon role from default privileges on future tables, functions, and sequences in the public schema, and drops a residual anon EXECUTE grant on set_curated_sessions_updated_at(), closing the future-object exposure gap left by P5b.",
+      "tags": ["database", "migration", "security", "rls", "permissions"],
+      "complexity": "simple",
+      "languageNotes": "Uses ALTER DEFAULT PRIVILEGES so that newly created objects no longer auto-grant ALL to anon — a defense-in-depth complement to per-table RLS."
+    },
+    {
+      "id": "table:supabase/migrations/20260617000000_desire_map_backend.sql",
+      "type": "table",
+      "name": "20260617000000_desire_map_backend.sql",
+      "filePath": "supabase/migrations/20260617000000_desire_map_backend.sql",
+      "summary": "Desire Map backend migration that creates the desire_map_status table (per-couple track + per-partner completion + full-reveal gating) and extends desire_ratings (rating check constraint) and desire_matches (is_free_reveal, revealed_at) to support the reveal flow.",
+      "tags": ["database", "migration", "sql", "desire-map"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260617000000_desire_map_backend.sql:desire_map_status",
+      "type": "table",
+      "name": "desire_map_status",
+      "summary": "Per-couple Desire Map progress: which track, each partner's completion timestamp, whether the full reveal is unlocked, and a waiting-state marker. Drives the gated reveal experience.",
+      "tags": ["database", "desire-map", "reveal", "couple"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260617120000_monetization_entitlements.sql",
+      "type": "table",
+      "name": "20260617120000_monetization_entitlements.sql",
+      "filePath": "supabase/migrations/20260617120000_monetization_entitlements.sql",
+      "summary": "Monetization migration that creates the service-role-only entitlements ledger (couple_id, product_id, is_active, purchased_by) with RLS and a couple_id index, and adds the denormalized access_tier / core_unlocked_at / is_founding_member cache columns to couples.",
+      "tags": ["database", "migration", "sql", "entitlements", "monetization"],
+      "complexity": "moderate",
+      "languageNotes": "The entitlements table is deliberately never client-readable (purchased_by is support-only); tier is mirrored onto couples.access_tier for client reads while the ledger stays service-role-only."
+    },
+    {
+      "id": "table:supabase/migrations/20260617120000_monetization_entitlements.sql:entitlements",
+      "type": "table",
+      "name": "entitlements",
+      "summary": "Service-role-only purchase ledger granting a couple an entitlement (product_id, is_active, expires_at, purchased_by). Source of truth for the couple's paid access tier; never exposed to clients.",
+      "tags": ["database", "entitlements", "monetization", "ledger"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql",
+      "type": "table",
+      "name": "20260617130000_entitlement_payer_portable_resolution.sql",
+      "filePath": "supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql",
+      "summary": "Defines two payer-portable resolution functions: resolve_couple_access_tier (reader returning 'core'/'free' from active entitlements matched by couple_id OR purchaser identity) and recompute_couple_entitlement (writer that refreshes the couples access_tier/founding/unlocked-at cache from the ledger), both locked to service_role.",
+      "tags": ["database", "migration", "sql", "entitlements", "function"],
+      "complexity": "moderate",
+      "languageNotes": "Payer-portable design: an entitlement follows the buyer (purchased_by = user_a OR user_b), so re-pairing inherits Core. Functions are revoked from public/authenticated/anon and granted only to service_role."
+    }
+  ],
+  "edges": [
+    {
+      "source": "table:supabase/migrations/20260101000000_baseline.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:user_profiles",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260101000000_baseline.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:couples",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260101000000_baseline.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:pairing_codes",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260101000000_baseline.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:curated_sessions",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260101000000_baseline.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:desire_ratings",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260101000000_baseline.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:desire_matches",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260101000000_baseline.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:card_progress",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260101000000_baseline.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:couple_session_records",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260101000000_baseline.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:assessment_responses",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260101000000_baseline.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:assessment_results",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260617000000_desire_map_backend.sql",
+      "target": "table:supabase/migrations/20260617000000_desire_map_backend.sql:desire_map_status",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260617000000_desire_map_backend.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:desire_ratings",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260617000000_desire_map_backend.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:desire_matches",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260617120000_monetization_entitlements.sql",
+      "target": "table:supabase/migrations/20260617120000_monetization_entitlements.sql:entitlements",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260617120000_monetization_entitlements.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:couples",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql",
+      "target": "table:supabase/migrations/20260617120000_monetization_entitlements.sql:entitlements",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "table:supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql",
+      "target": "table:supabase/migrations/20260101000000_baseline.sql:couples",
+      "type": "migrates",
+      "direction": "forward",
+      "weight": 0.7
+    }
+  ]
+}

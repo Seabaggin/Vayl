@@ -1,0 +1,53 @@
+[
+  {
+    "id": "compersion",
+    "kind": "term",
+    "term": "Compersion",
+    "definition": "Finding genuine joy in your partner's happiness with another person. The opposite of jealousy, and it can be cultivated."
+  },
+  {
+    "id": "veto",
+    "kind": "term",
+    "term": "Veto",
+    "definition": "An agreement letting a partner end another relationship. Common early on, often retired as trust deepens."
+  },
+  {
+    "id": "kitchen-table",
+    "kind": "term",
+    "term": "Kitchen-table",
+    "definition": "A style where everyone is comfortable enough to share a meal together. Named for the literal table."
+  },
+  {
+    "id": "anchor",
+    "kind": "term",
+    "term": "Anchor",
+    "definition": "A steadying, established relationship that grounds you while other connections come and go."
+  },
+  {
+    "id": "parallel",
+    "kind": "term",
+    "term": "Parallel",
+    "definition": "A style where partners' other relationships stay separate and rarely overlap. The opposite of kitchen-table."
+  },
+  {
+    "id": "metamour",
+    "kind": "sentence",
+    "term": "Metamour",
+    "definition": "Your partner's partner, a relationship of its own.",
+    "example": "I haven't met her metamour yet, but they text sometimes."
+  },
+  {
+    "id": "nre",
+    "kind": "sentence",
+    "term": "NRE",
+    "definition": "New Relationship Energy, the early-spark high.",
+    "example": "I'm riding the NRE, but I'm trying to stay grounded."
+  },
+  {
+    "id": "polycule",
+    "kind": "sentence",
+    "term": "Polycule",
+    "definition": "The connected network of everyone romantically linked.",
+    "example": "Our polycule has a group chat now."
+  }
+]

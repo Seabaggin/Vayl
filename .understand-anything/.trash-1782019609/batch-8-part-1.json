@@ -1,0 +1,470 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift",
+      "type": "file",
+      "name": "FoilDeckTheme.swift",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift",
+      "summary": "Pure data model defining a deck's visual identity for the FoilOpen sealed-case ceremony: a three-stop colorway ramp plus the deck name embossed on the case front.",
+      "tags": ["data-model", "design-tokens", "foil-open", "visual-effect"],
+      "complexity": "simple",
+      "languageNotes": "Two Equatable value-type structs with static factory constants (.solo, .vayl) — the Model layer of the 4-layer architecture."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift:FoilColorway",
+      "type": "class",
+      "name": "FoilColorway",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift",
+      "lineRange": [16, 27],
+      "summary": "Ordered three-stop color ramp (c0/c1/c2) expressing a deck category's identity; the .solo preset maps to the app's cyan-purple-magenta spectrum.",
+      "tags": ["data-model", "design-tokens", "color"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift:FoilDeckTheme",
+      "type": "class",
+      "name": "FoilDeckTheme",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift",
+      "lineRange": [30, 36],
+      "summary": "Deck theme value type pairing a FoilColorway with a deck name; the .vayl static is the onboarding starter deck identity.",
+      "tags": ["data-model", "design-tokens", "foil-open"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "type": "file",
+      "name": "MetallicCaseView.swift",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "summary": "The FoilOpen ceremony's reusable 3D tuck-box: a Canvas projects a painter-sorted anodized-metal box whose front face carries a debossed hex lattice lit by the hexFoilSurface Metal shader, then choreographs rise, knock, tap-to-crack, tear propagation, and shatter-dissolve.",
+      "tags": ["visual-effect", "animation", "view", "metal", "ceremony"],
+      "complexity": "complex",
+      "languageNotes": "1400-line single View doing manual 3D projection, convex-hull silhouette clipping, inverse-bilinear face-space UV mapping, and per-frame shader uniform synthesis; band phase is driven by float tilt (never absolute time) to dodge float32 GPU precision loss."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:CaseTear",
+      "type": "class",
+      "name": "CaseTear",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "lineRange": [30, 38],
+      "summary": "Identifiable model for a crack in the sealed case, anchored in face-local UV with a seed, strike timestamp, and fracture orientation so the tear sticks to the case through float and tilt.",
+      "tags": ["data-model", "foil-open", "ceremony"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:MetallicCaseView",
+      "type": "class",
+      "name": "MetallicCaseView",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "lineRange": [40, 145],
+      "summary": "Content-agnostic SwiftUI View rendering the floating metallic deck case; exposes a large tunable surface plus ceremony hooks (riseStart, latticeWakeStart, tears, dissolveStart, onFaceTap, knockStart, coreGlow) driven entirely by injected dates.",
+      "tags": ["view", "visual-effect", "animation", "metal"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:caseGeometry",
+      "type": "function",
+      "name": "caseGeometry",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "lineRange": [189, 224],
+      "summary": "Computes the per-frame CaseGeometry — tilt radians, hue driver, pose-mixed box fit, and the 8 projected corners plus front quad — so the Canvas box and shader front-quad uniforms always agree.",
+      "tags": ["visual-effect", "3d-projection", "animation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:foilLayer",
+      "type": "function",
+      "name": "foilLayer",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "lineRange": [280, 335],
+      "summary": "Assembles the layered ceremony render: interior glow behind erased wounds, the case Canvas with the hexFoilSurface colorEffect shader, and the shatter shard Canvas during the flood phase.",
+      "tags": ["view", "visual-effect", "metal", "animation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:drawCase",
+      "type": "function",
+      "name": "drawCase",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "lineRange": [339, 448],
+      "summary": "Draws the 3D box into the Canvas: culls and painter-sorts visible faces, fills each with single-light per-face brightness for the 3D read, adds the edge catch-light rim, and stamps the embossed brand layer.",
+      "tags": ["visual-effect", "3d-projection", "rendering"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:drawBrand",
+      "type": "function",
+      "name": "drawBrand",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "lineRange": [495, 587],
+      "summary": "Renders the perspective-correct hairline frame and the embossed deck-name wordmark on the front face using bilinear quad mapping and the card-back emboss recipe (shadow, highlight, gradient-filled core passes).",
+      "tags": ["visual-effect", "typography", "rendering"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:drawTears",
+      "type": "function",
+      "name": "drawTears",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "lineRange": [636, 659],
+      "summary": "Renders cracks in face space, mapping each tear's branch polylines through the current projected quad every frame with authored 1-2-3 severity, propagation growth, impact flash, and escalating colorway light-bleed.",
+      "tags": ["visual-effect", "animation", "ceremony", "rendering"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:handleTap",
+      "type": "function",
+      "name": "handleTap",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "lineRange": [268, 278],
+      "summary": "Converts a view-space tap to face-local UV via inverse-bilinear of the current projected front quad, clamps it onto the face, and forwards it to the consumer's onFaceTap callback.",
+      "tags": ["event-handler", "visual-effect", "3d-projection"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift",
+      "type": "file",
+      "name": "SpectrumSparkField.swift",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift",
+      "summary": "Stateless spectrum-mote particle field for the FoilOpen ceremony: TimelineView-driven, seeded-deterministic spark bursts knocked loose by a strike on the case, popping outward then drifting up like embers.",
+      "tags": ["visual-effect", "animation", "particles", "foil-open"],
+      "complexity": "moderate",
+      "languageNotes": "Pure-function-of-time Canvas rendering with a SplitMix-style seeded RandomNumberGenerator so particle params are recomputed identically every frame — no mutable particle state to clean up."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift:SparkBurst",
+      "type": "class",
+      "name": "SparkBurst",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift",
+      "lineRange": [16, 31],
+      "summary": "Identifiable value type describing one strike's worth of sparks — origin, start time, seed, count, and strike-vs-burst style — with a static lifespan used as the safe pruning horizon.",
+      "tags": ["data-model", "particles", "foil-open"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift:SpectrumSparkField",
+      "type": "class",
+      "name": "SpectrumSparkField",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift",
+      "lineRange": [33, 120],
+      "summary": "SwiftUI View that draws all live spark bursts on a TimelineView Canvas with two-pass glow-plus-core rendering; suppresses all airborne particles under Reduce Motion.",
+      "tags": ["view", "visual-effect", "animation", "particles"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/GlowOrb.swift",
+      "type": "file",
+      "name": "GlowOrb.swift",
+      "filePath": "Vayl/Design/Components/Effects/GlowOrb.swift",
+      "summary": "Small reusable radial-gradient glow orb whose ambient opacity adapts to the color scheme (emissive in dark, barely-there in light); decorative and non-interactive.",
+      "tags": ["visual-effect", "component", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/GlowUnderline.swift",
+      "type": "file",
+      "name": "GlowUnderline.swift",
+      "filePath": "Vayl/Design/Components/Effects/GlowUnderline.swift",
+      "summary": "ViewModifier that overlays a breathing three-layer spectrum glow underline (solid core, tight neon, wide bloom) beneath its content, with a flash parameter to dim it on interaction.",
+      "tags": ["visual-effect", "view-modifier", "animation", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/GlowUnderlineView.swift",
+      "type": "file",
+      "name": "GlowUnderlineView.swift",
+      "filePath": "Vayl/Design/Components/Effects/GlowUnderlineView.swift",
+      "summary": "Standalone View variant of the breathing spectrum glow underline (solid core, neon glow, wide bloom) for cases that compose the underline directly rather than as a modifier.",
+      "tags": ["visual-effect", "view", "animation", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/GradBadge.swift",
+      "type": "file",
+      "name": "GradBadge.swift",
+      "filePath": "Vayl/Design/Components/Effects/GradBadge.swift",
+      "summary": "Small capsule pill with a spectrum gradient border and a text label, used for metadata counts, status tags, and category chips — never for CTAs.",
+      "tags": ["component", "ui", "badge"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "type": "file",
+      "name": "HolographicShimmer.metal",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "summary": "Metal shader library of stitchable fragment effects: oil-slick orb iridescence, Voronoi and folded-simplex caustics, specular sweeps, a holographic foil surface, and the debossed hex-lattice foil that fronts the MetallicCaseView tuck-box.",
+      "tags": ["shader", "metal", "gpu", "visual-effect"],
+      "complexity": "complex",
+      "languageNotes": "Shared noise toolkit (value-noise fbm, simplex fbmS, Voronoi F1/F2, hashes) reused across seven [[stitchable]] entry points; hexFoilSurface uses inverse-bilinear to map screen pixels into the projected front-face UV so the lattice foreshortens with tilt and terminates at the box fold."
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:holoColor",
+      "type": "function",
+      "name": "holoColor",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "lineRange": [80, 104],
+      "summary": "Stitchable color shader compositing the oil-slick orb field with an ink overlay and animated surface grain, producing the pill-background holographic wash.",
+      "tags": ["shader", "metal", "gpu", "visual-effect"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:holoDistort",
+      "type": "function",
+      "name": "holoDistort",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "lineRange": [70, 78],
+      "summary": "Stitchable distortion shader perturbing sample positions with two fbm noise fields for a subtle liquid warp of the holographic surface.",
+      "tags": ["shader", "metal", "gpu", "visual-effect"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:causticLayer",
+      "type": "function",
+      "name": "causticLayer",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "lineRange": [158, 202],
+      "summary": "Stitchable shader rendering an animated light-web from two sine-warped Voronoi layers combined on their F2-F1 boundary, with vignette and an indigo-to-lavender color ramp for the OB deep card face.",
+      "tags": ["shader", "metal", "gpu", "visual-effect"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:htmlCaustics",
+      "type": "function",
+      "name": "htmlCaustics",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "lineRange": [240, 289],
+      "summary": "Stitchable shader porting the reference HTML caustics: folded simplex fBm with a sinkhole distortion produces sharp bright light ridges over a deep-purple-to-lavender ramp.",
+      "tags": ["shader", "metal", "gpu", "visual-effect"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:holoSpecular",
+      "type": "function",
+      "name": "holoSpecular",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "lineRange": [291, 307],
+      "summary": "Stitchable shader adding a moving white specular highlight band (plus a secondary glint) to brighten the holographic surface where light catches it.",
+      "tags": ["shader", "metal", "gpu", "visual-effect"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:holoFoilSurface",
+      "type": "function",
+      "name": "holoFoilSurface",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "lineRange": [327, 405],
+      "summary": "Stitchable foil shader producing electric high-contrast spectrum specular bands with an oil-slick or liquid-chrome pattern, a moving highlight, controlled gloss, and sparse sparkle over a dark base.",
+      "tags": ["shader", "metal", "gpu", "visual-effect"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:hexFoilSurface",
+      "type": "function",
+      "name": "hexFoilSurface",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "lineRange": [477, 569],
+      "summary": "Stitchable face-space material that maps pixels into the projected front quad via inverse-bilinear and lights a debossed hex lattice: groove flanks ignite in the deck colorway as one tilt-phased anisotropic band sweeps, with anodized grain, fresnel rim, environment gradient, and core glow.",
+      "tags": ["shader", "metal", "gpu", "visual-effect"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/HolographicShimmer.swift",
+      "type": "file",
+      "name": "HolographicShimmer.swift",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.swift",
+      "summary": "Pure-SwiftUI (Canvas, no Metal) holographic pill background: a noise-driven specular sweep, five screen-blended drifting orbs, vignette, and two fbm grain layers, used as the VaylButton fill.",
+      "tags": ["visual-effect", "view", "animation", "ui"],
+      "complexity": "complex",
+      "languageNotes": "Despite the shared name, this is a CPU/Canvas effect distinct from HolographicShimmer.metal; the grain is precomputed into a tiled CGImage and value-noise drives the sweep so the per-frame TimelineView closure stays cheap to type-check."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/HolographicShimmer.swift:HolographicShimmer",
+      "type": "class",
+      "name": "HolographicShimmer",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.swift",
+      "lineRange": [211, 315],
+      "summary": "SwiftUI View that layers the base fill, noise-swept specular gradient, drifting screen-blend orbs, dim overlay, vignette, and coarse/fine grain into the animated holographic pill surface.",
+      "tags": ["view", "visual-effect", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/HolographicShimmer.swift:GrainCanvas",
+      "type": "class",
+      "name": "GrainCanvas",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.swift",
+      "lineRange": [108, 201],
+      "summary": "Private helper View that builds one fbm-noise grain tile as a CGImage and tiles it across the Canvas, extracted so the drawing closure stays trivial to type-check.",
+      "tags": ["visual-effect", "view", "noise"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift",
+      "target": "class:Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift:FoilColorway",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift",
+      "target": "class:Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift:FoilDeckTheme",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "target": "class:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:CaseTear",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "target": "class:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:MetallicCaseView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "target": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:caseGeometry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "target": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:foilLayer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "target": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:drawCase",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "target": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:drawBrand",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "target": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:drawTears",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "target": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:handleTap",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift:foilLayer",
+      "target": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:hexFoilSurface",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "target": "file:Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "target": "file:Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift",
+      "target": "class:Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift:SparkBurst",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift",
+      "target": "class:Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift:SpectrumSparkField",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "target": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:holoColor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "target": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:holoDistort",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "target": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:causticLayer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "target": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:htmlCaustics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "target": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:holoSpecular",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "target": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:holoFoilSurface",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "target": "function:Vayl/Design/Components/Effects/HolographicShimmer.metal:hexFoilSurface",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/HolographicShimmer.swift",
+      "target": "class:Vayl/Design/Components/Effects/HolographicShimmer.swift:HolographicShimmer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/HolographicShimmer.swift",
+      "target": "class:Vayl/Design/Components/Effects/HolographicShimmer.swift:GrainCanvas",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    }
+  ]
+}

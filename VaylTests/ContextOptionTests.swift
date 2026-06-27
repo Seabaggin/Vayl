@@ -1,49 +1,57 @@
 import XCTest
 @testable import Vayl
 
-// Reconciled for the ContextPhase 2×3 redesign:
-//   • AppMode is now only .together / .solo (.browsing removed)
-//   • RelationshipContext expanded to 26 across 6 cells (Curious cells hold 5, others 4)
-//   • the anxious register set changed with the couple-curious split
+// Reconciled for the ContextPhase reason-based redesign (2026-06-20):
+//   • 4 sets: solo/couple × {curious, in-it}; exploring + experienced share the "in it" set.
+//   • Reason-based RelationshipContext (15 cases); `single` shared across both solo sets.
+//   • No "undecided" escape card — the low-commitment options ("here to learn", "checking
+//     it out") cover that, and solo sets are single-anchored (last).
 // Source of truth: AppEnums.swift (enums) + ContextOption.swift (options + derivedRegister).
 final class ContextOptionTests: XCTestCase {
 
     private let modes: [AppMode] = [.together, .solo]
 
-    // Each (mode, stage) cell ends with a first-class "undecided" escape card (the .ember one).
-    func test_everyCellEndsWithUndecidedCard() {
+    // Exploring + experienced resolve to the SAME "in it" set per mode.
+    func test_exploringAndExperiencedShareTheInItSet() {
+        for mode in modes {
+            let exploring   = ContextOption.options(appMode: mode, stage: .exploring).map(\.id)
+            let experienced = ContextOption.options(appMode: mode, stage: .experienced).map(\.id)
+            XCTAssertEqual(exploring, experienced,
+                           "\(mode): exploring + experienced should be the same 'in it' set")
+        }
+    }
+
+    // Every cell holds four real options (no forced undecided padding).
+    func test_cellCounts() {
         for mode in modes {
             for stage in NMStage.allCases {
-                let opts = ContextOption.options(appMode: mode, stage: stage)
-                XCTAssertTrue(
-                    opts.last?.id.hasSuffix("_undecided") ?? false,
-                    "\(mode)/\(stage) should end with an undecided card"
+                XCTAssertEqual(
+                    ContextOption.options(appMode: mode, stage: stage).count, 4,
+                    "\(mode)/\(stage) should hold 4 options"
                 )
-                XCTAssertEqual(opts.last?.accent, .ember, "\(mode)/\(stage) undecided card uses .ember")
             }
         }
     }
 
-    // The 2×3 matrix: Curious cells carry an extra concrete situation (5); the rest hold 4.
-    func test_cellCounts_matchTheTwoByThreeMatrix() {
-        XCTAssertEqual(ContextOption.options(appMode: .solo,     stage: .curious).count,     5)
-        XCTAssertEqual(ContextOption.options(appMode: .solo,     stage: .exploring).count,   4)
-        XCTAssertEqual(ContextOption.options(appMode: .solo,     stage: .experienced).count, 4)
-        XCTAssertEqual(ContextOption.options(appMode: .together, stage: .curious).count,     5)
-        XCTAssertEqual(ContextOption.options(appMode: .together, stage: .exploring).count,   4)
-        XCTAssertEqual(ContextOption.options(appMode: .together, stage: .experienced).count, 4)
+    // Solo sets are single-anchored: the last card is "I'm single" (context .single).
+    func test_soloSetsEndWithSingle() {
+        for stage in NMStage.allCases {
+            let last = ContextOption.options(appMode: .solo, stage: stage).last
+            XCTAssertEqual(last?.context, .single, "solo/\(stage) should end with the single card")
+        }
     }
 
-    func test_undecidedCardIsLast() {
-        let last = ContextOption.options(appMode: .solo, stage: .curious).last
-        XCTAssertEqual(last?.id, "solo_curious_undecided")
-        XCTAssertEqual(last?.accent, .ember)
+    // Couple sets never contain the single card.
+    func test_coupleSetsHaveNoSingle() {
+        for stage in NMStage.allCases {
+            let contexts = ContextOption.options(appMode: .together, stage: stage).map(\.context)
+            XCTAssertFalse(contexts.contains(.single), "couple/\(stage) should not offer the single card")
+        }
     }
 
     func test_derivedRegister_anxiousContexts() {
         let anxious: [RelationshipContext] = [
-            .partneredUndisclosed, .partneredHesitantCurious, .coupleProcessingCurious,
-            .coupleStalledConversation, .coupleReorienting, .coupleEvolving,
+            .soloUndisclosed, .coupleNervous, .coupleInitiator, .coupleRecalibrating,
         ]
         for ctx in anxious {
             XCTAssertEqual(register(for: ctx), .anxious, "\(ctx) should be anxious")
@@ -52,41 +60,34 @@ final class ContextOptionTests: XCTestCase {
 
     func test_derivedRegister_excitedContexts() {
         let excited: [RelationshipContext] = [
-            .singleExploring, .singleExperienced, .soloPolyIndependent,
-            .coupleSolidifying, .coupleFreshIntentional, .coupleSkillBuilding,
+            .single, .soloIntentional, .coupleExcited, .coupleGoDeeper,
         ]
         for ctx in excited {
             XCTAssertEqual(register(for: ctx), .excited, "\(ctx) should be excited")
         }
     }
 
-    func test_undecidedContextsAreFlexible() {
-        let undecided: [RelationshipContext] = [
-            .soloCuriousUndecided, .soloExploringUndecided, .soloExperiencedUndecided,
-            .coupleCuriousUndecided, .coupleExploringUndecided, .coupleExperiencedUndecided,
+    func test_derivedRegister_flexibleContexts() {
+        let flexible: [RelationshipContext] = [
+            .soloLearning, .soloSeekingClarity, .soloExpandKnowledge, .soloCheckingOut,
+            .coupleFiguringOut, .coupleGetBetter, .coupleKeepItFun,
         ]
-        for ctx in undecided {
+        for ctx in flexible {
             XCTAssertEqual(register(for: ctx), .flexible, "\(ctx) should be flexible")
         }
     }
 
-    // Every defined RelationshipContext is reachable through exactly the 2×3 option matrix —
-    // no orphan contexts, no duplicates. Self-maintaining against future context additions.
-    func test_everyContextReachableExactlyOnce() {
-        var seen: [RelationshipContext] = []
+    // Every defined RelationshipContext is reachable through some cell (no orphans).
+    // `single` is intentionally shared across both solo cells, so this is "at least once."
+    func test_everyContextReachable() {
+        var seen: Set<RelationshipContext> = []
         for mode in modes {
             for stage in NMStage.allCases {
-                seen.append(contentsOf: ContextOption.options(appMode: mode, stage: stage).map(\.context))
+                seen.formUnion(ContextOption.options(appMode: mode, stage: stage).map(\.context))
             }
         }
-        XCTAssertEqual(
-            Set(seen), Set(RelationshipContext.allCases),
-            "every RelationshipContext should be reachable through some cell"
-        )
-        XCTAssertEqual(
-            seen.count, RelationshipContext.allCases.count,
-            "no context should appear in more than one cell"
-        )
+        XCTAssertEqual(seen, Set(RelationshipContext.allCases),
+                       "every RelationshipContext should be reachable through some cell")
     }
 
     private func register(for ctx: RelationshipContext) -> SituationalRegister? {

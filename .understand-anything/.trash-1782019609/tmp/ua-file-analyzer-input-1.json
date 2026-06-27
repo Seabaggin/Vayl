@@ -1,0 +1,17 @@
+{
+  "projectRoot": "/Users/bryanjorden/Documents/School/Code/Vayl",
+  "batchFiles": [
+    {"path": "supabase/migrations/20260101000000_baseline.sql", "language": "sql", "sizeLines": 937, "fileCategory": "data"},
+    {"path": "supabase/migrations/20260616223000_p5d_revoke_anon_default_privileges.sql", "language": "sql", "sizeLines": 21, "fileCategory": "data"},
+    {"path": "supabase/migrations/20260617000000_desire_map_backend.sql", "language": "sql", "sizeLines": 45, "fileCategory": "data"},
+    {"path": "supabase/migrations/20260617120000_monetization_entitlements.sql", "language": "sql", "sizeLines": 62, "fileCategory": "data"},
+    {"path": "supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql", "language": "sql", "sizeLines": 80, "fileCategory": "data"}
+  ],
+  "batchImportData": {
+    "supabase/migrations/20260101000000_baseline.sql": [],
+    "supabase/migrations/20260616223000_p5d_revoke_anon_default_privileges.sql": [],
+    "supabase/migrations/20260617000000_desire_map_backend.sql": [],
+    "supabase/migrations/20260617120000_monetization_entitlements.sql": [],
+    "supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql": []
+  }
+}

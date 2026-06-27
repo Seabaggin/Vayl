@@ -32,6 +32,7 @@ final class DeckProgress {
     var deckId: String          // String reference to JSON content ID
     var firstOpenedAt: Date?
     var completedAt: Date?
+    var lastPlayedAt: Date?     // most-recent activity — drives "recent deck" on Home
     var currentCardIndex: Int   // persists mid-deck position — resume from here
     var isUnwrapped: Bool       // has the ceremonial unwrap animation fired
 
@@ -41,6 +42,7 @@ final class DeckProgress {
         self.deckId = deckId
         self.firstOpenedAt = nil
         self.completedAt = nil
+        self.lastPlayedAt = nil
         self.currentCardIndex = 0
         self.isUnwrapped = false
     }

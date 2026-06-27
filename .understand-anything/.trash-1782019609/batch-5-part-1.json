@@ -1,0 +1,494 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Core/Models/Enums/AppAccessEnums.swift",
+      "type": "file",
+      "name": "AppAccessEnums.swift",
+      "filePath": "Vayl/Core/Models/Enums/AppAccessEnums.swift",
+      "summary": "Defines monetization access enums: AccessTier (free/core/pro), ConnectionPlan, and the one-time Milestone events that fire visible in-app moments.",
+      "tags": ["data-model", "type-definition", "enum", "monetization"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppAccessEnums.swift:AccessTier",
+      "type": "class",
+      "name": "AccessTier",
+      "filePath": "Vayl/Core/Models/Enums/AppAccessEnums.swift",
+      "lineRange": [16, 28],
+      "summary": "The three couple-level access tiers (free, core lifetime, pro) — one purchase covers both partners. Read by EntitlementService DTOs.",
+      "tags": ["enum", "type-definition", "monetization"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppAccessEnums.swift:Milestone",
+      "type": "class",
+      "name": "Milestone",
+      "filePath": "Vayl/Core/Models/Enums/AppAccessEnums.swift",
+      "lineRange": [47, 55],
+      "summary": "Enumerates one-time milestone events (opened first deck, linked partner, etc.) that never reset once completed; persisted via MilestoneRecord.",
+      "tags": ["enum", "type-definition", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "type": "file",
+      "name": "AppCardEnums.swift",
+      "filePath": "Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "summary": "Card and deck taxonomy enums: CardType mechanics, CardIntensity (8 levels with sorting + difficulty mapping), CardStatus, WhoStarts, GenderDynamic, DeckCategory.",
+      "tags": ["data-model", "type-definition", "enum", "card-system"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppCardEnums.swift:CardType",
+      "type": "class",
+      "name": "CardType",
+      "filePath": "Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "lineRange": [17, 55],
+      "summary": "Enumerates every card kind (prompt, whisper, mirror, dare, ritual, etc.) that determines how the session renders a card and which reveal mechanic fires.",
+      "tags": ["enum", "type-definition", "card-system"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppCardEnums.swift:CardIntensity",
+      "type": "class",
+      "name": "CardIntensity",
+      "filePath": "Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "lineRange": [61, 127],
+      "summary": "8-level emotional-intensity scale (void → supernova), Comparable with difficulty labels and static mappers from JSON difficulty strings and numeric scores.",
+      "tags": ["enum", "type-definition", "card-system", "comparable"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppCardEnums.swift:DeckCategory",
+      "type": "class",
+      "name": "DeckCategory",
+      "filePath": "Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "lineRange": [224, 250],
+      "summary": "Categorizes decks (foundation, relationship core, NM-specific, solo prep, multi-person, etc.) to drive library organization and recommendations.",
+      "tags": ["enum", "type-definition", "deck-system"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppCardEnums.swift:CandleIntensity",
+      "type": "class",
+      "name": "CandleIntensity",
+      "filePath": "Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "lineRange": [195, 216],
+      "summary": "Render-layer experience-level enum (curious/exploring/experienced) decoupled from the domain NMStage, mapping 1:1 onto it for the candle selection UI.",
+      "tags": ["enum", "type-definition", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/Enums/AppDesireEnums.swift",
+      "type": "file",
+      "name": "AppDesireEnums.swift",
+      "filePath": "Vayl/Core/Models/Enums/AppDesireEnums.swift",
+      "summary": "Desire Map enums: DesireMapState (home indicator), DesireRatingValue (4-point weight with the sacred notForMe boundary), and DesireMatchType.",
+      "tags": ["data-model", "type-definition", "enum", "desire-map"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppDesireEnums.swift:DesireMapState",
+      "type": "class",
+      "name": "DesireMapState",
+      "filePath": "Vayl/Core/Models/Enums/AppDesireEnums.swift",
+      "lineRange": [14, 50],
+      "summary": "Models the full lifecycle of the home Desire Map indicator (hidden, gated, yourTurn, bothReady, revealed, etc.) with associated values; Equatable via a manual switch.",
+      "tags": ["enum", "type-definition", "desire-map", "state"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppDesireEnums.swift:DesireRatingValue",
+      "type": "class",
+      "name": "DesireRatingValue",
+      "filePath": "Vayl/Core/Models/Enums/AppDesireEnums.swift",
+      "lineRange": [65, 79],
+      "summary": "The fixed 4-point desire weight (excited/open/probablyNot/notForMe); notForMe is the sacred boundary protected by three enforcement layers and never leaves the device.",
+      "tags": ["enum", "type-definition", "desire-map", "privacy"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "file",
+      "name": "AppEnums.swift",
+      "filePath": "Vayl/Core/Models/Enums/AppEnums.swift",
+      "summary": "Core onboarding/routing and UI enums: NMStage, AppMode, EmotionalRegister, AgencySignal, MotivationShape, RelationshipContext, plus PartnerChipState and the AppIcons SF Symbol registry.",
+      "tags": ["data-model", "type-definition", "enum", "onboarding"],
+      "complexity": "complex",
+      "languageNotes": "Hosts a global RawRepresentable+Identifiable extension giving all String-backed enums a free id, reused across the codebase."
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppEnums.swift:NMStage",
+      "type": "class",
+      "name": "NMStage",
+      "filePath": "Vayl/Core/Models/Enums/AppEnums.swift",
+      "lineRange": [24, 46],
+      "summary": "Where a person is in their NM journey (curious/exploring/experienced); lives on UserProfile and drives default card difficulty and content routing.",
+      "tags": ["enum", "type-definition", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppEnums.swift:EmotionalRegister",
+      "type": "class",
+      "name": "EmotionalRegister",
+      "filePath": "Vayl/Core/Models/Enums/AppEnums.swift",
+      "lineRange": [85, 110],
+      "summary": "The aspirational tone register (anxious/excited/flexible/unknown) collected at onboarding; includes a slider-value-to-register mapper. Governs card copy warmth.",
+      "tags": ["enum", "type-definition", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppEnums.swift:MotivationShape",
+      "type": "class",
+      "name": "MotivationShape",
+      "filePath": "Vayl/Core/Models/Enums/AppEnums.swift",
+      "lineRange": [139, 170],
+      "summary": "What would feel like a win for the user (Compass Q2); one enum whose option set and labels adapt by AppMode, driving card-category priority.",
+      "tags": ["enum", "type-definition", "onboarding"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppEnums.swift:RelationshipContext",
+      "type": "class",
+      "name": "RelationshipContext",
+      "filePath": "Vayl/Core/Models/Enums/AppEnums.swift",
+      "lineRange": [188, 199],
+      "summary": "The concrete relationship starting point (solo and couple subsets) collected in ContextPhase; persisted for record while SituationalRegister drives behavior.",
+      "tags": ["enum", "type-definition", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppEnums.swift:PartnerChipState",
+      "type": "class",
+      "name": "PartnerChipState",
+      "filePath": "Vayl/Core/Models/Enums/AppEnums.swift",
+      "lineRange": [226, 249],
+      "summary": "State of the home-dashboard partner chip (none, invitePending, nudge, active, multipleActive) computed by HomeEventEngine; Equatable via manual switch.",
+      "tags": ["enum", "type-definition", "home", "state"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppEnums.swift:AppIcons",
+      "type": "class",
+      "name": "AppIcons",
+      "filePath": "Vayl/Core/Models/Enums/AppEnums.swift",
+      "lineRange": [260, 317],
+      "summary": "Namespaced registry of every SF Symbol string used in the app; raw symbol literals are banned, so all icons reference these static constants.",
+      "tags": ["enum", "design-system", "constants", "icons"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/Enums/AppOBEnums.swift",
+      "type": "file",
+      "name": "AppOBEnums.swift",
+      "filePath": "Vayl/Core/Models/Enums/AppOBEnums.swift",
+      "summary": "Onboarding-canvas-exclusive enums: OBPhase sequence, OBCredential, DemoVerb, OpenerDeckType, AgeRange, RelationshipTenure, and the AppDealerTyping timing engine.",
+      "tags": ["data-model", "type-definition", "enum", "onboarding"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppOBEnums.swift:OBPhase",
+      "type": "class",
+      "name": "OBPhase",
+      "filePath": "Vayl/Core/Models/Enums/AppOBEnums.swift",
+      "lineRange": [24, 36],
+      "summary": "The complete ordered sequence of onboarding canvas phases (stat → demo → ... → founderLetter); VaylDirector is the only reader/writer and advances through these in order.",
+      "tags": ["enum", "type-definition", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppOBEnums.swift:AppDealerTyping",
+      "type": "class",
+      "name": "AppDealerTyping",
+      "filePath": "Vayl/Core/Models/Enums/AppOBEnums.swift",
+      "lineRange": [116, 203],
+      "summary": "Pure-math timing contract for all onboarding dealer copy — per-character delays, deterministic type-duration estimate, hang times, shuffle/float transition animations, and the dealer font.",
+      "tags": ["enum", "onboarding", "animation", "timing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Core/Models/Enums/AppOBEnums.swift:typeDuration",
+      "type": "function",
+      "name": "typeDuration",
+      "filePath": "Vayl/Core/Models/Enums/AppOBEnums.swift",
+      "lineRange": [143, 160],
+      "summary": "Computes the deterministic mean type-out time of a dealer line in ms so phases can gate interactivity until the dealer finishes asking; mirrors charDelay.",
+      "tags": ["utility", "timing", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/Enums/AppPulseEnums.swift",
+      "type": "file",
+      "name": "AppPulseEnums.swift",
+      "filePath": "Vayl/Core/Models/Enums/AppPulseEnums.swift",
+      "summary": "Pulse check-in enums: PulseSource, InsightType, PulseCapacityColor, PulseTier (score-to-tier with color/label), and PulseWindow (time-range filtering for the pulse graph).",
+      "tags": ["data-model", "type-definition", "enum", "pulse"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppPulseEnums.swift:PulseTier",
+      "type": "class",
+      "name": "PulseTier",
+      "filePath": "Vayl/Core/Models/Enums/AppPulseEnums.swift",
+      "lineRange": [60, 101],
+      "summary": "Tier derived from a pulse capacity score (expansive/sovereign/friction/protective) with a static score-to-tier mapper plus color, label and sublabel for rendering.",
+      "tags": ["enum", "type-definition", "pulse"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Enums/AppPulseEnums.swift:PulseWindow",
+      "type": "class",
+      "name": "PulseWindow",
+      "filePath": "Vayl/Core/Models/Enums/AppPulseEnums.swift",
+      "lineRange": [106, 179],
+      "summary": "Time-window selector for the pulse graph (1W → all) computing start dates, entry filtering, day counts, graph widths, and accessibility labels.",
+      "tags": ["enum", "type-definition", "pulse", "filtering"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Core/Models/Enums/AppTab.swift",
+      "type": "file",
+      "name": "AppTab.swift",
+      "filePath": "Vayl/Core/Models/Enums/AppTab.swift",
+      "summary": "The four-tab navigation enum (home/play/map/learn) providing SF Symbol icon names and display labels for the main tab bar.",
+      "tags": ["data-model", "type-definition", "enum", "navigation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/Enums/UserDefaultsKey.swift",
+      "type": "file",
+      "name": "UserDefaultsKey.swift",
+      "filePath": "Vayl/Core/Models/Enums/UserDefaultsKey.swift",
+      "summary": "Single source of truth for raw UserDefaults key strings (currently the onboarding-completion launch-routing mirror) to prevent duplicate-literal desyncs across layers.",
+      "tags": ["type-definition", "constants", "configuration", "persistence"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/LockInSession.swift",
+      "type": "file",
+      "name": "LockInSession.swift",
+      "filePath": "Vayl/Core/Models/LockInSession.swift",
+      "summary": "SwiftData @Model recording the pre-session emotional bandwidth check-in for both partners; device-only, computes bandwidth gap once on write and exposes significance helpers.",
+      "tags": ["data-model", "swiftdata", "persistence", "session"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/LockInSession.swift:LockInSession",
+      "type": "class",
+      "name": "LockInSession",
+      "filePath": "Vayl/Core/Models/LockInSession.swift",
+      "lineRange": [33, 114],
+      "summary": "SwiftData model for the Lock In pre-session bandwidth capture (partner A/B bandwidth, gap, LDR flag) with computed hasSignificantGap / bothExpansive / bothProtective and preview fixtures.",
+      "tags": ["data-model", "swiftdata", "session"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Core/Models/MilestoneRecord.swift",
+      "type": "file",
+      "name": "MilestoneRecord.swift",
+      "filePath": "Vayl/Core/Models/MilestoneRecord.swift",
+      "summary": "SwiftData @Model recording a one-time milestone completion per user; device-only, holds optional Beacon item IDs for the research-orbs milestone.",
+      "tags": ["data-model", "swiftdata", "persistence"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/MilestoneRecord.swift:MilestoneRecord",
+      "type": "class",
+      "name": "MilestoneRecord",
+      "filePath": "Vayl/Core/Models/MilestoneRecord.swift",
+      "lineRange": [35, 102],
+      "summary": "SwiftData model for a completed Milestone (with optional beaconItemsRead for readThreeResearchOrbs) exposing researchOrbsComplete and example fixtures.",
+      "tags": ["data-model", "swiftdata"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/PulseEntry.swift",
+      "type": "file",
+      "name": "PulseEntry.swift",
+      "filePath": "Vayl/Core/Models/PulseEntry.swift",
+      "summary": "Plain Codable struct for one pulse check-in (capacity score + Q1–Q5 answers) cached in UserDefaults via PulseStore; includes a tier accessor and rich preview data.",
+      "tags": ["data-model", "type-definition", "pulse", "serialization"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/PulseEntry.swift:PulseEntry",
+      "type": "class",
+      "name": "PulseEntry",
+      "filePath": "Vayl/Core/Models/PulseEntry.swift",
+      "lineRange": [17, 28],
+      "summary": "Codable value type holding one pulse entry's capacity score, glow color and the five check-in answer labels; a device-level cache, not a SwiftData model.",
+      "tags": ["data-model", "type-definition", "pulse"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppAccessEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppAccessEnums.swift:AccessTier",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppAccessEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppAccessEnums.swift:Milestone",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppCardEnums.swift:CardType",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppCardEnums.swift:CardIntensity",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppCardEnums.swift:DeckCategory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppCardEnums.swift:CandleIntensity",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppDesireEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppDesireEnums.swift:DesireMapState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppDesireEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppDesireEnums.swift:DesireRatingValue",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppEnums.swift:NMStage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppEnums.swift:EmotionalRegister",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppEnums.swift:MotivationShape",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppEnums.swift:RelationshipContext",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppEnums.swift:PartnerChipState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppEnums.swift:AppIcons",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppOBEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppOBEnums.swift:OBPhase",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppOBEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppOBEnums.swift:AppDealerTyping",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Models/Enums/AppOBEnums.swift:AppDealerTyping",
+      "target": "function:Vayl/Core/Models/Enums/AppOBEnums.swift:typeDuration",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppPulseEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppPulseEnums.swift:PulseTier",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Enums/AppPulseEnums.swift",
+      "target": "class:Vayl/Core/Models/Enums/AppPulseEnums.swift:PulseWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/LockInSession.swift",
+      "target": "class:Vayl/Core/Models/LockInSession.swift:LockInSession",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/MilestoneRecord.swift",
+      "target": "class:Vayl/Core/Models/MilestoneRecord.swift:MilestoneRecord",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/PulseEntry.swift",
+      "target": "class:Vayl/Core/Models/PulseEntry.swift:PulseEntry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Models/MilestoneRecord.swift:MilestoneRecord",
+      "target": "class:Vayl/Core/Models/Enums/AppAccessEnums.swift:Milestone",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Core/Models/PulseEntry.swift:PulseEntry",
+      "target": "class:Vayl/Core/Models/Enums/AppPulseEnums.swift:PulseTier",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

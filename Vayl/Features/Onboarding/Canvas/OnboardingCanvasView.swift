@@ -52,7 +52,8 @@ struct OnboardingCanvasView: View {
                 // ── Layer 2: Atmosphere ───────────────────────────
                 OnboardingAtmosphere(config: atmosphereConfig)
                     .opacity(0.68)
-                    .animation(AppAnimation.standard, value: atmosphereConfig)
+                    // Config crossfade is owned by OnboardingAtmosphere's internal
+                    // atmosphereShift — no second animation here (was double-driving it).
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
 
@@ -112,11 +113,11 @@ struct OnboardingCanvasView: View {
                 // above its card stack (this canvas layer sits below the phase
                 // overlay), so rendering both double-composites the dealer line.
                 // Mirrors the corner-deck phase guard below.
-                if director.projectedTextVisible,
-                   let text = director.projectedText,
+                if director.projector.projectedTextVisible,
+                   let text = director.projector.projectedText,
                    director.phase != .context {
                     ProjectedTextView(text: text, screenSize: size,
-                                      anchorYFrac: director.projectedTextAnchorYFrac)
+                                      anchorYFrac: director.projector.projectedTextAnchorYFrac)
                         .transition(.opacity)
                 }
 
@@ -128,8 +129,12 @@ struct OnboardingCanvasView: View {
                 // Hidden during .confirmation — the credential cards deal out of the
                 // corner into the review fan (ConfirmationPhase), so the source deck
                 // would otherwise double up with them.
+                // Also hidden during .buildDeck — those same six credentials have
+                // collapsed into the centre deck that the forge melts; a corner deck
+                // fading back in top-right would double them and contradict "yours alone".
                 if director.tableFade > 0.01 && !director.cornerDeckCards.isEmpty
-                    && director.phase != .confirmation {
+                    && director.phase != .confirmation
+                    && director.phase != .buildDeck {
                     CornerDeckView(
                         cards:      director.cornerDeckCards,
                         screenSize: size,
@@ -188,71 +193,36 @@ struct OnboardingCanvasWrapper: View {
                 if let credential = director.editingCredential {
                     CredentialEditorOverlay(director: director, credential: credential)
                 }
+
+                // Single-user couples-first greeting (ContextPhase) — hosted here, outside
+                // the canvas, same as the edit overlay above.
+                if director.showSingleGreeting {
+                    SingleGreetingOverlay(director: director)
+                }
             }
             .animation(AppAnimation.standard.reduceMotionSafe, value: director.editingCredential)
+            .animation(AppAnimation.standard.reduceMotionSafe, value: director.showSingleGreeting)
         }
     }
 }
 
 // MARK: - Phase Router
-// Switch on director.phase. All transitions use .opacity.
-// VaylDirector is the only thing that changes director.phase.
+// Switch on director.phase. VaylDirector is the only thing that changes director.phase.
+// Phases hand over with a continuous depth cross-fade (see `phaseHandoff`): the arriving
+// phase settles in from slightly forward, the departing phase recedes back — so the canvas
+// reads as one space with z-depth, not a slideshow. Reduce Motion → pure opacity.
 
 private struct PhaseOverlayView: View {
     let director:   VaylDirector
     let screenSize: CGSize
     @Binding var tableRimBurst: Double
     @Binding var tableForgeEnergy: Double
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
-            switch director.phase {
-            case .stat:
-                StatPhase(director: director)
-                    .transition(.opacity)
-
-            case .demo:
-                DemoPhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
-                    .transition(.opacity)
-
-            case .name:
-                NamePhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
-                    .transition(.opacity)
-
-            case .gender:
-                GenderPhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
-                    .transition(.opacity)
-
-            case .modeSelect:
-                ModeSelectPhase(director: director, screenSize: screenSize)
-                    .transition(.opacity)
-
-            case .experienceLevel:
-                ExperienceLevelPhase(director: director, screenSize: screenSize)
-                    .transition(.opacity)
-
-            case .context:
-                ContextPhase(director: director, screenSize: screenSize)
-                    .transition(.opacity)
-
-            case .curiosity:
-                CuriosityPhase(director: director, screenSize: screenSize)
-                    .transition(.opacity)
-
-            case .confirmation:
-                ConfirmationPhase(director: director)
-                    .transition(.opacity)
-
-            case .buildDeck:
-                BuildDeckPhase(director: director, screenSize: screenSize,
-                               tableRimBurst: $tableRimBurst,
-                               tableForgeEnergy: $tableForgeEnergy)
-                    .transition(.opacity)
-
-            case .founderLetter:
-                FounderLetterPhase(director: director)
-                    .transition(.opacity)
-            }
+            phaseContent
+                .transition(phaseHandoff)
         }
         // Pin the ZStack to screen dimensions.
         // Card transforms during NamePhase (offset to deal origin,
@@ -261,7 +231,70 @@ private struct PhaseOverlayView: View {
         // outside the smaller collapsed boundary.
         .frame(width: screenSize.width, height: screenSize.height)
         .ignoresSafeArea()
-        .animation(AppAnimation.standard, value: director.phase)
+        // `slow` (0.5s) over `standard` (0.3s) — slow's own token doc names it the
+        // onboarding step-transition animation. reduceMotionSafe → fast opacity confirm.
+        .animation(AppAnimation.slow.reduceMotionSafe, value: director.phase)
+    }
+
+    /// The active phase view. Each case is a distinct type, so changing `director.phase`
+    /// changes identity → `phaseHandoff` plays on the outgoing + incoming phase.
+    @ViewBuilder
+    private var phaseContent: some View {
+        switch director.phase {
+        case .stat:
+            StatPhase(director: director)
+
+        case .demo:
+            DemoPhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
+
+        case .name:
+            NamePhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
+
+        case .gender:
+            GenderPhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
+
+        case .modeSelect:
+            ModeSelectPhase(director: director, screenSize: screenSize)
+
+        case .experienceLevel:
+            ExperienceLevelPhase(director: director, screenSize: screenSize)
+
+        case .context:
+            ContextPhase(director: director, screenSize: screenSize)
+
+        case .curiosity:
+            CuriosityPhase(director: director, screenSize: screenSize)
+
+        case .confirmation:
+            ConfirmationPhase(director: director)
+
+        case .buildDeck:
+            BuildDeckPhase(director: director, screenSize: screenSize,
+                           tableRimBurst: $tableRimBurst,
+                           tableForgeEnergy: $tableForgeEnergy)
+
+        case .founderLetter:
+            FounderLetterPhase(director: director)
+        }
+    }
+
+    /// Continuous phase-to-phase depth handoff. FEEL-GATE — the scale magnitudes are
+    /// starting points; verify on device and dial to taste. Incoming settles in from
+    /// slightly forward (1.02 → 1.0); outgoing recedes back (1.0 → 0.97). Under Reduce
+    /// Motion this collapses to a pure opacity cross-fade — scale is motion.
+    private var phaseHandoff: AnyTransition {
+        guard !reduceMotion else { return .opacity }
+        // Confirmation → BuildDeck is a pixel-identical deck handoff (the collapsed
+        // credential fan and BuildDeck's VaylDeckStack share point/size/face). A depth
+        // scale would counter-scale the two near-identical decks about screen-centre and
+        // double-image the swap. Both the leaving Confirmation and the arriving BuildDeck
+        // evaluate this against the POST-advance phase, so keying on .buildDeck drops the
+        // scale on BOTH sides of this one seam only — every other handoff keeps its depth.
+        if director.phase == .buildDeck { return .opacity }
+        return .asymmetric(
+            insertion: .opacity.combined(with: .scale(scale: 1.02)),
+            removal:   .opacity.combined(with: .scale(scale: 0.97))
+        )
     }
 }
 
@@ -292,9 +325,14 @@ private struct PhaseOverlayView: View {
                             HStack(spacing: 10) {
                                 ForEach(OBPhase.allCases, id: \.self) { phase in
                                     Button {
-                                        withAnimation(AppAnimation.standard) {
-                                            director.phase = phase
-                                        }
+                                        // Jump through the real navigation path so the target
+                                        // phase's entry routine runs (advance → handlePhaseEntry).
+                                        // Setting director.phase directly skips entry — e.g.
+                                        // Curiosity never arms curiosityDemoActive, so its deal
+                                        // bails on the guard and the phase looks stuck until you
+                                        // reach it through a real transition. The canvas already
+                                        // cross-fades on director.phase, so no withAnimation here.
+                                        director.advance(to: phase)
                                     } label: {
                                         Text(String(describing: phase))
                                             .font(.caption.weight(.bold))
@@ -342,9 +380,14 @@ private struct PhaseOverlayView: View {
                 if let credential = director.editingCredential {
                     CredentialEditorOverlay(director: director, credential: credential)
                 }
+
+                if director.showSingleGreeting {
+                    SingleGreetingOverlay(director: director)
+                }
             }
             } // GeometryReader
             .animation(AppAnimation.standard, value: director.editingCredential)
+            .animation(AppAnimation.standard, value: director.showSingleGreeting)
         }
     }
 

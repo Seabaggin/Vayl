@@ -19,10 +19,7 @@ struct SafariView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> SFSafariViewController {
         let controller = SFSafariViewController(url: url)
         controller.dismissButtonStyle = .done
-        // Bridge the SwiftUI color tokens to UIColor (iOS 14+). Keeps the slim
-        // Safari chrome on-brand; the page body itself comes from the hosted URL.
-        controller.preferredControlTintColor = UIColor(AppColors.accentPrimary)
-        controller.preferredBarTintColor = UIColor(AppColors.modalBackground)
+        // Safari chrome dynamically adapts in modern iOS.
         return controller
     }
 

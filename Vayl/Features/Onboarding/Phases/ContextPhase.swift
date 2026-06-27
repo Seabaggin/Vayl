@@ -21,12 +21,14 @@ struct ContextPhase: View {
     let screenSize: CGSize
 
     // MARK: - Card geometry
-    // Shared OB "hero card" size — identical to ModeSelectPhase / NamePhase /
-    // GenderPhase (obTableCard × cinematic scale). Keeps the card system consistent.
+    // Based on the shared OB "hero card" size (obTableCard × cinematic scale), bumped a
+    // touch for the carousel — browsing wants more card presence. The bump is Context-ONLY;
+    // it does not change the shared ModeSelect / Name / Gender card size.
     private var cardSize: CGSize {
-        CGSize(
-            width:  AppLayout.obTableCardWidth(in: screenSize.width)  * AppLayout.obTableCardCinematicScale,
-            height: AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale
+        let bump: CGFloat = 1.1   // FEEL-GATE — carousel card size; dial to taste
+        return CGSize(
+            width:  AppLayout.obTableCardWidth(in: screenSize.width)  * AppLayout.obTableCardCinematicScale * bump,
+            height: AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale * bump
         )
     }
 
@@ -73,7 +75,7 @@ struct ContextPhase: View {
         RadialGradient(
             colors: [
                 tint(for: options[physics.currentIndex].accent)
-                    .opacity(confirmPulse ? 0.42 : 0.26),
+                    .opacity(confirmPulse ? 0.34 : 0.18),   // FEEL-GATE — accent glow strength (turned down)
                 Color.clear,
             ],
             center: .center,
@@ -83,6 +85,12 @@ struct ContextPhase: View {
         .frame(width: cardSize.width * 2.2, height: cardSize.width * 2.2)
         .blur(radius: cardSize.width * 0.20)
         .offset(y: -cardSize.height * 0.10)
+        // Contain the oversized glow's LAYOUT footprint to the screen. Its visual frame
+        // (cardSize.width * 2.2 ≈ 1.5× the screen) otherwise inflates this ZStack's width,
+        // and the absolutely-positioned ProjectedTextView (x = screenWidth/2) is then
+        // measured against that wider box — landing LEFT of centre. The gradient still
+        // renders large (frame doesn't clip); only its reported layout size shrinks.
+        .frame(width: screenSize.width, height: screenSize.height)
         .opacity(entered && !exiting ? 1 : 0)
         .animation(AppAnimation.standard, value: physics.currentIndex)
         .animation(AppAnimation.spring, value: confirmPulse)
@@ -115,7 +123,6 @@ struct ContextPhase: View {
                 defocusUnselected:  defocusOthers,
                 content: { index, isFront in
                     let o = options[index]
-                    let isUndecided = (index == options.count - 1)
                     VaylCardFace(
                         content: .context(
                             number:   String(format: "%02d", index + 1),
@@ -126,7 +133,6 @@ struct ContextPhase: View {
                         isFront:   isFront,
                         confirmed: confirmedIndex == index
                     )
-                    .opacity(isUndecided ? 0.82 : 1.0)
                 },
                 onConfirm:   handleConfirm,
                 onUnconfirm: handleUnconfirm,
@@ -134,8 +140,11 @@ struct ContextPhase: View {
             )
             .offset(x: hintOffset)
             .opacity(entered ? 1 : 0)                   // per-card exit handles fade-out
-            .scaleEffect(entered ? 1 : 0.92)            // assembles in, not just fades
-            .offset(y: entered ? 0 : screenSize.height * 0.06)
+            // Assembly — the cards lift UP off the receding felt and grow into place with a
+            // touch of overshoot (was a faint 8% scale + 6% rise that read as a soft fade).
+            // FEEL-GATE — the grow-from scale and the rise distance.
+            .scaleEffect(entered ? 1 : 0.82)
+            .offset(y: entered ? 0 : screenSize.height * 0.13)
             .accessibilityLabel(a11yLabel)
             .accessibilityHint("Swipe left or right to browse. Double-tap to select. After selecting, swipe up to continue.")
 
@@ -189,8 +198,14 @@ struct ContextPhase: View {
 
         // Dealer copy — rendered by the phase so it layers ABOVE the cards.
         // (The canvas's copy layer sits behind the phase and is occluded by the stack.)
-        if director.projectedTextVisible, let copy = director.projectedText {
-            ProjectedTextView(text: copy, screenSize: screenSize)
+        if director.projector.projectedTextVisible, let copy = director.projector.projectedText {
+            // anchorYFrac lifts the line clear above the (enlarged) cards. The explicit
+            // screen-sized frame pins ProjectedTextView's absolute .position (x = width/2)
+            // to the SCREEN, immune to anything in this ZStack that renders wider than the
+            // screen (the glow, the peeking cards) — otherwise the line drifts off-centre.
+            // FEEL-GATE — anchorYFrac: lower value = higher on screen.
+            ProjectedTextView(text: copy, screenSize: screenSize, anchorYFrac: 0.20, centerGrow: true)
+                .frame(width: screenSize.width, height: screenSize.height)
                 .transition(.opacity)
                 .zIndex(20)
                 .allowsHitTesting(false)
@@ -218,7 +233,7 @@ struct ContextPhase: View {
         guard !entered else { return }
         // Clear any hangover dealer copy from the prior phase immediately. Re-hiding
         // here also wins the onAppear/onDisappear race with ExperienceLevel.
-        director.hideDealerLine()
+        director.projector.hideDealerLine()
 
         if reduceMotion {
             director.recedeTableForContext()
@@ -226,14 +241,14 @@ struct ContextPhase: View {
             director.showContextHeadline()
             Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(2500))
-                director.hideDealerLine()
+                director.projector.hideDealerLine()
             }
             return
         }
 
         Task { @MainActor in
             // 1. Silent beat — the clean felt (and the 5/6 deck) get their moment.
-            try? await Task.sleep(for: .milliseconds(900))
+            try? await Task.sleep(for: .milliseconds(700))   // FEEL-GATE — trimmed from 900 (less dead air before the headline)
             guard !entered else { return }
 
             // 2. Single strong bridging line, typed on the STILL-PRESENT felt.
@@ -250,10 +265,12 @@ struct ContextPhase: View {
             director.recedeTableForContext()
             try? await Task.sleep(for: .milliseconds(250))
             guard !entered else { return }
-            withAnimation(AppAnimation.spring) { entered = true }
+            // carouselAssemble — livelier than AppAnimation.spring; a bit of overshoot so the
+            // carousel ARRIVES off the felt rather than fades in (FEEL-GATE, tuned in the token).
+            withAnimation(AppAnimation.carouselAssemble) { entered = true }
 
             // 5. Headline fades over the rising cards.
-            director.hideDealerLine()
+            director.projector.hideDealerLine()
 
             // 6. No further copy — the carousel is the question. Just schedule hint.
             try? await Task.sleep(for: .milliseconds(800))
@@ -348,7 +365,7 @@ struct ContextPhase: View {
         guard let index = confirmedIndex, !exiting else { return }
         stopConfirmTug()
         let option = options[index]
-        director.hideDealerLine()
+        director.projector.hideDealerLine()
 
         // Step 1 — the chosen card launches up and off.
         withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { exiting = true }
@@ -358,12 +375,18 @@ struct ContextPhase: View {
             try? await Task.sleep(for: .milliseconds(350))
             withAnimation(AppAnimation.exit.reduceMotionSafe) { defocusOthers = true }
 
-            // Hero has cleared — return the felt, receive the credential, respond.
+            // Hero has cleared. Single → the couples-first greeting first (its Continue
+            // concludes); everyone else concludes straight to the felt + dealer reply.
             try? await Task.sleep(for: .milliseconds(450))
-            director.concludeContext(
-                relationshipContext: option.context,
-                situationalRegister: option.derivedRegister
-            )
+            if option.context == .single {
+                director.presentSingleGreeting(context: option.context,
+                                               register: option.derivedRegister)
+            } else {
+                director.concludeContext(
+                    relationshipContext: option.context,
+                    situationalRegister: option.derivedRegister
+                )
+            }
         }
     }
 }

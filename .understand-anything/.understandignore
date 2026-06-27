@@ -1,0 +1,41 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+#
+# SCOPE (chosen 2026-06-20): Vayl app source + VaylTests + supabase backend ONLY.
+# Everything else (design docs, HTML prototypes, agent tooling, root scratch
+# notes, build config, font binaries) is excluded to keep the architecture
+# graph focused on the real client<->backend system.
+
+# --- Documentation & design prototypes ---
+docs/
+
+# --- Agent / editor tooling (untracked) ---
+.agents/
+.claude/
+.understand-anything/
+
+# --- Supabase CLI working state (not architecture) ---
+supabase/.temp/
+
+# --- Xcode build/project config (not runtime architecture) ---
+Vayl.xcodeproj/
+
+# --- Root-level scratch docs, scripts, and config ---
+/*.md
+/*.sh
+/*.plist
+/*.yml
+/*.yaml
+/*.json
+/*.toml
+/*.Rhistory
+/*.xcworkspacedata
+/*.entitlements
+
+# --- Font & binary asset files (no graph value) ---
+*.otf
+*.ttf
+*.png
+*.jpg
+*.jpeg
+*.svg

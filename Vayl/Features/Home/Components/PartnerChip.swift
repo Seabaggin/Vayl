@@ -168,21 +168,10 @@ struct PartnerChip: View {
                             ? AppColors.textTertiary
                             : AppColors.textTertiary)
                 }
-                .padding(.horizontal, AppSpacing.sm)
+                .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.sm)
-                .background {
-                    Capsule()
-                        .fill(isLight
-                            ? AppColors.glassFrostCard
-                            : Color.white.opacity(0.04))
-                }
-                .overlay {
-                    Capsule()
-                        .stroke(isLight
-                            ? AppColors.borderSubtle
-                            : Color.white.opacity(0.08),
-                            lineWidth: 1)
-                }
+                // iOS 26 Liquid Glass — the partner pill is a native floating control.
+                .glassEffect(.regular, in: Capsule())
             }
             .buttonStyle(.plain)
 
@@ -195,21 +184,9 @@ struct PartnerChip: View {
                         ? AppColors.textTertiary
                         : AppColors.textTertiary)
             }
-            .padding(.horizontal, AppSpacing.sm)
+            .padding(.horizontal, AppSpacing.md)
             .padding(.vertical, AppSpacing.sm)
-            .background {
-                Capsule()
-                    .fill(isLight
-                        ? AppColors.glassFrostCard
-                        : Color.white.opacity(0.04))
-            }
-            .overlay {
-                Capsule()
-                    .stroke(isLight
-                        ? AppColors.borderSubtle
-                        : Color.white.opacity(0.06),
-                        lineWidth: 1)
-            }
+            .glassEffect(.regular, in: Capsule())
 
         // ── Nudge state — V1.1 stub ────────────────────────────
         case .nudge:

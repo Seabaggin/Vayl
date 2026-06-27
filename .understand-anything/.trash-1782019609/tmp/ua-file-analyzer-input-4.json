@@ -1,0 +1,31 @@
+{
+  "projectRoot": "/Users/bryanjorden/Documents/School/Code/Vayl",
+  "batchFiles": [
+    {"path":"Vayl/App/Theme/ThemeManager.swift","language":"swift","sizeLines":46,"fileCategory":"code"},
+    {"path":"Vayl/App/Theme/ThemeModifiers.swift","language":"swift","sizeLines":74,"fileCategory":"code"},
+    {"path":"Vayl/App/Theme/VaylPrimitives.swift","language":"swift","sizeLines":157,"fileCategory":"code"},
+    {"path":"Vayl/App/VaylApp.swift","language":"swift","sizeLines":72,"fileCategory":"code"},
+    {"path":"Vayl/AppIconRetreival.swift","language":"swift","sizeLines":40,"fileCategory":"code"},
+    {"path":"Vayl/Assets.xcassets/AccentColor.colorset/Contents.json","language":"json","sizeLines":11,"fileCategory":"config"},
+    {"path":"Vayl/Assets.xcassets/AppIcon.appiconset/Contents.json","language":"json","sizeLines":36,"fileCategory":"config"},
+    {"path":"Vayl/Assets.xcassets/Contents.json","language":"json","sizeLines":6,"fileCategory":"config"},
+    {"path":"Vayl/Assets.xcassets/gender-man.symbolset/Contents.json","language":"json","sizeLines":12,"fileCategory":"config"},
+    {"path":"Vayl/Assets.xcassets/gender-non-binary.symbolset/Contents.json","language":"json","sizeLines":12,"fileCategory":"config"},
+    {"path":"Vayl/Assets.xcassets/gender-trans.symbolset/Contents.json","language":"json","sizeLines":12,"fileCategory":"config"},
+    {"path":"Vayl/Assets.xcassets/gender-woman.symbolset/Contents.json","language":"json","sizeLines":12,"fileCategory":"config"},
+    {"path":"Vayl/Core/Debug/DiagnosticOverlay.swift","language":"swift","sizeLines":179,"fileCategory":"code"},
+    {"path":"Vayl/Core/Debug/DragDebugView.swift","language":"swift","sizeLines":79,"fileCategory":"code"},
+    {"path":"Vayl/Core/Models/AcknowledgementRecord.swift","language":"swift","sizeLines":86,"fileCategory":"code"},
+    {"path":"Vayl/Core/Models/Card.swift","language":"swift","sizeLines":270,"fileCategory":"code"},
+    {"path":"Vayl/Core/Models/CardSession.swift","language":"swift","sizeLines":111,"fileCategory":"code"},
+    {"path":"Vayl/Core/Models/CompanionCard.swift","language":"swift","sizeLines":19,"fileCategory":"code"},
+    {"path":"Vayl/Core/Models/Couple.swift","language":"swift","sizeLines":98,"fileCategory":"code"},
+    {"path":"Vayl/Core/Models/Deck.swift","language":"swift","sizeLines":118,"fileCategory":"code"},
+    {"path":"Vayl/Core/Models/DeckProgress.swift","language":"swift","sizeLines":46,"fileCategory":"code"},
+    {"path":"Vayl/Core/Models/DesireItem.swift","language":"swift","sizeLines":37,"fileCategory":"code"},
+    {"path":"Vayl/Core/Models/DesireMatch.swift","language":"swift","sizeLines":81,"fileCategory":"code"},
+    {"path":"Vayl/Core/Models/DesireRating.swift","language":"swift","sizeLines":124,"fileCategory":"code"},
+    {"path":"Vayl/Core/Models/EntitlementRecord.swift","language":"swift","sizeLines":148,"fileCategory":"code"}
+  ],
+  "batchImportData": {}
+}

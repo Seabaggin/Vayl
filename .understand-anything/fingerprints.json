@@ -1,0 +1,2939 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "9bdd879394fcba3faf188078edd1640c1d173977",
+  "generatedAt": "2026-06-21T05:26:38.101Z",
+  "files": {
+    "supabase/config.toml": {
+      "filePath": "supabase/config.toml",
+      "contentHash": "d43f296fbdf51b4889036b1bd5a4b0a3e1aaab0990522072b119f3da97d83679",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 23,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/functions/compute-desire-matches/index.ts": {
+      "filePath": "supabase/functions/compute-desire-matches/index.ts",
+      "contentHash": "e2f116a71dfde1ea22e28e6396542fef8394adb7f2bfd82be91b95743b754a66",
+      "functions": [
+        {
+          "name": "json",
+          "params": [
+            "body",
+            "status"
+          ],
+          "returnType": "Response",
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "matchType",
+          "params": [
+            "a",
+            "b"
+          ],
+          "returnType": "\"mutual\" | \"adjacent\" | null",
+          "exported": false,
+          "lineCount": 6
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "https://deno.land/std@0.168.0/http/server.ts",
+          "specifiers": [
+            "serve"
+          ]
+        },
+        {
+          "source": "https://esm.sh/@supabase/supabase-js@2",
+          "specifiers": [
+            "createClient"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 172,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/functions/create-pair/.npmrc": {
+      "filePath": "supabase/functions/create-pair/.npmrc",
+      "contentHash": "2cc495d5b8918533470e2666eccfcc0532a2a75699e8ad7c887163c83322ab55",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 4,
+      "hasStructuralAnalysis": false
+    },
+    "supabase/functions/create-pair/deno.json": {
+      "filePath": "supabase/functions/create-pair/deno.json",
+      "contentHash": "776494746017e3d2b06d84933befb734499e53c2ef2e951566801b8cb65882ba",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/functions/create-pair/index.ts": {
+      "filePath": "supabase/functions/create-pair/index.ts",
+      "contentHash": "80c94d26b3f921ec459fbe5d32608336761c461f33aeb7d2e582e6ecafa5eaae",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "https://esm.sh/@supabase/supabase-js@2",
+          "specifiers": [
+            "createClient"
+          ]
+        },
+        {
+          "source": "https://deno.land/std@0.177.0/http/server.ts",
+          "specifiers": [
+            "serve"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 143,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/functions/get-partner/index.ts": {
+      "filePath": "supabase/functions/get-partner/index.ts",
+      "contentHash": "097084b028cb536b637f26e4c5905155f761bc55bbaad3c4c21ecf1c270bbc80",
+      "functions": [
+        {
+          "name": "json",
+          "params": [
+            "body",
+            "status"
+          ],
+          "returnType": "Response",
+          "exported": false,
+          "lineCount": 6
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "https://deno.land/std@0.168.0/http/server.ts",
+          "specifiers": [
+            "serve"
+          ]
+        },
+        {
+          "source": "https://esm.sh/@supabase/supabase-js@2",
+          "specifiers": [
+            "createClient"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/functions/grant-entitlement/index.ts": {
+      "filePath": "supabase/functions/grant-entitlement/index.ts",
+      "contentHash": "d955ad777c1c5e583224feb44b68a49102b8a73b346592797e3629b5646cf63e",
+      "functions": [
+        {
+          "name": "json",
+          "params": [
+            "body",
+            "status"
+          ],
+          "returnType": "Response",
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "verifyAppleTransaction",
+          "params": [
+            "_signedTransaction",
+            "_expectedProductId"
+          ],
+          "returnType": "Promise<{ transactionId: string } | null>",
+          "exported": false,
+          "lineCount": 13
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "https://deno.land/std@0.168.0/http/server.ts",
+          "specifiers": [
+            "serve"
+          ]
+        },
+        {
+          "source": "https://esm.sh/@supabase/supabase-js@2",
+          "specifiers": [
+            "createClient"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 156,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/functions/lookup-code/.npmrc": {
+      "filePath": "supabase/functions/lookup-code/.npmrc",
+      "contentHash": "2cc495d5b8918533470e2666eccfcc0532a2a75699e8ad7c887163c83322ab55",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 4,
+      "hasStructuralAnalysis": false
+    },
+    "supabase/functions/lookup-code/deno.json": {
+      "filePath": "supabase/functions/lookup-code/deno.json",
+      "contentHash": "776494746017e3d2b06d84933befb734499e53c2ef2e951566801b8cb65882ba",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/functions/lookup-code/index.ts": {
+      "filePath": "supabase/functions/lookup-code/index.ts",
+      "contentHash": "1ddb02484822ca5f2cb6cc5efe6f605b2e47e93f04d6ac7c7984766a7bc501f5",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "https://esm.sh/@supabase/supabase-js@2",
+          "specifiers": [
+            "createClient"
+          ]
+        },
+        {
+          "source": "https://deno.land/std@0.177.0/http/server.ts",
+          "specifiers": [
+            "serve"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/functions/rapid-task/index.ts": {
+      "filePath": "supabase/functions/rapid-task/index.ts",
+      "contentHash": "8a70eb427d95f0f4df41ca5f927bcbbf0ffd2b3574ceea1b3aef4c95bbfa64bd",
+      "functions": [
+        {
+          "name": "json",
+          "params": [
+            "body",
+            "status"
+          ],
+          "returnType": "Response",
+          "exported": false,
+          "lineCount": 6
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "https://deno.land/std@0.168.0/http/server.ts",
+          "specifiers": [
+            "serve"
+          ]
+        },
+        {
+          "source": "https://esm.sh/@supabase/supabase-js@2",
+          "specifiers": [
+            "createClient"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 127,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/migrations/20260101000000_baseline.sql": {
+      "filePath": "supabase/migrations/20260101000000_baseline.sql",
+      "contentHash": "ad1ed5a09bcc0a7a1261d207d5bd37e8c6200e5b813d2eb3ec7919abd24331a2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 938,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/migrations/20260616223000_p5d_revoke_anon_default_privileges.sql": {
+      "filePath": "supabase/migrations/20260616223000_p5d_revoke_anon_default_privileges.sql",
+      "contentHash": "2a8af6283feed234f8f10bb49d74b284108a404766d172678fdaf5e8361021c3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 22,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/migrations/20260617000000_desire_map_backend.sql": {
+      "filePath": "supabase/migrations/20260617000000_desire_map_backend.sql",
+      "contentHash": "3620b1595cf751657c5b3d4d1c934e6c0a6067432d31840d7b8f76d92180cfe7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 46,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/migrations/20260617120000_monetization_entitlements.sql": {
+      "filePath": "supabase/migrations/20260617120000_monetization_entitlements.sql",
+      "contentHash": "6518224b90093c0a1fca226521e73c4bed02846e1a9c739bb781b247bb2d1cb4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 63,
+      "hasStructuralAnalysis": true
+    },
+    "supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql": {
+      "filePath": "supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql",
+      "contentHash": "2f8d05f7ce60624c7c39f5e456e39be33a86482e23ca8cf2b4669fa34b9adcf9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 81,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/App/AppShell.swift": {
+      "filePath": "Vayl/App/AppShell.swift",
+      "contentHash": "40717d8baf4a26a42d0904eb1a9e184d9f94ab9755b7d0ba1b84fa3f9f58d9f6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 73,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/ModelContainer.swift": {
+      "filePath": "Vayl/App/ModelContainer.swift",
+      "contentHash": "bd64601ee54d76379f9bc4da15715185260f70137463ce214b63f5b60a5fc768",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 120,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppAnimation.swift": {
+      "filePath": "Vayl/App/Theme/AppAnimation.swift",
+      "contentHash": "0b72a3efd9a20504c178b2775844c5f97d6f6c2429b500fdef2ee67249ee09e7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 672,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppColors.swift": {
+      "filePath": "Vayl/App/Theme/AppColors.swift",
+      "contentHash": "2fd41700ec11661a38ca5300ec1a0334c520c5a39cb0d7b81b18703af59761e4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 686,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppElevation.swift": {
+      "filePath": "Vayl/App/Theme/AppElevation.swift",
+      "contentHash": "65a7ddc98be311281e1bd607c2a8e0641d2c8335cddf770ff1fe5c75bd20ff77",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 282,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppFonts.swift": {
+      "filePath": "Vayl/App/Theme/AppFonts.swift",
+      "contentHash": "82e998ff49dfe93a33b40a7440d28f582a882048d1c67303b056339741601191",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 231,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppGlows.swift": {
+      "filePath": "Vayl/App/Theme/AppGlows.swift",
+      "contentHash": "0ed46aa17e422144526c82528263008b0c7eaa3ffb5b6e832b91f8e42392f86c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 415,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppGrid.swift": {
+      "filePath": "Vayl/App/Theme/AppGrid.swift",
+      "contentHash": "8c711bfdde238a79bdd7d4faf6c893a305337a052c8a58fa95bba08a0aae4bf8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 120,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppLayout.swift": {
+      "filePath": "Vayl/App/Theme/AppLayout.swift",
+      "contentHash": "1cdca934a75ac29ea0bb03df27f313343bb48cf4e4c154c030ce60f4301283cb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 460,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppRadius.swift": {
+      "filePath": "Vayl/App/Theme/AppRadius.swift",
+      "contentHash": "878e24da8e2b5f7e7c2463d0fcac0f5364d4fa4eb961b1608729d055dd5e5223",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 93,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppRootView.swift": {
+      "filePath": "Vayl/App/Theme/AppRootView.swift",
+      "contentHash": "b7717e2c8e819b6cc7bffcfb2d291de20ae130c40ee4b7fbb97789a981fe5a0d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 100,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppSafeArea.swift": {
+      "filePath": "Vayl/App/Theme/AppSafeArea.swift",
+      "contentHash": "506cb10501e84bb95e93264934049c0436f14c15e22a0148babc34265f5e3fc1",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 167,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppSpacing.swift": {
+      "filePath": "Vayl/App/Theme/AppSpacing.swift",
+      "contentHash": "31b32afcf435771eb4d409c130a1681471945574cc874c99b29b3d2dd90de6d2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 53,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/AppTheme.swift": {
+      "filePath": "Vayl/App/Theme/AppTheme.swift",
+      "contentHash": "f4225f4c022d923fb205d152e3720cc7e87243e357f268aecca6d69456ae8eed",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 40,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/ThemeManager.swift": {
+      "filePath": "Vayl/App/Theme/ThemeManager.swift",
+      "contentHash": "726345eb574778cd97d54a146e7bfee952eb8a04af5ef059ad98a2225a96b062",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 47,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/ThemeModifiers.swift": {
+      "filePath": "Vayl/App/Theme/ThemeModifiers.swift",
+      "contentHash": "2caef0de75c5e2204a82d4f8b4f0eb5cdf98520fd1966fa3cd9922d92f97fb47",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 75,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/Theme/VaylPrimitives.swift": {
+      "filePath": "Vayl/App/Theme/VaylPrimitives.swift",
+      "contentHash": "741796124103d5ad2f8ff2354bff8bc2e633cf0e40a314e3d0b305986e816f4d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 158,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/App/VaylApp.swift": {
+      "filePath": "Vayl/App/VaylApp.swift",
+      "contentHash": "f9d53aa088c002a0a875c31f7a6f6309ca29a06a8e3ebc641510e3c2ad49d7ad",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 70,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/AppIconRetreival.swift": {
+      "filePath": "Vayl/AppIconRetreival.swift",
+      "contentHash": "eff439f4d093c352a353b4075ae37d29dd84b38e955fbe4d205b9afdab21191d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 41,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Assets.xcassets/AccentColor.colorset/Contents.json": {
+      "filePath": "Vayl/Assets.xcassets/AccentColor.colorset/Contents.json",
+      "contentHash": "9af65086fa30b49252fae1a1225731691de794f7775af74d71befeb507d12b7c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 12,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Assets.xcassets/AppIcon.appiconset/Contents.json": {
+      "filePath": "Vayl/Assets.xcassets/AppIcon.appiconset/Contents.json",
+      "contentHash": "b4edff5e166ea16bf1f77599c4906229e0a9f9b7e243bdd532db1d891fe24383",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Assets.xcassets/Contents.json": {
+      "filePath": "Vayl/Assets.xcassets/Contents.json",
+      "contentHash": "0fd49ba3c3585c709678e0046a821c3c60685ec7063720d30d3a3448be3a208b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 7,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Assets.xcassets/gender-man.symbolset/Contents.json": {
+      "filePath": "Vayl/Assets.xcassets/gender-man.symbolset/Contents.json",
+      "contentHash": "48792ea77fe0a3e864f9c385ff3ce02ce923783922b65dd0ff8a04b57d725469",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Assets.xcassets/gender-non-binary.symbolset/Contents.json": {
+      "filePath": "Vayl/Assets.xcassets/gender-non-binary.symbolset/Contents.json",
+      "contentHash": "3a8eca14bd6e63db910e4af1cb02648bc8e0fc160e77aecb0787ef0c8afa9361",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Assets.xcassets/gender-trans.symbolset/Contents.json": {
+      "filePath": "Vayl/Assets.xcassets/gender-trans.symbolset/Contents.json",
+      "contentHash": "9e3b31a4998238908d1273c2478deee12e3786373cbe21c947737bc3a5dfed5b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Assets.xcassets/gender-woman.symbolset/Contents.json": {
+      "filePath": "Vayl/Assets.xcassets/gender-woman.symbolset/Contents.json",
+      "contentHash": "9fe74f196d5961c981b9f06d9d55039c411cf21f9906f9c03fbad30e59c0f0ad",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Core/Debug/DiagnosticOverlay.swift": {
+      "filePath": "Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "contentHash": "25389b6dec933ebcd0b3ec2d71d31f056c89aed4f115cb1efbdc72548451da6d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 180,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Debug/DragDebugView.swift": {
+      "filePath": "Vayl/Core/Debug/DragDebugView.swift",
+      "contentHash": "a6066131da3692ab95fe3a18534002ad574cbc53e1ce4a94f686e2c615335666",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 80,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/AcknowledgementRecord.swift": {
+      "filePath": "Vayl/Core/Models/AcknowledgementRecord.swift",
+      "contentHash": "ede29b19e21da3f3f22aa62132a0e3e799bb1bb97452f25b8fef36ef23f8f485",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/Card.swift": {
+      "filePath": "Vayl/Core/Models/Card.swift",
+      "contentHash": "5693c2b302aa8c6ccaf1f25508b09fae335ffc4af3c395e643dbdb52b0ab94a8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 271,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/CardSession.swift": {
+      "filePath": "Vayl/Core/Models/CardSession.swift",
+      "contentHash": "8fe16d0a011e7d2a019f1777e6aaa9490ebf32515711cd44565076f1ef528e8d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 112,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/CompanionCard.swift": {
+      "filePath": "Vayl/Core/Models/CompanionCard.swift",
+      "contentHash": "90ec7f834f025784517c3c05cd8bf585492e237b9f9d7c736117c4cbfd7a339a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 20,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/Couple.swift": {
+      "filePath": "Vayl/Core/Models/Couple.swift",
+      "contentHash": "e19c82788ac9db5f4c3f29398b487fd681bcca136691be4608b582d90350cb28",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 99,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/Deck.swift": {
+      "filePath": "Vayl/Core/Models/Deck.swift",
+      "contentHash": "e677d35aa27745d0ef1b8b845f4dda8f1db29bfbd30bd4918b8e99a5cb599273",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 119,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/DeckProgress.swift": {
+      "filePath": "Vayl/Core/Models/DeckProgress.swift",
+      "contentHash": "28f58362e22f412db10fbcae3c22ddc7216ac13e741e1eaf8519302019e9df95",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 47,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/DesireItem.swift": {
+      "filePath": "Vayl/Core/Models/DesireItem.swift",
+      "contentHash": "73d6acb6c62c31af616bc83ee5723641340c0dc0ef6bac23d9da2db037f2faa4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 38,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/DesireMatch.swift": {
+      "filePath": "Vayl/Core/Models/DesireMatch.swift",
+      "contentHash": "4ce0b0e6dac952a512f6c1bc9ff13529b1f080433b2bbdd1a46f9ae1175b2c24",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 82,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/DesireRating.swift": {
+      "filePath": "Vayl/Core/Models/DesireRating.swift",
+      "contentHash": "84fc85bde34164e6a6d12b05125c4d3fb0cc4d426ef1ad075c047958f0111bf6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 125,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/EntitlementRecord.swift": {
+      "filePath": "Vayl/Core/Models/EntitlementRecord.swift",
+      "contentHash": "0e0c444c2c6bc784edc894d49a5b579aa99cd9c9f6a3ebc3a5e45737d460d09e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 149,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/Enums/AppAccessEnums.swift": {
+      "filePath": "Vayl/Core/Models/Enums/AppAccessEnums.swift",
+      "contentHash": "7c938c1d12814c7177bf5543c46fecd93e76b51da1360254bce33a517e9f929b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 56,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/Enums/AppCardEnums.swift": {
+      "filePath": "Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "contentHash": "e5dccf1461b2f07e09b15ed862333cbd68a33e937443fc0721eca6ff759722f5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 251,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/Enums/AppDesireEnums.swift": {
+      "filePath": "Vayl/Core/Models/Enums/AppDesireEnums.swift",
+      "contentHash": "618df333383e34e426c73a0d82bc5115bc44e131b8ee708bab518e04cd80cd58",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 96,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/Enums/AppEnums.swift": {
+      "filePath": "Vayl/Core/Models/Enums/AppEnums.swift",
+      "contentHash": "0322eea59f8d218bdbe9c1478f300ae75d12c0c9340e7521eabd4d7a769a9395",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 347,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/Enums/AppOBEnums.swift": {
+      "filePath": "Vayl/Core/Models/Enums/AppOBEnums.swift",
+      "contentHash": "00ef90e0ac0b81cd53fb160ef1401f02ed455f583edc7d6a1294586560c4939a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 259,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/Enums/AppPulseEnums.swift": {
+      "filePath": "Vayl/Core/Models/Enums/AppPulseEnums.swift",
+      "contentHash": "db00e6fca58b7df038b02f00bec77e686f0c0b58dcecb838a0d7235d32fa8ba9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 181,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/Enums/AppTab.swift": {
+      "filePath": "Vayl/Core/Models/Enums/AppTab.swift",
+      "contentHash": "8c7c46944794503d70532cd47d06398b26a777a51dde96798bfe27e9005cdc0c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 30,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/Enums/UserDefaultsKey.swift": {
+      "filePath": "Vayl/Core/Models/Enums/UserDefaultsKey.swift",
+      "contentHash": "84cf0f62f80f4459d59d8553ba9ef953087670535442abed5ee77da612eeb48f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 21,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/LockInSession.swift": {
+      "filePath": "Vayl/Core/Models/LockInSession.swift",
+      "contentHash": "ac06f84aaf091b45af5dac4ba5e018337203656aa14d6469a8da96a32d9d4cfd",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 114,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/MilestoneRecord.swift": {
+      "filePath": "Vayl/Core/Models/MilestoneRecord.swift",
+      "contentHash": "aa7d40230dce1d590a976ae58f75b9e0c8636dda3d40973ee2a65d3eb4699ba8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 102,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/PulseEntry.swift": {
+      "filePath": "Vayl/Core/Models/PulseEntry.swift",
+      "contentHash": "df31b9395efd208bd9d6475ca3d5c904e0b5cbacb920eec2eabe2568e723c276",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 69,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/SessionRecord.swift": {
+      "filePath": "Vayl/Core/Models/SessionRecord.swift",
+      "contentHash": "45fb3aa410375792e855a2fb6291f7f9ec900ed797592c2f26c7c390f0307ed9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 99,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Models/UserProfile.swift": {
+      "filePath": "Vayl/Core/Models/UserProfile.swift",
+      "contentHash": "f61d0e27fe19c8cd3a63c16c958b6fb7b142736ea7afb0ebe126988379dc3184",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 190,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Persistence/DataStore.swift": {
+      "filePath": "Vayl/Core/Persistence/DataStore.swift",
+      "contentHash": "2cd6464595b7df57e3b8c8aff01edad597223687336a1828f3d3748e0c868ac5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 223,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Persistence/ModelContext+Extensions.swift": {
+      "filePath": "Vayl/Core/Persistence/ModelContext+Extensions.swift",
+      "contentHash": "955d91dbd64e0055db0997f127d59d8feaf4cb591516766c5bb9ac5b57dc64b1",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 36,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/AppState.swift": {
+      "filePath": "Vayl/Core/Services/AppState.swift",
+      "contentHash": "fb91eb58cd26deb3e4761256fa8c97930301b584f20e3e666fdcdec404f14be9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 202,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/AuthService.swift": {
+      "filePath": "Vayl/Core/Services/AuthService.swift",
+      "contentHash": "911b60765ef9b8d51a7514b58fee3a477994b9579710a8f85a570c0eedb58fde",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 185,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/ContentLoader.swift": {
+      "filePath": "Vayl/Core/Services/ContentLoader.swift",
+      "contentHash": "65e04e5f859416db6e780fe95e5320d816b570fbb50a209031cf232b43845f2b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 125,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/DesireSyncService.swift": {
+      "filePath": "Vayl/Core/Services/DesireSyncService.swift",
+      "contentHash": "e16827f0a9a91cf2943440888c087abaf4b869476db08d797e9040d514d38347",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 248,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/EntitlementService.swift": {
+      "filePath": "Vayl/Core/Services/EntitlementService.swift",
+      "contentHash": "aaa83545cc6ba412570cfc7f6f0109450475966e26f0eaf73fd9fd5853439b15",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 85,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/LegalLinks.swift": {
+      "filePath": "Vayl/Core/Services/LegalLinks.swift",
+      "contentHash": "afcf508bdbb4b235857ca9afdcf9f20efb6532332d8e52b4bb320320babf1b0e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 42,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/PairingService.swift": {
+      "filePath": "Vayl/Core/Services/PairingService.swift",
+      "contentHash": "8dfe6efc845180327077f3ae290f0fead19072a7942630b30ba8f96a9cd0ee6b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 248,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/ProfileService.swift": {
+      "filePath": "Vayl/Core/Services/ProfileService.swift",
+      "contentHash": "84b969d94ae3f12b25649ce2138b6c1d756ef7ae3ab9bc1c1656c4a82267d791",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 258,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/RealtimeSessionService.swift": {
+      "filePath": "Vayl/Core/Services/RealtimeSessionService.swift",
+      "contentHash": "ce27d832d0a0c224303e022d03f6b17d3eee3a58825933ea2801634d96bd122b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 294,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/StoreKitService.swift": {
+      "filePath": "Vayl/Core/Services/StoreKitService.swift",
+      "contentHash": "c42480db66a908ed655ddbcac5f1fff23fdcc7b30c744ea38bc6b6978629fa4b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 110,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/SupabaseManager.swift": {
+      "filePath": "Vayl/Core/Services/SupabaseManager.swift",
+      "contentHash": "a7dac97e3e20c0fae5801e3f1a63973f05efd797de5dd1cad417d1acc271e9a5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 31,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Core/Services/SyncManager.swift": {
+      "filePath": "Vayl/Core/Services/SyncManager.swift",
+      "contentHash": "5155e247eb69f7a16ec2b14591e7bdec69effb4751f4dbd07a4bf80a99b1719f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 308,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Brand/SplashScreenView.swift": {
+      "filePath": "Vayl/Design/Brand/SplashScreenView.swift",
+      "contentHash": "1e836d2370dcb5429b6d13bf19992f035019b9d8a742da7da481c08495ecfce2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 729,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Brand/VaylAppIcon.swift": {
+      "filePath": "Vayl/Design/Brand/VaylAppIcon.swift",
+      "contentHash": "69a7aecc53b46012097d40726a9187aa4485cac837e24ac449c3c512ab11e89e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 678,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Buttons/CriticalButton.swift": {
+      "filePath": "Vayl/Design/Components/Buttons/CriticalButton.swift",
+      "contentHash": "1998cf91d0946cdc579e39ef71da2b9a6d4047994d683df3a580c5b0583da0b1",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 51,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Buttons/SafeWordButton.swift": {
+      "filePath": "Vayl/Design/Components/Buttons/SafeWordButton.swift",
+      "contentHash": "76c0460f924301575bc70d83ecd2034b2d60d2a0462a5171251848c2061cf054",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 60,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Buttons/SelectablePill.swift": {
+      "filePath": "Vayl/Design/Components/Buttons/SelectablePill.swift",
+      "contentHash": "b1ffc9a3d495fc805b91e9a17c1244d64ae6f5095fae5146a58ce81b789d7b4a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 395,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift": {
+      "filePath": "Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift",
+      "contentHash": "ce6fb58b38eedaea25519232e401e4876317952eccfd46ee156640d2d22a5ed3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 89,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardBackView.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardBackView.swift",
+      "contentHash": "5d16db2d78ef655f528775793d9cdd3ec473a80654e9198091b3c0e400037232",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 353,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardCarousel.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardCarousel.swift",
+      "contentHash": "93bc2de53b30931eb228f5bd6ec8ec5b809732835728397f0b0966498f877467",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 642,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "contentHash": "5dd4a522d5430e14cef28313e62aa0c2894154b50f17a39fa7a273b97373f9fb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 898,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift",
+      "contentHash": "ed65215ad75944760aaf241dd314711c97a88be5e06fd0ea994169d4e200e5b0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 478,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift",
+      "contentHash": "7f06eb43378ccf1a83ce77454fb5a1b86e5bc002d3f08d66836ed7f4b6660536",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 70,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift",
+      "contentHash": "6859cf4accf5fe035cc0ccdccec937c6bf70a47c1ae48afeb44e7144ad15f714",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 110,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift",
+      "contentHash": "065f66cb9b8535007b8fe3566b6dc1e090d569bbe8fdc21aeb8564eee77df8b5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 303,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift",
+      "contentHash": "f33afdbef7b3e8e85385c48e465793ba925383221a8dca8d7fab8dd325efb4d7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 62,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift",
+      "contentHash": "208be563f41dab5e8463d3d5689473ec5a001cddbe6a3ff7d538a3afcab0af02",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 330,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift",
+      "contentHash": "7b5424d9cf07682f1b6d7e32d69817d9de9e4aad3d63ad8a03fb4fd378c6c78a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 86,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift",
+      "contentHash": "d20729fbe8e97def99b2e1dd0e3d4946a3c108099ae13f360cd1fbccf237e7ed",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 379,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift",
+      "contentHash": "155284cb73ba89cfd2bd750ef962864bdf854f3d3d21236e4a990326341d2bc0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 375,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift",
+      "contentHash": "d0351a5f091c9ea78b37c904ef30a1555601a312fddccd8cc01c39982c4a3c8e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 96,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift",
+      "contentHash": "d69d52158ee29b5881c6ee4799421cf5375fc7f448538123ac61f7064322f628",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 277,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardFrontView.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardFrontView.swift",
+      "contentHash": "9f934ee59c025ab36fb3d1661f2a3f38c5d9f2ea6f93ce7dfd1b5569f7362812",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 113,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardLayout.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardLayout.swift",
+      "contentHash": "1dc11c51a9f92ec80883cb64fade9d4baa561320ea12a0e1408a9c9232d38fe8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 40,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift",
+      "contentHash": "2f58b049e4eaf0fec490f9432f74beecfcf3d450cf9eee818bfca8386c0439a2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 166,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "contentHash": "6db479c5e8c40bc5fe8e4f24222d91394c88474f1c0aeacfdd19965b40746c8a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 345,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "contentHash": "0355ac01e525f215efebd6f632f2b7f33ddb8e86e66ad73947f0c1621eb54b28",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 150,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "contentHash": "001303bfec0b61d11ad06a7205356e34cb028a632d0292d0bd4ac782fe821635",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 336,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardRevealPillButton.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardRevealPillButton.swift",
+      "contentHash": "2700a62ab1a0271366131df392f9044420e405a40b9ddfb594960cd167c8fef9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 106,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardShadows.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardShadows.swift",
+      "contentHash": "b4787a5bf7a3a0f5534bfd161ff4a12924991c2a65fb31bbbe60d42fb161d4ab",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 24,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CardStyle.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CardStyle.swift",
+      "contentHash": "c42567c6c19f892226a9cf8688c0c894e14e6f3aec362627ca961f4b12b6568b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 51,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CategoryTileView.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CategoryTileView.swift",
+      "contentHash": "00e98beef4b9ef98c47ab29d3504d0f9cd8de170974f7c58234c6525d4e8bc57",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 91,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/ConversationCard.swift": {
+      "filePath": "Vayl/Design/Components/Cards/ConversationCard.swift",
+      "contentHash": "c80269a7285c3a78356a20600113e5865ccc61102aa78056d989601212bc9b14",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 424,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/ConversationCardTypes.swift": {
+      "filePath": "Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "contentHash": "f828fa32979a4a86acae2ac22234ae67d382d1705e1b132ae82c2b904c430e4d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 55,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CuriosityCardBack.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CuriosityCardBack.swift",
+      "contentHash": "7df1e752a78e5e8bdb21d81bcae1f3023e8a1366003768a0000cfbb8f9a415ba",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 161,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/CuriosityFlipCard.swift": {
+      "filePath": "Vayl/Design/Components/Cards/CuriosityFlipCard.swift",
+      "contentHash": "808c7aa534bf4cbee2c981fd40a35441f21655865324b6661757c9f4a9b32eaa",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 74,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/FuseTimerView.swift": {
+      "filePath": "Vayl/Design/Components/Cards/FuseTimerView.swift",
+      "contentHash": "7e375dde2562f60187d20a7368c49bbea12a350d38804af529634a7f8194c1b0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 142,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/PremiumCardShell.swift": {
+      "filePath": "Vayl/Design/Components/Cards/PremiumCardShell.swift",
+      "contentHash": "9d3b57d57b682d7468ad389896496e7b1ac8275313e0491b49dba605e5f6c3b2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 222,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/PromptCard.swift": {
+      "filePath": "Vayl/Design/Components/Cards/PromptCard.swift",
+      "contentHash": "90272f3a9391841c9ee960cabcaa531520687a04e6b4a07228a9f16ed1f9701b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 35,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/SettingsCard.swift": {
+      "filePath": "Vayl/Design/Components/Cards/SettingsCard.swift",
+      "contentHash": "39e1b9a4f47e41959642f0ed710b04ed4c543ece1d82ffed0e011314423378e3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 16,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/VaylCardAction.swift": {
+      "filePath": "Vayl/Design/Components/Cards/VaylCardAction.swift",
+      "contentHash": "56f0e262b50fadc826f9da7eee2c528eacde9392f2e26a05f451398628769e71",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 23,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/VaylCardBack.swift": {
+      "filePath": "Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "contentHash": "e6c07a7cec9fa49d6982496340e9f20109db4de4f489de83f42d3947f86f9e8d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 427,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/VaylCardCarousel.swift": {
+      "filePath": "Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "contentHash": "6ddbe97f72f3079798a1d1affb3cc1506301162001e10df7b580a8ec096e12aa",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 320,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/VaylCardContent.swift": {
+      "filePath": "Vayl/Design/Components/Cards/VaylCardContent.swift",
+      "contentHash": "bcfd1c0765f7091ff5d3aa28ebe580aec980e45f151a25c892092d41ff8ae63b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/VaylCardFace.swift": {
+      "filePath": "Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "contentHash": "cb5472e00bda0cb8318cd01320966ebcdab7a39bfdd4f69694f6ea75e9e6c781",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 646,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/VaylCardRenderer.swift": {
+      "filePath": "Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "contentHash": "bc98a25a1670b11f5eee30516709e45d6a1ea20ee4befbbf8882ed29d067aa95",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 56,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Cards/VaylDeckStack.swift": {
+      "filePath": "Vayl/Design/Components/Cards/VaylDeckStack.swift",
+      "contentHash": "fba95d95c3a27ade3db0126ba8b9cf525892e80001b2a3aa8805f76e1cb3102d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 25,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/AuroraGlowField.swift": {
+      "filePath": "Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "contentHash": "9699f8093d9bf1050ce64fb98032d65ece4aed6e911ddb05a9331d662014c6af",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 314,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/FilamentMode.swift": {
+      "filePath": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "contentHash": "3cca94167f9f82539f78372cb8f91270230b93dccb6feb980b1e89268a3229d4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 877,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/FlameAura.swift": {
+      "filePath": "Vayl/Design/Components/Effects/FlameAura.swift",
+      "contentHash": "3869728de06a8ea117b5544f2fb32aa3f7301efff7b513905e90e1b1c55536fd",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 245,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift": {
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift",
+      "contentHash": "ba464c41322a505be73eb528b28b210bd9a58fe6d236d4ceff0b57b57231759f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift": {
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "contentHash": "7be60c554d31ed06f77bf5a88a4d2896d257211b392ee52bec04b7f3b9ba967a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1407,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift": {
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift",
+      "contentHash": "2da7943f07934e5df5aff47f9a5d125277be72be599aaf9fcf73bd094eba7b25",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 121,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/GlowOrb.swift": {
+      "filePath": "Vayl/Design/Components/Effects/GlowOrb.swift",
+      "contentHash": "639067edfa1f56efeb63ce7a13cae9e6317313c03ac909163ca2084834f9ccd6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 36,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/GlowUnderline.swift": {
+      "filePath": "Vayl/Design/Components/Effects/GlowUnderline.swift",
+      "contentHash": "5d6e66ec2234b1e43a021f970f5f868d01da94da33b5bcbfa1b85577a11b879a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 73,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/GlowUnderlineView.swift": {
+      "filePath": "Vayl/Design/Components/Effects/GlowUnderlineView.swift",
+      "contentHash": "711e1ec22848be0f5ae741dc48a7a4820f88920b5913f2c1c4d282b89b988169",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 60,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/GradBadge.swift": {
+      "filePath": "Vayl/Design/Components/Effects/GradBadge.swift",
+      "contentHash": "e50296190084cb78e3e3b6107f943d40705ee30b4acef7f7b92105b07acd74de",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 45,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/HolographicShimmer.metal": {
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "contentHash": "c5e836ad720d170cfebc3fce7e8b63d116534eb9857133e6901cdc2a88b7d045",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 570,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/HolographicShimmer.swift": {
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.swift",
+      "contentHash": "17a431ba84b7c578239f7d2677ed6d9cd27200ebf1b9f96313d229ede530d1ef",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 336,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/HomeGlowField.swift": {
+      "filePath": "Vayl/Design/Components/Effects/HomeGlowField.swift",
+      "contentHash": "ae9a6deb22fa8ed8d32cc348ad54afec86a0b2bc7df5dd57f71cfd4bccf38a06",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 269,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/LightAuraBloom.swift": {
+      "filePath": "Vayl/Design/Components/Effects/LightAuraBloom.swift",
+      "contentHash": "9dda0c068b5020946c0c417815f7fc8c426768beeeae4f5dc91ca60e7fd208c4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 126,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/LightModeShimmer.swift": {
+      "filePath": "Vayl/Design/Components/Effects/LightModeShimmer.swift",
+      "contentHash": "9cc036b14738e5dac37aacb9660da79fbabc3d2a7b4a6a1fbad18a72b05876d8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 108,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/MazePatternView.swift": {
+      "filePath": "Vayl/Design/Components/Effects/MazePatternView.swift",
+      "contentHash": "4d3572609b438fca28e68e6566085fb00792c7c9940f8cdc2ad67650f6850a51",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 186,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/OrbitSpark.metal": {
+      "filePath": "Vayl/Design/Components/Effects/OrbitSpark.metal",
+      "contentHash": "5d9ec4fe798142fcadc5b0a2b547a778f7f63c5389939837234804cdcb5fe3f8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 65,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/OrbitSparkBorderView.swift": {
+      "filePath": "Vayl/Design/Components/Effects/OrbitSparkBorderView.swift",
+      "contentHash": "a60b6a1ed1905ef4cc8a3bfef757f18f0e3b5e9534e28168951f7ad360e71bbe",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 59,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/PillBorder.swift": {
+      "filePath": "Vayl/Design/Components/Effects/PillBorder.swift",
+      "contentHash": "ede0719305975032e2b5ba89695f128bb30531fb56cc355692269acd7e8370dd",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 146,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/SectionHeader.swift": {
+      "filePath": "Vayl/Design/Components/Effects/SectionHeader.swift",
+      "contentHash": "3530a19474e59848726e03cc9175c7626af445b831d9c0b3196a4e76772a276b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 18,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/SparkField.swift": {
+      "filePath": "Vayl/Design/Components/Effects/SparkField.swift",
+      "contentHash": "6b8ab196f61c23e333b46f815024c796a8bac96c642414e6aea349d81f40affd",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 629,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/SpectrumHairline.swift": {
+      "filePath": "Vayl/Design/Components/Effects/SpectrumHairline.swift",
+      "contentHash": "99d95a397611f93e5006c1eae260ab55502c6fe08b01d66317313c25e841c3af",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 86,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/TileOrbitView.swift": {
+      "filePath": "Vayl/Design/Components/Effects/TileOrbitView.swift",
+      "contentHash": "71705e0385c2ba4c6418562ce5c65417944489c69b949902653946d079fc8b32",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 354,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/VaylBorderEffect.swift": {
+      "filePath": "Vayl/Design/Components/Effects/VaylBorderEffect.swift",
+      "contentHash": "17adb82d774bef3061d34a871ffd06ec835bfad397c88f07859ccbcb6fb44755",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 448,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/VaylButton.swift": {
+      "filePath": "Vayl/Design/Components/Effects/VaylButton.swift",
+      "contentHash": "e077f545177b490acbbab84a3ba899333af76d24941e2ce08d7b7a0e8deb919d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 306,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Effects/VaylFlourishView.swift": {
+      "filePath": "Vayl/Design/Components/Effects/VaylFlourishView.swift",
+      "contentHash": "eefe6a0d1bca556eb10ef1f5d572dc8a0704c3ebc529535f40fbdc4bc3f032dd",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 218,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Input/InteractiveField.swift": {
+      "filePath": "Vayl/Design/Components/Input/InteractiveField.swift",
+      "contentHash": "a4f3d2431f2738045bdc2728b53553a3154031e706cc8dfc9fb4480eb3b68564",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 41,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Input/ToggleRow.swift": {
+      "filePath": "Vayl/Design/Components/Input/ToggleRow.swift",
+      "contentHash": "15db1633aa3c5936ee080460e2d39ec309c68c665a4ba65f51c3c65a458bef8c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 29,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Navigation/NavArrow.swift": {
+      "filePath": "Vayl/Design/Components/Navigation/NavArrow.swift",
+      "contentHash": "1be75b1e8f42f608e2786a2c839a951c9046468fac8551f17df4e4249672d695",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 297,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Navigation/OBSheetChrome.swift": {
+      "filePath": "Vayl/Design/Components/Navigation/OBSheetChrome.swift",
+      "contentHash": "e86f64b7505c25359129681ddfc0f370e16e3cb1e81463109acea3e056fd760a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 120,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Navigation/OnboardingFooter.swift": {
+      "filePath": "Vayl/Design/Components/Navigation/OnboardingFooter.swift",
+      "contentHash": "f1f9e94762dbc1de2040912eb1860a886f0026acbd3a84366414ace6690d9f19",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 51,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Navigation/OnboardingNavBar.swift": {
+      "filePath": "Vayl/Design/Components/Navigation/OnboardingNavBar.swift",
+      "contentHash": "54b1625aa5ef00fe3e590760c14a62807011156a5b01fc6650f111b2dca3c7a3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 118,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Navigation/RacetrackTabBar.swift": {
+      "filePath": "Vayl/Design/Components/Navigation/RacetrackTabBar.swift",
+      "contentHash": "4723832d61ff592130739f2962dcebf68bc317b0205087118edfe110560c8711",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 269,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Navigation/SafariView.swift": {
+      "filePath": "Vayl/Design/Components/Navigation/SafariView.swift",
+      "contentHash": "e75d042cdbd1ea0fa609109a11943eaf2e9c32f2a6ed83e14c6c8affa416b795",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 30,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Navigation/TabContentWrapper.swift": {
+      "filePath": "Vayl/Design/Components/Navigation/TabContentWrapper.swift",
+      "contentHash": "806846e2b6f54d8fe1cfb667989b8f00eae35bac4d9bd72874bca802f9988ec3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 135,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Progress/OnboardingProgressBar.swift": {
+      "filePath": "Vayl/Design/Components/Progress/OnboardingProgressBar.swift",
+      "contentHash": "42aa0c165c41b1b0fba8cd8ef2a2ed9e4cbbd74ea32c741f4fabeebf3832b758",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1158,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Progress/OrbitIndicator.swift": {
+      "filePath": "Vayl/Design/Components/Progress/OrbitIndicator.swift",
+      "contentHash": "95c1a3d23efcbef6a667a67eee4b8bfe3a7bba65019cfe5e1e8d85ff7ec302c4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 696,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Progress/ProgressBar.swift": {
+      "filePath": "Vayl/Design/Components/Progress/ProgressBar.swift",
+      "contentHash": "97d5e9ce5720c7aec1cf37049223bfeadcae64042c9f10cfb02bbdbce5a22ff2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 30,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Progress/ProgressRingView.swift": {
+      "filePath": "Vayl/Design/Components/Progress/ProgressRingView.swift",
+      "contentHash": "3816b3c0122995820bc3a6444c8ef5a25a62ae921f905f46aacbb8f13ce5f151",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 61,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Progress/ScoreRing.swift": {
+      "filePath": "Vayl/Design/Components/Progress/ScoreRing.swift",
+      "contentHash": "1ca90d9d56fd556e93dfa5e733cf3bce7cdfa93af010b1e5a108a1d159585160",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 77,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Progress/ScreenshotProtectionModifier.swift": {
+      "filePath": "Vayl/Design/Components/Progress/ScreenshotProtectionModifier.swift",
+      "contentHash": "25368afb503ad8a647ed37586950f95aac39fabf8f313cd6a27285a9ee0df7f4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 67,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Progress/SpectrumBar.swift": {
+      "filePath": "Vayl/Design/Components/Progress/SpectrumBar.swift",
+      "contentHash": "cdc636a51594f03c4643212cebc33a6e369933bd84c1f895b05fe3076483fd78",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 19,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Text/GradientText.swift": {
+      "filePath": "Vayl/Design/Components/Text/GradientText.swift",
+      "contentHash": "10d7bea82e7aa72d7a327af5a5658bb17dec3c1de49c9bbe44183e65604d945d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 72,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Text/KeywordHighlightText.swift": {
+      "filePath": "Vayl/Design/Components/Text/KeywordHighlightText.swift",
+      "contentHash": "6a59d43c3ade5e2569c321dd346f686ea0472ed69ed658211a6346bc9644100e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 67,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Text/LivingText.swift": {
+      "filePath": "Vayl/Design/Components/Text/LivingText.swift",
+      "contentHash": "a729d912a3dbde19da91ef0435b77f3c59113191d6df51add3e1825b7653a31d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 221,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Design/Components/Text/SpectrumBulletRow.swift": {
+      "filePath": "Vayl/Design/Components/Text/SpectrumBulletRow.swift",
+      "contentHash": "f44ee143bbc47330c19c00c14b8f2cb8e49b085a2be5d459d6f336351456e8bd",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 110,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Auth/Views/SignInView.swift": {
+      "filePath": "Vayl/Features/Auth/Views/SignInView.swift",
+      "contentHash": "2a094e2e0e5dbaf27e3c819a902621d9efa9233233801941480c3cc08fecb2e2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 187,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Desire Map/Store/CompanionCardStore.swift": {
+      "filePath": "Vayl/Features/Desire Map/Store/CompanionCardStore.swift",
+      "contentHash": "57320576e43d0949b40f9603304e091492430ae0e79fc5701d8ddbe6388e71bb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 40,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Desire Map/Store/DesireMapStore.swift": {
+      "filePath": "Vayl/Features/Desire Map/Store/DesireMapStore.swift",
+      "contentHash": "33813e8a9fe78c2e04c0ce2c2c461d2faf8bfa976fbac0a60f05e0f7b669405a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 181,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Desire Map/Store/DesireRevealStore.swift": {
+      "filePath": "Vayl/Features/Desire Map/Store/DesireRevealStore.swift",
+      "contentHash": "0f2f69ba9b3396421123591227425e10e6fa09d75a4e7589322192ac16c84d05",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 159,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Desire Map/Views/DesireMapView.swift": {
+      "filePath": "Vayl/Features/Desire Map/Views/DesireMapView.swift",
+      "contentHash": "9238cbdb24a903ee016c42c545a2ae1080fc046b55c1f648d4771e8e5ae95178",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 342,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Desire Map/Views/DesireRevealView.swift": {
+      "filePath": "Vayl/Features/Desire Map/Views/DesireRevealView.swift",
+      "contentHash": "b3eb1f7b29445b5df039a3db8fc05c4ed4bb986623ff505301a310597ffb88fc",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 520,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Components/CardChestContainer.swift": {
+      "filePath": "Vayl/Features/Home/Components/CardChestContainer.swift",
+      "contentHash": "60ad03ec6afc9d87131f4e01d7cd7603885472159745550d92d760dc0d6759fa",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 374,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Components/DesireMapIndicator.swift": {
+      "filePath": "Vayl/Features/Home/Components/DesireMapIndicator.swift",
+      "contentHash": "e8899a6f5964142489b2269ae1bc3ecaa987af3bae1a4629b35d05e58cf11ede",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 299,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Components/GettingStartedEntryCard.swift": {
+      "filePath": "Vayl/Features/Home/Components/GettingStartedEntryCard.swift",
+      "contentHash": "5e89bc4606254aef2e7f354382465571f83650e3f7caaaa2cf630c2e6e08f64f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 47,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Components/GravLiftView.swift": {
+      "filePath": "Vayl/Features/Home/Components/GravLiftView.swift",
+      "contentHash": "4e74ad3758d758c20e0fcbc1bdbdce262a1de4de87d99f9cc71587a11fb5f12e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 190,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Components/HomeWidgetShell.swift": {
+      "filePath": "Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "contentHash": "efbef40c2363d3092d37e690116e9f372fad8288978e68a365c64b029d4ce937",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 703,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Components/PartnerChip.swift": {
+      "filePath": "Vayl/Features/Home/Components/PartnerChip.swift",
+      "contentHash": "67b2659b4299f00735b445da07732f3a56a3af455f38b971f644a185c19ab405",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 290,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Components/PickUpCard.swift": {
+      "filePath": "Vayl/Features/Home/Components/PickUpCard.swift",
+      "contentHash": "c6940a9920c2c802c8eaa2c74a2f81a57e50704a43c84f9e6fca4e2e35c77bef",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 119,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Components/ReflectionBannerView.swift": {
+      "filePath": "Vayl/Features/Home/Components/ReflectionBannerView.swift",
+      "contentHash": "1013e63b2cb5ed5f7b8c73132d95afd4f7b6a67ccd14ab9afcba605667e36783",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 398,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Components/ReflectionCard.swift": {
+      "filePath": "Vayl/Features/Home/Components/ReflectionCard.swift",
+      "contentHash": "12787810a88984e8d5aa3b45daafab51bd4736f79391dda01674d2619f6918cd",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 709,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Components/ResearchTicker.swift": {
+      "filePath": "Vayl/Features/Home/Components/ResearchTicker.swift",
+      "contentHash": "469572707e20c466bbbd54f6c8cc55f754a0a41169c80deffe14aa34df56d68e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 124,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Models/GettingStarted.swift": {
+      "filePath": "Vayl/Features/Home/Models/GettingStarted.swift",
+      "contentHash": "a0afae38080d3e56ad66b5a9c41252a28dc9fced7bbb48342c46e4ca8f3658bd",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Models/HomeEventEngine.swift": {
+      "filePath": "Vayl/Features/Home/Models/HomeEventEngine.swift",
+      "contentHash": "383d581323043e509313f4f73da0f59f73aefc97ef8c8f59ebf7adfc50258e05",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 104,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Models/HomeModels.swift": {
+      "filePath": "Vayl/Features/Home/Models/HomeModels.swift",
+      "contentHash": "c4f54ef5e308a0f0ca7b3720f739d145485a54b007cca5eb4cc019aca79fadf3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 152,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Store/HomeStore.swift": {
+      "filePath": "Vayl/Features/Home/Store/HomeStore.swift",
+      "contentHash": "ceee8341a2bf91bb0923697ac43204744a73390bfcfa9e63f9c0247e5dbd2de2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 324,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Views/GettingStartedPathView.swift": {
+      "filePath": "Vayl/Features/Home/Views/GettingStartedPathView.swift",
+      "contentHash": "c90e5d5a92255a32eeb2853f1219b2c16d2e3f3d6c2aa94682bced5e192d4dd6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 146,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Views/HomeDashboardView.swift": {
+      "filePath": "Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "contentHash": "afe1d314aa482c2d9dd74279ca732d7aa8cd4136864836ec147f10fe46bcfe8f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 761,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Views/HomeGateView.swift": {
+      "filePath": "Vayl/Features/Home/Views/HomeGateView.swift",
+      "contentHash": "4d474963cb7fded6ca7046ad4ff1712bd354bf186c7ff8a10114db56449128d8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 298,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Views/HomeRouterView.swift": {
+      "filePath": "Vayl/Features/Home/Views/HomeRouterView.swift",
+      "contentHash": "608cb872d9f4dd8b09db2f4e3b90c9fe1210fee6eaf8d6442aeff26b4e78a6a8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 309,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Home/Views/MapCompletionBeatView.swift": {
+      "filePath": "Vayl/Features/Home/Views/MapCompletionBeatView.swift",
+      "contentHash": "6865ee7fa87c5e3d467df8aacbe980ef54ff60c014acdd034fe0849b21e01ef4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 103,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Learn/Views/ConstellationNode.swift": {
+      "filePath": "Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "contentHash": "5d8465d9164c359170d02290db29140e2367032ebbce57935cf691016a4f2d00",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 773,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Learn/Views/LearnView.swift": {
+      "filePath": "Vayl/Features/Learn/Views/LearnView.swift",
+      "contentHash": "020620fd08fbdda0fa8871a2f07bd0ff7d60e5c95fb69020a947540e2ed9ecbe",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 24,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Map/MapView.swift": {
+      "filePath": "Vayl/Features/Map/MapView.swift",
+      "contentHash": "5e3bef1b4b04bd5648e3d5ea3cb5b0a4b8c0857f819e3778c1b4d5d7d839be06",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 27,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Map/PrismView.swift": {
+      "filePath": "Vayl/Features/Map/PrismView.swift",
+      "contentHash": "af7128c9ad7f4967a9566ac01732f31342ee2cda14a00beacd09c7aebe174bea",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 834,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Monetization/Store/EntitlementStore.swift": {
+      "filePath": "Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "contentHash": "53c72c7b3af3323e21553cfc5281abc47996c278eac9b0ca559c624713db19e4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 207,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Monetization/Views/PaywallSheet.swift": {
+      "filePath": "Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "contentHash": "e356c257e9178763718128c58ad037bfd829bcc079c5fd42b4f3bd4b748fc940",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 455,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift": {
+      "filePath": "Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "contentHash": "855a45da1bfda8ad00061c9bc4a9687fc98f91b77164a4d05726e7fe7cfba402",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 148,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift": {
+      "filePath": "Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift",
+      "contentHash": "703e26a12e8e63fbfb9dec19635c8fde168305dfaaa44b85d5fb8a6a5625709b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 20,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift": {
+      "filePath": "Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift",
+      "contentHash": "e95e0688eab9d332cb0feb8846dd416ad45e45dcdd36d5c25b09da97add91c3a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 766,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift": {
+      "filePath": "Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "contentHash": "9fe7d0716463fd23b969f90f1c65f0f0ff4821b6119cdbf458b07a21d19f8cf0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 388,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Canvas/OnboardingStage.swift": {
+      "filePath": "Vayl/Features/Onboarding/Canvas/OnboardingStage.swift",
+      "contentHash": "50811acb8932133936f80ff23e056d1a86d669575a25fb29115c422f6142e59a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 26,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift": {
+      "filePath": "Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift",
+      "contentHash": "7814fbb1e21038f72e8afb6ddfedf56f1c7a9ffb2f818aef29e33dc947bc9f31",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 446,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift": {
+      "filePath": "Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "contentHash": "28c241c57f2d33fe88e07d9dacad292b33314767a53719c75a957dc7ac873b40",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 851,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Canvas/VaylDirector.swift": {
+      "filePath": "Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "contentHash": "bdaa2fb4fa9f39b4014d79992292f73d676f003bc9ee11e57e9429948691df30",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 392,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Components/CornerDeckView.swift": {
+      "filePath": "Vayl/Features/Onboarding/Components/CornerDeckView.swift",
+      "contentHash": "6f4be3653364f74cbe8f26676704ed6c7e87aaa441f0fbbc6abe6a813e8a59b4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 88,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Components/DeckWrapView.swift": {
+      "filePath": "Vayl/Features/Onboarding/Components/DeckWrapView.swift",
+      "contentHash": "99bcb1142c9dcff364309e1d415472720bc71e0ff4018cabe715a891c88eecef",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 66,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Components/FounderLetterSheet.swift": {
+      "filePath": "Vayl/Features/Onboarding/Components/FounderLetterSheet.swift",
+      "contentHash": "679a2ab386a788de2e30de234dbc5b4ae7129debba3bd6b57194dff8ee841f17",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 55,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Components/HandBackFollow.swift": {
+      "filePath": "Vayl/Features/Onboarding/Components/HandBackFollow.swift",
+      "contentHash": "2d4bdfc6c35e4ee091726a11ed490fb8eecacfe013b666ef7ac56cf0b7c95788",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 45,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Components/LiftHalo.swift": {
+      "filePath": "Vayl/Features/Onboarding/Components/LiftHalo.swift",
+      "contentHash": "109d8971bc6cae96107fd89c19d23effe644f5424bcd135ab4efa9a324063ede",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 47,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift": {
+      "filePath": "Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift",
+      "contentHash": "fcdaf35bdb0400aad2f24f5d36be40e47fbfa7b8c976482c1503fdd298095823",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 220,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Layout/OnboardingLayout.swift": {
+      "filePath": "Vayl/Features/Onboarding/Layout/OnboardingLayout.swift",
+      "contentHash": "4c63c5435a29d99dd2a90e03f0020b23959c1de4df977c068e5876e8e4b2b44a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 101,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Models/CardLandingSlot.swift": {
+      "filePath": "Vayl/Features/Onboarding/Models/CardLandingSlot.swift",
+      "contentHash": "d6c2d85dde9304305146eccd0b641503b9bc6c85242b211c4afde4331b97f9ef",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 34,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Models/ContextOption.swift": {
+      "filePath": "Vayl/Features/Onboarding/Models/ContextOption.swift",
+      "contentHash": "8a6d581e664b9e6fa2c81d11203fe253de11850b26140c0b97842f6573b06ca6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 131,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Models/CuriosityDeck.swift": {
+      "filePath": "Vayl/Features/Onboarding/Models/CuriosityDeck.swift",
+      "contentHash": "b949e193986f6adaeabd77ce54973b0fb904ee32f2526514b4fbff00beb2abeb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 112,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Models/CuriositySortCard.swift": {
+      "filePath": "Vayl/Features/Onboarding/Models/CuriositySortCard.swift",
+      "contentHash": "db26937e2e73cfbd7acd702ba1aa9cefd9125d5bf9956f2958564b2b1dfb79d1",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 12,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Models/DemoDictionary.swift": {
+      "filePath": "Vayl/Features/Onboarding/Models/DemoDictionary.swift",
+      "contentHash": "4dd8ddefbdf2249174a5c0510e6ee91907264cad2f14581e6582fa57b0235554",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 61,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Models/FoilTear.swift": {
+      "filePath": "Vayl/Features/Onboarding/Models/FoilTear.swift",
+      "contentHash": "7cb681cb19164cd30479254668da23e2c125c5d41363d3fe0c78bd343d53fe30",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 41,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Models/OnboardingData.swift": {
+      "filePath": "Vayl/Features/Onboarding/Models/OnboardingData.swift",
+      "contentHash": "33540a28f846553ce6050cabf296f387eb5fb1280075fd2d2967f329e7bd6441",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 101,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Models/VaylCardModel.swift": {
+      "filePath": "Vayl/Features/Onboarding/Models/VaylCardModel.swift",
+      "contentHash": "b11955a808056bf5923d7d01c097b3adaefe6da3576e62e17868649d96b264e7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 102,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Models/WelcomeDeck.swift": {
+      "filePath": "Vayl/Features/Onboarding/Models/WelcomeDeck.swift",
+      "contentHash": "3edbb9daa03e4ea5ca8da8298acdf0422d67b8b1d8dc98c35325c67d95d74b5a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 34,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "contentHash": "26d159f63f51d7a128bc9924e3135df2390b0d2d1a6a4852a18bbfb3e14ab927",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 631,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "contentHash": "853c7e9b20eb520368e684f0f25b9da4e6e8e94e8f411cb3e2a8dc08aba63bff",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 400,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/ContextPhase.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/ContextPhase.swift",
+      "contentHash": "c908f55f536d6dc4b83a7e26f6bf7fe87f699a5381b53b239ae248da51a9f71b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 393,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift",
+      "contentHash": "7bac3c3454fe77a2e42b22b80b1252c27f042463217bff06f942407a7074d7ac",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 374,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/CuriosityPhase.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/CuriosityPhase.swift",
+      "contentHash": "5db06232dc11065a16a4baa6eb230b90baa92ead42c1a2bcc956333c1445b9a2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 434,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/DemoPhase.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/DemoPhase.swift",
+      "contentHash": "b34f5a8e356fd030da55de554f536c9f301e9b6b6d1207b5297b892abed10994",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 655,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift",
+      "contentHash": "ff608ca4b6bd6b301b1e0f0f6f4bcff162496fc24907e0e138b6bdf7fe86cf7c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 479,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift",
+      "contentHash": "81344e0386ca56c8b3662be35e77009158fc6b392604504dcf3e0acf4db08164",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 178,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/GenderPhase.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/GenderPhase.swift",
+      "contentHash": "b8de044f8bc191a84d20d37fa1130bc7058284ff1a9ce8fd53ee620145c5e958",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 554,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift",
+      "contentHash": "cbe91c50d87b193cd74664055514ed4a615dc9e4cc42e24bc35960871db1d65f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 484,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/NamePhase.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/NamePhase.swift",
+      "contentHash": "2ebc8478c020810bd18332cf38b1c21539d341c564733ad32101da557f00f5b7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 938,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift",
+      "contentHash": "33d365b438b277bf2fca45bfe350ac2f4ec2b0f282e9db864ea8f4cc47905eee",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 103,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Phases/StatPhase.swift": {
+      "filePath": "Vayl/Features/Onboarding/Phases/StatPhase.swift",
+      "contentHash": "578a7a7b1b3efc1599271af9f2ee12a73d945215f54339c02fe6229f6329f1df",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 620,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Renders/AnimatedSignature.swift": {
+      "filePath": "Vayl/Features/Onboarding/Renders/AnimatedSignature.swift",
+      "contentHash": "ef5848d859af43330bbbd4a99137f227bc565a988683a6936f07530cc90e33f0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 355,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Renders/DealPointView.swift": {
+      "filePath": "Vayl/Features/Onboarding/Renders/DealPointView.swift",
+      "contentHash": "5f1eb529b2aed6ce26cba92f1494d598f2dd70fb108f9f05529afb29af7f0422",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 44,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Renders/ProjectedTextView.swift": {
+      "filePath": "Vayl/Features/Onboarding/Renders/ProjectedTextView.swift",
+      "contentHash": "e3449b397ea6effa66bf64de540fe26d59d57ee8f3476d85836c6d96641813a4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 110,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Onboarding/Store/OnboardingStore.swift": {
+      "filePath": "Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "contentHash": "2d1f4f7f700552fa64b610e213f975d4a60e74acc276949cc4cf1bb4e6badd2d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 166,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pairing/PairingInviteView.swift": {
+      "filePath": "Vayl/Features/Pairing/PairingInviteView.swift",
+      "contentHash": "a11edc8a4d99093daa4e4b67645b6850b4f323cc4f3e6a4f7b470c5c19090219",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 389,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pairing/PairingJoinView.swift": {
+      "filePath": "Vayl/Features/Pairing/PairingJoinView.swift",
+      "contentHash": "17a460fbf9110008ef222e6dd459dbf6b43b615356b61c9132171505f04abd52",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 311,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pairing/PairingSettingsView.swift": {
+      "filePath": "Vayl/Features/Pairing/PairingSettingsView.swift",
+      "contentHash": "dc8eaf2a2b6c0fc2e098b79f7d002d67253f2d95351e22cd2f6951f26f6cdd02",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 229,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pairing/PairingStore.swift": {
+      "filePath": "Vayl/Features/Pairing/PairingStore.swift",
+      "contentHash": "eca43b22d17bbb3ed61a14ea2b162c2213d45b6b67a843b62735a2cef6d39562",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 272,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Play/PlayView.swift": {
+      "filePath": "Vayl/Features/Play/PlayView.swift",
+      "contentHash": "14e3ab62bef0858e299bcfd8e517b20c7fddb0167e233ab558f8adec740d57cf",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 114,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Progress/ProgressDashboardView.swift": {
+      "filePath": "Vayl/Features/Progress/ProgressDashboardView.swift",
+      "contentHash": "762114b535eaa8ea1a9ae5aae3e367fae0376b0c43f203ad891eb60af6501237",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 208,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pulse/CheckInShell.swift": {
+      "filePath": "Vayl/Features/Pulse/CheckInShell.swift",
+      "contentHash": "fa7ee2d585e76b30f861c6132e1d3d400274d9af8774cb4ba2833d9bef424c8c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 149,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pulse/DailyCheckInView.swift": {
+      "filePath": "Vayl/Features/Pulse/DailyCheckInView.swift",
+      "contentHash": "5a65739329b827df29353e5822d38142d8777d8dc195fc178f59b2ffd1d01b86",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 700,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pulse/PulseCanvasScrollView.swift": {
+      "filePath": "Vayl/Features/Pulse/PulseCanvasScrollView.swift",
+      "contentHash": "4c27898d7962d0ed709dc2c7f721caa97289e529f99581fd0fc76f478545b870",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 66,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pulse/PulseDotSummary.swift": {
+      "filePath": "Vayl/Features/Pulse/PulseDotSummary.swift",
+      "contentHash": "4409e9c41b0bf7f365b46f5c496d60b18f4aed12ffa5102bc87d2886bef5dd8b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 649,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pulse/PulseFullView.swift": {
+      "filePath": "Vayl/Features/Pulse/PulseFullView.swift",
+      "contentHash": "69dc42bbd2766198bf7b8031c0534d25af12a3294c075ec6306097263b53fbf8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 302,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pulse/PulseGraph.swift": {
+      "filePath": "Vayl/Features/Pulse/PulseGraph.swift",
+      "contentHash": "ae86fb1083ca974b73e5af1cb47bc811bd49c77d4b8578e6b4eb28d6f554f084",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 987,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pulse/PulseSheetView.swift": {
+      "filePath": "Vayl/Features/Pulse/PulseSheetView.swift",
+      "contentHash": "d67915e12a658399ceca2240586a6d691e780cf4aa08e79b8bcb06b340d4da57",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 573,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pulse/PulseWidget.swift": {
+      "filePath": "Vayl/Features/Pulse/PulseWidget.swift",
+      "contentHash": "6b565c8e2fbd224020494f03555de1c5ea842f875e5e1ebc383c3f486e6a2143",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 342,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pulse/Store/PulseStore.swift": {
+      "filePath": "Vayl/Features/Pulse/Store/PulseStore.swift",
+      "contentHash": "36403b3ff2b634cf62f1672095b07b5ae00c5c768f22e4892e0801ae58eeca5b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 64,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Pulse/TierGuideSheet.swift": {
+      "filePath": "Vayl/Features/Pulse/TierGuideSheet.swift",
+      "contentHash": "23f61995dc9c23130220b058d6b067b80acca5a5fd4fcd590029128374d82f4e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 128,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Sessions/Debug/PresenceDebugView.swift": {
+      "filePath": "Vayl/Features/Sessions/Debug/PresenceDebugView.swift",
+      "contentHash": "7d23a706efc8cb9c60a4437b6df1e75c626f4136286366774e8653a7300098e6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 197,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Sessions/SessionPlan.swift": {
+      "filePath": "Vayl/Features/Sessions/SessionPlan.swift",
+      "contentHash": "026b64698b00821b5477cd2909b28b256e9e60bdc6e2d15a5153e5326b199aed",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 79,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Sessions/SessionStore.swift": {
+      "filePath": "Vayl/Features/Sessions/SessionStore.swift",
+      "contentHash": "895c98ea5c4d8e448b27027a5f52f7ac7384575fa2ee5ac1b0c6a72275bad77b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 240,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Sessions/SessionView.swift": {
+      "filePath": "Vayl/Features/Sessions/SessionView.swift",
+      "contentHash": "3dad150f608f4bbbd94a1e3e462fa7a5833cfaa9d2a166497fcb809c51cd5c6d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 281,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Features/Settings/SettingsView.swift": {
+      "filePath": "Vayl/Features/Settings/SettingsView.swift",
+      "contentHash": "84ce1fa02ac8a5d42bb458274b115529568284281fd468e74feae1faed965d4a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 299,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Resources/Content/assessment_questions.json": {
+      "filePath": "Vayl/Resources/Content/assessment_questions.json",
+      "contentHash": "e04c0764e27e49b7133e218a6d140bfa042c57769a5fa73aa5752ddb59ad9137",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 228,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Resources/Content/cards.json": {
+      "filePath": "Vayl/Resources/Content/cards.json",
+      "contentHash": "b405c612797f9607ff7b72317db3417f2361a773ff73da0bb4fb5e26de826afd",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 255,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Resources/Content/categories.json": {
+      "filePath": "Vayl/Resources/Content/categories.json",
+      "contentHash": "44b08f9f7d0389038fb01db21c3e7f0a1b3d4f6fd210ce999fab2c985b0fa4a8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 69,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Resources/Content/desire_items.json": {
+      "filePath": "Vayl/Resources/Content/desire_items.json",
+      "contentHash": "c1e78477b31c0c9dc44dcfc1a9625774e6c5984096ab1dd799074d541e48a7fe",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 242,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Resources/Decks/deck-index.json": {
+      "filePath": "Vayl/Resources/Decks/deck-index.json",
+      "contentHash": "74d051e1f841d88de09aa584e4dc03b5a6183ac069c57dcc0c2b1cd231496b07",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 4,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Resources/Decks/the-opener.json": {
+      "filePath": "Vayl/Resources/Decks/the-opener.json",
+      "contentHash": "8aef180fbb4952c9c2e43f8dfad929e71a673654ed898aa1e4597a4591693f33",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 195,
+      "hasStructuralAnalysis": true
+    },
+    "Vayl/Vayl.entitlements": {
+      "filePath": "Vayl/Vayl.entitlements",
+      "contentHash": "40a4178589650bca89021b82befb5c13ee511669ed8d38a00f7fb75fce374144",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Vayl.plist": {
+      "filePath": "Vayl/Vayl.plist",
+      "contentHash": "4872b593e94f89773a6488caf65e517d0dc45ac53d08590243a9d8d1e84ed5f3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 30,
+      "hasStructuralAnalysis": false
+    },
+    "Vayl/Vayl.storekit": {
+      "filePath": "Vayl/Vayl.storekit",
+      "contentHash": "72d427a405cc59050b15519fea6ff30e44fa429e8dbd37ac9e75dc1912aadd49",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 33,
+      "hasStructuralAnalysis": false
+    },
+    "VaylTests/CandleIntensityTests.swift": {
+      "filePath": "VaylTests/CandleIntensityTests.swift",
+      "contentHash": "6c6d40b5cd48a920ea80da6138a39ad2820b07aed055062142ac4ccaaf0871e4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 16,
+      "hasStructuralAnalysis": false
+    },
+    "VaylTests/ContextOptionTests.swift": {
+      "filePath": "VaylTests/ContextOptionTests.swift",
+      "contentHash": "d23e71045a06ad51b5ea2c040edd1fdca6badaf71d960cebe0ae8085eb07de64",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 105,
+      "hasStructuralAnalysis": false
+    },
+    "VaylTests/GettingStartedTests.swift": {
+      "filePath": "VaylTests/GettingStartedTests.swift",
+      "contentHash": "958e716940d744357edf40f916227b7ae8c5444da3acecab8be82a3319dba140",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 39,
+      "hasStructuralAnalysis": false
+    },
+    "VaylTests/MonteRowGeometryTests.swift": {
+      "filePath": "VaylTests/MonteRowGeometryTests.swift",
+      "contentHash": "a6df16bd4d29ee4a73a5a4cf1c3d55896ba284a5452ac780c5c629051344e825",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 20,
+      "hasStructuralAnalysis": false
+    }
+  }
+}

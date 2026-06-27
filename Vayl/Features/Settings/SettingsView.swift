@@ -18,7 +18,7 @@ struct SettingsView: View {
     @AppStorage("screenshotProtectionEnabled") private var screenshotProtection: Bool = true
     // TODO: migrate key to UserDefaultsKey.screenshotProtectionEnabled
     @State private var hapticFeedback: Bool = true
-    @State private var navigateToThemePicker: Bool = false
+    @State private var shareCapacity: Bool = true   // loaded from the profile on appear
 
     // MARK: - Body
 
@@ -69,6 +69,7 @@ struct SettingsView: View {
                 .padding(.bottom, AppSpacing.xxl)       // was 40 → xxl (48), snap per handoff
             }
             .background(AppColors.pageBackground.ignoresSafeArea())
+            .task { shareCapacity = await PulseSyncService.shared.fetchSharing() }
             .if(screenshotProtection) { $0.screenshotProtected() }
             .alert("Reset All Data?", isPresented: $showResetConfirm) {
                 Button("Cancel", role: .cancel) {}
@@ -173,32 +174,26 @@ struct SettingsView: View {
         SettingsCard {
             VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
                 SectionHeader("APPEARANCE")
-                Button {
-                    navigateToThemePicker = true
-                } label: {
-                    HStack {
-                        Image(AppIcons.paintpalette) // was "paintpalette.fill"
-                            .font(
-                                Font.custom("Switzer-Regular", size: 15, relativeTo: .body)
-                            )                       // was .system(size: 15)
-                            .foregroundColor(AppColors.accentSecondary)
-                        Text("Theme")
-                            .font(AppFonts.bodyMedium)
-                            .foregroundColor(AppColors.textPrimary)
-                        Spacer()
-                        Text("Midnight")
-                            .font(AppFonts.caption)
-                            .foregroundColor(AppColors.textMuted)
-                        Image(AppIcons.chevronRight) // was "chevron.right"
-                            .font(
-                                Font.custom("Switzer-Semibold", size: 12, relativeTo: .caption)
-                            )                       // was .system(size: 12, weight: .semibold)
-                            .foregroundColor(AppColors.textMuted)
-                    }
-                    .padding(.vertical, AppSpacing.xs) // was 4 → xs, exact
+                // Dark-only (Act 1): theme is fixed to Midnight, so this is an
+                // informational row, not a navigable picker. Restore a Button +
+                // destination here if light/system ever return.
+                HStack {
+                    Image(AppIcons.paintpalette) // was "paintpalette.fill"
+                        .font(
+                            Font.custom("Switzer-Regular", size: 15, relativeTo: .body)
+                        )                       // was .system(size: 15)
+                        .foregroundColor(AppColors.accentSecondary)
+                    Text("Theme")
+                        .font(AppFonts.bodyMedium)
+                        .foregroundColor(AppColors.textPrimary)
+                    Spacer()
+                    Text("Midnight")
+                        .font(AppFonts.caption)
+                        .foregroundColor(AppColors.textMuted)
                 }
-                .accessibilityLabel("Theme — currently Midnight")
-                .accessibilityAddTraits(.isButton)
+                .padding(.vertical, AppSpacing.xs) // was 4 → xs, exact
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Theme — Midnight")
                 SpectrumBar()
                 ToggleRow(
                     icon: "waveform",               // raw string lives in ToggleRow — migrate there
@@ -223,6 +218,24 @@ struct SettingsView: View {
                     isOn: $screenshotProtection
                 )
                 Text("When enabled, sensitive screens are hidden from screenshots and screen recordings.")
+                    .font(AppFonts.meta)
+                    .foregroundColor(AppColors.textMuted)
+
+                // Couples share current capacity (on by default). The binding writes
+                // only on user action; the .task load sets state directly (no write).
+                ToggleRow(
+                    icon: "waveform.path.ecg",
+                    iconColor: AppColors.accentPrimary,
+                    label: "Share my capacity with partner",
+                    isOn: Binding(
+                        get: { shareCapacity },
+                        set: { newValue in
+                            shareCapacity = newValue
+                            Task { await PulseSyncService.shared.setSharing(newValue) }
+                        }
+                    )
+                )
+                Text("Your partner sees only your current Pulse capacity, never your check-in answers or history.")
                     .font(AppFonts.meta)
                     .foregroundColor(AppColors.textMuted)
             }

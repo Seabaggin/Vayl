@@ -1,0 +1,33 @@
+{
+  "id": "trust-repair",
+  "title": "Trust & Repair",
+  "subtitle": "After it bends, before it breaks.",
+  "category": "relationshipCore",
+  "act": 1,
+  "intensity": 5,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": ["relationship", "core"],
+  "sort_order": 5,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "trust-repair-01",
+      "deck_id": "trust-repair",
+      "text": "When did I last make you feel safe?",
+      "highlight_words": ["safe"],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    }
+  ]
+}

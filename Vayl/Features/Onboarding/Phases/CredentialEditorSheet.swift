@@ -35,7 +35,7 @@ struct CredentialEditorSheet: View {
         .padding(AppSpacing.lg)
         // Native-style chrome: full-bleed width, continuous rounded top corners,
         // spectrum border tracing the rounded top. Shared with FounderLetterSheet.
-        .obSheetChrome()
+        .vaylSheetChrome()
     }
 
     // MARK: - Chrome
@@ -157,6 +157,14 @@ struct CredentialEditorSheet: View {
                               current: director.onboardingData.pronounsA) {
                     director.onboardingData.pronounsA = $0
                 }
+
+                // Shared opt-out — mirrors the OB decline bar (clears both fields at once).
+                selectableRow("Prefer not to say",
+                              selected: director.onboardingData.genderA == nil
+                                     && director.onboardingData.pronounsA == nil) {
+                    director.onboardingData.genderA   = nil
+                    director.onboardingData.pronounsA = nil
+                }
             }
             .padding(.vertical, AppSpacing.xs)
         }
@@ -196,10 +204,10 @@ struct CredentialEditorSheet: View {
     private var curiosityEditor: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                curiositySection(title: "What keeps coming up",
-                                 cards: director.buildCuriosityPile(round: 1))
-                curiositySection(title: "What you're curious about",
-                                 cards: director.buildCuriosityPile(round: 2))
+                curiositySection(title: "What's drawing you here",
+                                 cards: director.curiosity.buildCuriosityPile(round: 1, onboardingData: director.onboardingData))
+                curiositySection(title: "What you're curious to try",
+                                 cards: director.curiosity.buildCuriosityPile(round: 2, onboardingData: director.onboardingData))
             }
             .padding(.vertical, AppSpacing.xs)
         }

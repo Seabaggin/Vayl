@@ -1,0 +1,207 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "Vayl/Core/Services/SupabaseManager.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 30,
+      "nonEmptyLines": 26,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Services/SyncManager.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 307,
+      "nonEmptyLines": 273,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Brand/SplashScreenView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 728,
+      "nonEmptyLines": 629,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Brand/VaylAppIcon.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 677,
+      "nonEmptyLines": 601,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Buttons/CriticalButton.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 50,
+      "nonEmptyLines": 44,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Buttons/SafeWordButton.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 59,
+      "nonEmptyLines": 56,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Buttons/SelectablePill.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 394,
+      "nonEmptyLines": 358,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 88,
+      "nonEmptyLines": 79,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardBackView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 352,
+      "nonEmptyLines": 318,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardCarousel.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 641,
+      "nonEmptyLines": 572,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 897,
+      "nonEmptyLines": 834,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 477,
+      "nonEmptyLines": 403,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 69,
+      "nonEmptyLines": 61,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 109,
+      "nonEmptyLines": 94,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 302,
+      "nonEmptyLines": 266,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 61,
+      "nonEmptyLines": 52,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 329,
+      "nonEmptyLines": 299,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 85,
+      "nonEmptyLines": 74,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 378,
+      "nonEmptyLines": 329,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 374,
+      "nonEmptyLines": 323,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 95,
+      "nonEmptyLines": 87,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 276,
+      "nonEmptyLines": 239,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardFrontView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 112,
+      "nonEmptyLines": 97,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardLayout.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 39,
+      "nonEmptyLines": 31,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 165,
+      "nonEmptyLines": 145,
+      "metrics": {}
+    }
+  ]
+}

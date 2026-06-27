@@ -1,0 +1,207 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 344,
+      "nonEmptyLines": 299,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 149,
+      "nonEmptyLines": 121,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 335,
+      "nonEmptyLines": 293,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardRevealPillButton.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 105,
+      "nonEmptyLines": 97,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardShadows.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 23,
+      "nonEmptyLines": 21,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CardStyle.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 50,
+      "nonEmptyLines": 47,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CategoryTileView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 90,
+      "nonEmptyLines": 84,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/ConversationCard.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 423,
+      "nonEmptyLines": 360,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 55,
+      "nonEmptyLines": 42,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CuriosityCardBack.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 160,
+      "nonEmptyLines": 145,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/CuriosityFlipCard.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 73,
+      "nonEmptyLines": 65,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/FuseTimerView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 141,
+      "nonEmptyLines": 123,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/PremiumCardShell.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 221,
+      "nonEmptyLines": 196,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/PromptCard.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 34,
+      "nonEmptyLines": 28,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/SettingsCard.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 13,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/VaylCardAction.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 22,
+      "nonEmptyLines": 20,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 426,
+      "nonEmptyLines": 374,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 319,
+      "nonEmptyLines": 275,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/VaylCardContent.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 86,
+      "nonEmptyLines": 67,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 645,
+      "nonEmptyLines": 562,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 56,
+      "nonEmptyLines": 48,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Cards/VaylDeckStack.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 24,
+      "nonEmptyLines": 22,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 313,
+      "nonEmptyLines": 276,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 876,
+      "nonEmptyLines": 779,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Effects/FlameAura.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 244,
+      "nonEmptyLines": 214,
+      "metrics": {}
+    }
+  ]
+}

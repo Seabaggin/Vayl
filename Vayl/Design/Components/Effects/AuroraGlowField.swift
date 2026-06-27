@@ -104,7 +104,7 @@ struct AuroraGlowField: View {
             }
         }
         .allowsHitTesting(false)
-        .animation(.easeInOut(duration: 1.0), value: config)
+        .animation(AppAnimation.atmosphereShift, value: config)
         .onAppear {
             guard !hasStarted else { return }
             hasStarted = true

@@ -41,12 +41,12 @@ struct ConfirmationPhase: View {
 
     // Tuned reference values.
     private let fanSpread:    Double = 0.56
-    private let dealStagger:  Double = 0.19
+    private let dealStagger:  Double = 0.10            // FEEL-GATE: snappier deal (was 0.19)
     private let dealArc:      Double = 13              // % of screen height — bézier sweep peak
-    private let breatheHold:  Double = 1.4
-    private let dealSpan:     Double = 1.9             // deal stagger tail + spring settle — swipe arms on a still fan
+    private let dealLeadIn:   Double = 0.5             // FEEL-GATE: covers only the cross-fade, then deal (was breatheHold 1.4 of empty felt)
+    private let dealSpan:     Double = 1.2             // FEEL-GATE: stagger tail + spring settle (was 1.9)
     private let exitStagger:  Double = 0.12   // per-card delay, leftmost first — the gather reads card by card
-    private let exitSpan:     Double = 1.6    // stagger tail (0.6) + spring settle before the swap
+    private let exitSpan:     Double = 2.0    // FEEL-GATE: stagger tail (0.6) + FULL confirmGather settle (resp 0.8) before the swap — was 1.6, which advanced ~0.3s while the last card was still springing, popping the otherwise-identical deck handoff
     /// Same commit physics as CuriosityPhase — distance, or a committed flick.
     private let commitThreshold: CGFloat = 95
 
@@ -184,21 +184,23 @@ struct ConfirmationPhase: View {
     private func runEntry(size: CGSize) async {
         // The prompt is DEALER copy — typed Menlo via the canvas projection,
         // never a phase-local Text in a display face (one dealer, one voice).
-        director.showDealerLineManual("Everything look right?")
-
         if reduceMotion {
             // Cards are visible from the first frame under RM — no beats to wait out.
             dealt = true
             armed = true
+            director.projector.showDealerLineManual("Everything look right?")
         } else {
-            try? await Task.sleep(for: .seconds(breatheHold))
+            // Lead-in covers only the phase cross-fade, then the six cards deal out
+            // of the corner immediately (no empty-felt breathe), continuous with the
+            // deck the user just pocketed. The question types WITH the deal, landing
+            // as the fan settles, never asked of a blank table. One line, no lull.
+            try? await Task.sleep(for: .seconds(dealLeadIn))
             dealt = true   // cards animate via their per-card dealAnimation
+            director.projector.showDealerLineManual("Everything look right?")
 
-            // One light tick per landing, riding the deal stagger — the fan
-            // was the only silent deal in the OB. First (rightmost) card
-            // arrives ≈0.45s into its spring.
+            // One light tick per landing, riding the deal stagger.
             dealTickTask = Task { @MainActor in
-                try? await Task.sleep(for: .seconds(0.45))
+                try? await Task.sleep(for: .seconds(0.35))
                 let tick = UIImpactFeedbackGenerator(style: .light)
                 tick.prepare()
                 for _ in credentials.indices {
@@ -216,14 +218,14 @@ struct ConfirmationPhase: View {
         // the gesture once and the fan nudges rightward on a sparse cadence.
         try? await Task.sleep(for: .seconds(reduceMotion ? 0.5 : 2.5))
         guard !exiting, director.editingCredential == nil else { return }
-        director.hideDealerLine()
+        director.projector.hideDealerLine()
         try? await Task.sleep(for: .milliseconds(300))
         guard !exiting, director.editingCredential == nil else { return }
         // Persistent (manual) — the directional cue stays coupled to the nudge
         // instead of auto-hiding while the fan keeps twitching silently. This is
         // the only swipe-RIGHT in the OB (every prior confirm was swipe-up), so
         // its worded cue must not time out. Hidden on commit (startExit).
-        director.showDealerLineManual("If that's you — swipe right.")
+        director.projector.showDealerLineManual("If that's you — swipe right.")
         startNudge(amplitude: size.width * 0.055)
     }
 
@@ -248,7 +250,7 @@ struct ConfirmationPhase: View {
         guard !exiting else { return }
         exiting = true   // cards collapse via the exit animation modifiers
         nudgeTask?.cancel()
-        director.hideDealerLine()
+        director.projector.hideDealerLine()
         // The committed drag offset bleeds out on a slow ease UNDER the gather —
         // a spring snap-back here moved the whole fan leftward, against the
         // swipe that just committed. The deck still lands at the seam point.
@@ -267,7 +269,7 @@ struct ConfirmationPhase: View {
     private func dealAnimation(index: Int, count: Int) -> Animation {
         if reduceMotion { return AppAnimation.fast }
         let delay = Double(count - 1 - index) * dealStagger
-        return .spring(response: 0.55, dampingFraction: 0.86).delay(delay)
+        return AppAnimation.confirmDeal.delay(delay)
     }
 
     // MARK: - Exit animation (rightmost card leaves first — the deal grammar, reversed home)
@@ -281,7 +283,7 @@ struct ConfirmationPhase: View {
         let delay = Double(index) * exitStagger
         // 0.8 response — this is the keystone object moment (six credentials
         // become THE deck); at 0.5 the whole collapse read in ~0.35s, a snap.
-        return .spring(response: 0.8, dampingFraction: 0.85).delay(delay)
+        return AppAnimation.confirmGather.delay(delay)
     }
 
     /// The face-down flip rides the same stagger but resolves ~60% through the
@@ -289,7 +291,7 @@ struct ConfirmationPhase: View {
     private func exitFlipAnimation(index: Int, count: Int) -> Animation {
         if reduceMotion { return AppAnimation.fast }
         let delay = Double(index) * exitStagger
-        return .spring(response: 0.5, dampingFraction: 0.9).delay(delay)
+        return AppAnimation.confirmFlip.delay(delay)
     }
 
     // MARK: - Geometry

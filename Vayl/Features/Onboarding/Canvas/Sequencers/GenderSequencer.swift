@@ -63,19 +63,33 @@ final class GenderSequencer {
         "Man", "Woman", "Trans Man", "Trans Woman", "Non-binary",
     ]
     var drumOffset:    CGFloat  = 0
-    var selectedIndex: Int      = 0
+    /// -1 = no real selection yet (dial sits on the "—" placeholder). Blank-start:
+    /// the user must tune each dial (or decline) before the card can be lifted.
+    var selectedIndex: Int      = -1
     var drumSettled:   Bool     = false
 
     /// Radio tuner signal state.
     var signalStrength: Double = 0
 
-    // Pronouns drum (mirrors the gender drum).
-    var pronounsOptions:       [String] = ["she/her", "he/him", "they/them", "ze/zir", "any pronouns", "prefer not to say"]
+    // Pronouns drum (mirrors the gender drum). Pure pronoun preferences — the
+    // "prefer not to say" opt-out is now the shared decline bar under both drums
+    // (GenderPhase), so it lives in one place instead of two inconsistent ones.
+    var pronounsOptions:       [String] = ["she/her", "he/him", "they/them", "ze/zir", "any pronouns"]
     var pronounsDrumOffset:    CGFloat  = 0
-    var pronounsSelectedIndex: Int      = 0
+    var pronounsSelectedIndex: Int      = -1   // -1 = placeholder, no real selection yet
     var pronounsDrumSettled:   Bool     = false
 
     var bothSettled: Bool { drumSettled && pronounsDrumSettled }
+
+    /// Shared "prefer not to say" opt-out — declines BOTH gender and pronouns at once
+    /// (the bar under the dials). A valid, active completion of the identity card.
+    var declined: Bool = false
+
+    /// The card may be lifted once the user has tuned both dials to a real option OR
+    /// tapped the decline bar. Blank-start means there's no valid default to passively
+    /// accept, so requiring a choice strands no one (unlike the prior "did you scroll?"
+    /// gate — see the runEntry note).
+    var armedToLift: Bool { declined || bothSettled }
 
     /// GenderPhase observes this; advances to `.experienceLevel` on true.
     var shouldPocket: Bool = false
@@ -143,14 +157,17 @@ final class GenderSequencer {
             "Man", "Woman", "Trans Man", "Trans Woman", "Non-binary",
         ]
         drumOffset         = 0
-        selectedIndex      = 0
+        selectedIndex      = -1
         pronounsDrumOffset    = 0
-        pronounsSelectedIndex = 0
-        // Drums START settled — the defaults are a valid, lined-up selection.
-        // Gating anything on "user scrolled both drums" stranded default-accepters
-        // and pronoun-only users with no way to proceed.
-        drumSettled         = true
-        pronounsDrumSettled = true
+        pronounsSelectedIndex = -1
+        // Drums START BLANK (both dials on the "—" placeholder). The card's lift is
+        // gated on armedToLift — the user must tune both dials to a real option or tap
+        // the decline bar. A PRIOR gate keyed on "did the user scroll both drums"
+        // stranded anyone whose identity matched the default; blank-start removes the
+        // valid default, so requiring a choice strands no one.
+        drumSettled         = false
+        pronounsDrumSettled = false
+        declined            = false
         shouldPocket       = false
     }
 
@@ -193,11 +210,14 @@ final class GenderSequencer {
             swipeHintActive    = false
             pickerVisible      = true
             drumOffset         = 0
-            selectedIndex      = 0
+            selectedIndex      = -1
             pronounsDrumOffset    = 0
-            pronounsSelectedIndex = 0
-            drumSettled         = true
-            pronounsDrumSettled = true
+            pronounsSelectedIndex = -1
+            // Blank-start under Reduce Motion too — the user still chooses (or declines);
+            // only the deal/flip theatre is skipped, not the identity gate.
+            drumSettled         = false
+            pronounsDrumSettled = false
+            declined            = false
             shouldPocket       = false
             return
         }
@@ -288,6 +308,7 @@ final class GenderSequencer {
     func updateDrum(offset: CGFloat) {
         drumOffset  = offset
         drumSettled = false
+        declined    = false   // grabbing a dial cancels a prior decline
         if signalStrength > 0 {
             withAnimation(AppAnimation.standard.reduceMotionSafe) { signalStrength = 0 }
         }
@@ -297,23 +318,27 @@ final class GenderSequencer {
     func updatePronounsDrum(offset: CGFloat) {
         pronounsDrumOffset  = offset
         pronounsDrumSettled = false
+        declined            = false
         if signalStrength > 0 {
             withAnimation(AppAnimation.standard.reduceMotionSafe) { signalStrength = 0 }
         }
     }
 
-    /// Called when the drum snaps to a gender option.
+    /// Called when the gender drum snaps. `index` is -1 when it lands back on the "—"
+    /// placeholder (un-choosing), 0..n-1 on a real option.
     func settleDrum(index: Int) {
         selectedIndex = index
-        drumSettled   = true
-        if bothSettled { fireBothSettled() }
+        drumSettled   = index >= 0
+        if index >= 0 { declined = false }   // a real choice cancels a prior decline
+        if armedToLift { fireBothSettled() }
     }
 
-    /// Called when the pronouns drum snaps to a selection.
+    /// Pronouns drum snap. `index` is -1 on the "—" placeholder, 0..n-1 on a real option.
     func settlePronounsDrum(index: Int) {
         pronounsSelectedIndex = index
-        pronounsDrumSettled   = true
-        if bothSettled { fireBothSettled() }
+        pronounsDrumSettled   = index >= 0
+        if index >= 0 { declined = false }
+        if armedToLift { fireBothSettled() }
     }
 
     /// Both drums sit settled on a choice — signal locks, and the "lined up"
@@ -326,15 +351,27 @@ final class GenderSequencer {
         lockThudTrigger.toggle()
     }
 
+    /// Shared decline bar — "prefer not to say" for the whole identity card. Clears both
+    /// dials back to the placeholder and arms the lift (a valid, active choice). The view
+    /// resets the drum strips to the placeholder position; this owns the model state.
+    func declineIdentity() {
+        selectedIndex         = -1
+        pronounsSelectedIndex = -1
+        drumSettled           = false
+        pronounsDrumSettled   = false
+        declined              = true
+        fireBothSettled()   // arm: signal locks + "lined up" thud
+    }
+
     // MARK: - Lift / lower
     // Tap-to-lift → swipe-up — the grammar taught in NamePhase, identical to the
     // sibling selection phases. Callers wrap these in withAnimation(cardLift) so
     // animation context stays at the View layer (CardMirrorDealController pattern).
 
-    /// Tap on the resting card. Liftable from the moment the pickers are visible —
-    /// the defaults are a valid selection, so no drum interaction is required.
+    /// Tap on the resting card. Gated on `armedToLift` — the user must tune both dials
+    /// to a real option (or tap the decline bar) before the card will lift.
     func liftCard(screenSize: CGSize) {
-        guard pickerVisible, !cardLifted else { return }
+        guard pickerVisible, armedToLift, !cardLifted else { return }
         cardLifted = true
         cardOffset = CGSize(width: 0, height: screenSize.height * 0.42 - screenSize.height / 2)
         cardScale  = 1.12
@@ -370,10 +407,15 @@ final class GenderSequencer {
     func confirmSelection(screenSize: CGSize, cardWidth: CGFloat) {
         guard cardLifted else { return }
         endSwipeHint()
-        stage.onboardingData.genderA   = options[selectedIndex]
-        stage.onboardingData.pronounsA = pronounsOptions.indices.contains(pronounsSelectedIndex)
-            ? pronounsOptions[pronounsSelectedIndex]
-            : nil
+        if declined {
+            stage.onboardingData.genderA   = nil
+            stage.onboardingData.pronounsA = nil
+        } else {
+            stage.onboardingData.genderA   = options.indices.contains(selectedIndex)
+                ? options[selectedIndex] : nil
+            stage.onboardingData.pronounsA = pronounsOptions.indices.contains(pronounsSelectedIndex)
+                ? pronounsOptions[pronounsSelectedIndex] : nil
+        }
 
         withAnimation(AppAnimation.fast.reduceMotionSafe) { pickerVisible = false }
 
@@ -387,7 +429,7 @@ final class GenderSequencer {
         }
         // Alpha rides its own late curve so the card stays visible for ~90% of
         // the flight and dissolves INTO the deck rather than vanishing at launch.
-        withAnimation(.easeIn(duration: 0.2).delay(0.32).reduceMotionSafe) { cardAlpha = 0 }
+        withAnimation(AppAnimation.pocketAlphaFade.reduceMotionSafe) { cardAlpha = 0 }
 
         shouldPocket = true
     }

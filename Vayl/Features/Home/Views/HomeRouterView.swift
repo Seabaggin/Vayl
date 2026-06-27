@@ -14,10 +14,23 @@ import SwiftData
 struct HomeRouterView: View {
 
     @Environment(AppState.self) private var appState
+    @Environment(\.modelContext) private var modelContext
+
+    var body: some View {
+        HomeRouterInnerView(
+            appState: appState,
+            modelContainer: modelContext.container
+        )
+    }
+}
+
+private struct HomeRouterInnerView: View {
+
+    @Environment(AppState.self) private var appState
     @Environment(EntitlementStore.self) private var entitlements
     @Environment(\.modelContext) private var modelContext
 
-    @State private var store: HomeStore? = nil
+    @State private var store: HomeStore
 
     // ── Session presentation ─────────────────────────────────────────────
     // Created here because HomeRouterView owns appState and modelContext.
@@ -44,6 +57,10 @@ struct HomeRouterView: View {
     @Namespace private var pathNamespace
     @State private var showPath = false
 
+    init(appState: AppState, modelContainer: ModelContainer) {
+        _store = State(initialValue: HomeStore(modelContainer: modelContainer, appState: appState))
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -51,17 +68,8 @@ struct HomeRouterView: View {
             let layout = AppLayout.from(geo)
 
             Group {
-                if let store {
-                    routedContent(store: store, layout: layout)
-                } else {
-                    ProgressView()
-                        .tint(AppColors.accentPrimary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
+                routedContent(store: store, layout: layout)
             }
-        }
-        .task {
-            await bootstrapStore()
         }
         .sheet(item: $activeSession) { session in
             SessionView(store: session)
@@ -69,8 +77,16 @@ struct HomeRouterView: View {
         .fullScreenCover(item: $activeMap, onDismiss: handleRaterDismiss) { mapStore in
             DesireMapView(store: mapStore)
         }
-        .fullScreenCover(item: $activeReveal) { revealStore in
-            DesireRevealView(store: revealStore)
+        .vaylCover(
+            isPresented: Binding(
+                get: { activeReveal != nil },
+                set: { if !$0 { activeReveal = nil } }
+            ),
+            confirmOnExit: false
+        ) {
+            if let revealStore = activeReveal {
+                DesireRevealView(store: revealStore)
+            }
         }
     }
 
@@ -196,7 +212,12 @@ struct HomeRouterView: View {
                     handleCardAction(card: card, action: action, deck: loadedDeck, store: store)
                 },
                 onInvitePartner:     { appState.selectedTab = .map },
-                onPartnerTap:        { appState.selectedTab = .map }
+                onPartnerTap:        { appState.selectedTab = .map },
+                onOpenLexicon:       { appState.selectedTab = .learn },
+                onPulseTap:          { appState.selectedTab = .map },
+                // Interim: route to the Pulse surface. Final: present the shared
+                // check-in sheet in place (Bryan's PulseWidget pass).
+                onCheckIn:           { appState.selectedTab = .map }
             )
         }
     }
@@ -259,21 +280,11 @@ struct HomeRouterView: View {
     private func handleRaterDismiss() {
         Task {
             let wasComplete = mapWasCompleteOnOpen
-            await store?.loadAll()
-            if !wasComplete, store?.myMapComplete == true {
-                store?.celebrateMapCompletion()
+            await store.loadAll()
+            if !wasComplete, store.myMapComplete == true {
+                store.celebrateMapCompletion()
             }
         }
-    }
-
-    // MARK: - Store Bootstrap
-
-    private func bootstrapStore() async {
-        guard store == nil else { return }
-        store = HomeStore(
-            modelContainer: modelContext.container,
-            appState: appState
-        )
     }
 
     // MARK: - Debug Controls
@@ -284,6 +295,17 @@ struct HomeRouterView: View {
             Text("HomeState: \(String(describing: store.homeState))")
                 .font(AppFonts.meta)
                 .foregroundStyle(AppColors.textTertiary)
+
+            Button("OB ✓") {
+                let profile: UserProfile
+                if let existing = try? modelContext.fetch(FetchDescriptor<UserProfile>()).first {
+                    profile = existing
+                } else {
+                    profile = UserProfile(displayName: "Debug User")
+                    modelContext.insert(profile)
+                }
+                appState.markOnboardingComplete(profile, context: modelContext)
+            }
 
             Button(store.myMapComplete ? "Map ✓" : "Map ✗") {
                 store.myMapComplete.toggle()

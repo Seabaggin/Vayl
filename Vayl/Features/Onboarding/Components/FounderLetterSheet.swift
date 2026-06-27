@@ -30,7 +30,7 @@ struct FounderLetterSheet<Content: View>: View {
             Spacer(minLength: 0)
         }
         // Native-style chrome — identical to the edit sheet.
-        .obSheetChrome()
+        .vaylSheetChrome()
     }
 }
 

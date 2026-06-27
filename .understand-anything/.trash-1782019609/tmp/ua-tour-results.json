@@ -1,0 +1,2470 @@
+{
+  "scriptCompleted": true,
+  "entryPointCandidates": [
+    {
+      "id": "file:Vayl/App/VaylApp.swift",
+      "score": 5,
+      "name": "VaylApp.swift",
+      "type": "file",
+      "summary": "App entry point and composition root: constructs the shared AppState and injects it into the store graph, wires environment objects, and runs session/entitlement bootstrap on launch."
+    },
+    {
+      "id": "file:supabase/functions/compute-desire-matches/index.ts",
+      "score": 4,
+      "name": "index.ts",
+      "type": "file",
+      "summary": "Deno edge function (service-role): marks a partner's Desire Map complete, resolves the couple track, and when both finish computes positive matches over shared items (excluding boundaries) into desire_matches with one server-authoritative f"
+    },
+    {
+      "id": "file:supabase/functions/get-partner/index.ts",
+      "score": 4,
+      "name": "index.ts",
+      "type": "file",
+      "summary": "Deno edge function (service-role): returns only the linked partner's display name and pronouns for the caller's couple, since per-row RLS cannot expose cross-partner columns."
+    },
+    {
+      "id": "file:supabase/functions/grant-entitlement/index.ts",
+      "score": 4,
+      "name": "index.ts",
+      "type": "file",
+      "summary": "Deno edge function (service-role): the only path that grants Core to a couple, authorizing via Apple StoreKit receipt or an admin secret, writing the entitlements ledger, then recomputing the couple's access_tier."
+    },
+    {
+      "id": "file:supabase/functions/rapid-task/index.ts",
+      "score": 4,
+      "name": "index.ts",
+      "type": "file",
+      "summary": "Deno edge function (slug rapid-task, the app's create-couple endpoint): claims a pairing code, resolves both partners' profile ids, creates the couples row, links both profiles, inherits any payer-portable entitlement, and deletes the code."
+    },
+    {
+      "id": "file:supabase/functions/create-pair/index.ts",
+      "score": 3,
+      "name": "index.ts",
+      "type": "file",
+      "summary": "Deno edge function (service-role): validates a pairing code (existence, expiry, self-pair, prior-couple guards), creates a couples row, marks both profiles linked, and consumes the code."
+    },
+    {
+      "id": "file:supabase/functions/lookup-code/index.ts",
+      "score": 3,
+      "name": "index.ts",
+      "type": "file",
+      "summary": "Deno edge function (service-role): validates a pairing code's existence and expiry and returns the inviter's display name and pronouns for the 'you're pairing with...' preview."
+    },
+    {
+      "id": "config:supabase/config.toml",
+      "score": 2,
+      "name": "config.toml",
+      "type": "config",
+      "summary": "Supabase CLI config registering the lookup-code and create-pair edge functions with JWT verification enabled and their Deno import maps."
+    }
+  ],
+  "fanInRanking": [
+    {
+      "id": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "fanIn": 12,
+      "name": "VaylDirector.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Services/SupabaseManager.swift",
+      "fanIn": 6,
+      "name": "SupabaseManager.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Models/PulseEntry.swift",
+      "fanIn": 5,
+      "name": "PulseEntry.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "fanIn": 5,
+      "name": "EntitlementStore.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Services/AppState.swift",
+      "fanIn": 4,
+      "name": "AppState.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Services/SyncManager.swift",
+      "fanIn": 4,
+      "name": "SyncManager.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Pulse/PulseGraph.swift",
+      "fanIn": 4,
+      "name": "PulseGraph.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Services/ContentLoader.swift",
+      "fanIn": 3,
+      "name": "ContentLoader.swift"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "fanIn": 3,
+      "name": "VaylCardBack.swift"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/HolographicShimmer.swift",
+      "fanIn": 3,
+      "name": "HolographicShimmer.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Models/UserProfile.swift",
+      "fanIn": 2,
+      "name": "UserProfile.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Services/AuthService.swift",
+      "fanIn": 2,
+      "name": "AuthService.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Services/DesireSyncService.swift",
+      "fanIn": 2,
+      "name": "DesireSyncService.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Services/ProfileService.swift",
+      "fanIn": 2,
+      "name": "ProfileService.swift"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "fanIn": 2,
+      "name": "CarouselPhysics.swift"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "fanIn": 2,
+      "name": "AuroraGlowField.swift"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/LightModeShimmer.swift",
+      "fanIn": 2,
+      "name": "LightModeShimmer.swift"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Navigation/SafariView.swift",
+      "fanIn": 2,
+      "name": "SafariView.swift"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Progress/ScreenshotProtectionModifier.swift",
+      "fanIn": 2,
+      "name": "ScreenshotProtectionModifier.swift"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Text/LivingText.swift",
+      "fanIn": 2,
+      "name": "LivingText.swift"
+    }
+  ],
+  "fanOutRanking": [
+    {
+      "id": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "fanOut": 15,
+      "name": "HomeDashboardView.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "fanOut": 11,
+      "name": "HomeRouterView.swift"
+    },
+    {
+      "id": "file:Vayl/App/VaylApp.swift",
+      "fanOut": 9,
+      "name": "VaylApp.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "fanOut": 7,
+      "name": "PaywallSheet.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Pulse/CheckInShell.swift",
+      "fanOut": 5,
+      "name": "CheckInShell.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Store/HomeStore.swift",
+      "fanOut": 4,
+      "name": "HomeStore.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/ContextPhase.swift",
+      "fanOut": 4,
+      "name": "ContextPhase.swift"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/ConversationCard.swift",
+      "fanOut": 3,
+      "name": "ConversationCard.swift"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "fanOut": 3,
+      "name": "VaylCardRenderer.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Desire Map/Store/DesireRevealStore.swift",
+      "fanOut": 3,
+      "name": "DesireRevealStore.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Desire Map/Views/DesireRevealView.swift",
+      "fanOut": 3,
+      "name": "DesireRevealView.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "fanOut": 3,
+      "name": "CardFlightEngine.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift",
+      "fanOut": 3,
+      "name": "FounderLetterPhase.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Pairing/PairingSettingsView.swift",
+      "fanOut": 3,
+      "name": "PairingSettingsView.swift"
+    },
+    {
+      "id": "file:Vayl/Features/Play/PlayView.swift",
+      "fanOut": 3,
+      "name": "PlayView.swift"
+    },
+    {
+      "id": "file:Vayl/App/Theme/ThemeModifiers.swift",
+      "fanOut": 2,
+      "name": "ThemeModifiers.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Persistence/DataStore.swift",
+      "fanOut": 2,
+      "name": "DataStore.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Services/AuthService.swift",
+      "fanOut": 2,
+      "name": "AuthService.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Services/ContentLoader.swift",
+      "fanOut": 2,
+      "name": "ContentLoader.swift"
+    },
+    {
+      "id": "file:Vayl/Core/Services/DesireSyncService.swift",
+      "fanOut": 2,
+      "name": "DesireSyncService.swift"
+    }
+  ],
+  "bfsTraversal": {
+    "startNode": "file:Vayl/App/VaylApp.swift",
+    "startNodeName": "VaylApp.swift",
+    "order": [
+      "file:Vayl/App/VaylApp.swift",
+      "file:Vayl/App/ModelContainer.swift",
+      "file:Vayl/App/Theme/AppRootView.swift",
+      "file:Vayl/App/Theme/ThemeManager.swift",
+      "file:Vayl/Core/Services/AppState.swift",
+      "file:Vayl/Core/Services/AuthService.swift",
+      "file:Vayl/Core/Services/SyncManager.swift",
+      "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "file:Vayl/Features/Pulse/Store/PulseStore.swift",
+      "file:Vayl/Core/Models/UserProfile.swift",
+      "file:Vayl/Core/Services/SupabaseManager.swift",
+      "file:Vayl/Core/Services/EntitlementService.swift",
+      "file:Vayl/Core/Services/StoreKitService.swift",
+      "file:Vayl/Core/Models/PulseEntry.swift"
+    ],
+    "depthMap": {
+      "file:Vayl/App/VaylApp.swift": 0,
+      "file:Vayl/App/ModelContainer.swift": 1,
+      "file:Vayl/App/Theme/AppRootView.swift": 1,
+      "file:Vayl/App/Theme/ThemeManager.swift": 1,
+      "file:Vayl/Core/Services/AppState.swift": 1,
+      "file:Vayl/Core/Services/AuthService.swift": 1,
+      "file:Vayl/Core/Services/SyncManager.swift": 1,
+      "file:Vayl/Features/Monetization/Store/EntitlementStore.swift": 1,
+      "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift": 1,
+      "file:Vayl/Features/Pulse/Store/PulseStore.swift": 1,
+      "file:Vayl/Core/Models/UserProfile.swift": 2,
+      "file:Vayl/Core/Services/SupabaseManager.swift": 2,
+      "file:Vayl/Core/Services/EntitlementService.swift": 2,
+      "file:Vayl/Core/Services/StoreKitService.swift": 2,
+      "file:Vayl/Core/Models/PulseEntry.swift": 2
+    },
+    "byDepth": {
+      "0": [
+        "file:Vayl/App/VaylApp.swift"
+      ],
+      "1": [
+        "file:Vayl/App/ModelContainer.swift",
+        "file:Vayl/App/Theme/AppRootView.swift",
+        "file:Vayl/App/Theme/ThemeManager.swift",
+        "file:Vayl/Core/Services/AppState.swift",
+        "file:Vayl/Core/Services/AuthService.swift",
+        "file:Vayl/Core/Services/SyncManager.swift",
+        "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+        "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+        "file:Vayl/Features/Pulse/Store/PulseStore.swift"
+      ],
+      "2": [
+        "file:Vayl/Core/Models/UserProfile.swift",
+        "file:Vayl/Core/Services/SupabaseManager.swift",
+        "file:Vayl/Core/Services/EntitlementService.swift",
+        "file:Vayl/Core/Services/StoreKitService.swift",
+        "file:Vayl/Core/Models/PulseEntry.swift"
+      ]
+    },
+    "reachedCount": 15
+  },
+  "nonCodeFiles": {
+    "documentation": [],
+    "infrastructure": [],
+    "data": [
+      {
+        "id": "table:supabase/migrations/20260101000000_baseline.sql",
+        "name": "20260101000000_baseline.sql",
+        "type": "table",
+        "summary": "Baseline schema migration that provisions the entire Vayl backend: extensions (pgcrypto, uuid-ossp, pg_cron), helper functions, and the 10 core tables (user_profiles, couples, pairing_codes, curated_sessions, desire_ratings, desire_matches, card_progress, assessment_responses/results, couple_session"
+      },
+      {
+        "id": "table:supabase/migrations/20260101000000_baseline.sql:user_profiles",
+        "name": "user_profiles",
+        "type": "table",
+        "summary": "Per-user profile keyed by auth_id, storing onboarding state, NM flavor/stage, pairing code, couple linkage, orientation and role preferences. The pivot table linking Supabase auth identities to couple-scoped data."
+      },
+      {
+        "id": "table:supabase/migrations/20260101000000_baseline.sql:couples",
+        "name": "couples",
+        "type": "table",
+        "summary": "Couple record joining two user_profiles (user_a, user_b) with a shared safe word and a matches_revealed flag; the central scoping entity that most RLS policies and foreign keys reference."
+      },
+      {
+        "id": "table:supabase/migrations/20260101000000_baseline.sql:pairing_codes",
+        "name": "pairing_codes",
+        "type": "table",
+        "summary": "Short-lived invite codes for two-device pairing, tracking creator, expiry, and who claimed the code into which couple. RLS allows the creator to manage their row and a non-creator to claim it."
+      },
+      {
+        "id": "table:supabase/migrations/20260101000000_baseline.sql:curated_sessions",
+        "name": "curated_sessions",
+        "type": "table",
+        "summary": "Two-device curated card-session state: deck/variant, card list, per-card and global timers, per-partner presence/bandwidth/consent flags, reveal state, and safe-word usage. A unique partial index enforces one open session per couple."
+      },
+      {
+        "id": "table:supabase/migrations/20260101000000_baseline.sql:desire_ratings",
+        "name": "desire_ratings",
+        "type": "table",
+        "summary": "Per-user rating of an individual desire_item, the raw input that feeds Desire Map match computation."
+      },
+      {
+        "id": "table:supabase/migrations/20260101000000_baseline.sql:desire_matches",
+        "name": "desire_matches",
+        "type": "table",
+        "summary": "Computed alignment between partners on a desire item: alignment level, each partner's value, gap size, and an optional bridge card. The couple-facing output of the Desire Map."
+      },
+      {
+        "id": "table:supabase/migrations/20260101000000_baseline.sql:card_progress",
+        "name": "card_progress",
+        "type": "table",
+        "summary": "Per-couple status of each card (e.g. discussed/skipped), used to track deck progression across a couple's sessions."
+      },
+      {
+        "id": "table:supabase/migrations/20260101000000_baseline.sql:couple_session_records",
+        "name": "couple_session_records",
+        "type": "table",
+        "summary": "Historical log of completed couple sessions with start/end timestamps and count of cards discussed."
+      },
+      {
+        "id": "table:supabase/migrations/20260101000000_baseline.sql:assessment_responses",
+        "name": "assessment_responses",
+        "type": "table",
+        "summary": "Per-user raw answers to onboarding assessment questions, keyed by question_key."
+      },
+      {
+        "id": "table:supabase/migrations/20260101000000_baseline.sql:assessment_results",
+        "name": "assessment_results",
+        "type": "table",
+        "summary": "Per-user derived assessment results (result_key/result_value pairs) computed from assessment_responses."
+      },
+      {
+        "id": "table:supabase/migrations/20260616223000_p5d_revoke_anon_default_privileges.sql",
+        "name": "20260616223000_p5d_revoke_anon_default_privileges.sql",
+        "type": "table",
+        "summary": "Security-hardening migration (P5d) that revokes the anon role from default privileges on future tables, functions, and sequences in the public schema, and drops a residual anon EXECUTE grant on set_curated_sessions_updated_at(), closing the future-object exposure gap left by P5b."
+      },
+      {
+        "id": "table:supabase/migrations/20260617000000_desire_map_backend.sql",
+        "name": "20260617000000_desire_map_backend.sql",
+        "type": "table",
+        "summary": "Desire Map backend migration that creates the desire_map_status table (per-couple track + per-partner completion + full-reveal gating) and extends desire_ratings (rating check constraint) and desire_matches (is_free_reveal, revealed_at) to support the reveal flow."
+      },
+      {
+        "id": "table:supabase/migrations/20260617000000_desire_map_backend.sql:desire_map_status",
+        "name": "desire_map_status",
+        "type": "table",
+        "summary": "Per-couple Desire Map progress: which track, each partner's completion timestamp, whether the full reveal is unlocked, and a waiting-state marker. Drives the gated reveal experience."
+      },
+      {
+        "id": "table:supabase/migrations/20260617120000_monetization_entitlements.sql",
+        "name": "20260617120000_monetization_entitlements.sql",
+        "type": "table",
+        "summary": "Monetization migration that creates the service-role-only entitlements ledger (couple_id, product_id, is_active, purchased_by) with RLS and a couple_id index, and adds the denormalized access_tier / core_unlocked_at / is_founding_member cache columns to couples."
+      },
+      {
+        "id": "table:supabase/migrations/20260617120000_monetization_entitlements.sql:entitlements",
+        "name": "entitlements",
+        "type": "table",
+        "summary": "Service-role-only purchase ledger granting a couple an entitlement (product_id, is_active, expires_at, purchased_by). Source of truth for the couple's paid access tier; never exposed to clients."
+      },
+      {
+        "id": "table:supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql",
+        "name": "20260617130000_entitlement_payer_portable_resolution.sql",
+        "type": "table",
+        "summary": "Defines two payer-portable resolution functions: resolve_couple_access_tier (reader returning 'core'/'free' from active entitlements matched by couple_id OR purchaser identity) and recompute_couple_entitlement (writer that refreshes the couples access_tier/founding/unlocked-at cache from the ledger)"
+      }
+    ],
+    "config": [
+      {
+        "id": "config:Vayl/Resources/Content/assessment_questions.json",
+        "name": "assessment_questions.json",
+        "type": "config",
+        "summary": "Seed bank of ENM-readiness assessment questions (scale and multi-select), each tagged with a domain, weight, and sort order, consumed via ContentLoader.loadAssessmentQuestions(). Several entries are flagged as placeholders pending validated content."
+      },
+      {
+        "id": "config:Vayl/Resources/Content/cards.json",
+        "name": "cards.json",
+        "type": "config",
+        "summary": "Card-session content deck: education, prompt, and educationPrompt cards keyed to a category_id, with speaking-turn, difficulty, sensitivity, and free/paid gating. Loaded through ContentLoader.loadCards() to drive the couple card experience."
+      },
+      {
+        "id": "config:Vayl/Resources/Content/categories.json",
+        "name": "categories.json",
+        "type": "config",
+        "summary": "Category taxonomy for the Learn/card content (communication, boundaries, intimacy, etc.) with SF Symbol icons, phase grouping, card counts, and unlock gating. Loaded via ContentLoader.loadCategories() to organize and gate content sections."
+      },
+      {
+        "id": "config:Vayl/Resources/Content/desire_items.json",
+        "name": "desire_items.json",
+        "type": "config",
+        "summary": "Desire Map item catalog: per-item name, description, category, sensitivity, track membership (curious/established), and track-specific answer scales. Decoded into the DesireItem model via ContentLoader.loadDesireItems() to populate the Desire Map rater."
+      },
+      {
+        "id": "config:supabase/config.toml",
+        "name": "config.toml",
+        "type": "config",
+        "summary": "Supabase CLI config registering the lookup-code and create-pair edge functions with JWT verification enabled and their Deno import maps."
+      },
+      {
+        "id": "config:supabase/functions/create-pair/.npmrc",
+        "name": ".npmrc",
+        "type": "config",
+        "summary": "Placeholder npm registry configuration comment for the create-pair edge function's private package imports."
+      },
+      {
+        "id": "config:supabase/functions/create-pair/deno.json",
+        "name": "deno.json",
+        "type": "config",
+        "summary": "Deno import map for the create-pair edge function, aliasing the Supabase functions-js JSR package."
+      },
+      {
+        "id": "config:supabase/functions/lookup-code/.npmrc",
+        "name": ".npmrc",
+        "type": "config",
+        "summary": "Placeholder npm registry configuration comment for the lookup-code edge function's private package imports."
+      },
+      {
+        "id": "config:supabase/functions/lookup-code/deno.json",
+        "name": "deno.json",
+        "type": "config",
+        "summary": "Deno import map for the lookup-code edge function, aliasing the Supabase functions-js JSR package."
+      },
+      {
+        "id": "config:Vayl/Assets.xcassets/AccentColor.colorset/Contents.json",
+        "name": "Contents.json",
+        "type": "config",
+        "summary": "Asset catalog manifest defining the app's universal AccentColor color set."
+      },
+      {
+        "id": "config:Vayl/Assets.xcassets/AppIcon.appiconset/Contents.json",
+        "name": "Contents.json",
+        "type": "config",
+        "summary": "Asset catalog manifest declaring the universal app icon image set for iOS."
+      },
+      {
+        "id": "config:Vayl/Assets.xcassets/Contents.json",
+        "name": "Contents.json",
+        "type": "config",
+        "summary": "Root asset catalog manifest carrying Xcode authoring metadata for Assets.xcassets."
+      },
+      {
+        "id": "config:Vayl/Assets.xcassets/gender-man.symbolset/Contents.json",
+        "name": "Contents.json",
+        "type": "config",
+        "summary": "Asset catalog manifest registering the custom 'gender-man' SF Symbol used in onboarding gender selection."
+      },
+      {
+        "id": "config:Vayl/Assets.xcassets/gender-non-binary.symbolset/Contents.json",
+        "name": "Contents.json",
+        "type": "config",
+        "summary": "Asset catalog manifest registering the custom 'gender-non-binary' SF Symbol used in onboarding gender selection."
+      },
+      {
+        "id": "config:Vayl/Assets.xcassets/gender-trans.symbolset/Contents.json",
+        "name": "Contents.json",
+        "type": "config",
+        "summary": "Asset catalog manifest registering the custom 'gender-trans' SF Symbol used in onboarding gender selection."
+      },
+      {
+        "id": "config:Vayl/Assets.xcassets/gender-woman.symbolset/Contents.json",
+        "name": "Contents.json",
+        "type": "config",
+        "summary": "Asset catalog manifest registering the custom 'gender-woman' SF Symbol used in onboarding gender selection."
+      },
+      {
+        "id": "config:Vayl/Resources/Decks/deck-index.json",
+        "name": "deck-index.json",
+        "type": "config",
+        "summary": "Manifest listing the available bundled deck content ids — currently just 'the-opener'."
+      },
+      {
+        "id": "config:Vayl/Resources/Decks/the-opener.json",
+        "name": "the-opener.json",
+        "type": "config",
+        "summary": "Authored card-deck content file for 'The Opener' deck — the ordered prompt cards a couple plays in a session."
+      },
+      {
+        "id": "config:Vayl/Vayl.entitlements",
+        "name": "Vayl.entitlements",
+        "type": "config",
+        "summary": "App capability entitlements enabling Sign in with Apple (Default) and complete file data protection (NSFileProtectionComplete)."
+      },
+      {
+        "id": "config:Vayl/Vayl.plist",
+        "name": "Vayl.plist",
+        "type": "config",
+        "summary": "Info.plist supplying Supabase URL/anon-key build settings and registering the bundled Clash Display, Switzer, Zodiak, Volkhov and IBM Plex Mono fonts via UIAppFonts."
+      },
+      {
+        "id": "config:Vayl/Vayl.storekit",
+        "name": "Vayl.storekit",
+        "type": "config",
+        "summary": "StoreKit test configuration defining the single non-consumable 'Vayl Core Lifetime' product (com.vayl.core.lifetime, $24.99) backing the paywall."
+      }
+    ]
+  },
+  "clusters": [
+    {
+      "nodes": [
+        "file:Vayl/Core/Services/SupabaseManager.swift",
+        "file:Vayl/Core/Services/AppState.swift",
+        "file:Vayl/Core/Services/SyncManager.swift",
+        "file:Vayl/Core/Services/ContentLoader.swift",
+        "file:Vayl/Core/Services/AuthService.swift"
+      ],
+      "edgeCount": 9,
+      "dir": "Vayl/Core/Services"
+    },
+    {
+      "nodes": [
+        "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+        "file:Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift",
+        "file:Vayl/Design/Components/Cards/CardStyle.swift",
+        "file:Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+        "file:Vayl/Design/Components/Cards/CuriosityCardBack.swift"
+      ],
+      "edgeCount": 9,
+      "dir": "Vayl/Design/Components/Cards"
+    },
+    {
+      "nodes": [
+        "file:Vayl/Features/Pulse/PulseGraph.swift",
+        "file:Vayl/Features/Pulse/DailyCheckInView.swift",
+        "file:Vayl/Features/Pulse/PulseSheetView.swift",
+        "file:Vayl/Features/Pulse/PulseWidget.swift",
+        "file:Vayl/Features/Pulse/TierGuideSheet.swift"
+      ],
+      "edgeCount": 7,
+      "dir": "Vayl/Features/Pulse"
+    },
+    {
+      "nodes": [
+        "file:Vayl/Design/Components/Effects/HolographicShimmer.swift",
+        "file:Vayl/Design/Components/Effects/AuroraGlowField.swift",
+        "file:Vayl/Design/Components/Effects/LightModeShimmer.swift",
+        "file:Vayl/Design/Components/Effects/GlowOrb.swift",
+        "file:Vayl/Design/Components/Effects/HolographicShimmer.metal"
+      ],
+      "edgeCount": 4,
+      "dir": "Vayl/Design/Components/Effects"
+    },
+    {
+      "nodes": [
+        "file:Vayl/Features/Pairing/PairingSettingsView.swift",
+        "file:Vayl/Features/Pairing/PairingStore.swift",
+        "file:Vayl/Features/Pairing/PairingInviteView.swift",
+        "file:Vayl/Features/Pairing/PairingJoinView.swift"
+      ],
+      "edgeCount": 4,
+      "dir": "Vayl/Features/Pairing"
+    },
+    {
+      "nodes": [
+        "file:Vayl/App/Theme/AppColors.swift",
+        "file:Vayl/App/Theme/AppLayout.swift",
+        "file:Vayl/App/Theme/AppRadius.swift",
+        "file:Vayl/App/Theme/AppRootView.swift",
+        "file:Vayl/App/Theme/ThemeManager.swift"
+      ],
+      "edgeCount": 3,
+      "dir": "Vayl/App/Theme"
+    },
+    {
+      "nodes": [
+        "file:Vayl/Features/Home/Views/GettingStartedPathView.swift",
+        "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+        "file:Vayl/Features/Home/Views/MapCompletionBeatView.swift",
+        "file:Vayl/Features/Home/Views/HomeGateView.swift",
+        "file:Vayl/Features/Home/Views/HomeRouterView.swift"
+      ],
+      "edgeCount": 3,
+      "dir": "Vayl/Features/Home/Views"
+    },
+    {
+      "nodes": [
+        "file:Vayl/Design/Components/Navigation/SafariView.swift",
+        "file:Vayl/Design/Components/Navigation/RacetrackTabBar.swift",
+        "file:Vayl/Design/Components/Navigation/NavArrow.swift",
+        "file:Vayl/Design/Components/Navigation/OBSheetChrome.swift",
+        "file:Vayl/Design/Components/Navigation/OnboardingFooter.swift"
+      ],
+      "edgeCount": 1,
+      "dir": "Vayl/Design/Components/Navigation"
+    },
+    {
+      "nodes": [
+        "file:Vayl/App/ModelContainer.swift",
+        "file:Vayl/App/AppShell.swift",
+        "file:Vayl/App/VaylApp.swift"
+      ],
+      "edgeCount": 1,
+      "dir": "Vayl/App"
+    },
+    {
+      "nodes": [
+        "file:Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift",
+        "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+        "file:Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift"
+      ],
+      "edgeCount": 1,
+      "dir": "Vayl/Design/Components/Effects/FoilOpen"
+    }
+  ],
+  "layers": {
+    "count": 9,
+    "list": [
+      {
+        "id": "layer:app",
+        "name": "App & Composition Root",
+        "description": "SwiftUI @main entry (VaylApp), AppShell/AppRootView routing, SwiftData ModelContainer wiring, the App/Theme design-token system, and app-level config (entitlements, Info.plist, StoreKit catalog)."
+      },
+      {
+        "id": "layer:design-system",
+        "name": "Design System & Effects",
+        "description": "Reusable SwiftUI component library (cards, buttons, inputs, navigation, progress, text), Metal/SpriteKit visual effects and shaders, brand splash/app-icon views, and the xcasset color/symbol catalogs they render."
+      },
+      {
+        "id": "layer:core-models",
+        "name": "Core Models, Persistence & Content",
+        "description": "Pure data-shape structs and enums, the SwiftData persistence container, and the bundled JSON content (card decks, categories, assessment, desire items) those models decode at runtime."
+      },
+      {
+        "id": "layer:core-services",
+        "name": "Core Services",
+        "description": "Network/IO services injected into Stores — Supabase client, PairingService, SyncManager, Auth, ContentLoader, session services — plus on-device diagnostic/debug overlays."
+      },
+      {
+        "id": "layer:onboarding",
+        "name": "Onboarding Experience",
+        "description": "The animated two-device onboarding feature — Canvas, VaylDirector phase engine, per-phase Views, Sequencers, table-surface choreography, and its Stores/Models (largest feature module, isolated for its size)."
+      },
+      {
+        "id": "layer:features",
+        "name": "Feature Modules",
+        "description": "Per-feature View/Store/Model modules for Home, Pulse, Pairing, Sessions, Desire Map, Monetization, Learn, Map, Auth, Play, Progress, and Settings."
+      },
+      {
+        "id": "layer:backend",
+        "name": "Backend Edge Functions",
+        "description": "Supabase Deno/TypeScript edge functions (create-pair, get-partner, grant-entitlement, lookup-code, rapid-task, compute-desire-matches) and their Deno/npm config plus supabase/config.toml."
+      },
+      {
+        "id": "layer:database",
+        "name": "Database Schema",
+        "description": "Postgres schema as Supabase migrations and the tables they provision (user_profiles, couples, pairing_codes, curated_sessions, desire_ratings/matches, entitlements, assessment, card_progress, and more)."
+      },
+      {
+        "id": "layer:tests",
+        "name": "Tests",
+        "description": "VaylTests unit tests verifying client logic — enum ordering, ContextPhase options, GettingStarted step resolution, and Monte-fan layout geometry."
+      }
+    ]
+  },
+  "nodeSummaryIndex": {
+    "table:supabase/migrations/20260101000000_baseline.sql": {
+      "name": "20260101000000_baseline.sql",
+      "type": "table",
+      "filePath": "supabase/migrations/20260101000000_baseline.sql",
+      "summary": "Baseline schema migration that provisions the entire Vayl backend: extensions (pgcrypto, uuid-ossp, pg_cron), helper functions, and the 10 core tables (user_profiles, couples, pairing_codes, curated_sessions, desire_ratings, desire_matches, card_progress, assessment_responses/results, couple_session_records) with RLS policies scoped to couple membership."
+    },
+    "table:supabase/migrations/20260101000000_baseline.sql:user_profiles": {
+      "name": "user_profiles",
+      "type": "table",
+      "filePath": "",
+      "summary": "Per-user profile keyed by auth_id, storing onboarding state, NM flavor/stage, pairing code, couple linkage, orientation and role preferences. The pivot table linking Supabase auth identities to couple-scoped data."
+    },
+    "table:supabase/migrations/20260101000000_baseline.sql:couples": {
+      "name": "couples",
+      "type": "table",
+      "filePath": "",
+      "summary": "Couple record joining two user_profiles (user_a, user_b) with a shared safe word and a matches_revealed flag; the central scoping entity that most RLS policies and foreign keys reference."
+    },
+    "table:supabase/migrations/20260101000000_baseline.sql:pairing_codes": {
+      "name": "pairing_codes",
+      "type": "table",
+      "filePath": "",
+      "summary": "Short-lived invite codes for two-device pairing, tracking creator, expiry, and who claimed the code into which couple. RLS allows the creator to manage their row and a non-creator to claim it."
+    },
+    "table:supabase/migrations/20260101000000_baseline.sql:curated_sessions": {
+      "name": "curated_sessions",
+      "type": "table",
+      "filePath": "",
+      "summary": "Two-device curated card-session state: deck/variant, card list, per-card and global timers, per-partner presence/bandwidth/consent flags, reveal state, and safe-word usage. A unique partial index enforces one open session per couple."
+    },
+    "table:supabase/migrations/20260101000000_baseline.sql:desire_ratings": {
+      "name": "desire_ratings",
+      "type": "table",
+      "filePath": "",
+      "summary": "Per-user rating of an individual desire_item, the raw input that feeds Desire Map match computation."
+    },
+    "table:supabase/migrations/20260101000000_baseline.sql:desire_matches": {
+      "name": "desire_matches",
+      "type": "table",
+      "filePath": "",
+      "summary": "Computed alignment between partners on a desire item: alignment level, each partner's value, gap size, and an optional bridge card. The couple-facing output of the Desire Map."
+    },
+    "table:supabase/migrations/20260101000000_baseline.sql:card_progress": {
+      "name": "card_progress",
+      "type": "table",
+      "filePath": "",
+      "summary": "Per-couple status of each card (e.g. discussed/skipped), used to track deck progression across a couple's sessions."
+    },
+    "table:supabase/migrations/20260101000000_baseline.sql:couple_session_records": {
+      "name": "couple_session_records",
+      "type": "table",
+      "filePath": "",
+      "summary": "Historical log of completed couple sessions with start/end timestamps and count of cards discussed."
+    },
+    "table:supabase/migrations/20260101000000_baseline.sql:assessment_responses": {
+      "name": "assessment_responses",
+      "type": "table",
+      "filePath": "",
+      "summary": "Per-user raw answers to onboarding assessment questions, keyed by question_key."
+    },
+    "table:supabase/migrations/20260101000000_baseline.sql:assessment_results": {
+      "name": "assessment_results",
+      "type": "table",
+      "filePath": "",
+      "summary": "Per-user derived assessment results (result_key/result_value pairs) computed from assessment_responses."
+    },
+    "table:supabase/migrations/20260616223000_p5d_revoke_anon_default_privileges.sql": {
+      "name": "20260616223000_p5d_revoke_anon_default_privileges.sql",
+      "type": "table",
+      "filePath": "supabase/migrations/20260616223000_p5d_revoke_anon_default_privileges.sql",
+      "summary": "Security-hardening migration (P5d) that revokes the anon role from default privileges on future tables, functions, and sequences in the public schema, and drops a residual anon EXECUTE grant on set_curated_sessions_updated_at(), closing the future-object exposure gap left by P5b."
+    },
+    "table:supabase/migrations/20260617000000_desire_map_backend.sql": {
+      "name": "20260617000000_desire_map_backend.sql",
+      "type": "table",
+      "filePath": "supabase/migrations/20260617000000_desire_map_backend.sql",
+      "summary": "Desire Map backend migration that creates the desire_map_status table (per-couple track + per-partner completion + full-reveal gating) and extends desire_ratings (rating check constraint) and desire_matches (is_free_reveal, revealed_at) to support the reveal flow."
+    },
+    "table:supabase/migrations/20260617000000_desire_map_backend.sql:desire_map_status": {
+      "name": "desire_map_status",
+      "type": "table",
+      "filePath": "",
+      "summary": "Per-couple Desire Map progress: which track, each partner's completion timestamp, whether the full reveal is unlocked, and a waiting-state marker. Drives the gated reveal experience."
+    },
+    "table:supabase/migrations/20260617120000_monetization_entitlements.sql": {
+      "name": "20260617120000_monetization_entitlements.sql",
+      "type": "table",
+      "filePath": "supabase/migrations/20260617120000_monetization_entitlements.sql",
+      "summary": "Monetization migration that creates the service-role-only entitlements ledger (couple_id, product_id, is_active, purchased_by) with RLS and a couple_id index, and adds the denormalized access_tier / core_unlocked_at / is_founding_member cache columns to couples."
+    },
+    "table:supabase/migrations/20260617120000_monetization_entitlements.sql:entitlements": {
+      "name": "entitlements",
+      "type": "table",
+      "filePath": "",
+      "summary": "Service-role-only purchase ledger granting a couple an entitlement (product_id, is_active, expires_at, purchased_by). Source of truth for the couple's paid access tier; never exposed to clients."
+    },
+    "table:supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql": {
+      "name": "20260617130000_entitlement_payer_portable_resolution.sql",
+      "type": "table",
+      "filePath": "supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql",
+      "summary": "Defines two payer-portable resolution functions: resolve_couple_access_tier (reader returning 'core'/'free' from active entitlements matched by couple_id OR purchaser identity) and recompute_couple_entitlement (writer that refreshes the couples access_tier/founding/unlocked-at cache from the ledger), both locked to service_role."
+    },
+    "config:Vayl/Resources/Content/assessment_questions.json": {
+      "name": "assessment_questions.json",
+      "type": "config",
+      "filePath": "Vayl/Resources/Content/assessment_questions.json",
+      "summary": "Seed bank of ENM-readiness assessment questions (scale and multi-select), each tagged with a domain, weight, and sort order, consumed via ContentLoader.loadAssessmentQuestions(). Several entries are flagged as placeholders pending validated content."
+    },
+    "config:Vayl/Resources/Content/cards.json": {
+      "name": "cards.json",
+      "type": "config",
+      "filePath": "Vayl/Resources/Content/cards.json",
+      "summary": "Card-session content deck: education, prompt, and educationPrompt cards keyed to a category_id, with speaking-turn, difficulty, sensitivity, and free/paid gating. Loaded through ContentLoader.loadCards() to drive the couple card experience."
+    },
+    "config:Vayl/Resources/Content/categories.json": {
+      "name": "categories.json",
+      "type": "config",
+      "filePath": "Vayl/Resources/Content/categories.json",
+      "summary": "Category taxonomy for the Learn/card content (communication, boundaries, intimacy, etc.) with SF Symbol icons, phase grouping, card counts, and unlock gating. Loaded via ContentLoader.loadCategories() to organize and gate content sections."
+    },
+    "config:Vayl/Resources/Content/desire_items.json": {
+      "name": "desire_items.json",
+      "type": "config",
+      "filePath": "Vayl/Resources/Content/desire_items.json",
+      "summary": "Desire Map item catalog: per-item name, description, category, sensitivity, track membership (curious/established), and track-specific answer scales. Decoded into the DesireItem model via ContentLoader.loadDesireItems() to populate the Desire Map rater."
+    },
+    "config:supabase/config.toml": {
+      "name": "config.toml",
+      "type": "config",
+      "filePath": "supabase/config.toml",
+      "summary": "Supabase CLI config registering the lookup-code and create-pair edge functions with JWT verification enabled and their Deno import maps."
+    },
+    "file:supabase/functions/compute-desire-matches/index.ts": {
+      "name": "index.ts",
+      "type": "file",
+      "filePath": "supabase/functions/compute-desire-matches/index.ts",
+      "summary": "Deno edge function (service-role): marks a partner's Desire Map complete, resolves the couple track, and when both finish computes positive matches over shared items (excluding boundaries) into desire_matches with one server-authoritative free reveal."
+    },
+    "config:supabase/functions/create-pair/.npmrc": {
+      "name": ".npmrc",
+      "type": "config",
+      "filePath": "supabase/functions/create-pair/.npmrc",
+      "summary": "Placeholder npm registry configuration comment for the create-pair edge function's private package imports."
+    },
+    "config:supabase/functions/create-pair/deno.json": {
+      "name": "deno.json",
+      "type": "config",
+      "filePath": "supabase/functions/create-pair/deno.json",
+      "summary": "Deno import map for the create-pair edge function, aliasing the Supabase functions-js JSR package."
+    },
+    "file:supabase/functions/create-pair/index.ts": {
+      "name": "index.ts",
+      "type": "file",
+      "filePath": "supabase/functions/create-pair/index.ts",
+      "summary": "Deno edge function (service-role): validates a pairing code (existence, expiry, self-pair, prior-couple guards), creates a couples row, marks both profiles linked, and consumes the code."
+    },
+    "file:supabase/functions/get-partner/index.ts": {
+      "name": "index.ts",
+      "type": "file",
+      "filePath": "supabase/functions/get-partner/index.ts",
+      "summary": "Deno edge function (service-role): returns only the linked partner's display name and pronouns for the caller's couple, since per-row RLS cannot expose cross-partner columns."
+    },
+    "file:supabase/functions/grant-entitlement/index.ts": {
+      "name": "index.ts",
+      "type": "file",
+      "filePath": "supabase/functions/grant-entitlement/index.ts",
+      "summary": "Deno edge function (service-role): the only path that grants Core to a couple, authorizing via Apple StoreKit receipt or an admin secret, writing the entitlements ledger, then recomputing the couple's access_tier."
+    },
+    "config:supabase/functions/lookup-code/.npmrc": {
+      "name": ".npmrc",
+      "type": "config",
+      "filePath": "supabase/functions/lookup-code/.npmrc",
+      "summary": "Placeholder npm registry configuration comment for the lookup-code edge function's private package imports."
+    },
+    "config:supabase/functions/lookup-code/deno.json": {
+      "name": "deno.json",
+      "type": "config",
+      "filePath": "supabase/functions/lookup-code/deno.json",
+      "summary": "Deno import map for the lookup-code edge function, aliasing the Supabase functions-js JSR package."
+    },
+    "file:supabase/functions/lookup-code/index.ts": {
+      "name": "index.ts",
+      "type": "file",
+      "filePath": "supabase/functions/lookup-code/index.ts",
+      "summary": "Deno edge function (service-role): validates a pairing code's existence and expiry and returns the inviter's display name and pronouns for the 'you're pairing with...' preview."
+    },
+    "file:supabase/functions/rapid-task/index.ts": {
+      "name": "index.ts",
+      "type": "file",
+      "filePath": "supabase/functions/rapid-task/index.ts",
+      "summary": "Deno edge function (slug rapid-task, the app's create-couple endpoint): claims a pairing code, resolves both partners' profile ids, creates the couples row, links both profiles, inherits any payer-portable entitlement, and deletes the code."
+    },
+    "file:Vayl/App/AppShell.swift": {
+      "name": "AppShell.swift",
+      "type": "file",
+      "filePath": "Vayl/App/AppShell.swift",
+      "summary": "Root authenticated container view that switches between the Home, Play, Map, and Learn tabs and anchors the RacetrackTabBar above the home indicator."
+    },
+    "file:Vayl/App/ModelContainer.swift": {
+      "name": "ModelContainer.swift",
+      "type": "file",
+      "filePath": "Vayl/App/ModelContainer.swift",
+      "summary": "Defines the SwiftData SchemaV1 (the single registry of all @Model types) and the app's disk-backed and in-memory ModelContainer factories."
+    },
+    "file:Vayl/App/Theme/AppAnimation.swift": {
+      "name": "AppAnimation.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppAnimation.swift",
+      "summary": "Design-token namespace of all named SwiftUI animations and ambient durations (reactive springs, OB card physics, looping shimmers) plus Reduce-Motion-safe helpers."
+    },
+    "file:Vayl/App/Theme/AppColors.swift": {
+      "name": "AppColors.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppColors.swift",
+      "summary": "Central color-token system (void/surfaces/text/accent/feedback/shadows and spectrum gradient stops) that all views must reference instead of raw colors, with Color hex helpers."
+    },
+    "file:Vayl/App/Theme/AppElevation.swift": {
+      "name": "AppElevation.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppElevation.swift",
+      "summary": "Elevation/shadow token namespace plus cardElevation/modalElevation view modifiers that apply the correct shadow stack for the current color scheme."
+    },
+    "file:Vayl/App/Theme/AppFonts.swift": {
+      "name": "AppFonts.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppFonts.swift",
+      "summary": "Typography token system mapping semantic roles (heroTitle, cardTitle, bodyText, ctaLabel) to the ClashDisplay and Switzer faces with display/body constructors for custom sizes."
+    },
+    "file:Vayl/App/Theme/AppGlows.swift": {
+      "name": "AppGlows.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppGlows.swift",
+      "summary": "Glow-effect token namespace and view modifiers (spectrumBorderGlow, cornerDeckGlow, safetyGlow) so views express glows through tokens instead of raw shadows."
+    },
+    "file:Vayl/App/Theme/AppGrid.swift": {
+      "name": "AppGrid.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppGrid.swift",
+      "summary": "Layout-grid token struct defining column counts, gutters, and grid math used to align content to the app's spacing system."
+    },
+    "file:Vayl/App/Theme/AppLayout.swift": {
+      "name": "AppLayout.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppLayout.swift",
+      "summary": "GeometryProxy-derived layout resolver exposing screen/card/safe-area metrics and the mandatory OB and session card sizing helpers, replacing all UIScreen.main usage."
+    },
+    "file:Vayl/App/Theme/AppRadius.swift": {
+      "name": "AppRadius.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppRadius.swift",
+      "summary": "Semantic corner-radius token namespace (micro through sheet, plus OB-only obCard/cornerCard/foilEdge) that every clip and rounded-rectangle must reference."
+    },
+    "file:Vayl/App/Theme/AppRootView.swift": {
+      "name": "AppRootView.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppRootView.swift",
+      "summary": "Top-level routing gate that shows the splash once per cold launch, then reactively routes to onboarding, sign-in, or AppShell based on AppState and AuthService."
+    },
+    "file:Vayl/App/Theme/AppSafeArea.swift": {
+      "name": "AppSafeArea.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppSafeArea.swift",
+      "summary": "Safe-area utilities: a real-safe-area environment key and AppLayout extension so views can read true device insets without UIScreen, with helper view modifiers."
+    },
+    "file:Vayl/App/Theme/AppSpacing.swift": {
+      "name": "AppSpacing.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppSpacing.swift",
+      "summary": "Semantic spacing token namespace (xxs through xxl on an 8pt grid) that every padding, gap, and offset must reference instead of raw numbers."
+    },
+    "file:Vayl/App/Theme/AppTheme.swift": {
+      "name": "AppTheme.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/AppTheme.swift",
+      "summary": "Defines the ThemeMode enum (system/light/dark) retained for persistence after the app was hard-locked to dark and the legacy AppPalette was removed."
+    },
+    "file:Vayl/Core/Debug/DragDebugView.swift": {
+      "name": "DragDebugView.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Debug/DragDebugView.swift",
+      "summary": "DEBUG-only isolated drag-gesture test view: a draggable circle plus an event log to confirm DragGesture fires and hit-testing is not blocked."
+    },
+    "file:Vayl/Core/Models/AcknowledgementRecord.swift": {
+      "name": "AcknowledgementRecord.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/AcknowledgementRecord.swift",
+      "summary": "SwiftData @Model recording that a user tapped through the 3-card ground-rules modal in The Opener; a device-only legal/ethical record with copy versioning."
+    },
+    "file:Vayl/Core/Models/Card.swift": {
+      "name": "Card.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/Card.swift",
+      "summary": "Read-only Codable content model for a single prompt card loaded from JSON, with derived flags (reveal mechanic, context beat, ceremonial, living) plus The Opener sample data."
+    },
+    "file:Vayl/Core/Models/CardSession.swift": {
+      "name": "CardSession.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/CardSession.swift",
+      "summary": "SwiftData @Models for deck-play tracking: couple-owned CardSession, per-card CardResult outcomes, and the unlinked-user SoloSession prep deck."
+    },
+    "file:Vayl/Core/Models/CompanionCard.swift": {
+      "name": "CompanionCard.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/CompanionCard.swift",
+      "summary": "Stub Codable model for a Desire Map companion card that bridges a match into a next-step conversation prompt and optional suggested deck."
+    },
+    "file:Vayl/Core/Models/Couple.swift": {
+      "name": "Couple.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/Couple.swift",
+      "summary": "SwiftData @Model for a linked partner connection — owns the shared safe word, entitlement tier, Desire Map reveal state, and cascading session/match/progress relationships."
+    },
+    "file:Vayl/Core/Models/Deck.swift": {
+      "name": "Deck.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/Deck.swift",
+      "summary": "Read-only Codable content model for a deck loaded from JSON, with entitlement gating, gender-dynamic card filtering, ordering, and ritual-presence helpers."
+    },
+    "file:Vayl/Core/Models/DeckProgress.swift": {
+      "name": "DeckProgress.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/DeckProgress.swift",
+      "summary": "SwiftData @Model tracking a couple's resume position through a deck across sittings (current card index, unwrapped flag, first-opened/completed dates)."
+    },
+    "file:Vayl/Core/Models/DesireItem.swift": {
+      "name": "DesireItem.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/DesireItem.swift",
+      "summary": "Codable model for a single cohort-adaptive Desire Map prompt loaded from JSON, with per-track answer strings (weight-ordered) and cohort-appearance helpers."
+    },
+    "file:Vayl/Core/Models/DesireMatch.swift": {
+      "name": "DesireMatch.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/DesireMatch.swift",
+      "summary": "SwiftData @Model for a server-computed mutual/adjacent Desire Map match; reveal state and free-reveal flag are Edge-Function-authoritative to keep the paywall un-bypassable."
+    },
+    "file:Vayl/Core/Models/DesireRating.swift": {
+      "name": "DesireRating.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/DesireRating.swift",
+      "summary": "SwiftData @Models for the app's most sensitive data: per-user private DesireMapEntry ratings (notForMe never syncs) and the couple-level DesireMapStatus completion/reveal tracker."
+    },
+    "file:Vayl/Core/Models/EntitlementRecord.swift": {
+      "name": "EntitlementRecord.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/EntitlementRecord.swift",
+      "summary": "SwiftData @Models for purchase records: couple-level EntitlementRecord (Core unlock, founding-member, lifetime/expiry) and the permanent $7.99 ConnectionEntitlement."
+    },
+    "file:Vayl/App/Theme/ThemeManager.swift": {
+      "name": "ThemeManager.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/ThemeManager.swift",
+      "summary": "Holds the app-wide color-scheme mode as an @Observable store, persisting it to UserDefaults and force-pinning Act 1 to the dark Midnight palette."
+    },
+    "file:Vayl/App/Theme/ThemeModifiers.swift": {
+      "name": "ThemeModifiers.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/ThemeModifiers.swift",
+      "summary": "ViewModifiers and View extensions for the design system: themedRoot (color-scheme binding), themedCard (card surface), and a conditional `if` helper."
+    },
+    "file:Vayl/App/Theme/VaylPrimitives.swift": {
+      "name": "VaylPrimitives.swift",
+      "type": "file",
+      "filePath": "Vayl/App/Theme/VaylPrimitives.swift",
+      "summary": "Tier-1 raw color palette (UIColor hex/RGB anchors) whose only permitted consumer is AppColors; also defines the internal UIColor(hex:) initializer."
+    },
+    "file:Vayl/App/VaylApp.swift": {
+      "name": "VaylApp.swift",
+      "type": "file",
+      "filePath": "Vayl/App/VaylApp.swift",
+      "summary": "App entry point and composition root: constructs the shared AppState and injects it into the store graph, wires environment objects, and runs session/entitlement bootstrap on launch."
+    },
+    "file:Vayl/AppIconRetreival.swift": {
+      "name": "AppIconRetreival.swift",
+      "type": "file",
+      "filePath": "Vayl/AppIconRetreival.swift",
+      "summary": "Fully commented-out dev utility that once rendered and exported VaylAppIcon to PNG files at standard icon sizes; currently inert dead code."
+    },
+    "config:Vayl/Assets.xcassets/AccentColor.colorset/Contents.json": {
+      "name": "Contents.json",
+      "type": "config",
+      "filePath": "Vayl/Assets.xcassets/AccentColor.colorset/Contents.json",
+      "summary": "Asset catalog manifest defining the app's universal AccentColor color set."
+    },
+    "config:Vayl/Assets.xcassets/AppIcon.appiconset/Contents.json": {
+      "name": "Contents.json",
+      "type": "config",
+      "filePath": "Vayl/Assets.xcassets/AppIcon.appiconset/Contents.json",
+      "summary": "Asset catalog manifest declaring the universal app icon image set for iOS."
+    },
+    "config:Vayl/Assets.xcassets/Contents.json": {
+      "name": "Contents.json",
+      "type": "config",
+      "filePath": "Vayl/Assets.xcassets/Contents.json",
+      "summary": "Root asset catalog manifest carrying Xcode authoring metadata for Assets.xcassets."
+    },
+    "config:Vayl/Assets.xcassets/gender-man.symbolset/Contents.json": {
+      "name": "Contents.json",
+      "type": "config",
+      "filePath": "Vayl/Assets.xcassets/gender-man.symbolset/Contents.json",
+      "summary": "Asset catalog manifest registering the custom 'gender-man' SF Symbol used in onboarding gender selection."
+    },
+    "config:Vayl/Assets.xcassets/gender-non-binary.symbolset/Contents.json": {
+      "name": "Contents.json",
+      "type": "config",
+      "filePath": "Vayl/Assets.xcassets/gender-non-binary.symbolset/Contents.json",
+      "summary": "Asset catalog manifest registering the custom 'gender-non-binary' SF Symbol used in onboarding gender selection."
+    },
+    "config:Vayl/Assets.xcassets/gender-trans.symbolset/Contents.json": {
+      "name": "Contents.json",
+      "type": "config",
+      "filePath": "Vayl/Assets.xcassets/gender-trans.symbolset/Contents.json",
+      "summary": "Asset catalog manifest registering the custom 'gender-trans' SF Symbol used in onboarding gender selection."
+    },
+    "config:Vayl/Assets.xcassets/gender-woman.symbolset/Contents.json": {
+      "name": "Contents.json",
+      "type": "config",
+      "filePath": "Vayl/Assets.xcassets/gender-woman.symbolset/Contents.json",
+      "summary": "Asset catalog manifest registering the custom 'gender-woman' SF Symbol used in onboarding gender selection."
+    },
+    "file:Vayl/Core/Debug/DiagnosticOverlay.swift": {
+      "name": "DiagnosticOverlay.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "summary": "DEBUG-only suite of layout-diagnostic overlays (screen ruler, CTA position marker, safe-area bands, position reporter) for verifying OB canvas geometry on device."
+    },
+    "file:Vayl/Core/Models/Enums/AppAccessEnums.swift": {
+      "name": "AppAccessEnums.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/Enums/AppAccessEnums.swift",
+      "summary": "Defines monetization access enums: AccessTier (free/core/pro), ConnectionPlan, and the one-time Milestone events that fire visible in-app moments."
+    },
+    "file:Vayl/Core/Models/Enums/AppCardEnums.swift": {
+      "name": "AppCardEnums.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "summary": "Card and deck taxonomy enums: CardType mechanics, CardIntensity (8 levels with sorting + difficulty mapping), CardStatus, WhoStarts, GenderDynamic, DeckCategory."
+    },
+    "file:Vayl/Core/Models/Enums/AppDesireEnums.swift": {
+      "name": "AppDesireEnums.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/Enums/AppDesireEnums.swift",
+      "summary": "Desire Map enums: DesireMapState (home indicator), DesireRatingValue (4-point weight with the sacred notForMe boundary), and DesireMatchType."
+    },
+    "file:Vayl/Core/Models/Enums/AppEnums.swift": {
+      "name": "AppEnums.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/Enums/AppEnums.swift",
+      "summary": "Core onboarding/routing and UI enums: NMStage, AppMode, EmotionalRegister, AgencySignal, MotivationShape, RelationshipContext, plus PartnerChipState and the AppIcons SF Symbol registry."
+    },
+    "file:Vayl/Core/Models/Enums/AppOBEnums.swift": {
+      "name": "AppOBEnums.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/Enums/AppOBEnums.swift",
+      "summary": "Onboarding-canvas-exclusive enums: OBPhase sequence, OBCredential, DemoVerb, OpenerDeckType, AgeRange, RelationshipTenure, and the AppDealerTyping timing engine."
+    },
+    "file:Vayl/Core/Models/Enums/AppPulseEnums.swift": {
+      "name": "AppPulseEnums.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/Enums/AppPulseEnums.swift",
+      "summary": "Pulse check-in enums: PulseSource, InsightType, PulseCapacityColor, PulseTier (score-to-tier with color/label), and PulseWindow (time-range filtering for the pulse graph)."
+    },
+    "file:Vayl/Core/Models/Enums/AppTab.swift": {
+      "name": "AppTab.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/Enums/AppTab.swift",
+      "summary": "The four-tab navigation enum (home/play/map/learn) providing SF Symbol icon names and display labels for the main tab bar."
+    },
+    "file:Vayl/Core/Models/Enums/UserDefaultsKey.swift": {
+      "name": "UserDefaultsKey.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/Enums/UserDefaultsKey.swift",
+      "summary": "Single source of truth for raw UserDefaults key strings (currently the onboarding-completion launch-routing mirror) to prevent duplicate-literal desyncs across layers."
+    },
+    "file:Vayl/Core/Models/LockInSession.swift": {
+      "name": "LockInSession.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/LockInSession.swift",
+      "summary": "SwiftData @Model recording the pre-session emotional bandwidth check-in for both partners; device-only, computes bandwidth gap once on write and exposes significance helpers."
+    },
+    "file:Vayl/Core/Models/MilestoneRecord.swift": {
+      "name": "MilestoneRecord.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/MilestoneRecord.swift",
+      "summary": "SwiftData @Model recording a one-time milestone completion per user; device-only, holds optional Beacon item IDs for the research-orbs milestone."
+    },
+    "file:Vayl/Core/Models/PulseEntry.swift": {
+      "name": "PulseEntry.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/PulseEntry.swift",
+      "summary": "Plain Codable struct for one pulse check-in (capacity score + Q1–Q5 answers) cached in UserDefaults via PulseStore; includes a tier accessor and rich preview data."
+    },
+    "file:Vayl/Core/Models/SessionRecord.swift": {
+      "name": "SessionRecord.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/SessionRecord.swift",
+      "summary": "SwiftData @Model for one completed or safe-worded play session (category, difficulty, prompts shown, duration) with a cascade-delete relationship to its RatingRecords."
+    },
+    "file:Vayl/Core/Models/UserProfile.swift": {
+      "name": "UserProfile.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Models/UserProfile.swift",
+      "summary": "The central SwiftData @Model — one record per person created at onboarding's end; the durable source of truth for all onboarding/routing data, link state, and Desire Map completion."
+    },
+    "file:Vayl/Core/Persistence/DataStore.swift": {
+      "name": "DataStore.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Persistence/DataStore.swift",
+      "summary": "Central SwiftData persistence layer wrapping a ModelContext; every session/rating/streak/profile read and write goes through here. Also holds transitional RatingRecord/StreakRecord stub models."
+    },
+    "file:Vayl/Core/Persistence/ModelContext+Extensions.swift": {
+      "name": "ModelContext+Extensions.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Persistence/ModelContext+Extensions.swift",
+      "summary": "ModelContext extension adding saveWithLogging() — the project-wide replacement for silent try? context.save(), logging and rethrowing every failure via OSLog."
+    },
+    "file:Vayl/Core/Services/AppState.swift": {
+      "name": "AppState.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/AppState.swift",
+      "summary": "Root @Observable @MainActor app-level state owning the onboarding gate, link state, app mode, couple id and tab routing; the single writer of onboarding completion across truth/surface/cache."
+    },
+    "file:Vayl/Core/Services/AuthService.swift": {
+      "name": "AuthService.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/AuthService.swift",
+      "summary": "@Observable @MainActor Sign in with Apple service over Supabase — handles nonce generation, the ASAuthorization delegate flow, session checks, sign-out, and guarantees a remote profile row on auth."
+    },
+    "file:Vayl/Core/Services/ContentLoader.swift": {
+      "name": "ContentLoader.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/ContentLoader.swift",
+      "summary": "Static helper for reading bundled read-only JSON content (decks, cards, categories, desire items); all methods throw on failure rather than fatalError, with snake-case decoding."
+    },
+    "file:Vayl/Core/Services/DesireSyncService.swift": {
+      "name": "DesireSyncService.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/DesireSyncService.swift",
+      "summary": "@MainActor service pushing private desire-map ratings to Supabase (batch upsert), invoking the compute-desire-matches edge function, and reading back client-safe matches and couple status."
+    },
+    "file:Vayl/Core/Services/EntitlementService.swift": {
+      "name": "EntitlementService.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/EntitlementService.swift",
+      "summary": "Service layer for couple-level entitlements (Monetization M1) — reads the denormalized couples.access_tier and grants Core via the server-authoritative grant-entitlement edge function."
+    },
+    "file:Vayl/Core/Services/LegalLinks.swift": {
+      "name": "LegalLinks.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/LegalLinks.swift",
+      "summary": "Single source of truth for the app's Terms and Privacy URLs (currently Apple placeholder pages) plus the LegalDoc enum that drives the legal-document sheet in the paywall and sign-in."
+    },
+    "file:Vayl/Core/Services/PairingService.swift": {
+      "name": "PairingService.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/PairingService.swift",
+      "summary": "Pure data-access layer for partner linking over Supabase — generates/claims pairing codes, fetches the linked partner identity, and polls (via realtime channel + timeout) until the couple forms."
+    },
+    "file:Vayl/Core/Services/ProfileService.swift": {
+      "name": "ProfileService.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/ProfileService.swift",
+      "summary": "@MainActor Supabase profile service — fetch-or-create the remote user_profiles row, scoped pairing-code lookups (name+pronouns only), identity/NM-stage updates, and profile-id resolution caching."
+    },
+    "file:Vayl/Core/Services/RealtimeSessionService.swift": {
+      "name": "RealtimeSessionService.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/RealtimeSessionService.swift",
+      "summary": "Pure data-access transport for the two-device Curated Session over Supabase — curated_sessions CRUD, airlock column mutators, server-authoritative conditional advance, and a presence channel factory."
+    },
+    "file:Vayl/Core/Services/StoreKitService.swift": {
+      "name": "StoreKitService.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/StoreKitService.swift",
+      "summary": "StoreKit 2 wrapper (Monetization M2) — loads the Core product, runs the purchase sheet returning a verified transaction + signed JWS, checks/restores ownership, and observes background transaction updates."
+    },
+    "file:Vayl/Core/Services/SupabaseManager.swift": {
+      "name": "SupabaseManager.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/SupabaseManager.swift",
+      "summary": "Singleton service that constructs and exposes the shared SupabaseClient configured from Config URL and anon key."
+    },
+    "file:Vayl/Core/Services/SyncManager.swift": {
+      "name": "SyncManager.swift",
+      "type": "file",
+      "filePath": "Vayl/Core/Services/SyncManager.swift",
+      "summary": "ObservableObject service that pushes local profile, display identity, desire-map ratings, and onboarding state to Supabase and retries queued sync tasks."
+    },
+    "file:Vayl/Design/Brand/SplashScreenView.swift": {
+      "name": "SplashScreenView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Brand/SplashScreenView.swift",
+      "summary": "Animated brand splash screen that plays the Vayl wordmark/logo reveal then transitions to a generic destination view."
+    },
+    "file:Vayl/Design/Brand/VaylAppIcon.swift": {
+      "name": "VaylAppIcon.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Brand/VaylAppIcon.swift",
+      "summary": "In-code rendering of the Vayl app icon artwork (lattice wordmark plus starfield) usable as a SwiftUI view for previews and export."
+    },
+    "file:Vayl/Design/Components/Buttons/CriticalButton.swift": {
+      "name": "CriticalButton.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Buttons/CriticalButton.swift",
+      "summary": "Reusable destructive/critical-action button component styled with the app's destructive feedback tokens."
+    },
+    "file:Vayl/Design/Components/Buttons/SafeWordButton.swift": {
+      "name": "SafeWordButton.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Buttons/SafeWordButton.swift",
+      "summary": "Safe-word affordance button used in protected session contexts, styled with the safety accent and glow tokens."
+    },
+    "file:Vayl/Design/Components/Buttons/SelectablePill.swift": {
+      "name": "SelectablePill.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Buttons/SelectablePill.swift",
+      "summary": "Selectable pill/chip control used for single- and multi-select option lists, with animated border and shadow modifiers reflecting selection state."
+    },
+    "file:Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift": {
+      "name": "AtmosphericGhostDeck.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift",
+      "summary": "Decorative background view rendering a faint stacked ghost deck of cards to add atmosphere behind primary card content."
+    },
+    "file:Vayl/Design/Components/Cards/CardBackView.swift": {
+      "name": "CardBackView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardBackView.swift",
+      "summary": "Renders the back face of a card with two modes: a full interactive init for onboarding and a decorative deck-mode init for the home carousel."
+    },
+    "file:Vayl/Design/Components/Cards/CardCarousel.swift": {
+      "name": "CardCarousel.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardCarousel.swift",
+      "summary": "Interactive multi-phase card carousel (floating → spread → gathering → lifted) that animates a deck of cards and surfaces card actions to the host."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift": {
+      "name": "CandleCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "summary": "Card face that renders an animated candle/flame visualization via a Canvas-driven renderer, used as an expressive OB card surface."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift": {
+      "name": "CompassCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift",
+      "summary": "Card face rendering a compass/heading-ruler instrument that deflects toward a value, used for directional selection interactions."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift": {
+      "name": "CompassOptionCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift",
+      "summary": "Lightweight card face presenting a single compass option label, a variant surface in the compass selection flow."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift": {
+      "name": "CompassSliderCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift",
+      "summary": "Card face combining the compass instrument with a slider affordance for continuous value selection."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift": {
+      "name": "ContextCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift",
+      "summary": "Card face presenting an onboarding context prompt with a decorative book object illustration."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift": {
+      "name": "ControllerCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift",
+      "summary": "Card face drawing a single game-controller illustration via ControllerPainter, signifying solo-controller play mode."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift": {
+      "name": "ControllerPainter.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift",
+      "summary": "Shared stateless painter that draws the game-controller shape into a graphics context, reused by the single and dual controller card faces."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift": {
+      "name": "DualControllerCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift",
+      "summary": "Card face drawing two game controllers via ControllerPainter, signifying paired two-device play mode."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift": {
+      "name": "RadioTunerCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift",
+      "summary": "Card face rendering a radio-tuner dial metaphor for selecting along a continuous frequency-like scale."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift": {
+      "name": "SlotMachineCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift",
+      "summary": "Card face rendering a slot-machine reel metaphor for a randomized/spin-style selection surface."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift": {
+      "name": "SnapshotCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift",
+      "summary": "Card face presenting a static snapshot/summary surface, used to display a captured selection or result."
+    },
+    "file:Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift": {
+      "name": "TypewriterCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift",
+      "summary": "Card face presenting prompt text with an animated typewriter reveal effect."
+    },
+    "file:Vayl/Design/Components/Cards/CardFrontView.swift": {
+      "name": "CardFrontView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardFrontView.swift",
+      "summary": "Renders the front face shell of a card (size, corner radius, light/dark, arrow-trigger state) hosting card-face content."
+    },
+    "file:Vayl/Design/Components/Cards/CardLayout.swift": {
+      "name": "CardLayout.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardLayout.swift",
+      "summary": "Constants namespace defining standard card dimensions, corner radius, and horizontal margin used across card components."
+    },
+    "file:Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift": {
+      "name": "CardFlightScene.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift",
+      "summary": "SpriteKit scene that simulates physics-based card flight (dealing/throwing) for animated card transitions."
+    },
+    "file:Vayl/Design/Components/Cards/PromptCard.swift": {
+      "name": "PromptCard.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/PromptCard.swift",
+      "summary": "Simple prompt card displaying a card type, prompt text, and optional intensity label inside a PremiumCardShell."
+    },
+    "file:Vayl/Design/Components/Cards/SettingsCard.swift": {
+      "name": "SettingsCard.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/SettingsCard.swift",
+      "summary": "Generic reusable container that wraps Settings-screen content in padded rounded-card styling."
+    },
+    "file:Vayl/Design/Components/Cards/VaylCardAction.swift": {
+      "name": "VaylCardAction.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardAction.swift",
+      "summary": "Action enum describing the gestures and state changes a card face reports upward to Phases, which forward intents to VaylDirector."
+    },
+    "file:Vayl/Design/Components/Cards/VaylCardBack.swift": {
+      "name": "VaylCardBack.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "summary": "Canvas-rendered back face of a Vayl onboarding card: void base, atmosphere gradients, multi-pass VAYL wordmark, counter-rotated hex moire grid, and spectrum frames, with parameterized dissolution."
+    },
+    "file:Vayl/Design/Components/Cards/VaylCardCarousel.swift": {
+      "name": "VaylCardCarousel.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "summary": "Generic reusable card carousel rendering arbitrary card content in a stacked peek pile, with browse/exit gestures paired to the CarouselPhysics scroll engine."
+    },
+    "file:Vayl/Design/Components/Cards/VaylCardContent.swift": {
+      "name": "VaylCardContent.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardContent.swift",
+      "summary": "Public enum describing every content type a Vayl card face can render (portal, mode, context, curiosity, candle, compass, snapshot, and onboarding symbols), written onto VaylCardModel by the Director."
+    },
+    "file:Vayl/Design/Components/Cards/VaylCardFace.swift": {
+      "name": "VaylCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "summary": "Front face of a Vayl card: owns the shell, spectrum diamond, corner marks, and question text, and routes VaylCardContent cases to their specific content-face builders."
+    },
+    "file:Vayl/Design/Components/Cards/VaylCardRenderer.swift": {
+      "name": "VaylCardRenderer.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "summary": "Single source of truth translating VaylCardModel physics state into pixels, applying all transforms and choosing VaylCardBack vs VaylCardFace by flip progress."
+    },
+    "file:Vayl/Design/Components/Cards/VaylDeckStack.swift": {
+      "name": "VaylDeckStack.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/VaylDeckStack.swift",
+      "summary": "Renders a squared deck of six card backs at rest whose per-layer offsets mirror ConfirmationPhase exit positions, reused by CuriosityPhase and BuildDeckPhase."
+    },
+    "file:Vayl/Design/Components/Effects/AuroraGlowField.swift": {
+      "name": "AuroraGlowField.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "summary": "Warm Aurora atmospheric blob field of nine animated radial-gradient blobs for light-mode screens, with phase-drifted fade-in and looping sine modulation."
+    },
+    "file:Vayl/Design/Components/Effects/FilamentMode.swift": {
+      "name": "FilamentMode.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "summary": "Canvas-based three-orbit filament particle system: a state machine cycling parametric patterns and color sets across three trails, rendered with glow, core, and connection passes."
+    },
+    "file:Vayl/Design/Components/Effects/FlameAura.swift": {
+      "name": "FlameAura.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/FlameAura.swift",
+      "summary": "Canvas-based wisp-flame renderer where each wisp rises and wobbles via stacked sines and color-shifts magenta-to-purple, with wisp count and height driven by a selected intensity."
+    },
+    "file:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift": {
+      "name": "CardMirrorDeal.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "summary": "Mirror-deal card physics controller for the onboarding ModeSelectPhase, dealing two cards from opposite edges that land simultaneously, then handling lift, confirm, and reject animations."
+    },
+    "file:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift": {
+      "name": "CarouselPhysics.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "summary": "Reusable orientation-agnostic 1-D scroll engine for card carousels, owning a continuous card-index position driven by display-synced SwiftUI springs."
+    },
+    "file:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift": {
+      "name": "ThreeCardFanController.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "summary": "Three-card-monte fan controller orchestrating SpriteKit deal flights, spread-turnover reveal, lift, and confirm physics for the candle/experience-level selection."
+    },
+    "file:Vayl/Design/Components/Cards/CardRevealPillButton.swift": {
+      "name": "CardRevealPillButton.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardRevealPillButton.swift",
+      "summary": "Toggleable pill-shaped selection button for card reveal options, scaling when selected with a staggered entrance and dimming sibling pills."
+    },
+    "file:Vayl/Design/Components/Cards/CardShadows.swift": {
+      "name": "CardShadows.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardShadows.swift",
+      "summary": "View extension providing a reusable dual-shadow card modifier (accent color wash plus a black depth shadow), theme-aware."
+    },
+    "file:Vayl/Design/Components/Cards/CardStyle.swift": {
+      "name": "CardStyle.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CardStyle.swift",
+      "summary": "Reusable card-shell ViewModifier and convenience extension applying background, rounded clip, and border stroke to eliminate repetition."
+    },
+    "file:Vayl/Design/Components/Cards/CategoryTileView.swift": {
+      "name": "CategoryTileView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CategoryTileView.swift",
+      "summary": "Home-screen category grid tile displaying an emoji, title, completion count, and progress bar with theme-aware styling."
+    },
+    "file:Vayl/Design/Components/Cards/ConversationCard.swift": {
+      "name": "ConversationCard.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/ConversationCard.swift",
+      "summary": "3D-flipping conversation card with a question/fuse-timer front and a response pill-grid back, managing flip state, pill selection, encouragement, and ghost-deck atmosphere."
+    },
+    "file:Vayl/Design/Components/Cards/ConversationCardTypes.swift": {
+      "name": "ConversationCardTypes.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "summary": "Model types backing the conversation card: OBCard onboarding data, pill/response enums, content discriminators, and fuse/ghost-deck configuration."
+    },
+    "file:Vayl/Design/Components/Cards/CuriosityCardBack.swift": {
+      "name": "CuriosityCardBack.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CuriosityCardBack.swift",
+      "summary": "Face-down side of the curiosity picker card rendering a laser-engraved maze texture with an embedded orbit animation that stops on flip."
+    },
+    "file:Vayl/Design/Components/Cards/CuriosityFlipCard.swift": {
+      "name": "CuriosityFlipCard.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/CuriosityFlipCard.swift",
+      "summary": "Generic 3D flip container for curiosity picker cards: a maze/orbit back face and caller-supplied front content, orchestrating the flip and orbit lifecycle."
+    },
+    "file:Vayl/Design/Components/Cards/FuseTimerView.swift": {
+      "name": "FuseTimerView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/FuseTimerView.swift",
+      "summary": "Canvas-drawn fuse/spark countdown timer that travels a glowing spark along a rounded-rectangle border with a progressive burn effect."
+    },
+    "file:Vayl/Design/Components/Cards/PremiumCardShell.swift": {
+      "name": "PremiumCardShell.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Cards/PremiumCardShell.swift",
+      "summary": "Generic glass-morphic card container wrapping arbitrary content in an eight-layer premium composition with optional fuse-burn progress animation."
+    },
+    "file:Vayl/Design/Components/Effects/HomeGlowField.swift": {
+      "name": "HomeGlowField.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/HomeGlowField.swift",
+      "summary": "Full-page atmospheric background for the Home dashboard that crossfades from drifting glow blobs (morphProgress 0) to a deep-space galaxy with stars and blooms (morphProgress 1) as the user scrolls."
+    },
+    "file:Vayl/Design/Components/Effects/LightAuraBloom.swift": {
+      "name": "LightAuraBloom.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/LightAuraBloom.swift",
+      "summary": "Light-mode analogue of FlameAura: Canvas-drawn layered warm blobs (rose, peach, gold, lavender) that rise and breathe above a selected pill on cream backgrounds, scaled by the pill's intensity."
+    },
+    "file:Vayl/Design/Components/Effects/LightModeShimmer.swift": {
+      "name": "LightModeShimmer.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/LightModeShimmer.swift",
+      "summary": "Light-mode foil shimmer matching HolographicShimmer's energy on cream surfaces using two offset diagonal gradient sweeps in a warm purple/magenta/gold palette with screen blending."
+    },
+    "file:Vayl/Design/Components/Effects/MazePatternView.swift": {
+      "name": "MazePatternView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/MazePatternView.swift",
+      "summary": "Concentric engraved maze-ring pattern (rings with gaps plus radial spokes) rendered in multiple stroke layers for a debossed look, with a co-centered TileOrbitView comet orbit at its core."
+    },
+    "file:Vayl/Design/Components/Effects/OrbitSpark.metal": {
+      "name": "OrbitSpark.metal",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/OrbitSpark.metal",
+      "summary": "Metal fragment shader that draws a single comet-like spark orbiting a rounded-rectangle border, using a signed-distance border mask and a time-driven angular sweep with mode-switchable dark/light spectrum colors."
+    },
+    "file:Vayl/Design/Components/Effects/OrbitSparkBorderView.swift": {
+      "name": "OrbitSparkBorderView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/OrbitSparkBorderView.swift",
+      "summary": "SwiftUI wrapper that strokes a rounded-rectangle border with the spectrum gradient and applies the orbitSpark Metal colorEffect, animating the spark via TimelineView elapsed time and passing a palette mode for dark/light."
+    },
+    "file:Vayl/Design/Components/Effects/PillBorder.swift": {
+      "name": "PillBorder.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/PillBorder.swift",
+      "summary": "View-extension modifiers (.pillBorder / .magentaGoldBorder) that add a crisp spectrum or warm gradient stroke plus a blurred outward glow duplicate to selected/active pill surfaces."
+    },
+    "file:Vayl/Design/Components/Effects/SectionHeader.swift": {
+      "name": "SectionHeader.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/SectionHeader.swift",
+      "summary": "Trivial all-caps muted section label used above sections in Settings, Home, and list screens."
+    },
+    "file:Vayl/Design/Components/Effects/SparkField.swift": {
+      "name": "SparkField.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/SparkField.swift",
+      "summary": "Campfire-ember particle system for light-mode onboarding screens: per-screen tuned configurations drive a Canvas of rising, drifting, life-cycled warm sparks composited below content."
+    },
+    "file:Vayl/Design/Components/Effects/SpectrumHairline.swift": {
+      "name": "SpectrumHairline.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/SpectrumHairline.swift",
+      "summary": "Shared spectrum hairline accents: a flat fading cyan-purple-magenta line and a tapered lens/spindle variant (thickest at center, sharp points at the ends) used as on-brand sheet edge accents."
+    },
+    "file:Vayl/Design/Components/Effects/TileOrbitView.swift": {
+      "name": "TileOrbitView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/TileOrbitView.swift",
+      "summary": "Purpose-built comet-orbit animation for small tile contexts (44-88pt): resting static arcs or TimelineView-driven comet orbits whose phase offsets and color cycling keep heads and hues from ever colliding."
+    },
+    "file:Vayl/Design/Components/Effects/VaylBorderEffect.swift": {
+      "name": "VaylBorderEffect.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/VaylBorderEffect.swift",
+      "summary": "The animated spectrum pill border for VaylButton: a tapered hairline at rest that fills with a two-sided crisp-plus-halo spectrum stroke on press, with an outward-only glow achieved via destinationOut masking."
+    },
+    "file:Vayl/Design/Components/Effects/VaylButton.swift": {
+      "name": "VaylButton.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/VaylButton.swift",
+      "summary": "The app's primary CTA button: a holographic-shimmer pill with the animated VaylBorderEffect, choreographing press-down haptics, border fill, and a precisely scheduled post-fill glow burst on release."
+    },
+    "file:Vayl/Design/Components/Effects/VaylFlourishView.swift": {
+      "name": "VaylFlourishView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/VaylFlourishView.swift",
+      "summary": "Signature decorative flourish: two gradient-stroked paths that orbit and meet at a single center node, encoding duality and connection, breathing gently via an ambient pulse animation."
+    },
+    "file:Vayl/Design/Components/Input/InteractiveField.swift": {
+      "name": "InteractiveField.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Input/InteractiveField.swift",
+      "summary": "Reusable icon-plus-TextField input row with a color-scheme-adaptive background, subtle border, and a soft accent shadow in dark mode."
+    },
+    "file:Vayl/Design/Components/Input/ToggleRow.swift": {
+      "name": "ToggleRow.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Input/ToggleRow.swift",
+      "summary": "Trivial icon-plus-label-plus-Toggle row used in Settings sections, bound to an external isOn state."
+    },
+    "file:Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift": {
+      "name": "FoilDeckTheme.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift",
+      "summary": "Pure data model defining a deck's visual identity for the FoilOpen sealed-case ceremony: a three-stop colorway ramp plus the deck name embossed on the case front."
+    },
+    "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift": {
+      "name": "MetallicCaseView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "summary": "The FoilOpen ceremony's reusable 3D tuck-box: a Canvas projects a painter-sorted anodized-metal box whose front face carries a debossed hex lattice lit by the hexFoilSurface Metal shader, then choreographs rise, knock, tap-to-crack, tear propagation, and shatter-dissolve."
+    },
+    "file:Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift": {
+      "name": "SpectrumSparkField.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift",
+      "summary": "Stateless spectrum-mote particle field for the FoilOpen ceremony: TimelineView-driven, seeded-deterministic spark bursts knocked loose by a strike on the case, popping outward then drifting up like embers."
+    },
+    "file:Vayl/Design/Components/Effects/GlowOrb.swift": {
+      "name": "GlowOrb.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/GlowOrb.swift",
+      "summary": "Small reusable radial-gradient glow orb whose ambient opacity adapts to the color scheme (emissive in dark, barely-there in light); decorative and non-interactive."
+    },
+    "file:Vayl/Design/Components/Effects/GlowUnderline.swift": {
+      "name": "GlowUnderline.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/GlowUnderline.swift",
+      "summary": "ViewModifier that overlays a breathing three-layer spectrum glow underline (solid core, tight neon, wide bloom) beneath its content, with a flash parameter to dim it on interaction."
+    },
+    "file:Vayl/Design/Components/Effects/GlowUnderlineView.swift": {
+      "name": "GlowUnderlineView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/GlowUnderlineView.swift",
+      "summary": "Standalone View variant of the breathing spectrum glow underline (solid core, neon glow, wide bloom) for cases that compose the underline directly rather than as a modifier."
+    },
+    "file:Vayl/Design/Components/Effects/GradBadge.swift": {
+      "name": "GradBadge.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/GradBadge.swift",
+      "summary": "Small capsule pill with a spectrum gradient border and a text label, used for metadata counts, status tags, and category chips — never for CTAs."
+    },
+    "file:Vayl/Design/Components/Effects/HolographicShimmer.metal": {
+      "name": "HolographicShimmer.metal",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.metal",
+      "summary": "Metal shader library of stitchable fragment effects: oil-slick orb iridescence, Voronoi and folded-simplex caustics, specular sweeps, a holographic foil surface, and the debossed hex-lattice foil that fronts the MetallicCaseView tuck-box."
+    },
+    "file:Vayl/Design/Components/Effects/HolographicShimmer.swift": {
+      "name": "HolographicShimmer.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Effects/HolographicShimmer.swift",
+      "summary": "Pure-SwiftUI (Canvas, no Metal) holographic pill background: a noise-driven specular sweep, five screen-blended drifting orbs, vignette, and two fbm grain layers, used as the VaylButton fill."
+    },
+    "file:Vayl/Design/Components/Navigation/NavArrow.swift": {
+      "name": "NavArrow.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Navigation/NavArrow.swift",
+      "summary": "Adaptive onboarding back/forward nav-arrow component family: a custom chevron Shape rendered as a spectrum-gradient stroked pill, with dark and light variants unified behind a colorScheme-aware OnboardingNavArrow wrapper."
+    },
+    "file:Vayl/Design/Components/Navigation/OBSheetChrome.swift": {
+      "name": "OBSheetChrome.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Navigation/OBSheetChrome.swift",
+      "summary": "Shared ViewModifier giving the onboarding custom sheets native-style chrome: full-bleed dark surface with continuous rounded top corners and a spectrum border that traces the top edge and dissolves down the sides."
+    },
+    "file:Vayl/Design/Components/Navigation/OnboardingFooter.swift": {
+      "name": "OnboardingFooter.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Navigation/OnboardingFooter.swift",
+      "summary": "Small footer label shown beneath the CTA on onboarding screens, carrying privacy/encryption reassurance copy at minimum-legible Dynamic Type size."
+    },
+    "file:Vayl/Design/Components/Navigation/OnboardingNavBar.swift": {
+      "name": "OnboardingNavBar.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Navigation/OnboardingNavBar.swift",
+      "summary": "Reusable onboarding top row pairing an optional circular back button with a centered OnboardingProgressBar; used at the head of every onboarding screen showing navigation."
+    },
+    "file:Vayl/Design/Components/Navigation/RacetrackTabBar.swift": {
+      "name": "RacetrackTabBar.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Navigation/RacetrackTabBar.swift",
+      "summary": "Main app tab bar binding to AppTab: a capsule of icon pills with a sequenced racetrack-trim border animation (old pill erases while new pill draws) over a shimmering glass background."
+    },
+    "file:Vayl/Design/Components/Navigation/SafariView.swift": {
+      "name": "SafariView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Navigation/SafariView.swift",
+      "summary": "Thin UIViewControllerRepresentable wrapper over SFSafariViewController for presenting hosted legal web pages in-app via a sheet."
+    },
+    "file:Vayl/Design/Components/Navigation/TabContentWrapper.swift": {
+      "name": "TabContentWrapper.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Navigation/TabContentWrapper.swift",
+      "summary": "Generic wrapper applied to every tab's content that adds bottom scroll inset, a gradient fade mask, and indicator inset so content dissolves cleanly behind the floating tab bar."
+    },
+    "file:Vayl/Design/Components/Progress/OnboardingProgressBar.swift": {
+      "name": "OnboardingProgressBar.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Progress/OnboardingProgressBar.swift",
+      "summary": "Heavily-tuned onboarding progress bar with a gradient fill, traveling shimmer, and a multi-layer Canvas bloom + particle completion effect; ships extracted pure-math helpers, a testable animation clock, and full accessibility/RTL/localization support."
+    },
+    "file:Vayl/Design/Components/Progress/OrbitIndicator.swift": {
+      "name": "OrbitIndicator.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Progress/OrbitIndicator.swift",
+      "summary": "Reusable three-state (pending → processing → complete) loading indicator drawing an animated comet-tail orbit via a TimelineView Canvas, with a gradient fill, glow, and holographic sheen for the complete state."
+    },
+    "file:Vayl/Design/Components/Progress/ProgressBar.swift": {
+      "name": "ProgressBar.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Progress/ProgressBar.swift",
+      "summary": "Minimal value/max horizontal capsule progress bar filled with the spectrum border gradient."
+    },
+    "file:Vayl/Design/Components/Progress/ProgressRingView.swift": {
+      "name": "ProgressRingView.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Progress/ProgressRingView.swift",
+      "summary": "Reusable circular progress ring with a spectrum-stroked arc and a centered percentage label, sized and weighted by init parameters."
+    },
+    "file:Vayl/Design/Components/Progress/ScoreRing.swift": {
+      "name": "ScoreRing.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Progress/ScoreRing.swift",
+      "summary": "Animated score ring rendering a 0-100 score as an angular spectrum sweep with a centered numeric label that fills in on appear."
+    },
+    "file:Vayl/Design/Components/Progress/ScreenshotProtectionModifier.swift": {
+      "name": "ScreenshotProtectionModifier.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Progress/ScreenshotProtectionModifier.swift",
+      "summary": "ViewModifier that obscures private content with a material overlay when the screen is being captured or screenshotted, exposed via a screenshotProtected() View extension."
+    },
+    "file:Vayl/Design/Components/Progress/SpectrumBar.swift": {
+      "name": "SpectrumBar.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Progress/SpectrumBar.swift",
+      "summary": "Trivial horizontal spectrum-gradient capsule used as a thin divider/accent bar."
+    },
+    "file:Vayl/Design/Components/Text/GradientText.swift": {
+      "name": "GradientText.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Text/GradientText.swift",
+      "summary": "Static two-tone gradient text view (no animation), colorScheme-aware; the non-animated counterpart to LivingText's premium three-tone treatment."
+    },
+    "file:Vayl/Design/Components/Text/KeywordHighlightText.swift": {
+      "name": "KeywordHighlightText.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Text/KeywordHighlightText.swift",
+      "summary": "Text view that builds an AttributedString highlighting specified keywords in accent colors (cyan/magenta/gold) against a base color for prompt emphasis."
+    },
+    "file:Vayl/Design/Components/Text/LivingText.swift": {
+      "name": "LivingText.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Text/LivingText.swift",
+      "summary": "Premium animated tri-color 'breathing' headline text: a TimelineView layers screen-blended bloom glows and a subtle scale breath over a full-opacity spectrum core, with a static Reduce Motion fallback."
+    },
+    "file:Vayl/Design/Components/Text/SpectrumBulletRow.swift": {
+      "name": "SpectrumBulletRow.swift",
+      "type": "file",
+      "filePath": "Vayl/Design/Components/Text/SpectrumBulletRow.swift",
+      "summary": "Labeled list row marked by a flat spectrum disc with a periodic holographic specular sweep; intentionally not a checkmark so lists read as possibilities rather than guaranteed deliverables."
+    },
+    "file:Vayl/Features/Auth/Views/SignInView.swift": {
+      "name": "SignInView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Auth/Views/SignInView.swift",
+      "summary": "Sign-in screen presenting the Vayl wordmark, a Sign in with Apple CTA wired to AuthService, loading/error states, and tappable Terms/Privacy links that open in an in-app SafariView sheet."
+    },
+    "file:Vayl/Features/Desire Map/Store/CompanionCardStore.swift": {
+      "name": "CompanionCardStore.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Desire Map/Store/CompanionCardStore.swift",
+      "summary": "Stub @Observable @MainActor Store that maps a couple's DesireMatches to companion cards pointing at a conversation or deck to open together; returns placeholder content until real companion data and deck mapping are wired."
+    },
+    "file:Vayl/Features/Desire Map/Store/DesireMapStore.swift": {
+      "name": "DesireMapStore.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Desire Map/Store/DesireMapStore.swift",
+      "summary": "@Observable @MainActor Store for the Desire Map rater: resolves the cohort track from the local SwiftData profile, loads track items, upserts one DesireMapEntry per (userId, itemId), marks the profile complete, and best-effort syncs on completion."
+    },
+    "file:Vayl/Features/Desire Map/Store/DesireRevealStore.swift": {
+      "name": "DesireRevealStore.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Desire Map/Store/DesireRevealStore.swift",
+      "summary": "@Observable @MainActor Store for the D4 reveal: fetches the couple's alignment-only matches via DesireSyncService and resolves the free/locked split against the EntitlementStore (the conversion gate)."
+    },
+    "file:Vayl/Features/Desire Map/Views/DesireMapView.swift": {
+      "name": "DesireMapView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Desire Map/Views/DesireMapView.swift",
+      "summary": "View layer for the two-track Desire Map card rater: reads DesireMapStore, presents one desire per card with four cohort-driven answers, routes between rater/completion/empty states, and is screenshot-protected."
+    },
+    "file:Vayl/Features/Desire Map/Views/DesireRevealView.swift": {
+      "name": "DesireRevealView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Desire Map/Views/DesireRevealView.swift",
+      "summary": "View layer for the D4 reveal 'magic moment': reads DesireRevealStore, celebrates aligned matches with staggered reveal animations, shows locked teasers with a price-hint unlock CTA, and is screenshot-protected."
+    },
+    "file:Vayl/Features/Home/Components/CardChestContainer.swift": {
+      "name": "CardChestContainer.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Components/CardChestContainer.swift",
+      "summary": "Home-tab container hosting the card deck carousel that morphs between a floating hero state and a framed glass 'chest' (ambient orbs, rim light, matched-geometry header, progress bar) as the carousel phase changes."
+    },
+    "file:Vayl/Features/Home/Views/GettingStartedPathView.swift": {
+      "name": "GettingStartedPathView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Views/GettingStartedPathView.swift",
+      "summary": "The expanded 'Path' overlay listing the couple's first steps to their reveal; destination of the matched-geometry morph from GettingStartedEntryCard, presented over a blurred Home."
+    },
+    "file:Vayl/Features/Home/Views/HomeDashboardView.swift": {
+      "name": "HomeDashboardView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "summary": "The main Home dashboard view: composes the greeting, card chest/carousel hero, desire-map indicator, reflection card, pick-up list, partner chip, and ambient prism/constellation zones into the scrolling home surface with a choreographed entrance."
+    },
+    "file:Vayl/Features/Home/Views/HomeGateView.swift": {
+      "name": "HomeGateView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Views/HomeGateView.swift",
+      "summary": "Retired-from-routing gate screen that pitched the Desire Map as 'step 1 of 2' with a privacy info card and a choreographed entrance; kept on disk but no longer in the Home routing flow."
+    },
+    "file:Vayl/Features/Home/Views/HomeRouterView.swift": {
+      "name": "HomeRouterView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Views/HomeRouterView.swift",
+      "summary": "Thin Home routing view: owns appState/modelContext, constructs HomeStore, and switches on store.homeState to render the dashboard while hosting the session sheet, desire-map rater, reveal cover, Path overlay, and completion beat."
+    },
+    "file:Vayl/Features/Home/Views/MapCompletionBeatView.swift": {
+      "name": "MapCompletionBeatView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Views/MapCompletionBeatView.swift",
+      "summary": "A brief one-shot celebration beat shown over the Home dashboard the moment the user finishes their Desire Map; tap to continue, reusing the reveal's prism emblem motif."
+    },
+    "file:Vayl/Features/Learn/Views/ConstellationNode.swift": {
+      "name": "ConstellationNode.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "summary": "The Learn 'constellation' visualization: a model for stat/term nodes plus the floating, tappable node views, proximity connection lines, a detail bottom sheet, and the container ConstellationView."
+    },
+    "file:Vayl/Features/Learn/Views/LearnView.swift": {
+      "name": "LearnView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Learn/Views/LearnView.swift",
+      "summary": "Placeholder Learn tab screen showing only a 'Learn' title over the page background; the real Learn content hub is not yet built."
+    },
+    "file:Vayl/Features/Map/MapView.swift": {
+      "name": "MapView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Map/MapView.swift",
+      "summary": "Temporary Map tab harness that renders PairingSettingsView for partner-linking verification; to be replaced by the real Map / Desire Map implementation."
+    },
+    "file:Vayl/Features/Map/PrismView.swift": {
+      "name": "PrismView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Map/PrismView.swift",
+      "summary": "The Map-tab 'prism' widget: a mode-switching surface (Journal / Reflect / Agreements) with time-aware prompts, a solo-card draw, cursor-blink journaling, and expandable agreement rows, wrapped in the HomeWidgetShell chrome."
+    },
+    "file:Vayl/Features/Monetization/Store/EntitlementStore.swift": {
+      "name": "EntitlementStore.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "summary": "Monetization Store: the central @Observable read surface for the couple's access tier (isCore/tier), OR-ing the couple's server tier with local StoreKit ownership, and driving purchase/restore and background transaction updates."
+    },
+    "file:Vayl/Features/Monetization/Views/PaywallSheet.swift": {
+      "name": "PaywallSheet.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "summary": "The reusable Vayl paywall: one Core-scoped bottom sheet ($24.99 one-time, both unlock) presented from three doors (reveal / settings / play-deck) whose only difference is the hook header; purchase and restore run through EntitlementStore."
+    },
+    "file:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift": {
+      "name": "CardFlightEngine.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "summary": "Onboarding card-deal engine: owns the OB card landing-slot pool and bridges SwiftUI to the SpriteKit CardFlightScene, flying card-back snapshots from off-screen to natural resting slots and returning their final offset/angle."
+    },
+    "file:Vayl/Features/Home/Components/DesireMapIndicator.swift": {
+      "name": "DesireMapIndicator.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Components/DesireMapIndicator.swift",
+      "summary": "Dashboard component that renders the couple's Desire Map status across its many states (youDone, bothReady, freeRevealSeen, redoInProgress) with state-specific cards and CTAs."
+    },
+    "file:Vayl/Features/Home/Components/GettingStartedEntryCard.swift": {
+      "name": "GettingStartedEntryCard.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Components/GettingStartedEntryCard.swift",
+      "summary": "Compact dashboard entry card ('Your first steps') showing onboarding-path progress; carries the matched-geometry source that morphs into the full Path overlay when tapped."
+    },
+    "file:Vayl/Features/Home/Components/GravLiftView.swift": {
+      "name": "GravLiftView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Components/GravLiftView.swift",
+      "summary": "Decorative tractor-beam 'grav lift' effect (layered cones, halo, and scan lines) that breathes with a phase input; non-interactive ambient visual behind the home hero card."
+    },
+    "file:Vayl/Features/Home/Components/HomeWidgetShell.swift": {
+      "name": "HomeWidgetShell.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "summary": "Reusable home-dashboard widget chrome: a generic container that wraps arbitrary content in a themed surface with inset shadows, a spectrum rim, and an underglow; also defines the OrbLayer ambient backdrop."
+    },
+    "file:Vayl/Features/Home/Components/PartnerChip.swift": {
+      "name": "PartnerChip.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Components/PartnerChip.swift",
+      "summary": "Dashboard chip that renders the partner-presence affordance across states (no partner / invite-pending / active / multiple stub), using holographic shimmer for the invite states."
+    },
+    "file:Vayl/Features/Home/Components/PickUpCard.swift": {
+      "name": "PickUpCard.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Components/PickUpCard.swift",
+      "summary": "Dashboard 'pick up where you left off' list card rendering in-progress content items (timeline, article, judgment, autopsy) with a pulsing activity dot and a see-all action."
+    },
+    "file:Vayl/Features/Home/Components/ReflectionBannerView.swift": {
+      "name": "ReflectionBannerView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Components/ReflectionBannerView.swift",
+      "summary": "Bottom-sheet reflection capture banner shown after a session: lets the user pick feeling pills or write a note, toggle sharing with the partner, and submit; drag-to-dismiss."
+    },
+    "file:Vayl/Features/Home/Components/ReflectionCard.swift": {
+      "name": "ReflectionCard.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Components/ReflectionCard.swift",
+      "summary": "Large dashboard reflection card rendering the full reflection lifecycle (pending / waiting-on-partner / both-reflected / summary) with a paged, swipeable layout and a pill-selection sheet."
+    },
+    "file:Vayl/Features/Home/Components/ResearchTicker.swift": {
+      "name": "ResearchTicker.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Components/ResearchTicker.swift",
+      "summary": "Ambient, non-interactive ticker that cycles a curated list of CNM research facts, definitions, and reframes on a timer with a cross-fade."
+    },
+    "file:Vayl/Features/Home/Models/GettingStarted.swift": {
+      "name": "GettingStarted.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Models/GettingStarted.swift",
+      "summary": "Pure Model-layer derivation of the post-onboarding 'first steps' activation: resolves the ordered step list and their states (done/active/upcoming/locked) from the couple's flags."
+    },
+    "file:Vayl/Features/Home/Models/HomeEventEngine.swift": {
+      "name": "HomeEventEngine.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Models/HomeEventEngine.swift",
+      "summary": "Pure logic struct that selects the home greeting's two-line sub-copy from a prioritized list of HomeEvents (partner events → milestones → time/absence → stage defaults)."
+    },
+    "file:Vayl/Features/Home/Models/HomeModels.swift": {
+      "name": "HomeModels.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Models/HomeModels.swift",
+      "summary": "View-layer Model definitions for the Home screen: the ReflectionCardState and HomeState routing enums, reflection pill groups, pick-up items, research facts, and the HomeEvent enum."
+    },
+    "file:Vayl/Features/Home/Store/HomeStore.swift": {
+      "name": "HomeStore.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Home/Store/HomeStore.swift",
+      "summary": "The Home feature's Store: an @Observable @MainActor brain that owns all routing state, derives HomeState/GettingStarted, loads profile/desire-status/deck-progress/reflection/deck data, and tracks the one-shot map-completion beat."
+    },
+    "file:Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift": {
+      "name": "CanvasEasing.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift",
+      "summary": "Pure easing-math namespace (normalise-in-window, cubic in-out, quint/sept ease-out) used to drive the OB canvas dissolution and physics curves."
+    },
+    "file:Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift": {
+      "name": "OBDeepCardFace.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift",
+      "summary": "Canvas + Metal-shader renderer for 'The Deep' OB card face revealed on flip during NamePhase: layered swirl, seeded particles, shimmer, depth-glow, and a caustics colorEffect."
+    },
+    "file:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift": {
+      "name": "OnboardingCanvasView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "summary": "The single persistent OB canvas: a 10-layer ZStack (void → atmosphere → table → dealpoint → SpriteKit flight → cards → projected text → corner deck → phase overlay) plus the phase router switching on director.phase."
+    },
+    "file:Vayl/Features/Onboarding/Canvas/OnboardingStage.swift": {
+      "name": "OnboardingStage.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Canvas/OnboardingStage.swift",
+      "summary": "Narrow @MainActor protocol exposing only the coordinator surface (onboardingData + dealer-line projection) that extracted phase sequencers need, keeping them decoupled from the full director."
+    },
+    "file:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift": {
+      "name": "GenderSequencer.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift",
+      "summary": "Extracted @Observable store owning the entire Gender phase: dissolution/crystallisation curves, radio-tuner signal, gender + pronouns drums, and tap-lift→swipe-up confirm, writing the choice back through OnboardingStage."
+    },
+    "file:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift": {
+      "name": "TableSurfaceView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "summary": "Animatable single-pass Canvas that draws the entire Vayl card table (atmosphere, felt, vignette, topo contours with card dissolution warp/flow-around + forge sway, compass star, amber pool, spectrum rim arc)."
+    },
+    "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift": {
+      "name": "VaylDirector.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "summary": "The central @Observable @MainActor OB coordinator: owns phase, all card collections + physics state, table fade, and the only advance() path; conforms to OnboardingStage and forwards to the projector, card-flight engine, and per-phase sequencers."
+    },
+    "file:Vayl/Features/Onboarding/Components/CornerDeckView.swift": {
+      "name": "CornerDeckView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Components/CornerDeckView.swift",
+      "summary": "Stateless top-right corner deck showing collected credential cards (max 7) as a stacked, slightly fanned pile of real VaylCardBack renders with a count label and receive-glow."
+    },
+    "file:Vayl/Features/Onboarding/Components/DeckWrapView.swift": {
+      "name": "DeckWrapView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Components/DeckWrapView.swift",
+      "summary": "TimelineView-driven Canvas that spirals spectrum ribbons in a spinning helix around the rising BuildDeck 'forge' deck, drawing front strands bright and back strands dim."
+    },
+    "file:Vayl/Features/Onboarding/Components/FounderLetterSheet.swift": {
+      "name": "FounderLetterSheet.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Components/FounderLetterSheet.swift",
+      "summary": "Shared generic sheet chrome (spectrum grab handle + obSheetChrome) for the founder letter, used identically at BuildDeck's peek detent and FounderLetterPhase's full expansion so the phase swap is invisible."
+    },
+    "file:Vayl/Features/Onboarding/Components/HandBackFollow.swift": {
+      "name": "HandBackFollow.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Components/HandBackFollow.swift",
+      "summary": "Pure feel-math namespace for the shared 'lift → swipe up to hand back' affordance: tanh-banded lateral drift, stiffened upward follow with a soft ceiling, and a slight drift tilt — tuned from one place."
+    },
+    "file:Vayl/Features/Onboarding/Components/LiftHalo.swift": {
+      "name": "LiftHalo.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Components/LiftHalo.swift",
+      "summary": "Single-source spectrum focus ring shown around a lifted OB card (blurred halo + crisp glowing stroke), reused as an overlay by every selection phase so the tap-to-lift look never drifts."
+    },
+    "file:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift": {
+      "name": "OnboardingAtmosphere.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift",
+      "summary": "Per-phase OB atmosphere: light mode composites AuroraGlowField + SparkField, dark mode renders an OBVoidBloom (tri-color bloom under a hard void mask), with a library of named AtmosphereConfig presets."
+    },
+    "file:Vayl/Features/Onboarding/Layout/OnboardingLayout.swift": {
+      "name": "OnboardingLayout.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Layout/OnboardingLayout.swift",
+      "summary": "Shared proportional spacing constants for onboarding, expressed as fractions of live screen height/width (with a stepped nav-top) so the layout scales across the full iPhone device matrix."
+    },
+    "file:Vayl/Features/Onboarding/Models/CardLandingSlot.swift": {
+      "name": "CardLandingSlot.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Models/CardLandingSlot.swift",
+      "summary": "Pure model for one predefined card-deal landing zone: fractional center + angle with jitter fields, resolving to a concrete position/angle for any screen size."
+    },
+    "file:Vayl/Features/Onboarding/Models/ContextOption.swift": {
+      "name": "ContextOption.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Models/ContextOption.swift",
+      "summary": "Pure data + selection model for ContextPhase cards (solo/couple × curious/in-it): first-person 'I' option sets, plus a derivedRegister that is the sole downstream behavioural driver."
+    },
+    "file:Vayl/Features/Onboarding/Models/CuriosityDeck.swift": {
+      "name": "CuriosityDeck.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Models/CuriosityDeck.swift",
+      "summary": "Pure deterministic selection model for the CuriosityPhase sort deck: round-1 feeling hands keyed by mode × register and a fixed escalating round-2 milestone set, backed by a stable id→text catalog."
+    },
+    "file:Vayl/Features/Onboarding/Models/CuriositySortCard.swift": {
+      "name": "CuriositySortCard.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Models/CuriositySortCard.swift",
+      "summary": "Minimal Identifiable/Equatable model for a single CuriosityPhase sort card: stable id (the key written to OnboardingData), display text, and round number."
+    },
+    "file:Vayl/Features/Onboarding/Models/DemoDictionary.swift": {
+      "name": "DemoDictionary.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Models/DemoDictionary.swift",
+      "summary": "Pure mapping from the DemoPhase 'I [verb] [noun]' snapshot to an EmotionalRegister via noun keyword-stem categories modulated by the verb, defaulting to flexible — reviving the cut Compass Q3 signal."
+    },
+    "file:Vayl/Features/Onboarding/Models/FoilTear.swift": {
+      "name": "FoilTear.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Models/FoilTear.swift",
+      "summary": "Identifiable model for a single crack in the sealed BuildDeck case: face-local UV tap point, authored crack orientation, a stable procedural seed, and the strike timestamp."
+    },
+    "file:Vayl/Features/Onboarding/Models/OnboardingData.swift": {
+      "name": "OnboardingData.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Models/OnboardingData.swift",
+      "summary": "Transient struct accumulating every onboarding answer (demo/name/gender/mode/experience/context/curiosity + derived opener deck) and the isReadyToComplete commit gate; written to UserProfile on completion."
+    },
+    "file:Vayl/Features/Onboarding/Models/VaylCardModel.swift": {
+      "name": "VaylCardModel.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Models/VaylCardModel.swift",
+      "summary": "@Observable reference model for one OB canvas card: content (question/credential/face-up) plus full physics + layout state (position, rotation, scale, flip, elevation, opacity, zIndex, slot) written exclusively by VaylDirector."
+    },
+    "file:Vayl/Features/Onboarding/Models/WelcomeDeck.swift": {
+      "name": "WelcomeDeck.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Models/WelcomeDeck.swift",
+      "summary": "Equatable model for the forged starter deck revealed at the end of BuildDeck: real name/purpose/colorway derived from OpenerDeckType, plus a shared set of placeholder prompt cards pending the content pass."
+    },
+    "file:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift": {
+      "name": "BuildDeckPhase.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "summary": "OB BuildDeck phase View driving the multi-beat forge ceremony: the confirmed deck melts through the felt, the table works, a metallic case rises/floats, a three-strike crack ceremony shatters it into the forged WelcomeDeck reveal and founder-letter exit."
+    },
+    "file:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift": {
+      "name": "ConfirmationPhase.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "summary": "OB Confirmation phase View: deals the six credential cards out of the corner deck onto the felt along a bézier corner-sweep, opens per-card edit sheets on tap, and confirms via a fan-wide swipe-right that collapses into a deck and advances to BuildDeck."
+    },
+    "file:Vayl/Features/Onboarding/Phases/ContextPhase.swift": {
+      "name": "ContextPhase.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/ContextPhase.swift",
+      "summary": "Onboarding phase View — a browsable card carousel where the user swipes relationship-context cards, taps to confirm, and swipes up to commit the selection via VaylDirector."
+    },
+    "file:Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift": {
+      "name": "CredentialEditorSheet.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift",
+      "summary": "In-canvas edit half-sheet (plus its custom CredentialEditorOverlay presenter) for revising a single onboarding credential during ConfirmationPhase, writing straight back to director.onboardingData."
+    },
+    "file:Vayl/Features/Onboarding/Phases/CuriosityPhase.swift": {
+      "name": "CuriosityPhase.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/CuriosityPhase.swift",
+      "summary": "Onboarding phase View rendering a two-round Tinder-style card-sort pile; the user sweeps left to discard or right to keep, with all sort state owned by director.curiosity."
+    },
+    "file:Vayl/Features/Onboarding/Phases/DemoPhase.swift": {
+      "name": "DemoPhase.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/DemoPhase.swift",
+      "summary": "Onboarding phase View for the user's first card — a sentence-completion (\"I [verb] [noun].\") that teaches tap-to-lift and swipe-to-seal while triangulating an EmotionalRegister committed via director.commitDemoSnapshot."
+    },
+    "file:Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift": {
+      "name": "ExperienceLevelPhase.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift",
+      "summary": "Onboarding phase View dealing three candle cards into a fan via ThreeCardFanController; tap lifts to reveal a level, swipe-up confirms and writes nmStage through director.commitExperienceLevel."
+    },
+    "file:Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift": {
+      "name": "FounderLetterPhase.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift",
+      "summary": "Final onboarding phase View presenting the founder letter sheet; the pull-down completion gesture commits the whole onboarding via director.finishOnboarding(using: onboardingStore)."
+    },
+    "file:Vayl/Features/Onboarding/Phases/GenderPhase.swift": {
+      "name": "GenderPhase.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/GenderPhase.swift",
+      "summary": "Onboarding phase View where a radio-tuner card crystallises from the felt and the user tunes gender + pronoun drums; near-pure renderer with all visual state on director.gender."
+    },
+    "file:Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift": {
+      "name": "ModeSelectPhase.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift",
+      "summary": "Onboarding phase View dealing two solo/together cards from opposite sides via CardMirrorDealController; the user lifts one and swipes up to set appMode and advance to gender."
+    },
+    "file:Vayl/Features/Onboarding/Phases/NamePhase.swift": {
+      "name": "NamePhase.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/NamePhase.swift",
+      "summary": "The flagship onboarding phase View — deals and flips the first card, runs the typewriter name input and greeting, and teaches the universal tap-lift then swipe-up hand-back gesture lesson."
+    },
+    "file:Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift": {
+      "name": "SingleGreetingSheet.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift",
+      "summary": "An 'honest moment' overlay (SingleGreetingOverlay) shown when a user confirms 'I'm single' in ContextPhase, acknowledged via 'Got it' which commits the pending conclusion through director.continueFromSingleGreeting."
+    },
+    "file:Vayl/Features/Onboarding/Phases/StatPhase.swift": {
+      "name": "StatPhase.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Phases/StatPhase.swift",
+      "summary": "Early onboarding phase View presenting the '1 in 5' hero statistic with a holographic ignition entrance cascade and a citation expander, advancing on CTA."
+    },
+    "file:Vayl/Features/Onboarding/Renders/AnimatedSignature.swift": {
+      "name": "AnimatedSignature.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Renders/AnimatedSignature.swift",
+      "summary": "Native SwiftUI draw-on of the founder's three-stroke handwritten signature, each pen-stroke trim-animated with lift pauses and rendered in glow plus crisp spectrum passes."
+    },
+    "file:Vayl/Features/Onboarding/Renders/DealPointView.swift": {
+      "name": "DealPointView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Renders/DealPointView.swift",
+      "summary": "Stateless render of the OB deal point — the table-horizon origin from which all onboarding cards launch, its glow intensity driven by VaylDirector."
+    },
+    "file:Vayl/Features/Onboarding/Renders/ProjectedTextView.swift": {
+      "name": "ProjectedTextView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Renders/ProjectedTextView.swift",
+      "summary": "Stateless render of the dealer's voice — text typed character-by-character onto the felt at the table horizon, driven by VaylDirector's projected text state."
+    },
+    "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift": {
+      "name": "OnboardingStore.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "summary": "Observable MainActor store that commits completed OnboardingData to SwiftData, persisting every field onto UserProfile and mirroring displayName/appMode into AppState."
+    },
+    "file:Vayl/Features/Pairing/PairingInviteView.swift": {
+      "name": "PairingInviteView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pairing/PairingInviteView.swift",
+      "summary": "Person-A pairing View that generates an invite code and waits for a partner to join; display-only with all logic delegated to PairingStore."
+    },
+    "file:Vayl/Features/Pairing/PairingJoinView.swift": {
+      "name": "PairingJoinView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pairing/PairingJoinView.swift",
+      "summary": "Person-B pairing View where the user enters a partner's code to join; display-only with all logic delegated to PairingStore.joinWithCode."
+    },
+    "file:Vayl/Features/Pairing/PairingSettingsView.swift": {
+      "name": "PairingSettingsView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pairing/PairingSettingsView.swift",
+      "summary": "Partner-linking settings screen showing current link state and surfacing the invite/join actions when unlinked, reading link state from AppState."
+    },
+    "file:Vayl/Features/Pairing/PairingStore.swift": {
+      "name": "PairingStore.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pairing/PairingStore.swift",
+      "summary": "Observable MainActor store owning the device-pairing flow — generate/regenerate/join/poll lifecycle over PairingService, persisting the couple link to SwiftData and mirroring it into AppState."
+    },
+    "file:Vayl/Features/Play/PlayView.swift": {
+      "name": "PlayView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Play/PlayView.swift",
+      "summary": "Placeholder Play tab View; in DEBUG builds it hosts a temporary stub-session button that exercises the curated-session insert path against Supabase."
+    },
+    "file:Vayl/Features/Progress/ProgressDashboardView.swift": {
+      "name": "ProgressDashboardView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Progress/ProgressDashboardView.swift",
+      "summary": "Progress dashboard View showing exploration score, per-category breakdown, and recent activity, sourced from DataStore's streak and session records."
+    },
+    "file:Vayl/Features/Pulse/CheckInShell.swift": {
+      "name": "CheckInShell.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pulse/CheckInShell.swift",
+      "summary": "Full-screen container for the Pulse check-in: PulseGraph fills the top 60% (always visible) while DailyCheckInView slides up in the bottom 40%, with camera bindings owned by PulseWidget."
+    },
+    "file:Vayl/Features/Pulse/DailyCheckInView.swift": {
+      "name": "DailyCheckInView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pulse/DailyCheckInView.swift",
+      "summary": "The 5-question daily check-in panel rendered inside CheckInShell; each pill answer moves liveScore so the live dot animates on the graph above, returning a PulseEntry on completion."
+    },
+    "file:Vayl/Features/Pulse/PulseCanvasScrollView.swift": {
+      "name": "PulseCanvasScrollView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pulse/PulseCanvasScrollView.swift",
+      "summary": "Pure SwiftUI two-axis ScrollView wrapper for PulseGraph that anchors to the most-recent entry and locks the outer dashboard scroll while a touch is on the graph."
+    },
+    "file:Vayl/Features/Pulse/PulseDotSummary.swift": {
+      "name": "PulseDotSummary.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pulse/PulseDotSummary.swift",
+      "summary": "Overlay View presenting a single Pulse entry's detail via a spectrum 'burn' that expands from the tapped dot, with ember particles and a smart above/below flip; dismiss collapses the burn back into the dot."
+    },
+    "file:Vayl/Features/Pulse/PulseFullView.swift": {
+      "name": "PulseFullView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pulse/PulseFullView.swift",
+      "summary": "Full Pulse history screen (stub) for the Me|Us tab — owns window selection and camera state, hosts a scrollable PulseGraph plus an insights placeholder and a full-screen dot burn summary overlay."
+    },
+    "file:Vayl/Features/Pulse/PulseGraph.swift": {
+      "name": "PulseGraph.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pulse/PulseGraph.swift",
+      "summary": "Core drawing primitive for the Pulse capacity timeline — a breathing spectrum EKG line with tier guide lines, tappable tier badges, animated welding sparks on the live segment, and an empty-state heartbeat demo."
+    },
+    "file:Vayl/Features/Pulse/PulseSheetView.swift": {
+      "name": "PulseSheetView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pulse/PulseSheetView.swift",
+      "summary": "Sheet presented from the Pulse home widget — mirrors the widget header, shows streak/avg-tier/trend stats, a window selector and graph card, and a single 'Open in Map' exit."
+    },
+    "file:Vayl/Features/Pulse/PulseWidget.swift": {
+      "name": "PulseWidget.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pulse/PulseWidget.swift",
+      "summary": "Compact Pulse timeline widget for the Home dashboard — reads entries from PulseStore, renders a chrome-free graph with a floating tier header, and launches the check-in cover and full-history sheet."
+    },
+    "file:Vayl/Features/Pulse/Store/PulseStore.swift": {
+      "name": "PulseStore.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pulse/Store/PulseStore.swift",
+      "summary": "Observable store owning the local list of daily PulseEntry check-ins, persisting them to UserDefaults with one-entry-per-day dedup and DEBUG preview seeding."
+    },
+    "file:Vayl/Features/Pulse/TierGuideSheet.swift": {
+      "name": "TierGuideSheet.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Pulse/TierGuideSheet.swift",
+      "summary": "Explanatory sheet presented when a Pulse tier badge is tapped, describing the four capacity tiers — Expansive, Sovereign, Protective, Contracted."
+    },
+    "file:Vayl/Features/Sessions/Debug/PresenceDebugView.swift": {
+      "name": "PresenceDebugView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Sessions/Debug/PresenceDebugView.swift",
+      "summary": "DEBUG-only two-device harness (store + view) that joins a Supabase couple channel via RealtimeSessionService and tracks presence join/leave deltas; throwaway scaffold ahead of the real AirlockStore."
+    },
+    "file:Vayl/Features/Sessions/SessionPlan.swift": {
+      "name": "SessionPlan.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Sessions/SessionPlan.swift",
+      "summary": "SwiftData @Model for a curated couple session plan — ordered card ids with optional per-card and global timers, preset/LDR flags, and a hardcoded stub for early two-device verification."
+    },
+    "file:Vayl/Features/Sessions/SessionStore.swift": {
+      "name": "SessionStore.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Sessions/SessionStore.swift",
+      "summary": "Brain of the card session flow — owns card navigation, records per-card results, and persists the completed CardSession, CardResults and DeckProgress to SwiftData, then enqueues a Supabase sync."
+    },
+    "file:Vayl/Features/Sessions/SessionView.swift": {
+      "name": "SessionView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Sessions/SessionView.swift",
+      "summary": "Thin render-only card session view driven entirely by SessionStore — shows the current card, progress pips, skip/bookmark/discussed controls, and a session-complete summary."
+    },
+    "file:Vayl/Features/Settings/SettingsView.swift": {
+      "name": "SettingsView.swift",
+      "type": "file",
+      "filePath": "Vayl/Features/Settings/SettingsView.swift",
+      "summary": "Settings screen with profile, partner pairing, appearance, privacy, data export and danger-zone sections, plus DEBUG-only presence-debug and logout-reset entries."
+    },
+    "config:Vayl/Resources/Decks/deck-index.json": {
+      "name": "deck-index.json",
+      "type": "config",
+      "filePath": "Vayl/Resources/Decks/deck-index.json",
+      "summary": "Manifest listing the available bundled deck content ids — currently just 'the-opener'."
+    },
+    "config:Vayl/Resources/Decks/the-opener.json": {
+      "name": "the-opener.json",
+      "type": "config",
+      "filePath": "Vayl/Resources/Decks/the-opener.json",
+      "summary": "Authored card-deck content file for 'The Opener' deck — the ordered prompt cards a couple plays in a session."
+    },
+    "config:Vayl/Vayl.entitlements": {
+      "name": "Vayl.entitlements",
+      "type": "config",
+      "filePath": "Vayl/Vayl.entitlements",
+      "summary": "App capability entitlements enabling Sign in with Apple (Default) and complete file data protection (NSFileProtectionComplete)."
+    },
+    "config:Vayl/Vayl.plist": {
+      "name": "Vayl.plist",
+      "type": "config",
+      "filePath": "Vayl/Vayl.plist",
+      "summary": "Info.plist supplying Supabase URL/anon-key build settings and registering the bundled Clash Display, Switzer, Zodiak, Volkhov and IBM Plex Mono fonts via UIAppFonts."
+    },
+    "config:Vayl/Vayl.storekit": {
+      "name": "Vayl.storekit",
+      "type": "config",
+      "filePath": "Vayl/Vayl.storekit",
+      "summary": "StoreKit test configuration defining the single non-consumable 'Vayl Core Lifetime' product (com.vayl.core.lifetime, $24.99) backing the paywall."
+    },
+    "file:VaylTests/CandleIntensityTests.swift": {
+      "name": "CandleIntensityTests.swift",
+      "type": "file",
+      "filePath": "VaylTests/CandleIntensityTests.swift",
+      "summary": "Unit tests asserting CandleIntensity's ordered cases match the experience-row slots and map to the correct NMStage values."
+    },
+    "file:VaylTests/ContextOptionTests.swift": {
+      "name": "ContextOptionTests.swift",
+      "type": "file",
+      "filePath": "VaylTests/ContextOptionTests.swift",
+      "summary": "Unit tests for the reason-based ContextPhase redesign — verifies cell option counts, solo single-anchoring, exploring/experienced set sharing, register derivation, and full RelationshipContext reachability."
+    },
+    "file:VaylTests/GettingStartedTests.swift": {
+      "name": "GettingStartedTests.swift",
+      "type": "file",
+      "filePath": "VaylTests/GettingStartedTests.swift",
+      "summary": "Unit tests for GettingStarted.resolve — checks step ordering and active/done/locked states across paired/unpaired and map-completion permutations."
+    },
+    "file:VaylTests/MonteRowGeometryTests.swift": {
+      "name": "MonteRowGeometryTests.swift",
+      "type": "file",
+      "filePath": "VaylTests/MonteRowGeometryTests.swift",
+      "summary": "Unit test verifying AppLayout.monteFanLayout produces an upright center card, mirror-symmetric outer angles/offsets, and a fan that fits within the screen width."
+    }
+  },
+  "totalNodes": 291,
+  "totalEdges": 738
+}

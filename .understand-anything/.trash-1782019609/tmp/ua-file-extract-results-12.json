@@ -1,0 +1,207 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "Vayl/Features/Onboarding/Phases/ContextPhase.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 392,
+      "nonEmptyLines": 352,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 373,
+      "nonEmptyLines": 333,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Phases/CuriosityPhase.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 433,
+      "nonEmptyLines": 391,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Phases/DemoPhase.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 654,
+      "nonEmptyLines": 584,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 478,
+      "nonEmptyLines": 434,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 177,
+      "nonEmptyLines": 152,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Phases/GenderPhase.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 553,
+      "nonEmptyLines": 505,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 483,
+      "nonEmptyLines": 432,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Phases/NamePhase.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 937,
+      "nonEmptyLines": 809,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Phases/SingleGreetingSheet.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 102,
+      "nonEmptyLines": 91,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Phases/StatPhase.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 619,
+      "nonEmptyLines": 545,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Renders/AnimatedSignature.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 354,
+      "nonEmptyLines": 307,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Renders/DealPointView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 44,
+      "nonEmptyLines": 37,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Renders/ProjectedTextView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 110,
+      "nonEmptyLines": 101,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 165,
+      "nonEmptyLines": 138,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pairing/PairingInviteView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 388,
+      "nonEmptyLines": 332,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pairing/PairingJoinView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 310,
+      "nonEmptyLines": 261,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pairing/PairingSettingsView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 228,
+      "nonEmptyLines": 194,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pairing/PairingStore.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 271,
+      "nonEmptyLines": 223,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Play/PlayView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 113,
+      "nonEmptyLines": 100,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Progress/ProgressDashboardView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 207,
+      "nonEmptyLines": 181,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pulse/CheckInShell.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 148,
+      "nonEmptyLines": 123,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pulse/DailyCheckInView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 699,
+      "nonEmptyLines": 598,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pulse/PulseCanvasScrollView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 65,
+      "nonEmptyLines": 55,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pulse/PulseDotSummary.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 648,
+      "nonEmptyLines": 562,
+      "metrics": {}
+    }
+  ]
+}

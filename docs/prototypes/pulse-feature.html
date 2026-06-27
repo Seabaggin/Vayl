@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — The Pulse (two-line capacity)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=switzer@400,500,600,700&display=swap">
+<style>
+  :root{
+    /* real AppColors primitives (Midnight) */
+    --void:#040308; --cbg:#12111A; --raised:#1A1825; --input:#0C0C10;
+    --hair:rgba(255,255,255,0.06); --hair2:rgba(255,255,255,0.10);
+    --cy:#00C2FF; --pu:#6C3AE0; --mg:#FF006A; --bridge:#8B6FD4;
+    --tp:#E8E8F0; --tb:rgba(255,255,255,0.82); --ts:rgba(255,255,255,0.65); --tt:rgba(255,255,255,0.38); --tm:rgba(255,255,255,0.20);
+    --gold:#C8960A; --gold-lt:#DDB13B;
+    --lbl:rgba(160,125,205,0.55);
+    --sp:linear-gradient(135deg,#00C2FF,#6C3AE0,#FF006A);
+    --display:'Clash Display',-apple-system,'SF Pro Display',sans-serif;
+    --body:'Switzer',-apple-system,'SF Pro Text',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{background:#0a0a0f;color:var(--tb);font-family:var(--body)}
+  .wrap{display:flex;min-height:100vh}
+
+  .panel{width:310px;flex-shrink:0;padding:26px 22px;background:#0a0a0f;border-right:1px solid #1b1b26;overflow-y:auto;height:100vh}
+  .panel h1{font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:var(--lbl);margin:0 0 4px}
+  .panel h2{font-size:17px;font-weight:600;color:var(--tp);margin:0 0 12px;font-family:var(--display)}
+  .panel p{font-size:12.5px;line-height:1.55;color:var(--ts)}
+  .panel .k{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--lbl);margin:18px 0 7px}
+  .panel li{font-size:12px;line-height:1.5;color:var(--ts);margin:0 0 6px 16px}
+  .panel li b{color:var(--tb)}
+  .panel .imp li{color:var(--tb)} .panel .imp li b{color:var(--cy)}
+  .toggleRow{display:flex;align-items:center;gap:10px;margin:11px 0}
+  .toggleRow span{font-size:12px;color:var(--ts)}
+  .toggle{width:42px;height:24px;border-radius:12px;cursor:pointer;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);position:relative;transition:background .25s;flex-shrink:0}
+  .toggle::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .25s}
+  .toggle.on{background:linear-gradient(90deg,var(--pu),var(--mg));box-shadow:0 0 14px rgba(108,58,224,0.45)}
+  .toggle.on::after{left:23px}
+  .flag{margin-top:16px;font-size:11px;line-height:1.5;color:var(--tt);padding:10px 12px;border-radius:10px;background:rgba(200,150,10,0.06);border:1px solid rgba(200,150,10,0.22)}
+  .flag b{color:var(--gold-lt)}
+
+  .stage{flex:1;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 80% at 50% 14%,#16121e 0%,#0a0a0f 60%);min-width:0;padding:30px}
+  .phone{width:390px;height:844px;background:var(--void);border-radius:50px;border:1.5px solid rgba(255,255,255,0.1);overflow:hidden;position:relative;box-shadow:0 0 0 1px rgba(255,255,255,0.04) inset,0 40px 120px rgba(0,0,0,0.8),0 0 60px rgba(108,58,224,0.12);flex-shrink:0;user-select:none}
+  .atmo{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(64px)}
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column}
+  .sb{height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0;position:relative;z-index:10}
+  .sbt{font-size:15px;font-weight:600;color:var(--tp)}
+  .bat{width:22px;height:11px;border:1.5px solid rgba(244,241,255,0.7);border-radius:2px;position:relative}
+  .bat::after{content:'';position:absolute;right:-4px;top:3px;width:2px;height:5px;background:rgba(244,241,255,0.5);border-radius:0 1px 1px 0}
+  .batf{position:absolute;inset:2px;right:4px;background:var(--tp);border-radius:1px;width:65%}
+
+  .body{flex:1;display:flex;flex-direction:column;padding:8px 22px 26px;position:relative;z-index:2}
+
+  /* ── Header: YOUR current capacity state (primary) + check-in ── */
+  .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .ph .eyebrow{font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--lbl)}
+  .ph .tier{font-family:var(--display);font-size:27px;font-weight:700;color:var(--tp);margin-top:6px;letter-spacing:-0.01em;line-height:1.05}
+  .ph .sub{font-size:12.5px;color:var(--ts);margin-top:4px}
+  .checkin{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;background:rgba(108,58,224,0.18);margin-top:14px}
+  .checkin::before{content:"";position:absolute;inset:0;border-radius:50%;padding:1.4px;background:var(--sp);-webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+  .checkin i{font-size:18px;color:var(--cy)}
+  .checkin:active{transform:scale(0.94)}
+
+  /* partner's current state — neutral fact, shown only in compare; never interpreted */
+  .partnerNow{display:none;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:var(--ts)}
+  .partnerNow.show{display:flex}
+  .partnerNow .pdot{width:16px;height:16px;border-radius:50%;border:1.4px dashed var(--bridge);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--tb);font-family:ui-monospace,Menlo,monospace}
+  .partnerNow b{color:var(--tb);font-weight:600}
+
+  /* ── Me / Compare toggle (secondary — primary view is your own line) ── */
+  .seg{display:flex;gap:4px;margin:16px 0 2px;background:rgba(255,255,255,0.04);border:1px solid var(--hair);border-radius:24px;padding:3px}
+  .seg b{flex:1;text-align:center;font-size:12.5px;font-weight:600;color:var(--ts);padding:8px 4px;border-radius:20px;cursor:pointer;transition:.18s;display:flex;align-items:center;justify-content:center;gap:6px}
+  .seg b i{font-size:14px}
+  .seg b.on{color:var(--tp);background:rgba(108,58,224,0.22);box-shadow:0 0 0 1px rgba(108,58,224,0.4) inset}
+
+  /* ── The capacity graph (PulseGraph) ── */
+  .graph{position:relative;height:248px;margin:14px -22px 2px;flex-shrink:0}
+  .graph svg{position:absolute;inset:0;width:100%;height:100%}
+  .ekg-glow{animation:breatheGlow 4s ease-in-out infinite}
+  .ekg-line{animation:breatheLine 4s ease-in-out infinite}
+  body.rm .ekg-glow,body.rm .ekg-line{animation:none}
+  @keyframes breatheLine{0%,100%{stroke-width:2.4}50%{stroke-width:2.8}}
+  @keyframes breatheGlow{0%,100%{stroke-width:5;opacity:0.16}50%{stroke-width:6.5;opacity:0.26}}
+  /* live beat at "now" — the heartbeat lives where it's truthful (the present), never in history */
+  .ping{animation:ping 1.3s ease-out infinite}
+  .beatdot{transform-box:fill-box;transform-origin:center;animation:lubdub 1.3s ease-in-out infinite}
+  .pbeat{transform-box:fill-box;transform-origin:center;animation:lubdub 1.7s ease-in-out infinite}
+  @keyframes lubdub{0%,42%,100%{transform:scale(1)}9%{transform:scale(1.5)}19%{transform:scale(1.06)}28%{transform:scale(1.3)}}
+  @keyframes ping{0%{r:5;opacity:0.5}9%{opacity:0.5}72%{r:19;opacity:0}100%{r:19;opacity:0}}
+  body.rm .ping{display:none}
+  body.rm .beatdot,body.rm .pbeat{animation:none}
+  /* the live ECG lead-out that beats out of the now-dot (baseline = current capacity; motion only) */
+  .leadSweep{stroke-dasharray:12 100;animation:sweep 1.3s linear infinite}
+  @keyframes sweep{from{stroke-dashoffset:112}to{stroke-dashoffset:0}}
+  body.rm .liveBeat{display:none}
+  /* empty-state monitor line placeholder */
+  .emptySweep{stroke-dasharray:14 100;animation:sweep 2.4s linear infinite}
+  body.rm .emptySweep{display:none}
+  .pt{cursor:pointer;transition:opacity .15s}
+  .zoneLetter{font:700 9px ui-monospace,Menlo,monospace}
+  .axisLbl{font:600 8.5px var(--body);fill:var(--tt)}
+  .pinitial{font:700 9px ui-monospace,Menlo,monospace}
+
+  /* selected-day readout (PulseDotSummary, simplified) */
+  .readout{font-size:11.5px;color:var(--ts);text-align:center;margin-top:10px;min-height:16px}
+  .readout b{color:var(--tp);font-weight:700}
+  .readout .who{font-weight:700;color:var(--bridge)}
+  .readout.empty{color:var(--tt)}
+
+  /* ── time in each space — your own data summary (Me mode only) ── */
+  .space{margin-top:18px}
+  .space .sl{font-size:9.5px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--lbl);margin-bottom:9px}
+  .spaceBar{display:flex;gap:2px;height:8px;border-radius:4px;overflow:hidden}
+  .spaceBar i{display:block;height:100%}
+  .spaceLeg{display:flex;flex-wrap:wrap;gap:11px;margin-top:10px}
+  .spaceLeg span{font-size:11px;color:var(--ts);display:flex;align-items:center;gap:5px}
+  .spaceLeg .d{width:8px;height:8px;border-radius:2px}
+  .spaceCap{font-size:11px;color:var(--tt);margin-top:9px}.spaceCap b{color:var(--ts);font-weight:600}
+
+  /* full history link — the long-window selector lives one screen deeper now */
+  .histLink{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:22px;font-size:11.5px;font-weight:600;color:var(--ts);cursor:pointer}
+  .histLink i{font-size:14px}
+  .histLink:active{opacity:.6}
+
+  @media (max-width:980px){.panel{display:none}}
+</style>
+</head>
+<body class="rich">
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="spark" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00C2FF"/><stop offset="52%" stop-color="#6C3AE0"/><stop offset="100%" stop-color="#FF006A"/></linearGradient>
+  <linearGradient id="areaFade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a5cff" stop-opacity="0.14"/><stop offset="0.65" stop-color="#7a5cff" stop-opacity="0.03"/><stop offset="1" stop-color="#7a5cff" stop-opacity="0"/></linearGradient>
+  <linearGradient id="edgeFade" x1="0%" y1="0" x2="100%" y2="0"><stop offset="0" stop-color="#000"/><stop offset="0.09" stop-color="#fff"/><stop offset="0.91" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+  <mask id="fadeMask"><rect x="0" y="0" width="390" height="248" fill="url(#edgeFade)"/></mask>
+</defs></svg>
+
+<div class="wrap">
+  <aside class="panel">
+    <h1>Vayl · The Pulse</h1>
+    <h2>Two-line capacity</h2>
+    <p><b style="color:var(--tb)">Primary</b> is your own capacity over time, a data mirror of your check-ins. <b style="color:var(--tb)">Secondary</b> is a toggle that overlays your partner's line so you can see the gap between your two capacities.</p>
+
+    <div class="k">The graph language</div>
+    <ul>
+      <li><b>Smooth line</b> — flowing capacity curve, spectrum styling, no jagged EKG.</li>
+      <li><b>You = solid · partner = dashed</b> + their initial. Color is decorative and identical for both; it encodes nothing.</li>
+      <li><b>Neutral tier zones</b> — E / S / F / P bands as a quiet backdrop, not colored grid lines.</li>
+      <li><b>Tap a dot</b> → that day's check-in summary.</li>
+      <li><b>Shared date axis</b> — both lines connect their own check-ins by date, last ~7.</li>
+    </ul>
+
+    <div class="k imp" style="color:var(--cy)">The read</div>
+    <ul class="imp">
+      <li>In compare, the read is the <b>gap</b> between the two lines.</li>
+      <li><b>Shown, never interpreted</b> — no "in sync" / "drifting" labels, no advice. A neutral mirror.</li>
+    </ul>
+
+    <div class="k">Try it</div>
+    <div class="toggleRow"><div class="toggle" id="cmpToggle"></div><span id="cmpLabel">Compare: off (your line)</span></div>
+    <div class="toggleRow"><div class="toggle on" id="dataToggle"></div><span id="dataLabel">Data: 7 check-ins</span></div>
+    <div class="toggleRow"><div class="toggle" id="rmToggle"></div><span>Reduce Motion</span></div>
+
+    <div class="flag">Code bug to fix: <b>PulseGraph</b> tier letters read <b>E / S / P / C</b>, but the <b>PulseTier</b> enum is expansive / sovereign / friction / protective. This proto uses the correct <b>E / S / F / P</b>.</div>
+  </aside>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="atmo">
+        <div class="blob" style="width:300px;height:300px;background:radial-gradient(circle,rgba(0,194,255,0.10),transparent 70%);top:-40px;left:-50px"></div>
+        <div class="blob" style="width:260px;height:260px;background:radial-gradient(circle,rgba(255,0,106,0.07),transparent 70%);top:200px;right:-60px"></div>
+        <div class="blob" style="width:320px;height:320px;background:radial-gradient(circle,rgba(108,58,224,0.08),transparent 70%);bottom:120px;left:-30px"></div>
+      </div>
+      <div class="screen">
+        <div class="sb"><span class="sbt">9:41</span><div class="bat"><div class="batf"></div></div></div>
+        <div class="body">
+          <div class="ph">
+            <div style="flex:1;min-width:0">
+              <div class="eyebrow">The Pulse</div>
+              <div class="tier" id="tierLabel">The Expansive Space</div>
+              <div class="sub" id="tierSub">Connected · Adventurous</div>
+              <div class="partnerNow" id="partnerNow"><span class="pdot" id="pInitialDot">M</span><span><b id="pName">Mara</b> · <span id="pTier">The Friction Space</span></span></div>
+            </div>
+            <div class="checkin" id="checkin"><i class="ti ti-plus"></i></div>
+          </div>
+
+          <div class="seg" id="seg">
+            <b class="on" data-m="me"><i class="ti ti-user"></i>You</b>
+            <b data-m="us"><i class="ti ti-users"></i>Compare</b>
+          </div>
+
+          <div class="graph" id="graph"></div>
+
+          <div class="readout" id="readout"><b>Today</b> · The Expansive Space · grounded, clear, open</div>
+
+          <div class="space" id="spaceBlock">
+            <div class="sl">Your time in each space · last 2 weeks</div>
+            <div class="spaceBar" id="spaceBar"></div>
+            <div class="spaceLeg" id="spaceLeg"></div>
+            <div class="spaceCap" id="spaceCap"></div>
+          </div>
+
+          <div class="histLink" id="histLink"><i class="ti ti-history"></i>View full history</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+
+// PulseTier — names KEPT (expansive/sovereign/friction/protective). Capacity = vertical height.
+const TIERS=[
+  {key:'expansive', letter:'E', label:'The Expansive Space', sub:'Connected · Adventurous', min:3.5},
+  {key:'sovereign', letter:'S', label:'The Sovereign Space', sub:'Grounded · Secure',       min:2.5},
+  {key:'friction',  letter:'F', label:'The Friction Space',  sub:'Anxious · Defensive',      min:1.5},
+  {key:'protective',letter:'P', label:'The Protective Space', sub:'Overwhelmed · Need space', min:0},
+];
+function tierFor(s){return TIERS.find(t=>s>=t.min);}
+const WORDS=['tender, holding on','steady, a little tired','grounded, opening up','clear, present','grounded, open','light, clear','open, curious','quiet, guarded','full, a bit thin'];
+
+const PARTNER={name:'Mara',initial:'M'};
+
+// shared recent-date axis (last ~2 weeks). Each person checks in on their own days.
+const AXIS_MAX=13; // slot 13 = Today
+const DAY_LABEL=s=>s===13?'Today':s===12?'Yesterday':`${13-s}d ago`;
+
+// YOU — 7 check-ins climbing into Expansive
+const YOU={slots:[1,3,5,7,9,11,13], scores:[2.4,2.6,2.9,3.1,3.3,3.6,3.8]};
+// PARTNER — 7 check-ins, lower and flatter (a visible gap, shown not interpreted)
+const PAR={slots:[0,2,4,6,8,10,12], scores:[2.1,1.9,2.2,2.0,2.3,2.4,2.2]};
+
+const VB={w:390,h:248,padL:30,padR:56,padT:20,padB:30};
+const plotH=VB.h-VB.padT-VB.padB;
+const tierY=s=>VB.padT+(4-s)/3*plotH;
+const xAt=slot=>VB.padL+(slot/AXIS_MAX)*(VB.w-VB.padL-VB.padR);
+
+let compare=false;
+
+// stylised ECG (flat baseline + QRS beats) — decorative, used only in the live "now" zone + empty placeholder
+function ecg(y,x0,x1,beats,R){
+  const span=(x1-x0)/beats; let d=`M ${x0.toFixed(1)} ${y.toFixed(1)}`;
+  for(let i=0;i<beats;i++){
+    const c=x0+span*i+span*0.5, a=Math.min(6,span*0.07);
+    d+=` L ${(c-2.4*a).toFixed(1)} ${y.toFixed(1)}`
+      +` L ${(c-1.4*a).toFixed(1)} ${(y+R*0.18).toFixed(1)}`
+      +` L ${(c-0.5*a).toFixed(1)} ${(y-R).toFixed(1)}`
+      +` L ${(c+0.4*a).toFixed(1)} ${(y+R*0.32).toFixed(1)}`
+      +` L ${(c+1.4*a).toFixed(1)} ${y.toFixed(1)}`;
+  }
+  return d+` L ${x1.toFixed(1)} ${y.toFixed(1)}`;
+}
+
+// Catmull-Rom → cubic bézier — smooth flowing line
+function smoothPath(pts){
+  if(pts.length<2) return `M ${pts[0][0]} ${pts[0][1]}`;
+  let d=`M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[i-1]||pts[i], p1=pts[i], p2=pts[i+1], p3=pts[i+2]||pts[i+1];
+    const c1x=p1[0]+(p2[0]-p0[0])/6, c1y=p1[1]+(p2[1]-p0[1])/6;
+    const c2x=p2[0]-(p3[0]-p1[0])/6, c2y=p2[1]-(p3[1]-p1[1])/6;
+    d+=` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+  }
+  return d;
+}
+
+// neutral tier-zone backdrop — faint bands + letters. Active band (your now) slightly brighter.
+function zonesSVG(activeKey){
+  const bounds=[tierY(4),tierY(3.5),tierY(2.5),tierY(1.5),tierY(1)];
+  const fills=[0.045,0.022,0.045,0.022]; // alternating faint
+  let g='<g>';
+  TIERS.forEach((t,i)=>{
+    const y0=bounds[i], y1=bounds[i+1], on=t.key===activeKey;
+    g+=`<rect x="0" y="${y0.toFixed(1)}" width="390" height="${(y1-y0).toFixed(1)}" fill="#fff" fill-opacity="${(on?0.07:fills[i]).toFixed(3)}"/>`;
+    const cy=(y0+y1)/2+3;
+    g+=`<text x="16" y="${cy.toFixed(1)}" class="zoneLetter" fill="#fff" fill-opacity="${on?0.8:0.32}">${t.letter}</text>`;
+  });
+  // faint separators
+  [1,2,3].forEach(i=>{g+=`<line x1="0" y1="${bounds[i].toFixed(1)}" x2="390" y2="${bounds[i].toFixed(1)}" stroke="#fff" stroke-opacity="0.05" stroke-width="1" mask="url(#fadeMask)"/>`;});
+  g+='</g>';
+  return g;
+}
+
+// sparse date labels along the bottom
+function axisSVG(){
+  const marks=[0,4,8,13];
+  return marks.map(s=>`<text x="${xAt(s).toFixed(1)}" y="${(VB.h-9).toFixed(1)}" text-anchor="middle" class="axisLbl">${DAY_LABEL(s)}</text>`).join('');
+}
+
+// one person's dots
+function dotsFor(series,who,isYou){
+  let out='';
+  series.slots.forEach((slot,i)=>{
+    const s=series.scores[i], x=xAt(slot).toFixed(1), y=tierY(s).toFixed(1);
+    const isNow=i===series.slots.length-1;
+    const words=WORDS[(slot)%WORDS.length], tl=tierFor(s);
+    const meta=`data-who="${who}" data-you="${isYou}" data-day="${DAY_LABEL(slot)}" data-tier="${tl.label}" data-words="${words}"`;
+    if(isYou){
+      if(isNow){
+        out+=`<circle class="ping" cx="${x}" cy="${y}" r="5" fill="url(#spark)" fill-opacity="0.5"/>`;
+        out+=`<circle class="beatdot pt" ${meta} cx="${x}" cy="${y}" r="5.4" fill="#0a0810" stroke="url(#spark)" stroke-width="2.6"/>`;
+      }else{
+        out+=`<circle class="pt" ${meta} cx="${x}" cy="${y}" r="3.2" fill="#fff" fill-opacity="0.62"/>`;
+        out+=`<circle class="pt" ${meta} cx="${x}" cy="${y}" r="13" fill="transparent"/>`;
+      }
+    }else{
+      // partner — hollow dashed-feel ring, recessive; their "now" gets a gentler beat
+      out+=`<circle class="${isNow?'pbeat ':''}pt" ${meta} cx="${x}" cy="${y}" r="3.4" fill="#0a0810" stroke="url(#spark)" stroke-width="1.4" stroke-opacity="0.7"/>`;
+      out+=`<circle class="pt" ${meta} cx="${x}" cy="${y}" r="13" fill="transparent"/>`;
+    }
+  });
+  return out;
+}
+
+function renderRich(){
+  const youPts=YOU.slots.map((slot,i)=>[xAt(slot),tierY(YOU.scores[i])]);
+  const parPts=PAR.slots.map((slot,i)=>[xAt(slot),tierY(PAR.scores[i])]);
+  const yourActive=tierFor(YOU.scores.at(-1)).key;
+  const youLine=smoothPath(youPts), parLine=smoothPath(parPts);
+  const by=VB.h-VB.padB;
+  const area=`${youLine} L ${youPts.at(-1)[0].toFixed(1)} ${by} L ${youPts[0][0].toFixed(1)} ${by} Z`;
+
+  let partnerSvg='';
+  if(compare){
+    // partner leading-end initial badge
+    const lead=parPts.at(-1);
+    partnerSvg=`
+      <path class="ekg-line" d="${parLine}" fill="none" stroke="url(#spark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 5" opacity="0.72"/>
+      ${dotsFor(PAR,PARTNER.initial,false)}
+      <g transform="translate(${(lead[0]+13).toFixed(1)},${lead[1].toFixed(1)})">
+        <circle r="9" fill="#0a0810" stroke="url(#spark)" stroke-width="1.2" stroke-opacity="0.8" stroke-dasharray="3 3"/>
+        <text text-anchor="middle" y="3.2" class="pinitial" fill="#fff" fill-opacity="0.85">${PARTNER.initial}</text>
+      </g>`;
+  }
+
+  // live beat — an ECG lead-out from the now-dot, baseline pinned to your current capacity (honest; the beat lives in the present)
+  const xNow=youPts.at(-1)[0], yNow=youPts.at(-1)[1], xEnd=VB.w-8;
+  let lead='';
+  if(xEnd-xNow>26){
+    const lp=ecg(yNow,xNow,xEnd,1,20);
+    lead=`<g class="liveBeat">
+      <path d="${lp}" fill="none" stroke="url(#spark)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.22"/>
+      <path class="leadSweep" pathLength="100" d="${lp}" fill="none" stroke="url(#spark)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>`;
+  }
+
+  $('graph').innerHTML=`<svg viewBox="0 0 ${VB.w} ${VB.h}">
+    ${zonesSVG(yourActive)}
+    ${axisSVG()}
+    <path d="${area}" fill="url(#areaFade)" stroke="none"/>
+    <path class="ekg-glow" d="${youLine}" fill="none" stroke="url(#spark)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.2" filter="blur(4px)"/>
+    <path class="ekg-line" d="${youLine}" fill="none" stroke="url(#spark)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    ${lead}
+    ${partnerSvg}
+    ${dotsFor(YOU,'You',true)}
+  </svg>`;
+
+  // header = YOUR current state (primary)
+  const at=TIERS.find(t=>t.key===yourActive);
+  $('tierLabel').textContent=at.label; $('tierSub').textContent=at.sub;
+
+  // partner current state — neutral fact only, compare only
+  const pTier=tierFor(PAR.scores.at(-1));
+  $('partnerNow').classList.toggle('show',compare);
+  $('pName').textContent=PARTNER.name; $('pInitialDot').textContent=PARTNER.initial;
+  $('pTier').textContent=pTier.label;
+
+  // default readout = your today
+  $('readout').className='readout';
+  $('readout').innerHTML=`<b>Today</b> · ${at.label} · ${WORDS[13%WORDS.length]}`;
+
+  // your time in each space (Me mode only — it's your data summary)
+  if(!compare){
+    $('spaceBlock').style.display='';
+    const counts={expansive:0,sovereign:0,friction:0,protective:0};
+    YOU.scores.forEach(s=>counts[tierFor(s).key]++);
+    const n=YOU.scores.length, pct=k=>Math.round(counts[k]/n*100);
+    const zc={expansive:'#00C2FF',sovereign:'#6C3AE0',friction:'#FF006A',protective:'#FF5C8A'};
+    $('spaceBar').innerHTML=TIERS.map(t=>pct(t.key)>0?`<i style="width:${pct(t.key)}%;background:${zc[t.key]}"></i>`:'').join('');
+    $('spaceLeg').innerHTML=TIERS.filter(t=>pct(t.key)>0).map(t=>`<span><span class="d" style="background:${zc[t.key]}"></span>${t.label.replace('The ','').replace(' Space','')} ${pct(t.key)}%</span>`).join('');
+    const top=TIERS.slice().sort((a,b)=>counts[b.key]-counts[a.key])[0];
+    $('spaceCap').innerHTML=`Mostly the <b>${top.label.replace('The ','')}</b> these two weeks.`;
+  }else{
+    $('spaceBlock').style.display='none';
+  }
+  wireDots();
+}
+
+function renderEmpty(){
+  // the EKG line is now the empty placeholder — a live cardiac monitor across the width
+  const yb=VB.padT+plotH/2;
+  const d=ecg(yb,6,VB.w-6,4,34);
+  $('graph').innerHTML=`<svg viewBox="0 0 ${VB.w} ${VB.h}">
+    ${zonesSVG('sovereign')}
+    <path d="${d}" fill="none" stroke="url(#spark)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.12" filter="blur(3px)"/>
+    <path d="${d}" fill="none" stroke="url(#spark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
+    <path class="emptySweep" pathLength="100" d="${d}" fill="none" stroke="url(#spark)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+  $('tierLabel').textContent='Your Pulse'; $('tierSub').textContent='Check in to begin your line';
+  $('partnerNow').classList.remove('show');
+  $('readout').className='readout empty';
+  $('readout').textContent='No check-ins yet. Tap ＋ to log how today feels.';
+  $('spaceBlock').style.display='none';
+}
+
+function wireDots(){
+  document.querySelectorAll('#graph .pt').forEach(pt=>pt.addEventListener('click',()=>{
+    const isYou=pt.dataset.you==='true';
+    const whoLabel=isYou?'You':pt.dataset.who;
+    $('readout').className='readout';
+    $('readout').innerHTML=`<span class="who">${whoLabel}</span> · <b>${pt.dataset.day}</b> · ${pt.dataset.tier} · ${pt.dataset.words}`;
+  }));
+}
+
+function setData(on){
+  $('dataToggle').classList.toggle('on',on);
+  $('dataLabel').textContent=on?'Data: 7 check-ins':'Data: empty (new)';
+}
+
+// ── controls ──
+function render(){ $('dataToggle').classList.contains('on')?renderRich():renderEmpty(); }
+
+function setCompare(on){
+  compare=on;
+  $('cmpToggle').classList.toggle('on',on);
+  $('cmpLabel').textContent=on?'Compare: on (partner overlay)':'Compare: off (your line)';
+  document.querySelectorAll('#seg b').forEach(b=>b.classList.toggle('on',(b.dataset.m==='us')===on));
+  render();
+}
+
+$('seg').addEventListener('click',e=>{const b=e.target.closest('b');if(!b)return;setCompare(b.dataset.m==='us');});
+$('cmpToggle').addEventListener('click',()=>setCompare(!compare));
+$('dataToggle').addEventListener('click',()=>{setData(!$('dataToggle').classList.contains('on'));render();});
+$('rmToggle').addEventListener('click',()=>{$('rmToggle').classList.toggle('on');document.body.classList.toggle('rm');});
+$('checkin').addEventListener('click',()=>{
+  $('readout').className='readout empty';
+  $('readout').textContent='Check-in expands here with the graph as the stage (the live dot moves as you answer the 5 questions).';
+  setTimeout(()=>render(),2200);
+});
+$('histLink').addEventListener('click',()=>{
+  $('readout').className='readout empty';
+  $('readout').textContent='Full history — the 1W…2Y / All window selector lives on this deeper screen.';
+  setTimeout(()=>render(),2000);
+});
+
+render();
+</script>
+</body>
+</html>

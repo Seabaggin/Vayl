@@ -168,10 +168,7 @@ struct FounderLetterPhase: View {
             withAnimation(AppAnimation.spring.reduceMotionSafe) { dismissDrag = 0 }
         } else {
             // the set changed behind the curtain — complete the descent.
-            // 0.45s easeInOut: the OB's final gesture deserves a settled fall,
-            // not the 0.2s easeIn snap (AppAnimation.exit) — half its own
-            // 0.4s arrival, the most abrupt animation in the flow.
-            withAnimation(.easeInOut(duration: 0.45).reduceMotionSafe) {
+            withAnimation(AppAnimation.curtainFall.reduceMotionSafe) {
                 departing = true
                 dismissDrag = 0
             }

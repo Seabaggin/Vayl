@@ -5,7 +5,8 @@
       "name": "mockup",
       "runtimeExecutable": "node",
       "runtimeArgs": ["docs/mockups/server.js"],
-      "port": 7331
+      "port": 7331,
+      "autoPort": false
     },
     {
       "name": "roadmap",

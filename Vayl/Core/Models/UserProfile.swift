@@ -72,6 +72,13 @@ final class UserProfile {
 
     var hasCompletedDesireMap: Bool
 
+    // MARK: - Identity Card (Map)
+    // Net-new V1 identity, set on the Me Card and persisted here. Optional so the
+    // additive change is a lightweight SwiftData migration (no real users yet).
+
+    var flavor: String?         // Flavor.rawValue — explorer / anchor / catalyst / architect
+    var chosenTitle: String?    // the Title chosen from the flavor's shortlist
+
     // MARK: - Init
 
     init(
@@ -94,7 +101,9 @@ final class UserProfile {
         archetype: ArchetypeTag = .curious,
         curiositySelections: [String] = [],
         nmCardResponse: String? = nil,
-        openerDeckType: OpenerDeckType = .anxious
+        openerDeckType: OpenerDeckType = .anxious,
+        flavor: String? = nil,
+        chosenTitle: String? = nil
     ) {
         self.id = UUID()
         self.accountId = nil
@@ -128,6 +137,8 @@ final class UserProfile {
         self.coupleId = nil
         self.linkedAt = nil
         self.hasCompletedDesireMap = false
+        self.flavor = flavor
+        self.chosenTitle = chosenTitle
     }
 
     // MARK: - Computed

@@ -33,6 +33,20 @@ struct SnapshotCardFace: View {
 
     private var sentenceSize: CGFloat { min(cardWidth * 0.13, 32) }
 
+    /// Noun font eases down with length: short words stay a decent size, longer
+    /// phrases ease smaller instead of truncating ("freed.."). A hard fit-cap
+    /// guarantees it never overflows the card's padded width.
+    private var nounSize: CGFloat {
+        guard !noun.isEmpty else { return sentenceSize }
+        let n = CGFloat(noun.count)
+        // Soft (1.0%/char) so longer phrases stay large; fit-cap below bounds them.
+        let gentle = sentenceSize * max(0.62, 1 - 0.010 * max(0, n - 5))
+        let avail  = cardWidth - AppSpacing.lg * 2
+        let estW   = sentenceSize * n * 0.60
+        let fit    = estW <= avail ? sentenceSize : sentenceSize * (avail / estW)
+        return min(gentle, fit)
+    }
+
     var body: some View {
         ZStack {
             // Tone wash — a soft bloom that warms/cools with the verb.
@@ -68,9 +82,9 @@ struct SnapshotCardFace: View {
                         .font(AppFonts.display(sentenceSize, weight: .semibold, relativeTo: .title))
                 } else {
                     LivingText(text: noun,
-                               font: AppFonts.display(sentenceSize, weight: .semibold, relativeTo: .title))
+                               font: AppFonts.display(nounSize, weight: .semibold, relativeTo: .title))
                         .lineLimit(1)
-                        .minimumScaleFactor(0.5)
+                        .minimumScaleFactor(0.4)   // final net if the width estimate runs wide
                 }
             }
             .padding(.horizontal, AppSpacing.lg)

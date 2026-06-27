@@ -36,6 +36,10 @@ final class PulseStore {
         entries.append(entry)
         entries.sort { $0.date < $1.date }
         save()
+        // Broadcast current capacity to the partner (if sharing is on). Fire-and-forget;
+        // local save above is the source of truth. RLS gates partner visibility.
+        let score = entry.capacityScore
+        Task { await PulseSyncService.shared.pushCurrentCapacity(score: score) }
     }
 
     func remove(id: UUID) {

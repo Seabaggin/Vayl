@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Couple Session · Deal → Ember Morph</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --void: #0a0810; --ink: #070610; --cardBg: #120f1a;
+    --cyan: #00c2ff; --cyanL: #4dd8ff; --purple: #6c3ae0; --purpleL: #a78bfa;
+    --magenta: #ff006a; --magentaL: #ff4d94; --bridge: #8b6fd4;
+    --label: rgba(160,125,205,0.48);
+    --t-display: rgba(236,234,242,0.95); --t-primary: rgba(255,255,255,0.90);
+    --t-secondary: rgba(255,255,255,0.55); --t-tertiary: rgba(255,255,255,0.34);
+    --disp: "Clash Display", -apple-system, sans-serif;
+    --body: "Switzer", -apple-system, BlinkMacSystemFont, sans-serif;
+    --deal: 520ms; --expand: 900ms; --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --dive: cubic-bezier(0.5, 0, 0.32, 1);
+    --cw: 340px; --ch: 241px;            /* sessionCard: 88% of 390 × 0.708 */
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #131218; color: var(--t-primary); font-family: var(--body); }
+  .spectrum-text { background: linear-gradient(90deg, var(--cyan), var(--bridge) 40%, var(--magenta)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .wrap { display: flex; min-height: 100vh; }
+
+  .panel { width: 322px; flex-shrink: 0; padding: 30px 26px 60px; background: #0e0d14; border-right: 1px solid #1c1a28; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
+  .panel .brand { font-family: var(--disp); font-size: 13px; font-weight: 600; letter-spacing: 0.34em; margin: 0 0 2px; color: var(--t-display); }
+  .panel h2 { font-family: var(--disp); font-size: 19px; font-weight: 500; margin: 0 0 10px; color: var(--t-display); line-height: 1.25; }
+  .panel .lede { font-size: 12.5px; line-height: 1.6; color: var(--t-secondary); margin: 0 0 22px; }
+  .step { display: flex; gap: 11px; font-size: 12px; line-height: 1.5; color: var(--t-secondary); margin-bottom: 12px; }
+  .step .k { font-family: var(--disp); font-weight: 600; font-size: 12px; min-width: 16px; }
+  .step b { color: var(--t-primary); font-weight: 500; }
+  .hint-line { border-top: 1px solid #1c1a28; margin-top: 18px; padding-top: 18px; font-size: 11.5px; line-height: 1.6; color: var(--t-tertiary); }
+  .hint-line b { color: var(--t-secondary); font-weight: 500; }
+  .row { display: flex; align-items: center; gap: 10px; margin: 18px 0 0; }
+  .row span { font-size: 11.5px; color: var(--t-secondary); }
+  .toggle { width: 40px; height: 23px; border-radius: 12px; cursor: pointer; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); position: relative; transition: background 0.25s; flex: none; }
+  .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: left 0.25s; }
+  .toggle.on { background: linear-gradient(90deg, var(--purple), var(--magenta)); }
+  .toggle.on::after { left: 22px; }
+  .speed-row { display: flex; gap: 8px; margin-top: 18px; }
+  .speed-row button { flex: 1; font-family: var(--body); font-size: 11px; color: var(--t-secondary); background: transparent; border: 1px solid #1c1a28; border-radius: 8px; padding: 7px 0; cursor: pointer; }
+  .speed-row button.active { color: var(--t-display); border-color: rgba(108,58,224,0.6); background: rgba(108,58,224,0.08); }
+  .resetbtn { width: 100%; margin-top: 16px; font-family: var(--body); font-size: 12px; color: var(--t-secondary); background: transparent; border: 1px solid #1c1a28; border-radius: 9px; padding: 10px 0; cursor: pointer; }
+  .resetbtn:hover { border-color: rgba(108,58,224,0.4); color: var(--t-primary); }
+
+  .stage { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 40px;
+    background: radial-gradient(130% 90% at 50% 10%, #1b1a22 0%, #111016 60%); }
+  .phone { position: relative; width: 390px; height: 844px; border-radius: 50px; overflow: hidden; background: var(--ink);
+    box-shadow: 0 36px 90px rgba(0,0,0,0.62), inset 0 0 0 1.5px rgba(255,255,255,0.05); }
+  .voidbg { position: absolute; inset: 0; background: var(--void); }
+  .atmo { position: absolute; inset: 0; pointer-events: none; transition: opacity var(--expand) var(--ease); }
+  .atmo .drift { position: absolute; inset: 0; animation: drift 12s ease-in-out infinite alternate; }
+  body.rm .atmo .drift { animation: none; }
+  @keyframes drift { from { transform: translate(0,0); } to { transform: translate(-6px,8px); } }
+  .blob { position: absolute; border-radius: 50%; filter: blur(64px); transform: translate(-50%,-50%); }
+  .b-base { left:195px; top:700px; width:420px; height:340px; background: radial-gradient(closest-side, rgba(255,0,106,0.16), transparent 74%); animation: emberBreathe 6.5s ease-in-out infinite; }
+  .b-top  { left:120px; top:210px; width:300px; height:280px; background: radial-gradient(closest-side, rgba(108,58,224,0.10), transparent 76%); animation: emberBreathe 8.5s ease-in-out 1.2s infinite; }
+  body.rm .b-base, body.rm .b-top { animation: none; }
+  /* the warm ember slowly breathes — the screen stays alive even sitting in the background */
+  @keyframes emberBreathe { 0%,100% { opacity: 0.62; transform: translate(-50%,-50%) scale(1); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.07); } }
+
+  /* idle dim — once the session starts and phones go down, the screen recedes; touch wakes it */
+  .dimveil { position: absolute; inset: 0; z-index: 6; pointer-events: none; background: rgba(4,3,9,0); transition: background 1.7s ease; }
+  .phone.dimmed .dimveil { background: rgba(4,3,9,0.5); }
+  .phone.waking .dimveil { transition: background 0.4s ease; }
+  .phone[data-state="card"] .atmo, .phone[data-state="reset"] .atmo, .phone[data-state="discard"] .atmo { opacity: 0.4; }
+  .phone[data-state="open"] .atmo, .phone[data-state="refold"] .atmo { opacity: 1; }
+
+  .notch { position: absolute; top: 13px; left: 50%; transform: translateX(-50%); width: 112px; height: 30px; background: #000; border-radius: 18px; z-index: 9; }
+  .home-ind { position: absolute; bottom: 9px; left: 50%; transform: translateX(-50%); width: 128px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.22); z-index: 9; }
+  .sb { position: absolute; top: 0; left: 0; right: 0; z-index: 8; display: flex; justify-content: space-between; padding: 17px 40px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7); pointer-events: none; }
+  .sb .ic { letter-spacing: 2px; font-size: 11px; opacity: 0.72; }
+
+  /* ════════ shared VaylCardFace / VaylCardBack anatomy ════════ */
+  /* rounded spectrum-gradient borders via mask-exclude (border-image can't round) */
+  .frameOuter, .frameInset { position: absolute; border-radius: 14px; pointer-events: none;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; }
+  .frameOuter { inset: 0; padding: 1.1px;          /* outer hairline · 52% */
+    background: linear-gradient(135deg, rgba(0,194,255,0.52), rgba(108,58,224,0.52) 50%, rgba(255,0,106,0.52)) border-box; }
+  .frameInset { inset: 9px; border-radius: 10px; padding: 0.6px;  /* inset frame · 27% */
+    background: linear-gradient(135deg, rgba(0,194,255,0.27), rgba(108,58,224,0.27) 50%, rgba(255,0,106,0.27)) border-box; }
+  .edgeHair { position: absolute; left: 14px; right: 14px; height: 1.2px; opacity: 0.6; pointer-events: none;
+    background: linear-gradient(90deg, var(--cyan), var(--purple) 50%, var(--magenta)); }
+  .edgeHair.t { top: 0.75px; } .edgeHair.b { bottom: 0.75px; }
+
+  .face { position: absolute; inset: 0; border-radius: 14px; overflow: hidden; background: var(--cardBg); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  /* front atmosphere — the still side (lower opacity) */
+  .face.front .atmoF { position: absolute; inset: 0; background:
+    radial-gradient(circle at 30% 32%, rgba(0,194,255,0.07), transparent 50%),
+    radial-gradient(circle at 72% 70%, rgba(255,0,106,0.07), transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(108,58,224,0.11), transparent 46%); }
+  .face.front .cardPrompt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 0 24px; font-family: var(--disp); font-weight: 500; font-size: 17px; line-height: 1.42; color: rgba(255,255,255,0.92); letter-spacing: -0.005em; }
+  /* back — wordmark + hex moiré */
+  .face.back { transform: rotateY(180deg); }
+  .face.back .atmoB { position: absolute; inset: 0; background:
+    radial-gradient(circle at 38% 36%, rgba(0,194,255,0.09), transparent 52%),
+    radial-gradient(circle at 65% 66%, rgba(255,0,106,0.09), transparent 52%),
+    radial-gradient(circle at 50% 50%, rgba(108,58,224,0.15), transparent 48%); }
+  .face.back .hex { position: absolute; inset: 0; }
+  .face.back .hex svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(0.4px); }
+  .face.back .wm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-top: 4px;
+    font-family: var(--disp); font-weight: 500; font-size: 13px; letter-spacing: 7px; padding-left: 7px;
+    text-shadow: 0 0 7px rgba(108,58,224,0.45); }
+
+  /* ════════ CARD LAYER — landscape, deals + flips + morphs ════════ */
+  .cardLayer { position: absolute; left: 50%; top: 50%; width: var(--cw); height: var(--ch); z-index: 6; cursor: pointer;
+    perspective: 1400px;
+    box-shadow: 0 24px 54px rgba(0,0,0,0.55), 0 0 16px rgba(255,0,106,0.08);
+    border-radius: 14px;
+    transform: translate(-50%,-50%) scale(1); opacity: 1;
+    transition: transform var(--expand) var(--ease), opacity calc(var(--expand) * 0.55) var(--ease); }
+  .flipper { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateY(0deg);
+    transition: transform var(--deal) var(--ease), opacity calc(var(--expand) * 0.4) var(--ease); }
+
+  .phone[data-state="reset"]   .cardLayer { transition-duration: 0ms; transform: translate(-50%,-50%) translateY(262px) rotate(5deg) scale(0.9); opacity: 0; }
+  .phone[data-state="reset"]   .flipper   { transition-duration: 0ms; transform: rotateY(180deg); }
+  .phone[data-state="discard"] .cardLayer { transition-duration: var(--deal); transform: translate(-50%,-50%) translateY(262px) rotate(5deg) scale(0.9); opacity: 0; }
+  .phone[data-state="discard"] .flipper   { transform: rotateY(180deg); }
+  .phone[data-state="card"]    .cardLayer { transition-duration: var(--deal); transform: translate(-50%,-50%) scale(1); opacity: 1; }
+  .phone[data-state="card"]    .flipper   { transform: rotateY(0deg); }
+  /* DIVE — the camera is pulled through the card: it lifts, then rushes past, frame flying off-screen */
+  .phone[data-state="open"]    .cardLayer { animation: cardDive var(--expand) var(--dive) forwards; }
+  .phone[data-state="refold"]  .cardLayer { transition-duration: var(--expand); transform: translate(-50%,-50%) translateY(-14px) scale(1.7); opacity: 0; }
+  .phone[data-state="open"]    .flipper,
+  .phone[data-state="refold"]  .flipper   { opacity: 0; transition: opacity calc(var(--expand) * 0.4) var(--ease); }
+  @keyframes cardDive {
+    0%   { transform: translate(-50%,-50%) scale(1);    opacity: 1; filter: blur(0); }
+    16%  { transform: translate(-50%,-51%) scale(1.07); opacity: 1; filter: blur(0); }
+    100% { transform: translate(-50%,-54%) scale(4.1);  opacity: 0; filter: blur(7px); }
+  }
+
+  /* the deck the card is dealt from — three face-down VaylCardBacks */
+  .deck { position: absolute; bottom: -54px; left: 50%; transform: translateX(-50%); z-index: 2; width: 0; height: 0; transition: opacity var(--expand) var(--ease); }
+  .deckcard { position: absolute; width: 150px; height: 106px; left: -75px; bottom: 0; border-radius: 9px; overflow: hidden; background: var(--cardBg); transform-origin: bottom center; }
+  .deckcard .miniFrame { position: absolute; inset: 0; border-radius: 9px; padding: 0.8px; pointer-events: none;
+    background: linear-gradient(135deg, rgba(0,194,255,0.4), rgba(108,58,224,0.4) 50%, rgba(255,0,106,0.4)) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .deckcard .miniWm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-left: 4px;
+    font-family: var(--disp); font-weight: 500; font-size: 8px; letter-spacing: 4px; }
+  .deckcard:nth-child(1) { transform: rotate(-11deg) translateY(6px); opacity: 0.5; }
+  .deckcard:nth-child(2) { transform: rotate(0deg); opacity: 0.75; }
+  .deckcard:nth-child(3) { transform: rotate(11deg) translateY(6px); opacity: 0.5; }
+  .phone[data-state="open"] .deck, .phone[data-state="refold"] .deck { opacity: 0; }
+
+  /* ════════ SCREEN LAYER — Ember Void full screen ════════ */
+  .screenLayer { position: absolute; inset: 0; z-index: 4; padding: 0 32px; display: flex; flex-direction: column;
+    opacity: 0; transform: scale(0.8) translateY(20px); pointer-events: none;
+    transition: transform var(--expand) var(--ease), opacity calc(var(--expand) * 0.7) var(--ease); }
+  .phone[data-state="open"] .screenLayer { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto;
+    transition-delay: calc(var(--expand) * 0.16); }
+  .phone[data-state="refold"] .screenLayer { opacity: 0; transform: scale(0.8) translateY(20px); }
+  /* chrome assembles out of depth, staggered, after the dive clears */
+  .phone[data-state="open"] .topbar    { animation: riseIn calc(var(--expand)*0.5) var(--ease) calc(var(--expand)*0.40) both; }
+  .phone[data-state="open"] .turncue   { animation: riseIn calc(var(--expand)*0.5) var(--ease) calc(var(--expand)*0.50) both; }
+  .phone[data-state="open"] .answercue { animation: riseIn calc(var(--expand)*0.5) var(--ease) calc(var(--expand)*0.58) both; }
+  .phone[data-state="open"] .presence  { animation: riseIn calc(var(--expand)*0.5) var(--ease) calc(var(--expand)*0.52) both; }
+  .phone[data-state="open"] .footer-row{ animation: riseIn calc(var(--expand)*0.5) var(--ease) calc(var(--expand)*0.58) both; }
+  @keyframes riseIn  { from { opacity: 0; transform: translateY(13px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* warp flash — spectrum bloom that whooshes as you pass through the frame */
+  .warp { position: absolute; inset: 0; z-index: 7; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+    background: radial-gradient(circle at 50% 45%, rgba(0,194,255,0) 0%, rgba(108,58,224,0.30) 28%, rgba(255,0,106,0.08) 50%, transparent 68%); }
+  .phone[data-state="open"] .warp { animation: warpFlash var(--expand) var(--ease) forwards; }
+  @keyframes warpFlash { 0% { opacity: 0; transform: scale(0.4); } 34% { opacity: 0.34; } 100% { opacity: 0; transform: scale(2.4); } }
+  /* void rush — the chamber arrives around you */
+  .rush { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0;
+    background: radial-gradient(120% 80% at 50% 72%, rgba(255,0,106,0.22), transparent 60%), radial-gradient(100% 70% at 50% 28%, rgba(108,58,224,0.16), transparent 60%); }
+  .phone[data-state="open"] .rush { animation: voidRush var(--expand) var(--ease) forwards; }
+  @keyframes voidRush { 0% { opacity: 0; transform: scale(1.35); } 55% { opacity: 1; } 100% { opacity: 0.5; transform: scale(1); } }
+
+  /* reduce motion — collapse the dive to a calm cross-fade */
+  body.rm .phone[data-state="open"] .cardLayer { animation: none; transition: opacity 220ms var(--ease); transform: translate(-50%,-50%) scale(1); opacity: 0; }
+  body.rm .warp, body.rm .rush { display: none; }
+  body.rm .phone[data-state="open"] .screenLayer { transition: opacity 240ms var(--ease); transform: none; transition-delay: 60ms; }
+  body.rm .phone[data-state="open"] .topbar,
+  body.rm .phone[data-state="open"] .turncue,
+  body.rm .phone[data-state="open"] .answercue,
+  body.rm .phone[data-state="open"] .presence,
+  body.rm .phone[data-state="open"] .footer-row { animation: none; }
+  /* ── top: one monochrome overline + bar · no spectrum spent up here ── */
+  .topbar { margin-top: 48px; }                                /* AppSpacing.xxl */
+  .toprow { display: flex; align-items: center; gap: 16px; }   /* AppSpacing.md */
+  .progblock { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .progbar { display: flex; gap: 4px; height: 3px; }
+  .progbar i { flex: 1; border-radius: 2px; background: rgba(255,255,255,0.06); }   /* borderSubtle */
+  .progbar i.done { background: rgba(255,255,255,0.38); }                           /* textTertiary */
+  .progbar i.now  { background: rgba(255,255,255,0.65); }                           /* textSecondary */
+  .progcount { font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.38); }
+  .pausebtn { flex: none; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; gap: 3px; cursor: pointer; padding: 0; background: none; border: none; opacity: 0.4; transition: opacity 0.2s; }
+  .pausebtn:hover { opacity: 0.72; }
+  .pausebtn span { width: 2.5px; height: 11px; border-radius: 2px; background: rgba(255,255,255,0.65); display: block; }
+
+  /* ── center: turn cue · prompt · reciprocal beat ── */
+  .sbody { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  /* turn cue — bare text; the ✦ is the screen's single resting spectrum moment */
+  .turncue { align-self: flex-start; display: inline-flex; align-items: baseline; gap: 9px; font-size: 13px; color: rgba(255,255,255,0.65); margin-bottom: 26px; }
+  .turncue .spark { font-family: var(--disp); font-size: 13px; animation: sparkBreath 3.4s ease-in-out infinite; }
+  body.rm .turncue .spark { animation: none; }
+  @keyframes sparkBreath { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+  .turncue b { color: rgba(255,255,255,0.9); font-weight: 500; }
+  /* the only full-contrast element on screen — AppFonts.sessionPrompt → display(28) */
+  .sprompt { font-family: var(--disp); font-weight: 500; font-size: 28px; line-height: 1.36; letter-spacing: -0.01em; color: rgba(255,255,255,0.96); }
+  .sprompt .q { color: rgba(255,255,255,0.38); }
+
+  /* ── bottom: advance gate (presence + ready) ── */
+  .gate { padding-bottom: 40px; }
+  /* the screen's ONE bordered surface — cardBackground + borderSubtle, radius container */
+  .presence { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.06); background: rgba(18,15,26,0.55); margin-bottom: 16px; }
+  .who { display: flex; align-items: center; gap: 7px; font-size: 12px; color: rgba(255,255,255,0.55); transition: color 0.3s; }
+  .who .rdot { width: 9px; height: 9px; border-radius: 50%; border: 1.3px solid rgba(255,255,255,0.38); background: transparent; transition: all 0.3s; }
+  .who.ready { color: rgba(255,255,255,0.9); }
+  .who.ready .rdot { border-color: transparent; background: linear-gradient(135deg, var(--cyan), var(--magenta)); }
+  .who.waiting .rdot { animation: pulse 1.3s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+  body.rm .who.waiting .rdot { animation: none; }
+  .gstatus { flex: 1; text-align: center; font-size: 11px; color: rgba(255,255,255,0.38); }
+  .footer-row { display: flex; justify-content: space-between; align-items: center; }
+  .passbtn { font-size: 13px; color: rgba(255,255,255,0.38); cursor: pointer; background: none; border: none; font-family: var(--body); padding: 8px 4px; }
+  .passbtn:hover { color: rgba(255,255,255,0.65); }
+  .readybtn { font-size: 13px; font-weight: 500; color: var(--t-display); padding: 12px 24px; border-radius: 20px; cursor: pointer; font-family: var(--body);
+    border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.025); transition: all 0.25s; }
+  .readybtn:hover { border-color: rgba(108,58,224,0.5); background: rgba(108,58,224,0.1); }
+  .readybtn.armed { border-color: transparent; background: linear-gradient(135deg, rgba(0,194,255,0.92), rgba(255,0,106,0.92)); color: #0a0810; font-weight: 600; }
+  .deckcount { position: absolute; bottom: 92px; left: 0; right: 0; text-align: center; z-index: 5; font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 0.04em; transition: opacity var(--expand) var(--ease); }
+  .phone[data-state="open"] .deckcount, .phone[data-state="refold"] .deckcount { opacity: 0; }
+</style>
+</head>
+<body class="rm-off">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <pattern id="hexC" width="22" height="25" patternUnits="userSpaceOnUse">
+    <path d="M11 5.5 L17.06 9 L17.06 16 L11 19.5 L4.94 16 L4.94 9 Z" fill="none" stroke="#00c2ff" stroke-width="0.5"/>
+  </pattern>
+  <pattern id="hexM" width="22" height="25" patternUnits="userSpaceOnUse">
+    <path d="M11 5.5 L17.06 9 L17.06 16 L11 19.5 L4.94 16 L4.94 9 Z" fill="none" stroke="#ff006a" stroke-width="0.5"/>
+  </pattern>
+</defs></svg>
+
+<div class="wrap">
+  <aside class="panel">
+    <div class="brand">VAYL</div>
+    <h2>Deal → Ember Morph</h2>
+    <p class="lede">Each card is <b>dealt from the deck</b>, flips from <b>VaylCardBack → VaylCardFace</b>, then <b>expands</b> into the eyes-up Ember Void screen. <em>We're ready</em> folds it away and the next deals in.</p>
+    <div class="step"><span class="k spectrum-text">1</span><span>A horizontal session card is <b>dealt</b> up and <b>flips</b> to reveal the prompt.</span></div>
+    <div class="step"><span class="k spectrum-text">2</span><span>It <b>expands and dissolves</b> into the full-screen prompt — chrome melts to void.</span></div>
+    <div class="step"><span class="k spectrum-text">3</span><span><b>We're ready →</b> folds it back; the next deals in. Shallow → deep.</span></div>
+    <div class="hint-line">Card built to the real component anatomy — <b>cardBg</b> interior, double spectrum frame (outer 52% + inset 27%), top/bottom edge hairlines, magenta edge-glow, 17px Clash prompt; back carries the <b>VAYL wordmark + hex moiré</b>. Landscape <b>sessionCard</b> ratio (×0.708).</div>
+    <div class="hint-line">The screen <b>breathes</b> (slow ember + soft pulses) so it stays alive set down, then <b>dims after ~3.4s idle</b> — phones-down recede. Touch anywhere wakes it.</div>
+    <div class="speed-row"><button data-deal="360" data-exp="640">Snappy</button><button data-deal="520" data-exp="900" class="active">Default</button><button data-deal="820" data-exp="1500">Slow-mo</button></div>
+    <button class="resetbtn" id="reset">↺ Restart session</button>
+    <div class="row"><div class="toggle on" id="morphToggle"></div><span>Morph animation <em style="color:var(--t-tertiary)">(off after 1st session)</em></span></div>
+    <div class="row"><div class="toggle" id="rmToggle"></div><span>Reduce motion</span></div>
+  </aside>
+
+  <main class="stage">
+    <div class="phone" id="phone" data-state="card">
+      <div class="voidbg"></div>
+      <div class="rush"></div>
+      <div class="atmo"><div class="drift"><div class="blob b-base"></div><div class="blob b-top"></div></div></div>
+      <div class="warp"></div>
+      <div class="notch"></div>
+      <div class="sb"><span>9:41</span><span class="ic">●●● ▮</span></div>
+
+      <div class="deck">
+        <div class="deckcard"><div class="miniWm spectrum-text">VAYL</div><div class="miniFrame"></div></div>
+        <div class="deckcard"><div class="miniWm spectrum-text">VAYL</div><div class="miniFrame"></div></div>
+        <div class="deckcard"><div class="miniWm spectrum-text">VAYL</div><div class="miniFrame"></div></div>
+      </div>
+
+      <div class="cardLayer" id="cardLayer">
+        <div class="flipper">
+          <div class="face front">
+            <div class="atmoF"></div>
+            <div class="cardPrompt" id="cPrompt">What made you smile today?</div>
+            <div class="edgeHair t"></div><div class="edgeHair b"></div>
+            <div class="frameInset"></div><div class="frameOuter"></div>
+          </div>
+          <div class="face back">
+            <div class="atmoB"></div>
+            <div class="hex"><svg><rect x="0" y="0" width="100%" height="100%" fill="url(#hexC)" opacity="0.20" transform="rotate(8 170 120)"/><rect x="0" y="0" width="100%" height="100%" fill="url(#hexM)" opacity="0.18" transform="rotate(-8 170 120)"/></svg></div>
+            <div class="wm spectrum-text">VAYL</div>
+            <div class="edgeHair t"></div><div class="edgeHair b"></div>
+            <div class="frameInset"></div><div class="frameOuter"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="screenLayer" id="screenLayer">
+        <div class="topbar">
+          <div class="toprow">
+            <div class="progblock">
+              <div class="progbar" id="progbar"></div>
+              <div class="progcount" id="progcount">Card 1 of 8 · warming up</div>
+            </div>
+            <button class="pausebtn" id="pausebtn" aria-label="Pause / re-center"><span></span><span></span></button>
+          </div>
+        </div>
+
+        <div class="sbody">
+          <div class="turncue" id="turncue"><span class="spark spectrum-text">✦</span> <b>Alex</b> draws — read it aloud</div>
+          <div class="sprompt" id="sPrompt">What made you smile today?</div>
+        </div>
+
+        <div class="gate">
+          <div class="presence">
+            <span class="who you" id="whoYou"><i class="rdot"></i>You</span>
+            <span class="gstatus" id="gstatus">tap ready once you've both shared</span>
+            <span class="who partner" id="whoAlex"><i class="rdot"></i>Alex</span>
+          </div>
+          <div class="footer-row">
+            <button class="passbtn" id="pass">pass</button>
+            <button class="readybtn" id="ready">we're ready →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dimveil"></div>
+      <div class="deckcount" id="deckcount">card 1 · 3 · tap to open</div>
+      <div class="home-ind"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const cards = [
+    { depth: "warming up", drawer: "Alex", q: "What made you smile today?" },
+    { depth: "warming up", drawer: "You",  q: "What's a small thing I do that you love?" },
+    { depth: "deepening",  drawer: "Alex", q: "When did you last feel really seen by me?" },
+    { depth: "deepening",  drawer: "You",  q: "What's something you've wanted to ask me", tail: " — but never have?" },
+    { depth: "opening up", drawer: "Alex", q: "Where do you want us to be a year from now?" },
+    { depth: "opening up", drawer: "You",  q: "What's a fear you haven't said out loud to me?" },
+    { depth: "deep",       drawer: "Alex", q: "When do you feel closest to me?" },
+    { depth: "deep",       drawer: "You",  q: "What do you need more of from me right now?" },
+  ];
+  const phone = document.getElementById('phone');
+  const cardLayer = document.getElementById('cardLayer');
+  const ready = document.getElementById('ready'), pass = document.getElementById('pass');
+  const cPrompt = document.getElementById('cPrompt'), sPrompt = document.getElementById('sPrompt');
+  const progbar = document.getElementById('progbar'), progcount = document.getElementById('progcount');
+  const turncue = document.getElementById('turncue'), deckcount = document.getElementById('deckcount');
+  const whoYou = document.getElementById('whoYou'), whoAlex = document.getElementById('whoAlex'), gstatus = document.getElementById('gstatus');
+  let idx = 0, busy = false, morphOn = true, youReady = false, gateTimer = null, idleTimer = null;
+  const set = s => phone.dataset.state = s;
+  const dur = name => parseInt(getComputedStyle(document.documentElement).getPropertyValue(name));
+
+  // idle dim — the screen recedes a few seconds after it settles; any touch wakes it
+  function dimNow() { if (phone.dataset.state === 'open' && !busy) phone.classList.add('dimmed'); }
+  function wake() {
+    phone.classList.add('waking'); phone.classList.remove('dimmed');
+    clearTimeout(idleTimer); idleTimer = setTimeout(dimNow, 3400);
+    setTimeout(() => phone.classList.remove('waking'), 450);
+  }
+
+  // monochrome progress — depth is carried by the overline word, not by hue
+  function buildProgress() {
+    progbar.innerHTML = '';
+    for (let i = 0; i < cards.length; i++) {
+      const seg = document.createElement('i');
+      if (i < idx) seg.className = 'done';
+      else if (i === idx) seg.className = 'now';
+      progbar.appendChild(seg);
+    }
+  }
+  function resetGate() {
+    youReady = false; clearTimeout(gateTimer);
+    whoYou.className = 'who you'; whoAlex.className = 'who partner';
+    ready.classList.remove('armed'); ready.textContent = "we're ready →";
+    gstatus.textContent = "tap ready once you've both shared";
+  }
+  function render() {
+    const c = cards[idx];
+    cPrompt.innerHTML = c.q + (c.tail || '');
+    sPrompt.innerHTML = c.q + (c.tail ? '<span class="q">' + c.tail + '</span>' : '');
+    progcount.textContent = 'Card ' + (idx + 1) + ' of ' + cards.length + ' · ' + c.depth;
+    turncue.innerHTML = '<span class="spark spectrum-text">✦</span> <b>' + c.drawer + '</b> ' + (c.drawer === 'You' ? 'drew this' : 'draws') + ' — read it aloud';
+    deckcount.textContent = 'card ' + (idx + 1) + ' of ' + cards.length + ' · tap to open';
+    buildProgress(); resetGate();
+  }
+
+  function deal() {
+    render();
+    if (!morphOn) { set('open'); busy = false; return; }
+    set('reset');
+    void cardLayer.offsetWidth;
+    setTimeout(() => {
+      set('card');
+      setTimeout(() => { set('open'); busy = false; wake(); }, dur('--deal') + 170);
+    }, 30);
+  }
+  function open() {
+    if (busy || phone.dataset.state !== 'card') return;
+    if (!morphOn) { set('open'); wake(); return; }
+    busy = true; set('open');
+    setTimeout(() => { busy = false; wake(); }, dur('--expand'));
+  }
+
+  function nextCard() {
+    if (busy) return;
+    busy = true;
+    phone.classList.remove('dimmed'); clearTimeout(idleTimer);
+    idx = (idx + 1) % cards.length;
+    if (!morphOn) { render(); busy = false; wake(); return; }
+    set('refold');
+    setTimeout(deal, dur('--expand') - 120);
+  }
+
+  // advance gate — you ready → waiting for Alex → both ready → next card
+  function readyUp() {
+    if (busy || phone.dataset.state !== 'open' || youReady) return;
+    youReady = true;
+    whoYou.classList.add('ready');
+    ready.classList.add('armed'); ready.textContent = "you're ready";
+    gstatus.textContent = 'waiting for Alex…';
+    whoAlex.classList.add('waiting');
+    gateTimer = setTimeout(() => {                       // simulate Alex readying up
+      whoAlex.classList.remove('waiting'); whoAlex.classList.add('ready');
+      gstatus.textContent = 'both ready';
+      gateTimer = setTimeout(nextCard, 480);
+    }, 1300);
+  }
+  function passCard() {
+    if (busy || phone.dataset.state !== 'open') return;
+    gstatus.textContent = 'passed — next card';
+    setTimeout(nextCard, 240);
+  }
+
+  cardLayer.addEventListener('click', open);
+  ready.addEventListener('click', readyUp);
+  pass.addEventListener('click', passCard);
+  phone.addEventListener('pointerdown', () => { if (phone.dataset.state === 'open') wake(); });
+  function restart() { if (busy) return; idx = 0; busy = true; deal(); }
+  document.getElementById('reset').addEventListener('click', restart);
+
+  document.querySelectorAll('.speed-row button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.speed-row button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.documentElement.style.setProperty('--deal', b.dataset.deal + 'ms');
+    document.documentElement.style.setProperty('--expand', b.dataset.exp + 'ms');
+  }));
+  document.getElementById('morphToggle').addEventListener('click', function () {
+    this.classList.toggle('on'); morphOn = this.classList.contains('on');
+  });
+  document.getElementById('rmToggle').addEventListener('click', function () {
+    this.classList.toggle('on'); document.body.classList.toggle('rm', this.classList.contains('on'));
+  });
+
+  render();
+  setTimeout(() => { busy = true; deal(); }, 400);
+</script>
+</body>
+</html>

@@ -1,0 +1,501 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Design/Components/Effects/HomeGlowField.swift",
+      "type": "file",
+      "name": "HomeGlowField.swift",
+      "filePath": "Vayl/Design/Components/Effects/HomeGlowField.swift",
+      "summary": "Full-page atmospheric background for the Home dashboard that crossfades from drifting glow blobs (morphProgress 0) to a deep-space galaxy with stars and blooms (morphProgress 1) as the user scrolls.",
+      "tags": ["visual-effect", "view", "animation", "atmosphere"],
+      "complexity": "complex",
+      "languageNotes": "Body is split into glowBlobLayer and galaxyLayer ViewBuilders so each type-checks in isolation (the inline two-layer ZStack with per-blob sin offsets compiled at 163ms)."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/HomeGlowField.swift:HomeGlowField",
+      "type": "class",
+      "name": "HomeGlowField",
+      "filePath": "Vayl/Design/Components/Effects/HomeGlowField.swift",
+      "lineRange": [70, 243],
+      "summary": "SwiftUI View that opacity-crossfades a seven-blob glow atmosphere against a galaxy layer driven by morphProgress, orchestrating staggered fade-in and looping drift animations on appear.",
+      "tags": ["view", "visual-effect", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/LightAuraBloom.swift",
+      "type": "file",
+      "name": "LightAuraBloom.swift",
+      "filePath": "Vayl/Design/Components/Effects/LightAuraBloom.swift",
+      "summary": "Light-mode analogue of FlameAura: Canvas-drawn layered warm blobs (rose, peach, gold, lavender) that rise and breathe above a selected pill on cream backgrounds, scaled by the pill's intensity.",
+      "tags": ["visual-effect", "view", "animation", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/LightAuraBloom.swift:LightAuraBloom",
+      "type": "class",
+      "name": "LightAuraBloom",
+      "filePath": "Vayl/Design/Components/Effects/LightAuraBloom.swift",
+      "lineRange": [20, 125],
+      "summary": "SwiftUI View rendering the intensity-scaled warm bloom; returns EmptyView for the .dim intensity and animates the blobs via a 60fps phase timer on a Canvas.",
+      "tags": ["view", "visual-effect", "animation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/LightModeShimmer.swift",
+      "type": "file",
+      "name": "LightModeShimmer.swift",
+      "filePath": "Vayl/Design/Components/Effects/LightModeShimmer.swift",
+      "summary": "Light-mode foil shimmer matching HolographicShimmer's energy on cream surfaces using two offset diagonal gradient sweeps in a warm purple/magenta/gold palette with screen blending.",
+      "tags": ["visual-effect", "view", "animation", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/LightModeShimmer.swift:LightModeShimmer",
+      "type": "class",
+      "name": "LightModeShimmer",
+      "filePath": "Vayl/Design/Components/Effects/LightModeShimmer.swift",
+      "lineRange": [14, 107],
+      "summary": "SwiftUI View animating a primary horizontal sweep plus an optional offset secondary diagonal pass (pills only) so the two never sync, faking foil depth without strobing.",
+      "tags": ["view", "visual-effect", "animation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/MazePatternView.swift",
+      "type": "file",
+      "name": "MazePatternView.swift",
+      "filePath": "Vayl/Design/Components/Effects/MazePatternView.swift",
+      "summary": "Concentric engraved maze-ring pattern (rings with gaps plus radial spokes) rendered in multiple stroke layers for a debossed look, with a co-centered TileOrbitView comet orbit at its core.",
+      "tags": ["visual-effect", "view", "ui", "pattern"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/MazePatternView.swift:MazePatternView",
+      "type": "class",
+      "name": "MazePatternView",
+      "filePath": "Vayl/Design/Components/Effects/MazePatternView.swift",
+      "lineRange": [16, 157],
+      "summary": "SwiftUI View building the gapped-ring and spoke maze Path in four offset stroke layers (glow, groove shadow, main line, highlight) and embedding a TileOrbitView sharing its GeometryReader coordinate space.",
+      "tags": ["view", "visual-effect", "pattern"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/OrbitSpark.metal",
+      "type": "file",
+      "name": "OrbitSpark.metal",
+      "filePath": "Vayl/Design/Components/Effects/OrbitSpark.metal",
+      "summary": "Metal fragment shader that draws a single comet-like spark orbiting a rounded-rectangle border, using a signed-distance border mask and a time-driven angular sweep with mode-switchable dark/light spectrum colors.",
+      "tags": ["shader", "metal", "gpu", "visual-effect"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/OrbitSpark.metal:orbitSpark",
+      "type": "function",
+      "name": "orbitSpark",
+      "filePath": "Vayl/Design/Components/Effects/OrbitSpark.metal",
+      "lineRange": [9, 64],
+      "summary": "Stitchable color shader computing a rounded-rect SDF border mask and a spark whose angular position orbits over time, tinted along a cyan/purple/magenta (or warm aurora) ramp with a hot white core.",
+      "tags": ["shader", "metal", "gpu", "visual-effect"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/OrbitSparkBorderView.swift",
+      "type": "file",
+      "name": "OrbitSparkBorderView.swift",
+      "filePath": "Vayl/Design/Components/Effects/OrbitSparkBorderView.swift",
+      "summary": "SwiftUI wrapper that strokes a rounded-rectangle border with the spectrum gradient and applies the orbitSpark Metal colorEffect, animating the spark via TimelineView elapsed time and passing a palette mode for dark/light.",
+      "tags": ["visual-effect", "view", "metal", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/OrbitSparkBorderView.swift:OrbitSparkBorderView",
+      "type": "class",
+      "name": "OrbitSparkBorderView",
+      "filePath": "Vayl/Design/Components/Effects/OrbitSparkBorderView.swift",
+      "lineRange": [16, 58],
+      "summary": "View that drives the orbitSpark shader with size, elapsed time, border width, corner radius, and a color-mode float selecting the dark or warm palette.",
+      "tags": ["view", "visual-effect", "metal"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/PillBorder.swift",
+      "type": "file",
+      "name": "PillBorder.swift",
+      "filePath": "Vayl/Design/Components/Effects/PillBorder.swift",
+      "summary": "View-extension modifiers (.pillBorder / .magentaGoldBorder) that add a crisp spectrum or warm gradient stroke plus a blurred outward glow duplicate to selected/active pill surfaces.",
+      "tags": ["visual-effect", "view-modifier", "design-tokens", "ui"],
+      "complexity": "moderate",
+      "languageNotes": "Public View extension delegates to a shared private PillBorderModifier so both the dark spectrum and light warm variants reuse one stroke-plus-glow implementation."
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/SectionHeader.swift",
+      "type": "file",
+      "name": "SectionHeader.swift",
+      "filePath": "Vayl/Design/Components/Effects/SectionHeader.swift",
+      "summary": "Trivial all-caps muted section label used above sections in Settings, Home, and list screens.",
+      "tags": ["component", "ui", "typography"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/SparkField.swift",
+      "type": "file",
+      "name": "SparkField.swift",
+      "filePath": "Vayl/Design/Components/Effects/SparkField.swift",
+      "summary": "Campfire-ember particle system for light-mode onboarding screens: per-screen tuned configurations drive a Canvas of rising, drifting, life-cycled warm sparks composited below content.",
+      "tags": ["visual-effect", "particles", "animation", "view"],
+      "complexity": "complex",
+      "languageNotes": "Each SparkField owns an isolated @StateObject SparkSystem (no singleton); plusLighter blending is applied only inside the Canvas while .compositingGroup() seals the layer so sparks sit beneath ZStack siblings."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/SparkField.swift:SparkConfiguration",
+      "type": "class",
+      "name": "SparkConfiguration",
+      "filePath": "Vayl/Design/Components/Effects/SparkField.swift",
+      "lineRange": [55, 274],
+      "summary": "Value-type configuration capturing all per-screen spark tuning (count, speed, radius, glow, opacity ceilings, spawn and fade zones, palette), with one static preset per onboarding screen and a shared warm-ember default palette.",
+      "tags": ["data-model", "configuration", "particles"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/SparkField.swift:SparkField",
+      "type": "class",
+      "name": "SparkField",
+      "filePath": "Vayl/Design/Components/Effects/SparkField.swift",
+      "lineRange": [280, 316],
+      "summary": "SwiftUI View driving its owned SparkSystem on a 30fps TimelineView Canvas, compositing-grouped and hit-testing-disabled so it always sits in the background.",
+      "tags": ["view", "visual-effect", "particles", "animation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/SparkField.swift:SparkSystem",
+      "type": "class",
+      "name": "SparkSystem",
+      "filePath": "Vayl/Design/Components/Effects/SparkField.swift",
+      "lineRange": [326, 371],
+      "summary": "ObservableObject owning the isolated particle array: configures, updates, and draws all particles with plusLighter blending inside the Canvas context.",
+      "tags": ["store", "particles", "state"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/SparkField.swift:Particle",
+      "type": "class",
+      "name": "Particle",
+      "filePath": "Vayl/Design/Components/Effects/SparkField.swift",
+      "lineRange": [382, 547],
+      "summary": "Value-type ember spark storing normalized position, velocity, drift, lifecycle frames, and color; computes a combined lifecycle-plus-spatial opacity curve and draws a three-layer halo/dot/core, respawning when aged out.",
+      "tags": ["data-model", "particles", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/SpectrumHairline.swift",
+      "type": "file",
+      "name": "SpectrumHairline.swift",
+      "filePath": "Vayl/Design/Components/Effects/SpectrumHairline.swift",
+      "summary": "Shared spectrum hairline accents: a flat fading cyan-purple-magenta line and a tapered lens/spindle variant (thickest at center, sharp points at the ends) used as on-brand sheet edge accents.",
+      "tags": ["visual-effect", "component", "design-tokens", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/SpectrumHairline.swift:SpectrumHairline",
+      "type": "class",
+      "name": "SpectrumHairline",
+      "filePath": "Vayl/Design/Components/Effects/SpectrumHairline.swift",
+      "lineRange": [9, 25],
+      "summary": "View rendering a thin full-width spectrum gradient line that fades to clear at both ends, the app's hairline accent shared by on-brand sheets.",
+      "tags": ["view", "visual-effect", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/SpectrumHairline.swift:TaperedSpectrumHairline",
+      "type": "class",
+      "name": "TaperedSpectrumHairline",
+      "filePath": "Vayl/Design/Components/Effects/SpectrumHairline.swift",
+      "lineRange": [31, 55],
+      "summary": "View filling a lens-shaped tapered hairline with the spectrum gradient, mirroring VaylBorderEffect's tapered hairline at section scale for the OB sheet top-edge accent.",
+      "tags": ["view", "visual-effect", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/TileOrbitView.swift",
+      "type": "file",
+      "name": "TileOrbitView.swift",
+      "filePath": "Vayl/Design/Components/Effects/TileOrbitView.swift",
+      "summary": "Purpose-built comet-orbit animation for small tile contexts (44-88pt): resting static arcs or TimelineView-driven comet orbits whose phase offsets and color cycling keep heads and hues from ever colliding.",
+      "tags": ["visual-effect", "view", "animation", "ui"],
+      "complexity": "complex",
+      "languageNotes": "Canvas-only with no state objects or trail history; resting state mounts no TimelineView so it costs zero GPU, and color cycling lerps the whole orbit as a unit through cyan/magenta/purple anchors."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/TileOrbitView.swift:TileOrbitView",
+      "type": "class",
+      "name": "TileOrbitView",
+      "filePath": "Vayl/Design/Components/Effects/TileOrbitView.swift",
+      "lineRange": [48, 288],
+      "summary": "SwiftUI View switching between a resting-arc Canvas and an active comet Canvas; the active draw renders dim rings, a segmented gradient tail, a radial head glow, and a white-hot dot per orbit.",
+      "tags": ["view", "visual-effect", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/VaylBorderEffect.swift",
+      "type": "file",
+      "name": "VaylBorderEffect.swift",
+      "filePath": "Vayl/Design/Components/Effects/VaylBorderEffect.swift",
+      "summary": "The animated spectrum pill border for VaylButton: a tapered hairline at rest that fills with a two-sided crisp-plus-halo spectrum stroke on press, with an outward-only glow achieved via destinationOut masking.",
+      "tags": ["visual-effect", "view", "animation", "ui"],
+      "complexity": "complex",
+      "languageNotes": "Stroke width is linearly interpolated across resting/active/glowing states to avoid a single-frame snap; the halo is masked inward (positive inset) so only the outward blur survives, and hairline visibility is decoupled from progress to close a one-frame gap."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/VaylBorderEffect.swift:VaylBorderEffect",
+      "type": "class",
+      "name": "VaylBorderEffect",
+      "filePath": "Vayl/Design/Components/Effects/VaylBorderEffect.swift",
+      "lineRange": [12, 256],
+      "summary": "SwiftUI View composing the hairline, resting boundary stroke, masked outward halo, and two trimmed crisp spectrum strokes whose width, blur, and opacity are driven by progress and glowIntensity.",
+      "tags": ["view", "visual-effect", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/VaylButton.swift",
+      "type": "file",
+      "name": "VaylButton.swift",
+      "filePath": "Vayl/Design/Components/Effects/VaylButton.swift",
+      "summary": "The app's primary CTA button: a holographic-shimmer pill with the animated VaylBorderEffect, choreographing press-down haptics, border fill, and a precisely scheduled post-fill glow burst on release.",
+      "tags": ["component", "ui", "button", "animation"],
+      "complexity": "complex",
+      "languageNotes": "Uses CACurrentMediaTime (monotonic) rather than Date() to schedule the glow so NTP drift cannot mis-fire it; a custom DragGesture with ±20pt slop replaces a tap to get accurate inside/cancel detection at the 44pt hit target."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/VaylButton.swift:VaylButton",
+      "type": "class",
+      "name": "VaylButton",
+      "filePath": "Vayl/Design/Components/Effects/VaylButton.swift",
+      "lineRange": [12, 272],
+      "summary": "SwiftUI View stacking the capsule fill, HolographicShimmer, VaylBorderEffect, and label, with gesture handlers that drive press state, haptics, border progress, and the async glow task.",
+      "tags": ["view", "component", "button", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/VaylButton.swift:onPressUp",
+      "type": "function",
+      "name": "onPressUp",
+      "filePath": "Vayl/Design/Components/Effects/VaylButton.swift",
+      "lineRange": [193, 243],
+      "summary": "Release handler that fires medium haptic, computes remaining border-fill time from the monotonic press timestamp, then runs an async task sequencing glow-in, hold, and glow-out before invoking the action.",
+      "tags": ["event-handler", "animation", "concurrency"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/VaylFlourishView.swift",
+      "type": "file",
+      "name": "VaylFlourishView.swift",
+      "filePath": "Vayl/Design/Components/Effects/VaylFlourishView.swift",
+      "summary": "Signature decorative flourish: two gradient-stroked paths that orbit and meet at a single center node, encoding duality and connection, breathing gently via an ambient pulse animation.",
+      "tags": ["visual-effect", "view", "brand", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/VaylFlourishView.swift:VaylFlourishView",
+      "type": "class",
+      "name": "VaylFlourishView",
+      "filePath": "Vayl/Design/Components/Effects/VaylFlourishView.swift",
+      "lineRange": [15, 207],
+      "summary": "Canvas-based SwiftUI View drawing the mirrored flourish arms, curls, tails, and secondary waves with per-stroke linear gradients plus a small center node, scaled by an ambient breathing animation.",
+      "tags": ["view", "visual-effect", "brand"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Input/InteractiveField.swift",
+      "type": "file",
+      "name": "InteractiveField.swift",
+      "filePath": "Vayl/Design/Components/Input/InteractiveField.swift",
+      "summary": "Reusable icon-plus-TextField input row with a color-scheme-adaptive background, subtle border, and a soft accent shadow in dark mode.",
+      "tags": ["component", "ui", "input", "form"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Input/ToggleRow.swift",
+      "type": "file",
+      "name": "ToggleRow.swift",
+      "filePath": "Vayl/Design/Components/Input/ToggleRow.swift",
+      "summary": "Trivial icon-plus-label-plus-Toggle row used in Settings sections, bound to an external isOn state.",
+      "tags": ["component", "ui", "input", "settings"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Design/Components/Effects/HomeGlowField.swift",
+      "target": "class:Vayl/Design/Components/Effects/HomeGlowField.swift:HomeGlowField",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/LightAuraBloom.swift",
+      "target": "class:Vayl/Design/Components/Effects/LightAuraBloom.swift:LightAuraBloom",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/LightModeShimmer.swift",
+      "target": "class:Vayl/Design/Components/Effects/LightModeShimmer.swift:LightModeShimmer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/MazePatternView.swift",
+      "target": "class:Vayl/Design/Components/Effects/MazePatternView.swift:MazePatternView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/MazePatternView.swift",
+      "target": "file:Vayl/Design/Components/Effects/TileOrbitView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/OrbitSpark.metal",
+      "target": "function:Vayl/Design/Components/Effects/OrbitSpark.metal:orbitSpark",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/OrbitSparkBorderView.swift",
+      "target": "class:Vayl/Design/Components/Effects/OrbitSparkBorderView.swift:OrbitSparkBorderView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/OrbitSparkBorderView.swift",
+      "target": "file:Vayl/Design/Components/Effects/OrbitSpark.metal",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Design/Components/Effects/OrbitSparkBorderView.swift:OrbitSparkBorderView",
+      "target": "function:Vayl/Design/Components/Effects/OrbitSpark.metal:orbitSpark",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/SparkField.swift",
+      "target": "class:Vayl/Design/Components/Effects/SparkField.swift:SparkConfiguration",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/SparkField.swift",
+      "target": "class:Vayl/Design/Components/Effects/SparkField.swift:SparkField",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/SparkField.swift",
+      "target": "class:Vayl/Design/Components/Effects/SparkField.swift:SparkSystem",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/SparkField.swift",
+      "target": "class:Vayl/Design/Components/Effects/SparkField.swift:Particle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Design/Components/Effects/SparkField.swift:SparkField",
+      "target": "class:Vayl/Design/Components/Effects/SparkField.swift:SparkSystem",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/SpectrumHairline.swift",
+      "target": "class:Vayl/Design/Components/Effects/SpectrumHairline.swift:SpectrumHairline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/SpectrumHairline.swift",
+      "target": "class:Vayl/Design/Components/Effects/SpectrumHairline.swift:TaperedSpectrumHairline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/TileOrbitView.swift",
+      "target": "class:Vayl/Design/Components/Effects/TileOrbitView.swift:TileOrbitView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/VaylBorderEffect.swift",
+      "target": "class:Vayl/Design/Components/Effects/VaylBorderEffect.swift:VaylBorderEffect",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/VaylButton.swift",
+      "target": "class:Vayl/Design/Components/Effects/VaylButton.swift:VaylButton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/VaylButton.swift",
+      "target": "function:Vayl/Design/Components/Effects/VaylButton.swift:onPressUp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/VaylButton.swift",
+      "target": "file:Vayl/Design/Components/Effects/HolographicShimmer.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/VaylButton.swift",
+      "target": "file:Vayl/Design/Components/Effects/VaylBorderEffect.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Design/Components/Effects/VaylButton.swift:VaylButton",
+      "target": "class:Vayl/Design/Components/Effects/HolographicShimmer.swift:HolographicShimmer",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Design/Components/Effects/VaylButton.swift:VaylButton",
+      "target": "class:Vayl/Design/Components/Effects/VaylBorderEffect.swift:VaylBorderEffect",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/VaylFlourishView.swift",
+      "target": "class:Vayl/Design/Components/Effects/VaylFlourishView.swift:VaylFlourishView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    }
+  ]
+}

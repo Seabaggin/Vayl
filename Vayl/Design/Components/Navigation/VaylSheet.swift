@@ -1,16 +1,20 @@
-// Design/Components/OBSheetChrome.swift
+// Design/Components/Navigation/VaylSheet.swift
 
 import SwiftUI
 
-/// Shared chrome for the OB custom sheets (FounderLetterSheet, CredentialEditor).
-/// Matches a native `.sheet`: full-bleed width, continuous (squircle) rounded
-/// TOP corners, presented over content. The single accent is a spectrum border
-/// that TRACES the rounded top edge and dissolves down the sides — not a flat
-/// hairline cutting across below the corners.
+/// The Vayl sheet surface — the single chrome behind every Vayl sheet.
+/// Full-bleed width, continuous (squircle) rounded TOP corners, presented over
+/// content. The single accent is a spectrum border that TRACES the rounded top
+/// edge and dissolves down the sides — not a flat hairline cutting across below
+/// the corners. One source of truth + one knob (AppRadius.sheet) to match the
+/// system corner.
 ///
-/// One source of truth so both sheets read identically and there's one knob
-/// (AppRadius.sheet) to match the system corner.
-private struct OBSheetChrome: ViewModifier {
+/// Two ways in:
+///   • `.vaylSheet(isPresented:)` (VaylPresentation.swift) — the standard route;
+///     applies this chrome + a spaced grabber automatically.
+///   • `.vaylSheetChrome(widen:)` — the raw chrome, for OB phases that present
+///     their own way (FounderLetterSheet, CredentialEditorSheet, PaywallSheet).
+private struct VaylSheetChrome: ViewModifier {
 
     /// Extra push-out (per side) for a sheet whose layout bounds sit INSIDE the
     /// physical screen edge. The confirmation overlay is hosted high in the tree
@@ -110,10 +114,191 @@ private struct OBSheetChrome: ViewModifier {
 
 extension View {
     /// Native-style sheet chrome — full-bleed width, continuous rounded top
-    /// corners, spectrum top-edge border. See OBSheetChrome.
+    /// corners, spectrum top-edge border. See VaylSheetChrome.
     /// `widen`: extra push-out per side for sheets whose bounds sit inset from
     /// the physical edge (e.g. the founder letter, hosted deep in the tree).
-    func obSheetChrome(widen: CGFloat = 0) -> some View {
-        modifier(OBSheetChrome(widen: widen))
+    func vaylSheetChrome(widen: CGFloat = 0) -> some View {
+        modifier(VaylSheetChrome(widen: widen))
     }
 }
+
+// MARK: - Preview gallery
+//
+// Every VaylSheet instance in the app, in one canvas, rendered through the real
+// VaylSheetChrome + spectrum pull-tab so the surface, top border, and tab read
+// together. The bodies are REPRESENTATIVE — the real ones live in their feature
+// views (private) and can't be reached from here; these mirror each sheet's
+// identity closely enough to review the chrome. Scroll the canvas horizontally.
+
+#if DEBUG
+private struct VaylSheetSpecimen<C: View>: View {
+    let label: String
+    var fraction: CGFloat = 0.6
+    @ViewBuilder var content: () -> C
+
+    var body: some View {
+        VStack(spacing: AppSpacing.sm) {
+            Text(label)
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+            ZStack(alignment: .bottom) {
+                AppColors.void
+                VStack(spacing: 0) {
+                    Capsule()
+                        .fill(AppColors.spectrumBorder)
+                        .frame(width: 40, height: 4)
+                        .opacity(0.6)
+                        .padding(.vertical, AppSpacing.sm)
+                    content()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 580 * fraction)
+                .vaylSheetChrome()
+            }
+            .frame(width: 320, height: 580)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.sheet, style: .continuous))
+        }
+    }
+}
+
+private func specimenChip(_ t: String, on: Bool) -> some View {
+    Text(t)
+        .font(AppFonts.caption)
+        .foregroundStyle(on ? AppColors.void : AppColors.textBody)
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.sm)
+        .background(Capsule().fill(on ? AnyShapeStyle(AppColors.spectrumBorder)
+                                       : AnyShapeStyle(AppColors.inputBackground)))
+        .overlay(Capsule().strokeBorder(AppColors.borderDefault, lineWidth: on ? 0 : 1))
+}
+
+private func specimenCTA(_ t: String) -> some View {
+    Text(t)
+        .font(AppFonts.buttonLabel)
+        .foregroundStyle(AppColors.void)
+        .padding(.vertical, AppSpacing.md)
+        .padding(.horizontal, AppSpacing.lg)
+        .background(RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+            .fill(AppColors.spectrumBorder))
+}
+
+private func specimenRow(_ glyph: String, _ title: String) -> some View {
+    HStack(spacing: AppSpacing.md) {
+        Text(glyph).frame(width: 22)
+        Text(title).font(AppFonts.bodyText).foregroundStyle(AppColors.textBody)
+        Spacer()
+    }
+    .padding(.vertical, AppSpacing.sm)
+}
+
+private func specimenStep(_ n: Int) -> some View {
+    Text("\(n)")
+        .font(AppFonts.buttonLabelSmall)
+        .foregroundStyle(AppColors.textBody)
+        .frame(width: 28, height: 28)
+        .overlay(Circle().strokeBorder(AppColors.borderDefault, lineWidth: 1))
+}
+
+#Preview("VaylSheet — all instances") {
+    ScrollView(.horizontal, showsIndicators: false) {
+        HStack(alignment: .top, spacing: AppSpacing.lg) {
+
+            // ── Session: close · reflection (.vaylSheet) ──
+            VaylSheetSpecimen(label: "Close · reflection", fraction: 0.66) {
+                VStack(alignment: .leading, spacing: AppSpacing.md) {
+                    Text("How was that, for you?")
+                        .font(AppFonts.sectionHeading).foregroundStyle(AppColors.textPrimary)
+                    Text("just for you · swipe down to skip")
+                        .font(AppFonts.caption).foregroundStyle(AppColors.textTertiary)
+                    HStack(spacing: AppSpacing.sm) {
+                        specimenChip("close", on: true)
+                        specimenChip("seen", on: false)
+                        specimenChip("warm", on: false)
+                    }
+                    Spacer(minLength: 0)
+                    HStack {
+                        Text("Skip").font(AppFonts.buttonLabel).foregroundStyle(AppColors.textSecondary)
+                        Spacer()
+                        specimenCTA("Save")
+                    }
+                }
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.top, AppSpacing.xs)
+                .padding(.bottom, AppSpacing.lg)
+            }
+
+            // ── Session: player · care (.vaylSheet) ──
+            VaylSheetSpecimen(label: "Player · care", fraction: 0.5) {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    Text("if you need a beat")
+                        .font(AppFonts.overline).tracking(2).textCase(.uppercase)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .padding(.bottom, AppSpacing.sm)
+                    specimenRow("❚❚", "Pause")
+                    specimenRow("🤍", "A 6-second hug")
+                    specimenRow("✦", "Say one thing you love")
+                    specimenRow("⤼", "Skip this card")
+                }
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.top, AppSpacing.sm)
+            }
+
+            // ── Session: airlock · sync tutorial (.vaylSheet) ──
+            VaylSheetSpecimen(label: "Airlock · sync", fraction: 0.55) {
+                VStack(spacing: AppSpacing.md) {
+                    Text("Syncing to begin")
+                        .font(AppFonts.sectionHeading).foregroundStyle(AppColors.textPrimary)
+                    Text("A shared breath, on both phones at once.")
+                        .font(AppFonts.caption).foregroundStyle(AppColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                    HStack(spacing: AppSpacing.md) {
+                        specimenStep(1); specimenStep(2); specimenStep(3)
+                    }
+                }
+                .padding(AppSpacing.lg)
+            }
+
+            // ── OB: founder letter (.vaylSheetChrome) ──
+            VaylSheetSpecimen(label: "OB · founder letter", fraction: 0.6) {
+                VStack(alignment: .leading, spacing: AppSpacing.md) {
+                    Text("Before you go.")
+                        .font(AppFonts.sectionHeading).foregroundStyle(AppColors.textPrimary)
+                    Text("A note from the people who made this for you.")
+                        .font(AppFonts.founderLetter(13)).foregroundStyle(AppColors.textBody)
+                }
+                .padding(AppSpacing.lg)
+            }
+
+            // ── OB: credential editor (.vaylSheetChrome) ──
+            VaylSheetSpecimen(label: "OB · credential editor", fraction: 0.5) {
+                VStack(alignment: .leading, spacing: AppSpacing.md) {
+                    Text("EDIT").font(AppFonts.overline).foregroundStyle(AppColors.textTertiary)
+                    Text("Your name").font(AppFonts.sectionHeading).foregroundStyle(AppColors.textPrimary)
+                    SpectrumHairline()
+                    Spacer(minLength: 0)
+                    specimenCTA("Done").frame(maxWidth: .infinity)
+                }
+                .padding(AppSpacing.lg)
+            }
+
+            // ── Monetization: paywall (.vaylSheetChrome) ──
+            VaylSheetSpecimen(label: "Paywall", fraction: 0.6) {
+                VStack(spacing: AppSpacing.md) {
+                    Text("See your Desire Map")
+                        .font(AppFonts.sectionHeading).foregroundStyle(AppColors.textPrimary)
+                        .multilineTextAlignment(.center)
+                    Text("Unlock everything, once.")
+                        .font(AppFonts.caption).foregroundStyle(AppColors.textSecondary)
+                    Spacer(minLength: 0)
+                    specimenCTA("Unlock · $24.99").frame(maxWidth: .infinity)
+                }
+                .padding(AppSpacing.lg)
+            }
+        }
+        .padding(AppSpacing.xl)
+    }
+    .background(Color.black)
+    .preferredColorScheme(.dark)
+}
+#endif

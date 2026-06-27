@@ -16,7 +16,6 @@ struct ExperienceLevelPhase: View {
     let screenSize: CGSize
 
     @State private var monte        = ThreeCardFanController()
-    @State private var liftedText:  String?          = nil
     @State private var liftedLevel: CandleIntensity? = nil
     @State private var liftTextTask: Task<Void, Never>? = nil
     @State private var entranceTask: Task<Void, Never>? = nil
@@ -25,6 +24,13 @@ struct ExperienceLevelPhase: View {
     // confirm gesture (the consistent cue across phases, mirroring GenderPhase).
     @State private var hintOffset:  CGFloat            = 0
     @State private var hintTask:    Task<Void, Never>? = nil
+
+    // Live hand-off follow (Phase 4c): the lifted card tracks the finger as it's handed up
+    // (shared HandBackFollow). View-local; the controller owns monte.offsets, so this
+    // resolves to .zero inside the pocket flight on confirm.
+    @State private var handBackDrag:         CGSize = .zero
+    @State private var handBackArmed:        Bool   = false
+    @State private var handBackSelectionGen = UISelectionFeedbackGenerator()
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.displayScale)              private var displayScale
@@ -42,22 +48,12 @@ struct ExperienceLevelPhase: View {
     /// scales across devices. Negative = upward. Felt value — verify travel on device.
     private var hintFlickY: CGFloat { -cardH * 0.10 }
 
-    /// The most prominent card in the resting fan — the one with the highest zIndex
-    /// (the center/top card the user sees front-and-center). It carries the selection
-    /// tug while the fan rests face-up, signalling "this card can be picked."
-    private var topCardIndex: Int {
-        monte.zIndices.indices.max { monte.zIndices[$0] < monte.zIndices[$1] } ?? 1
-    }
-
-    /// y-offset contribution from the GenderPhase-style tug for slot `i`.
-    /// • Resting fan (`.faceUp`): only the top card tugs — "pick a card."
-    /// • A card lifted (`.lifted`): only the lifted card tugs — "swipe up to confirm."
+    /// y-offset contribution from the swipe-up tug for slot `i`. Only the LIFTED card tugs
+    /// (the swipe-up confirm cue). There's no resting "pick a card" bounce — the
+    /// auto-selected default card is the cue, so no single card is singled out at rest.
     private func tugOffset(for i: Int) -> CGFloat {
-        switch monte.state {
-        case .faceUp: return i == topCardIndex ? hintOffset : 0
-        case .lifted: return isLifted(i)        ? hintOffset : 0
-        default:      return 0
-        }
+        if case .lifted = monte.state, isLifted(i) { return hintOffset }
+        return 0
     }
 
     /// SpriteKit layer visible only while sprites carry the cards in flight (the deal-in).
@@ -83,32 +79,51 @@ struct ExperienceLevelPhase: View {
         let s = AppElevation.cardShadow(elevation: restElevation)
         let offsetY: CGFloat = monte.offsets[i].height + restingUp + tugOffset(for: i)
 
-        // Both faces stay mounted so the candle's Canvas + .drawingGroup warm up at
-        // deal time (drawn ONCE at time:0 while hidden behind the back). The reveal
-        // then swaps opacity at the edge-on midpoint — no cold first-draw at the flip
-        // pivot, which was the laggiest moment. Two-faced idiom, same as
-        // ConfirmationPhase / CuriosityFlipCard.
+        // Both faces stay mounted (dual-mount pre-warm) so the candle's Canvas +
+        // .drawingGroup are warm before the turn. The reveal is a real 3D EDGE-TURN
+        // (rotation3DEffect, ConfirmationPhase idiom) — not a flat scaleX squish: `turned`
+        // drives both faces' rotation + opacity crossfade, and at the 90° edge-on midpoint
+        // both are ~invisible so the swap is clean. The L→R wave (stagger) lives in
+        // spreadTurnoverReveal, making it a ribbon-spread turnover.
+        let turned = monte.showFace[i]
         ZStack {
             VaylCardBack()
                 .frame(width: cardW, height: cardH)
-                .opacity(monte.showFace[i] ? 0 : 1)
+                .rotation3DEffect(.degrees(turned ? 180 : 0),
+                                  axis: (x: 0, y: 1, z: 0), perspective: 0.6)
+                .opacity(turned ? 0 : 1)
 
-            // Freeze the flame (time:0) until revealed — warm, but not redrawing
-            // while hidden. onAction stays nil until shown so the hidden face is
-            // fully inert and never intercepts a tap (matches the old back state).
+            // Freeze the flame (time:0) until revealed — warm, but not redrawing while hidden.
+            //
+            // onAction is kept CONSTANT (never nil↔closure). Toggling it flips
+            // FaceGestures' `if enabled` structural branch inside VaylCardFace, which
+            // re-identifies the face subtree and COLD-re-rasterizes this — the OB's most
+            // expensive, self-animating candle face (own @State breathe + drawingGroup) —
+            // at the exact flip pivot. That cold raster IS the reveal glitch. Instead we
+            // gate the hidden face inert with .allowsHitTesting, exactly like the working
+            // ModeSelect flip. The tap/swipe handlers already guard on state
+            // (questionAsked / .lifted), so an always-attached gesture is safe.
             VaylCardFace(
                 content:  .candle(intensity: monte.intensities[i],
-                                  time: monte.showFace[i] ? t : 0),
-                onAction: monte.showFace[i] ? { handleCardAction($0, slot: i) } : nil
+                                  time: turned ? t : 0),
+                onAction: { handleCardAction($0, slot: i) }
             )
             .frame(width: cardW, height: cardH)
             .overlay(liftHalo(visible: lifted))
-            .opacity(monte.showFace[i] ? 1 : 0)
+            .rotation3DEffect(.degrees(turned ? 0 : -180),
+                              axis: (x: 0, y: 1, z: 0), perspective: 0.6)
+            .allowsHitTesting(turned)
+            .opacity(turned ? 1 : 0)
         }
-        .scaleEffect(x: monte.flipScaleX[i], y: 1, anchor: .center)
+        // The 3D turn curve — FEEL-GATE (~0.52s ease reads as a card rolling over its edge).
+        // Nil under Reduce Motion so the face appears instantly (reveal() path).
+        .animation(reduceMotion ? nil : AppAnimation.cardTurn3D,
+                   value: monte.showFace[i])
         .scaleEffect(monte.scales[i])
-        .rotationEffect(.degrees(monte.angles[i]))
+        // Tilt + follow as the lifted card is handed up (shared HandBackFollow).
+        .rotationEffect(.degrees(monte.angles[i] + (lifted ? HandBackFollow.tilt(for: handBackDrag.width, screenWidth: screenSize.width) : 0)))
         .offset(x: monte.offsets[i].width, y: offsetY)
+        .offset(lifted ? handBackDrag : .zero)
         .opacity(monte.alphas[i])
         .zIndex(monte.zIndices[i])
         .shadow(color: s.color, radius: s.radius, y: s.y)
@@ -163,8 +178,9 @@ struct ExperienceLevelPhase: View {
             // doubled shadow). The canvas-level render is the single source.
 
             // ── Layer: Lift label ─────────────────────────────────────────────
-            if let text = liftedText, let level = liftedLevel {
-                liftCopyLayer(title: level.displayName, subtitle: text)
+            if let level = liftedLevel {
+                liftCopyLayer(title: level.displayName,
+                              durationText: duration(for: level))
                     .transition(.opacity)
                     .zIndex(20)
             }
@@ -227,22 +243,29 @@ struct ExperienceLevelPhase: View {
                 // Set intent as the deal begins; the line carries through the flourish and
                 // clears at .revealing. (Under Reduce Motion .dealing never fires, so it's
                 // naturally skipped.)
-                director.showDealerLineManual("Let's see where you're starting.")
+                director.projector.showDealerLineManual("Let's see where you're starting.")
             case .revealing:
                 // Clear the entrance line as the flip-reveal begins.
-                director.hideDealerLine()
+                director.projector.hideDealerLine()
             case .faceUp:
-                // Cards finished revealing — tug the top card to invite a pick and ask
-                // the question. The cards must not answer before it's asked: the tap
-                // gate opens at type-complete + 250ms (questionAsked). The line then
-                // persists until the user taps (hidden in handleCardAction).
-                startSwipeHint()
+                // Cards finished revealing — ask the question, then AUTO-SELECT the default
+                // (curious). No resting "pick a card" bounce: the auto-lifted card is the cue.
+                // The tap gate opens at type-complete + a beat (questionAsked) so the cards
+                // don't answer before it's asked.
                 let line = "How much have you explored?"
-                director.showDealerLineManual(line)
+                director.projector.showDealerLineManual(line)
                 let gateMs = reduceMotion ? 250 : AppDealerTyping.typeDuration(line) + 500
                 Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(gateMs))
                     questionAsked = true
+                    // Start the user at curious — they can tap another card to switch, or
+                    // swipe up to confirm. Skip if they somehow already picked.
+                    guard case .faceUp = monte.state else { return }
+                    director.projector.hideDealerLine()
+                    withAnimation(AppAnimation.standard.reduceMotionSafe) {
+                        monte.lift(.curious, screenSize: screenSize)
+                    }
+                    scheduleLiftText(for: .curious)
                 }
             case .lifted:
                 // A card is lifted & ready to confirm — tug it upward to cue swipe-up. By
@@ -332,7 +355,16 @@ struct ExperienceLevelPhase: View {
 
     // MARK: — Lift copy overlay
 
-    private func liftCopyLayer(title: String, subtitle: String) -> some View {
+    /// Experience-duration credential shown under the level name (Bryan's literal ranges).
+    private func duration(for intensity: CandleIntensity) -> String {
+        switch intensity {
+        case .curious:     return "No experience"
+        case .exploring:   return "3 months – 1 year"
+        case .experienced: return "1.5+ years"
+        }
+    }
+
+    private func liftCopyLayer(title: String, durationText: String) -> some View {
         ZStack {
             VStack(spacing: AppSpacing.sm) {
                 // Level name — LivingText
@@ -341,9 +373,11 @@ struct ExperienceLevelPhase: View {
                     font: AppFonts.heroTitle
                 )
 
-                // Descriptor — GradientText
+                // Experience duration — the prominent "how long." Sized up to the section
+                // heading now that it's the only sub-line (the encouraging dealer's-read
+                // moved to the swipe-up response — director.showExpLevelExitLine).
                 GradientText(
-                    text: subtitle,
+                    text: durationText,
                     font: AppFonts.sectionHeading
                 )
                 .multilineTextAlignment(.center)
@@ -384,28 +418,42 @@ struct ExperienceLevelPhase: View {
         case .tapped:
             // The dealer finishes his question before the cards will answer it.
             guard questionAsked else { return }
-            director.hideDealerLine()
+            director.projector.hideDealerLine()
             withAnimation(AppAnimation.standard.reduceMotionSafe) {
                 monte.lift(intensity, screenSize: screenSize)
             }
             liftTextTask?.cancel()
             withAnimation(AppAnimation.fast) {
-                liftedText  = nil
                 liftedLevel = nil
             }
             scheduleLiftText(for: intensity)
 
+        case .dragChanged(let translation):
+            // Live hand-off follow — only the lifted card tracks the finger.
+            guard case .lifted(let held) = monte.state, held == intensity else { return }
+            handBackDrag = HandBackFollow.offset(for: translation, cardWidth: cardW, cardHeight: cardH)
+            let crossed = translation.height < -cardH * 0.14
+            if crossed != handBackArmed { handBackArmed = crossed; handBackSelectionGen.selectionChanged() }
+
         case .swipedUp:
             guard case .lifted(let held) = monte.state, held == intensity else { return }
+            handBackArmed = false
             liftTextTask?.cancel()
             withAnimation(AppAnimation.fast) {
-                liftedText  = nil
                 liftedLevel = nil
             }
-            director.hideDealerLine()
+            director.projector.hideDealerLine()
+            // Drift + tilt resolve INTO the pocket flight — no snap at the handoff.
+            withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { handBackDrag = .zero }
             monte.confirm(held, screenSize: screenSize) {
                 director.commitExperienceLevel($0)
             }
+
+        case .dragEnded:
+            // Released short of the commit threshold — settle the card back to the lift anchor.
+            guard case .lifted = monte.state else { return }
+            handBackArmed = false
+            withAnimation(AppAnimation.cardSettle.reduceMotionSafe) { handBackDrag = .zero }
 
         default:
             break
@@ -419,15 +467,10 @@ struct ExperienceLevelPhase: View {
         liftTextTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(120))
             guard !Task.isCancelled else { return }
-            let descriptor: String = {
-                switch intensity {
-                case .curious:     return "Just opening the door."
-                case .exploring:   return "Finding our rhythm."
-                case .experienced: return "We know what we like."
-                }
-            }()
+            // On lift we show only the level name + duration (see liftCopyLayer). The
+            // encouraging dealer's-read line is spoken on CONFIRM (showExpLevelExitLine),
+            // not parked statically on screen while the card is held.
             withAnimation(AppAnimation.standard) {
-                liftedText  = descriptor
                 liftedLevel = intensity
             }
         }

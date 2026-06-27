@@ -63,7 +63,7 @@ struct PaywallSheet: View {
     // MARK: - Header bloom tuning
     //
     // Bloom-rendering constants (size / offset / intensity) for the paywall-only spectrum halo
-    // behind the hook. NOT design tokens; same convention as OBSheetChrome's purpleTint/darken.
+    // behind the hook. NOT design tokens; same convention as VaylSheetChrome's purpleTint/darken.
     // Tune on device; they never leave this file.
     private let bloomCoreSize:  CGFloat = 300   // purple core diameter
     private let bloomFlankSize: CGFloat = 210   // cyan / magenta flank diameter
@@ -91,18 +91,18 @@ struct PaywallSheet: View {
 
     // Content-height when it fits; scrolls when it can't (large Dynamic Type / small screens).
     // ViewThatFits uses the .fixedSize (content-height) layout if it fits the proposed height,
-    // else the scrollable fallback. obSheetChrome forces maxHeight:.infinity (shared, off-limits),
+    // else the scrollable fallback. vaylSheetChrome forces maxHeight:.infinity (shared, off-limits),
     // so the chrome wraps BOTH candidates: with .fixedSize it hugs content; inside the ScrollView
     // it fills the screen and the content scrolls (the CTA + footer stay reachable).
     @ViewBuilder private var sizedSheet: some View {
         ViewThatFits(in: .vertical) {
             sheetStack
-                .obSheetChrome()
+                .vaylSheetChrome()
                 // .fixedSize(vertical) overrides the chrome's maxHeight:.infinity so the sheet hugs
                 // content; horizontal:false keeps full-bleed width (no GeometryReader, no width bug).
                 .fixedSize(horizontal: false, vertical: true)
             ScrollView(showsIndicators: false) { sheetStack }
-                .obSheetChrome()
+                .vaylSheetChrome()
         }
     }
 
@@ -175,7 +175,7 @@ struct PaywallSheet: View {
     //
     // Composed from the shared GlowOrb primitive: a purple core flanked by faint cyan/magenta,
     // so the hook sits in a halo that echoes the spectrum border, bullets, and divider. Lives
-    // ONLY here, never in the shared obSheetChrome (FounderLetter/CredentialEditor reuse that).
+    // ONLY here, never in the shared vaylSheetChrome (FounderLetter/CredentialEditor reuse that).
     // Static (GlowOrb doesn't animate, so no Reduce Motion concern).
     private var headerBloom: some View {
         ZStack {

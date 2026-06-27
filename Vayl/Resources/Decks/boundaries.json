@@ -1,0 +1,33 @@
+{
+  "id": "boundaries",
+  "title": "Boundaries",
+  "subtitle": "The lines that keep this safe.",
+  "category": "foundationEntry",
+  "act": 1,
+  "intensity": 3,
+  "is_locked": false,
+  "required_entitlement": null,
+  "tags": ["foundation", "free"],
+  "sort_order": 3,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "boundaries-01",
+      "deck_id": "boundaries",
+      "text": "What's one line you'd want drawn before anything new?",
+      "highlight_words": ["line"],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    }
+  ]
+}

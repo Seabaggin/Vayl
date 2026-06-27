@@ -39,7 +39,10 @@ enum SchemaV1: VersionedSchema {
         LockInSession.self,
         AcknowledgementRecord.self,
         MilestoneRecord.self,
-        SessionPlan.self
+        SessionPlan.self,
+        SyncTask.self,
+        SessionReflection.self,
+        EventLogEntry.self
     ]
 }
 
@@ -113,6 +116,34 @@ extension ModelContainer {
             )
         } catch {
             fatalError("❌ Failed to create preview ModelContainer: \(error.localizedDescription)")
+        }
+    }
+
+    /// In-memory container seeded with a completed UserProfile.
+    /// Use for any preview that exercises code gated on onboarding completion:
+    /// DesireMapView, DesireRevealView, AppShell (where the rater/reveal are reachable).
+    static var previewContainerWithProfile: ModelContainer {
+        do {
+            let schema = Schema(SchemaV1.models)
+            let config = ModelConfiguration(
+                "VaylPreviewWithProfile",
+                schema: schema,
+                isStoredInMemoryOnly: true
+            )
+            let container = try ModelContainer(
+                for: schema,
+                migrationPlan: AppMigrationPlan.self,
+                configurations: [config]
+            )
+            let context = ModelContext(container)
+            let profile = UserProfile(displayName: "Jordan")
+            profile.hasCompletedOnboarding = true
+            profile.onboardingCompletedAt = Date()
+            context.insert(profile)
+            try? context.save()
+            return container
+        } catch {
+            fatalError("❌ Failed to create preview ModelContainer (with profile): \(error.localizedDescription)")
         }
     }
 }

@@ -14,7 +14,7 @@ import SwiftUI
 ///            camera dollies in, and the hex material wakes on arrival
 ///   Beat 4 · stillness, dealer invitation — the case ARMS
 ///   Beat 5 · crack ceremony — three strikes, escalating light + haptics,
-///            third → bloom-flood shatter (taps forward to director.addFoilTear)
+///            third → bloom-flood shatter (taps forward to director.ceremony.addFoilTear)
 ///   Beat 7 · founder letter sheet-peek exit (interim: after the shatter, or as
 ///            an idle fallback — replaced by the reveal carousel in segment 7)
 ///
@@ -50,9 +50,13 @@ struct BuildDeckPhase: View {
     @State private var latticeWake: Date = .distantFuture  // hex wakes AFTER the zoom
     @State private var caseFloat:  Bool = false     // felt → float position
 
-    // crack ceremony (Beat 5) — taps forward to director.addFoilTear
+    // crack ceremony (Beat 5) — taps forward to director.ceremony.addFoilTear
     @State private var caseArmed:    Bool = false   // invitation landed; taps live
     @State private var caseDissolve: Date = .distantFuture  // third crack → shatter
+    // Segment 2 — the charged core: the deck's energy contained inside the shell.
+    // 0 = dark; lights to a baseline when the case arms, climbs per tap (the
+    // release premise's charge floor rising toward the break).
+    @State private var coreEnergy:   Double = 0
     // directional recoil — the case is KNOCKED, yawing away from the strike
     @State private var kickDeg:  Double = 0
     @State private var kickAxis: (x: CGFloat, y: CGFloat) = (0, 1)
@@ -115,19 +119,24 @@ struct BuildDeckPhase: View {
             // the view forwards face-UV strikes to the director (sole owner of
             // crack state); the dealer's words are the affordance.
             if caseShown {
+                // Segment 2 — the charged core glows from WITHIN: coreGlow lights
+                // the case's own hex SEAMS (in MetallicCaseView's shader), so the
+                // energy reads as coming through the deck's structure, not a halo
+                // behind it. Lights at arm, climbs per tap toward the break.
                 MetallicCaseView(
                     riseStart: caseRiseStart,
                     latticeWakeStart: latticeWake,
-                    tears: director.foilTears.map {
+                    tears: director.ceremony.foilTears.map {
                         CaseTear(id: $0.id, faceUV: $0.faceUV, seed: $0.seed,
                                  struck: $0.struck, angleDeg: $0.angleDeg)
                     },
                     dissolveStart: caseDissolve,
                     onFaceTap: caseArmed && caseDissolve == .distantFuture
-                        ? { uv in director.addFoilTear(atFaceUV: uv) }
+                        ? { uv in director.ceremony.addFoilTear(atFaceUV: uv) }
                         : nil,
                     knockStart: knockStart,
-                    knockSeed: knockSeed
+                    knockSeed: knockSeed,
+                    coreGlow: coreEnergy
                 )
                     .frame(width: deckSize.width, height: deckSize.height)
                     .rotation3DEffect(.degrees(kickDeg),
@@ -137,7 +146,7 @@ struct BuildDeckPhase: View {
                     .position(caseFloat ? floatCenter : feltCenter)
                     .opacity(caseOpacity)
                     .accessibilityLabel("Your sealed deck")
-                    .accessibilityHint(caseArmed ? "Tap three times to break it open" : "")
+                    .accessibilityHint(caseArmed ? "Tap three times to let it out" : "")
                     .accessibilityAddTraits(caseArmed ? .isButton : [])
             }
 
@@ -228,12 +237,12 @@ struct BuildDeckPhase: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .scaleEffect(stagePunch ? 1.03 : 1.0)   // the whole stage jolts at the burst
+        .scaleEffect(stagePunch ? 1.05 : 1.0)   // the whole stage jolts on each strike + the burst
         .sensoryFeedback(.impact(weight: .medium), trigger: meltDone)   // the deck goes under
         .sensoryFeedback(.impact(weight: .heavy),  trigger: caseFloat)  // the case takes the air
         .sensoryFeedback(.impact(weight: .light, intensity: 0.5), trigger: knockCount)
         // crack ceremony — strikes escalate light, medium, heavy (the ritual arc)
-        .sensoryFeedback(trigger: director.foilTears.count) { old, new in
+        .sensoryFeedback(trigger: director.ceremony.foilTears.count) { old, new in
             guard new > old else { return nil }
             switch new {
             case 1:  return .impact(weight: .light,  intensity: 0.8)
@@ -241,8 +250,8 @@ struct BuildDeckPhase: View {
             default: return .impact(weight: .heavy,  intensity: 1.0)
             }
         }
-        .onChange(of: director.foilTears.count) { _, count in
-            guard count > 0, let strike = director.foilTears.last?.faceUV else { return }
+        .onChange(of: director.ceremony.foilTears.count) { _, count in
+            guard count > 0, let strike = director.ceremony.foilTears.last?.faceUV else { return }
             // If the idle peek already rose and the user then commits to the
             // ritual, retract it — the knock-cued strike wins. Two exit
             // affordances must not coexist (and the peek's low edge could
@@ -250,9 +259,21 @@ struct BuildDeckPhase: View {
             if count == 1, peekShown, caseDissolve == .distantFuture {
                 withAnimation(AppAnimation.fast.reduceMotionSafe) { peekShown = false }
             }
-            // every strike hits harder — the ritual escalates
-            recoil(from: strike, degrees: 2.6 + 0.9 * Double(count - 1))
-            spawnSparks(at: strike, count: 12 + 8 * (count - 1))
+            // every strike hits HARDER — bigger recoil + a stage jolt = weight
+            recoil(from: strike, degrees: 4.0 + 1.8 * Double(count - 1))
+            spawnSparks(at: strike, count: 16 + 10 * (count - 1))
+            if count < 3 {   // count 3 is the shatter — its own jolt handles that frame
+                withAnimation(.spring(response: 0.12, dampingFraction: 0.5)) { stagePunch = true }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(reduceMotion ? 0 : 90))
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.7)) { stagePunch = false }
+                }
+            }
+            // each release vents a burst, but the shell is more compromised — the
+            // steady core glow climbs toward the break (Segment 2 charge floor).
+            withAnimation(AppAnimation.standard.reduceMotionSafe) {
+                coreEnergy = 0.40 + 0.30 * Double(count)
+            }
             if count >= 3 { beginShatter() }
         }
         .accessibilityLabel("Build deck phase")
@@ -319,10 +340,10 @@ struct BuildDeckPhase: View {
         guard !reduceMotion else { return }
         knockTask = Task { @MainActor in
             while knockCount < 24,
-                  director.foilTears.isEmpty,
+                  director.ceremony.foilTears.isEmpty,
                   caseDissolve == .distantFuture {
                 try? await Task.sleep(for: .seconds(3.5))
-                guard director.foilTears.isEmpty, caseDissolve == .distantFuture else { break }
+                guard director.ceremony.foilTears.isEmpty, caseDissolve == .distantFuture else { break }
                 knock()
             }
         }
@@ -372,7 +393,17 @@ struct BuildDeckPhase: View {
             }
             // The flood resolves INTO the deck — object continuity, no void.
             try? await Task.sleep(for: .seconds(reduceMotion ? 0.3 : 1.3))   // FEEL-GATE: tune on device
-            withAnimation(AppAnimation.enter.reduceMotionSafe) { revealShown = true }
+            // Fade the shattered case + its interior-glow layer out as the deck
+            // arrives, then UNMOUNT it — otherwise the interior-glow Canvas keeps
+            // rendering at full brightness BEHIND the reveal (the post-reveal bug).
+            withAnimation(AppAnimation.enter.reduceMotionSafe) {
+                revealShown = true
+                caseOpacity = 0
+            }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(reduceMotion ? 0.1 : 0.7))
+                caseShown = false
+            }
             // the deck lands first; the exit CTA fades in a beat later
             try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 1.2))   // FEEL-GATE: tune on device
             withAnimation(AppAnimation.enter.reduceMotionSafe) { ctaShown = true }
@@ -406,15 +437,18 @@ struct BuildDeckPhase: View {
 
     private func runSequence() {
         sequenceTask = Task { @MainActor in
-            // settle — the deck just arrived from confirmation; let it sit
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 0.8))
+            // settle — the deck just arrived from confirmation; let it sit.
+            // FEEL-GATE: trimmed 0.8 → 0.4 now that Confirmation holds its exit
+            // until the gather spring is fully still (exitSpan 2.0). The deck
+            // arrives already settled, so a long second settle here only sagged.
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 0.4))
             // Holds are computed from type time (the `…` now costs a real beat
             // since the ellipsis cadence fix — a fixed hideAfter clipped the
             // hold to ~0.4s). Line holds ~0.6s, then is GONE ~0.4s before the
             // melt — the deck's exit gets full attention, no text competing.
             let line1 = "From everything you've shown me…"
             let t1 = Double(AppDealerTyping.typeDuration(line1)) / 1000.0
-            director.showDealerLine(line1, hideAfter: t1 + 0.6)
+            director.projector.showDealerLine(line1, hideAfter: t1 + 0.6)
             try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : t1 + 1.0))
 
             // Beat 1 — the deck melts down through the felt; the table's rim
@@ -437,7 +471,7 @@ struct BuildDeckPhase: View {
             // dead hold on the dark table before the case mounts.
             let line2 = "…I'm building a deck that's yours alone."
             let t2 = Double(AppDealerTyping.typeDuration(line2)) / 1000.0
-            director.showDealerLine(line2, hideAfter: t2 + 0.6)
+            director.projector.showDealerLine(line2, hideAfter: t2 + 0.6)
             try? await Task.sleep(for: .seconds(reduceMotion ? 0.3 : t2 + 1.0))
 
             // Beat 3a — the cased deck lies flat where the cards went under —
@@ -450,6 +484,11 @@ struct BuildDeckPhase: View {
             // driver in the case view). The table stays put for the whole rise —
             // flat → pause → stand → THEN the felt lets go (user-confirmed order).
             caseRiseStart = .now
+            // The hex material wakes AS IT RISES (the shader's own intent): the
+            // stand-up's big tilt-sweep drives the band across the now-awake
+            // lattice, so the honeycomb IGNITES and animates through the rise
+            // instead of powering on flat after the zoom has already landed.
+            latticeWake = .now
             try? await Task.sleep(for: .seconds(reduceMotion ? 0.1 : 1.0))
 
             // Beat 3c — the rise has landed: the camera dollies in, the case
@@ -463,17 +502,16 @@ struct BuildDeckPhase: View {
             }
             try? await Task.sleep(for: .seconds(reduceMotion ? 0.3 : 1.0))
 
-            // …and the hex material wakes upon zoom-in. Hold past the 1.2s wake
-            // so the lattice finishes powering on before the invitation types.
-            latticeWake = .now
+            // The hex finished powering on during the rise; a short settle so the
+            // lit, floating case holds a beat before the invitation types.
             try? await Task.sleep(for: .seconds(reduceMotion ? 0.1 : 1.3))
 
             // Beat 4 — stillness already passed; the invitation. Projected ABOVE
             // the floating case — at 2× zoom the case covers the horizon anchor
             // and the line would type invisibly behind it.
-            let invite = "This one's yours. Break it open."
+            let invite = "It's ready. Tap to let it out."
             let inviteMs = AppDealerTyping.typeDuration(invite)
-            director.showDealerLine(invite, hideAfter: Double(inviteMs) / 1000.0 + 2.0,
+            director.projector.showDealerLine(invite, hideAfter: Double(inviteMs) / 1000.0 + 2.0,
                                     anchorYFrac: AppLayout.forgeFloatTextYFrac)
 
             // Arm WITH the words landing, not as they start — a fast tap mustn't
@@ -482,6 +520,8 @@ struct BuildDeckPhase: View {
             try? await Task.sleep(for: .milliseconds(reduceMotion ? 0 : inviteMs + 250))
             caseArmed = true
             startKnocking()   // the deck inside wants out
+            // the core lights: the deck's energy is now contained and straining
+            withAnimation(.easeInOut(duration: 1.2).reduceMotionSafe) { coreEnergy = 0.40 }
             // The reveal now owns the path forward: striking the case blooms into
             // the forged deck (beginShatter → reveal), and the bottom CTA hands
             // off to the letter. A pre-reveal idle peek is wrong — the knock cue

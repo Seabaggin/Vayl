@@ -184,6 +184,24 @@ final class SessionStore: Identifiable {
             try context.saveWithLogging()
             logger.info("SessionStore: session saved — \(self.results.count) cards, deck \(self.deck.id)")
 
+            // Enqueue async sync to Supabase
+            let payloadObj = SessionRecordPayload(
+                id: session.id,
+                coupleId: coupleId,
+                startedAt: session.startedAt,
+                endedAt: session.completedAt,
+                cardsDiscussed: session.cardsDiscussed
+            )
+            if let payloadData = try? JSONEncoder().encode(payloadObj) {
+                Task { @MainActor in
+                    SyncManager.shared.enqueueSyncTask(
+                        taskType: "sync_session",
+                        entityId: session.id.uuidString,
+                        payload: payloadData
+                    )
+                }
+            }
+
         } catch {
             self.error = error.localizedDescription
             logger.error("SessionStore: save failed — \(error.localizedDescription)")

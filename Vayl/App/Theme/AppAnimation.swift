@@ -93,6 +93,16 @@ internal enum AppAnimation {
     /// timingCurve (0.22, 1, 0.36, 1): snappy ease-out, no overshoot.
     static let statGlowBloomSettle: Animation = .timingCurve(0.22, 1, 0.36, 1, duration: 0.46)
 
+    /// 0.65s ease-out — StatPhase exit: the entire phase fades out after "Begin" is tapped.
+    /// Long enough that the phase cross-fade (AppAnimation.slow) absorbs the remaining tail.
+    /// Reduce motion: replace with AppAnimation.fast at call site.
+    static let statExitFade: Animation = .easeOut(duration: 0.65)
+
+    /// 0.32s ease-in-out — StatPhase citation panel toggle (open and close).
+    /// Calm dim + fade — not snappy, not ceremonial. The panel is reference content.
+    /// Reduce motion: replace with AppAnimation.fast at call site.
+    static let statCitationToggle: Animation = .easeInOut(duration: 0.32)
+
     /// 0.35s material expand — Citation panel expand and collapse.
     /// timingCurve (0.4, 0, 0.2, 1): standard deceleration curve — element
     /// enters fast and eases into its resting position. Used for the expandable
@@ -338,6 +348,36 @@ internal enum AppAnimation {
     /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity — card disappears in place.
     static let cardPocket: Animation = .timingCurve(0.4, 0, 1, 1, duration: 0.52)
 
+    /// 0.2s ease-in, delayed 0.32s — Card alpha fading out at the END of a pocket flight.
+    /// Companion to cardPocket: the card stays visible for ~90% of the travel and dissolves
+    /// INTO the corner deck rather than fading at launch (fading across the whole flight made
+    /// it vanish in ~0.15s, so the handoff never visibly arrived). Used at every pocket site —
+    /// NamePhase, DemoPhase, GenderPhase, CuriosityPhase handoff, and ThreeCardFanController.
+    /// Reduce motion: via .reduceMotionSafe → .easeOut(duration: 0.15); the delay is dropped.
+    static let pocketAlphaFade: Animation = .easeIn(duration: 0.2).delay(0.32)
+
+    /// Spring — the ContextPhase carousel assembling up off the receding felt. A touch of
+    /// overshoot (lower damping than the general `spring` 0.5/0.85) so the cards ARRIVE
+    /// rather than fade in. FEEL-GATE — tuned on device.
+    /// Reduce motion: guarded at the call site (only fires on the non-RM entrance path).
+    static let carouselAssemble: Animation = .spring(response: 0.6, dampingFraction: 0.74)
+
+    /// Spring — ConfirmationPhase fan dealing out of the corner deck onto the felt.
+    /// Applied per-card with a staggered .delay() at the call site (rightmost deals first).
+    /// Reduce motion: call site returns AppAnimation.fast instead.
+    static let confirmDeal: Animation = .spring(response: 0.46, dampingFraction: 0.84)   // FEEL-GATE: snappier, livelier deal (was 0.55 / 0.86)
+
+    /// Spring — ConfirmationPhase fan GATHERING into the deck on confirm (the keystone
+    /// "six credentials become THE deck" moment). 0.8 response so the collapse reads as a
+    /// deliberate gather, not a snap. Applied per-card with a staggered .delay() at the call site.
+    /// Reduce motion: call site returns AppAnimation.fast instead.
+    static let confirmGather: Animation = .spring(response: 0.8, dampingFraction: 0.85)
+
+    /// Spring — ConfirmationPhase cards turning face-down as they gather (their truths go
+    /// private on the way to the deck). Applied per-card with a staggered .delay() at the call site.
+    /// Reduce motion: call site returns AppAnimation.fast instead.
+    static let confirmFlip: Animation = .spring(response: 0.5, dampingFraction: 0.9)
+
     /// 0.36s custom ease — Curiosity sort card flung off-screen on a keep/pass commit.
     /// Cubic bezier (0.4, 0, 0.5, 1): eases off the release point then accelerates
     /// away — the card is thrown clear of the pile, not filed. Value is the locked
@@ -391,6 +431,20 @@ internal enum AppAnimation {
     /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity — table dims instantly.
     static let tableRecede: Animation = .timingCurve(0.4, 0, 0.6, 1, duration: 0.70)
 
+    /// 0.70s ease-out — The felt blooming UP onto the table (the inverse of tableRecede).
+    /// One characteristic weight for every felt fade-IN after the first arrival, so the
+    /// table reads as one physical surface: ModeSelect entry, Confirmation entry, and the
+    /// Context felt re-emerging after the carousel. (The very first felt arrival in Demo
+    /// stays on the heavier cinematicFade — the world's debut.) FEEL-GATE.
+    /// Reduce motion: via .reduceMotionSafe → .easeOut(duration: 0.15) — felt appears.
+    static let tableBloom: Animation = .easeOut(duration: 0.70)
+
+    /// 1.0s ease-in-out — OB atmosphere crossfade between phases (OnboardingAtmosphere).
+    /// Slow + geological so the background shifts beneath attention, never snappy. Single
+    /// owner of the config crossfade — the canvas no longer double-animates it.
+    /// Reduce motion: ambient background; acceptable as-is (opacity-only crossfade).
+    static let atmosphereShift: Animation = .easeInOut(duration: 1.0)
+
     /// Spring — Corner deck receiving a newly pocketed card.
     /// Fast response (0.40) makes the receive feel reactive to the arriving card.
     /// The glow pulse uses this same token and fades after 600ms.
@@ -414,6 +468,49 @@ internal enum AppAnimation {
     /// Two halves compose the full 0.58s cardFlip total.
     /// Reduce motion: skip flip entirely — face swaps without rotation.
     static let cardFlipHalf: Animation = .timingCurve(0.4, 0, 0.6, 1, duration: 0.29)
+
+    /// 0.42s per half — Demo card 3D flip. Same cubic as cardFlipHalf (0.4,0,0.6,1)
+    /// but slower — DemoPhase is the user's first flip encounter; extra weight adds ceremony.
+    /// Two halves compose a full 0.84s Demo flip. Not interchangeable with cardFlipHalf.
+    /// Reduce motion: skip flip entirely — face swaps without rotation.
+    static let demoFlipHalf: Animation = .timingCurve(0.4, 0, 0.6, 1, duration: 0.42)
+
+    /// 0.52s cubic — 3D edge-turn on ExperienceLevelPhase card flip.
+    /// timingCurve (0.45, 0.05, 0.55, 0.95): slight ease-in gathering momentum,
+    /// then easing out as the card faces the user. Not a general flip token.
+    /// Reduce motion: skip the turn — face swaps instantly.
+    static let cardTurn3D: Animation = .timingCurve(0.45, 0.05, 0.55, 0.95, duration: 0.52)
+
+    // MARK: — DemoPhase Sequence
+    // Tokens for the Demo "I want ___" card: sentence melt → verb cycle → seal → dissolve.
+    // These are ceremony-level animations that ONLY belong in DemoPhase — do not reuse.
+
+    /// 1.05s ease-out — "I want" sentence dissolving / melting onto the card face.
+    /// Deliberately slow — the melt is the first "magic" moment the user sees.
+    /// Reduce motion: replace with AppAnimation.fast at call site.
+    static let demoSentenceMelt: Animation = .easeOut(duration: 1.05)
+
+    /// 0.24s ease-in-out — Verb slot-machine crossfade during the intro cycle.
+    /// Short enough that the cycle feels quick and mechanical.
+    /// Reduce motion: cycle is skipped entirely at call site.
+    static let demoVerbCrossfade: Animation = .easeInOut(duration: 0.24)
+
+    /// Spring — Demo card gliding to stage centre. response: 0.95, dampingFraction: 1.0 —
+    /// critically damped (no oscillation), deliberately slower than cardCenter (0.72s).
+    /// The demo card should feel weighty arriving at its presentation spot.
+    /// Reduce motion: replace with AppAnimation.standard at call site.
+    static let demoCenterDeliberate: Animation = .spring(response: 0.95, dampingFraction: 1.0)
+
+    /// 0.35s ease-in-out — Sentence fusing into the seal line (chevron + prompt resolve).
+    /// Runs before the dissolve — traces the line, THEN breaks it into motes.
+    /// Reduce motion: replace with AppAnimation.fast at call site.
+    static let sealTrace: Animation = .easeInOut(duration: 0.35)
+
+    /// 1.0s ease-out — Card dissolving into spectrum motes after seal.
+    /// Runs concurrently with the pocket animation — motes lift off before card flies.
+    /// sealBloom (0.5s) uses AppAnimation.slow (exact match) — no separate token.
+    /// Reduce motion: dissolve is skipped entirely at call site.
+    static let sealDissolve: Animation = .easeOut(duration: 1.0)
 
     /// 0.60s custom ease — Table rim burst decaying after card lands.
     /// Cubic bezier (0.2, 0.8, 0.4, 1.0). was 0.50s — corrected to spec.
@@ -522,6 +619,109 @@ internal enum AppAnimation {
     /// AppAnimation.spring for the settle back home, then a still pause before repeating.
     /// Reduce motion: never fires — the start branch is guarded by reduceMotion.
     static let swipeHintFlick: Animation = .easeOut(duration: 0.26)
+
+    // MARK: — FounderLetterPhase
+    /// 0.45s ease-in-out — The OB's final swipe-down descent ("curtain falls").
+    /// Heavier than exit (0.2s easeIn) — the last gesture deserves weight.
+    /// Half of the letter's own 0.4s arrival, so it mirrors rather than outdoes it.
+    /// Apply .reduceMotionSafe at the call site.
+    static let curtainFall: Animation = .easeInOut(duration: 0.45)
+
+    // MARK: — Desire Map
+    // Tokens for the ten-screen Desire Map flow (rater + reveal + paywall).
+    // Two classes, same rules as the rest of this file:
+    //   Reactive  — screen transitions, star ignitions, sheet rises, depth-push.
+    //               Reduce motion fallback: .easeOut(duration: 0.15).
+    //   Ambient   — sparkle cadence, hesitant line sketch, charted hold.
+    //               Disable entirely under reduce motion — skip the .task / loop,
+    //               hold the static state.
+    //
+    // Starting values tuned from the storyboard prototypes. Bryan dials final feel
+    // on device — do not lock these before the device pass.
+
+    // Reveal reactive
+    /// 0.80s ease-out — Spectrum-bloom entrance wash as the rater opens.
+    /// The one ceremonial entrance: the start screen recedes and Q1 emerges from depth.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let desireRevealBloom: Animation = .easeOut(duration: 0.80)
+
+    /// 0.72s ease-out — Free star glow blooming in on reveal open.
+    /// Fires on .onAppear of the free star; the star ignites to full then sparkles.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — star appears lit, no bloom.
+    static let desireStarIgnite: Animation = .easeOut(duration: 0.72)
+
+    /// 0.76s ease-out — Constellation lines drawing on at the reveal.
+    /// Applied to a trimFraction (0 → 1) on the confident-mode path in ConstellationField.
+    /// Reduce motion: lines appear at full opacity, no draw-on travel.
+    static let desireLineDraw: Animation = .easeOut(duration: 0.76)
+
+    /// 0.50s ease-out — Detail / full-map / paywall sheet rising from the bottom.
+    /// Applied to the .move(edge: .bottom) transition inside the cover's sheet host.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — sheet appears in place.
+    static let desireSheetRise: Animation = .easeOut(duration: 0.50)
+
+    // Rater depth-push reactive
+    /// 0.20s ease-in — Current question receding on answer: scale .93 + translateY 7 + fade.
+    /// Fast exit clears the stage for the incoming question without lingering.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — question disappears.
+    static let desireDepthExit: Animation = .easeIn(duration: 0.20)
+
+    /// 0.34s ease-out — Next question emerging from depth: scale 1.07 → 1 + fade-in.
+    /// Slightly longer than exit — the arrival has more presence than the departure.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — question appears.
+    static let desireDepthEnter: Animation = .easeOut(duration: 0.34)
+
+    /// 0.56s ease-out — Answer star rising into the personal sky above.
+    /// Synced to fire alongside desireDepthExit so the star lifts as the question recedes.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — star appears in sky position.
+    static let desireStarRise: Animation = .easeOut(duration: 0.56)
+
+    // Finish-beat reactive
+    /// 0.35s ease-out — Last question and answer rows fading out at completion.
+    /// Clears the stage for the finish-flair star rise.
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let desireFinishFade: Animation = .easeOut(duration: 0.35)
+
+    /// 0.80s ease-out — Last star rising with extra ignite + sparkle burst on completion.
+    /// Brighter and slower than a normal desireStarRise — the climactic beat of rating.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) — final star appears lit.
+    static let desireFinishFlair: Animation = .easeOut(duration: 0.80)
+
+    /// 0.60s ease-out — "Your map is charted." copy + hesitant constellation lines fading in.
+    /// Fired after the finish-flair star settles, not immediately after the last rate().
+    /// Reduce motion: replace with .easeOut(duration: 0.15).
+    static let desireChartedFadeIn: Animation = .easeOut(duration: 0.60)
+
+    // Desire Map ambient (raw Double — not Animation instances)
+    // All three: disable the .task / loop entirely when reduce motion is active.
+    // The static state (a resting cross + glow, faint partial lines) must read without motion.
+
+    /// 0.95s — Total duration of one sparkle keyframe (scale 0→1→0.55, opacity 0→1→0, slight rotation).
+    /// Not an Animation — consumed by KeyframeAnimator total. Divide across CubicKeyframe tracks at the call site.
+    /// Reduce motion: skip the .task trigger entirely; sparkle never fires.
+    static let desireSparkleDuration: Double = 0.95
+
+    /// 3.5s — Mean cadence for free/active star sparkle.
+    /// Randomize ±55–160% at the call site (.task sleeps desireSparkleFreeRate * factor)
+    /// so stars twinkle out of phase rather than in sync.
+    /// Reduce motion: .task is never started.
+    static let desireSparkleFreeRate: Double = 3.5
+
+    /// 7.0s — Mean cadence for locked/dim star sparkle.
+    /// Same randomize recipe as desireSparkleFreeRate; locked stars twinkle rarely.
+    /// Reduce motion: .task is never started.
+    static let desireSparkleLockedRate: Double = 7.0
+
+    /// 2.0s — Hold at the charted screen before auto-advancing (tap-anywhere skips).
+    /// Not an Animation — consumed by Task.sleep at the call site.
+    /// Reduce motion: use as-is; the hold is timing, not motion.
+    static let desireChartedHold: Double = 2.0
+
+    /// 4.2s — One full pass of the hesitant constellation line sketch loop.
+    /// Lines draw partway, pull back, fade, and restart — never locking.
+    /// Not an Animation — consumed by a repeating loop at the call site.
+    /// Reduce motion: loop never starts; lines hold at a faint partial-draw static state.
+    static let desireHesitantSketch: Double = 4.2
 }
 
 // MARK: — Reduce Motion Helpers

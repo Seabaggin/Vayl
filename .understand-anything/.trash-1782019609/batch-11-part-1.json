@@ -1,0 +1,1177 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift",
+      "type": "file",
+      "name": "CanvasEasing.swift",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift",
+      "summary": "Pure easing-math namespace (normalise-in-window, cubic in-out, quint/sept ease-out) used to drive the OB canvas dissolution and physics curves.",
+      "tags": [
+        "utility",
+        "math",
+        "easing",
+        "design-system"
+      ],
+      "complexity": "simple",
+      "languageNotes": "A caseless Swift enum used as a static-only function namespace \u2014 a common Swift idiom for stateless utilities."
+    },
+    {
+      "id": "enum:Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift:CanvasEasing",
+      "type": "class",
+      "name": "CanvasEasing",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift",
+      "lineRange": [
+        3,
+        19
+      ],
+      "summary": "Static easing namespace: nm (window normalise + clamp), eIO3 (ease-in-out cubic), eO5/eO7 (ease-out quint/sept). The math backbone for GenderSequencer's dissolution curves.",
+      "tags": [
+        "utility",
+        "math",
+        "easing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift",
+      "type": "file",
+      "name": "OBDeepCardFace.swift",
+      "filePath": "Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift",
+      "summary": "Canvas + Metal-shader renderer for 'The Deep' OB card face revealed on flip during NamePhase: layered swirl, seeded particles, shimmer, depth-glow, and a caustics colorEffect.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "canvas",
+        "design-system"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Time-stateless renderer: deepT is injected by a parent TimelineView, and seeded particle/fleck pools are generated once via a deterministic sin-hash rng so frames stay stable."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift:OBDeepCardFace",
+      "type": "class",
+      "name": "OBDeepCardFace",
+      "filePath": "Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift",
+      "lineRange": [
+        27,
+        97
+      ],
+      "summary": "The Deep card-face View: composites a Canvas (base/swirl/shimmer/depth-glow) under a screen-blended htmlCaustics shader, clipped to the OB card radius with a spectrum DeepCardShell overlay.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "canvas"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "type": "file",
+      "name": "OnboardingCanvasView.swift",
+      "filePath": "Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "summary": "The single persistent OB canvas: a 10-layer ZStack (void \u2192 atmosphere \u2192 table \u2192 dealpoint \u2192 SpriteKit flight \u2192 cards \u2192 projected text \u2192 corner deck \u2192 phase overlay) plus the phase router switching on director.phase.",
+      "tags": [
+        "view",
+        "entry-point",
+        "ui",
+        "canvas"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Hosts a SpriteView for card-flight physics and routes every OB phase via a switch on director.phase; modal overlays live in OnboardingCanvasWrapper outside the .ignoresSafeArea chain."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasView",
+      "type": "class",
+      "name": "OnboardingCanvasView",
+      "filePath": "Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "lineRange": [
+        18,
+        163
+      ],
+      "summary": "Root OB canvas View owning a VaylDirector; renders all persistent canvas layers and the phase overlay, and starts the director on appear.",
+      "tags": [
+        "view",
+        "ui",
+        "canvas"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasWrapper",
+      "type": "class",
+      "name": "OnboardingCanvasWrapper",
+      "filePath": "Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "lineRange": [
+        172,
+        203
+      ],
+      "summary": "Call-site wrapper that captures the real safe-area insets outside the canvas's ignoresSafeArea chain and hosts the credential-editor and single-greeting overlays (which the canvas forbids as sheets).",
+      "tags": [
+        "view",
+        "ui",
+        "barrel"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "type": "class",
+      "name": "PhaseOverlayView",
+      "filePath": "Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "lineRange": [
+        211,
+        288
+      ],
+      "summary": "Private phase router: switches on director.phase to the active phase View and applies a depth cross-fade handoff (Reduce-Motion \u2192 pure opacity).",
+      "tags": [
+        "view",
+        "ui",
+        "router"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Canvas/OnboardingStage.swift",
+      "type": "file",
+      "name": "OnboardingStage.swift",
+      "filePath": "Vayl/Features/Onboarding/Canvas/OnboardingStage.swift",
+      "summary": "Narrow @MainActor protocol exposing only the coordinator surface (onboardingData + dealer-line projection) that extracted phase sequencers need, keeping them decoupled from the full director.",
+      "tags": [
+        "type-definition",
+        "protocol",
+        "architecture"
+      ],
+      "complexity": "simple",
+      "languageNotes": "A deliberately minimal protocol seam: sequencers depend on OnboardingStage, not the 850-line VaylDirector, so they stay unit-testable against a mock stage."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Canvas/OnboardingStage.swift:OnboardingStage",
+      "type": "class",
+      "name": "OnboardingStage",
+      "filePath": "Vayl/Features/Onboarding/Canvas/OnboardingStage.swift",
+      "lineRange": [
+        16,
+        25
+      ],
+      "summary": "@MainActor AnyObject protocol: onboardingData accessor plus showDealerLineManual/hideDealerLine \u2014 the capability slice VaylDirector exposes to sequencers.",
+      "tags": [
+        "type-definition",
+        "protocol"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift",
+      "type": "file",
+      "name": "GenderSequencer.swift",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift",
+      "summary": "Extracted @Observable store owning the entire Gender phase: dissolution/crystallisation curves, radio-tuner signal, gender + pronouns drums, and tap-lift\u2192swipe-up confirm, writing the choice back through OnboardingStage.",
+      "tags": [
+        "store",
+        "state",
+        "observable",
+        "sequencer"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Holds an unowned OnboardingStage; one dissolutionT write per frame drives eight computed easing curves to keep SwiftUI invalidation minimal."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:GenderSequencer",
+      "type": "class",
+      "name": "GenderSequencer",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift",
+      "lineRange": [
+        21,
+        445
+      ],
+      "summary": "@Observable @MainActor Gender-phase store: runs the autonomous crystallise\u2192flip\u2192picker sequence, manages both drums + decline, and pockets the confirmed identity card while persisting genderA/pronounsA via the stage.",
+      "tags": [
+        "store",
+        "state",
+        "observable"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:runRise",
+      "type": "function",
+      "name": "runRise",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift",
+      "lineRange": [
+        191,
+        268
+      ],
+      "summary": "Async crystallisation sequence: drives dissolutionT 0\u21921 over 3.2s with the dealer line firing mid-formation, then holds and hands off to the flip-and-spin beat. Includes a full Reduce-Motion instant path.",
+      "tags": [
+        "sequencer",
+        "animation",
+        "async"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:confirmSelection",
+      "type": "function",
+      "name": "confirmSelection",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift",
+      "lineRange": [
+        407,
+        435
+      ],
+      "summary": "Swipe-up commit: persists self gender/pronouns into onboardingData (or nil on decline), flies the card to the corner deck on a pocket curve with late alpha, and sets shouldPocket for GenderPhase to advance.",
+      "tags": [
+        "sequencer",
+        "validation",
+        "state"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "type": "file",
+      "name": "TableSurfaceView.swift",
+      "filePath": "Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "summary": "Animatable single-pass Canvas that draws the entire Vayl card table (atmosphere, felt, vignette, topo contours with card dissolution warp/flow-around + forge sway, compass star, amber pool, spectrum rim arc).",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "canvas",
+        "design-system"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Conforms to Animatable so fade/rimBurst/forgeEnergy interpolate per-frame under the caller's withAnimation; visibility is purely fade-driven, never conditional. Includes a rounded-rect SDF for topo flow-around."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift:TableSurfaceView",
+      "type": "class",
+      "name": "TableSurfaceView",
+      "filePath": "Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "lineRange": [
+        26,
+        122
+      ],
+      "summary": "Layer-3 table-surface View (View + Animatable). Caller drives fade/rimBurst/dissolution/forgeEnergy; the body composites seven Canvas sub-passes and never holds state or animates itself.",
+      "tags": [
+        "view",
+        "ui",
+        "canvas"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift:drawTopoLines",
+      "type": "function",
+      "name": "drawTopoLines",
+      "filePath": "Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "lineRange": [
+        289,
+        462
+      ],
+      "summary": "Draws 62 fbm/domain-warped contour lines clipped to the table circle, applying forge sway plus a two-phase card dissolution (inward warp, then rounded-rect SDF flow-around) when a gender card is crystallising.",
+      "tags": [
+        "rendering",
+        "canvas",
+        "procedural"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift:drawSpectrumRim",
+      "type": "function",
+      "name": "drawSpectrumRim",
+      "filePath": "Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "lineRange": [
+        703,
+        848
+      ],
+      "summary": "Renders the tapered cyan\u2192purple\u2192magenta rim arc in 120 segments with a base-bloom + crisp pass, amplified by rimBurst on card impact and spotlit at the compass-star midpoint.",
+      "tags": [
+        "rendering",
+        "canvas",
+        "design-system"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift:drawCompassStar",
+      "type": "function",
+      "name": "drawCompassStar",
+      "filePath": "Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "lineRange": [
+        526,
+        666
+      ],
+      "summary": "Draws the 8-spike compass star at the deal point with glow, halo/inner rings, per-spike light/shadow faces, and a filled center octagon.",
+      "tags": [
+        "rendering",
+        "canvas"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "type": "file",
+      "name": "VaylDirector.swift",
+      "filePath": "Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "summary": "The central @Observable @MainActor OB coordinator: owns phase, all card collections + physics state, table fade, and the only advance() path; conforms to OnboardingStage and forwards to the projector, card-flight engine, and per-phase sequencers.",
+      "tags": [
+        "store",
+        "state",
+        "observable",
+        "coordinator",
+        "entry-point"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Uses @ObservationIgnored lazy vars to defer SpriteKit/engine/sequencer construction; advance() debounces with a 50ms Task and is the sole writer of director.phase and tableFade per the architecture contract."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "type": "class",
+      "name": "VaylDirector",
+      "filePath": "Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "lineRange": [
+        6,
+        391
+      ],
+      "summary": "OB flow coordinator (Store layer) implementing OnboardingStage: drives phase entry routines, credential collection, context/curiosity conclusions, opener-deck evaluation, and the final commit through OnboardingStore.",
+      "tags": [
+        "store",
+        "state",
+        "observable",
+        "coordinator"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:advance",
+      "type": "function",
+      "name": "advance",
+      "filePath": "Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "lineRange": [
+        72,
+        88
+      ],
+      "summary": "The sole phase-transition gate: debounces re-entry, hides the outgoing dealer line, then sets phase and runs the new phase's entry routine on a short delayed Task.",
+      "tags": [
+        "state",
+        "navigation",
+        "coordinator"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:concludeContext",
+      "type": "function",
+      "name": "concludeContext",
+      "filePath": "Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "lineRange": [
+        225,
+        253
+      ],
+      "summary": "Writes the chosen relationship context + register, re-emerges the felt with a responsive dealer reply, credits the .context credential, then advances to Curiosity after the copy beat.",
+      "tags": [
+        "state",
+        "coordinator",
+        "async"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:finishOnboarding",
+      "type": "function",
+      "name": "finishOnboarding",
+      "filePath": "Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "lineRange": [
+        318,
+        335
+      ],
+      "summary": "Commits onboardingData through OnboardingStore (gated by isReadyToComplete); on success dissolves the felt as reactive routing exits OB, on failure sets commitFailed non-destructively.",
+      "tags": [
+        "state",
+        "coordinator",
+        "persistence"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:evaluateOpenerDeckType",
+      "type": "function",
+      "name": "evaluateOpenerDeckType",
+      "filePath": "Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "lineRange": [
+        368,
+        386
+      ],
+      "summary": "Selects the OpenerDeckType from NMStage + situational register + curiosity richness (mode-independent by design) and writes it into onboardingData at the end of Curiosity.",
+      "tags": [
+        "state",
+        "routing",
+        "coordinator"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:receiveCredential",
+      "type": "function",
+      "name": "receiveCredential",
+      "filePath": "Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "lineRange": [
+        157,
+        166
+      ],
+      "summary": "The single path for crediting the corner deck: appends a freshly collected credential card and plays the deck-receive pulse so card-state ownership stays in the director.",
+      "tags": [
+        "state",
+        "coordinator"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Components/CornerDeckView.swift",
+      "type": "file",
+      "name": "CornerDeckView.swift",
+      "filePath": "Vayl/Features/Onboarding/Components/CornerDeckView.swift",
+      "summary": "Stateless top-right corner deck showing collected credential cards (max 7) as a stacked, slightly fanned pile of real VaylCardBack renders with a count label and receive-glow.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Components/CornerDeckView.swift:CornerDeckView",
+      "type": "class",
+      "name": "CornerDeckView",
+      "filePath": "Vayl/Features/Onboarding/Components/CornerDeckView.swift",
+      "lineRange": [
+        28,
+        87
+      ],
+      "summary": "Renders the corner credential pile from [VaylCardModel] with hardcoded stacking offsets and a derived scale so each mini-card's corner radius matches the cornerCard token.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Components/DeckWrapView.swift",
+      "type": "file",
+      "name": "DeckWrapView.swift",
+      "filePath": "Vayl/Features/Onboarding/Components/DeckWrapView.swift",
+      "summary": "TimelineView-driven Canvas that spirals spectrum ribbons in a spinning helix around the rising BuildDeck 'forge' deck, drawing front strands bright and back strands dim.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "canvas"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Components/DeckWrapView.swift:DeckWrapView",
+      "type": "class",
+      "name": "DeckWrapView",
+      "filePath": "Vayl/Features/Onboarding/Components/DeckWrapView.swift",
+      "lineRange": [
+        14,
+        65
+      ],
+      "summary": "Forge-beat helix View: draws three phase-offset spectrum ribbons around the deck centre via a Canvas, with intensity fading the wrap in as the deck builds.",
+      "tags": [
+        "view",
+        "component",
+        "canvas"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Components/FounderLetterSheet.swift",
+      "type": "file",
+      "name": "FounderLetterSheet.swift",
+      "filePath": "Vayl/Features/Onboarding/Components/FounderLetterSheet.swift",
+      "summary": "Shared generic sheet chrome (spectrum grab handle + obSheetChrome) for the founder letter, used identically at BuildDeck's peek detent and FounderLetterPhase's full expansion so the phase swap is invisible.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Components/FounderLetterSheet.swift:FounderLetterSheet",
+      "type": "class",
+      "name": "FounderLetterSheet",
+      "filePath": "Vayl/Features/Onboarding/Components/FounderLetterSheet.swift",
+      "lineRange": [
+        14,
+        35
+      ],
+      "summary": "Generic View<Content> rendering the founder-letter sheet frame: spectrum capsule handle over @ViewBuilder content with native obSheetChrome.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Components/HandBackFollow.swift",
+      "type": "file",
+      "name": "HandBackFollow.swift",
+      "filePath": "Vayl/Features/Onboarding/Components/HandBackFollow.swift",
+      "summary": "Pure feel-math namespace for the shared 'lift \u2192 swipe up to hand back' affordance: tanh-banded lateral drift, stiffened upward follow with a soft ceiling, and a slight drift tilt \u2014 tuned from one place.",
+      "tags": [
+        "utility",
+        "math",
+        "physics",
+        "design-system"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Static-only enum applying tanh soft-clamps so a hard flick can't launch the card off-screen; drives visual follow only, with commit keyed off raw translation at the call site."
+    },
+    {
+      "id": "enum:Vayl/Features/Onboarding/Components/HandBackFollow.swift:HandBackFollow",
+      "type": "class",
+      "name": "HandBackFollow",
+      "filePath": "Vayl/Features/Onboarding/Components/HandBackFollow.swift",
+      "lineRange": [
+        23,
+        44
+      ],
+      "summary": "Static offset/tilt helpers for a lifted hand-back card: bounded tanh drift and stiffened upward lift, plus a drift-proportional tilt in degrees.",
+      "tags": [
+        "utility",
+        "physics",
+        "math"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Components/LiftHalo.swift",
+      "type": "file",
+      "name": "LiftHalo.swift",
+      "filePath": "Vayl/Features/Onboarding/Components/LiftHalo.swift",
+      "summary": "Single-source spectrum focus ring shown around a lifted OB card (blurred halo + crisp glowing stroke), reused as an overlay by every selection phase so the tap-to-lift look never drifts.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "design-system"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Components/LiftHalo.swift:LiftHalo",
+      "type": "class",
+      "name": "LiftHalo",
+      "filePath": "Vayl/Features/Onboarding/Components/LiftHalo.swift",
+      "lineRange": [
+        18,
+        46
+      ],
+      "summary": "Hit-test-disabled View rendering the lifted-card spectrum ring in two passes with spectrumBorderGlow, animated on a `visible` flag.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift",
+      "type": "file",
+      "name": "OnboardingAtmosphere.swift",
+      "filePath": "Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift",
+      "summary": "Per-phase OB atmosphere: light mode composites AuroraGlowField + SparkField, dark mode renders an OBVoidBloom (tri-color bloom under a hard void mask), with a library of named AtmosphereConfig presets.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "design-system"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "AtmosphereConfig/AtmosphereIntensity are Equatable value presets so per-phase config changes can be animated via atmosphereShift."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift:OnboardingAtmosphere",
+      "type": "class",
+      "name": "OnboardingAtmosphere",
+      "filePath": "Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift",
+      "lineRange": [
+        66,
+        98
+      ],
+      "summary": "Atmosphere View that branches on colorScheme: aurora + sparks in light, OBVoidBloom in dark, mapping the active AtmosphereConfig into an AuroraConfig.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift:AtmosphereConfig",
+      "type": "class",
+      "name": "AtmosphereConfig",
+      "filePath": "Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift",
+      "lineRange": [
+        8,
+        53
+      ],
+      "summary": "Equatable preset bundle pairing light/dark AtmosphereIntensity values, with named statics (stat, brand, name, modeSelect, contextSelect, curiosityPicker, cardReveal, groundRules) per OB phase.",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "design-system"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift",
+      "target": "enum:Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift:CanvasEasing",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift",
+      "target": "enum:Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift:CanvasEasing",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift:OBDeepCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift:OBDeepCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasWrapper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasView",
+      "target": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasView",
+      "target": "class:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift:TableSurfaceView",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasView",
+      "target": "class:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift:OnboardingAtmosphere",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasView",
+      "target": "class:Vayl/Features/Onboarding/Components/CornerDeckView.swift:CornerDeckView",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasView",
+      "target": "file:Vayl/Features/Onboarding/Renders/DealPointView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasView",
+      "target": "file:Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasView",
+      "target": "file:Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "target": "file:Vayl/Features/Onboarding/Phases/StatPhase.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "target": "file:Vayl/Features/Onboarding/Phases/DemoPhase.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "target": "file:Vayl/Features/Onboarding/Phases/NamePhase.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "target": "file:Vayl/Features/Onboarding/Phases/GenderPhase.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "target": "file:Vayl/Features/Onboarding/Phases/ModeSelectPhase.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "target": "file:Vayl/Features/Onboarding/Phases/ExperienceLevelPhase.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "target": "file:Vayl/Features/Onboarding/Phases/ContextPhase.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "target": "file:Vayl/Features/Onboarding/Phases/CuriosityPhase.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "target": "class:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:ConfirmationPhase",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "target": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:PhaseOverlayView",
+      "target": "file:Vayl/Features/Onboarding/Phases/FounderLetterPhase.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift:OnboardingCanvasWrapper",
+      "target": "file:Vayl/Features/Onboarding/Phases/CredentialEditorSheet.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/OnboardingStage.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/OnboardingStage.swift:OnboardingStage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/OnboardingStage.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/OnboardingStage.swift:OnboardingStage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/OnboardingStage.swift:OnboardingStage",
+      "target": "class:Vayl/Features/Onboarding/Models/OnboardingData.swift:OnboardingData",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:GenderSequencer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift",
+      "target": "function:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:runRise",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift",
+      "target": "function:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:confirmSelection",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:GenderSequencer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:GenderSequencer",
+      "target": "class:Vayl/Features/Onboarding/Canvas/OnboardingStage.swift:OnboardingStage",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:GenderSequencer",
+      "target": "class:Vayl/Features/Onboarding/Models/VaylCardModel.swift:VaylCardModel",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:GenderSequencer",
+      "target": "enum:Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift:CanvasEasing",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "function:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:runRise",
+      "target": "enum:Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift:CanvasEasing",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift:TableSurfaceView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "target": "function:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift:drawTopoLines",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "target": "function:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift:drawSpectrumRim",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "target": "function:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift:drawCompassStar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift:TableSurfaceView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "target": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:advance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "target": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:concludeContext",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "target": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:finishOnboarding",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "target": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:evaluateOpenerDeckType",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "target": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:receiveCredential",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "target": "class:Vayl/Features/Onboarding/Canvas/OnboardingStage.swift:OnboardingStage",
+      "type": "implements",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "target": "class:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift:GenderSequencer",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "target": "class:Vayl/Features/Onboarding/Models/OnboardingData.swift:OnboardingData",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "target": "class:Vayl/Features/Onboarding/Models/VaylCardModel.swift:VaylCardModel",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "target": "file:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "target": "file:Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "target": "enum:Vayl/Features/Onboarding/Models/DemoDictionary.swift:DemoDictionary",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:finishOnboarding",
+      "target": "file:Vayl/Features/Onboarding/Store/OnboardingStore.swift",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:concludeContext",
+      "target": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:receiveCredential",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:concludeContext",
+      "target": "function:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:advance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/CornerDeckView.swift",
+      "target": "class:Vayl/Features/Onboarding/Components/CornerDeckView.swift:CornerDeckView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/CornerDeckView.swift",
+      "target": "class:Vayl/Features/Onboarding/Components/CornerDeckView.swift:CornerDeckView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Components/CornerDeckView.swift:CornerDeckView",
+      "target": "class:Vayl/Features/Onboarding/Models/VaylCardModel.swift:VaylCardModel",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Components/CornerDeckView.swift:CornerDeckView",
+      "target": "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/DeckWrapView.swift",
+      "target": "class:Vayl/Features/Onboarding/Components/DeckWrapView.swift:DeckWrapView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/DeckWrapView.swift",
+      "target": "class:Vayl/Features/Onboarding/Components/DeckWrapView.swift:DeckWrapView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/FounderLetterSheet.swift",
+      "target": "class:Vayl/Features/Onboarding/Components/FounderLetterSheet.swift:FounderLetterSheet",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/FounderLetterSheet.swift",
+      "target": "class:Vayl/Features/Onboarding/Components/FounderLetterSheet.swift:FounderLetterSheet",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/HandBackFollow.swift",
+      "target": "enum:Vayl/Features/Onboarding/Components/HandBackFollow.swift:HandBackFollow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/HandBackFollow.swift",
+      "target": "enum:Vayl/Features/Onboarding/Components/HandBackFollow.swift:HandBackFollow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/LiftHalo.swift",
+      "target": "class:Vayl/Features/Onboarding/Components/LiftHalo.swift:LiftHalo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/LiftHalo.swift",
+      "target": "class:Vayl/Features/Onboarding/Components/LiftHalo.swift:LiftHalo",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift",
+      "target": "class:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift:OnboardingAtmosphere",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift",
+      "target": "class:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift:AtmosphereConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift",
+      "target": "class:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift:OnboardingAtmosphere",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift:OnboardingAtmosphere",
+      "target": "file:Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift:OnboardingAtmosphere",
+      "target": "file:Vayl/Design/Components/Effects/SparkField.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

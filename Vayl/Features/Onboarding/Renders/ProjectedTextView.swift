@@ -36,24 +36,49 @@ struct ProjectedTextView: View {
     var anchorYFrac: CGFloat = AppLayout.tableHorizonYFrac
     /// Optical offset above the anchor, in points.
     var yOffset: CGFloat = -28
+    /// Single-line callers (e.g. the ContextPhase headline) set this to reveal the ACTUAL
+    /// typed substring, which grows symmetrically from the centre instead of filling into a
+    /// pre-laid-out, left-anchored full line. Only safe for text that stays on ONE line —
+    /// multi-line text must keep the default (clear-tail) layout to avoid mid-type re-wrap.
+    var centerGrow: Bool = false
 
     @State private var revealedCount: Int = 0
+    /// Drives the projection entrance — scaleY 0.94→1.0 over textProject as the line
+    /// lands on the felt (the documented "project onto the surface" feel). RM: instant.
+    @State private var entered:       Bool = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        Text(attributedReveal)
-            // Dealer voice — single source (AppDealerTyping.font). Change the font once there.
-            .font(AppDealerTyping.font)
-            // Token: warm amber (rgba 245,235,215,0.90) pending AppColors.tableProjectedText
-            .foregroundStyle(AppColors.textPrimary)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, AppLayout.screenHPad)
-            .position(
-                x: screenSize.width  * 0.50,
-                y: screenSize.height * anchorYFrac + yOffset // optical offset — token pending AppLayout.projectedTextOffset
-            )
-            .allowsHitTesting(false)
-            .task(id: text) { await typeOn(text) }
+        Group {
+            if centerGrow {
+                // Real substring in a STATIC full-width, centre-aligned frame — the box
+                // stops resizing per character, so .position no longer pins the leading
+                // edge; the string expands left and right equally from centre.
+                Text(String(text.prefix(revealedCount)))
+                    .frame(maxWidth: .infinity, alignment: .center)
+            } else {
+                Text(attributedReveal)
+            }
+        }
+        // Dealer voice — single source (AppDealerTyping.font). Change the font once there.
+        .font(AppDealerTyping.font)
+        // Token: warm amber (rgba 245,235,215,0.90) pending AppColors.tableProjectedText
+        .foregroundStyle(AppColors.textPrimary)
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, AppLayout.screenHPad)
+        // Projection entrance — a slight vertical grow as the line lands on the felt,
+        // co-timed with the caller's opacity fade (both AppAnimation.textProject).
+        .scaleEffect(y: entered ? 1.0 : 0.94)
+        .position(
+            x: screenSize.width  * 0.50,
+            y: screenSize.height * anchorYFrac + yOffset // optical offset — token pending AppLayout.projectedTextOffset
+        )
+        .allowsHitTesting(false)
+        .task(id: text) { await typeOn(text) }
+        .onAppear {
+            guard !reduceMotion else { entered = true; return }
+            withAnimation(AppAnimation.textProject) { entered = true }
+        }
     }
 
     /// The FULL line laid out from the first frame — unrevealed characters are

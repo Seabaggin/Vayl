@@ -1,0 +1,772 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Features/Onboarding/Layout/OnboardingLayout.swift",
+      "type": "file",
+      "name": "OnboardingLayout.swift",
+      "filePath": "Vayl/Features/Onboarding/Layout/OnboardingLayout.swift",
+      "summary": "Shared proportional spacing constants for onboarding, expressed as fractions of live screen height/width (with a stepped nav-top) so the layout scales across the full iPhone device matrix.",
+      "tags": [
+        "utility",
+        "layout",
+        "design-system"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Caseless enum aliased as OL; every metric is a fraction-of-geometry function rather than a UIScreen.main read, per the iOS 26 layout contract."
+    },
+    {
+      "id": "enum:Vayl/Features/Onboarding/Layout/OnboardingLayout.swift:OnboardingLayout",
+      "type": "class",
+      "name": "OnboardingLayout",
+      "filePath": "Vayl/Features/Onboarding/Layout/OnboardingLayout.swift",
+      "lineRange": [
+        28,
+        100
+      ],
+      "summary": "Static layout namespace: nav padding, vertical rhythm (compact/standard/loose), progress-bar clearance, spacer bounds, atmosphere ellipse sizing, and scroll min-height, all device-proportional.",
+      "tags": [
+        "utility",
+        "layout",
+        "design-system"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Models/CardLandingSlot.swift",
+      "type": "file",
+      "name": "CardLandingSlot.swift",
+      "filePath": "Vayl/Features/Onboarding/Models/CardLandingSlot.swift",
+      "summary": "Pure model for one predefined card-deal landing zone: fractional center + angle with jitter fields, resolving to a concrete position/angle for any screen size.",
+      "tags": [
+        "data-model",
+        "type-definition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Models/CardLandingSlot.swift:CardLandingSlot",
+      "type": "class",
+      "name": "CardLandingSlot",
+      "filePath": "Vayl/Features/Onboarding/Models/CardLandingSlot.swift",
+      "lineRange": [
+        13,
+        33
+      ],
+      "summary": "Struct describing a fractional landing slot with jitter and a nested Resolved type; resolve(in:) adds randomness within the zone for an organic deal.",
+      "tags": [
+        "data-model",
+        "type-definition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Models/ContextOption.swift",
+      "type": "file",
+      "name": "ContextOption.swift",
+      "filePath": "Vayl/Features/Onboarding/Models/ContextOption.swift",
+      "summary": "Pure data + selection model for ContextPhase cards (solo/couple \u00d7 curious/in-it): first-person 'I' option sets, plus a derivedRegister that is the sole downstream behavioural driver.",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "content"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "context is the persisted routing tag while derivedRegister (anxious/excited/flexible) is what downstream branches on; accent is decorative only \u2014 never branched on."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Models/ContextOption.swift:ContextOption",
+      "type": "class",
+      "name": "ContextOption",
+      "filePath": "Vayl/Features/Onboarding/Models/ContextOption.swift",
+      "lineRange": [
+        20,
+        130
+      ],
+      "summary": "Identifiable context card model with title/subtitle/detail, a derivedRegister mapping context\u2192SituationalRegister, and an options(appMode:stage:) resolver returning the four curated card sets.",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "content"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Models/CuriosityDeck.swift",
+      "type": "file",
+      "name": "CuriosityDeck.swift",
+      "filePath": "Vayl/Features/Onboarding/Models/CuriosityDeck.swift",
+      "summary": "Pure deterministic selection model for the CuriosityPhase sort deck: round-1 feeling hands keyed by mode \u00d7 register and a fixed escalating round-2 milestone set, backed by a stable id\u2192text catalog.",
+      "tags": [
+        "data-model",
+        "content",
+        "validation"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Selection is deterministic per (mode, register) so the ConfirmationPhase editor can rebuild the exact 10 cards; catalog ids persist into onboardingData and are never reused for different text."
+    },
+    {
+      "id": "enum:Vayl/Features/Onboarding/Models/CuriosityDeck.swift:CuriosityDeck",
+      "type": "class",
+      "name": "CuriosityDeck",
+      "filePath": "Vayl/Features/Onboarding/Models/CuriosityDeck.swift",
+      "lineRange": [
+        21,
+        96
+      ],
+      "summary": "Static deck namespace: cards(round:mode:register:) maps deterministic id hands through the catalog into CuriositySortCard arrays for both sort rounds.",
+      "tags": [
+        "data-model",
+        "content"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Models/CuriositySortCard.swift",
+      "type": "file",
+      "name": "CuriositySortCard.swift",
+      "filePath": "Vayl/Features/Onboarding/Models/CuriositySortCard.swift",
+      "summary": "Minimal Identifiable/Equatable model for a single CuriosityPhase sort card: stable id (the key written to OnboardingData), display text, and round number.",
+      "tags": [
+        "data-model",
+        "type-definition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Models/DemoDictionary.swift",
+      "type": "file",
+      "name": "DemoDictionary.swift",
+      "filePath": "Vayl/Features/Onboarding/Models/DemoDictionary.swift",
+      "summary": "Pure mapping from the DemoPhase 'I [verb] [noun]' snapshot to an EmotionalRegister via noun keyword-stem categories modulated by the verb, defaulting to flexible \u2014 reviving the cut Compass Q3 signal.",
+      "tags": [
+        "data-model",
+        "validation",
+        "content"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Stems are matched as lowercased substrings; verb\u00d7noun triangulation flips categories (e.g. need + excited-noun \u2192 anxious) with no user-visible evaluation."
+    },
+    {
+      "id": "enum:Vayl/Features/Onboarding/Models/DemoDictionary.swift:DemoDictionary",
+      "type": "class",
+      "name": "DemoDictionary",
+      "filePath": "Vayl/Features/Onboarding/Models/DemoDictionary.swift",
+      "lineRange": [
+        20,
+        60
+      ],
+      "summary": "Static register-inference namespace: category(for:) classifies the noun by stem lists, register(verb:noun:) modulates it by verb into the final EmotionalRegister.",
+      "tags": [
+        "data-model",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Models/FoilTear.swift",
+      "type": "file",
+      "name": "FoilTear.swift",
+      "filePath": "Vayl/Features/Onboarding/Models/FoilTear.swift",
+      "summary": "Identifiable model for a single crack in the sealed BuildDeck case: face-local UV tap point, authored crack orientation, a stable procedural seed, and the strike timestamp.",
+      "tags": [
+        "data-model",
+        "type-definition"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Stored in face-local UV (not screen space) so cracks stick to the case as it floats and tilts; seed makes the branch geometry procedural yet frame-stable."
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Models/OnboardingData.swift",
+      "type": "file",
+      "name": "OnboardingData.swift",
+      "filePath": "Vayl/Features/Onboarding/Models/OnboardingData.swift",
+      "summary": "Transient struct accumulating every onboarding answer (demo/name/gender/mode/experience/context/curiosity + derived opener deck) and the isReadyToComplete commit gate; written to UserProfile on completion.",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "state"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Documents the cut CompassPhase fields (retained but never written in OB) and is the source of truth for content routing across the app lifecycle."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Models/OnboardingData.swift:OnboardingData",
+      "type": "class",
+      "name": "OnboardingData",
+      "filePath": "Vayl/Features/Onboarding/Models/OnboardingData.swift",
+      "lineRange": [
+        14,
+        100
+      ],
+      "summary": "The onboarding aggregate struct: raw + derived fields per phase plus an isReadyToComplete computed gate requiring name, situational register, and at least one curiosity selection.",
+      "tags": [
+        "data-model",
+        "type-definition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Models/VaylCardModel.swift",
+      "type": "file",
+      "name": "VaylCardModel.swift",
+      "filePath": "Vayl/Features/Onboarding/Models/VaylCardModel.swift",
+      "summary": "@Observable reference model for one OB canvas card: content (question/credential/face-up) plus full physics + layout state (position, rotation, scale, flip, elevation, opacity, zIndex, slot) written exclusively by VaylDirector.",
+      "tags": [
+        "data-model",
+        "state",
+        "observable"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "An @Observable final class (not a struct) so the renderer reads live physics; the contract is strict write-only-by-director \u2014 no View may mutate it."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Models/VaylCardModel.swift:VaylCardModel",
+      "type": "class",
+      "name": "VaylCardModel",
+      "filePath": "Vayl/Features/Onboarding/Models/VaylCardModel.swift",
+      "lineRange": [
+        24,
+        101
+      ],
+      "summary": "Identifiable @Observable card model holding identity, content, and director-owned physics/layout fields that VaylCardRenderer reads to render face/back and animate flight.",
+      "tags": [
+        "data-model",
+        "observable",
+        "state"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Models/WelcomeDeck.swift",
+      "type": "file",
+      "name": "WelcomeDeck.swift",
+      "filePath": "Vayl/Features/Onboarding/Models/WelcomeDeck.swift",
+      "summary": "Equatable model for the forged starter deck revealed at the end of BuildDeck: real name/purpose/colorway derived from OpenerDeckType, plus a shared set of placeholder prompt cards pending the content pass.",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "content"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Models/WelcomeDeck.swift:WelcomeDeck",
+      "type": "class",
+      "name": "WelcomeDeck",
+      "filePath": "Vayl/Features/Onboarding/Models/WelcomeDeck.swift",
+      "lineRange": [
+        8,
+        33
+      ],
+      "summary": "Struct mapping OpenerDeckType \u2192 a named WelcomeDeck (STEADY/OPENING/RETURN/WIDER) with placeholder context cards for the reveal carousel.",
+      "tags": [
+        "data-model",
+        "content"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "type": "file",
+      "name": "BuildDeckPhase.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "summary": "OB BuildDeck phase View driving the multi-beat forge ceremony: the confirmed deck melts through the felt, the table works, a metallic case rises/floats, a three-strike crack ceremony shatters it into the forged WelcomeDeck reveal and founder-letter exit.",
+      "tags": [
+        "view",
+        "ui",
+        "ceremony",
+        "animation"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Heavy @State async beat-sequencing with cancellable Task handles; forwards crack strikes to director.ceremony.addFoilTear and drives the persistent table bindings (rimBurst/forgeEnergy) during the forge."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "type": "class",
+      "name": "BuildDeckPhase",
+      "filePath": "Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "lineRange": [
+        23,
+        596
+      ],
+      "summary": "The forge-ceremony phase View: melt-through, case rise/float/zoom, knock anticipation, crack\u2192shatter burst, reveal carousel, and the founder-letter peek/expand handoff to FounderLetterPhase.",
+      "tags": [
+        "view",
+        "ui",
+        "ceremony"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:runSequence",
+      "type": "function",
+      "name": "runSequence",
+      "filePath": "Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "lineRange": [
+        438,
+        527
+      ],
+      "summary": "Async Beats 1\u20134 driver: dealer lines, deck melt + rim oscillation, the cased deck mount/rise/float/zoom with table recede, then arming the case and starting the knock loop.",
+      "tags": [
+        "ceremony",
+        "animation",
+        "async"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:beginShatter",
+      "type": "function",
+      "name": "beginShatter",
+      "filePath": "Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "lineRange": [
+        373,
+        411
+      ],
+      "summary": "Third-crack climax: runs the case overload + flood (screen flash, stage punch, celebration sparks), then resolves into the reveal carousel and unmounts the shattered case.",
+      "tags": [
+        "ceremony",
+        "animation",
+        "async"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:MeltThroughFelt",
+      "type": "class",
+      "name": "MeltThroughFelt",
+      "filePath": "Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "lineRange": [
+        604,
+        630
+      ],
+      "summary": "ViewModifier that sinks the deck straight down through a fixed clip window with a soft absorption-band mask so the edge melts under the felt rather than slicing.",
+      "tags": [
+        "view",
+        "ui",
+        "animation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "type": "file",
+      "name": "ConfirmationPhase.swift",
+      "filePath": "Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "summary": "OB Confirmation phase View: deals the six credential cards out of the corner deck onto the felt along a b\u00e9zier corner-sweep, opens per-card edit sheets on tap, and confirms via a fan-wide swipe-right that collapses into a deck and advances to BuildDeck.",
+      "tags": [
+        "view",
+        "ui",
+        "animation",
+        "validation"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Uses a CornerSweep GeometryEffect for the b\u00e9zier deal and a simultaneousGesture so card taps still edit while fan-level swipes commit; renders its own VaylCardFace symbol cards and never writes VaylCardModel physics."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:ConfirmationPhase",
+      "type": "class",
+      "name": "ConfirmationPhase",
+      "filePath": "Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "lineRange": [
+        20,
+        373
+      ],
+      "summary": "Credential-review phase View: b\u00e9zier corner-sweep deal, per-credential symbol content + edit-sheet tap, damped fan drag with idle nudge, and a swipe-right commit that flips the fan face-down into a deck.",
+      "tags": [
+        "view",
+        "ui",
+        "validation"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:runEntry",
+      "type": "function",
+      "name": "runEntry",
+      "filePath": "Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "lineRange": [
+        183,
+        228
+      ],
+      "summary": "Async entry: projects the dealer prompt, deals the fan with a per-landing haptic tick, arms the swipe after the settle, then voices the keep-direction cue and starts the rightward nudge.",
+      "tags": [
+        "ui",
+        "animation",
+        "async"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:content",
+      "type": "function",
+      "name": "content",
+      "filePath": "Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "lineRange": [
+        335,
+        372
+      ],
+      "summary": "Maps each OBCredential to its VaylCardContent symbol from onboardingData (snapshot shows the user's own sealed sentence; others render the phase's signature card face).",
+      "tags": [
+        "ui",
+        "data-model"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:CornerSweep",
+      "type": "class",
+      "name": "CornerSweep",
+      "filePath": "Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "lineRange": [
+        381,
+        399
+      ],
+      "summary": "Animatable GeometryEffect translating a card along a quadratic b\u00e9zier from the corner deck through a control point to its fan target as progress goes 0\u21921.",
+      "tags": [
+        "ui",
+        "animation",
+        "geometry"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Features/Onboarding/Layout/OnboardingLayout.swift",
+      "target": "enum:Vayl/Features/Onboarding/Layout/OnboardingLayout.swift:OnboardingLayout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Layout/OnboardingLayout.swift",
+      "target": "enum:Vayl/Features/Onboarding/Layout/OnboardingLayout.swift:OnboardingLayout",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/CardLandingSlot.swift",
+      "target": "class:Vayl/Features/Onboarding/Models/CardLandingSlot.swift:CardLandingSlot",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/CardLandingSlot.swift",
+      "target": "class:Vayl/Features/Onboarding/Models/CardLandingSlot.swift:CardLandingSlot",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/ContextOption.swift",
+      "target": "class:Vayl/Features/Onboarding/Models/ContextOption.swift:ContextOption",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/ContextOption.swift",
+      "target": "class:Vayl/Features/Onboarding/Models/ContextOption.swift:ContextOption",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Models/ContextOption.swift:ContextOption",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/CuriosityDeck.swift",
+      "target": "enum:Vayl/Features/Onboarding/Models/CuriosityDeck.swift:CuriosityDeck",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/CuriosityDeck.swift",
+      "target": "enum:Vayl/Features/Onboarding/Models/CuriosityDeck.swift:CuriosityDeck",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "enum:Vayl/Features/Onboarding/Models/CuriosityDeck.swift:CuriosityDeck",
+      "target": "file:Vayl/Features/Onboarding/Models/CuriositySortCard.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/DemoDictionary.swift",
+      "target": "enum:Vayl/Features/Onboarding/Models/DemoDictionary.swift:DemoDictionary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/DemoDictionary.swift",
+      "target": "enum:Vayl/Features/Onboarding/Models/DemoDictionary.swift:DemoDictionary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "enum:Vayl/Features/Onboarding/Models/DemoDictionary.swift:DemoDictionary",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/OnboardingData.swift",
+      "target": "class:Vayl/Features/Onboarding/Models/OnboardingData.swift:OnboardingData",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/OnboardingData.swift",
+      "target": "class:Vayl/Features/Onboarding/Models/OnboardingData.swift:OnboardingData",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Models/OnboardingData.swift:OnboardingData",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/VaylCardModel.swift",
+      "target": "class:Vayl/Features/Onboarding/Models/VaylCardModel.swift:VaylCardModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/VaylCardModel.swift",
+      "target": "class:Vayl/Features/Onboarding/Models/VaylCardModel.swift:VaylCardModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Models/VaylCardModel.swift:VaylCardModel",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/WelcomeDeck.swift",
+      "target": "class:Vayl/Features/Onboarding/Models/WelcomeDeck.swift:WelcomeDeck",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Models/WelcomeDeck.swift",
+      "target": "class:Vayl/Features/Onboarding/Models/WelcomeDeck.swift:WelcomeDeck",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Models/WelcomeDeck.swift:WelcomeDeck",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "target": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "target": "function:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:runSequence",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "target": "function:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:beginShatter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "target": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:MeltThroughFelt",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "target": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "target": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "target": "class:Vayl/Features/Onboarding/Models/WelcomeDeck.swift:WelcomeDeck",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "target": "class:Vayl/Features/Onboarding/Components/FounderLetterSheet.swift:FounderLetterSheet",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "target": "file:Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "target": "file:Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "target": "file:Vayl/Design/Components/Cards/VaylDeckStack.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "target": "file:Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "target": "file:Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "target": "file:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:BuildDeckPhase",
+      "target": "file:Vayl/Design/Components/Effects/VaylButton.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "function:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift:beginShatter",
+      "target": "class:Vayl/Features/Onboarding/Models/WelcomeDeck.swift:WelcomeDeck",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "target": "class:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:ConfirmationPhase",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "target": "function:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:runEntry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "target": "function:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:content",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "target": "class:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:CornerSweep",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift",
+      "target": "class:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:ConfirmationPhase",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:ConfirmationPhase",
+      "target": "class:Vayl/Features/Onboarding/Canvas/VaylDirector.swift:VaylDirector",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:ConfirmationPhase",
+      "target": "file:Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:ConfirmationPhase",
+      "target": "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:ConfirmationPhase",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "function:Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift:content",
+      "target": "class:Vayl/Features/Onboarding/Models/OnboardingData.swift:OnboardingData",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

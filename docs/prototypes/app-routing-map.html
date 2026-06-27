@@ -152,7 +152,7 @@
   <div class="mast">
     <h1>Vayl — App Routing &amp; Screen Map</h1>
     <p class="sub">Every flow, by journey (left→right), with each box annotated by <b>presentation</b>, <b>build status</b>, and <b>gate</b>. Solid = built · dashed = needed · orange = needs rework. Cross-references jump to their destination.</p>
-    <p class="meta">Working map · v1 · OB ceremony collapsed (solid) per direction</p>
+    <p class="meta">Working map · v3 · + platform / safety / compliance · feature-flow + edge backlog · <b style="color:var(--amber)">*</b> = AI-specced, Bryan to define</p>
   </div>
 
   <!-- LEGEND -->
@@ -197,7 +197,7 @@
 
   <!-- LANE 1 -->
   <div class="lane">
-    <div class="lane-head"><span class="num">1</span><h2>First-Run &amp; Auth</h2><span class="tag">launch → ceremony → save → home</span></div>
+    <div class="lane-head"><span class="num">1</span><h2>First-Run &amp; Auth</h2><span class="tag">launch → OB → local Home → sign-in deferred</span></div>
     <div class="lane-body">
       <div class="flow">
         <div class="node action built"><div class="ntop"><span class="pres">System</span><span class="st built">✓ built</span></div><h4>Launch</h4><p>Cold start → AppRootView decides route.</p></div>
@@ -206,13 +206,13 @@
         <span class="arrow">→</span>
         <div class="node cover built"><div class="ntop"><span class="pres">Cover</span><span class="st built">✓ built</span></div><h4>OB Ceremony <span style="color:var(--t4);font-weight:600">(11 phases)</span></h4><p><b>Collapsed — solid.</b> Ends at founder-letter pull → commit → mark complete.</p></div>
         <span class="arrow">→</span>
-        <div class="node cover rework"><div class="ntop"><span class="pres">Cover</span><span class="st rework">⚠ reframe</span></div><h4>Sign in with Apple</h4><p><b>Rec:</b> restyle as the box's closing beat — <i>"Claim your deck · Save &amp; sync."</i> One tap. Stays post-OB.</p></div>
+        <div class="node tab built"><div class="ntop"><span class="pres">Tab · local</span><span class="st built">✓ built</span></div><h4>Home (signed-out)</h4><p>Lands here after OB — <b>no sign-in yet.</b> Browse decks, play solo deck, start your map — all local. <a class="ref" href="#tabs">↗ Tabs</a></p></div>
         <span class="arrow">→</span>
-        <div class="node action built"><div class="ntop"><span class="pres">Overlay</span><span class="st built">✓ built</span></div><h4>Getting Started</h4><p>Post-OB bridge: ✓Profile ◯Map ◯Invite 🔒Reveal.</p></div>
+        <div class="node action built"><div class="ntop"><span class="pres">Overlay</span><span class="st built">✓ built</span></div><h4>Getting Started</h4><p><b>Activation</b> bridge — routes each step: ◯Map ◯Invite 🔒Reveal.</p></div>
         <span class="arrow">→</span>
-        <div class="node tab built"><div class="ntop"><span class="pres">Tab</span><span class="st built">✓ built</span></div><h4>Home</h4><p>Lands here. <a class="ref" href="#tabs">↗ Tabs</a></p></div>
+        <div class="node cover needed"><div class="ntop"><span class="pres">Cover</span><span class="st needed">◇ deferred</span></div><h4>Sign in — Apple (deferred)</h4><p>Fires at the <b>first server action</b>, benefit-framed: <i>"save your map"</i> or <i>"connect with [partner]."</i> One tap · declinable.</p></div>
       </div>
-      <div class="callout"><span class="ic">🍎</span><div class="ct"><b>Returning users:</b> onboarded + signed-in → straight to Home · onboarded + signed-out → Sign-in is the re-entry · new device → Apple restores profile + couple tier (entitlement follows the buyer). <b>Don't move sign-in earlier</b> — gating before value costs conversions, and you need the account at pairing anyway (next lane).</div></div>
+      <div class="callout"><span class="ic">🍎</span><div class="ct"><b>Sign-in = local-first, benefit-framed (not a gate).</b> OB + their own Desire Map run signed-out/local. Apple Sign-In fires at the first server-touching action — <i>save your map</i> or <i>pair</i> — declinable (decline = deferral, keep using locally). <b>Both partners must be signed in to pair</b> (couple = two real identities). Current code hard-gates auth right after OB → must change to a local Home+map path + merge-on-sign-in.</div></div>
     </div>
   </div>
 
@@ -251,13 +251,13 @@
     <div class="lane-head"><span class="num">3</span><h2>Desire Map → Reveal → Paywall</h2><span class="tag">the conversion spine</span></div>
     <div class="lane-body">
       <div class="flow">
-        <div class="node cover built"><div class="ntop"><span class="pres">Cover</span><span class="st built">✓ built</span></div><h4>Desire Map (rater)</h4><p>From Getting Started. <b>Available until primary completes</b>, card-by-card rating → sync.</p></div>
+        <div class="node cover built"><div class="ntop"><span class="pres">Cover</span><span class="st built">✓ built</span></div><h4>Desire Map (rater)</h4><p><b>Soft step, not a gate.</b> Runs local/signed-out; on complete → <i>"save your map"</i> sign-in. Nudged in Getting Started.</p></div>
         <span class="arrow">→</span>
-        <div class="node action built"><div class="ntop"><span class="pres">State</span><span class="st built">✓ built</span></div><h4>Waiting for partner</h4><p>Primary done → status shows in the <b>partner pill / overlay</b> on Home.</p><div class="gates"><span class="g state">◐ State</span><span class="g tier">T1 · partner done</span></div></div>
+        <div class="node action built"><div class="ntop"><span class="pres">Status</span><span class="st built">✓ built</span></div><h4>Waiting for partner</h4><p><b>Read-only signal</b> — partner pill (presence + map status) + Getting Started. <i>HomeWaitingView deleted 6/19.</i></p><div class="gates"><span class="g state">◐ State</span><span class="g tier">T1 · partner done</span></div></div>
         <span class="arrow">→</span>
         <div class="node cover built"><div class="ntop"><span class="pres">Cover</span><span class="st built">✓ built</span></div><h4>Match Reveal — the magic moment</h4><p>Both done → fires to both. <b>Free:</b> 1 match shown + rest blurred. <b>Core:</b> all.</p><div class="gates"><span class="g pay">🔒 Paywall</span><span class="g tier">T1 · reveal ready</span></div></div>
         <span class="arrow">→</span>
-        <div class="node cover needed" id="paywall"><div class="ntop"><span class="pres">Cover</span><span class="st needed">◇ build out</span></div><h4>Paywall</h4><p><b>One reusable screen.</b> Lands here after reveal · also reached from Settings banner. $24.99 couple lifetime.</p><div class="gates"><span class="g pay">🔒</span><span class="g apple">Restore Purchases</span></div></div>
+        <div class="node cover needed" id="paywall"><div class="ntop"><span class="pres">Cover</span><span class="st needed">◇ build out</span></div><h4>Paywall</h4><p><b>One reusable screen, passive model.</b> PRIMARY door = Play deck-store (locked → preview → CTA). Secondary = reveal CTA + Settings banner. $24.99 couple lifetime.</p><div class="gates"><span class="g pay">🔒</span><span class="g apple">Restore Purchases</span></div></div>
         <span class="arrow">→</span>
         <div class="node action built"><div class="ntop"><span class="pres">StoreKit</span><span class="st built">✓ built</span></div><h4>Purchase</h4><p>Apple sheet → JWS → server grant (both unlock).</p></div>
         <span class="arrow">→</span>
@@ -266,7 +266,7 @@
       <div class="flow" style="margin-top:9px">
         <div class="node sheet needed"><div class="ntop"><span class="pres">Sheet</span><span class="st needed">◇ needed</span></div><h4>Open a conversation (consent-unlock)</h4><p>From the Vault. Ask partner about a hidden answer → soft-decline-safe → one neutral discussion card.</p></div>
       </div>
-      <div class="callout"><span class="ic">💳</span><div class="ct"><b>Reorg — paywall = one destination, two triggers:</b> reveal CTA + Settings upgrade banner. Don't re-invent paywall UI per surface. Deck-2 unwrap trigger from the spec is <b>deferred</b> for V1 (kept simple, per your call).</div></div>
+      <div class="callout"><span class="ic">💳</span><div class="ct"><b>Passive paywall (card-premiere):</b> Play = storefront; locked decks → <b>deck preview → CTA → paywall</b> (preview-then-CTA). This deck-store is the PRIMARY card-native conversion and <b>replaces</b> the old "Deck-2 after first sitting" mechanic. Reveal CTA + Settings banner = secondary doors. Passive-dominant, not purely passive. <a class="ref" href="#tabs">↗ Play storefront</a></div></div>
     </div>
   </div>
 
@@ -290,6 +290,10 @@
         <span class="arrow">→</span>
         <div class="node sheet needed"><div class="ntop"><span class="pres">Sheet</span><span class="st needed">◇ Phase F</span></div><h4>Reflection / post-session</h4><p>Back to Home after.</p><div class="gates"><span class="g tier t3">T3 · partner/both reflected</span></div></div>
       </div>
+      <div class="flow" style="margin-top:9px">
+        <div class="node cover needed"><div class="ntop"><span class="pres">In-session</span><span class="st needed">◇ needed</span></div><h4>Player mechanics</h4><p>Turn-taking · whisper · reveal cards · consent (<b>✓ tracked</b>) · aftercare.</p></div>
+        <div class="node cover needed"><div class="ntop"><span class="pres">In-session</span><span class="st needed">◇ define *</span></div><h4>Pause &amp; re-center <b style="color:var(--amber)">*</b></h4><p><i>* AI-specced, not Bryan's call yet.</i> Likely a <b>Pause</b> (things got testy) → pick a re-centering tool (Gottman 6-sec kiss, share a favorite thing…). "Safe word" may be the wrong frame. <code>SafeWordButton</code> + <code>safeWordUsed</code> exist; define when building the session sequence.</p></div>
+      </div>
       <div class="callout warn"><span class="ic">⚠️</span><div class="ct"><b>Two reorgs here:</b> (1) Card Session must be a <code>.vaylCover</code> per your nav contract — it's a <code>.sheet</code> today; (2) build the <code>.vaylCover</code> / <code>.vaylSheet</code> helpers first — they don't exist yet. Standalone "1-card" session = same engine (1..N cards).</div></div>
     </div>
   </div>
@@ -301,12 +305,13 @@
       <div class="tabgrid">
         <div class="tabcard">
           <div class="th"><span class="pres" style="--pc:var(--cyan);color:var(--cyan);background:rgba(0,194,255,0.14)">Tab</span><h3>Home</h3><span class="st built" style="margin-left:auto">✓ built (shell)</span></div>
-          <p class="desc">State machine: gated → waiting → matchReady → dashboard.</p>
+          <p class="desc">Always the dashboard (<b>un-gated</b>). Deck hero leads; the map is a module.</p>
           <ul class="kids">
-            <li><b>Resume deck</b> hero <span class="mini">→ <a class="ref" href="#session">Card Session</a></span></li>
-            <li><b>Daily Pulse check-in</b> <span class="mini">→ full Pulse in Map</span></li>
-            <li><b>Research quick-view</b> <span class="mini">→ Learn</span></li>
-            <li>Getting Started (early) · Partner pill / status</li>
+            <li><b>Deck hero</b> <span class="mini">ACTION → <a class="ref" href="#session">Card Session</a></span></li>
+            <li><b>Getting Started</b> <span class="mini">ACTIVATION → routes each step (map / invite / reveal)</span></li>
+            <li><b>Partner pill</b> <span class="mini">STATUS — read-only (presence + map status); no route in v1</span></li>
+            <li><b>Daily Pulse check-in</b> <span class="mini">ACTION → check-in · arc → history sheet</span></li>
+            <li><b>Research quick-view</b> <span class="mini">→ Learn (push)</span></li>
             <li>Cog <span class="mini">→ <a class="ref" href="#settings">Settings</a></span></li>
           </ul>
         </div>
@@ -317,7 +322,7 @@
             <li><b>Deck grid</b> — all decks, lock states</li>
             <li><b>Deck detail</b> → view all cards (gallery)</li>
             <li><b>Curate / configure</b> → launch <span class="mini">→ <a class="ref" href="#session">Card Session</a></span></li>
-            <li class="mini">Locked decks → <a class="ref" href="#paywall">Paywall</a></li>
+            <li class="mini">Locked deck → preview → CTA → <a class="ref" href="#paywall">Paywall</a> (passive)</li>
           </ul>
         </div>
         <div class="tabcard needed">
@@ -340,6 +345,7 @@
         </div>
       </div>
       <div class="callout"><span class="ic">🪞</span><div class="ct"><b>Me / Us proposal:</b> the switcher resolves the old "Mirror = individual-only" tension — <b>Me</b> <i>is</i> the individual Mirror, <b>Us</b> is the additive couple layer. Daily check-in lives under Me but is reachable from Home too (one action, two doors). Flagged "subtab links to think about" → that's the Me/Us segmented control + the Vault sheet.</div></div>
+      <div class="callout"><span class="ic">🧭</span><div class="ct"><b>Home component-routing rule — three categories:</b> <b>STATUS</b> (partner pill, pulse glance, teasers) = read-only glance, routes only if it fronts a real action · <b>ACTIVATION</b> (Getting Started) = routes by design, each step launches its flow, temporary · <b>ACTION</b> (deck hero, pulse check-in, "see where you align") = routes / triggers. Your rule: <i>no dead affordances</i> — show a tap target only when there's somewhere to go. <b>Partner pill = pure STATUS in v1</b> (expandable / hub version is deferred to the home-tab pass); the reveal action lives in Getting Started, deep couple content lives in Map "Us".</div></div>
     </div>
   </div>
 
@@ -349,7 +355,7 @@
     <div class="lane-body">
       <div class="flow">
         <div class="node push needed"><div class="ntop"><span class="pres">Push</span><span class="st needed">◇ needed</span></div><h4>Profile edit</h4><p>+ photo opt-in (on the card).</p></div>
-        <div class="node push needed"><div class="ntop"><span class="pres">Push</span><span class="st needed">◇ needed</span></div><h4>Pairing / Unlink</h4><p><a class="ref" href="#pairing">↗ Pairing</a></p></div>
+        <div class="node push needed"><div class="ntop"><span class="pres">Push</span><span class="st needed">◇ needed</span></div><h4>Pairing / Unlink</h4><p>Unlink = <b>hold-to-confirm</b> (safety). <a class="ref" href="#pairing">↗ Pairing</a></p></div>
         <div class="node push needed"><div class="ntop"><span class="pres">Push</span><span class="st needed">◇ needed</span></div><h4>Subscription</h4><p>Upgrade <b>banner</b> → <a class="ref" href="#paywall">Paywall</a> · Restore · Manage.</p><div class="gates"><span class="g apple">Restore — required</span></div></div>
         <div class="node push needed"><div class="ntop"><span class="pres">Push</span><span class="st needed">◇ needed</span></div><h4>Notifications</h4><p>Per-tier opt-in toggles.</p></div>
         <div class="node push needed"><div class="ntop"><span class="pres">Push</span><span class="st needed">◇ needed</span></div><h4>Legal</h4><p>Privacy Policy + Terms.</p><div class="gates"><span class="g apple">Required</span></div></div>
@@ -361,6 +367,32 @@
     </div>
   </div>
 
+  <!-- LANE 7 -->
+  <div class="lane">
+    <div class="lane-head"><span class="num">7</span><h2>Cross-cutting — Platform, Safety &amp; Compliance</h2><span class="tag">the non-negotiables under the journeys</span></div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="node action needed"><div class="ntop"><span class="pres">Infra</span><span class="st needed">◇ needed</span></div><h4>Push notifications</h4><p><b>No APNs / UNUserNotificationCenter today.</b> Needs device tokens + server triggers + permission priming + tap-routing. Or ship <b>pull-only</b> V1 (decide).</p></div>
+        <div class="node action needed"><div class="ntop"><span class="pres">Infra</span><span class="st needed">◇ needed</span></div><h4>Deep / universal links</h4><p>None today. Invite link → install → <b>deferred pair</b>; notification-tap routing. Growth loop + notifs depend on it.</p><div class="gates"><span class="g pair">👥 invite link</span></div></div>
+        <div class="node action needed"><div class="ntop"><span class="pres">Gate</span><span class="st needed">◇ needed</span></div><h4>Force-update gate</h4><p>Live backend + realtime protocol → old clients break on schema change. Min-version check.</p></div>
+        <div class="node cover needed"><div class="ntop"><span class="pres">Cover</span><span class="st needed">◇ needed</span></div><h4>Age gate / 17+</h4><p>Sexual content → App Store 17+ rating + age confirmation. No age handling today.</p><div class="gates"><span class="g apple">App Store</span></div></div>
+        <div class="node action needed"><div class="ntop"><span class="pres">State</span><span class="st needed">◇ needed</span></div><h4>Maintenance / backend-down</h4><p>Graceful "we'll be right back" vs broken screens.</p></div>
+      </div>
+      <div class="flow" style="margin-top:9px">
+        <div class="node action built"><div class="ntop"><span class="pres">Safety</span><span class="st built">✓ built</span></div><h4>Screenshot protection</h4><p><code>.screenshotProtected()</code> on sensitive screens.</p></div>
+        <div class="node action needed"><div class="ntop"><span class="pres">Safety</span><span class="st needed">◇ needed</span></div><h4>App-switcher blur</h4><p>Cover the backgrounding snapshot (app-switcher thumbnail). Outing-risk context.</p></div>
+        <div class="node cover needed"><div class="ntop"><span class="pres">Safety</span><span class="st needed">◇ needed</span></div><h4>Biometric app-lock</h4><p>Face ID to open. Discreet content on a visible phone.</p></div>
+        <div class="node push needed"><div class="ntop"><span class="pres">Safety</span><span class="st needed">◇ needed</span></div><h4>Crisis / safety resources</h4><p>Always-reachable. Planned as the Learn pill (Learn is a stub today).</p></div>
+      </div>
+      <div class="flow" style="margin-top:9px">
+        <div class="node push needed"><div class="ntop"><span class="pres">Legal</span><span class="st needed">◇ needed</span></div><h4>Data export (GDPR)</h4><p>"Download my data" — complement to delete-account (built).</p><div class="gates"><span class="g apple">Region-req</span></div></div>
+        <div class="node action built"><div class="ntop"><span class="pres">Legal</span><span class="st built">~ partial</span></div><h4>Terms consent</h4><p>Inline "by continuing…" text exists at sign-in. Explicit accept = optional upgrade.</p></div>
+        <div class="node action built"><div class="ntop"><span class="pres">Safety</span><span class="st built">✓ built</span></div><h4>In-session consent</h4><p>Per-partner consent tracked (a/b_consented) pre-active.</p></div>
+      </div>
+      <div class="callout warn"><span class="ic">🚧</span><div class="ct"><b>Won't-ship-without (my call):</b> the Pause / re-center flow (lane 4 <b style="color:var(--amber)">*</b>), force-update gate, age rating, and an explicit <b>push-vs-pull</b> decision. The rest is sequence-able. <b>Already built:</b> screenshot protection · in-session consent · onboarding scene-phase handling.</div></div>
+    </div>
+  </div>
+
   <!-- SYSTEM STATES -->
   <div class="sectlabel">Cross-cutting — system states (every data screen needs these)</div>
   <div class="syschips">
@@ -369,6 +401,30 @@
     <span class="syschip"><b>Loading</b></span>
     <span class="syschip"><b>Empty state</b> (icon + headline + sub + CTA)</span>
     <span class="syschip"><b>Permission priming</b> (notifications)</span>
+  </div>
+
+  <!-- FEATURE FLOWS -->
+  <div class="sectlabel">Feature flows you understand — not yet drawn</div>
+  <div class="syschips">
+    <span class="syschip"><b>Desire-map re-do</b> (monthly re-rate)</span>
+    <span class="syschip"><b>Agreements</b> create / edit (Vault)</span>
+    <span class="syschip"><b>Pulse check-in</b> screen</span>
+    <span class="syschip"><b>Consent-unlock</b> convo (ask→pending→opened→card)</span>
+    <span class="syschip"><b>Profile-photo add</b> (+ camera / library perm)</span>
+    <span class="syschip"><b>Learn drill-in</b> (finding / flavor quiz)</span>
+    <span class="syschip"><b>Solo / unpaired</b> tab states</span>
+    <span class="syschip"><b>Invited-partner onboarding</b></span>
+  </div>
+
+  <!-- EDGE STATES -->
+  <div class="sectlabel">Edge states</div>
+  <div class="syschips">
+    <span class="syschip"><b>OB resume after app-kill</b> (today: restarts)</span>
+    <span class="syschip"><b>Purchase pending</b> / Ask-to-Buy / Family Sharing</span>
+    <span class="syschip"><b>Entitlement-sync failure</b> (paid but locked)</span>
+    <span class="syschip"><b>Logout</b> → local data</span>
+    <span class="syschip"><b>Partner unpairs mid-session</b></span>
+    <span class="syschip"><b>Notif-permission denied</b> fallback</span>
   </div>
 
   <!-- NOTIFICATIONS -->
@@ -397,7 +453,7 @@
 
   <p class="footnote">
     <b>V1 notification build:</b> Tier 1 (3 push) + the opt-in Pulse reminder + "partner joined pairing." Everything Tier 3/4 deferred — they trade your anti-spam stance for marginal retention. Each push needs device tokens + a server trigger (edge fn / DB webhook); locals need only notification permission.<br><br>
-    <b>Map reads, left→right:</b> ① get in &amp; signed up · ② find your partner · ③ the paid magic moment · ④ play together · ⑤ where you live day-to-day · ⑥ manage it all. The dashed boxes are the build backlog.
+    <b>Map reads, left→right:</b> ① get in (local-first, sign-in deferred) · ② find your partner · ③ the paid magic moment · ④ play together · ⑤ where you live day-to-day · ⑥ manage it all · ⑦ the platform / safety / compliance layer beneath it all. The dashed boxes are the build backlog; <b style="color:var(--amber)">*</b> = AI-specced, Bryan to define.
   </p>
 
 </div>

@@ -465,6 +465,16 @@ struct AppColors {
         dark:  VaylPrimitives.inkSurface
     )
 
+    /// Translucent glass surface for cards that float on the void + atmosphere
+    /// (the Map tab and any void-native surface). Unlike `glassFrostCard` /
+    /// `cardBackground` (the opaque `inkCard`), this lets the aurora bloom read
+    /// through the card. The canonical `.vaylGlassCard` fill — mockup parity is
+    /// rgba(255,255,255,0.03) over the void.
+    static let glassSurface = Color.dynamic(
+        light: VaylPrimitives.frostCard,
+        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.03)
+    )
+
     // ─────────────────────────────────────────────
     // MARK: Pill surface — Midnight mode
     //
@@ -667,12 +677,11 @@ struct AppColors {
 // MARK: - Color.dynamic
 
 extension Color {
-    /// Resolves automatically for light and dark via UIColor(dynamicProvider:).
+    /// Always resolves to the dark variant — app is dark-only (Act 1).
+    /// light: param is retained for future Dawn-mode work; it is currently ignored.
     /// No @Environment(\.colorScheme) branching required in views.
     static func dynamic(light: UIColor, dark: UIColor) -> Color {
-        Color(UIColor(dynamicProvider: { traits in
-            traits.userInterfaceStyle == .dark ? dark : light
-        }))
+        Color(uiColor: dark)
     }
 }
 

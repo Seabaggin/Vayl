@@ -36,48 +36,44 @@ Timing and feel decisions must be verified in a React
 demo or interactive reference before being written into
 Swift. Never guess at a timing value — always feel it first.
 
-A segment is not complete until it has been run on device
-and the human has confirmed the feel is correct.
+A segment is not complete until it has run on device and the human has confirmed the feel.
 Build succeeds is not done. Feel is correct is done.
-- 
 
 ---
 
-## Product Reality Check — This App Is Not the Center of Anyone's Life
+## Product Principles (Non-Negotiable)
 
-Vayl occupies a **small, optional corner** of a user's real life. People pick it up
-occasionally; the relationship itself happens off-app, in the real world. Design from
-that humility — this is minuscule in the grand scheme of someone living their life.
+### Humility: Vayl is a small, optional corner of a user's life
+The relationship happens off-app, in the real world. Design from that humility, not from an imagined always-on user. Don't build features that assume Vayl is the primary channel for relationship events. Avoid engagement-maximizing mechanics (streaks, push spam, "open to find out" hooks, self-important alerts; a breakup needs no in-app notification). Bias to the minimum feature set that earns a small, respected place.
+**Test before proposing a feature:** is it genuinely necessary in a couple's real life, or does it only make sense if Vayl is the center of their world? Default to the humbler answer.
 
-**When proposing any feature or system-design choice, contextualize it against how
-humans actually live — not against an imagined user who is always in the app.** Most of
-what matters to a couple happens where Vayl can't see it and doesn't need to.
+### The user journey: two temperatures, one path (not two types)
+"Excited" and "anxious" are states of the same person, converging at the partner invite, not two populations. Anyone in the app is already curious-leaning and partner-cautious, not paralyzed (the truly anxious never installed it). The hesitation is rarely about NM itself; it's about the partner step, and about not yet knowing their own shape ("I want NM" is a direction, not a want).
+- The solo lane is a genuine **self-discovery bridge** with standalone value (clarity in either direction), not a holding pen and not a funnel.
+- Guiding a curious user toward the partner invite is **not funneling**: the core value (Desire Map, sessions) is dyadic, so helping them get there is the tool working as intended.
+- But this persona bolts under pressure. **Guide by clarifying, not prompting**; the invite must feel like the user's own conclusion. Keep an honest off-ramp ("not now / not for me" is a respected outcome). That honesty is what makes the eventual yes durable.
 
-- Don't build features that assume Vayl is the primary channel for relationship events,
-  or that the user is always-on / dependent on it.
-- A breakup does not need an in-app notification. People know they're broken up long
-  before the app could tell them. If a feature only makes sense when you assume the app
-  matters more than it does, **cut it.**
-- Bias toward the **minimum necessary** feature set that earns a small, respected place.
-  Avoid engagement-maximizing mechanics — streaks, push spam, "open the app to find out"
-  hooks, self-important alerts.
+### Discovery tools are NOT assessment
+Vayl is not a clinical or therapy tool. It gives people **maps, vocabulary, and mirrors, and lets them make the determinations.** It never issues findings about a user.
+**The bright line: name what the user said, never infer what they didn't.** Direct desire questions stay in naming; a personality/trait quiz that concludes an unstated trait is assessment. Only two operations on quiz data are permitted:
+- **Compare two points** (e.g. the couples Desire Map: relational distance, led with overlap).
+- **Rank or distribute one person's own answers.** A summary is fine only if it stays traceable to and descriptive of their answers, never an opaque verdict.
+Labels are **wayfinding vocabulary, not assigned identity.** End every quiz with a door to content, never a conclusion.
 
-**The test, before proposing a feature:** *In a realistic context — a couple living
-their actual lives — is this genuinely necessary, or does it only make sense if Vayl is
-the center of their world?* Default to the humbler answer.
+**An assessment looks like (banned):**
+> "You are an Explorer." / "Do you recharge alone? → You're an introvert." (infers an unstated trait and hands down a verdict about the person)
+
+**A discovery tool looks like (the pattern):**
+> "You said you want loving relationships outside your main one. That's often called polyamory, here's where to explore it." (names what they said, then hands them the vocabulary and a door)
+> "Here's where you two meet, and where there's distance." (the Desire Map: compares two points, never characterizes either)
 
 ---
 
 ## iOS 26 / Xcode 26 — Mandatory Compliance
 
-Apple skipped versions 19–25 to align iOS 26 with the year 2026.
-Most AI coding assistants are trained on data before this shift and are
-unaware of these requirements. As of April 28, 2026, the iOS 26 SDK is
-**mandatory for App Store submissions**. Several long-standing warnings
-are now **hard compiler errors and App Review rejections**.
-
-**When prompting:** tell the AI to "use Swift 6 and assume an iOS 16+ baseline"
-to prevent hallucination of ancient APIs the iOS 26 compiler will reject.
+The iOS 26 SDK is mandatory for App Store submissions (Apple skipped 19-25 to align with 2026).
+Use Swift 6 and an iOS 16+ baseline. Several long-standing warnings are now **hard compiler errors
+and App Review rejections**:
 
 ### Global Singletons & Window Management — BANNED
 
@@ -131,113 +127,102 @@ tokens: no raw primitives).
 
 ---
 
+## Safe Area & Tab Bar Contract
+
+**Anchor to the safe area, never the screen edge.** Proper placement is a relationship the
+system already knows — ask it, don't hardcode a number. If you are reaching for a literal to
+clear a piece of hardware or chrome, you are doing it wrong; find the inset.
+
+- **The tab bar owns its own clearance.** It is attached as `.safeAreaInset(edge: .bottom)` in
+  `AppShell` — SwiftUI positions the pill above the home indicator AND reserves its measured
+  height as a bottom inset for every tab automatically. **Tab content must NOT add its own
+  bottom clearance** (no `.bottomContentInset`, no `.padding(.bottom, …)` for the bar); it is
+  already reserved. Re-deriving the bar height anywhere else (the old `TabContentWrapper`
+  `.contentMargins(.bottom, 62 …)`) is the bug, not the fix.
+- **Covers / sheets** (outside the tab shell) have no AppShell inset, so they DO own their
+  bottom clearance: `.stickyBottomCTA` for a pinned CTA, else `.bottomClearance(layout)`.
+- **Top chrome** clears the Dynamic Island via `.topClearance(layout)` — never `.padding(.top, 60)`.
+- **Backgrounds bleed, content insets.** Atmospheres / fills use `.ignoresSafeArea()`; content
+  and chrome stay inside the safe area.
+- Never `.padding(.bottom, 34 / 100)` or `.padding(.top, 60 / 120)` as a hardware proxy. Helpers
+  live in `AppSafeArea.swift`; raw insets in `AppLayout` (`homeIndicatorInset`, `topHardwareInset`).
+
+---
+
 ## Design Token Contract
 
 **Zero raw values in Views.** Never use `.red`, `Color(hex:)`, `.font(.title)`,
 or numeric literals for spacing, radius, opacity, or animation duration.
 
-### AppColors
+**Token source of truth: `Vayl/App/Theme/`.** Exact names live in those files. Read the relevant one before using a token, and never invent a token or a raw value.
+
+| Token | File | Provides |
+|---|---|---|
+| `AppColors` | `AppColors.swift` | void / cardBg, spectrum (cyan · purple · magenta), surfaces, text, accent, feedback, shadows |
+| `AppFonts` | `AppFonts.swift` | ClashDisplay display set + Switzer body set + `.display(_:weight:relativeTo:)` / `.body(...)` constructors |
+| `AppSpacing` | `AppSpacing.swift` | `xxs`(2) to `xxl`(48) scale |
+| `AppRadius` | `AppRadius.swift` | `sm`(8) to `pill`, plus OB (`obCard` 14 / `cornerCard` / `foilEdge`) |
+| `AppLayout` | `AppLayout.swift` | `from(geo)` geometry + OB card sizing |
+| `AppAnimation` | `AppAnimation.swift` | reactive (`fast`/`standard`/`spring`/`enter`/`exit`), OB physics, ambient durations |
+| `AppGlows` | `AppGlows.swift` | glow modifiers (`.spectrumBorderGlow` etc.); use these, never `.shadow()` for glows |
+| `AppElevation` | `AppElevation.swift` | `.cardElevation()` / `.modalElevation()` / `cardShadow(elevation:)` |
+
+### Rules that aren't a single token
+- **OB card sizing (mandatory, no exceptions):** `AppLayout.obCardWidth(in: screenWidth)` = `min(screenWidth * 0.72, 320)`; `obCardHeight` = `obCardWidth * 1.5`.
+- **Layout from geometry only:** `AppLayout.from(geo)`, never `UIScreen.main.bounds` (iOS 26 banned).
+- **Looping animations** require `.ambientAnimation(_:value:)` with a Reduce Motion fallback.
+
+### Required View Patterns
+Every screen background:
 ```swift
-// OB Canvas (OB only)
-AppColors.void / AppColors.cardBg
-AppColors.spectrumCyan / AppColors.spectrumPurple / AppColors.spectrumMagenta
-AppColors.spectrumBorder / AppColors.spectrumText   // LinearGradient tokens
-
-// Surfaces
-AppColors.pageBackground / AppColors.cardBackground / AppColors.modalBackground
-
-// Text
-AppColors.textPrimary / AppColors.textBody / AppColors.textSecondary
-AppColors.textTertiary / AppColors.textHint / AppColors.textMuted
-
-// Accent
-AppColors.accentPrimary / AppColors.accentSecondary / AppColors.accentTertiary
-
-// Feedback
-AppColors.success / AppColors.destructive / AppColors.safetyAccent
-
-// Shadows
-AppColors.shadowDeep / AppColors.shadowMagenta / AppColors.shadowPurple
-AppFonts// Display — ClashDisplay
-AppFonts.heroTitle / AppFonts.displayHero / AppFonts.screenTitle
-AppFonts.cardTitle / AppFonts.sectionHeading / AppFonts.prompt
-
-// Body — Switzer
-AppFonts.ctaLabel / AppFonts.bodyText / AppFonts.bodyMedium
-AppFonts.buttonLabel / AppFonts.caption / AppFonts.overline
-
-// Constructors for custom sizes:
-AppFonts.display(_ size:, weight:, relativeTo:)
-AppFonts.body(_ size:, weight:, relativeTo:)
-AppSpacingAppSpacing.xxs(2) / .xs(4) / .sm(8) / .md(16) / .lg(24) / .xl(32) / .xxl(48)
-AppRadiusAppRadius.micro(2) / .sm(8) / .md(12) / .lg(16) / .xl(24) / .container(20) / .pill
-// OB: AppRadius.obCard(14) / .cornerCard(4) / .foilEdge(16)
-AppLayout// Always resolve from GeometryProxy — never UIScreen.main.bounds (iOS 26: banned)
-AppLayout.from(geo) → layout.screenWidth / .screenHeight / .cardWidth / .safeAreaInsets
-
-// OB card sizing — mandatory for all OB cards, no exceptions:
-AppLayout.obCardWidth(in: screenWidth)   // min(screenWidth * 0.72, 320)
-AppLayout.obCardHeight(in: screenWidth)  // obCardWidth * 1.5
-
-// OB geometry: .dealPointYFrac(.32) / .tableHorizonYFrac(.32)
-// Corner deck: .cornerDeckWidth(30) / .cornerDeckHeight(45)
-AppAnimation// Reactive
-AppAnimation.fast / .standard / .slow / .spring / .enter / .exit
-
-// OB Card Physics
-AppAnimation.cardSlide / .cardSettle / .cardPocket / .cardFlip
-AppAnimation.cardLift / .deckFan / .deckWeave / .foilDissolve
-AppAnimation.tableRecede / .deckReceive / .textProject / .cardBreathe
-
-// Ambient durations (Double, not Animation)
-AppAnimation.ambientPulse(2.0) / .ambientDrift(4.0) / .ambientShimmer(1.2)
-
-// Reduce Motion
-animation.reduceMotionSafe
-.ambientAnimation(_ animation:, value:)  // REQUIRED on all looping animations
-AppGlows// Use modifiers — never call .shadow() directly for glows
-.spectrumBorderGlow(intensity: Double)
-.cornerDeckGlow(visible: Bool)
-.accentFocusGlow(visible: Bool)
-.safetyGlow(visible: Bool)
-AppElevation.cardElevation()   // card shadow for current color scheme
-.modalElevation()  // modal shadow for current color scheme
-AppElevation.cardShadow(elevation: Double)  // OB physics — 0.0 flat → 1.0 lifted
-Required View PatternsEvery screen backgroundZStack {
+ZStack {
     AppColors.void.ignoresSafeArea()
-    AtmosphereView()
+    OnboardingAtmosphere(config: .stat).ignoresSafeArea()
     // content
 }
-Every card / surfacemyCard
-    .glassCard()
-    .hairline(.resting)  // or .hairline(.active)
-Every tappable element — ALL THREE requiredmyButton
+```
+Every card / surface (pick one, never hand-roll card chrome):
+```swift
+myCard.themedCard()      // opaque card
+myCard.vaylGlassCard()   // translucent glass surface (canonical Map-tab look)
+```
+Every tappable element (all three required):
+```swift
+myButton
     .scaleEffect(isPressed ? 0.96 : 1.0)
     .sensoryFeedback(.impact(.light), trigger: isPressed)
     .onTapGesture { store.doSomething() }
-OB card face visual rules
-1D outline only — no fills
-Spectrum gradient on every stroke — cyan → purple → magenta
-Two render passes — glow (blurred, low opacity) + crisp (full opacity)
-All geometry proportional to cardWidth/cardHeight — no fixed pixels
-Empty states — required on every data screenIcon (AppColors.textTertiary) + headline (AppFonts.cardTitle) + sub-label (AppFonts.caption) + optional CTAViolation Checklist
- No raw colors, fonts, spacing, radius, or opacity in Views
- No UIScreen.main or UIApplication.shared.keyWindow — iOS 26 banned
- No UIWebView or NSURLConnection — iOS 26 hard errors
- No UNAuthorizationOptionAlert — use .Banner variant
- No UIScreen.main.bounds — use AppLayout.from(geo)
- No Service/network calls in Views
- No View writes to VaylCardModel
- No phase change without director.advance()
- No VaylCardFace shell modifications
- Every OB screen: AppColors.void + AtmosphereView()
- Every OB card: VaylCardFace + AppLayout.obCardWidth/Height + .hairline()
- Every tap: press state + haptic + action
- All looping animations: .ambientAnimation()
- All OB card face geometry proportional
- .drawingGroup() on VaylCardFace — never remove
- Reduce Motion fallbacks on all animations
- Empty state on every data screen
- Presentation via .vaylCover / .vaylSheet — never raw .fullScreenCover / .sheet
- Card Session is a .vaylCover (protected, confirm-on-exit) — never a sheet
- Right-size every feature — none that assumes Vayl is the center of the user's life
+```
+
+### OB Card Face Visual Rules
+- 1D outline only, no fills
+- Spectrum gradient on every stroke: cyan → purple → magenta
+- Two render passes: glow (blurred, low opacity) + crisp (full opacity)
+- All geometry proportional to cardWidth/cardHeight, no fixed pixels
+
+### Empty States (required on every data screen)
+Icon (`AppColors.textTertiary`) + headline (`AppFonts.cardTitle`) + sub-label (`AppFonts.caption`) + optional CTA
+
+## Violation Checklist
+- [ ] No raw colors, fonts, spacing, radius, or opacity in Views
+- [ ] No UIScreen.main or UIApplication.shared.keyWindow (iOS 26 banned)
+- [ ] No UIWebView or NSURLConnection (iOS 26 hard errors)
+- [ ] No UNAuthorizationOptionAlert, use .Banner variant
+- [ ] No UIScreen.main.bounds, use AppLayout.from(geo)
+- [ ] Tab content adds NO bottom clearance (AppShell `.safeAreaInset` owns it); covers/sheets use `.bottomClearance` / `.stickyBottomCTA`
+- [ ] No hardcoded hardware padding (`.padding(.top, 60)` / `.padding(.bottom, 34/100)`); use `.topClearance` / safe-area insets
+- [ ] No Service/network calls in Views
+- [ ] No View writes to VaylCardModel
+- [ ] No phase change without director.advance()
+- [ ] No VaylCardFace shell modifications
+- [ ] Every OB screen: AppColors.void + OnboardingAtmosphere
+- [ ] Every OB card: VaylCardFace + AppLayout.obCardWidth/Height
+- [ ] Every tap: press state + haptic + action
+- [ ] All looping animations: .ambientAnimation()
+- [ ] All OB card face geometry proportional
+- [ ] .drawingGroup() on VaylCardFace, never remove
+- [ ] Reduce Motion fallbacks on all animations
+- [ ] Empty state on every data screen
+- [ ] Presentation via .vaylCover / .vaylSheet, never raw .fullScreenCover / .sheet
+- [ ] Card Session is a .vaylCover (protected, confirm-on-exit), never a sheet
+- [ ] Right-size every feature; none that assumes Vayl is the center of the user's life

@@ -173,6 +173,23 @@ final class AppState {
         }
     }
 
+    // MARK: - Unlink (Seg 9 scaffold — UNVERIFIED)
+    //
+    // Local breakup/dissolve: drops the partner link so routing returns to an
+    // unlinked state. ARCHIVAL, not deletion — we do NOT delete the Couple or its
+    // history (Couple's deleteRule is .nullify). The remote side (marking the
+    // couples row dissolved, tearing down any open curated_session, revoking the
+    // partner's device tokens) is NOT wired — it needs the backend work + a
+    // two-device test. Per CLAUDE.md humility, a breakup needs no in-app fanfare;
+    // this is quiet data hygiene.
+
+    /// Clears the local partner link. Leaves history and the remote Couple row intact.
+    func unlink() {
+        coupleId = nil
+        linkState = .unlinked
+        logger.info("Local unlink — partner link cleared (history retained)")
+    }
+
     // MARK: - Private Helpers
 
     private func persist(_ value: String, forKey key: PersistenceKey) {

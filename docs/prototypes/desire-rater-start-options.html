@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Desire Map · Start page framings</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --void:#0a0810; --cyan:#00C2FF; --purple:#6C3AE0; --magenta:#FF006A;
+  --t-primary:rgba(255,255,255,.92); --t-secondary:rgba(255,255,255,.62);
+  --t-tertiary:rgba(255,255,255,.36); --t-muted:rgba(255,255,255,.20);
+  --disp:"Clash Display",-apple-system,sans-serif;
+  --body:"Switzer",-apple-system,BlinkMacSystemFont,sans-serif;
+}
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
+html, body { min-height:100vh; background:#0c0b11; font-family:var(--body); color:var(--t-primary);
+  display:flex; flex-direction:column; align-items:center; padding:30px 20px 56px; gap:20px; }
+.page-title { font-family:var(--disp); font-size:17px; font-weight:600; color:var(--t-secondary); text-align:center; }
+.stage { display:flex; flex-wrap:wrap; gap:30px; align-items:flex-start; justify-content:center; }
+.col { display:flex; flex-direction:column; align-items:center; gap:12px; }
+.cap { font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--t-tertiary); }
+.col.reco .cap { color:var(--purple); }
+
+.phone { position:relative; width:344px; height:744px; border-radius:46px; overflow:hidden;
+  background:#050409; box-shadow:0 30px 76px rgba(0,0,0,.6),inset 0 0 0 1.5px rgba(255,255,255,.05); flex:none; }
+.notch { position:absolute; top:12px; left:50%; transform:translateX(-50%); width:98px; height:26px; background:#000; border-radius:16px; z-index:40; }
+.home-ind { position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:112px; height:5px; border-radius:3px; background:rgba(255,255,255,.22); z-index:40; }
+.status-bar { position:absolute; top:0; left:0; right:0; z-index:38; display:flex; justify-content:space-between; padding:15px 34px 0; font-size:12px; font-weight:600; color:rgba(255,255,255,.7); }
+.status-bar .ic { letter-spacing:2px; font-size:9px; opacity:.72; }
+
+.void { position:absolute; inset:0; background:radial-gradient(120% 90% at 50% 8%, #0c0916 0%, var(--void) 48%, #050409 100%); z-index:0; }
+.bloom { position:absolute; inset:0; z-index:1; pointer-events:none; }
+.bloom .b { position:absolute; border-radius:50%; filter:blur(60px); }
+.bloom .purple  { width:360px; height:300px; left:50%; transform:translateX(-50%); bottom:0; background:radial-gradient(closest-side,rgba(108,58,224,.16),transparent 72%); }
+.bloom .magenta { width:240px; height:240px; right:-40px; bottom:40px; background:radial-gradient(closest-side,rgba(255,0,106,.10),transparent 72%); }
+.bloom .cyan    { width:240px; height:240px; left:-40px;  bottom:60px; background:radial-gradient(closest-side,rgba(0,194,255,.07),transparent 72%); }
+.stars { position:absolute; inset:-5%; z-index:2; pointer-events:none; }
+.star { position:absolute; border-radius:50%; background:#fff; }
+
+.start { position:absolute; inset:0; z-index:10; padding:0 28px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+.s-over { font-size:10px; font-weight:700; letter-spacing:.26em; text-transform:uppercase; color:var(--t-tertiary); margin-bottom:18px; }
+.s-title { font-family:var(--disp); font-size:35px; font-weight:700; letter-spacing:-.02em; line-height:1.05; color:var(--t-primary); }
+.s-title .g { background:linear-gradient(100deg,var(--magenta),var(--purple) 60%,var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.s-body { font-size:14.5px; line-height:1.6; color:var(--t-secondary); margin-top:18px; max-width:284px; }
+.s-priv { font-size:12px; line-height:1.55; color:var(--t-tertiary); margin-top:16px; max-width:280px; display:flex; gap:8px; align-items:flex-start; text-align:left; }
+.s-priv svg { flex:none; margin-top:1px; }
+.s-priv b { color:var(--t-secondary); font-weight:600; }
+.cta { margin-top:30px; height:54px; padding:0 38px; border-radius:99px; cursor:pointer; border:1px solid rgba(108,58,224,.55); background:linear-gradient(90deg,rgba(255,0,106,.18),rgba(108,58,224,.26)); box-shadow:0 0 28px rgba(108,58,224,.26); display:flex; align-items:center; justify-content:center; }
+.cta-label { font-family:var(--disp); font-size:16px; font-weight:700; color:var(--t-primary); }
+.s-count { font-size:11px; color:var(--t-muted); margin-top:15px; letter-spacing:.02em; }
+</style>
+</head>
+<body>
+
+<div class="page-title">Desire Map · Start page — three framings</div>
+
+<div class="stage" id="stage"></div>
+
+<script>
+const rand = (a,b) => a + Math.random()*(b-a);
+const SHIELD = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 2l7 3v6c0 5-3.5 8.5-7 9.5C8.5 19.5 5 16 5 11V5l7-3z" stroke="rgba(108,58,224,.8)" stroke-width="1.5"/></svg>';
+const PRIV = '<span>You answer only for yourself. Only your <b>mutual matches</b> are revealed, never your private nos.</span>';
+
+const VARIANTS = [
+  { cap:'Overlap-led · current', reco:true,
+    title:'See where your<br>desires <span class="g">meet</span>',
+    body:'Naming what you want out loud is hard. Answer privately. When Alex does too, the desires you share become a map you explore together.' },
+  { cap:'Common ground', reco:false,
+    title:'Start from<br>what you <span class="g">share</span>',
+    body:'The hardest part is the first conversation. Answer privately, see where you and Alex already want the same things, and start there.' },
+  { cap:'Direct', reco:false,
+    title:'Find what<br>you both <span class="g">want</span>',
+    body:'A few private questions about what you are curious to explore. The ones you and Alex both want become a map to talk through together.' },
+];
+
+function starfield(){
+  let html = '';
+  for (let i=0;i<60;i++){
+    const sz=rand(0.7,1.7).toFixed(2);
+    html += `<div class="star" style="width:${sz}px;height:${sz}px;left:${rand(0,100).toFixed(1)}%;top:${rand(0,100).toFixed(1)}%;opacity:${rand(0.05,0.34).toFixed(2)}"></div>`;
+  }
+  return html;
+}
+
+document.getElementById('stage').innerHTML = VARIANTS.map(v => `
+  <div class="col ${v.reco?'reco':''}">
+    <div class="cap">${v.cap}</div>
+    <div class="phone">
+      <div class="void"></div>
+      <div class="bloom"><div class="b purple"></div><div class="b magenta"></div><div class="b cyan"></div></div>
+      <div class="stars">${starfield()}</div>
+      <div class="notch"></div>
+      <div class="status-bar"><span>9:41</span><span class="ic">●●● ▮</span></div>
+      <div class="start">
+        <div class="s-over">Desire Map</div>
+        <div class="s-title">${v.title}</div>
+        <div class="s-body">${v.body}</div>
+        <div class="s-priv">${SHIELD}${PRIV}</div>
+        <div class="cta"><span class="cta-label">Begin</span></div>
+        <div class="s-count">17 questions · about 3 minutes</div>
+      </div>
+      <div class="home-ind"></div>
+    </div>
+  </div>
+`).join('');
+</script>
+</body>
+</html>

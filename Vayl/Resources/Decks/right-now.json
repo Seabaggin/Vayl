@@ -1,0 +1,33 @@
+{
+  "id": "right-now",
+  "title": "Right Now",
+  "subtitle": "Present-tense, a little daring.",
+  "category": "wildcard",
+  "act": 1,
+  "intensity": 4,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": ["wildcard", "core"],
+  "sort_order": 6,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "right-now-01",
+      "deck_id": "right-now",
+      "text": "What do you want more of, starting tonight?",
+      "highlight_words": ["more of"],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    }
+  ]
+}

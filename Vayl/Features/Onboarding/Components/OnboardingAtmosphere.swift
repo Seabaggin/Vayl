@@ -65,35 +65,13 @@ struct AtmosphereIntensity: Equatable {
 
 struct OnboardingAtmosphere: View {
 
-    var config:      AtmosphereConfig   = .stat
-    var sparkConfig: SparkConfiguration = .statView
-    var opacity:     Double             = 1.0
-
-    @Environment(\.colorScheme) private var colorScheme
-
-    private var auroraConfig: AuroraConfig {
-        let i = colorScheme == .light ? config.light : config.dark
-        return AuroraConfig(
-            topOpacityMult:    i.top,
-            midOpacityMult:    i.mid,
-            bottomOpacityMult: i.bottom,
-            globalOpacity:     i.global
-        )
-    }
+    var config:  AtmosphereConfig = .stat
+    var opacity: Double           = 1.0
 
     var body: some View {
-        Group {
-            if colorScheme == .light {
-                ZStack {
-                    AuroraGlowField(config: auroraConfig)
-                    SparkField(config: sparkConfig)
-                }
-            } else {
-                OBVoidBloom(intensity: config.dark)
-                    .animation(.easeInOut(duration: 1.0), value: config)
-            }
-        }
-        .opacity(opacity)
+        OBVoidBloom(intensity: config.dark)
+            .animation(AppAnimation.atmosphereShift, value: config)
+            .opacity(opacity)
     }
 }
 
@@ -207,13 +185,4 @@ private struct OBVoidBloom: View {
             .ignoresSafeArea()
     }
     .preferredColorScheme(.dark)
-}
-
-#Preview("Stat — Light") {
-    ZStack {
-        AppColors.pageBackground.ignoresSafeArea()
-        OnboardingAtmosphere(config: .stat, sparkConfig: .statView, opacity: 1.0)
-            .ignoresSafeArea()
-    }
-    .preferredColorScheme(.light)
 }

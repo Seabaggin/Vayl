@@ -40,6 +40,12 @@
 import Foundation
 import SwiftData
 import Combine
+import OSLog
+
+private let logger = Logger(
+    subsystem: "com.vayl.app",
+    category: "SyncManager"
+)
 
 @MainActor  // Runs on main thread — safe for @Published properties that drive UI
 class SyncManager: ObservableObject {
@@ -98,16 +104,12 @@ class SyncManager: ObservableObject {
                 throw SyncError.profileMissingId
             }
             UserDefaults.standard.set(profileId.uuidString, forKey: "supabaseProfileId")
-            #if DEBUG
-            print("✅ Profile synced to Supabase")
-            #endif
+            logger.info("✅ Profile synced to Supabase")
             return profileId
         } catch {
             lastSyncError = error.localizedDescription
             UserDefaults.standard.set(true, forKey: "pendingProfileSync")
-            #if DEBUG
-            print("❌ Profile sync failed: \(error.localizedDescription)")
-            #endif
+            logger.error("❌ Profile sync failed: \(error.localizedDescription)")
             throw error
         }
     }
@@ -130,13 +132,9 @@ class SyncManager: ObservableObject {
                 name: trimmedName.isEmpty ? nil : trimmedName,
                 pronouns: pronouns
             )
-            #if DEBUG
-            print("✅ Display identity synced to Supabase")
-            #endif
+            logger.info("✅ Display identity synced to Supabase")
         } catch {
-            #if DEBUG
-            print("⚠️ Display identity sync failed (non-fatal): \(error.localizedDescription)")
-            #endif
+            logger.warning("⚠️ Display identity sync failed (non-fatal): \(error.localizedDescription)")
         }
     }
 
@@ -159,15 +157,11 @@ class SyncManager: ObservableObject {
             try await DesireSyncService.shared.computeMatches()
             UserDefaults.standard.set(false, forKey: "pendingDesireSync")
             lastSyncError = nil
-            #if DEBUG
-            print("✅ Desire map synced (\(ratings.count) weights, stage \(nmStage))")
-            #endif
+            logger.info("✅ Desire map synced (\(ratings.count) weights, stage \(nmStage))")
         } catch {
             lastSyncError = error.localizedDescription
             UserDefaults.standard.set(true, forKey: "pendingDesireSync")
-            #if DEBUG
-            print("❌ Desire map sync failed — will retry on next rater open: \(error.localizedDescription)")
-            #endif
+            logger.error("❌ Desire map sync failed — will retry on next rater open: \(error.localizedDescription)")
         }
     }
 
@@ -211,13 +205,9 @@ class SyncManager: ObservableObject {
         }
         do {
             try await profileService.markOnboardingComplete(profileId: profileId)
-            #if DEBUG
-            print("✅ Onboarding flag synced to Supabase")
-            #endif
+            logger.info("✅ Onboarding flag synced to Supabase")
         } catch {
-            #if DEBUG
-            print("❌ Onboarding sync failed — will retry: \(error)")
-            #endif
+            logger.error("❌ Onboarding sync failed — will retry: \(error)")
             UserDefaults.standard.set(true, forKey: "pendingOnboardingSync")
         }
     }
@@ -252,19 +242,65 @@ class SyncManager: ObservableObject {
     ///
     /// - Parameter userId: Authenticated user's UUID
     func retryPendingSyncs(userId: UUID) async {
+        // 1) Process legacy UserDefaults queue
         if UserDefaults.standard.bool(forKey: "pendingOnboardingSync"),
            let profileIdString = UserDefaults.standard.string(forKey: "supabaseProfileId"),
            let profileId = UUID(uuidString: profileIdString) {
             do {
                 try await profileService.markOnboardingComplete(profileId: profileId)
                 UserDefaults.standard.set(false, forKey: "pendingOnboardingSync")
-                #if DEBUG
-                print("✅ Pending onboarding sync completed on retry")
-                #endif
+                logger.info("✅ Pending onboarding sync completed on retry")
             } catch {
-                #if DEBUG
-                print("⚠️ Retry failed for onboarding sync — will try again next launch")
-                #endif
+                logger.warning("⚠️ Retry failed for onboarding sync — will try again next launch")
+            }
+        }
+        
+        // 2) Process durable SwiftData SyncTask queue
+        await processTaskQueue()
+    }
+    
+    // =========================================================================
+    // MARK: - Durable Background Queue (SyncTask)
+    // =========================================================================
+
+    /// Enqueues a task into SwiftData for reliable background synchronization.
+    func enqueueSyncTask(taskType: String, entityId: String, payload: Data? = nil) {
+        let context = ModelContext(ModelContainer.appContainer)
+        let task = SyncTask(taskType: taskType, entityId: entityId, payload: payload)
+        context.insert(task)
+        try? context.save()
+        logger.info("Enqueued SyncTask: \(taskType) for entity \(entityId)")
+        
+        // Trigger a process run in the background
+        Task { await processTaskQueue() }
+    }
+    
+    /// Processes all pending SyncTasks in the local queue.
+    private func processTaskQueue() async {
+        let context = ModelContext(ModelContainer.appContainer)
+        let descriptor = FetchDescriptor<SyncTask>(sortBy: [SortDescriptor(\.createdAt)])
+        
+        guard let tasks = try? context.fetch(descriptor), !tasks.isEmpty else { return }
+        logger.info("Processing \(tasks.count) pending SyncTasks")
+        
+        for task in tasks {
+            do {
+                switch task.taskType {
+                case "sync_session":
+                    if let payload = task.payload {
+                        try await SessionSyncService.shared.pushSession(payload: payload)
+                    }
+                default:
+                    logger.warning("Unknown taskType in queue: \(task.taskType)")
+                }
+                
+                // On success, remove from queue
+                context.delete(task)
+                try? context.save()
+            } catch {
+                task.retryCount += 1
+                try? context.save()
+                logger.error("SyncTask failed (\(task.taskType), retries: \(task.retryCount)): \(error.localizedDescription)")
             }
         }
     }

@@ -7,7 +7,7 @@ import Foundation
 import Supabase
 import OSLog
 
-private let logger = Logger(
+nonisolated private let logger = Logger(
     subsystem: "com.vayl.app",
     category: "PairingService"
 )
@@ -140,58 +140,67 @@ final class PairingService {
     /// Throws `PairingError.expiredCode` if the code times out before a partner
     /// joins, or rethrows on cancellation / network failure.
     func pollForClaim(code: String, deadline: Date) async throws -> UUID {
-        // Person A (creator). The `create-couple` (deployed slug `rapid-task`) function
-        // DELETES the pairing code and writes `couple_id` / `is_linked` onto BOTH
-        // user_profiles, so the creator watches their own profile rather than the
-        // (now-deleted) code row. The code row is re-read only to detect expiry.
-        struct ProfileCoupleRow: Decodable {
+        struct ProfileCoupleRow: Decodable, Sendable {
             let coupleId: UUID?
             enum CodingKeys: String, CodingKey { case coupleId = "couple_id" }
         }
-        struct CodeExpiryRow: Decodable {
-            let expiresAt: Date
-            enum CodingKeys: String, CodingKey { case expiresAt = "expires_at" }
-        }
 
         let myAuthId = try await currentUserId()
-        let normalized = code.trimmingCharacters(in: .whitespaces).uppercased()
 
-        while true {
-            try Task.checkCancellation()
+        let channel = supabase.channel("pairing:\(myAuthId.uuidString)")
+        let changes = channel.postgresChange(
+            AnyAction.self,
+            schema: "public",
+            table: "user_profiles",
+            filter: .eq("auth_id", value: myAuthId.uuidString)
+        )
+        
+        try await channel.subscribeWithError()
+        defer { Task { await self.supabase.removeChannel(channel) } }
+        
+        // 1) Partner joined? (initial check before stream starts)
+        let initialRows: [ProfileCoupleRow] = try await supabase
+            .from("user_profiles")
+            .select("couple_id")
+            .eq("auth_id", value: myAuthId.uuidString)
+            .execute()
+            .value
+            
+        if let coupleId = initialRows.first?.coupleId {
+            logger.info("Linked (initial) — coupleId: \(coupleId)")
+            return coupleId
+        }
 
-            // 1) Partner joined? (couple_id stamped on our own profile)
-            let rows: [ProfileCoupleRow] = try await supabase
-                .from("user_profiles")
-                .select("couple_id")
-                .eq("auth_id", value: myAuthId.uuidString)
-                .execute()
-                .value
-
-            if let coupleId = rows.first?.coupleId {
-                logger.info("Linked — coupleId: \(coupleId)")
-                return coupleId
+        // 2) Listen for realtime changes or timeout
+        return try await withThrowingTaskGroup(of: UUID.self) { group in
+            group.addTask {
+                for await _ in changes {
+                    let rows: [ProfileCoupleRow] = try await self.supabase
+                        .from("user_profiles")
+                        .select("couple_id")
+                        .eq("auth_id", value: myAuthId.uuidString)
+                        .execute()
+                        .value
+                    if let coupleId = rows.first?.coupleId {
+                        logger.info("Linked (realtime) — coupleId: \(coupleId)")
+                        return coupleId
+                    }
+                }
+                throw CancellationError()
             }
-
-            // 2) Expired? Captured deadline is the hard bound; the live DB read
-            //    lets an expiry that's been forced server-side surface immediately.
-            if Date() >= deadline {
+            
+            group.addTask {
+                let timeToWait = deadline.timeIntervalSinceNow
+                if timeToWait > 0 {
+                    try await Task.sleep(for: .seconds(timeToWait))
+                }
                 logger.info("Pairing code expired (deadline reached)")
                 throw PairingError.expiredCode
             }
-            let codeRows: [CodeExpiryRow] = try await supabase
-                .from(SupabaseTable.pairingCodes)
-                .select("expires_at")
-                .eq("code", value: normalized)
-                .execute()
-                .value
-            if let liveExpiry = codeRows.first?.expiresAt, liveExpiry <= Date() {
-                logger.info("Pairing code expired (live expiry)")
-                throw PairingError.expiredCode
-            }
-            // Row may be briefly absent between the partner's claim+delete and the
-            // couple_id write becoming visible to us — keep looping; step 1 catches it.
-
-            try await Task.sleep(for: .seconds(3))
+            
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
         }
     }
 

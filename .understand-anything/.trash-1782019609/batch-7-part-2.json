@@ -1,0 +1,1031 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Design/Components/Cards/PromptCard.swift",
+      "type": "file",
+      "name": "PromptCard.swift",
+      "filePath": "Vayl/Design/Components/Cards/PromptCard.swift",
+      "summary": "Simple prompt card displaying a card type, prompt text, and optional intensity label inside a PremiumCardShell.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/PromptCard.swift:PromptCard",
+      "type": "class",
+      "name": "PromptCard",
+      "filePath": "Vayl/Design/Components/Cards/PromptCard.swift",
+      "lineRange": [
+        1,
+        34
+      ],
+      "summary": "SwiftUI View rendering a prompt card's type, body text, and intensity using the PremiumCardShell container.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/SettingsCard.swift",
+      "type": "file",
+      "name": "SettingsCard.swift",
+      "filePath": "Vayl/Design/Components/Cards/SettingsCard.swift",
+      "summary": "Generic reusable container that wraps Settings-screen content in padded rounded-card styling.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/SettingsCard.swift:SettingsCard",
+      "type": "class",
+      "name": "SettingsCard",
+      "filePath": "Vayl/Design/Components/Cards/SettingsCard.swift",
+      "lineRange": [
+        1,
+        15
+      ],
+      "summary": "SwiftUI View applying padding and the shared cardStyle modifier to wrap arbitrary settings content.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/VaylCardAction.swift",
+      "type": "file",
+      "name": "VaylCardAction.swift",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardAction.swift",
+      "summary": "Action enum describing the gestures and state changes a card face reports upward to Phases, which forward intents to VaylDirector.",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "interaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylCardAction.swift:VaylCardAction",
+      "type": "class",
+      "name": "VaylCardAction",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardAction.swift",
+      "lineRange": [
+        1,
+        22
+      ],
+      "summary": "Enum of card-face intents (tapped, swipedUp/Down, dragChanged/Ended, confirmed, identitySelected) used as the face-to-phase communication contract.",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "enum"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "type": "file",
+      "name": "VaylCardBack.swift",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "summary": "Canvas-rendered back face of a Vayl onboarding card: void base, atmosphere gradients, multi-pass VAYL wordmark, counter-rotated hex moire grid, and spectrum frames, with parameterized dissolution.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card",
+        "canvas"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Pure render component with no flipping, animation, gestures, or state; the caller (VaylCardRenderer) owns all transforms."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylCardBack.swift:VaylCardBack",
+      "type": "class",
+      "name": "VaylCardBack",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "lineRange": [
+        1,
+        426
+      ],
+      "summary": "SwiftUI View drawing the layered Vayl card back via Canvas, accepting dissolution overrides for hex angle, hex spacing, and wordmark opacity.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card",
+        "canvas"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/VaylCardBack.swift:drawWordmark",
+      "type": "function",
+      "name": "drawWordmark",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "lineRange": [
+        155,
+        249
+      ],
+      "summary": "Multi-pass Canvas render of the VAYL wordmark: outer bloom, inner glow, emboss shadow and highlight, and a sharp spectrum-gradient core.",
+      "tags": [
+        "canvas",
+        "rendering",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/VaylCardBack.swift:drawHexLayer",
+      "type": "function",
+      "name": "drawHexLayer",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "lineRange": [
+        259,
+        324
+      ],
+      "summary": "Draws a single rotated hex-grid layer at a given angle, color, and opacity for the moire interference effect.",
+      "tags": [
+        "canvas",
+        "rendering",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/VaylCardBack.swift:drawAtmosphere",
+      "type": "function",
+      "name": "drawAtmosphere",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "lineRange": [
+        97,
+        148
+      ],
+      "summary": "Draws three radial-gradient blobs (cyan, magenta, purple) behind the wordmark for atmospheric depth.",
+      "tags": [
+        "canvas",
+        "rendering",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "type": "file",
+      "name": "VaylCardCarousel.swift",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "summary": "Generic reusable card carousel rendering arbitrary card content in a stacked peek pile, with browse/exit gestures paired to the CarouselPhysics scroll engine.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card",
+        "carousel"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylCardCarousel.swift:VaylCardCarousel",
+      "type": "class",
+      "name": "VaylCardCarousel",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "lineRange": [
+        20,
+        302
+      ],
+      "summary": "Generic SwiftUI View driving a stacked card carousel: per-slot transforms, browse gestures, confirm highlight, and breathing animation backed by CarouselPhysics.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "carousel"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylCardCarousel.swift:StackLayout",
+      "type": "class",
+      "name": "StackLayout",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "lineRange": [
+        303,
+        319
+      ],
+      "summary": "Equatable peek-geometry config (spacing, opacity falloff, rotation, blur per card distance) for the stacked carousel layout.",
+      "tags": [
+        "type-definition",
+        "config",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/VaylCardCarousel.swift:transform",
+      "type": "function",
+      "name": "transform",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "lineRange": [
+        198,
+        226
+      ],
+      "summary": "Maps a card's scroll-distance slot into x/y offset, scale, rotation, opacity, and blur for the stacked layout.",
+      "tags": [
+        "ui",
+        "layout",
+        "card"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/VaylCardContent.swift",
+      "type": "file",
+      "name": "VaylCardContent.swift",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardContent.swift",
+      "summary": "Public enum describing every content type a Vayl card face can render (portal, mode, context, curiosity, candle, compass, snapshot, and onboarding symbols), written onto VaylCardModel by the Director.",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "enum"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylCardContent.swift:VaylCardContent",
+      "type": "class",
+      "name": "VaylCardContent",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardContent.swift",
+      "lineRange": [
+        1,
+        86
+      ],
+      "summary": "Equatable enum enumerating all Vayl card face content variants consumed by VaylCardRenderer and VaylCardFace.",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "enum"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylCardContent.swift:ModeMotifStyle",
+      "type": "class",
+      "name": "ModeMotifStyle",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardContent.swift",
+      "lineRange": [
+        1,
+        86
+      ],
+      "summary": "Equatable enum selecting the glass-bar motif style (single vs dual) for mode-selection cards.",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "enum"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "type": "file",
+      "name": "VaylCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "summary": "Front face of a Vayl card: owns the shell, spectrum diamond, corner marks, and question text, and routes VaylCardContent cases to their specific content-face builders.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Router-pattern View dispatching to 12+ private content-face builders; caller owns frame, scale, rotation, opacity, offset, and shadow."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylCardFace.swift:VaylCardFace",
+      "type": "class",
+      "name": "VaylCardFace",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "lineRange": [
+        29,
+        225
+      ],
+      "summary": "SwiftUI View for the Vayl card front, composing shell plus content and dispatching VaylCardContent to the matching content face.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylCardFace.swift:ModeFaceContent",
+      "type": "class",
+      "name": "ModeFaceContent",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "lineRange": [
+        370,
+        640
+      ],
+      "summary": "Private SwiftUI View rendering the ModeSelectPhase glass-bar motif (single or dual bars) via an eight-pass Canvas.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "canvas"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylCardFace.swift:FaceAtmosphere",
+      "type": "class",
+      "name": "FaceAtmosphere",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "lineRange": [
+        264,
+        306
+      ],
+      "summary": "Private SwiftUI View drawing three low-opacity radial-gradient blobs as the card-front atmospheric background.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylCardFace.swift:QuestionText",
+      "type": "class",
+      "name": "QuestionText",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "lineRange": [
+        307,
+        342
+      ],
+      "summary": "Private SwiftUI View rendering vertically centered question text with padding zones.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "text"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/VaylCardFace.swift:contentFace",
+      "type": "function",
+      "name": "contentFace",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "lineRange": [
+        130,
+        225
+      ],
+      "summary": "ViewBuilder routing each VaylCardContent case to its corresponding content-face builder (typewriter, slotMachine, radioTuner, controller, mode, candle, compass, snapshot, etc.).",
+      "tags": [
+        "ui",
+        "routing",
+        "card"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "type": "file",
+      "name": "VaylCardRenderer.swift",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "summary": "Single source of truth translating VaylCardModel physics state into pixels, applying all transforms and choosing VaylCardBack vs VaylCardFace by flip progress.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylCardRenderer.swift:VaylCardRenderer",
+      "type": "class",
+      "name": "VaylCardRenderer",
+      "filePath": "Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "lineRange": [
+        1,
+        55
+      ],
+      "summary": "SwiftUI View that reads VaylCardModel and renders the flipped card with shadow, scale, rotation, and position transforms.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/VaylDeckStack.swift",
+      "type": "file",
+      "name": "VaylDeckStack.swift",
+      "filePath": "Vayl/Design/Components/Cards/VaylDeckStack.swift",
+      "summary": "Renders a squared deck of six card backs at rest whose per-layer offsets mirror ConfirmationPhase exit positions, reused by CuriosityPhase and BuildDeckPhase.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/VaylDeckStack.swift:VaylDeckStack",
+      "type": "class",
+      "name": "VaylDeckStack",
+      "filePath": "Vayl/Design/Components/Cards/VaylDeckStack.swift",
+      "lineRange": [
+        1,
+        24
+      ],
+      "summary": "SwiftUI View stacking six VaylCardBack instances with incremental offsets to depict a deck of Vayl cards at rest.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "type": "file",
+      "name": "AuroraGlowField.swift",
+      "filePath": "Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "summary": "Warm Aurora atmospheric blob field of nine animated radial-gradient blobs for light-mode screens, with phase-drifted fade-in and looping sine modulation.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "effect",
+        "animation"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/AuroraGlowField.swift:AuroraGlowField",
+      "type": "class",
+      "name": "AuroraGlowField",
+      "filePath": "Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "lineRange": [
+        87,
+        313
+      ],
+      "summary": "SwiftUI View rendering the nine-blob Aurora atmosphere across top/mid/lower tiers with staggered entrance and continuous phase animation.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "effect"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/AuroraGlowField.swift:AuroraConfig",
+      "type": "class",
+      "name": "AuroraConfig",
+      "filePath": "Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "lineRange": [
+        39,
+        86
+      ],
+      "summary": "Equatable config of per-tier and global opacity multipliers with named presets for each onboarding phase background.",
+      "tags": [
+        "type-definition",
+        "config",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/AuroraGlowField.swift:startAtmosphere",
+      "type": "function",
+      "name": "startAtmosphere",
+      "filePath": "Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "lineRange": [
+        262,
+        300
+      ],
+      "summary": "Kicks off staggered phase-drifted fade-in animations for all nine blobs plus their continuous looping phase animations.",
+      "tags": [
+        "animation",
+        "effect"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/FilamentMode.swift",
+      "type": "file",
+      "name": "FilamentMode.swift",
+      "filePath": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "summary": "Canvas-based three-orbit filament particle system: a state machine cycling parametric patterns and color sets across three trails, rendered with glow, core, and connection passes.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "effect",
+        "animation"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Combines an ObservableObject state machine (FilamentState) with a Canvas FilamentView and eight parametric path enums."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FilamentMode.swift:FilamentState",
+      "type": "class",
+      "name": "FilamentState",
+      "filePath": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "lineRange": [
+        166,
+        452
+      ],
+      "summary": "ObservableObject state machine advancing three orbit trails, cycling patterns and color transitions, and handling spiral-contraction exit.",
+      "tags": [
+        "store",
+        "state",
+        "observable",
+        "effect"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FilamentMode.swift:FilamentView",
+      "type": "class",
+      "name": "FilamentView",
+      "filePath": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "lineRange": [
+        453,
+        737
+      ],
+      "summary": "Canvas-based SwiftUI View rendering the three-orbit filament system with multi-pass glow/core strokes and inter-trail connection arcs.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "effect",
+        "canvas"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FilamentMode.swift:FilamentPattern",
+      "type": "class",
+      "name": "FilamentPattern",
+      "filePath": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "lineRange": [
+        22,
+        99
+      ],
+      "summary": "Int-backed CaseIterable enum of parametric orbital patterns (figure8, lemniscate, sCurve, weave, circle, spiral, drift, pendulum), each mapping t to a point.",
+      "tags": [
+        "type-definition",
+        "enum",
+        "effect"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FilamentMode.swift:FilamentColorSet",
+      "type": "class",
+      "name": "FilamentColorSet",
+      "filePath": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "lineRange": [
+        100,
+        165
+      ],
+      "summary": "Value type holding a primary/light/glow color triplet for a filament orbit, with dark and light preset sets.",
+      "tags": [
+        "type-definition",
+        "config",
+        "effect"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FilamentMode.swift:FilamentMode",
+      "type": "class",
+      "name": "FilamentMode",
+      "filePath": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "lineRange": [
+        13,
+        21
+      ],
+      "summary": "Enum selecting filament behavior (solo vs duo) controlling trail offset parameters.",
+      "tags": [
+        "type-definition",
+        "enum"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/FilamentMode.swift:advance",
+      "type": "function",
+      "name": "advance",
+      "filePath": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "lineRange": [
+        284,
+        430
+      ],
+      "summary": "Advances all three trails each frame: updates t, cycles patterns (frozen during exit), lerps transitions, trims trail history, and cycles colors.",
+      "tags": [
+        "effect",
+        "animation",
+        "state"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/FilamentMode.swift:drawFilament",
+      "type": "function",
+      "name": "drawFilament",
+      "filePath": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "lineRange": [
+        558,
+        650
+      ],
+      "summary": "Renders one filament trail in three Canvas passes: glow halo, mid and core strokes, and a white-hot head dot.",
+      "tags": [
+        "canvas",
+        "rendering",
+        "effect"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/FilamentMode.swift:drawConnection",
+      "type": "function",
+      "name": "drawConnection",
+      "filePath": "Vayl/Design/Components/Effects/FilamentMode.swift",
+      "lineRange": [
+        651,
+        737
+      ],
+      "summary": "Draws a quad-curve arc between two trail heads with glow, core, and proximity-based spark dots.",
+      "tags": [
+        "canvas",
+        "rendering",
+        "effect"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Effects/FlameAura.swift",
+      "type": "file",
+      "name": "FlameAura.swift",
+      "filePath": "Vayl/Design/Components/Effects/FlameAura.swift",
+      "summary": "Canvas-based wisp-flame renderer where each wisp rises and wobbles via stacked sines and color-shifts magenta-to-purple, with wisp count and height driven by a selected intensity.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "effect",
+        "animation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Effects/FlameAura.swift:FlameAura",
+      "type": "class",
+      "name": "FlameAura",
+      "filePath": "Vayl/Design/Components/Effects/FlameAura.swift",
+      "lineRange": [
+        1,
+        244
+      ],
+      "summary": "SwiftUI View drawing rising wisp flames via Canvas, with per-wisp turbulence, birth/death fade, and intensity-driven wisp count and height.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "effect",
+        "canvas"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/FlameAura.swift:drawWisp",
+      "type": "function",
+      "name": "drawWisp",
+      "filePath": "Vayl/Design/Components/Effects/FlameAura.swift",
+      "lineRange": [
+        76,
+        183
+      ],
+      "summary": "Renders a single rising wisp with seeded turbulence, eased rise, base taper, and a two-pass outer-glow plus tight-core fill.",
+      "tags": [
+        "canvas",
+        "rendering",
+        "effect"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Effects/FlameAura.swift:taperedWispPath",
+      "type": "function",
+      "name": "taperedWispPath",
+      "filePath": "Vayl/Design/Components/Effects/FlameAura.swift",
+      "lineRange": [
+        184,
+        217
+      ],
+      "summary": "Builds a tapered ribbon path for a wisp using cubic-bezier sides converging to a point at the tip.",
+      "tags": [
+        "canvas",
+        "rendering",
+        "effect"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Design/Components/Cards/PromptCard.swift",
+      "target": "class:Vayl/Design/Components/Cards/PromptCard.swift:PromptCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/PromptCard.swift",
+      "target": "file:Vayl/Design/Components/Cards/PremiumCardShell.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/SettingsCard.swift",
+      "target": "class:Vayl/Design/Components/Cards/SettingsCard.swift:SettingsCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/SettingsCard.swift",
+      "target": "file:Vayl/Design/Components/Cards/CardStyle.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardAction.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylCardAction.swift:VaylCardAction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylCardBack.swift:VaylCardBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "target": "function:Vayl/Design/Components/Cards/VaylCardBack.swift:drawWordmark",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "target": "function:Vayl/Design/Components/Cards/VaylCardBack.swift:drawHexLayer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "target": "function:Vayl/Design/Components/Cards/VaylCardBack.swift:drawAtmosphere",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylCardCarousel.swift:VaylCardCarousel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylCardCarousel.swift:StackLayout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "target": "function:Vayl/Design/Components/Cards/VaylCardCarousel.swift:transform",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardCarousel.swift",
+      "target": "file:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardContent.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylCardContent.swift:VaylCardContent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardContent.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylCardContent.swift:ModeMotifStyle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylCardFace.swift:VaylCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylCardFace.swift:ModeFaceContent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylCardFace.swift:FaceAtmosphere",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylCardFace.swift:QuestionText",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "target": "function:Vayl/Design/Components/Cards/VaylCardFace.swift:contentFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylCardRenderer.swift:VaylCardRenderer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "target": "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "target": "file:Vayl/Design/Components/Cards/VaylCardFace.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylCardRenderer.swift",
+      "target": "file:Vayl/Features/Onboarding/Models/VaylCardModel.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylDeckStack.swift",
+      "target": "class:Vayl/Design/Components/Cards/VaylDeckStack.swift:VaylDeckStack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/VaylDeckStack.swift",
+      "target": "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "target": "class:Vayl/Design/Components/Effects/AuroraGlowField.swift:AuroraGlowField",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "target": "class:Vayl/Design/Components/Effects/AuroraGlowField.swift:AuroraConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "target": "function:Vayl/Design/Components/Effects/AuroraGlowField.swift:startAtmosphere",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FilamentMode.swift",
+      "target": "class:Vayl/Design/Components/Effects/FilamentMode.swift:FilamentState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FilamentMode.swift",
+      "target": "class:Vayl/Design/Components/Effects/FilamentMode.swift:FilamentView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FilamentMode.swift",
+      "target": "class:Vayl/Design/Components/Effects/FilamentMode.swift:FilamentPattern",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FilamentMode.swift",
+      "target": "class:Vayl/Design/Components/Effects/FilamentMode.swift:FilamentColorSet",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FilamentMode.swift",
+      "target": "class:Vayl/Design/Components/Effects/FilamentMode.swift:FilamentMode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FilamentMode.swift",
+      "target": "function:Vayl/Design/Components/Effects/FilamentMode.swift:advance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FilamentMode.swift",
+      "target": "function:Vayl/Design/Components/Effects/FilamentMode.swift:drawFilament",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FilamentMode.swift",
+      "target": "function:Vayl/Design/Components/Effects/FilamentMode.swift:drawConnection",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FlameAura.swift",
+      "target": "class:Vayl/Design/Components/Effects/FlameAura.swift:FlameAura",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FlameAura.swift",
+      "target": "function:Vayl/Design/Components/Effects/FlameAura.swift:drawWisp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Effects/FlameAura.swift",
+      "target": "function:Vayl/Design/Components/Effects/FlameAura.swift:taperedWispPath",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    }
+  ]
+}

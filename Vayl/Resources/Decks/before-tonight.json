@@ -1,0 +1,33 @@
+{
+  "id": "before-tonight",
+  "title": "Before Tonight",
+  "subtitle": "Set the frame, then play.",
+  "category": "experienceArc",
+  "act": 1,
+  "intensity": 4,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": ["experience", "core"],
+  "sort_order": 7,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "before-tonight-01",
+      "deck_id": "before-tonight",
+      "text": "Before anything happens tonight, what would help you feel settled and ready?",
+      "highlight_words": ["settled", "ready"],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    }
+  ]
+}

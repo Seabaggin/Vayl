@@ -1,0 +1,33 @@
+{
+  "id": "desire-and-fantasy",
+  "title": "Desire & Fantasy",
+  "subtitle": "Said out loud, on purpose.",
+  "category": "identityDynamics",
+  "act": 1,
+  "intensity": 6,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": ["identity", "core"],
+  "sort_order": 8,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "desire-and-fantasy-01",
+      "deck_id": "desire-and-fantasy",
+      "text": "What's a curiosity you've never said out loud?",
+      "highlight_words": ["curiosity"],
+      "type": "prompt",
+      "intensity": 6,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    }
+  ]
+}

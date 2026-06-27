@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — hero-collapse options (grandiose)</title>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=switzer@400,500,600,700&display=swap">
+<style>
+  :root{
+    --void:#040308; --cbg:#12111A;
+    --cy:#00C2FF; --pu:#6C3AE0; --mg:#FF006A;
+    --tp:#E8E8F0; --tb:rgba(255,255,255,0.84); --ts:rgba(255,255,255,0.6); --tt:rgba(255,255,255,0.36);
+    --hair:rgba(255,255,255,0.07);
+    --sp:linear-gradient(135deg,#00C2FF,#6C3AE0,#FF006A);
+    --display:'Clash Display',-apple-system,sans-serif;
+    --body:'Switzer',-apple-system,sans-serif;
+    --c:0;   /* collapse 0..1, driven by the slider */
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:radial-gradient(120% 80% at 50% 0%,#15151c,#08080c 60%);color:var(--tb);font-family:var(--body);padding:34px 26px 80px}
+  h1{font-family:var(--display);font-size:23px;font-weight:600;color:var(--tp);max-width:1120px;margin:0 auto}
+  .lede{font-size:13.5px;line-height:1.6;color:var(--ts);max-width:800px;margin:9px auto 0}
+  .lede b{color:var(--tb)}
+
+  .sliderbar{position:sticky;top:10px;z-index:50;max-width:560px;margin:22px auto 0;background:rgba(18,17,26,0.85);backdrop-filter:blur(20px);
+    border:1px solid var(--hair);border-radius:16px;padding:14px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 16px 40px rgba(0,0,0,0.5)}
+  .sliderbar label{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--tt);white-space:nowrap}
+  .sliderbar input{flex:1;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;background:linear-gradient(90deg,#2a2735,#4a3f66);outline:none}
+  .sliderbar input::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--sp);box-shadow:0 0 14px rgba(108,58,224,0.6);cursor:pointer}
+  .sliderbar .val{font-family:var(--display);font-size:15px;color:var(--tp);width:42px;text-align:right}
+
+  .row{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;max-width:1120px;margin:34px auto 0}
+  .col{width:280px}
+  .col h2{font-family:var(--display);font-size:16px;font-weight:600;color:var(--tp);display:flex;align-items:center;gap:8px}
+  .col h2 .n{font-size:11px;font-weight:700;color:var(--pu);border:1px solid rgba(108,58,224,0.5);border-radius:7px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center}
+  .col .desc{font-size:12px;line-height:1.5;color:var(--ts);margin:8px 0 4px;min-height:74px}
+  .col .swift{font-size:10.5px;line-height:1.4;color:var(--tt)}
+  .col .swift b{color:var(--ts)}
+
+  .ph{width:280px;height:500px;background:var(--void);border-radius:40px;border:1.5px solid rgba(255,255,255,0.1);overflow:hidden;position:relative;
+    box-shadow:0 24px 64px rgba(0,0,0,0.7),0 0 40px rgba(108,58,224,0.1);margin-bottom:14px}
+  .mh{position:absolute;top:16px;left:20px;font-family:var(--display);font-size:18px;font-weight:700;background:var(--sp);-webkit-background-clip:text;background-clip:text;color:transparent;z-index:14}
+  .stage{position:absolute;inset:0;padding-top:54px}
+
+  /* hero card */
+  .hero{position:absolute;left:50%;top:64px;width:230px;height:140px;margin-left:-115px;border-radius:16px;overflow:hidden;
+    background:radial-gradient(120% 80% at 50% 0,rgba(108,58,224,0.3),transparent 62%),var(--cbg);will-change:transform,opacity,filter}
+  .hero::before{content:'';position:absolute;inset:6px;border-radius:11px;border:1px solid transparent;
+    background:var(--sp) border-box;-webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0.7}
+  .hero .q{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 24px;font-size:12.5px;line-height:1.4;color:var(--tb)}
+
+  /* library rising up to take over */
+  .lib{position:absolute;left:0;right:0;top:228px;padding:0 20px;will-change:transform,filter}
+  .libhead{font-family:var(--display);font-size:14px;color:var(--tp);margin-bottom:12px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .case{aspect-ratio:1/1.2;border-radius:11px;background:linear-gradient(160deg,#15121d,#0a0810);border:1px solid var(--hair);position:relative;overflow:hidden}
+  .case::before{content:'';position:absolute;inset:5px;border-radius:8px;border:1px solid transparent;background:var(--ck,var(--sp)) border-box;
+    -webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0.75}
+  .case.cy{--ck:linear-gradient(135deg,#00C2FF,#3FA9F5)} .case.pu{--ck:linear-gradient(135deg,#6C3AE0,#9C6BFF)} .case.mg{--ck:linear-gradient(135deg,#FF006A,#FF5A8A)}
+
+  /* library rises in every option */
+  .lib{transform:translateY(calc(var(--c) * -156px))}
+
+  /* ════ A · RECEDE INTO DEPTH (3D tilt-back) ════ */
+  .optA .hero{transform-origin:50% 0%;
+    transform:perspective(820px) rotateX(calc(var(--c) * -52deg)) scale(calc(1 - var(--c) * 0.26)) translateY(calc(var(--c) * -22px));
+    opacity:calc(1 - var(--c) * 0.92)}
+
+  /* ════ B · RETURN TO THE DECK (sink into the rising library) ════ */
+  .optB .hero{transform-origin:50% 100%;
+    transform:scale(calc(1 - var(--c) * 0.52)) translateY(calc(var(--c) * 196px)) rotateX(calc(var(--c) * 10deg));
+    opacity:calc(1 - var(--c) * 0.85)}
+
+  /* ════ C · RACK-FOCUS (hero defocuses, library snaps sharp) ════ */
+  .optC .hero{transform:scale(calc(1 - var(--c) * 0.06));
+    filter:blur(calc(var(--c) * 11px));opacity:calc(1 - var(--c) * 0.74)}
+  .optC .lib{filter:blur(calc((1 - var(--c)) * 2.6px));
+    transform:translateY(calc(var(--c) * -156px)) scale(calc(0.97 + var(--c) * 0.03))}
+</style>
+</head>
+<body>
+<h1>Hero collapse — make it an event, not a scroll</h1>
+<p class="lede">Today the hero just shrinks + fades 1:1 with scroll, which reads as "the page moved." These three give it <b>drama and depth</b> while still being the same scroll-linked, Home-matched mechanism underneath. <b>Drag the slider</b> to scrub the collapse 0 → 1 and watch all three at once. The library rises to take over in each.</p>
+
+<div class="sliderbar">
+  <label>Collapse</label>
+  <input type="range" id="s" min="0" max="100" value="0">
+  <span class="val" id="v">0%</span>
+</div>
+
+<div class="row">
+
+  <!-- A -->
+  <div class="col optA">
+    <div class="ph">
+      <div class="mh">Cards</div>
+      <div class="stage">
+        <div class="hero"><div class="q">What are the anchors that kept you two tethered?</div></div>
+        <div class="lib">
+          <div class="libhead">Deck library</div>
+          <div class="grid">
+            <div class="case cy"></div><div class="case pu"></div><div class="case mg"></div><div class="case cy"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h2><span class="n">A</span> Recede into depth</h2>
+    <div class="desc">The hero tilts back in 3D and falls away into the distance as the library rises over it. Cinematic, dimensional, rhymes with the OB "card on a table" grammar.</div>
+    <div class="swift"><b>SwiftUI:</b> rotation3DEffect (x-axis) + scale + opacity, perspective via the projection. Cheap.</div>
+  </div>
+
+  <!-- B -->
+  <div class="col optB">
+    <div class="ph">
+      <div class="mh">Cards</div>
+      <div class="stage">
+        <div class="hero"><div class="q">What are the anchors that kept you two tethered?</div></div>
+        <div class="lib">
+          <div class="libhead">Deck library</div>
+          <div class="grid">
+            <div class="case cy"></div><div class="case pu"></div><div class="case mg"></div><div class="case cy"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h2><span class="n">B</span> Return to the deck</h2>
+    <div class="desc">The featured card shrinks and sinks down into the rising library, as if rejoining the collection it came from. A little narrative: the hero IS one of these decks.</div>
+    <div class="swift"><b>SwiftUI:</b> scale + offset(y) downward + opacity, eased. Simplest of the three.</div>
+  </div>
+
+  <!-- C -->
+  <div class="col optC">
+    <div class="ph">
+      <div class="mh">Cards</div>
+      <div class="stage">
+        <div class="hero"><div class="q">What are the anchors that kept you two tethered?</div></div>
+        <div class="lib">
+          <div class="libhead">Deck library</div>
+          <div class="grid">
+            <div class="case cy"></div><div class="case pu"></div><div class="case mg"></div><div class="case cy"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h2><span class="n">C</span> Rack-focus</h2>
+    <div class="desc">A depth-of-field shift: the hero defocuses (blurs + dims) while the library pulls into sharp focus and rises. Filmic, premium, very "the attention moved."</div>
+    <div class="swift"><b>SwiftUI:</b> .blur on the hero + .blur fading off the library, driven by collapse. Blur in a scroll = watch perf, but 1 hero + a grid is fine.</div>
+  </div>
+
+</div>
+
+<script>
+  const s = document.getElementById('s'), v = document.getElementById('v');
+  function apply(){ const c = s.value / 100; document.documentElement.style.setProperty('--c', c); v.textContent = s.value + '%'; }
+  s.addEventListener('input', apply); apply();
+</script>
+</body>
+</html>

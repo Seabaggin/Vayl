@@ -1,0 +1,207 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "Vayl/Features/Home/Components/DesireMapIndicator.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 298,
+      "nonEmptyLines": 275,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Components/GettingStartedEntryCard.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 46,
+      "nonEmptyLines": 43,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Components/GravLiftView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 189,
+      "nonEmptyLines": 172,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 702,
+      "nonEmptyLines": 653,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Components/PartnerChip.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 289,
+      "nonEmptyLines": 262,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Components/PickUpCard.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 118,
+      "nonEmptyLines": 104,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Components/ReflectionBannerView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 397,
+      "nonEmptyLines": 366,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Components/ReflectionCard.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 708,
+      "nonEmptyLines": 651,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Components/ResearchTicker.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 123,
+      "nonEmptyLines": 110,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Models/GettingStarted.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 86,
+      "nonEmptyLines": 78,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Models/HomeEventEngine.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 103,
+      "nonEmptyLines": 93,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Models/HomeModels.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 151,
+      "nonEmptyLines": 131,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Store/HomeStore.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 323,
+      "nonEmptyLines": 259,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Views/GettingStartedPathView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 145,
+      "nonEmptyLines": 134,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 760,
+      "nonEmptyLines": 669,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Views/HomeGateView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 297,
+      "nonEmptyLines": 266,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Views/HomeRouterView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 308,
+      "nonEmptyLines": 264,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Views/MapCompletionBeatView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 102,
+      "nonEmptyLines": 89,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 772,
+      "nonEmptyLines": 696,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Learn/Views/LearnView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 23,
+      "nonEmptyLines": 19,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Map/MapView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 26,
+      "nonEmptyLines": 21,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Map/PrismView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 833,
+      "nonEmptyLines": 749,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 206,
+      "nonEmptyLines": 179,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 454,
+      "nonEmptyLines": 403,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 147,
+      "nonEmptyLines": 127,
+      "metrics": {}
+    }
+  ]
+}

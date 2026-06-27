@@ -42,6 +42,7 @@ struct VaylApp: App {
     var body: some Scene {
         WindowGroup {
             AppRootView()
+                .preferredColorScheme(.dark)
                 .environment(themeManager)
                 .environment(appState)
                 .environment(authService)
@@ -56,15 +57,12 @@ struct VaylApp: App {
                     // Resolve tier (server + local StoreKit) + load the product + start the
                     // purchase-updates listener, now the session is ready (RLS-scoped).
                     await entitlementStore.bootstrap()
-                }
-                .task {
-                    // Waits for session check to resolve before retrying syncs.
-                    // Task.sleep is a known issue — tracked for replacement
-                    // with proper async coordination. See handoff doc.
-                    try? await Task.sleep(for: .seconds(1))
+                    
+                    // Now that session is guaranteed to be checked, retry syncs safely.
                     let onboardingDone = appState.isOnboardingComplete
-                    guard onboardingDone, let userId = authService.userId else { return }
-                    await SyncManager.shared.retryPendingSyncs(userId: userId)
+                    if onboardingDone, let userId = authService.userId {
+                        await SyncManager.shared.retryPendingSyncs(userId: userId)
+                    }
                 }
                 .modelContainer(ModelContainer.appContainer)
         }

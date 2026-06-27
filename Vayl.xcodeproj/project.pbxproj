@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		3D01604A2FBBFA4B00492968 /* CLAUDE.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D0160492FBBFA4400492968 /* CLAUDE.md */; };
-		3D51D7432F5FB8D7002488A7 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D7422F5FB8D7002488A7 /* Auth */; };
 		3D51D7452F5FB8D7002488A7 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D7442F5FB8D7002488A7 /* Functions */; };
 		3D51D7472F5FB8D7002488A7 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D7462F5FB8D7002488A7 /* PostgREST */; };
 		3D51D7492F5FB8D7002488A7 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D7482F5FB8D7002488A7 /* Realtime */; };
@@ -18,11 +17,13 @@
 		3D767EFA2F5D562900F2D70F /* RULES.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EF92F5D562100F2D70F /* RULES.md */; };
 		3D767EFC2F5D565700F2D70F /* PROJECT_SCOPE.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */; };
 		3D807B942F8DC74B0021F080 /* .aider.conf.yml in Resources */ = {isa = PBXBuildFile; fileRef = 3D807B932F8DC7450021F080 /* .aider.conf.yml */; };
+		3D82F2982FE618DE004AD1C7 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 3D82F2972FE618DE004AD1C7 /* Auth */; };
 		3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */; };
 		AA000001AAAA000000000001 /* MonteRowGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */; };
 		AA000002AAAA000000000001 /* CandleIntensityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000002AAAA000000000002 /* CandleIntensityTests.swift */; };
 		AA000003AAAA000000000001 /* ContextOptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000003AAAA000000000002 /* ContextOptionTests.swift */; };
 		AA000004AAAA000000000001 /* GettingStartedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000004AAAA000000000002 /* GettingStartedTests.swift */; };
+		AA000005AAAA000000000001 /* CoupleSessionPlaythroughTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000005AAAA000000000002 /* CoupleSessionPlaythroughTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +57,7 @@
 		AA000002AAAA000000000002 /* CandleIntensityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandleIntensityTests.swift; sourceTree = "<group>"; };
 		AA000003AAAA000000000002 /* ContextOptionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextOptionTests.swift; sourceTree = "<group>"; };
 		AA000004AAAA000000000002 /* GettingStartedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GettingStartedTests.swift; sourceTree = "<group>"; };
+		AA000005AAAA000000000002 /* CoupleSessionPlaythroughTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoupleSessionPlaythroughTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -86,8 +88,8 @@
 			files = (
 				3D51D7472F5FB8D7002488A7 /* PostgREST in Frameworks */,
 				3D51D7452F5FB8D7002488A7 /* Functions in Frameworks */,
+				3D82F2982FE618DE004AD1C7 /* Auth in Frameworks */,
 				3D51D7502F5FBA71002488A7 /* Supabase in Frameworks */,
-				3D51D7432F5FB8D7002488A7 /* Auth in Frameworks */,
 				3D51D74B2F5FB8D7002488A7 /* Storage in Frameworks */,
 				3D51D7492F5FB8D7002488A7 /* Realtime in Frameworks */,
 			);
@@ -150,6 +152,7 @@
 				AA000002AAAA000000000002 /* CandleIntensityTests.swift */,
 				AA000003AAAA000000000002 /* ContextOptionTests.swift */,
 				AA000004AAAA000000000002 /* GettingStartedTests.swift */,
+				AA000005AAAA000000000002 /* CoupleSessionPlaythroughTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -175,12 +178,12 @@
 			);
 			name = Vayl;
 			packageProductDependencies = (
-				3D51D7422F5FB8D7002488A7 /* Auth */,
 				3D51D7442F5FB8D7002488A7 /* Functions */,
 				3D51D7462F5FB8D7002488A7 /* PostgREST */,
 				3D51D7482F5FB8D7002488A7 /* Realtime */,
 				3D51D74A2F5FB8D7002488A7 /* Storage */,
 				3D51D74F2F5FBA71002488A7 /* Supabase */,
+				3D82F2972FE618DE004AD1C7 /* Auth */,
 			);
 			productName = "Open Lightly";
 			productReference = 3D767EB22F5D520D00F2D70F /* Vayl.app */;
@@ -343,6 +346,7 @@
 				AA000002AAAA000000000001 /* CandleIntensityTests.swift in Sources */,
 				AA000003AAAA000000000001 /* ContextOptionTests.swift in Sources */,
 				AA000004AAAA000000000001 /* GettingStartedTests.swift in Sources */,
+				AA000005AAAA000000000001 /* CoupleSessionPlaythroughTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -697,11 +701,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		3D51D7422F5FB8D7002488A7 /* Auth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 3D51D7412F5FB8D7002488A7 /* XCRemoteSwiftPackageReference "supabase-swift" */;
-			productName = Auth;
-		};
 		3D51D7442F5FB8D7002488A7 /* Functions */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 3D51D7412F5FB8D7002488A7 /* XCRemoteSwiftPackageReference "supabase-swift" */;
@@ -726,6 +725,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3D51D7412F5FB8D7002488A7 /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		3D82F2972FE618DE004AD1C7 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3D51D7412F5FB8D7002488A7 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -4,36 +4,37 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct AppShell: View {
 
     @State private var selectedTab: AppTab = .home
 
     var body: some View {
-        GeometryReader { geo in
-            let layout = AppLayout.from(geo)
-
-            ZStack(alignment: .bottom) {
-                Group {
-                    switch selectedTab {
-                    case .home:
-                        TabContentWrapper { HomeRouterView() }
-                    case .play:
-                        TabContentWrapper { PlayView() }
-                    case .map:
-                        TabContentWrapper { MapView() }
-                    case .learn:
-                        TabContentWrapper { LearnView() }
-                    }
-                }
-                .ignoresSafeArea(edges: .bottom)
-
-                RacetrackTabBar(selection: $selectedTab)
-                    .padding(.bottom, layout.homeIndicatorInset + AppSpacing.xs)
+        Group {
+            switch selectedTab {
+            case .home:
+                // fade off: Home's Lexicon is anchored at the bottom and must not dissolve.
+                TabContentWrapper(fade: false) { HomeRouterView() }
+            case .play:
+                TabContentWrapper { PlayView() }
+            case .map:
+                TabContentWrapper { MapView() }
+            case .learn:
+                TabContentWrapper { LearnView() }
             }
-            .ignoresSafeArea(edges: .bottom)
         }
-        .ignoresSafeArea(edges: .bottom)
+        // The tab bar is attached as a bottom SAFE-AREA INSET, not a ZStack overlay.
+        // SwiftUI then (1) positions the pill above the home indicator on every device and
+        // (2) reserves its EXACT rendered height as a content inset for every tab — a single
+        // source of truth, so the bar can't sit wrong and screens stop hand-rolling their
+        // own bottom clearance. Per-tab atmospheres still bleed behind it via their own
+        // .ignoresSafeArea(), so the pill floats over the void.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            RacetrackTabBar(selection: $selectedTab)
+                .padding(.top, AppSpacing.sm)      // breathing between content and the pill
+                .padding(.bottom, AppSpacing.md)   // float above the home indicator (tunable)
+        }
     }
 }
 
@@ -46,7 +47,9 @@ struct AppShell: View {
     return AppShell()
         .environment(state)
         .environment(PulseStore())
+        .environment(EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state))
         .preferredColorScheme(.dark)
+        .modelContainer(.previewContainerWithProfile)
 }
 
 #Preview("Home — Unlinked Together") {
@@ -57,7 +60,9 @@ struct AppShell: View {
     return AppShell()
         .environment(state)
         .environment(PulseStore())
+        .environment(EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state))
         .preferredColorScheme(.dark)
+        .modelContainer(.previewContainerWithProfile)
 }
 
 #Preview("Home — Unlinked Solo") {
@@ -68,5 +73,7 @@ struct AppShell: View {
     return AppShell()
         .environment(state)
         .environment(PulseStore())
+        .environment(EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state))
         .preferredColorScheme(.dark)
+        .modelContainer(.previewContainerWithProfile)
 }

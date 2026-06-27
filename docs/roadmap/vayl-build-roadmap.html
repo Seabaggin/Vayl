@@ -504,22 +504,6 @@ const BUILD_ROADMAP = {
           ]
         },
         {
-          id: "DC", title: "Desire card-face — warm-biased burning border", status: "inprogress", est: 6,
-          oneThing: "A desire-specific card identity: a tight, transient flame on the card's border that ignites on the event (flip-land / answer-select) and dies — never persistent.",
-          build: "PROTOTYPE BUILT (2026-06-25): `Features/Desire Map/Prototype/DesireCardFacePrototype.swift` — a feel harness composing the REAL components (`OnboardingAtmosphere(.cardReveal)` + `VaylCardFace` warm-tinted via a magenta-led colorway + animated `heat` + `VaylButton` + `SelectablePill`), three toggleable modes. Direction LOCKED: the burning border — `BorderFlame` emits short fire wisps (the FlameAura magenta→purple look) tight on the card's real edge, licking outward, on a burst envelope (ignite → ~1.1s → die). Reuse, don't reinvent: `FlameAura`, `SelectablePill` (existing flame-aura-on-select), `OrbitSparkBorderView` (shader living border) all exist. Hard constraint: the flame is an OVERLAY OUTSIDE `VaylCardFace`'s `.drawingGroup()` (never bake per-frame animation inside the rasterized face); the one-shot `heat` glow-pop is fine inside. REMAINING (Bryan, on device): tune the `BorderFlame` knobs (tightness `maxLen`, `burnDuration`, outward-vs-hug), then fold into (a) the D4 reveal flip card and (b) the rater answer rows (currently a flat `.spectrumBorderGlow` — inconsistent with the flame language elsewhere).",
-          feel: "Desire = heat, kept INSIDE the spectrum palette (warm-biased to magenta, NOT literal fire color). The flame rewards the action, it doesn't hum — the reveal is already glow-dense, so one hero glow moment, not constant ambient flame.",
-          done: "On device, the burning border reads warm-in-system and ignites-then-dies on the event; the same treatment lands on the reveal flip card and the rater answer rows.",
-          constraints: "Overlay outside the drawingGroup. Reuse FlameAura/OrbitSpark — don't add a third flame. Don't modify the VaylCardFace shell. Feel-tune on device before folding in.",
-          risk: "BorderFlame is a Canvas with blur passes — if the burst janks on device, escalate to the `HolographicShimmer`/`OrbitSpark` Metal shader rather than fighting Canvas (respect the shader-time-precision + clean-build gotchas).",
-          refs: [
-            { label: "Segment 1 build spec", href: "../superpowers/specs/2026-06-24-desire-reveal-segment1-build.md" },
-            { label: "Implementation handoff", href: "../handoffs/2026-06-25-desire-map-implementation-handoff.md" }
-          ],
-          questions: [
-            { lens: "design", who: "bryan", q: "Final `BorderFlame` knob values (tightness/`maxLen`, `burnDuration`, outward-vs-hug) after the device feel pass." }
-          ]
-        },
-        {
           id: "D5", title: "Map tab houses the compare", status: "todo", est: 5,
           oneThing: "The couple's alignment lives on Map: a 'where you align' preview + the full reveal in the Vault.",
           build: "FOLDED INTO T3 (Map bridge doc 2026-06-24): `MapView` is no longer the `PairingSettingsView` stub. The ongoing alignment now lives in two places — the Us layer's 'where you align' preview (mutual / adjacent from `DesireMatch`) and the Vault's Desire segment (the full D4 reveal + consent unlock). Build it there (T3 Seg 4 + Seg 5), reusing `DesireRevealStore` — don't duplicate reveal logic. This segment stays as the Desire-phase tracking entry; the actual surface ships in T3.",

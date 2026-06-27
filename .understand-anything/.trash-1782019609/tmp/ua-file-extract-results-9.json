@@ -1,0 +1,207 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "Vayl/Design/Components/Navigation/NavArrow.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 296,
+      "nonEmptyLines": 250,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Navigation/OBSheetChrome.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 119,
+      "nonEmptyLines": 112,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Navigation/OnboardingFooter.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 50,
+      "nonEmptyLines": 44,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Navigation/OnboardingNavBar.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 117,
+      "nonEmptyLines": 104,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Navigation/RacetrackTabBar.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 268,
+      "nonEmptyLines": 236,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Navigation/SafariView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 29,
+      "nonEmptyLines": 24,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Navigation/TabContentWrapper.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 134,
+      "nonEmptyLines": 120,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Progress/OnboardingProgressBar.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 1157,
+      "nonEmptyLines": 1027,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Progress/OrbitIndicator.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 695,
+      "nonEmptyLines": 643,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Progress/ProgressBar.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 29,
+      "nonEmptyLines": 24,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Progress/ProgressRingView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 60,
+      "nonEmptyLines": 55,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Progress/ScoreRing.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 76,
+      "nonEmptyLines": 66,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Progress/ScreenshotProtectionModifier.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 66,
+      "nonEmptyLines": 61,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Progress/SpectrumBar.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 15,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Text/GradientText.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 71,
+      "nonEmptyLines": 65,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Text/KeywordHighlightText.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 66,
+      "nonEmptyLines": 59,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Text/LivingText.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 220,
+      "nonEmptyLines": 197,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Design/Components/Text/SpectrumBulletRow.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 109,
+      "nonEmptyLines": 99,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Auth/Views/SignInView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 186,
+      "nonEmptyLines": 159,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Desire Map/Store/CompanionCardStore.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 39,
+      "nonEmptyLines": 35,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Desire Map/Store/DesireMapStore.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 180,
+      "nonEmptyLines": 152,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Desire Map/Store/DesireRevealStore.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 158,
+      "nonEmptyLines": 132,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Desire Map/Views/DesireMapView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 341,
+      "nonEmptyLines": 296,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Desire Map/Views/DesireRevealView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 519,
+      "nonEmptyLines": 456,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Home/Components/CardChestContainer.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 373,
+      "nonEmptyLines": 328,
+      "metrics": {}
+    }
+  ]
+}

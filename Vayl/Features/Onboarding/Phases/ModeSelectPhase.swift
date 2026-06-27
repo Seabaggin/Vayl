@@ -28,7 +28,7 @@ struct ModeSelectPhase: View {
     @State private var deselectHaptic:   Bool         = false
 
     // ── Question gate ────────────────────────────────────────────────
-    // The cards answer "Anyone at the table with you?" — they must not be
+    // The cards answer "How are you exploring?" — they must not be
     // tappable until the dealer has finished asking it. questionShown latches
     // the line fire; questionAsked opens interaction at type-complete + 250ms.
     @State private var questionShown:    Bool         = false
@@ -39,6 +39,13 @@ struct ModeSelectPhase: View {
     // needs the same cross-phase cue ExperienceLevel/Gender carry. See startSwipeHint.
     @State private var hintOffset:       CGFloat            = 0
     @State private var hintTask:         Task<Void, Never>? = nil
+
+    // Live hand-off follow (Phase 4c): the lifted card tracks the finger as it's handed up
+    // (shared HandBackFollow). View-local; the controller owns deal offsets, so this
+    // resolves to .zero inside the pocket flight on confirm.
+    @State private var handBackDrag:         CGSize = .zero
+    @State private var handBackArmed:        Bool   = false
+    @State private var handBackSelectionGen = UISelectionFeedbackGenerator()
 
     // ── Cheat code button animation ──────────────────────────────────
     @State private var leftActiveButtons:      Set<Int> = []
@@ -168,27 +175,29 @@ struct ModeSelectPhase: View {
         let flipScaleX = side == .left ? deal.leftFlipScaleX : deal.rightFlipScaleX
         let showBack   = isRejected ? deal.rejectedShowBack  : !showFace
 
-        Group {
-            if showFace && !showBack {
-                VaylCardFace(
-                    content:  content,
-                    onAction: { action in handleAction(action, from: side) }
-                )
+        // Both faces stay mounted (pre-warm) so the illustration face doesn't cold-render
+        // at the flip pivot — swapped by opacity at edge-on. Face stays inert until shown.
+        ZStack {
+            VaylCardBack()
                 .drawingGroup()
                 .frame(width: cardWidth, height: cardHeight)
-                .allowsHitTesting(canInteract(side))
-            } else {
-                VaylCardBack()
-                    .drawingGroup()
-                    .frame(width: cardWidth, height: cardHeight)
-                    .allowsHitTesting(false)
-            }
+                .allowsHitTesting(false)
+                .opacity(showFace && !showBack ? 0 : 1)
+            VaylCardFace(
+                content:  content,
+                onAction: { action in handleAction(action, from: side) }
+            )
+            .drawingGroup()
+            .frame(width: cardWidth, height: cardHeight)
+            .allowsHitTesting(showFace && !showBack && canInteract(side))
+            .opacity(showFace && !showBack ? 1 : 0)
         }
         .overlay(LiftHalo(visible: isLifted))
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
-                    guard canInteract(side) else { return }
+                    // Don't mash the cheat code while lifted — that's the hand-off drag.
+                    guard canInteract(side), !isCardLifted(side) else { return }
                     if cheatCodeTask == nil || cheatCodeTask!.isCancelled {
                         startCheatCode(for: side)
                     }
@@ -197,8 +206,10 @@ struct ModeSelectPhase: View {
         )
         .scaleEffect(x: flipScaleX * (showBack ? deal.rejectedFlipScaleX : 1.0), y: 1.0)
         .scaleEffect(scale)
-        .rotationEffect(.degrees(angle))
+        // Tilt + follow as the lifted card is handed up (shared HandBackFollow).
+        .rotationEffect(.degrees(angle + (isLifted ? HandBackFollow.tilt(for: handBackDrag.width, screenWidth: screenSize.width) : 0)))
         .offset(CGSize(width: offset.width, height: offset.height + tugOffset(for: side)))
+        .offset(isLifted ? handBackDrag : .zero)
         .opacity(alpha)
         .zIndex(isLifted ? 10 : side == .right ? 6 : 4)
     }
@@ -242,7 +253,7 @@ struct ModeSelectPhase: View {
                 withAnimation(AppAnimation.cardLift.reduceMotionSafe) { deal.lift(card: side) }
                 liftHaptic.toggle()
                 speechTask?.cancel()
-                director.hideDealerLine()
+                director.projector.hideDealerLine()
                 scheduleLiftText(for: side)
                 // Cue the confirm gesture — the lifted card tugs upward (the tug
                 // auto-follows on switchLift since tugOffset reads deal.state).
@@ -261,9 +272,25 @@ struct ModeSelectPhase: View {
                 break
             }
 
+        case .dragChanged(let translation):
+            // Live hand-off follow — only the lifted card tracks the finger.
+            guard case .lifted(let current) = deal.state, current == side else { return }
+            handBackDrag = HandBackFollow.offset(for: translation, cardWidth: cardWidth, cardHeight: cardHeight)
+            let crossed = translation.height < -cardHeight * 0.14
+            if crossed != handBackArmed { handBackArmed = crossed; handBackSelectionGen.selectionChanged() }
+
+        case .dragEnded:
+            // Released short of the commit threshold — settle the card back to the lift anchor.
+            guard case .lifted = deal.state else { return }
+            handBackArmed = false
+            withAnimation(AppAnimation.cardSettle.reduceMotionSafe) { handBackDrag = .zero }
+
         case .swipedUp:
             guard case .lifted(let current) = deal.state, current == side else { return }
+            handBackArmed = false
             stopSwipeHint()
+            // Drift + tilt resolve INTO the pocket flight — no snap at the handoff.
+            withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { handBackDrag = .zero }
             deal.confirm(
                 card:       side,
                 screenSize: screenSize,
@@ -281,7 +308,7 @@ struct ModeSelectPhase: View {
                     // Rejected card has fully exited (~940ms after swipe). Clean up UI and advance.
                     liftTextTask?.cancel()
                     withAnimation(AppAnimation.fast) { liftedText = nil; liftedSide = nil }
-                    director.hideDealerLine()
+                    director.projector.hideDealerLine()
                     Task { @MainActor in
                         try? await Task.sleep(for: .milliseconds(180))
                         director.advance(to: .gender)
@@ -338,8 +365,8 @@ struct ModeSelectPhase: View {
     private func askQuestion() {
         guard !questionShown else { return }
         questionShown = true
-        let line = "Anyone at the table with you?"
-        director.showDealerLineManual(line)
+        let line = "How are you exploring?"
+        director.projector.showDealerLineManual(line)
         let gateMs = reduceMotion ? 250 : AppDealerTyping.typeDuration(line) + 500
         // Own handle (not speechTask) — reusing speechTask orphaned the deal task's
         // handle, so an interrupted deal→question handoff couldn't be cancelled and
@@ -348,9 +375,16 @@ struct ModeSelectPhase: View {
             try? await Task.sleep(for: .milliseconds(gateMs))
             guard !Task.isCancelled else { return }
             questionAsked = true
-            // No auto-hide: the cards are intentionally label-free, so this line is
-            // the ONLY signifier of the choice. It persists until the user picks
-            // (handleAction hides it on tap) — never timed out from under them.
+            // Auto-select couples (the right card) as the default — couples-first. The
+            // lifted card is the cue; the user taps the solo card to switch, or swipes up
+            // to confirm. Skip if they already tapped during the question.
+            guard case .faceUp = deal.state else { return }
+            stopCheatCode()
+            withAnimation(AppAnimation.cardLift.reduceMotionSafe) { deal.lift(card: .right) }
+            liftHaptic.toggle()
+            director.projector.hideDealerLine()
+            scheduleLiftText(for: .right)
+            startSwipeHint()
         }
     }
 

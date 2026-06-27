@@ -1,0 +1,685 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Core/Models/SessionRecord.swift",
+      "type": "file",
+      "name": "SessionRecord.swift",
+      "filePath": "Vayl/Core/Models/SessionRecord.swift",
+      "summary": "SwiftData @Model for one completed or safe-worded play session (category, difficulty, prompts shown, duration) with a cascade-delete relationship to its RatingRecords.",
+      "tags": ["data-model", "swiftdata", "persistence", "session"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/SessionRecord.swift:SessionRecord",
+      "type": "class",
+      "name": "SessionRecord",
+      "filePath": "Vayl/Core/Models/SessionRecord.swift",
+      "lineRange": [18, 98],
+      "summary": "SwiftData model persisting a single session's metadata and cascade-deleting its child RatingRecords; stores enums as raw strings to avoid SwiftData enum issues.",
+      "tags": ["data-model", "swiftdata", "session"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Core/Models/UserProfile.swift",
+      "type": "file",
+      "name": "UserProfile.swift",
+      "filePath": "Vayl/Core/Models/UserProfile.swift",
+      "summary": "The central SwiftData @Model — one record per person created at onboarding's end; the durable source of truth for all onboarding/routing data, link state, and Desire Map completion.",
+      "tags": ["data-model", "swiftdata", "persistence", "onboarding"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Core/Models/UserProfile.swift:UserProfile",
+      "type": "class",
+      "name": "UserProfile",
+      "filePath": "Vayl/Core/Models/UserProfile.swift",
+      "lineRange": [20, 189],
+      "summary": "SwiftData model holding identity, onboarding routing (NMStage, AppMode, registers, archetype), link state and Desire Map flags; exposes derived linkState/defaultIntensity and preview fixtures.",
+      "tags": ["data-model", "swiftdata", "onboarding"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Core/Persistence/DataStore.swift",
+      "type": "file",
+      "name": "DataStore.swift",
+      "filePath": "Vayl/Core/Persistence/DataStore.swift",
+      "summary": "Central SwiftData persistence layer wrapping a ModelContext; every session/rating/streak/profile read and write goes through here. Also holds transitional RatingRecord/StreakRecord stub models.",
+      "tags": ["persistence", "swiftdata", "data-access", "service"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Core/Persistence/DataStore.swift:DataStore",
+      "type": "class",
+      "name": "DataStore",
+      "filePath": "Vayl/Core/Persistence/DataStore.swift",
+      "lineRange": [38, 222],
+      "summary": "Wraps a ModelContext to save sessions with ratings and streak bookkeeping, fetch sessions/ratings, fetch-or-create the streak and profile, and perform danger-zone deletions.",
+      "tags": ["persistence", "swiftdata", "data-access"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Core/Persistence/DataStore.swift:saveSession",
+      "type": "function",
+      "name": "saveSession",
+      "filePath": "Vayl/Core/Persistence/DataStore.swift",
+      "lineRange": [59, 115],
+      "summary": "Persists a completed session: inserts the SessionRecord, creates a RatingRecord per reaction, and updates the streak record (extend/reset based on day continuity).",
+      "tags": ["persistence", "swiftdata", "session"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Persistence/DataStore.swift:RatingRecord",
+      "type": "class",
+      "name": "RatingRecord",
+      "filePath": "Vayl/Core/Persistence/DataStore.swift",
+      "lineRange": [6, 15],
+      "summary": "Transitional SwiftData @Model stub for a per-prompt rating tied to a SessionRecord, pending the post-migration replacement.",
+      "tags": ["data-model", "swiftdata", "stub"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Persistence/DataStore.swift:StreakRecord",
+      "type": "class",
+      "name": "StreakRecord",
+      "filePath": "Vayl/Core/Persistence/DataStore.swift",
+      "lineRange": [17, 27],
+      "summary": "Transitional SwiftData @Model stub tracking streak and lifetime totals (current/longest streak, total sessions/prompts), pending the post-migration replacement.",
+      "tags": ["data-model", "swiftdata", "stub"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Persistence/ModelContext+Extensions.swift",
+      "type": "file",
+      "name": "ModelContext+Extensions.swift",
+      "filePath": "Vayl/Core/Persistence/ModelContext+Extensions.swift",
+      "summary": "ModelContext extension adding saveWithLogging() — the project-wide replacement for silent try? context.save(), logging and rethrowing every failure via OSLog.",
+      "tags": ["persistence", "swiftdata", "extension", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Services/AppState.swift",
+      "type": "file",
+      "name": "AppState.swift",
+      "filePath": "Vayl/Core/Services/AppState.swift",
+      "summary": "Root @Observable @MainActor app-level state owning the onboarding gate, link state, app mode, couple id and tab routing; the single writer of onboarding completion across truth/surface/cache.",
+      "tags": ["store", "state", "observable", "routing"],
+      "complexity": "complex",
+      "languageNotes": "Uses property didSet observers as the sole UserDefaults cache-write sites to keep the in-memory surface from desyncing with the durable UserProfile truth."
+    },
+    {
+      "id": "class:Vayl/Core/Services/AppState.swift:AppState",
+      "type": "class",
+      "name": "AppState",
+      "filePath": "Vayl/Core/Services/AppState.swift",
+      "lineRange": [20, 192],
+      "summary": "Observable MainActor root state class hydrating from UserDefaults at init and exposing the only onboarding-completion writers (markOnboardingComplete/resetOnboarding/hydrateOnboardingState).",
+      "tags": ["store", "state", "observable", "routing"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Core/Services/AppState.swift:markOnboardingComplete",
+      "type": "function",
+      "name": "markOnboardingComplete",
+      "filePath": "Vayl/Core/Services/AppState.swift",
+      "lineRange": [147, 152],
+      "summary": "The single completion writer — sets onboarding-complete on the UserProfile truth, saves the context, and flips the in-memory surface whose didSet writes the UserDefaults cache.",
+      "tags": ["store", "onboarding", "persistence"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Vayl/Core/Services/AppState.swift:hydrateOnboardingState",
+      "type": "function",
+      "name": "hydrateOnboardingState",
+      "filePath": "Vayl/Core/Services/AppState.swift",
+      "lineRange": [168, 174],
+      "summary": "Reconciles the in-memory onboarding surface (and its cache) against the durable UserProfile truth at launch, correcting any drift from remote sync.",
+      "tags": ["store", "onboarding", "persistence"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Services/AuthService.swift",
+      "type": "file",
+      "name": "AuthService.swift",
+      "filePath": "Vayl/Core/Services/AuthService.swift",
+      "summary": "@Observable @MainActor Sign in with Apple service over Supabase — handles nonce generation, the ASAuthorization delegate flow, session checks, sign-out, and guarantees a remote profile row on auth.",
+      "tags": ["service", "networking", "authentication", "observable"],
+      "complexity": "complex",
+      "languageNotes": "Bridges the callback-based ASAuthorizationControllerDelegate into async/await by hopping back to the MainActor inside Task blocks."
+    },
+    {
+      "id": "class:Vayl/Core/Services/AuthService.swift:AuthService",
+      "type": "class",
+      "name": "AuthService",
+      "filePath": "Vayl/Core/Services/AuthService.swift",
+      "lineRange": [16, 184],
+      "summary": "Observable MainActor NSObject managing Apple sign-in and Supabase auth state (checkSession, signInWithApple, signOut), with SHA256-nonce helpers and a remote-profile guarantee.",
+      "tags": ["service", "authentication", "networking", "observable"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Core/Services/AuthService.swift:checkSession",
+      "type": "function",
+      "name": "checkSession",
+      "filePath": "Vayl/Core/Services/AuthService.swift",
+      "lineRange": [39, 58],
+      "summary": "Resolves real Supabase auth state at launch — signs out expired sessions, sets userId/isAuthenticated, and ensures the remote profile row exists. No simulator shortcuts.",
+      "tags": ["service", "authentication", "networking"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Services/ContentLoader.swift",
+      "type": "file",
+      "name": "ContentLoader.swift",
+      "filePath": "Vayl/Core/Services/ContentLoader.swift",
+      "summary": "Static helper for reading bundled read-only JSON content (decks, cards, categories, desire items); all methods throw on failure rather than fatalError, with snake-case decoding.",
+      "tags": ["service", "serialization", "content-loading", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Services/ContentLoader.swift:ContentLoader",
+      "type": "class",
+      "name": "ContentLoader",
+      "filePath": "Vayl/Core/Services/ContentLoader.swift",
+      "lineRange": [37, 124],
+      "summary": "Struct exposing generic single/array JSON decoders plus typed accessors (loadDeck, loadDesireItems, etc.) that throw ContentLoaderError on missing files or decode failures.",
+      "tags": ["service", "serialization", "content-loading"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Core/Services/DesireSyncService.swift",
+      "type": "file",
+      "name": "DesireSyncService.swift",
+      "filePath": "Vayl/Core/Services/DesireSyncService.swift",
+      "summary": "@MainActor service pushing private desire-map ratings to Supabase (batch upsert), invoking the compute-desire-matches edge function, and reading back client-safe matches and couple status.",
+      "tags": ["service", "networking", "desire-map", "sync"],
+      "complexity": "complex",
+      "languageNotes": "Defines a Sendable PendingDesireRating value snapshot taken before any await so a SwiftData @Model is never touched across a suspension point."
+    },
+    {
+      "id": "class:Vayl/Core/Services/DesireSyncService.swift:DesireSyncService",
+      "type": "class",
+      "name": "DesireSyncService",
+      "filePath": "Vayl/Core/Services/DesireSyncService.swift",
+      "lineRange": [101, 201],
+      "summary": "MainActor singleton syncing desire ratings (resolving the profile id first), computing matches server-side, and fetching client-safe match rows and completion status for a couple.",
+      "tags": ["service", "desire-map", "networking", "sync"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Core/Services/DesireSyncService.swift:syncRatings",
+      "type": "function",
+      "name": "syncRatings",
+      "filePath": "Vayl/Core/Services/DesireSyncService.swift",
+      "lineRange": [136, 162],
+      "summary": "Maps local desire ratings to Supabase DTOs against the resolved profile id and batch-upserts them on (user_id, desire_item_id) so re-rating updates in place.",
+      "tags": ["service", "desire-map", "networking"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Core/Services/EntitlementService.swift",
+      "type": "file",
+      "name": "EntitlementService.swift",
+      "filePath": "Vayl/Core/Services/EntitlementService.swift",
+      "summary": "Service layer for couple-level entitlements (Monetization M1) — reads the denormalized couples.access_tier and grants Core via the server-authoritative grant-entitlement edge function.",
+      "tags": ["service", "networking", "monetization", "entitlements"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Services/EntitlementService.swift:EntitlementService",
+      "type": "class",
+      "name": "EntitlementService",
+      "filePath": "Vayl/Core/Services/EntitlementService.swift",
+      "lineRange": [19, 58],
+      "summary": "Injected Supabase service exposing fetchTier (RLS-scoped couple tier read) and grantCore (server-validated StoreKit JWS grant); never reads the service-role-only entitlements ledger.",
+      "tags": ["service", "monetization", "networking"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Services/LegalLinks.swift",
+      "type": "file",
+      "name": "LegalLinks.swift",
+      "filePath": "Vayl/Core/Services/LegalLinks.swift",
+      "summary": "Single source of truth for the app's Terms and Privacy URLs (currently Apple placeholder pages) plus the LegalDoc enum that drives the legal-document sheet in the paywall and sign-in.",
+      "tags": ["type-definition", "configuration", "legal", "constants"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Services/PairingService.swift",
+      "type": "file",
+      "name": "PairingService.swift",
+      "filePath": "Vayl/Core/Services/PairingService.swift",
+      "summary": "Pure data-access layer for partner linking over Supabase — generates/claims pairing codes, fetches the linked partner identity, and polls (via realtime channel + timeout) until the couple forms.",
+      "tags": ["service", "networking", "pairing", "realtime"],
+      "complexity": "complex",
+      "languageNotes": "pollForClaim races a realtime postgres-changes stream against a deadline timer using withThrowingTaskGroup, returning whichever resolves first."
+    },
+    {
+      "id": "class:Vayl/Core/Services/PairingService.swift:PairingService",
+      "type": "class",
+      "name": "PairingService",
+      "filePath": "Vayl/Core/Services/PairingService.swift",
+      "lineRange": [58, 222],
+      "summary": "Async/await Supabase pairing service: generateCode, claimCode (create-couple edge fn), fetchPartner (get-partner), and pollForClaim with realtime + deadline; errors always rethrown.",
+      "tags": ["service", "pairing", "networking", "realtime"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Core/Services/PairingService.swift:pollForClaim",
+      "type": "function",
+      "name": "pollForClaim",
+      "filePath": "Vayl/Core/Services/PairingService.swift",
+      "lineRange": [142, 205],
+      "summary": "Subscribes to a per-user realtime channel and races a postgres-changes task against a deadline timer, returning the coupleId when the partner joins or throwing expiredCode on timeout.",
+      "tags": ["service", "pairing", "realtime", "concurrency"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Core/Services/PairingService.swift:generateCode",
+      "type": "function",
+      "name": "generateCode",
+      "filePath": "Vayl/Core/Services/PairingService.swift",
+      "lineRange": [76, 102],
+      "summary": "Inserts a new pairing code row for the current user and reads back the DB-assigned expires_at so the waiting UI can count down and bound its poll.",
+      "tags": ["service", "pairing", "networking"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Services/ProfileService.swift",
+      "type": "file",
+      "name": "ProfileService.swift",
+      "filePath": "Vayl/Core/Services/ProfileService.swift",
+      "summary": "@MainActor Supabase profile service — fetch-or-create the remote user_profiles row, scoped pairing-code lookups (name+pronouns only), identity/NM-stage updates, and profile-id resolution caching.",
+      "tags": ["service", "networking", "profile", "privacy"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Core/Services/ProfileService.swift:ProfileService",
+      "type": "class",
+      "name": "ProfileService",
+      "filePath": "Vayl/Core/Services/ProfileService.swift",
+      "lineRange": [21, 258],
+      "summary": "MainActor service mapping the SupabaseProfile DTO and exposing fetchOrCreateProfile, lookupPairingCode (privacy-scoped), markOnboardingComplete, updateIdentity/updateNMStage, and ensureProfileExists.",
+      "tags": ["service", "profile", "networking", "privacy"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Core/Services/ProfileService.swift:fetchOrCreateProfile",
+      "type": "function",
+      "name": "fetchOrCreateProfile",
+      "filePath": "Vayl/Core/Services/ProfileService.swift",
+      "lineRange": [76, 121],
+      "summary": "Selects the remote user_profiles row by auth_id and, if none exists, inserts a default profile and returns the created row (select-before-insert avoids duplicates).",
+      "tags": ["service", "profile", "networking"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Core/Services/ProfileService.swift:ensureProfileExists",
+      "type": "function",
+      "name": "ensureProfileExists",
+      "filePath": "Vayl/Core/Services/ProfileService.swift",
+      "lineRange": [237, 256],
+      "summary": "Returns the cached or freshly-fetched Supabase profile id for an auth id (caching it in UserDefaults), throwing profileNotFound if no row exists; used by FK-bound writes.",
+      "tags": ["service", "profile", "networking"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Services/RealtimeSessionService.swift",
+      "type": "file",
+      "name": "RealtimeSessionService.swift",
+      "filePath": "Vayl/Core/Services/RealtimeSessionService.swift",
+      "summary": "Pure data-access transport for the two-device Curated Session over Supabase — curated_sessions CRUD, airlock column mutators, server-authoritative conditional advance, and a presence channel factory.",
+      "tags": ["service", "networking", "realtime", "session"],
+      "complexity": "complex",
+      "languageNotes": "advance() uses a conditional UPDATE guarded on the expected current_index to make double-advance impossible across two devices."
+    },
+    {
+      "id": "class:Vayl/Core/Services/RealtimeSessionService.swift:RealtimeSessionService",
+      "type": "class",
+      "name": "RealtimeSessionService",
+      "filePath": "Vayl/Core/Services/RealtimeSessionService.swift",
+      "lineRange": [136, 255],
+      "summary": "Async/await curated_sessions service: openSession, fetchOpenSession, per-column airlock mutators (bandwidth/consent/presence/status), and the conditional advance; UI/state owned elsewhere.",
+      "tags": ["service", "realtime", "session", "networking"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Core/Services/RealtimeSessionService.swift:advance",
+      "type": "function",
+      "name": "advance",
+      "filePath": "Vayl/Core/Services/RealtimeSessionService.swift",
+      "lineRange": [243, 254],
+      "summary": "Server-authoritative card advance — increments current_index only if it still equals expectedIndex, returning whether this call moved the pointer or the partner already did.",
+      "tags": ["service", "session", "realtime", "concurrency"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Vayl/Core/Services/RealtimeSessionService.swift:sessionChannel",
+      "type": "function",
+      "name": "sessionChannel",
+      "filePath": "Vayl/Core/Services/RealtimeSessionService.swift",
+      "lineRange": [277, 281],
+      "summary": "Builds (without subscribing) the couple's realtime channel keyed by user id so presence joins/leaves are identifiable; the consumer owns the subscribe/track lifecycle.",
+      "tags": ["service", "realtime", "session"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Services/StoreKitService.swift",
+      "type": "file",
+      "name": "StoreKitService.swift",
+      "filePath": "Vayl/Core/Services/StoreKitService.swift",
+      "summary": "StoreKit 2 wrapper (Monetization M2) — loads the Core product, runs the purchase sheet returning a verified transaction + signed JWS, checks/restores ownership, and observes background transaction updates.",
+      "tags": ["service", "storekit", "monetization", "networking"],
+      "complexity": "moderate",
+      "languageNotes": "Uses StoreKit 2 VerificationResult pattern-matching to surface only verified transactions and their JWS for server re-verification; never grants on .unverified."
+    },
+    {
+      "id": "class:Vayl/Core/Services/StoreKitService.swift:StoreKitService",
+      "type": "class",
+      "name": "StoreKitService",
+      "filePath": "Vayl/Core/Services/StoreKitService.swift",
+      "lineRange": [17, 109],
+      "summary": "Service surfacing StoreKit 2 purchase/restore/ownership for the Core lifetime product and a detached Transaction.updates listener; state decisions delegated to EntitlementStore.",
+      "tags": ["service", "storekit", "monetization"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Core/Services/StoreKitService.swift:purchase",
+      "type": "function",
+      "name": "purchase",
+      "filePath": "Vayl/Core/Services/StoreKitService.swift",
+      "lineRange": [43, 62],
+      "summary": "Runs Apple's purchase sheet and returns a PurchaseOutcome carrying the verified transaction + JWS on success (finishing the transaction), or cancelled/pending/unverified.",
+      "tags": ["service", "storekit", "monetization"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Core/Models/SessionRecord.swift",
+      "target": "class:Vayl/Core/Models/SessionRecord.swift:SessionRecord",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/UserProfile.swift",
+      "target": "class:Vayl/Core/Models/UserProfile.swift:UserProfile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Persistence/DataStore.swift",
+      "target": "class:Vayl/Core/Persistence/DataStore.swift:DataStore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Persistence/DataStore.swift",
+      "target": "function:Vayl/Core/Persistence/DataStore.swift:saveSession",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Persistence/DataStore.swift",
+      "target": "class:Vayl/Core/Persistence/DataStore.swift:RatingRecord",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Persistence/DataStore.swift",
+      "target": "class:Vayl/Core/Persistence/DataStore.swift:StreakRecord",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Persistence/DataStore.swift:DataStore",
+      "target": "function:Vayl/Core/Persistence/DataStore.swift:saveSession",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/AppState.swift",
+      "target": "class:Vayl/Core/Services/AppState.swift:AppState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/AppState.swift:AppState",
+      "target": "function:Vayl/Core/Services/AppState.swift:markOnboardingComplete",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/AppState.swift:AppState",
+      "target": "function:Vayl/Core/Services/AppState.swift:hydrateOnboardingState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/AuthService.swift",
+      "target": "class:Vayl/Core/Services/AuthService.swift:AuthService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/AuthService.swift:AuthService",
+      "target": "function:Vayl/Core/Services/AuthService.swift:checkSession",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/ContentLoader.swift",
+      "target": "class:Vayl/Core/Services/ContentLoader.swift:ContentLoader",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/DesireSyncService.swift",
+      "target": "class:Vayl/Core/Services/DesireSyncService.swift:DesireSyncService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/DesireSyncService.swift:DesireSyncService",
+      "target": "function:Vayl/Core/Services/DesireSyncService.swift:syncRatings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/EntitlementService.swift",
+      "target": "class:Vayl/Core/Services/EntitlementService.swift:EntitlementService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/PairingService.swift",
+      "target": "class:Vayl/Core/Services/PairingService.swift:PairingService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/PairingService.swift:PairingService",
+      "target": "function:Vayl/Core/Services/PairingService.swift:pollForClaim",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/PairingService.swift:PairingService",
+      "target": "function:Vayl/Core/Services/PairingService.swift:generateCode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/ProfileService.swift",
+      "target": "class:Vayl/Core/Services/ProfileService.swift:ProfileService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/ProfileService.swift:ProfileService",
+      "target": "function:Vayl/Core/Services/ProfileService.swift:fetchOrCreateProfile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/ProfileService.swift:ProfileService",
+      "target": "function:Vayl/Core/Services/ProfileService.swift:ensureProfileExists",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/RealtimeSessionService.swift",
+      "target": "class:Vayl/Core/Services/RealtimeSessionService.swift:RealtimeSessionService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/RealtimeSessionService.swift:RealtimeSessionService",
+      "target": "function:Vayl/Core/Services/RealtimeSessionService.swift:advance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/RealtimeSessionService.swift:RealtimeSessionService",
+      "target": "function:Vayl/Core/Services/RealtimeSessionService.swift:sessionChannel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Services/StoreKitService.swift",
+      "target": "class:Vayl/Core/Services/StoreKitService.swift:StoreKitService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Services/StoreKitService.swift:StoreKitService",
+      "target": "function:Vayl/Core/Services/StoreKitService.swift:purchase",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Persistence/DataStore.swift",
+      "target": "file:Vayl/Core/Models/SessionRecord.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Persistence/DataStore.swift",
+      "target": "file:Vayl/Core/Models/UserProfile.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Services/AppState.swift",
+      "target": "file:Vayl/Core/Models/UserProfile.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Services/AuthService.swift",
+      "target": "file:Vayl/Core/Services/SyncManager.swift",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Core/Services/AuthService.swift",
+      "target": "file:Vayl/Core/Services/SupabaseManager.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Services/ContentLoader.swift",
+      "target": "file:Vayl/Core/Models/Deck.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Services/ContentLoader.swift",
+      "target": "file:Vayl/Core/Models/DesireItem.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Services/DesireSyncService.swift",
+      "target": "file:Vayl/Core/Services/ProfileService.swift",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Core/Services/DesireSyncService.swift",
+      "target": "file:Vayl/Core/Services/SupabaseManager.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Services/EntitlementService.swift",
+      "target": "file:Vayl/Core/Services/SupabaseManager.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Services/PairingService.swift",
+      "target": "file:Vayl/Core/Services/SupabaseManager.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Services/ProfileService.swift",
+      "target": "file:Vayl/Core/Services/SyncManager.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Services/ProfileService.swift",
+      "target": "file:Vayl/Core/Services/SupabaseManager.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Services/RealtimeSessionService.swift",
+      "target": "file:Vayl/Core/Services/SupabaseManager.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

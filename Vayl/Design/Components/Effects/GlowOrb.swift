@@ -14,7 +14,7 @@ struct GlowOrb: View {
     let color: Color
     var size: CGFloat = 200
 
-    // Matches AppPalette.glowOpacity values: 0.18 dark, 0.06 light.
+    // Ambient glow opacity — emissive in dark, barely-there in light.
     private var glowOpacity: Double { colorScheme == .dark ? 0.18 : 0.06 }
 
     var body: some View {

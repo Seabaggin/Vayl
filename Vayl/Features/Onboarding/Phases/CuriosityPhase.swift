@@ -40,6 +40,13 @@ struct CuriosityPhase: View {
     @State private var summaryHintOffset: CGFloat            = 0
     @State private var summaryHintTask:   Task<Void, Never>? = nil
 
+    // Live hand-off follow (Phase 4): the presented deck tracks the finger as it's handed up
+    // (shared HandBackFollow). View-local; the director owns curiositySummaryOffset, so this
+    // resolves to .zero inside the pocket flight on handoff.
+    @State private var summaryDrag:         CGSize = .zero
+    @State private var summaryArmed:        Bool   = false
+    @State private var summarySelectionGen = UISelectionFeedbackGenerator()
+
     // MARK: - Layout
 
     /// Horizontal drag distance that commits a swipe. Also normalizes the drag
@@ -57,6 +64,32 @@ struct CuriosityPhase: View {
     /// matching the dealer-is-above visual language used across OB phases.
     private var offScreenY: CGFloat { -(screenSize.height * 0.5 + cardHeight) }
 
+    // MARK: - Squared-deck stack & deal tuning  (FEEL-GATE — tune on device)
+    // The resting pile is a tight, single-direction squared deck (mirrors
+    // VaylDeckStack — the same look the kept cards forge into at the phase end),
+    // dealt in one confident cascade from a single origin above the table.
+    // Promote to AppLayout/AppAnimation tokens once the feel is locked.
+
+    /// Visible thickness cap. Cards deeper than this share the deepest layer's
+    /// offset, so a 10-card pile reads as a ~4-thick deck, never a sprawl.
+    private static let stackDepthCap:    Int     = 4
+    /// Per-layer lateral step (one direction) — the deck's side bevel.
+    private static let stackStepX:       CGFloat = 1.2
+    /// Per-layer vertical step (one direction) — the deck's bottom bevel.
+    private static let stackStepY:       CGFloat = 2.0
+    /// Per-layer opacity falloff for the beneath cards, floored so the bevel
+    /// reads as depth without turning murky.
+    private static let stackOpacityStep: Double  = 0.045
+    private static let stackMinOpacity:  Double  = 0.85
+    /// Resting tilt of the squared deck. 0 = machine-flat; a whisper (≈0.4)
+    /// reads as a hand-squared deck. Start flat.
+    private static let stackRestTilt:    Double  = 0.0
+    /// Inter-card deal delay — a confident cascade, not a lazy rain (was 0.06).
+    private static let dealStagger:      Double  = 0.045
+    /// Incoming tilt as each card flies off the dealer's deck; settles to the
+    /// resting tilt on landing. 0 = straight drop.
+    private static let dealIncomingTilt: Double  = -7.0
+
     // MARK: - Body
 
     var body: some View {
@@ -70,25 +103,25 @@ struct CuriosityPhase: View {
         }
         // Trigger deal whenever the director toggles the deal flag
         // (fires on entry for Round 1 and again on Round 2 transition).
-        .onChange(of: director.curiosityDealTrigger) { _, _ in
+        .onChange(of: director.curiosity.dealTrigger) { _, _ in
             dealCards()
         }
         // Threshold crossing → selection haptic (fires both ways: in and out of threshold)
-        .sensoryFeedback(.selection, trigger: director.curiosityThresholdCrossed)
+        .sensoryFeedback(.selection, trigger: director.curiosity.thresholdCrossed)
         // Commit → medium impact haptic (toggled by the view before calling director)
         .sensoryFeedback(.impact(weight: .medium), trigger: commitHapticTrigger)
         // Demo commits carry the same thunk — the gesture is taught WITH its
         // physical signature (the director toggles this only on demo swipes).
-        .sensoryFeedback(.impact(weight: .medium), trigger: director.curiosityDemoCommitTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: director.curiosity.demoCommitTrigger)
         .onAppear {
-            director.beginCuriosityDemo(screenWidth: screenSize.width)
+            director.curiosity.beginCuriosityDemo(screenWidth: screenSize.width)
         }
         .onDisappear {
-            director.curiositySequenceTask?.cancel()
+            director.curiosity.sequenceTask?.cancel()
             summaryHintTask?.cancel()
         }
         // Tug loop on the presented deck — flick up, spring home, rest.
-        .onChange(of: director.curiositySummaryPresented) { _, presented in
+        .onChange(of: director.curiosity.summaryPresented) { _, presented in
             summaryHintTask?.cancel()
             guard presented, !reduceMotion else {
                 withAnimation(AppAnimation.spring.reduceMotionSafe) { summaryHintOffset = 0 }
@@ -115,7 +148,7 @@ struct CuriosityPhase: View {
     /// underneath) *rise* into place instead of a recycled view swapping content. The
     /// departing card is rendered separately by `flyingCardView` so it leaves as itself.
     private var pileView: some View {
-        let pile = director.curiosityPile
+        let pile = director.curiosity.pile
 
         return ZStack {
 
@@ -143,16 +176,19 @@ struct CuriosityPhase: View {
             // forge melts in BuildDeck) materialises at the lift anchor with
             // the taught halo. The USER hands it over: swipe-up → handoff.
             // Director owns the materialise + flight animation.
-            if director.curiositySummaryVisible {
-                VaylDeckStack(size: CGSize(width: cardWidth, height: cardHeight))
-                    .overlay(LiftHalo(visible: director.curiositySummaryPresented))
-                    .scaleEffect(director.curiositySummaryScale)
-                    .opacity(director.curiositySummaryAlpha)
-                    .offset(director.curiositySummaryOffset)
+            if director.curiosity.summaryVisible {
+                VaylDeckStack(size: CGSize(width: cardWidth, height: cardHeight), count: 4, bleedUp: true)   // FEEL-GATE: slim, recedes up so the halo sits flush on the bottom
+                    .overlay(LiftHalo(visible: director.curiosity.summaryPresented))
+                    .scaleEffect(director.curiosity.summaryScale)
+                    // Tilt as the deck is handed up (shared HandBackFollow).
+                    .rotationEffect(.degrees(HandBackFollow.tilt(for: summaryDrag.width, screenWidth: screenSize.width)))
+                    .opacity(director.curiosity.summaryAlpha)
+                    .offset(director.curiosity.summaryOffset)
                     .offset(y: summaryHintOffset)
+                    .offset(summaryDrag)   // live hand-off follow (resolves into the pocket flight)
                     .contentShape(Rectangle())
                     .gesture(summaryHandoffDrag)
-                    .allowsHitTesting(director.curiositySummaryPresented)
+                    .allowsHitTesting(director.curiosity.summaryPresented)
             }
         }
     }
@@ -163,24 +199,31 @@ struct CuriosityPhase: View {
     @ViewBuilder
     private func pileCard(card: CuriositySortCard, depth: Int, pileCount: Int) -> some View {
         let isTop = depth == 0
-        let drag  = director.curiosityDragOffset
+        let drag  = director.curiosity.dragOffset
 
-        // Resting stagger gives the pile physical thickness; the top card rests centered.
-        // Direction alternates so the pile tilts irregularly rather than fanning.
-        let sign:        CGFloat = depth % 2 == 0 ? 1 : -1
-        let staggerX:    CGFloat = CGFloat(depth) * 1.5 * sign
-        let staggerY:    CGFloat = CGFloat(depth) * 4.0
-        let restRotate:  Double  = Double(depth) * 1.2 * Double(sign)
-        let cardOpacity: Double  = max(0, 1.0 - Double(depth) * 0.05)
+        // Resting squared deck: every card offset the SAME direction by a small
+        // step, capped after `stackDepthCap` layers so a 10-card pile reads as a
+        // tight ~4-thick deck (top card centered), not a sprawling alternating pile.
+        let layer:       CGFloat = CGFloat(min(depth, Self.stackDepthCap))
+        let restX:       CGFloat = layer * Self.stackStepX
+        let restY:       CGFloat = layer * Self.stackStepY
+        let restRotate:  Double  = Self.stackRestTilt
+        let cardOpacity: Double  = max(Self.stackMinOpacity, 1.0 - Double(layer) * Self.stackOpacityStep)
         // Bottom cards arrive first so they end up under the later arrivals.
-        let dealDelay:   Double  = Double(pileCount - 1 - depth) * 0.06
+        let dealDelay:   Double  = Double(pileCount - 1 - depth) * Self.dealStagger
 
-        // Top card follows the finger; beneath cards hold their stagger.
-        let offsetX:  CGFloat = isTop ? drag.width : staggerX
-        let offsetY:  CGFloat = allCardsDealt ? (isTop ? drag.height : staggerY) : offScreenY
-        let rotation: Double  = isTop
-            ? Double(drag.width) / Double(screenSize.width) * 18.0 * Double(grabPivot)
-            : restRotate
+        // Single confident deal: before landing, every card sits at ONE origin
+        // (centered, above the table) and converges into the squared deck — a
+        // dealt cascade, not 10 columns of rain. After landing, the top card
+        // follows the finger; beneath cards hold the squared rest.
+        let offsetX:  CGFloat = allCardsDealt ? (isTop ? drag.width  : restX) : 0
+        let offsetY:  CGFloat = allCardsDealt ? (isTop ? drag.height : restY) : offScreenY
+        // Incoming tilt settles to the resting tilt as the card lands (cards
+        // flicked off the dealer's deck), then the top card tilts with the drag.
+        let rotation: Double  = allCardsDealt
+            ? (isTop ? Double(drag.width) / Double(screenSize.width) * 18.0 * Double(grabPivot)
+                     : restRotate)
+            : Self.dealIncomingTilt
 
         // Only the top card's compass needle follows the finger; the next card
         // rests at zero so it rises into place with a level needle.
@@ -193,8 +236,9 @@ struct CuriosityPhase: View {
             .overlay { swipeStamps(for: isTop ? drag : .zero) }
             .opacity(cardOpacity)
             .rotationEffect(.degrees(rotation))
-            // Deal flight (y from off-screen) — only this is driven by allCardsDealt,
-            // so a live drag on the top card is never animated by the deal curve.
+            // Deal flight (x converges + y drops + tilt settles) — all driven by
+            // allCardsDealt, so a live drag on the top card is never animated by
+            // the deal curve (drag changes don't re-trigger this value).
             .animation(
                 reduceMotion ? .easeOut(duration: 0.15)
                              : AppAnimation.cardSlide.delay(dealDelay),
@@ -204,9 +248,9 @@ struct CuriosityPhase: View {
             // Only the top card receives touches; the gesture is attached to every card
             // (constant structure) but gated off beneath, off during the demo, and
             // off during the mid-deck pause while the second question types.
-            .allowsHitTesting(isTop
-                              && !director.curiosityDemoActive
-                              && !director.curiosityRoundTransitioning)
+            .allowsHitTesting(isTop 
+                              && !director.curiosity.demoActive
+                              && !director.curiosity.roundTransitioning)
             .gesture(curiosityDrag)
     }
 
@@ -215,8 +259,8 @@ struct CuriosityPhase: View {
     /// not a card vanishing while a new one pops in.
     @ViewBuilder
     private var flyingCardView: some View {
-        if let flying = director.curiosityFlyingCard {
-            let off = director.curiosityFlyingOffset
+        if let flying = director.curiosity.flyingCard {
+            let off = director.curiosity.flyingOffset
             // Needle pinned at full tilt in the throw direction — the card leaves
             // showing the verdict it was committed with.
             VaylCardFace(content: .curiosity(
@@ -282,7 +326,7 @@ struct CuriosityPhase: View {
                 // gesture, so this resolves to the same pivot every change.
                 let half = cardHeight / 2.0
                 grabPivot = min(max((half - value.startLocation.y) / half, -1.0), 1.0)
-                director.onCuriosityDrag(offset: value.translation)
+                director.curiosity.onCuriosityDrag(offset: value.translation)
             }
             .onEnded { value in
                 // Commit on distance crossed, OR on a confident flick whose
@@ -294,9 +338,9 @@ struct CuriosityPhase: View {
                 if abs(travelled) >= commitThreshold || abs(projected) >= commitThreshold * 1.6 {
                     // Toggle before calling director so the haptic fires on this frame.
                     commitHapticTrigger.toggle()
-                    director.commitCuriositySwipe(screenSize: screenSize)
+                    director.curiosity.commitCuriositySwipe(screenSize: screenSize)
                 } else {
-                    director.snapBackCuriosityCard()
+                    director.curiosity.snapBackCuriosityCard()
                 }
             }
     }
@@ -305,16 +349,28 @@ struct CuriosityPhase: View {
     /// distance OR a committed flick, the gesture taught in Name.
     private var summaryHandoffDrag: some Gesture {
         DragGesture(minimumDistance: 30)
-            .onChanged { _ in
+            .onChanged { value in
                 summaryHintTask?.cancel()
                 withAnimation(AppAnimation.spring.reduceMotionSafe) { summaryHintOffset = 0 }
+                // Follow the finger as the forged deck is handed up (weighty, banded).
+                summaryDrag = HandBackFollow.offset(for: value.translation,
+                                                    cardWidth: cardWidth, cardHeight: cardHeight)
+                let crossed = value.translation.height < -cardHeight * 0.14
+                if crossed != summaryArmed { summaryArmed = crossed; summarySelectionGen.selectionChanged() }
             }
             .onEnded { value in
+                summaryArmed = false
                 let dy  = value.translation.height
                 let pdy = value.predictedEndTranslation.height
-                guard dy < -cardHeight * 0.14 || pdy < -cardHeight * 0.5 else { return }
-                commitHapticTrigger.toggle()
-                director.handoffCuriosityDeck(screenSize: screenSize)
+                if dy < -cardHeight * 0.14 || pdy < -cardHeight * 0.5 {
+                    commitHapticTrigger.toggle()
+                    // Drift + tilt resolve INTO the pocket flight — no snap at the handoff.
+                    withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { summaryDrag = .zero }
+                    director.curiosity.handoffCuriosityDeck(screenSize: screenSize)
+                } else {
+                    // Short of the threshold — settle the deck back to the presented anchor.
+                    withAnimation(AppAnimation.cardSettle.reduceMotionSafe) { summaryDrag = .zero }
+                }
             }
     }
 
@@ -343,23 +399,16 @@ struct CuriosityPhase: View {
 // MARK: - Preview
 
 #if DEBUG
-#Preview("Curiosity Pile — Round 1") {
+#Preview("Curiosity Pile — full deal (10)") {
     // Director lives inside a wrapper view so @State drives the lifecycle correctly.
     // Setting curiosityDealTrigger before the view appears doesn't fire onChange
     // (onChange only triggers on changes, not initial values), so we toggle it
-    // via onAppear instead.
+    // via onAppear instead. Loads the real 5+5 deck so the squared deck + cascade
+    // read at the true depth.
     struct PreviewWrapper: View {
         @State private var director: VaylDirector = {
             let d = VaylDirector()
-            d.curiosityPile = [
-                CuriositySortCard(id: "p0", text: "I don't know what I actually want",  round: 1),
-                CuriositySortCard(id: "p1", text: "We want different things",             round: 1),
-                CuriositySortCard(id: "p2", text: "I wouldn't know how to ask for it",   round: 1),
-                CuriositySortCard(id: "p3", text: "Jealousy comes up and gets stuck",    round: 1),
-                CuriositySortCard(id: "p4", text: "We've lost some of our connection",   round: 1),
-                CuriositySortCard(id: "p5", text: "I keep ending up in the same place",  round: 1),
-                CuriositySortCard(id: "p6", text: "My reactions in intimacy surprise me",round: 1),
-            ]
+            d.curiosity.pile = d.curiosity.buildCuriosityPile(round: 1, onboardingData: d.onboardingData) + d.curiosity.buildCuriosityPile(round: 2, onboardingData: d.onboardingData)
             return d
         }()
 
@@ -373,7 +422,7 @@ struct CuriosityPhase: View {
             }
             .onAppear {
                 // Toggle triggers onChange → dealCards() → staggered deal animation.
-                director.curiosityDealTrigger.toggle()
+                director.curiosity.dealTrigger.toggle()
             }
         }
     }
