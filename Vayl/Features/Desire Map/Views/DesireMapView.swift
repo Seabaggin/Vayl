@@ -572,7 +572,26 @@ struct DesireMapView: View {
     // topspark → heading → subtitle → .agroup rows → spacer → waitline
 
     private var mirrorScreen: some View {
-        ScrollView(showsIndicators: false) {
+        VStack(spacing: 0) {
+            // Fixed close affordance. The mirror is a terminal waiting state inside a
+            // .vaylCover (interactive-dismiss disabled), so it must always offer an explicit
+            // exit — the readyBar only appears for the second-finisher (.ready), not here.
+            HStack {
+                Spacer()
+                Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
+                    Image(systemName: "xmark")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .frame(width: 36, height: 36)
+                        .background(Circle().fill(AppColors.cardBg.opacity(0.55)))
+                        .overlay(Circle().stroke(AppColors.borderSubtle, lineWidth: 1))
+                }
+                .buttonStyle(_RaterPressStyle())
+            }
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.top, AppSpacing.sm)
+
+            ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 0) {
 
                 if raterPhase == .ready {
@@ -629,6 +648,7 @@ struct DesireMapView: View {
             .padding(.bottom, AppSpacing.xxl)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
     }
 
     private var readyBar: some View {
