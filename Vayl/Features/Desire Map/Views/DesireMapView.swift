@@ -21,7 +21,7 @@ struct DesireMapView: View {
     /// True when the partner has also completed their map. Drives the ready bar in mirror.
     var partnerComplete: Bool = false
 
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.vaylDismiss) private var vaylDismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: - Presentation phase
@@ -45,6 +45,14 @@ struct DesireMapView: View {
     @State private var chartedStarsVisible: Bool = false
     @State private var chartedLinesActive: Bool  = false
     @State private var chartedTitleVisible: Bool = false
+
+    /// The charted-finish ceremony, held so a tap (skip) or disappear can cancel it.
+    @State private var chartedTask: Task<Void, Never>? = nil
+
+    // MARK: - Star-rise sync (S2.2)
+    // Bumped on every answer commit so the accumulating sky animates the new star
+    // rising on desireStarRise, synced to the question receding on desireDepthExit.
+    @State private var starRiseTick: Int = 0
 
     // MARK: - Haptics
 
@@ -87,6 +95,11 @@ struct DesireMapView: View {
             withAnimation(AppAnimation.desireFinishFade) { raterPhase = .charted }
             runChartedSequence()
         }
+        .onDisappear {
+            // Don't let the charted ceremony outlive the view.
+            chartedTask?.cancel()
+            chartedTask = nil
+        }
     }
 
     // MARK: - Atmosphere config
@@ -119,6 +132,9 @@ struct DesireMapView: View {
 
             case .charted:
                 chartedScreen
+                    // Tap anywhere during the charted hold skips the ceremony and proceeds.
+                    .contentShape(Rectangle())
+                    .onTapGesture { skipChartedSequence() }
                     .transition(.opacity)
 
             case .mirror, .ready:
@@ -188,7 +204,7 @@ struct DesireMapView: View {
             VStack {
                 HStack {
                     Spacer()
-                    Button { dismiss() } label: {
+                    Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
                         Image(systemName: "xmark")
                             .font(AppFonts.caption)
                             .foregroundStyle(AppColors.textTertiary)
@@ -258,15 +274,20 @@ struct DesireMapView: View {
             startVisible = false; raterPhase = .rating; ratingVisible = true
             return
         }
-        withAnimation(.easeOut(duration: 0.80)) {
+        // Sleep beats are expressed as fractions of the bloom token's duration, not
+        // free magic numbers: the fade-out begins as the bloom nears its peak (~80%),
+        // and the orb resets once the fade has largely cleared. bloomDuration mirrors
+        // AppAnimation.desireRevealBloom (0.80s) so the timing stays tied to that token.
+        let bloomDuration: Double = 0.80
+        withAnimation(AppAnimation.desireRevealBloom) {
             bloomScale = 20; bloomOpacity = 0.65; startVisible = false
         }
         Task {
-            try? await Task.sleep(for: .seconds(0.65))
-            withAnimation(.easeOut(duration: 0.30)) { bloomOpacity = 0 }
+            try? await Task.sleep(for: .seconds(bloomDuration * 0.80))
+            withAnimation(AppAnimation.standard) { bloomOpacity = 0 }
             raterPhase = .rating
             withAnimation(AppAnimation.desireStarIgnite.reduceMotionSafe) { ratingVisible = true }
-            try? await Task.sleep(for: .seconds(0.50))
+            try? await Task.sleep(for: .seconds(bloomDuration * 0.62))
             bloomScale = 0.01
         }
     }
@@ -292,7 +313,7 @@ struct DesireMapView: View {
         let answers = store.answers(for: item)
         return ZStack(alignment: .top) {
             // Stars only appear for excited + open answers (stars mark desire, not avoidance)
-            _StarAccum(ratings: positiveRatings)
+            _StarAccum(ratings: positiveRatings, riseTrigger: starRiseTick)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .allowsHitTesting(false)
 
@@ -321,9 +342,17 @@ struct DesireMapView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, AppSpacing.lg)
                 .id(index)
+                // Two-phase depth: the incoming question emerges from depth on
+                // desireDepthEnter; the outgoing one recedes on desireDepthExit.
+                // Carrying the animation on each side of the transition lets the
+                // single index change drive both phases at their own pace.
                 .transition(.asymmetric(
-                    insertion: .opacity.combined(with: .scale(scale: 1.04)),
-                    removal:   .opacity.combined(with: .scale(scale: 0.90))
+                    insertion: .opacity
+                        .combined(with: .scale(scale: 1.04))
+                        .animation(AppAnimation.desireDepthEnter.reduceMotionSafe),
+                    removal: .opacity
+                        .combined(with: .scale(scale: 0.90))
+                        .animation(AppAnimation.desireDepthExit.reduceMotionSafe)
                 ))
 
                 Spacer(minLength: AppSpacing.lg)
@@ -384,7 +413,7 @@ struct DesireMapView: View {
                 .font(AppFonts.caption)
                 .foregroundStyle(AppColors.textTertiary)
 
-            Button { dismiss() } label: {
+            Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
                 Image(systemName: "xmark")
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
@@ -451,7 +480,7 @@ struct DesireMapView: View {
                             .position(x: nodes[i].0 * W, y: nodes[i].1 * H)
                             .opacity(chartedStarsVisible ? 1 : 0)
                             .animation(
-                                AppAnimation.desireStarIgnite.delay(Double(i) * 0.06),
+                                AppAnimation.desireFinishFlair.delay(Double(i) * 0.06).reduceMotionSafe,
                                 value: chartedStarsVisible
                             )
                     }
@@ -475,37 +504,67 @@ struct DesireMapView: View {
             }
             .padding(.horizontal, AppSpacing.xxl)
             .opacity(chartedTitleVisible ? 1 : 0)
-            .animation(AppAnimation.desireStarIgnite, value: chartedTitleVisible)
+            .animation(AppAnimation.desireChartedFadeIn.reduceMotionSafe, value: chartedTitleVisible)
 
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    // Sleep beats for the charted ceremony. These mirror the documented durations of
+    // the matching AppAnimation tokens (desireFinishFade 0.35, desireFinishFlair 0.80),
+    // kept here as named Doubles because an Animation token can't report its own
+    // duration to Task.sleep. The hold uses the raw-Double token directly.
+    private static let chartedStarSettle: Double = 0.35   // desireFinishFade
+    private static let chartedLinesDraw:  Double = 0.80   // desireFinishFlair (line-draw wait)
+
     private func runChartedSequence() {
-        Task {
+        chartedTask?.cancel()
+        chartedTask = Task {
             if reduceMotion {
                 chartedStarsVisible = true
                 chartedTitleVisible = true
-                try? await Task.sleep(for: .seconds(0.8))
-                withAnimation(AppAnimation.enter) { raterPhase = .mirror }
+                try? await Task.sleep(for: .seconds(AppAnimation.desireChartedHold))
+                guard !Task.isCancelled else { return }
+                advancePastCharted()
                 return
             }
-            // Stars ignite
-            withAnimation(AppAnimation.desireStarIgnite) { chartedStarsVisible = true }
-            try? await Task.sleep(for: .seconds(0.35))
+            // Last star flair — the climactic ignite of the rating beat. The flair
+            // animation rides on the chartedScreen star's .animation(value:) modifier.
+            chartedStarsVisible = true
+            try? await Task.sleep(for: .seconds(Self.chartedStarSettle))
+            guard !Task.isCancelled else { return }
             // Lines activate (each handles own timing via onAppear)
             chartedLinesActive = true
             // Wait for all lines to finish drawing (~2.6s for last line to complete)
-            try? await Task.sleep(for: .seconds(2.2))
-            // Title appears — hold long enough to read both lines
+            try? await Task.sleep(for: .seconds(Self.chartedLinesDraw))
+            guard !Task.isCancelled else { return }
+            // Charted-text fades in once the flair settles (desireChartedFadeIn on the view).
             chartedTitleVisible = true
-            try? await Task.sleep(for: .seconds(1.7))
-            // Auto-advance
-            withAnimation(AppAnimation.enter) {
-                raterPhase = partnerComplete ? .ready : .mirror
-            }
+            // Hold long enough to read both lines (tap-anywhere skips).
+            try? await Task.sleep(for: .seconds(AppAnimation.desireChartedHold))
+            guard !Task.isCancelled else { return }
+            advancePastCharted()
         }
+    }
+
+    /// Leaves the charted beat for its branch target. Shared by the timed auto-advance
+    /// and the tap-to-skip path, so both land on the same destination.
+    private func advancePastCharted() {
+        withAnimation(AppAnimation.enter) {
+            raterPhase = partnerComplete ? .ready : .mirror
+        }
+    }
+
+    /// Tap-anywhere during the charted hold cancels the ceremony and proceeds now.
+    private func skipChartedSequence() {
+        guard raterPhase == .charted else { return }
+        chartedTask?.cancel()
+        chartedTask = nil
+        // Settle the visuals so the skip doesn't snap mid-draw, then advance.
+        chartedStarsVisible = true
+        chartedTitleVisible = true
+        advancePastCharted()
     }
 
     // MARK: - Mirror screen (S2.4)
@@ -573,35 +632,39 @@ struct DesireMapView: View {
     }
 
     private var readyBar: some View {
-        HStack(spacing: AppSpacing.sm) {
-            Text("✦")
-                .font(AppFonts.bodyMedium)
-                .foregroundStyle(LinearGradient(
-                    colors: [AppColors.spectrumMagenta, AppColors.spectrumPurple],
-                    startPoint: .leading, endPoint: .trailing
-                ))
-            Text("**\(partnerName) finished.** Your map is ready.")
-                .font(AppFonts.bodyText)
-                .foregroundStyle(AppColors.textPrimary)
-            Spacer()
-            Text("→")
-                .font(AppFonts.bodyMedium)
-                .foregroundStyle(AppColors.spectrumMagenta)
+        // A Button (not a bare onTapGesture) so it carries the press style + haptic,
+        // matching every other tappable affordance in the rater.
+        Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
+            HStack(spacing: AppSpacing.sm) {
+                Text("✦")
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(LinearGradient(
+                        colors: [AppColors.spectrumMagenta, AppColors.spectrumPurple],
+                        startPoint: .leading, endPoint: .trailing
+                    ))
+                Text("**\(partnerName) finished.** Your map is ready.")
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(AppColors.textPrimary)
+                Spacer()
+                Text("→")
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(AppColors.spectrumMagenta)
+            }
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.vertical, AppSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                    .fill(LinearGradient(
+                        colors: [AppColors.spectrumMagenta.opacity(0.12), AppColors.spectrumPurple.opacity(0.18)],
+                        startPoint: .leading, endPoint: .trailing
+                    ))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                    .stroke(AppColors.spectrumPurple.opacity(0.45), lineWidth: 1)
+            )
         }
-        .padding(.horizontal, AppSpacing.md)
-        .padding(.vertical, AppSpacing.sm)
-        .background(
-            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                .fill(LinearGradient(
-                    colors: [AppColors.spectrumMagenta.opacity(0.12), AppColors.spectrumPurple.opacity(0.18)],
-                    startPoint: .leading, endPoint: .trailing
-                ))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                .stroke(AppColors.spectrumPurple.opacity(0.45), lineWidth: 1)
-        )
-        .onTapGesture { dismiss() }
+        .buttonStyle(_RaterPressStyle())
     }
 
     private var ratedItemsByGroup: [(DesireRatingValue, [DesireItem])] {
@@ -627,7 +690,7 @@ struct DesireMapView: View {
                 .font(AppFonts.caption)
                 .foregroundStyle(AppColors.textTertiary)
                 .multilineTextAlignment(.center)
-            Button { dismiss() } label: {
+            Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
                 Text("Close").font(AppFonts.ctaLabel).foregroundStyle(AppColors.textSecondary)
             }
             .buttonStyle(PlainButtonStyle())
@@ -641,12 +704,20 @@ struct DesireMapView: View {
     private func choose(_ weight: DesireRatingValue, for item: DesireItem) {
         store.rate(itemId: item.id, rating: weight)
         hapticTick += 1
-        withAnimation(.easeOut(duration: 0.35)) { index += 1 }
+
+        // Two-phase depth-push, synced with the rising star: the new answer star
+        // lifts into the sky on desireStarRise, fired alongside the outgoing question
+        // receding (desireDepthExit) while the incoming question emerges from depth
+        // (desireDepthEnter). The per-phase depth animations ride on the question
+        // transition itself; this withAnimation only triggers the index change.
+        withAnimation(AppAnimation.desireStarRise.reduceMotionSafe) { starRiseTick += 1 }
+        withAnimation(AppAnimation.desireDepthExit.reduceMotionSafe) { index += 1 }
     }
 
     private func back() {
         guard index > 0 else { return }
-        withAnimation(.easeOut(duration: 0.28)) { index -= 1 }
+        // Snappier back read — the emerging question arrives on desireDepthEnter.
+        withAnimation(AppAnimation.desireDepthEnter.reduceMotionSafe) { index -= 1 }
     }
 
     private func accentColor(for weight: DesireRatingValue) -> Color {
@@ -745,6 +816,9 @@ private struct _RaterPill: View {
 private struct _StarAccum: View {
     /// Ordered list of positive ratings (excited/open) in answer order.
     let ratings: [DesireRatingValue]
+    /// Bumped on each answer commit so the newly added star rises in sync with the
+    /// question receding (desireStarRise fired alongside desireDepthExit in choose()).
+    var riseTrigger: Int = 0
 
     private static let positions: [(CGFloat, CGFloat)] = {
         let golden: Double = 2.399963229728653
@@ -777,7 +851,9 @@ private struct _StarAccum: View {
                     )
             }
         }
-        .animation(AppAnimation.desireStarIgnite, value: ratings.count)
+        // The accumulating star rises on desireStarRise, driven by the answer-tap
+        // trigger so it lifts in sync with the question receding (desireDepthExit).
+        .animation(AppAnimation.desireStarRise.reduceMotionSafe, value: riseTrigger)
     }
 }
 

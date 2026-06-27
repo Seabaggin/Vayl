@@ -38,7 +38,8 @@ private struct HomeRouterInnerView: View {
     @State private var activeSession: SessionStore? = nil
 
     // ── Desire Map rater presentation ────────────────────────────────────
-    // Full-screen so the rater is an immersive, unhurried beat.
+    // Presented as a .vaylCover so the rater is a protected, immersive, unhurried
+    // beat (interactive-dismiss disabled; exit is explicit via vaylDismiss).
     // Reachable for unpaired users too (head-start hook).
     @State private var activeMap: DesireMapStore? = nil
 
@@ -74,8 +75,19 @@ private struct HomeRouterInnerView: View {
         .sheet(item: $activeSession) { session in
             SessionView(store: session)
         }
-        .fullScreenCover(item: $activeMap, onDismiss: handleRaterDismiss) { mapStore in
-            DesireMapView(store: mapStore)
+        .vaylCover(
+            isPresented: Binding(
+                get: { activeMap != nil },
+                set: { if !$0 { activeMap = nil } }
+            ),
+            confirmOnExit: false,
+            // The rater is a natural-end exit (no confirm dialog). The dismiss handler
+            // fires via the cover's onExit hook, preserving the completion-beat behavior.
+            onExit: handleRaterDismiss
+        ) {
+            if let mapStore = activeMap {
+                DesireMapView(store: mapStore)
+            }
         }
         .vaylCover(
             isPresented: Binding(
