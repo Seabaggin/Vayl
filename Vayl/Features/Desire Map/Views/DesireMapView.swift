@@ -53,6 +53,7 @@ struct DesireMapView: View {
     // Bumped on every answer commit so the accumulating sky animates the new star
     // rising on desireStarRise, synced to the question receding on desireDepthExit.
     @State private var starRiseTick: Int = 0
+    @State private var sparkBreath: Bool = false
 
     // MARK: - Haptics
 
@@ -607,6 +608,10 @@ struct DesireMapView: View {
                             colors: [AppColors.spectrumMagenta, AppColors.spectrumPurple, AppColors.spectrumCyan],
                             startPoint: .leading, endPoint: .trailing
                         ))
+                        .scaleEffect(sparkBreath ? 1.1 : 1.0)
+                        .opacity(sparkBreath ? 1.0 : 0.74)
+                        .ambientAnimation(AppAnimation.cardBreathe, value: sparkBreath)
+                        .onAppear { sparkBreath = true }
                     Text("just for you")
                         .font(AppFonts.overline)
                         .tracking(1.4)
@@ -629,8 +634,8 @@ struct DesireMapView: View {
 
                 // Answer groups
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                    ForEach(ratedItemsByGroup, id: \.0) { rating, items in
-                        _MirrorGroup(rating: rating, items: items)
+                    ForEach(Array(ratedItemsByGroup.enumerated()), id: \.element.0) { idx, pair in
+                        _MirrorGroup(rating: pair.0, items: pair.1, index: idx)
                     }
                 }
 
@@ -959,6 +964,10 @@ private struct _ChartedLine: View {
 private struct _MirrorGroup: View {
     let rating: DesireRatingValue
     let items: [DesireItem]
+    let index: Int
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var appeared = false
 
     private var label: String {
         switch rating {
@@ -1000,9 +1009,12 @@ private struct _MirrorGroup: View {
 
             ForEach(items) { item in
                 HStack(spacing: AppSpacing.md) {
+                    // Lit accent chip — a soft same-colour glow gives each row its emotion's
+                    // light (the star/core glow language in _AccumStar). Muted rows stay flat.
                     RoundedRectangle(cornerRadius: AppRadius.pill)
                         .fill(barColor)
                         .frame(width: 3, height: 18)
+                        .shadow(color: isMuted ? .clear : barColor.opacity(0.6), radius: 3)
 
                     Text(item.name)
                         .font(AppFonts.bodyText)
@@ -1018,17 +1030,22 @@ private struct _MirrorGroup: View {
                 }
                 .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.sm)
-                .background(
-                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .fill(isMuted ? Color.clear : Color.white.opacity(0.025))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .stroke(
-                            isMuted ? Color.white.opacity(0.045) : Color.white.opacity(0.06),
-                            lineWidth: 1
-                        )
-                )
+                // Canonical glass surface; positive rows carry their emotion in the hairline,
+                // muted rows recede (neutral, dimmed). Replaces the near-invisible hand-rolled fill.
+                .vaylGlassCard(accent: isMuted ? nil : barColor, radius: AppRadius.md)
+                .opacity(isMuted ? 0.5 : 1)
+            }
+        }
+        // Groups arrive with a soft staggered lift (reduce-motion: a clean fade, no travel).
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : (reduceMotion ? 0 : 10))
+        .onAppear {
+            withAnimation(
+                AppAnimation.desireDepthEnter
+                    .delay(Double(index) * AppAnimation.desireBeatStaggerStep)
+                    .reduceMotionSafe
+            ) {
+                appeared = true
             }
         }
     }
