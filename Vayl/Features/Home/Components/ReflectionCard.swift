@@ -227,7 +227,7 @@ struct ReflectionCard: View {
             }
             .padding(AppSpacing.md)
         }
-        .sheet(isPresented: $showFullPillSheet) {
+        .vaylSheet(isPresented: $showFullPillSheet) {
             fullPillSheet
         }
     }
@@ -630,7 +630,7 @@ struct ReflectionCard: View {
             // Dynamic Type scaling would make "──" oversized relative
             // to the 7pt dots it connects.
             Text("──")
-                .font(Font.custom("Switzer-Regular", size: 9, relativeTo: .caption2))
+                .font(AppFonts.body(9, relativeTo: .caption2))
                 .foregroundStyle(AppColors.textTertiary)
 
             ForEach(0..<dots.count, id: \.self) { i in
@@ -647,7 +647,7 @@ struct ReflectionCard: View {
                 }
                 if i < dots.count - 1 {
                     Text("──")
-                        .font(Font.custom("Switzer-Regular", size: 9, relativeTo: .caption2))
+                        .font(AppFonts.body(9, relativeTo: .caption2))
                         .foregroundStyle(AppColors.textTertiary)
                 }
             }

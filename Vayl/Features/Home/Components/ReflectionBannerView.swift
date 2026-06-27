@@ -215,7 +215,7 @@ struct ReflectionBannerView: View {
                     }
                 }
         )
-        .sheet(isPresented: $showFullPillSheet) {
+        .vaylSheet(isPresented: $showFullPillSheet) {
             fullPillSheet
         }
     }

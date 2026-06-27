@@ -276,10 +276,11 @@ final class HomeStore {
             return profile.hasCompletedDesireMap ? .youDone(partnerName: "your partner") : .yourTurn
         case .linked:
             if !profile.hasCompletedDesireMap { return .yourTurn }
-            // Partner completion is not yet tracked locally —
-            // TODO: read partner status from Couple record when sync layer exists.
-            // For now surface bothReady when this user is done and linked.
-            return .bothReady
+            // Conservative fast-path: the partner's completion is not known until the server
+            // resolve (resolvePostStatusDesireMapState) runs a hop later. Show "waiting" rather
+            // than optimistically flashing "both ready" — the server resolve upgrades to
+            // .bothReady / .fullyUnlocked once it confirms.
+            return .youDone(partnerName: partnerName ?? "your partner")
         }
     }
 
