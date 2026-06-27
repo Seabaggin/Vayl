@@ -91,13 +91,15 @@ final class MapStore {
 
     // MARK: - Load
 
-    /// Idempotent — safe to call on every appear.
-    func load(appState: AppState, context: ModelContext) {
+    /// Idempotent — safe to call on every appear. `isCore` is the OR'd entitlement
+    /// source of truth (server tier OR local StoreKit ownership), threaded in from the
+    /// View; the desire-match gate reads it rather than the lagging local Couple mirror.
+    func load(appState: AppState, context: ModelContext, isCore: Bool) {
         loadMasthead(appState: appState, context: context)
         loadRecord(coupleId: appState.coupleId, context: context)
         loadMeCard(context: context)
         loadUs(appState: appState, context: context)
-        Task { await loadServerAlignData(appState: appState, context: context) }
+        Task { await loadServerAlignData(appState: appState, context: context, isCore: isCore) }
     }
 
     /// Async: fetches the partner's name for the header toggle. Safe to await on appear.
@@ -240,17 +242,14 @@ final class MapStore {
 
     /// Fetches server desire matches and updates the Us align list and meCard tags.
     /// Runs after loadUs so the synchronous scaffold is already in place.
-    private func loadServerAlignData(appState: AppState, context: ModelContext) async {
+    private func loadServerAlignData(appState: AppState, context: ModelContext, isCore: Bool) async {
         guard let coupleId = appState.coupleId else { return }
 
         let matchRows = (try? await DesireSyncService.shared.fetchMatches(coupleId: coupleId)) ?? []
 
-        let canReveal: Bool = {
-            guard let couple = try? context.fetch(
-                FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
-            ).first else { return false }
-            return couple.canRevealDesireMap
-        }()
+        // Gate on the OR'd entitlement (server tier OR local StoreKit ownership), not the
+        // local Couple.canRevealDesireMap mirror, which can lag a just-purchased buyer.
+        let canReveal = isCore
 
         // Build the Us align list using the server-authoritative gate rule.
         let items = (try? ContentLoader.loadDesireItems()) ?? []

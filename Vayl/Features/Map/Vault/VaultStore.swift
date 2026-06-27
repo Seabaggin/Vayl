@@ -36,8 +36,9 @@ final class VaultStore {
     private(set) var lockedAlignCount: Int = 0
 
     /// Builds the Desire Map summary from the user's local ratings + server matches,
-    /// gated on canRevealDesireMap. Idempotent; safe to re-run after a paywall unlock.
-    func loadDesire(appState: AppState, context: ModelContext) async {
+    /// gated on `isCore` (the OR'd entitlement: server tier OR local StoreKit ownership),
+    /// threaded in from the View. Idempotent; safe to re-run after a paywall unlock.
+    func loadDesire(appState: AppState, context: ModelContext, isCore: Bool) async {
         guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else {
             desire = DesireSummary()
             align = []
@@ -64,9 +65,9 @@ final class VaultStore {
         var revealed: [MapStore.AlignItem] = []
         var locked = 0
         if let coupleId = appState.coupleId {
-            let canReveal = (try? context.fetch(
-                FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
-            ).first)?.canRevealDesireMap ?? false
+            // Gate on the OR'd entitlement, not the local Couple mirror (which can lag a
+            // just-purchased buyer and under-reveal the Vault while the reveal shows unlocked).
+            let canReveal = isCore
             let rows = (try? await DesireSyncService.shared.fetchMatches(coupleId: coupleId)) ?? []
             let items = (try? ContentLoader.loadDesireItems()) ?? []
             let nameById = Dictionary(items.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })

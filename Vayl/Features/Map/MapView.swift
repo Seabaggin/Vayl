@@ -17,6 +17,7 @@ struct MapView: View {
 
     @Environment(AppState.self) private var appState
     @Environment(PulseStore.self) private var pulse
+    @Environment(EntitlementStore.self) private var entitlements
     @Environment(\.modelContext) private var modelContext
     @State private var store = MapStore()
 
@@ -119,7 +120,7 @@ struct MapView: View {
             ) {
                 PaywallSheet(entry: .reveal, onUnlocked: {
                     showPaywall = false
-                    Task { await vaultStore.loadDesire(appState: appState, context: modelContext) }
+                    Task { await vaultStore.loadDesire(appState: appState, context: modelContext, isCore: entitlements.isCore) }
                 })
             }
             .vaylSheet(isPresented: $showSettings, heightFraction: 0.92, screenHeight: layout.screenHeight) {
@@ -127,8 +128,8 @@ struct MapView: View {
             }
         }
         .task {
-            store.load(appState: appState, context: modelContext)
-            await vaultStore.loadDesire(appState: appState, context: modelContext)
+            store.load(appState: appState, context: modelContext, isCore: entitlements.isCore)
+            await vaultStore.loadDesire(appState: appState, context: modelContext, isCore: entitlements.isCore)
             await store.loadPartner(appState: appState)
         }
     }
@@ -275,9 +276,11 @@ struct MapView: View {
 // MARK: - Preview
 
 #Preview("Map tab") {
-    MapView()
-        .environment({ let s = AppState(); s.displayName = "Jordan"; return s }())
+    let state = { let s = AppState(); s.displayName = "Jordan"; return s }()
+    return MapView()
+        .environment(state)
         .environment(PulseStore())
+        .environment(EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state))
         .modelContainer(.previewContainer)
         .preferredColorScheme(.dark)
 }

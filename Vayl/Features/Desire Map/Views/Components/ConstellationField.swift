@@ -51,6 +51,9 @@ struct ConstellationField: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hesitantTrim: Double = 0.0
     @State private var confidentTrim: Double = 0.0
+    /// Drives the looping hesitant sketch through .ambientAnimation (the canonical
+    /// Reduce-Motion gate), toggled on appear instead of a bare repeatForever.
+    @State private var hesitantAnimating = false
 
     var body: some View {
         GeometryReader { geo in
@@ -63,7 +66,19 @@ struct ConstellationField: View {
                 // Path + .trim() participates in SwiftUI's animation interpolation;
                 // Canvas does not — keep lines as view-layer Paths.
                 if lineMode != .hidden, nodes.count > 1 {
-                    lineLayer(connections: connections, positions: positions)
+                    if lineMode == .hesitant {
+                        // Looping sketch goes through .ambientAnimation (the canonical
+                        // Reduce-Motion gate). Scoped to .hesitant so it never clobbers
+                        // the .confident draw-on, which owns its own withAnimation.
+                        lineLayer(connections: connections, positions: positions)
+                            .ambientAnimation(
+                                .easeInOut(duration: AppAnimation.desireHesitantSketch / 2)
+                                    .repeatForever(autoreverses: true),
+                                value: hesitantAnimating
+                            )
+                    } else {
+                        lineLayer(connections: connections, positions: positions)
+                    }
                 }
 
                 // ── Stars ──────────────────────────────────
@@ -163,13 +178,11 @@ struct ConstellationField: View {
                 // Static faint partial — suggests lines without completing them.
                 hesitantTrim = 0.42
             } else {
-                // Draws toward 0.65, reverses, never fully connects — loops forever.
-                withAnimation(
-                    .easeInOut(duration: AppAnimation.desireHesitantSketch / 2)
-                    .repeatForever(autoreverses: true)
-                ) {
-                    hesitantTrim = 0.65
-                }
+                // Draws toward 0.65, reverses, never fully connects. The looping
+                // animation lives on the line layer via .ambientAnimation (which
+                // carries the Reduce-Motion gate); toggling hesitantAnimating starts it.
+                hesitantTrim = 0.65
+                hesitantAnimating = true
             }
 
         case .confident:
