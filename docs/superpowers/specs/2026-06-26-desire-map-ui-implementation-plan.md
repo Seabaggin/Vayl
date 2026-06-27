@@ -152,7 +152,7 @@ Add: `selectedMatch: RevealMatch?` (detail sheet), `showFullMap: Bool`, `showPay
 
 Screen mapping:
 - **6 Reveal:** `phase == .ready`, free star `.lit` (ignite on appear via `desireStarIgnite`, then sparkles), other matches present as `.dim` locked stars (names blurred). Caption `"You both marked this"`, hint `"tap to read · or open the full map"`. Count templated to `store.lockedCount`.
-- **7 Star detail:** tap a free/unlocked star → `DesireStarDetailSheet` over a dimmed constellation. Shows category, name, a `mutual`/`adjacent` badge (mutual = magenta "You both want this"; adjacent = purple "Worth exploring"), the `match.celebration` meaning, a `Talk about this →` button (stub action) and `Explore in Learn →`. **This same card body is reused by the full-map list (1d) — extract it as `DesireMatchDetail`.**
+- **7 Star detail:** tap a free/unlocked star → `DesireStarDetailSheet` over a dimmed constellation. Shows category, name, a `mutual`/`adjacent` badge (mutual = magenta "You both want this"; adjacent = purple "Worth exploring"), the `match.celebration` meaning, and a `Talk about this →` button (stub action). **`Explore in Learn →` is POST-LAUNCH** (parked, §7b) — hide the door at launch (do NOT ship a dead button); wire it after V1. **This card body is reused by the full-map list (1d) — extract it as `DesireMatchDetail`.**
 - **8 The ask:** tap a locked star (or the list's unlock CTA) → `PaywallSheet(entry: .reveal, onUnlocked: { store.unlockAll() })` hosted the same way over the scrim. On unlock: sheet falls, `store.load()` re-resolves to Core, all stars light **in place** (no navigation).
 - **10 Unlocked:** Core couple → whole sky lit, names resolve, `ConstellationField(lineMode: .confident)`, caption `"N desires you share"`, `"tap any star to talk about it"`.
 
@@ -196,7 +196,10 @@ Reskin `DesireMapView` into the void/star world. **Reuse `DesireMapStore` for al
   - **first finisher** (`false`) → charted auto-advances to the **wait mirror** (screen 4), staying in the rater cover.
   - **re-entry** when `partnerMapComplete` later polls true → the mirror shows the **Ready bar** (screen 5); tapping it presents the reveal.
 - **Notification:** push is **stubbed** (`PushService` is unverified scaffold — do NOT wire it). Partner completion is learned by **polling** (`HomeStore` loads `bothComplete` on Home appear). The Ready bar is driven by `partnerMapComplete`. That is the V1 behavior; do not build push.
-- **Vault reuse (screen 9 = the Vault desire list):** point `VaultDesireSection` at the shared `DesireMapListView` from 1d, fed by `VaultStore.align` + `lockedAlignCount`. Build the list once, render it in both the reveal's Full-map sheet and the Vault. (If Vault wiring risks scope-creep, ship the reveal's copy first and leave a `// reuse in VaultDesireSection` seam.)
+- **Map-tab integration — the reveal's permanent home (T3 Seg 4–5 seam; ONE store, no fork).** Beyond the first-time D4 cover, the couple's alignment surfaces on the **Map tab** in two places. These are owned by the **Tabs T3 track** and ship there; this plan builds the reusable reveal + the seam, then stops at it (do NOT build a second Map surface here):
+  - **Us-layer "where you align" preview** — a compact glance (mutual / adjacent counts, optionally a mini view) read from `DesireMatch` / `VaultStore.align`, tappable into the Vault. A lightweight read, NOT a second reveal.
+  - **Vault → Desire segment** — the reveal's returnable home: the **legible list view** (`DesireMapListView` from §1d, the "list" half of "two views of one map: constellation felt / list legible") plus the **consent unlock** for hidden / sensitive matches.
+  - **The one-store rule (HARD):** exactly one reveal-logic source — `DesireRevealStore`. The D4 cover, the Vault Desire segment, and the preview all read it (the preview may use the lighter `VaultStore.align`). Do NOT write a second store or re-implement the free/locked/unlock logic. Build `DesireRevealView` and `DesireMapListView` **host-agnostic** (they render the reveal; the caller decides cover vs embedded-in-Vault) so T3 can host them without a rewrite. If Vault wiring risks scope-creep, ship the reveal's own copy first and leave a `// reuse in VaultDesireSection` seam. Reference: `docs/handoffs/2026-06-24-map-tab-bridge.md`.
 - **Edge states:** already-Core (skip paywall, lit sky), 0 matches (graceful empty), 1 match (free star only, gentle close), Reduce Motion (every animation a static fallback; still purchasable).
 - **HomeRouterView:** the rater stays its own presenter for now (the nav-grammar cleanup of the rater is out of scope); only the reveal moved to `.vaylCover` in Phase 1. The branch sets `activeReveal` to hand off rater → reveal.
 
@@ -209,6 +212,7 @@ Reskin `DesireMapView` into the void/star world. **Reuse `DesireMapStore` for al
 - `DesireMapStore`'s rating logic — reuse `load()` / `rate()` / `isComplete`; do not duplicate or alter the persistence/sync path.
 - `vaylSheetChrome` / `VaylPresentation` — extend only if strictly forced; never restyle.
 - `ConstellationNode.swift` (Learn) — mirror its recipe in `DesireStarView`, do not import or edit it.
+- Do NOT fork reveal logic or write a second reveal store. ONE `DesireRevealStore` is shared by the D4 cover, the Vault Desire segment, and the Us-layer preview. The Map surfaces are T3 Seg 4–5 — build the reveal/list reusably (host-agnostic), coordinate, never duplicate.
 
 ---
 
@@ -223,8 +227,18 @@ Reskin `DesireMapView` into the void/star world. **Reuse `DesireMapStore` for al
 7. **Tokens only.** No raw colors/fonts/spacing/radius/opacity/duration literals in the views. Add durations to `AppAnimation` (§0a). Reference `AppColors`/`AppFonts`/`AppSpacing`/`AppRadius`/`AppGlows`.
 8. **Build the matches list once** (1d) and reuse it in the reveal Full-map sheet and `VaultDesireSection`. Do not fork two list views.
 9. **Empty/sparse layout:** `ConstellationField` must degrade — 1 match is a single hero star, not a lonely web; many matches spread without crowding.
+10. **One reveal store, host-agnostic views.** `DesireRevealStore` is the single reveal-logic source; `DesireRevealView` and `DesireMapListView` render the reveal independent of presentation (D4 cover vs embedded in the Vault Desire segment vs the Us-layer preview's read). Never duplicate the free/locked/unlock logic for a Map surface — those are T3 Seg 4–5 and reuse this. See `docs/handoffs/2026-06-24-map-tab-bridge.md`.
 
 ---
+
+## 7b. Post-launch (parked — out of V1 "done")
+
+Deliberately out of the V1 Desire Map. Do not build or block "done" on them:
+- **Explore in Learn** — the content door on a match. Hide the link at launch (no dead button); wire post-V1.
+- **Push notification** for partner-finished — V1 polls (the Ready bar appears on Home reload); push is later.
+- **Moments / "First Spark"** — deferred to monetization M4.
+
+Separately OPEN (not parked — decide or defer before building): the **conversation / consent layer** — the "Talk about this" discussion tool + the hidden-desire consent ask (Segment 3, still undefined). This is a design decision, not a parked feature.
 
 ## 8. Segment checklist (each is "done" only when it compiles AND matches the storyboard AND Bryan confirms the feel on device — not "build succeeds")
 
@@ -242,7 +256,7 @@ Reskin `DesireMapView` into the void/star world. **Reuse `DesireMapStore` for al
 - **S2.3** Charted finish beat: fade → flair → charted + hesitant lines → hold → auto-advance hook (screen 3).
 - **S2.4** Solo mirror (screen 4) + Ready re-entry bar (screen 5).
 - **S3.1** Finish branch (second → reveal handoff; first → mirror; re-entry → ready bar) via `fetchStatus`.
-- **S3.2** Vault reuse of the list (`VaultDesireSection`) + edge states + reduce-motion sweep.
+- **S3.2** Reveal built host-agnostic + the matches list (§1d) wired for reuse via one `DesireRevealStore` (the Vault Desire segment / Us-layer preview ship in **T3 Seg 4–5** — this segment leaves a clean seam, it does NOT build a second Map surface) + edge states + reduce-motion sweep.
 
 Stop after each segment for Bryan's device confirmation before starting the next (Vayl build protocol: feel is the done condition, not compilation).
 

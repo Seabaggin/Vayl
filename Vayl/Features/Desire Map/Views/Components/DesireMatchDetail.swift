@@ -114,8 +114,7 @@ struct DesireMatchDetail: View {
 
     private var badgeText: String {
         switch match.alignment {
-        // Fix #6: warm sparkle glyph on the mutual badge (mockup). Adjacent/none unchanged.
-        case .mutual:   return "✦ You both want this"
+        case .mutual:   return "You both want this"
         case .adjacent: return "Worth exploring"
         case .none:     return "Shared"
         }

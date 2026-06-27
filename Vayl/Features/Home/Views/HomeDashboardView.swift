@@ -330,16 +330,10 @@ struct HomeDashboardView: View {
 
     private var lexiconModule: some View {
         VStack(spacing: 0) {
-            if showDesireNudge {
-                DesireMapIndicator(
-                    state: desireMapState,
-                    onReveal: onDesireMapReveal,
-                    onUnlock: onDesireMapUnlock,
-                    onRemind: onRemindPartner
-                )
-            } else {
-                HomeLexicon(onOpen: onOpenLexicon)
-            }
+            // DesireMapIndicator retired from the dashboard: the waiting state now lives in the
+            // partner pill, completion is the one-shot moment, and the reveal entry is the Getting
+            // Started step. (The indicator is kept on disk for the M5 unlock surface.)
+            HomeLexicon(onOpen: onOpenLexicon)
         }
         .opacity(lexVisible ? 1 : 0)
         .animation(AppAnimation.slow, value: lexVisible)
@@ -347,6 +341,12 @@ struct HomeDashboardView: View {
         .opacity(deckEngaged ? 0.25 : 1)
         .allowsHitTesting(!deckEngaged)
         .animation(AppAnimation.enter, value: deckEngaged)
+    }
+
+    /// You finished your map; your partner has not. Drives the partner-pill waiting indicator.
+    private var isWaitingOnPartner: Bool {
+        if case .youDone = desireMapState { return true }
+        return false
     }
 
     // MARK: - Greeting Block
@@ -363,6 +363,7 @@ struct HomeDashboardView: View {
             Spacer()
             PartnerChip(
                 state: partnerChipState,
+                waiting: isWaitingOnPartner,
                 onInviteTap: onInvitePartner,
                 onPartnerTap: onPartnerTap
             )

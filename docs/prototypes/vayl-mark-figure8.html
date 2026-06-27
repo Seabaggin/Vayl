@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Figure-8 mark · braided spectrum rope</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --void:#0a0810;--card:#0e0d14;--cyan:#00c2ff;--purple:#6c3ae0;--purpleL:#a78bfa;--magenta:#ff006a;--bridge:#8b6fd4;
+    --t1:rgba(255,255,255,.92);--t2:rgba(255,255,255,.62);--t3:rgba(255,255,255,.34);--label:rgba(160,125,205,.5);--hair:#1c1a28;
+    --disp:"Clash Display",-apple-system,sans-serif;--body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:1060px;margin:0 auto;padding:46px 30px 90px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:30px;font-weight:600;margin:0 0 12px}
+  .lede{font-size:14px;line-height:1.65;color:var(--t2);max-width:760px;margin:0 0 8px}.lede b{color:var(--t1);font-weight:600}
+
+  .heroStage{margin:26px 0 14px;border-radius:20px;background:radial-gradient(120% 90% at 50% 12%,#171423 0%,var(--void) 58%,#050409 100%);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:30px}
+  .heroStage .field{position:absolute;inset:0}
+  canvas{position:relative;z-index:2;display:block}
+
+  .row{display:flex;align-items:flex-end;gap:34px;flex-wrap:wrap;margin:22px 2px 0}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:9px}
+  .cell .cap{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+  .cell .stageS{border-radius:12px;background:radial-gradient(120% 100% at 50% 10%,#161320,#070610);padding:10px;display:flex;align-items:center;justify-content:center}
+
+  .mini{width:240px;border-radius:16px;background:radial-gradient(130% 110% at 50% 0%,#171426,#100d18 70%);border:1px solid rgba(108,58,224,.16);padding:18px 16px;text-align:center}
+  .mini .ring{width:74px;height:60px;margin:0 auto 11px;display:flex;align-items:center;justify-content:center}
+  .mini h4{font-family:var(--disp);font-size:15px;font-weight:600;margin:0 0 4px}.mini p{font-size:11px;line-height:1.5;color:var(--t2);margin:0}
+
+  .why{margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.why{grid-template-columns:1fr}.row{gap:20px}}
+  .note{background:var(--card);border:1px solid var(--hair);border-radius:14px;padding:15px 17px}
+  .note h5{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--label);margin:0 0 8px}
+  .note p{font-size:12.5px;line-height:1.62;color:var(--t2);margin:0}.note p b{color:var(--t1);font-weight:600}
+  footer{margin-top:34px;border-top:1px solid var(--hair);padding-top:18px;font-size:12.5px;color:var(--t3);line-height:1.6}footer b{color:var(--t2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The figure-8 <span class="spectrum">— in real rope</span></h1>
+  <p class="lede">One unbroken thread, folded back through itself: the knot you stake a life on. Rendered as braided rope where the <b>twist actually follows the curve</b> (Canvas, tangent-aligned strands), not a filtered line. The spectrum runs the length of the rope: <b>cyan at the standing end (you)</b> → <b>purple where it binds</b> → <b>magenta at the working end (them)</b>. One cord, both of you.</p>
+
+  <div class="heroStage"><div class="field" data-field></div><canvas id="hero"></canvas></div>
+
+  <div class="row">
+    <div class="cell"><div class="stageS"><canvas id="md"></canvas></div><div class="cap">~64px</div></div>
+    <div class="cell"><div class="stageS"><canvas id="sm"></canvas></div><div class="cap">~40px icon</div></div>
+    <div class="mini"><div class="ring"><canvas id="ring"></canvas></div><h4>That's yours now</h4><p>When Alex finishes,<br>you'll see where you align.</p></div>
+  </div>
+
+  <div class="why">
+    <div class="note"><h5>Why the figure-8 is Vayl</h5><p><b>The trust knot.</b> Climbers tie in with it because it holds and it's easy to check at a glance, exactly the relationship you're building: secure, and legible. One continuous rope (not two tied together) says <b>one shared thing</b>, and the spectrum running its length makes the single cord carry both people.</p></div>
+    <div class="note"><h5>What I can still tune</h5><p>Rope <b>thickness</b> and <b>twist density</b> (tighter twist reads finer/more premium), the <b>helix angle</b>, how hard the <b>over/under</b> shadow reads, the exact <b>knot geometry</b> (this is a clean first pass, the real figure-8 weave can be tightened), and the <b>spectrum mapping</b> (length-wise as now, vs. a warmer magenta-led bias).</p></div>
+  </div>
+
+  <footer><b>This is the texture + treatment to react to</b>, on the locked figure-8 form. If the braided look is right, I'll tune the knobs above, then settle the <b>icon-tier</b> (at ~40px the fiber simplifies, so the small mark may want a cleaner cord version of the same shape) before any Swift. <b>Nothing is built in the app yet.</b></footer>
+</div>
+
+<!-- hidden path used to sample the figure-8 centerline -->
+<svg width="0" height="0" style="position:absolute"><path id="f8" d="M34 176 C58 164 70 150 76 140 C44 120 44 88 84 72 C112 60 132 66 150 82 C166 96 176 118 184 142 C204 162 236 166 250 156 C286 134 286 92 246 72 C218 60 196 66 178 82 C162 96 150 120 138 144 C150 160 158 168 166 178"/></svg>
+
+<script>
+  const pathEl = document.getElementById('f8');
+  const VBW = 320, VBH = 248;
+  const stops = [[0,194,255],[108,58,224],[255,0,106]];
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  function specRGB(t){ t=Math.max(0,Math.min(1,t)); let i=t<.5?0:1,u=t<.5?t*2:(t-.5)*2; const a=stops[i],b=stops[i+1]; return [lerp(a[0],b[0],u),lerp(a[1],b[1],u),lerp(a[2],b[2],u)]; }
+  function shade(rgb,f){ const[r,g,b]=rgb; if(f<0){const k=1+f;return `rgb(${r*k|0},${g*k|0},${b*k|0})`;} return `rgb(${lerp(r,255,f)|0},${lerp(g,255,f)|0},${lerp(b,255,f)|0})`; }
+
+  function sample(scale){
+    const L=pathEl.getTotalLength(); const pts=[]; const step=Math.max(0.8, 1.4);
+    for(let i=0;i<=L;i+=step){ const p=pathEl.getPointAtLength(i); pts.push({x:p.x*scale,y:p.y*scale,t:i/L}); }
+    return pts;
+  }
+  function ropePass(ctx,pts,w,colorFn){ ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=w;
+    for(let i=1;i<pts.length;i++){ ctx.beginPath(); ctx.moveTo(pts[i-1].x,pts[i-1].y); ctx.lineTo(pts[i].x,pts[i].y); ctx.strokeStyle=colorFn(pts[i].t); ctx.stroke(); } }
+  function twist(ctx,pts,R){ ctx.lineCap='round'; ctx.globalAlpha=.5; ctx.lineWidth=Math.max(1,R*0.34);
+    for(let i=5;i<pts.length-5;i+=Math.max(2,Math.round(R*0.6))){ const a=Math.atan2(pts[i+4].y-pts[i-4].y,pts[i+4].x-pts[i-4].x); const h=a+1.0; const dx=Math.cos(h)*R*0.94,dy=Math.sin(h)*R*0.94; ctx.beginPath(); ctx.moveTo(pts[i].x-dx,pts[i].y-dy); ctx.lineTo(pts[i].x+dx,pts[i].y+dy); ctx.strokeStyle=shade(specRGB(pts[i].t),-.58); ctx.stroke(); }
+    ctx.globalAlpha=1; }
+  function sheen(ctx,pts,R){ if(R<5) return; ctx.lineCap='round'; ctx.globalAlpha=.28; ctx.lineWidth=Math.max(1,R*0.22);
+    for(let i=2;i<pts.length-2;i++){ const a=Math.atan2(pts[i+1].y-pts[i-1].y,pts[i+1].x-pts[i-1].x); const ox=Math.cos(a-Math.PI/2)*R*0.4,oy=Math.sin(a-Math.PI/2)*R*0.4; ctx.beginPath(); ctx.moveTo(pts[i-1].x+ox,pts[i-1].y+oy); ctx.lineTo(pts[i].x+ox,pts[i].y+oy); ctx.strokeStyle='#fff'; ctx.stroke(); }
+    ctx.globalAlpha=1; }
+  function stack(ctx,pts,R){
+    ropePass(ctx,pts,2*R+4,()=>'#05040c');                 // dark edge / over-under gap maker
+    ropePass(ctx,pts,2*R, t=>shade(specRGB(t),-.45));      // shaded body sides
+    ropePass(ctx,pts,1.32*R, t=>shade(specRGB(t),-.04));   // mid
+    ropePass(ctx,pts,0.5*R, t=>shade(specRGB(t),.5));      // lit crown
+    twist(ctx,pts,R);
+    sheen(ctx,pts,R);
+  }
+  function render(canvas, cssW, R){
+    const cssH = Math.round(cssW*VBH/VBW), dpr=2;
+    canvas.style.width=cssW+'px'; canvas.style.height=cssH+'px';
+    canvas.width=cssW*dpr; canvas.height=cssH*dpr;
+    const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+    const scale=cssW/VBW; const pts=sample(scale);
+    stack(ctx,pts,R);
+    // redraw the "over" strand (the second center diagonal) on top, with its dark edge cutting the gap
+    const over=pts.filter(p=>p.t>=0.70 && p.t<=0.875);
+    stack(ctx,over,R);
+  }
+  render(document.getElementById('hero'), 360, 17);
+  render(document.getElementById('md'),   150, 7.2);
+  render(document.getElementById('sm'),    90, 4.3);
+  render(document.getElementById('ring'),  118, 5.6);
+
+  const rand=(a,b)=>a+Math.random()*(b-a);
+  document.querySelectorAll('[data-field]').forEach(f=>{let h='';for(let i=0;i<26;i++){const s=rand(.6,1.5).toFixed(2);h+=`<div style="position:absolute;border-radius:50%;background:#fff;width:${s}px;height:${s}px;left:${rand(0,100).toFixed(1)}%;top:${rand(0,100).toFixed(1)}%;opacity:${rand(.05,.26).toFixed(2)}"></div>`;}f.innerHTML=h;});
+</script>
+</body>
+</html>

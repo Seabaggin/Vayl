@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Knot Marks · rope texture + spectrum</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --void:#0a0810;--card:#0e0d14;--core:#0A0814;
+    --cyan:#00c2ff;--purple:#6c3ae0;--purpleL:#a78bfa;--magenta:#ff006a;--magentaL:#ff4d94;--bridge:#8b6fd4;
+    --t1:rgba(255,255,255,.92);--t2:rgba(255,255,255,.62);--t3:rgba(255,255,255,.34);--label:rgba(160,125,205,.5);
+    --disp:"Clash Display",-apple-system,sans-serif;--body:"Switzer",-apple-system,sans-serif;--hair:#1c1a28;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:1180px;margin:0 auto;padding:46px 30px 90px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:30px;font-weight:600;margin:0 0 12px;letter-spacing:-.01em}
+  .lede{font-size:14px;line-height:1.65;color:var(--t2);max-width:780px;margin:0 0 14px}
+  .lede b{color:var(--t1);font-weight:600}
+  .reco{margin:20px 0 30px;background:rgba(108,58,224,.08);border:1px solid rgba(108,58,224,.28);border-radius:14px;padding:15px 18px}
+  .reco .tag{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--purpleL)}
+  .reco p{font-size:13px;line-height:1.6;color:var(--t2);margin:7px 0 0}.reco p b{color:var(--t1)}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .cand{background:var(--card);border:1px solid var(--hair);border-radius:18px;overflow:hidden}
+  .cand.pick{border-color:rgba(108,58,224,.5);box-shadow:0 0 0 1px rgba(108,58,224,.18),0 18px 50px rgba(0,0,0,.4)}
+  .ch{display:flex;align-items:baseline;justify-content:space-between;padding:16px 20px 0}
+  .cn{font-family:var(--disp);font-size:18px;font-weight:600}.ct{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--label)}
+  .pf{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--void);background:linear-gradient(90deg,var(--cyan),var(--magenta));border-radius:6px;padding:3px 8px}
+  .stage{position:relative;margin:14px 16px 0;border-radius:14px;background:radial-gradient(120% 90% at 50% 12%,#161320 0%,var(--void) 60%,#050409 100%);overflow:hidden;height:220px;display:flex;align-items:center;justify-content:center}
+  .stage .field{position:absolute;inset:0}
+  .hero{width:200px;height:180px;position:relative;z-index:2}
+  .sizes{display:flex;align-items:center;gap:20px;padding:16px 22px 4px}
+  .sizes .cell{display:flex;flex-direction:column;align-items:center;gap:7px}.sizes .cap{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+  .i28{width:30px;height:28px}.i20{width:22px;height:20px}
+  .mini{flex:1;border-radius:16px;background:radial-gradient(130% 110% at 50% 0%,#171426,#100d18 70%);border:1px solid rgba(108,58,224,.16);padding:16px 14px;text-align:center}
+  .mini .ring{width:70px;height:64px;margin:0 auto 9px;display:flex;align-items:center;justify-content:center}
+  .mini .ring svg{width:54px;height:48px}
+  .mini h4{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 3px}.mini p{font-size:10.5px;line-height:1.45;color:var(--t2);margin:0}
+  .why{padding:14px 22px 22px}
+  .why h5{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--label);margin:0 0 8px}
+  .why p{font-size:12.5px;line-height:1.62;color:var(--t2);margin:0 0 9px}.why p b{color:var(--t1);font-weight:600}
+  .why .scale{font-size:11.5px;color:var(--t3);border-top:1px solid var(--hair);padding-top:9px}.why .scale b{color:var(--magentaL);font-weight:600}
+  footer{margin-top:38px;border-top:1px solid var(--hair);padding-top:20px;font-size:12.5px;color:var(--t3);line-height:1.6}footer b{color:var(--t2)}
+
+  /* ── rope layers (applied per <use>) ── */
+  .rb{fill:none;stroke:#060510;stroke-linecap:round;stroke-linejoin:round}      /* dark base / makes the over-under gap */
+  .rd{fill:none;stroke-linecap:round;stroke-linejoin:round}                     /* spectrum body (color inline) */
+  .rl{fill:none;stroke:#05040c;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:5 7;opacity:.5}  /* twist lay (dark bands) */
+  .rs{fill:none;stroke:#fff;stroke-linecap:round;stroke-dasharray:2 9;opacity:.42}                          /* fiber sheen */
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">VAYL</div>
+  <h1>The knot <span class="spectrum">— a mark with rope in it</span></h1>
+  <p class="lede">A knot is the most Vayl symbol there is: your own card says <b>"the anchors that have kept you tethered to each other"</b> and <b>"Grounded · Secure."</b> A knot is the tie that binds, <b>two strands stronger bound than apart</b>, and it's warm and tactile, not a cold glyph. The spectrum maps onto it directly: a <b>cyan rope (you)</b> and a <b>magenta rope (them)</b> tied through the <b>purple</b> where you hold. Every mark below is real twisted rope (layered stroke + dash + a roughen filter), not two crossed lines.</p>
+
+  <div class="reco">
+    <span class="tag">My recommendation</span>
+    <p><b>B — The Bond (reef knot).</b> It's the one that's unmistakably <b>two becoming one</b>: a cyan rope and a magenta rope, equal, tied through each other at a purple center, with the tails left open (the relationship keeps going). It's the most legible at small sizes of the "two-rope" knots and it carries the cleanest meaning. <b>A — Figure-8</b> (your pick) is the strongest single-rope story: one unbroken line, endlessly secure. I'd build B, and keep A as the alternate if you want one continuous thread over two.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- ════ A · FIGURE-8 ════ -->
+    <section class="cand">
+      <div class="ch"><div class="cn">A · Figure-8</div><div class="ct">your pick · one rope</div></div>
+      <div class="stage"><div class="field" data-field></div>
+        <svg class="hero" viewBox="0 0 200 180">
+          <defs>
+            <linearGradient id="spA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00c2ff"/><stop offset=".5" stop-color="#6c3ae0"/><stop offset="1" stop-color="#ff006a"/></linearGradient>
+            <filter id="ruA"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4"/></filter>
+            <path id="A_back"  d="M100 92 C58 60 58 124 100 92"/>
+            <path id="A_front" d="M100 92 C142 60 142 124 100 92"/>
+            <path id="A_tl" d="M100 92 C84 110 78 128 72 150"/>
+            <path id="A_tr" d="M100 92 C116 110 122 128 128 150"/>
+          </defs>
+          <g filter="url(#ruA)">
+            <!-- back loop + tails first, front loop last → over/under -->
+            <use href="#A_back" class="rb" stroke-width="22"/><use href="#A_back" class="rd" stroke="url(#spA)" stroke-width="15"/><use href="#A_back" class="rl" stroke-width="15"/><use href="#A_back" class="rs" stroke-width="5"/>
+            <use href="#A_tl" class="rb" stroke-width="22"/><use href="#A_tl" class="rd" stroke="url(#spA)" stroke-width="15"/><use href="#A_tl" class="rl" stroke-width="15"/>
+            <use href="#A_tr" class="rb" stroke-width="22"/><use href="#A_tr" class="rd" stroke="url(#spA)" stroke-width="15"/><use href="#A_tr" class="rl" stroke-width="15"/>
+            <use href="#A_front" class="rb" stroke-width="22"/><use href="#A_front" class="rd" stroke="url(#spA)" stroke-width="15"/><use href="#A_front" class="rl" stroke-width="15"/><use href="#A_front" class="rs" stroke-width="5"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sizes">
+        <div class="cell"><svg class="i28" viewBox="0 0 200 180"><g><use href="#A_back" class="rd" stroke="url(#spA)" stroke-width="26"/><use href="#A_front" class="rb" stroke-width="34"/><use href="#A_front" class="rd" stroke="url(#spA)" stroke-width="26"/></g></svg><div class="cap">28</div></div>
+        <div class="cell"><svg class="i20" viewBox="0 0 200 180"><use href="#A_back" class="rd" stroke="url(#spA)" stroke-width="34"/><use href="#A_front" class="rb" stroke-width="44"/><use href="#A_front" class="rd" stroke="url(#spA)" stroke-width="34"/></svg><div class="cap">20</div></div>
+        <div class="mini"><div class="ring"><svg viewBox="0 0 200 180"><use href="#A_back" class="rd" stroke="url(#spA)" stroke-width="18"/><use href="#A_front" class="rb" stroke-width="24"/><use href="#A_front" class="rd" stroke="url(#spA)" stroke-width="18"/></svg></div><h4>That's yours now</h4><p>When Alex finishes,<br>you'll see where you align.</p></div>
+      </div>
+      <div class="why"><h5>Why it's Vayl</h5>
+        <p><b>One unbroken line, endlessly secure.</b> The figure-8 is the climber's trust knot, the one you stake a life on. Drawn as a single spectrum rope folding back through itself: a continuous thread (the relationship) that holds because of how it's tied, not despite it.</p>
+        <div class="scale"><b>Scales:</b> simplifies to a clean ∞ at 20px and keeps the spectrum. Risk: at tiny sizes it reads "infinity" before "knot" — fine, arguably a feature.</div>
+      </div>
+    </section>
+
+    <!-- ════ B · THE BOND (PICK) ════ -->
+    <section class="cand pick">
+      <div class="ch"><div class="cn">B · The Bond</div><div style="display:flex;gap:8px;align-items:center"><span class="pf">recommend</span><span class="ct">reef · two ropes</span></div></div>
+      <div class="stage"><div class="field" data-field></div>
+        <svg class="hero" viewBox="0 0 200 180">
+          <defs>
+            <linearGradient id="cyB" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#00c2ff"/><stop offset="1" stop-color="#7d57d6"/></linearGradient>
+            <linearGradient id="mgB" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#ff006a"/><stop offset="1" stop-color="#7d57d6"/></linearGradient>
+            <filter id="ruB"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="9" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4"/></filter>
+            <!-- cyan bight: tails out left, bight bulges right to ~x108 -->
+            <path id="B_cy" d="M26 58 C72 58 108 64 108 90 C108 116 72 122 26 122"/>
+            <!-- magenta bight: tails out right, bight bulges left to ~x92 -->
+            <path id="B_mg" d="M174 58 C128 58 92 64 92 90 C92 116 128 122 174 122"/>
+            <!-- cyan over-stitch (top of its bight, redrawn above magenta for the weave) -->
+            <path id="B_cyOver" d="M108 90 C108 70 94 60 80 59"/>
+          </defs>
+          <g filter="url(#ruB)">
+            <use href="#B_cy" class="rb" stroke-width="22"/><use href="#B_cy" class="rd" stroke="url(#cyB)" stroke-width="15"/><use href="#B_cy" class="rl" stroke-width="15"/><use href="#B_cy" class="rs" stroke-width="5"/>
+            <use href="#B_mg" class="rb" stroke-width="22"/><use href="#B_mg" class="rd" stroke="url(#mgB)" stroke-width="15"/><use href="#B_mg" class="rl" stroke-width="15"/><use href="#B_mg" class="rs" stroke-width="5"/>
+            <use href="#B_cyOver" class="rb" stroke-width="22"/><use href="#B_cyOver" class="rd" stroke="url(#cyB)" stroke-width="15"/><use href="#B_cyOver" class="rl" stroke-width="15"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sizes">
+        <div class="cell"><svg class="i28" viewBox="0 0 200 180"><use href="#B_cy" class="rd" stroke="url(#cyB)" stroke-width="26"/><use href="#B_mg" class="rb" stroke-width="34"/><use href="#B_mg" class="rd" stroke="url(#mgB)" stroke-width="26"/><use href="#B_cyOver" class="rb" stroke-width="34"/><use href="#B_cyOver" class="rd" stroke="url(#cyB)" stroke-width="26"/></svg><div class="cap">28</div></div>
+        <div class="cell"><svg class="i20" viewBox="0 0 200 180"><use href="#B_cy" class="rd" stroke="url(#cyB)" stroke-width="34"/><use href="#B_mg" class="rb" stroke-width="44"/><use href="#B_mg" class="rd" stroke="url(#mgB)" stroke-width="34"/></svg><div class="cap">20</div></div>
+        <div class="mini"><div class="ring"><svg viewBox="0 0 200 180"><use href="#B_cy" class="rd" stroke="url(#cyB)" stroke-width="18"/><use href="#B_mg" class="rb" stroke-width="24"/><use href="#B_mg" class="rd" stroke="url(#mgB)" stroke-width="18"/><use href="#B_cyOver" class="rb" stroke-width="24"/><use href="#B_cyOver" class="rd" stroke="url(#cyB)" stroke-width="18"/></svg></div><h4>That's yours now</h4><p>When Alex finishes,<br>you'll see where you align.</p></div>
+      </div>
+      <div class="why"><h5>Why it's Vayl</h5>
+        <p><b>Two equals, tied through each other.</b> The reef (square) knot joins two ropes of equal size, the symbol of union. <b>Cyan you, magenta them</b>, each passing through the other and holding at the <b>purple</b> bind. The tails stay open because the relationship keeps going.</p>
+        <p>It's the convergence idea from the last round, but made of <b>real rope</b> instead of an abstract node, the warmth you were missing.</p>
+        <div class="scale"><b>Scales:</b> the two-rope read survives to ~24px; below that it collapses toward a single woven lozenge (still fine). Risk: the over/under weave is the part that needs care at tiny sizes.</div>
+      </div>
+    </section>
+
+    <!-- ════ C · THE TETHER (overhand) ════ -->
+    <section class="cand">
+      <div class="ch"><div class="cn">C · The Tether</div><div class="ct">overhand · one rope</div></div>
+      <div class="stage"><div class="field" data-field></div>
+        <svg class="hero" viewBox="0 0 200 180">
+          <defs>
+            <linearGradient id="spC" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#00c2ff"/><stop offset=".5" stop-color="#6c3ae0"/><stop offset="1" stop-color="#ff006a"/></linearGradient>
+            <filter id="ruC"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.2"/></filter>
+            <!-- a single overhand: loop on top, rope tucked through, two tails down -->
+            <path id="C_loopBack" d="M100 70 C70 70 70 110 100 118"/>
+            <path id="C_loopFront" d="M100 118 C130 110 130 70 100 70"/>
+            <path id="C_tuck" d="M78 96 C92 86 112 86 124 100 L132 150"/>
+            <path id="C_tail" d="M76 96 L68 150"/>
+          </defs>
+          <g filter="url(#ruC)">
+            <use href="#C_loopBack" class="rb" stroke-width="21"/><use href="#C_loopBack" class="rd" stroke="url(#spC)" stroke-width="14"/><use href="#C_loopBack" class="rl" stroke-width="14"/>
+            <use href="#C_tail" class="rb" stroke-width="21"/><use href="#C_tail" class="rd" stroke="url(#spC)" stroke-width="14"/><use href="#C_tail" class="rl" stroke-width="14"/>
+            <use href="#C_loopFront" class="rb" stroke-width="21"/><use href="#C_loopFront" class="rd" stroke="url(#spC)" stroke-width="14"/><use href="#C_loopFront" class="rl" stroke-width="14"/><use href="#C_loopFront" class="rs" stroke-width="5"/>
+            <use href="#C_tuck" class="rb" stroke-width="21"/><use href="#C_tuck" class="rd" stroke="url(#spC)" stroke-width="14"/><use href="#C_tuck" class="rl" stroke-width="14"/><use href="#C_tuck" class="rs" stroke-width="5"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sizes">
+        <div class="cell"><svg class="i28" viewBox="0 0 200 180"><use href="#C_loopBack" class="rd" stroke="url(#spC)" stroke-width="24"/><use href="#C_loopFront" class="rb" stroke-width="32"/><use href="#C_loopFront" class="rd" stroke="url(#spC)" stroke-width="24"/><use href="#C_tuck" class="rb" stroke-width="32"/><use href="#C_tuck" class="rd" stroke="url(#spC)" stroke-width="24"/></svg><div class="cap">28</div></div>
+        <div class="cell"><svg class="i20" viewBox="0 0 200 180"><use href="#C_loopBack" class="rd" stroke="url(#spC)" stroke-width="30"/><use href="#C_loopFront" class="rb" stroke-width="40"/><use href="#C_loopFront" class="rd" stroke="url(#spC)" stroke-width="30"/></svg><div class="cap">20</div></div>
+        <div class="mini"><div class="ring"><svg viewBox="0 0 200 180"><use href="#C_loopBack" class="rd" stroke="url(#spC)" stroke-width="17"/><use href="#C_loopFront" class="rb" stroke-width="23"/><use href="#C_loopFront" class="rd" stroke="url(#spC)" stroke-width="17"/><use href="#C_tuck" class="rb" stroke-width="23"/><use href="#C_tuck" class="rd" stroke="url(#spC)" stroke-width="17"/></svg></div><h4>That's yours now</h4><p>When Alex finishes,<br>you'll see where you align.</p></div>
+      </div>
+      <div class="why"><h5>Why it's Vayl</h5>
+        <p><b>The first knot, the seed.</b> The overhand is the simplest tie there is, the one inside every other knot. A loop with the rope tucked through: the smallest possible "we're tied." Quiet, foundational, intimate.</p>
+        <div class="scale"><b>Scales:</b> the loop+tuck is busy small; it wants to drop the tails and read as a single tucked loop under ~28px. Risk: simplest meaning, but also the least distinctive silhouette.</div>
+      </div>
+    </section>
+
+    <!-- ════ D · THE CARRICK ════ -->
+    <section class="cand">
+      <div class="ch"><div class="cn">D · The Carrick</div><div class="ct">heraldic · two ropes</div></div>
+      <div class="stage"><div class="field" data-field></div>
+        <svg class="hero" viewBox="0 0 200 180">
+          <defs>
+            <linearGradient id="cyD" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00c2ff"/><stop offset="1" stop-color="#8b6fd4"/></linearGradient>
+            <linearGradient id="mgD" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff006a"/><stop offset="1" stop-color="#8b6fd4"/></linearGradient>
+            <filter id="ruD"><feTurbulence type="fractalNoise" baseFrequency=".65" numOctaves="2" seed="6" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.2"/></filter>
+            <!-- two interlocking ovals at 45°, the heraldic Wake/Carrick rosette (stylized) -->
+            <ellipse id="D_a" cx="100" cy="90" rx="40" ry="62" transform="rotate(45 100 90)"/>
+            <ellipse id="D_b" cx="100" cy="90" rx="40" ry="62" transform="rotate(-45 100 90)"/>
+            <path id="D_aOver" d="M72 62 A40 62 45 0 1 128 118" />
+          </defs>
+          <g filter="url(#ruD)">
+            <use href="#D_a" class="rb" stroke-width="20"/><use href="#D_a" class="rd" stroke="url(#cyD)" stroke-width="13"/><use href="#D_a" class="rl" stroke-width="13"/>
+            <use href="#D_b" class="rb" stroke-width="20"/><use href="#D_b" class="rd" stroke="url(#mgD)" stroke-width="13"/><use href="#D_b" class="rl" stroke-width="13"/><use href="#D_b" class="rs" stroke-width="4"/>
+            <use href="#D_aOver" class="rb" stroke-width="20"/><use href="#D_aOver" class="rd" stroke="url(#cyD)" stroke-width="13"/><use href="#D_aOver" class="rl" stroke-width="13"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sizes">
+        <div class="cell"><svg class="i28" viewBox="0 0 200 180"><use href="#D_a" class="rd" stroke="url(#cyD)" stroke-width="22"/><use href="#D_b" class="rb" stroke-width="30"/><use href="#D_b" class="rd" stroke="url(#mgD)" stroke-width="22"/><use href="#D_aOver" class="rb" stroke-width="30"/><use href="#D_aOver" class="rd" stroke="url(#cyD)" stroke-width="22"/></svg><div class="cap">28</div></div>
+        <div class="cell"><svg class="i20" viewBox="0 0 200 180"><use href="#D_a" class="rd" stroke="url(#cyD)" stroke-width="28"/><use href="#D_b" class="rb" stroke-width="38"/><use href="#D_b" class="rd" stroke="url(#mgD)" stroke-width="28"/></svg><div class="cap">20</div></div>
+        <div class="mini"><div class="ring"><svg viewBox="0 0 200 180"><use href="#D_a" class="rd" stroke="url(#cyD)" stroke-width="16"/><use href="#D_b" class="rb" stroke-width="22"/><use href="#D_b" class="rd" stroke="url(#mgD)" stroke-width="16"/><use href="#D_aOver" class="rb" stroke-width="22"/><use href="#D_aOver" class="rd" stroke="url(#cyD)" stroke-width="16"/></svg></div><h4>That's yours now</h4><p>When Alex finishes,<br>you'll see where you align.</p></div>
+      </div>
+      <div class="why"><h5>Why it's Vayl</h5>
+        <p><b>The emblem of fellowship.</b> The Carrick bend has been a <b>heraldic badge of union</b> for centuries, two ropes woven into a perfectly symmetric rosette. The most "logo" of the knots: balanced, four-fold, woven cyan-over-magenta.</p>
+        <div class="scale"><b>Scales:</b> the rosette holds a recognizable woven-diamond silhouette small. Risk: it's the busiest weave, and a true Carrick needs careful over/under, this is a stylized first pass at the geometry.</div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer><b>How to read this:</b> each knot is real rope, layered stroke + dark twist-dash + white fiber-sheen + a turbulence roughen so it isn't a flat line, shown as a hero, at 28/20px, and in the waiting card. The geometry is a <b>first pass</b> to judge the direction and the texture, not final knot-accurate weave. Tell me which knot has the right feel and I'll take that one deep: tighten the real over/under, tune the rope thickness + twist density, and lock the spectrum mapping before any Swift. <b>Nothing is built.</b></footer>
+
+</div>
+<script>
+  const rand=(a,b)=>a+Math.random()*(b-a);
+  document.querySelectorAll('[data-field]').forEach(f=>{let h='';for(let i=0;i<24;i++){const s=rand(.6,1.5).toFixed(2);h+=`<div style="position:absolute;border-radius:50%;background:#fff;width:${s}px;height:${s}px;left:${rand(0,100).toFixed(1)}%;top:${rand(0,100).toFixed(1)}%;opacity:${rand(.05,.26).toFixed(2)}"></div>`;}f.innerHTML=h;});
+</script>
+</body>
+</html>

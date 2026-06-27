@@ -107,23 +107,18 @@ private struct HomeRouterInnerView: View {
     @ViewBuilder
     private func routedContent(store: HomeStore, layout: AppLayout) -> some View {
         ZStack {
-            switch store.homeState {
-
-            case .gated:
-                // Dashboard from day one — the activation Path lives on it (replaces HomeGateView,
-                // which is retired from routing but kept on disk). The map rater is reached via the
-                // Path overlay's "Map your desires" step → handleStep(.mapDesires).
-                dashboardContent(store: store)
-                    .transition(.opacity)
-
-            case .dashboard:
-                dashboardContent(store: store)
-                    .transition(.opacity)
-
-            case .soloUnpaired:
-                dashboardContent(store: store)
-                    .transition(.opacity)
+            // Home leads with the dashboard from day one; .gated is vestigial. The waiting/reveal
+            // progression is surfaced via the Getting Started path + partner pill, not a dashboard
+            // card. The dashboard blurs behind the one-shot map-charted moment.
+            Group {
+                switch store.homeState {
+                case .gated, .dashboard, .soloUnpaired:
+                    dashboardContent(store: store)
+                        .transition(.opacity)
+                }
             }
+            .blur(radius: store.showCompletionBeat ? 18 : 0)
+            .animation(AppAnimation.enter, value: store.showCompletionBeat)
 
             // The Path overlay sits above the dashboard so the blurred Home shows behind it.
             if showPath {
@@ -147,9 +142,9 @@ private struct HomeRouterInnerView: View {
 
             // One-shot completion beat — a brief moment over the dashboard, never a home state.
             if store.showCompletionBeat {
-                MapCompletionBeatView(
-                    partnerName: store.partnerName,
-                    onDone: { withAnimation(AppAnimation.exit) { store.dismissCompletionBeat() } }
+                MapChartedMoment(
+                    partnerName: store.partnerName ?? "your partner",
+                    onDone: { store.dismissCompletionBeat() }
                 )
                 .transition(.opacity)
                 .zIndex(1)
@@ -304,7 +299,9 @@ private struct HomeRouterInnerView: View {
             if store.partnerMapComplete, !store.revealDone {
                 try? await Task.sleep(for: .seconds(Self.raterToRevealHandoff))
                 presentReveal()
-            } else if !wasComplete {
+            } else if !wasComplete, store.isPaired {
+                // First finisher, paired: the one-shot map-charted moment. (Solo completion is
+                // the solo-funnel beat, deferred — no partner to "see where you align" with yet.)
                 store.celebrateMapCompletion()
             }
         }

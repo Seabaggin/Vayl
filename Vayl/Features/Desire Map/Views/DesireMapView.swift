@@ -600,18 +600,8 @@ struct DesireMapView: View {
                         .padding(.bottom, AppSpacing.md)
                 }
 
-                // "✦ just for you" — warm gradient spark + overline label
+                // Overline label (the desire-map identity is the aperture mark, not a sparkle).
                 HStack(spacing: AppSpacing.xs) {
-                    Text("✦")
-                        .font(AppFonts.bodyText)
-                        .foregroundStyle(LinearGradient(
-                            colors: [AppColors.spectrumMagenta, AppColors.spectrumPurple, AppColors.spectrumCyan],
-                            startPoint: .leading, endPoint: .trailing
-                        ))
-                        .scaleEffect(sparkBreath ? 1.1 : 1.0)
-                        .opacity(sparkBreath ? 1.0 : 0.74)
-                        .ambientAnimation(AppAnimation.cardBreathe, value: sparkBreath)
-                        .onAppear { sparkBreath = true }
                     Text("just for you")
                         .font(AppFonts.overline)
                         .tracking(1.4)
@@ -661,12 +651,6 @@ struct DesireMapView: View {
         // matching every other tappable affordance in the rater.
         Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
             HStack(spacing: AppSpacing.sm) {
-                Text("✦")
-                    .font(AppFonts.bodyMedium)
-                    .foregroundStyle(LinearGradient(
-                        colors: [AppColors.spectrumMagenta, AppColors.spectrumPurple],
-                        startPoint: .leading, endPoint: .trailing
-                    ))
                 Text("**\(partnerName) finished.** Your map is ready.")
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textPrimary)

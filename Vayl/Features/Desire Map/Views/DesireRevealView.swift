@@ -201,7 +201,7 @@ struct DesireRevealView: View {
         case .beat1:
             // Caption for the free match
             VStack(spacing: AppSpacing.xs) {
-                Text("You both marked this ✦")
+                Text("You both marked this")
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textSecondary)
                     .multilineTextAlignment(.center)

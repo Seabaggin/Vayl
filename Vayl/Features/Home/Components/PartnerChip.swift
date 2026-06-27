@@ -4,6 +4,9 @@ import SwiftUI
 
 struct PartnerChip: View {
     let state: PartnerChipState
+    /// You finished your Desire Map and are waiting on your partner — surfaces a small aperture
+    /// in the active pill (the desire-map waiting status, no dashboard card).
+    var waiting: Bool = false
     var onInviteTap:  (() -> Void)? = nil
     var onPartnerTap: (() -> Void)? = nil
 
@@ -158,6 +161,11 @@ struct PartnerChip: View {
                         .foregroundStyle(isLight
                             ? AppColors.textSecondary
                             : AppColors.textSecondary)
+
+                    if waiting {
+                        VaylMark(ringCount: 1, glow: 0.55, showsCore: true)
+                            .frame(width: 15, height: 15)
+                    }
 
                     Image(systemName: AppIcons.chevronRight)
                         // .caption2 scales with Dynamic Type — correct for

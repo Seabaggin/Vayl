@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — mark in the real treatment (glow + crisp on void)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600&f[]=switzer@400,500&display=swap" rel="stylesheet" />
+<style>
+  :root{--void:#0a0810;--cyan:#00c2ff;--purple:#6c3ae0;--purpleL:#a78bfa;--magenta:#ff006a;--bridge:#8b6fd4;
+    --t1:rgba(236,234,242,.95);--t2:rgba(255,255,255,.6);--t3:rgba(255,255,255,.34);--hair:#1c1a28;
+    --disp:"Clash Display",sans-serif;--body:"Switzer",sans-serif;}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0a0810;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:1000px;margin:0 auto;padding:44px 30px 80px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:27px;font-weight:600;margin:0 0 10px}
+  .lede{font-size:13.5px;line-height:1.6;color:var(--t2);max-width:680px;margin:0 0 6px}.lede b{color:var(--t1)}
+
+  /* void atmosphere (lifted from desire-map-flow-family) */
+  .stage{position:relative;border-radius:20px;overflow:hidden;background:radial-gradient(120% 90% at 50% 8%,#0c0916 0%,var(--void) 48%,#050409 100%);height:300px;display:flex;align-items:center;justify-content:center;gap:60px;margin:26px 0 0}
+  .atmo{position:absolute;inset:0;pointer-events:none}
+  .blob{position:absolute;border-radius:50%;filter:blur(64px);transform:translate(-50%,-50%)}
+  .b1{left:36%;top:64%;width:340px;height:300px;background:radial-gradient(closest-side,rgba(108,58,224,.20),transparent 74%);animation:br 7s ease-in-out infinite}
+  .b2{left:62%;top:54%;width:240px;height:230px;background:radial-gradient(closest-side,rgba(255,0,106,.13),transparent 74%);animation:br 8.5s ease-in-out 1.2s infinite}
+  .b3{left:30%;top:46%;width:220px;height:220px;background:radial-gradient(closest-side,rgba(0,194,255,.09),transparent 74%);animation:br 9s ease-in-out .6s infinite}
+  @keyframes br{0%,100%{opacity:.62;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
+  .field{position:absolute;inset:0}
+  svg{position:relative;z-index:2}
+
+  .row{display:flex;align-items:center;gap:40px;flex-wrap:wrap;margin-top:24px}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:9px}
+  .cell .box{border-radius:13px;background:radial-gradient(120% 100% at 50% 8%,#0c0916,#050409);padding:14px;display:flex;align-items:center;justify-content:center}
+  .cell .cap{font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.1em}
+  .mini{width:240px;border-radius:18px;background:radial-gradient(130% 110% at 50% 0%,#120f1f,#080610 72%);border:1px solid rgba(108,58,224,.16);padding:20px 16px;text-align:center}
+  .mini .ring{height:74px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .mini h4{font-family:var(--disp);font-size:15px;font-weight:600;margin:0 0 4px}.mini p{font-size:11px;line-height:1.5;color:var(--t2);margin:0}
+
+  .note{margin-top:30px;font-size:12.5px;color:var(--t2);line-height:1.6;max-width:720px}.note b{color:var(--t1)}
+  footer{margin-top:22px;border-top:1px solid var(--hair);padding-top:16px;font-size:12px;color:var(--t3);line-height:1.6}footer b{color:var(--t2)}
+
+  svg .glow{filter:blur(4px)}
+  svg .glowBig{filter:blur(9px)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The mark, <span class="spectrum">in the real treatment</span></h1>
+  <p class="lede">Same nested-diamond form, now built the way the rest of the app is: a <b>blurred spectrum glow</b> behind a <b>thin near-white crisp outline</b>, a bright glowing core, on the void atmosphere. The colour lives in the glow, not painted on the lines. Two forms, side by side, judged in the right world.</p>
+
+  <svg width="0" height="0"><defs>
+    <linearGradient id="sp" gradientUnits="userSpaceOnUse" x1="20" y1="22" x2="140" y2="138">
+      <stop offset="0" stop-color="#00c2ff"/><stop offset=".5" stop-color="#7d57d6"/><stop offset="1" stop-color="#ff006a"/></linearGradient>
+    <radialGradient id="core"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#ffd9ec"/><stop offset=".7" stop-color="#ff4d94"/><stop offset="1" stop-color="transparent"/></radialGradient>
+    <linearGradient id="line" gradientUnits="userSpaceOnUse" x1="20" y1="20" x2="140" y2="140">
+      <stop offset="0" stop-color="rgba(220,240,255,.95)"/><stop offset=".5" stop-color="rgba(230,220,255,.92)"/><stop offset="1" stop-color="rgba(255,220,235,.95)"/></linearGradient>
+    <path id="r1" d="M80 22 Q85 75 138 80 Q85 85 80 138 Q75 85 22 80 Q75 75 80 22 Z"/>
+    <path id="r2" d="M80 40 Q84 76 120 80 Q84 84 80 120 Q76 84 40 80 Q76 76 80 40 Z"/>
+    <path id="r3" d="M80 56 Q83 77 104 80 Q83 83 80 104 Q77 83 56 80 Q77 77 80 56 Z"/>
+    <path id="f8" d="M60 50 L100 80 C126 84 134 68 134 58 C134 48 126 34 100 38 L60 68 C34 72 26 56 26 46 C26 36 34 22 60 26 Z"/>
+  </defs></svg>
+
+  <div class="stage">
+    <div class="atmo"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+    <!-- APERTURE -->
+    <svg width="150" height="150" viewBox="0 0 160 160">
+      <g class="glow" opacity=".85"><use href="#r1" fill="none" stroke="url(#sp)" stroke-width="4.5"/><use href="#r2" fill="none" stroke="url(#sp)" stroke-width="4"/><use href="#r3" fill="none" stroke="url(#sp)" stroke-width="3.5"/></g>
+      <g fill="none" stroke="url(#line)" stroke-width="1.5" stroke-linejoin="round"><use href="#r1"/><use href="#r2"/><use href="#r3"/></g>
+      <circle class="glowBig" cx="80" cy="80" r="18" fill="url(#core)"/>
+      <circle cx="80" cy="80" r="3" fill="#fff"/>
+    </svg>
+    <!-- FIGURE-8 -->
+    <svg width="150" height="150" viewBox="0 0 160 160">
+      <g class="glow" opacity=".85"><use href="#f8" fill="none" stroke="url(#sp)" stroke-width="6"/></g>
+      <use href="#f8" fill="none" stroke="url(#line)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle class="glow" cx="80" cy="58" r="9" fill="url(#core)" opacity=".7"/>
+    </svg>
+  </div>
+
+  <div class="row">
+    <div class="cell"><div class="box"><svg width="40" height="40" viewBox="0 0 160 160"><g class="glow" opacity=".9"><use href="#r1" fill="none" stroke="url(#sp)" stroke-width="9"/><use href="#r3" fill="none" stroke="url(#sp)" stroke-width="9"/></g><g fill="none" stroke="url(#line)" stroke-width="4"><use href="#r1"/><use href="#r3"/></g><circle cx="80" cy="80" r="6" fill="#fff"/></svg></div><div class="cap">40 · aperture</div></div>
+    <div class="cell"><div class="box"><svg width="24" height="24" viewBox="0 0 160 160"><g class="glow"><use href="#r1" fill="none" stroke="url(#sp)" stroke-width="13"/></g><use href="#r1" fill="none" stroke="url(#line)" stroke-width="6"/><circle cx="80" cy="80" r="9" fill="#fff"/></svg></div><div class="cap">24 · aperture</div></div>
+    <div class="mini">
+      <div class="ring"><svg width="58" height="58" viewBox="0 0 160 160"><g class="glow" opacity=".85"><use href="#r1" fill="none" stroke="url(#sp)" stroke-width="6"/><use href="#r3" fill="none" stroke="url(#sp)" stroke-width="5"/></g><g fill="none" stroke="url(#line)" stroke-width="2.4" stroke-linejoin="round"><use href="#r1"/><use href="#r3"/></g><circle class="glow" cx="80" cy="80" r="13" fill="url(#core)"/><circle cx="80" cy="80" r="3" fill="#fff"/></svg></div>
+      <h4>That's yours now</h4><p>When Alex finishes,<br>you'll see where you align.</p>
+    </div>
+  </div>
+
+  <p class="note"><b>This is the treatment, not the final geometry.</b> If the look now reads as Vayl (glow + thin light line + lit core on void), I lock onto one form, the aperture or the figure-8, and refine the exact shape. Then it ports to Swift the way everything else has: <code>OnboardingAtmosphere</code> + a glow pass + a crisp pass + a glowing core, all your existing tokens.</p>
+  <footer><b>Which is closer</b> now that they're in the right skin: the nested-diamond <b>aperture</b>, or the <b>figure-8</b>? And is the glow/line balance right, or do you want the line brighter / the glow hotter?</footer>
+</div>
+
+<script>
+  const rand=(a,b)=>a+Math.random()*(b-a);
+  let h='';for(let i=0;i<30;i++){const s=rand(.6,1.5).toFixed(2);h+=`<div style="position:absolute;border-radius:50%;background:#fff;width:${s}px;height:${s}px;left:${rand(0,100).toFixed(1)}%;top:${rand(0,100).toFixed(1)}%;opacity:${rand(.05,.3).toFixed(2)}"></div>`;}
+  const f=document.createElement('div');f.className='field';f.innerHTML=h;document.querySelector('.stage').appendChild(f);
+</script>
+</body>
+</html>
