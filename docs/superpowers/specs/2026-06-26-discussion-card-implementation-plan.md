@@ -3,7 +3,7 @@
 **Date:** 2026-06-26
 **Scope:** a sub-implementation of the Desire Map. The plumbing is built; this turns the placeholder discussion card into a real "what's next after the map" bridge.
 **Sits on:** the main DM plan (`docs/superpowers/specs/2026-06-26-desire-map-ui-implementation-plan.md`) and the Vault consent spec (`docs/superpowers/specs/2026-06-24-vault-design.md` §4). Read both first.
-**Gate:** §2 (the MARK) is an OPEN design decision. **Do not build §3 until §2 is resolved.**
+**Gate:** §2 (the MARK) resolved 2026-06-27. §3 is now executable.
 
 ---
 
@@ -24,36 +24,33 @@ Built today (verified):
 
 ---
 
-## 2. ⚑ THE MARK — HOW WE IMPLEMENT THE CARD (OPEN — decide before building)
-
-> This is the one genuinely-open decision. Everything in §3 is blocked on it. Fill in the DECISION lines, then build.
-
-The card's *shape* is half-decided by the `CompanionCard` model (a prompt + a suggested deck). What's undecided is what it actually **is, contains, and opens.** Resolve these:
+## 2. ⚑ THE MARK — HOW WE IMPLEMENT THE CARD (RESOLVED 2026-06-27)
 
 **Q1 — What is the card?**
-- (a) A single **conversation prompt** (one question to discuss), lightweight, opens as a small card/sheet.
-- (b) A link into a **topic deck** (a curated set of session cards for that desire, played two-device like a session).
-- (c) **Both** — a prompt that sits on top of / opens into a suggested deck.
-- *Lean:* (c), since the model already carries `prompt` + `suggestedDeckId`, and it degrades gracefully (prompt always present, deck optional).
-- **DECISION: ________**
+**(c) Prompt + optional deck.** A `ConversationCard`-rendered prompt is always present. A "Open the deck" CTA renders only when `suggestedDeckId != nil`. V1 is prompt-only in practice (`suggestedDeckId: nil` everywhere); adding a deck later automatically activates the CTA without touching the card view.
 
-**Q2 — Presentation.** A `.vaylSheet` off the match detail? A push? A route into the Play/session tab (open the deck there)? A new lightweight `DiscussionCardView`, or reuse `ConversationCard`?
-- **DECISION: ________**
+**Q2 — Presentation.**
+The discussion card's **permanent home is the Vault** (`VaultDesireSection`), presented as a `.vaylSheet`. The reveal's `DesireStarDetailSheet` gets a **low-hierarchy wayfinder** (ghost button or text link, not a primary CTA) — tapping it dismisses the reveal cover and routes to the Map tab's Vault with the relevant match surfaced. The reveal does not host the card; it points there. The card view is a thin `DiscussionCardView` wrapping `ConversationCard`.
 
-**Q3 — Mutual vs consent-opened: one card or two paths?** A mutual match has no privacy concern; a consent-opened desire **must stay neutral** (the card cannot reference who asked or who wanted it — decline-never-discloses extends to the card content). Cleanest is **one card per desire item, neutral by construction**, reached from both paths.
-- **DECISION: ________**
+**Q3 — One card or two paths.**
+**One card per desire item, one resolver.** Both entry points ("Talk about this" on a mutual/adjacent match, and the consent-opened row in the Vault) route through `CompanionCardStore`. The card is neutral by construction — it never references who asked or who wanted it. Neutrality is enforced at the prompt content level (tier sets tone, not asker/responder identity).
 
-**Q4 — Content granularity.** Per-desire-**item** (19 items), per-**category**, or a generic fallback? This sets the `companion_cards.json` shape and the authoring load.
-- *Lean:* per-category prompts + a generic fallback, with per-item override where it earns it (keeps authoring small).
-- **DECISION: ________**
+**Q4 — Content granularity.**
+**Per-tier prompts.** Three tiers; a small pool of prompts per tier. The desire item name is the context (displayed above the card); the prompt opens the conversation and works for any item at that tier. No per-item or per-category authoring needed.
 
-**Q5 — Deck mapping.** Does `suggestedDeckId` point at an existing Play deck (which?), or is "the deck for this desire" net-new content? If decks don't exist yet, ship the prompt-only card and leave `suggestedDeckId: nil` (graceful).
-- **DECISION: ________**
+| Tier | Signal | Prompt register |
+|---|---|---|
+| `mutual` | `matchType: .mutual` | celebratory, "you both want this" |
+| `adjacent` | `matchType: .adjacent` | curious, "you're both drawn here" |
+| `consent_opened` | consent-opened path | careful, low-pressure, "what would this feel like" |
 
-**Q6 — V1 vs parked.** Like "Explore in Learn," this can be parked. If parked: hide "Talk about this" + the opened-consent card content at launch (the consent *ask* still works), and ship §3 post-V1.
-- **DECISION: ________**
+`companion_cards.json` shape: `{ tier, prompts: [{ id, text }] }`. `CompanionCardStore` selects a prompt from the matching tier pool using `desireItemId` as a stable seed (same couple sees the same prompt for a given match).
 
-*(When these are answered, delete the "OPEN" framing and the plan below becomes executable.)*
+**Q5 — Deck mapping.**
+**Deferred post-launch.** `suggestedDeckId: nil` for V1. No deck CTA renders. Wiring a deck to a desire later is a content config change only.
+
+**Q6 — V1 vs parked.**
+**Ships with the Vault build** (not gated on the reveal launch). The reveal's wayfinder is included when the reveal ships; the card content + Vault wiring land when the Vault Desire segment is built. The consent ask still works at launch; the opened-consent card content is the Vault segment's deliverable.
 
 ---
 
@@ -61,10 +58,10 @@ The card's *shape* is half-decided by the `CompanionCard` model (a prompt + a su
 
 Each is "done" when it compiles AND matches the resolved §2 AND Bryan confirms on device.
 
-- **D1 — Content pipeline.** Author `Resources/Content/companion_cards.json` at the §2-Q4 granularity (prompt + optional `suggestedDeckId`). Add a `ContentLoader.loadCompanionCards()` (mirror `loadDesireItems()`). Replace `CompanionCardStore`'s placeholder with a real load + lookup by `desireItemId`/category, and a generic fallback. *Done:* `CompanionCardStore.companions(for:)` returns real, non-placeholder content.
-- **D2 — The card view.** Per §2-Q1/Q2: reuse `ConversationCard` (or a thin `DiscussionCardView`) to render the companion (prompt + optional "Open the deck" CTA → the session/deck system). Host per the resolved presentation (likely a `.vaylSheet`). Neutral copy only. *Done:* a real card renders for a desire item.
-- **D3 — Wire the two entry points.** (a) `onTalkTapped` on the mutual-match detail → present the card for that item. (b) The opened-consent row in `VaultDesireSection` → present the **same** card (one card per item, neutral). Route both through one resolver (`CompanionCardStore`), no duplication. *Done:* both paths open the same card; the consent-opened path reveals nothing about who asked.
-- **D4 — Real ids (server).** Populate `bridge_card_id` on matches (in the `compute-desire-matches` edge fn) and a real `discussion_card_id` on open (in `consent-respond`, replacing `"neutral"`), if §2 decided per-item ids. If the card is resolved client-side from `desireItemId`, this segment is optional — the client already has the item id. *Done:* ids are real, or this segment is consciously skipped.
+- **D1 — Content pipeline.** Author `Resources/Content/companion_cards.json` as `{ tier: "mutual"|"adjacent"|"consent_opened", prompts: [{ id, text }] }`. Add `ContentLoader.loadCompanionCards()` (mirror `loadDesireItems()`). Replace `CompanionCardStore`'s placeholder with real load + tier lookup: mutual matches use `mutual` pool, adjacent matches use `adjacent` pool, consent-opened path uses `consent_opened` pool. Use `desireItemId` as a stable seed to select a prompt within the pool (same couple, same prompt for a given match). *Done:* `CompanionCardStore.card(for:path:)` returns real, tier-appropriate content.
+- **D2 — The card view.** A thin `DiscussionCardView` wrapping `ConversationCard`: desire item name as context above, tier prompt as the card body, no deck CTA (V1). Hosted as a `.vaylSheet` from `VaultDesireSection`. *Done:* a real card renders for a desire item in the Vault.
+- **D3 — Wire the two entry points.** (a) `onTalkTapped` in the reveal's `DesireStarDetailSheet` → low-hierarchy wayfinder (ghost button/text link) that dismisses the cover and routes to the Map tab's Vault with the match surfaced. (b) The opened-consent row in `VaultDesireSection` → presents `DiscussionCardView` as a `.vaylSheet`. Both route through `CompanionCardStore`, same card, no duplication. *Done:* both paths surface the correct card; consent-opened path reveals nothing about who asked.
+- **D4 — Real ids (server).** The card is resolved client-side from `desireItemId` + tier, so `bridge_card_id` / `discussion_card_id` server ids are not needed. `consent-respond`'s `discussion_card_id: "neutral"` placeholder can stay as-is; the client ignores it and resolves the card locally. **This segment is skipped.**
 
 ---
 
@@ -75,17 +72,17 @@ Each is "done" when it compiles AND matches the resolved §2 AND Bryan confirms 
 - **Reuse `ConversationCard` + the session/deck system**; do not fork a second card renderer.
 - **Tier:** consent openings ride on Desire Map access (a free couple gets their one free match's conversation; more requires Core). Gate via `EntitlementStore.isCore`, do not invent a new SKU.
 - 4-layer (View → `CompanionCardStore` → `ContentLoader`/services → `CompanionCard`); tokens only; `.vaylSheet`/`.vaylCover`; empty/fallback state on the card; no em dashes in copy.
-- If §2-Q6 parks it: hide `Talk about this` and the opened-consent card content at launch; leave the seam.
+- The reveal's wayfinder ships with the reveal (low-hierarchy, points to Vault). The card content + Vault wiring are the Vault Desire segment's deliverable.
 
 ---
 
 ## 5. Segment checklist
 
-- **D0** Resolve §2 (the MARK). *Gate for everything below.*
-- **D1** `companion_cards.json` + `ContentLoader.loadCompanionCards()` + real `CompanionCardStore` load.
-- **D2** The card view (reuse `ConversationCard`), neutral copy, prompt (+ optional deck CTA).
-- **D3** Wire `onTalkTapped` (mutual) + the opened-consent row (Vault) to one resolver → the same card.
-- **D4** (Optional) real `bridge_card_id` / `discussion_card_id` server-side.
+- **D0** ✅ §2 resolved 2026-06-27.
+- **D1** `companion_cards.json` (3-tier pool) + `ContentLoader.loadCompanionCards()` + real `CompanionCardStore` tier lookup.
+- **D2** `DiscussionCardView` wrapping `ConversationCard`, `.vaylSheet` from Vault.
+- **D3** Reveal wayfinder (low-hierarchy, dismiss + route to Vault) + Vault opened-consent row → same card via `CompanionCardStore`.
+- **D4** ~~Server ids~~ — skipped; card resolves client-side from `desireItemId` + tier.
 
 ---
 
