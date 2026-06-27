@@ -545,23 +545,20 @@ const BUILD_ROADMAP = {
           ]
         },
         {
-          id: "DB", title: "Activation follow-ons — Moments + solo funnel", status: "todo", est: 4,
-          oneThing: "The two activation behaviors 'The Path' (DA) deliberately stubbed: warm step-completion Moments + the solo→pairing funnel.",
-          build: "Split out of the old 'activation + living Pulse' DA, now fully superseded by 'The Path' (its banner/checklist shipped there; the Pulse heartbeat empty-state is BUILT). Two genuine leftovers remain. (1) Moments: when `gettingStarted` advances a step (e.g. map → invite), fire a brief warm beat — 'The Path' left a `TODO(Moments)` marker in `HomeRouterView.handleStep`. NO points / XP / badges. (2) Solo funnel: an unpaired user can still complete + bank the desire map ('invite someone to see what you share'), and Home funnels toward pairing — the entry card already renders for solo, but the banked-reveal framing + pairing funnel don't exist yet.",
-          feel: "Game STRUCTURE, never game tone — a rare, warm 'first spark', not a score (Safety doc: 'therapist, not video game'). The banked solo reveal is the carrot that pulls toward inviting a partner.",
-          done: "Advancing a step fires a warm Moment (no points); an unpaired user completes + banks the map and is funneled toward pairing to unlock the reveal.",
-          constraints: "Home + a (future) Moments surface. No points system. Builds on DA — `GettingStartedEntryCard` + `handleStep` already exist.",
-          risk: "Don't turn completions into a chore list or scoreboard — Moments stay rare + warm. The real (data-driven) Pulse is NOT here; it lives in the Map/Tabs phase.",
+          id: "DB", title: "Activation off-ramp — solo funnel", status: "todo", est: 3,
+          oneThing: "An unpaired user can complete + bank their Desire Map, and Home gently funnels toward inviting a partner.",
+          build: "Split out of the old 'activation + living Pulse' DA (its banner/checklist shipped in 'The Path'; the Pulse heartbeat empty-state is BUILT). Solo funnel: an unpaired user can complete + bank the desire map ('invite someone to see what you share'), and Home funnels toward pairing — the entry card already renders for solo, but the banked-reveal framing + the pairing funnel don't exist yet. NOTE: 'Moments' (warm deck/milestone celebrations) MOVED to Monetization (M4) — it rides the same completed-sitting/milestone signal as the conversion moments, and the DM's own celebration is already its reveal. DB is now solo-funnel only, and fully buildable today.",
+          feel: "Guide by clarifying, not funnel under pressure (the partner-cautious persona bolts). The banked solo reveal is the honest carrot toward inviting a partner; keep a respected off-ramp ('not now / not for me').",
+          done: "An unpaired user completes + banks the map and is gently funneled toward pairing to unlock the reveal, with an honest off-ramp.",
+          constraints: "Home + pairing. No points system. Builds on DA — `GettingStartedEntryCard` already renders for solo.",
+          risk: "Don't push — the persona bolts. Funnel = clarify the value (the banked map), never pressure.",
           refs: [
-            { label: "★ Cohort redesign spec §4", href: "../superpowers/specs/2026-06-16-desire-map-cohort-adaptive-redesign.md" },
-            { label: "handleStep TODO(Moments)", href: "../../Vayl/Features/Home/Views/HomeRouterView.swift" }
+            { label: "★ Cohort redesign spec §4", href: "../superpowers/specs/2026-06-16-desire-map-cohort-adaptive-redesign.md" }
           ],
           checklist: [
-            { group: "Back-end", done: false, text: "Step completions fire warm Moments (no points / XP / badges) — replace the `TODO(Moments)` stub in `handleStep`" },
             { group: "Solo", done: false, text: "Unpaired: desire map completable + banked ('invite someone to see what you share'); Home funnels to pairing" }
           ],
           questions: [
-            { lens: "dod", who: "bryan", q: "What surfaces a Moment — Home banner, card, or toast — and does it fire on every step or only map → invite?" },
             { lens: "design", who: "bryan", q: "Pulse 7-day trend data source — what does the real graph measure once data exists? (lives in Map direction; parked here so it isn't lost)" }
           ]
         },
@@ -649,14 +646,15 @@ const BUILD_ROADMAP = {
         {
           id: "M4", title: "Conversion moment 1 — Deck 2 unwrap", status: "todo", est: 6,
           oneThing: "Completing the first sitting surfaces Deck 2's unwrap → gate.",
-          build: "When the first sitting completes (real conversation), Deck 2's unwrap becomes visible on Home. Reaching for it → unwrap ceremony (cards partially visible — desire before friction) → paywall. Copy: 'You're ready for this one' → 'Unlock everything — $24.99, yours forever.' Escape: 'Not yet' — no re-prompt.",
+          build: "When the first sitting completes (real conversation), Deck 2's unwrap becomes visible on Home. Reaching for it → unwrap ceremony (cards partially visible — desire before friction) → paywall. Copy: 'You're ready for this one' → 'Unlock everything — $24.99, yours forever.' Escape: 'Not yet' — no re-prompt. ALSO HOSTS 'Moments' (moved here from desire-phase DB): the same completed-sitting signal fires a warm, NO-points celebration beat for finishing a deck / a milestone we build — the non-paywall sibling of the unwrap (warm beat first, soft ask second). Moments = decks + milestones ONLY; the DM's celebration is its reveal and the solo summary stays a summary. Reuse `MapCompletionBeatView`; the `TODO(Moments)` stub in `HomeRouterView.handleStep` is the first hook. Gated on the same 'completed sitting' signal as the unwrap, so it lands with this segment. Keep rare + warm (humility).",
           feel: "Earned, not interrupted — the unwrap is a reward for showing up, with a soft ask.",
           done: "Completing a sitting surfaces the unwrap; tapping through converts or dismisses cleanly.",
           constraints: "Home + a paywall sheet + entitlement read. Builds on the card-session flow (Card Session phase, S4/S6).",
           risk: "Depends on a real 'completed sitting' signal existing (Card Session S6 post-session).",
           refs: [],
           questions: [
-            { lens: "dod", who: "bryan", q: "What counts as a completed 'sitting' — a card count, or an explicit end-session?" }
+            { lens: "dod", who: "bryan", q: "What counts as a completed 'sitting' — a card count, or an explicit end-session?" },
+            { lens: "design", who: "bryan", q: "Moments (moved from DB): which milestones earn a warm beat (deck done / first session / stage unlock) and what surface (banner / card / over-dashboard beat)? Rare + warm, no points — or fold entirely into this unwrap beat." }
           ]
         },
         {
