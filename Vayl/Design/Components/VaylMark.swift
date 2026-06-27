@@ -53,6 +53,43 @@ struct ApertureRing: Shape {
     }
 }
 
+// MARK: - Aperture edge
+// One side of the aperture star (tip → next tip), as its own path so it can be trimmed and
+// drawn independently of the other three. `edgeIndex` 0 = N→E, 1 = E→S, 2 = S→W, 3 = W→N.
+// Trimming each edge by the same progress draws the mark as four lines growing at once,
+// not a single closed path sweeping around quadrant by quadrant.
+
+struct ApertureEdge: Shape {
+    var edgeIndex: Int
+    var scale: CGFloat = 1
+    var concavity: CGFloat = 0.78
+
+    var animatableData: CGFloat {
+        get { concavity }
+        set { concavity = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let c = CGPoint(x: rect.midX, y: rect.midY)
+        let r = min(rect.width, rect.height) / 2 * scale
+        let tips = [
+            CGPoint(x: c.x, y: c.y - r),  // N
+            CGPoint(x: c.x + r, y: c.y),  // E
+            CGPoint(x: c.x, y: c.y + r),  // S
+            CGPoint(x: c.x - r, y: c.y)   // W
+        ]
+        let a = tips[edgeIndex % 4]
+        let b = tips[(edgeIndex + 1) % 4]
+        let mid = CGPoint(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)
+        let ctrl = CGPoint(x: mid.x + (c.x - mid.x) * concavity,
+                           y: mid.y + (c.y - mid.y) * concavity)
+        var p = Path()
+        p.move(to: a)
+        p.addQuadCurve(to: b, control: ctrl)
+        return p
+    }
+}
+
 // MARK: - Vayl mark
 
 struct VaylMark: View {
@@ -82,12 +119,16 @@ struct VaylMark: View {
                     ForEach(0..<rings, id: \.self) { i in
                         let t = rings <= 1 ? 0 : CGFloat(i) / CGFloat(rings - 1)
                         let scale = 1.0 - t * 0.66          // outer 1.0 → inner ~0.34
-                        ApertureRing(scale: scale, concavity: concavity)
-                            .trim(from: 0, to: drawProgress)
-                            .stroke(
-                                AppColors.spectrumBorder,
-                                style: StrokeStyle(lineWidth: lineWidth, lineJoin: .round)
-                            )
+                        // Four edges, each trimmed individually → the mark draws as four lines
+                        // growing at once, not one path sweeping through quadrants.
+                        ForEach(0..<4, id: \.self) { e in
+                            ApertureEdge(edgeIndex: e, scale: scale, concavity: concavity)
+                                .trim(from: 0, to: drawProgress)
+                                .stroke(
+                                    AppColors.spectrumBorder,
+                                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
+                                )
+                        }
                     }
                 }
                 .spectrumBorderGlow(intensity: glow * Double(drawProgress))
