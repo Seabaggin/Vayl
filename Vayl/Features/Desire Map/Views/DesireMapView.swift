@@ -5,19 +5,68 @@ import SwiftData
 // Two-track card rater (View layer — reads DesireMapStore, forwards taps; no DB/Service).
 // One desire per card; the four answers + which items appear are cohort-driven (store.track).
 // Only the WEIGHT (DesireRatingValue) is stored — the displayed string is cohort copy.
+//
+// RaterPhase drives the visual state machine:
+//   .start   — invitation screen + spectrum-bloom entrance (S2.1)
+//   .rating  — void layout, pills, growing star sky (S2.2)
+//   .charted — hesitant constellation lines + "Your map is charted." (S2.3)
+//   .mirror  — solo wait: grouped private answers, no progress race (S2.4)
+//   .ready   — first finisher re-entry: same mirror + "partner finished" bar (S2.4)
 
 struct DesireMapView: View {
 
     let store: DesireMapStore
+    /// Display name for the partner — shown in charted + mirror copy.
+    var partnerName: String = "your partner"
+    /// True when the partner has also completed their map. Drives the ready bar in mirror.
+    var partnerComplete: Bool = false
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // MARK: - Presentation phase
+
+    private enum RaterPhase { case start, rating, charted, mirror, ready }
+    @State private var raterPhase: RaterPhase = .start
+
+    // MARK: - Rating navigation
+
     @State private var index: Int = 0
-    @State private var hapticTick: Int = 0   // sensoryFeedback trigger
+
+    // MARK: - Bloom entrance (S2.1)
+
+    @State private var bloomScale: CGFloat  = 0.01
+    @State private var bloomOpacity: Double = 0.0
+    @State private var startVisible: Bool   = true
+    @State private var ratingVisible: Bool  = false
+
+    // MARK: - Charted beat (S2.3)
+
+    @State private var chartedStarsVisible: Bool = false
+    @State private var chartedLinesActive: Bool  = false
+    @State private var chartedTitleVisible: Bool = false
+
+    // MARK: - Haptics
+
+    @State private var hapticTick: Int = 0
+
+    // MARK: - Body
 
     var body: some View {
         ZStack {
             AppColors.void.ignoresSafeArea()
+            OnboardingAtmosphere(config: atmosphereConfig).ignoresSafeArea()
+            if raterPhase == .start {
+                starField.ignoresSafeArea()
+            }
+
             content
+
+            GlowOrb(color: AppColors.spectrumMagenta, size: 300)
+                .scaleEffect(bloomScale)
+                .opacity(bloomOpacity)
+                .allowsHitTesting(false)
+                .ignoresSafeArea()
         }
         .screenshotProtected()
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTick)
@@ -26,10 +75,27 @@ struct DesireMapView: View {
             if let firstUnrated = store.items.firstIndex(where: { store.existingRating(for: $0.id) == nil }) {
                 index = firstUnrated
             }
+            if !store.items.isEmpty, store.ratedCount > 0 {
+                raterPhase = store.ratedCount >= store.totalCount
+                    ? (partnerComplete ? .ready : .mirror)
+                    : .rating
+                ratingVisible = true
+            }
+        }
+        .onChange(of: index) { _, newValue in
+            guard newValue >= store.items.count, raterPhase == .rating else { return }
+            withAnimation(AppAnimation.desireFinishFade) { raterPhase = .charted }
+            runChartedSequence()
         }
     }
 
-    // MARK: - Routing between states
+    // MARK: - Atmosphere config
+
+    private var atmosphereConfig: AtmosphereConfig {
+        raterPhase == .start ? .modeSelect : .cardReveal
+    }
+
+    // MARK: - Phase routing
 
     @ViewBuilder
     private var content: some View {
@@ -37,70 +103,311 @@ struct DesireMapView: View {
             emptyState(error)
         } else if store.items.isEmpty {
             emptyState("No desire items to show.")
-        } else if index >= store.items.count {
-            completionView
         } else {
+            switch raterPhase {
+            case .start:
+                startScreen
+                    .opacity(startVisible ? 1 : 0)
+                    .animation(AppAnimation.desireFinishFade.reduceMotionSafe, value: startVisible)
+                    .transition(.opacity)
+
+            case .rating:
+                raterContent
+                    .opacity(ratingVisible ? 1 : 0)
+                    .animation(AppAnimation.desireStarIgnite.reduceMotionSafe, value: ratingVisible)
+                    .transition(.opacity)
+
+            case .charted:
+                chartedScreen
+                    .transition(.opacity)
+
+            case .mirror, .ready:
+                mirrorScreen
+                    .transition(.opacity)
+            }
+        }
+    }
+
+    // MARK: - Start screen (S2.1)
+
+    private var startScreen: some View {
+        ZStack {
+            VStack(spacing: 0) {
+                Spacer()
+
+                Text("Desire Map")
+                    .font(AppFonts.overline)
+                    .tracking(1.5)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .padding(.bottom, AppSpacing.lg)
+
+                VStack(spacing: 2) {
+                    Text("See where your desires")
+                        .font(AppFonts.heroTitle)
+                        .foregroundStyle(AppColors.textPrimary)
+                        .multilineTextAlignment(.center)
+                    LivingText(text: "meet", font: AppFonts.heroTitle)
+                }
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.xl)
+
+                Text("Opening up usually waits on a conversation no one wants to start. So you each answer in private, and only the desires you **both** want are ever revealed. You begin already knowing where you agree.")
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, AppSpacing.xxl)
+                    .padding(.bottom, AppSpacing.md)
+
+                HStack(alignment: .top, spacing: AppSpacing.xs) {
+                    Text("◇")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                    Text("If only one of you wants it, it stays private. Your no is never shown to your partner.")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
+                }
+                .padding(.horizontal, AppSpacing.xxl)
+
+                Spacer()
+
+                VStack(spacing: AppSpacing.sm) {
+                    VaylButton(label: "Begin", style: .primary, size: .fullWidth) { beginTapped() }
+                        .frame(height: VaylButtonSize.fullWidth.height)
+
+                    let count = store.totalCount > 0 ? store.totalCount : 17
+                    Text("\(count) questions · about 3 minutes")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                }
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.xxl)
+            }
+
+            VStack {
+                HStack {
+                    Spacer()
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textTertiary)
+                            .frame(width: 36, height: 36)
+                            .background(Circle().fill(AppColors.cardBg.opacity(0.55)))
+                            .overlay(Circle().stroke(AppColors.borderSubtle, lineWidth: 1))
+                    }
+                    .buttonStyle(_RaterPressStyle())
+                }
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.top, AppSpacing.sm)
+                Spacer()
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - Star field (S2.1 background, 44 stars ~18 twinkling)
+
+    private static let _bgStars: [(Double, Double, Double, Double, Double)] = [
+        (0.08, 0.04, 1.2, 0.20, 0), (0.52, 0.03, 1.0, 0.14, 0), (0.75, 0.12, 0.7, 0.10, 0),
+        (0.42, 0.16, 0.8, 0.12, 0), (0.05, 0.28, 0.9, 0.18, 0), (0.35, 0.32, 0.7, 0.08, 0),
+        (0.80, 0.30, 1.2, 0.15, 0), (0.70, 0.35, 0.8, 0.10, 0), (0.60, 0.50, 0.9, 0.12, 0),
+        (0.32, 0.55, 1.3, 0.08, 0), (0.05, 0.58, 0.8, 0.07, 0), (0.45, 0.65, 1.0, 0.09, 0),
+        (0.15, 0.70, 0.7, 0.07, 0), (0.62, 0.78, 0.9, 0.07, 0), (0.38, 0.82, 1.2, 0.08, 0),
+        (0.10, 0.85, 0.6, 0.06, 0), (0.72, 0.88, 1.0, 0.07, 0), (0.50, 0.92, 0.8, 0.05, 0),
+        (0.30, 0.20, 0.9, 0.13, 0), (0.90, 0.14, 0.7, 0.09, 0), (0.18, 0.44, 0.8, 0.10, 0),
+        (0.85, 0.50, 0.7, 0.08, 0), (0.25, 0.62, 1.0, 0.08, 0), (0.68, 0.62, 0.8, 0.07, 0),
+        (0.95, 0.72, 0.6, 0.06, 0), (0.55, 0.88, 0.9, 0.06, 0),
+        (0.92, 0.07, 0.9, 0.20, 3.2), (0.28, 0.10, 1.5, 0.22, 4.8),
+        (0.18, 0.18, 1.1, 0.18, 3.8), (0.65, 0.08, 1.3, 0.20, 4.1),
+        (0.87, 0.21, 1.0, 0.16, 2.9), (0.55, 0.25, 1.4, 0.22, 4.5),
+        (0.12, 0.38, 1.0, 0.18, 3.6), (0.48, 0.42, 1.1, 0.16, 2.7),
+        (0.22, 0.45, 1.5, 0.20, 4.2), (0.90, 0.44, 0.8, 0.14, 3.4),
+        (0.78, 0.60, 1.0, 0.12, 4.7), (0.88, 0.72, 1.1, 0.10, 3.1),
+        (0.58, 0.15, 1.2, 0.18, 4.0), (0.40, 0.75, 1.3, 0.10, 2.8),
+        (0.96, 0.38, 0.9, 0.12, 3.9), (0.02, 0.52, 1.0, 0.10, 4.3),
+        (0.73, 0.48, 0.8, 0.12, 2.6), (0.14, 0.96, 1.1, 0.08, 3.7),
+    ]
+
+    private var starField: some View {
+        TimelineView(.periodic(from: .now, by: 0.067)) { timeline in
+            Canvas { ctx, size in
+                let elapsed = timeline.date.timeIntervalSinceReferenceDate
+                    .truncatingRemainder(dividingBy: 1000)
+                for (idx, star) in DesireMapView._bgStars.enumerated() {
+                    let (xr, yr, d, base, period) = star
+                    let opacity: Double = period > 0
+                        ? 0.2 + (sin((elapsed / period + Double(idx) * 0.37) * .pi * 2) * 0.5 + 0.5) * 0.6
+                        : base
+                    let x = size.width * xr
+                    let y = size.height * yr
+                    let r = d / 2
+                    ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: d, height: d)),
+                             with: .color(.white.opacity(opacity)))
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    // MARK: - Bloom entrance
+
+    private func beginTapped() {
+        hapticTick += 1
+        guard !reduceMotion else {
+            startVisible = false; raterPhase = .rating; ratingVisible = true
+            return
+        }
+        withAnimation(.easeOut(duration: 0.80)) {
+            bloomScale = 20; bloomOpacity = 0.65; startVisible = false
+        }
+        Task {
+            try? await Task.sleep(for: .seconds(0.65))
+            withAnimation(.easeOut(duration: 0.30)) { bloomOpacity = 0 }
+            raterPhase = .rating
+            withAnimation(AppAnimation.desireStarIgnite.reduceMotionSafe) { ratingVisible = true }
+            try? await Task.sleep(for: .seconds(0.50))
+            bloomScale = 0.01
+        }
+    }
+
+    // MARK: - Rater (S2.2)
+
+    @ViewBuilder
+    private var raterContent: some View {
+        if index < store.items.count {
             rater(item: store.items[index])
         }
     }
 
-    // MARK: - Rater
+    private var positiveRatings: [DesireRatingValue] {
+        store.items.compactMap { item in
+            guard let r = store.existingRating(for: item.id),
+                  r == .excitedAboutIt || r == .openToIt else { return nil }
+            return r
+        }
+    }
 
     private func rater(item: DesireItem) -> some View {
-        VStack(spacing: AppSpacing.md) {
-            topBar
-            card(for: item)
+        let answers = store.answers(for: item)
+        return ZStack(alignment: .top) {
+            // Stars only appear for excited + open answers (stars mark desire, not avoidance)
+            _StarAccum(ratings: positiveRatings)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .allowsHitTesting(false)
+
+            VStack(spacing: 0) {
+                // Top bar
+                topBar
+                    .padding(.horizontal, AppSpacing.lg)
+                    .padding(.top, AppSpacing.sm)
+                    .padding(.bottom, AppSpacing.xs)
+
+                // Space for stars to be visible
+                Spacer(minLength: 140)
+
+                // Question — transitions on each answer
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    Text(item.category.uppercased())
+                        .font(AppFonts.overline)
+                        .tracking(1.2)
+                        .foregroundStyle(AppColors.spectrumMagenta.opacity(0.85))
+
+                    Text(item.name)
+                        .font(AppFonts.cardTitle)
+                        .foregroundStyle(AppColors.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, AppSpacing.lg)
                 .id(index)
                 .transition(.asymmetric(
-                    insertion: .move(edge: .bottom).combined(with: .opacity),
-                    removal:   .move(edge: .top).combined(with: .opacity)
+                    insertion: .opacity.combined(with: .scale(scale: 1.04)),
+                    removal:   .opacity.combined(with: .scale(scale: 0.90))
                 ))
+
+                Spacer(minLength: AppSpacing.lg)
+
+                // Answer area
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    Text("How do you feel about this?")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .padding(.horizontal, AppSpacing.lg)
+
+                    VStack(spacing: AppSpacing.sm) {
+                        ForEach(Array(answers.enumerated()), id: \.offset) { idx, label in
+                            if idx < DesireRatingValue.allCases.count {
+                                let weight = DesireRatingValue.allCases[idx]
+                                _RaterPill(
+                                    label: label,
+                                    hint: pillHint(for: weight),
+                                    accent: accentColor(for: weight),
+                                    isBoundary: weight == .notForMe,
+                                    isSelected: store.existingRating(for: item.id) == weight
+                                ) { choose(weight, for: item) }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, AppSpacing.lg)
+                }
+
+                // Privacy footer
+                Text("Private — only your mutual matches are ever revealed.")
+                    .font(AppFonts.meta)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, AppSpacing.xxl)
+                    .padding(.top, AppSpacing.sm)
+                    .padding(.bottom, AppSpacing.xl)
+            }
         }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.top, AppSpacing.md)
-        .padding(.bottom, AppSpacing.lg)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var topBar: some View {
         HStack(spacing: AppSpacing.md) {
             Button { back() } label: {
                 Image(systemName: "chevron.left")
-                    .font(AppFonts.bodyMedium)
-                    .foregroundColor(AppColors.textSecondary)
-                    .frame(width: 36, height: 36)
-                    .background(Circle().fill(AppColors.cardBg))
-                    .overlay(Circle().stroke(AppColors.borderSubtle, lineWidth: 1))
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .frame(width: 32, height: 32)
             }
-            .buttonStyle(PlainButtonStyle())
-            .opacity(index == 0 ? 0.3 : 1)
+            .buttonStyle(_RaterPressStyle())
+            .opacity(index == 0 ? 0.25 : 1)
             .disabled(index == 0)
 
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                progressTrack
-                Text("\(index + 1) of \(store.totalCount)")
-                    .font(AppFonts.caption)
-                    .foregroundColor(AppColors.textTertiary)
-            }
+            progressTrack
+
+            Text("\(index + 1) of \(store.totalCount)")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
 
             Button { dismiss() } label: {
                 Image(systemName: "xmark")
                     .font(AppFonts.caption)
-                    .foregroundColor(AppColors.textTertiary)
-                    .frame(width: 36, height: 36)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .frame(width: 32, height: 32)
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(_RaterPressStyle())
         }
     }
 
     private var progressTrack: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule().fill(AppColors.textTertiary.opacity(0.18))
-                Capsule().fill(AppColors.spectrumBorder)
+                Capsule().fill(Color.white.opacity(0.08))
+                Capsule()
+                    .fill(LinearGradient(
+                        colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ))
                     .frame(width: geo.size.width * progressRatio)
             }
         }
-        .frame(height: 4)
+        .frame(height: 3)
         .animation(AppAnimation.standard, value: store.ratedCount)
     }
 
@@ -109,121 +416,201 @@ struct DesireMapView: View {
         return CGFloat(store.ratedCount) / CGFloat(store.totalCount)
     }
 
-    // MARK: - Card
+    // MARK: - Charted beat (S2.3)
 
-    private func card(for item: DesireItem) -> some View {
-        let answers = store.answers(for: item)
-        return VStack(alignment: .leading, spacing: AppSpacing.md) {
-            HStack(spacing: AppSpacing.sm) {
-                Circle().fill(AppColors.spectrumCyan).frame(width: 5, height: 5)
-                Text(item.category.uppercased())
-                    .font(AppFonts.overline)
-                    .foregroundColor(AppColors.textTertiary)
-            }
+    private var chartedScreen: some View {
+        VStack(spacing: 0) {
+            Spacer()
 
-            Text(item.name)
-                .font(AppFonts.cardTitle)
-                .foregroundColor(AppColors.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
+            GeometryReader { geo in
+                let W = geo.size.width
+                let H = geo.size.height
+                // 6 nodes from the mockup (relative positions in 0-1 space)
+                let nodes: [(CGFloat, CGFloat)] = [
+                    (0.50, 0.30), (0.26, 0.22), (0.72, 0.26),
+                    (0.34, 0.62), (0.68, 0.58), (0.48, 0.80),
+                ]
+                let connections: [(Int, Int, Double)] = [
+                    (0, 1, 0.0), (0, 2, 0.6), (0, 3, 1.2), (2, 4, 0.9), (3, 5, 1.6),
+                ]
 
-            Text(item.description)
-                .font(AppFonts.bodyText)
-                .foregroundColor(AppColors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Spacer(minLength: AppSpacing.lg)
-
-            Text("How do you feel about this?")
-                .font(AppFonts.caption)
-                .foregroundColor(AppColors.textTertiary)
-
-            VStack(spacing: AppSpacing.sm) {
-                ForEach(Array(answers.enumerated()), id: \.offset) { idx, label in
-                    if idx < DesireRatingValue.allCases.count {
-                        let weight = DesireRatingValue.allCases[idx]
-                        RatingRow(
-                            label: label,
-                            accent: accentColor(for: weight),
-                            isBoundary: weight == .notForMe,
-                            isSelected: store.existingRating(for: item.id) == weight
-                        ) { choose(weight, for: item) }
+                ZStack {
+                    if chartedLinesActive {
+                        ForEach(connections.indices, id: \.self) { i in
+                            let c = connections[i]
+                            _ChartedLine(
+                                sx: nodes[c.0].0 * W, sy: nodes[c.0].1 * H,
+                                ex: nodes[c.1].0 * W, ey: nodes[c.1].1 * H,
+                                delay: c.2
+                            )
+                        }
+                    }
+                    ForEach(nodes.indices, id: \.self) { i in
+                        _AccumStar()
+                            .frame(width: 34, height: 34)
+                            .position(x: nodes[i].0 * W, y: nodes[i].1 * H)
+                            .opacity(chartedStarsVisible ? 1 : 0)
+                            .animation(
+                                AppAnimation.desireStarIgnite.delay(Double(i) * 0.06),
+                                value: chartedStarsVisible
+                            )
                     }
                 }
             }
+            .frame(maxWidth: 340, maxHeight: 200)
+            .padding(.horizontal, AppSpacing.xl)
 
-            Text("🔒 Private to you — only matches you both share are ever revealed.")
-                .font(AppFonts.meta)
-                .foregroundColor(AppColors.textMuted)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-                .padding(.top, AppSpacing.xs)
+            Spacer().frame(height: AppSpacing.xl)
+
+            VStack(spacing: AppSpacing.sm) {
+                Text("Your map is charted.")
+                    .font(AppFonts.sectionHeading)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .multilineTextAlignment(.center)
+
+                Text("All \(store.totalCount). The lines find \(partnerName)'s once they finish theirs.")
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal, AppSpacing.xxl)
+            .opacity(chartedTitleVisible ? 1 : 0)
+            .animation(AppAnimation.desireStarIgnite, value: chartedTitleVisible)
+
+            Spacer()
         }
-        .padding(AppSpacing.lg)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func runChartedSequence() {
+        Task {
+            if reduceMotion {
+                chartedStarsVisible = true
+                chartedTitleVisible = true
+                try? await Task.sleep(for: .seconds(0.8))
+                withAnimation(AppAnimation.enter) { raterPhase = .mirror }
+                return
+            }
+            // Stars ignite
+            withAnimation(AppAnimation.desireStarIgnite) { chartedStarsVisible = true }
+            try? await Task.sleep(for: .seconds(0.35))
+            // Lines activate (each handles own timing via onAppear)
+            chartedLinesActive = true
+            // Wait for all lines to finish drawing (~2.6s for last line to complete)
+            try? await Task.sleep(for: .seconds(2.2))
+            // Title appears — hold long enough to read both lines
+            chartedTitleVisible = true
+            try? await Task.sleep(for: .seconds(1.7))
+            // Auto-advance
+            withAnimation(AppAnimation.enter) {
+                raterPhase = partnerComplete ? .ready : .mirror
+            }
+        }
+    }
+
+    // MARK: - Mirror screen (S2.4)
+    // Matches flow-family screen 4/5: scrollable grouped list on the void.
+    // topspark → heading → subtitle → .agroup rows → spacer → waitline
+
+    private var mirrorScreen: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 0) {
+
+                if raterPhase == .ready {
+                    readyBar
+                        .padding(.bottom, AppSpacing.md)
+                }
+
+                // "✦ just for you" — warm gradient spark + overline label
+                HStack(spacing: AppSpacing.xs) {
+                    Text("✦")
+                        .font(AppFonts.bodyText)
+                        .foregroundStyle(LinearGradient(
+                            colors: [AppColors.spectrumMagenta, AppColors.spectrumPurple, AppColors.spectrumCyan],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
+                    Text("just for you")
+                        .font(AppFonts.overline)
+                        .tracking(1.4)
+                        .foregroundStyle(AppColors.textTertiary)
+                }
+                .padding(.bottom, AppSpacing.sm)
+
+                Text("Everything you said")
+                    .font(AppFonts.screenTitle)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .padding(.bottom, AppSpacing.xs)
+
+                Text(raterPhase == .ready
+                     ? "Still yours, still private. Tap above to see where you two meet."
+                     : "Your full read, kept private. Where it meets \(partnerName)'s appears once they finish theirs.")
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.bottom, AppSpacing.lg)
+
+                // Answer groups
+                VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                    ForEach(ratedItemsByGroup, id: \.0) { rating, items in
+                        _MirrorGroup(rating: rating, items: items)
+                    }
+                }
+
+                if raterPhase != .ready {
+                    Text("No rush, and no race. Your overlap with \(partnerName) appears whenever they finish.")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, AppSpacing.xl)
+                }
+            }
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.top, AppSpacing.lg)
+            .padding(.bottom, AppSpacing.xxl)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var readyBar: some View {
+        HStack(spacing: AppSpacing.sm) {
+            Text("✦")
+                .font(AppFonts.bodyMedium)
+                .foregroundStyle(LinearGradient(
+                    colors: [AppColors.spectrumMagenta, AppColors.spectrumPurple],
+                    startPoint: .leading, endPoint: .trailing
+                ))
+            Text("**\(partnerName) finished.** Your map is ready.")
+                .font(AppFonts.bodyText)
+                .foregroundStyle(AppColors.textPrimary)
+            Spacer()
+            Text("→")
+                .font(AppFonts.bodyMedium)
+                .foregroundStyle(AppColors.spectrumMagenta)
+        }
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: AppRadius.container)
-                .fill(AppColors.cardBg)
+            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                .fill(LinearGradient(
+                    colors: [AppColors.spectrumMagenta.opacity(0.12), AppColors.spectrumPurple.opacity(0.18)],
+                    startPoint: .leading, endPoint: .trailing
+                ))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.container)
-                .stroke(AppColors.spectrumBorder, lineWidth: 1)
-                .opacity(0.5)
+            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                .stroke(AppColors.spectrumPurple.opacity(0.45), lineWidth: 1)
         )
+        .onTapGesture { dismiss() }
     }
 
-    private func accentColor(for weight: DesireRatingValue) -> Color {
-        switch weight {
-        case .excitedAboutIt: return AppColors.spectrumCyan
-        case .openToIt:       return AppColors.spectrumPurple
-        case .probablyNot:    return AppColors.textTertiary
-        case .notForMe:       return AppColors.spectrumMagenta
+    private var ratedItemsByGroup: [(DesireRatingValue, [DesireItem])] {
+        let rated = store.items.filter { store.existingRating(for: $0.id) != nil }
+        let grouped = Dictionary(grouping: rated) { store.existingRating(for: $0.id)! }
+        return DesireRatingValue.allCases.compactMap { rating in
+            guard let items = grouped[rating], !items.isEmpty else { return nil }
+            return (rating, items)
         }
-    }
-
-    // MARK: - Completion
-
-    private var completionView: some View {
-        VStack(spacing: AppSpacing.lg) {
-            Spacer()
-            Circle()
-                .fill(AppColors.spectrumBorder)
-                .frame(width: 88, height: 88)
-                .overlay(
-                    Circle().fill(AppColors.void).frame(width: 74, height: 74)
-                        .overlay(Text("✦").font(AppFonts.cardTitle).foregroundColor(AppColors.textPrimary))
-                )
-                .spectrumBorderGlow(intensity: 0.6)
-
-            Text("Your Desire Map is complete")
-                .font(AppFonts.sectionHeading)
-                .foregroundColor(AppColors.textPrimary)
-                .multilineTextAlignment(.center)
-
-            Text("When your partner finishes theirs, you'll see what you share.")
-                .font(AppFonts.bodyText)
-                .foregroundColor(AppColors.textSecondary)
-                .multilineTextAlignment(.center)
-
-            Text("🔒 Saved privately to your device")
-                .font(AppFonts.caption)
-                .foregroundColor(AppColors.textMuted)
-
-            Spacer()
-
-            Button { dismiss() } label: {
-                Text("Done")
-                    .font(AppFonts.ctaLabel)
-                    .foregroundColor(AppColors.textPrimary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, AppSpacing.md)
-                    .background(
-                        Capsule().stroke(AppColors.spectrumBorder, lineWidth: 1)
-                    )
-            }
-            .buttonStyle(PlainButtonStyle())
-        }
-        .padding(.horizontal, AppSpacing.xl)
-        .padding(.vertical, AppSpacing.xxl)
     }
 
     // MARK: - Empty / error
@@ -232,16 +619,16 @@ struct DesireMapView: View {
         VStack(spacing: AppSpacing.md) {
             Image(systemName: "heart.text.square")
                 .font(AppFonts.screenTitle)
-                .foregroundColor(AppColors.textTertiary)
+                .foregroundStyle(AppColors.textTertiary)
             Text("Desire Map unavailable")
                 .font(AppFonts.cardTitle)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundStyle(AppColors.textPrimary)
             Text(message)
                 .font(AppFonts.caption)
-                .foregroundColor(AppColors.textTertiary)
+                .foregroundStyle(AppColors.textTertiary)
                 .multilineTextAlignment(.center)
             Button { dismiss() } label: {
-                Text("Close").font(AppFonts.ctaLabel).foregroundColor(AppColors.textSecondary)
+                Text("Close").font(AppFonts.ctaLabel).foregroundStyle(AppColors.textSecondary)
             }
             .buttonStyle(PlainButtonStyle())
             .padding(.top, AppSpacing.sm)
@@ -254,23 +641,48 @@ struct DesireMapView: View {
     private func choose(_ weight: DesireRatingValue, for item: DesireItem) {
         store.rate(itemId: item.id, rating: weight)
         hapticTick += 1
-        withAnimation(AppAnimation.spring) {
-            index += 1
-        }
+        withAnimation(.easeOut(duration: 0.35)) { index += 1 }
     }
 
     private func back() {
         guard index > 0 else { return }
-        withAnimation(AppAnimation.spring) {
-            index -= 1
+        withAnimation(.easeOut(duration: 0.28)) { index -= 1 }
+    }
+
+    private func accentColor(for weight: DesireRatingValue) -> Color {
+        switch weight {
+        case .excitedAboutIt: return AppColors.spectrumCyan
+        case .openToIt:       return AppColors.spectrumPurple
+        case .probablyNot:    return AppColors.textTertiary
+        case .notForMe:       return AppColors.spectrumMagenta
+        }
+    }
+
+    private func pillHint(for weight: DesireRatingValue) -> String {
+        switch weight {
+        case .excitedAboutIt: return "i want this"
+        case .openToIt:       return "i'm curious"
+        case .probablyNot:    return "not right now"
+        case .notForMe:       return "stays private"
         }
     }
 }
 
-// MARK: - RatingRow
+// MARK: - Press style
 
-private struct RatingRow: View {
+private struct _RaterPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(AppAnimation.fast, value: configuration.isPressed)
+    }
+}
+
+// MARK: - Rater pill (S2.2, replaces RatingRow)
+
+private struct _RaterPill: View {
     let label: String
+    let hint: String
     let accent: Color
     let isBoundary: Bool
     let isSelected: Bool
@@ -278,64 +690,301 @@ private struct RatingRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: AppSpacing.sm) {
-                RoundedRectangle(cornerRadius: AppRadius.pill)
+            HStack(spacing: AppSpacing.md) {
+                Circle()
                     .fill(accent)
-                    .frame(width: 4, height: 22)
+                    .frame(width: 9, height: 9)
 
                 Text(label)
                     .font(AppFonts.bodyMedium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundStyle(isSelected ? AppColors.textPrimary : AppColors.textSecondary)
 
                 Spacer(minLength: 0)
 
                 if isBoundary {
-                    Text("🔒 private")
+                    Image(systemName: "lock.fill")
                         .font(AppFonts.meta)
-                        .foregroundColor(AppColors.textMuted)
+                        .foregroundStyle(AppColors.textTertiary.opacity(0.45))
+                } else if !hint.isEmpty {
+                    Text(hint)
+                        .font(AppFonts.meta)
+                        .foregroundStyle(AppColors.textTertiary)
                 }
             }
             .padding(.horizontal, AppSpacing.md)
-            .padding(.vertical, AppSpacing.md)
+            .frame(height: 54)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                RoundedRectangle(cornerRadius: AppRadius.md)
-                    .fill(isSelected ? accent.opacity(0.10) : AppColors.cardBackground)
+                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                    .fill(isSelected
+                        ? AnyShapeStyle(LinearGradient(
+                            colors: [AppColors.spectrumMagenta.opacity(0.14), AppColors.spectrumPurple.opacity(0.18)],
+                            startPoint: .leading, endPoint: .trailing
+                          ))
+                        : AnyShapeStyle(Color.white.opacity(0.03))
+                    )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.md)
-                    .stroke(isSelected ? accent : AppColors.borderSubtle, lineWidth: isSelected ? 1.5 : 1)
+                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                    .stroke(
+                        isSelected ? AppColors.spectrumPurple.opacity(0.80) : Color.white.opacity(0.10),
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
             )
-            .scaleEffect(isSelected ? 0.98 : 1.0)
-            .animation(AppAnimation.spring, value: isSelected)
+            .shadow(color: isSelected ? AppColors.spectrumPurple.opacity(0.28) : .clear, radius: 11)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(_RaterPressStyle())
+        .animation(AppAnimation.fast, value: isSelected)
+    }
+}
+
+// MARK: - Star accumulation field (S2.2)
+
+// Vogel phyllotaxis spiral, upper 38% of screen. Stars ONLY appear for excited/open answers.
+// Excited stars are larger and brighter than open stars — the sky remembers your enthusiasm.
+private struct _StarAccum: View {
+    /// Ordered list of positive ratings (excited/open) in answer order.
+    let ratings: [DesireRatingValue]
+
+    private static let positions: [(CGFloat, CGFloat)] = {
+        let golden: Double = 2.399963229728653
+        return (0..<17).map { i in
+            let t   = Double(i + 1) / 20.0
+            let r   = sqrt(t) * 0.36
+            let ang = Double(i) * golden
+            let x   = CGFloat(max(0.09, min(0.91, 0.50 + r * cos(ang))))
+            let y   = CGFloat(max(0.04, min(0.40, 0.22 + r * sin(ang) * 0.72)))
+            return (x, y)
+        }
+    }()
+
+    var body: some View {
+        GeometryReader { geo in
+            let count = min(ratings.count, Self.positions.count)
+            ForEach(0..<count, id: \.self) { i in
+                let excited = ratings[i] == .excitedAboutIt
+                let sz: CGFloat = excited ? 34 : 24
+                _AccumStar(isExcited: excited)
+                    .frame(width: sz, height: sz)
+                    .position(
+                        x: geo.size.width  * Self.positions[i].0,
+                        y: geo.size.height * Self.positions[i].1
+                    )
+                    .transition(
+                        .scale(scale: 0.1)
+                        .combined(with: .opacity)
+                        .combined(with: .offset(y: 28))
+                    )
+            }
+        }
+        .animation(AppAnimation.desireStarIgnite, value: ratings.count)
+    }
+}
+
+// Star node with cross-hair glow lines, matching the HTML reference.
+// Excited: larger glow (34px), brighter core (4.5pt). Open: smaller (24px), dimmer (3.2pt).
+private struct _AccumStar: View {
+    var isExcited: Bool = false
+
+    private var glowSize: CGFloat { isExcited ? 34 : 24 }
+    private var coreSize: CGFloat { isExcited ? 4.5 : 3.2 }
+    private var restOpacity: Double { isExcited ? 0.72 : 0.50 }
+
+    var body: some View {
+        ZStack {
+            // Outer glow blob
+            Circle()
+                .fill(RadialGradient(
+                    colors: [.white.opacity(0.55), AppColors.spectrumMagenta.opacity(0.32), .clear],
+                    center: .center, startRadius: 0, endRadius: glowSize / 2
+                ))
+                .blur(radius: 5)
+
+            // Horizontal cross line
+            Rectangle()
+                .fill(LinearGradient(
+                    colors: [.clear, .white.opacity(0.50), .clear],
+                    startPoint: .leading, endPoint: .trailing
+                ))
+                .frame(width: glowSize, height: 1)
+
+            // Vertical cross line
+            Rectangle()
+                .fill(LinearGradient(
+                    colors: [.clear, .white.opacity(0.50), .clear],
+                    startPoint: .top, endPoint: .bottom
+                ))
+                .frame(width: 1, height: glowSize)
+
+            // Bright core dot
+            Circle()
+                .fill(.white)
+                .frame(width: coreSize, height: coreSize)
+                .shadow(color: AppColors.spectrumMagenta.opacity(0.80), radius: 3)
+                .shadow(color: AppColors.spectrumPurple.opacity(0.40), radius: 7)
+        }
+        .frame(width: glowSize, height: glowSize)
+        .opacity(restOpacity)
+    }
+}
+
+// MARK: - Charted line (S2.3 — hesitant sketch animation)
+
+private struct _ChartedLine: View {
+    let sx: CGFloat; let sy: CGFloat
+    let ex: CGFloat; let ey: CGFloat
+    let delay: Double
+
+    @State private var trimTo: CGFloat  = 0
+    @State private var lineOp: Double   = 0
+
+    var body: some View {
+        Path { p in p.move(to: CGPoint(x: sx, y: sy)); p.addLine(to: CGPoint(x: ex, y: ey)) }
+            .trim(from: 0, to: trimTo)
+            .stroke(Color.white.opacity(0.35), lineWidth: 1)
+            .opacity(lineOp)
+            .onAppear {
+                Task {
+                    try? await Task.sleep(for: .seconds(delay))
+                    withAnimation(.easeOut(duration: 0.45)) { trimTo = 0.88; lineOp = 0.22 }
+                    try? await Task.sleep(for: .seconds(0.45))
+                    withAnimation(.easeInOut(duration: 0.35)) { trimTo = 0.52; lineOp = 0.12 }
+                    try? await Task.sleep(for: .seconds(0.45))
+                    withAnimation(.easeOut(duration: 0.35)) { trimTo = 0; lineOp = 0 }
+                }
+            }
+    }
+}
+
+// MARK: - Mirror group (S2.4 — one per rating group, matches HTML .agroup/.arow pattern)
+// Label: small uppercase in accent color. Rows: subtle dark bg + thin border, 3px accent bar.
+// Positive rows get a "›" in purple; muted rows (probably not / not for me) get no bg fill.
+
+private struct _MirrorGroup: View {
+    let rating: DesireRatingValue
+    let items: [DesireItem]
+
+    private var label: String {
+        switch rating {
+        case .excitedAboutIt: return "Excited about it"
+        case .openToIt:       return "Open to it"
+        case .probablyNot:    return "Probably not"
+        case .notForMe:       return "Not for me"
+        }
+    }
+
+    private var isMuted: Bool {
+        rating == .probablyNot || rating == .notForMe
+    }
+
+    private var labelColor: Color {
+        switch rating {
+        case .excitedAboutIt: return AppColors.spectrumCyan
+        case .openToIt:       return AppColors.spectrumPurple
+        case .probablyNot:    return AppColors.textTertiary
+        case .notForMe:       return AppColors.spectrumMagenta
+        }
+    }
+
+    private var barColor: Color {
+        switch rating {
+        case .excitedAboutIt: return AppColors.spectrumCyan
+        case .openToIt:       return AppColors.spectrumPurple
+        case .probablyNot:    return Color.white.opacity(0.22)
+        case .notForMe:       return AppColors.spectrumMagenta
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            Text(label.uppercased())
+                .font(AppFonts.overline)
+                .tracking(1.4)
+                .foregroundStyle(labelColor)
+
+            ForEach(items) { item in
+                HStack(spacing: AppSpacing.md) {
+                    RoundedRectangle(cornerRadius: AppRadius.pill)
+                        .fill(barColor)
+                        .frame(width: 3, height: 18)
+
+                    Text(item.name)
+                        .font(AppFonts.bodyText)
+                        .foregroundStyle(isMuted ? AppColors.textTertiary : AppColors.textPrimary)
+
+                    Spacer(minLength: 0)
+
+                    if !isMuted {
+                        Text("›")
+                            .font(AppFonts.bodyText)
+                            .foregroundStyle(AppColors.spectrumPurple)
+                    }
+                }
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                        .fill(isMuted ? Color.clear : Color.white.opacity(0.025))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                        .stroke(
+                            isMuted ? Color.white.opacity(0.045) : Color.white.opacity(0.06),
+                            lineWidth: 1
+                        )
+                )
+            }
+        }
     }
 }
 
 // MARK: - Previews
 
-#Preview("Curious — 18 items") {
+#Preview("Start screen") {
+    let container = ModelContainer.previewContainerWithProfile
+    let appState = AppState()
+    let store = DesireMapStore(modelContainer: container, appState: appState)
+    store.load()
+    return DesireMapView(store: store)
+        .environment(appState)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Rating — mid-map") {
     let container = ModelContainer.previewContainer
     container.mainContext.insert(UserProfile(displayName: "Jordan", nmStage: .curious))
     try? container.mainContext.save()
     let appState = AppState()
     let store = DesireMapStore(modelContainer: container, appState: appState)
     store.load()
-    return DesireMapView(store: store)
+    return DesireMapView(store: store, partnerName: "Alex")
         .environment(appState)
         .preferredColorScheme(.dark)
 }
 
-#Preview("Established — 12 items") {
-    let container = ModelContainer.previewContainer
-    container.mainContext.insert(UserProfile(displayName: "Jordan", nmStage: .experienced))
-    try? container.mainContext.save()
+#Preview("Mirror — first finisher") {
+    let container = ModelContainer.previewContainerWithProfile
     let appState = AppState()
     let store = DesireMapStore(modelContainer: container, appState: appState)
     store.load()
-    return DesireMapView(store: store)
+    // Pre-rate all items so the mirror screen shows
+    DesireRatingValue.allCases.enumerated().forEach { idx, weight in
+        if idx < store.items.count { store.rate(itemId: store.items[idx].id, rating: weight) }
+    }
+    return DesireMapView(store: store, partnerName: "Alex")
         .environment(appState)
         .preferredColorScheme(.dark)
 }
 
+#Preview("Ready bar — partner done") {
+    let container = ModelContainer.previewContainerWithProfile
+    let appState = AppState()
+    let store = DesireMapStore(modelContainer: container, appState: appState)
+    store.load()
+    DesireRatingValue.allCases.enumerated().forEach { idx, weight in
+        if idx < store.items.count { store.rate(itemId: store.items[idx].id, rating: weight) }
+    }
+    return DesireMapView(store: store, partnerName: "Alex", partnerComplete: true)
+        .environment(appState)
+        .preferredColorScheme(.dark)
+}

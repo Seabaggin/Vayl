@@ -2,13 +2,17 @@
 //  DesireRevealView.swift
 //  Vayl
 //
-//  D4 — the Desire-Map reveal (the "magic moment"). View layer: reads DesireRevealStore,
-//  forwards taps; no DB/Service. Celebrates where the couple ALIGNS — never a table of raw
-//  answers (the read is alignment-only). Free couple sees the one free match + locked teasers
-//  with an unlock CTA; core sees them all.
+//  D4 — the Desire-Map reveal. Reads DesireRevealStore; forwards taps; no DB/Service.
+//  The whole reveal is ONE .vaylCover (wired in HomeRouterView S1.6). Inner sheets
+//  (detail · full-map · paywall) are hosted directly inside this view as a custom
+//  bottom sheet layer — never via .vaylSheet or .sheet.
 //
-//  STUB STATUS (2026-06-17): structure + states wired to live data; FEEL/composition/motion is
-//  Bryan's styling pass. Stubbed CTAs: unlock (→ M5), bridge nav, request (open decision).
+//  Screens 6–10 of the ten-screen Desire Map flow:
+//    6  Reveal      — free star lit + locked stars dim (ConstellationField)
+//    7  Star detail — DesireStarDetailSheet (S1.3)
+//    8  Paywall     — PaywallSheet host (S1.4)
+//    9  Full map    — DesireMapListSheet (S1.5)
+//   10  Unlocked    — whole sky lit, confident lines, caption updates in place
 //
 
 import SwiftUI
@@ -17,88 +21,73 @@ struct DesireRevealView: View {
 
     let store: DesireRevealStore
 
-    @Environment(\.dismiss) private var dismiss
+    // vaylDismiss is injected by .vaylCover (wired in S1.6).
+    // Until S1.6, X is a no-op — swipe-dismiss the fullScreenCover to close during testing.
+    @Environment(\.vaylDismiss) private var vaylDismiss
     @Environment(EntitlementStore.self) private var entitlements
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var hapticTick: Int = 0
-    @State private var emblemPulse: Bool = false
-    @State private var appeared: Bool = false
+
+    // MARK: - Body
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
+            // ── Background ──────────────────────────────
             AppColors.void.ignoresSafeArea()
-            content
+            OnboardingAtmosphere(config: .cardReveal).ignoresSafeArea()
+
+            // ── Content ─────────────────────────────────
+            VStack(spacing: 0) {
+                topBar
+                mainContent
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+            // ── Sheet host (S1.3/S1.4/S1.5 fill the sheets) ──
+            if hasActiveSheet {
+                sheetHostLayer
+                    .transition(.opacity)
+            }
         }
         .screenshotProtected()
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTick)
+        .animation(AppAnimation.desireSheetRise, value: hasActiveSheet)
         .task { if case .loading = store.phase { await store.load() } }
-        .onAppear { emblemPulse = true; triggerReveal() }
-        .onChange(of: store.phase) { _, _ in triggerReveal() }
+        .onAppear { triggerBeatSequence() }
+        .onChange(of: store.phase) { _, _ in triggerBeatSequence() }
     }
 
-    private func triggerReveal() {
-        guard !appeared, case .ready = store.phase else { return }
-        appeared = true
+    private var hasActiveSheet: Bool {
+        store.selectedMatch != nil || store.showFullMap || store.showPaywall
     }
 
-    // MARK: - State routing
+    private func triggerBeatSequence() {
+        guard case .ready = store.phase, store.beatPhase == .idle else { return }
+        store.startBeatSequence()
+    }
+
+    // MARK: - Phase routing
 
     @ViewBuilder
-    private var content: some View {
+    private var mainContent: some View {
         switch store.phase {
         case .loading:
             loadingView
         case .failed(let msg):
-            emptyState(icon: "exclamationmark.triangle",
-                       title: "Couldn't load your matches",
-                       message: msg)
+            emptyState(
+                icon: "exclamationmark.triangle",
+                title: "Couldn't load your matches",
+                message: msg
+            )
         case .empty:
-            emptyState(icon: "sparkles",
-                       title: "No shared matches yet",
-                       message: "When you and your partner both finish your maps, what you share appears here.")
+            emptyState(
+                icon: "sparkles",
+                title: "No shared matches yet",
+                message: "When you and your partner both finish your maps, what you share appears here."
+            )
         case .ready:
-            reveal
-        }
-    }
-
-    // MARK: - Reveal
-
-    private var reveal: some View {
-        VStack(spacing: 0) {
-            topBar
-            ScrollView {
-                VStack(spacing: AppSpacing.lg) {
-                    header
-                        .opacity(appeared ? 1 : 0)
-                        .offset(y: appeared || reduceMotion ? 0 : 16)
-                        .animation(AppAnimation.enter.delay(0.05), value: appeared)
-
-                    ForEach(Array(store.unlockedMatches.enumerated()), id: \.element.id) { idx, match in
-                        MatchCardView(match: match) {
-                            hapticTick += 1
-                            // TODO(D4/companion): navigate to bridge card for match.bridgeCardId
-                        }
-                        .opacity(appeared ? 1 : 0)
-                        .offset(y: appeared || reduceMotion ? 0 : 20)
-                        .animation(AppAnimation.enter.delay(0.15 + Double(idx) * 0.10), value: appeared)
-                    }
-
-                    if store.lockedCount > 0 {
-                        lockedSection
-                            .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared || reduceMotion ? 0 : 20)
-                            .animation(AppAnimation.enter.delay(0.15 + Double(store.unlockedMatches.count) * 0.10), value: appeared)
-                    }
-
-                    requestRow
-                        .opacity(appeared ? 1 : 0)
-                        .animation(AppAnimation.enter.delay(0.20 + Double(store.totalCount) * 0.08), value: appeared)
-                }
-                .padding(.horizontal, AppSpacing.lg)
-                .padding(.top, AppSpacing.md)
-                .padding(.bottom, AppSpacing.xxl)
-            }
+            beatReveal
         }
     }
 
@@ -106,200 +95,282 @@ struct DesireRevealView: View {
 
     private var topBar: some View {
         HStack {
-            Spacer()
-            Button { hapticTick += 1; dismiss() } label: {
+            Button {
+                hapticTick += 1
+                vaylDismiss(confirm: false)
+            } label: {
                 Image(systemName: "xmark")
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
                     .frame(width: 36, height: 36)
-                    .background(Circle().fill(AppColors.cardBg))
+                    .background(Circle().fill(AppColors.cardBg.opacity(0.55)))
                     .overlay(Circle().stroke(AppColors.borderSubtle, lineWidth: 1))
             }
             .buttonStyle(_PressScaleStyle())
+
+            Spacer()
+
+            if store.totalCount > 1 {
+                Button {
+                    hapticTick += 1
+                    store.openFullMap()
+                } label: {
+                    Text("Full map")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.vertical, AppSpacing.xs)
+                        .background(Capsule().fill(AppColors.cardBg.opacity(0.55)))
+                        .overlay(Capsule().stroke(AppColors.borderSubtle, lineWidth: 1))
+                }
+                .buttonStyle(_PressScaleStyle())
+            }
         }
         .padding(.horizontal, AppSpacing.lg)
         .padding(.top, AppSpacing.sm)
+        .padding(.bottom, AppSpacing.xs)
     }
 
-    // MARK: - Header (emblem + headline + count)
+    // MARK: - Beat-driven reveal (3-beat ceremony + unlock-in-place)
+    //
+    // beat1:    free match entrance — constellation shows only unlocked nodes
+    // beat2:    locked teasers stagger in below; count + spectrum hairline fade in
+    // beat3:    PaywallSheet auto-rises (hosted in sheetHostLayer)
+    // revealed: all matches lit, confident lines — post-unlock celebration
 
-    private var header: some View {
-        VStack(spacing: AppSpacing.sm) {
-            // Concentric-ring prism emblem — spectrum outer ring, void inner, ✦ center
-            ZStack {
-                // Glow layer
-                Circle()
-                    .fill(AppColors.spectrumCyan.opacity(emblemPulse ? 0.18 : 0.08))
-                    .frame(width: 96, height: 96)
-                    .blur(radius: 16)
+    private var beatReveal: some View {
+        ZStack {
+            // Tap-anywhere-to-advance background (nodes' own tap gestures take priority)
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    hapticTick += 1
+                    store.advanceBeat()
+                }
 
-                // Outer spectrum ring
-                Circle()
-                    .stroke(AppColors.spectrumBorder, lineWidth: 1.5)
-                    .frame(width: 72, height: 72)
+            VStack(spacing: 0) {
+                // Beat progress dots (hidden when idle or fully revealed)
+                if store.beatPhase != .idle && store.beatPhase != .revealed {
+                    beatDots
+                        .padding(.top, AppSpacing.xs)
+                }
 
-                // Inner void ring (creates concentric depth)
-                Circle()
-                    .fill(AppColors.void)
-                    .frame(width: 60, height: 60)
+                // Overline
+                Text(store.beatPhase == .revealed ? "Your shared sky" : "Where you meet")
+                    .font(AppFonts.overline)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .tracking(1.5)
+                    .padding(.top, AppSpacing.md)
+                    .opacity(store.beatPhase != .idle ? 1 : 0)
+                    .animation(AppAnimation.desireStarIgnite.delay(0.10), value: store.beatPhase)
 
-                // Center mark
-                Text("✦")
-                    .font(AppFonts.cardTitle)
-                    .foregroundStyle(AppColors.spectrumBorder)
+                // Constellation
+                ConstellationField(
+                    nodes: constellationNodes,
+                    lineMode: constellationLineMode,
+                    onNodeTapped: { id in
+                        hapticTick += 1
+                        if let match = store.matches.first(where: { $0.id.uuidString == id }) {
+                            store.selectStar(match)
+                        }
+                    }
+                )
+                .frame(maxWidth: .infinity)
+                .frame(height: store.beatPhase.rawValue >= 2 ? 220 : 300)
+                .padding(.vertical, AppSpacing.lg)
+                .opacity(store.beatPhase != .idle ? 1 : 0)
+                .animation(AppAnimation.desireStarIgnite, value: store.beatPhase)
+                .animation(.easeOut(duration: 0.40), value: store.beatPhase.rawValue >= 2)
+
+                // Bottom section: caption at beat1/revealed, locked rows at beat2/beat3
+                bottomSection
+                    .animation(.easeOut(duration: 0.40), value: store.beatPhase)
             }
-            .spectrumBorderGlow(intensity: emblemPulse ? 0.65 : 0.30)
-            .ambientAnimation(
-                .easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true),
-                value: emblemPulse
-            )
-            .padding(.top, AppSpacing.md)
-            .padding(.bottom, AppSpacing.xs)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
 
-            Text("Where you align")
-                .font(AppFonts.sectionHeading)
-                .foregroundStyle(AppColors.textPrimary)
-                .multilineTextAlignment(.center)
+    @ViewBuilder
+    private var bottomSection: some View {
+        switch store.beatPhase {
+        case .idle:
+            EmptyView()
 
-            if store.totalCount > 0 {
-                Text(countLine)
+        case .beat1:
+            // Caption for the free match
+            VStack(spacing: AppSpacing.xs) {
+                Text("You both marked this")
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textSecondary)
                     .multilineTextAlignment(.center)
+                if store.lockedCount > 0 {
+                    Text("tap to read · or open the full map")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .multilineTextAlignment(.center)
+                }
             }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.bottom, AppSpacing.sm)
-    }
+            .padding(.horizontal, AppSpacing.xxl)
+            .padding(.bottom, AppSpacing.xxl)
+            .transition(.opacity)
 
-    private var countLine: String {
-        let n = store.totalCount
-        return "You share \(n) thing\(n == 1 ? "" : "s"). Here's where your desires meet."
-    }
+        case .beat2, .beat3:
+            // Locked teasers + count
+            _LockedSection(
+                matches: store.lockedMatches,
+                isVisible: store.beatPhase.rawValue >= 2
+            )
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.bottom, AppSpacing.xxl)
+            .transition(.opacity)
 
-    // MARK: - Locked teasers + CTA
-
-    private var lockedSection: some View {
-        VStack(spacing: AppSpacing.md) {
-            ForEach(store.lockedMatches) { LockedTeaserCard(match: $0) }
-            unlockCTA
-        }
-    }
-
-    private var unlockCTA: some View {
-        VStack(spacing: AppSpacing.sm) {
-            // Invitation header
-            HStack(spacing: AppSpacing.xs) {
-                Image(systemName: "sparkles")
-                    .font(AppFonts.bodyMedium)
-                    .foregroundStyle(AppColors.spectrumCyan)
-                Text("You have \(store.lockedCount) more match\(store.lockedCount == 1 ? "" : "es")")
-                    .font(AppFonts.bodyMedium)
-                    .foregroundStyle(AppColors.textPrimary)
-            }
-
-            Text("Unlock everything — yours, forever.")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textSecondary)
-                .multilineTextAlignment(.center)
-
-            // Price hint
-            if let price = entitlements.corePriceText {
-                Text(price)
-                    .font(AppFonts.overline)
+        case .revealed:
+            // Post-unlock caption
+            VStack(spacing: AppSpacing.xs) {
+                let n = store.totalCount
+                Text("\(n) desire\(n == 1 ? "" : "s") you share")
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                Text("tap any star to talk about it")
+                    .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
                     .multilineTextAlignment(.center)
+                Rectangle()
+                    .fill(LinearGradient(
+                        colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+                        startPoint: .leading, endPoint: .trailing
+                    ))
+                    .frame(width: 56, height: 1)
+                    .opacity(0.5)
+                    .padding(.top, AppSpacing.xs)
             }
+            .padding(.horizontal, AppSpacing.xxl)
+            .padding(.bottom, AppSpacing.xxl)
+            .transition(.opacity)
+        }
+    }
 
-            Button {
-                hapticTick += 1
-                store.unlockAll()   // TODO(M5): StoreKit purchase → grant-entitlement → load()
-            } label: {
-                HStack(spacing: AppSpacing.xs) {
-                    Text("Own your experience")
-                        .font(AppFonts.ctaLabel)
-                    Image(systemName: "chevron.right")
-                        .font(AppFonts.caption)
-                }
-                .foregroundStyle(AppColors.textPrimary)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, AppSpacing.md)
-                .background(
-                    Capsule()
-                        .stroke(AppColors.spectrumBorder, lineWidth: 1.5)
+    // MARK: - Beat dots (spectrum pill for active, dim dot for inactive)
+
+    private var beatDots: some View {
+        HStack(spacing: AppSpacing.xs) {
+            ForEach(1...3, id: \.self) { i in
+                let isActive = store.beatPhase.rawValue == i
+                Capsule()
+                    .fill(isActive
+                        ? AnyShapeStyle(LinearGradient(
+                            colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+                            startPoint: .leading, endPoint: .trailing))
+                        : AnyShapeStyle(Color.white.opacity(0.12)))
+                    .frame(width: isActive ? 20 : 6, height: 6)
+                    .shadow(color: isActive ? AppColors.spectrumPurple.opacity(0.45) : .clear, radius: 4)
+                    .animation(AppAnimation.fast, value: store.beatPhase)
+            }
+        }
+    }
+
+    // MARK: - Constellation data (beat-aware)
+
+    private var constellationNodes: [ConstellationNodeData] {
+        switch store.beatPhase {
+        case .idle:
+            return []
+        case .beat1:
+            return store.unlockedMatches.map { match in
+                ConstellationNodeData(
+                    id: match.id.uuidString,
+                    size: 22,
+                    state: .lit,
+                    label: match.itemName,
+                    cadence: .free
                 )
             }
-            .buttonStyle(_PressScaleStyle())
-            .padding(.top, AppSpacing.xs)
-        }
-        .padding(AppSpacing.lg)
-        .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: AppRadius.container).fill(AppColors.cardBg))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.container)
-                .stroke(AppColors.spectrumBorder, lineWidth: 1)
-                .opacity(0.6)
-        )
-        .spectrumBorderGlow(intensity: 0.25)
-    }
-
-    // MARK: - Request row (subtle bottom row)
-
-    private var requestRow: some View {
-        Button {
-            hapticTick += 1
-            store.requestHiddenConversation()   // TODO(D4): define what a request DOES
-        } label: {
-            HStack(spacing: AppSpacing.sm) {
-                Image(systemName: "questionmark.bubble")
-                    .font(AppFonts.bodyMedium)
-                    .foregroundStyle(AppColors.textTertiary)
-                Text("Ask about something you didn't match on")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(AppFonts.meta)
-                    .foregroundStyle(AppColors.textTertiary)
+        case .beat2, .beat3:
+            return store.matches.map { match in
+                ConstellationNodeData(
+                    id: match.id.uuidString,
+                    size: match.isLocked ? 11 : 22,
+                    state: match.isLocked ? .dim : .lit,
+                    label: match.isLocked ? nil : match.itemName,
+                    cadence: match.isLocked ? .locked : .free
+                )
             }
-            .padding(AppSpacing.md)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: AppRadius.md).fill(AppColors.cardBg))
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.md)
-                    .stroke(AppColors.borderSubtle, lineWidth: 1)
-            )
+        case .revealed:
+            return store.matches.map { match in
+                ConstellationNodeData(
+                    id: match.id.uuidString,
+                    size: 16,
+                    state: .lit,
+                    label: match.itemName,
+                    cadence: .free
+                )
+            }
         }
-        .buttonStyle(_PressScaleStyle())
-        .padding(.top, AppSpacing.sm)
     }
 
-    // MARK: - Loading
+    private var constellationLineMode: ConstellationLineMode {
+        store.beatPhase == .revealed ? .confident : .hidden
+    }
+
+    // MARK: - Sheet host layer
+
+    // Scrim + sheet slot. Sheets are pinned to bottom and transition .move(edge:.bottom).
+    // S1.4 adds PaywallSheet; S1.5 adds DesireMapListSheet.
+    private var sheetHostLayer: some View {
+        ZStack(alignment: .bottom) {
+            Color.black.opacity(0.55)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    hapticTick += 1
+                    if store.showPaywall {
+                        store.closePaywall()
+                    } else {
+                        store.dismissSheets()
+                    }
+                }
+
+            // S1.3 — star detail sheet
+            if let match = store.selectedMatch {
+                DesireStarDetailSheet(match: match) {
+                    store.dismissSheets()
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(AppAnimation.desireSheetRise, value: store.selectedMatch?.id)
+            }
+
+            // S1.5 — full-map list sheet
+            if store.showFullMap {
+                DesireMapListSheet(
+                    matches: store.matches,
+                    priceText: entitlements.corePriceText,
+                    onUnlockTapped: {
+                        store.dismissSheets()
+                        store.showPaywall = true
+                    },
+                    onClose: { store.dismissSheets() }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(AppAnimation.desireSheetRise, value: store.showFullMap)
+            }
+
+            // S1.4 — paywall
+            if store.showPaywall {
+                PaywallSheet(entry: .reveal, onUnlocked: {
+                    store.handleUnlockSuccess()
+                })
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(AppAnimation.desireSheetRise, value: store.showPaywall)
+            }
+        }
+    }
+
+    // MARK: - Loading state
 
     private var loadingView: some View {
         VStack(spacing: AppSpacing.lg) {
-            // Pulsing emblem — same visual as the reveal header but in a waiting state
-            ZStack {
-                Circle()
-                    .fill(AppColors.spectrumCyan.opacity(emblemPulse ? 0.15 : 0.06))
-                    .frame(width: 96, height: 96)
-                    .blur(radius: 20)
-                Circle()
-                    .stroke(AppColors.spectrumBorder, lineWidth: 1)
-                    .frame(width: 72, height: 72)
-                    .opacity(emblemPulse ? 0.7 : 0.3)
-                Circle()
-                    .fill(AppColors.void)
-                    .frame(width: 60, height: 60)
-                Text("✦")
-                    .font(AppFonts.cardTitle)
-                    .foregroundStyle(AppColors.textTertiary.opacity(emblemPulse ? 0.9 : 0.4))
-            }
-            .ambientAnimation(
-                .easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true),
-                value: emblemPulse
-            )
-
+            ProgressView()
+                .tint(AppColors.textTertiary)
             Text("Finding where you align…")
                 .font(AppFonts.bodyText)
                 .foregroundStyle(AppColors.textSecondary)
@@ -323,7 +394,10 @@ struct DesireRevealView: View {
                 .foregroundStyle(AppColors.textTertiary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, AppSpacing.md)
-            Button { hapticTick += 1; dismiss() } label: {
+            Button {
+                hapticTick += 1
+                vaylDismiss(confirm: false)
+            } label: {
                 Text("Close")
                     .font(AppFonts.ctaLabel)
                     .foregroundStyle(AppColors.textSecondary)
@@ -334,139 +408,67 @@ struct DesireRevealView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(AppSpacing.xl)
     }
-
-    // MARK: - Alignment color
-
-    private func alignmentColor(_ alignment: DesireMatchType?) -> Color {
-        switch alignment {
-        case .mutual:   return AppColors.spectrumCyan
-        case .adjacent: return AppColors.spectrumPurple
-        case .none:     return AppColors.textTertiary
-        }
-    }
 }
 
-// MARK: - Match card (unlocked)
+// MARK: - Locked teasers section (beat2 + beat3)
+// Blurred item names + lock glyphs, staggered in at 80ms each, matching desire-reveal.html.
 
-private struct MatchCardView: View {
-    let match: RevealMatch
-    let onTalkTapped: () -> Void
-
-    @State private var talkPressed: Bool = false
+private struct _LockedSection: View {
+    let matches: [RevealMatch]
+    let isVisible: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            // Alignment pip + label
-            HStack(spacing: AppSpacing.sm) {
-                RoundedRectangle(cornerRadius: AppRadius.pill)
-                    .fill(alignmentColor)
-                    .frame(width: 4, height: 18)
-                Text(alignmentLabel.uppercased())
-                    .font(AppFonts.overline)
-                    .foregroundStyle(AppColors.textTertiary)
-            }
-
-            // Item name
-            Text(match.itemName)
-                .font(AppFonts.cardTitle)
-                .foregroundStyle(AppColors.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            // Celebration subtitle
-            Text(match.celebration)
-                .font(AppFonts.bodyText)
-                .foregroundStyle(AppColors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            // Bridge link — "Talk about this →"
-            Button {
-                onTalkTapped()
-            } label: {
-                HStack(spacing: AppSpacing.xs) {
-                    Text("Talk about this")
-                        .font(AppFonts.ctaLabel)
-                        .foregroundStyle(AppColors.spectrumCyan)
-                    Image(systemName: "chevron.right")
-                        .font(AppFonts.meta)
-                        .foregroundStyle(AppColors.spectrumCyan.opacity(0.7))
+        VStack(spacing: AppSpacing.xs) {
+            ForEach(Array(matches.prefix(4).enumerated()), id: \.element.id) { i, match in
+                HStack(spacing: AppSpacing.md) {
+                    Text(match.itemName)
+                        .font(AppFonts.bodyText)
+                        .foregroundStyle(Color.white.opacity(0.30))
+                        .blur(radius: 5)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    Image(systemName: "lock.fill")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(Color.white.opacity(0.30))
                 }
-                .padding(.top, AppSpacing.xs)
+                .padding(.horizontal, AppSpacing.md)
+                .frame(height: 46)
+                .background(
+                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                        .fill(Color.white.opacity(0.02))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
+                .opacity(isVisible ? 1 : 0)
+                .offset(y: isVisible ? 0 : 22)
+                .animation(
+                    .easeOut(duration: 0.36).delay(Double(i) * 0.08),
+                    value: isVisible
+                )
             }
-            .buttonStyle(_PressScaleStyle())
-        }
-        .padding(AppSpacing.lg)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: AppRadius.container).fill(AppColors.cardBg))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.container)
-                .stroke(AppColors.spectrumBorder, lineWidth: 1)
-        )
-        .spectrumBorderGlow(intensity: 0.30)
-    }
 
-    private var alignmentLabel: String {
-        match.alignment?.displayName ?? "Aligned"
-    }
-
-    private var alignmentColor: Color {
-        switch match.alignment {
-        case .mutual:   return AppColors.spectrumCyan
-        case .adjacent: return AppColors.spectrumPurple
-        case .none:     return AppColors.textTertiary
-        }
-    }
-}
-
-// MARK: - Locked teaser card
-
-private struct LockedTeaserCard: View {
-    let match: RevealMatch
-
-    @State private var shimmer: Bool = false
-
-    var body: some View {
-        HStack(spacing: AppSpacing.sm) {
-            RoundedRectangle(cornerRadius: AppRadius.pill)
-                .fill(alignmentColor.opacity(0.5))
-                .frame(width: 4, height: 18)
-
-            Text(match.itemName)
-                .font(AppFonts.cardTitle)
-                .foregroundStyle(AppColors.textPrimary)
-                .lineLimit(1)
-                .blur(radius: 6)
-                .redacted(reason: .placeholder)
-
-            Spacer(minLength: AppSpacing.sm)
-
-            Image(systemName: "lock.fill")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textTertiary.opacity(shimmer ? 0.8 : 0.5))
-                .ambientAnimation(
-                    .easeInOut(duration: AppAnimation.ambientShimmer).repeatForever(autoreverses: true),
-                    value: shimmer
-                )
-        }
-        .padding(AppSpacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: AppRadius.md).fill(AppColors.cardBg))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.md)
-                .stroke(AppColors.spectrumBorder, lineWidth: 1)
-                .opacity(shimmer ? 0.30 : 0.12)
-                .ambientAnimation(
-                    .easeInOut(duration: AppAnimation.ambientShimmer).repeatForever(autoreverses: true),
-                    value: shimmer
-                )
-        )
-        .onAppear { shimmer = true }
-    }
-
-    private var alignmentColor: Color {
-        switch match.alignment {
-        case .mutual:   return AppColors.spectrumCyan
-        case .adjacent: return AppColors.spectrumPurple
-        case .none:     return AppColors.textTertiary
+            // Count + spectrum hairline; delayed until all rows finish staggering in
+            VStack(spacing: AppSpacing.xs) {
+                Text("\(matches.count) more aligned desire\(matches.count == 1 ? "" : "s")")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(Color.white.opacity(0.18))
+                Rectangle()
+                    .fill(LinearGradient(
+                        colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+                        startPoint: .leading, endPoint: .trailing
+                    ))
+                    .frame(width: 60, height: 1)
+                    .opacity(0.4)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, AppSpacing.sm)
+            .opacity(isVisible ? 1 : 0)
+            .animation(
+                .easeOut(duration: 0.4).delay(Double(min(matches.count, 4)) * 0.08 + 0.14),
+                value: isVisible
+            )
         }
     }
 }
@@ -484,9 +486,9 @@ private struct _PressScaleStyle: ButtonStyle {
 // MARK: - Previews
 
 #if DEBUG
-#Preview("Free reveal — 1 + 3 locked") {
+#Preview("Free reveal — 1 lit + 3 locked") {
     DesireRevealView(store: .previewStore(matches: [
-        .sample("New Relationship Energy (NRE)", .mutual),
+        .sample("New Relationship Energy", .mutual),
         .sample("Overnight Stays With Others", .adjacent, locked: true),
         .sample("Meeting Your Partner's Other Connections", .mutual, locked: true),
         .sample("Time and Attention", .adjacent, locked: true),
@@ -495,11 +497,13 @@ private struct _PressScaleStyle: ButtonStyle {
     .preferredColorScheme(.dark)
 }
 
-#Preview("Fully unlocked — core") {
+#Preview("Fully unlocked — 5 stars") {
     DesireRevealView(store: .previewStore(matches: [
-        .sample("New Relationship Energy (NRE)", .mutual),
-        .sample("Overnight Stays With Others", .adjacent),
-        .sample("Meeting Your Partner's Other Connections", .mutual),
+        .sample("New Relationship Energy", .mutual),
+        .sample("Overnight Stays", .adjacent),
+        .sample("Meeting Partners", .mutual),
+        .sample("Shared Space", .mutual),
+        .sample("Deep Conversations", .adjacent),
     ]))
     .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
     .preferredColorScheme(.dark)

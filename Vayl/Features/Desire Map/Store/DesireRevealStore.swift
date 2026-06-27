@@ -33,6 +33,24 @@ final class DesireRevealStore: Identifiable {
         case failed(String)
     }
 
+    // MARK: - Beat phase (3-beat reveal ceremony)
+    //
+    // idle    → (load completes) → beat1: free match entrance; auto-advances after kHold12
+    // beat1   → (hold) → beat2: locked teasers stagger in; auto-advances after kHold23
+    // beat2   → (hold) → beat3: paywall auto-rises
+    // beat3   → (purchase) → revealed: all matches lit, confident lines
+    //
+    // Already-Core couples skip beats 2-3 and land directly in revealed.
+    // Tap-to-advance (advanceBeat) skips the current hold immediately.
+
+    enum BeatPhase: Int, Equatable {
+        case idle     = 0
+        case beat1    = 1   // free match visible only
+        case beat2    = 2   // locked teasers stagger in
+        case beat3    = 3   // paywall open
+        case revealed = 4   // post-unlock: all matches lit
+    }
+
     // MARK: - Published state
 
     private(set) var phase: Phase = .loading
@@ -40,6 +58,18 @@ final class DesireRevealStore: Identifiable {
     /// All matches, each resolved to a display name + alignment + locked flag.
     /// Free couple: the one `is_free_reveal` is unlocked, the rest locked. Core: all unlocked.
     private(set) var matches: [RevealMatch] = []
+
+    /// Drives the 3-beat ceremony. View observes this to choreograph the visual sequence.
+    private(set) var beatPhase: BeatPhase = .idle
+
+    // MARK: - Interaction state (sheet hosts live inside the reveal cover)
+
+    /// Set when the user taps a star — drives the detail sheet.
+    var selectedMatch: RevealMatch? = nil
+    /// True while the full-map list sheet is open.
+    var showFullMap: Bool = false
+    /// True while the paywall sheet is open (tapped a locked star or the upgrade CTA).
+    var showPaywall: Bool = false
 
     // MARK: - Derived
 
@@ -68,6 +98,51 @@ final class DesireRevealStore: Identifiable {
         self.service = service ?? .shared
     }
 
+    // MARK: - Beat sequence
+
+    /// Kick off the reveal ceremony. No-op if a sequence is already running.
+    /// Already-Core couples skip straight to .revealed (no conversion moment needed).
+    func startBeatSequence() {
+        guard beatPhase == .idle else { return }
+        if isFullyUnlocked {
+            beatPhase = .revealed
+        } else {
+            beatPhase = .beat1
+            scheduleAutoAdvance()
+        }
+    }
+
+    /// Tap-to-advance: skip the current hold immediately. Idempotent — safe to call at any beat.
+    /// Animations are driven by the View observing beatPhase changes.
+    func advanceBeat() {
+        switch beatPhase {
+        case .beat1: beatPhase = .beat2
+        case .beat2: beatPhase = .beat3; showPaywall = true
+        case .beat3: showPaywall = true  // re-open paywall if the user dismissed it without purchasing
+        default: break
+        }
+    }
+
+    private func scheduleAutoAdvance() {
+        // Holds from desire-reveal.html control panel (default values; feel in the mockup):
+        //   kHold12 (flip-settle → gap): 1.5s
+        //   kHold23 (gap appears → paywall rises): 1.2s
+        let kHold12: Double = 1.5
+        let kHold23: Double = 1.2
+        Task {
+            try? await Task.sleep(for: .seconds(kHold12))
+            guard beatPhase == .beat1 else { return }
+            beatPhase = .beat2
+
+            // Wait for all locked rows to stagger in before the hold begins
+            let staggerDone = Double(lockedCount) * 0.08 + 0.14
+            try? await Task.sleep(for: .seconds(staggerDone + kHold23))
+            guard beatPhase == .beat2 else { return }
+            beatPhase = .beat3
+            showPaywall = true
+        }
+    }
+
     // MARK: - Load
 
     /// Fetch the couple's matches and resolve the free/locked split. No-op (empty) when unpaired.
@@ -76,12 +151,14 @@ final class DesireRevealStore: Identifiable {
         phase = .loading
         do {
             let names = try itemNameMap()
+            let categories = try itemCategoryMap()
             let rows = try await service.fetchMatches(coupleId: coupleId)
             let core = entitlements.isCore
             matches = rows.map { row in
                 RevealMatch(
                     id: row.id,
                     itemName: names[row.desireItemId] ?? row.desireItemId,
+                    itemCategory: categories[row.desireItemId],
                     alignment: row.matchType,                       // mutual / adjacent
                     isLocked: !core && !row.isFreeReveal,           // free couple locks all but the free one
                     bridgeCardId: row.bridgeCardId
@@ -89,8 +166,10 @@ final class DesireRevealStore: Identifiable {
             }
             phase = matches.isEmpty ? .empty : .ready
             if !matches.isEmpty {
-                let full = entitlements.isCore
-                Task { try? await service.markRevealSeen(coupleId: coupleId, full: full) }
+                // Always stamp free-seen. This closes the latent edge where a Core couple
+                // opening the reveal stamped only full: true, leaving free_reveal_seen_at null
+                // and HomeStore.revealDone (= hasSeenFree) permanently false.
+                Task { try? await service.markRevealSeen(coupleId: coupleId, full: false) }
             }
         } catch {
             phase = .failed(error.localizedDescription)
@@ -101,6 +180,10 @@ final class DesireRevealStore: Identifiable {
         try ContentLoader.loadDesireItems().reduce(into: [:]) { $0[$1.id] = $1.name }
     }
 
+    private func itemCategoryMap() throws -> [String: String] {
+        try ContentLoader.loadDesireItems().reduce(into: [:]) { $0[$1.id] = $1.category }
+    }
+
     // MARK: - Actions (stubbed — see file header)
 
     /// Unlock all matches for BOTH partners — runs the Core purchase (M2). On success the
@@ -108,7 +191,11 @@ final class DesireRevealStore: Identifiable {
     /// open. M5 (the dedicated paywall surface) can replace this entry with a richer sheet.
     func unlockAll() {
         Task {
-            if await entitlements.purchase() { await load() }
+            guard let coupleId = appState.coupleId else { return }
+            guard await entitlements.purchase() else { return }
+            await load()
+            // Stamp full-seen now that the whole map is accessible.
+            Task { try? await service.markRevealSeen(coupleId: coupleId, full: true) }
         }
     }
 
@@ -117,6 +204,47 @@ final class DesireRevealStore: Identifiable {
     /// never the partner's score. Stubbed until that decision lands.
     func requestHiddenConversation() {
         // TODO(D4): define what a request DOES (notify partner? queue a discussion card?).
+    }
+
+    // MARK: - Sheet interaction
+
+    /// Tap a star: unlocked → open detail sheet; locked → open paywall.
+    func selectStar(_ match: RevealMatch) {
+        if match.isLocked {
+            showPaywall = true
+        } else {
+            selectedMatch = match
+        }
+    }
+
+    /// Open the full-map list sheet from the top-right pill.
+    func openFullMap() {
+        showFullMap = true
+    }
+
+    /// Dismiss the detail sheet or the full-map sheet (not the paywall).
+    func dismissSheets() {
+        selectedMatch = nil
+        showFullMap = false
+    }
+
+    /// Dismiss the paywall sheet only.
+    func closePaywall() {
+        showPaywall = false
+    }
+
+    /// Called by `PaywallSheet.onUnlocked` after the purchase has already succeeded.
+    /// Closes the paywall, transitions to .revealed, and reloads — at this point
+    /// `entitlements.isCore` is already true, so `load()` resolves all matches as unlocked,
+    /// lighting the constellation in place. Also stamps `full: true` seen.
+    func handleUnlockSuccess() {
+        showPaywall = false
+        beatPhase = .revealed
+        Task {
+            await load()
+            guard let coupleId = appState.coupleId else { return }
+            Task { try? await service.markRevealSeen(coupleId: coupleId, full: true) }
+        }
     }
 
     // MARK: - Preview seam
@@ -141,6 +269,7 @@ final class DesireRevealStore: Identifiable {
 struct RevealMatch: Identifiable, Equatable {
     let id: UUID
     let itemName: String
+    let itemCategory: String?           // e.g. "emotional", "sexual", "communication"
     let alignment: DesireMatchType?     // mutual ("Mutual") / adjacent ("Worth Exploring")
     let isLocked: Bool
     let bridgeCardId: String?
@@ -155,8 +284,8 @@ struct RevealMatch: Identifiable, Equatable {
     }
 
     #if DEBUG
-    static func sample(_ name: String, _ alignment: DesireMatchType, locked: Bool = false) -> RevealMatch {
-        RevealMatch(id: UUID(), itemName: name, alignment: alignment, isLocked: locked, bridgeCardId: nil)
+    static func sample(_ name: String, _ alignment: DesireMatchType, locked: Bool = false, category: String? = "emotional") -> RevealMatch {
+        RevealMatch(id: UUID(), itemName: name, itemCategory: category, alignment: alignment, isLocked: locked, bridgeCardId: nil)
     }
     #endif
 }
