@@ -41,7 +41,7 @@ struct DiscussionCardView: View {
             Spacer(minLength: AppSpacing.lg)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppColors.void)
+        .background(AppColors.void.ignoresSafeArea())
     }
 }
 

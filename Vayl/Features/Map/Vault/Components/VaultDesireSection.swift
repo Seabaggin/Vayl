@@ -238,6 +238,7 @@ struct VaultDesireSection: View {
                     .foregroundStyle(AppColors.textTertiary)
             }
             .padding(AppSpacing.md)
+            .contentShape(Rectangle())
             .vaylGlassCard()
         }
         .buttonStyle(PressableCardStyle())
