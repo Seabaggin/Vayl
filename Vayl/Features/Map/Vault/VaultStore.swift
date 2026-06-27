@@ -292,4 +292,27 @@ final class VaultStore {
         try? await consentService.respond(itemId: itemId, open: open)
         await loadConsent(appState: appState, context: context)
     }
+
+    // MARK: - Discussion card
+
+    private let companionCardStore = CompanionCardStore()
+    private(set) var selectedDiscussionCard: CompanionCard? = nil
+
+    /// Opens the discussion card for a desire item at the given tier.
+    func openDiscussion(itemId: String, itemName: String, tier: CompanionCardTier) {
+        let card = companionCardStore.card(forItemId: itemId, tier: tier)
+            ?? CompanionCard(
+                id: "discussion_fallback_\(itemId)",
+                desireItemId: itemId,
+                title: itemName,
+                prompt: "What would you want to explore together here?",
+                suggestedDeckId: nil
+            )
+        selectedDiscussionCard = card
+    }
+
+    /// Clears the discussion card state.
+    func closeDiscussion() {
+        selectedDiscussionCard = nil
+    }
 }
