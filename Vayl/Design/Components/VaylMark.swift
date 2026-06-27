@@ -89,9 +89,13 @@ struct VaylMark: View {
                 .spectrumBorderGlow(intensity: glow)
 
                 if showsCore {
+                    // Pure opaque white, theme-independent (it's a lit point, not text), with a
+                    // tight white core glow so it reads as a bright anchor that accentuates the
+                    // aperture — the same lit-core idiom as DesireStarView.
                     Circle()
-                        .fill(AppColors.textPrimary)
-                        .frame(width: dim * 0.05, height: dim * 0.05)
+                        .fill(.white)
+                        .frame(width: dim * 0.065, height: dim * 0.065)
+                        .shadow(color: .white.opacity(glow), radius: dim * 0.02)
                         .spectrumBorderGlow(intensity: glow)
                 }
             }
@@ -119,6 +123,7 @@ struct VaylMark: View {
             }
         }
     }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Vayl mark — in the waiting card") {
@@ -141,4 +146,5 @@ struct VaylMark: View {
         .vaylGlassCard()
         .padding(AppSpacing.xl)
     }
+    .preferredColorScheme(.dark)
 }
