@@ -100,6 +100,44 @@ enum PulseTier: String, CaseIterable, Codable {
     }
 }
 
+/// The four quadrants of the capacity circumplex (energy x openness).
+/// These are the same four "Spaces" as PulseTier, addressed two-dimensionally.
+/// Axis rule: midline (0.5) ties resolve toward charged/open.
+enum PulseQuadrant: String, CaseIterable, Codable {
+    case expansive   // charged + open   (top-right)
+    case friction    // charged + guarded(top-left)
+    case sovereign   // quiet  + open    (bottom-right)
+    case protective  // quiet  + guarded (bottom-left)
+
+    var spaceName: String {
+        switch self {
+        case .expansive:  return "The Expansive Space"
+        case .friction:   return "The Friction Space"
+        case .sovereign:  return "The Sovereign Space"
+        case .protective: return "The Protective Space"
+        }
+    }
+
+    var sublabel: String {
+        switch self {
+        case .expansive:  return "Connected · Adventurous"
+        case .friction:   return "Anxious · Defensive"
+        case .sovereign:  return "Grounded · Secure"
+        case .protective: return "Overwhelmed · Need Space"
+        }
+    }
+
+    /// Capacity-tier colour token for the aura body.
+    var capacityColor: PulseCapacityColor {
+        switch self {
+        case .expansive:  return .cyan
+        case .sovereign:  return .indigo
+        case .friction:   return .magenta
+        case .protective: return .rose
+        }
+    }
+}
+
 /// Time window for pulse graph display.
 /// widgetDefault drives the home screen widget.
 /// Full window selector appears in PulseFullView only.

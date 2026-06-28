@@ -17,14 +17,23 @@ import Foundation
 struct PulseEntry: Identifiable, Codable {
     var id:            UUID               = UUID()
     var date:          Date
-    var capacityScore: Double              // 1.0–4.0 — clamped result of check-in math
-    var glowColor:     PulseCapacityColor  // Q4 answer — maps to AppColors
+    var capacityScore: Double              // kept for back-compat decode; prefer resolvedPosition.capacityScore
+    var glowColor:     PulseCapacityColor  // Q4 answer
     var speed:         String              // Q5 answer label
 
-    // Q1–Q3 answers — displayed in dot summary sheet
+    // Q1-Q3 answers
     var nervousSystem: String              // Q1 answer label
     var focus:         String              // Q2 answer label
     var feeling:       String              // Q3 answer label
+
+    var position: PulsePosition? = nil     // nil for pre-redesign entries
+
+    /// Effective position: stored field, or reconstructed from legacy capacityScore (openness mid).
+    var resolvedPosition: PulsePosition {
+        position ?? PulsePosition(energy: (capacityScore - 1) / 3, openness: 0.5)
+    }
+
+    var quadrant: PulseQuadrant { resolvedPosition.quadrant }
 }
 
 // MARK: - Tier convenience
