@@ -443,6 +443,7 @@ struct SettingsSubScreenShell<Content: View>: View {
         .preferredColorScheme(.dark)
         .environment(state)
         .environment(EntitlementStore(modelContainer: .previewContainer, appState: state))
+        .environment(AuthService())
         .modelContainer(ModelContainer.previewContainer)
 }
 #endif
