@@ -307,54 +307,57 @@ struct SettingsView: View {
             SettingsSectionLabel(text: "You")
             SettingsCard {
                 VStack(spacing: 0) {
-                    NavigationLink(value: SettingsRoute.you) {
-                        SettingsNavRow(
-                            icon: "person.circle",
-                            label: "Display name",
-                            value: appState.displayName.isEmpty ? nil : appState.displayName,
-                            iconTint: AppColors.spectrumCyan,
-                            iconBg: AppColors.spectrumCyan.opacity(0.10)
-                        )
-                    }
-                    .buttonStyle(PressableCardStyle())
+                    SettingsNavRow(
+                        icon: "person.circle",
+                        label: "Display name",
+                        value: appState.displayName.isEmpty ? nil : appState.displayName,
+                        iconTint: AppColors.spectrumCyan,
+                        iconBg: AppColors.spectrumCyan.opacity(0.10),
+                        showChevron: false
+                    )
 
                     Divider().overlay(AppColors.borderSubtle)
 
-                    NavigationLink(value: SettingsRoute.you) {
-                        SettingsNavRow(
-                            icon: "quote.bubble",
-                            label: "Pronouns",
-                            value: profile?.pronouns.isEmpty == false
-                                ? profile?.pronouns.joined(separator: " / ")
-                                : nil,
-                            iconTint: AppColors.spectrumPurple,
-                            iconBg: AppColors.spectrumPurple.opacity(0.10)
-                        )
-                    }
-                    .buttonStyle(PressableCardStyle())
+                    SettingsNavRow(
+                        icon: "quote.bubble",
+                        label: "Pronouns",
+                        value: profile?.pronouns.isEmpty == false
+                            ? profile?.pronouns.joined(separator: " / ")
+                            : nil,
+                        iconTint: AppColors.spectrumPurple,
+                        iconBg: AppColors.spectrumPurple.opacity(0.10),
+                        showChevron: false
+                    )
 
                     Divider().overlay(AppColors.borderSubtle)
 
-                    NavigationLink(value: SettingsRoute.you) {
-                        SettingsNavRow(
-                            icon: "stairs",
-                            label: "Experience",
-                            subtitle: "Shapes the deck and content shown to you",
-                            value: profile?.nmStage.displayName,
-                            iconTint: AppColors.spectrumMagenta,
-                            iconBg: AppColors.spectrumMagenta.opacity(0.10)
-                        )
-                    }
-                    .buttonStyle(PressableCardStyle())
+                    SettingsNavRow(
+                        icon: "stairs",
+                        label: "Experience",
+                        value: profile?.nmStage.displayName,
+                        iconTint: AppColors.spectrumMagenta,
+                        iconBg: AppColors.spectrumMagenta.opacity(0.10),
+                        showChevron: false
+                    )
 
                     SettingsSubSectionLabel(text: "About you")
 
+                    SettingsNavRow(
+                        icon: "person.crop.rectangle",
+                        label: "Age range",
+                        iconTint: AppColors.spectrumCyan,
+                        iconBg: AppColors.spectrumCyan.opacity(0.10),
+                        showChevron: false
+                    )
+
+                    Divider().overlay(AppColors.borderSubtle)
+
                     NavigationLink(value: SettingsRoute.you) {
                         SettingsNavRow(
-                            icon: "person.crop.rectangle",
-                            label: "Age range",
-                            iconTint: AppColors.spectrumCyan,
-                            iconBg: AppColors.spectrumCyan.opacity(0.10)
+                            icon: "pencil",
+                            label: "Edit profile",
+                            iconTint: AppColors.textSecondary,
+                            iconBg: AppColors.glassSurface
                         )
                     }
                     .buttonStyle(PressableCardStyle())
@@ -400,25 +403,33 @@ struct SettingsView: View {
 
                         SettingsSubSectionLabel(text: "Relationship")
 
-                        NavigationLink(value: SettingsRoute.partner) {
-                            SettingsNavRow(
-                                icon: "heart.fill",
-                                label: "Relationship type",
-                                subtitle: "Married, partnered, dating...",
-                                iconTint: AppColors.spectrumMagenta,
-                                iconBg: AppColors.spectrumMagenta.opacity(0.10)
-                            )
-                        }
-                        .buttonStyle(PressableCardStyle())
+                        SettingsNavRow(
+                            icon: "heart.fill",
+                            label: "Relationship type",
+                            subtitle: "Married, partnered, dating...",
+                            iconTint: AppColors.spectrumMagenta,
+                            iconBg: AppColors.spectrumMagenta.opacity(0.10),
+                            showChevron: false
+                        )
+
+                        Divider().overlay(AppColors.borderSubtle)
+
+                        SettingsNavRow(
+                            icon: "calendar",
+                            label: "Together since",
+                            iconTint: AppColors.spectrumPurple,
+                            iconBg: AppColors.spectrumPurple.opacity(0.10),
+                            showChevron: false
+                        )
 
                         Divider().overlay(AppColors.borderSubtle)
 
                         NavigationLink(value: SettingsRoute.partner) {
                             SettingsNavRow(
-                                icon: "calendar",
-                                label: "Together since",
-                                iconTint: AppColors.spectrumPurple,
-                                iconBg: AppColors.spectrumPurple.opacity(0.10)
+                                icon: "pencil",
+                                label: "Edit relationship info",
+                                iconTint: AppColors.textSecondary,
+                                iconBg: AppColors.glassSurface
                             )
                         }
                         .buttonStyle(PressableCardStyle())

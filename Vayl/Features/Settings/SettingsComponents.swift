@@ -50,6 +50,7 @@ struct SettingsNavRow: View {
     var labelColor: Color = AppColors.textPrimary
     var iconTint: Color = AppColors.textSecondary
     var iconBg: Color = AppColors.glassSurface
+    var showChevron: Bool = true
 
     var body: some View {
         HStack(spacing: AppSpacing.sm + AppSpacing.xs) {
@@ -82,12 +83,13 @@ struct SettingsNavRow: View {
                     .foregroundStyle(AppColors.textSecondary)
             }
 
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(AppColors.textTertiary)
-                .accessibilityHidden(true)
+            if showChevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(AppColors.textTertiary)
+                    .accessibilityHidden(true)
+            }
         }
-        // Expands tap target to full row width.
         .contentShape(Rectangle())
         .padding(.vertical, AppSpacing.sm + AppSpacing.xs)
     }
