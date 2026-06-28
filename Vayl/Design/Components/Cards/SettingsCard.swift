@@ -11,5 +11,19 @@ struct SettingsCard<Content: View>: View {
         }
         .padding(AppSpacing.md)
         .cardStyle()
+        .overlay(alignment: .top) {
+            LinearGradient(
+                colors: [
+                    .clear,
+                    AppColors.spectrumCyan.opacity(0.28),
+                    AppColors.spectrumPurple.opacity(0.26),
+                    AppColors.spectrumMagenta.opacity(0.28),
+                    .clear
+                ],
+                startPoint: .leading, endPoint: .trailing
+            )
+            .frame(height: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
     }
 }

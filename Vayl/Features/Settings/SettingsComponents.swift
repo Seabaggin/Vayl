@@ -20,12 +20,14 @@ struct SettingsSectionLabel: View {
 
 // MARK: - SettingsNavRow
 
-/// A navigation row with icon, label, optional trailing value, and chevron.
-/// Wrap in `NavigationLink(value:)` — this view is layout only, no tap action.
+/// A navigation row with icon badge, label (+ optional subtitle), optional trailing value, and chevron.
+/// Wrap in a `Button` or `NavigationLink(value:)` — this view is layout only.
 struct SettingsNavRow: View {
     let icon: String
     let label: String
+    var subtitle: String? = nil
     var value: String? = nil
+    var labelColor: Color = AppColors.textPrimary
     var iconTint: Color = AppColors.textSecondary
     var iconBg: Color = AppColors.glassSurface
 
@@ -41,9 +43,16 @@ struct SettingsNavRow: View {
                 )
                 .frame(width: 32, height: 32)
 
-            Text(label)
-                .font(AppFonts.bodyMedium)
-                .foregroundStyle(AppColors.textPrimary)
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                Text(label)
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(labelColor)
+                if let sub = subtitle {
+                    Text(sub)
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                }
+            }
 
             Spacer()
 
