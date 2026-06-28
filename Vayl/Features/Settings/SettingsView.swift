@@ -121,7 +121,7 @@ struct SettingsView: View {
             }
             .padding(.top, AppSpacing.md)
 
-            Text("Profile.")
+            Text(appState.displayName.isEmpty ? "Settings." : "\(appState.displayName).")
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(
                     LinearGradient(
@@ -131,14 +131,6 @@ struct SettingsView: View {
                     )
                 )
                 .padding(.top, AppSpacing.xs)
-
-            HStack(spacing: AppSpacing.xs) {
-                if let stage = profile?.nmStage {
-                    spectrumBadge(stage.displayName)
-                }
-                plainBadge(appState.linkState == .linked ? "Linked" : "Solo discovery")
-            }
-            .padding(.top, AppSpacing.xs)
         }
     }
 
@@ -295,9 +287,12 @@ struct SettingsView: View {
     private var youSection: some View {
         NavigationLink(value: SettingsRoute.you) {
             HStack(spacing: AppSpacing.md) {
-                Image(systemName: "person.crop.circle.fill")
-                    .font(.system(size: 40))
+                Image(systemName: "person.fill")
+                    .font(.system(size: 22))
                     .foregroundStyle(AppColors.textTertiary)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(AppColors.glassSurface))
+                    .overlay(Circle().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: AppSpacing.xxs) {
