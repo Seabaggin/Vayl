@@ -25,14 +25,6 @@ struct SettingsView: View {
     @Query private var profiles: [UserProfile]
     private var profile: UserProfile? { profiles.first }
 
-    // Inline preference state
-    @AppStorage("appLockEnabled")               private var appLock:            Bool = false
-    @AppStorage("blurInSwitcherEnabled")         private var blurInSwitcher:      Bool = true
-    @AppStorage("screenshotProtectionEnabled")   private var screenshotProtection: Bool = true
-    @AppStorage("notificationsCheckInReminder")  private var checkInReminder:     Bool = true
-    @AppStorage("notificationsPartnerActivity")  private var partnerNudges:       Bool = true
-    @AppStorage("notificationsDiscreetMode")     private var discreetMode:        Bool = false
-    @AppStorage("hapticFeedbackEnabled")         private var hapticFeedback:      Bool = true
 
     // Sheet / dialog state
     @State private var showInvite:          Bool = false
@@ -481,100 +473,39 @@ struct SettingsView: View {
             SettingsSectionLabel(text: "App")
             SettingsCard {
                 VStack(spacing: 0) {
-
-                    // Privacy & safety
-                    SettingsSubSectionLabel(text: "Privacy & safety", isFirst: true)
-                    SettingsToggleRow(
-                        icon: "lock.fill",
-                        label: "App lock",
-                        subtitle: "Face ID · locks immediately",
-                        iconTint: AppColors.safetyAccent,
-                        iconBg: AppColors.safetyAccent.opacity(0.09),
-                        isOn: $appLock
-                    )
-                    Divider().overlay(AppColors.borderSubtle)
-                    SettingsToggleRow(
-                        icon: "eye.slash.fill",
-                        label: "Blur in app switcher",
-                        iconTint: AppColors.textSecondary,
-                        iconBg: AppColors.glassSurface,
-                        isOn: $blurInSwitcher
-                    )
-                    Divider().overlay(AppColors.borderSubtle)
-                    SettingsToggleRow(
-                        icon: "camera.viewfinder",
-                        label: "Screenshot protection",
-                        iconTint: AppColors.textSecondary,
-                        iconBg: AppColors.glassSurface,
-                        isOn: $screenshotProtection
-                    )
-                    Divider().overlay(AppColors.borderSubtle)
-                    Button {} label: {
+                    NavigationLink(value: SettingsRoute.privacy) {
                         SettingsNavRow(
-                            icon: "checklist",
-                            label: "Review ground rules",
-                            iconTint: AppColors.textSecondary,
-                            iconBg: AppColors.glassSurface
+                            icon: "lock.fill",
+                            label: "Privacy & safety",
+                            iconTint: AppColors.safetyAccent,
+                            iconBg: AppColors.safetyAccent.opacity(0.09)
                         )
                     }
                     .buttonStyle(PressableCardStyle())
 
-                    // Notifications
-                    SettingsSubSectionLabel(text: "Notifications")
-                    SettingsToggleRow(
-                        icon: "bell.fill",
-                        label: "Check-in reminder",
-                        subtitle: "Weekly · Sunday evenings",
-                        iconTint: AppColors.spectrumPurple,
-                        iconBg: AppColors.spectrumPurple.opacity(0.10),
-                        isOn: $checkInReminder
-                    )
                     Divider().overlay(AppColors.borderSubtle)
-                    SettingsToggleRow(
-                        icon: "bell.badge.fill",
-                        label: "Partner nudges",
-                        iconTint: AppColors.spectrumPurple,
-                        iconBg: AppColors.spectrumPurple.opacity(0.10),
-                        isOn: $partnerNudges
-                    )
-                    Divider().overlay(AppColors.borderSubtle)
-                    SettingsToggleRow(
-                        icon: "eye.slash",
-                        label: "Discreet mode",
-                        subtitle: "Hide content in alerts",
-                        iconTint: AppColors.textSecondary,
-                        iconBg: AppColors.glassSurface,
-                        isOn: $discreetMode
-                    )
 
-                    // Appearance
-                    SettingsSubSectionLabel(text: "Appearance")
-                    Button {} label: {
+                    NavigationLink(value: SettingsRoute.notifications) {
+                        SettingsNavRow(
+                            icon: "bell.fill",
+                            label: "Notifications",
+                            iconTint: AppColors.spectrumPurple,
+                            iconBg: AppColors.spectrumPurple.opacity(0.10)
+                        )
+                    }
+                    .buttonStyle(PressableCardStyle())
+
+                    Divider().overlay(AppColors.borderSubtle)
+
+                    NavigationLink(value: SettingsRoute.appearance) {
                         SettingsNavRow(
                             icon: "paintpalette.fill",
-                            label: "Theme",
-                            value: "Midnight",
+                            label: "Appearance",
                             iconTint: AppColors.spectrumMagenta,
                             iconBg: AppColors.spectrumMagenta.opacity(0.10)
                         )
                     }
                     .buttonStyle(PressableCardStyle())
-                    LinearGradient(
-                        colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-                        startPoint: .leading, endPoint: .trailing
-                    )
-                    .frame(height: 5)
-                    .clipShape(Capsule())
-                    .opacity(0.85)
-                    .padding(.vertical, AppSpacing.xs)
-                    SettingsToggleRow(
-                        icon: "waveform",
-                        label: "Haptic feedback",
-                        subtitle: "Feel interactions through vibration.",
-                        iconTint: AppColors.textSecondary,
-                        iconBg: AppColors.glassSurface,
-                        isOn: $hapticFeedback
-                    )
                 }
             }
         }
