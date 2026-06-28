@@ -364,18 +364,6 @@ struct HomeDashboardView: View {
                 font: AppFonts.display(40, weight: .bold, relativeTo: .largeTitle),
                 animated: false
             )
-            Button {
-                onOpenSettings?()
-            } label: {
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(AppColors.textSecondary)
-                    .frame(width: 36, height: 36)
-                    .background(Circle().fill(AppColors.glassSurface))
-                    .accessibilityHidden(true)
-            }
-            .buttonStyle(PressableCardStyle())
-            .accessibilityLabel("Open settings")
             Spacer()
             PartnerChip(
                 state: partnerChipState,

@@ -58,9 +58,6 @@ private struct HomeRouterInnerView: View {
     @Namespace private var pathNamespace
     @State private var showPath = false
 
-    // ── Settings cover ───────────────────────────────────────────────────
-    @State private var showSettings = false
-
     init(appState: AppState, modelContainer: ModelContainer) {
         _store = State(initialValue: HomeStore(modelContainer: modelContainer, appState: appState))
     }
@@ -106,9 +103,6 @@ private struct HomeRouterInnerView: View {
             if let revealStore = activeReveal {
                 DesireRevealView(store: revealStore)
             }
-        }
-        .vaylCover(isPresented: $showSettings, confirmOnExit: false) {
-            SettingsView()
         }
     }
 
@@ -235,7 +229,7 @@ private struct HomeRouterInnerView: View {
                 // Interim: route to the Pulse surface. Final: present the shared
                 // check-in sheet in place (Bryan's PulseWidget pass).
                 onCheckIn:           { appState.selectedTab = .map },
-                onOpenSettings:      { showSettings = true }
+                onOpenSettings:      { appState.selectedTab = .settings }
             )
         }
     }

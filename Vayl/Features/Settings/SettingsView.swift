@@ -16,6 +16,8 @@ enum SettingsRoute: Hashable {
 // MARK: - Main view
 
 struct SettingsView: View {
+    var isTab: Bool = false
+
     @Environment(AppState.self)          private var appState
     @Environment(EntitlementStore.self)  private var entitlements
     @Environment(AuthService.self)       private var authService
@@ -107,17 +109,19 @@ struct SettingsView: View {
                     .tracking(2)
                     .foregroundStyle(AppColors.textSectionLabel)
                 Spacer()
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(AppColors.textSecondary)
-                        .frame(width: 32, height: 32)
-                        .background(Circle().fill(AppColors.glassSurface))
+                if !isTab {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(AppColors.textSecondary)
+                            .frame(width: 32, height: 32)
+                            .background(Circle().fill(AppColors.glassSurface))
+                    }
+                    .buttonStyle(PressableCardStyle())
+                    .accessibilityLabel("Close settings")
                 }
-                .buttonStyle(PressableCardStyle())
-                .accessibilityLabel("Close settings")
             }
             .padding(.top, AppSpacing.md)
 

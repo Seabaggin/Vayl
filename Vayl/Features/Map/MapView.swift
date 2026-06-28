@@ -26,7 +26,6 @@ struct MapView: View {
     @State private var showMeCard = false
     @State private var showVault = false
     @State private var showPaywall = false
-    @State private var showSettings = false
     @State private var vaultStore = VaultStore()
 
     var body: some View {
@@ -106,9 +105,6 @@ struct MapView: View {
                     Task { await vaultStore.loadDesire(appState: appState, context: modelContext, isCore: entitlements.isCore) }
                 })
             }
-            .vaylCover(isPresented: $showSettings, confirmOnExit: false) {
-                SettingsView()
-            }
         }
         .task {
             store.load(appState: appState, context: modelContext, isCore: entitlements.isCore)
@@ -132,7 +128,6 @@ struct MapView: View {
                 }
             }
             Spacer()
-            gearButton
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -184,20 +179,6 @@ struct MapView: View {
         .animation(AppAnimation.slow, value: store.partnerName)
     }
 
-    private var gearButton: some View {
-        Button {
-            showSettings = true
-        } label: {
-            Image(systemName: "gearshape")
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(AppColors.textSecondary)
-                .frame(width: 36, height: 36)
-                .background(Circle().fill(AppColors.glassSurface))
-                .overlay(Circle().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
-        }
-        .buttonStyle(PressableCardStyle())
-        .accessibilityLabel("Settings")
-    }
 
     // MARK: - Layers (empty scaffolds in Seg 0; filled in Segments 1-5)
 

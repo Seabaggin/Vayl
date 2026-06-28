@@ -22,6 +22,8 @@ struct AppShell: View {
                 TabContentWrapper { MapView() }
             case .learn:
                 TabContentWrapper { LearnView() }
+            case .settings:
+                TabContentWrapper { SettingsView(isTab: true) }
             }
         }
         // The tab bar is attached as a bottom SAFE-AREA INSET, not a ZStack overlay.
