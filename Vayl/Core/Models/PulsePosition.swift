@@ -3,10 +3,10 @@
 import Foundation
 
 /// A capacity reading as a point in the circumplex.
-/// Axes are normalised 0...1: energy 0 = quiet, 1 = charged; openness 0 = guarded, 1 = open.
-/// Midline (0.5) ties resolve toward charged/open (>= rule).
+/// Axes are normalised 0...1: energy 0 = low, 1 = high; openness 0 = guarded, 1 = open.
+/// Midline (0.5) ties resolve toward high/open (>= rule).
 struct PulsePosition: Equatable, Codable {
-    var energy: Double      // 0...1 (vertical; 0 = quiet, 1 = charged)
+    var energy: Double      // 0...1 (vertical; 0 = low, 1 = high)
     var openness: Double    // 0...1 (horizontal; 0 = guarded, 1 = open)
 
     init(energy: Double, openness: Double) {
@@ -16,7 +16,7 @@ struct PulsePosition: Equatable, Codable {
 
     private static func clamp(_ v: Double) -> Double { max(0, min(1, v)) }
 
-    /// Which quadrant this point falls in. Midline ties (>= 0.5) resolve toward charged/open.
+    /// Which quadrant this point falls in. Midline ties (>= 0.5) resolve toward high/open.
     var quadrant: PulseQuadrant {
         let charged = energy >= 0.5
         let open    = openness >= 0.5

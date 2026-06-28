@@ -21,7 +21,6 @@ struct MapView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var store = MapStore()
 
-    // Pulse check-in state — the screen owns the cover/sheet (mirrors PulseWidget).
     @State private var showCheckIn = false
     @State private var showPulseSheet = false
     @State private var showMeCard = false
@@ -29,12 +28,6 @@ struct MapView: View {
     @State private var showPaywall = false
     @State private var showSettings = false
     @State private var vaultStore = VaultStore()
-    @State private var pendingEntry: PulseEntry? = nil
-    @State private var camScale: CGFloat = 1.0
-    @State private var camTx: CGFloat = 0.0
-    @State private var camTy: CGFloat = 0.0
-    @State private var liveScore: Double? = nil
-    @State private var drawProgress: CGFloat = 0.0
 
     var body: some View {
         @Bindable var store = store
@@ -62,28 +55,12 @@ struct MapView: View {
             // Pin the screen to the true width so an ignoresSafeArea child (the
             // atmosphere) cannot inflate the container and shove the column off-centre.
             .frame(width: layout.screenWidth, alignment: .center)
-            .vaylCover(isPresented: $showCheckIn, confirmOnExit: false) {
-                CheckInShell(
-                    entries:      pulse.entries,
-                    camScale:     $camScale,
-                    camTx:        $camTx,
-                    camTy:        $camTy,
-                    liveScore:    $liveScore,
-                    drawProgress: $drawProgress,
-                    onComplete: { entry in
-                        pendingEntry = entry
-                        showCheckIn  = false
-                    },
-                    onDismiss: {
-                        resetCheckInState()
-                        showCheckIn = false
-                    }
-                )
-            }
-            .onChange(of: showCheckIn) { _, isShowing in
-                if !isShowing, let entry = pendingEntry {
-                    handleNewEntry(entry)
-                }
+            .vaylSheet(
+                isPresented: $showCheckIn,
+                heightFraction: 0.82,
+                screenHeight: layout.screenHeight
+            ) {
+                PulseCheckInView(store: pulse, onClose: { showCheckIn = false })
             }
             .onChange(of: appState.vaultOpenPending) { _, pending in
                 if pending {
@@ -249,33 +226,20 @@ struct MapView: View {
 
     private var usLayer: some View {
         MapUsLayer(
-            stats: store.usStats,
-            align: store.alignItems,
+            stats:            store.usStats,
+            align:            store.alignItems,
             lockedAlignCount: store.lockedAlignCount,
-            onOpenVault: { showVault = true }
+            onOpenVault:      { showVault = true },
+            partnerPosition:  store.partnerPosition,
+            partnerName:      store.partnerName
         )
     }
 
-    // MARK: - Pulse check-in plumbing (the screen owns the cover, mirrors PulseWidget)
+    // MARK: - Pulse check-in
 
     private func startCheckIn() {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        resetCheckInState()
         showCheckIn = true
-    }
-
-    private func handleNewEntry(_ entry: PulseEntry) {
-        pulse.add(entry)
-        pendingEntry = nil
-        resetCheckInState()
-    }
-
-    private func resetCheckInState() {
-        camScale     = 1.0
-        camTx        = 0.0
-        camTy        = 0.0
-        liveScore    = nil
-        drawProgress = 0.0
     }
 }
 

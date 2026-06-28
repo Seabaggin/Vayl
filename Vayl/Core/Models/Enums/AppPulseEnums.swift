@@ -104,10 +104,10 @@ enum PulseTier: String, CaseIterable, Codable {
 /// These are the same four "Spaces" as PulseTier, addressed two-dimensionally.
 /// Axis rule: midline (0.5) ties resolve toward charged/open.
 enum PulseQuadrant: String, CaseIterable, Codable {
-    case expansive   // charged + open   (top-right)
-    case friction    // charged + guarded(top-left)
-    case sovereign   // quiet  + open    (bottom-right)
-    case protective  // quiet  + guarded (bottom-left)
+    case expansive   // high energy + open    (top-right)
+    case friction    // high energy + guarded (top-left)
+    case sovereign   // low energy  + open    (bottom-right)
+    case protective  // low energy  + guarded (bottom-left)
 
     var spaceName: String {
         switch self {

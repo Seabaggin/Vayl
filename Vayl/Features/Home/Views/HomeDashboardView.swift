@@ -283,10 +283,13 @@ struct HomeDashboardView: View {
             ) {
                 CardSessionContainerView(hand: sessionHand ?? [])
             }
-            // Pulse check-in — presented in place over Home (no tab switch).
-            // confirmOnExit:false so it doesn't inherit the session's leave-guard.
-            .vaylCover(isPresented: $showPulseCheckIn, confirmOnExit: false) {
-                PulseCheckInCover(store: pulseStore, onClose: { showPulseCheckIn = false })
+            // Pulse check-in — sheet (discrete task), not a cover (not an immersive mode).
+            .vaylSheet(
+                isPresented: $showPulseCheckIn,
+                heightFraction: 0.82,
+                screenHeight: layout.screenHeight
+            ) {
+                PulseCheckInView(store: pulseStore, onClose: { showPulseCheckIn = false })
             }
             // The Vayl sheet (custom OB chrome). Pass the real screen height so the
             // half fraction is reliable — the overlay's own geometry here measures the

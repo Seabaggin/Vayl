@@ -31,18 +31,6 @@ struct PulseCheckInCover: View {
     @State private var drawProgress: CGFloat = 0.0
 
     var body: some View {
-        CheckInShell(
-            entries:      store.entries,
-            camScale:     $camScale,
-            camTx:        $camTx,
-            camTy:        $camTy,
-            liveScore:    $liveScore,
-            drawProgress: $drawProgress,
-            onComplete: { entry in
-                store.add(entry)
-                onClose()
-            },
-            onDismiss: { onClose() }
-        )
+        CheckInShell(store: store, onDismiss: onClose, entries: store.entries)
     }
 }

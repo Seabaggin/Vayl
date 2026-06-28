@@ -14,7 +14,7 @@ struct PulseAura: View {
 
     @State private var breatheScale: CGFloat = 1.0
     @State private var causticActive = false
-    @State private var sweepActive   = false
+    @State private var sweepActive   = false  // drives glassSweep via GlassSpecularSweep factory
 
     private var tier: PulseCapacityColor { quadrant.capacityColor }
 
@@ -22,7 +22,6 @@ struct PulseAura: View {
         ZStack {
             bodyLayer
             causticLayer
-                .blendMode(.screen)
             glassSweep
             rimLayer
         }
@@ -54,32 +53,35 @@ struct PulseAura: View {
     }
 
     private var causticLayer: some View {
-        let s = size * 1.32  // oversized so drift edges never show through the clip
-        return ZStack {
-            // blob 1: specular white flash (35% 38%)
-            RadialGradient(
-                colors: [.white.opacity(0.60), .clear],
-                center: UnitPoint(x: 0.35, y: 0.38),
-                startRadius: 0,
-                endRadius: s * 0.30
-            )
-            // blob 2: tier light (66% 60%)
-            RadialGradient(
-                colors: [tier.auraLight.opacity(0.90), .clear],
-                center: UnitPoint(x: 0.66, y: 0.60),
-                startRadius: 0,
-                endRadius: s * 0.28
-            )
-            // blob 3: tier core (50% 80%)
-            RadialGradient(
-                colors: [tier.auraCore.opacity(0.80), .clear],
-                center: UnitPoint(x: 0.50, y: 0.80),
-                startRadius: 0,
-                endRadius: s * 0.30
-            )
+        // CSS `background:` layers composite bottom-to-top (last declaration = bottom).
+        // Canvas mirrors that exactly — each fill() draws over the prior one.
+        // This single-pass render matches CSS's internal multi-background compositing;
+        // a ZStack of separate RadialGradient views doesn't — the z-order was inverted
+        // (white ended up at the bottom, colored blobs on top) producing the viscous look.
+        let s = size * 1.32  // `inset: -16%` → 100% + 2×16% = 132%
+        return Canvas { ctx, sz in
+            let w = sz.width, h = sz.height
+            // Blob 3 — BOTTOM: tier core at 50% 80% (last CSS declaration)
+            ctx.fill(Path(CGRect(origin: .zero, size: sz)),
+                     with: .radialGradient(
+                        Gradient(colors: [tier.auraCore, .clear]),
+                        center: CGPoint(x: w * 0.50, y: h * 0.80),
+                        startRadius: 0, endRadius: w * 0.30))
+            // Blob 2 — MIDDLE: tier light at 66% 60%
+            ctx.fill(Path(CGRect(origin: .zero, size: sz)),
+                     with: .radialGradient(
+                        Gradient(colors: [tier.auraLight, .clear]),
+                        center: CGPoint(x: w * 0.66, y: h * 0.60),
+                        startRadius: 0, endRadius: w * 0.28))
+            // Blob 1 — TOP: white specular at 35% 38% (first CSS declaration)
+            ctx.fill(Path(CGRect(origin: .zero, size: sz)),
+                     with: .radialGradient(
+                        Gradient(colors: [.white.opacity(0.60), .clear]),
+                        center: CGPoint(x: w * 0.35, y: h * 0.38),
+                        startRadius: 0, endRadius: w * 0.30))
         }
         .frame(width: s, height: s)
-        // drift: alternates between two positions; phase driven by causticActive toggle
+        .blendMode(.screen)
         .offset(
             x: causticActive ?  size * 0.07 : -size * 0.06,  // FEEL: tune
             y: causticActive ? -size * 0.06 :  size * 0.06   // FEEL: tune
@@ -92,29 +94,12 @@ struct PulseAura: View {
     }
 
     private var glassSweep: some View {
-        // Strip is 2.8× the aura width, starting parked off-screen left.
-        // Parked center (sweepActive=false): -size * 0.892  (translateX(-64%) of strip width)
-        // Passed center (sweepActive=true):  +size * 0.9   (translateX(0%), strip off-screen right)
-        // The gradient bands are only visible as the strip passes through the clipped circle.
-        // FEEL: gradient stop positions and opacity tuned on device vs pulse-aura-glass.html.
-        let stripW  = size * 2.8
+        // Geometry: strip is 2.8× wide so edges stay off-screen during the sweep.
+        // Gradient recipe from GlassSpecularSweep.glassSpecular() — StatPhase canonical.
         let offsetX = sweepActive ? size * 0.9 : -size * 0.892
         return Rectangle()
-            .fill(
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear,               location: 0.36),
-                        .init(color: .white.opacity(0.30), location: 0.405),
-                        .init(color: .clear,               location: 0.45),
-                        .init(color: .clear,               location: 0.57),
-                        .init(color: .white.opacity(0.15), location: 0.61),
-                        .init(color: .clear,               location: 0.65),
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .frame(width: stripW, height: size * 1.24)
+            .fill(LinearGradient.glassSpecular())
+            .frame(width: size * 2.8, height: size * 1.24)
             .offset(x: offsetX)
             .ambientAnimation(
                 .easeInOut(duration: AppAnimation.auraGlassSweep).repeatForever(autoreverses: false),

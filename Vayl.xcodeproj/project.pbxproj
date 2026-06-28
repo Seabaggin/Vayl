@@ -28,6 +28,7 @@
 		AA000007AAAA000000000001 /* DesireRevealStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000007AAAA000000000002 /* DesireRevealStoreTests.swift */; };
 		AA000008AAAA000000000001 /* DesireMapStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000008AAAA000000000002 /* DesireMapStoreTests.swift */; };
 		AA000009AAAA000000000001 /* PulsePositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000009AAAA000000000002 /* PulsePositionTests.swift */; };
+		AA00000AAAAA000000000001 /* PulseAnswersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000AAAAA000000000002 /* PulseAnswersTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -66,6 +67,7 @@
 		AA000007AAAA000000000002 /* DesireRevealStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesireRevealStoreTests.swift; sourceTree = "<group>"; };
 		AA000008AAAA000000000002 /* DesireMapStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesireMapStoreTests.swift; sourceTree = "<group>"; };
 		AA000009AAAA000000000002 /* PulsePositionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulsePositionTests.swift; sourceTree = "<group>"; };
+		AA00000AAAAA000000000002 /* PulseAnswersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseAnswersTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -165,6 +167,7 @@
 				AA000007AAAA000000000002 /* DesireRevealStoreTests.swift */,
 				AA000008AAAA000000000002 /* DesireMapStoreTests.swift */,
 				AA000009AAAA000000000002 /* PulsePositionTests.swift */,
+				AA00000AAAAA000000000002 /* PulseAnswersTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -363,6 +366,7 @@
 				AA000007AAAA000000000001 /* DesireRevealStoreTests.swift in Sources */,
 				AA000008AAAA000000000001 /* DesireMapStoreTests.swift in Sources */,
 				AA000009AAAA000000000001 /* PulsePositionTests.swift in Sources */,
+				AA00000AAAAA000000000001 /* PulseAnswersTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

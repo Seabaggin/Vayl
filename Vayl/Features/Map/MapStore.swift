@@ -69,6 +69,11 @@ final class MapStore {
 
     private(set) var meCard = MeCard()
 
+    // MARK: - Pulse positions
+
+    /// The partner's current circumplex position. nil until Segment 7 wires PulseSyncService.
+    private(set) var partnerPosition: PulsePosition? = nil
+
     // MARK: - The Us layer
 
     struct UsStats {
