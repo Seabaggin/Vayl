@@ -298,18 +298,9 @@ struct SettingsView: View {
             SettingsSectionLabel(text: "You")
             NavigationLink(value: SettingsRoute.you) {
                 HStack(spacing: AppSpacing.md) {
-                    // Avatar
-                    Circle()
-                        .fill(AppColors.spectrumPurple.opacity(0.18))
-                        .overlay(
-                            Circle().strokeBorder(AppColors.spectrumPurple.opacity(0.30), lineWidth: 1)
-                        )
-                        .frame(width: 48, height: 48)
-                        .overlay(
-                            Text(appState.displayName.prefix(1).uppercased())
-                                .font(AppFonts.display(20, weight: .bold, relativeTo: .title))
-                                .foregroundStyle(AppColors.spectrumPurple)
-                        )
+                    Image(systemName: "person.crop.circle.fill")
+                        .font(.system(size: 40))
+                        .foregroundStyle(AppColors.textTertiary)
                         .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: AppSpacing.xxs) {
