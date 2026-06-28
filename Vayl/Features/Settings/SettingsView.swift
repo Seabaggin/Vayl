@@ -18,7 +18,11 @@ enum SettingsRoute: Hashable {
 struct SettingsView: View {
     @Environment(AppState.self)         private var appState
     @Environment(EntitlementStore.self) private var entitlements
+    @Environment(AuthService.self)      private var authService
     @Environment(\.dismiss)             private var dismiss
+
+    @State private var showSignOutConfirm:  Bool = false
+    @State private var showDeleteConfirm:   Bool = false
 
     var body: some View {
         NavigationStack {
@@ -50,6 +54,20 @@ struct SettingsView: View {
                 case .appearance:    SettingsAppearanceView()
                 case .partner:       SettingsPartnerView()
                 }
+            }
+            .confirmationDialog("Sign out?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
+                Button("Sign out", role: .destructive) {
+                    Task { await authService.signOut() }
+                }
+                Button("Cancel", role: .cancel) {}
+            }
+            .alert("Delete account?", isPresented: $showDeleteConfirm) {
+                Button("Delete everything", role: .destructive) {
+                    // Full deletion deferred to V1.1 — requires server-side cleanup
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This permanently deletes your data and cannot be undone.")
             }
         }
     }
@@ -285,7 +303,7 @@ struct SettingsView: View {
         SettingsCard {
             VStack(spacing: 0) {
                 Button {
-                    // Wired in Seg 4
+                    showSignOutConfirm = true
                 } label: {
                     HStack {
                         Text("Sign out")
@@ -301,7 +319,7 @@ struct SettingsView: View {
                 Divider().overlay(AppColors.borderSubtle)
 
                 Button {
-                    // Wired in Seg 4
+                    // Export data deferred to V1.1 — requires server-side data export pipeline
                 } label: {
                     HStack {
                         Text("Export my data")
@@ -321,7 +339,7 @@ struct SettingsView: View {
                 Divider().overlay(AppColors.borderSubtle)
 
                 Button {
-                    // Wired in Seg 4
+                    showDeleteConfirm = true
                 } label: {
                     HStack {
                         Text("Delete account")
@@ -370,20 +388,6 @@ struct SettingsView: View {
                 .padding(.top, AppSpacing.xs)
         }
         .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Sub-screen stubs (replaced in Segs 2–4)
-
-struct SettingsPartnerView: View {
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        SettingsSubScreenShell(title: "Partner", onBack: { dismiss() }) {
-            Text("Partner settings — Seg 4")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textTertiary)
-                .padding(.top, AppSpacing.lg)
-        }
     }
 }
 
