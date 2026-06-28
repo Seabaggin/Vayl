@@ -43,6 +43,12 @@ struct MapUsLayer: View {
         return distance > 0.45 ? "A wide day between you" : "Close today"
     }
 
+    private var usGridPairs: [(mine: PulseQuadrant, partner: PulseQuadrant?)] {
+        // Until Segment 7 wires PulseSyncService, partner entries are unavailable
+        // and carry-forward yields all-nil partner halves (solid my-colour cells).
+        PulseHistory.pairedLastLogged(mine: pulse.entries, partner: [])
+    }
+
     private var descCopy: String {
         guard let partner = partnerPosition else {
             return "Partner hasn't checked in yet today."
@@ -59,6 +65,9 @@ struct MapUsLayer: View {
         VStack(alignment: .leading, spacing: AppSpacing.lg) {
             fieldBlock
             copyBlock
+            if !usGridPairs.isEmpty {
+                PulseHistoryGrid(mode: .us(usGridPairs, partnerName: partnerName))
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

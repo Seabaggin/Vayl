@@ -57,6 +57,12 @@ struct MapPulseHero: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.top, AppSpacing.sm)
+
+            // History grid — last 30 logged check-ins, never "last 30 days".
+            if !meGridQuadrants.isEmpty {
+                PulseHistoryGrid(mode: .me(meGridQuadrants))
+                    .padding(.top, AppSpacing.lg)
+            }
         }
         .vaylSheet(isPresented: $showMap, heightFraction: 0.88) {
             MapFieldSheet(position: currentPosition, quadrant: currentQuadrant)
@@ -90,6 +96,10 @@ struct MapPulseHero: View {
     }
 
     private var currentQuadrant: PulseQuadrant { currentPosition.quadrant }
+
+    private var meGridQuadrants: [PulseQuadrant] {
+        PulseHistory.lastLogged(pulse.entries).map { $0.resolvedPosition.quadrant }
+    }
 
     private var weatherLine: String? {
         let entries = pulse.entries
