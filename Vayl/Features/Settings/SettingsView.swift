@@ -219,15 +219,8 @@ struct SettingsView: View {
                 .buttonStyle(PressableCardStyle())
             }
             .padding(AppSpacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: AppRadius.container)
-                    .fill(AppColors.spectrumCyan.opacity(0.05))
-            )
+            .vaylGlassCard(accent: AppColors.spectrumCyan, radius: AppRadius.container)
             .overlay(alignment: .top) { spectrumTopLine }
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.container)
-                    .strokeBorder(AppColors.borderSubtle, lineWidth: 1)
-            )
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
             .padding(.top, AppSpacing.md)
         } else {
@@ -285,7 +278,7 @@ struct SettingsView: View {
             }
             .padding(AppSpacing.md)
             .background(
-                RoundedRectangle(cornerRadius: AppRadius.container)
+                RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
                     .fill(LinearGradient(
                         colors: [
                             AppColors.spectrumCyan.opacity(0.09),
@@ -296,11 +289,8 @@ struct SettingsView: View {
                         endPoint: .bottomTrailing
                     ))
             )
+            .vaylGlassCard(radius: AppRadius.container)
             .overlay(alignment: .top) { spectrumTopLine }
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.container)
-                    .strokeBorder(AppColors.borderSubtle, lineWidth: 1)
-            )
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
             .padding(.top, AppSpacing.md)
         }

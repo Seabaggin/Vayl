@@ -10,7 +10,7 @@ struct SettingsCard<Content: View>: View {
             content
         }
         .padding(AppSpacing.md)
-        .cardStyle()
+        .vaylGlassCard(radius: AppRadius.container)
         .overlay(alignment: .top) {
             LinearGradient(
                 colors: [
