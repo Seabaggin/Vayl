@@ -42,12 +42,12 @@ struct SettingsView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
                         settingsHeader
-                        membershipCard
                         youSection
                         partnerSection
                         appSection
                         accountSection
                         aboutSection
+                        membershipCard
                         versionLabel
                     }
                     .padding(.horizontal, AppSpacing.lg)
@@ -121,24 +121,6 @@ struct SettingsView: View {
             }
             .padding(.top, AppSpacing.md)
 
-            Text(appState.displayName.isEmpty ? "You." : "\(appState.displayName).")
-                .font(AppFonts.screenTitle)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .padding(.top, AppSpacing.xs)
-
-            HStack(spacing: AppSpacing.xs) {
-                if let stage = profile?.nmStage {
-                    spectrumBadge(stage.displayName)
-                }
-                plainBadge(appState.linkState == .linked ? "Linked" : "Solo discovery")
-            }
-            .padding(.top, AppSpacing.xs)
         }
     }
 
@@ -179,6 +161,7 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var membershipCard: some View {
+        SettingsSectionLabel(text: "Membership")
         if entitlements.isCore {
             HStack(spacing: AppSpacing.md) {
                 Image(systemName: "checkmark.circle.fill")
@@ -212,7 +195,6 @@ struct SettingsView: View {
             .vaylGlassCard(accent: AppColors.spectrumCyan, radius: AppRadius.container)
             .overlay(alignment: .top) { spectrumTopLine }
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
-            .padding(.top, AppSpacing.md)
         } else {
             Button {
                 // Not wired in V1 — open paywall
@@ -261,7 +243,6 @@ struct SettingsView: View {
             .vaylGlassCard(radius: AppRadius.container)
             .overlay(alignment: .top) { premiumHairline }
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
-            .padding(.top, AppSpacing.md)
         }
     }
 
@@ -294,49 +275,46 @@ struct SettingsView: View {
     // MARK: - You
 
     private var youSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            SettingsSectionLabel(text: "You")
-            NavigationLink(value: SettingsRoute.you) {
-                HStack(spacing: AppSpacing.md) {
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.system(size: 40))
-                        .foregroundStyle(AppColors.textTertiary)
-                        .accessibilityHidden(true)
+        NavigationLink(value: SettingsRoute.you) {
+            HStack(spacing: AppSpacing.md) {
+                Image(systemName: "person.crop.circle.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(AppColors.textTertiary)
+                    .accessibilityHidden(true)
 
-                    VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                        Text(appState.displayName.isEmpty ? "Set your name" : appState.displayName)
-                            .font(AppFonts.bodyMedium)
-                            .foregroundStyle(appState.displayName.isEmpty ? AppColors.textTertiary : AppColors.textPrimary)
+                VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                    Text(appState.displayName.isEmpty ? "Set your name" : appState.displayName)
+                        .font(AppFonts.bodyMedium)
+                        .foregroundStyle(appState.displayName.isEmpty ? AppColors.textTertiary : AppColors.textPrimary)
 
-                        let sub = [
-                            profile?.pronouns.isEmpty == false ? profile?.pronouns.joined(separator: "/") : nil,
-                            profile?.nmStage.displayName
-                        ].compactMap { $0 }.joined(separator: " · ")
-                        if !sub.isEmpty {
-                            Text(sub)
-                                .font(AppFonts.caption)
-                                .foregroundStyle(AppColors.textTertiary)
-                        } else {
-                            Text("Tap to complete your profile")
-                                .font(AppFonts.caption)
-                                .foregroundStyle(AppColors.textMuted)
-                        }
+                    let sub = [
+                        profile?.pronouns.isEmpty == false ? profile?.pronouns.joined(separator: "/") : nil,
+                        profile?.nmStage.displayName
+                    ].compactMap { $0 }.joined(separator: " · ")
+                    if !sub.isEmpty {
+                        Text(sub)
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textTertiary)
+                    } else {
+                        Text("Tap to complete your profile")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textMuted)
                     }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(AppColors.textTertiary)
-                        .accessibilityHidden(true)
                 }
-                .padding(AppSpacing.md)
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(AppColors.textTertiary)
+                    .accessibilityHidden(true)
             }
-            .buttonStyle(PressableCardStyle())
-            .vaylGlassCard(radius: AppRadius.container)
-            .overlay(alignment: .top) { spectrumTopLine }
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
+            .padding(AppSpacing.md)
         }
+        .buttonStyle(PressableCardStyle())
+        .vaylGlassCard(radius: AppRadius.container)
+        .overlay(alignment: .top) { spectrumTopLine }
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
     }
 
     // MARK: - Partner
