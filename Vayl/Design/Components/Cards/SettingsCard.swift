@@ -9,7 +9,8 @@ struct SettingsCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             content
         }
-        .padding(AppSpacing.md)
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.xs)
         .vaylGlassCard(radius: AppRadius.container)
         .overlay(alignment: .top) {
             LinearGradient(

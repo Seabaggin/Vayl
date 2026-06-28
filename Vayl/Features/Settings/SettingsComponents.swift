@@ -13,7 +13,7 @@ struct SettingsSectionLabel: View {
             .tracking(2)
             .foregroundStyle(AppColors.textSectionLabel)
             .padding(.top, AppSpacing.lg)
-            .padding(.bottom, AppSpacing.xs)
+            .padding(.bottom, AppSpacing.sm)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -32,7 +32,7 @@ struct SettingsNavRow: View {
     var iconBg: Color = AppColors.glassSurface
 
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
+        HStack(spacing: AppSpacing.sm + AppSpacing.xs) {
             RoundedRectangle(cornerRadius: AppRadius.sm)
                 .fill(iconBg)
                 .overlay(
@@ -69,7 +69,7 @@ struct SettingsNavRow: View {
         }
         // Expands tap target to full row width.
         .contentShape(Rectangle())
-        .padding(.vertical, AppSpacing.sm)
+        .padding(.vertical, AppSpacing.sm + AppSpacing.xs)
     }
 }
 
@@ -84,7 +84,7 @@ struct SettingsToggleRow: View {
     @Binding var isOn: Bool
 
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
+        HStack(spacing: AppSpacing.sm + AppSpacing.xs) {
             RoundedRectangle(cornerRadius: AppRadius.sm)
                 .fill(iconBg)
                 .overlay(
@@ -112,6 +112,6 @@ struct SettingsToggleRow: View {
                 .labelsHidden()
                 .tint(AppColors.accentPrimary)
         }
-        .padding(.vertical, AppSpacing.sm)
+        .padding(.vertical, AppSpacing.sm + AppSpacing.xs)
     }
 }
