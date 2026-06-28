@@ -53,9 +53,7 @@ struct SettingsView: View {
                         membershipCard
                         youSection
                         partnerSection
-                        privacySection
-                        notificationsSection
-                        appearanceSection
+                        appSection
                         accountSection
                         aboutSection
                         versionLabel
@@ -349,10 +347,22 @@ struct SettingsView: View {
                         SettingsNavRow(
                             icon: "stairs",
                             label: "Experience",
-                            subtitle: "Sets your default card intensity",
+                            subtitle: "Shapes the deck and content shown to you",
                             value: profile?.nmStage.displayName,
                             iconTint: AppColors.spectrumMagenta,
                             iconBg: AppColors.spectrumMagenta.opacity(0.10)
+                        )
+                    }
+                    .buttonStyle(PressableCardStyle())
+
+                    SettingsSubSectionLabel(text: "About you")
+
+                    NavigationLink(value: SettingsRoute.you) {
+                        SettingsNavRow(
+                            icon: "person.crop.rectangle",
+                            label: "Age range",
+                            iconTint: AppColors.spectrumCyan,
+                            iconBg: AppColors.spectrumCyan.opacity(0.10)
                         )
                     }
                     .buttonStyle(PressableCardStyle())
@@ -395,6 +405,31 @@ struct SettingsView: View {
                                 .accessibilityLabel("Linked")
                         }
                         .padding(.vertical, AppSpacing.xs)
+
+                        SettingsSubSectionLabel(text: "Relationship")
+
+                        NavigationLink(value: SettingsRoute.partner) {
+                            SettingsNavRow(
+                                icon: "heart.fill",
+                                label: "Relationship type",
+                                subtitle: "Married, partnered, dating...",
+                                iconTint: AppColors.spectrumMagenta,
+                                iconBg: AppColors.spectrumMagenta.opacity(0.10)
+                            )
+                        }
+                        .buttonStyle(PressableCardStyle())
+
+                        Divider().overlay(AppColors.borderSubtle)
+
+                        NavigationLink(value: SettingsRoute.partner) {
+                            SettingsNavRow(
+                                icon: "calendar",
+                                label: "Together since",
+                                iconTint: AppColors.spectrumPurple,
+                                iconBg: AppColors.spectrumPurple.opacity(0.10)
+                            )
+                        }
+                        .buttonStyle(PressableCardStyle())
 
                         Divider().overlay(AppColors.borderSubtle)
 
@@ -439,13 +474,16 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Privacy & Safety
+    // MARK: - App (Privacy, Notifications, Appearance)
 
-    private var privacySection: some View {
+    private var appSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SettingsSectionLabel(text: "Privacy & safety")
+            SettingsSectionLabel(text: "App")
             SettingsCard {
                 VStack(spacing: 0) {
+
+                    // Privacy & safety
+                    SettingsSubSectionLabel(text: "Privacy & safety", isFirst: true)
                     SettingsToggleRow(
                         icon: "lock.fill",
                         label: "App lock",
@@ -480,18 +518,9 @@ struct SettingsView: View {
                         )
                     }
                     .buttonStyle(PressableCardStyle())
-                }
-            }
-        }
-    }
 
-    // MARK: - Notifications
-
-    private var notificationsSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            SettingsSectionLabel(text: "Notifications")
-            SettingsCard {
-                VStack(spacing: 0) {
+                    // Notifications
+                    SettingsSubSectionLabel(text: "Notifications")
                     SettingsToggleRow(
                         icon: "bell.fill",
                         label: "Check-in reminder",
@@ -517,18 +546,9 @@ struct SettingsView: View {
                         iconBg: AppColors.glassSurface,
                         isOn: $discreetMode
                     )
-                }
-            }
-        }
-    }
 
-    // MARK: - Appearance
-
-    private var appearanceSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            SettingsSectionLabel(text: "Appearance")
-            SettingsCard {
-                VStack(spacing: 0) {
+                    // Appearance
+                    SettingsSubSectionLabel(text: "Appearance")
                     Button {} label: {
                         SettingsNavRow(
                             icon: "paintpalette.fill",
@@ -539,7 +559,6 @@ struct SettingsView: View {
                         )
                     }
                     .buttonStyle(PressableCardStyle())
-
                     LinearGradient(
                         colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
                         startPoint: .leading, endPoint: .trailing
@@ -548,7 +567,6 @@ struct SettingsView: View {
                     .clipShape(Capsule())
                     .opacity(0.85)
                     .padding(.vertical, AppSpacing.xs)
-
                     SettingsToggleRow(
                         icon: "waveform",
                         label: "Haptic feedback",

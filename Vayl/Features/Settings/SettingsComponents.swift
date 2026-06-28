@@ -18,6 +18,26 @@ struct SettingsSectionLabel: View {
     }
 }
 
+// MARK: - SettingsSubSectionLabel
+
+/// Whisper-level label used inside a SettingsCard to separate sub-groups
+/// (e.g. "About you", "Relationship" within a larger card).
+struct SettingsSubSectionLabel: View {
+    let text: String
+    /// Use true when this label is the first item in a card — reduces top padding.
+    var isFirst: Bool = false
+
+    var body: some View {
+        Text(text.uppercased())
+            .font(AppFonts.overline)
+            .tracking(1.5)
+            .foregroundStyle(AppColors.textMuted)
+            .padding(.top, isFirst ? AppSpacing.xxs : AppSpacing.sm + AppSpacing.xs)
+            .padding(.bottom, AppSpacing.xxs)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
 // MARK: - SettingsNavRow
 
 /// A navigation row with icon badge, label (+ optional subtitle), optional trailing value, and chevron.
