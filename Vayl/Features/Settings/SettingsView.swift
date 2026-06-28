@@ -135,6 +135,7 @@ struct SettingsView: View {
                     )
                 )
                 .padding(.top, AppSpacing.xs)
+                .padding(.bottom, AppSpacing.sm)
         }
     }
 
