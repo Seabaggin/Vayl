@@ -121,6 +121,24 @@ struct SettingsView: View {
             }
             .padding(.top, AppSpacing.md)
 
+            Text("Profile.")
+                .font(AppFonts.screenTitle)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .padding(.top, AppSpacing.xs)
+
+            HStack(spacing: AppSpacing.xs) {
+                if let stage = profile?.nmStage {
+                    spectrumBadge(stage.displayName)
+                }
+                plainBadge(appState.linkState == .linked ? "Linked" : "Solo discovery")
+            }
+            .padding(.top, AppSpacing.xs)
         }
     }
 
