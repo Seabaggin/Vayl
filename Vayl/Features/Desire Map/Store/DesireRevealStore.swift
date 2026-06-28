@@ -10,8 +10,8 @@
 //  conversion mechanic (D4 shows it; M5 wires the actual purchase).
 //
 //  STUB STATUS (2026-06-17): structure + data wiring complete; FEEL/styling is Bryan's pass.
-//  Deferred: unlockAll() → M5 (StoreKit → grant-entitlement); requestHiddenConversation()
-//  behavior is the spec's open decision ("what does a request DO?").
+//  The "request a hidden conversation" idea moved to the Vault consent flow
+//  (VaultStore.askToOpen + VaultDesireSection), so it no longer lives here.
 //
 
 import Foundation
@@ -76,6 +76,11 @@ final class DesireRevealStore: Identifiable {
     /// True while the paywall sheet is open (tapped a locked star or the upgrade CTA).
     var showPaywall: Bool = false
 
+    #if DEBUG
+    /// Debug-only: force a specific ceremony variant. Production picks it by coupleId.
+    var debugVariantOverride: CeremonyVariant? = nil
+    #endif
+
     // MARK: - Derived
 
     var unlockedMatches: [RevealMatch] { matches.filter { !$0.isLocked } }
@@ -116,6 +121,12 @@ final class DesireRevealStore: Identifiable {
         guard beatPhase == .idle else { return }
         if isFullyUnlocked || lockedCount == 0 {
             beatPhase = .revealed
+            // Landing straight on the lit sky (already-Core, or a lone free match) is a full
+            // viewing, so stamp full-seen: full_reveal_seen_at should reflect reality, mirroring
+            // the post-purchase path (handleUnlockSuccess). load() already stamped free-seen.
+            if let coupleId = appState.coupleId {
+                Task { try? await service.markRevealSeen(coupleId: coupleId, full: true) }
+            }
         } else {
             beatPhase = .beat1
             scheduleAutoAdvance()
@@ -229,13 +240,6 @@ final class DesireRevealStore: Identifiable {
             // Stamp full-seen now that the whole map is accessible.
             Task { try? await service.markRevealSeen(coupleId: coupleId, full: true) }
         }
-    }
-
-    /// Request a conversation about a question the couple did NOT match on (a hidden / big-gap item).
-    /// The exact behavior is the spec's open decision — surfaces only the requester's own answer,
-    /// never the partner's score. Stubbed until that decision lands.
-    func requestHiddenConversation() {
-        // TODO(D4): define what a request DOES (notify partner? queue a discussion card?).
     }
 
     // MARK: - Sheet interaction

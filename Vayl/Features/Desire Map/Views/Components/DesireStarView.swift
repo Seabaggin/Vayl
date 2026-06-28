@@ -37,9 +37,26 @@ struct DesireStarView: View {
     var state: StarState = .lit
     var label: String? = nil
     var cadence: Cadence = .free
+    /// When true, the star plays the two-seed ignite entrance once on appear (your purple + their
+    /// magenta converging into one bright star). Default false — renders lit immediately.
+    var ignites: Bool = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var sparkleTrigger: Int = 0
+    /// Entrance state. Initialized from `ignites` so non-igniting stars render at rest with no
+    /// first-frame flash; igniting stars start collapsed and bloom in `startEntrance()`.
+    @State private var bloomed: Bool
+    @State private var seedsMerged: Bool
+
+    init(size: CGFloat, state: StarState = .lit, label: String? = nil, cadence: Cadence = .free, ignites: Bool = false) {
+        self.size = size
+        self.state = state
+        self.label = label
+        self.cadence = cadence
+        self.ignites = ignites
+        _bloomed = State(initialValue: !ignites)
+        _seedsMerged = State(initialValue: !ignites)
+    }
 
     // MARK: Derived geometry (all proportional to size)
 
@@ -59,13 +76,24 @@ struct DesireStarView: View {
     var body: some View {
         VStack(spacing: AppSpacing.xs) {
             ZStack {
-                haloLayer
-                glowLayer
-                coreLayer
-                crossLayer
-                if state == .lit {
-                    sparkleLayer
+                // Two-seed entrance — a cool (you) and warm (them) point converging as the star
+                // ignites. Present only while the entrance plays; otherwise no seeds, instant bloom.
+                if playsEntrance {
+                    seedView(color: AppColors.spectrumPurple,  dx: -seedOffset)
+                    seedView(color: AppColors.spectrumMagenta, dx:  seedOffset)
                 }
+
+                ZStack {
+                    haloLayer
+                    glowLayer
+                    coreLayer
+                    crossLayer
+                    if state == .lit {
+                        sparkleLayer
+                    }
+                }
+                .scaleEffect(bloomed ? 1 : entranceStartScale)
+                .opacity(bloomed ? 1 : 0)
             }
             .frame(width: haloSize, height: haloSize)
 
@@ -78,11 +106,53 @@ struct DesireStarView: View {
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .frame(maxWidth: haloSize)
+                    .opacity(bloomed ? 1 : 0)
             }
         }
+        .onAppear { startEntrance() }
         .task(id: "\(state == .lit)-\(!reduceMotion)") {
             guard !reduceMotion, state == .lit else { return }
             await sparkleLoop()
+        }
+    }
+
+    // MARK: Entrance (two-seed ignite)
+
+    private var playsEntrance: Bool { ignites && state == .lit && !reduceMotion }
+
+    private var seedDiameter: CGFloat { glowSize * 0.5 }
+    private var seedOffset: CGFloat   { glowSize * 0.45 }
+    private var entranceStartScale: CGFloat { 0.2 }
+    private var seedRestOpacity: Double { 0.6 }
+
+    /// A faint pre-merge seed point (cool = you, warm = them). Drifts to center and fades as the
+    /// star blooms. Geometry is proportional to `size`.
+    private func seedView(color: Color, dx: CGFloat) -> some View {
+        Circle()
+            .fill(RadialGradient(
+                colors: [color.opacity(0.95), color.opacity(0.22), .clear],
+                center: .center, startRadius: 0, endRadius: seedDiameter / 2))
+            .frame(width: seedDiameter, height: seedDiameter)
+            .blur(radius: 5)
+            .scaleEffect(seedsMerged ? 0.35 : 1)
+            .offset(x: seedsMerged ? 0 : dx, y: seedsMerged ? 0 : dx * 0.35)
+            .opacity(seedsMerged ? 0 : seedRestOpacity)
+    }
+
+    /// Drives the entrance on appear. Igniting stars converge two seeds and bloom; everything
+    /// else (no ignite, or Reduce Motion) lands at rest instantly.
+    private func startEntrance() {
+        guard ignites else { return }              // already at rest (bloomed initialized true)
+        guard playsEntrance else {                 // Reduce Motion / not lit: skip the ceremony
+            bloomed = true
+            seedsMerged = true
+            return
+        }
+        withAnimation(AppAnimation.desireStarSeedDrift) { seedsMerged = true }
+        withAnimation(AppAnimation.desireStarMergeSettle.delay(AppAnimation.desireStarMergeBloomDelay)) { bloomed = true }
+        Task {
+            try? await Task.sleep(for: .seconds(AppAnimation.desireStarMergeBloomDelay * 2))
+            sparkleTrigger += 1
         }
     }
 
@@ -254,4 +324,15 @@ struct DesireStarView: View {
         AppColors.void.ignoresSafeArea()
         DesireStarView(size: 24, state: .lit, label: "Rare spark", cadence: .locked)
     }
+}
+
+#Preview("Two-seed ignite") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        HStack(spacing: AppSpacing.xl) {
+            DesireStarView(size: 22, state: .lit, label: "Opening Up", cadence: .free, ignites: true)
+            DesireStarView(size: 15, state: .lit, label: "Shared", cadence: .free, ignites: true)
+        }
+    }
+    .preferredColorScheme(.dark)
 }

@@ -650,6 +650,21 @@ internal enum AppAnimation {
     /// Reduce motion: replace with .easeOut(duration: 0.15) — star appears lit, no bloom.
     static let desireStarIgnite: Animation = .easeOut(duration: 0.72)
 
+    /// 0.56s overshoot — a matched star blooming from two seeds into one bright star (the merge
+    /// settle). The timingCurve's y2 > 1 produces a soft overshoot past full size before it settles.
+    /// Feel reference: docs/prototypes/desire-map-match-ceremony.html
+    /// Reduce motion: the two-seed entrance is skipped entirely; the star renders lit.
+    static let desireStarMergeSettle: Animation = .timingCurve(0.34, 1.3, 0.5, 1, duration: 0.56)
+
+    /// 0.56s — the two seeds (your purple, their magenta) drifting together as the star ignites.
+    /// Slightly less overshoot than the bloom so the points arrive cleanly into one.
+    /// Reduce motion: the entrance is skipped.
+    static let desireStarSeedDrift: Animation = .timingCurve(0.34, 1.2, 0.5, 1, duration: 0.56)
+
+    /// 0.18s — the bloom starts this long after the seeds begin converging, so the star brightens
+    /// as the seeds arrive rather than before. Consumed as a `.delay`. Reduce motion: unused.
+    static let desireStarMergeBloomDelay: Double = 0.18
+
     /// 0.76s ease-out — Constellation lines drawing on at the reveal.
     /// Applied to a trimFraction (0 → 1) on the confident-mode path in ConstellationField.
     /// Reduce motion: lines appear at full opacity, no draw-on travel.
@@ -741,6 +756,27 @@ internal enum AppAnimation {
     /// 0.36s — A single locked teaser row fading/staggering into the gap (Beat 2).
     /// Reduce motion: falls back via `.reduceMotionSafe` to a fast opacity confirm.
     static let desireLockedRowEnter: Animation = .easeOut(duration: 0.36)
+
+    // Reveal ceremony — the telegraphed constellation assembly (DesireConstellationView).
+    // Stars light in the variant's order with a budgeted stagger; lines draw when both ends are
+    // lit; a telegraph wind-up precedes. Reduce motion: skip to the static lit sky (no assembly).
+
+    /// 1.4s — total budget to light all non-hero stars; per-star stagger = budget / count (clamped),
+    /// so many stars do not drag.
+    static let desireCeremonyBudget: Double = 1.4
+    /// 0.5s — gap after the hero ignites before the rest begin (Gather).
+    static let desireCeremonyHeroLead: Double = 0.5
+    /// Per-star stagger clamps during the assembly.
+    static let desireCeremonyStaggerMin: Double = 0.09
+    static let desireCeremonyStaggerMax: Double = 0.30
+    /// 1.7s — the Sweep band's full pass across the field; stars light as it reaches them.
+    static let desireSweepDuration: Double = 1.7
+    /// Linear sweep of the telegraph band across the field.
+    static let desireSweepBand: Animation = .linear(duration: desireSweepDuration)
+    /// 0.64s ease-in — the Gather telegraph contracting a point of light to center before the hero.
+    static let desireGatherPulse: Animation = .easeIn(duration: 0.64)
+    /// 0.5s — how long the Gather wind-up holds before the hero forms. Consumed by Task.sleep.
+    static let desireGatherLead: Double = 0.5
 
     // Vayl mark ceremony — the one-shot "map charted" moment (MapChartedMoment).
     // Reduce motion: skip both; the mark is shown fully drawn and the copy is shown at once.

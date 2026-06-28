@@ -166,10 +166,12 @@ struct DesireRevealView: View {
                     .animation(AppAnimation.desireStarIgnite.delay(0.10).reduceMotionSafe, value: store.beatPhase)
 
                 // Constellation
-                ConstellationField(
-                    nodes: constellationNodes,
-                    lineMode: constellationLineMode,
-                    onNodeTapped: { id in
+                DesireConstellationView(
+                    stars: placedStars,
+                    edges: layout.edges,
+                    variant: ceremonyVariant,
+                    mode: constellationMode,
+                    onTap: { id in
                         hapticTick += 1
                         if let match = store.matches.first(where: { $0.id.uuidString == id }) {
                             store.selectStar(match)
@@ -177,13 +179,12 @@ struct DesireRevealView: View {
                     }
                 )
                 .frame(maxWidth: .infinity)
-                .frame(height: store.beatPhase.rawValue >= 2 ? 220 : 300)
+                .frame(height: (store.beatPhase == .beat2 || store.beatPhase == .beat3) ? 220 : 300)
                 .padding(.vertical, AppSpacing.lg)
                 .opacity(store.beatPhase != .idle ? 1 : 0)
-                // Fix #3b: gate the ignite + height transition behind reduceMotionSafe so they
-                // fall back to a fast opacity confirm when Reduce Motion is on.
+                // Fix #3b: opacity reveal gated behind reduceMotionSafe; the per-star ignite + line
+                // draw live inside DesireConstellationView (also Reduce-Motion aware).
                 .animation(AppAnimation.desireStarIgnite.reduceMotionSafe, value: store.beatPhase)
-                .animation(AppAnimation.enter.reduceMotionSafe, value: store.beatPhase.rawValue >= 2)
 
                 // Bottom section: caption at beat1/revealed, locked rows at beat2/beat3
                 bottomSection
@@ -273,76 +274,68 @@ struct DesireRevealView: View {
         }
     }
 
-    // MARK: - Constellation data (beat-aware)
+    // MARK: - Constellation data (generated layout + ceremony)
 
-    private var constellationNodes: [ConstellationNodeData] {
+    /// The telegraphed ceremony variant for this couple (seeded by coupleId).
+    private var ceremonyVariant: CeremonyVariant {
+        #if DEBUG
+        if let override = store.debugVariantOverride { return override }
+        #endif
+        return CeremonyVariant.resolve(coupleId: appState.coupleId)
+    }
+
+    /// The generated constellation (positions + MST edges) for the full match set, seeded by the
+    /// couple so the sky is theirs and stable across beats. Deterministic — recomputing is cheap.
+    private var layout: ConstellationLayout.Result {
+        let seed = appState.coupleId.map { ConstellationLayout.seed(for: $0) } ?? 0
+        return ConstellationLayout.generate(count: store.matches.count, seed: seed)
+    }
+
+    /// What the constellation does at the current beat.
+    private var constellationMode: DesireConstellationView.Mode {
         switch store.beatPhase {
-        case .idle:
-            return []
-        case .beat1:
-            return store.unlockedMatches.map { match in
-                ConstellationNodeData(
-                    id: match.id.uuidString,
-                    size: 22,
-                    state: .lit,
-                    label: match.itemName,
-                    cadence: .free
-                )
-            }
-        case .beat2, .beat3:
-            return store.matches.map { match in
-                ConstellationNodeData(
-                    id: match.id.uuidString,
-                    size: match.isLocked ? 11 : 22,
-                    state: match.isLocked ? .dim : .lit,
-                    label: match.isLocked ? nil : match.itemName,
-                    cadence: match.isLocked ? .locked : .free
-                )
-            }
-        case .revealed:
-            // Fix #6: preserve the mockup's hero hierarchy (screen 10) — the free/hero match is
-            // notably larger; the rest vary slightly. Sizes derive from a base × multiplier, no
-            // fixed pixel soup.
-            let heroId = heroMatchId
-            return store.matches.enumerated().map { index, match in
-                let isHero = match.id == heroId
-                // Deterministic slight variation for non-hero nodes (alternating, index-driven).
-                let variation: CGFloat = 1.0 + (CGFloat(index % 3) - 1.0) * revealedNodeVariation
-                let size = revealedNodeBaseSize * (isHero ? revealedHeroMultiplier : variation)
-                return ConstellationNodeData(
-                    id: match.id.uuidString,
-                    size: size,
-                    state: .lit,
-                    label: match.itemName,
-                    cadence: .free
-                )
-            }
+        case .idle, .beat1:   return .intro
+        case .beat2, .beat3:  return .teasers
+        case .revealed:       return reduceMotion ? .resolved : .assemble
         }
     }
 
-    // MARK: - Revealed-sky node sizing (fix #6)
+    /// Matches placed onto the generated layout: the free-reveal (or first mutual) star takes the
+    /// central hero slot; the rest fill the remaining positions in order. Sizes scale with count
+    /// so many stars do not crowd. Indices align with `layout.points` / `layout.edges`.
+    private var placedStars: [DesireConstellationView.Star] {
+        let result = layout
+        guard !result.points.isEmpty, !store.matches.isEmpty else { return [] }
 
-    /// Base star diameter for the unlocked sky; hero scales up, others vary slightly around it.
-    private var revealedNodeBaseSize: CGFloat { 16 }
-    /// Hero multiplier — the free/hero match reads notably larger (mockup screen 10).
-    private var revealedHeroMultiplier: CGFloat { 1.55 }
-    /// Spread for the slight per-node variation around the base (non-hero nodes).
-    private var revealedNodeVariation: CGFloat { 0.18 }
+        let hero = store.matches.first(where: { $0.isFreeReveal })
+            ?? store.matches.first(where: { $0.alignment == .mutual })
+            ?? store.matches.first
+        let others = store.matches.filter { $0.id != hero?.id }
 
-    /// The hero match for the unlocked sky: the server-set free-reveal star (the emotional
-    /// peak, the same star that led the free reveal), else the first mutual, else the first match.
-    private var heroMatchId: UUID? {
-        if let free = store.matches.first(where: { $0.isFreeReveal }) {
-            return free.id
+        var placed = [RevealMatch?](repeating: nil, count: result.points.count)
+        if result.heroIndex < placed.count { placed[result.heroIndex] = hero }
+        var oi = 0
+        for i in placed.indices where i != result.heroIndex {
+            if oi < others.count { placed[i] = others[oi]; oi += 1 }
         }
-        if let mutual = store.matches.first(where: { $0.alignment == .mutual }) {
-            return mutual.id
-        }
-        return store.matches.first?.id
-    }
 
-    private var constellationLineMode: ConstellationLineMode {
-        store.beatPhase == .revealed ? .confident : .hidden
+        let n = max(store.matches.count, 1)
+        let base = max(9.0, min(16.0, 16.0 * (4.0 / Double(n)).squareRoot()))
+        let heroSize = CGFloat(min(24.0, base * 1.5))
+
+        return placed.enumerated().compactMap { index, match in
+            guard let match else { return nil }
+            let isHero = index == result.heroIndex
+            return DesireConstellationView.Star(
+                id: match.id.uuidString,
+                point: result.points[index],
+                size: isHero ? heroSize : CGFloat(base),
+                label: match.itemName,
+                isHero: isHero,
+                isLocked: match.isLocked,
+                cadence: match.isLocked ? .locked : .free
+            )
+        }
     }
 
     // MARK: - Sheet host layer
@@ -367,12 +360,7 @@ struct DesireRevealView: View {
                 DesireStarDetailSheet(
                     match: match,
                     onClose: { store.dismissSheets() },
-                    onTalkTapped: {
-                        store.dismissSheets()
-                        vaylDismiss(confirm: false)
-                        appState.selectedTab = .map
-                        appState.vaultOpenPending = true
-                    }
+                    onTalkTapped: routeToVault
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(AppAnimation.desireSheetRise, value: store.selectedMatch?.id)
@@ -387,7 +375,8 @@ struct DesireRevealView: View {
                         store.dismissSheets()
                         store.showPaywall = true
                     },
-                    onClose: { store.dismissSheets() }
+                    onClose: { store.dismissSheets() },
+                    onTalk: { _ in routeToVault() }
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(AppAnimation.desireSheetRise, value: store.showFullMap)
@@ -402,6 +391,18 @@ struct DesireRevealView: View {
                 .animation(AppAnimation.desireSheetRise, value: store.showPaywall)
             }
         }
+    }
+
+    // MARK: - Talk routing
+
+    /// Talk-about-this: leave the reveal and open the Vault (Map tab), where the
+    /// conversation / consent flow lives. Shared by the star-detail sheet and the
+    /// full-map list rows so both routes behave identically.
+    private func routeToVault() {
+        store.dismissSheets()
+        vaylDismiss(confirm: false)
+        appState.selectedTab = .map
+        appState.vaultOpenPending = true
     }
 
     // MARK: - Loading state

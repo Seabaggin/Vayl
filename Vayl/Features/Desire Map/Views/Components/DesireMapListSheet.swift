@@ -23,6 +23,8 @@ struct DesireMapListSheet: View {
     let priceText: String?
     var onUnlockTapped: () -> Void = {}
     var onClose: () -> Void = {}
+    /// Tapped "Talk about this" inside an expanded row — routes to the Vault (wired by the host).
+    var onTalk: (RevealMatch) -> Void = { _ in }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -51,7 +53,8 @@ struct DesireMapListSheet: View {
                 DesireMapListView(
                     matches: matches,
                     priceText: priceText,
-                    onUnlockTapped: onUnlockTapped
+                    onUnlockTapped: onUnlockTapped,
+                    onTalk: onTalk
                 )
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.bottom, AppSpacing.xxl)
@@ -60,7 +63,8 @@ struct DesireMapListSheet: View {
                     DesireMapListView(
                         matches: matches,
                         priceText: priceText,
-                        onUnlockTapped: onUnlockTapped
+                        onUnlockTapped: onUnlockTapped,
+                        onTalk: onTalk
                     )
                     .padding(.horizontal, AppSpacing.lg)
                     .padding(.bottom, AppSpacing.xxl)
@@ -91,6 +95,7 @@ struct DesireMapListView: View {
     let matches: [RevealMatch]
     let priceText: String?
     var onUnlockTapped: () -> Void = {}
+    var onTalk: (RevealMatch) -> Void = { _ in }
 
     @State private var expandedId: String? = nil
 
@@ -148,7 +153,8 @@ struct DesireMapListView: View {
                                     expandedId = expanded ? match.id.uuidString : nil
                                 }
                             }
-                        )
+                        ),
+                        onTalk: { onTalk(match) }
                     )
                 }
             }
@@ -185,6 +191,7 @@ private struct _ExpandableMatchRow: View {
 
     let match: RevealMatch
     @Binding var isExpanded: Bool
+    var onTalk: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -210,7 +217,7 @@ private struct _ExpandableMatchRow: View {
 
             // Expanded body
             if isExpanded {
-                DesireMatchDetail(match: match)
+                DesireMatchDetail(match: match, onTalkTapped: onTalk)
                     .padding(.top, AppSpacing.sm)
                     .padding(.leading, AppSpacing.md)
                     .transition(.opacity.combined(with: .move(edge: .top)))

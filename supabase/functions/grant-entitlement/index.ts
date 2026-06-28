@@ -13,10 +13,8 @@
 //   1. Apple receipt path (production): the client posts its StoreKit 2 signed transaction
 //      (JWS). The server verifies Apple's signature + claims, then grants. This is what the
 //      paywall doc means by "server-side receipt validation, never client-only."
-//      ⚠️ M1 SEAM — the cryptographic JWS verification is wired in M2. It needs the App Store
-//      Connect product, appAppleId, and Apple root certs, none of which exist yet. Until then
-//      `verifyAppleTransaction` FAILS CLOSED (returns null) → the Apple path never grants, so
-//      it cannot be used to bypass the paywall before M2 hardens it.
+//      Verification is gated by APPLE_VERIFICATION_ENABLED and fails closed (returns null) until
+//      the env (root certs, bundleId, appAppleId) is set — so it cannot bypass the paywall.
 //
 //   2. Admin / support path: a server-only secret (header x-grant-secret == ENTITLEMENT_GRANT_SECRET).
 //      For support comps, founding-member grants, and M1 verification. Clients never hold the
@@ -45,24 +43,68 @@ const PRODUCT_TIER: Record<string, string> = {
   "com.vayl.core.lifetime": "core",
 }
 
+// Decode a JWS payload segment WITHOUT verifying — only to read the environment so we can build
+// the verifier for the right environment. Trust still comes from the signature check that follows.
+function decodeJwsPayload(jws: string): Record<string, unknown> {
+  const seg = jws.split(".")[1] ?? ""
+  const b64 = seg.replace(/-/g, "+").replace(/_/g, "/")
+  const pad = b64.length % 4 ? "=".repeat(4 - (b64.length % 4)) : ""
+  return JSON.parse(atob(b64 + pad))
+}
+
+function peekEnvironment(jws: string): "Production" | "Sandbox" {
+  try {
+    const p = decodeJwsPayload(jws) as { environment?: string }
+    return p?.environment === "Production" ? "Production" : "Sandbox"
+  } catch {
+    return "Sandbox"
+  }
+}
+
 // ── Apple StoreKit 2 JWS verification ──────────────────────────────────────────
-// M1 SEAM (fail-closed). M2 implements this with Apple's app-store-server-library
-// `SignedDataVerifier`: verify the x5c chain to Apple's G3 root, verify the ES256 signature,
-// then validate bundleId + productId + environment from the decoded payload, and return the
-// verified transactionId. Until M2 wires the verifier + App Store Connect config (gated by the
-// APPLE_VERIFICATION_ENABLED env flag), this returns null and the Apple path never grants.
+// Verifies the client's signed transaction with Apple's app-store-server-library
+// `SignedDataVerifier` (the SAME verifier appstore-notifications uses). Fail-closed: returns null
+// unless APPLE_VERIFICATION_ENABLED=true AND the signature verifies AND the product matches. The
+// library is imported lazily so it is never loaded while the flag is off. Env (supabase secrets):
+//   APPLE_VERIFICATION_ENABLED=true
+//   APPLE_ROOT_CERTS = comma-separated base64 DER of Apple's root cert(s) (AppleRootCA-G3)
+//   APPLE_BUNDLE_ID  = com.bryanjorden.Vayl
+//   APPLE_APP_APPLE_ID = 6785124476
 async function verifyAppleTransaction(
-  _signedTransaction: string,
-  _expectedProductId: string,
+  signedTransaction: string,
+  expectedProductId: string,
 ): Promise<{ transactionId: string } | null> {
-  const enabled = Deno.env.get("APPLE_VERIFICATION_ENABLED") === "true"
-  if (!enabled) return null // fail closed — M2 turns this on with real verification
-  // M2:
-  //   const verifier = new SignedDataVerifier(appleRootCAs, true, environment, bundleId, appAppleId)
-  //   const payload = await verifier.verifyAndDecodeTransaction(signedTransaction)
-  //   if (payload.productId !== expectedProductId) return null
-  //   return { transactionId: payload.transactionId }
-  return null
+  if (Deno.env.get("APPLE_VERIFICATION_ENABLED") !== "true") return null
+  try {
+    const { SignedDataVerifier, Environment } = await import(
+      "npm:@apple/app-store-server-library"
+    )
+    const { Buffer } = await import("node:buffer")
+
+    const rootCerts = (Deno.env.get("APPLE_ROOT_CERTS") ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((b64) => Buffer.from(b64, "base64"))
+    if (rootCerts.length === 0) {
+      console.error("grant-entitlement: APPLE_ROOT_CERTS not set")
+      return null
+    }
+
+    const bundleId = Deno.env.get("APPLE_BUNDLE_ID") ?? ""
+    const appAppleId = Number(Deno.env.get("APPLE_APP_APPLE_ID") ?? "0") || undefined
+    const env = peekEnvironment(signedTransaction) === "Production"
+      ? Environment.PRODUCTION
+      : Environment.SANDBOX
+
+    const verifier = new SignedDataVerifier(rootCerts, true, env, bundleId, appAppleId)
+    const tx = await verifier.verifyAndDecodeTransaction(signedTransaction)
+    if (tx.productId !== expectedProductId) return null
+    return { transactionId: tx.transactionId }
+  } catch (e) {
+    console.error("grant-entitlement: verification failed", e)
+    return null
+  }
 }
 
 serve(async (req) => {
@@ -119,8 +161,8 @@ serve(async (req) => {
     }
 
     if (!transactionId) {
-      // Neither a verified Apple receipt nor an admin grant. The Apple path is the M2 seam and
-      // fails closed, so this refusal is what keeps the paywall intact until M2.
+      // Neither a verified Apple receipt nor an admin grant. The Apple path fails closed until
+      // verification is enabled, so this refusal is what keeps the paywall intact.
       return json({ error: "Purchase could not be validated" }, 402)
     }
 

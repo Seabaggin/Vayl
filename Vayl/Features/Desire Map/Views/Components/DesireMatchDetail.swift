@@ -67,23 +67,28 @@ struct DesireMatchDetail: View {
             }
             .buttonStyle(_DetailPressStyle())
 
-            Button {
-                onLearnTapped?()
-            } label: {
-                HStack(spacing: AppSpacing.sm) {
-                    // Fix #6: interpolate the item name to match the mockup ("Explore "X" in Learn").
-                    Text("Explore \u{201C}\(match.itemName)\u{201D} in Learn")
-                        .font(AppFonts.bodyText)
-                        .foregroundStyle(AppColors.textSecondary)
-                        .lineLimit(1)
-                    Spacer(minLength: 0)
-                    Image(systemName: "arrow.up.right")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textTertiary)
+            // Learn link renders only when wired. Until Learn can deep-link to a desire
+            // term, the reveal/list pass `onLearnTapped: nil`, so it stays hidden rather
+            // than showing a dead "Explore X in Learn" control.
+            if let onLearnTapped {
+                Button {
+                    onLearnTapped()
+                } label: {
+                    HStack(spacing: AppSpacing.sm) {
+                        // Fix #6: interpolate the item name to match the mockup ("Explore "X" in Learn").
+                        Text("Explore \u{201C}\(match.itemName)\u{201D} in Learn")
+                            .font(AppFonts.bodyText)
+                            .foregroundStyle(AppColors.textSecondary)
+                            .lineLimit(1)
+                        Spacer(minLength: 0)
+                        Image(systemName: "arrow.up.right")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textTertiary)
+                    }
+                    .contentShape(Rectangle())
                 }
-                .contentShape(Rectangle())
+                .buttonStyle(_DetailPressStyle())
             }
-            .buttonStyle(_DetailPressStyle())
         }
     }
 

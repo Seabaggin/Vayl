@@ -86,7 +86,11 @@ private struct HomeRouterInnerView: View {
             onExit: handleRaterDismiss
         ) {
             if let mapStore = activeMap {
-                DesireMapView(store: mapStore)
+                DesireMapView(
+                    store: mapStore,
+                    partnerName: store.partnerName ?? "your partner",
+                    partnerComplete: store.partnerMapComplete
+                )
             }
         }
         .vaylCover(
@@ -339,6 +343,12 @@ private struct HomeRouterInnerView: View {
             Button(store.revealDone ? "Reveal ✓" : "Reveal ✗") {
                 store.revealDone.toggle()
             }
+            // Direct reveal entry for testing — the production link is the Getting Started
+            // `.seeReveal` step, only reachable once BOTH partners finish. One button per variant
+            // so all three telegraphs are feelable solo (production picks one by coupleId).
+            Button("Reveal · Gather ▶")      { presentSampleReveal(.gather) }
+            Button("Reveal · Sweep ▶")       { presentSampleReveal(.sweep) }
+            Button("Reveal · Constellate ▶") { presentSampleReveal(.constellate) }
         }
         .font(AppFonts.overline)
         .foregroundStyle(AppColors.accentPrimary)
@@ -347,6 +357,19 @@ private struct HomeRouterInnerView: View {
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
         .padding(.trailing, AppSpacing.md)
         .bottomContentInset(layout)
+    }
+
+    /// Opens the reveal with sample matches and a forced ceremony variant (debug feel-testing).
+    private func presentSampleReveal(_ variant: CeremonyVariant) {
+        let reveal = DesireRevealStore.previewStore(matches: [
+            .sample("New Relationship Energy", .mutual, free: true),
+            .sample("Overnight Stays With Others", .adjacent),
+            .sample("Meeting Your Partner's Connections", .mutual),
+            .sample("Shared Space Agreements", .mutual),
+            .sample("Deep Conversations Outside", .adjacent),
+        ])
+        reveal.debugVariantOverride = variant
+        activeReveal = reveal
     }
     #endif
 }

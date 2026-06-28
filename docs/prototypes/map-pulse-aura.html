@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Pulse as aura (token-grounded)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  /* ── tokens lifted straight from Vayl/App/Theme ─────────────────────
+     VaylPrimitives + AppColors (dark/Midnight) · AppSpacing · AppRadius   */
+  :root{
+    /* spectrum */
+    --cyan:#00C2FF; --cyan-light:#4DD8FF;
+    --purple:#6C3AE0; --purple-light:#A78BFA; --bridge:#8B6FD4;
+    --magenta:#FF006A; --magenta-light:#FF4D94;
+    /* capacity tiers (PulseCapacityColor) */
+    --cap-abundant:#00C2FF;  /* cyan  · highest */
+    --cap-good:#8B5CF6;      /* indigo */
+    --cap-low:#FF006A;       /* magenta */
+    --cap-empty:#C76A86;     /* rose  · lowest  */
+    /* ink / surfaces */
+    --void:#0a0810;       /* inkVoid */
+    --card:#120f1a;       /* inkCardOB */
+    --surface:#1A1825;    /* inkSurface */
+    /* text (dark) */
+    --t1:#E8E8F0;                       /* inkText */
+    --t2:rgba(255,255,255,.65);
+    --t3:rgba(255,255,255,.38);
+    --t-muted:rgba(255,255,255,.20);
+    --glass:rgba(255,255,255,.06);      /* glassSurface */
+    --border:rgba(255,255,255,.10);     /* borderSubtle */
+    /* radius (AppRadius) */ --r-md:12px; --r-lg:16px; --r-xl:24px; --r-ob:14px;
+    /* spacing (AppSpacing) xxs2 xs4 sm8 md16 lg24 xl32 */
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:860px;margin:0 auto;padding:44px 28px 70px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:26px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:13px;line-height:1.55;color:var(--t2);margin:0 0 8px}.lede b{color:var(--t1)}
+  .tk{font-size:11px;color:var(--t3);margin:0 0 26px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:30px;justify-items:center}
+  @media(max-width:740px){.two{grid-template-columns:1fr}}
+  .cap{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin:0 0 12px;text-align:center}
+  .cap.me{color:var(--cyan)}.cap.us{color:var(--magenta)}
+
+  .phone{position:relative;width:330px;max-width:100%;border-radius:40px;overflow:hidden;background:#040308;box-shadow:0 28px 70px rgba(0,0,0,.55),inset 0 0 0 1.4px rgba(255,255,255,.05);aspect-ratio:330/715}
+  .sky{position:absolute;inset:0;background:
+      radial-gradient(120% 30% at 50% 2%, rgba(108,58,224,.2), transparent 60%),
+      radial-gradient(80% 18% at 80% 24%, rgba(255,0,106,.08), transparent 70%),
+      linear-gradient(var(--void), #08060f)}
+  .star{position:absolute;width:1.5px;height:1.5px;border-radius:50%;background:#fff;opacity:.38}
+  .notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:84px;height:23px;background:#000;border-radius:14px;z-index:30}
+  .home{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:96px;height:4px;border-radius:3px;background:rgba(255,255,255,.2);z-index:30}
+  .scr{position:absolute;inset:0;z-index:10;padding:48px 16px 14px;display:flex;flex-direction:column}
+
+  .mast{display:flex;align-items:flex-start;justify-content:space-between}
+  .mast .nm{font-family:var(--disp);font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .mast .lit{background:linear-gradient(90deg,var(--cyan),var(--bridge) 50%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mast .fade{color:var(--t3);opacity:.45}
+  .mast .sub{font-size:11px;color:var(--t3);margin-top:3px}
+  .mast .gear{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--glass);display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:14px;flex:none}
+
+  /* Pulse hero zone */
+  .pulse{margin-top:16px;border-radius:var(--r-xl);background:var(--glass);border:1px solid var(--border);padding:18px 16px 16px;display:flex;flex-direction:column;align-items:center;backdrop-filter:blur(6px)}
+  .pk{align-self:stretch;display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+  .pk .l{font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--purple-light);opacity:.7}
+  .seg{display:flex;gap:2px;background:rgba(255,255,255,.04);border-radius:20px;padding:2px}
+  .seg span{font-size:9px;color:var(--t3);padding:3px 8px;border-radius:20px}
+  .seg span.on{color:var(--t1);background:rgba(108,58,224,.4)}
+
+  /* the aura */
+  .aura{position:relative;width:158px;height:158px;margin:14px 0 6px}
+  .aura .orb{position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle at 40% 36%, var(--cyan-light), var(--cyan) 36%, rgba(0,194,255,.18) 64%, transparent 74%);
+    box-shadow:0 0 42px 6px rgba(0,194,255,.5), 0 0 96px 22px rgba(0,194,255,.26);
+    animation:breathe 5.5s ease-in-out infinite}
+  .aura .wisp{position:absolute;inset:8%;border-radius:50%;
+    background:radial-gradient(circle at 64% 70%, rgba(139,92,246,.5), transparent 52%),radial-gradient(circle at 30% 74%, rgba(255,0,106,.28), transparent 46%);
+    mix-blend-mode:screen;animation:breathe 7s ease-in-out infinite reverse}
+  @keyframes breathe{0%,100%{transform:scale(1);opacity:.94}50%{transform:scale(1.05);opacity:1}}
+  @media(prefers-reduced-motion:reduce){.aura .orb,.aura .wisp{animation:none}}
+
+  .state{font-family:var(--disp);font-size:23px;font-weight:600;color:#fff;text-align:center;line-height:1.1}
+  .substate{font-size:11px;color:var(--t2);margin-top:4px;text-align:center}
+  .composite{display:flex;gap:14px;margin-top:14px}
+  .dim{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .dim .dl{font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3)}
+  .dots{display:flex;gap:3px}
+  .dots i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.16)}
+  .dots i.on{background:var(--cyan);box-shadow:0 0 5px rgba(0,194,255,.6)}
+
+  /* grid (emotional calendar — NOT completion) */
+  .gridK{align-self:stretch;font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--t3);margin:20px 2px 8px}
+  .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:7px}
+  .gd{aspect-ratio:1;border-radius:50%}
+  .gd.ab{background:var(--cap-abundant);box-shadow:0 0 6px rgba(0,194,255,.45)}
+  .gd.go{background:var(--cap-good);box-shadow:0 0 6px rgba(139,92,246,.4)}
+  .gd.lo{background:var(--cap-low);box-shadow:0 0 6px rgba(255,0,106,.4)}
+  .gd.em{background:var(--cap-empty)}
+  .gd.no{background:rgba(255,255,255,.05)}
+
+  /* US — two overlapping auras */
+  .duo{position:relative;width:250px;height:172px;margin:12px 0 4px}
+  .a2{position:absolute;top:18px;width:140px;height:140px;border-radius:50%;mix-blend-mode:screen;animation:breathe 6s ease-in-out infinite}
+  .a2.you{left:18px;background:radial-gradient(circle at 42% 38%, var(--cyan-light), var(--cyan) 38%, transparent 72%);box-shadow:0 0 46px 8px rgba(0,194,255,.42)}
+  .a2.alex{right:18px;background:radial-gradient(circle at 58% 38%, #b9a6ff, var(--cap-good) 40%, transparent 72%);box-shadow:0 0 46px 8px rgba(139,92,246,.42);animation-delay:-2s}
+  .tag{position:absolute;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;z-index:4}
+  .tag.you{left:26px;top:2px;color:var(--cyan)}
+  .tag.alex{right:26px;top:2px;color:var(--purple-light)}
+  .readline{font-family:var(--disp);font-size:17px;font-weight:600;color:#fff;text-align:center;margin-top:2px}
+  .readsub{font-size:11px;color:var(--t2);margin-top:3px;text-align:center;max-width:230px}
+
+  .legend{align-self:stretch;display:flex;gap:10px;margin-top:18px}
+  .lg{flex:1;border-radius:var(--r-md);border:1px solid var(--border);background:rgba(255,255,255,.025);padding:9px;text-align:center}
+  .lg .mini{position:relative;height:40px;margin-bottom:6px}
+  .lg .mo{position:absolute;top:8px;width:30px;height:30px;border-radius:50%;mix-blend-mode:screen}
+  .lg .mo.y{background:radial-gradient(circle,var(--cyan),transparent 70%);box-shadow:0 0 14px rgba(0,194,255,.5)}
+  .lg .mo.a{background:radial-gradient(circle,var(--cap-good),transparent 70%);box-shadow:0 0 14px rgba(139,92,246,.5)}
+  .lg.sync .mo.y{left:88px}.lg.sync .mo.a{left:104px}
+  .lg.drift .mo.y{left:58px}.lg.drift .mo.a{left:132px}
+  .lg .ll{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t2)}
+
+  .od{grid-column:1/-1;font-size:12px;line-height:1.6;color:var(--t2);margin-top:24px}.od b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The Pulse, <span class="spectrum">as an aura</span></h1>
+  <p class="lede">Capacity rendered as a <b>living field</b>, not a line. The orb takes the color of your capacity tier (your real tokens: cyan Abundant, indigo Good, magenta Low, rose Empty) and breathes. A state, not a metric.</p>
+  <p class="tk">Colors, spacing, and radii are the real <code>VaylPrimitives</code> / <code>AppColors</code> / <code>AppSpacing</code> / <code>AppRadius</code> values. Tier names and states from <code>PulseCapacityColor</code> / <code>PulseTier</code>.</p>
+
+  <div class="two">
+
+    <!-- ME -->
+    <div>
+      <div class="cap me">Me · your aura + history</div>
+      <div class="phone">
+        <div class="sky"></div>
+        <div class="star" style="left:16%;top:8%"></div><div class="star" style="left:78%;top:6%"></div><div class="star" style="left:44%;top:12%"></div><div class="star" style="left:28%;top:24%"></div><div class="star" style="left:86%;top:30%"></div><div class="star" style="left:62%;top:40%"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast">
+            <div><div class="nm"><span class="lit">Jordan.</span><span class="fade"> &amp; Alex</span></div><div class="sub">Curious · 14 weeks on Vayl</div></div>
+            <div class="gear">⚙</div>
+          </div>
+
+          <div class="pulse">
+            <div class="pk"><span class="l">The Pulse</span><div class="seg"><span>30D</span><span class="on">90D</span><span>All</span></div></div>
+            <div class="aura"><div class="orb"></div><div class="wisp"></div></div>
+            <div class="state">The Expansive Space</div>
+            <div class="substate">Connected · Adventurous</div>
+            <div class="composite">
+              <div class="dim"><span class="dl">Mood</span><div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div></div>
+              <div class="dim"><span class="dl">Life</span><div class="dots"><i class="on"></i><i class="on"></i><i></i><i></i></div></div>
+              <div class="dim"><span class="dl">Us</span><div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+            </div>
+          </div>
+
+          <div class="gridK">Your last 30 days</div>
+          <div class="grid">
+            <div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd lo"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd ab"></div>
+            <div class="gd ab"></div><div class="gd go"></div><div class="gd em"></div><div class="gd lo"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd go"></div><div class="gd ab"></div>
+            <div class="gd lo"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd ab"></div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <!-- US -->
+    <div>
+      <div class="cap us">Us · two auras, the comparison</div>
+      <div class="phone">
+        <div class="sky"></div>
+        <div class="star" style="left:18%;top:7%"></div><div class="star" style="left:74%;top:9%"></div><div class="star" style="left:46%;top:14%"></div><div class="star" style="left:30%;top:28%"></div><div class="star" style="left:84%;top:34%"></div><div class="star" style="left:60%;top:46%"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast">
+            <div><div class="nm"><span class="lit">Jordan &amp; Alex.</span></div><div class="sub">Linked · 14 wks · 24 sessions</div></div>
+            <div class="gear">⚙</div>
+          </div>
+
+          <div class="pulse">
+            <div class="pk"><span class="l">The Pulse · together</span></div>
+            <div class="duo">
+              <span class="tag you">You</span><span class="tag alex">Alex</span>
+              <div class="a2 you"></div>
+              <div class="a2 alex"></div>
+            </div>
+            <div class="readline">Close today</div>
+            <div class="readsub">You're both in an open place. Where the fields meet is your shared ground; the gap is the distance between you.</div>
+
+            <div class="legend">
+              <div class="lg sync"><div class="mini"><div class="mo y"></div><div class="mo a"></div></div><div class="ll">In sync</div></div>
+              <div class="lg drift"><div class="mini"><div class="mo y"></div><div class="mo a"></div></div><div class="ll">Drifted</div></div>
+            </div>
+          </div>
+
+          <div class="gridK">Your togetherness · last 14 days</div>
+          <div class="grid" style="grid-template-columns:repeat(14,1fr)">
+            <div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd lo"></div><div class="gd lo"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd ab"></div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <p class="od"><b>Me</b>: the aura is your capacity tier color, breathing, with the named state beneath it and a light composite (mood · life · us) so it reads as "a total of emotion and life context," your idea. The grid below is the <b>history, an emotional calendar</b> (each day colored by that day's tier), not a completion streak. <b>Us</b>: your two auras overlap with <code>screen</code> blend, so the meeting zone literally brightens. <b>Close versus far and merged versus separate is the comparison</b>, the two reference orbs (In sync / Drifted) show the range. Same read as the old crossing lines, "one of you here, the other there," but felt instead of charted.</p>
+
+  </div>
+</div>
+</body>
+</html>

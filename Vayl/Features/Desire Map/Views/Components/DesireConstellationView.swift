@@ -1,0 +1,200 @@
+//
+//  DesireConstellationView.swift
+//  Vayl
+//
+//  The Desire Map reveal constellation with the telegraphed two-seed assembly ceremony.
+//  Renders generated star positions + MST edges and, in `.assemble`, lights the stars in the
+//  variant's order (each via DesireStarView's two-seed ignite) while the lines draw and a
+//  telegraph plays. Reduce Motion lands on the static lit sky.
+//
+//  Replaces the reveal's use of ConstellationField. Positions/edges come from ConstellationLayout
+//  (stable per couple); the variant comes from CeremonyVariant.
+//
+//  Feel reference: docs/prototypes/desire-map-ceremony-variants.html
+//  Spec: docs/superpowers/specs/2026-06-27-desire-map-reveal-ceremony-design.md
+//
+
+import SwiftUI
+
+struct DesireConstellationView: View {
+
+    struct Star: Identifiable {
+        let id: String
+        let point: CGPoint        // normalized 0...1
+        let size: CGFloat
+        let label: String?
+        let isHero: Bool
+        let isLocked: Bool
+        let cadence: DesireStarView.Cadence
+    }
+
+    enum Mode: Equatable {
+        case intro      // beat 1: only the hero free star, igniting
+        case teasers    // beat 2/3: all shown, hero lit, locked dim, no lines
+        case assemble   // revealed (motion): the telegraphed variant ceremony
+        case resolved   // revealed (reduce motion / static): all lit, lines drawn, no motion
+    }
+
+    let stars: [Star]
+    let edges: [ConstellationLayout.Edge]
+    let variant: CeremonyVariant
+    let mode: Mode
+    var onTap: ((String) -> Void)? = nil
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var revealed: Set<Int> = []
+    @State private var gatherContracted = false
+    @State private var sweepProgress: CGFloat = 0
+    @State private var sweepVisible = false
+
+    private var heroIndex: Int { stars.firstIndex(where: \.isHero) ?? 0 }
+
+    // MARK: - Body
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                if mode == .assemble && !reduceMotion {
+                    telegraph(in: geo.size)
+                }
+
+                ForEach(Array(edges.enumerated()), id: \.offset) { _, edge in
+                    line(edge, in: geo.size)
+                }
+
+                ForEach(Array(stars.enumerated()), id: \.element.id) { index, star in
+                    if revealed.contains(index) {
+                        DesireStarView(
+                            size: star.size,
+                            state: starState(index, star),
+                            label: showsLabel(star) ? star.label : nil,
+                            cadence: star.cadence,
+                            ignites: ignites
+                        )
+                        .position(x: star.point.x * geo.size.width,
+                                  y: star.point.y * geo.size.height)
+                        .onTapGesture { onTap?(star.id) }
+                    }
+                }
+            }
+        }
+        .task(id: mode) { await applyMode() }
+    }
+
+    // MARK: - Per-star rendering
+
+    /// New stars ignite (two-seed merge) during the intro hero beat and the full assembly only.
+    private var ignites: Bool { mode == .intro || mode == .assemble }
+
+    private func starState(_ index: Int, _ star: Star) -> DesireStarView.StarState {
+        (mode == .teasers && star.isLocked) ? .dim : .lit
+    }
+
+    private func showsLabel(_ star: Star) -> Bool {
+        guard star.label != nil, !star.isLocked else { return false }
+        return star.isHero || stars.count <= 6
+    }
+
+    // MARK: - Lines
+
+    @ViewBuilder
+    private func line(_ edge: ConstellationLayout.Edge, in size: CGSize) -> some View {
+        let drawn = lineDrawn(edge)
+        Path { path in
+            path.move(to: scaled(stars[edge.a].point, size))
+            path.addLine(to: scaled(stars[edge.b].point, size))
+        }
+        .trim(from: 0, to: drawn ? 1 : 0)
+        .stroke(Color.white.opacity(0.5), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
+        .animation(AppAnimation.desireLineDraw.reduceMotionSafe, value: drawn)
+    }
+
+    private func lineDrawn(_ edge: ConstellationLayout.Edge) -> Bool {
+        switch mode {
+        case .resolved:        return true
+        case .assemble:        return revealed.contains(edge.a) && revealed.contains(edge.b)
+        case .intro, .teasers: return false
+        }
+    }
+
+    // MARK: - Telegraph
+
+    @ViewBuilder
+    private func telegraph(in size: CGSize) -> some View {
+        switch variant.telegraph {
+        case .gather:
+            Circle()
+                .fill(RadialGradient(
+                    colors: [Color.white.opacity(0.22), AppColors.spectrumMagenta.opacity(0.12), .clear],
+                    center: .center, startRadius: 0, endRadius: size.width * 0.24))
+                .frame(width: size.width * 0.48, height: size.width * 0.48)
+                .scaleEffect(gatherContracted ? 0.2 : 1.7)
+                .opacity(gatherContracted ? 0 : 0.5)
+                .blur(radius: 6)
+                .position(x: size.width / 2, y: size.height * 0.46)
+                .allowsHitTesting(false)
+        case .sweep:
+            Rectangle()
+                .fill(LinearGradient(
+                    colors: [.clear, Color.white.opacity(0.16), .clear],
+                    startPoint: .leading, endPoint: .trailing))
+                .frame(width: 60, height: size.height * 1.4)
+                .blur(radius: 8)
+                .rotationEffect(.degrees(-12))
+                .position(x: (sweepProgress * 1.4 - 0.2) * size.width, y: size.height / 2)
+                .opacity(sweepVisible ? 0.85 : 0)
+                .allowsHitTesting(false)
+        case .none:
+            EmptyView()
+        }
+    }
+
+    private func scaled(_ point: CGPoint, _ size: CGSize) -> CGPoint {
+        CGPoint(x: point.x * size.width, y: point.y * size.height)
+    }
+
+    // MARK: - Assembly timeline
+
+    private func applyMode() async {
+        sweepVisible = false
+        gatherContracted = false
+        sweepProgress = 0
+        switch mode {
+        case .intro:
+            revealed = stars.isEmpty ? [] : [heroIndex]
+        case .teasers, .resolved:
+            revealed = Set(stars.indices)
+        case .assemble:
+            revealed = []
+            await runAssembly()
+        }
+    }
+
+    private func runAssembly() async {
+        guard !stars.isEmpty else { return }
+
+        switch variant.telegraph {
+        case .gather:
+            withAnimation(AppAnimation.desireGatherPulse) { gatherContracted = true }
+            try? await Task.sleep(for: .seconds(AppAnimation.desireGatherLead))
+        case .sweep:
+            sweepVisible = true
+            withAnimation(AppAnimation.desireSweepBand) { sweepProgress = 1 }
+        case .none:
+            break
+        }
+        if Task.isCancelled { return }
+
+        let schedule = variant.schedule(points: stars.map(\.point), heroIndex: heroIndex)
+            .sorted { $0.delay < $1.delay }
+        var elapsed = 0.0
+        for step in schedule {
+            let wait = step.delay - elapsed
+            if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+            if Task.isCancelled { return }
+            elapsed = step.delay
+            revealed.insert(step.index)
+        }
+        sweepVisible = false
+    }
+}
