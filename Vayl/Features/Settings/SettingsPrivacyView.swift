@@ -8,7 +8,9 @@ struct SettingsPrivacyView: View {
     @AppStorage("screenshotProtectionEnabled")
     private var screenshotProtection: Bool = true
 
-    @State private var shareCapacity: Bool = true
+    // Sharing preference — PulseStore reads and syncs this on launch.
+    @AppStorage("shareCapacityWithPartner")
+    private var shareCapacity: Bool = true
 
     var body: some View {
         SettingsSubScreenShell(title: "Privacy & safety", onBack: { dismiss() }) {
@@ -32,16 +34,9 @@ struct SettingsPrivacyView: View {
                     subtitle: "Your partner sees your Pulse capacity, not your answers.",
                     iconTint: AppColors.accentPrimary,
                     iconBg: AppColors.accentPrimary.opacity(0.10),
-                    isOn: Binding(
-                        get: { shareCapacity },
-                        set: { newVal in
-                            shareCapacity = newVal
-                            Task { await PulseSyncService.shared.setSharing(newVal) }
-                        }
-                    )
+                    isOn: $shareCapacity
                 )
             }
         }
-        .task { shareCapacity = await PulseSyncService.shared.fetchSharing() }
     }
 }

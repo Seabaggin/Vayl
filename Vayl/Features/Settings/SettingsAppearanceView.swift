@@ -41,6 +41,7 @@ struct SettingsAppearanceView: View {
                 SettingsToggleRow(
                     icon: "waveform",
                     label: "Haptic feedback",
+                    subtitle: "Feel interactions through vibration.",
                     iconTint: AppColors.accentSecondary,
                     iconBg: AppColors.accentSecondary.opacity(0.10),
                     isOn: $hapticFeedback
