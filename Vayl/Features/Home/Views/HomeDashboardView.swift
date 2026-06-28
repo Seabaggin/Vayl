@@ -364,7 +364,6 @@ struct HomeDashboardView: View {
                 font: AppFonts.display(40, weight: .bold, relativeTo: .largeTitle),
                 animated: false
             )
-            Spacer()
             Button {
                 onOpenSettings?()
             } label: {
@@ -377,7 +376,7 @@ struct HomeDashboardView: View {
             }
             .buttonStyle(PressableCardStyle())
             .accessibilityLabel("Open settings")
-            .padding(.trailing, AppSpacing.xs)
+            Spacer()
             PartnerChip(
                 state: partnerChipState,
                 waiting: isWaitingOnPartner,
