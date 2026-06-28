@@ -293,9 +293,12 @@ struct SettingsView: View {
     private var youSection: some View {
         NavigationLink(value: SettingsRoute.you) {
             HStack(spacing: AppSpacing.md) {
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 44))
+                Image(systemName: "person.fill")
+                    .font(.system(size: 22))
                     .foregroundStyle(AppColors.textTertiary)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(AppColors.glassSurface))
+                    .overlay(Circle().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: AppSpacing.xxs) {
