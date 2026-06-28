@@ -259,9 +259,8 @@ struct SettingsView: View {
                     ))
             )
             .vaylGlassCard(radius: AppRadius.container)
-            .overlay(alignment: .top) { spectrumTopLine }
+            .overlay(alignment: .top) { premiumHairline }
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
-            .spectrumBorderGlow(intensity: 0.7)
             .padding(.top, AppSpacing.md)
         }
     }
@@ -278,6 +277,18 @@ struct SettingsView: View {
             startPoint: .leading, endPoint: .trailing
         )
         .frame(height: 1)
+    }
+
+    /// Hairline with a soft glow bloom — used on the premium upgrade banner to draw the eye.
+    private var premiumHairline: some View {
+        let gradient = LinearGradient(
+            colors: [.clear, AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta, .clear],
+            startPoint: .leading, endPoint: .trailing
+        )
+        return ZStack(alignment: .top) {
+            gradient.frame(height: 8).blur(radius: 5).opacity(0.55)
+            gradient.frame(height: 1)
+        }
     }
 
     // MARK: - You
