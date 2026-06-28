@@ -125,7 +125,7 @@ struct SettingsView: View {
             }
             .padding(.top, AppSpacing.md)
 
-            Text("Profile.")
+            Text(appState.displayName.isEmpty ? "Settings." : "\(appState.displayName).")
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(
                     LinearGradient(
@@ -300,9 +300,9 @@ struct SettingsView: View {
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                    Text(appState.displayName.isEmpty ? "Set your name" : appState.displayName)
+                    Text("Profile")
                         .font(AppFonts.bodyMedium)
-                        .foregroundStyle(appState.displayName.isEmpty ? AppColors.textTertiary : AppColors.textPrimary)
+                        .foregroundStyle(AppColors.textPrimary)
 
                     let sub = [
                         profile?.pronouns.isEmpty == false ? profile?.pronouns.joined(separator: "/") : nil
