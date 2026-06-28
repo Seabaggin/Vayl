@@ -375,18 +375,6 @@ struct SettingsView: View {
 
 // MARK: - Sub-screen stubs (replaced in Segs 2–4)
 
-struct SettingsIdentityView: View {
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        SettingsSubScreenShell(title: "You", onBack: { dismiss() }) {
-            Text("Identity settings — Seg 2")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textTertiary)
-                .padding(.top, AppSpacing.lg)
-        }
-    }
-}
-
 struct SettingsPrivacyView: View {
     @Environment(\.dismiss) private var dismiss
     var body: some View {
