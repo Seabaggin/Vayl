@@ -375,42 +375,6 @@ struct SettingsView: View {
 
 // MARK: - Sub-screen stubs (replaced in Segs 2–4)
 
-struct SettingsPrivacyView: View {
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        SettingsSubScreenShell(title: "Privacy & safety", onBack: { dismiss() }) {
-            Text("Privacy settings — Seg 3")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textTertiary)
-                .padding(.top, AppSpacing.lg)
-        }
-    }
-}
-
-struct SettingsNotificationsView: View {
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        SettingsSubScreenShell(title: "Notifications", onBack: { dismiss() }) {
-            Text("Notification settings — Seg 3")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textTertiary)
-                .padding(.top, AppSpacing.lg)
-        }
-    }
-}
-
-struct SettingsAppearanceView: View {
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        SettingsSubScreenShell(title: "Appearance", onBack: { dismiss() }) {
-            Text("Appearance settings — Seg 3")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textTertiary)
-                .padding(.top, AppSpacing.lg)
-        }
-    }
-}
-
 struct SettingsPartnerView: View {
     @Environment(\.dismiss) private var dismiss
     var body: some View {
