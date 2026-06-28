@@ -125,7 +125,7 @@ struct SettingsView: View {
             }
             .padding(.top, AppSpacing.md)
 
-            Text(appState.displayName.isEmpty ? "Settings." : "\(appState.displayName).")
+            Text("Profile.")
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(
                     LinearGradient(
@@ -305,8 +305,7 @@ struct SettingsView: View {
                         .foregroundStyle(appState.displayName.isEmpty ? AppColors.textTertiary : AppColors.textPrimary)
 
                     let sub = [
-                        profile?.pronouns.isEmpty == false ? profile?.pronouns.joined(separator: "/") : nil,
-                        profile?.nmStage.displayName
+                        profile?.pronouns.isEmpty == false ? profile?.pronouns.joined(separator: "/") : nil
                     ].compactMap { $0 }.joined(separator: " · ")
                     if !sub.isEmpty {
                         Text(sub)
