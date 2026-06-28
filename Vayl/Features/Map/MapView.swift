@@ -106,8 +106,8 @@ struct MapView: View {
                     Task { await vaultStore.loadDesire(appState: appState, context: modelContext, isCore: entitlements.isCore) }
                 })
             }
-            .vaylSheet(isPresented: $showSettings, heightFraction: 0.92, screenHeight: layout.screenHeight) {
-                PairingSettingsView()
+            .vaylSheet(isPresented: $showSettings, heightFraction: 0.97, screenHeight: layout.screenHeight) {
+                SettingsView()
             }
         }
         .task {

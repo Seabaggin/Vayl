@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Settings v2 · Consolidated nav</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+  :root {
+    --void: #0a0810; --cardBg: #120f1a;
+    --cyan: #00c2ff; --purple: #6c3ae0; --magenta: #ff006a; --gold: #ffce6b;
+    --label: rgba(160,125,205,0.5);
+    --t-display: rgba(255,255,255,0.92); --t-primary: rgba(255,255,255,0.88);
+    --t-secondary: rgba(255,255,255,0.55); --t-tertiary: rgba(255,255,255,0.32);
+    --t-whisper: rgba(255,255,255,0.26);
+    --line: rgba(255,255,255,0.07);
+    --sp: linear-gradient(95deg, var(--cyan), var(--purple), var(--magenta));
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #16161c; color: #e7e7f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  .wrap { display: flex; height: 100vh; }
+
+  /* lab panel */
+  .panel { width: 286px; flex-shrink: 0; padding: 26px 22px; background: #101016; border-right: 1px solid #1e1b2c; overflow-y: auto; }
+  .panel h1 { font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); margin: 0 0 4px; }
+  .panel h2 { font-size: 17px; font-weight: 600; color: var(--t-display); margin: 0 0 12px; }
+  .panel p  { font-size: 12.5px; line-height: 1.55; color: var(--t-secondary); margin: 0 0 8px; }
+  .panel ul { padding-left: 16px; margin: 4px 0 14px; }
+  .panel li { font-size: 12px; line-height: 1.6; color: var(--t-secondary); margin-bottom: 4px; }
+  .panel li b { color: var(--t-primary); font-weight: 600; }
+  .panel .nav a { display: block; font-size: 12px; padding: 7px 10px; margin-bottom: 5px; color: var(--t-secondary); text-decoration: none; border: 1px solid #1e1b2c; border-radius: 8px; }
+  .panel .nav a.active { color: var(--t-display); border-color: rgba(108,58,224,0.5); }
+  .toggleRow { display: flex; align-items: center; gap: 10px; margin: 11px 0; }
+  .toggleRow span { font-size: 12px; color: var(--t-secondary); }
+  .toggle { width: 42px; height: 24px; border-radius: 12px; cursor: pointer; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); position: relative; transition: background 0.25s; flex-shrink: 0; }
+  .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left 0.25s; }
+  .toggle.on { background: linear-gradient(90deg, var(--purple), var(--magenta)); box-shadow: 0 0 14px rgba(108,58,224,0.45); }
+  .toggle.on::after { left: 23px; }
+
+  .stage { flex: 1; display: flex; align-items: center; justify-content: center; background: radial-gradient(120% 80% at 50% 18%, #20202a 0%, #121217 60%); min-width: 0; }
+  .phone { position: relative; width: 390px; height: 844px; border-radius: 47px; overflow: hidden; background: var(--void); box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+
+  /* atmosphere */
+  .atmo { position: absolute; inset: 0; opacity: 0.30; pointer-events: none; z-index: 0; }
+  .atmo .drift { position: absolute; inset: 0; animation: drift 9s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: translate(0,0); } to { transform: translate(6px,-8px); } }
+  body.rm .atmo .drift { animation: none; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(54px); transform: translate(-50%,-50%); }
+  .b1 { left: 60px;  top: 130px; width: 440px; height: 360px; background: radial-gradient(closest-side, rgba(0,194,255,0.42), transparent 72%); }
+  .b2 { left: 340px; top: 220px; width: 400px; height: 340px; background: radial-gradient(closest-side, rgba(255,0,106,0.38), transparent 72%); }
+  .b3 { left: 180px; top: 560px; width: 340px; height: 320px; background: radial-gradient(closest-side, rgba(108,58,224,0.46), transparent 72%); }
+  .b4 { left: 320px; top: 780px; width: 360px; height: 300px; background: radial-gradient(closest-side, rgba(0,140,255,0.34), transparent 72%); }
+
+  /* screens — iOS push transition */
+  .screen {
+    position: absolute; inset: 0; overflow: hidden; z-index: 1;
+    transform: translateX(100%);
+    transition: transform 0.34s cubic-bezier(0.33,1,0.68,1);
+    pointer-events: none;
+  }
+  .screen.active { transform: translateX(0); pointer-events: auto; }
+  .screen.behind  { transform: translateX(-28%); pointer-events: none; }
+  body.rm .screen { transition: none; }
+
+  /* status bar */
+  .statusbar { position: relative; z-index: 12; pointer-events: none; display: flex; justify-content: space-between; align-items: center; padding: 16px 28px 4px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.65); }
+  .bat { width: 22px; height: 11px; border: 1.5px solid rgba(255,255,255,0.6); border-radius: 3px; position: relative; }
+  .bat::after { content: ""; position: absolute; right: -4px; top: 3px; width: 2px; height: 5px; background: rgba(255,255,255,0.45); border-radius: 0 1px 1px 0; }
+  .bat i { position: absolute; inset: 1.5px; right: 4px; background: rgba(255,255,255,0.85); border-radius: 1px; width: 62%; }
+
+  /* scroll body */
+  .scroll { position: absolute; top: 44px; left: 0; right: 0; bottom: 0; overflow-y: auto; padding: 4px 20px 120px; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  .hdr { display: flex; align-items: center; padding: 4px 0 12px; }
+  .back { display: flex; align-items: center; gap: 5px; font-size: 14px; color: var(--t-secondary); cursor: pointer; user-select: none; }
+  .back i { font-size: 17px; }
+  .back:active { opacity: 0.6; }
+
+  .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+  .pg-name { font-size: 34px; font-weight: 800; line-height: 1.04; letter-spacing: 0.01em; background: var(--sp); -webkit-background-clip: text; background-clip: text; color: transparent; margin-top: 2px; }
+  .pg-title { font-size: 28px; font-weight: 800; line-height: 1.04; color: var(--t-display); margin-top: 2px; }
+  .badges { display: flex; gap: 7px; margin-top: 11px; }
+  .badge { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 11px; border-radius: 20px; color: var(--t-secondary); background: rgba(255,255,255,0.04); border: 1px solid var(--line); }
+  .badge.spec span { background: var(--sp); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* premium cards */
+  .prem { position: relative; margin-top: 18px; border-radius: 20px; padding: 17px 18px; overflow: hidden; cursor: pointer;
+    background: linear-gradient(150deg, rgba(0,194,255,0.09), rgba(108,58,224,0.12) 52%, rgba(255,0,106,0.09));
+    border: 1px solid transparent; box-shadow: 0 18px 44px rgba(108,58,224,0.18); }
+  .prem .pframe { position: absolute; inset: 0; border-radius: 20px; pointer-events: none;
+    background: linear-gradient(120deg, rgba(0,194,255,0.6), rgba(108,58,224,0.6), rgba(255,0,106,0.6)) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0.55; }
+  .prem::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent 6%, var(--cyan) 30%, var(--purple) 54%, var(--magenta) 78%, transparent 94%); }
+  .prem-top { display: flex; align-items: center; gap: 9px; position: relative; }
+  .prem-ic { width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(108,58,224,0.16); border: 1px solid rgba(108,58,224,0.34); font-size: 15px; }
+  .prem-ic i { background: var(--sp); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .prem-ic.ok { background: rgba(0,194,255,0.12); border-color: rgba(0,194,255,0.34); }
+  .prem-ic.ok i { color: var(--cyan); -webkit-text-fill-color: var(--cyan); }
+  .prem-k { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--t-secondary); }
+  .prem-t { position: relative; font-size: 16px; font-weight: 700; color: var(--t-display); line-height: 1.35; margin: 11px 0 14px; }
+  .prem-cta { position: relative; display: flex; align-items: center; }
+  .prem-price { font-size: 12.5px; color: var(--t-tertiary); }
+  .prem-price b { font-size: 15px; font-weight: 800; color: var(--t-display); margin-right: 4px; }
+  .prem-go { margin-left: auto; width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 17px; background: linear-gradient(95deg, var(--purple), var(--magenta)); box-shadow: 0 8px 22px rgba(108,58,224,0.4); }
+  .prem.life { display: flex; align-items: center; gap: 12px; padding: 15px 16px; box-shadow: none; background: rgba(0,194,255,0.05); margin-top: 18px; }
+  .prem.life .prem-main { min-width: 0; }
+  .prem-t2 { font-size: 15px; font-weight: 700; color: var(--t-display); }
+  .prem-sub { font-size: 11px; color: var(--t-tertiary); margin-top: 2px; }
+  .restore { margin-left: auto; font-size: 11.5px; font-weight: 700; color: var(--cyan); white-space: nowrap; cursor: pointer; }
+
+  /* section header + card */
+  .sec-h { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--label); margin: 24px 4px 9px; }
+  .card { position: relative; border-radius: 18px; border: 1px solid var(--line); background: rgba(255,255,255,0.022); padding: 4px 14px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03); }
+  .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(0,194,255,0.28), rgba(108,58,224,0.26), rgba(255,0,106,0.28), transparent); }
+
+  /* rows */
+  .row { display: flex; align-items: center; gap: 13px; padding: 13px 0; cursor: pointer; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row:active { opacity: 0.72; }
+  .ic { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.045); border: 1px solid var(--line); font-size: 17px; color: var(--t-secondary); }
+  .ic.spec i { background: var(--sp); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .ic.safety { background: rgba(255,206,107,0.09); border-color: rgba(255,206,107,0.24); color: var(--gold); }
+  .ic.bad { background: rgba(255,0,106,0.08); border-color: rgba(255,0,106,0.26); color: #ff5a7a; }
+  .ic.ghost { background: transparent; border-color: transparent; color: var(--t-tertiary); }
+  .meta { flex: 1; min-width: 0; }
+  .lbl { font-size: 14.5px; font-weight: 500; color: var(--t-primary); }
+  .lbl.bad { color: #ff5a7a; }
+  .lbl.dim { color: var(--t-tertiary); }
+  .sub { font-size: 11px; color: var(--t-tertiary); margin-top: 2px; line-height: 1.35; }
+  .val { font-size: 13px; color: var(--t-secondary); margin-left: auto; white-space: nowrap; }
+  .chev { font-size: 17px; color: var(--t-whisper); flex-shrink: 0; }
+
+  /* partner crest */
+  .partnerRow .crest { width: 38px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+
+  /* iOS toggle */
+  .tgl { width: 46px; height: 28px; border-radius: 14px; flex-shrink: 0; position: relative; cursor: pointer; background: rgba(255,255,255,0.10); border: 1px solid var(--line); transition: background 0.25s; }
+  .tgl::after { content: ""; position: absolute; top: 2.5px; left: 2.5px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: left 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.45); }
+  .tgl.on { background: linear-gradient(90deg, var(--purple), var(--magenta)); border-color: transparent; }
+  .tgl.on::after { left: 20.5px; }
+  body.rm .tgl, body.rm .tgl::after { transition: none; }
+
+  /* specbar */
+  .specbar { height: 6px; border-radius: 3px; margin: -2px 0 12px; background: var(--sp); opacity: 0.85; }
+
+  /* footer */
+  .footer-links { display: flex; justify-content: center; gap: 22px; margin-top: 20px; }
+  .footer-link { font-size: 11.5px; color: var(--t-tertiary); cursor: pointer; }
+  .ver { text-align: center; font-size: 11px; color: var(--t-whisper); margin: 10px 0 4px; letter-spacing: 0.04em; }
+
+  /* tab bar */
+  .tabbar { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); width: 340px; height: 64px; border-radius: 32px; background: rgba(10,8,16,0.97); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.055); display: flex; align-items: center; justify-content: space-around; z-index: 40; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 60px; cursor: pointer; }
+  .tab i { font-size: 21px; color: rgba(255,255,255,0.22); }
+  .tab span { font-size: 10px; color: rgba(255,255,255,0.22); }
+  .tab.active i { background: var(--sp); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tab.active span { color: rgba(255,255,255,0.65); font-weight: 600; }
+
+  /* variant visibility */
+  body:not(.life) .v-life { display: none; }
+  body.life .v-free { display: none; }
+  body:not(.solo) .v-solo { display: none; }
+  body.solo .v-linked { display: none; }
+
+  /* arrival */
+  body.arrive #scr-main .pg-name,
+  body.arrive #scr-main .badges { animation: rise 0.5s ease-out 0.05s backwards; }
+  body.arrive #scr-main .prem  { animation: rise 0.55s cubic-bezier(0.25,1.02,0.4,1) 0.14s backwards; }
+  body.arrive #scr-main .sec-h,
+  body.arrive #scr-main .card  { animation: rise 0.5s ease-out 0.24s backwards; }
+  body.arrive #scr-main .tabbar{ animation: rise 0.5s ease-out 0.4s backwards; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+  body.rm.arrive * { animation: none !important; }
+
+  @media (max-width: 920px) { .panel { display: none; } }
+</style>
+</head>
+<body class="arrive">
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="specGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#00c2ff"/>
+    <stop offset="52%" stop-color="#6c3ae0"/>
+    <stop offset="100%" stop-color="#ff006a"/>
+  </linearGradient>
+</defs></svg>
+
+<div class="wrap">
+
+  <!-- ── Lab panel ── -->
+  <aside class="panel">
+    <h1>Vayl · Settings v2</h1>
+    <h2>Consolidated nav</h2>
+    <p>The original had 7 expanded sections (~25 rows visible). This version collapses them into 4 navigable rows + a featured Partner card.</p>
+    <ul>
+      <li><b>Main screen</b> — ~10 rows. Instant scan.</li>
+      <li><b>You</b> — nav row, shows "Jordan · Exploring" inline.</li>
+      <li><b>Partner</b> — featured card; it's relational state, not a setting.</li>
+      <li><b>Privacy, Notifs, Appearance</b> — nav rows with current value inline.</li>
+      <li><b>Account</b> — sign out, export, delete at the bottom.</li>
+    </ul>
+    <p>Tap rows on the phone to navigate into sub-screens. Back arrow returns.</p>
+
+    <div style="margin-top:16px">
+      <div class="toggleRow"><div class="toggle" id="billToggle"></div><span id="billLabel">Premium: Free</span></div>
+      <div class="toggleRow"><div class="toggle on" id="linkToggle"></div><span id="linkLabel">Partner: Linked</span></div>
+      <div class="toggleRow"><div class="toggle" id="rmToggle"></div><span>Reduce motion</span></div>
+    </div>
+
+    <h1 style="margin-top:20px">Compare</h1>
+    <div class="nav">
+      <a href="settings-v2.html" class="active">Settings v2 — Consolidated (this)</a>
+      <a href="settings.html">Settings v1 — Long list (original)</a>
+    </div>
+  </aside>
+
+  <!-- ── Phone stage ── -->
+  <div class="stage">
+    <div class="phone">
+      <div class="atmo"><div class="drift">
+        <div class="blob b1"></div><div class="blob b2"></div>
+        <div class="blob b3"></div><div class="blob b4"></div>
+      </div></div>
+
+      <!-- ══════════════════════════════════════
+           MAIN SCREEN
+      ══════════════════════════════════════ -->
+      <div class="screen active" id="scr-main">
+        <div class="statusbar"><span>9:41</span><div class="bat"><i></i></div></div>
+        <div class="scroll">
+          <div class="hdr"><div class="back"><i class="ti ti-arrow-left"></i> Map</div></div>
+          <div class="eyebrow">Settings</div>
+          <div class="pg-name">Jordan.</div>
+          <div class="badges">
+            <span class="badge spec"><span>Exploring</span></span>
+            <span class="badge v-linked">Linked</span>
+            <span class="badge v-solo">Solo discovery</span>
+          </div>
+
+          <!-- Premium: free state -->
+          <div class="prem v-free">
+            <div class="pframe"></div>
+            <div class="prem-top">
+              <span class="prem-ic"><i class="ti ti-sparkles"></i></span>
+              <span class="prem-k">Vayl · Lifetime</span>
+            </div>
+            <div class="prem-t">Unlock every deck and the full Desire Map.</div>
+            <div class="prem-cta">
+              <div class="prem-price"><b>$24.99</b>once · yours to keep</div>
+              <span class="prem-go"><i class="ti ti-arrow-right"></i></span>
+            </div>
+          </div>
+
+          <!-- Premium: lifetime state -->
+          <div class="prem life v-life">
+            <div class="pframe"></div>
+            <span class="prem-ic ok"><i class="ti ti-circle-check"></i></span>
+            <div class="prem-main">
+              <div class="prem-t2">Vayl Lifetime</div>
+              <div class="prem-sub">Member since June 2026</div>
+            </div>
+            <div class="restore">Restore</div>
+          </div>
+
+          <!-- Partner: linked -->
+          <div class="sec-h">Partner</div>
+          <div class="card v-linked">
+            <div class="row partnerRow" onclick="nav('scr-partner')">
+              <span class="crest">
+                <svg width="34" height="30" viewBox="0 0 56 46">
+                  <g fill="none" stroke="url(#specGrad)" stroke-width="1.8" stroke-linejoin="round">
+                    <path d="M21 6 L32 23 L21 40 L10 23 Z"/>
+                    <path d="M35 6 L46 23 L35 40 L24 23 Z"/>
+                  </g>
+                </svg>
+              </span>
+              <div class="meta">
+                <div class="lbl">Jordan &amp; Alex</div>
+                <div class="sub">Linked · 14 weeks</div>
+              </div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+          </div>
+
+          <!-- Partner: solo -->
+          <div class="card v-solo">
+            <div class="row" onclick="nav('scr-partner')">
+              <span class="ic spec"><i class="ti ti-user-plus"></i></span>
+              <div class="meta">
+                <div class="lbl">Invite a partner</div>
+                <div class="sub">Share a code to link your apps</div>
+              </div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+          </div>
+
+          <!-- Settings navigation card -->
+          <div class="sec-h">Your settings</div>
+          <div class="card">
+            <div class="row" onclick="nav('scr-you')">
+              <span class="ic spec"><i class="ti ti-user-circle"></i></span>
+              <div class="meta"><div class="lbl">You</div></div>
+              <div class="val">Jordan · Exploring</div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+            <div class="row" onclick="nav('scr-privacy')">
+              <span class="ic safety"><i class="ti ti-lock"></i></span>
+              <div class="meta"><div class="lbl">Privacy &amp; safety</div></div>
+              <div class="val">Face ID on</div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+            <div class="row" onclick="nav('scr-notifs')">
+              <span class="ic"><i class="ti ti-bell"></i></span>
+              <div class="meta"><div class="lbl">Notifications</div></div>
+              <div class="val">Weekly</div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+            <div class="row" onclick="nav('scr-appearance')">
+              <span class="ic"><i class="ti ti-palette"></i></span>
+              <div class="meta"><div class="lbl">Appearance</div></div>
+              <div class="val">Midnight</div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+          </div>
+
+          <!-- Account card -->
+          <div class="sec-h">Account</div>
+          <div class="card">
+            <div class="row">
+              <span class="ic ghost"><i class="ti ti-logout"></i></span>
+              <div class="meta"><div class="lbl dim">Sign out</div></div>
+            </div>
+            <div class="row">
+              <span class="ic"><i class="ti ti-download"></i></span>
+              <div class="meta"><div class="lbl">Export my data</div></div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+            <div class="row">
+              <span class="ic bad"><i class="ti ti-trash"></i></span>
+              <div class="meta"><div class="lbl bad">Delete account</div></div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="footer-links">
+            <span class="footer-link">Privacy</span>
+            <span class="footer-link">Terms</span>
+            <span class="footer-link">Support</span>
+          </div>
+          <div class="ver">Vayl · v0.1.0</div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><i class="ti ti-home"></i><span>Home</span></div>
+          <div class="tab"><i class="ti ti-cards"></i><span>Play</span></div>
+          <div class="tab active"><i class="ti ti-map-2"></i><span>Map</span></div>
+          <div class="tab"><i class="ti ti-book-2"></i><span>Learn</span></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           SUB-SCREEN: YOU
+      ══════════════════════════════════════ -->
+      <div class="screen" id="scr-you">
+        <div class="statusbar"><span>9:41</span><div class="bat"><i></i></div></div>
+        <div class="scroll">
+          <div class="hdr">
+            <div class="back" onclick="back()"><i class="ti ti-arrow-left"></i> Settings</div>
+          </div>
+          <div class="pg-title">You</div>
+
+          <div class="sec-h">Identity</div>
+          <div class="card">
+            <div class="row">
+              <span class="ic"><i class="ti ti-user"></i></span>
+              <div class="meta"><div class="lbl">Display name</div></div>
+              <div class="val">Jordan</div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+            <div class="row">
+              <span class="ic"><i class="ti ti-venus"></i></span>
+              <div class="meta"><div class="lbl">Gender identity</div></div>
+              <div class="val">Non-binary</div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+            <div class="row">
+              <span class="ic"><i class="ti ti-quote"></i></span>
+              <div class="meta"><div class="lbl">Pronouns</div></div>
+              <div class="val">they / them</div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+            <div class="row">
+              <span class="ic spec"><i class="ti ti-stairs-up"></i></span>
+              <div class="meta">
+                <div class="lbl">Experience</div>
+                <div class="sub">Sets your default card intensity</div>
+              </div>
+              <div class="val">Exploring</div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+          </div>
+
+          <div class="sec-h">About you</div>
+          <div class="card">
+            <div class="row">
+              <span class="ic"><i class="ti ti-calendar"></i></span>
+              <div class="meta"><div class="lbl">Age range</div></div>
+              <div class="val">25–35</div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+            <div class="row">
+              <span class="ic"><i class="ti ti-heart-handshake"></i></span>
+              <div class="meta"><div class="lbl">Relationship</div></div>
+              <div class="val">Finding our shape</div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><i class="ti ti-home"></i><span>Home</span></div>
+          <div class="tab"><i class="ti ti-cards"></i><span>Play</span></div>
+          <div class="tab active"><i class="ti ti-map-2"></i><span>Map</span></div>
+          <div class="tab"><i class="ti ti-book-2"></i><span>Learn</span></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           SUB-SCREEN: PARTNER
+      ══════════════════════════════════════ -->
+      <div class="screen" id="scr-partner">
+        <div class="statusbar"><span>9:41</span><div class="bat"><i></i></div></div>
+        <div class="scroll">
+          <div class="hdr">
+            <div class="back" onclick="back()"><i class="ti ti-arrow-left"></i> Settings</div>
+          </div>
+          <div class="pg-title v-linked">Jordan &amp; Alex</div>
+          <div class="pg-title v-solo">Partner</div>
+
+          <!-- linked state -->
+          <div class="v-linked">
+            <div class="sec-h">Connection</div>
+            <div class="card">
+              <div class="row partnerRow" style="cursor:default">
+                <span class="crest">
+                  <svg width="34" height="30" viewBox="0 0 56 46">
+                    <g fill="none" stroke="url(#specGrad)" stroke-width="1.8" stroke-linejoin="round">
+                      <path d="M21 6 L32 23 L21 40 L10 23 Z"/>
+                      <path d="M35 6 L46 23 L35 40 L24 23 Z"/>
+                    </g>
+                  </svg>
+                </span>
+                <div class="meta">
+                  <div class="lbl">Alex</div>
+                  <div class="sub">Linked · 14 weeks · March 2026</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sec-h">Actions</div>
+            <div class="card">
+              <div class="row">
+                <span class="ic bad"><i class="ti ti-unlink"></i></span>
+                <div class="meta"><div class="lbl bad">Unlink partner</div></div>
+                <i class="ti ti-chevron-right chev"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- solo state -->
+          <div class="v-solo">
+            <div class="sec-h">Connect</div>
+            <div class="card">
+              <div class="row">
+                <span class="ic spec"><i class="ti ti-user-plus"></i></span>
+                <div class="meta">
+                  <div class="lbl">Invite a partner</div>
+                  <div class="sub">Share a code to link your apps</div>
+                </div>
+                <i class="ti ti-chevron-right chev"></i>
+              </div>
+              <div class="row">
+                <span class="ic"><i class="ti ti-link"></i></span>
+                <div class="meta"><div class="lbl">Enter a code</div></div>
+                <i class="ti ti-chevron-right chev"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><i class="ti ti-home"></i><span>Home</span></div>
+          <div class="tab"><i class="ti ti-cards"></i><span>Play</span></div>
+          <div class="tab active"><i class="ti ti-map-2"></i><span>Map</span></div>
+          <div class="tab"><i class="ti ti-book-2"></i><span>Learn</span></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           SUB-SCREEN: PRIVACY & SAFETY
+      ══════════════════════════════════════ -->
+      <div class="screen" id="scr-privacy">
+        <div class="statusbar"><span>9:41</span><div class="bat"><i></i></div></div>
+        <div class="scroll">
+          <div class="hdr">
+            <div class="back" onclick="back()"><i class="ti ti-arrow-left"></i> Settings</div>
+          </div>
+          <div class="pg-title">Privacy &amp; safety</div>
+
+          <div class="sec-h">Protection</div>
+          <div class="card">
+            <div class="row">
+              <span class="ic safety"><i class="ti ti-lock"></i></span>
+              <div class="meta">
+                <div class="lbl">App lock</div>
+                <div class="sub">Face ID · locks immediately</div>
+              </div>
+              <div class="tgl on" data-tgl></div>
+            </div>
+            <div class="row">
+              <span class="ic"><i class="ti ti-eye-off"></i></span>
+              <div class="meta"><div class="lbl">Blur in app switcher</div></div>
+              <div class="tgl on" data-tgl></div>
+            </div>
+            <div class="row">
+              <span class="ic"><i class="ti ti-screenshot"></i></span>
+              <div class="meta"><div class="lbl">Screenshot protection</div></div>
+              <div class="tgl on" data-tgl></div>
+            </div>
+          </div>
+
+          <div class="sec-h v-linked">Sharing</div>
+          <div class="card v-linked">
+            <div class="row">
+              <span class="ic"><i class="ti ti-wave-sine"></i></span>
+              <div class="meta">
+                <div class="lbl">Share capacity with partner</div>
+                <div class="sub">They see your Pulse state, never your answers</div>
+              </div>
+              <div class="tgl on" data-tgl></div>
+            </div>
+          </div>
+
+          <div class="sec-h">Ground rules</div>
+          <div class="card">
+            <div class="row">
+              <span class="ic safety"><i class="ti ti-checklist"></i></span>
+              <div class="meta">
+                <div class="lbl">Review ground rules</div>
+                <div class="sub">Your mutual agreements for sessions</div>
+              </div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><i class="ti ti-home"></i><span>Home</span></div>
+          <div class="tab"><i class="ti ti-cards"></i><span>Play</span></div>
+          <div class="tab active"><i class="ti ti-map-2"></i><span>Map</span></div>
+          <div class="tab"><i class="ti ti-book-2"></i><span>Learn</span></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           SUB-SCREEN: NOTIFICATIONS
+      ══════════════════════════════════════ -->
+      <div class="screen" id="scr-notifs">
+        <div class="statusbar"><span>9:41</span><div class="bat"><i></i></div></div>
+        <div class="scroll">
+          <div class="hdr">
+            <div class="back" onclick="back()"><i class="ti ti-arrow-left"></i> Settings</div>
+          </div>
+          <div class="pg-title">Notifications</div>
+
+          <div class="sec-h">Reminders</div>
+          <div class="card">
+            <div class="row">
+              <span class="ic"><i class="ti ti-bell"></i></span>
+              <div class="meta">
+                <div class="lbl">Check-in reminder</div>
+                <div class="sub">Weekly · Sunday evenings</div>
+              </div>
+              <div class="tgl on" data-tgl></div>
+            </div>
+            <div class="row">
+              <span class="ic"><i class="ti ti-bell-ringing"></i></span>
+              <div class="meta">
+                <div class="lbl">Partner nudges</div>
+                <div class="sub">When your partner checks in</div>
+              </div>
+              <div class="tgl on" data-tgl></div>
+            </div>
+          </div>
+
+          <div class="sec-h">Content</div>
+          <div class="card">
+            <div class="row">
+              <span class="ic"><i class="ti ti-eye-off"></i></span>
+              <div class="meta">
+                <div class="lbl">Discreet mode</div>
+                <div class="sub">Hide content in lock screen alerts</div>
+              </div>
+              <div class="tgl" data-tgl></div>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><i class="ti ti-home"></i><span>Home</span></div>
+          <div class="tab"><i class="ti ti-cards"></i><span>Play</span></div>
+          <div class="tab active"><i class="ti ti-map-2"></i><span>Map</span></div>
+          <div class="tab"><i class="ti ti-book-2"></i><span>Learn</span></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           SUB-SCREEN: APPEARANCE
+      ══════════════════════════════════════ -->
+      <div class="screen" id="scr-appearance">
+        <div class="statusbar"><span>9:41</span><div class="bat"><i></i></div></div>
+        <div class="scroll">
+          <div class="hdr">
+            <div class="back" onclick="back()"><i class="ti ti-arrow-left"></i> Settings</div>
+          </div>
+          <div class="pg-title">Appearance</div>
+
+          <div class="sec-h">Display</div>
+          <div class="card">
+            <div class="row" style="cursor:default">
+              <span class="ic"><i class="ti ti-palette"></i></span>
+              <div class="meta"><div class="lbl">Theme</div></div>
+              <div class="val">Midnight</div>
+            </div>
+            <div class="specbar"></div>
+          </div>
+
+          <div class="sec-h">Feel</div>
+          <div class="card">
+            <div class="row">
+              <span class="ic"><i class="ti ti-wave-sine"></i></span>
+              <div class="meta"><div class="lbl">Haptic feedback</div></div>
+              <div class="tgl on" data-tgl></div>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><i class="ti ti-home"></i><span>Home</span></div>
+          <div class="tab"><i class="ti ti-cards"></i><span>Play</span></div>
+          <div class="tab active"><i class="ti ti-map-2"></i><span>Map</span></div>
+          <div class="tab"><i class="ti ti-book-2"></i><span>Learn</span></div>
+        </div>
+      </div>
+
+    </div><!-- .phone -->
+  </div><!-- .stage -->
+</div><!-- .wrap -->
+
+<script>
+  let current = 'scr-main';
+
+  function nav(id) {
+    const prev = document.getElementById(current);
+    prev.classList.remove('active');
+    prev.classList.add('behind');
+    document.getElementById(id).classList.add('active');
+    current = id;
+  }
+
+  function back() {
+    document.getElementById(current).classList.remove('active');
+    const main = document.getElementById('scr-main');
+    main.classList.remove('behind');
+    main.classList.add('active');
+    current = 'scr-main';
+  }
+
+  document.querySelectorAll('[data-tgl]').forEach(t =>
+    t.addEventListener('click', () => t.classList.toggle('on'))
+  );
+
+  const bill = document.getElementById('billToggle');
+  const billLabel = document.getElementById('billLabel');
+  bill.addEventListener('click', () => {
+    bill.classList.toggle('on');
+    document.body.classList.toggle('life', bill.classList.contains('on'));
+    billLabel.textContent = 'Premium: ' + (bill.classList.contains('on') ? 'Lifetime' : 'Free');
+  });
+
+  const link = document.getElementById('linkToggle');
+  const linkLabel = document.getElementById('linkLabel');
+  link.addEventListener('click', () => {
+    link.classList.toggle('on');
+    const linked = link.classList.contains('on');
+    document.body.classList.toggle('solo', !linked);
+    linkLabel.textContent = 'Partner: ' + (linked ? 'Linked' : 'Solo');
+  });
+
+  const rm = document.getElementById('rmToggle');
+  rm.addEventListener('click', () => {
+    rm.classList.toggle('on');
+    document.body.classList.toggle('rm');
+  });
+</script>
+</body>
+</html>

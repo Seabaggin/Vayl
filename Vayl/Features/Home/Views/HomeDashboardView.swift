@@ -68,6 +68,7 @@ struct HomeDashboardView: View {
     /// sheet in place over Home (Bryan's PulseWidget pass). Interim: routes to the
     /// Pulse surface so it is never dead.
     var onCheckIn: (() -> Void)? = nil
+    var onOpenSettings: (() -> Void)? = nil
 
     // MARK: - State
 
@@ -364,6 +365,19 @@ struct HomeDashboardView: View {
                 animated: false
             )
             Spacer()
+            Button {
+                onOpenSettings?()
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(AppColors.textSecondary)
+                    .frame(width: 36, height: 36)
+                    .background(Circle().fill(AppColors.glassSurface))
+                    .accessibilityHidden(true)
+            }
+            .buttonStyle(PressableCardStyle())
+            .accessibilityLabel("Open settings")
+            .padding(.trailing, AppSpacing.xs)
             PartnerChip(
                 state: partnerChipState,
                 waiting: isWaitingOnPartner,

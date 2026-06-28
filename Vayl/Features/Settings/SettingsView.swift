@@ -1,318 +1,492 @@
-//
-//  SettingsView.swift
-//  Vayl
-//
+// Vayl/Features/Settings/SettingsView.swift
 
 import SwiftUI
 import SwiftData
 
+// MARK: - Route enum
+
+enum SettingsRoute: Hashable {
+    case you
+    case privacy
+    case notifications
+    case appearance
+    case partner
+}
+
+// MARK: - Main view
+
 struct SettingsView: View {
-
-    // MARK: - State
-
-    @State private var partnerName: String = ""
-    @State private var pairingCode: String = "AX7-QM2"
-    @State private var showPairingCopied: Bool = false
-    @State private var showResetConfirm: Bool = false
-    @State private var showExportSheet: Bool = false
-    @AppStorage("screenshotProtectionEnabled") private var screenshotProtection: Bool = true
-    // TODO: migrate key to UserDefaultsKey.screenshotProtectionEnabled
-    @State private var hapticFeedback: Bool = true
-    @State private var shareCapacity: Bool = true   // loaded from the profile on appear
-
-    // MARK: - Body
+    @Environment(AppState.self)         private var appState
+    @Environment(EntitlementStore.self) private var entitlements
+    @Environment(\.dismiss)             private var dismiss
 
     var body: some View {
         NavigationStack {
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: AppSpacing.xl) {        // was 28 → xl (32), snap per handoff
-                    header
-                    NavigationLink(destination: PairingSettingsView()) {
-                        HStack {
-                            Image(AppIcons.heartCircleFill) // was "heart.circle.fill"
-                                .foregroundStyle(.pink)
-                            VStack(alignment: .leading, spacing: AppSpacing.xxs) { // was 2 → xxs, exact
-                                Text("Pair with Partner")
-                                    .font(AppFonts.bodyMedium)   // was .fontWeight(.medium) on system font
-                                    .foregroundColor(AppColors.textPrimary)
-                                Text("Connect your accounts to play together")
-                                    .font(AppFonts.caption)      // was .font(.caption) system token
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Image(AppIcons.chevronRight)     // was "chevron.right"
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, AppSpacing.xs)  // was 4 → xs, exact
+            ZStack {
+                AppColors.void.ignoresSafeArea()
+                OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        settingsHeader
+                        membershipCard
+                        partnerCard
+                        SettingsSectionLabel(text: "Preferences")
+                        preferencesCard
+                        SettingsSectionLabel(text: "Account")
+                        accountCard
+                        footerLinks
                     }
-                    profileSection
-                    partnerSection
-                    appearanceSection
-                    privacySection
-                    dataSection
-                    dangerZone
-                    appInfo
-                    #if DEBUG
-                    NavigationLink {
-                        PresenceDebugView()
-                    } label: {
-                        Text("🔌 DEV: Presence Debug (B1)")
-                            .font(AppFonts.bodyMedium)
-                            .foregroundColor(AppColors.accentPrimary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    DebugLogoutView()
-                    #endif
+                    .padding(.horizontal, AppSpacing.lg)
+                    .padding(.bottom, AppSpacing.xxl)
                 }
-                .padding(.horizontal, AppSpacing.lg)    // was 20 → lg (24)
-                .padding(.top, AppSpacing.md)           // was 16 → md, exact
-                .padding(.bottom, AppSpacing.xxl)       // was 40 → xxl (48), snap per handoff
             }
-            .background(AppColors.pageBackground.ignoresSafeArea())
-            .task { shareCapacity = await PulseSyncService.shared.fetchSharing() }
-            .if(screenshotProtection) { $0.screenshotProtected() }
-            .alert("Reset All Data?", isPresented: $showResetConfirm) {
-                Button("Cancel", role: .cancel) {}
-                Button("Reset Everything", role: .destructive) {
-                    #if DEBUG
-                    print("[Settings] Reset all data")
-                    #endif
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: SettingsRoute.self) { route in
+                switch route {
+                case .you:           SettingsIdentityView()
+                case .privacy:       SettingsPrivacyView()
+                case .notifications: SettingsNotificationsView()
+                case .appearance:    SettingsAppearanceView()
+                case .partner:       SettingsPartnerView()
                 }
-            } message: {
-                Text("This will permanently delete all sessions, ratings, and progress. This cannot be undone.")
             }
         }
     }
 
     // MARK: - Header
 
-    private var header: some View {
-        Text("Settings")
-            .font(AppFonts.screenTitle)
-            .foregroundColor(AppColors.textPrimary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    // MARK: - Profile
-
-    private var profileSection: some View {
-        SettingsCard {
-            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
-                SectionHeader("PROFILE")
-                InteractiveField(
-                    placeholder: "Your name",
-                    icon: "person.fill",            // raw string lives in InteractiveField — migrate there
-                    text: $partnerName
-                )
+    private var settingsHeader: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            HStack {
+                Text("Settings")
+                    .font(AppFonts.overline)
+                    .tracking(2)
+                    .foregroundStyle(AppColors.textSectionLabel)
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(AppColors.textSecondary)
+                        .frame(width: 32, height: 32)
+                        .background(Circle().fill(AppColors.glassSurface))
+                }
+                .buttonStyle(PressableCardStyle())
+                .accessibilityLabel("Close settings")
             }
+            .padding(.top, AppSpacing.md)
+
+            Text(appState.displayName.isEmpty ? "You." : "\(appState.displayName).")
+                .font(AppFonts.screenTitle)
+                .foregroundStyle(AppColors.textPrimary)
+                .padding(.top, AppSpacing.xs)
         }
     }
 
-    // MARK: - Partner Pairing
+    // MARK: - Membership
 
-    private var partnerSection: some View {
-        SettingsCard {
-            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
-                SectionHeader("PARTNER PAIRING")
-                Text("Share this code with your partner so they can link their app to yours.")
-                    .font(AppFonts.caption)
-                    .foregroundColor(AppColors.textTertiary)
-                HStack(spacing: AppSpacing.sm) {    // was 12 → sm (8), snap per handoff
-                    Text(pairingCode)
-                        .font(AppFonts.scoreDisplay)
-                        .foregroundColor(AppColors.accentPrimary)
-                        .kerning(2)
-                    Spacer()
-                    Button {
-                        UIPasteboard.general.string = pairingCode
-                        withAnimation(AppAnimation.fast) { // was bare withAnimation
-                            showPairingCopied = true
-                        }
-                        Task {
-                            try? await Task.sleep(for: .seconds(2))
-                            // TODO: replace try? with do/catch per Swift rules
-                            withAnimation(AppAnimation.fast) { // was bare withAnimation
-                                showPairingCopied = false
-                            }
-                        }
-                    } label: {
-                        Image(showPairingCopied ? AppIcons.checkmark : AppIcons.docOnDoc)
-                        // was "checkmark" / "doc.on.doc"
-                            .font(
-                                Font.custom("Switzer-Medium", size: 16, relativeTo: .body)
-                            )                       // was .system(size: 16, weight: .medium)
-                            .foregroundColor(
-                                showPairingCopied ? AppColors.success : AppColors.textSecondary
-                            )
-                            .frame(minWidth: 44, minHeight: 44) // A11y: min hit target
-                    }
-                    .accessibilityLabel(showPairingCopied ? "Copied" : "Copy pairing code")
-                    .accessibilityAddTraits(.isButton)
-                }
-                .padding(AppSpacing.md)             // was 14 → md (16), snap
-                .cardStyle(
-                    background: AppColors.modalBackground,
-                    cornerRadius: AppRadius.md      // was 10 → md (12), snap per handoff
-                )
-                InteractiveField(
-                    placeholder: "Enter partner's code",
-                    icon: "link",                   // raw string lives in InteractiveField — migrate there
-                    text: .constant("")
-                )
-                VaylButton(label: "Link Partner") {
-                    #if DEBUG
-                    print("[Settings] Link partner tapped")
-                    #endif
-                }
-            }
-        }
-    }
-
-    // MARK: - Appearance
-
-    private var appearanceSection: some View {
-        SettingsCard {
-            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
-                SectionHeader("APPEARANCE")
-                // Dark-only (Act 1): theme is fixed to Midnight, so this is an
-                // informational row, not a navigable picker. Restore a Button +
-                // destination here if light/system ever return.
-                HStack {
-                    Image(AppIcons.paintpalette) // was "paintpalette.fill"
-                        .font(
-                            Font.custom("Switzer-Regular", size: 15, relativeTo: .body)
-                        )                       // was .system(size: 15)
-                        .foregroundColor(AppColors.accentSecondary)
-                    Text("Theme")
+    @ViewBuilder
+    private var membershipCard: some View {
+        if entitlements.isCore {
+            HStack(spacing: AppSpacing.md) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(AppColors.spectrumCyan)
+                VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                    Text("Vayl Lifetime")
                         .font(AppFonts.bodyMedium)
-                        .foregroundColor(AppColors.textPrimary)
-                    Spacer()
-                    Text("Midnight")
+                        .foregroundStyle(AppColors.textPrimary)
+                    Text("Full access, forever.")
                         .font(AppFonts.caption)
-                        .foregroundColor(AppColors.textMuted)
+                        .foregroundStyle(AppColors.textTertiary)
                 }
-                .padding(.vertical, AppSpacing.xs) // was 4 → xs, exact
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("Theme — Midnight")
-                SpectrumBar()
-                ToggleRow(
-                    icon: "waveform",               // raw string lives in ToggleRow — migrate there
-                    iconColor: AppColors.accentTertiary,
-                    label: "Haptic Feedback",
-                    isOn: $hapticFeedback
-                )
+                Spacer()
+                Button("Restore") {
+                    // Not wired in V1 — restore StoreKit purchase
+                }
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.accentPrimary)
+                    .buttonStyle(PressableCardStyle())
             }
+            .padding(AppSpacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .fill(AppColors.spectrumCyan.opacity(0.06))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .strokeBorder(AppColors.borderSubtle, lineWidth: 1)
+            )
+            .padding(.top, AppSpacing.md)
+        } else {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                HStack {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(AppColors.spectrumPurple)
+                    Text("Vayl Lifetime")
+                        .font(AppFonts.overline)
+                        .tracking(1.5)
+                        .foregroundStyle(AppColors.textSecondary)
+                    Spacer()
+                    Text("$24.99 once")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                }
+                Text("Unlock every deck and the full Desire Map.")
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(AppColors.textPrimary)
+                HStack {
+                    Button("Restore purchase") {
+                        // Not wired in V1 — restore StoreKit purchase
+                    }
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .buttonStyle(PressableCardStyle())
+                    Spacer()
+                    Button("Upgrade") {
+                        // Not wired in V1 — open paywall
+                    }
+                        .font(AppFonts.buttonLabel)
+                        .foregroundStyle(AppColors.spectrumPurple)
+                        .buttonStyle(PressableCardStyle())
+                }
+            }
+            .padding(AppSpacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .fill(LinearGradient(
+                        colors: [
+                            AppColors.spectrumCyan.opacity(0.07),
+                            AppColors.spectrumPurple.opacity(0.10),
+                            AppColors.spectrumMagenta.opacity(0.07)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .strokeBorder(AppColors.borderSubtle, lineWidth: 1)
+            )
+            .padding(.top, AppSpacing.md)
         }
     }
 
-    // MARK: - Privacy
+    // MARK: - Partner card
 
-    private var privacySection: some View {
-        SettingsCard {
-            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
-                SectionHeader("PRIVACY")
-                ToggleRow(
-                    icon: "eye.slash.fill",         // raw string lives in ToggleRow — migrate there
-                    iconColor: AppColors.safetyAccent,
-                    label: "Screenshot Protection",
-                    isOn: $screenshotProtection
-                )
-                Text("When enabled, sensitive screens are hidden from screenshots and screen recordings.")
-                    .font(AppFonts.meta)
-                    .foregroundColor(AppColors.textMuted)
-
-                // Couples share current capacity (on by default). The binding writes
-                // only on user action; the .task load sets state directly (no write).
-                ToggleRow(
-                    icon: "waveform.path.ecg",
-                    iconColor: AppColors.accentPrimary,
-                    label: "Share my capacity with partner",
-                    isOn: Binding(
-                        get: { shareCapacity },
-                        set: { newValue in
-                            shareCapacity = newValue
-                            Task { await PulseSyncService.shared.setSharing(newValue) }
+    private var partnerCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SettingsSectionLabel(text: "Partner")
+            SettingsCard {
+                NavigationLink(value: SettingsRoute.partner) {
+                    if appState.linkState == .linked {
+                        HStack(spacing: AppSpacing.md) {
+                            Image(systemName: "person.2.fill")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(AppColors.spectrumCyan)
+                                .frame(width: 32, height: 32)
+                                .background(
+                                    RoundedRectangle(cornerRadius: AppRadius.sm)
+                                        .fill(AppColors.spectrumCyan.opacity(0.10))
+                                )
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                                Text("Linked")
+                                    .font(AppFonts.bodyMedium)
+                                    .foregroundStyle(AppColors.textPrimary)
+                                Text("Paired account")
+                                    .font(AppFonts.caption)
+                                    .foregroundStyle(AppColors.textTertiary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(AppColors.textTertiary)
+                                .accessibilityHidden(true)
                         }
+                        .contentShape(Rectangle())
+                        .padding(.vertical, AppSpacing.sm)
+                    } else {
+                        SettingsNavRow(
+                            icon: "person.badge.plus",
+                            label: "Invite a partner",
+                            iconTint: AppColors.spectrumCyan,
+                            iconBg: AppColors.spectrumCyan.opacity(0.10)
+                        )
+                    }
+                }
+                .buttonStyle(PressableCardStyle())
+            }
+        }
+    }
+
+    // MARK: - Preferences card (4 nav rows)
+
+    private var preferencesCard: some View {
+        SettingsCard {
+            VStack(spacing: 0) {
+                NavigationLink(value: SettingsRoute.you) {
+                    SettingsNavRow(
+                        icon: "person.circle",
+                        label: "You",
+                        value: appState.displayName.isEmpty ? nil : appState.displayName,
+                        iconTint: AppColors.spectrumCyan,
+                        iconBg: AppColors.spectrumCyan.opacity(0.10)
                     )
-                )
-                Text("Your partner sees only your current Pulse capacity, never your check-in answers or history.")
-                    .font(AppFonts.meta)
-                    .foregroundColor(AppColors.textMuted)
-            }
-        }
-    }
-
-    // MARK: - Data
-
-    private var dataSection: some View {
-        SettingsCard {
-            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
-                SectionHeader("DATA")
-                CriticalButton(title: "Export My Data", icon: "square.and.arrow.up", style: .neutral) {
-                    // raw string lives in CriticalButton — migrate there
-                    showExportSheet = true
                 }
-            }
-        }
-    }
+                .buttonStyle(PressableCardStyle())
 
-    // MARK: - Danger Zone
+                Divider().overlay(AppColors.borderSubtle)
 
-    private var dangerZone: some View {
-        SettingsCard {
-            VStack(alignment: .leading, spacing: AppSpacing.md) { // was 14 → md (16), snap
-                SectionHeader("DANGER ZONE")
-                CriticalButton(title: "Reset All Data", icon: "trash.fill", style: .neutral) {
-                    // raw string lives in CriticalButton — migrate there
-                    showResetConfirm = true
+                NavigationLink(value: SettingsRoute.privacy) {
+                    SettingsNavRow(
+                        icon: "lock.fill",
+                        label: "Privacy & safety",
+                        iconTint: AppColors.safetyAccent,
+                        iconBg: AppColors.safetyAccent.opacity(0.10)
+                    )
                 }
+                .buttonStyle(PressableCardStyle())
+
+                Divider().overlay(AppColors.borderSubtle)
+
+                NavigationLink(value: SettingsRoute.notifications) {
+                    SettingsNavRow(
+                        icon: "bell.fill",
+                        label: "Notifications",
+                        iconTint: AppColors.spectrumPurple,
+                        iconBg: AppColors.spectrumPurple.opacity(0.10)
+                    )
+                }
+                .buttonStyle(PressableCardStyle())
+
+                Divider().overlay(AppColors.borderSubtle)
+
+                NavigationLink(value: SettingsRoute.appearance) {
+                    SettingsNavRow(
+                        icon: "paintpalette.fill",
+                        label: "Appearance",
+                        value: "Midnight",
+                        iconTint: AppColors.spectrumMagenta,
+                        iconBg: AppColors.spectrumMagenta.opacity(0.10)
+                    )
+                }
+                .buttonStyle(PressableCardStyle())
             }
         }
     }
 
-    // MARK: - App Info
+    // MARK: - Account card
 
-    private var appInfo: some View {
-        VStack(spacing: AppSpacing.sm) {            // was 6 → sm (8), snap per handoff
-            Text("Vayl")
-                .font(AppFonts.caption)
-                .foregroundColor(AppColors.textMuted)
-            Text("v0.1.0")
-                .font(AppFonts.meta)
-                .foregroundColor(AppColors.textMuted)
+    private var accountCard: some View {
+        SettingsCard {
+            VStack(spacing: 0) {
+                Button {
+                    // Wired in Seg 4
+                } label: {
+                    HStack {
+                        Text("Sign out")
+                            .font(AppFonts.bodyMedium)
+                            .foregroundStyle(AppColors.textPrimary)
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
+                    .padding(.vertical, AppSpacing.sm)
+                }
+                .buttonStyle(PressableCardStyle())
+
+                Divider().overlay(AppColors.borderSubtle)
+
+                Button {
+                    // Wired in Seg 4
+                } label: {
+                    HStack {
+                        Text("Export my data")
+                            .font(AppFonts.bodyMedium)
+                            .foregroundStyle(AppColors.textPrimary)
+                        Spacer()
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(AppColors.textTertiary)
+                            .accessibilityHidden(true)
+                    }
+                    .contentShape(Rectangle())
+                    .padding(.vertical, AppSpacing.sm)
+                }
+                .buttonStyle(PressableCardStyle())
+
+                Divider().overlay(AppColors.borderSubtle)
+
+                Button {
+                    // Wired in Seg 4
+                } label: {
+                    HStack {
+                        Text("Delete account")
+                            .font(AppFonts.bodyMedium)
+                            .foregroundStyle(AppColors.destructive)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(AppColors.textTertiary)
+                            .accessibilityHidden(true)
+                    }
+                    .contentShape(Rectangle())
+                    .padding(.vertical, AppSpacing.sm)
+                }
+                .buttonStyle(PressableCardStyle())
+            }
         }
-        .padding(.top, AppSpacing.sm)              // was 8 → sm, exact
+    }
+
+    // MARK: - Footer
+
+    private var footerLinks: some View {
+        VStack(spacing: AppSpacing.xs) {
+            HStack(spacing: AppSpacing.xl) {
+                Button("Privacy") {
+                    // Not wired in V1 — open privacy URL
+                }
+                .buttonStyle(PressableCardStyle())
+                Button("Terms") {
+                    // Not wired in V1 — open terms URL
+                }
+                .buttonStyle(PressableCardStyle())
+                Button("Support") {
+                    // Not wired in V1 — open support URL
+                }
+                .buttonStyle(PressableCardStyle())
+            }
+            .font(AppFonts.caption)
+            .foregroundStyle(AppColors.textTertiary)
+            .padding(.top, AppSpacing.lg)
+
+            Text("Vayl · v0.1.0")
+                .font(AppFonts.overline)
+                .tracking(1)
+                .foregroundStyle(AppColors.textMuted)
+                .padding(.top, AppSpacing.xs)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
-// MARK: - Debug Logout
+// MARK: - Sub-screen stubs (replaced in Segs 2–4)
 
-#if DEBUG
-struct DebugLogoutView: View {
-    @Environment(AuthService.self) private var authService
-    @Environment(AppState.self)    private var appState
-    @Environment(\.modelContext)   private var modelContext
+struct SettingsIdentityView: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        SettingsSubScreenShell(title: "You", onBack: { dismiss() }) {
+            Text("Identity settings — Seg 2")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
+                .padding(.top, AppSpacing.lg)
+        }
+    }
+}
+
+struct SettingsPrivacyView: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        SettingsSubScreenShell(title: "Privacy & safety", onBack: { dismiss() }) {
+            Text("Privacy settings — Seg 3")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
+                .padding(.top, AppSpacing.lg)
+        }
+    }
+}
+
+struct SettingsNotificationsView: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        SettingsSubScreenShell(title: "Notifications", onBack: { dismiss() }) {
+            Text("Notification settings — Seg 3")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
+                .padding(.top, AppSpacing.lg)
+        }
+    }
+}
+
+struct SettingsAppearanceView: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        SettingsSubScreenShell(title: "Appearance", onBack: { dismiss() }) {
+            Text("Appearance settings — Seg 3")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
+                .padding(.top, AppSpacing.lg)
+        }
+    }
+}
+
+struct SettingsPartnerView: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        SettingsSubScreenShell(title: "Partner", onBack: { dismiss() }) {
+            Text("Partner settings — Seg 4")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
+                .padding(.top, AppSpacing.lg)
+        }
+    }
+}
+
+// MARK: - Shared sub-screen shell
+
+struct SettingsSubScreenShell<Content: View>: View {
+    let title: String
+    var onBack: (() -> Void)? = nil
+    @ViewBuilder let content: Content
 
     var body: some View {
-        Button("⚠️ DEV: Log Out & Reset Onboarding") {
-            Task {
-                await authService.signOut()
-                // Reset the durable truth too — not just the surface — so the launch
-                // reconcile can't flip onboarding back to complete.
-                let profile = (try? modelContext.fetch(FetchDescriptor<UserProfile>()))?.first
-                appState.resetOnboarding(profile, context: modelContext)
+        ZStack {
+            AppColors.void.ignoresSafeArea()
+            OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Button {
+                        onBack?()
+                    } label: {
+                        HStack(spacing: AppSpacing.xs) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 13, weight: .semibold))
+                            Text("Settings")
+                                .font(AppFonts.bodyMedium)
+                        }
+                        .foregroundStyle(AppColors.textSecondary)
+                    }
+                    .buttonStyle(PressableCardStyle())
+                    .padding(.top, AppSpacing.md)
+
+                    Text(title)
+                        .font(AppFonts.screenTitle)
+                        .foregroundStyle(AppColors.textPrimary)
+                        .padding(.top, AppSpacing.sm)
+
+                    content
+                }
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.xxl)
             }
         }
-        .foregroundColor(.red)
-        .padding()
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
-#endif
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
+    let state = AppState()
     SettingsView()
         .preferredColorScheme(.dark)
-        .environment(AuthService())
-        .environment(AppState())
+        .environment(state)
+        .environment(EntitlementStore(modelContainer: .previewContainer, appState: state))
         .modelContainer(ModelContainer.previewContainer)
 }
+#endif

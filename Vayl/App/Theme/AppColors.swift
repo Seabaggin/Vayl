@@ -290,6 +290,14 @@ struct AppColors {
         dark:  VaylPrimitives.cyan.withAlphaComponent(0.60)
     )
 
+    /// Section headers and eyebrow labels — the lavender-purple from docs/prototypes/settings-v2.html.
+    /// Matches `--label: rgba(160,125,205,0.5)` in HTML prototypes. Softer than textCardLabel
+    /// (which skews cyan in Midnight). Use for .sec-h style grouping labels in list screens.
+    static let textSectionLabel = Color.dynamic(
+        light: VaylPrimitives.purple.withAlphaComponent(0.65),
+        dark:  VaylPrimitives.purpleBright.withAlphaComponent(0.55)
+    )
+
     // ─────────────────────────────────────────────
     // MARK: Accent — action and emphasis
     // ─────────────────────────────────────────────
