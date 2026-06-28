@@ -305,64 +305,55 @@ struct SettingsView: View {
     private var youSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             SettingsSectionLabel(text: "You")
-            SettingsCard {
-                VStack(spacing: 0) {
-                    SettingsNavRow(
-                        icon: "person.circle",
-                        label: "Display name",
-                        value: appState.displayName.isEmpty ? nil : appState.displayName,
-                        iconTint: AppColors.spectrumCyan,
-                        iconBg: AppColors.spectrumCyan.opacity(0.10),
-                        showChevron: false
-                    )
-
-                    Divider().overlay(AppColors.borderSubtle)
-
-                    SettingsNavRow(
-                        icon: "quote.bubble",
-                        label: "Pronouns",
-                        value: profile?.pronouns.isEmpty == false
-                            ? profile?.pronouns.joined(separator: " / ")
-                            : nil,
-                        iconTint: AppColors.spectrumPurple,
-                        iconBg: AppColors.spectrumPurple.opacity(0.10),
-                        showChevron: false
-                    )
-
-                    Divider().overlay(AppColors.borderSubtle)
-
-                    SettingsNavRow(
-                        icon: "stairs",
-                        label: "Experience",
-                        value: profile?.nmStage.displayName,
-                        iconTint: AppColors.spectrumMagenta,
-                        iconBg: AppColors.spectrumMagenta.opacity(0.10),
-                        showChevron: false
-                    )
-
-                    SettingsSubSectionLabel(text: "About you")
-
-                    SettingsNavRow(
-                        icon: "person.crop.rectangle",
-                        label: "Age range",
-                        iconTint: AppColors.spectrumCyan,
-                        iconBg: AppColors.spectrumCyan.opacity(0.10),
-                        showChevron: false
-                    )
-
-                    Divider().overlay(AppColors.borderSubtle)
-
-                    NavigationLink(value: SettingsRoute.you) {
-                        SettingsNavRow(
-                            icon: "pencil",
-                            label: "Edit profile",
-                            iconTint: AppColors.textSecondary,
-                            iconBg: AppColors.glassSurface
+            NavigationLink(value: SettingsRoute.you) {
+                HStack(spacing: AppSpacing.md) {
+                    // Avatar
+                    Circle()
+                        .fill(AppColors.spectrumPurple.opacity(0.18))
+                        .overlay(
+                            Circle().strokeBorder(AppColors.spectrumPurple.opacity(0.30), lineWidth: 1)
                         )
+                        .frame(width: 48, height: 48)
+                        .overlay(
+                            Text(appState.displayName.prefix(1).uppercased())
+                                .font(AppFonts.display(20, weight: .bold, relativeTo: .title))
+                                .foregroundStyle(AppColors.spectrumPurple)
+                        )
+                        .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                        Text(appState.displayName.isEmpty ? "Set your name" : appState.displayName)
+                            .font(AppFonts.bodyMedium)
+                            .foregroundStyle(appState.displayName.isEmpty ? AppColors.textTertiary : AppColors.textPrimary)
+
+                        let sub = [
+                            profile?.pronouns.isEmpty == false ? profile?.pronouns.joined(separator: "/") : nil,
+                            profile?.nmStage.displayName
+                        ].compactMap { $0 }.joined(separator: " · ")
+                        if !sub.isEmpty {
+                            Text(sub)
+                                .font(AppFonts.caption)
+                                .foregroundStyle(AppColors.textTertiary)
+                        } else {
+                            Text("Tap to complete your profile")
+                                .font(AppFonts.caption)
+                                .foregroundStyle(AppColors.textMuted)
+                        }
                     }
-                    .buttonStyle(PressableCardStyle())
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(AppColors.textTertiary)
+                        .accessibilityHidden(true)
                 }
+                .padding(AppSpacing.md)
             }
+            .buttonStyle(PressableCardStyle())
+            .vaylGlassCard(radius: AppRadius.container)
+            .overlay(alignment: .top) { spectrumTopLine }
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
         }
     }
 
@@ -371,83 +362,10 @@ struct SettingsView: View {
     private var partnerSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             SettingsSectionLabel(text: "Partner")
-            SettingsCard {
-                if appState.linkState == .linked {
-                    VStack(spacing: 0) {
-                        HStack(spacing: AppSpacing.md) {
-                            Image(systemName: "person.2.fill")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundStyle(AppColors.spectrumCyan)
-                                .frame(width: 34, height: 34)
-                                .background(
-                                    RoundedRectangle(cornerRadius: AppRadius.sm)
-                                        .fill(AppColors.spectrumCyan.opacity(0.10))
-                                        .overlay(RoundedRectangle(cornerRadius: AppRadius.sm)
-                                            .strokeBorder(AppColors.borderSubtle, lineWidth: 1))
-                                )
-                                .accessibilityHidden(true)
-                            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                                Text("Linked")
-                                    .font(AppFonts.bodyMedium)
-                                    .foregroundStyle(AppColors.textPrimary)
-                                Text("Paired account")
-                                    .font(AppFonts.caption)
-                                    .foregroundStyle(AppColors.textTertiary)
-                            }
-                            Spacer()
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(AppColors.success)
-                                .accessibilityLabel("Linked")
-                        }
-                        .padding(.vertical, AppSpacing.xs)
-
-                        SettingsSubSectionLabel(text: "Relationship")
-
-                        SettingsNavRow(
-                            icon: "heart.fill",
-                            label: "Relationship type",
-                            subtitle: "Married, partnered, dating...",
-                            iconTint: AppColors.spectrumMagenta,
-                            iconBg: AppColors.spectrumMagenta.opacity(0.10),
-                            showChevron: false
-                        )
-
-                        Divider().overlay(AppColors.borderSubtle)
-
-                        SettingsNavRow(
-                            icon: "calendar",
-                            label: "Together since",
-                            iconTint: AppColors.spectrumPurple,
-                            iconBg: AppColors.spectrumPurple.opacity(0.10),
-                            showChevron: false
-                        )
-
-                        Divider().overlay(AppColors.borderSubtle)
-
-                        NavigationLink(value: SettingsRoute.partner) {
-                            SettingsNavRow(
-                                icon: "pencil",
-                                label: "Edit relationship info",
-                                iconTint: AppColors.textSecondary,
-                                iconBg: AppColors.glassSurface
-                            )
-                        }
-                        .buttonStyle(PressableCardStyle())
-
-                        Divider().overlay(AppColors.borderSubtle)
-
-                        Button { showUnlink = true } label: {
-                            SettingsNavRow(
-                                icon: "link.badge.minus",
-                                label: "Unlink partner",
-                                labelColor: AppColors.destructive,
-                                iconTint: AppColors.destructive,
-                                iconBg: AppColors.destructive.opacity(0.09)
-                            )
-                        }
-                        .buttonStyle(PressableCardStyle())
-                    }
-                } else {
+            if appState.linkState == .linked {
+                linkedPartnerContent
+            } else {
+                SettingsCard {
                     VStack(spacing: 0) {
                         Button { showInvite = true } label: {
                             SettingsNavRow(
@@ -474,6 +392,66 @@ struct SettingsView: View {
                     }
                 }
             }
+        }
+    }
+
+    private var linkedPartnerContent: some View {
+        VStack(spacing: AppSpacing.sm) {
+            // Summary card — one tappable unit for all relationship context
+            NavigationLink(value: SettingsRoute.partner) {
+                HStack(spacing: AppSpacing.md) {
+                    Circle()
+                        .fill(AppColors.spectrumCyan.opacity(0.12))
+                        .overlay(Circle().strokeBorder(AppColors.spectrumCyan.opacity(0.28), lineWidth: 1))
+                        .frame(width: 48, height: 48)
+                        .overlay(
+                            Image(systemName: "person.2.fill")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(AppColors.spectrumCyan)
+                        )
+                        .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                        HStack(spacing: AppSpacing.xs) {
+                            Text("Linked")
+                                .font(AppFonts.bodyMedium)
+                                .foregroundStyle(AppColors.textPrimary)
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 13))
+                                .foregroundStyle(AppColors.success)
+                                .accessibilityHidden(true)
+                        }
+                        Text("Tap to add relationship context")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textMuted)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(AppColors.textTertiary)
+                        .accessibilityHidden(true)
+                }
+                .padding(AppSpacing.md)
+            }
+            .buttonStyle(PressableCardStyle())
+            .vaylGlassCard(radius: AppRadius.container)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
+
+            // Unlink is destructive — separate card, visually distinct
+            Button { showUnlink = true } label: {
+                SettingsNavRow(
+                    icon: "link.badge.minus",
+                    label: "Unlink partner",
+                    labelColor: AppColors.destructive,
+                    iconTint: AppColors.destructive,
+                    iconBg: AppColors.destructive.opacity(0.09)
+                )
+            }
+            .buttonStyle(PressableCardStyle())
+            .vaylGlassCard(radius: AppRadius.container)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
         }
     }
 
