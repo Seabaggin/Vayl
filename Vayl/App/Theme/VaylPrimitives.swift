@@ -41,6 +41,10 @@ enum VaylPrimitives {
     static let magentaDark    = UIColor(hex: "#BE185D")
     static let pink           = UIColor(hex: "#FF2D8A")
 
+    static let rose           = UIColor(hex: "#C76A86")  // Protective/Empty tier core
+    static let roseLight      = UIColor(hex: "#ECC0CE")  // Protective tier highlight
+    static let roseDark       = UIColor(hex: "#8F4A60")  // Protective tier deep
+
     static let deepBlue       = UIColor(hex: "#0078FF")
 
     // ── Neutrals — dark side ──────────────────────────────────

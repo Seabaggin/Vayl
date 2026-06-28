@@ -671,6 +671,34 @@ struct AppColors {
         light: VaylPrimitives.wineFaint,
         dark:  VaylPrimitives.magentaLight
     )
+
+    // ─────────────────────────────────────────────────────────────
+    // MARK: Aura tier color ramps — PulseAura use only
+    //
+    // Each tier: core (midpoint) / light (inner highlight) / deep (outer edge) / glow (shadow).
+    // Maps to HTML: .cyan → expansive, .indigo → sovereign, .magenta → friction, .rose → protective.
+    // FEEL: intensities tuned on device against docs/prototypes/pulse-aura-glass.html.
+    // ─────────────────────────────────────────────────────────────
+
+    static let auraCoreCyan     = Color(uiColor: VaylPrimitives.cyan)
+    static let auraLightCyan    = Color(uiColor: VaylPrimitives.cyanLight)
+    static let auraDeepCyan     = Color(uiColor: VaylPrimitives.cyanDark)
+    static let auraGlowCyan     = Color(uiColor: VaylPrimitives.cyan).opacity(0.30)
+
+    static let auraCoreIndigo   = Color(uiColor: VaylPrimitives.electricViolet)
+    static let auraLightIndigo  = Color(uiColor: VaylPrimitives.purpleBright)
+    static let auraDeepIndigo   = Color(uiColor: VaylPrimitives.purple)
+    static let auraGlowIndigo   = Color(uiColor: VaylPrimitives.electricViolet).opacity(0.30)
+
+    static let auraCoreMagenta  = Color(uiColor: VaylPrimitives.magenta)
+    static let auraLightMagenta = Color(uiColor: VaylPrimitives.magentaLight)
+    static let auraDeepMagenta  = Color(uiColor: VaylPrimitives.magentaDark)
+    static let auraGlowMagenta  = Color(uiColor: VaylPrimitives.magenta).opacity(0.28)
+
+    static let auraCoreRose     = Color(uiColor: VaylPrimitives.rose)
+    static let auraLightRose    = Color(uiColor: VaylPrimitives.roseLight)
+    static let auraDeepRose     = Color(uiColor: VaylPrimitives.roseDark)
+    static let auraGlowRose     = Color(uiColor: VaylPrimitives.rose).opacity(0.26)
 }
 
 
@@ -690,5 +718,46 @@ extension Color {
 extension Color {
     init(hex: String) {
         self.init(uiColor: UIColor(hex: hex))
+    }
+}
+
+// MARK: - PulseCapacityColor aura ramp
+
+extension PulseCapacityColor {
+    /// Aura body radial gradient center color.
+    var auraCore: Color {
+        switch self {
+        case .cyan:    return AppColors.auraCoreCyan
+        case .indigo:  return AppColors.auraCoreIndigo
+        case .magenta: return AppColors.auraCoreMagenta
+        case .rose:    return AppColors.auraCoreRose
+        }
+    }
+    /// Aura body inner highlight (lightest, at center).
+    var auraLight: Color {
+        switch self {
+        case .cyan:    return AppColors.auraLightCyan
+        case .indigo:  return AppColors.auraLightIndigo
+        case .magenta: return AppColors.auraLightMagenta
+        case .rose:    return AppColors.auraLightRose
+        }
+    }
+    /// Aura body outer edge color (darkest, at rim).
+    var auraDeep: Color {
+        switch self {
+        case .cyan:    return AppColors.auraDeepCyan
+        case .indigo:  return AppColors.auraDeepIndigo
+        case .magenta: return AppColors.auraDeepMagenta
+        case .rose:    return AppColors.auraDeepRose
+        }
+    }
+    /// Glow shadow color for the soft outer halo.
+    var auraGlow: Color {
+        switch self {
+        case .cyan:    return AppColors.auraGlowCyan
+        case .indigo:  return AppColors.auraGlowIndigo
+        case .magenta: return AppColors.auraGlowMagenta
+        case .rose:    return AppColors.auraGlowRose
+        }
     }
 }

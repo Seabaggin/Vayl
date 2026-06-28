@@ -793,6 +793,21 @@ internal enum AppAnimation {
     /// 2.8s — Hold after the copy resolves before the moment auto-advances back to Home.
     /// Reduce motion: measured from appear (no draw lead). Consumed by Task.sleep.
     static let markHold: Double = 2.8
+
+    // MARK: — Pulse Aura
+    // Ambient durations for PulseAura (raw Doubles — construct with .easeInOut at call site).
+    // All three are ambient: guard with `!reduceMotion` in PulseAura; never fire under reduce motion.
+    // FEEL: all values tuned on device against docs/prototypes/pulse-aura-glass.html.
+
+    /// 5.4s — Aura body breathe (scale 1 ↔ 1.045, autoreverses). FEEL: tune on device.
+    static let auraBreathe: Double = 5.4
+
+    /// 7.0s — Caustic drift, one leg (offsets alternate, autoreverses). FEEL: tune on device.
+    static let auraCausticDrift: Double = 7.0
+
+    /// 17.0s — Glass sweep full non-reversing cycle. The strip travels the full frame;
+    /// the visible pass through the circle is ~10% of travel = ~1.7s. FEEL: tune on device.
+    static let auraGlassSweep: Double = 17.0
 }
 
 // MARK: — Reduce Motion Helpers
