@@ -214,30 +214,25 @@ struct SettingsView: View {
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
             .padding(.top, AppSpacing.md)
         } else {
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                HStack(spacing: AppSpacing.sm) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(AppColors.spectrumPurple)
-                        .frame(width: 26, height: 26)
-                        .background(
-                            RoundedRectangle(cornerRadius: AppRadius.sm)
-                                .fill(AppColors.spectrumPurple.opacity(0.16))
-                                .overlay(RoundedRectangle(cornerRadius: AppRadius.sm)
-                                    .strokeBorder(AppColors.spectrumPurple.opacity(0.34), lineWidth: 1))
-                        )
-                        .accessibilityHidden(true)
-                    Text("Vayl · Lifetime")
-                        .font(AppFonts.overline)
-                        .tracking(2)
-                        .foregroundStyle(AppColors.textSecondary)
-                }
+            Button {
+                // Not wired in V1 — open paywall
+            } label: {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    HStack(spacing: AppSpacing.sm) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(AppColors.spectrumPurple)
+                            .accessibilityHidden(true)
+                        Text("Vayl · Lifetime")
+                            .font(AppFonts.overline)
+                            .tracking(2)
+                            .foregroundStyle(AppColors.textSecondary)
+                    }
 
-                Text("Unlock every deck and the full Desire Map.")
-                    .font(AppFonts.bodyMedium)
-                    .foregroundStyle(AppColors.textPrimary)
+                    Text("Unlock every deck and the full Desire Map.")
+                        .font(AppFonts.bodyMedium)
+                        .foregroundStyle(AppColors.textPrimary)
 
-                HStack(alignment: .center) {
                     Group {
                         Text("$24.99")
                             .font(AppFonts.bodyMedium.bold())
@@ -246,27 +241,11 @@ struct SettingsView: View {
                             .font(AppFonts.caption)
                             .foregroundStyle(AppColors.textTertiary)
                     }
-                    Spacer()
-                    Button {
-                        // Not wired in V1 — open paywall
-                    } label: {
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 36, height: 36)
-                            .background(
-                                RoundedRectangle(cornerRadius: AppRadius.sm)
-                                    .fill(LinearGradient(
-                                        colors: [AppColors.spectrumPurple, AppColors.spectrumMagenta],
-                                        startPoint: .leading, endPoint: .trailing
-                                    ))
-                            )
-                    }
-                    .buttonStyle(PressableCardStyle())
-                    .accessibilityLabel("Upgrade to Lifetime")
                 }
+                .padding(AppSpacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(AppSpacing.md)
+            .buttonStyle(PressableCardStyle())
             .background(
                 RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
                     .fill(LinearGradient(
@@ -282,6 +261,7 @@ struct SettingsView: View {
             .vaylGlassCard(radius: AppRadius.container)
             .overlay(alignment: .top) { spectrumTopLine }
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
+            .spectrumBorderGlow(intensity: 0.7)
             .padding(.top, AppSpacing.md)
         }
     }
@@ -362,18 +342,38 @@ struct SettingsView: View {
     private var partnerSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             SettingsSectionLabel(text: "Partner")
-            if appState.linkState == .linked {
-                linkedPartnerContent
-            } else {
-                SettingsCard {
+            SettingsCard {
+                if appState.linkState == .linked {
+                    VStack(spacing: 0) {
+                        NavigationLink(value: SettingsRoute.partner) {
+                            SettingsNavRow(
+                                icon: "person.2.fill",
+                                label: "Linked",
+                                subtitle: "Add relationship details"
+                            )
+                        }
+                        .buttonStyle(PressableCardStyle())
+
+                        Divider().overlay(AppColors.borderSubtle)
+
+                        Button { showUnlink = true } label: {
+                            SettingsNavRow(
+                                icon: "person.badge.minus",
+                                label: "Unlink partner",
+                                labelColor: AppColors.destructive,
+                                iconTint: AppColors.destructive,
+                                iconBg: AppColors.destructive.opacity(0.09)
+                            )
+                        }
+                        .buttonStyle(PressableCardStyle())
+                    }
+                } else {
                     VStack(spacing: 0) {
                         Button { showInvite = true } label: {
                             SettingsNavRow(
                                 icon: "person.badge.plus",
                                 label: "Invite a partner",
-                                subtitle: "Share a code to link your apps",
-                                iconTint: AppColors.spectrumCyan,
-                                iconBg: AppColors.spectrumCyan.opacity(0.10)
+                                subtitle: "Share a code to link your apps"
                             )
                         }
                         .buttonStyle(PressableCardStyle())
@@ -383,75 +383,13 @@ struct SettingsView: View {
                         Button { showJoin = true } label: {
                             SettingsNavRow(
                                 icon: "link.badge.plus",
-                                label: "Enter a code",
-                                iconTint: AppColors.spectrumPurple,
-                                iconBg: AppColors.spectrumPurple.opacity(0.10)
+                                label: "Enter a code"
                             )
                         }
                         .buttonStyle(PressableCardStyle())
                     }
                 }
             }
-        }
-    }
-
-    private var linkedPartnerContent: some View {
-        VStack(spacing: AppSpacing.sm) {
-            // Summary card — one tappable unit for all relationship context
-            NavigationLink(value: SettingsRoute.partner) {
-                HStack(spacing: AppSpacing.md) {
-                    Circle()
-                        .fill(AppColors.spectrumCyan.opacity(0.12))
-                        .overlay(Circle().strokeBorder(AppColors.spectrumCyan.opacity(0.28), lineWidth: 1))
-                        .frame(width: 48, height: 48)
-                        .overlay(
-                            Image(systemName: "person.2.fill")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundStyle(AppColors.spectrumCyan)
-                        )
-                        .accessibilityHidden(true)
-
-                    VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                        HStack(spacing: AppSpacing.xs) {
-                            Text("Linked")
-                                .font(AppFonts.bodyMedium)
-                                .foregroundStyle(AppColors.textPrimary)
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 13))
-                                .foregroundStyle(AppColors.success)
-                                .accessibilityHidden(true)
-                        }
-                        Text("Tap to add relationship context")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.textMuted)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(AppColors.textTertiary)
-                        .accessibilityHidden(true)
-                }
-                .padding(AppSpacing.md)
-            }
-            .buttonStyle(PressableCardStyle())
-            .vaylGlassCard(radius: AppRadius.container)
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
-
-            // Unlink is destructive — separate card, visually distinct
-            Button { showUnlink = true } label: {
-                SettingsNavRow(
-                    icon: "link.badge.minus",
-                    label: "Unlink partner",
-                    labelColor: AppColors.destructive,
-                    iconTint: AppColors.destructive,
-                    iconBg: AppColors.destructive.opacity(0.09)
-                )
-            }
-            .buttonStyle(PressableCardStyle())
-            .vaylGlassCard(radius: AppRadius.container)
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
         }
     }
 
@@ -463,36 +401,21 @@ struct SettingsView: View {
             SettingsCard {
                 VStack(spacing: 0) {
                     NavigationLink(value: SettingsRoute.privacy) {
-                        SettingsNavRow(
-                            icon: "lock.fill",
-                            label: "Privacy & safety",
-                            iconTint: AppColors.safetyAccent,
-                            iconBg: AppColors.safetyAccent.opacity(0.09)
-                        )
+                        SettingsNavRow(icon: "lock.fill", label: "Privacy & safety")
                     }
                     .buttonStyle(PressableCardStyle())
 
                     Divider().overlay(AppColors.borderSubtle)
 
                     NavigationLink(value: SettingsRoute.notifications) {
-                        SettingsNavRow(
-                            icon: "bell.fill",
-                            label: "Notifications",
-                            iconTint: AppColors.spectrumPurple,
-                            iconBg: AppColors.spectrumPurple.opacity(0.10)
-                        )
+                        SettingsNavRow(icon: "bell.fill", label: "Notifications")
                     }
                     .buttonStyle(PressableCardStyle())
 
                     Divider().overlay(AppColors.borderSubtle)
 
                     NavigationLink(value: SettingsRoute.appearance) {
-                        SettingsNavRow(
-                            icon: "paintpalette.fill",
-                            label: "Appearance",
-                            iconTint: AppColors.spectrumMagenta,
-                            iconBg: AppColors.spectrumMagenta.opacity(0.10)
-                        )
+                        SettingsNavRow(icon: "paintpalette.fill", label: "Appearance")
                     }
                     .buttonStyle(PressableCardStyle())
                 }
@@ -508,24 +431,14 @@ struct SettingsView: View {
             SettingsCard {
                 VStack(spacing: 0) {
                     Button { showSignOutConfirm = true } label: {
-                        SettingsNavRow(
-                            icon: "rectangle.portrait.and.arrow.right",
-                            label: "Sign out",
-                            iconTint: AppColors.textSecondary,
-                            iconBg: AppColors.glassSurface
-                        )
+                        SettingsNavRow(icon: "rectangle.portrait.and.arrow.right", label: "Sign out")
                     }
                     .buttonStyle(PressableCardStyle())
 
                     Divider().overlay(AppColors.borderSubtle)
 
                     Button {} label: {
-                        SettingsNavRow(
-                            icon: "square.and.arrow.down",
-                            label: "Export my data",
-                            iconTint: AppColors.textSecondary,
-                            iconBg: AppColors.glassSurface
-                        )
+                        SettingsNavRow(icon: "square.and.arrow.up", label: "Export my data")
                     }
                     .buttonStyle(PressableCardStyle())
 
@@ -554,36 +467,21 @@ struct SettingsView: View {
             SettingsCard {
                 VStack(spacing: 0) {
                     Button {} label: {
-                        SettingsNavRow(
-                            icon: "shield.fill",
-                            label: "Privacy policy",
-                            iconTint: AppColors.textSecondary,
-                            iconBg: AppColors.glassSurface
-                        )
+                        SettingsNavRow(icon: "hand.raised.fill", label: "Privacy policy")
                     }
                     .buttonStyle(PressableCardStyle())
 
                     Divider().overlay(AppColors.borderSubtle)
 
                     Button {} label: {
-                        SettingsNavRow(
-                            icon: "doc.text.fill",
-                            label: "Terms of service",
-                            iconTint: AppColors.textSecondary,
-                            iconBg: AppColors.glassSurface
-                        )
+                        SettingsNavRow(icon: "doc.text.fill", label: "Terms of service")
                     }
                     .buttonStyle(PressableCardStyle())
 
                     Divider().overlay(AppColors.borderSubtle)
 
                     Button {} label: {
-                        SettingsNavRow(
-                            icon: "questionmark.circle.fill",
-                            label: "Support",
-                            iconTint: AppColors.textSecondary,
-                            iconBg: AppColors.glassSurface
-                        )
+                        SettingsNavRow(icon: "questionmark.circle.fill", label: "Support")
                     }
                     .buttonStyle(PressableCardStyle())
                 }
