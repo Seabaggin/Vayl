@@ -58,9 +58,8 @@ private struct HomeRouterInnerView: View {
     @Namespace private var pathNamespace
     @State private var showPath = false
 
-    // ── Settings sheet ───────────────────────────────────────────────────
+    // ── Settings cover ───────────────────────────────────────────────────
     @State private var showSettings = false
-    @State private var screenHeightForSettings: CGFloat = 0
 
     init(appState: AppState, modelContainer: ModelContainer) {
         _store = State(initialValue: HomeStore(modelContainer: modelContainer, appState: appState))
@@ -75,8 +74,6 @@ private struct HomeRouterInnerView: View {
             Group {
                 routedContent(store: store, layout: layout)
             }
-            .onAppear { screenHeightForSettings = layout.screenHeight }
-            .onChange(of: geo.size) { _, _ in screenHeightForSettings = AppLayout.from(geo).screenHeight }
         }
         .sheet(item: $activeSession) { session in
             SessionView(store: session)
@@ -110,7 +107,7 @@ private struct HomeRouterInnerView: View {
                 DesireRevealView(store: revealStore)
             }
         }
-        .vaylSheet(isPresented: $showSettings, heightFraction: 0.97, screenHeight: screenHeightForSettings) {
+        .vaylCover(isPresented: $showSettings, confirmOnExit: false) {
             SettingsView()
         }
     }
