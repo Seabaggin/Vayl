@@ -293,10 +293,15 @@ struct SettingsView: View {
     private var youSection: some View {
         NavigationLink(value: SettingsRoute.you) {
             HStack(spacing: AppSpacing.md) {
-                Image(systemName: "person.fill")
-                    .font(.system(size: 24))
-                    .foregroundStyle(AppColors.textTertiary)
-                    .accessibilityHidden(true)
+                RoundedRectangle(cornerRadius: AppRadius.sm)
+                    .fill(AppColors.glassSurface)
+                    .overlay(
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(AppColors.textSecondary)
+                            .accessibilityHidden(true)
+                    )
+                    .frame(width: 32, height: 32)
 
                 VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                     Text("Profile")
