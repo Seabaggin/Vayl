@@ -37,7 +37,7 @@ struct TabContentWrapper<Content: View>: View {
         // optional dissolve. No `.ignoresSafeArea()` on the mask — it must match the inset
         // content frame so the fade lands ABOVE the bar, not behind it at the physical edge.
         if fade {
-            content.mask(fadeMask)
+            content.mask(fadeMask.ignoresSafeArea())
         } else {
             content
         }
