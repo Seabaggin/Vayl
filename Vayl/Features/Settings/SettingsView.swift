@@ -69,36 +69,36 @@ struct SettingsView: View {
             .vaylSheet(isPresented: $showPartner, heightFraction: 0.92, screenHeight: layout.screenHeight) {
                 SettingsPartnerView()
             }
-        }
-        .sheet(isPresented: $showInvite) {
-            PairingInviteView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
-                .environment(appState)
-        }
-        .sheet(isPresented: $showJoin) {
-            PairingJoinView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
-                .environment(appState)
-        }
-        .confirmationDialog("Unlink partner?", isPresented: $showUnlink, titleVisibility: .visible) {
-            Button("Unlink", role: .destructive) {
-                // Unlink UX deferred to V1.1
+            .sheet(isPresented: $showInvite) {
+                PairingInviteView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
+                    .environment(appState)
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("You and your partner will lose access to shared content.")
-        }
-        .confirmationDialog("Sign out?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
-            Button("Sign out", role: .destructive) {
-                Task { await authService.signOut() }
+            .sheet(isPresented: $showJoin) {
+                PairingJoinView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
+                    .environment(appState)
             }
-            Button("Cancel", role: .cancel) {}
-        }
-        .alert("Delete account?", isPresented: $showDeleteConfirm) {
-            Button("Delete everything", role: .destructive) {
-                // Full deletion deferred to V1.1 — requires server-side cleanup
+            .confirmationDialog("Unlink partner?", isPresented: $showUnlink, titleVisibility: .visible) {
+                Button("Unlink", role: .destructive) {
+                    // Unlink UX deferred to V1.1
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("You and your partner will lose access to shared content.")
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This permanently deletes your data and cannot be undone.")
+            .confirmationDialog("Sign out?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
+                Button("Sign out", role: .destructive) {
+                    Task { await authService.signOut() }
+                }
+                Button("Cancel", role: .cancel) {}
+            }
+            .alert("Delete account?", isPresented: $showDeleteConfirm) {
+                Button("Delete everything", role: .destructive) {
+                    // Full deletion deferred to V1.1 — requires server-side cleanup
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This permanently deletes your data and cannot be undone.")
+            }
         }
     }
 
