@@ -137,10 +137,8 @@ struct PulseField: View {
 
     private var axisLabels: some View {
         ZStack {
-            axisText("Charged").position(x: size * 0.50, y: 11)
-            axisText("Quiet")  .position(x: size * 0.50, y: size - 11)
-            axisText("Guarded").rotationEffect(.degrees(-90)).position(x: 11, y: size * 0.50)
-            axisText("Open")   .rotationEffect(.degrees(90)) .position(x: size - 11, y: size * 0.50)
+            axisText("↑ Energy")  .position(x: size * 0.50, y: 11)
+            axisText("Openness →").position(x: size * 0.78, y: size - 11)
         }
         .frame(width: size, height: size)
         .allowsHitTesting(false)
