@@ -64,7 +64,7 @@ struct MapPulseHero: View {
                     .padding(.top, AppSpacing.lg)
             }
         }
-        .vaylSheet(isPresented: $showMap, heightFraction: 0.88) {
+        .vaylCover(isPresented: $showMap, confirmOnExit: false) {
             MapFieldSheet(position: currentPosition, quadrant: currentQuadrant)
         }
     }
@@ -116,22 +116,24 @@ struct MapPulseHero: View {
 
 // MARK: - Field map sheet
 
-/// The "your map" panel — the PulseField fills the full sheet width so the zone
-/// glows are one with the sheet surface. GeometryReader at the root gives a stable
-/// width measurement without feedback loops.
+/// Full-screen cover: the circumplex field owns the screen, zone glows bleed into
+/// the void atmosphere, copy reads below. Presented via .vaylCover so the system
+/// knows this is an immersive experience, not a sheet.
 private struct MapFieldSheet: View {
     let position: PulsePosition
     let quadrant: PulseQuadrant
 
+    @Environment(\.vaylDismiss) private var dismiss
+
     var body: some View {
         GeometryReader { geo in
+            let layout = AppLayout.from(geo)
             let w = geo.size.width
-            // AppColors.void here is load-bearing: PulseField zone gradients fade to
-            // .clear, which otherwise shows the semi-transparent modalBackground and
-            // lets the Map tab content bleed through. Void blocks it and makes the
-            // zone glows feel one with the surface.
+
             ZStack(alignment: .top) {
-                AppColors.void
+                AppColors.void.ignoresSafeArea()
+                OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+
                 ScrollView {
                     VStack(spacing: 0) {
                         PulseField(
@@ -139,7 +141,7 @@ private struct MapFieldSheet: View {
                             size: w,
                             showAxisLabels: true
                         )
-                        .padding(.top, AppSpacing.xs)
+                        .padding(.top, layout.safeAreaInsets.top + AppSpacing.xl)
 
                         VStack(spacing: AppSpacing.xxs) {
                             Text(readCopy)
@@ -157,8 +159,25 @@ private struct MapFieldSheet: View {
 
                         Spacer(minLength: AppSpacing.xl)
                     }
-                    .frame(minHeight: geo.size.height)
                 }
+
+                // Dismiss — top-leading, below Dynamic Island
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(AppColors.textMuted)
+                        .frame(width: 32, height: 32)
+                        .background(AppColors.glassSurface)
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .padding(.top, layout.safeAreaInsets.top + AppSpacing.sm)
+                .padding(.leading, AppSpacing.lg)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
