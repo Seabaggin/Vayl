@@ -294,7 +294,7 @@ struct SettingsView: View {
         NavigationLink(value: SettingsRoute.you) {
             HStack(spacing: AppSpacing.md) {
                 Image(systemName: "person.fill")
-                    .font(.system(size: 36))
+                    .font(.system(size: 24))
                     .foregroundStyle(AppColors.textTertiary)
                     .accessibilityHidden(true)
 
