@@ -138,6 +138,24 @@ class SyncManager: ObservableObject {
         }
     }
 
+    func pushNMStage(_ stage: String) async {
+        do {
+            try await profileService.updateNMStage(stage)
+            logger.info("✅ NM stage synced: \(stage)")
+        } catch {
+            logger.warning("⚠️ NM stage sync failed (non-fatal): \(error.localizedDescription)")
+        }
+    }
+
+    func pushSharePulse(_ value: Bool) async {
+        do {
+            try await profileService.updateSharePulse(value)
+            logger.info("✅ Share pulse preference synced: \(value)")
+        } catch {
+            logger.warning("⚠️ Share pulse sync failed (non-fatal): \(error.localizedDescription)")
+        }
+    }
+
     // =========================================================================
     // MARK: - Desire Map Sync (D2)
     // =========================================================================

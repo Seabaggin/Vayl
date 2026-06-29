@@ -34,13 +34,11 @@ struct SettingsIdentityView: View {
                         editField = .name
                     } label: {
                         SettingsNavRow(
-                            icon: "person.circle",
+                            icon: "person.fill",
                             label: "Name",
                             value: profile?.displayName.isEmpty == false
                                 ? profile?.displayName
-                                : (appState.displayName.isEmpty ? nil : appState.displayName),
-                            iconTint: AppColors.spectrumCyan,
-                            iconBg: AppColors.spectrumCyan.opacity(0.10)
+                                : (appState.displayName.isEmpty ? nil : appState.displayName)
                         )
                     }
                     .buttonStyle(PressableCardStyle())
@@ -53,9 +51,7 @@ struct SettingsIdentityView: View {
                         SettingsNavRow(
                             icon: "quote.bubble",
                             label: "Pronouns",
-                            value: pronounsDisplay == "Not set" ? nil : pronounsDisplay,
-                            iconTint: AppColors.spectrumPurple,
-                            iconBg: AppColors.spectrumPurple.opacity(0.10)
+                            value: pronounsDisplay == "Not set" ? nil : pronounsDisplay
                         )
                     }
                     .buttonStyle(PressableCardStyle())
@@ -68,9 +64,7 @@ struct SettingsIdentityView: View {
                         SettingsNavRow(
                             icon: "sparkles",
                             label: "Experience",
-                            value: profile?.nmStage.displayName ?? NMStage.curious.displayName,
-                            iconTint: AppColors.spectrumMagenta,
-                            iconBg: AppColors.spectrumMagenta.opacity(0.10)
+                            value: profile?.nmStage.displayName ?? NMStage.curious.displayName
                         )
                     }
                     .buttonStyle(PressableCardStyle())
@@ -222,23 +216,26 @@ private struct IdentityEditSheet: View {
         switch field {
         case .name:
             let trimmed = text.trimmingCharacters(in: .whitespaces)
-            if !trimmed.isEmpty {
-                p.displayName = trimmed
-            }
+            if !trimmed.isEmpty { p.displayName = trimmed }
         case .pronouns:
-            // Split on comma, trim each element, drop empties, store as [String].
             let trimmed = text.trimmingCharacters(in: .whitespaces)
-            if trimmed.isEmpty {
-                p.pronouns = []
-            } else {
-                p.pronouns = trimmed
-                    .components(separatedBy: ",")
-                    .map { $0.trimmingCharacters(in: .whitespaces) }
-                    .filter { !$0.isEmpty }
-            }
+            p.pronouns = trimmed.isEmpty ? [] : trimmed
+                .components(separatedBy: ",")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
         case .experience:
             p.nmStage = selectedStage
         }
         try? context.save()
+        let capturedField = field
+        let capturedStage = selectedStage
+        Task {
+            switch capturedField {
+            case .name, .pronouns:
+                await SyncManager.shared.pushDisplayIdentity(localProfile: p)
+            case .experience:
+                await SyncManager.shared.pushNMStage(capturedStage.rawValue)
+            }
+        }
     }
 }

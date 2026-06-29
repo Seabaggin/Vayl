@@ -3,12 +3,11 @@
 import SwiftUI
 
 struct SettingsPrivacyView: View {
-    @Environment(\.dismiss)            private var dismiss
+    @Environment(\.dismiss) private var dismiss
 
     @AppStorage("screenshotProtectionEnabled")
     private var screenshotProtection: Bool = true
 
-    // Sharing preference — PulseStore reads and syncs this on launch.
     @AppStorage("shareCapacityWithPartner")
     private var shareCapacity: Bool = true
 
@@ -37,6 +36,9 @@ struct SettingsPrivacyView: View {
                     isOn: $shareCapacity
                 )
             }
+        }
+        .onChange(of: shareCapacity) { _, newValue in
+            Task { await SyncManager.shared.pushSharePulse(newValue) }
         }
     }
 }

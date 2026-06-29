@@ -1,13 +1,16 @@
 // Vayl/Features/Settings/SettingsNotificationsView.swift
 
 import SwiftUI
+import UserNotifications
 
 struct SettingsNotificationsView: View {
     @Environment(\.dismiss) private var dismiss
 
-    @AppStorage("notificationsCheckInReminder") private var checkInReminder: Bool = true
-    @AppStorage("notificationsPartnerActivity") private var partnerActivity: Bool = true
+    @AppStorage("notificationsCheckInReminder") private var checkInReminder: Bool = false
+    @AppStorage("notificationsPartnerActivity") private var partnerActivity: Bool = false
     @AppStorage("notificationsDiscreetMode")    private var discreetMode: Bool = false
+
+    @State private var showPermissionDeniedAlert = false
 
     var body: some View {
         SettingsSubScreenShell(title: "Notifications", onBack: { dismiss() }) {
@@ -46,6 +49,48 @@ struct SettingsNotificationsView: View {
                     iconBg: AppColors.safetyAccent.opacity(0.10),
                     isOn: $discreetMode
                 )
+            }
+        }
+        .onChange(of: checkInReminder) { _, enabled in
+            if enabled { requestPermission(onDenied: { checkInReminder = false }) }
+        }
+        .onChange(of: partnerActivity) { _, enabled in
+            if enabled { requestPermission(onDenied: { partnerActivity = false }) }
+        }
+        .alert("Notifications are off", isPresented: $showPermissionDeniedAlert) {
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Allow notifications for Vayl in System Settings to enable this.")
+        }
+    }
+
+    private func requestPermission(onDenied: @escaping () -> Void) {
+        Task {
+            let center = UNUserNotificationCenter.current()
+            let settings = await center.notificationSettings()
+            switch settings.authorizationStatus {
+            case .authorized, .provisional:
+                break
+            case .denied:
+                await MainActor.run {
+                    onDenied()
+                    showPermissionDeniedAlert = true
+                }
+            case .notDetermined:
+                let granted = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+                if !granted {
+                    await MainActor.run {
+                        onDenied()
+                        showPermissionDeniedAlert = true
+                    }
+                }
+            @unknown default:
+                break
             }
         }
     }

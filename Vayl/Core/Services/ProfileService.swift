@@ -232,6 +232,15 @@ final class ProfileService: ObservableObject {
 
     // MARK: - Ensure Profile Exists
 
+    func updateSharePulse(_ value: Bool) async throws {
+        let authId = try await supabase.auth.session.user.id
+        try await supabase
+            .from("user_profiles")
+            .update(["share_pulse_with_partner": value])
+            .eq("auth_id", value: authId.uuidString)
+            .execute()
+    }
+
     /// Checks if a profile exists for the given authId. If not, throws an error.
     /// Caches the profile ID in UserDefaults for future use.
     func ensureProfileExists(authId: UUID) async throws -> UUID {
