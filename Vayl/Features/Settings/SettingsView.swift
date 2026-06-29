@@ -56,6 +56,7 @@ struct SettingsView: View {
                     .padding(.bottom, AppSpacing.xxl)
                 }
             }
+            .ignoresSafeArea(edges: .top)
             .toolbar(.hidden, for: .navigationBar)
             .toolbarBackground(.hidden, for: .navigationBar)
             .navigationDestination(for: SettingsRoute.self) { route in
