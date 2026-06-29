@@ -47,21 +47,28 @@ extension PulseEntry {
 // MARK: - Preview Data
 
 extension PulseEntry {
-    static let previews: [PulseEntry] = [
-        .init(date: .daysAgo(13), capacityScore: 1.8, glowColor: .magenta, speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive"),
-        .init(date: .daysAgo(12), capacityScore: 3.4, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous"),
-        .init(date: .daysAgo(11), capacityScore: 2.1, glowColor: .magenta, speed: "Just Proximity",   nervousSystem: "Exhausted",   focus: "Deeply Inward",  feeling: "Anxious"),
-        .init(date: .daysAgo(10), capacityScore: 3.8, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous"),
-        .init(date: .daysAgo(9),  capacityScore: 1.4, glowColor: .rose,    speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive"),
-        .init(date: .daysAgo(8),  capacityScore: 2.9, glowColor: .indigo,  speed: "Light Connection", nervousSystem: "Stable",      focus: "Balanced",       feeling: "Content"),
-        .init(date: .daysAgo(7),  capacityScore: 3.6, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous"),
-        .init(date: .daysAgo(6),  capacityScore: 1.6, glowColor: .rose,    speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive"),
-        .init(date: .daysAgo(5),  capacityScore: 2.4, glowColor: .indigo,  speed: "Just Proximity",   nervousSystem: "Stable",      focus: "Just Me",        feeling: "Content"),
-        .init(date: .daysAgo(4),  capacityScore: 3.9, glowColor: .cyan,    speed: "Playful",          nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous"),
-        .init(date: .daysAgo(3),  capacityScore: 1.2, glowColor: .rose,    speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive"),
-        .init(date: .daysAgo(2),  capacityScore: 3.2, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Recharging",  focus: "Reaching Out",   feeling: "Adventurous"),
-        .init(date: .daysAgo(1),  capacityScore: 2.6, glowColor: .indigo,  speed: "Light Connection", nervousSystem: "Stable",      focus: "Balanced",       feeling: "Secure"),
-    ]
+    static let previews: [PulseEntry] = {
+        // Each entry carries a real 2D position computed from its Q1-Q3 answers so the
+        // circumplex field places the aura correctly even without a live check-in.
+        func pos(_ ns: String, _ f: String, _ feel: String) -> PulsePosition {
+            PulseAnswers.position(nervousSystem: ns, focus: f, feeling: feel)
+        }
+        return [
+            .init(date: .daysAgo(13), capacityScore: 1.8, glowColor: .magenta, speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive",   position: pos("Overwhelmed", "Deeply Inward",  "Defensive")),
+            .init(date: .daysAgo(12), capacityScore: 3.4, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous", position: pos("Energized",   "Reaching Out",   "Adventurous")),
+            .init(date: .daysAgo(11), capacityScore: 2.1, glowColor: .magenta, speed: "Just Proximity",   nervousSystem: "Exhausted",   focus: "Deeply Inward",  feeling: "Anxious",     position: pos("Exhausted",   "Deeply Inward",  "Anxious")),
+            .init(date: .daysAgo(10), capacityScore: 3.8, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous", position: pos("Energized",   "Reaching Out",   "Adventurous")),
+            .init(date: .daysAgo(9),  capacityScore: 1.4, glowColor: .rose,    speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive",   position: pos("Overwhelmed", "Deeply Inward",  "Defensive")),
+            .init(date: .daysAgo(8),  capacityScore: 2.9, glowColor: .indigo,  speed: "Light Connection", nervousSystem: "Stable",      focus: "Balanced",       feeling: "Content",     position: pos("Stable",      "Balanced",       "Content")),
+            .init(date: .daysAgo(7),  capacityScore: 3.6, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous", position: pos("Energized",   "Reaching Out",   "Adventurous")),
+            .init(date: .daysAgo(6),  capacityScore: 1.6, glowColor: .rose,    speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive",   position: pos("Overwhelmed", "Deeply Inward",  "Defensive")),
+            .init(date: .daysAgo(5),  capacityScore: 2.4, glowColor: .indigo,  speed: "Just Proximity",   nervousSystem: "Stable",      focus: "Just Me",        feeling: "Content",     position: pos("Stable",      "Just Me",        "Content")),
+            .init(date: .daysAgo(4),  capacityScore: 3.9, glowColor: .cyan,    speed: "Playful",          nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous", position: pos("Energized",   "Reaching Out",   "Adventurous")),
+            .init(date: .daysAgo(3),  capacityScore: 1.2, glowColor: .rose,    speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive",   position: pos("Overwhelmed", "Deeply Inward",  "Defensive")),
+            .init(date: .daysAgo(2),  capacityScore: 3.2, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Recharging",  focus: "Reaching Out",   feeling: "Adventurous", position: pos("Recharging",  "Reaching Out",   "Adventurous")),
+            .init(date: .daysAgo(1),  capacityScore: 2.6, glowColor: .indigo,  speed: "Light Connection", nervousSystem: "Stable",      focus: "Balanced",       feeling: "Secure",      position: pos("Stable",      "Balanced",       "Secure")),
+        ]
+    }()
 }
 
 // MARK: - Date Extension
