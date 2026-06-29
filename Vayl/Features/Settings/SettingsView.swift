@@ -3,16 +3,6 @@
 import SwiftUI
 import SwiftData
 
-// MARK: - Route enum
-
-enum SettingsRoute: Hashable {
-    case you
-    case privacy
-    case notifications
-    case appearance
-    case partner
-}
-
 // MARK: - Main view
 
 struct SettingsView: View {
@@ -27,6 +17,12 @@ struct SettingsView: View {
     @Query private var profiles: [UserProfile]
     private var profile: UserProfile? { profiles.first }
 
+    // Sub-screen navigation
+    @State private var showYou:           Bool = false
+    @State private var showPrivacy:       Bool = false
+    @State private var showNotifications: Bool = false
+    @State private var showAppearance:    Bool = false
+    @State private var showPartner:       Bool = false
 
     // Sheet / dialog state
     @State private var showInvite:          Bool = false
@@ -36,7 +32,8 @@ struct SettingsView: View {
     @State private var showDeleteConfirm:   Bool = false
 
     var body: some View {
-        NavigationStack {
+        GeometryReader { geo in
+            let layout = AppLayout.from(geo)
             ZStack {
                 AppColors.void.ignoresSafeArea()
                 OnboardingAtmosphere(config: .stat).ignoresSafeArea()
@@ -56,48 +53,52 @@ struct SettingsView: View {
                     .padding(.bottom, AppSpacing.xxl)
                 }
             }
-            .ignoresSafeArea(edges: .top)
-            .toolbar(.hidden, for: .navigationBar)
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .navigationDestination(for: SettingsRoute.self) { route in
-                switch route {
-                case .you:           SettingsIdentityView()
-                case .privacy:       SettingsPrivacyView()
-                case .notifications: SettingsNotificationsView()
-                case .appearance:    SettingsAppearanceView()
-                case .partner:       SettingsPartnerView()
-                }
+            .frame(width: layout.screenWidth)
+            .vaylSheet(isPresented: $showYou, heightFraction: 0.92, screenHeight: layout.screenHeight) {
+                SettingsIdentityView()
             }
-            .sheet(isPresented: $showInvite) {
-                PairingInviteView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
-                    .environment(appState)
+            .vaylSheet(isPresented: $showPrivacy, heightFraction: 0.92, screenHeight: layout.screenHeight) {
+                SettingsPrivacyView()
             }
-            .sheet(isPresented: $showJoin) {
-                PairingJoinView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
-                    .environment(appState)
+            .vaylSheet(isPresented: $showNotifications, heightFraction: 0.92, screenHeight: layout.screenHeight) {
+                SettingsNotificationsView()
             }
-            .confirmationDialog("Unlink partner?", isPresented: $showUnlink, titleVisibility: .visible) {
-                Button("Unlink", role: .destructive) {
-                    // Unlink UX deferred to V1.1
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("You and your partner will lose access to shared content.")
+            .vaylSheet(isPresented: $showAppearance, heightFraction: 0.92, screenHeight: layout.screenHeight) {
+                SettingsAppearanceView()
             }
-            .confirmationDialog("Sign out?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
-                Button("Sign out", role: .destructive) {
-                    Task { await authService.signOut() }
-                }
-                Button("Cancel", role: .cancel) {}
+            .vaylSheet(isPresented: $showPartner, heightFraction: 0.92, screenHeight: layout.screenHeight) {
+                SettingsPartnerView()
             }
-            .alert("Delete account?", isPresented: $showDeleteConfirm) {
-                Button("Delete everything", role: .destructive) {
-                    // Full deletion deferred to V1.1 — requires server-side cleanup
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This permanently deletes your data and cannot be undone.")
+        }
+        .sheet(isPresented: $showInvite) {
+            PairingInviteView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
+                .environment(appState)
+        }
+        .sheet(isPresented: $showJoin) {
+            PairingJoinView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
+                .environment(appState)
+        }
+        .confirmationDialog("Unlink partner?", isPresented: $showUnlink, titleVisibility: .visible) {
+            Button("Unlink", role: .destructive) {
+                // Unlink UX deferred to V1.1
             }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You and your partner will lose access to shared content.")
+        }
+        .confirmationDialog("Sign out?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
+            Button("Sign out", role: .destructive) {
+                Task { await authService.signOut() }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("Delete account?", isPresented: $showDeleteConfirm) {
+            Button("Delete everything", role: .destructive) {
+                // Full deletion deferred to V1.1 — requires server-side cleanup
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently deletes your data and cannot be undone.")
         }
     }
 
@@ -277,7 +278,6 @@ struct SettingsView: View {
         .frame(height: 1)
     }
 
-    /// Hairline with a soft glow bloom — used on the premium upgrade banner to draw the eye.
     private var premiumHairline: some View {
         let gradient = LinearGradient(
             colors: [.clear, AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta, .clear],
@@ -292,7 +292,7 @@ struct SettingsView: View {
     // MARK: - You
 
     private var youSection: some View {
-        NavigationLink(value: SettingsRoute.you) {
+        Button { showYou = true } label: {
             HStack(spacing: AppSpacing.md) {
                 RoundedRectangle(cornerRadius: AppRadius.sm)
                     .fill(AppColors.glassSurface)
@@ -346,7 +346,7 @@ struct SettingsView: View {
             SettingsCard {
                 if appState.linkState == .linked {
                     VStack(spacing: 0) {
-                        NavigationLink(value: SettingsRoute.partner) {
+                        Button { showPartner = true } label: {
                             SettingsNavRow(
                                 icon: "person.2.fill",
                                 label: "Linked",
@@ -401,21 +401,21 @@ struct SettingsView: View {
             SettingsSectionLabel(text: "App")
             SettingsCard {
                 VStack(spacing: 0) {
-                    NavigationLink(value: SettingsRoute.privacy) {
+                    Button { showPrivacy = true } label: {
                         SettingsNavRow(icon: "lock.fill", label: "Privacy & safety")
                     }
                     .buttonStyle(PressableCardStyle())
 
                     Divider().overlay(AppColors.borderSubtle)
 
-                    NavigationLink(value: SettingsRoute.notifications) {
+                    Button { showNotifications = true } label: {
                         SettingsNavRow(icon: "bell.fill", label: "Notifications")
                     }
                     .buttonStyle(PressableCardStyle())
 
                     Divider().overlay(AppColors.borderSubtle)
 
-                    NavigationLink(value: SettingsRoute.appearance) {
+                    Button { showAppearance = true } label: {
                         SettingsNavRow(icon: "paintpalette.fill", label: "Appearance")
                     }
                     .buttonStyle(PressableCardStyle())
