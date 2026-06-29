@@ -49,19 +49,20 @@ struct PulseField: View {
 
     private var zones: some View {
         ZStack {
-            // Expansive (cyan) — top-right
-            RadialGradient(colors: [AppColors.pulseTierExpansive.opacity(0.26), .clear],
-                           center: .topTrailing,   startRadius: 0, endRadius: size * 0.92)
-            // Friction (magenta) — top-left
-            RadialGradient(colors: [AppColors.pulseTierFriction.opacity(0.20), .clear],
-                           center: .topLeading,    startRadius: 0, endRadius: size * 0.92)
-            // Protective (rose) — bottom-left
-            RadialGradient(colors: [AppColors.pulseTierProtective.opacity(0.20), .clear],
-                           center: .bottomLeading, startRadius: 0, endRadius: size * 0.92)
-            // Sovereign (indigo) — bottom-right
-            RadialGradient(colors: [AppColors.pulseTierSovereign.opacity(0.20), .clear],
-                           center: .bottomTrailing, startRadius: 0, endRadius: size * 0.92)
+            zoneBlob(AppColors.pulseTierExpansive,  cx: 0.70, cy: 0.30)
+            zoneBlob(AppColors.pulseTierFriction,   cx: 0.30, cy: 0.30)
+            zoneBlob(AppColors.pulseTierProtective, cx: 0.30, cy: 0.70)
+            zoneBlob(AppColors.pulseTierSovereign,  cx: 0.70, cy: 0.70)
         }
+    }
+
+    private func zoneBlob(_ color: Color, cx: CGFloat, cy: CGFloat) -> some View {
+        let d = size * 0.74
+        return Circle()
+            .fill(color.opacity(0.16))
+            .frame(width: d, height: d)
+            .blur(radius: size * 0.105)
+            .position(x: cx * size, y: cy * size)
     }
 
     // MARK: - Aura layer
