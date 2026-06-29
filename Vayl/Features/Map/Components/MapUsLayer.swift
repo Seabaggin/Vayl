@@ -108,6 +108,7 @@ struct MapUsLayer: View {
                                       fieldSize: size)
                         }
                     }
+                    .frame(width: size, height: size)
                 }
             }
     }

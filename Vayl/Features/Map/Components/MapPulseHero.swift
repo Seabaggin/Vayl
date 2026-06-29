@@ -116,47 +116,43 @@ struct MapPulseHero: View {
 
 // MARK: - Field map sheet
 
-/// The "your map" panel — a PulseField showing just the current position.
+/// The "your map" panel — the PulseField fills the full sheet width so the zone
+/// glows are one with the sheet surface. GeometryReader at the root gives a stable
+/// width measurement without feedback loops.
 private struct MapFieldSheet: View {
     let position: PulsePosition
     let quadrant: PulseQuadrant
 
-    private let fieldSize: CGFloat = 240
-
     var body: some View {
-        VStack(spacing: 0) {
-            Text("Your map")
-                .font(AppFonts.screenTitle)
-                .foregroundStyle(AppColors.textPrimary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, AppSpacing.md)
+        GeometryReader { geo in
+            let w = geo.size.width
+            ScrollView {
+                VStack(spacing: 0) {
+                    PulseField(
+                        entries: [PulseFieldEntry(position: position, auraSize: 60)],
+                        size: w,
+                        showAxisLabels: true
+                    )
+                    .padding(.top, AppSpacing.xs)
 
-            PulseField(
-                entries: [PulseFieldEntry(position: position, auraSize: 44)],
-                size: fieldSize,
-                showAxisLabels: true
-            )
-            .frame(maxWidth: .infinity)
-            .padding(.bottom, AppSpacing.sm)
+                    VStack(spacing: AppSpacing.xxs) {
+                        Text(readCopy)
+                            .font(AppFonts.display(15, weight: .semibold, relativeTo: .subheadline))
+                            .foregroundStyle(AppColors.textPrimary)
+                            .multilineTextAlignment(.center)
+                        Text(descCopy)
+                            .font(AppFonts.body(11, weight: .regular, relativeTo: .footnote))
+                            .foregroundStyle(AppColors.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, AppSpacing.lg)
+                    .padding(.top, AppSpacing.md)
 
-            VStack(spacing: AppSpacing.xxs) {
-                Text(readCopy)
-                    .font(AppFonts.cardTitle)
-                    .foregroundStyle(AppColors.textPrimary)
-                    .multilineTextAlignment(.center)
-                Text(descCopy)
-                    .font(AppFonts.bodyText)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                }
             }
-            .padding(.horizontal, AppSpacing.lg)
-
-            Spacer()
         }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.top, AppSpacing.md)
-        .padding(.bottom, AppSpacing.xl)
     }
 
     private var readCopy: String {

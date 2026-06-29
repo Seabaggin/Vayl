@@ -38,11 +38,11 @@ struct PulseField: View {
     var body: some View {
         ZStack {
             zones
+            if showAxisLabels { axisLabels }
             if showAxisLabels { quadrantLabels }
             auraLayer
         }
         .frame(width: size, height: size)
-        .overlay { if showAxisLabels { axisLabels } }
     }
 
     // MARK: - Zone washes
@@ -111,15 +111,16 @@ struct PulseField: View {
             .padding(AppSpacing.xs)
     }
 
-    // MARK: - Axis labels
+    // MARK: - Axis labels (inside the field near each edge)
 
     private var axisLabels: some View {
         ZStack {
-            axisText("High")    .offset(y: -(size / 2 + 10))
-            axisText("Low")     .offset(y:  (size / 2 + 10))
-            axisText("Guarded") .rotationEffect(.degrees(-90)).offset(x: -(size / 2 + 12))
-            axisText("Open")    .rotationEffect(.degrees(90)) .offset(x:  (size / 2 + 12))
+            axisText("Charged").position(x: size * 0.50, y: 11)
+            axisText("Quiet")  .position(x: size * 0.50, y: size - 11)
+            axisText("Guarded").rotationEffect(.degrees(-90)).position(x: 11, y: size * 0.50)
+            axisText("Open")   .rotationEffect(.degrees(90)) .position(x: size - 11, y: size * 0.50)
         }
+        .frame(width: size, height: size)
         .allowsHitTesting(false)
     }
 
