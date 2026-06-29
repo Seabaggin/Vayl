@@ -137,8 +137,10 @@ struct PulseField: View {
 
     private var axisLabels: some View {
         ZStack {
-            axisText("↑ Energy")  .position(x: size * 0.50, y: 11)
-            axisText("Openness →").position(x: size * 0.78, y: size - 11)
+            axisText("Charged") .position(x: size * 0.50, y: 11)
+            axisText("Depleted").position(x: size * 0.50, y: size - 11)
+            axisText("Guarded").rotationEffect(.degrees(-90)).position(x: 11, y: size * 0.50)
+            axisText("Open")   .rotationEffect(.degrees(90)) .position(x: size - 11, y: size * 0.50)
         }
         .frame(width: size, height: size)
         .allowsHitTesting(false)
@@ -146,10 +148,10 @@ struct PulseField: View {
 
     private func axisText(_ label: String) -> some View {
         Text(label)
-            .font(.system(size: 7, weight: .bold))
+            .font(.system(size: 10, weight: .bold))
             .tracking(1.4)
             .textCase(.uppercase)
-            .foregroundStyle(AppColors.textTertiary.opacity(0.55))
+            .foregroundStyle(Color.white.opacity(0.70))
     }
 }
 
