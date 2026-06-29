@@ -38,6 +38,7 @@ struct PulseField: View {
     var body: some View {
         ZStack {
             zones
+            if showAxisLabels { quadrantLabels }
             auraLayer
         }
         .frame(width: size, height: size)
@@ -88,6 +89,26 @@ struct PulseField: View {
             x: pos.openness * size.width,
             y: (1 - pos.energy) * size.height
         )
+    }
+
+    // MARK: - Quadrant corner labels (inside the field — 8.5pt Clash Display, per-quadrant colour)
+
+    private var quadrantLabels: some View {
+        ZStack {
+            quadrantText("Expansive",  .topTrailing,   AppColors.pulseTierExpansive.opacity(0.78))
+            quadrantText("Friction",   .topLeading,    AppColors.pulseTierFriction.opacity(0.65))
+            quadrantText("Protective", .bottomLeading, AppColors.pulseTierProtective.opacity(0.70))
+            quadrantText("Sovereign",  .bottomTrailing,AppColors.pulseTierSovereign.opacity(0.72))
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func quadrantText(_ label: String, _ alignment: Alignment, _ color: Color) -> some View {
+        Text(label)
+            .font(AppFonts.display(8.5, weight: .semibold, relativeTo: .caption2))
+            .foregroundStyle(color)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
+            .padding(AppSpacing.xs)
     }
 
     // MARK: - Axis labels
