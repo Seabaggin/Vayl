@@ -126,30 +126,38 @@ private struct MapFieldSheet: View {
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
-            ScrollView {
-                VStack(spacing: 0) {
-                    PulseField(
-                        entries: [PulseFieldEntry(position: position, auraSize: 60)],
-                        size: w,
-                        showAxisLabels: true
-                    )
-                    .padding(.top, AppSpacing.xs)
+            // AppColors.void here is load-bearing: PulseField zone gradients fade to
+            // .clear, which otherwise shows the semi-transparent modalBackground and
+            // lets the Map tab content bleed through. Void blocks it and makes the
+            // zone glows feel one with the surface.
+            ZStack(alignment: .top) {
+                AppColors.void
+                ScrollView {
+                    VStack(spacing: 0) {
+                        PulseField(
+                            entries: [PulseFieldEntry(position: position, auraSize: 60)],
+                            size: w,
+                            showAxisLabels: true
+                        )
+                        .padding(.top, AppSpacing.xs)
 
-                    VStack(spacing: AppSpacing.xxs) {
-                        Text(readCopy)
-                            .font(AppFonts.display(15, weight: .semibold, relativeTo: .subheadline))
-                            .foregroundStyle(AppColors.textPrimary)
-                            .multilineTextAlignment(.center)
-                        Text(descCopy)
-                            .font(AppFonts.body(11, weight: .regular, relativeTo: .footnote))
-                            .foregroundStyle(AppColors.textSecondary)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
+                        VStack(spacing: AppSpacing.xxs) {
+                            Text(readCopy)
+                                .font(AppFonts.display(15, weight: .semibold, relativeTo: .subheadline))
+                                .foregroundStyle(AppColors.textPrimary)
+                                .multilineTextAlignment(.center)
+                            Text(descCopy)
+                                .font(AppFonts.body(11, weight: .regular, relativeTo: .footnote))
+                                .foregroundStyle(AppColors.textSecondary)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.top, AppSpacing.md)
+
+                        Spacer(minLength: AppSpacing.xl)
                     }
-                    .padding(.horizontal, AppSpacing.lg)
-                    .padding(.top, AppSpacing.md)
-
-                    Spacer()
+                    .frame(minHeight: geo.size.height)
                 }
             }
         }
