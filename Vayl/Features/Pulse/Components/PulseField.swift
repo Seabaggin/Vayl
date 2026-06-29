@@ -38,8 +38,8 @@ struct PulseField: View {
     var body: some View {
         ZStack {
             zones
+            ghostLabels
             if showAxisLabels { axisLabels }
-            if showAxisLabels { quadrantLabels }
             auraLayer
         }
         .frame(width: size, height: size)
@@ -62,6 +62,27 @@ struct PulseField: View {
             .fill(color.opacity(0.16))
             .frame(width: d, height: d)
             .blur(radius: size * 0.105)
+            .position(x: cx * size, y: cy * size)
+    }
+
+    // MARK: - Ghost quadrant labels
+
+    private var ghostLabels: some View {
+        ZStack {
+            ghostLabel("Expansive",  AppColors.pulseTierExpansive,  cx: 0.75, cy: 0.25, quadrant: .expansive)
+            ghostLabel("Friction",   AppColors.pulseTierFriction,   cx: 0.25, cy: 0.25, quadrant: .friction)
+            ghostLabel("Protective", AppColors.pulseTierProtective, cx: 0.25, cy: 0.75, quadrant: .protective)
+            ghostLabel("Sovereign",  AppColors.pulseTierSovereign,  cx: 0.75, cy: 0.75, quadrant: .sovereign)
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func ghostLabel(_ name: String, _ color: Color, cx: CGFloat, cy: CGFloat, quadrant: PulseQuadrant) -> some View {
+        let isActive = entries.contains { $0.quadrant == quadrant }
+        return Text(name.uppercased())
+            .font(AppFonts.display(22, weight: .semibold, relativeTo: .title2))
+            .tracking(3)
+            .foregroundStyle(color.opacity(isActive ? 0.22 : 0.08))
             .position(x: cx * size, y: cy * size)
     }
 
