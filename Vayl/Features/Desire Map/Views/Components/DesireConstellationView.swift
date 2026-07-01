@@ -26,6 +26,8 @@ struct DesireConstellationView: View {
         let isHero: Bool
         let isLocked: Bool
         let cadence: DesireStarView.Cadence
+        /// Adjacent ("worth exploring") matches carry a dashed orbit ring once unlocked.
+        var isAdjacent: Bool = false
     }
 
     enum Mode: Equatable {
@@ -69,7 +71,8 @@ struct DesireConstellationView: View {
                             state: starState(index, star),
                             label: showsLabel(star) ? star.label : nil,
                             cadence: star.cadence,
-                            ignites: ignites
+                            ignites: ignites,
+                            ring: (star.isAdjacent && !star.isLocked) ? .dashed : .none
                         )
                         .position(x: star.point.x * geo.size.width,
                                   y: star.point.y * geo.size.height)

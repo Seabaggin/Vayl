@@ -179,7 +179,9 @@ struct DesireRevealView: View {
                     }
                 )
                 .frame(maxWidth: .infinity)
-                .frame(height: (store.beatPhase == .beat2 || store.beatPhase == .beat3) ? 220 : 300)
+                // beat2/3 pull the sky in to make room for the locked rows; beat1 and the
+                // unlocked sky are full-bleed — the constellation IS the screen (mockup 6/10).
+                .frame(maxHeight: (store.beatPhase == .beat2 || store.beatPhase == .beat3) ? 220 : .infinity)
                 .padding(.vertical, AppSpacing.lg)
                 .opacity(store.beatPhase != .idle ? 1 : 0)
                 // Fix #3b: opacity reveal gated behind reduceMotionSafe; the per-star ignite + line
@@ -203,10 +205,18 @@ struct DesireRevealView: View {
         case .beat1:
             // Caption for the free match
             VStack(spacing: AppSpacing.xs) {
-                Text("You both marked this")
-                    .font(AppFonts.bodyText)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .multilineTextAlignment(.center)
+                HStack(spacing: AppSpacing.xs) {
+                    Text("You both marked this")
+                        .font(AppFonts.bodyText)
+                        .foregroundStyle(AppColors.textSecondary)
+                    Text("✦")
+                        .font(AppFonts.bodyText)
+                        .foregroundStyle(LinearGradient(
+                            colors: [AppColors.spectrumCyan, AppColors.spectrumMagenta],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
+                }
+                .multilineTextAlignment(.center)
                 if store.lockedCount > 0 {
                     Text("tap to read · or open the full map")
                         .font(AppFonts.caption)
@@ -232,10 +242,18 @@ struct DesireRevealView: View {
             // Post-unlock caption
             VStack(spacing: AppSpacing.xs) {
                 let n = store.totalCount
-                Text("\(n) desire\(n == 1 ? "" : "s") you share")
-                    .font(AppFonts.bodyText)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .multilineTextAlignment(.center)
+                HStack(spacing: AppSpacing.xs) {
+                    Text("\(n) desire\(n == 1 ? "" : "s") you share")
+                        .font(AppFonts.bodyText)
+                        .foregroundStyle(AppColors.textSecondary)
+                    Text("✦")
+                        .font(AppFonts.bodyText)
+                        .foregroundStyle(LinearGradient(
+                            colors: [AppColors.spectrumCyan, AppColors.spectrumMagenta],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
+                }
+                .multilineTextAlignment(.center)
                 Text("tap any star to talk about it")
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
@@ -333,7 +351,8 @@ struct DesireRevealView: View {
                 label: match.itemName,
                 isHero: isHero,
                 isLocked: match.isLocked,
-                cadence: match.isLocked ? .locked : .free
+                cadence: match.isLocked ? .locked : .free,
+                isAdjacent: match.alignment == .adjacent
             )
         }
     }

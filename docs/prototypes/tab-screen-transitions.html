@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vayl — Screen Transition Variants</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #07061A;
+  --purple: #7B52E0;
+  --bar-bg: rgba(14,12,32,0.97);
+  --border: rgba(255,255,255,0.09);
+}
+
+body {
+  background: #05040f;
+  font-family: -apple-system, 'SF Pro Display', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 44px 24px 72px;
+  min-height: 100vh;
+  color: #fff;
+  gap: 10px;
+}
+
+h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; color: rgba(255,255,255,0.85); }
+.sub { font-size: 12px; color: rgba(255,255,255,0.30); text-align: center; max-width: 640px; line-height: 1.55; }
+
+.grid {
+  display: flex;
+  gap: 20px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.variant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.variant-name {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: var(--purple);
+}
+
+.variant-desc {
+  font-size: 11px;
+  color: rgba(255,255,255,0.28);
+  text-align: center;
+  max-width: 160px;
+  line-height: 1.5;
+}
+
+/* ── Phone ── */
+.phone {
+  width: 176px;
+  height: 350px;
+  background: var(--void);
+  border-radius: 32px;
+  border: 1px solid rgba(255,255,255,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgba(123,82,224,0.10),
+    0 14px 48px rgba(0,0,0,0.65),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* Screen area — overflow hidden so slides clip */
+.screen {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Each tab "page" — absolutely positioned, fills screen */
+.screen-page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.screen-page.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Per-tab accent atmospheres */
+.screen-page[data-tab="0"] { background: radial-gradient(ellipse 70% 50% at 50% 45%, rgba(100,60,200,0.22) 0%, transparent 70%); }
+.screen-page[data-tab="1"] { background: radial-gradient(ellipse 70% 50% at 50% 45%, rgba(0,200,200,0.14) 0%, transparent 70%); }
+.screen-page[data-tab="2"] { background: radial-gradient(ellipse 70% 50% at 50% 45%, rgba(200,80,160,0.16) 0%, transparent 70%); }
+.screen-page[data-tab="3"] { background: radial-gradient(ellipse 70% 50% at 50% 45%, rgba(60,120,220,0.16) 0%, transparent 70%); }
+.screen-page[data-tab="4"] { background: radial-gradient(ellipse 70% 50% at 50% 45%, rgba(100,100,140,0.14) 0%, transparent 70%); }
+
+.page-icon {
+  width: 32px;
+  height: 32px;
+  opacity: 0.55;
+}
+
+.page-label {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  color: rgba(255,255,255,0.50);
+}
+
+/* ── Tab bar ── */
+.bar-area {
+  padding: 5px 8px 9px;
+  flex-shrink: 0;
+}
+
+.pill {
+  background: var(--bar-bg);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 3px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  top: 50%;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  transform: translateY(-50%) translateX(-50%);
+  pointer-events: none;
+  z-index: 1;
+  will-change: left, transform;
+}
+
+.orb::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(123,82,224,0.62) 0%,
+    rgba(123,82,224,0.24) 40%,
+    rgba(123,82,224,0.06) 65%,
+    transparent 75%
+  );
+  filter: blur(5px);
+}
+
+.tab-btn {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  z-index: 3;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: rgba(255,255,255,0.28);
+  transition: color 0.2s, filter 0.2s;
+  will-change: transform;
+}
+
+.tab-btn.active svg {
+  color: #fff;
+  filter: drop-shadow(0 0 5px rgba(160,120,255,0.9));
+}
+
+/* Landing flash for Snap & Halo */
+.land-flash {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.65) 0%, rgba(200,170,255,0.35) 40%, transparent 70%);
+}
+</style>
+</head>
+<body>
+
+<h1>Screen Transition · Motion Variants</h1>
+<p class="sub">All frames use Snap &amp; Halo on the bar. Variants differ only in how the screen content moves between tabs. Click any tab.</p>
+
+<div class="grid" id="grid"></div>
+
+<script>
+const TABS = ['home','play','map','learn','settings'];
+const TAB_NAMES = ['Home','Play','Map','Learn','Settings'];
+const TAB_COLORS = ['rgba(120,80,220,0.7)', 'rgba(0,200,180,0.7)', 'rgba(220,80,160,0.7)', 'rgba(80,140,230,0.7)', 'rgba(130,130,160,0.7)'];
+
+const ICONS = {
+  home:     `<path d="M3 10L12 3l9 7v10H3V10z"/><path d="M9.5 21v-6h5v6"/>`,
+  play:     `<rect x="4" y="3" width="7" height="18" rx="1.5"/><rect x="13" y="3" width="7" height="18" rx="1.5"/>`,
+  map:      `<path d="M12 2a6 6 0 0 0-6 6c0 4.5 6 11 6 11s6-6.5 6-11a6 6 0 0 0-6-6z"/><circle cx="12" cy="8" r="2"/>`,
+  learn:    `<path d="M4 5h16v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5z"/><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><line x1="9" y1="11" x2="15" y2="11"/>`,
+  settings: `<circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2m-3.5-6.5-1.5 1.5m-8 8-1.5 1.5m0-11 1.5 1.5m8 8 1.5 1.5"/>`,
+};
+
+const VARIANTS = [
+  { id: 'slide',    name: 'Slide',         desc: 'Content slides directionally left/right based on tab order' },
+  { id: 'drift',    name: 'Drift',         desc: 'Subtle directional drift + fade — feels like gravity' },
+  { id: 'rise',     name: 'Rise',          desc: 'New content rises up from 20px below, emerges from void' },
+  { id: 'zoom',     name: 'Zoom In',       desc: 'New content scales in from 96% — like stepping into a space' },
+  { id: 'instant',  name: 'Cut',           desc: 'Instant swap — only the bar animates (baseline comparison)' },
+];
+
+const grid = document.getElementById('grid');
+
+VARIANTS.forEach(v => {
+  const col = document.createElement('div');
+  col.className = 'variant';
+
+  const phone = document.createElement('div');
+  phone.className = 'phone';
+  phone.dataset.variant = v.id;
+  phone.dataset.active = '0';
+  phone.dataset.busy = '0';
+
+  // Screen
+  const screen = document.createElement('div');
+  screen.className = 'screen';
+
+  TABS.forEach((tab, i) => {
+    const page = document.createElement('div');
+    page.className = 'screen-page' + (i === 0 ? ' visible' : '');
+    page.dataset.tab = i;
+
+    const iconEl = document.createElement('div');
+    iconEl.innerHTML = `<svg viewBox="0 0 24 24" class="page-icon" style="stroke:${TAB_COLORS[i]};fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;width:36px;height:36px">${ICONS[tab]}</svg>`;
+
+    const label = document.createElement('div');
+    label.className = 'page-label';
+    label.textContent = TAB_NAMES[i];
+
+    page.appendChild(iconEl);
+    page.appendChild(label);
+    screen.appendChild(page);
+  });
+
+  // Tab bar
+  const barArea = document.createElement('div');
+  barArea.className = 'bar-area';
+  const pill = document.createElement('div');
+  pill.className = 'pill';
+
+  const orb = document.createElement('div');
+  orb.className = 'orb';
+  pill.appendChild(orb);
+
+  TABS.forEach((tab, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.innerHTML = `<svg viewBox="0 0 24 24">${ICONS[tab]}</svg>`;
+    btn.dataset.idx = i;
+
+    btn.addEventListener('click', () => {
+      if (phone.dataset.busy === '1') return;
+      const from = parseInt(phone.dataset.active);
+      const to = i;
+      if (from === to) return;
+
+      phone.dataset.busy = '1';
+      phone.dataset.active = to;
+
+      pill.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const slotW = pill.clientWidth / TABS.length;
+      const toX = slotW * (to + 0.5);
+
+      // ── Snap & Halo bar animation (same for all variants) ──
+      snapAndHalo(orb, pill, btn, slotW, from, to, toX);
+
+      // ── Screen transition (varies by variant) ──
+      const pages = Array.from(screen.querySelectorAll('.screen-page'));
+      const fromPage = pages[from];
+      const toPage = pages[to];
+      const dir = to > from ? 1 : -1;
+
+      SCREEN_TRANSITIONS[v.id](fromPage, toPage, dir, () => {
+        phone.dataset.busy = '0';
+      });
+    });
+
+    pill.appendChild(btn);
+  });
+
+  barArea.appendChild(pill);
+  phone.appendChild(screen);
+  phone.appendChild(barArea);
+  col.appendChild(phone);
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'variant-name';
+  nameEl.textContent = v.name;
+  const descEl = document.createElement('div');
+  descEl.className = 'variant-desc';
+  descEl.textContent = v.desc;
+
+  col.appendChild(nameEl);
+  col.appendChild(descEl);
+  grid.appendChild(col);
+
+  // Init orb
+  requestAnimationFrame(() => {
+    const slotW = pill.clientWidth / TABS.length;
+    orb.style.left = slotW * 0.5 + 'px';
+  });
+});
+
+// ── Snap & Halo (shared bar animation) ──
+function snapAndHalo(orb, pill, targetBtn, slotW, from, to, targetX) {
+  const fromX = slotW * (from + 0.5);
+  const overshoot = (targetX - fromX) * 0.20;
+
+  orb.style.transition = 'left 0.20s cubic-bezier(0.4, 0, 1, 1)';
+  orb.style.left = (targetX + overshoot) + 'px';
+
+  setTimeout(() => {
+    orb.style.transition = 'left 0.26s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    orb.style.left = targetX + 'px';
+
+    // Halo burst at icon
+    const flash = document.createElement('div');
+    flash.className = 'land-flash';
+    flash.style.cssText = `left:${targetX}px; top:50%; width:40px; height:40px;`;
+    pill.appendChild(flash);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      flash.style.transition = 'transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.28s ease-out';
+      flash.style.transform = 'translate(-50%, -50%) scale(2.0)';
+      flash.style.opacity = '0';
+    }));
+    setTimeout(() => flash.remove(), 350);
+  }, 195);
+}
+
+// ── Screen transition functions ──
+const SCREEN_TRANSITIONS = {
+
+  // Full directional horizontal slide
+  slide(fromPage, toPage, dir, done) {
+    const dur = 280;
+    const easing = 'cubic-bezier(0.32, 0, 0.2, 1)';
+
+    // Stage incoming off-screen
+    toPage.style.transition = 'none';
+    toPage.style.opacity = '1';
+    toPage.style.transform = `translateX(${dir * 100}%)`;
+    toPage.classList.add('visible');
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      // Slide outgoing out
+      fromPage.style.transition = `transform ${dur}ms ${easing}, opacity ${dur * 0.5}ms ease-out`;
+      fromPage.style.transform = `translateX(${-dir * 40}%)`;
+      fromPage.style.opacity = '0';
+
+      // Slide incoming in
+      toPage.style.transition = `transform ${dur}ms ${easing}`;
+      toPage.style.transform = 'translateX(0)';
+
+      setTimeout(() => {
+        fromPage.classList.remove('visible');
+        fromPage.style.transform = '';
+        fromPage.style.opacity = '';
+        fromPage.style.transition = '';
+        toPage.style.transition = '';
+        done();
+      }, dur + 20);
+    }));
+  },
+
+  // Soft drift — subtle 12px lateral shift + fade
+  drift(fromPage, toPage, dir, done) {
+    const dur = 240;
+    const drift = 12;
+
+    // Incoming starts slightly offset
+    toPage.style.transition = 'none';
+    toPage.style.opacity = '0';
+    toPage.style.transform = `translateX(${dir * drift}px)`;
+    toPage.classList.add('visible');
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      // Outgoing fades + drifts away
+      fromPage.style.transition = `opacity ${dur}ms ease-out, transform ${dur}ms ease-out`;
+      fromPage.style.opacity = '0';
+      fromPage.style.transform = `translateX(${-dir * drift * 0.6}px)`;
+
+      // Incoming drifts to rest + fades in
+      toPage.style.transition = `opacity ${dur}ms ease-out, transform ${dur}ms cubic-bezier(0.2, 0, 0.2, 1)`;
+      toPage.style.opacity = '1';
+      toPage.style.transform = 'translateX(0)';
+
+      setTimeout(() => {
+        fromPage.classList.remove('visible');
+        fromPage.style.transform = '';
+        fromPage.style.opacity = '';
+        fromPage.style.transition = '';
+        toPage.style.transition = '';
+        done();
+      }, dur + 20);
+    }));
+  },
+
+  // Rise — new content rises from below, old fades
+  rise(fromPage, toPage, dir, done) {
+    const dur = 300;
+    const riseAmt = 22;
+
+    toPage.style.transition = 'none';
+    toPage.style.opacity = '0';
+    toPage.style.transform = `translateY(${riseAmt}px)`;
+    toPage.classList.add('visible');
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      // Outgoing: fade out, slight rise up
+      fromPage.style.transition = `opacity ${dur * 0.55}ms ease-out, transform ${dur * 0.55}ms ease-out`;
+      fromPage.style.opacity = '0';
+      fromPage.style.transform = `translateY(${-riseAmt * 0.5}px)`;
+
+      // Incoming: fade in + rise to rest
+      toPage.style.transition = `opacity ${dur}ms ease-out, transform ${dur}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+      toPage.style.opacity = '1';
+      toPage.style.transform = 'translateY(0)';
+
+      setTimeout(() => {
+        fromPage.classList.remove('visible');
+        fromPage.style.transform = '';
+        fromPage.style.opacity = '';
+        fromPage.style.transition = '';
+        toPage.style.transition = '';
+        done();
+      }, dur + 20);
+    }));
+  },
+
+  // Zoom in — incoming scales up from 0.93 to 1.0 with fade
+  zoom(fromPage, toPage, dir, done) {
+    const dur = 280;
+
+    toPage.style.transition = 'none';
+    toPage.style.opacity = '0';
+    toPage.style.transform = 'scale(0.93)';
+    toPage.classList.add('visible');
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      // Old: quick fade out, slight scale down
+      fromPage.style.transition = `opacity ${dur * 0.45}ms ease-out, transform ${dur * 0.45}ms ease-out`;
+      fromPage.style.opacity = '0';
+      fromPage.style.transform = 'scale(1.03)';
+
+      // New: scale up + fade in
+      toPage.style.transition = `opacity ${dur}ms ease-out, transform ${dur}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+      toPage.style.opacity = '1';
+      toPage.style.transform = 'scale(1)';
+
+      setTimeout(() => {
+        fromPage.classList.remove('visible');
+        fromPage.style.transform = '';
+        fromPage.style.opacity = '';
+        fromPage.style.transition = '';
+        toPage.style.transition = '';
+        done();
+      }, dur + 20);
+    }));
+  },
+
+  // Instant cut — no screen transition at all
+  instant(fromPage, toPage, dir, done) {
+    fromPage.classList.remove('visible');
+    fromPage.style.transform = '';
+    fromPage.style.opacity = '';
+    toPage.style.transition = 'none';
+    toPage.style.opacity = '1';
+    toPage.style.transform = '';
+    toPage.classList.add('visible');
+    done();
+  },
+
+};
+</script>
+</body>
+</html>

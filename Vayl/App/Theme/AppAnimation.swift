@@ -809,6 +809,22 @@ internal enum AppAnimation {
     /// circle about every 8.5s (map-pulse-final.html @keyframes sweep / .od note).
     /// Was 17.0s; halved to match the mockup cadence. FEEL: confirm on device.
     static let auraGlassSweep: Double = 8.5
+
+    // MARK: — Tab Navigation
+    // Tokens for the tab bar orb snap-and-halo and tab content gravity drift.
+    // Both are reactive (user-initiated tap). Reduce motion: easeOut(0.15), suppress offsets at call site.
+
+    /// Spring — Tab bar orb snapping to new selection. response: 0.40, dampingFraction: 0.62
+    /// overshoots ~15% past target then springs back, communicating physical momentum.
+    /// Also drives the halo burst scale at the landing icon.
+    /// Reduce motion: replace with AppAnimation.fast — orb jumps to position without travel.
+    static let orbSnap: Animation = .spring(response: 0.40, dampingFraction: 0.62)
+
+    /// 0.25s ease-out — Tab content gravitational drift on tab switch.
+    /// Incoming view drifts 14pt in from the direction of navigation, decelerating to rest.
+    /// Outgoing view fades in place (no counter-drift — avoids direction-mismatch on removal).
+    /// Reduce motion: call site should suppress the offset and cross-fade only.
+    static let tabSwitch: Animation = .easeOut(duration: 0.25)
 }
 
 // MARK: — Reduce Motion Helpers

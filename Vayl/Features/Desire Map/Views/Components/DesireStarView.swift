@@ -17,6 +17,9 @@ import SwiftUI
 extension DesireStarView {
     enum StarState { case dim, lit }
     enum Cadence { case free, locked }
+    /// Alignment marker: adjacent ("worth exploring") stars carry a dashed orbit ring
+    /// so mutual and adjacent read differently on the unlocked sky.
+    enum RingStyle { case none, dashed }
 }
 
 private struct SparkleValues {
@@ -40,6 +43,8 @@ struct DesireStarView: View {
     /// When true, the star plays the two-seed ignite entrance once on appear (your purple + their
     /// magenta converging into one bright star). Default false — renders lit immediately.
     var ignites: Bool = false
+    /// Dashed orbit ring for adjacent ("worth exploring") matches on the unlocked sky.
+    var ring: RingStyle = .none
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var sparkleTrigger: Int = 0
@@ -48,24 +53,33 @@ struct DesireStarView: View {
     @State private var bloomed: Bool
     @State private var seedsMerged: Bool
 
-    init(size: CGFloat, state: StarState = .lit, label: String? = nil, cadence: Cadence = .free, ignites: Bool = false) {
+    init(size: CGFloat, state: StarState = .lit, label: String? = nil, cadence: Cadence = .free, ignites: Bool = false, ring: RingStyle = .none) {
         self.size = size
         self.state = state
         self.label = label
         self.cadence = cadence
         self.ignites = ignites
+        self.ring = ring
         _bloomed = State(initialValue: !ignites)
         _seedsMerged = State(initialValue: !ignites)
     }
 
     // MARK: Derived geometry (all proportional to size)
+    //
+    // Ground truth: desire-map-flow-family.html `.snode`. There the reference dimension is
+    // the GLOW (--g); the core is a pinpoint (~0.09–0.12 of the glow — hero 5px on a 54px
+    // glow), the cross spans ~1.3–1.6 of the glow at 1px, and the halo is 2.2× the glow.
+    // `size` here stays the caller-facing scale knob (glow = size * 3.2), but every layer
+    // derives from the glow so the star reads as a spark in light, never a white disc.
 
-    private var haloSize: CGFloat  { size * 6.0  }
-    private var glowSize: CGFloat  { size * 3.2  }
-    private var coreSize: CGFloat  { size        }
-    private var crossLen: CGFloat  { size * 3.5  }
-    private var crossW: CGFloat    { max(0.8, size * 0.075) }
+    private var glowSize: CGFloat  { size * 3.2 }
+    private var haloSize: CGFloat  { glowSize * 2.2 }
+    private var coreSize: CGFloat  { glowSize * 0.12 }
+    private var crossLen: CGFloat  { glowSize * 1.4 }
+    private var crossW: CGFloat    { 1.0 }
     private var sparkleSize: CGFloat { size * 2.2 }
+    private var ringSize: CGFloat  { glowSize * 0.92 }
+    private var labelWidth: CGFloat { max(haloSize, 120) }
 
     private var glowOpacity: Double   { state == .lit ? 1.0 : 0.18 }
     private var coreOpacity: Double   { state == .lit ? 1.0 : 0.28 }
@@ -86,6 +100,9 @@ struct DesireStarView: View {
                 ZStack {
                     haloLayer
                     glowLayer
+                    if ring == .dashed {
+                        ringLayer
+                    }
                     coreLayer
                     crossLayer
                     if state == .lit {
@@ -105,7 +122,8 @@ struct DesireStarView: View {
                     .shadow(color: AppColors.spectrumMagenta.opacity(0.55), radius: 5)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
-                    .frame(maxWidth: haloSize)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(width: labelWidth)
                     .opacity(bloomed ? 1 : 0)
             }
         }
@@ -158,15 +176,16 @@ struct DesireStarView: View {
 
     // MARK: Layers
 
+    // Gradient stops mirror the mockup's radial-gradients exactly (shalo / sglow).
     private var haloLayer: some View {
         Circle()
             .fill(
                 RadialGradient(
-                    colors: [
-                        AppColors.spectrumMagenta.opacity(0.16),
-                        AppColors.spectrumPurple.opacity(0.08),
-                        Color.clear
-                    ],
+                    gradient: Gradient(stops: [
+                        .init(color: AppColors.spectrumMagenta.opacity(0.14), location: 0.0),
+                        .init(color: AppColors.spectrumPurple.opacity(0.07),  location: 0.54),
+                        .init(color: .clear,                                  location: 0.76)
+                    ]),
                     center: .center,
                     startRadius: 0,
                     endRadius: haloSize / 2
@@ -180,12 +199,12 @@ struct DesireStarView: View {
         Circle()
             .fill(
                 RadialGradient(
-                    colors: [
-                        Color.white.opacity(0.85),
-                        AppColors.spectrumMagenta.opacity(0.42),
-                        AppColors.spectrumPurple.opacity(0.13),
-                        Color.clear
-                    ],
+                    gradient: Gradient(stops: [
+                        .init(color: Color.white.opacity(0.85),               location: 0.0),
+                        .init(color: AppColors.spectrumMagenta.opacity(0.42), location: 0.28),
+                        .init(color: AppColors.spectrumPurple.opacity(0.14),  location: 0.60),
+                        .init(color: .clear,                                  location: 0.80)
+                    ]),
                     center: .center,
                     startRadius: 0,
                     endRadius: glowSize / 2
@@ -206,6 +225,16 @@ struct DesireStarView: View {
             .opacity(coreOpacity)
     }
 
+    // Dashed orbit ring — the adjacent ("worth exploring") marker on the unlocked sky.
+    private var ringLayer: some View {
+        Circle()
+            .stroke(
+                Color.white.opacity(state == .lit ? 0.30 : 0.14),
+                style: StrokeStyle(lineWidth: 0.9, dash: [2.5, 3.5])
+            )
+            .frame(width: ringSize, height: ringSize)
+    }
+
     // Two thin rectangles (H + V) with a white gradient that fades at both ends.
     // This is the star's permanent character — present even at rest.
     private var crossLayer: some View {
@@ -213,7 +242,7 @@ struct DesireStarView: View {
             Rectangle()
                 .fill(
                     LinearGradient(
-                        colors: [Color.clear, Color.white, Color.clear],
+                        colors: [Color.clear, Color.white.opacity(0.62), Color.clear],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -223,7 +252,7 @@ struct DesireStarView: View {
             Rectangle()
                 .fill(
                     LinearGradient(
-                        colors: [Color.clear, Color.white, Color.clear],
+                        colors: [Color.clear, Color.white.opacity(0.62), Color.clear],
                         startPoint: .top,
                         endPoint: .bottom
                     )
