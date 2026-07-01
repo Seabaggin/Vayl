@@ -530,10 +530,6 @@ supabase/
 │   │   └── index.ts                            — Initiates consent request flow between partners.
 │   ├── consent-respond/
 │   │   └── index.ts                            — Handles consent responses (accept/decline).
-│   ├── create-pair/
-│   │   ├── deno.json                           — Dependencies for create-pair function.
-│   │   ├── .npmrc                              — NPM configuration.
-│   │   └── index.ts                            — Creates couple pairing relationship.
 │   ├── get-partner/
 │   │   └── index.ts                            — Fetches partner profile/relationship data.
 │   ├── grant-entitlement/

@@ -1061,3 +1061,7 @@ deletion already satisfies the App Store "delete account" requirement.
 (the slug the app actually invokes) uses `created_by` + `claimed_by is null` + deletes the code.
 `ProfileService.lookupPairingCode` also uses `created_by`. This plan does not touch pairing, but **flag**
 that `create-pair` is dead/stale relative to `rapid-task` — a separate cleanup, not this pass.
+**Resolved 2026-07-01:** verified no callers (app invokes `rapid-task`; no edge function or Swift code
+references `create-pair`), then deleted `supabase/functions/create-pair/` and its `config.toml` block.
+If the function is still deployed on prod project `ynhjlabjzauamntbyxdp`, undeploy it manually
+(`supabase functions delete create-pair`); MCP is read-only.

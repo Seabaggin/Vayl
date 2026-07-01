@@ -10,17 +10,6 @@ entrypoint = "./functions/lookup-code/index.ts"
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/lookup-code/*.html" ]
 
-[functions.create-pair]
-enabled = true
-verify_jwt = true
-import_map = "./functions/create-pair/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/create-pair/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/create-pair/*.html" ]
-
 # Public endpoint: Apple posts App Store Server Notifications with no Supabase JWT, so the
 # platform JWT check must be OFF here. Trust comes solely from Apple's signature (verified in
 # the function once the M2 verification seam is wired).
