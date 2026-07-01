@@ -17,4 +17,7 @@ import Foundation
 /// in-memory owner that Views read is `AppState.isOnboardingComplete`.
 enum UserDefaultsKey {
     static let hasCompletedOnboarding = "hasCompletedOnboarding"
+    /// Set true when a couple completes their first card session — collapses the
+    /// airlock's six house-rule bullets to the one-line "settle in" on repeats.
+    static let hasCompletedCoupleSession = "vayl.hasCompletedCoupleSession"
 }

@@ -13,6 +13,8 @@ import SwiftUI
 struct DeckCellView: View {
     let summary: DeckSummary
     let style: DeckStyle
+    /// Live lock state from the wall's store (nil = frozen catalog flag).
+    var locked: Bool? = nil
     var index: Int = 0
     var namespace: Namespace.ID
     var onTap: () -> Void
@@ -23,7 +25,7 @@ struct DeckCellView: View {
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                DeckCaseView(summary: summary, style: style)
+                DeckCaseView(summary: summary, style: style, lockedOverride: locked)
                     .matchedGeometryEffect(id: summary.id, in: namespace, isSource: true)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(summary.category.displayName)

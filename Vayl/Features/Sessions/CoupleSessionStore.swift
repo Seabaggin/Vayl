@@ -3,17 +3,18 @@
 //  Vayl
 //
 //  Brain of the in-person couple card session (the .vaylCover flow):
-//  airlock → transition → in-session player → close + reflection.
+//  lobby/airlock → transition → in-session player → close (or safeClose) +
+//  reflection.
 //
 //  ONE store owns the whole cover because the phases share a single hand,
 //  one bandwidth reading, one card-result ledger, and one end-of-session
-//  persistence write. Splitting into Airlock/Player stores would only add
-//  cross-store coordination for state that is genuinely one session.
+//  persistence write.
 //
-//  FRONT-END / LOCAL: partner presence and the partner's "ready" are mocked
-//  here (no Realtime). The swap to RealtimeSessionService is a one-layer change
-//  inside this store — the views never learn the difference. See
-//  docs/superpowers/specs/2026-06-21-couple-session-quickplay-implementation-spec.md.
+//  TWO-DEVICE: when a RealtimeSessionService is injected the row is the source
+//  of truth — SessionSyncCoordinator mirrors it in (index forward-only,
+//  optimistic advance with rollback), and every UI state is reconstructable
+//  from fetchOpenSession after an app kill. `realtime == nil` is the pure-local
+//  DEBUG path (mocked partner), behavior unchanged from master.
 //
 //  Dependencies injected via init — never @Environment. ModelContext is created
 //  fresh at write time — never stored on self (matches SessionStore).
@@ -31,12 +32,13 @@ final class CoupleSessionStore: Identifiable {
 
     // MARK: - Flow
 
-    enum Phase { case airlock, transition, session, close, done }
+    enum Phase { case airlock, transition, session, close, safeClose, done }
 
     /// Who is drawing the current card.
     enum Drawer { case you, partner }
 
-    /// Pre-session bandwidth reading. Informs depth; never hard-gates in V1.
+    /// Pre-session bandwidth reading. The gentler of the two readings becomes
+    /// the session's depth ceiling; the raw reading is never shown to the partner.
     enum Bandwidth: String, CaseIterable {
         case light, open, deep
         var label: String { rawValue }
@@ -52,13 +54,27 @@ final class CoupleSessionStore: Identifiable {
     let id = UUID()
     private(set) var phase: Phase = .airlock
 
-    // MARK: - Airlock state
+    // MARK: - Launch context
+
+    let entry: SessionLaunch.Entry
+    private let sessionRole: SessionRole
+    private(set) var remoteSessionId: UUID?
+    /// Safe word label + partner display name, resolved from the local Couple /
+    /// profile rows at init; wayfinding copy only.
+    private(set) var safeWordLabel: String = "red"
+    private(set) var partnerLabel: String = "your partner"
+    private(set) var deckTitle: String = "Tonight's deck"
+    private(set) var localProfileId: UUID?
+    private let perCardTimerSeconds: [String: Int]
+    private let sessionStartedAt = Date()
+
+    // MARK: - Airlock state (DEBUG local mock path)
 
     /// Your private bandwidth reading.
     var bandwidth: Bandwidth = .open
-    /// Mock partner reading — shown once they "arrive". Realtime later.
+    /// Mock partner reading — DEBUG local path only.
     private(set) var partnerBandwidth: Bandwidth = .light
-    /// Mock presence — flips true shortly after the airlock appears. Realtime later.
+    /// Mock presence — flips true shortly after the airlock appears (DEBUG local path).
     private(set) var partnerPresent: Bool = false
 
     // MARK: - Session state
@@ -85,9 +101,7 @@ final class CoupleSessionStore: Identifiable {
     private let appState: AppState
     /// Sync hook — encodes the completed-session payload and hands it to the
     /// offline queue. Injected (default = the real SyncManager) so tests pass a
-    /// no-op: the queue touches the on-disk app container + network, which must
-    /// not run inside a unit test. Also keeps the store from reaching for the
-    /// `SyncManager.shared` singleton inline (services injected, not reached for).
+    /// no-op.
     private let enqueueSync: @MainActor (SessionRecordPayload) -> Void
 
     /// UX beat durations. Defaults match the felt design; tests pass tiny values
@@ -95,38 +109,32 @@ final class CoupleSessionStore: Identifiable {
     private let presenceSeconds: Double
     private let transitionSeconds: Double
 
-    // ── Realtime scaffold (UNVERIFIED — Seg 6/7, needs backend + two devices) ──
-    // Injected service + role + initiator. Default nil = pure-local (the verified
-    // path; the front-end behaves exactly as before). When a service is injected
-    // (behind a flag, with real auth), the store ALSO pushes state to
-    // curated_sessions. None of this has run against the backend or a second
-    // device. See docs/superpowers/plans/2026-06-21-segments-6-9-scaffold-status.md.
     private let realtime: RealtimeSessionService?
-    private let sessionRole: SessionRole
     private let initiatorId: UUID?
-    private(set) var remoteSessionId: UUID?
 
     // MARK: - Init
 
     init(
-        hand: [Card],
+        launch: SessionLaunch,
         modelContainer: ModelContainer,
         appState: AppState,
-        presenceSeconds: Double = 1.4,
-        transitionSeconds: Double = 2.6,
         realtime: RealtimeSessionService? = nil,
-        sessionRole: SessionRole = .a,
-        initiatorId: UUID? = nil,
+        presenceSeconds: Double = 1.4,
+        transitionSeconds: Double = 2.5,          // 🎚️ spec 4.5: ~2.5s held beat
         enqueueSync: (@MainActor (SessionRecordPayload) -> Void)? = nil
     ) {
-        self.hand = hand
+        self.hand = launch.hand
+        self.effectiveHand = launch.hand
+        self.entry = launch.entry
+        self.sessionRole = launch.role
+        self.remoteSessionId = launch.session?.id
+        self.perCardTimerSeconds = launch.session?.perCardTimer ?? [:]
         self.modelContainer = modelContainer
         self.appState = appState
         self.presenceSeconds = presenceSeconds
         self.transitionSeconds = transitionSeconds
         self.realtime = realtime
-        self.sessionRole = sessionRole
-        self.initiatorId = initiatorId
+        self.initiatorId = launch.session?.initiatorId
         self.enqueueSync = enqueueSync ?? { payload in
             guard let data = try? JSONEncoder().encode(payload) else { return }
             SyncManager.shared.enqueueSyncTask(
@@ -135,32 +143,88 @@ final class CoupleSessionStore: Identifiable {
                 payload: data
             )
         }
+        resolveLocalContext()
     }
 
-    // MARK: - Derived
+    /// Compatibility path for the DEBUG local flow, previews, and the existing
+    /// playthrough tests: a plain hand = a pure-local launch.
+    convenience init(
+        hand: [Card],
+        modelContainer: ModelContainer,
+        appState: AppState,
+        presenceSeconds: Double = 1.4,
+        transitionSeconds: Double = 2.5,
+        enqueueSync: (@MainActor (SessionRecordPayload) -> Void)? = nil
+    ) {
+        self.init(
+            launch: SessionLaunch(hand: hand, entry: .localDebug, role: .a, session: nil),
+            modelContainer: modelContainer,
+            appState: appState,
+            realtime: nil,
+            presenceSeconds: presenceSeconds,
+            transitionSeconds: transitionSeconds,
+            enqueueSync: enqueueSync
+        )
+    }
+
+    private func resolveLocalContext() {
+        let context = ModelContext(modelContainer)
+        var profileFetch = FetchDescriptor<UserProfile>()
+        profileFetch.fetchLimit = 1
+        localProfileId = try? context.fetch(profileFetch).first?.id
+        if let coupleId = appState.coupleId {
+            var coupleFetch = FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
+            coupleFetch.fetchLimit = 1
+            if let couple = try? context.fetch(coupleFetch).first {
+                safeWordLabel = couple.sharedSafeWord
+            }
+        }
+        // Deck title: resolve the pretty name from the catalog when possible.
+        if let deckId = hand.first?.deckId,
+           let title = (try? DeckCatalogService().loadSummaries())?
+               .first(where: { $0.id == deckId })?.title {
+            deckTitle = title
+        }
+        // Partner label stays the honest generic when no name is resolvable
+        // (no hardcoded placeholder names).
+    }
+
+    // MARK: - Derived (reads the ceiling-trimmed hand)
 
     var currentCard: Card? {
-        hand.indices.contains(index) ? hand[index] : nil
+        effectiveHand.indices.contains(index) ? effectiveHand[index] : nil
     }
 
     /// Drawer alternates; the partner (A) opens, matching the deck order.
     var currentDrawer: Drawer { index % 2 == 0 ? .partner : .you }
 
-    var isLastCard: Bool { index >= hand.count - 1 }
+    var isLastCard: Bool { index >= effectiveHand.count - 1 }
 
     /// Cards still to come after the current one — drives the fanned deck.
-    var upcomingCount: Int { max(0, hand.count - index - 1) }
+    var upcomingCount: Int { max(0, effectiveHand.count - index - 1) }
 
     var discussedCount: Int { records.filter { $0.status == .discussed }.count }
     var skippedCount: Int { records.filter { $0.status == .skipped }.count }
 
     /// Position label for the in-session header ("Card 3 · 8").
-    var positionLabel: String { "\(index + 1) · \(hand.count)" }
+    var positionLabel: String { "\(index + 1) · \(effectiveHand.count)" }
 
-    // MARK: - Airlock actions
+    /// Cover-family screen 7 stat line: cards / depth reached / duration.
+    var sessionStatLine: String {
+        let cards = "\(discussedCount) \(discussedCount == 1 ? "card" : "cards")"
+        let depth = "reached \(depthLabel)"
+        let minutes = max(1, Int(Date().timeIntervalSince(sessionStartedAt) / 60))
+        return "\(cards) · \(depth) · \(minutes) min"
+    }
 
-    /// Arms the mock partner-presence handshake. Called when the airlock appears.
-    /// Realtime swap: replace with a RealtimeSessionService presence subscription.
+    /// Depth reached: the ceiling when live, else my own reading. Names the
+    /// band, never a number, never the partner's reading (spec 4.5).
+    private var depthLabel: String { (depthCeiling ?? bandwidth).label }
+
+    // MARK: - Airlock actions (DEBUG local mock path)
+
+    /// Arms the mock partner-presence handshake. DEBUG local path only —
+    /// the real presence comes from AirlockStore.
     func armPresence() {
         guard !partnerPresent else { return }
         Task { @MainActor in
@@ -171,15 +235,37 @@ final class CoupleSessionStore: Identifiable {
 
     func setBandwidth(_ b: Bandwidth) { bandwidth = b }
 
-    /// Both partners released the sync ring close enough together. Cross the
-    /// airlock into the phones-down transition, then the first card.
+    /// DEBUG local path: cross the airlock into the transition, then card 1.
     func confirmSynced() {
         guard phase == .airlock else { return }
         phase = .transition
-        liveOpen()
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(transitionSeconds))
             if phase == .transition { phase = .session }
+        }
+    }
+
+    /// AirlockStore reported active — cross into the held transition beat,
+    /// start the remote mirror, then land on card 1.
+    func airlockDidActivate() {
+        guard phase == .airlock else { return }
+        phase = .transition
+        startRemoteSync()
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(transitionSeconds))
+            if phase == .transition {
+                phase = .session
+                startTimerIfLeader()
+            }
+        }
+    }
+
+    /// Lobby cancel: mark the row abandoned so the partner's device sees the
+    /// session end (no-op on the pure-local path).
+    func abandonRemoteSession() {
+        guard let realtime, let sid = remoteSessionId else { return }
+        Task { @MainActor in
+            try? await realtime.setStatus(sessionId: sid, status: .abandoned)
         }
     }
 
@@ -188,19 +274,16 @@ final class CoupleSessionStore: Identifiable {
     /// Deal forward: the current card is done (discussed) → next, or finish.
     func dealNext() {
         recordCurrent(.discussed)
-        liveAdvance(expectedIndex: index)
         advanceOrFinish()
     }
 
     /// Pass gracefully: the current card is skipped → next, or finish.
     func pass() {
         recordCurrent(.skipped)
-        liveAdvance(expectedIndex: index)
         advanceOrFinish()
     }
 
     /// "End well" from the re-center sheet — a clean dual exit mid-session.
-    /// Records the current card as skipped and goes straight to the close.
     func endEarly() {
         recordCurrent(.skipped)
         finishSession()
@@ -211,11 +294,277 @@ final class CoupleSessionStore: Identifiable {
         records.append((card: card, status: status))
     }
 
+    /// Optimistic + conditional-write advance (spec D7). Both paths bump
+    /// locally first; the live path then writes the conditional update and
+    /// rolls the bump back only on a NETWORK failure (a `false` result just
+    /// means the partner won the race and the echoed row confirms the same
+    /// landing index).
     private func advanceOrFinish() {
-        if isLastCard {
-            finishSession()
+        if isLastCard { finishSession(); return }
+        let expected = index
+        index += 1                                   // optimistic, both paths
+        revealEngine?.reset(forCardId: effectiveHand[expected].id)
+        refreshTimer()
+        guard isLive, let realtime, let sid = remoteSessionId else { return }
+        Task { @MainActor in
+            do {
+                _ = try await realtime.advance(sessionId: sid, expectedIndex: expected)
+                self.startTimerIfLeader()
+            } catch {
+                // Network failure: roll the optimistic bump back; the next echo
+                // or reconnect resolves the truth. Index never regresses below
+                // the last confirmed row value.
+                if self.index == expected + 1, self.confirmedIndex <= expected {
+                    self.index = expected
+                    self.refreshTimer()
+                }
+            }
+        }
+    }
+
+    // MARK: - Remote sync (the row is the source of truth)
+
+    private var coordinator: SessionSyncCoordinator?
+    private(set) var isLive = false
+    private(set) var partnerPresentLive = false
+    private(set) var isPaused = false
+    private(set) var partnerAway = false
+    private(set) var safeWordUsed = false
+    private(set) var timerStartedAtRaw: String?
+    /// Highest row index applied; the forward-only guard.
+    private var confirmedIndex = 0
+    /// Depth ceiling once both bandwidths are on the row.
+    private(set) var depthCeiling: Bandwidth?
+    /// The hand actually played tonight (ceiling-trimmed; == hand until then).
+    private(set) var effectiveHand: [Card]
+    /// PLAN16-SECTION3 assigns the real engine; row/broadcast reveal deltas are
+    /// forwarded to it.
+    var revealEngine: RevealEngine?
+
+    func startRemoteSync() {
+        guard let realtime, let coupleId = appState.coupleId,
+              let userId = localProfileId, let sid = remoteSessionId,
+              coordinator == nil else { return }
+        let coordinator = SessionSyncCoordinator(
+            service: realtime, coupleId: coupleId, userId: userId, sessionId: sid
+        )
+        self.coordinator = coordinator
+        coordinator.onRowUpdate = { [weak self] dto in self?.applyRemoteRow(dto) }
+        coordinator.onPresence = { [weak self] present in
+            guard let self, let me = self.localProfileId else { return }
+            let partnerHere = present.contains { $0 != me.uuidString }
+            self.partnerPresentLive = partnerHere
+            partnerHere ? self.partnerReturned() : self.partnerLost()
+        }
+        coordinator.onReveal = { [weak self] envelope in
+            self?.revealEngine?.applyBroadcast(envelope)
+        }
+        coordinator.onResendRequest = { [weak self] cardId in
+            self?.receiveRevealResendRequest(cardId: cardId)
+        }
+        coordinator.start()
+        isLive = true
+    }
+
+    /// PLAN16-SECTION3 replaces this stub (the engine answers resend requests
+    /// by re-sending its buffered envelope).
+    func receiveRevealResendRequest(cardId: String) {}
+
+    func teardown() {
+        coordinator?.stop()
+        coordinator = nil
+        graceTask?.cancel()
+        timerTask?.cancel()
+    }
+
+    /// Mirror the authoritative row. Index only ever moves forward.
+    private func applyRemoteRow(_ dto: CuratedSessionDTO) {
+        if dto.currentIndex > confirmedIndex {
+            confirmedIndex = dto.currentIndex
+        }
+        let indexChanged: Bool
+        if dto.currentIndex != index, dto.currentIndex >= confirmedIndex,
+           effectiveHand.indices.contains(dto.currentIndex) {
+            index = dto.currentIndex
+            indexChanged = true
+        } else if dto.currentIndex < index, dto.currentIndex == confirmedIndex {
+            // Our optimistic bump outran a row that never moved: roll back.
+            index = dto.currentIndex
+            indexChanged = true
         } else {
-            index += 1
+            indexChanged = false
+        }
+        timerStartedAtRaw = dto.timerStartedAt
+        liveTimers = dto.perCardTimer
+        refreshTimer()
+        if indexChanged { startTimerIfLeader() }
+        recomputeCeiling(a: dto.aBandwidth, b: dto.bBandwidth)
+        if dto.safeWordUsed, !safeWordUsed {
+            safeWordUsed = true
+            enterSafeClose()
+        }
+        isPaused = (dto.status == CuratedSessionStatus.paused.rawValue)
+        if dto.status == CuratedSessionStatus.complete.rawValue, phase == .session {
+            finishSession()                       // partner finished → follow to close
+        }
+        if dto.status == CuratedSessionStatus.abandoned.rawValue,
+           !safeWordUsed, phase == .session {
+            endEarly()                            // partner confirmed exit
+        }
+        revealEngine?.applyRow(dto.revealState)
+    }
+
+    /// Depth ceiling (spec 4.3): min of the two private readings. Light keeps
+    /// cards ≤ .split, Open ≤ .auroraBand, Deep everything. Closing ritual is
+    /// never trimmed. Both devices derive this from the same row columns, so
+    /// the trimmed hand (and therefore current_index) is identical on both.
+    private func recomputeCeiling(a: Float?, b: Float?) {
+        guard let a, let b, depthCeiling == nil else { return }
+        let minFraction = min(a, b)
+        let ceiling: Bandwidth = minFraction < 0.4 ? .light : (minFraction < 0.7 ? .open : .deep)
+        depthCeiling = ceiling
+        let maxIntensity: CardIntensity = {
+            switch ceiling {
+            case .light: return .split
+            case .open:  return .auroraBand
+            case .deep:  return .supernova
+            }
+        }()
+        effectiveHand = hand.filter { $0.type == .closingRitual || $0.intensity <= maxIntensity }
+    }
+
+    /// Cover appeared with no live channel (app kill / relaunch): rebuild from
+    /// the open row and resubscribe. Every UI state must be reconstructable
+    /// from fetchOpenSession alone (spec section 5).
+    func resumeIfNeeded() async {
+        guard let realtime, coordinator == nil,
+              let coupleId = appState.coupleId else { return }
+        guard let dto = try? await realtime.fetchOpenSession(coupleId: coupleId),
+              dto.id == remoteSessionId ?? dto.id else { return }
+        remoteSessionId = dto.id
+        switch dto.status {
+        case CuratedSessionStatus.active.rawValue, CuratedSessionStatus.paused.rawValue:
+            recomputeCeiling(a: dto.aBandwidth, b: dto.bBandwidth)
+            confirmedIndex = dto.currentIndex
+            index = min(dto.currentIndex, max(0, effectiveHand.count - 1))
+            timerStartedAtRaw = dto.timerStartedAt
+            liveTimers = dto.perCardTimer
+            isPaused = (dto.status == CuratedSessionStatus.paused.rawValue)
+            if phase == .airlock { phase = .session }
+            startRemoteSync()
+            refreshTimer()
+            revealEngine?.applyRow(dto.revealState)
+        default:
+            break   // lobby/airlock: AirlockStore owns those states
+        }
+    }
+
+    // MARK: - Timer — derived locally from the shared anchor, never ticked over the wire
+
+    private var liveTimers: [String: Int] = [:]     // seeded from perCardTimerSeconds
+    private(set) var timerRemaining: TimeInterval?
+    private(set) var timerElapsed = false
+    private var timerTask: Task<Void, Never>?
+
+    private static let isoFractional: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let isoPlain = ISO8601DateFormatter()
+
+    private var currentCardLimit: Int? {
+        guard let id = currentCard?.id else { return nil }
+        return liveTimers[id]
+    }
+
+    func refreshTimer() {
+        timerTask?.cancel()
+        timerElapsed = false
+        if liveTimers.isEmpty { liveTimers = perCardTimerSeconds }
+        guard let limit = currentCardLimit, let raw = timerStartedAtRaw,
+              let started = Self.isoFractional.date(from: raw) ?? Self.isoPlain.date(from: raw)
+        else { timerRemaining = nil; return }
+        let deadline = started.addingTimeInterval(TimeInterval(limit))
+        timerTask = Task { @MainActor in
+            while !Task.isCancelled {
+                let remaining = deadline.timeIntervalSinceNow
+                timerRemaining = max(0, remaining)
+                if remaining <= 0 { timerElapsed = true; break }   // soft: NEVER advances
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
+    }
+
+    /// Role-a stamps the anchor when a timed card presents (deterministic single
+    /// writer; the echoed UPDATE starts both countdowns together).
+    func startTimerIfLeader() {
+        guard isLive, sessionRole == .a, let realtime, let sid = remoteSessionId,
+              currentCardLimit != nil else { return }
+        Task { @MainActor in try? await realtime.markTimerStarted(sessionId: sid) }
+    }
+
+    /// "keep going": null this card's timer for BOTH via the row (spec 4.3).
+    func keepGoing() {
+        guard let id = currentCard?.id else { return }
+        liveTimers[id] = nil
+        timerElapsed = false
+        timerRemaining = nil
+        timerTask?.cancel()
+        guard isLive, let realtime, let sid = remoteSessionId else { return }
+        let timers = liveTimers
+        Task { @MainActor in try? await realtime.setPerCardTimer(sessionId: sid, timers: timers) }
+    }
+
+    // MARK: - Safety (pause / safe word / presence grace)
+
+    private var graceTask: Task<Void, Never>?
+
+    func togglePause() {
+        isPaused.toggle()
+        guard isLive, let realtime, let sid = remoteSessionId else { return }
+        let status: CuratedSessionStatus = isPaused ? .paused : .active
+        Task { @MainActor in try? await realtime.setStatus(sessionId: sid, status: status) }
+    }
+
+    /// The safe word: an immediate, no-questions exit for BOTH devices.
+    /// abandoned + safe_word_used in one write; no reflection, no penalty
+    /// beyond cards already recorded.
+    func raiseSafeWord() {
+        safeWordUsed = true
+        if isLive, let realtime, let sid = remoteSessionId {
+            Task { @MainActor in try? await realtime.raiseSafeWord(sessionId: sid) }
+        }
+        enterSafeClose()
+    }
+
+    /// Both the local raise and the remote echo land here.
+    private func enterSafeClose() {
+        guard phase == .session || phase == .transition else { return }
+        timerTask?.cancel()
+        phase = .safeClose
+    }
+
+    /// Leaving the safe-word close: nothing else to save, just leave the cover.
+    func acknowledgeSafeClose() { phase = .done }
+
+    // Presence loss (called from the coordinator's presence callback).
+    private func partnerLost() {
+        guard isLive, phase == .session, graceTask == nil else { return }
+        graceTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(15))
+            guard !Task.isCancelled, !partnerPresentLive else { return }
+            partnerAway = true
+            if !isPaused { togglePause() }
+        }
+    }
+
+    private func partnerReturned() {
+        graceTask?.cancel()
+        graceTask = nil
+        if partnerAway {
+            partnerAway = false
+            if isPaused { togglePause() }   // their return resumes
         }
     }
 
@@ -245,54 +594,11 @@ final class CoupleSessionStore: Identifiable {
     private func finishSession() {
         persistSession()
         liveComplete()
+        UserDefaults.standard.set(true, forKey: UserDefaultsKey.hasCompletedCoupleSession)
         phase = .close
     }
 
-    // MARK: - Realtime scaffold methods (UNVERIFIED — Seg 6/7)
-    //
-    // Fire-and-forget pushes of local state to curated_sessions. Every one is a
-    // no-op unless a RealtimeSessionService is injected, so the verified local flow
-    // is untouched. NONE of this has run against the backend or a second device.
-    // The service is accessed via `self` inside each @MainActor task (never captured
-    // directly) to keep the closures free of non-Sendable captures.
-
-    /// Opens the curated_sessions row + pushes initial presence / bandwidth / status.
-    private func liveOpen() {
-        guard realtime != nil, let coupleId = appState.coupleId, let initiatorId else { return }
-        let draft = CuratedSessionDraft(
-            deckId: hand.first?.deckId ?? "",
-            deckVariant: nil,
-            cardIds: hand.map(\.id),
-            perCardTimer: [:],
-            globalTimerSeconds: nil
-        )
-        let role = sessionRole
-        let bandwidthValue = bandwidth.fraction
-        Task { @MainActor in
-            guard let realtime = self.realtime else { return }
-            do {
-                let dto = try await realtime.openSession(
-                    coupleId: coupleId, initiatorId: initiatorId, draft: draft
-                )
-                self.remoteSessionId = dto.id
-                try? await realtime.setPresence(sessionId: dto.id, role: role, present: true)
-                try? await realtime.setBandwidth(sessionId: dto.id, role: role, value: bandwidthValue)
-                try? await realtime.setStatus(sessionId: dto.id, status: .active)
-            } catch {
-                logger.warning("liveOpen failed (scaffold, unverified): \(error.localizedDescription)")
-            }
-        }
-    }
-
-    /// Server-authoritative advance, conditional on the expected index.
-    private func liveAdvance(expectedIndex: Int) {
-        guard realtime != nil, let sid = remoteSessionId else { return }
-        Task { @MainActor in
-            _ = try? await self.realtime?.advance(sessionId: sid, expectedIndex: expectedIndex)
-        }
-    }
-
-    /// Marks this device gone + the session complete.
+    /// Marks this device gone + the session complete (no-op pure-local).
     private func liveComplete() {
         guard realtime != nil, let sid = remoteSessionId else { return }
         let role = sessionRole
@@ -300,16 +606,6 @@ final class CoupleSessionStore: Identifiable {
             try? await self.realtime?.setPresence(sessionId: sid, role: role, present: false)
             try? await self.realtime?.setStatus(sessionId: sid, status: .complete)
         }
-    }
-
-    /// Seg 7 (two-device sync) — the UNVERIFIED core. The push side above is wired;
-    /// CONSUMING remote presence + postgres-changes to drive THIS device's state is
-    /// the next step and needs two physical devices to validate.
-    func startRemoteSync() {
-        guard realtime != nil else { return }
-        // TODO(Seg 7): open realtime.sessionChannel(coupleId:userId:), trackPresence,
-        // and mirror remote current_index / presence / status into this store via
-        // presenceChange() / postgres-changes. No-op beyond this guard today.
     }
 
     private func persistSession() {

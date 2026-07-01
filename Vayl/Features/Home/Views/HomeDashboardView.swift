@@ -99,8 +99,16 @@ struct HomeDashboardView: View {
     @Environment(PulseStore.self) private var pulseStore
 
     /// Tonight's hand, set when the carousel hands off via `onStartHand`. Non-nil
-    /// drives the protected session cover.
+    /// drives the protected session cover. DEBUG-only couch mode (spec rule 26):
+    /// release "Settle in" routes to Play instead.
     @State private var sessionHand: [Card]? = nil
+
+    /// Joiner entry: "‹name› set up a session" banner + join cover.
+    @Environment(\.modelContext) private var modelContext
+    @Environment(AppState.self) private var appState
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var entryStore: SessionEntryStore?
+    @State private var joinerLaunch: SessionLaunch?
 
     #if DEBUG
     @State private var showDebugGrid = false
@@ -254,6 +262,8 @@ struct HomeDashboardView: View {
 
                 reflectionBanner
 
+                pendingSessionBanner
+
                 #if DEBUG
                 debugOverlay(layout: layout)
                 #endif
@@ -272,7 +282,40 @@ struct HomeDashboardView: View {
                     set: { if !$0 { sessionHand = nil } }
                 )
             ) {
-                CardSessionContainerView(hand: sessionHand ?? [])
+                // DEBUG-only couch mode: sessionHand is only ever set in DEBUG
+                // builds (see settleIn()).
+                CardSessionContainerView(launch: SessionLaunch(
+                    hand: sessionHand ?? [], entry: .localDebug, role: .a, session: nil
+                ))
+            }
+            // Joiner path: partner opened a lobby → banner → this cover.
+            .vaylCover(isPresented: Binding(
+                get: { joinerLaunch != nil },
+                set: { if !$0 { joinerLaunch = nil } }
+            )) {
+                if let launch = joinerLaunch {
+                    CardSessionContainerView(launch: launch)
+                        .id(launch.id)
+                }
+            }
+            .onAppear {
+                if entryStore == nil {
+                    entryStore = SessionEntryStore(
+                        modelContainer: modelContext.container,
+                        appState: appState,
+                        partnerName: { [chip = partnerChipState] in
+                            if case .active(let name, _) = chip { return name }
+                            return nil
+                        }
+                    )
+                }
+                entryStore?.refresh()
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { entryStore?.refresh() }
+            }
+            .onChange(of: entryStore?.acceptedLaunch) { _, launch in
+                if let launch { joinerLaunch = launch; entryStore?.acceptedLaunch = nil }
             }
             // Pulse check-in — sheet (discrete task), not a cover (not an immersive mode).
             .vaylSheet(
@@ -386,6 +429,28 @@ struct HomeDashboardView: View {
         }
     }
 
+    // MARK: - Pending Session Banner (joiner entry)
+
+    @ViewBuilder
+    private var pendingSessionBanner: some View {
+        if let pending = entryStore?.pendingSession {
+            VStack {
+                PendingSessionBanner(
+                    initiatorName: pending.initiatorName,
+                    deckTitle: pending.deckTitle,
+                    onJoin: { entryStore?.accept() },
+                    onDismiss: { entryStore?.dismissBanner() }
+                )
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.top, AppSpacing.sm)
+                Spacer()
+            }
+            .transition(.move(edge: .top).combined(with: .opacity))
+            .animation(AppAnimation.spring, value: entryStore?.pendingSession)
+            .zIndex(2)
+        }
+    }
+
     // MARK: - Phase / Entrance
 
     // MARK: - Deck (hand + settle in)
@@ -410,7 +475,13 @@ struct HomeDashboardView: View {
         let hand = handIDs.compactMap { id in cards.first { $0.id == id } }
         guard !hand.isEmpty else { return }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        // Single-device couch mode survives only behind DEBUG (spec rule 26);
+        // release routes to Play, where the real two-device flow begins.
+        #if DEBUG
         sessionHand = hand
+        #else
+        onNavigateToPlay?()
+        #endif
         handIDs = []
         deckReset += 1   // reset the carousel back to floating behind the session
     }

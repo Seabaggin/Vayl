@@ -29,7 +29,8 @@ struct DeckDetailView: View {
                     // The grid case zooms in here (matchedGeometry). The animated 3D
                     // MetallicCaseView is reserved for the Begin ceremony, so this stays a
                     // seamless static→static zoom.
-                    DeckCaseView(summary: deck, style: store.style(for: deck))
+                    DeckCaseView(summary: deck, style: store.style(for: deck),
+                                 lockedOverride: store.isLocked(deck))
                         .frame(width: 190)
                         .matchedGeometryEffect(id: deck.id, in: namespace, isSource: false)
                         .padding(.top, AppSpacing.xxl)
@@ -55,7 +56,7 @@ struct DeckDetailView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, AppSpacing.xl)
 
-                    if deck.isLocked { sealedNotice() }
+                    if store.isLocked(deck) { sealedNotice() }
                     cta(deck)
                 }
                 .padding(.horizontal, AppSpacing.lg)
@@ -79,7 +80,7 @@ struct DeckDetailView: View {
     private func cta(_ d: DeckSummary) -> some View {
         // Free vs Core: a Core deck offers the paywall; a free deck begins.
         // Canonical VaylButton — not a hand-rolled CTA.
-        if d.isLocked {
+        if store.isLocked(d) {
             VaylButton(label: "Unlock with Core") { store.requestUnlock(d) }
         } else {
             VaylButton(label: "Begin") { store.beginCeremony(d.id) }

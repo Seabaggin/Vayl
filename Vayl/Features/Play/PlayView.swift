@@ -14,8 +14,11 @@ import SwiftData
 struct PlayView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppState.self) private var appState
+    @Environment(EntitlementStore.self) private var entitlements
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     @State private var store: PlayStore?
+    @State private var entryStore: SessionEntryStore?
     @State private var scrollY: CGFloat = 0
     @Namespace private var deckZoom
 
@@ -37,8 +40,20 @@ struct PlayView: View {
         }
         .task {
             if store == nil && injectedStore == nil {
-                store = PlayStore(modelContainer: modelContext.container, appState: appState)
+                store = PlayStore(modelContainer: modelContext.container,
+                                  appState: appState,
+                                  entitlements: entitlements)
             }
+            if entryStore == nil {
+                entryStore = SessionEntryStore(
+                    modelContainer: modelContext.container,
+                    appState: appState
+                )
+            }
+            entryStore?.refresh()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { entryStore?.refresh() }
         }
     }
 
@@ -78,13 +93,55 @@ struct PlayView: View {
                     .transition(.opacity)
                     .zIndex(10)
             }
+
+            // Joiner banner — above the ceremony (20 > 10).
+            if let pending = entryStore?.pendingSession {
+                VStack {
+                    PendingSessionBanner(
+                        initiatorName: pending.initiatorName,
+                        deckTitle: pending.deckTitle,
+                        onJoin: { entryStore?.accept() },
+                        onDismiss: { entryStore?.dismissBanner() }
+                    )
+                    .padding(.horizontal, AppSpacing.sm)
+                    .padding(.top, AppSpacing.sm)
+                    Spacer()
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(20)
+            }
         }
         .animation(AppAnimation.enter, value: store.ceremonyDeckID)
+        .animation(AppAnimation.spring, value: entryStore?.pendingSession)
+        .onChange(of: entryStore?.acceptedLaunch) { _, launch in
+            if let launch {
+                store.launch = launch          // reuses the session cover below
+                entryStore?.acceptedLaunch = nil
+            }
+        }
+        .vaylSheet(
+            isPresented: Binding(
+                get: { store.builderDeck != nil },
+                set: { if !$0 { store.cancelBuilder() } }
+            ),
+            heightFraction: 0.92
+        ) {
+            if let deck = store.builderDeck {
+                SessionBuilderView(
+                    deck: deck,
+                    onConfirm: { plan in store.builderDidFinish(plan) },
+                    onCancel: { store.cancelBuilder() }
+                )
+            }
+        }
         .vaylCover(isPresented: Binding(
-            get: { store.sessionHand != nil },
+            get: { store.launch != nil },
             set: { if !$0 { store.endSession() } }
         )) {
-            CardSessionContainerView(hand: store.sessionHand ?? [])
+            if let launch = store.launch {
+                CardSessionContainerView(launch: launch)
+                    .id(launch.id)             // re-key: each launch boots fresh
+            }
         }
         .vaylSheet(
             isPresented: Binding(

@@ -161,7 +161,7 @@ final class DesireMapModelTests: XCTestCase {
             id: "x", name: "X", description: "d", category: "emotional",
             sensitivity: 1, sortOrder: 0,
             tracks: ["curious"],
-            answers: ["curious": ["a", "b", "c", "d"]]
+            answers: ["curious": ["a", "b", "c", "d"]], meaning: nil
         )
         XCTAssertTrue(item.appears(in: "curious"))
         XCTAssertFalse(item.appears(in: "established"))

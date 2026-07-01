@@ -53,26 +53,38 @@ struct SessionCloseView: View {
     // MARK: - Landing
 
     private var landing: some View {
-        VStack(spacing: AppSpacing.md) {
-            Spacer()
-            Text("that's a wrap")
-                .font(AppFonts.overline)
-                .tracking(2)
-                .textCase(.uppercase)
-                .foregroundStyle(AppColors.accentSecondary)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: AppSpacing.sm) {
+                Text("✦")
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(AppColors.spectrumText)
+                Text("that's a wrap")
+                    .font(AppFonts.overline)
+                    .tracking(2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(AppColors.textTertiary)
+            }
+            .padding(.bottom, AppSpacing.lg)
 
-            Text("You stayed with\neach other.")
+            Text("You went \(store.discussedCount) \(store.discussedCount == 1 ? "card" : "cards")\ndeep together.")
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(AppColors.textPrimary)
-                .multilineTextAlignment(.center)
 
-            Text("\(store.discussedCount) \(store.discussedCount == 1 ? "card" : "cards") · you went deep tonight")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textSecondary)
+            HStack(spacing: AppSpacing.sm) {
+                Circle()
+                    .fill(AppColors.spectrumMagenta)
+                    .frame(width: 5, height: 5)
+                Text(store.sessionStatLine)
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+            }
+            .padding(.top, AppSpacing.md)
+
             Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(.horizontal, AppSpacing.xl)
+        .padding(.top, AppSpacing.xxl)
     }
 
     // MARK: - Reflection sheet

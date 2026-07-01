@@ -290,6 +290,48 @@ final class RealtimeSessionService {
 
         return !updated.isEmpty
     }
+
+    // MARK: Timer + safety row ops (Section 2 scope; streams live in the extensions below)
+
+    /// Stamps timer_started_at = now. Written by the role-a device when a timed
+    /// card presents; the echoed UPDATE anchors both countdowns.
+    func markTimerStarted(sessionId: UUID) async throws {
+        try await supabase
+            .from(SupabaseTable.curatedSessions)
+            .update(["timer_started_at": ISO8601DateFormatter().string(from: Date())])
+            .eq("id", value: sessionId.uuidString)
+            .execute()
+    }
+
+    /// Replaces the per-card timer map ("keep going" removes one card's entry).
+    /// Whole-map write: acceptable because only the tapping device writes it
+    /// and the map is tiny; the echoed row is still the single truth.
+    func setPerCardTimer(sessionId: UUID, timers: [String: Int]) async throws {
+        try await supabase
+            .from(SupabaseTable.curatedSessions)
+            .update(["per_card_timer": timers])
+            .eq("id", value: sessionId.uuidString)
+            .execute()
+    }
+
+    /// The safe word: abandoned + safe_word_used in ONE write so both devices
+    /// see a single atomic exit signal.
+    func raiseSafeWord(sessionId: UUID) async throws {
+        struct SafeWordUpdate: Encodable {
+            let status: String
+            let safeWordUsed: Bool
+            enum CodingKeys: String, CodingKey {
+                case status
+                case safeWordUsed = "safe_word_used"
+            }
+        }
+        try await supabase
+            .from(SupabaseTable.curatedSessions)
+            .update(SafeWordUpdate(status: CuratedSessionStatus.abandoned.rawValue,
+                                   safeWordUsed: true))
+            .eq("id", value: sessionId.uuidString)
+            .execute()
+    }
 }
 
 // MARK: - SessionPresence

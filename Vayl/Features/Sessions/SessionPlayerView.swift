@@ -65,7 +65,34 @@ struct SessionPlayerView: View {
                 .animation(.easeInOut(duration: dimmed ? 1.7 : 0.4), value: dimmed)
                 .allowsHitTesting(false)
                 .ignoresSafeArea()
+
+            // Pause / partner-away — a held room, above the idle dim.
+            if store.isPaused {
+                ZStack {
+                    Rectangle().fill(AppColors.void).opacity(0.72).ignoresSafeArea()
+                    VStack(spacing: AppSpacing.md) {
+                        Text(store.partnerAway
+                             ? "waiting for \(store.partnerLabel)…"
+                             : "paused")
+                            .font(AppFonts.sectionHeading)
+                            .foregroundStyle(AppColors.textPrimary)
+                        if !store.partnerAway {
+                            Button {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                store.togglePause()
+                            } label: {
+                                Text("resume")
+                                    .font(AppFonts.buttonLabel)
+                                    .foregroundStyle(AppColors.spectrumText)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .transition(.opacity)
+            }
         }
+        .animation(reduceMotion ? AppAnimation.fast : AppAnimation.standard, value: store.isPaused)
         .contentShape(Rectangle())
         .onTapGesture { wake() }
         .onAppear {
@@ -102,6 +129,9 @@ struct SessionPlayerView: View {
                 .tracking(2)
                 .textCase(.uppercase)
                 .foregroundStyle(AppColors.textTertiary)
+
+            SessionTimerBar(store: store)
+                .padding(.top, AppSpacing.sm)
         }
         .frame(maxHeight: .infinity, alignment: .top)
         .padding(.top, AppSpacing.xl)
@@ -301,6 +331,29 @@ struct SessionPlayerView: View {
                 Capsule().fill(AppColors.cardBackground.opacity(0.6))
                     .overlay(Capsule().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
             )
+
+            // The safe word — discreet, always reachable, one tap is enough.
+            // No confirm alert: the whole point of a safe word is that saying
+            // it once works (SafeWordButton's alert pattern deliberately not reused).
+            Button {
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                store.raiseSafeWord()
+            } label: {
+                Text(store.safeWordLabel)
+                    .font(AppFonts.buttonLabelSmall)
+                    .textCase(.uppercase)
+                    .tracking(1)
+                    .foregroundStyle(AppColors.safetyAccent)
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(
+                        Capsule().fill(AppColors.safetyAccent.opacity(0.08))
+                            .overlay(Capsule().strokeBorder(
+                                AppColors.safetyAccent.opacity(0.25), lineWidth: 1))
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Safe word: \(store.safeWordLabel). Ends the session immediately for both of you.")
         }
     }
 
@@ -360,7 +413,10 @@ struct SessionPlayerView: View {
                 .padding(.top, AppSpacing.sm)        // grabber (in .vaylSheet) supplies the top gap
                 .padding(.bottom, AppSpacing.sm)
 
-            careOption("❚❚", "Pause", sub: "hold the room") { showCare = false }
+            careOption("❚❚", "Pause", sub: "hold the room") {
+                showCare = false
+                store.togglePause()
+            }
             careOption("🤍", "A 6-second hug") { showCare = false }
             careOption("✦", "Say one thing you love") { showCare = false }
             careOption("◦", "Just sit a minute") { showCare = false }
@@ -412,7 +468,7 @@ struct SessionPlayerView: View {
     // MARK: - Hold-to-deal mechanic
 
     private func startHold() {
-        guard !holding, !diving, store.currentCard != nil else { return }
+        guard !holding, !diving, !store.isPaused, store.currentCard != nil else { return }
         wake()
         holding = true
         fill = 0
@@ -462,10 +518,10 @@ struct SessionPlayerView: View {
 
     private func nextPromptText() -> String {
         let next = store.index + 1
-        guard store.hand.indices.contains(next) else {
+        guard store.effectiveHand.indices.contains(next) else {
             return store.currentCard?.text ?? ""
         }
-        return store.hand[next].text
+        return store.effectiveHand[next].text
     }
 
     // MARK: - Idle dim

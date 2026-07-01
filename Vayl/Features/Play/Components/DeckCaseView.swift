@@ -22,8 +22,12 @@ import SwiftUI
 struct DeckCaseView: View {
     let summary: DeckSummary
     let style: DeckStyle
+    /// Live lock state threaded in from the wall/detail (PlayStore.isLocked —
+    /// catalog flag AND not Core). nil falls back to the frozen catalog flag
+    /// (previews / storeless call sites only).
+    var lockedOverride: Bool? = nil
 
-    private var locked: Bool { summary.isLocked }
+    private var locked: Bool { lockedOverride ?? summary.isLocked }
 
     /// Pointy-top unit hexagon vertices (center → vertex), scaled by the cell radius.
     private static let hexUnit: [CGPoint] = [

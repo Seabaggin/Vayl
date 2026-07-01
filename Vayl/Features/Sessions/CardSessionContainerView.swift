@@ -2,44 +2,67 @@
 // Vayl
 //
 // The protected container for a couple card session — the single `.vaylCover`
-// destination for the whole flow. It builds the local CoupleSessionStore from
-// the environment and runs the phase machine:
+// destination for the whole flow. It boots from a SessionLaunch, builds the
+// CoupleSessionStore (+ AirlockStore for two-device launches) and runs the
+// phase machine:
 //
-//   airlock → transition (phones down) → in-session player → close + reflection → done
+//   lobby/airlock (AirlockStore) → transition → in-session player →
+//   close / safeClose → done
 //
-// FRONT-END / LOCAL: no Realtime. Partner presence and advance are mocked in
-// the store; swapping RealtimeSessionService in is a one-layer change there.
-// The store/views carry no network. See
-// docs/superpowers/specs/2026-06-21-couple-session-quickplay-implementation-spec.md.
+// Reconnect: an already-active row skips the airlock and rebuilds the player
+// from the row (CoupleSessionStore.resumeIfNeeded). `launch.session == nil` is
+// the pure-local DEBUG path (mocked partner in the store).
 
 import SwiftUI
 import SwiftData
 
 struct CardSessionContainerView: View {
 
-    /// Tonight's hand, dealt from the carousel.
-    let hand: [Card]
+    let launch: SessionLaunch
 
     @Environment(\.modelContext) private var modelContext
     @Environment(AppState.self) private var appState
 
     @State private var store: CoupleSessionStore?
+    @State private var airlock: AirlockStore?
 
     var body: some View {
         ZStack {
             AppColors.void.ignoresSafeArea()
             if let store {
-                CoupleSessionFlow(store: store)
+                CoupleSessionFlow(store: store, airlock: airlock)
             }
         }
         .task {
-            if store == nil {
-                store = CoupleSessionStore(
-                    hand: hand,
-                    modelContainer: modelContext.container,
-                    appState: appState
+            guard store == nil else { return }
+            let realtime: RealtimeSessionService? =
+                launch.session != nil ? RealtimeSessionService() : nil
+            let built = CoupleSessionStore(
+                launch: launch,
+                modelContainer: modelContext.container,
+                appState: appState,
+                realtime: realtime
+            )
+            store = built
+            // Fresh lobby/airlock rows run the handshake; active/paused rows are
+            // the reconnect path (resumeIfNeeded) and skip the airlock.
+            if let session = launch.session,
+               session.status == CuratedSessionStatus.lobby.rawValue
+                || session.status == CuratedSessionStatus.airlock.rawValue,
+               let myId = built.localProfileId {
+                let a = AirlockStore(
+                    coupleId: session.coupleId,
+                    myProfileId: myId,
+                    role: launch.role
                 )
+                airlock = a
+                Task { await a.start() }
             }
+            await built.resumeIfNeeded()
+        }
+        .onDisappear {
+            airlock?.leave()
+            store?.teardown()
         }
     }
 }
@@ -52,6 +75,7 @@ struct CardSessionContainerView: View {
 private struct CoupleSessionFlow: View {
 
     @Bindable var store: CoupleSessionStore
+    let airlock: AirlockStore?
 
     @Environment(\.vaylDismiss) private var vaylDismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -84,29 +108,42 @@ private struct CoupleSessionFlow: View {
     private var content: some View {
         switch store.phase {
         case .airlock:
-            AirlockView(store: store).transition(.opacity)
+            if let airlock {
+                switch airlock.state {
+                case .waitingForPartner, .failed:
+                    SessionLobbyView(store: store, airlock: airlock).transition(.opacity)
+                case .bothPresent, .bandwidthSet, .consented, .activating:
+                    AirlockView(store: store, airlock: airlock).transition(.opacity)
+                case .active:
+                    Color.clear.onAppear {
+                        airlock.leave()                   // hand the channel to the coordinator
+                        store.airlockDidActivate()
+                    }
+                }
+            } else {
+                AirlockView(store: store, airlock: nil).transition(.opacity)   // DEBUG local
+            }
         case .transition:
             transitionBeat.transition(.opacity)
         case .session:
             SessionPlayerView(store: store).transition(.opacity)
         case .close:
             SessionCloseView(store: store).transition(.opacity)
+        case .safeClose:
+            SafeWordCloseView(store: store).transition(.opacity)
         case .done:
             doneBeat.transition(.opacity)
         }
     }
 
-    // MARK: - Transition (phones down)
+    // MARK: - Transition (a held breath, together)
 
     private var transitionBeat: some View {
         VStack(spacing: AppSpacing.lg) {
             Spacer()
-            Text("put your phones down.")
-                .font(AppFonts.sectionHeading)
-                .foregroundStyle(AppColors.textPrimary)
             Text("look at each other.")
                 .font(AppFonts.sectionHeading)
-                .foregroundStyle(AppColors.textSecondary)
+                .foregroundStyle(AppColors.textPrimary)
             Text("✦")
                 .font(AppFonts.displayHero)
                 .foregroundStyle(AppColors.spectrumText)
@@ -128,12 +165,18 @@ private struct CoupleSessionFlow: View {
 
     private var doneBeat: some View {
         VStack(spacing: AppSpacing.sm) {
-            Text("kept, just for you")
-                .font(AppFonts.sectionHeading)
-                .foregroundStyle(AppColors.textPrimary)
-            Text("it'll show up in your Map")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textSecondary)
+            if store.safeWordUsed {
+                Text("closed, no questions")
+                    .font(AppFonts.sectionHeading)
+                    .foregroundStyle(AppColors.textPrimary)
+            } else {
+                Text("kept, just for you")
+                    .font(AppFonts.sectionHeading)
+                    .foregroundStyle(AppColors.textPrimary)
+                Text("it'll show up in your Map")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -141,9 +184,14 @@ private struct CoupleSessionFlow: View {
 
 // MARK: - Preview
 
-#Preview("Session Container — stub") {
-    CardSessionContainerView(hand: Array(Card.samples.prefix(8)))
-        .environment(AppState())
-        .modelContainer(.previewContainer)
-        .preferredColorScheme(.dark)
+#Preview("Session Container — local stub") {
+    CardSessionContainerView(launch: SessionLaunch(
+        hand: Array(Card.samples.prefix(8)),
+        entry: .localDebug,
+        role: .a,
+        session: nil
+    ))
+    .environment(AppState())
+    .modelContainer(.previewContainer)
+    .preferredColorScheme(.dark)
 }

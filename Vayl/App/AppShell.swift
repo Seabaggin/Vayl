@@ -8,6 +8,8 @@ import SwiftData
 
 struct AppShell: View {
 
+    @Environment(AppState.self) private var appState
+
     @State private var selectedTab:        AppTab  = .home
     @State private var transitionDirection: CGFloat = 1
 
@@ -61,6 +63,21 @@ struct AppShell: View {
             // so the pill clears the home-indicator gesture zone. FEEL: confirm on device.
             .padding(.bottom, AppSpacing.sm)
             .ignoresSafeArea(.container, edges: .bottom)
+        }
+        // Programmatic routing: HomeRouterView's appState.selectedTab writes (dead
+        // before this) and the joiner banner's route-to-Play both land here. The
+        // local @State stays the tab bar's animation source; these keep it in
+        // lockstep both directions.
+        .onAppear { selectedTab = appState.selectedTab }
+        .onChange(of: appState.selectedTab) { _, newTab in
+            guard selectedTab != newTab else { return }
+            let fromIdx = AppTab.allCases.firstIndex(of: selectedTab) ?? 0
+            let toIdx   = AppTab.allCases.firstIndex(of: newTab) ?? 0
+            transitionDirection = CGFloat(toIdx > fromIdx ? 1 : -1)
+            withAnimation(AppAnimation.tabSwitch) { selectedTab = newTab }
+        }
+        .onChange(of: selectedTab) { _, newTab in
+            if appState.selectedTab != newTab { appState.selectedTab = newTab }
         }
     }
 

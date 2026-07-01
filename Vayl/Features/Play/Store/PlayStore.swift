@@ -28,25 +28,42 @@ final class PlayStore {
     var activeMode: PlayMode = .cards
     var enabledModes: [PlayMode] { PlayFeatureFlags.enabledModes }
 
-    // Hero / wall / detail / ceremony / session
+    // Hero / wall / detail / ceremony / builder / lobby / session
     var featuredID: String?
     var detailID: String?
     var ceremonyDeckID: String?
-    var sessionHand: [Card]?            // non-nil → present the session cover
+    /// Ceremony finished → the builder shapes tonight's plan for this deck.
+    var builderDeck: Deck?
+    /// Non-nil → present the session .vaylCover (lobby-first for remote sessions).
+    var launch: SessionLaunch?
     var paywallDeck: DeckSummary?       // non-nil → present the Core paywall for this deck
+    private(set) var openError: String?
 
     // deps
     private let catalog: DeckCatalogService
     private let modelContainer: ModelContainer
     private let appState: AppState
+    private let entitlements: EntitlementStore          // M3: the single Core gate
+    private let realtime: RealtimeSessionService        // opens the lobby row
 
     init(modelContainer: ModelContainer,
          appState: AppState,
-         catalog: DeckCatalogService = DeckCatalogService()) {
+         entitlements: EntitlementStore,
+         catalog: DeckCatalogService = DeckCatalogService(),
+         realtime: RealtimeSessionService = RealtimeSessionService()) {
         self.modelContainer = modelContainer
         self.appState = appState
+        self.entitlements = entitlements
         self.catalog = catalog
+        self.realtime = realtime
         load()
+    }
+
+    /// Live lock state: catalog flag AND not Core. One purchase flips
+    /// entitlements.isCore and every gate below re-derives. Views call this,
+    /// never summary.isLocked directly.
+    func isLocked(_ summary: DeckSummary) -> Bool {
+        summary.isLocked && !entitlements.isCore
     }
 
     func load() {
@@ -66,11 +83,11 @@ final class PlayStore {
     /// "Most-recent" means most-recently-opened: `DeckProgress` has no last-touched stamp yet.
     private func resolveFeatured() {
         let progress = fetchProgress()
-        let availableIDs = Set(summaries.filter { !$0.isLocked }.map(\.id))   // free = playable
+        let availableIDs = Set(summaries.filter { !isLocked($0) }.map(\.id))   // playable = free OR Core-unlocked
         let recentInProgress = progress
             .filter { availableIDs.contains($0.deckId) && $0.completedAt == nil && $0.currentCardIndex > 0 }
             .max { ($0.firstOpenedAt ?? .distantPast) < ($1.firstOpenedAt ?? .distantPast) }
-        let fallback = summaries.first { !$0.isLocked }?.id ?? summaries.first?.id
+        let fallback = summaries.first { !isLocked($0) }?.id ?? summaries.first?.id
         featuredID = recentInProgress?.deckId ?? fallback
         featuredContinuity = continuity(forDeck: featuredID, in: progress)
     }
@@ -137,17 +154,70 @@ final class PlayStore {
             return
         }
         ceremonyDeckID = nil
-        sessionHand = deck.orderedCards
+        builderDeck = deck                    // SessionBuilderView presents (Seam B)
     }
 
-    /// Direct begin (no ceremony) — fallback / Reduce Motion path.
+    /// Direct begin (no ceremony) — fallback / Reduce Motion path. Still goes
+    /// through the builder.
     func begin(_ id: String) {
         guard let deck = try? catalog.loadDeck(id: id) else { return }
         detailID = nil
-        sessionHand = deck.orderedCards
+        builderDeck = deck
     }
 
-    func endSession() { sessionHand = nil }
+    func cancelBuilder() { builderDeck = nil }
+
+    /// SEAM B (assembler ruling 1): the builder hands back the Codable
+    /// SessionPlan struct; the row snapshot is `plan.draft` at the openSession
+    /// call site. Open the row, then present the lobby cover.
+    func builderDidFinish(_ plan: SessionPlan) {
+        guard let deck = builderDeck else { return }
+        builderDeck = nil
+        openError = nil
+        guard let coupleId = appState.coupleId, let myId = localProfileId() else {
+            // Solo / unpaired: keep the local single-device path behind DEBUG only.
+            #if DEBUG
+            launch = SessionLaunch(hand: deck.orderedCards, entry: .localDebug,
+                                   role: .a, session: nil)
+            #endif
+            return
+        }
+        let hand = plan.cardIds.compactMap { id in deck.orderedCards.first { $0.id == id } }
+        let draft = plan.draft
+        Task { @MainActor in
+            do {
+                let dto = try await realtime.openSession(
+                    coupleId: coupleId, initiatorId: myId, draft: draft
+                )
+                launch = SessionLaunch(hand: hand, entry: .initiator,
+                                       role: role(for: myId), session: dto)
+            } catch {
+                openError = "Couldn't start the session. Try again."
+            }
+        }
+    }
+
+    func endSession() { launch = nil }
+
+    /// SessionRole identity rule (spec 4.2, hard): derives from the local Couple
+    /// row's partnerAId vs my LOCAL profile id. Never the supabase auth id.
+    private func role(for profileId: UUID) -> SessionRole {
+        let context = ModelContext(modelContainer)
+        guard let coupleId = appState.coupleId else { return .a }
+        var fetch = FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
+        fetch.fetchLimit = 1
+        guard let couple = try? context.fetch(fetch).first else { return .a }
+        return couple.partnerAId == profileId ? .a : .b
+    }
+
+    /// The local SwiftData profile id (auth-id vs profile-id convention: this is
+    /// the PROFILE id, which is what couples rows reference).
+    private func localProfileId() -> UUID? {
+        let context = ModelContext(modelContainer)
+        var fetch = FetchDescriptor<UserProfile>()
+        fetch.fetchLimit = 1
+        return try? context.fetch(fetch).first?.id
+    }
 
     /// Locked deck → open the Core paywall (closes the detail first).
     func requestUnlock(_ deck: DeckSummary) { detailID = nil; paywallDeck = deck }
@@ -158,7 +228,12 @@ final class PlayStore {
 extension PlayStore {
     /// In-memory store for SwiftUI previews (loads the bundled catalog).
     @MainActor static var preview: PlayStore {
-        PlayStore(modelContainer: .previewContainer, appState: AppState())
+        let appState = AppState()
+        return PlayStore(
+            modelContainer: .previewContainer,
+            appState: appState,
+            entitlements: EntitlementStore(modelContainer: .previewContainer, appState: appState)
+        )
     }
 }
 #endif

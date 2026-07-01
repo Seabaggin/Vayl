@@ -39,7 +39,8 @@ struct DeckWallView: View {
                     GridItem(.flexible(), spacing: AppSpacing.md)]
         return LazyVGrid(columns: cols, spacing: AppSpacing.lg) {
             ForEach(Array(store.summaries.enumerated()), id: \.element.id) { i, s in
-                DeckCellView(summary: s, style: store.style(for: s), index: i, namespace: namespace) {
+                DeckCellView(summary: s, style: store.style(for: s),
+                             locked: store.isLocked(s), index: i, namespace: namespace) {
                     store.openDetail(s.id)
                 }
             }
