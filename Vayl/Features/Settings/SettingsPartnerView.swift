@@ -4,6 +4,8 @@ import SwiftUI
 import SwiftData
 
 struct SettingsPartnerView: View {
+    var onClose: (() -> Void)? = nil
+
     @Environment(AppState.self)        private var appState
     @Environment(\.modelContext)       private var modelContext
     @Environment(\.dismiss)            private var dismiss
@@ -13,14 +15,16 @@ struct SettingsPartnerView: View {
     @State private var showUnlink:  Bool = false
 
     var body: some View {
-        SettingsSubScreenShell(title: "Partner", onBack: { dismiss() }) {
+        SettingsSubScreenShell(title: "Partner", onBack: {
+            if let onClose { onClose() } else { dismiss() }
+        }) {
             if appState.linkState == .linked {
                 linkedContent
             } else {
                 soloContent
             }
         }
-        .sheet(isPresented: $showInvite) {
+        .vaylSheet(isPresented: $showInvite, heightFraction: 0.92) {
             PairingInviteView(
                 store: PairingStore(
                     modelContainer: modelContext.container,
@@ -29,7 +33,7 @@ struct SettingsPartnerView: View {
             )
             .environment(appState)
         }
-        .sheet(isPresented: $showJoin) {
+        .vaylSheet(isPresented: $showJoin, heightFraction: 0.92) {
             PairingJoinView(
                 store: PairingStore(
                     modelContainer: modelContext.container,
@@ -60,7 +64,7 @@ struct SettingsPartnerView: View {
             SettingsCard {
                 HStack(spacing: AppSpacing.md) {
                     Image(systemName: "person.2.fill")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(AppFonts.bodyMedium)
                         .foregroundStyle(AppColors.spectrumCyan)
                         .frame(width: 32, height: 32)
                         .background(

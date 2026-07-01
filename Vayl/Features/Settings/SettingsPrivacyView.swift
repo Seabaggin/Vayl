@@ -3,6 +3,9 @@
 import SwiftUI
 
 struct SettingsPrivacyView: View {
+    let store: SettingsStore
+    var onClose: (() -> Void)? = nil
+
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage("screenshotProtectionEnabled")
@@ -12,7 +15,9 @@ struct SettingsPrivacyView: View {
     private var shareCapacity: Bool = true
 
     var body: some View {
-        SettingsSubScreenShell(title: "Privacy & safety", onBack: { dismiss() }) {
+        SettingsSubScreenShell(title: "Privacy & safety", onBack: {
+            if let onClose { onClose() } else { dismiss() }
+        }) {
             SettingsSectionLabel(text: "Screen protection")
             SettingsCard {
                 SettingsToggleRow(
@@ -38,7 +43,7 @@ struct SettingsPrivacyView: View {
             }
         }
         .onChange(of: shareCapacity) { _, newValue in
-            Task { await SyncManager.shared.pushSharePulse(newValue) }
+            store.setShareCapacity(newValue)
         }
     }
 }

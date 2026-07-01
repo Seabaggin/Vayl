@@ -4,6 +4,8 @@ import SwiftUI
 import UserNotifications
 
 struct SettingsNotificationsView: View {
+    var onClose: (() -> Void)? = nil
+
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage("notificationsCheckInReminder") private var checkInReminder: Bool = false
@@ -13,7 +15,9 @@ struct SettingsNotificationsView: View {
     @State private var showPermissionDeniedAlert = false
 
     var body: some View {
-        SettingsSubScreenShell(title: "Notifications", onBack: { dismiss() }) {
+        SettingsSubScreenShell(title: "Notifications", onBack: {
+            if let onClose { onClose() } else { dismiss() }
+        }) {
             SettingsSectionLabel(text: "Reminders")
             SettingsCard {
                 VStack(spacing: 0) {
@@ -82,7 +86,10 @@ struct SettingsNotificationsView: View {
                     showPermissionDeniedAlert = true
                 }
             case .notDetermined:
-                let granted = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+                // iOS 26: `.alert` authorization option is banned — request sound + badge
+                // only and set the banner presentation style in the notification delegate
+                // (same posture as PushService.requestAuthorizationAndRegister).
+                let granted = (try? await center.requestAuthorization(options: [.sound, .badge])) ?? false
                 if !granted {
                     await MainActor.run {
                         onDenied()

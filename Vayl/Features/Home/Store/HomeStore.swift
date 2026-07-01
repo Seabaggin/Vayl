@@ -79,6 +79,12 @@ final class HomeStore {
     /// Reflection card state — derived from most recent CardSession.
     var reflectionCardState: ReflectionCardState = .hidden
 
+    // MARK: - Lexicon (Home "Today") content
+
+    /// Server-overridden daily-5 content, fetched once per Home load. Nil → HomeLexicon
+    /// uses its bundled baseline. Owned here so the view never calls ContentService (H-2).
+    var lexiconRemotePool: LexiconRemotePool? = nil
+
     // MARK: - Dependencies
 
     private let modelContainer: ModelContainer
@@ -184,6 +190,20 @@ final class HomeStore {
         await loadDeckProgress()
         await loadReflectionState()
         await loadDeck()
+        await loadLexiconContent()
+    }
+
+    // MARK: - Lexicon Content Load
+
+    /// Fetches server-driven daily-5 content. Best-effort — leaves lexiconRemotePool nil on
+    /// any failure so HomeLexicon keeps its bundled baseline.
+    private func loadLexiconContent() async {
+        let f = await ContentService.shared.fetchFindings()
+        let t = await ContentService.shared.fetchGlossary()
+        let q = await ContentService.shared.fetchQuotes()
+        if f != nil || t != nil || q != nil {
+            lexiconRemotePool = LexiconRemotePool(findings: f, terms: t, quotes: q)
+        }
     }
 
     // MARK: - Recent Deck
@@ -379,4 +399,14 @@ final class HomeStore {
 
         isLoadingDeck = false
     }
+}
+
+// MARK: - LexiconRemotePool
+
+/// The three server content arrays HomeLexicon needs to rebuild its pool. Nil arrays mean
+/// "no server override for this kind"; the view falls back to bundled JSON per kind.
+struct LexiconRemotePool {
+    let findings: [ResearchFinding]?
+    let terms:    [LexiconTerm]?
+    let quotes:   [MediaQuote]?
 }

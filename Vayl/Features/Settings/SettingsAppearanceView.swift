@@ -3,12 +3,16 @@
 import SwiftUI
 
 struct SettingsAppearanceView: View {
+    var onClose: (() -> Void)? = nil
+
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage("hapticFeedbackEnabled") private var hapticFeedback: Bool = true
 
     var body: some View {
-        SettingsSubScreenShell(title: "Appearance", onBack: { dismiss() }) {
+        SettingsSubScreenShell(title: "Appearance", onBack: {
+            if let onClose { onClose() } else { dismiss() }
+        }) {
             SettingsSectionLabel(text: "Theme")
             SettingsCard {
                 // Dark-only in Act 1: theme is fixed to Midnight.
@@ -18,7 +22,7 @@ struct SettingsAppearanceView: View {
                         .fill(AppColors.spectrumMagenta.opacity(0.10))
                         .overlay(
                             Image(systemName: "moon.fill")
-                                .font(.system(size: 15, weight: .medium))
+                                .font(AppFonts.bodyMedium)
                                 .foregroundStyle(AppColors.spectrumMagenta)
                                 .accessibilityHidden(true)
                         )

@@ -207,6 +207,7 @@ private struct HomeRouterInnerView: View {
                 cardsCompleted:      store.cardsCompleted,
                 recentEvents:        [],
                 isSolo:              store.isSolo,
+                lexiconRemotePool:   store.lexiconRemotePool,
                 gettingStarted:      store.gettingStarted,
                 pathNamespace:       pathNamespace,
                 pathOpen:            showPath,

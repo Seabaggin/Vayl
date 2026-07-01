@@ -17,6 +17,10 @@ struct SettingsView: View {
     @Query private var profiles: [UserProfile]
     private var profile: UserProfile? { profiles.first }
 
+    /// Built in .onAppear — the Store needs the environment container + appState +
+    /// authService, which aren't available in a property initializer.
+    @State private var store: SettingsStore?
+
     // Sub-screen navigation
     @State private var showYou:           Bool = false
     @State private var showPrivacy:       Bool = false
@@ -54,26 +58,43 @@ struct SettingsView: View {
                 }
             }
             .frame(width: layout.screenWidth)
+            .onAppear {
+                if store == nil {
+                    store = SettingsStore(
+                        modelContainer: modelContext.container,
+                        appState: appState,
+                        authService: authService
+                    )
+                }
+            }
+            .onChange(of: store?.didLeaveAccount ?? false) { _, left in
+                // Route out of a pushed Settings; tab-mode root re-renders reactively.
+                if left, !isTab { dismiss() }
+            }
             .vaylSheet(isPresented: $showYou, heightFraction: 0.92, screenHeight: layout.screenHeight) {
-                SettingsIdentityView()
+                if let store {
+                    SettingsIdentityView(store: store, onClose: { showYou = false })
+                }
             }
             .vaylSheet(isPresented: $showPrivacy, heightFraction: 0.92, screenHeight: layout.screenHeight) {
-                SettingsPrivacyView()
+                if let store {
+                    SettingsPrivacyView(store: store, onClose: { showPrivacy = false })
+                }
             }
             .vaylSheet(isPresented: $showNotifications, heightFraction: 0.92, screenHeight: layout.screenHeight) {
-                SettingsNotificationsView()
+                SettingsNotificationsView(onClose: { showNotifications = false })
             }
             .vaylSheet(isPresented: $showAppearance, heightFraction: 0.92, screenHeight: layout.screenHeight) {
-                SettingsAppearanceView()
+                SettingsAppearanceView(onClose: { showAppearance = false })
             }
             .vaylSheet(isPresented: $showPartner, heightFraction: 0.92, screenHeight: layout.screenHeight) {
-                SettingsPartnerView()
+                SettingsPartnerView(onClose: { showPartner = false })
             }
-            .sheet(isPresented: $showInvite) {
+            .vaylSheet(isPresented: $showInvite, heightFraction: 0.92, screenHeight: layout.screenHeight) {
                 PairingInviteView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
                     .environment(appState)
             }
-            .sheet(isPresented: $showJoin) {
+            .vaylSheet(isPresented: $showJoin, heightFraction: 0.92, screenHeight: layout.screenHeight) {
                 PairingJoinView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
                     .environment(appState)
             }
@@ -87,17 +108,30 @@ struct SettingsView: View {
             }
             .confirmationDialog("Sign out?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
                 Button("Sign out", role: .destructive) {
-                    Task { await authService.signOut() }
-                }
-                Button("Cancel", role: .cancel) {}
-            }
-            .alert("Delete account?", isPresented: $showDeleteConfirm) {
-                Button("Delete everything", role: .destructive) {
-                    // Full deletion deferred to V1.1 — requires server-side cleanup
+                    Task { await store?.signOut() }
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This permanently deletes your data and cannot be undone.")
+                Text("You can sign back in anytime with the same Apple ID.")
+            }
+            .alert("Delete your account?", isPresented: $showDeleteConfirm) {
+                Button("Delete account", role: .destructive) {
+                    Task { await store?.deleteAccount() }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This permanently deletes your profile, your Desire Map answers, and your sessions. If you have a partner, they keep their own data and return to being unpaired. This cannot be undone.")
+            }
+            .alert(
+                "Something went wrong",
+                isPresented: Binding(
+                    get: { if case .error = store?.accountPhase { return true } else { return false } },
+                    set: { _ in store?.clearError() }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                if case .error(let message) = store?.accountPhase { Text(message) }
             }
         }
     }
@@ -117,7 +151,7 @@ struct SettingsView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(AppFonts.caption)
                             .foregroundStyle(AppColors.textSecondary)
                             .frame(width: 32, height: 32)
                             .background(Circle().fill(AppColors.glassSurface))
@@ -183,7 +217,7 @@ struct SettingsView: View {
         if entitlements.isCore {
             HStack(spacing: AppSpacing.md) {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(AppFonts.bodyMedium)
                     .foregroundStyle(AppColors.spectrumCyan)
                     .frame(width: 28, height: 28)
                     .background(
@@ -220,7 +254,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     HStack(spacing: AppSpacing.sm) {
                         Image(systemName: "sparkles")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(AppFonts.caption)
                             .foregroundStyle(AppColors.spectrumPurple)
                             .accessibilityHidden(true)
                         Text("Vayl · Lifetime")
@@ -298,7 +332,7 @@ struct SettingsView: View {
                     .fill(AppColors.glassSurface)
                     .overlay(
                         Image(systemName: "person.fill")
-                            .font(.system(size: 15, weight: .medium))
+                            .font(AppFonts.bodyMedium)
                             .foregroundStyle(AppColors.textSecondary)
                             .accessibilityHidden(true)
                     )
@@ -326,7 +360,7 @@ struct SettingsView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(AppFonts.overline)
                     .foregroundStyle(AppColors.textTertiary)
                     .accessibilityHidden(true)
             }
@@ -521,7 +555,7 @@ struct SettingsSubScreenShell<Content: View>: View {
                     } label: {
                         HStack(spacing: AppSpacing.xs) {
                             Image(systemName: "chevron.left")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(AppFonts.caption)
                             Text("Settings")
                                 .font(AppFonts.bodyMedium)
                         }

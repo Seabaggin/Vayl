@@ -27,6 +27,9 @@ import UIKit
 
 struct HomeLexicon: View {
 
+    /// Server-overridden content, injected from HomeStore via HomeDashboardView
+    /// (nil → bundled baseline). The view never fetches content itself (H-2).
+    var remotePool: LexiconRemotePool? = nil
     /// Tapping a page routes to its destination (the dossier / Learn).
     var onOpen: (() -> Void)? = nil
 
@@ -87,19 +90,35 @@ struct HomeLexicon: View {
         let act:     String
     }
 
-    // Bundled is the instant baseline + offline fallback; remote (Supabase) overrides
-    // it when reachable, so the daily-5 can change without an app build.
-    @State private var remotePool: [Item]? = nil
-    private var pool: [Item] { remotePool ?? Self.bundledPool }
+    // Bundled is the instant baseline + offline fallback; the injected remotePool
+    // overrides it when present, so the daily-5 can change without an app build.
+    private var pool: [Item] {
+        guard let remotePool else { return Self.bundledPool }
+        return Self.buildPool(
+            remoteFindings: remotePool.findings,
+            remoteTerms:    remotePool.terms,
+            remoteQuotes:   remotePool.quotes
+        )
+    }
 
     private static let bundledPool: [Item] = buildPool()
+
+    // Per-kind bundled caches: `pool` is computed per body evaluation (body runs every
+    // frame during a drag), so the JSON decode must happen exactly once per launch —
+    // never inside buildPool's fallback path.
+    private static let bundledFindings: [ResearchFinding] =
+        (try? ContentLoader.load(ResearchFinding.self, from: "research_findings")) ?? []
+    private static let bundledTerms: [LexiconTerm] =
+        (try? ContentLoader.load(LexiconTerm.self, from: "lexicon_terms")) ?? []
+    private static let bundledQuotes: [MediaQuote] =
+        (try? ContentLoader.load(MediaQuote.self, from: "media_quotes")) ?? []
 
     private static func buildPool(remoteFindings: [ResearchFinding]? = nil,
                                   remoteTerms: [LexiconTerm]? = nil,
                                   remoteQuotes: [MediaQuote]? = nil) -> [Item] {
-        let findings = remoteFindings ?? (try? ContentLoader.load(ResearchFinding.self, from: "research_findings")) ?? []
-        let terms    = remoteTerms    ?? (try? ContentLoader.load(LexiconTerm.self,     from: "lexicon_terms")) ?? []
-        let quotes   = remoteQuotes   ?? (try? ContentLoader.load(MediaQuote.self,      from: "media_quotes")) ?? []
+        let findings = remoteFindings ?? bundledFindings
+        let terms    = remoteTerms    ?? bundledTerms
+        let quotes   = remoteQuotes   ?? bundledQuotes
 
         let researchItems: [Item] = findings.map { f in
             Item(category: .research, label: "From the Research",
@@ -160,15 +179,6 @@ struct HomeLexicon: View {
         }
         .sheet(item: $shareImage) { wrapped in
             ActivityView(items: [wrapped.image])
-        }
-        .task {
-            // Override the bundled pool with server content when reachable.
-            let f = await ContentService.shared.fetchFindings()
-            let t = await ContentService.shared.fetchGlossary()
-            let q = await ContentService.shared.fetchQuotes()
-            if f != nil || t != nil || q != nil {
-                remotePool = Self.buildPool(remoteFindings: f, remoteTerms: t, remoteQuotes: q)
-            }
         }
     }
 

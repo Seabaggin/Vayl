@@ -80,11 +80,14 @@ final class AuthService: NSObject {
     func signOut() async {
         do {
             try await supabase.auth.signOut()
-            self.isAuthenticated = false
-            self.userId = nil
         } catch {
+            // Record the failure but never stay signed-in locally — a failed network
+            // sign-out (or an already-dead session, e.g. right after account deletion)
+            // must still clear local auth state or the app is stuck inside the shell.
             self.error = error.localizedDescription
         }
+        self.isAuthenticated = false
+        self.userId = nil
     }
 
     // MARK: - Helpers

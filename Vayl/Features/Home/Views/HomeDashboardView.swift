@@ -36,6 +36,8 @@ struct HomeDashboardView: View {
     var recentEvents: [HomeEvent] = []
     var isSolo: Bool = false
     var showReflectionBanner: Bool = false
+    /// Server-overridden Lexicon content from HomeStore (nil → bundled baseline).
+    var lexiconRemotePool: LexiconRemotePool? = nil
 
     // MARK: - Getting Started Activation
     // Optional namespace so the existing #Previews still compile (Namespace.ID has no public
@@ -320,7 +322,7 @@ struct HomeDashboardView: View {
             // DesireMapIndicator retired from the dashboard: the waiting state now lives in the
             // partner pill, completion is the one-shot moment, and the reveal entry is the Getting
             // Started step. (The indicator is kept on disk for the M5 unlock surface.)
-            HomeLexicon(onOpen: onOpenLexicon)
+            HomeLexicon(remotePool: lexiconRemotePool, onOpen: onOpenLexicon)
         }
         .opacity(lexVisible ? 1 : 0)
         .animation(AppAnimation.slow, value: lexVisible)

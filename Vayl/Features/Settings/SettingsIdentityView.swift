@@ -4,9 +4,11 @@ import SwiftUI
 import SwiftData
 
 struct SettingsIdentityView: View {
-    @Environment(AppState.self)     private var appState
-    @Environment(\.modelContext)    private var context
-    @Environment(\.dismiss)         private var dismiss
+    let store: SettingsStore
+    var onClose: (() -> Void)? = nil
+
+    @Environment(AppState.self) private var appState
+    @Environment(\.dismiss)     private var dismiss
 
     @Query private var profiles: [UserProfile]
     private var profile: UserProfile? { profiles.first }
@@ -26,7 +28,9 @@ struct SettingsIdentityView: View {
     }
 
     var body: some View {
-        SettingsSubScreenShell(title: "You", onBack: { dismiss() }) {
+        SettingsSubScreenShell(title: "You", onBack: {
+            if let onClose { onClose() } else { dismiss() }
+        }) {
             SettingsSectionLabel(text: "Identity")
             SettingsCard {
                 VStack(spacing: 0) {
@@ -71,10 +75,16 @@ struct SettingsIdentityView: View {
                 }
             }
         }
-        .sheet(item: $editField) { field in
-            IdentityEditSheet(field: field, profile: profile, context: context) {
-                if let name = profile?.displayName, !name.isEmpty {
-                    appState.displayName = name
+        .vaylSheet(
+            isPresented: Binding(
+                get: { editField != nil },
+                set: { if !$0 { editField = nil } }
+            ),
+            heightFraction: 0.5
+        ) {
+            if let field = editField {
+                IdentityEditSheet(field: field, profile: profile, store: store) {
+                    editField = nil
                 }
             }
         }
@@ -86,56 +96,48 @@ struct SettingsIdentityView: View {
 private struct IdentityEditSheet: View {
     let field: SettingsIdentityView.IdentityField
     let profile: UserProfile?
-    let context: ModelContext
-    var onSave: () -> Void
-
-    @Environment(\.dismiss) private var dismiss
+    let store: SettingsStore
+    /// Closes the presenting `.vaylSheet` (a custom overlay — `dismiss()` has no
+    /// presentation to act on here, so the owner collapses `editField` instead).
+    var onDone: () -> Void
 
     @State private var text: String = ""
     @State private var selectedStage: NMStage = .curious
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                AppColors.void.ignoresSafeArea()
-                OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+        ZStack {
+            AppColors.void.ignoresSafeArea()
+            OnboardingAtmosphere(config: .stat).ignoresSafeArea()
 
-                VStack(spacing: AppSpacing.lg) {
-                    switch field {
-                    case .name:
-                        editTextField(label: "Display name", placeholder: "Your name")
-                    case .pronouns:
-                        editTextField(label: "Pronouns", placeholder: "e.g. she/her, they/them")
-                    case .experience:
-                        experiencePicker
-                    }
-                    Spacer()
+            VStack(spacing: AppSpacing.lg) {
+                switch field {
+                case .name:
+                    editTextField(label: "Display name", placeholder: "Your name")
+                case .pronouns:
+                    editTextField(label: "Pronouns", placeholder: "e.g. she/her, they/them")
+                case .experience:
+                    experiencePicker
                 }
-                .padding(.horizontal, AppSpacing.lg)
-                .padding(.top, AppSpacing.lg)
+                Spacer()
             }
-            .toolbar(.hidden, for: .navigationBar)
-            .overlay(alignment: .bottom) {
-                HStack {
-                    Button("Cancel") { dismiss() }
-                        .font(AppFonts.buttonLabel)
-                        .foregroundStyle(AppColors.textTertiary)
-                        .buttonStyle(PressableCardStyle())
-                    Spacer()
-                    Button("Save") {
-                        save()
-                        onSave()
-                        dismiss()
-                    }
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.top, AppSpacing.lg)
+        }
+        .overlay(alignment: .bottom) {
+            HStack {
+                Button("Cancel") { onDone() }
+                    .font(AppFonts.buttonLabel)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .buttonStyle(PressableCardStyle())
+                Spacer()
+                Button("Save") { commit() }
                     .font(AppFonts.buttonLabel)
                     .foregroundStyle(AppColors.accentPrimary)
                     .buttonStyle(PressableCardStyle())
-                }
-                .padding(.horizontal, AppSpacing.lg)
-                .padding(.bottom, AppSpacing.xl)
             }
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.bottom, AppSpacing.xl)
         }
-        .presentationDetents([.medium])
         .onAppear { loadCurrentValue() }
     }
 
@@ -211,31 +213,14 @@ private struct IdentityEditSheet: View {
         }
     }
 
-    private func save() {
-        guard let p = profile else { return }
+    private func commit() {
+        let storeField: SettingsStore.IdentityField
         switch field {
-        case .name:
-            let trimmed = text.trimmingCharacters(in: .whitespaces)
-            if !trimmed.isEmpty { p.displayName = trimmed }
-        case .pronouns:
-            let trimmed = text.trimmingCharacters(in: .whitespaces)
-            p.pronouns = trimmed.isEmpty ? [] : trimmed
-                .components(separatedBy: ",")
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-                .filter { !$0.isEmpty }
-        case .experience:
-            p.nmStage = selectedStage
+        case .name:       storeField = .name
+        case .pronouns:   storeField = .pronouns
+        case .experience: storeField = .experience
         }
-        try? context.save()
-        let capturedField = field
-        let capturedStage = selectedStage
-        Task {
-            switch capturedField {
-            case .name, .pronouns:
-                await SyncManager.shared.pushDisplayIdentity(localProfile: p)
-            case .experience:
-                await SyncManager.shared.pushNMStage(capturedStage.rawValue)
-            }
-        }
+        store.saveIdentity(field: storeField, rawText: text, stage: selectedStage)
+        onDone()
     }
 }

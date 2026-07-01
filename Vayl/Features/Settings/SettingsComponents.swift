@@ -58,7 +58,7 @@ struct SettingsNavRow: View {
                 .fill(iconBg)
                 .overlay(
                     Image(systemName: icon)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(AppFonts.bodyMedium)
                         .foregroundStyle(iconTint)
                         .accessibilityHidden(true)
                 )
@@ -85,7 +85,7 @@ struct SettingsNavRow: View {
 
             if showChevron {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(AppFonts.overline)
                     .foregroundStyle(AppColors.textTertiary)
                     .accessibilityHidden(true)
             }
@@ -111,7 +111,7 @@ struct SettingsToggleRow: View {
                 .fill(iconBg)
                 .overlay(
                     Image(systemName: icon)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(AppFonts.bodyMedium)
                         .foregroundStyle(iconTint)
                         .accessibilityHidden(true)
                 )
