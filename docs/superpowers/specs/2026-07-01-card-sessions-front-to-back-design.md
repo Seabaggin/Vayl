@@ -114,6 +114,7 @@ Never persisted. Sent only after local seal; buffered in the store until reveal 
 - States: `waitingForPartner → bothPresent → bandwidthSet(mine) → consented(mine) → activating → active` plus `failed(reason)`.
 - Inputs: presence stream, rowUpdates, own UI actions (bandwidth slider commit, consent tap).
 - Flip to active: when the row shows both `*_present` and both `*_consented`, EITHER device calls `setStatus(.active)`; the write is idempotent and the partial unique index makes duplicates harmless. Both devices react to the row UPDATE, never to their own optimistic write.
+- Depth ceiling: once both bandwidths are on the row, each device independently computes `min(a_bandwidth, b_bandwidth)` and trims tonight's hand of cards whose `intensity` exceeds the ceiling's band (Light ≤ split, Open ≤ auroraBand, Deep = all); deterministic on both sides, no extra sync. Closing ritual is never trimmed. Neither partner's raw reading is ever displayed.
 - Poll fallback: if channel subscribe fails or no presence event within 10s, fall back to polling `fetchOpenSession(coupleId:)` every 2s; same state machine, worse latency, identical behavior.
 - Presence heartbeat: on channel join also write `*_present = true`; on clean exit write false.
 
@@ -165,6 +166,16 @@ All presentation through `.vaylCover` for the session (protected, confirm-on-exi
 | Safe-word close screen | Neutral, warm, zero-guilt; both devices |
 
 Special-card treatment (animated gradient border, particles) applies to reveal-mechanic cards per the handoff doc's ceremony spec; reuse existing glow/border components (AppGlows, VaylBorderEffect), no new primitives.
+
+### 4.5 Visual reference: the protected cover family
+
+Canonical look for the cover flow is `docs/prototypes/couple-session-cover-family.html` (airlock 1A/1B, transition, close). Binding decisions from it:
+
+- **Airlock 1A, house rules:** six SpectrumBulletRow rules read aloud together, no per-rule checkboxes; one tap on "We're ready" advances. First session shows all six; repeat sessions collapse to a one-line "settle in."
+- **Airlock 1B, bandwidth + lock-in:** bandwidth is a **3-detent slider** (Light / Open / Deep), set privately. The **gentler of the two readings becomes the session's depth ceiling** (caps how deep tonight's hand goes; interacts with SessionPlan by trimming cards above the ceiling's intensity band). The raw reading is never shown to the partner; only the existing `LockInSession` "different places" gap moment may surface, and it names the gap, never the numbers. Lock-in is a **3-second press-and-hold** with a spectrum arc ramp (feel moment, dialed on device per the Swift-over-HTML rule), then the presence row waits for the partner.
+- **Transition (screen 2):** kept as a ~2.5s held beat with the breathing ✦ and "look at each other." only. The "put your phones down" line is CUT (both here and the 1B footer): a two-device session needs the phones for cards and reveals, and eyes-up behavior is already taught by the player's idle dim.
+- **Close (screen 7):** cover-family styling applies to the existing SessionCloseView; adds the session stat line (cards / depth reached / duration) and keeps the one-word field + post-bandwidth ("how full are you now") feeding SessionReflection and Pulse as built.
+- Same void + ember-blob + spectrum vocabulary across all cover screens so the whole `.vaylCover` reads as one continuous protected room; Reduce Motion stills the blobs and the breathing spark.
 
 ---
 
