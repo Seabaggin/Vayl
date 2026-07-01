@@ -19,6 +19,7 @@ private let logger = Logger(subsystem: "com.vayl.app", category: "AccountService
 /// Deployed edge-function slugs (same convention as PairingService.SupabaseFunction).
 private enum AccountFunction {
     static let deleteAccount = "delete-account"
+    static let unlinkPartner = "unlink-partner"
 }
 
 @MainActor
@@ -46,6 +47,22 @@ final class AccountService {
             throw AccountError.deletionRejected
         }
         logger.info("Remote account deleted")
+    }
+
+    /// Invokes the `unlink-partner` edge function. The server reverts BOTH members to
+    /// unpaired and deletes the `couples` row (cascading the shared artifacts); each
+    /// person's own per-user data survives. Throws on failure — the caller must NOT
+    /// clear local link state unless this succeeds, or the two sides desync.
+    func unlinkPartner() async throws {
+        struct UnlinkResponse: Decodable { let unlinked: Bool }
+        let response: UnlinkResponse = try await supabase.functions.invoke(
+            AccountFunction.unlinkPartner,
+            options: FunctionInvokeOptions()
+        )
+        guard response.unlinked else {
+            throw AccountError.unlinkRejected
+        }
+        logger.info("Couple dissolved remotely")
     }
 
     /// Ends the Supabase session. Best-effort — local session teardown must still proceed
@@ -76,9 +93,11 @@ final class AccountService {
 
     enum AccountError: LocalizedError {
         case deletionRejected
+        case unlinkRejected
         var errorDescription: String? {
             switch self {
             case .deletionRejected: return "Your account could not be deleted. Please try again."
+            case .unlinkRejected:   return "Your partner could not be unlinked. Please try again."
             }
         }
     }

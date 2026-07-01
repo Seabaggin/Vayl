@@ -27,6 +27,7 @@ final class SettingsStore {
         case idle
         case signingOut
         case deleting
+        case unlinking
         case error(String)
     }
 
@@ -119,6 +120,47 @@ final class SettingsStore {
     /// Was called directly from SettingsPrivacyView (H-2 violation) — now routed here.
     func setShareCapacity(_ value: Bool) {
         Task { await SyncManager.shared.pushSharePulse(value) }
+    }
+
+    // MARK: - Unlink partner
+
+    /// Dissolves the couple. Remote first (both members reverted to unpaired, the couple
+    /// row + shared artifacts deleted server-side); only on success is the local mirror
+    /// cleared — the caller's profile goes unlinked, the couple-scoped shared rows
+    /// (Couple, DesireMatch, DesireMapStatus) are removed to match the server, and
+    /// session history stays (archival, per the AppState.unlink stance). The signed-in
+    /// account itself is untouched. Quiet data hygiene — no fanfare.
+    func unlink() async {
+        accountPhase = .unlinking
+        do {
+            try await accountService.unlinkPartner()
+        } catch {
+            accountPhase = .error(error.localizedDescription)
+            logger.error("Unlink failed: \(error.localizedDescription)")
+            return
+        }
+
+        let context = ModelContext(modelContainer)
+        if let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first {
+            let coupleId = profile.coupleId ?? appState.coupleId
+            profile.isLinked = false
+            profile.coupleId = nil
+            profile.partnerGenderIdentity = nil
+            profile.partnerPronouns = nil
+            if let coupleId {
+                try? context.delete(model: Couple.self,
+                                    where: #Predicate { $0.id == coupleId })
+                try? context.delete(model: DesireMatch.self,
+                                    where: #Predicate { $0.coupleId == coupleId })
+                try? context.delete(model: DesireMapStatus.self,
+                                    where: #Predicate { $0.coupleId == coupleId })
+            }
+            try? context.saveWithLogging()
+        }
+
+        appState.unlink()   // clears coupleId + linkState → routing re-renders unlinked
+        accountPhase = .idle
+        logger.info("Unlink complete — partner link dissolved")
     }
 
     // MARK: - Sign out

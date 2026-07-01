@@ -4,6 +4,7 @@ import SwiftUI
 import SwiftData
 
 struct SettingsPartnerView: View {
+    let store: SettingsStore
     var onClose: (() -> Void)? = nil
 
     @Environment(AppState.self)        private var appState
@@ -48,11 +49,11 @@ struct SettingsPartnerView: View {
             titleVisibility: .visible
         ) {
             Button("Unlink", role: .destructive) {
-                // Unlink UX deferred to V1.1 — see monetization_m1_backend_built.md
+                Task { await store.unlink() }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("You and your partner will lose access to shared content.")
+            Text("You each keep your own answers, but shared things like your Desire Map matches are removed. You can pair again anytime.")
         }
     }
 

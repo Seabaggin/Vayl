@@ -88,7 +88,9 @@ struct SettingsView: View {
                 SettingsAppearanceView(onClose: { showAppearance = false })
             }
             .vaylSheet(isPresented: $showPartner, heightFraction: 0.92, screenHeight: layout.screenHeight) {
-                SettingsPartnerView(onClose: { showPartner = false })
+                if let store {
+                    SettingsPartnerView(store: store, onClose: { showPartner = false })
+                }
             }
             .vaylSheet(isPresented: $showInvite, heightFraction: 0.92, screenHeight: layout.screenHeight) {
                 PairingInviteView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
@@ -100,11 +102,11 @@ struct SettingsView: View {
             }
             .confirmationDialog("Unlink partner?", isPresented: $showUnlink, titleVisibility: .visible) {
                 Button("Unlink", role: .destructive) {
-                    // Unlink UX deferred to V1.1
+                    Task { await store?.unlink() }
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("You and your partner will lose access to shared content.")
+                Text("You each keep your own answers, but shared things like your Desire Map matches are removed. You can pair again anytime.")
             }
             .confirmationDialog("Sign out?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
                 Button("Sign out", role: .destructive) {
@@ -467,13 +469,6 @@ struct SettingsView: View {
                 VStack(spacing: 0) {
                     Button { showSignOutConfirm = true } label: {
                         SettingsNavRow(icon: "rectangle.portrait.and.arrow.right", label: "Sign out")
-                    }
-                    .buttonStyle(PressableCardStyle())
-
-                    Divider().overlay(AppColors.borderSubtle)
-
-                    Button {} label: {
-                        SettingsNavRow(icon: "square.and.arrow.up", label: "Export my data")
                     }
                     .buttonStyle(PressableCardStyle())
 
