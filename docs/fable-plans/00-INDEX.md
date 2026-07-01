@@ -38,10 +38,11 @@ order is the suggested sequence.
 ### 🟠 Tier C — Core loop / Card Session (one-shot the code; MUST verify on two physical devices).
 | # | Plan | What it does | Notes |
 |---|---|---|---|
-| **08** | [Session realtime handshake](08-session-realtime-handshake.md) | Dedicated `AirlockStore` + Supabase Realtime presence/postgres-changes + poll fallback | **Highest-risk segment.** Realtime is new to this stack. Build-green ≠ done; two-device proof is mandatory. |
-| **09** | [Session entry + Airlock UI](09-session-entry-airlock-ui.md) | Home/Deck entry + joiner banner + `SessionLobbyView`; fixes the dead `AppShell` tab wiring | Depends on 08 for real presence. |
-| **10** | [Session player core](10-session-player-core.md) | Consumer-side sync coordinator, synced timer, Whisper reveal, safe-word/pause/keep-awake | `startRemoteSync()` is a TODO stub today. Whisper answers cross via Broadcast only, never persisted. Depends on 08+09. |
-| **11** | [Session builder](11-session-builder.md) | `SessionBuilderStore/View` producing real `SessionPlan`s; fast paths | Mostly single-device → **the most one-shottable of the four.** Zero transport/Player edits. |
+| **16** | [Card sessions front-to-back](16-card-sessions-front-to-back.md) | **THE master session one-shot** — handshake + entry/lobby/airlock UI + player sync + five-mechanic RevealEngine + local living cards + builder + composition migration + the 12-deck launch catalog | Supersedes 08–11 + 15's deck authoring. Spec: `docs/superpowers/specs/2026-07-01-card-sessions-front-to-back-design.md`. Read its SEAM RECONCILIATION block first. Two-device proof mandatory. |
+| ~~08~~ | ~~[Session realtime handshake](08-session-realtime-handshake.md)~~ | **SUPERSEDED by 16** (absorbed + updated: streams are session-id-filtered, reveal transport added) | Do not execute alongside 16. |
+| ~~09~~ | ~~[Session entry + Airlock UI](09-session-entry-airlock-ui.md)~~ | **SUPERSEDED by 16** (airlock re-cut to the cover-family mockup; AppShell fix carried over) | Do not execute alongside 16. |
+| ~~10~~ | ~~[Session player core](10-session-player-core.md)~~ | **SUPERSEDED by 16** (Whisper generalized into the RevealEngine; sync/timer/safe-word carried over) | Do not execute alongside 16. |
+| ~~11~~ | ~~[Session builder](11-session-builder.md)~~ | **SUPERSEDED by 16** (builder emits the new `SessionPlan` struct; the SwiftData `@Model SessionPlan` is deleted) | Do not execute alongside 16. |
 
 ### 🔵 Tier D — Map / Vault (one-shot the scaffold; feel + RLS pass).
 | # | Plan | What it does | Notes |
@@ -53,7 +54,7 @@ order is the suggested sequence.
 ### ⚪ Tier E — Content (Fable drafts; you edit).
 | # | Plan | What it does | Notes |
 |---|---|---|---|
-| **15** | [Content authoring](15-content-authoring.md) | Draft the launch deck set (2 decks drafted in full), lock desire/pulse content, delete dead placeholder JSON | 13 of 16 decks are 1-card stubs today. Retires the dead `assessment_questions.json` + `cards.json` "clinical" placeholders. |
+| **15** | [Content authoring](15-content-authoring.md) | **PARTIALLY SUPERSEDED by 16** — all deck authoring + dead-JSON deletion now lives in 16's Section 4 (12-deck bible-aligned catalog). Still live here: the desire/pulse content-lock segments only. | Run only 15's non-deck segments; the deck slate + catalog belong to 16. |
 
 ---
 
@@ -65,7 +66,7 @@ Mapped to these plans and sequenced finish-first:
 1. **01** (clean the tree) → **02** (hardening) — a day of pure de-risking, everything downstream gets cleaner.
 2. **04** (Settings + **Delete Account**, the hard App Store blocker) → **05** (gates).
 3. **06** (tests — lock the money/privacy invariants before you refactor) → **07** (empty states + crash SDK).
-4. **Card Session 08 → 09 → 10 → 11** (the core loop; budget real two-device time here).
+4. **Card Session 16** (the core loop, one master pass replacing 08 → 09 → 10 → 11; budget real two-device time here).
 5. **Map 12 → 13 → 14** (13 is deploy-and-verify; 14 is a scope decision).
 6. **15** (content — the 30–50h authoring track; start early, don't compress into the final week).
 7. **Then the manual work below** (V1/V2 device walks, A2 legal, A4 submit).
