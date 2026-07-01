@@ -39,7 +39,6 @@ enum SchemaV1: VersionedSchema {
         LockInSession.self,
         AcknowledgementRecord.self,
         MilestoneRecord.self,
-        SessionPlan.self,
         SyncTask.self,
         SessionReflection.self,
         EventLogEntry.self

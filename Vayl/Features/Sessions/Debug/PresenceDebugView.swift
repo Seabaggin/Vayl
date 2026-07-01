@@ -2,194 +2,178 @@
 //  PresenceDebugView.swift
 //  Vayl
 //
-//  THROWAWAY debug harness for Phase B1 (channel + presence). #if DEBUG only —
-//  it never ships. Two devices join one couple channel with DISTINCT user ids
-//  and watch each other appear / disappear. Delete once AirlockStore (B3) owns
-//  the real channel lifecycle.
+//  THROWAWAY debug harness for the Airlock handshake. #if DEBUG only — it never
+//  ships. Two devices, SAME couple, each signed in as its own partner. One taps
+//  "Open row" (initiator, stub draft), then BOTH tap "Start". Both commit
+//  Bandwidth, then Lock in. The row flips `active` exactly once; both reach
+//  ACTIVE. "Force poll" exercises the no-realtime path. Delete once the real
+//  Airlock UI (Section 2) owns the cover.
 //
 
 #if DEBUG
 import SwiftUI
+import SwiftData
 import Supabase
 
-// MARK: - Store
-// @Observable @MainActor so the View can bind directly. This is the temporary
-// stand-in for AirlockStore (B3): it owns the channel lifecycle and the derived
-// "who is present" set; the service stays a pure factory + helpers.
+// MARK: - Driver
+// Thin @Observable wrapper around the real AirlockStore. The ONLY place the
+// harness cheats: openRow() calls RealtimeSessionService directly with a stub
+// draft, because the store only ever fetches (the Builder/Lobby opens the row
+// in shipping code). Acceptable in a #if DEBUG throwaway, never in production.
 
 @Observable
 @MainActor
-final class PresenceDebugStore {
-
-    enum ConnectionState: String {
-        case idle, connecting, live, error
-    }
+final class AirlockHarnessDriver {
 
     var coupleIdText: String = ""
-    var userIdText: String = UUID().uuidString   // distinct per device by default
-    var state: ConnectionState = .idle
-    var presentUserIds: [String] = []
-    var lastError: String?
+    var status: String = "idle"
+    private(set) var store: AirlockStore?
 
-    private let service = RealtimeSessionService()
-    private var channel: RealtimeChannelV2?
-    private var presenceTask: Task<Void, Never>?
+    private let modelContainer: ModelContainer
+    init(modelContainer: ModelContainer) { self.modelContainer = modelContainer }
 
-    func join() {
-        guard state == .idle || state == .error else { return }
-
-        let coupleStr = coupleIdText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let userStr   = userIdText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let coupleId = UUID(uuidString: coupleStr),
-              let userId   = UUID(uuidString: userStr) else {
-            lastError = "Couple ID and User ID must both be valid UUIDs."
-            state = .error
-            return
+    func openRow() {
+        guard let coupleId = UUID(uuidString: coupleIdText.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            status = "Couple ID must be a valid UUID."; return
         }
-
-        lastError = nil
-        state = .connecting
-        presentUserIds = []
-
-        let channel = service.sessionChannel(coupleId: coupleId, userId: userId)
-        self.channel = channel
-
-        // A Task created from a @MainActor context inherits MainActor isolation,
-        // so the self mutations below are main-actor safe with no explicit hops.
-        presenceTask = Task { [weak self] in
-            guard let self else { return }
-
-            // Register the presence stream BEFORE subscribing — ordering matters.
-            let presence = channel.presenceChange()
+        Task {
             do {
-                try await channel.subscribeWithError()
-                try await self.service.trackPresence(on: channel, userId: userId)
-                self.state = .live
+                let context = ModelContext(modelContainer)
+                guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else {
+                    status = "No local UserProfile."; return
+                }
+                let draft = CuratedSessionDraft(
+                    deckId: "debug", deckVariant: nil,
+                    cardIds: [], perCardTimer: [:], globalTimerSeconds: nil
+                )
+                _ = try await RealtimeSessionService().openSession(
+                    coupleId: coupleId, initiatorId: profile.id, draft: draft
+                )
+                status = "row opened, now Start on both devices"
             } catch {
-                self.lastError = error.localizedDescription
-                self.state = .error
-                return
-            }
-
-            // Maintain the present set from join/leave deltas. Keys are user ids.
-            for await change in presence {
-                var present = Set(self.presentUserIds)
-                present.formUnion(change.joins.keys)
-                present.subtract(change.leaves.keys)
-                self.presentUserIds = present.sorted()
+                status = "open failed: \(error.localizedDescription)"
             }
         }
     }
 
-    func leave() {
-        presenceTask?.cancel()
-        presenceTask = nil
-        presentUserIds = []
-        state = .idle
-        if let channel {
-            self.channel = nil
-            Task { await service.leaveChannel(channel) }
+    func startStore() {
+        guard let coupleId = UUID(uuidString: coupleIdText.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            status = "Couple ID must be a valid UUID."; return
         }
+        guard let s = AirlockStore.make(coupleId: coupleId, modelContainer: modelContainer) else {
+            status = "Could not resolve local Couple / UserProfile."; return
+        }
+        store = s
+        status = "role \(s.role.rawValue) · starting"
+        Task { await s.start() }
     }
+
+    func bandwidth() { Task { await store?.commitBandwidth(0.55) } }
+    func lockIn()    { Task { await store?.consent() } }
+    func forcePoll() { Task { await store?.forcePollMode() } }
+    func leave()     { store?.leave(); store = nil; status = "left" }
 }
 
 // MARK: - View
 
 struct PresenceDebugView: View {
 
-    @State private var store = PresenceDebugStore()
+    @Environment(\.modelContext) private var modelContext
+    @State private var driver: AirlockHarnessDriver?
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: AppSpacing.lg) {
 
-                Text("Presence Debug · B1")
+                Text("Airlock Handshake")
                     .font(AppFonts.screenTitle)
                     .foregroundColor(AppColors.textPrimary)
 
-                Text("Run on TWO devices. Use the SAME Couple ID and DIFFERENT User IDs. Tap Join on both — each should see the other's id appear. Tap Leave (or background) and it disappears on the partner.")
+                Text("Run on TWO physical devices, SAME Couple ID, each signed in as its own partner. One taps Open row, then BOTH tap Start. Commit Bandwidth, then Lock in on both. The row flips to active exactly once and both show ACTIVE. Force poll to test the no-realtime path.")
                     .font(AppFonts.caption)
                     .foregroundColor(AppColors.textSecondary)
 
-                VStack(spacing: AppSpacing.sm) {
-                    InteractiveField(placeholder: "Couple ID (UUID)", icon: "👥", text: $store.coupleIdText)
-                    InteractiveField(placeholder: "User ID (UUID)", icon: "🆔", text: $store.userIdText)
-                }
+                if let driver {
+                    InteractiveField(placeholder: "Couple ID (UUID)", icon: "👥",
+                                     text: Binding(get: { driver.coupleIdText },
+                                                   set: { driver.coupleIdText = $0 }))
 
-                HStack(spacing: AppSpacing.md) {
-                    VaylButton(label: store.state == .live ? "Joined" : "Join", size: .compact) {
-                        store.join()
+                    HStack(spacing: AppSpacing.md) {
+                        VaylButton(label: "Open row", size: .compact) { driver.openRow() }
+                        VaylButton(label: "Start", style: .secondary, size: .compact) { driver.startStore() }
                     }
-                    VaylButton(label: "Leave", style: .secondary, size: .compact) {
-                        store.leave()
+                    HStack(spacing: AppSpacing.md) {
+                        VaylButton(label: "Bandwidth", size: .compact) { driver.bandwidth() }
+                        VaylButton(label: "Lock in", style: .secondary, size: .compact) { driver.lockIn() }
                     }
+                    HStack(spacing: AppSpacing.md) {
+                        VaylButton(label: "Force poll", style: .secondary, size: .compact) { driver.forcePoll() }
+                        VaylButton(label: "Leave", style: .secondary, size: .compact) { driver.leave() }
+                    }
+
+                    stateReadout(driver)
                 }
-
-                statusRow
-
-                if let error = store.lastError {
-                    Text(error)
-                        .font(AppFonts.caption)
-                        .foregroundColor(AppColors.destructive)
-                }
-
-                presenceList
             }
             .padding(AppSpacing.lg)
         }
         .background(AppColors.pageBackground.ignoresSafeArea())
-        .navigationTitle("Presence Debug")
-    }
-
-    private var statusRow: some View {
-        HStack(spacing: AppSpacing.sm) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: AppSpacing.sm, height: AppSpacing.sm)
-            Text(store.state.rawValue.capitalized)
-                .font(AppFonts.bodyMedium)
-                .foregroundColor(AppColors.textPrimary)
-        }
-    }
-
-    private var statusColor: Color {
-        switch store.state {
-        case .idle:       return AppColors.textMuted
-        case .connecting: return AppColors.accentSecondary
-        case .live:       return AppColors.success
-        case .error:      return AppColors.destructive
+        .navigationTitle("Airlock Handshake")
+        .task {
+            if driver == nil {
+                driver = AirlockHarnessDriver(modelContainer: modelContext.container)
+            }
         }
     }
 
     @ViewBuilder
-    private var presenceList: some View {
+    private func stateReadout(_ driver: AirlockHarnessDriver) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("PRESENT (\(store.presentUserIds.count))")
-                .font(AppFonts.overline)
-                .foregroundColor(AppColors.textTertiary)
+            Text(driver.status)
+                .font(AppFonts.bodyMedium)
+                .foregroundColor(AppColors.textPrimary)
 
-            if store.presentUserIds.isEmpty {
-                Text("No one here yet.")
-                    .font(AppFonts.caption)
-                    .foregroundColor(AppColors.textMuted)
+            if let store = driver.store {
+                row("transport", store.transport.rawValue)
+                row("state", stateLabel(store.state))
+                row("partner present", store.partnerPresent ? "yes" : "no")
+                row("you consented", store.selfConsented ? "yes" : "no")
+                row("partner consented", store.partnerConsented ? "yes" : "no")
+                row("depth ceiling", store.depthCeiling.map { String(format: "%.2f", $0) } ?? "-")
             } else {
-                let me = store.userIdText.trimmingCharacters(in: .whitespacesAndNewlines)
-                ForEach(store.presentUserIds, id: \.self) { id in
-                    HStack(spacing: AppSpacing.sm) {
-                        Text(id)
-                            .font(AppFonts.caption)
-                            .foregroundColor(AppColors.textBody)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        if id == me {
-                            Text("you")
-                                .font(AppFonts.overline)
-                                .foregroundColor(AppColors.accentPrimary)
-                        }
-                        Spacer()
-                    }
+                // Empty state (required on every data screen).
+                VStack(spacing: AppSpacing.xs) {
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .foregroundColor(AppColors.textTertiary)
+                    Text("No handshake yet")
+                        .font(AppFonts.cardTitle)
+                        .foregroundColor(AppColors.textSecondary)
+                    Text("Enter a Couple ID, tap Open row on one device, then Start.")
+                        .font(AppFonts.caption)
+                        .foregroundColor(AppColors.textTertiary)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.top, AppSpacing.lg)
             }
+        }
+    }
+
+    private func row(_ k: String, _ v: String) -> some View {
+        HStack {
+            Text(k).font(AppFonts.caption).foregroundColor(AppColors.textTertiary)
+            Spacer()
+            Text(v).font(AppFonts.caption).foregroundColor(AppColors.textBody)
+        }
+    }
+
+    private func stateLabel(_ s: AirlockState) -> String {
+        switch s {
+        case .waitingForPartner:      return "waiting for partner"
+        case .bothPresent:            return "both present"
+        case .bandwidthSet:           return "bandwidth set"
+        case .consented:              return "consented"
+        case .activating:             return "activating"
+        case .active:                 return "ACTIVE"
+        case .failed(let reason):     return "failed: \(reason)"
         }
     }
 }

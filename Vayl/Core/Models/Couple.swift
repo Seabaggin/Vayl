@@ -34,6 +34,14 @@ final class Couple {
     var sharedSafeWord: String          // default "red" — only shared config
     var relationshipTenure: RelationshipTenure?  // set by first together-mode partner during OB
 
+    // MARK: - Connection Composition
+    // Which gendered card variants this couple sees (mf / mm / ff / flexible).
+    // Wayfinding vocabulary, never identity: derived from both partners' OB
+    // gender answers at pairing (one-tap confirm), changeable in Settings,
+    // consumed by Deck.cards(for:). Mirrors couples.connection_composition.
+
+    var connectionComposition: GenderDynamic = GenderDynamic.flexible
+
     // MARK: - Entitlement
     // Lives on Couple — one purchase unlocks both partners.
     // purchasedBy recorded for support only — never surfaced to either partner.
@@ -64,7 +72,8 @@ final class Couple {
         partnerAId: UUID,
         partnerBId: UUID,
         connectionType: ConnectionPlan = .primary,
-        relationshipTenure: RelationshipTenure? = nil
+        relationshipTenure: RelationshipTenure? = nil,
+        connectionComposition: GenderDynamic = .flexible
     ) {
         self.id = UUID()
         self.partnerAId = partnerAId
@@ -73,6 +82,7 @@ final class Couple {
         self.connectionType = connectionType
         self.sharedSafeWord = "red"
         self.relationshipTenure = relationshipTenure
+        self.connectionComposition = connectionComposition
         self.entitlementTier = .free
         self.coreUnlockedAt = nil
         self.coreUnlockedBy = nil
