@@ -44,6 +44,7 @@ final class SettingsStore {
     private let modelContainer: ModelContainer
     private let appState: AppState
     private let authService: AuthService
+    private let entitlements: EntitlementStore
     private let accountService: AccountService
 
     // MARK: - Init
@@ -54,11 +55,13 @@ final class SettingsStore {
         modelContainer: ModelContainer,
         appState: AppState,
         authService: AuthService,
+        entitlements: EntitlementStore,
         accountService: AccountService? = nil
     ) {
         self.modelContainer = modelContainer
         self.appState = appState
         self.authService = authService
+        self.entitlements = entitlements
         self.accountService = accountService ?? AccountService()
     }
 
@@ -123,6 +126,21 @@ final class SettingsStore {
     }
 
     // MARK: - Unlink partner
+
+    /// The unlink confirm message, honest about what actually happens for THIS user.
+    /// Unlinking dissolves the couple, so the couple's Core tier goes with it; the buyer
+    /// keeps access via local StoreKit ownership (isCore = tier OR localOwnsCore) and
+    /// re-grants the couple on re-pairing. The non-payer's access ends with the pairing.
+    var unlinkWarning: String {
+        let base = "You each keep your own answers, but shared things like your Desire Map matches are removed."
+        guard entitlements.isCore else {
+            return base + " You can pair again anytime."
+        }
+        if entitlements.localOwnsCore {
+            return base + " Your partner's full access ends, but your Lifetime purchase stays with you and unlocks again when you pair."
+        }
+        return base + " Full access came with this pairing, so your membership returns to free until you pair with the purchaser again."
+    }
 
     /// Dissolves the couple. Remote first (both members reverted to unpaired, the couple
     /// row + shared artifacts deleted server-side); only on success is the local mirror

@@ -53,7 +53,7 @@ struct SettingsPartnerView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("You each keep your own answers, but shared things like your Desire Map matches are removed. You can pair again anytime.")
+            Text(store.unlinkWarning)
         }
     }
 

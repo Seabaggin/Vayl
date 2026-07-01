@@ -63,7 +63,8 @@ struct SettingsView: View {
                     store = SettingsStore(
                         modelContainer: modelContext.container,
                         appState: appState,
-                        authService: authService
+                        authService: authService,
+                        entitlements: entitlements
                     )
                 }
             }
@@ -106,7 +107,7 @@ struct SettingsView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("You each keep your own answers, but shared things like your Desire Map matches are removed. You can pair again anytime.")
+                Text(store?.unlinkWarning ?? "")
             }
             .confirmationDialog("Sign out?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
                 Button("Sign out", role: .destructive) {
