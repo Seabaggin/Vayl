@@ -2,7 +2,8 @@
 //
 // Slug: get-partner
 //
-// Returns ONLY the linked partner's display identity (name + pronouns) for the
+// Returns ONLY the linked partner's display identity (name + pronouns +
+// gender_identity, the composition-derivation input) for the
 // calling user's couple. Why a function: user_profiles SELECT RLS is
 // `auth_id = auth.uid()` (no cross-partner read), and RLS can't restrict
 // columns — so this service-role function is how a partner's name reaches the
@@ -71,13 +72,19 @@ serve(async (req) => {
     // ── ONLY the partner's display identity — nothing else ────────────
     const { data: partner, error: partnerErr } = await serviceClient
       .from("user_profiles")
-      .select("name, pronouns")
+      .select("name, pronouns, gender_identity")
       .eq("id", partnerProfileId)
       .single()
     if (partnerErr || !partner) return json({ partner: null }, 200)
 
     return json(
-      { partner: { name: partner.name ?? null, pronouns: partner.pronouns ?? null } },
+      {
+        partner: {
+          name: partner.name ?? null,
+          pronouns: partner.pronouns ?? null,
+          gender: partner.gender_identity ?? null,
+        },
+      },
       200
     )
   } catch (_err) {
