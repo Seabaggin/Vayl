@@ -51,12 +51,22 @@ struct TableSurfaceView: View, Animatable {
     // Without Animatable conformance a Canvas view receives only the FINAL
     // value of a withAnimation change — fades pop and oscillations freeze.
     // Conforming makes fade / rimBurst / forgeEnergy genuinely interpolate.
-    var animatableData: AnimatablePair<Double, AnimatablePair<Double, Double>> {
-        get { AnimatablePair(fade, AnimatablePair(rimBurst, forgeEnergy)) }
+    var animatableData: AnimatablePair<
+        AnimatablePair<Double, Double>,
+        AnimatablePair<Double, AnimatablePair<Double, Double>>
+    > {
+        get {
+            AnimatablePair(
+                AnimatablePair(fade, rimBurst),
+                AnimatablePair(forgeEnergy, AnimatablePair(dissolutionWarp, dissolutionFlowOut))
+            )
+        }
         set {
-            fade        = newValue.first
-            rimBurst    = newValue.second.first
-            forgeEnergy = newValue.second.second
+            fade               = newValue.first.first
+            rimBurst           = newValue.first.second
+            forgeEnergy        = newValue.second.first
+            dissolutionWarp    = newValue.second.second.first
+            dissolutionFlowOut = newValue.second.second.second
         }
     }
 

@@ -75,7 +75,9 @@ struct MapPulseHero: View {
         HStack {
             Text("The Pulse")
                 .font(AppFonts.overline)
-                .foregroundStyle(AppColors.textTertiary)
+                .textCase(.uppercase)
+                .tracking(1.5)
+                .foregroundStyle(AppColors.textSectionLabel)
             Spacer()
             Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()

@@ -801,7 +801,7 @@ private struct _RaterPill: View {
                             colors: [AppColors.spectrumMagenta.opacity(0.14), AppColors.spectrumPurple.opacity(0.18)],
                             startPoint: .leading, endPoint: .trailing
                           ))
-                        : AnyShapeStyle(Color.white.opacity(0.03))
+                        : AnyShapeStyle(AppColors.whisperFill)
                     )
             )
             .overlay(

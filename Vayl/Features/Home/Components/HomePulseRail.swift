@@ -1,148 +1,181 @@
 // Features/Home/Components/HomePulseRail.swift
 //
-// Module 2 of the Home dashboard — the compact Pulse aura widget.
+// Module 2 of the Home dashboard — the compact Pulse aura widget (ambient hero).
 //
-// Dormant (no today check-in): dim dashed orb + "How's your capacity?" invite.
-// Active (today check-in exists): live PulseAura + Space name + sublabel + "Xh ago".
+// Dormant (no today check-in): cycling aura touring all 4 spaces + "How's your capacity?" invite.
+// Active (today check-in exists): landed PulseAura + Space name + sublabel + "Xh ago".
 //
-// No streak. No badge. No calendar gap. The orb IS the language.
+// Layout — row-paired hero + orb (validated across 3 mockup rounds):
+//   docs/prototypes/home-pulse-widget-shine.html → -alignment-options.html → -orb-size-options.html
+//   • Eyebrow ("THE PULSE") on its own line.
+//   • Hero line + orb share ONE row, .center aligned — so they stay vertically centered
+//     against each other regardless of 1- vs 2-line hero copy. (Independent-block centering,
+//     the prior approach, drifted ~14pt between dormant/active depending on line count.)
+//   • The Check-in pill lives under the orb in BOTH states, so re-checking-in is one tap.
+//   • Sub-label (+ relative time when active) sits below in normal flow.
 //
-// Visual reference: docs/prototypes/home-pulse-aura.html — dormant + active panels.
+// No streak. No badge. No calendar gap. The orb IS the language; its own glow washes the pane.
+// Tapping the card opens the full Pulse on the Map; the pill (re-)runs a check-in.
+//
+// NOTE (out of scope, tracked as D1.5): the mockup's "brighter than yesterday" trend line needs
+// a new PulseStore trend computation (today's capacity vs the prior entry) that doesn't exist yet.
 
 import SwiftUI
 
 struct HomePulseRail: View {
 
-    var onTap:          (() -> Void)? = nil
-    var onCheckIn:      (() -> Void)? = nil
-    var onInfo:         (() -> Void)? = nil
-    // Kept for call-site compat; unused now that the aura widget is fixed-height.
-    var expansion:      Double        = 1
-    var maxGraphHeight: CGFloat       = 160
+    var onTap:     (() -> Void)? = nil   // → Map Pulse
+    var onCheckIn: (() -> Void)? = nil   // → check-in
+
+    /// Aura diameter. Matches Option A in the orb-size reference
+    /// (docs/prototypes/home-pulse-widget-orb-size-options.html) — 84px orb in a ~320px card,
+    /// present without going orb-dominant (Option B, rejected) or duplicating the 150pt
+    /// Map-hero aura. FEEL: tune on device.
+    private let orbSize: CGFloat = 84
+
+    /// The orb's wide pane-wash glow — disc diameter as a multiple of orbSize. Matches
+    /// shine.html's `box-shadow: 0 0 150px 60px` on a 66px orb: a ~186px (2.8×) solid-.32 disc
+    /// feathered wide, washing the whole pane. Clipped to the card. FEEL: tune on device.
+    private let orbHaloSpread: CGFloat = 2.8
 
     @Environment(PulseStore.self) private var pulse
-    @State private var breathe: Bool = false
 
     // MARK: - Body
 
     var body: some View {
         Group {
             if let entry = todayEntry {
-                activeRow(entry: entry)
+                let quadrant = entry.resolvedPosition.quadrant
+                card(
+                    orb:       PulseAura(quadrant: quadrant, size: orbSize, haloSpread: orbHaloSpread),
+                    hero:      quadrant.spaceName,
+                    heroColor: AppColors.textPrimary,
+                    sub:       quadrant.sublabel,
+                    subColor:  AppColors.textSecondary,
+                    timestamp: relativeTime(entry.date)
+                )
             } else {
-                dormantRow
+                card(
+                    orb:       PulseCyclingAura(size: orbSize, haloSpread: orbHaloSpread),
+                    hero:      "How's your capacity?",
+                    heroColor: AppColors.textPrimary,
+                    sub:       "A quick check-in",
+                    subColor:  AppColors.textTertiary,
+                    timestamp: nil
+                )
             }
         }
-        .background(AppColors.glassSurface)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
-                .strokeBorder(AppColors.borderSubtle, lineWidth: 1)
-        )
-        .onAppear { breathe = true }
     }
 
-    // MARK: - Active row
+    // MARK: - Card
 
-    private func activeRow(entry: PulseEntry) -> some View {
-        let quadrant = entry.resolvedPosition.quadrant
-        return Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            onTap?()
-        } label: {
-            HStack(spacing: AppSpacing.sm) {
-                PulseAura(quadrant: quadrant, size: 42)
-                    .frame(width: 50, height: 50)
+    /// Shared ambient-hero layout. `Orb` is generic so each state passes its own aura view
+    /// (landed vs cycling) with no AnyView boxing.
+    private func card<Orb: View>(
+        orb: Orb,
+        hero: String,
+        heroColor: Color,
+        sub: String,
+        subColor: Color,
+        timestamp: String?
+    ) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("The Pulse")
-                        .font(AppFonts.overline)
-                        .foregroundStyle(AppColors.textTertiary)
-                    Text(quadrant.spaceName)
-                        .font(AppFonts.cardTitle)
-                        .foregroundStyle(AppColors.textPrimary)
-                        .lineLimit(1)
-                    Text(quadrant.sublabel)
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textSecondary)
+            // Eyebrow
+            Text("The Pulse")
+                .font(AppFonts.overline)
+                .textCase(.uppercase)
+                .tracking(1.5)
+                .foregroundStyle(AppColors.textSectionLabel)
+
+            // Hero row — text leads, orb + pill on the right, centered against each other.
+            HStack(alignment: .center, spacing: AppSpacing.md) {
+                Text(hero)
+                    .font(AppFonts.pulseWidgetTitle)
+                    .foregroundStyle(heroColor)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(spacing: AppSpacing.sm) {
+                    orb
+                    checkInPill
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize()
+            }
 
-                VStack(alignment: .trailing, spacing: 3) {
-                    Text("›")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(AppColors.textTertiary)
-                    Text(relativeTime(entry.date))
-                        .font(.system(size: 8.5, weight: .regular))
+            // Sub-block
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                Text(sub)
+                    .font(AppFonts.caption)
+                    .foregroundStyle(subColor)
+                if let timestamp {
+                    Text(timestamp)
+                        .font(AppFonts.buttonLabelSmall)
                         .foregroundStyle(AppColors.textTertiary)
                         .monospacedDigit()
                 }
             }
-            .padding(.horizontal, AppSpacing.md)
-            .padding(.vertical, AppSpacing.sm)
         }
-        .buttonStyle(.plain)
+        .padding(AppSpacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // Opaque app-surface base (cardBackground) so the atmosphere does NOT bleed through —
+        // the only colour on the pane is the orb's own shadow-glow, clipped to the card so it
+        // washes from the orb's position and can't desync from the aura.
+        .background(AppColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
+                .strokeBorder(AppColors.borderDefault, lineWidth: 1)
+        )
+        // Spectrum top hairline — the codebase card-chrome language (same cyan→purple→magenta
+        // stops as VaylBorderEffect's HairlineView), tapered to nothing at the ends via the
+        // clear stops. Inset horizontally so it lands on the straight top segment, clear of
+        // the rounded corners.
+        .overlay(alignment: .top) {
+            LinearGradient(
+                colors: [
+                    .clear,
+                    AppColors.spectrumCyan.opacity(0.90),
+                    AppColors.spectrumPurple,
+                    AppColors.spectrumMagenta.opacity(0.90),
+                    .clear
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(height: 1)
+            .padding(.horizontal, AppSpacing.md)
+        }
+        .contentShape(RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous))
+        .onTapGesture {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            onTap?()
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("The Pulse. \(hero)")
+        .accessibilityHint("Opens the Pulse on the Map")
     }
 
-    // MARK: - Dormant row
+    // MARK: - Check-in pill (both states)
 
-    private var dormantRow: some View {
-        HStack(spacing: AppSpacing.sm) {
-            // Dashed, dim orb — breathes like an inactive shell.
-            ZStack {
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [AppColors.textTertiary.opacity(0.07), .clear],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 20
-                        )
-                    )
-                Circle()
-                    .strokeBorder(
-                        AppColors.borderSubtle.opacity(0.55),
-                        style: StrokeStyle(lineWidth: 1.5, dash: [4, 4])
-                    )
-            }
-            .scaleEffect(breathe ? 1.06 : 0.94)
-            .opacity(breathe ? 1.0 : 0.82)
-            .ambientAnimation(AppAnimation.cardBreathe, value: breathe)
-            .frame(width: 40, height: 40)
-            .frame(width: 50, height: 50)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("The Pulse")
-                    .font(AppFonts.overline)
-                    .foregroundStyle(AppColors.textTertiary.opacity(0.7))
-                Text("How's your capacity?")
-                    .font(AppFonts.cardTitle)
-                    .foregroundStyle(AppColors.textMuted)
-                    .lineLimit(1)
-                Text("A quick check-in")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textTertiary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                onCheckIn?()
-            } label: {
-                Text("Check in")
-                    .font(AppFonts.buttonLabelSmall)
-                    .foregroundStyle(AppColors.spectrumCyan)
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.vertical, AppSpacing.xxs)
-                    .overlay(
-                        Capsule()
-                            .strokeBorder(AppColors.spectrumCyan.opacity(0.45), lineWidth: 1)
-                    )
-            }
-            .buttonStyle(.plain)
+    private var checkInPill: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            onCheckIn?()
+        } label: {
+            Text("Check in")
+                .font(AppFonts.buttonLabelSmall)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.vertical, AppSpacing.xxs)
+                .overlay(
+                    Capsule().strokeBorder(AppColors.borderDefault, lineWidth: 1)
+                )
         }
-        .padding(.horizontal, AppSpacing.md)
-        .padding(.vertical, AppSpacing.sm)
+        .buttonStyle(.plain)
+        .accessibilityLabel("Check in")
     }
 
     // MARK: - Helpers
@@ -204,6 +237,32 @@ struct PulseInfoSheet: View {
             focus: "Reaching Out",
             feeling: "Adventurous",
             position: PulsePosition(energy: 0.82, openness: 0.78)
+        ))
+        return s
+    }())
+    .preferredColorScheme(.dark)
+}
+
+// A deliberately long state name to prove the hero wraps to 2 lines while staying
+// centered against the orb (the alignment fix this rebuild exists for).
+#Preview("Active — long hero (wrap test)") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+        HomePulseRail(onTap: {})
+            .padding(AppSpacing.lg)
+    }
+    .environment({
+        let s = PulseStore()
+        s.add(PulseEntry(
+            date: Date(),
+            capacityScore: 1.0,
+            glowColor: .rose,
+            speed: "Protective",
+            nervousSystem: "Guarded",
+            focus: "Turning Inward",
+            feeling: "Need Space",
+            position: PulsePosition(energy: 0.18, openness: 0.16)
         ))
         return s
     }())

@@ -70,11 +70,11 @@ struct PulseCheckInView: View {
             entries: [
                 PulseFieldEntry(
                     position: currentPosition,
-                    auraSize: 40,
+                    auraSize: 46,
                     isBloom:  bloomDone
                 )
             ],
-            size: 200
+            size: 264
         )
         .frame(maxWidth: .infinity)
     }

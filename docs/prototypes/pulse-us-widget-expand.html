@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Us widget → full graph, the expand</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF; --indigo:#8B5CF6; --magenta:#FF006A; --rose:#C76A86;
+    --t1:#E8E8F0; --t2:rgba(255,255,255,.66); --t3:rgba(255,255,255,.42); --t-muted:rgba(255,255,255,.22);
+    --border:rgba(255,255,255,.10); --purple-light:#A78BFA;
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+    --ease:cubic-bezier(.5,.05,.2,1); --dur:.85s;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0b0910;color:var(--t1);font-family:var(--body)}
+  .wrap{max-width:560px;margin:0 auto;padding:34px 26px 70px;text-align:center}
+  .brand{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.34em;color:var(--t3)}
+  h1{font-family:var(--disp);font-size:22px;font-weight:600;margin:6px 0 6px}
+  .lede{font-size:12.5px;line-height:1.55;color:var(--t2);margin:0 0 8px}
+  .hint{font-size:11px;color:var(--purple-light);margin:0 0 22px}
+  .btn{font-size:11px;color:var(--t2);border:1px solid var(--border);background:rgba(255,255,255,.03);border-radius:20px;padding:7px 16px;cursor:pointer;margin-bottom:20px}
+
+  .stage{position:relative;width:320px;height:600px;margin:0 auto;border-radius:40px;overflow:hidden;
+    background:radial-gradient(120% 30% at 50% 0%,rgba(108,58,224,.14),transparent 60%),linear-gradient(#0a0810,#08060f);
+    box-shadow:0 24px 64px rgba(0,0,0,.5),inset 0 0 0 1.3px rgba(255,255,255,.05);cursor:pointer;text-align:left}
+  .notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:80px;height:20px;background:#000;border-radius:12px;z-index:40}
+
+  /* ── the widget card (fades out on expand) ── */
+  .widget{position:absolute;left:16px;right:16px;top:220px;height:150px;border-radius:22px;border:1px solid var(--border);
+    background:linear-gradient(160deg,#151026,#0d0a16);overflow:hidden;z-index:10;
+    transition:opacity var(--dur) var(--ease), transform var(--dur) var(--ease)}
+  .widget::before{content:'';position:absolute;top:0;left:16px;right:16px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent)}
+  .widget .k{position:absolute;left:18px;top:20px;font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--purple-light)}
+  .widget .q{position:absolute;left:18px;top:60px;font-family:var(--disp);font-size:21px;font-weight:600;color:#fff}
+  .widget .s{position:absolute;left:18px;top:96px;font-size:11px;color:var(--t2)}
+  .stage.expanded .widget{opacity:0;transform:scale(.96)}
+
+  /* ── the field layer (fades in on expand) ── */
+  .field{position:absolute;left:36px;top:70px;width:248px;height:248px;z-index:5;opacity:0;transform:scale(.86);
+    transition:opacity var(--dur) var(--ease), transform var(--dur) var(--ease)}
+  .stage.expanded .field{opacity:1;transform:scale(1)}
+  .zone{position:absolute;width:50%;height:50%;filter:blur(9px)}
+  .z-exp{top:0;right:0;background:radial-gradient(130% 130% at 100% 0%,rgba(0,194,255,.18),rgba(0,194,255,.07))}
+  .z-fri{top:0;left:0;background:radial-gradient(130% 130% at 0% 0%,rgba(255,0,106,.15),rgba(255,0,106,.06))}
+  .z-pro{bottom:0;left:0;background:radial-gradient(130% 130% at 0% 100%,rgba(199,106,134,.28),rgba(199,106,134,.10))}
+  .z-sov{bottom:0;right:0;background:radial-gradient(130% 130% at 100% 100%,rgba(139,92,246,.16),rgba(139,92,246,.07))}
+  .ax{position:absolute;font-size:7px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--t-muted)}
+  .ax-u{top:-14px;left:50%;transform:translateX(-50%)}.ax-d{bottom:-14px;left:50%;transform:translateX(-50%)}
+  .ax-l{left:-24px;top:50%;transform:translateY(-50%) rotate(-90deg)}.ax-r{right:-22px;top:50%;transform:translateY(-50%) rotate(90deg)}
+
+  /* capsule connector (draws in) */
+  .capsule{position:absolute;left:36px;top:70px;width:248px;height:248px;z-index:6;opacity:0;transition:opacity var(--dur) var(--ease) .15s}
+  .stage.expanded .capsule{opacity:1}
+
+  /* tags */
+  .tag{position:absolute;z-index:9;font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:0;transition:opacity .4s ease .5s}
+  .stage.expanded .tag{opacity:1}
+  .tag.you{left:214px;top:96px;color:var(--cyan)} .tag.alex{left:60px;top:270px;color:var(--rose)}
+
+  /* ── the two persistent orbs (the shared element) ── */
+  .orb{position:absolute;border-radius:50%;z-index:20;
+    transition:left var(--dur) var(--ease), top var(--dur) var(--ease), width var(--dur) var(--ease), height var(--dur) var(--ease), clip-path var(--dur) var(--ease)}
+  /* WIDGET STATE: both stacked on the widget's right, clipped to halves = one split bead */
+  .orb.you {left:228px;top:252px;width:62px;height:62px;background:radial-gradient(circle at 38% 34%,#7FE0FF,var(--cyan) 60%);box-shadow:0 0 40px 14px rgba(0,194,255,.34);clip-path:polygon(0 0,100% 0,0 100%,0 100%)}
+  .orb.alex{left:228px;top:252px;width:62px;height:62px;background:radial-gradient(circle at 62% 66%,#ECC0CE,var(--rose) 60%);box-shadow:0 0 34px 12px rgba(199,106,134,.32);clip-path:polygon(100% 0,100% 100%,0 100%,100% 0)}
+  /* FIELD STATE: un-clipped full circles, flown to their positions */
+  .stage.expanded .orb.you {left:193px;top:105px;width:44px;height:44px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+  .stage.expanded .orb.alex{left:73px; top:213px;width:44px;height:44px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+  .orb .rim{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 1.5px 3px rgba(255,255,255,.5)}
+
+  /* copy + grid below (fade in) */
+  .below{position:absolute;left:20px;right:20px;top:340px;z-index:7;text-align:center;opacity:0;transform:translateY(8px);
+    transition:opacity var(--dur) var(--ease) .1s, transform var(--dur) var(--ease) .1s}
+  .stage.expanded .below{opacity:1;transform:translateY(0)}
+  .below .read{font-family:var(--disp);font-size:15px;font-weight:600;color:#fff}
+  .below .rsub{font-size:11px;color:var(--t2);margin-top:5px}
+  .below .gk{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--t3);margin:16px 0 8px}
+  .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+  .gd{aspect-ratio:1;border-radius:50%;background:linear-gradient(135deg,var(--a) 0 50%,var(--b) 50% 100%)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL · US EXPAND</div>
+  <h1>Widget → full graph</h1>
+  <p class="lede">Approach B: the couple is one split bead in the widget; tap and it <b>divides</b> — the halves un-clip into two orbs that fly to their real positions on the field, and the graph builds around them.</p>
+  <p class="hint">▶ Tap the phone to expand · tap again to collapse</p>
+
+  <div class="stage" id="stage" onclick="this.classList.toggle('expanded')">
+    <div class="notch"></div>
+
+    <!-- widget -->
+    <div class="widget">
+      <div class="k">The Pulse · together</div>
+      <div class="q">A wide day</div>
+      <div class="s"><span style="color:var(--cyan)">You — Expansive</span> · <span style="color:var(--rose)">Alex — Protective</span></div>
+    </div>
+
+    <!-- field -->
+    <div class="field">
+      <div class="zone z-exp"></div><div class="zone z-fri"></div><div class="zone z-pro"></div><div class="zone z-sov"></div>
+      <span class="ax ax-u">Charged</span><span class="ax ax-d">Depleted</span><span class="ax ax-l">Guarded</span><span class="ax ax-r">Open</span>
+    </div>
+    <svg class="capsule" viewBox="0 0 248 248">
+      <line x1="179" y1="70" x2="69" y2="179" stroke="url(#cg)" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+      <defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00C2FF"/><stop offset="1" stop-color="#C76A86"/></linearGradient></defs>
+    </svg>
+
+    <div class="tag you">You</div>
+    <div class="tag alex">Alex</div>
+
+    <!-- the two persistent orbs -->
+    <div class="orb you"><div class="rim"></div></div>
+    <div class="orb alex"><div class="rim"></div></div>
+
+    <!-- copy + grid -->
+    <div class="below">
+      <div class="read">A wide day between you</div>
+      <div class="rsub">You're in the Expansive space; Alex is in the Protective space.</div>
+      <div class="gk">Your last 30 check-ins · you / Alex</div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var pairs=[['--cyan','--indigo'],['--cyan','--cyan'],['--indigo','--indigo'],['--cyan','--rose'],['--cyan','--cyan'],['--indigo','--cyan'],['--cyan','--cyan'],['--cyan','--indigo'],['--magenta','--rose'],['--cyan','--cyan']];
+  var g=document.getElementById('grid'),html='';
+  for(var i=0;i<30;i++){var p=pairs[i%pairs.length];html+='<div class="gd" style="--a:var('+p[0]+');--b:var('+p[1]+')"></div>';}
+  g.innerHTML=html;
+</script>
+</body>
+</html>

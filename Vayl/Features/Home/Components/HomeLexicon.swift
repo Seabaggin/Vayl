@@ -39,9 +39,15 @@ struct HomeLexicon: View {
     @State private var resumeItem: DispatchWorkItem?
     @State private var kept = false
     @State private var shareImage: ShareImage?
-    /// Each page's measured content height, so the pager sizes to the CURRENT item instead
-    /// of being locked to one height for all of them (which left a gap under short items).
+    /// Each page's measured content height (keyed by index). Used to reserve the tallest so the
+    /// pager holds one stable height across the daily 5 rather than resizing per item.
     @State private var pageHeights: [Int: CGFloat] = [:]
+
+    /// The tallest measured page — the pager reserves this so it never resizes between the daily
+    /// 5. Falls back to `pageHeight` only for the first frame, before any measurement lands.
+    private var maxPageHeight: CGFloat {
+        pageHeights.values.max() ?? pageHeight
+    }
 
     // Feel values (tunable on device).
     private let interval:      TimeInterval = 12.0   // slow, ambient dwell (not a ticker)
@@ -171,9 +177,9 @@ struct HomeLexicon: View {
             let w = geo.size.width
             HStack(alignment: .top, spacing: 0) {
                 ForEach(Array(pages.enumerated()), id: \.offset) { idx, item in
-                    // Each page is its OWN content height (no fixed frame → the trailing
-                    // Spacer collapses → no empty gap under the CTA). Its height is measured
-                    // so the pager can size to the current item, not the tallest one.
+                    // Each page reports its OWN content height (measured below) so the pager can
+                    // reserve the TALLEST across the daily 5 and hold one stable height — it must
+                    // never resize as the rotation lands on a shorter or taller item.
                     page(item)
                         .frame(width: w, alignment: .top)
                         .background(
@@ -188,11 +194,13 @@ struct HomeLexicon: View {
             .contentShape(Rectangle())
             .gesture(swipe(width: w))
         }
-        // Size to the CURRENT page's measured height (animated on swipe), so the CTA always
-        // sits at the content's bottom with no fixed-height gap. `pageHeight` is now only the
-        // first-frame fallback before measurement lands.
-        .frame(height: pageHeights[index] ?? pageHeight, alignment: .top)
-        .animation(AppAnimation.spring, value: pageHeights[index])
+        // Size to the TALLEST measured page, never the current one. The daily 5 vary in length,
+        // and sizing per-page made the pager grow/shrink on every auto-advance — a visible jump
+        // that also shifted the bottom-anchored column. Reserving the max gives one stable height
+        // that always fits the longest page; shorter pages top-align with breathing room below.
+        // `pageHeight` is the first-frame fallback before measurement lands.
+        .frame(height: maxPageHeight, alignment: .top)
+        .animation(AppAnimation.spring, value: maxPageHeight)
         .onPreferenceChange(PageHeightKey.self) { pageHeights = $0 }
         .mask(
             LinearGradient(

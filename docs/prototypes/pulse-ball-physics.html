@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Pulse ball physics playground</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF; --magenta:#FF006A; --indigo:#8B5CF6; --rose:#C76A86;
+    --void:#0a0810; --t1:#E8E8F0; --t2:rgba(255,255,255,.65); --t3:rgba(255,255,255,.4); --t-muted:rgba(255,255,255,.2);
+    --glass:rgba(255,255,255,.06); --border:rgba(255,255,255,.1); --purple-light:#A78BFA;
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0b0910;color:var(--t1);font-family:var(--body)}
+  .wrap{max-width:900px;margin:0 auto;padding:32px 24px 64px}
+  .brand{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.34em;color:var(--t3);margin:0 0 6px}
+  h1{font-family:var(--disp);font-size:24px;font-weight:600;margin:0 0 4px}
+  .lede{font-size:13px;line-height:1.55;color:var(--t2);margin:0 0 22px;max-width:640px}
+  .stage{display:grid;grid-template-columns:360px 1fr;gap:32px;align-items:start}
+  @media(max-width:760px){.stage{grid-template-columns:1fr}}
+
+  /* field */
+  .fieldWrap{position:relative}
+  .field{position:relative;width:340px;height:340px;margin:0 auto;touch-action:none;cursor:grab}
+  .field.dragging{cursor:grabbing}
+  /* each colour fills its quadrant edge-to-edge; where they meet reads as the boundary */
+  .field{border-radius:20px;overflow:hidden}
+  .zone{position:absolute;width:50%;height:50%;pointer-events:none;filter:blur(7px)}
+  .z-exp{top:0;right:0;background:radial-gradient(130% 130% at 100% 0%,rgba(0,194,255,.20),rgba(0,194,255,.09))}
+  .z-fri{top:0;left:0;background:radial-gradient(130% 130% at 0% 0%,rgba(255,0,106,.16),rgba(255,0,106,.07))}
+  .z-pro{bottom:0;left:0;background:radial-gradient(130% 130% at 0% 100%,rgba(199,106,134,.16),rgba(199,106,134,.07))}
+  .z-sov{bottom:0;right:0;background:radial-gradient(130% 130% at 100% 100%,rgba(139,92,246,.18),rgba(139,92,246,.08))}
+  .qlab{position:absolute;font-family:var(--disp);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.14;pointer-events:none}
+  .q-exp{top:8px;right:10px}.q-fri{top:8px;left:10px}.q-pro{bottom:8px;left:10px}.q-sov{bottom:8px;right:10px}
+  .axlab{position:absolute;font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--t-muted);pointer-events:none}
+  .ax-up{top:-16px;left:50%;transform:translateX(-50%)}.ax-dn{bottom:-16px;left:50%;transform:translateX(-50%)}
+  .ax-l{left:-30px;top:50%;transform:translateY(-50%) rotate(-90deg)}.ax-r{right:-30px;top:50%;transform:translateY(-50%) rotate(90deg)}
+  .ball{position:absolute;width:56px;height:56px;border-radius:50%;left:0;top:0;will-change:transform;pointer-events:none;overflow:hidden}
+  .ball .spec{position:absolute;width:52%;height:40%;left:16%;top:14%;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.7),transparent 60%);mix-blend-mode:screen}
+  .ball .rim{position:absolute;inset:0;border-radius:50%;
+    box-shadow:inset 0 1.5px 3px rgba(255,255,255,.5),inset 0 -3px 8px rgba(0,0,0,.25)}
+
+  /* readout + chip */
+  .readout{margin-bottom:20px}
+  .space{font-family:var(--disp);font-size:22px;font-weight:600;line-height:1.1}
+  .sub{font-size:12px;color:var(--t2);margin-top:3px}
+  .coord{font-size:10px;color:var(--t3);margin-top:6px;font-variant-numeric:tabular-nums}
+  .chipLabel{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--t3);margin:0 0 8px}
+  .chip{display:flex;align-items:center;gap:12px;border-radius:16px;background:var(--glass);border:1px solid var(--border);padding:11px 14px}
+  .chip .cball{width:42px;height:42px;border-radius:50%;flex:none;position:relative;overflow:hidden}
+  .chip .ck{font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--purple-light);opacity:.85}
+  .chip .cs{font-family:var(--disp);font-size:15px;font-weight:600;margin-top:1px}
+  .chip .cd{font-size:9.5px;color:var(--t2);margin-top:1px}
+
+  /* questions */
+  .qblock{margin-top:24px}
+  .qh{font-size:11px;color:var(--t3);margin:0 0 7px}
+  .pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .pill{font-size:12px;color:var(--t2);border:1px solid var(--border);background:rgba(255,255,255,.03);border-radius:20px;padding:6px 12px;cursor:pointer;transition:all .15s}
+  .pill:hover{border-color:rgba(255,255,255,.28)}
+  .pill.on{color:#fff;border-color:transparent;background:linear-gradient(120deg,rgba(0,194,255,.35),rgba(255,0,106,.28))}
+
+  /* controls */
+  .panel{margin-top:26px;border-top:1px solid var(--border);padding-top:18px}
+  .panel h3{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--purple-light);margin:0 0 14px}
+  .ctl{display:grid;grid-template-columns:118px 1fr 56px;gap:10px;align-items:center;margin-bottom:11px}
+  .ctl label{font-size:11px;color:var(--t2)}
+  .ctl output{font-size:11px;color:var(--t1);font-variant-numeric:tabular-nums;text-align:right}
+  input[type=range]{width:100%;accent-color:var(--cyan)}
+  .row2{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:6px}
+  .toggle{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--t2);cursor:pointer}
+  .vals{margin-top:14px;font-size:11px;color:var(--t3);font-family:var(--body)}
+  .vals code{color:var(--cyan);font-size:11px}
+  .hint{font-size:11px;color:var(--t3);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL · PLAYGROUND</div>
+  <h1>The Pulse ball — feel the physics</h1>
+  <p class="lede">Answer the questions to drive the ball, or just <b>grab and throw it</b> around the grid. The ball floats, springs to where your answers land, is trapped inside the field, and its colour is the exact blend of wherever it sits. Dial the sliders until the motion feels right, then tell me the numbers and I'll bake them into Swift.</p>
+
+  <div class="stage">
+    <!-- LEFT: field -->
+    <div class="fieldWrap">
+      <div class="field" id="field">
+        <div class="zone z-exp"></div><div class="zone z-fri"></div><div class="zone z-pro"></div><div class="zone z-sov"></div>
+        <span class="qlab q-exp">Expansive</span><span class="qlab q-fri">Friction</span><span class="qlab q-pro">Protective</span><span class="qlab q-sov">Sovereign</span>
+        <span class="axlab ax-up">Charged</span><span class="axlab ax-dn">Depleted</span><span class="axlab ax-l">Guarded</span><span class="axlab ax-r">Open</span>
+        <div class="ball" id="ball"><div class="spec"></div><div class="rim"></div></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: readout + chip + questions + controls -->
+    <div>
+      <div class="readout">
+        <div class="space" id="spaceName">The Sovereign Space</div>
+        <div class="sub" id="spaceSub">Grounded · Secure</div>
+        <div class="coord" id="coord">energy .50 · openness .50</div>
+      </div>
+
+      <div class="chipLabel">How it reads on Home</div>
+      <div class="chip">
+        <div class="cball" id="chipBall"><div class="spec" style="left:16%;top:14%;width:52%;height:40%;position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.7),transparent 60%);mix-blend-mode:screen"></div></div>
+        <div>
+          <div class="ck">The Pulse</div>
+          <div class="cs" id="chipName">The Sovereign Space</div>
+          <div class="cd" id="chipSub">Grounded · Secure</div>
+        </div>
+      </div>
+
+      <div class="qblock">
+        <div class="qh">Q1 · nervous system → energy (up/down)</div>
+        <div class="pills" data-q="0" id="q0"></div>
+        <div class="qh">Q2 · focus → openness (left/right)</div>
+        <div class="pills" data-q="1" id="q1"></div>
+        <div class="qh">Q3 · loudest feeling → openness</div>
+        <div class="pills" data-q="2" id="q2"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Physics — dial the feel</h3>
+        <div class="ctl"><label>Spring response</label><input type="range" id="response" min="0.20" max="1.20" step="0.01" value="0.72"><output id="responseV">0.72s</output></div>
+        <div class="ctl"><label>Damping</label><input type="range" id="damping" min="0.55" max="1.00" step="0.01" value="0.96"><output id="dampingV">0.96</output></div>
+        <div class="ctl"><label>Float amount</label><input type="range" id="floatAmp" min="0" max="10" step="0.5" value="4"><output id="floatAmpV">4px</output></div>
+        <div class="ctl"><label>Float period</label><input type="range" id="floatPer" min="2.0" max="6.0" step="0.1" value="3.6"><output id="floatPerV">3.6s</output></div>
+        <div class="ctl"><label>Breathe</label><input type="range" id="breathe" min="0" max="0.08" step="0.005" value="0.03"><output id="breatheV">0.03</output></div>
+        <div class="row2">
+          <label class="toggle"><input type="checkbox" id="snap" checked> Discrete quadrant colour (uncheck to compare continuous blend)</label>
+        </div>
+        <div class="vals" id="vals"></div>
+        <div class="hint">Swift target: <code>.spring(response:, dampingFraction:)</code> for the move · a looping sine bob + scale-breathe for the idle float.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const CY=[0,194,255], MG=[255,0,106], IN=[139,92,246], RO=[199,106,134];
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const mix=(c1,c2,t)=>[lerp(c1[0],c2[0],t),lerp(c1[1],c2[1],t),lerp(c1[2],c2[2],t)];
+  const rgb=c=>`rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`;
+  const rgba=(c,a)=>`rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${a})`;
+  // bilinear blend by openness x (0..1) and energy y (0..1)
+  function fieldColor(x,y){
+    const top=mix(MG,CY,x);     // y=1: friction→expansive
+    const bot=mix(RO,IN,x);     // y=0: protective→sovereign
+    return mix(bot,top,y);
+  }
+  function quadrant(x,y){
+    if(y>=0.5) return x>=0.5?'expansive':'friction';
+    return x>=0.5?'sovereign':'protective';
+  }
+  const NAMES={expansive:['The Expansive Space','Connected · Adventurous',CY],
+               friction:['The Friction Space','Anxious · Defensive',MG],
+               sovereign:['The Sovereign Space','Grounded · Secure',IN],
+               protective:['The Protective Space','Overwhelmed · Need Space',RO]};
+
+  // questions (exact Vayl deltas)
+  const Q=[
+    {axis:'e',pills:[['Overwhelmed',-1],['Exhausted',-0.5],['Stable',0],['Recharging',0.5],['Energized',1]]},
+    {axis:'o',pills:[['Deeply Inward',-0.75],['Just Me',-0.25],['Balanced',0],['Reaching Out',0.75]]},
+    {axis:'o',pills:[['Defensive',-0.5],['Anxious',-0.5],['Content',0.5],['Secure',0.75],['Adventurous',1]]},
+  ];
+  const answers=[null,null,null];
+
+  const OFF=0.16; // min distance from a centre axis — guarantees you land in ONE space, never on a line
+  function offAxis(v){ if(v>0.5) return Math.max(v,0.5+OFF); if(v<0.5) return Math.min(v,0.5-OFF); return 0.5+OFF; }
+  function targetFromAnswers(){
+    let e=0.5,o=0.5,eDet=false,oDet=false;
+    if(answers[0]!=null){ e=0.5+answers[0]*0.5; eDet=true; }
+    const d2=answers[1], d3=answers[2];
+    if(d2!=null&&d3!=null){ o=0.5+(d2*0.6+d3*0.4)*0.5; oDet=true; }
+    else if(d2!=null){ o=0.5+d2*0.6*0.5; oDet=true; }
+    else if(d3!=null){ o=0.5+d3*0.4*0.5; oDet=true; }
+    if(eDet) e=offAxis(e);
+    if(oDet) o=offAxis(o);
+    return {x:clamp(o),y:clamp(e)};
+  }
+  const clamp=v=>Math.max(0.08,Math.min(0.92,v));
+
+  // build pills
+  Q.forEach((q,qi)=>{
+    const el=document.getElementById('q'+qi);
+    q.pills.forEach(([label,val])=>{
+      const b=document.createElement('div');
+      b.className='pill'; b.textContent=label;
+      b.onclick=()=>{
+        answers[qi]=val;
+        [...el.children].forEach(c=>c.classList.remove('on'));
+        b.classList.add('on');
+        const t=targetFromAnswers(); tx=t.x; ty=t.y; dragging=false;
+      };
+      el.appendChild(b);
+    });
+  });
+
+  // physics state (x=openness, y=energy, both 0..1; screen y is inverted at render)
+  let px=0.5,py=0.5,vx=0,vy=0,tx=0.5,ty=0.5;
+  let dispCol=[196,201,212];  // displayed colour, eased toward the target each frame (starts silver)
+  let landed=false;           // silver until the ball first lands in a space, then always coloured
+  let dragging=false;
+  const field=document.getElementById('field');
+  const ball=document.getElementById('ball');
+  const FS=340, R=28; // field size, ball radius
+
+  // controls
+  const get=id=>document.getElementById(id);
+  const P={response:get('response'),damping:get('damping'),floatAmp:get('floatAmp'),floatPer:get('floatPer'),breathe:get('breathe'),snap:get('snap')};
+  function syncOut(){
+    get('responseV').textContent=(+P.response.value).toFixed(2)+'s';
+    get('dampingV').textContent=(+P.damping.value).toFixed(2);
+    get('floatAmpV').textContent=(+P.floatAmp.value)+'px';
+    get('floatPerV').textContent=(+P.floatPer.value).toFixed(1)+'s';
+    get('breatheV').textContent=(+P.breathe.value).toFixed(3);
+    get('vals').innerHTML='current: <code>.spring(response: '+(+P.response.value).toFixed(2)+', dampingFraction: '+(+P.damping.value).toFixed(2)+')</code> · float <code>'+(+P.floatAmp.value)+'px / '+(+P.floatPer.value).toFixed(1)+'s</code> · breathe <code>'+(+P.breathe.value).toFixed(3)+'</code>';
+  }
+  Object.values(P).forEach(el=>el.addEventListener('input',syncOut)); syncOut();
+
+  // drag
+  function ptToField(ev){
+    const r=field.getBoundingClientRect();
+    const cx=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left;
+    const cy=(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top;
+    return {x:clamp(cx/FS), y:clamp(1-cy/FS)};
+  }
+  function down(ev){dragging=true;field.classList.add('dragging');const p=ptToField(ev);tx=p.x;ty=p.y;ev.preventDefault();}
+  function move(ev){if(!dragging)return;const p=ptToField(ev);tx=p.x;ty=p.y;ev.preventDefault();}
+  function up(){dragging=false;field.classList.remove('dragging');}
+  field.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  field.addEventListener('touchstart',down,{passive:false}); window.addEventListener('touchmove',move,{passive:false}); window.addEventListener('touchend',up);
+
+  // render loop with SwiftUI-equivalent spring
+  let last=performance.now();
+  function frame(now){
+    let dt=(now-last)/1000; last=now; if(dt>0.05)dt=0.05;
+    const resp=+P.response.value, zeta=+P.damping.value;
+    const w=2*Math.PI/resp;         // natural frequency
+    const k=w*w, c=2*zeta*w;        // stiffness, damping
+    // integrate both axes
+    let ax=-k*(px-tx)-c*vx; vx+=ax*dt; px+=vx*dt;
+    let ay=-k*(py-ty)-c*vy; vy+=ay*dt; py+=vy*dt;
+    px=Math.max(0.08,Math.min(0.92,px)); py=Math.max(0.08,Math.min(0.92,py));
+
+    // colour — silver ONLY to start; once the ball first lands in a space it stays coloured
+    const SILVER=[196,201,212];
+    const NEAR=0.05;
+    const inQuad=Math.abs(px-0.5)>=NEAR&&Math.abs(py-0.5)>=NEAR;
+    if(inQuad) landed=true;
+    const snap=P.snap.checked;
+    const qd=quadrant(px,py);
+    const target= !landed ? SILVER : (snap ? NAMES[qd][2] : fieldColor(px,py));
+    dispCol=mix(dispCol,target,0.16);
+    const col=dispCol;
+    const light=mix(col,[255,255,255],0.55), deep=mix(col,[0,0,0],0.42);
+    const grad='radial-gradient(circle at 38% 32%,'+rgb(light)+' 0%,'+rgb(col)+' 46%,'+rgb(deep)+' 92%)';
+
+    // idle float (render-only)
+    const t=now/1000;
+    const amp=+P.floatAmp.value, per=+P.floatPer.value, br=+P.breathe.value;
+    const bob=Math.sin(t*2*Math.PI/per)*amp;
+    const scale=1+br*Math.sin(t*2*Math.PI/(per*1.4));
+    const left=px*FS, top=(1-py)*FS;
+    ball.style.transform='translate('+(left-R)+'px,'+(top-R+bob)+'px) scale('+scale.toFixed(3)+')';
+    ball.style.background=grad;
+    ball.style.boxShadow='0 0 26px 4px '+rgba(col,0.45)+',0 0 8px 1px '+rgba(col,0.35);
+
+    // readouts
+    const [nm,sb]= !landed ? ['Finding your space','Answer to place your Pulse'] : NAMES[qd];
+    const nameCol= !landed ? SILVER : NAMES[qd][2];
+    get('spaceName').textContent=nm; get('spaceName').style.color=rgb(nameCol);
+    get('spaceSub').textContent=sb;
+    get('coord').textContent='energy '+py.toFixed(2)+' · openness '+px.toFixed(2);
+    get('chipName').textContent=nm; get('chipSub').textContent=sb;
+    const cb=document.getElementById('chipBall');
+    cb.style.background=grad; cb.style.boxShadow='0 0 14px 2px '+rgba(col,0.4);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

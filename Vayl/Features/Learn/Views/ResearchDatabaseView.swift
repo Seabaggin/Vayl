@@ -73,7 +73,7 @@ struct ResearchDatabaseView: View {
         .padding(.vertical, AppSpacing.sm)
         .padding(.horizontal, AppSpacing.md)
         .background(RoundedRectangle(cornerRadius: AppRadius.md)
-            .fill(Color.white.opacity(0.04))
+            .fill(AppColors.whisperFill)
             .overlay(RoundedRectangle(cornerRadius: AppRadius.md).stroke(AppColors.borderSubtle, lineWidth: 1)))
     }
 
@@ -89,7 +89,7 @@ struct ResearchDatabaseView: View {
                             .padding(.horizontal, AppSpacing.md)
                             .padding(.vertical, AppSpacing.sm)
                             .background(Capsule()
-                                .fill(on ? AppColors.spectrumPurple.opacity(0.2) : Color.white.opacity(0.03))
+                                .fill(on ? AppColors.spectrumPurple.opacity(0.2) : AppColors.whisperFill)
                                 .overlay(Capsule().stroke(on ? AppColors.spectrumPurple.opacity(0.45) : AppColors.borderSubtle, lineWidth: 1)))
                     }
                     .buttonStyle(PressableCardStyle())

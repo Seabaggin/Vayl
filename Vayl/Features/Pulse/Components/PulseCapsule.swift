@@ -69,8 +69,7 @@ struct PulseCapsule: View {
             .frame(width: g.width, height: g.height)
             .rotationEffect(g.angle)
             .position(x: g.midX, y: g.midY)
-            .shadow(color: AppColors.borderSubtle.opacity(0.3), radius: 12)
-            .opacity(0.82)                              // FEEL: tune vs map-pulse-us.html
+            .shadow(color: AppColors.pulseCapsuleGlow, radius: 12)   // soft periwinkle halo (map-pulse-us.html)
     }
 }
 

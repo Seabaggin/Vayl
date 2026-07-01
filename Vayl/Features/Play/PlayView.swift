@@ -48,15 +48,17 @@ struct PlayView: View {
             OnboardingAtmosphere(config: .stat).ignoresSafeArea()
 
             VStack(spacing: 0) {
-                PlayMastheadView()
-                    .padding(.horizontal, AppSpacing.lg)
-                    .padding(.top, AppSpacing.xs)
-
                 if store.isEmpty {
+                    PlayMastheadView()
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.top, AppSpacing.xs)
                     PlayEmptyState(message: store.loadError) { store.retry() }
                 } else {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: AppSpacing.xl) {
+                            PlayMastheadView()
+                                .padding(.horizontal, AppSpacing.lg)
+                                .padding(.top, AppSpacing.xs)
                             PlayHeroView(store: store, collapse: collapse)
                             DeckWallView(store: store, namespace: deckZoom)
                         }

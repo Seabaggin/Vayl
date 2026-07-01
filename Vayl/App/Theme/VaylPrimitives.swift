@@ -35,6 +35,7 @@ enum VaylPrimitives {
     static let purpleVivid    = UIColor(hex: "#9333EA")
     static let electricViolet = UIColor(hex: "#8B5CF6")
     static let spectrumBridge = UIColor(hex: "#8B6FD4") // mid-spectrum gradient bridge — cyan to magenta wordmark sweep
+    static let periwinkle     = UIColor(hex: "#82A0E6") // soft cornflower blue — Pulse capsule halo (map-pulse-us.html .capsule glow)
 
     static let magenta        = UIColor(hex: "#FF006A")
     static let magentaLight   = UIColor(hex: "#FF4D94")

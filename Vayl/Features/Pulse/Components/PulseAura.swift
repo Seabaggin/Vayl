@@ -7,8 +7,13 @@ import SwiftUI
 
 struct PulseAura: View {
 
-    let quadrant: PulseQuadrant
+    let ramp: AuraColors
     var size: CGFloat = 44
+    /// Wide ambient halo the orb casts beyond its tight core glow — as a multiple of `size`.
+    /// 0 (default) = no halo, so every existing caller (Map hero, field, history grid) is
+    /// unchanged. The Home widget sets this to wash the pane with the orb's colour; because
+    /// the halo lives here it stays in sync with the cycling dormant ramp automatically.
+    var haloSpread: CGFloat = 0
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -16,7 +21,19 @@ struct PulseAura: View {
     @State private var causticActive = false
     @State private var sweepActive   = false  // drives glassSweep via GlassSpecularSweep factory
 
-    private var tier: PulseCapacityColor { quadrant.capacityColor }
+    /// Colour the aura by its quadrant tier (the common case — every existing caller).
+    init(quadrant: PulseQuadrant, size: CGFloat = 44, haloSpread: CGFloat = 0) {
+        self.ramp = AuraColors(quadrant.capacityColor)
+        self.size = size
+        self.haloSpread = haloSpread
+    }
+
+    /// Colour the aura from an explicit ramp — used by the cycling dormant aura.
+    init(ramp: AuraColors, size: CGFloat = 44, haloSpread: CGFloat = 0) {
+        self.ramp = ramp
+        self.size = size
+        self.haloSpread = haloSpread
+    }
 
     var body: some View {
         ZStack {
@@ -28,7 +45,33 @@ struct PulseAura: View {
         .frame(width: size, height: size)
         .compositingGroup()
         .clipShape(Circle())
-        .shadow(color: tier.auraGlow, radius: size * 0.27)   // FEEL: tune on device
+        .shadow(color: ramp.glow, radius: size * 0.27)   // FEEL: tune on device — tight core glow
+        // Wide ambient halo — the Home widget's pane wash. A RadialGradient disc, NOT a .shadow
+        // (shadows have no spread, so the colour dilutes to nothing) and NOT a .blur() (a Gaussian
+        // blur is an offscreen pass — re-rasterising it every frame under the dormant orb's 60fps
+        // TimelineView blows the HomeDashboardView preview budget and burns GPU on device). The
+        // gradient maps cleanly onto shine.html's `box-shadow: 0 0 150px 60px` on a 66px orb: the
+        // solid-colour core stop = the 60px SPREAD, the fade to clear = the 150px blur. `haloSpread`
+        // is the disc diameter as a multiple of the orb (~2.8×). ramp.glow's ~.30 alpha ≈ the
+        // mockup's .32. No-op when haloSpread is 0. FEEL: tune.
+        .background {
+            if haloSpread > 0 {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            gradient: Gradient(stops: [
+                                .init(color: ramp.glow, location: 0.0),
+                                .init(color: ramp.glow, location: 0.34),  // solid core = box-shadow spread
+                                .init(color: .clear,    location: 1.0)     // soft falloff = the blur
+                            ]),
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: size * haloSpread * 0.5
+                        )
+                    )
+                    .frame(width: size * haloSpread, height: size * haloSpread)
+            }
+        }
         .scaleEffect(breatheScale)
         .ambientAnimation(
             .easeInOut(duration: AppAnimation.auraBreathe).repeatForever(autoreverses: true),
@@ -44,7 +87,7 @@ struct PulseAura: View {
         Circle()
             .fill(
                 RadialGradient(
-                    colors: [tier.auraLight, tier.auraCore, tier.auraDeep],
+                    colors: [ramp.light, ramp.core, ramp.deep],
                     center: .center,
                     startRadius: 0,
                     endRadius: size * 0.5
@@ -64,13 +107,13 @@ struct PulseAura: View {
             // Blob 3 — BOTTOM: tier core at 50% 80% (last CSS declaration)
             ctx.fill(Path(CGRect(origin: .zero, size: sz)),
                      with: .radialGradient(
-                        Gradient(colors: [tier.auraCore, .clear]),
+                        Gradient(colors: [ramp.core, .clear]),
                         center: CGPoint(x: w * 0.50, y: h * 0.80),
                         startRadius: 0, endRadius: w * 0.30))
             // Blob 2 — MIDDLE: tier light at 66% 60%
             ctx.fill(Path(CGRect(origin: .zero, size: sz)),
                      with: .radialGradient(
-                        Gradient(colors: [tier.auraLight, .clear]),
+                        Gradient(colors: [ramp.light, .clear]),
                         center: CGPoint(x: w * 0.66, y: h * 0.60),
                         startRadius: 0, endRadius: w * 0.28))
             // Blob 1 — TOP: white specular at 35% 38% (first CSS declaration)
@@ -127,6 +170,89 @@ struct PulseAura: View {
         breatheScale  = 1.045  // FEEL: tune on device
         causticActive = true
         sweepActive   = true
+    }
+}
+
+// MARK: - Aura colour ramp
+
+/// The four colours that paint a PulseAura. Build one from a quadrant tier, or interpolate
+/// between two ramps (for the cycling dormant aura).
+struct AuraColors {
+    let light: Color
+    let core:  Color
+    let deep:  Color
+    let glow:  Color
+
+    init(light: Color, core: Color, deep: Color, glow: Color) {
+        self.light = light; self.core = core; self.deep = deep; self.glow = glow
+    }
+
+    init(_ tier: PulseCapacityColor) {
+        self.init(light: tier.auraLight, core: tier.auraCore, deep: tier.auraDeep, glow: tier.auraGlow)
+    }
+
+    static func lerp(_ a: AuraColors, _ b: AuraColors, _ t: Double) -> AuraColors {
+        AuraColors(
+            light: a.light.blended(with: b.light, t),
+            core:  a.core.blended(with: b.core,  t),
+            deep:  a.deep.blended(with: b.deep,  t),
+            glow:  a.glow.blended(with: b.glow,  t)
+        )
+    }
+}
+
+private extension Color {
+    /// Linear RGBA blend toward another colour. t=0 → self, t=1 → other.
+    func blended(with other: Color, _ t: Double) -> Color {
+        let f = CGFloat(max(0, min(1, t)))
+        var r1: CGFloat = 0, g1: CGFloat = 0, b1: CGFloat = 0, a1: CGFloat = 0
+        var r2: CGFloat = 0, g2: CGFloat = 0, b2: CGFloat = 0, a2: CGFloat = 0
+        UIColor(self).getRed(&r1, green: &g1, blue: &b1, alpha: &a1)
+        UIColor(other).getRed(&r2, green: &g2, blue: &b2, alpha: &a2)
+        return Color(
+            red:     Double(r1 + (r2 - r1) * f),
+            green:   Double(g1 + (g2 - g1) * f),
+            blue:    Double(b1 + (b2 - b1) * f),
+            opacity: Double(a1 + (a2 - a1) * f)
+        )
+    }
+}
+
+// MARK: - Cycling dormant aura
+
+/// The D1 / empty-state aura: no check-in data yet, so it slowly tours all four spaces —
+/// alive and inviting instead of a dead shell. One calm aura under Reduce Motion.
+struct PulseCyclingAura: View {
+    var size: CGFloat = 56
+    var secondsPerSpace: Double = 3.6   // FEEL: tune on device
+    /// Forwarded to the inner PulseAura — see PulseAura.haloSpread. The halo cycles colour
+    /// in lockstep with the ramp because it's the same view.
+    var haloSpread: CGFloat = 0
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // Around the circumplex: Expansive → Sovereign → Protective → Friction → back.
+    private let ramps: [AuraColors] = [
+        AuraColors(.cyan), AuraColors(.indigo), AuraColors(.rose), AuraColors(.magenta),
+    ]
+
+    var body: some View {
+        if reduceMotion {
+            PulseAura(ramp: ramps[0], size: size, haloSpread: haloSpread)
+        } else {
+            TimelineView(.animation) { timeline in
+                PulseAura(ramp: rampAt(timeline.date), size: size, haloSpread: haloSpread)
+            }
+        }
+    }
+
+    private func rampAt(_ date: Date) -> AuraColors {
+        let n     = Double(ramps.count)
+        let phase = (date.timeIntervalSinceReferenceDate / secondsPerSpace).truncatingRemainder(dividingBy: n)
+        let i     = Int(phase)
+        let frac  = phase - Double(i)
+        let eased = frac * frac * (3 - 2 * frac)   // smoothstep — ease in/out between spaces
+        return AuraColors.lerp(ramps[i], ramps[(i + 1) % ramps.count], eased)
     }
 }
 

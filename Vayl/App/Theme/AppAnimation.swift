@@ -805,9 +805,10 @@ internal enum AppAnimation {
     /// 7.0s — Caustic drift, one leg (offsets alternate, autoreverses). FEEL: tune on device.
     static let auraCausticDrift: Double = 7.0
 
-    /// 17.0s — Glass sweep full non-reversing cycle. The strip travels the full frame;
-    /// the visible pass through the circle is ~10% of travel = ~1.7s. FEEL: tune on device.
-    static let auraGlassSweep: Double = 17.0
+    /// 8.5s — Glass sweep full non-reversing cycle. Mockup parity: the glint crosses the
+    /// circle about every 8.5s (map-pulse-final.html @keyframes sweep / .od note).
+    /// Was 17.0s; halved to match the mockup cadence. FEEL: confirm on device.
+    static let auraGlassSweep: Double = 8.5
 }
 
 // MARK: — Reduce Motion Helpers

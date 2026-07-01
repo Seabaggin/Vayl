@@ -81,9 +81,13 @@ struct MapUsLayer: View {
             .overlay {
                 GeometryReader { geo in
                     let size = geo.size.width
+                    // Aura diameter as a ratio of the field, not a fixed pt — matches the
+                    // mockup's 44/248 ≈ 0.177 so orbs (and the capsule derived from them)
+                    // scale with the full-width field instead of reading small.
+                    let auraSize = size * 0.177
                     ZStack {
                         PulseField(
-                            entries: fieldEntries,
+                            entries: fieldEntries(auraSize: auraSize),
                             size: size,
                             showAxisLabels: true
                         )
@@ -94,7 +98,8 @@ struct MapUsLayer: View {
                                 partnerPosition: partner,
                                 myColor:         myQuadrant.capacityColor.auraCore,
                                 partnerColor:    partner.quadrant.capacityColor.auraCore,
-                                fieldSize:       size
+                                fieldSize:       size,
+                                auraSize:        auraSize
                             )
                             auraLabel("You",
                                       position: myPosition,
@@ -113,12 +118,12 @@ struct MapUsLayer: View {
             }
     }
 
-    private var fieldEntries: [PulseFieldEntry] {
+    private func fieldEntries(auraSize: CGFloat) -> [PulseFieldEntry] {
         var entries: [PulseFieldEntry] = [
-            PulseFieldEntry(id: "me", position: myPosition, auraSize: 44)
+            PulseFieldEntry(id: "me", position: myPosition, auraSize: auraSize)
         ]
         if let partner = partnerPosition {
-            entries.append(PulseFieldEntry(id: "partner", position: partner, auraSize: 44))
+            entries.append(PulseFieldEntry(id: "partner", position: partner, auraSize: auraSize))
         }
         return entries
     }

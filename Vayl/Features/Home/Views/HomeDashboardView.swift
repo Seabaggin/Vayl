@@ -87,10 +87,6 @@ struct HomeDashboardView: View {
     /// Bumped to reset the carousel back to floating after "Settle in".
     @State private var deckReset = 0
 
-    /// Whether the Pulse graph is expanded. Tap the rail to toggle; the column reflows and
-    /// the ScrollView scrolls if it overflows — no scroll-linked sizing, no fit math.
-    @State private var pulseExpanded = false
-
     /// Presents the Pulse QRG. Owned here (not in HomePulseRail) so the sheet
     /// covers the whole screen rather than the nested rail's bounds.
     @State private var showPulseInfo = false
@@ -141,12 +137,6 @@ struct HomeDashboardView: View {
             // them again shrank the fill target ~176pt below the real viewport, which is what
             // floated the Lexicon above a fixed dead gap. The viewport IS screenHeight.
             let safeContentH = layout.screenHeight
-            // Tap-to-expand: the Pulse graph is a DISCRETE state, not a scroll-linked size.
-            // `expansion` is 0 or 1 (animated on tap). Expanding reflows the column and the
-            // ScrollView scrolls if it overflows. No fit constants, no snap, no minHeight
-            // floor — the engine owns the sizing, so it adapts to every screen for free.
-            let maxGraphHeight = layout.screenHeight * 0.38   // graph height when expanded
-            let expansion = pulseExpanded ? 1.0 : 0.0
             // Drops the pedestal light-strip to the hero card's lower edge so the deck
             // reads as levitating on a beam of light. The card is 190pt tall with an
             // 8pt top pad inside CardCarousel; the strip sits at its center, so ~155
@@ -225,11 +215,9 @@ struct HomeDashboardView: View {
                         // Collapses to its minimum when the graph expands and the view scrolls.
                         Spacer(minLength: heroIsolation)
 
-                        // The Pulse — a secondary hero. Collapsed it shows just its
-                        // tier-coloured header + the "+"; tap the rail to expand the graph.
+                        // The Pulse — a secondary, ambient-hero signal. Tapping it opens
+                        // the full Pulse on the Map; the pill (re-)runs a check-in.
                         pulseModule(
-                            expansion: expansion,
-                            maxGraphHeight: maxGraphHeight,
                             // The column's real inner width. An ENFORCED ceiling (not
                             // an exact width) so the long title scales-to-fit instead
                             // of reporting its unscaled ideal and blowing the card past
@@ -307,16 +295,11 @@ struct HomeDashboardView: View {
 
     // MARK: - Pulse (the secondary hero — tap the rail to expand the graph)
 
-    private func pulseModule(expansion: Double, maxGraphHeight: CGFloat, columnWidth: CGFloat) -> some View {
+    private func pulseModule(columnWidth: CGFloat) -> some View {
         HomePulseRail(
-            onTap: { withAnimation(AppAnimation.spring) { pulseExpanded.toggle() } },
-            onCheckIn: { showPulseCheckIn = true },
-            onInfo: { showPulseInfo = true },
-            expansion: expansion,
-            maxGraphHeight: maxGraphHeight
+            onTap: { onPulseTap?() },
+            onCheckIn: { showPulseCheckIn = true }
         )
-        // Animate the graph growth + the column reflow when the expanded state flips.
-        .animation(AppAnimation.spring, value: expansion)
         // Cap at the column's inner width so the long title scales-to-fit rather than
         // forcing the card wider than the viewport (which a vertical ScrollView would
         // then pin leading, running the right edge off-screen). maxWidth = ceiling, so

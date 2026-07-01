@@ -112,17 +112,9 @@ struct HolographicTextCore: View {
             // Specular highlight — light catching the surface.
             base.foregroundStyle(.clear)
                 .overlay {
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear,                            location: 0.00),
-                            .init(color: .clear,                            location: 0.30),
-                            .init(color: .white.opacity(specPrimary),       location: 0.38),
-                            .init(color: .white.opacity(0),                 location: 0.42),
-                            .init(color: .clear,                            location: 0.50),
-                            .init(color: .white.opacity(specSecondary),     location: 0.60),
-                            .init(color: .clear,                            location: 0.65),
-                            .init(color: .clear,                            location: 1.00),
-                        ],
+                    LinearGradient.glassSpecular(
+                        primary:    specPrimary,
+                        secondary:  specSecondary,
                         startPoint: UnitPoint(x: -0.1, y:  1.0),
                         endPoint:   UnitPoint(x:  1.1, y: -0.25)
                     )

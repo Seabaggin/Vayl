@@ -196,7 +196,7 @@ struct PairingInviteView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
-                .fill(isLight ? AppColors.cardBackground : Color.white.opacity(0.04))
+                .fill(isLight ? AppColors.cardBackground : AppColors.whisperFill)
                 .overlay(
                     RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
                         .strokeBorder(

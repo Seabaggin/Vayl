@@ -112,12 +112,10 @@ struct CardCarousel: View {
             }
 
             DispatchQueue.main.async {
-                DispatchQueue.main.async {
-                    // Float loop — 3.2s intentional, slightly below ambientDrift (4.0s).
-                    // Gives card a faster, more responsive idle breath.
-                    withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
-                        floatOffset = -6
-                    }
+                // Float loop — 3.2s intentional, slightly below ambientDrift (4.0s).
+                // Gives card a faster, more responsive idle breath.
+                withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
+                    floatOffset = -6
                 }
             }
 
@@ -178,7 +176,7 @@ struct CardCarousel: View {
 
     private var dimmingBackdrop: some View {
         Rectangle()
-            .fill(Color.black.opacity(dimOpacity ?? (isLight ? 0.35 : 0.75)))
+            .fill(dimOpacity.map { Color.black.opacity($0) } ?? AppColors.scrimHeavy)
             .frame(width: 3000, height: 3000)
             .opacity((phase == .floating || phase == .spread) ? 0 : 1)
             .allowsHitTesting(phase != .floating && phase != .spread)

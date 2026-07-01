@@ -25,7 +25,7 @@ struct InteractiveField: View {
         .padding(.horizontal, AppSpacing.md)
         .padding(.vertical, AppSpacing.sm)
         .background(
-            colorScheme == .dark ? .white.opacity(0.03) : AppColors.cardBackground
+            colorScheme == .dark ? AppColors.whisperFill : AppColors.cardBackground
         )
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
         .overlay(

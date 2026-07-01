@@ -318,7 +318,7 @@ final class ThreeCardFanController {
             // positions: reveal the backs, hold one frame so they paint, then clear the
             // sprites. The flourish runs entirely on the SwiftUI cards after this.
             showSwiftUIBacks()
-            try? await Task.sleep(for: .milliseconds(32))
+            try? await Task.sleep(for: .milliseconds(50))
             guard !Task.isCancelled else { return }
             for i in 0..<3 { flightScene.clearCard(id: "monte-\(i)") }
             // Ribbon-spread turnover on the SwiftUI cards: spread → sweep-turn → re-collect.

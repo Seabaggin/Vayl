@@ -234,10 +234,16 @@ final class DesireRevealStore: Identifiable {
     /// open. M5 (the dedicated paywall surface) can replace this entry with a richer sheet.
     func unlockAll() {
         Task {
-            guard let coupleId = appState.coupleId else { return }
             guard await entitlements.purchase() else { return }
+            #if DEBUG
+            if appState.coupleId == nil {
+                matches = matches.map { RevealMatch(id: $0.id, itemName: $0.itemName, itemCategory: $0.itemCategory, alignment: $0.alignment, isLocked: false, bridgeCardId: $0.bridgeCardId, isFreeReveal: $0.isFreeReveal) }
+                beatPhase = .revealed
+                return
+            }
+            #endif
             await load()
-            // Stamp full-seen now that the whole map is accessible.
+            guard let coupleId = appState.coupleId else { return }
             Task { try? await service.markRevealSeen(coupleId: coupleId, full: true) }
         }
     }
@@ -278,6 +284,12 @@ final class DesireRevealStore: Identifiable {
         showPaywall = false
         beatPhase = .revealed
         Task {
+            #if DEBUG
+            if appState.coupleId == nil {
+                matches = matches.map { RevealMatch(id: $0.id, itemName: $0.itemName, itemCategory: $0.itemCategory, alignment: $0.alignment, isLocked: false, bridgeCardId: $0.bridgeCardId, isFreeReveal: $0.isFreeReveal) }
+                return
+            }
+            #endif
             await load()
             guard let coupleId = appState.coupleId else { return }
             Task { try? await service.markRevealSeen(coupleId: coupleId, full: true) }
@@ -287,10 +299,10 @@ final class DesireRevealStore: Identifiable {
     // MARK: - Preview seam
 
     #if DEBUG
-    static func previewStore(matches: [RevealMatch], phase: Phase = .ready) -> DesireRevealStore {
+    static func previewStore(matches: [RevealMatch], phase: Phase = .ready, entitlements: EntitlementStore? = nil) -> DesireRevealStore {
         let store = DesireRevealStore(
             appState: AppState(),
-            entitlements: EntitlementStore(modelContainer: .previewContainer, appState: AppState())
+            entitlements: entitlements ?? EntitlementStore(modelContainer: .previewContainer, appState: AppState())
         )
         store.matches = matches
         store.phase = phase

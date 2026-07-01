@@ -85,6 +85,9 @@ final class CardFlightEngine {
         let cardW = AppLayout.obTableCardWidth(in: screenSize.width)  * AppLayout.obTableCardCinematicScale
         let cardH = AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale
 
+        // Yield before rasterizing so any in-flight SwiftUI animation frames
+        // are committed first — prevents ImageRenderer from blocking mid-frame.
+        await Task.yield()
         let renderer = ImageRenderer(
             content: VaylCardBack().frame(width: cardW, height: cardH)
         )

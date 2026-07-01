@@ -29,4 +29,14 @@ enum AppTab: String, CaseIterable, Hashable {
         case .settings: return "Settings"
         }
     }
+
+    var filledIcon: String {
+        switch self {
+        case .home:     return "house.fill"
+        case .play:     return "play.fill"
+        case .map:      return "map.fill"
+        case .learn:    return "books.vertical.fill"
+        case .settings: return "gearshape.fill"
+        }
+    }
 }

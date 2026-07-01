@@ -219,6 +219,16 @@
       <span class="howto-step"><b>④</b> Build to the done-condition, on device</span>
       <span class="howto-step"><b>⑤</b> Mark <code>done</code> + log <code>actual</code> hours → date re-derives</span>
     </div>
+    <div class="playbook-rules" style="margin:14px 0;padding:14px 16px;border:1px solid color-mix(in srgb, var(--purple) 40%, transparent);border-radius:12px;background:color-mix(in srgb, var(--purple) 7%, transparent)">
+      <div style="font-weight:700;letter-spacing:.02em;margin-bottom:8px">Finish-first discipline <span style="color:var(--text-3);font-weight:400;font-size:12px">· adopted 2026-06-30</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;line-height:1.5;margin-bottom:10px">
+        <span><b style="color:var(--cyan)">WIP = 1</b> — one segment in flight, the only thing you touch</span>
+        <span><b style="color:var(--cyan)">Finish-first</b> — nothing new until the current is <code>done</code> (device + feel, not mockup-perfect)</span>
+        <span><b style="color:var(--cyan)">Off-segment urges</b> → <code>docs/parking-lot.md</code>, keep moving</span>
+      </div>
+      <div style="font-size:13px;line-height:1.7"><b>Build order:</b>&nbsp; 1 Pairing ✓ → 2 Desire Map → 3 Card Game → 4 Map → 5 Settings → 6 Monetization → 7 Content → 8 Verify → 9 App Store</div>
+      <div style="font-size:12px;color:var(--text-3);margin-top:6px">Monetization threads through the surfaces: <b>M2</b> with the verifying sweep · <b>M5</b> with the Desire Map · <b>M4</b> with the Card Game · <b>M3</b> with the tab-cohesion pass. Only App Store submission (A1–A4) is a true end block. Today: finish Pulse, then the verifying sweep (DA · M2 · T2 · T4) — all code-complete, awaiting your device pass.</div>
+    </div>
     <div class="proj" id="projection"></div>
     <div class="rail" id="rail"></div>
     <div class="legends" id="legends"></div>
@@ -260,7 +270,7 @@
    ========================================================================== */
 const BUILD_ROADMAP = {
   meta: {
-    updated: "2026-06-25",
+    updated: "2026-06-30",
     deadline: "2026-07-24",        // hard submit target — shown for reference, not used to schedule
     workHoursPerDay: 4,            // your focused hours/day toward Vayl
     workDaysPerWeek: 6,            // productive days/week (calendar conversion)
@@ -486,20 +496,25 @@ const BUILD_ROADMAP = {
         {
           id: "D4", title: "Reveal / compare UI — celebration of alignment + request", status: "inprogress", est: 12,
           oneThing: "The magic moment — a celebration of where the couple aligns, never a table of raw answers.",
-          build: "ACTIVE BUILD 2026-06-25 — see `docs/handoffs/2026-06-25-desire-map-implementation-handoff.md` + the Segment 1 spec (`docs/superpowers/specs/2026-06-24-desire-reveal-segment1-build.md`): being built into the 3-beat choreography + `PaywallSheet(entry:.reveal)` hosted as a custom bottom sheet inside a `.vaylCover` + unlock-in-place + the warm-biased card-face flame (segment DC). The hidden-convo 'request' row is REMOVED from the reveal (deferred to the Vault/consent segment). STUB SCAFFOLD BUILT (2026-06-17): `DesireRevealStore` (reads `fetchMatches` — alignment only, no raw values; resolves the free/locked split via `EntitlementStore.isCore`) + `DesireRevealView` (header · unlocked match cards w/ 'Mutual'/'Worth Exploring' + celebration line · locked/blurred teaser + unlock CTA · request stub · loading/empty/error), every state + #Previews; wired into HomeRouterView's `matchReady` onReveal + `seeReveal` step via an `activeReveal` fullScreenCover. Compiles clean. REMAINING (Bryan styles): feel/composition/motion pass; the 'what does a request DO' decision; M5 unlock wiring (StoreKit → grant-entitlement); bridge-card nav; D5 Map-tab hosting; `.vaylCover` migration when the nav spec lands. Original intent (unchanged): CELEBRATES alignment (wholehearted + 1–2 off), hides gap-3, request shows only the user's OWN answer, couple-symmetric free→1→buy→all.",
+          build: "SUBSTANTIALLY BUILT 2026-06-28. Full constellation reveal + purchase flow device-verified. Built: `DesireRevealStore` (full — 3-beat ceremony BeatPhase state machine, auto-advance timers, `unlockAll()`/`handleUnlockSuccess()`/`handleTransactionUpdate()` wired to real `EntitlementStore.purchase()`; `RevealMatch` model); `DesireRevealView` (constellation sky · beat dots · per-beat bottom section · `_LockedSection` blurred teasers · star detail sheet · full-map list sheet · PaywallSheet host · post-unlock caption; all 4 states + #Previews); `DesireConstellationView` (MST edge drawing, per-star ignite animation, locked/free cadence, hero slot, Reduce Motion safe); `ConstellationLayout` (deterministic layout seeded by coupleId); `CeremonyVariant` (Gather/Sweep/Constellate, seeded by coupleId); `DesireStarDetailSheet` + `DesireMapListSheet` + `DesireStarView` + `DesireMatchDetail`. PaywallSheet wired at `entry:.reveal`; `handleUnlockSuccess()` flips all stars lit in-place. Debug test harness working on device (debug variant buttons + previewStore with real entitlements injection). DEVICE-VERIFIED 2026-06-28: local StoreKit purchase → `localOwnsCore` flips → beat ceremony → paywall → purchase succeeds → all matches unlock in-place. REMAINING: (Bryan) styling/feel/motion pass in Xcode canvas; (both) verify server grant with real paired account + None StoreKit config; bridge-card nav; D5 Map-tab hosting.",
           feel: "Held-breath unveil; spectrum prism; warm + celebratory — 'here's where you meet,' never a scorecard. The asymmetric Option-C waiting/7-day/nudge is DEFERRED (M6) — but the model scaffolds it (`DesireMapStatus.waitingStateSince`), so don't delete that.",
           done: "Two rated partners → a reveal that celebrates alignment; 1 free match visible, rest gated (M5); hidden mismatches show a 'request' affordance + the user's own answer only.",
           constraints: "Reveal feature + `DesireMapState`. Refine D3's match tiers here (add gap 1–2). Partner raw values never reach the client. No Map-tab housing yet.",
-          risk: "Needs a feel-reference before Swift. NEVER render the partner's raw answer (not even on request) — show the user's own answer + a request. Cross-device simultaneity needs realtime — may simplify to single-device for V1.",
+          risk: "NEVER render the partner's raw answer (not even on request) — show the user's own answer + a request. Cross-device simultaneity needs realtime — may simplify to single-device for V1.",
           refs: [],
           checklist: [
-            { group: "Feel-first", done: false, text: "Prototype the reveal motion (held-breath prism unveil) BEFORE Swift" },
-            { group: "Model", done: true, text: "Celebrate alignment (wholehearted + 1–2 off); hide gap-3 mismatches; never show the partner's raw answer — stub renders alignment-only matches + celebration lines" },
-            { group: "Front-end", done: false, text: "Hidden mismatch → a REQUEST affordance + the user's OWN answer only — affordance stubbed; the request FLOW is the open decision" },
-            { group: "Front-end", done: true, text: "1 free match shown; rest gated in M5 — stub shows 1 free + blurred locked teasers + unlock CTA (M5 wires the purchase)" }
+            { group: "Feel-first", done: true, text: "Constellation ceremony prototyped + feel-approved; DesireConstellationView + CeremonyVariant + ConstellationLayout built in Swift" },
+            { group: "Model", done: true, text: "Celebrate alignment (wholehearted + 1-2 off); hide gap-3 mismatches; never show the partner's raw answer — alignment-only matches + celebration lines" },
+            { group: "Front-end", done: true, text: "3-beat ceremony (beat1/beat2/beat3/revealed) with auto-advance timers + tap-to-advance; Reduce Motion safe" },
+            { group: "Front-end", done: true, text: "1 free match shown; rest blurred teasers; PaywallSheet wired at entry:.reveal; unlock flips all stars lit in-place" },
+            { group: "Front-end", done: true, text: "Star detail sheet + full-map list sheet + paywall host — all wired" },
+            { group: "Device", done: true, text: "Local StoreKit purchase flow verified on device 2026-06-28 — buy → unlock in-place confirmed" },
+            { group: "Front-end", done: false, text: "Bryan styling/feel/motion pass in Xcode canvas" },
+            { group: "Device", done: false, text: "Server grant verified — real paired account + None StoreKit config → entitlement row in DB" },
+            { group: "Front-end", done: false, text: "Hidden mismatch REQUEST affordance flow (open decision: companion card / partner ping / own-answer only)" },
+            { group: "Front-end", done: false, text: "Bridge-card nav (tap star → companion card)" }
           ],
           questions: [
-            { lens: "design", who: "bryan", q: "Reveal visual — blended prism / progressive unveil? (needs a feel reference)" },
             { lens: "dod", who: "bryan", q: "What does a 'request' DO — open a conversation/companion card, ping the partner, or just unlock the user's own framing? Define the request flow." }
           ]
         },
@@ -589,10 +604,10 @@ const BUILD_ROADMAP = {
 
     /* ════════════════ PHASE 3 — MONETIZATION ════════════════ */
     {
-      id: "money", n: 3, title: "Monetization — couple-core",
-      status: "next",
+      id: "money", n: 6, title: "Monetization — threaded through the surfaces",
+      status: "later",
       goal: "Free-tier gating + $24.99 lifetime (one purchase → BOTH partners unlock) live, with the two conversion moments. Couple-symmetric only for V1.",
-      why: "The reveal is the primary conversion event; this turns the emotional peak into revenue. Couple-core only — asymmetric / multi-connection deferred (M6).",
+      why: "Not a standalone block: its segments ride with the features they gate. M2 (StoreKit) in the verifying sweep, M5 (reveal gate) with the Desire Map, M4 (Deck 2 unwrap) with the Card Game, M3 (free-tier gates) with the tab-cohesion pass. The reveal is still the primary conversion event; this phase just tracks the money pieces threaded through the surfaces above.",
       visual: {
         text: "Paywall = void + spectrum + glass; copy is always 'own your experience' / 'yours forever' — NEVER 'pay to unlock.' Desire before friction: the ceremony/reveal plants the want before the ask. Locked states read as 'not yet,' never 'denied.' Lock In and Learn are NEVER paywalled. → If StoreKit / App Store Connect are new to you, follow the linked zero-to-shipped guide step by step.",
         refs: [
@@ -619,15 +634,24 @@ const BUILD_ROADMAP = {
         {
           id: "M2", title: "StoreKit 2 purchase + restore", status: "verifying", est: 12, cal: false,
           oneThing: "A real $24.99 lifetime purchase unlocks `core`; restore works on reinstall.",
-          build: "CLIENT LAYER BUILT (2026-06-17, compiles clean): `StoreKitService` (load `com.vayl.core.lifetime`, `purchase()` → verified `Transaction` + JWS, `currentEntitlements`, `Transaction.updates` listener, `restore()` via `AppStore.sync()`); `EntitlementStore` gains `bootstrap()`/`purchase()`/`restore()` + `isCore` = server couple-tier OR local StoreKit ownership (guide Part D — buyer offline-safe, partner via server); a verified purchase pushes the JWS to `grant-entitlement` (writes the couple row → partner unlocks). D4 reveal's unlock CTA now runs `purchase()`. Local `Vayl.storekit` added for simulator purchase/restore. REMAINING (yours): create the ASC product + price tier; select `Vayl.storekit` in the scheme (Edit Scheme → Run → Options → StoreKit Configuration); a device sandbox purchase test; + the server-verification-posture decision (Q below); + wire the PaywallSheet footer Restore button (`restorePurchases` stub, `TODO(monetization)`) to the built `restore()`. Guide: storekit-appstore-connect-guide.md.",
+          build: "CLIENT LAYER BUILT + DEVICE-VERIFIED 2026-06-28. `StoreKitService` (load/purchase/restore/Transaction.updates + JWS extraction); `EntitlementStore.bootstrap()`/`purchase()`/`restore()`; `isCore` = server couple-tier OR local StoreKit ownership (buyer offline-safe, partner via server); purchase pushes JWS to `grant-entitlement` → couple row → partner unlocks. ASC product `com.vayl.core.lifetime` created ($24.99 Non-Consumable). Local `Vayl.storekit` sim config added. PaywallSheet Restore/Terms/Privacy wired (no longer stubs). SERVER POSTURE DECIDED 2026-06-28: Option B — trust StoreKit 2 on-device `.verified` + write couple row server-side (re-verify as post-launch fast-follow); `grant-entitlement` v6 deployed with Option B decode path. LOCAL PURCHASE VERIFIED: Vayl.storekit → purchase → `localOwnsCore` flips → reveal unlocks in-place on device. SERVER GRANT REMAINING: needs a real paired account (not Vayl.storekit which generates transaction_id='0' that conflicts with the M1 test row). To verify: sign into Vayl with paired account, StoreKit config = None, complete purchase, check entitlements table for new row + couple access_tier = core.",
           feel: "The moment of purchase is the moment of commitment — keep it calm and certain.",
-          done: "A sandbox purchase unlocks `core` on device; restore works after a reinstall.",
-          constraints: "StoreKit service + App Store Connect product. No gates, no conversion UI yet. (Estimated at full cost — new domain, not rescaled by your velocity factor.)",
-          risk: "Zero StoreKit in the codebase today; you're new to StoreKit + ASC. The guide de-risks this — don't freehand it.",
+          done: "A sandbox purchase unlocks `core` on device; restore works after a reinstall; partner reads `core` from the couple row.",
+          constraints: "StoreKit service + App Store Connect product. No gates, no conversion UI yet.",
+          risk: "Vayl.storekit generates transaction_id='0' — conflicts with M1 test row on upsert. Always use StoreKit config = None for server-path verification.",
           refs: [{ label: "★ StoreKit & ASC guide", href: "storekit-appstore-connect-guide.md" }],
+          checklist: [
+            { group: "Client", done: true, text: "`StoreKitService` + `EntitlementStore.bootstrap/purchase/restore` built + compiles" },
+            { group: "Client", done: true, text: "Local `Vayl.storekit` sim config; `isCore` = server tier OR local StoreKit ownership" },
+            { group: "ASC", done: true, text: "ASC product `com.vayl.core.lifetime` created ($24.99 Non-Consumable)" },
+            { group: "Server", done: true, text: "Option B posture decided + deployed: grant-entitlement v6 decodes JWS payload, trusts StoreKit .verified" },
+            { group: "Device", done: true, text: "Local purchase verified on device: buy → localOwnsCore → reveal unlocks in-place" },
+            { group: "Device", done: false, text: "Server grant verified: sign into Vayl (paired account) + StoreKit config = None → purchase → entitlements row written + couples.access_tier = core" },
+            { group: "Device", done: false, text: "Partner unlock verified: second device reads core from couple row after buyer's purchase" },
+            { group: "Device", done: false, text: "Restore verified: reinstall → restore purchase → isCore = true" }
+          ],
           questions: [
-            { lens: "deps", who: "bryan", q: "Is `com.vayl.core.lifetime` + its price tier created in App Store Connect yet? (guide walks the setup)" },
-            { lens: "dod", who: "bryan", q: "SERVER-VERIFICATION POSTURE (decide for V1): (A) the edge fn RE-VERIFIES the StoreKit 2 JWS server-side [your M1 pick — strongest; needs Apple root certs + a device sandbox txn to test; grant-entitlement's Apple path is built FAIL-CLOSED awaiting it], or (B) TRUST StoreKit 2's on-device `.verified` + write the couple row server-side [the guide's V1 rec — ships now, re-verify as a fast-follow]. Buyer-side unlock already works either way via local StoreKit ownership; this only governs the server grant that unlocks the PARTNER." }
+            { lens: "dod", who: "bryan", q: "RESOLVED 2026-06-28 — Option B (trust StoreKit 2 .verified + write couple row server-side). Upgrade to Option A (full JWS re-verify) as a post-launch fast-follow." }
           ]
         },
         {
@@ -658,14 +682,21 @@ const BUILD_ROADMAP = {
           ]
         },
         {
-          id: "M5", title: "Conversion moment 2 — Desire-Map reveal gate", status: "todo", est: 8,
+          id: "M5", title: "Conversion moment 2 — Desire-Map reveal gate", status: "inprogress", est: 8,
           oneThing: "Free couple sees 1 match + blurred rest; buying unlocks all for both.",
-          build: "Reusable `PaywallSheet` UI BUILT + polished (2026-06-20, committed `a5faeff`): `Features/Monetization/Views/PaywallSheet.swift` is ONE Core-scoped sheet for all three doors (reveal / Settings / Play locked-deck), on the OB custom-bottom-sheet chrome. Content-height via `.fixedSize` with a `ViewThatFits` scroll backstop for large Dynamic Type; paywall-only spectrum header bloom (from the shared `GlowOrb`); curiosity-payoff hero ('Made to take your curiosity somewhere deeper. Follow it together, and see where it leads.'); the one-time/forever terms live ONLY in the price row (de-duped); VoiceOver labels on the info disclosure + badge + footer; footer Restore/Terms/Privacy are tappable STUBS (greppable `TODO(monetization)`/`TODO(legal)`; no legal URLs exist yet, task chip planted). Spec: ../superpowers/specs/2026-06-19-desire-reveal-paywall-design.md. M5 ITSELF = the GATE that presents this sheet: sits on the D4 reveal mechanic; reveal exactly ONE mutual match free (`isFreeReveal == true`, server-set); blur the rest with the count ('You have X more mutual matches'); 3-beat choreography (match lands → gap opens → sheet); on purchase, `grant-entitlement` flips `couples.access_tier` → both partners' full reveal auto-shows via the rule `shown = isCore || isFreeReveal` (no `fullRevealUnlocked`/`matches_revealed` to set — those columns were dropped in DR, 2026-06-26; per-user 'Seen' lives in `desire_reveal_progress`).",
+          build: "PAYWALL UI FULLY BUILT 2026-06-28: `PaywallSheet.swift` — ONE Core-scoped sheet for all three doors (reveal / Settings / Play locked-deck); content-height `.fixedSize` + `ViewThatFits` scroll backstop; spectrum header bloom; Restore/Terms/Privacy wired to real `EntitlementStore.restore()` + legal sheet; VoiceOver labels complete. `PaywallSheet(entry:.reveal)` already wired into D4's `DesireRevealView` (auto-rises at beat3, `onUnlocked` → `handleUnlockSuccess()`). GATE IS LIVE: beat ceremony ends at beat3 → paywall auto-rises; `isFullyUnlocked = entitlements.isCore` bypasses beats 2-3 for Core couples; `shown = isCore || isFreeReveal` rule enforced in `DesireRevealStore.load()`. REMAINING: legal URLs (Terms/Privacy — no URLs exist yet); real couple end-to-end test (both partners rated → 1 free match + gated rest → purchase → both unlock); D5 Map-tab surface for the reveal (T3).",
           feel: "The blur is longing, not a wall — you can feel there's more behind it.",
           done: "A free couple sees 1 match + blurred rest; buying unlocks all matches for both partners.",
           constraints: "Reveal gate only. Do NOT build the asymmetric Option-C waiting/7-day/nudge here — that's M6.",
-          risk: "Depends on D4. Cross-device simultaneous full reveal needs realtime — single-device may be acceptable for launch.",
+          risk: "Cross-device simultaneous full reveal needs realtime — single-device acceptable for launch.",
           refs: [],
+          checklist: [
+            { group: "UI", done: true, text: "`PaywallSheet.swift` built — all 3 doors, content-height, spectrum bloom, VoiceOver, Restore/Terms/Privacy wired" },
+            { group: "Gate", done: true, text: "Beat ceremony → beat3 → paywall auto-rises; Core couples skip to revealed; `shown = isCore || isFreeReveal` enforced in load()" },
+            { group: "Purchase", done: true, text: "`onUnlocked` → `handleUnlockSuccess()` → all stars flip lit in-place (device-verified 2026-06-28)" },
+            { group: "Legal", done: false, text: "Terms + Privacy URLs (no legal URLs exist yet — needed before App Store submission)" },
+            { group: "Device", done: false, text: "Real couple end-to-end: both partners rated → 1 free match + gated rest → purchase → BOTH partners see full reveal" }
+          ],
           questions: [
             { lens: "dod", who: "bryan", q: "Simultaneous cross-device full reveal in V1 (needs realtime), or single-device acceptable for launch?" }
           ]
@@ -689,7 +720,7 @@ const BUILD_ROADMAP = {
 
     /* ════════════════ PHASE 4 — CARD SESSION SYSTEM ════════════════ */
     {
-      id: "sessions", n: 4, title: "Card Session System — the core loop",
+      id: "sessions", n: 3, title: "Card Session System — the core loop",
       status: "next",
       goal: "The couple curated card session works end-to-end on two devices: server-authoritative + real-time, from the Airlock 'both here' handshake through a synced player to post-session reflection.",
       why: "This IS the product's core loop — the actual 'sitting' the whole app orchestrates toward — and it was nearly missed in the plan. The data layer already exists; the real work is the experience flow + the two-device real-time tissue, which is NEW to this stack (it has only ever polled). So the build de-risks real-time FIRST, then layers UI, Player, Builder, post-session.",
@@ -744,9 +775,9 @@ const BUILD_ROADMAP = {
           ]
         },
         {
-          id: "S3", title: "Entry + Airlock UI", status: "verifying", est: 10,
+          id: "S3", title: "Entry + Airlock UI", status: "todo", est: 10,
           oneThing: "Real entry from Home / Deck Library + the Lobby / Airlock real UI (bandwidth + consent).",
-          build: "Entry on Home / Deck Library (`fetchOpenSession` on `.task`/`scenePhase==.active`; present via `.sheet(item:)` per `HomeRouterView`) + a partner pending-session banner. Replace the debug UI with `SessionLobbyView` (consent to the session shape) + `AirlockView` (presence 'both here' + bandwidth sliders + ~3s hold + consent; `.screenshotProtected()`); persist bandwidth via `LockInSession`.",
+          build: "RELABELED todo 2026-06-30 (checklist unbuilt, not actually verifying). Entry on Home / Deck Library (`fetchOpenSession` on `.task`/`scenePhase==.active`; present via `.sheet(item:)` per `HomeRouterView`) + a partner pending-session banner. Replace the debug UI with `SessionLobbyView` (consent to the session shape) + `AirlockView` (presence 'both here' + bandwidth sliders + ~3s hold + consent; `.screenshotProtected()`); persist bandwidth via `LockInSession`.",
           feel: "The Airlock is the session's first emotional beat — 'both here' should feel like a held breath before the dive, not a loading screen.",
           done: "A starts from Home; B's Home shows a pending banner → opens the lobby; two devices run the full Airlock with real UI to `active`; `LockInSession` rows written.",
           constraints: "Replaces debug UI; navigate to a placeholder 'active' screen (Player is S4). `PlayView` OFF-LIMITS (generative). `AppShell` uses local `@State selectedTab` — may need wiring to route a partner into a pending session.",
@@ -764,9 +795,9 @@ const BUILD_ROADMAP = {
           ]
         },
         {
-          id: "S4", title: "Player core (synced cards, timer, reveal, safety)", status: "verifying", est: 18,
+          id: "S4", title: "Player core (synced cards, timer, reveal, safety)", status: "todo", est: 18,
           oneThing: "Both devices render the same card in lockstep — server-authoritative advance, synced gentle timer, one reveal mechanic, safety + presence cues.",
-          build: "`CuratedPlayerStore` + extend `SessionView`: render `card_ids[current_index]` from the update stream; Next/Skip → `advance` (conditional update, no double-advance); completion writes `CardSession`/`CardResult`/`DeckProgress` (the `saveSession` pattern). Synced per-card timer from `timer_started_at`+`per_card_timer` (soft chime + 'wrap up' / 'keep going' via Broadcast, never hard-cut). One reveal — Whisper: private text → both seal → simultaneous 3-2-1 (answers exchanged at reveal via Broadcast, NOT stored). Keep-awake + dim via `connectedScenes`; safe word 'red' (sets `safe_word_used`, graceful dual exit) + pause; active-listener role + soft turn cue per card.",
+          build: "RELABELED todo 2026-06-30 (checklist unbuilt, not actually verifying). `CuratedPlayerStore` + extend `SessionView`: render `card_ids[current_index]` from the update stream; Next/Skip → `advance` (conditional update, no double-advance); completion writes `CardSession`/`CardResult`/`DeckProgress` (the `saveSession` pattern). Synced per-card timer from `timer_started_at`+`per_card_timer` (soft chime + 'wrap up' / 'keep going' via Broadcast, never hard-cut). One reveal — Whisper: private text → both seal → simultaneous 3-2-1 (answers exchanged at reveal via Broadcast, NOT stored). Keep-awake + dim via `connectedScenes`; safe word 'red' (sets `safe_word_used`, graceful dual exit) + pause; active-listener role + soft turn cue per card.",
           feel: "Lockstep should feel like two people holding the same object — when one turns the card, both feel it move. Timers nudge gently; the reveal is a held-breath 3-2-1, never a jump-scare.",
           done: "Same card on both; either advances, both move together; simultaneous taps don't double-advance; completion persists `CardSession`. Synced countdown → at zero, chime + 'wrap up' (no auto-advance); 'keep going' clears both. Whisper: neither sees the other until both seal; simultaneous reveal; answers not persisted. Screen stays awake, dims after idle, restores on tap; 'red' ends both; pause works; cues render.",
           constraints: "Player only. Don't touch the legacy `couple_session_records`. No `UIScreen.main`. No mic / audio capture.",
@@ -862,7 +893,7 @@ const BUILD_ROADMAP = {
 
     /* ════════════════ PHASE 5 — MAP (relationship dashboard) ════════════════ */
     {
-      id: "map", n: 5, title: "Map — the relationship dashboard",
+      id: "map", n: 4, title: "Map — the relationship dashboard",
       status: "next",
       goal: "Map is the couple's returnable home: a Me / Us dashboard hosting Pulse, the Me Card, the Record, and the Vault — and where the Desire-Map compare lives after the reveal.",
       why: "Slice 3 of the core loop — where the relationship lives between sittings. Absorbs the Desire-Map post-completion (D5), Pulse, and Agreements. Home / Play / Learn / Settings folded out to their own phases.",
@@ -906,8 +937,8 @@ const BUILD_ROADMAP = {
 
     /* ════════════════ PHASE 6 — SETTINGS ════════════════ */
     {
-      id: "settings", n: 6, title: "Settings — control panel",
-      status: "next",
+      id: "settings", n: 5, title: "Settings — control panel",
+      status: "later",
       goal: "A complete, truthful Settings page: profile, pairing entry, account actions, plus the App-Store-required Delete Account / Sign Out (logic lands in A1).",
       why: "Slice 4 — launch-required. Delete Account is a hard App Store blocker; restore-purchase, manage-pairing, theme, and legal all live here. Folded out of the old Tabs phase.",
       visual: {
@@ -1221,6 +1252,7 @@ function refsHTML(refs){
 }
 
 const D = BUILD_ROADMAP;
+const PHASES = D.phases.slice().sort((a,b)=>(a.n||0)-(b.n||0)); // display order follows n — reorder the build flow by editing a phase's n
 const allSegs = D.phases.flatMap(p => p.segments);
 
 /* ── estimation engine ────────────────────────────────────────────────────
@@ -1328,7 +1360,7 @@ function phaseRollup(p){
   return { done, total, doneC, totalC, pct: total > 0 ? Math.round(100*done/total) : 0 };
 }
 
-document.getElementById("rail").innerHTML = D.phases.map(p => {
+document.getElementById("rail").innerHTML = PHASES.map(p => {
   const st = PHASE_STATUS[p.status] || PHASE_STATUS.later;
   const isActive = p.id === D.meta.current.phase;
   const r = phaseRollup(p);
@@ -1353,7 +1385,7 @@ document.getElementById("legends").innerHTML = `
   </div>`;
 
 /* phases */
-document.getElementById("phases").innerHTML = D.phases.map(p => {
+document.getElementById("phases").innerHTML = PHASES.map(p => {
   const st = PHASE_STATUS[p.status] || PHASE_STATUS.later;
   const collapsed = (p.status === "later" || p.status === "done") ? "collapsed" : "";
   const r = phaseRollup(p);

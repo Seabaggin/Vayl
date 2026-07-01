@@ -118,6 +118,19 @@ struct AppFonts {
         display(22, weight: .semibold, relativeTo: .title2)
     }
 
+    /// Compact card/widget title — for dense rows where cardTitle (22pt) would
+    /// truncate beside other elements. Pulse rail state name, list-row headers.
+    static var cardTitleCompact: Font {
+        display(16, weight: .semibold, relativeTo: .headline)
+    }
+
+    /// The Home Pulse widget's hero line — "How's your capacity?" (dormant) or the
+    /// landed Space name (active). Sized up from cardTitle (22) so it holds its own
+    /// beside the widget's enlarged 84pt aura. Home Pulse widget only.
+    static var pulseWidgetTitle: Font {
+        display(28, weight: .semibold, relativeTo: .title2)
+    }
+
     /// Section labels inside a screen. Never the screen title.
     static var sectionHeading: Font {
         display(20, weight: .medium, relativeTo: .title3)

@@ -32,11 +32,6 @@ private struct HomeRouterInnerView: View {
 
     @State private var store: HomeStore
 
-    // ── Session presentation ─────────────────────────────────────────────
-    // Created here because HomeRouterView owns appState and modelContext.
-    // Presented as a sheet over the home content.
-    @State private var activeSession: SessionStore? = nil
-
     // ── Desire Map rater presentation ────────────────────────────────────
     // Presented as a .vaylCover so the rater is a protected, immersive, unhurried
     // beat (interactive-dismiss disabled; exit is explicit via vaylDismiss).
@@ -71,9 +66,6 @@ private struct HomeRouterInnerView: View {
             Group {
                 routedContent(store: store, layout: layout)
             }
-        }
-        .sheet(item: $activeSession) { session in
-            SessionView(store: session)
         }
         .vaylCover(
             isPresented: Binding(
@@ -240,15 +232,6 @@ private struct HomeRouterInnerView: View {
     /// Lives here because this view owns appState and modelContext.
     private func handleCardAction(card: Card, action: CardAction, deck: Deck, store: HomeStore) {
         switch action {
-
-        case .startSession:
-            // Resume from current progress — startIndex from store.cardsCompleted
-            activeSession = SessionStore(
-                deck: deck,
-                startIndex: store.cardsCompleted,
-                modelContainer: modelContext.container,
-                appState: appState
-            )
 
         case .navigateToPlay:
             appState.selectedTab = .play

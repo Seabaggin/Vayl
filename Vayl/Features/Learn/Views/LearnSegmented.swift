@@ -52,7 +52,7 @@ struct LearnSegmented<Value: Hashable>: View {
         .padding(AppSpacing.xxs)
         .background(
             RoundedRectangle(cornerRadius: AppRadius.lg)
-                .fill(Color.white.opacity(0.03))
+                .fill(AppColors.whisperFill)
                 .overlay(RoundedRectangle(cornerRadius: AppRadius.lg)
                     .stroke(AppColors.borderSubtle, lineWidth: 1))
         )

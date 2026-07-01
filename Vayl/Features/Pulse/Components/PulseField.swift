@@ -49,41 +49,61 @@ struct PulseField: View {
 
     private var zones: some View {
         ZStack {
-            zoneBlob(AppColors.pulseTierExpansive,  cx: 0.70, cy: 0.30)
-            zoneBlob(AppColors.pulseTierFriction,   cx: 0.30, cy: 0.30)
-            zoneBlob(AppColors.pulseTierProtective, cx: 0.30, cy: 0.70)
-            zoneBlob(AppColors.pulseTierSovereign,  cx: 0.70, cy: 0.70)
+            // Same size + symmetric positions, but opacity is luminance-compensated so the four
+            // read as EQUAL presence on the void: cyan is intrinsically bright (pull it down),
+            // rose is a muted dusty tone (push it up), magenta/indigo sit between. Each colour
+            // still fades to clear before it reaches the next, so overlaps stay soft.
+            zoneBlob(AppColors.auraCoreRose,    cx: 0.28, cy: 0.72, opacity: 0.32)  // Protective (muted → up)
+            zoneBlob(AppColors.auraCoreMagenta, cx: 0.28, cy: 0.28, opacity: 0.20)  // Friction
+            zoneBlob(AppColors.auraCoreIndigo,  cx: 0.72, cy: 0.72, opacity: 0.23)  // Sovereign
+            zoneBlob(AppColors.auraCoreCyan,    cx: 0.72, cy: 0.28, opacity: 0.16)  // Expansive (bright → down)
         }
     }
 
-    private func zoneBlob(_ color: Color, cx: CGFloat, cy: CGFloat) -> some View {
-        let d = size * 0.74
-        return Circle()
-            .fill(color.opacity(0.16))
-            .frame(width: d, height: d)
-            .blur(radius: size * 0.105)
-            .position(x: cx * size, y: cy * size)
+    private func zoneBlob(_ color: Color, cx: CGFloat, cy: CGFloat, opacity: Double) -> some View {
+        let d = size * 0.92
+        return RadialGradient(
+            gradient: Gradient(stops: [
+                .init(color: color.opacity(opacity),       location: 0),
+                .init(color: color.opacity(opacity * 0.5), location: 0.45),
+                .init(color: .clear,                       location: 0.85)  // fades before the edge → soft overlap
+            ]),
+            center: .center,
+            startRadius: 0,
+            endRadius: d * 0.5
+        )
+        .frame(width: d, height: d)
+        .blur(radius: size * 0.05)
+        .position(x: cx * size, y: cy * size)
     }
 
     // MARK: - Ghost quadrant labels
 
     private var ghostLabels: some View {
         ZStack {
-            ghostLabel("Expansive",  AppColors.pulseTierExpansive,  cx: 0.75, cy: 0.25, quadrant: .expansive)
-            ghostLabel("Friction",   AppColors.pulseTierFriction,   cx: 0.25, cy: 0.25, quadrant: .friction)
-            ghostLabel("Protective", AppColors.pulseTierProtective, cx: 0.25, cy: 0.75, quadrant: .protective)
-            ghostLabel("Sovereign",  AppColors.pulseTierSovereign,  cx: 0.75, cy: 0.75, quadrant: .sovereign)
+            // Left words ride higher, right words lower within each pair, so a big word and its
+            // neighbour interlock at different heights instead of colliding at the centre line.
+            ghostLabel("Friction",   AppColors.auraCoreMagenta, leading: true,  yFrac: 0.16, quadrant: .friction)
+            ghostLabel("Expansive",  AppColors.auraCoreCyan,    leading: false, yFrac: 0.30, quadrant: .expansive)
+            ghostLabel("Protective", AppColors.auraCoreRose,    leading: true,  yFrac: 0.70, quadrant: .protective)
+            ghostLabel("Sovereign",  AppColors.auraCoreIndigo,  leading: false, yFrac: 0.84, quadrant: .sovereign)
         }
+        .frame(width: size, height: size)
         .allowsHitTesting(false)
     }
 
-    private func ghostLabel(_ name: String, _ color: Color, cx: CGFloat, cy: CGFloat, quadrant: PulseQuadrant) -> some View {
+    // Big, bold quadrant words. Full-width side-aligned band, staggered by yFrac so pairs never
+    // collide — lets each word stay large (≈0.085×field) and heavy without crossing into its twin.
+    private func ghostLabel(_ name: String, _ color: Color, leading: Bool, yFrac: CGFloat, quadrant: PulseQuadrant) -> some View {
         let isActive = entries.contains { $0.quadrant == quadrant }
         return Text(name.uppercased())
-            .font(AppFonts.display(22, weight: .semibold, relativeTo: .title2))
-            .tracking(3)
-            .foregroundStyle(color.opacity(isActive ? 0.22 : 0.08))
-            .position(x: cx * size, y: cy * size)
+            .font(AppFonts.display(size * 0.085, weight: .bold, relativeTo: .title2))
+            .tracking(size * 0.004)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .foregroundStyle(color.opacity(isActive ? 0.34 : 0.17))
+            .frame(width: size * 0.92, alignment: leading ? .leading : .trailing)
+            .position(x: size * 0.5, y: size * yFrac)
     }
 
     // MARK: - Aura layer

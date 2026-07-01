@@ -71,7 +71,12 @@ extension ModelContainer {
     ///
     /// fatalError on failure is intentional — catches schema mismatches
     /// at launch rather than producing silent data loss.
-    static var appContainer: ModelContainer {
+    ///
+    /// `static let`, not `static var` — the container is built once and
+    /// cached. Every caller (VaylApp's .modelContainer, EntitlementStore,
+    /// hydrateOnboardingState, SyncManager) must see the SAME instance, or
+    /// writes through one Store's context silently don't appear in another's.
+    static let appContainer: ModelContainer = {
         do {
             let schema = Schema(SchemaV1.models)
 
@@ -96,7 +101,7 @@ extension ModelContainer {
         } catch {
             fatalError("❌ Failed to create ModelContainer: \(error.localizedDescription)")
         }
-    }
+    }()
 
     /// In-memory container for SwiftUI previews and unit tests.
     /// Identical schema to appContainer — nothing hits disk.

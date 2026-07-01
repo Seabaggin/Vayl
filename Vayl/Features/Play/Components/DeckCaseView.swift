@@ -224,7 +224,7 @@ private struct HexFoil: View {
                 row += 1
             }
 
-            ctx.stroke(grid, with: .color(.white.opacity(0.10)), lineWidth: 0.6)
+            ctx.stroke(grid, with: .color(AppColors.borderDefault), lineWidth: 0.6)
             ctx.translateBy(x: 0.5, y: 0.5)
             ctx.stroke(grid, with: .color(tint.opacity(0.06)), lineWidth: 0.6)
         }

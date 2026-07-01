@@ -122,7 +122,7 @@ public final class CardMirrorDealController {
 
             // Travel ends at 16+880ms — the tick must land WITH the visual
             // stop, not 100ms ahead of it (the hand felt it before the eye).
-            try? await Task.sleep(for: .milliseconds(860))
+            try? await Task.sleep(for: .milliseconds(896))
             guard !Task.isCancelled else { return }
 
             // Landing haptics — both cards land at same moment, 80ms stagger

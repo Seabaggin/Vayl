@@ -404,6 +404,15 @@ struct AppColors {
         dark:  VaylPrimitives.pureBlack.withAlphaComponent(0.50)
     )
 
+    /// Full-screen backdrop dim behind an elevated/engaged surface (an open
+    /// carousel, a reveal's bottom sheet). Heavier than `shadowDeep`, which is
+    /// for a resting modal scrim — this is for a surface the user is actively
+    /// inside. Values sourced from CardCarousel's existing tuned dim.
+    static let scrimHeavy = Color.dynamic(
+        light: VaylPrimitives.pureBlack.withAlphaComponent(0.35),
+        dark:  VaylPrimitives.pureBlack.withAlphaComponent(0.75)
+    )
+
     /// Dawn tinted shadow — magenta channel. Cards in light mode.
     static let shadowMagenta = Color.dynamic(
         light: VaylPrimitives.magenta.withAlphaComponent(0.18),
@@ -481,6 +490,14 @@ struct AppColors {
     static let glassSurface = Color.dynamic(
         light: VaylPrimitives.frostCard,
         dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.03)
+    )
+
+    /// Barely-there tonal wash — a hint of surface without committing to a fill.
+    /// Unlike `glassSurface` (opaque frost in light mode), this stays translucent
+    /// on both appearances. For a subtle background tint on rows, pills, and tiles.
+    static let whisperFill = Color.dynamic(
+        light: VaylPrimitives.pureBlack.withAlphaComponent(0.03),
+        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.04)
     )
 
     // ─────────────────────────────────────────────
@@ -707,6 +724,10 @@ struct AppColors {
     static let auraLightRose    = Color(uiColor: VaylPrimitives.roseLight)
     static let auraDeepRose     = Color(uiColor: VaylPrimitives.roseDark)
     static let auraGlowRose     = Color(uiColor: VaylPrimitives.rose).opacity(0.26)
+
+    /// Pulse "Us" capsule halo — soft periwinkle glow around the connector stroke.
+    /// Mockup parity: map-pulse-us.html `.capsule` box-shadow rgba(130,160,230,.18).
+    static let pulseCapsuleGlow = Color(uiColor: VaylPrimitives.periwinkle).opacity(0.18)
 }
 
 

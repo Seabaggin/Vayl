@@ -140,7 +140,8 @@ final class CardFlightScene: SKScene {
             guard let self, let n = self.cardNodes[id] else { return }
             self.restedIDs.insert(id)
             let pos = n.position, rot = n.zRotation
-            DispatchQueue.main.async {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 if let handler = self.onCardRested[id] {
                     self.onCardRested.removeValue(forKey: id)
                     handler(id, pos, rot)

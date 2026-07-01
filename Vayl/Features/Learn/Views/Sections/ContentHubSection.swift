@@ -232,7 +232,7 @@ struct ContentHubSection: View {
             .foregroundStyle(AppColors.textSecondary)
             .padding(.horizontal, AppSpacing.sm)
             .padding(.vertical, AppSpacing.xxs)
-            .background(Capsule().fill(Color.white.opacity(0.04))
+            .background(Capsule().fill(AppColors.whisperFill)
                 .overlay(Capsule().stroke(AppColors.borderSubtle, lineWidth: 1)))
     }
 

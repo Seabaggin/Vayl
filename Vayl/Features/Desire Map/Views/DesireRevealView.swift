@@ -344,7 +344,7 @@ struct DesireRevealView: View {
     // S1.4 adds PaywallSheet; S1.5 adds DesireMapListSheet.
     private var sheetHostLayer: some View {
         ZStack(alignment: .bottom) {
-            Color.black.opacity(0.55)
+            AppColors.scrimHeavy
                 .ignoresSafeArea()
                 .onTapGesture {
                     hapticTick += 1
@@ -475,11 +475,11 @@ private struct _LockedSection: View {
                 .frame(height: 46)
                 .background(
                     RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .fill(Color.white.opacity(0.02))
+                        .fill(AppColors.whisperFill)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(AppColors.borderDefault, lineWidth: 1)
                 )
                 .opacity(isVisible ? 1 : 0)
                 .offset(y: isVisible ? 0 : 22)

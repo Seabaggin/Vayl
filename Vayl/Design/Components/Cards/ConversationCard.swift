@@ -146,7 +146,7 @@ struct ConversationCard: View {
 
             // Border
             RoundedRectangle(cornerRadius: cornerRadius)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(AppColors.borderSubtle, lineWidth: 1)
         }
     }
 
@@ -192,7 +192,7 @@ struct ConversationCard: View {
             .padding(AppSpacing.xl)
 
             RoundedRectangle(cornerRadius: cornerRadius)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(AppColors.borderSubtle, lineWidth: 1)
         }
     }
 
@@ -222,14 +222,14 @@ struct ConversationCard: View {
                     RoundedRectangle(cornerRadius: AppRadius.pill)
                         .fill(isSelected
                               ? AppColors.accentSecondary.opacity(0.15)
-                              : Color.white.opacity(0.04))
+                              : AppColors.whisperFill)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: AppRadius.pill)
                         .stroke(
                             isSelected
                                 ? AnyShapeStyle(AppColors.spectrumBorder)
-                                : AnyShapeStyle(Color.white.opacity(0.08)),
+                                : AnyShapeStyle(AppColors.borderDefault),
                             lineWidth: isSelected ? 1.5 : 1
                         )
                 )
@@ -342,13 +342,12 @@ struct ConversationCard: View {
         }
         onPillSelected?(pill)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
             withAnimation(AppAnimation.enter) {
                 showEncouragement = true
             }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
+            try? await Task.sleep(for: .milliseconds(700))
             onContinue?()
         }
     }

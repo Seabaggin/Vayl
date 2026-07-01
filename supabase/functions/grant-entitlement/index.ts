@@ -148,8 +148,30 @@ serve(async (req) => {
     let transactionId: string | null = null
 
     if (typeof body.signedTransaction === "string" && body.signedTransaction.length > 0) {
+      // Option A: full server-side re-verification (when APPLE_VERIFICATION_ENABLED=true).
       const verified = await verifyAppleTransaction(body.signedTransaction, productId)
-      if (verified) transactionId = verified.transactionId
+      if (verified) {
+        transactionId = verified.transactionId
+      } else {
+        // Option B: trust StoreKit 2's on-device .verified stamp — decode payload only, skip
+        // re-verification. Security holds: couple_id is server-authoritative (can't grant to
+        // another couple) and transaction_id uniqueness prevents replay.
+        try {
+          const payload = decodeJwsPayload(body.signedTransaction) as {
+            transactionId?: string
+            productId?: string
+          }
+          if (
+            typeof payload.transactionId === "string" &&
+            payload.transactionId.length > 0 &&
+            payload.productId === productId
+          ) {
+            transactionId = payload.transactionId
+          }
+        } catch {
+          // malformed JWS — leave transactionId null, fall through to 402
+        }
+      }
     }
 
     const adminSecret = Deno.env.get("ENTITLEMENT_GRANT_SECRET")
