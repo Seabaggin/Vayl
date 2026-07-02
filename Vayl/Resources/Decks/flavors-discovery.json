@@ -1,50 +1,50 @@
 {
-  "id": "before-tonight",
-  "title": "Before Tonight",
-  "subtitle": "Set the frame, then play.",
-  "category": "experienceArc",
+  "id": "flavors-discovery",
+  "title": "Flavors: Discovery Edition",
+  "subtitle": "A fitting room, no purchase required.",
+  "category": "nmSpecific",
   "act": 1,
-  "intensity": 4,
+  "intensity": 3,
   "is_locked": true,
   "required_entitlement": "core",
   "tags": [
     "core",
-    "experience",
-    "pregame"
+    "nm",
+    "discovery"
   ],
-  "sort_order": 8,
-  "schema_version": 2,
+  "sort_order": 6,
+  "schema_version": 1,
   "cards": [
     {
-      "id": "bt-01",
-      "deck_id": "before-tonight",
-      "text": "What are you hoping tonight feels like?\n\nOne honest sentence each.\n\nWhat would help you walk out the door settled?",
+      "id": "f-01",
+      "deck_id": "flavors-discovery",
+      "text": "When you imagine \"more open,\" what single image comes to mind first?\n\nDescribe the picture exactly as it appears.",
       "highlight_words": [
-        "tonight feels like"
+        "single image"
       ],
       "type": "prompt",
-      "intensity": 3,
+      "intensity": 2,
       "who_starts": "partnerA",
       "is_sensitive": false,
       "can_skip": false,
       "register": "flexible",
-      "context_beat_type": null,
-      "context_beat_copy": null,
+      "context_beat_type": "banner",
+      "context_beat_copy": "Nothing tonight is a commitment. This deck is a fitting room.",
       "back_copy": null,
       "is_gendered_card": false,
       "gendered_for": null,
       "sort_order": 1
     },
     {
-      "id": "bt-02",
-      "deck_id": "before-tonight",
-      "text": "One word for what's in your chest right now.",
+      "id": "f-02",
+      "deck_id": "flavors-discovery",
+      "text": "What draws you toward this at all?\n\nThe honest pull underneath the curiosity.",
       "highlight_words": [
-        "One word"
+        "honest pull"
       ],
-      "type": "snapshot",
+      "type": "prompt",
       "intensity": 3,
-      "who_starts": "both",
+      "who_starts": "partnerB",
       "is_sensitive": false,
       "can_skip": false,
       "register": "flexible",
@@ -56,18 +56,18 @@
       "sort_order": 2
     },
     {
-      "id": "bt-03",
-      "deck_id": "before-tonight",
-      "text": "Signals for tonight.\n\nWhat do green, yellow, and red each look like on you?\n\nBe specific enough to spot across a room.",
+      "id": "f-03",
+      "deck_id": "flavors-discovery",
+      "text": "What if you were both at a party where flirting was allowed and expected...\n\nWhat do you picture yourself doing?",
       "highlight_words": [
-        "green, yellow, and red"
+        "allowed and expected"
       ],
-      "type": "prompt",
-      "intensity": 4,
-      "who_starts": "partnerB",
+      "type": "whatIf",
+      "intensity": 3,
+      "who_starts": "both",
       "is_sensitive": false,
       "can_skip": false,
-      "register": "flexible",
+      "register": "excited",
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
@@ -76,14 +76,14 @@
       "sort_order": 3
     },
     {
-      "id": "bt-04",
-      "deck_id": "before-tonight",
-      "text": "The what-ifs worth saying now.\n\nOne of you wants to leave. One of you connects and the other doesn't. The plan changes.\n\nWalk each one through before it can surprise you.",
+      "id": "f-04",
+      "deck_id": "flavors-discovery",
+      "text": "Which flavor sounds nothing like you two?\n\nWhat exactly feels off about it?\n\nNaming by contrast counts. It's often where the real shape starts.",
       "highlight_words": [
-        "what-ifs"
+        "nothing like you two"
       ],
       "type": "prompt",
-      "intensity": 4,
+      "intensity": 3,
       "who_starts": "partnerA",
       "is_sensitive": false,
       "can_skip": false,
@@ -96,11 +96,11 @@
       "sort_order": 4
     },
     {
-      "id": "bt-05",
-      "deck_id": "before-tonight",
-      "text": "How far does tonight go, at most?\n\nPlace it. Calibrate before the door, never at it.",
+      "id": "f-05",
+      "deck_id": "flavors-discovery",
+      "text": "How much does romantic connection with others belong in your picture?\n\nPlace yourself between \"experiences only\" and \"room for feelings.\"",
       "highlight_words": [
-        "at most"
+        "your picture"
       ],
       "type": "unspoken",
       "intensity": 4,
@@ -116,14 +116,14 @@
       "sort_order": 5
     },
     {
-      "id": "bt-06",
-      "deck_id": "before-tonight",
-      "text": "What would make you check on me tonight?\n\nWhat should I do when you do?",
+      "id": "f-06",
+      "deck_id": "flavors-discovery",
+      "text": "What would stay just-ours in every version you can imagine?",
       "highlight_words": [
-        "check on me"
+        "just-ours"
       ],
       "type": "prompt",
-      "intensity": 5,
+      "intensity": 4,
       "who_starts": "partnerB",
       "is_sensitive": false,
       "can_skip": false,
@@ -136,35 +136,15 @@
       "sort_order": 6
     },
     {
-      "id": "bt-07",
-      "deck_id": "before-tonight",
-      "text": "Aftercare, decided in advance.\n\nWhat does coming home look like?\n\nDebrief tonight or sleep first? Touch or space?",
+      "id": "f-07",
+      "deck_id": "flavors-discovery",
+      "text": "Which of your worries is about a specific style?\n\nWhich is about any change at all?",
       "highlight_words": [
-        "coming home"
+        "any change at all"
       ],
       "type": "prompt",
       "intensity": 4,
       "who_starts": "partnerA",
-      "is_sensitive": false,
-      "can_skip": false,
-      "register": "flexible",
-      "context_beat_type": null,
-      "context_beat_copy": null,
-      "back_copy": null,
-      "is_gendered_card": false,
-      "gendered_for": null,
-      "sort_order": 7
-    },
-    {
-      "id": "bt-08",
-      "deck_id": "before-tonight",
-      "text": "Either of you can call tonight off.\n\nAt any point. For any reason.\n\nIt costs nothing. It proves the whole thing works.",
-      "highlight_words": [
-        "call tonight off"
-      ],
-      "type": "permissionCard",
-      "intensity": 3,
-      "who_starts": "both",
       "is_sensitive": false,
       "can_skip": false,
       "register": "anxious",
@@ -173,21 +153,41 @@
       "back_copy": null,
       "is_gendered_card": false,
       "gendered_for": null,
+      "sort_order": 7
+    },
+    {
+      "id": "f-08",
+      "deck_id": "flavors-discovery",
+      "text": "One word for where you are in this exploration today.",
+      "highlight_words": [
+        "One word"
+      ],
+      "type": "snapshot",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
       "sort_order": 8
     },
     {
-      "id": "bt-09",
-      "deck_id": "before-tonight",
-      "text": "What are you most looking forward to watching the other one enjoy?",
+      "id": "f-09",
+      "deck_id": "flavors-discovery",
+      "text": "What would you want to read, watch, or learn together before choosing anything?",
       "highlight_words": [
-        "watching the other one enjoy"
+        "before choosing anything"
       ],
       "type": "prompt",
       "intensity": 3,
       "who_starts": "partnerB",
       "is_sensitive": false,
       "can_skip": false,
-      "register": "excited",
+      "register": "flexible",
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
@@ -196,14 +196,14 @@
       "sort_order": 9
     },
     {
-      "id": "bt-10",
-      "deck_id": "before-tonight",
-      "text": "The Thread.\n\nEach of you finishes this, out loud:\n\n\"Whatever happens tonight, the thing I'm coming home to is...\"\n\nThen go.",
+      "id": "f-10",
+      "deck_id": "flavors-discovery",
+      "text": "Leave It Open.\n\nEach of you names one thing you're deliberately leaving undecided.\n\nThen say it together, once:\n\n\"We don't have to know yet.\"",
       "highlight_words": [
-        "coming home to"
+        "leaving undecided"
       ],
       "type": "closingRitual",
-      "intensity": 3,
+      "intensity": 2,
       "who_starts": "both",
       "is_sensitive": false,
       "can_skip": false,

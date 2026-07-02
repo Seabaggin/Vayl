@@ -1,0 +1,279 @@
+{
+  "id": "sex-and-pleasure",
+  "title": "Sex & Pleasure",
+  "subtitle": "Said out loud, on purpose.",
+  "category": "relationshipCore",
+  "act": 1,
+  "intensity": 6,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": [
+    "core",
+    "sex",
+    "pleasure"
+  ],
+  "sort_order": 4,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "sp-01",
+      "deck_id": "sex-and-pleasure",
+      "text": "What did you learn about wanting things, growing up?\n\nWhat have you had to unlearn?",
+      "highlight_words": [
+        "unlearn"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": "banner",
+      "context_beat_copy": "Nobody arrives at honesty about sex fully formed. Start where you are.",
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    },
+    {
+      "id": "sp-02",
+      "deck_id": "sex-and-pleasure",
+      "text": "What reliably works for you that you've never said in plain words?\n\nPlain words. Right now.",
+      "highlight_words": [
+        "plain words"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerB",
+      "is_sensitive": true,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 2
+    },
+    {
+      "id": "sp-03",
+      "deck_id": "sex-and-pleasure",
+      "text": "Name one want you haven't said out loud.\n\nThe only reply allowed:\n\n\"Tell me more.\"",
+      "highlight_words": [
+        "Tell me more."
+      ],
+      "type": "greenLight",
+      "intensity": 5,
+      "who_starts": "partnerA",
+      "is_sensitive": true,
+      "can_skip": false,
+      "register": "excited",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 3
+    },
+    {
+      "id": "sp-04",
+      "deck_id": "sex-and-pleasure",
+      "text": "What has never quite worked?\n\nAnd what have you performed instead of saying so?",
+      "highlight_words": [
+        "performed"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerB",
+      "is_sensitive": true,
+      "can_skip": true,
+      "register": "anxious",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": "If performance came up, there is no repair project tonight.\n\nJust thank them for the honesty. It cost something.",
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 4
+    },
+    {
+      "id": "sp-05",
+      "deck_id": "sex-and-pleasure",
+      "text": "For him:\n\nWhat has carrying the first move felt like lately?\n\nIf the wanting between you runs at different speeds, say what that does to you. Say it without apologizing for it.\n\nThen, for her: tell him one thing you see him carry that he thinks is invisible.",
+      "highlight_words": [
+        "first move"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "mf",
+      "sort_order": 5
+    },
+    {
+      "id": "sp-05f",
+      "deck_id": "sex-and-pleasure",
+      "text": "Whichever of you reaches first, more often:\n\nWhat has carrying the first move felt like lately?\n\nIf the wanting between you runs at different speeds, say what that does to you.\n\nThen the other: tell them one thing you see them carry that they think is invisible.",
+      "highlight_words": [
+        "first move"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "flexible",
+      "sort_order": 5
+    },
+    {
+      "id": "sp-06",
+      "deck_id": "sex-and-pleasure",
+      "text": "For her:\n\nWhat does it take for you to want freely?\n\nName the quiet math you run before you can let go. The reading of the room. The managing of the temperature.\n\nThen, for him: what could you take on so less of that math is needed?",
+      "highlight_words": [
+        "want freely"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "mf",
+      "sort_order": 6
+    },
+    {
+      "id": "sp-06f",
+      "deck_id": "sex-and-pleasure",
+      "text": "Whichever of you does more of the reading in bed, the checking, the sensing, the adjusting:\n\nWhat would it take to put that down and just want?\n\nThen the other: what could you take on so more of that letting go is possible?",
+      "highlight_words": [
+        "just want"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "flexible",
+      "sort_order": 6
+    },
+    {
+      "id": "sp-07",
+      "deck_id": "sex-and-pleasure",
+      "text": "Tonight's appetite for adventure.\n\nPlace it against your everyday average.\n\nThe gap, or the overlap, is the conversation.",
+      "highlight_words": [
+        "appetite"
+      ],
+      "type": "unspoken",
+      "intensity": 6,
+      "who_starts": "both",
+      "is_sensitive": true,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 7
+    },
+    {
+      "id": "sp-08",
+      "deck_id": "sex-and-pleasure",
+      "text": "What's a curiosity you've been sitting on?\n\nYou don't have to want it to happen. You only have to say it exists.",
+      "highlight_words": [
+        "curiosity"
+      ],
+      "type": "prompt",
+      "intensity": 6,
+      "who_starts": "partnerB",
+      "is_sensitive": true,
+      "can_skip": true,
+      "register": "excited",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 8
+    },
+    {
+      "id": "sp-09",
+      "deck_id": "sex-and-pleasure",
+      "text": "What makes you feel most wanted?\n\nAnd what accidentally switches it off?",
+      "highlight_words": [
+        "most wanted"
+      ],
+      "type": "prompt",
+      "intensity": 6,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 9
+    },
+    {
+      "id": "sp-10",
+      "deck_id": "sex-and-pleasure",
+      "text": "Twenty seconds.\n\nOne kiss like you mean it.\n\nThen keep going.",
+      "highlight_words": [
+        "like you mean it"
+      ],
+      "type": "dare",
+      "intensity": 4,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "excited",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 10
+    },
+    {
+      "id": "sp-11",
+      "deck_id": "sex-and-pleasure",
+      "text": "The Keep.\n\nEach of you names one thing about your sex life together that stays sacred...\n\nwhatever else you two ever explore.",
+      "highlight_words": [
+        "stays sacred"
+      ],
+      "type": "closingRitual",
+      "intensity": 4,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 11
+    }
+  ]
+}

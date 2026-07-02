@@ -7,15 +7,22 @@
   "intensity": 1,
   "is_locked": false,
   "required_entitlement": null,
-  "tags": ["foundation", "free"],
+  "tags": [
+    "foundation",
+    "free",
+    "ritual",
+    "repeatable"
+  ],
   "sort_order": 2,
-  "schema_version": 1,
+  "schema_version": 2,
   "cards": [
     {
       "id": "the-check-in-01",
       "deck_id": "the-check-in",
       "text": "Where are we, really, this week?",
-      "highlight_words": ["really"],
+      "highlight_words": [
+        "really"
+      ],
       "type": "prompt",
       "intensity": 1,
       "who_starts": "partnerA",
@@ -28,6 +35,106 @@
       "is_gendered_card": false,
       "gendered_for": null,
       "sort_order": 1
+    },
+    {
+      "id": "the-check-in-02",
+      "deck_id": "the-check-in",
+      "text": "One word for how this week felt between us.",
+      "highlight_words": [
+        "One word"
+      ],
+      "type": "snapshot",
+      "intensity": 1,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 2
+    },
+    {
+      "id": "the-check-in-03",
+      "deck_id": "the-check-in",
+      "text": "When did you feel closest to me this week?\n\nWas there a moment you felt a little far away?",
+      "highlight_words": [
+        "closest"
+      ],
+      "type": "prompt",
+      "intensity": 2,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "anxious",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": "If a specific moment came up, resist solving it right now. Let it be heard first. You can come back to it after the deck.",
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 3
+    },
+    {
+      "id": "the-check-in-04",
+      "deck_id": "the-check-in",
+      "text": "How full is your tank right now?\n\nWhat's been filling it? What's been draining it?",
+      "highlight_words": [
+        "your tank"
+      ],
+      "type": "prompt",
+      "intensity": 2,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 4
+    },
+    {
+      "id": "the-check-in-05",
+      "deck_id": "the-check-in",
+      "text": "Look up from the phone.\n\nName one thing they did this week that you noticed and didn't mention.\n\nSay it now.",
+      "highlight_words": [
+        "Say it now."
+      ],
+      "type": "appreciationInterrupt",
+      "intensity": 1,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 5
+    },
+    {
+      "id": "the-check-in-06",
+      "deck_id": "the-check-in",
+      "text": "One small thing to carry into next week.\n\nEach of you names yours.\n\nMake it small enough to actually happen.",
+      "highlight_words": [
+        "carry into next week"
+      ],
+      "type": "closingRitual",
+      "intensity": 1,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 6
     }
   ]
 }

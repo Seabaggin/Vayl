@@ -113,8 +113,8 @@ extension Card {
             canSkip: false,
             register: .flexible,
             contextBeatType: .interstitial,
-            contextBeatCopy: "Something worth knowing before you go further:\n\nA boundary is a limit you set for yourself — not a rule you can set for someone else.\n\n\"I won't sleep with anyone without a condom\" is a boundary. It's yours. Your partner is still free to make their own choice — but now you know if you're compatible.",
-            backCopy: "If either of you answered no to the second question — that's not a red flag, it's a starting point. What specific boundary has felt ignored? Name it out loud before the next card.",
+            contextBeatCopy: "Something worth knowing before you go further:\n\nA boundary is a limit you set for yourself, not a rule you can set for someone else.\n\n\"I won't sleep with anyone without a condom\" is a boundary. It's yours. Your partner is still free to make their own choice. Now you both know where you actually stand.",
+            backCopy: "If either of you answered no to the second question, you just found your starting point.\n\nWhat specific boundary has felt ignored? Name it out loud before the next card.",
             isGenderedCard: false,
             genderedFor: nil,
             sortOrder: 2

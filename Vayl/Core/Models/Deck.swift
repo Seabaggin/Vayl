@@ -49,13 +49,18 @@ struct Deck: Codable, Identifiable {
     }
 
     /// Cards for a specific gender dynamic.
-    /// Returns all cards when dynamic is .flexible or card is not gendered.
+    /// Content contract (2026-07-01 catalog re-cut): every gendered slot ships
+    /// exactly two variants, mf + flexible, sharing a sortOrder. mm/ff copy is
+    /// deferred; those compositions read the flexible variant.
     func cards(for dynamic: GenderDynamic) -> [Card] {
         cards.filter { card in
             guard card.isGenderedCard, let genderedFor = card.genderedFor else {
                 return true
             }
-            return genderedFor == dynamic || dynamic == .flexible
+            switch dynamic {
+            case .mf:                     return genderedFor == .mf
+            case .mm, .ff, .flexible:     return genderedFor == .flexible
+            }
         }
         .sorted { $0.sortOrder < $1.sortOrder }
     }

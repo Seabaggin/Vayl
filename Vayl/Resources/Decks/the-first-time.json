@@ -1,7 +1,7 @@
 {
-  "id": "before-tonight",
-  "title": "Before Tonight",
-  "subtitle": "Set the frame, then play.",
+  "id": "the-first-time",
+  "title": "The First Time",
+  "subtitle": "The one before the first one.",
   "category": "experienceArc",
   "act": 1,
   "intensity": 4,
@@ -10,21 +10,21 @@
   "tags": [
     "core",
     "experience",
-    "pregame"
+    "milestone"
   ],
-  "sort_order": 8,
-  "schema_version": 2,
+  "sort_order": 10,
+  "schema_version": 1,
   "cards": [
     {
-      "id": "bt-01",
-      "deck_id": "before-tonight",
-      "text": "What are you hoping tonight feels like?\n\nOne honest sentence each.\n\nWhat would help you walk out the door settled?",
+      "id": "ft-01",
+      "deck_id": "the-first-time",
+      "text": "Before card one:\n\nEach of you says out loud what you need from tonight's conversation.\n\nThen begin.",
       "highlight_words": [
-        "tonight feels like"
+        "what you need"
       ],
-      "type": "prompt",
-      "intensity": 3,
-      "who_starts": "partnerA",
+      "type": "openingRitual",
+      "intensity": 2,
+      "who_starts": "both",
       "is_sensitive": false,
       "can_skip": false,
       "register": "flexible",
@@ -36,15 +36,15 @@
       "sort_order": 1
     },
     {
-      "id": "bt-02",
-      "deck_id": "before-tonight",
-      "text": "One word for what's in your chest right now.",
+      "id": "ft-02",
+      "deck_id": "the-first-time",
+      "text": "How long has this been an idea?\n\nWhat finally made it real?",
       "highlight_words": [
-        "One word"
+        "finally made it real"
       ],
-      "type": "snapshot",
+      "type": "prompt",
       "intensity": 3,
-      "who_starts": "both",
+      "who_starts": "partnerA",
       "is_sensitive": false,
       "can_skip": false,
       "register": "flexible",
@@ -56,18 +56,18 @@
       "sort_order": 2
     },
     {
-      "id": "bt-03",
-      "deck_id": "before-tonight",
-      "text": "Signals for tonight.\n\nWhat do green, yellow, and red each look like on you?\n\nBe specific enough to spot across a room.",
+      "id": "ft-03",
+      "deck_id": "the-first-time",
+      "text": "What are you afraid this changes?\n\nSay the real fear, even if it sounds dramatic out loud.",
       "highlight_words": [
-        "green, yellow, and red"
+        "real fear"
       ],
       "type": "prompt",
       "intensity": 4,
       "who_starts": "partnerB",
       "is_sensitive": false,
-      "can_skip": false,
-      "register": "flexible",
+      "can_skip": true,
+      "register": "anxious",
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
@@ -76,18 +76,18 @@
       "sort_order": 3
     },
     {
-      "id": "bt-04",
-      "deck_id": "before-tonight",
-      "text": "The what-ifs worth saying now.\n\nOne of you wants to leave. One of you connects and the other doesn't. The plan changes.\n\nWalk each one through before it can surprise you.",
+      "id": "ft-04",
+      "deck_id": "the-first-time",
+      "text": "What do you hope you find out about yourself?",
       "highlight_words": [
-        "what-ifs"
+        "about yourself"
       ],
       "type": "prompt",
       "intensity": 4,
       "who_starts": "partnerA",
       "is_sensitive": false,
       "can_skip": false,
-      "register": "flexible",
+      "register": "excited",
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
@@ -96,16 +96,16 @@
       "sort_order": 4
     },
     {
-      "id": "bt-05",
-      "deck_id": "before-tonight",
-      "text": "How far does tonight go, at most?\n\nPlace it. Calibrate before the door, never at it.",
+      "id": "ft-05",
+      "deck_id": "the-first-time",
+      "text": "The thing about the first time you haven't said out loud yet.",
       "highlight_words": [
-        "at most"
+        "haven't said out loud"
       ],
-      "type": "unspoken",
-      "intensity": 4,
+      "type": "whisper",
+      "intensity": 5,
       "who_starts": "both",
-      "is_sensitive": false,
+      "is_sensitive": true,
       "can_skip": false,
       "register": "flexible",
       "context_beat_type": null,
@@ -116,11 +116,11 @@
       "sort_order": 5
     },
     {
-      "id": "bt-06",
-      "deck_id": "before-tonight",
-      "text": "What would make you check on me tonight?\n\nWhat should I do when you do?",
+      "id": "ft-06",
+      "deck_id": "the-first-time",
+      "text": "What from your story together do you want to hold onto tightest as you walk in?",
       "highlight_words": [
-        "check on me"
+        "hold onto tightest"
       ],
       "type": "prompt",
       "intensity": 5,
@@ -136,31 +136,11 @@
       "sort_order": 6
     },
     {
-      "id": "bt-07",
-      "deck_id": "before-tonight",
-      "text": "Aftercare, decided in advance.\n\nWhat does coming home look like?\n\nDebrief tonight or sleep first? Touch or space?",
+      "id": "ft-07",
+      "deck_id": "the-first-time",
+      "text": "You're allowed to get all the way to the doorstep and turn around.\n\nFirsts don't expire.",
       "highlight_words": [
-        "coming home"
-      ],
-      "type": "prompt",
-      "intensity": 4,
-      "who_starts": "partnerA",
-      "is_sensitive": false,
-      "can_skip": false,
-      "register": "flexible",
-      "context_beat_type": null,
-      "context_beat_copy": null,
-      "back_copy": null,
-      "is_gendered_card": false,
-      "gendered_for": null,
-      "sort_order": 7
-    },
-    {
-      "id": "bt-08",
-      "deck_id": "before-tonight",
-      "text": "Either of you can call tonight off.\n\nAt any point. For any reason.\n\nIt costs nothing. It proves the whole thing works.",
-      "highlight_words": [
-        "call tonight off"
+        "Firsts don't expire."
       ],
       "type": "permissionCard",
       "intensity": 3,
@@ -173,21 +153,41 @@
       "back_copy": null,
       "is_gendered_card": false,
       "gendered_for": null,
+      "sort_order": 7
+    },
+    {
+      "id": "ft-08",
+      "deck_id": "the-first-time",
+      "text": "How will you want to be found afterward?\n\nTalking, touching, quiet, fed?",
+      "highlight_words": [
+        "be found"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
       "sort_order": 8
     },
     {
-      "id": "bt-09",
-      "deck_id": "before-tonight",
-      "text": "What are you most looking forward to watching the other one enjoy?",
+      "id": "ft-09",
+      "deck_id": "the-first-time",
+      "text": "What will you tell each other if it's wonderful?\n\nWhat if it's just fine?\n\nBoth answers count.",
       "highlight_words": [
-        "watching the other one enjoy"
+        "Both answers count."
       ],
       "type": "prompt",
       "intensity": 3,
       "who_starts": "partnerB",
       "is_sensitive": false,
       "can_skip": false,
-      "register": "excited",
+      "register": "flexible",
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
@@ -196,11 +196,11 @@
       "sort_order": 9
     },
     {
-      "id": "bt-10",
-      "deck_id": "before-tonight",
-      "text": "The Thread.\n\nEach of you finishes this, out loud:\n\n\"Whatever happens tonight, the thing I'm coming home to is...\"\n\nThen go.",
+      "id": "ft-10",
+      "deck_id": "the-first-time",
+      "text": "The Day After Promise.\n\nEach of you makes one small promise for the morning after. Out loud.\n\nThe deck ends when both are said.",
       "highlight_words": [
-        "coming home to"
+        "one small promise"
       ],
       "type": "closingRitual",
       "intensity": 3,
