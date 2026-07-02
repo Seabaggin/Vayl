@@ -278,7 +278,7 @@ struct PaywallSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Text("The Opener and your solo decks are always free.")
+            Text("The Opener and The Check-In are always free.")
                 .font(AppFonts.meta)
                 .foregroundStyle(AppColors.textMuted)
         }
