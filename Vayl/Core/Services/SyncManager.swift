@@ -130,7 +130,8 @@ class SyncManager: ObservableObject {
         do {
             try await profileService.updateIdentity(
                 name: trimmedName.isEmpty ? nil : trimmedName,
-                pronouns: pronouns
+                pronouns: pronouns,
+                gender: localProfile.genderIdentity
             )
             logger.info("✅ Display identity synced to Supabase")
         } catch {

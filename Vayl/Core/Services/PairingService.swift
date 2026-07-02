@@ -42,10 +42,12 @@ struct PairingCodeRow: Decodable {
 }
 
 /// The linked partner's display identity, as returned by `get-partner`.
-/// Either field may be nil if the partner hasn't set it yet.
+/// Any field may be nil if the partner hasn't set it yet (or an older
+/// `get-partner` deployment omits the key — all fields decode optionally).
 struct PartnerIdentity: Decodable {
     let name: String?
     let pronouns: String?
+    let gender: String?     // raw OB GenderPhase answer — composition derivation input
 }
 
 // MARK: - PairingService
@@ -202,6 +204,41 @@ final class PairingService {
             group.cancelAll()
             return result
         }
+    }
+
+    // MARK: - Connection Composition (spec §9)
+
+    /// Reads the couple's connection_composition. RLS scopes the row to couple
+    /// members, so a non-member reads nothing → returns .flexible (the default).
+    func fetchComposition(coupleId: UUID) async throws -> GenderDynamic {
+        struct Row: Decodable {
+            let connectionComposition: String
+            enum CodingKeys: String, CodingKey {
+                case connectionComposition = "connection_composition"
+            }
+        }
+        let rows: [Row] = try await supabase
+            .from("couples")
+            .select("connection_composition")
+            .eq("id", value: coupleId.uuidString)
+            .execute()
+            .value
+        guard let raw = rows.first?.connectionComposition,
+              let value = GenderDynamic(rawValue: raw) else { return .flexible }
+        return value
+    }
+
+    /// Writes connection_composition via the set_connection_composition RPC
+    /// (SECURITY DEFINER + is_couple_member guard — couples has no member
+    /// UPDATE policy by design). Throws on non-membership or invalid value.
+    func setComposition(coupleId: UUID, _ value: GenderDynamic) async throws {
+        try await supabase
+            .rpc("set_connection_composition", params: [
+                "p_couple_id": coupleId.uuidString,
+                "p_value": value.rawValue,
+            ])
+            .execute()
+        logger.info("connection_composition set to \(value.rawValue)")
     }
 
     // MARK: - Private Helpers

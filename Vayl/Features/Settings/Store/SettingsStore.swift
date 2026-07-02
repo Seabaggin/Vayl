@@ -46,23 +46,27 @@ final class SettingsStore {
     private let authService: AuthService
     private let entitlements: EntitlementStore
     private let accountService: AccountService
+    private let pairingService: PairingService
 
     // MARK: - Init
 
-    /// `accountService` nil resolves to a fresh AccountService inside the MainActor-isolated
-    /// body — a default argument would evaluate in a nonisolated context and not compile.
+    /// `accountService` / `pairingService` nil resolve to fresh instances inside the
+    /// MainActor-isolated body — a default argument would evaluate in a nonisolated
+    /// context and not compile.
     init(
         modelContainer: ModelContainer,
         appState: AppState,
         authService: AuthService,
         entitlements: EntitlementStore,
-        accountService: AccountService? = nil
+        accountService: AccountService? = nil,
+        pairingService: PairingService? = nil
     ) {
         self.modelContainer = modelContainer
         self.appState = appState
         self.authService = authService
         self.entitlements = entitlements
         self.accountService = accountService ?? AccountService()
+        self.pairingService = pairingService ?? PairingService()
     }
 
     // MARK: - Identity edit (name / pronouns / experience)
@@ -123,6 +127,47 @@ final class SettingsStore {
     /// Was called directly from SettingsPrivacyView (H-2 violation) — now routed here.
     func setShareCapacity(_ value: Bool) {
         Task { await SyncManager.shared.pushSharePulse(value) }
+    }
+
+    // MARK: - Connection composition (spec §9 Settings row)
+
+    /// The couple's current composition, for the row value + picker checkmark.
+    /// Hydrated from the local Couple mirror instantly, then the remote row.
+    private(set) var composition: GenderDynamic = .flexible
+
+    func loadComposition() async {
+        guard let coupleId = appState.coupleId else { return }
+        // Instant local mirror (may not exist — nothing creates Couple rows locally).
+        let context = ModelContext(modelContainer)
+        let descriptor = FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
+        if let couple = try? context.fetch(descriptor).first {
+            composition = couple.connectionComposition
+        }
+        // Remote truth.
+        if let remote = try? await pairingService.fetchComposition(coupleId: coupleId) {
+            composition = remote
+        }
+    }
+
+    /// Writes the chosen composition through the RPC and mirrors it into the
+    /// local Couple if one exists (mirror-if-present — never creates rows).
+    /// Optimistic UI; reverts on failure.
+    func setComposition(_ value: GenderDynamic) async {
+        guard let coupleId = appState.coupleId else { return }
+        let previous = composition
+        composition = value
+        do {
+            try await pairingService.setComposition(coupleId: coupleId, value)
+            let context = ModelContext(modelContainer)
+            let descriptor = FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
+            if let couple = try? context.fetch(descriptor).first {
+                couple.connectionComposition = value
+                try? context.saveWithLogging()
+            }
+        } catch {
+            composition = previous
+            logger.error("setComposition failed: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Unlink partner

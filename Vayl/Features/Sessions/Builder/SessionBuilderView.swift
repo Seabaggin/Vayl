@@ -20,6 +20,11 @@ struct SessionBuilderView: View {
     /// it and moves to the lobby.
     let onConfirm: (SessionPlan) -> Void
     let onCancel: () -> Void
+    /// The couple's composition, threaded from the host (seam ruling 6).
+    /// Defaults .flexible when unknown — never blocks on a missing Couple.
+    var composition: GenderDynamic = .flexible
+    /// Resume point (DeckProgress.currentCardIndex), threaded from the host.
+    var startIndex: Int = 0
 
     @State private var store: SessionBuilderStore?
 
@@ -36,12 +41,12 @@ struct SessionBuilderView: View {
         }
         .task {
             guard store == nil else { return }
-            // Composition filter: .flexible until the couple's composition is
-            // threaded through the host (seam ruling 6 — default, never block).
+            // Composition filter + resume index come from the host (PlayStore),
+            // defaulted .flexible / 0 when unknown (seam ruling 6 — never block).
             store = SessionBuilderStore(
                 deckId: deck.id,
-                cards: deck.cards(for: .flexible),
-                startIndex: 0
+                cards: deck.cards(for: composition),
+                startIndex: startIndex
             )
         }
     }

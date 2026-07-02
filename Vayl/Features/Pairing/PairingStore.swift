@@ -231,10 +231,86 @@ final class PairingStore {
         do {
             if let partner = try await pairingService.fetchPartner() {
                 partnerName = partner.name
+                persistPartnerGender(partner.gender)
+                deriveCompositionProposal(partnerGender: partner.gender)
             }
         } catch {
             logger.error("Fetch partner failed: \(error.localizedDescription)")
         }
+    }
+
+    /// Fulfills UserProfile.partnerGenderIdentity's "populated via pairing
+    /// flow" contract (UserProfile.swift). Best-effort.
+    private func persistPartnerGender(_ gender: String?) {
+        guard let gender else { return }
+        let context = ModelContext(modelContainer)
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
+        profile.partnerGenderIdentity = gender
+        try? context.saveWithLogging()
+    }
+
+    // MARK: - Connection Composition (spec §9)
+
+    /// The composition to propose on the linked screen. Nil = nothing to
+    /// propose (non-binary / declined / already resolved) → silent .flexible,
+    /// which is the DB default — no write needed.
+    private(set) var compositionProposal: GenderDynamic? = nil
+
+    /// Set once the user answers (either way) so a re-entered linked surface
+    /// never re-asks. UserDefaults because it is per-device UI state, not data.
+    private let proposalResolvedKey = "vayl.compositionProposalResolved"
+
+    /// Derives the proposal from both partners' OB gender answers. Called from
+    /// refreshPartner after the partner's gender lands. One-shot per device.
+    private func deriveCompositionProposal(partnerGender: String?) {
+        guard case .linked = linkState,
+              !UserDefaults.standard.bool(forKey: proposalResolvedKey) else { return }
+        let context = ModelContext(modelContainer)
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
+        compositionProposal = GenderDynamic.proposal(
+            myGender: profile.genderIdentity,
+            partnerGender: partnerGender
+        )
+        if compositionProposal == nil {
+            // Nothing to propose — resolve silently so we never re-derive.
+            UserDefaults.standard.set(true, forKey: proposalResolvedKey)
+        }
+    }
+
+    /// One-tap confirm. Writes the proposal remotely (RPC), mirrors into the
+    /// local Couple if one exists (same mirror-if-present rule as
+    /// EntitlementStore.apply — this store never creates Couple rows).
+    func confirmComposition() async {
+        guard case .linked(let coupleId) = linkState,
+              let proposal = compositionProposal else { return }
+        do {
+            try await pairingService.setComposition(coupleId: coupleId, proposal)
+            mirrorCompositionLocally(proposal, coupleId: coupleId)
+            compositionProposal = nil
+            UserDefaults.standard.set(true, forKey: proposalResolvedKey)
+            logger.info("Composition confirmed: \(proposal.rawValue)")
+        } catch {
+            // Non-fatal: the couple can set it anytime in Settings.
+            compositionProposal = nil
+            UserDefaults.standard.set(true, forKey: proposalResolvedKey)
+            logger.error("Composition write failed (Settings row remains): \(error.localizedDescription)")
+        }
+    }
+
+    /// "Keep it flexible" / card skipped. No network call — the column already
+    /// defaults to flexible, which is the spec's silent fallback.
+    func dismissComposition() {
+        compositionProposal = nil
+        UserDefaults.standard.set(true, forKey: proposalResolvedKey)
+        logger.info("Composition proposal dismissed — staying flexible")
+    }
+
+    private func mirrorCompositionLocally(_ value: GenderDynamic, coupleId: UUID) {
+        let context = ModelContext(modelContainer)
+        let descriptor = FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
+        guard let couple = try? context.fetch(descriptor).first else { return }
+        couple.connectionComposition = value
+        try? context.saveWithLogging()
     }
 
     // MARK: - Persistence

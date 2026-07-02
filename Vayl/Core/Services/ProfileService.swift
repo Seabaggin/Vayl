@@ -195,17 +195,19 @@ final class ProfileService: ObservableObject {
     
     // MARK: - Update Identity (P3 — partner-visible fields)
 
-    /// Pushes the user's display identity (name + pronouns) to their remote
+    /// Pushes the user's display identity (name + pronouns + gender) to their remote
     /// `user_profiles` row, matched by `auth_id`. The rich onboarding profile lives
-    /// only in local SwiftData; this syncs the two partner-visible fields so a
-    /// linked partner can read them (via the `get-partner` function). Idempotent
-    /// partial UPDATE — safe to call repeatedly (pairing entry, linked-screen load).
-    /// RLS permits it (`auth_id = auth.uid()`).
-    func updateIdentity(name: String?, pronouns: String?) async throws {
+    /// only in local SwiftData; this syncs the partner-visible fields so a
+    /// linked partner can read them (via the `get-partner` function). Gender is the
+    /// composition-derivation input (spec §9) and crosses only via `get-partner`.
+    /// Idempotent partial UPDATE — safe to call repeatedly (pairing entry,
+    /// linked-screen load). RLS permits it (`auth_id = auth.uid()`).
+    func updateIdentity(name: String?, pronouns: String?, gender: String? = nil) async throws {
         let authId = try await supabase.auth.session.user.id
         var patch: [String: String] = [:]
         if let name, !name.isEmpty { patch["name"] = name }
         if let pronouns, !pronouns.isEmpty { patch["pronouns"] = pronouns }
+        if let gender, !gender.isEmpty { patch["gender_identity"] = gender }
         guard !patch.isEmpty else { return }
         try await supabase
             .from("user_profiles")

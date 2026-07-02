@@ -27,6 +27,7 @@ struct SettingsView: View {
     @State private var showNotifications: Bool = false
     @State private var showAppearance:    Bool = false
     @State private var showPartner:       Bool = false
+    @State private var showComposition:   Bool = false
 
     // Sheet / dialog state
     @State private var showInvite:          Bool = false
@@ -67,6 +68,7 @@ struct SettingsView: View {
                         entitlements: entitlements
                     )
                 }
+                Task { await store?.loadComposition() }
             }
             .onChange(of: store?.didLeaveAccount ?? false) { _, left in
                 // Route out of a pushed Settings; tab-mode root re-renders reactively.
@@ -91,6 +93,11 @@ struct SettingsView: View {
             .vaylSheet(isPresented: $showPartner, heightFraction: 0.92, screenHeight: layout.screenHeight) {
                 if let store {
                     SettingsPartnerView(store: store, onClose: { showPartner = false })
+                }
+            }
+            .vaylSheet(isPresented: $showComposition, heightFraction: 0.5, screenHeight: layout.screenHeight) {
+                if let store {
+                    SettingsCompositionView(store: store, onClose: { showComposition = false })
                 }
             }
             .vaylSheet(isPresented: $showInvite, heightFraction: 0.92, screenHeight: layout.screenHeight) {
@@ -388,6 +395,18 @@ struct SettingsView: View {
                                 icon: "person.2.fill",
                                 label: "Linked",
                                 subtitle: "Add relationship details"
+                            )
+                        }
+                        .buttonStyle(PressableCardStyle())
+
+                        Divider().overlay(AppColors.borderSubtle)
+
+                        Button { showComposition = true } label: {
+                            SettingsNavRow(
+                                icon: "text.bubble",
+                                label: "Card wording",
+                                subtitle: "How some session cards are phrased",
+                                value: (store?.composition ?? .flexible).settingsLabel
                             )
                         }
                         .buttonStyle(PressableCardStyle())

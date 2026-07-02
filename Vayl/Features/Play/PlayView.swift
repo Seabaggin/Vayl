@@ -130,7 +130,9 @@ struct PlayView: View {
                 SessionBuilderView(
                     deck: deck,
                     onConfirm: { plan in store.builderDidFinish(plan) },
-                    onCancel: { store.cancelBuilder() }
+                    onCancel: { store.cancelBuilder() },
+                    composition: store.composition,
+                    startIndex: store.builderStartIndex
                 )
             }
         }

@@ -35,6 +35,7 @@
 		AA00000DAAAA000000000001 /* RevealEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000DAAAA000000000002 /* RevealEngineTests.swift */; };
 		AA00000EAAAA000000000001 /* SessionBuilderStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000EAAAA000000000002 /* SessionBuilderStoreTests.swift */; };
 		AA00000FAAAA000000000001 /* ContentLintTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000FAAAA000000000002 /* ContentLintTests.swift */; };
+		AA00000GAAAA000000000001 /* CompositionDerivationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000GAAAA000000000002 /* CompositionDerivationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -80,6 +81,7 @@
 		AA00000DAAAA000000000002 /* RevealEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevealEngineTests.swift; sourceTree = "<group>"; };
 		AA00000EAAAA000000000002 /* SessionBuilderStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionBuilderStoreTests.swift; sourceTree = "<group>"; };
 		AA00000FAAAA000000000002 /* ContentLintTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentLintTests.swift; sourceTree = "<group>"; };
+		AA00000GAAAA000000000002 /* CompositionDerivationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompositionDerivationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -186,6 +188,7 @@
 				AA00000DAAAA000000000002 /* RevealEngineTests.swift */,
 				AA00000EAAAA000000000002 /* SessionBuilderStoreTests.swift */,
 				AA00000FAAAA000000000002 /* ContentLintTests.swift */,
+				AA00000GAAAA000000000002 /* CompositionDerivationTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -391,6 +394,7 @@
 				AA00000DAAAA000000000001 /* RevealEngineTests.swift in Sources */,
 				AA00000EAAAA000000000001 /* SessionBuilderStoreTests.swift in Sources */,
 				AA00000FAAAA000000000001 /* ContentLintTests.swift in Sources */,
+				AA00000GAAAA000000000001 /* CompositionDerivationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

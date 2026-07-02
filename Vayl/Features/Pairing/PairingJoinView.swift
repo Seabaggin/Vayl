@@ -199,6 +199,16 @@ struct PairingJoinView: View {
                     .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
                     .multilineTextAlignment(.center)
             }
+
+            if let proposal = store.compositionProposal {
+                CompositionConfirmCard(
+                    proposal: proposal,
+                    onConfirm: { Task { await store.confirmComposition() } },
+                    onKeepFlexible: { store.dismissComposition() }
+                )
+                .transition(.opacity)
+                .animation(AppAnimation.standard, value: store.compositionProposal)
+            }
         }
     }
 

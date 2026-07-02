@@ -45,17 +45,20 @@ final class PlayStore {
     private let appState: AppState
     private let entitlements: EntitlementStore          // M3: the single Core gate
     private let realtime: RealtimeSessionService        // opens the lobby row
+    private let pairing: PairingService                 // couple composition read (spec §9)
 
     init(modelContainer: ModelContainer,
          appState: AppState,
          entitlements: EntitlementStore,
          catalog: DeckCatalogService = DeckCatalogService(),
-         realtime: RealtimeSessionService = RealtimeSessionService()) {
+         realtime: RealtimeSessionService = RealtimeSessionService(),
+         pairing: PairingService = PairingService()) {
         self.modelContainer = modelContainer
         self.appState = appState
         self.entitlements = entitlements
         self.catalog = catalog
         self.realtime = realtime
+        self.pairing = pairing
         load()
     }
 
@@ -76,6 +79,43 @@ final class PlayStore {
         }
         resolveFeatured()
         loadFeatured()
+        refreshComposition()
+    }
+
+    // MARK: - Connection composition (seam ruling 6)
+
+    /// The couple's composition for card filtering. Hydrated from the local
+    /// Couple mirror instantly (rows may not exist — nothing creates them
+    /// locally), then the remote couples row. Defaults .flexible when unknown;
+    /// never blocks the builder on a fetch.
+    private(set) var composition: GenderDynamic = .flexible
+
+    private func refreshComposition() {
+        guard let coupleId = appState.coupleId else {
+            composition = .flexible
+            return
+        }
+        // Instant local mirror, if a Couple row happens to exist.
+        let context = ModelContext(modelContainer)
+        let descriptor = FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
+        if let couple = try? context.fetch(descriptor).first {
+            composition = couple.connectionComposition
+        }
+        // Remote truth, best-effort — lands well before the builder opens.
+        Task { @MainActor in
+            if let remote = try? await pairing.fetchComposition(coupleId: coupleId) {
+                composition = remote
+            }
+        }
+    }
+
+    /// Resume point for the builder: the featured/selected deck's
+    /// DeckProgress.currentCardIndex, 0 when fresh or completed.
+    private(set) var builderStartIndex: Int = 0
+
+    private func resolveBuilderStartIndex(deckId: String) {
+        let row = fetchProgress().first { $0.deckId == deckId }
+        builderStartIndex = (row?.completedAt == nil) ? (row?.currentCardIndex ?? 0) : 0
     }
 
     /// Pick the featured deck (most-recent in-progress, else first available) and resolve
@@ -154,6 +194,7 @@ final class PlayStore {
             return
         }
         ceremonyDeckID = nil
+        resolveBuilderStartIndex(deckId: deck.id)
         builderDeck = deck                    // SessionBuilderView presents (Seam B)
     }
 
@@ -162,6 +203,7 @@ final class PlayStore {
     func begin(_ id: String) {
         guard let deck = try? catalog.loadDeck(id: id) else { return }
         detailID = nil
+        resolveBuilderStartIndex(deckId: deck.id)
         builderDeck = deck
     }
 
