@@ -32,6 +32,8 @@
 		AA00000AAAAA000000000001 /* PulseAnswersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000AAAAA000000000002 /* PulseAnswersTests.swift */; };
 		AA00000BAAAA000000000001 /* PulseHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000BAAAA000000000002 /* PulseHistoryTests.swift */; };
 		AA00000CAAAA000000000001 /* AirlockStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000CAAAA000000000002 /* AirlockStoreTests.swift */; };
+		AA00000DAAAA000000000001 /* RevealEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000DAAAA000000000002 /* RevealEngineTests.swift */; };
+		AA00000EAAAA000000000001 /* SessionBuilderStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000EAAAA000000000002 /* SessionBuilderStoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +76,8 @@
 		AA00000AAAAA000000000002 /* PulseAnswersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseAnswersTests.swift; sourceTree = "<group>"; };
 		AA00000BAAAA000000000002 /* PulseHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseHistoryTests.swift; sourceTree = "<group>"; };
 		AA00000CAAAA000000000002 /* AirlockStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirlockStoreTests.swift; sourceTree = "<group>"; };
+		AA00000DAAAA000000000002 /* RevealEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevealEngineTests.swift; sourceTree = "<group>"; };
+		AA00000EAAAA000000000002 /* SessionBuilderStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionBuilderStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -177,6 +181,8 @@
 				AA00000AAAAA000000000002 /* PulseAnswersTests.swift */,
 				AA00000BAAAA000000000002 /* PulseHistoryTests.swift */,
 				AA00000CAAAA000000000002 /* AirlockStoreTests.swift */,
+				AA00000DAAAA000000000002 /* RevealEngineTests.swift */,
+				AA00000EAAAA000000000002 /* SessionBuilderStoreTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -379,6 +385,8 @@
 				AA00000AAAAA000000000001 /* PulseAnswersTests.swift in Sources */,
 				AA00000BAAAA000000000001 /* PulseHistoryTests.swift in Sources */,
 				AA00000CAAAA000000000001 /* AirlockStoreTests.swift in Sources */,
+				AA00000DAAAA000000000001 /* RevealEngineTests.swift in Sources */,
+				AA00000EAAAA000000000001 /* SessionBuilderStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

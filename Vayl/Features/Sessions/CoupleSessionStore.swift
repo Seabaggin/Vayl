@@ -135,6 +135,7 @@ final class CoupleSessionStore: Identifiable {
         self.transitionSeconds = transitionSeconds
         self.realtime = realtime
         self.initiatorId = launch.session?.initiatorId
+        self.revealEngine = RevealEngine(role: launch.role, transport: nil)
         self.enqueueSync = enqueueSync ?? { payload in
             guard let data = try? JSONEncoder().encode(payload) else { return }
             SyncManager.shared.enqueueSyncTask(
@@ -241,7 +242,10 @@ final class CoupleSessionStore: Identifiable {
         phase = .transition
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(transitionSeconds))
-            if phase == .transition { phase = .session }
+            if phase == .transition {
+                phase = .session
+                cardDidChange()      // Section 3: first card's beat/reveal setup
+            }
         }
     }
 
@@ -255,6 +259,7 @@ final class CoupleSessionStore: Identifiable {
             try? await Task.sleep(for: .seconds(transitionSeconds))
             if phase == .transition {
                 phase = .session
+                cardDidChange()      // Section 3: first card's beat/reveal setup
                 startTimerIfLeader()
             }
         }
@@ -303,7 +308,7 @@ final class CoupleSessionStore: Identifiable {
         if isLastCard { finishSession(); return }
         let expected = index
         index += 1                                   // optimistic, both paths
-        revealEngine?.reset(forCardId: effectiveHand[expected].id)
+        cardDidChange()                              // Section 3: beats / back / reveal per-card setup
         refreshTimer()
         guard isLive, let realtime, let sid = remoteSessionId else { return }
         Task { @MainActor in
@@ -316,6 +321,7 @@ final class CoupleSessionStore: Identifiable {
                 // the last confirmed row value.
                 if self.index == expected + 1, self.confirmedIndex <= expected {
                     self.index = expected
+                    self.cardDidChange()
                     self.refreshTimer()
                 }
             }
@@ -337,9 +343,12 @@ final class CoupleSessionStore: Identifiable {
     private(set) var depthCeiling: Bandwidth?
     /// The hand actually played tonight (ceiling-trimmed; == hand until then).
     private(set) var effectiveHand: [Card]
-    /// PLAN16-SECTION3 assigns the real engine; row/broadcast reveal deltas are
-    /// forwarded to it.
-    var revealEngine: RevealEngine?
+    /// ONE engine serves all five reveal mechanics (Section 3). Built at init
+    /// with a nil transport (pure-local path: compose/seal render, bothSealed
+    /// never fires); startRemoteSync attaches the real wire adapter.
+    let revealEngine: RevealEngine
+    /// The engine holds its transport weak — the store retains the adapter.
+    private var revealTransportAdapter: RevealTransportAdapter?
 
     func startRemoteSync() {
         guard let realtime, let coupleId = appState.coupleId,
@@ -357,22 +366,33 @@ final class CoupleSessionStore: Identifiable {
             partnerHere ? self.partnerReturned() : self.partnerLost()
         }
         coordinator.onReveal = { [weak self] envelope in
-            self?.revealEngine?.applyBroadcast(envelope)
+            self?.revealEngine.applyBroadcast(envelope)
         }
         coordinator.onResendRequest = { [weak self] cardId in
             self?.receiveRevealResendRequest(cardId: cardId)
         }
+        let adapter = RevealTransportAdapter(
+            realtime: realtime,
+            sessionId: sid,
+            role: sessionRole,
+            coordinator: coordinator
+        )
+        revealTransportAdapter = adapter
+        revealEngine.attachTransport(adapter)
         coordinator.start()
         isLive = true
     }
 
-    /// PLAN16-SECTION3 replaces this stub (the engine answers resend requests
-    /// by re-sending its buffered envelope).
-    func receiveRevealResendRequest(cardId: String) {}
+    /// The partner asked for a re-send: the engine answers by re-broadcasting
+    /// its buffered envelope (Section 3).
+    func receiveRevealResendRequest(cardId: String) {
+        revealEngine.receiveResendRequest(cardId: cardId)
+    }
 
     func teardown() {
         coordinator?.stop()
         coordinator = nil
+        revealEngine.teardown()
         graceTask?.cancel()
         timerTask?.cancel()
     }
@@ -397,7 +417,10 @@ final class CoupleSessionStore: Identifiable {
         timerStartedAtRaw = dto.timerStartedAt
         liveTimers = dto.perCardTimer
         refreshTimer()
-        if indexChanged { startTimerIfLeader() }
+        if indexChanged {
+            startTimerIfLeader()
+            cardDidChange()      // Section 3: beats / back / reveal per-card setup
+        }
         recomputeCeiling(a: dto.aBandwidth, b: dto.bBandwidth)
         if dto.safeWordUsed, !safeWordUsed {
             safeWordUsed = true
@@ -411,7 +434,7 @@ final class CoupleSessionStore: Identifiable {
            !safeWordUsed, phase == .session {
             endEarly()                            // partner confirmed exit
         }
-        revealEngine?.applyRow(dto.revealState)
+        revealEngine.applyRow(dto.revealState)
     }
 
     /// Depth ceiling (spec 4.3): min of the two private readings. Light keeps
@@ -453,10 +476,85 @@ final class CoupleSessionStore: Identifiable {
             if phase == .airlock { phase = .session }
             startRemoteSync()
             refreshTimer()
-            revealEngine?.applyRow(dto.revealState)
+            cardDidChange()
+            restoreReveal(flags: currentCard.flatMap { dto.revealState[$0.id] })
         default:
             break   // lobby/airlock: AirlockStore owns those states
         }
+    }
+
+    // MARK: - Card presentation state (Section 3: beats, card backs, reveal gate)
+
+    /// The views need the role for role-aware prompts (Mirror). Exposing the
+    /// private let through a computed keeps the stored property private.
+    var sessionRoleForViews: SessionRole { sessionRole }
+
+    /// Set true by restoreReveal when the row said "sealed" but the payload
+    /// died with the process — the reveal views show the re-compose copy once.
+    private(set) var revealRecomposing = false
+
+    /// The beat waiting to play before the current card. nil = none / done.
+    private(set) var activeContextBeat: (type: ContextBeatType, copy: String)?
+    /// Beats play once per card per sitting.
+    private var beatShownCardIds: Set<String> = []
+    /// backCopy flip state for the current card.
+    private(set) var showingCardBack = false
+
+    /// A reveal card may only advance once revealed (the ceremony is the card).
+    var revealSatisfied: Bool {
+        guard currentCard?.isRevealMechanic == true else { return true }
+        return revealEngine.phase == .revealed
+    }
+
+    func dismissContextBeat() {
+        activeContextBeat = nil
+    }
+
+    func flipCardBack() {
+        guard currentCard?.hasBackCopy == true else { return }
+        showingCardBack = true
+    }
+
+    /// Central per-card setup. Called on session start and EVERY index move —
+    /// the local path from advanceOrFinish, the live path from applyRemoteRow
+    /// when the echoed current_index changes (never both for one move: the
+    /// echo of our own advance lands on an index we already occupy).
+    func cardDidChange() {
+        showingCardBack = false
+        revealRecomposing = false
+        activeContextBeat = nil
+
+        guard let card = currentCard else { return }
+
+        if card.hasContextBeat,
+           let type = card.contextBeatType,
+           let copy = card.contextBeatCopy,
+           !beatShownCardIds.contains(card.id) {
+            beatShownCardIds.insert(card.id)
+            activeContextBeat = (type, copy)
+        }
+
+        if card.isRevealMechanic {
+            revealEngine.beginCard(card.id)
+        } else {
+            revealEngine.teardown()
+        }
+    }
+
+    /// Reconnect restore for the current card (resumeIfNeeded calls this after
+    /// rebuilding state from fetchOpenSession). A sealed flag with no local
+    /// payload means the answer died with the process → whole-card clear +
+    /// re-compose (spec §5).
+    func restoreReveal(flags: RevealCardState?) {
+        guard let card = currentCard, card.isRevealMechanic else { return }
+        let flags = flags ?? RevealCardState()
+        let outcome = revealEngine.restore(
+            cardId: card.id,
+            mySealed: flags.sealed(for: sessionRole),
+            partnerSealed: flags.sealed(for: sessionRole == .a ? .b : .a),
+            revealed: flags.revealed
+        )
+        revealRecomposing = (outcome == .recompose)
     }
 
     // MARK: - Timer — derived locally from the shared anchor, never ticked over the wire
@@ -698,5 +796,51 @@ final class CoupleSessionStore: Identifiable {
         } catch {
             logger.error("reflection save failed — \(error.localizedDescription)")
         }
+    }
+}
+
+// MARK: - RevealTransportAdapter (glue: engine seam → real wire)
+
+/// Adapts the Section-1 service (row flag merge-writes) + Section-2 coordinator
+/// (broadcast) to the engine's RevealTransporting seam. Owned per-session by
+/// CoupleSessionStore; holds no state of its own.
+@MainActor
+final class RevealTransportAdapter: RevealTransporting {
+
+    private let realtime: RealtimeSessionService
+    private let sessionId: UUID
+    private let role: SessionRole
+    private weak var coordinator: SessionSyncCoordinator?
+
+    init(
+        realtime: RealtimeSessionService,
+        sessionId: UUID,
+        role: SessionRole,
+        coordinator: SessionSyncCoordinator?
+    ) {
+        self.realtime = realtime
+        self.sessionId = sessionId
+        self.role = role
+        self.coordinator = coordinator
+    }
+
+    func setSealed(cardId: String) async throws {
+        try await realtime.setSealed(sessionId: sessionId, cardId: cardId, role: role)
+    }
+
+    func setRevealed(cardId: String) async throws {
+        try await realtime.setRevealed(sessionId: sessionId, cardId: cardId)
+    }
+
+    func clearRevealCard(cardId: String) async throws {
+        try await realtime.clearRevealCard(sessionId: sessionId, cardId: cardId)
+    }
+
+    func sendEnvelope(_ envelope: RevealEnvelope) {
+        coordinator?.sendReveal(envelope)
+    }
+
+    func requestResend(cardId: String) {
+        coordinator?.sendResendRequest(cardId: cardId)
     }
 }

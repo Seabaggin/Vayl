@@ -91,6 +91,17 @@ struct SessionPlayerView: View {
                 }
                 .transition(.opacity)
             }
+
+            // Pre-card context beat (Section 3) — banner floats over the dimmed
+            // card tap-through; interstitial holds until "got it".
+            if let beat = store.activeContextBeat {
+                ContextBeatOverlayView(
+                    type: beat.type,
+                    copy: beat.copy,
+                    onDismiss: { store.dismissContextBeat() }
+                )
+                .zIndex(10)
+            }
         }
         .animation(reduceMotion ? AppAnimation.fast : AppAnimation.standard, value: store.isPaused)
         .contentShape(Rectangle())
@@ -160,17 +171,49 @@ struct SessionPlayerView: View {
         VStack(alignment: .leading, spacing: AppSpacing.lg) {
             drawerRow
             if let card = store.currentCard {
-                highlightedPrompt(card)
-                    .font(AppFonts.display(26, weight: .medium, relativeTo: .title))
-                    .foregroundStyle(AppColors.textPrimary)
-                    .lineSpacing(AppSpacing.xs)
-                    .fixedSize(horizontal: false, vertical: true)
+                cardFace(card)
+                if card.hasBackCopy, !card.isRevealMechanic {
+                    CardBackFlipView(
+                        backCopy: card.backCopy ?? "",
+                        showingBack: store.showingCardBack,
+                        onFlip: { store.flipCardBack() }
+                    )
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, AppSpacing.xl)
         .padding(.bottom, 150)
         .frame(maxHeight: .infinity, alignment: .center)
+    }
+
+    /// Face router (Section 3): reveal mechanics get their reveal surface,
+    /// local living cards get their typed face, discussion cards keep the
+    /// hero prompt.
+    @ViewBuilder
+    private func cardFace(_ card: Card) -> some View {
+        switch card.type {
+        case .whisper:
+            WhisperRevealView(store: store, isWhatIf: false,
+                              recomposing: store.revealRecomposing)
+        case .whatIf:
+            WhisperRevealView(store: store, isWhatIf: true,
+                              recomposing: store.revealRecomposing)
+        case .unspoken:
+            UnspokenSliderView(store: store, recomposing: store.revealRecomposing)
+        case .mirror:
+            MirrorRevealView(store: store, recomposing: store.revealRecomposing)
+        case .snapshot:
+            SnapshotRevealView(store: store, recomposing: store.revealRecomposing)
+        case .prompt, .reflect:
+            highlightedPrompt(card)
+                .font(AppFonts.display(26, weight: .medium, relativeTo: .title))
+                .foregroundStyle(AppColors.textPrimary)
+                .lineSpacing(AppSpacing.xs)
+                .fixedSize(horizontal: false, vertical: true)
+        default:
+            LocalCardFaceView(card: card)               // the nine local living cards
+        }
     }
 
     private var drawerRow: some View {
@@ -292,7 +335,13 @@ struct SessionPlayerView: View {
             HStack(alignment: .bottom) {
                 leftStack
                 Spacer()
+                // Reveal cards must reveal before advancing (the ceremony is
+                // the card). Only the proceed control is gated — the care mark
+                // and the safe word stay reachable, always.
                 proceedButton
+                    .allowsHitTesting(store.revealSatisfied)
+                    .opacity(store.revealSatisfied ? 1 : 0.35)
+                    .animation(AppAnimation.standard, value: store.revealSatisfied)
             }
         }
         .padding(.horizontal, AppSpacing.lg)
@@ -468,7 +517,8 @@ struct SessionPlayerView: View {
     // MARK: - Hold-to-deal mechanic
 
     private func startHold() {
-        guard !holding, !diving, !store.isPaused, store.currentCard != nil else { return }
+        guard !holding, !diving, !store.isPaused, store.currentCard != nil,
+              store.revealSatisfied else { return }
         wake()
         holding = true
         fill = 0
