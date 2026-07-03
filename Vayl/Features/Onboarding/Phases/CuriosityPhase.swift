@@ -240,7 +240,7 @@ struct CuriosityPhase: View {
             // allCardsDealt, so a live drag on the top card is never animated by
             // the deal curve (drag changes don't re-trigger this value).
             .animation(
-                reduceMotion ? .easeOut(duration: 0.15)
+                reduceMotion ? AppAnimation.fast
                              : AppAnimation.cardSlide.delay(dealDelay),
                 value: allCardsDealt
             )

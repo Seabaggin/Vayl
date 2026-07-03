@@ -190,7 +190,7 @@ final class CuriositySequencer {
 
     private func demoSwipe(right: Bool, screenWidth: CGFloat) async {
         let dir: CGFloat = right ? 1 : -1
-        withAnimation(.easeIn(duration: 0.22)) {
+        withAnimation(AppAnimation.curiosityDemoSwipe) {
             dragOffset = CGSize(width: dir * screenWidth * 0.28, height: 0)
         }
         try? await Task.sleep(for: .milliseconds(160))

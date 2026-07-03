@@ -950,6 +950,11 @@ internal enum AppAnimation {
     /// large, settles to rest). Not a deal: no flight, no slide. FEEL-GATE origin value.
     /// Reduce motion: skipped at call site — card appears at rest.
     static let cardSetDown: Animation = .easeOut(duration: 0.7)
+
+    /// 0.22s ease-in — the Curiosity DEMO card gliding partway off during the dealer's
+    /// keep/pass demonstration (not the user's own throw — that's curiosityThrow).
+    /// Reduce motion: the demo sequence is skipped entirely at the call site.
+    static let curiosityDemoSwipe: Animation = .easeIn(duration: 0.22)
 }
 
 // MARK: — Reduce Motion Helpers
