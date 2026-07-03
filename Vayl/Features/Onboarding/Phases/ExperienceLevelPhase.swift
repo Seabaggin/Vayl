@@ -137,9 +137,15 @@ struct ExperienceLevelPhase: View {
             // ── Layer: SpriteKit card flight ──────────────────────────────────
             // Visible only during .dealing (sprites carry the cards in flight).
             // Hidden once deal completes — SwiftUI backs take over at fan positions.
+            // shouldRender — the scene gates its own frames (only while sprites
+            // exist + a removal-flush grace), so this layer costs no GPU for the
+            // rest of the phase. 120fps — flights render at ProMotion rate.
+            let flightScene = monte.flightScene
             SpriteView(
-                scene:   monte.flightScene,
-                options: [.allowsTransparency]
+                scene:   flightScene,
+                preferredFramesPerSecond: 120,
+                options: [.allowsTransparency],
+                shouldRender: { flightScene.shouldRender(at: $0) }
             )
             .frame(width: screenSize.width, height: screenSize.height)
             .allowsHitTesting(false)
@@ -214,19 +220,17 @@ struct ExperienceLevelPhase: View {
             }
 
             // Defer the card-back rasterization OFF the appearance frame.
-            // ImageRenderer.uiImage is a synchronous main-thread rasterize of a
-            // VaylCardBack (.drawingGroup + spectrum strokes); running it inline in
-            // onAppear hitched the deal-in. Let the phase paint first, then snapshot
-            // + deal a couple of frames later (imperceptible in the ceremony).
+            // The raster is a synchronous main-thread rasterize of a VaylCardBack
+            // (.drawingGroup + spectrum strokes); running it inline in onAppear
+            // hitched the deal-in. Let the phase paint first, then snapshot + deal
+            // a couple of frames later (imperceptible in the ceremony).
+            // CardBackRaster caches per (size, scale), so a re-entry is instant.
             entranceTask = Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(32))
                 guard !Task.isCancelled else { return }
-                let renderer = ImageRenderer(
-                    content: VaylCardBack().frame(width: cardW, height: cardH)
-                )
-                renderer.scale = displayScale
-
-                guard let backImage = renderer.uiImage else {
+                guard let backImage = CardBackRaster.image(
+                    width: cardW, height: cardH, scale: displayScale
+                ) else {
                     // Snapshot failed — fall back to instant reveal.
                     monte.showSwiftUIBacks()
                     await monte.reveal()

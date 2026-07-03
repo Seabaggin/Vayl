@@ -81,13 +81,19 @@ struct OnboardingCanvasView: View {
                 // Scene is sized in .onAppear because size is zero
                 // at CardFlightScene() init time.
                 //
-                // PERF NOTE: SpriteView renders continuously even when inFlightCards is empty.
-                // Consider gating with .opacity(director.inFlightCards.isEmpty ? 0 : 1)
-                // to eliminate idle GPU cost. Test on A14 before enabling — opacity 0 may
-                // not stop Metal rendering on all devices.
+                // shouldRender — the scene gates its own frames (renders only
+                // while cards exist + a short grace to flush removals), so the
+                // idle SpriteView costs no GPU behind the rest of the OB.
+                // 120fps — deals render at ProMotion rate instead of the SKView
+                // default 60, matching the SwiftUI animations around them
+                // (CADisableMinimumFrameDurationOnPhone is set in Vayl.plist;
+                // non-ProMotion displays clamp to 60 automatically).
+                let flightScene = director.cardFlightScene
                 SpriteView(
-                    scene:   director.cardFlightScene,
-                    options: [.allowsTransparency]
+                    scene:   flightScene,
+                    preferredFramesPerSecond: 120,
+                    options: [.allowsTransparency],
+                    shouldRender: { flightScene.shouldRender(at: $0) }
                 )
                 .frame(width: size.width, height: size.height)
                 .allowsHitTesting(false)

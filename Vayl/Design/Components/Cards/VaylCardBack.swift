@@ -253,6 +253,43 @@ private extension VaylCardBack {
 
 private extension VaylCardBack {
 
+    /// The hex grid at unit cell size, untranslated — built once per process.
+    /// Every draw derives its grid from this via a single affine transform
+    /// (scale by hexSize, offset, rotate about card center); rebuilding the
+    /// ~7k-segment path point-by-point on each draw dominated the card back's
+    /// raster cost — paid on every re-raster during the gender dissolution
+    /// (hexSpacingMul animates per frame) and every deal snapshot.
+    static let unitHexGrid: Path = {
+        // Column and row counts extend well beyond the card boundary to survive rotation.
+        let colRange = -5 ..< 26
+        let rowRange = -5 ..< 32
+
+        var gridPath = Path()
+
+        for c in colRange {
+            for r in rowRange {
+                let x = CGFloat(c) * 1.732
+                let y = CGFloat(r) * 2 + (c % 2 == 0 ? 0 : 1)
+
+                // Four edges of the hex that are visible facing upward/sideways.
+                // The full hex has 6 edges — we draw only 4 to avoid double-drawing
+                // shared edges which would double the stroke weight at intersections.
+                let pts: [CGPoint] = [
+                    CGPoint(x: x,         y: y + 1),
+                    CGPoint(x: x + 0.866, y: y + 0.5),
+                    CGPoint(x: x + 0.866, y: y - 0.5),
+                    CGPoint(x: x,         y: y - 1),
+                ]
+
+                for i in 0 ..< pts.count - 1 {
+                    gridPath.move(to: pts[i])
+                    gridPath.addLine(to: pts[i + 1])
+                }
+            }
+        }
+        return gridPath
+    }()
+
     /// Draws one hex grid layer rotated by `degrees` around the card center.
     /// Two calls with opposing rotation produce the moiré interference pattern.
     /// `hexSize` is pre-scaled by the caller — pass `15 * hexSpacingMul` for dissolution.
@@ -271,35 +308,10 @@ private extension VaylCardBack {
         let ox: CGFloat = -40
         let oy: CGFloat = -60
 
-        // Column and row counts extend well beyond the card boundary to survive rotation.
-        let colRange = -5 ..< 26
-        let rowRange = -5 ..< 32
-
-        var gridPath = Path()
-
-        for c in colRange {
-            for r in rowRange {
-                let x = CGFloat(c) * hexSize * 1.732 + ox
-                let y = CGFloat(r) * hexSize * 2 + (c % 2 == 0 ? 0 : hexSize) + oy
-
-                // Four edges of the hex that are visible facing upward/sideways.
-                // The full hex has 6 edges — we draw only 4 to avoid double-drawing
-                // shared edges which would double the stroke weight at intersections.
-                let pts: [CGPoint] = [
-                    CGPoint(x: x,                  y: y + hexSize),
-                    CGPoint(x: x + hexSize * 0.866, y: y + hexSize * 0.5),
-                    CGPoint(x: x + hexSize * 0.866, y: y - hexSize * 0.5),
-                    CGPoint(x: x,                  y: y - hexSize),
-                ]
-
-                for i in 0 ..< pts.count - 1 {
-                    gridPath.move(to: pts[i])
-                    gridPath.addLine(to: pts[i + 1])
-                }
-            }
-        }
-
-        // Rotate the entire grid around the card center.
+        // One transform, applied innermost-first (CGAffineTransform builder calls
+        // PREPEND): scale the unit grid to hexSize, offset by (ox, oy), then
+        // rotate the whole grid around the card center — identical geometry to
+        // building the grid at hexSize and rotating it.
         let cx = W / 2
         let cy = H / 2
         let radians = degrees * .pi / 180
@@ -307,9 +319,11 @@ private extension VaylCardBack {
         var transform = CGAffineTransform(translationX: cx, y: cy)
         transform = transform.rotated(by: radians)
         transform = transform.translatedBy(x: -cx, y: -cy)
+        transform = transform.translatedBy(x: ox, y: oy)
+        transform = transform.scaledBy(x: hexSize, y: hexSize)
 
         var rotatedPath = Path()
-        rotatedPath.addPath(gridPath, transform: transform)
+        rotatedPath.addPath(Self.unitHexGrid, transform: transform)
 
         // 0.3px blur — matches SVG filter: blur(0.3px).
         // Softens the aliasing on fine diagonal strokes without blurring

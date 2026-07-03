@@ -143,6 +143,14 @@ final class DemoSequencer {
         try? await Task.sleep(for: .milliseconds(800))
         guard !Task.isCancelled else { return }
 
+        // Rasterize the deal's card-back snapshot on this idle beat (the phase
+        // cross-fade has settled; the first dealer line hasn't started). The deal
+        // itself fires mid-choreography, where a synchronous ImageRenderer pass
+        // would eat the launch frame.
+        if !reduceMotion {
+            CardBackRaster.prewarm(width: cardWidth, height: cardHeight, scale: displayScale)
+        }
+
         // ── Two intro lines ───────────────────────────────────────
         let line1 = "The things worth learning about yourself rarely surface on their own."
         director.projector.showDealerLineManual(line1, anchorYFrac: 0.29)   // FEEL-GATE: lifted off the table horizon

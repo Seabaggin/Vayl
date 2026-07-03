@@ -236,12 +236,18 @@ final class GenderSequencer {
         // nothing legible on screen (density only began at T=0.18). The dealer
         // line types DURING crystallisation so the voice covers the formation —
         // the same bridge that makes the Gender→Experience seam read seamless.
+        //
+        // FrameClock (CADisplayLink) drives the loop — one dissolutionT write per
+        // rendered frame. The previous 14ms Task.sleep loop beat against the
+        // display cadence (double-writes some frames, skips others), which
+        // juddered the crystallisation.
         let dur   = 3.2
         let line  = "Let's find your place at the table."
         var lineFired = false
         let start = Date()
 
-        while !Task.isCancelled {
+        for await _ in FrameClock.frames() {
+            guard !Task.isCancelled else { break }
             let elapsed = -start.timeIntervalSinceNow
             let t = min(elapsed / dur, 1.0)
             dissolutionT = t
@@ -250,7 +256,6 @@ final class GenderSequencer {
                 stage.showDealerLineManual(line, anchorYFrac: AppLayout.tableHorizonYFrac)
             }
             if t >= 1.0 { break }
-            try? await Task.sleep(for: .milliseconds(14))
         }
 
         guard !Task.isCancelled else { return }
