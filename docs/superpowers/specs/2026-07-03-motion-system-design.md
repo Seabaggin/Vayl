@@ -99,10 +99,13 @@ refusalShiver         0.28s, ±3pt keyframes
 quietMaxScaleDelta    0.02      quietMaxTravel  16   // documented ceilings, cited in reviews
 ```
 
-**Behavior → view-layer API, next to existing siblings:**
-- `Vayl/Design/Components/Motion/VaylMotion.swift` (new): `AnyTransition.vaylDepth(_ register:)`,
-  `.vaylCascade(index:trigger:)`, `.vaylRefusal(trigger:)` — each with Reduce Motion built in so
-  call sites can't forget it.
+**Staple appliers → `Vayl/App/Theme/AppMotion.swift` (new).** Theme's actual convention is
+"tokens + thin stateless applications of them" (`AppGlows` ships glow modifiers, `AppElevation`
+ships shadow modifiers) — AppMotion is the same relationship to AppAnimation that AppGlows has to
+AppColors: `AnyTransition.vaylDepth(_ register:)`, `.vaylCascade(index:trigger:)`,
+`.vaylRefusal(trigger:)` — each with Reduce Motion built in so call sites can't forget it.
+The line: thin token-appliers live in Theme; anything with a state machine or structure
+(presentation, border effect) stays in Design/Components and merely adopts the tokens.
 - `VaylPresentation.swift` (existing): `.vaylSheet` adopts `arrive` + scrim value; `.vaylCover`
   adopts `arriveCover` + the content-lag choreography.
 - `VaylBorderEffect` / `VaylButton` (existing): unchanged; refusal shiver added.
@@ -117,7 +120,7 @@ staple (`vaylDepth` / `arrive` / tap contract); no ad hoc slides.
 
 ## 7. Migration order (implementation plan input)
 
-1. Tokens + `VaylMotion.swift` (no call sites yet — pure additive, build-verified).
+1. Tokens (`AppAnimation`) + `AppMotion.swift` (no call sites yet — pure additive, build-verified).
 2. Tab bar: orbGlide + drift (smallest visible surface, easiest to feel-verify).
 3. `vaylSheet` / `vaylCover` arrival adoption.
 4. Quiet depth handoff at tab-content swaps + any custom screen swaps found in audit.
