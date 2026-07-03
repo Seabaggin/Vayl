@@ -63,6 +63,9 @@
   /* caption cue variant (toggle) — the house "tap to map →" pattern from MapPulseHero */
   .tapCue{font-size:11px;color:var(--text-tertiary);margin-top:var(--sp-xs);display:none}
   body.showCue .tapCue{display:block}
+  /* elevation variant (toggle) — the REAL .cardElevation token: shadowDeep (black .50), radius 16, y 8 */
+  body.showElev .pulseCard{box-shadow:0 8px 16px rgba(0,0,0,.50)}
+  body.showElev .pulseCard:active{box-shadow:0 3px 8px rgba(0,0,0,.50)}   /* press = settles toward the page */
 
   /* ── orbs: 84pt, wide halo wash clipped to the card ── */
   .orbCol{width:96px;display:flex;align-items:center;justify-content:center;flex:none}
@@ -93,6 +96,7 @@
     <p><b>Press it</b> (click and hold any card): scale 0.97, no opacity drop — the contract's missing press state, added.</p>
     <label class="toggleRow"><input type="checkbox" id="chevToggle"/> show the chevron variant</label>
     <label class="toggleRow"><input type="checkbox" id="cueToggle"/> show the "tap to begin →" caption cue (house pattern, dormant only)</label>
+    <label class="toggleRow"><input type="checkbox" id="elevToggle"/> add depth: the real <b>.cardElevation</b> shadow (press to feel it settle)</label>
     <p class="note">Token-accurate: card <code>#12111A</code> (cardBackground), border <code>borderDefault</code>, radius <code>AppRadius.container</code> 20, spectrum hairline inset <code>sp-md</code>, eyebrow <code>textSectionLabel</code>, orb 84pt with the shine.html halo wash. Cycling orb tours the four spaces (sped up ~2.5× for the demo).<br/><br/>Copy per this thread: header is the invitation, value line is the incentive + stakes; paired and unpaired variants differ only in the second sentence. The reciprocity echo ("Alex checked in today") is on card 2 for the pressure-vs-presence judgment call.</p>
   </div>
 
@@ -153,6 +157,8 @@
     document.body.classList.toggle('showChev', e.target.checked));
   document.getElementById('cueToggle').addEventListener('change', e =>
     document.body.classList.toggle('showCue', e.target.checked));
+  document.getElementById('elevToggle').addEventListener('change', e =>
+    document.body.classList.toggle('showElev', e.target.checked));
 </script>
 </body>
 </html>
