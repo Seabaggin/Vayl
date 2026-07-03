@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — The Capacity Map card · whole-card tap, no pill · token-accurate</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --void:#0a0810;                              /* AppColors.void */
+    --card:#12111A;                              /* AppColors.cardBackground (dark) → inkCard */
+    --text-primary:#E8E8F0;                      /* AppColors.textPrimary */
+    --text-secondary:rgba(255,255,255,.65);      /* AppColors.textSecondary */
+    --text-tertiary:rgba(255,255,255,.38);       /* AppColors.textTertiary */
+    --border-default:rgba(255,255,255,.10);      /* AppColors.borderDefault */
+    --section-label:rgba(192,132,252,.55);       /* AppColors.textSectionLabel */
+    --cyan:#00C2FF; --purple:#6C3AE0; --magenta:#FF006A;          /* spectrum */
+    --a-cyan:#00C2FF; --a-indigo:#8B5CF6; --a-magenta:#FF006A; --a-rose:#C76A86;  /* auraCore* */
+    --sp-xxs:2px; --sp-xs:4px; --sp-sm:8px; --sp-md:16px; --sp-lg:24px;           /* AppSpacing */
+    --r-container:20px;                          /* AppRadius.container */
+    --disp:"Clash Display",-apple-system,sans-serif;
+    --body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:#0b0910;color:var(--text-primary);font-family:var(--body)}
+  body{display:flex;gap:44px;align-items:flex-start;justify-content:center;padding:36px 22px 90px;flex-wrap:wrap}
+
+  .panel{width:290px;padding-top:4px}
+  .panel .brand{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.34em;color:var(--text-tertiary);margin:0 0 6px}
+  .panel h1{font-family:var(--disp);font-size:20px;font-weight:600;margin:0 0 10px;line-height:1.3}
+  .panel p{font-size:12.5px;line-height:1.6;color:var(--text-secondary);margin:0 0 12px}
+  .panel p b{color:var(--text-primary);font-weight:500}
+  .panel code{color:var(--cyan);font-size:11px}
+  .toggleRow{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--text-secondary);margin:14px 0 4px;cursor:pointer;user-select:none}
+  .toggleRow input{accent-color:#8B5CF6}
+  .note{margin-top:16px;font-size:11px;line-height:1.6;color:var(--text-tertiary);border-top:1px solid rgba(255,255,255,.06);padding-top:12px}
+
+  .stage{display:flex;flex-direction:column;gap:26px;width:340px}
+  .cap{font-family:var(--disp);font-size:12px;font-weight:600;color:var(--text-secondary);margin:0 0 -16px}
+  .cap span{color:var(--text-tertiary);font-weight:400;font-family:var(--body);font-size:11px}
+
+  /* ── the card — HomePulseRail chrome, faithful: cardBackground, borderDefault,
+        r-container 20, spectrum top hairline inset by sp-md, whole thing a Button ── */
+  .pulseCard{position:relative;border-radius:var(--r-container);background:var(--card);
+    border:1px solid var(--border-default);padding:var(--sp-md);overflow:hidden;cursor:pointer;
+    transition:transform .18s cubic-bezier(0.22,1,0.36,1);user-select:none;-webkit-user-select:none}
+  .pulseCard:active{transform:scale(0.97)}      /* the press state — Button + custom style, scale only, no opacity drop */
+  .hairline{position:absolute;top:0;left:var(--sp-md);right:var(--sp-md);height:1px;
+    background:linear-gradient(90deg,transparent,rgba(0,194,255,.9),var(--purple),rgba(255,0,106,.9),transparent)}
+  .eyebrow{font-family:var(--body);font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--section-label);margin-bottom:var(--sp-md)}
+  .heroRow{display:flex;align-items:center;gap:var(--sp-md)}
+  .heroTxt{flex:1;font-family:var(--disp);font-size:21px;font-weight:600;line-height:1.22;color:var(--text-primary)}
+  .subBlock{margin-top:var(--sp-md);display:flex;flex-direction:column;gap:var(--sp-xxs)}
+  .subLine{font-size:12px;color:var(--text-secondary)}
+  .valueLine{font-size:12px;line-height:1.5;color:var(--text-tertiary)}
+  .stamp{font-size:11px;font-weight:600;color:var(--text-tertiary);font-variant-numeric:tabular-nums}
+  .echo{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-secondary);margin-top:var(--sp-xs)}
+  .echo .dot{width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,var(--a-magenta),var(--purple))}
+
+  /* chevron variant (toggle) */
+  .chev{position:absolute;top:var(--sp-md);right:var(--sp-md);color:var(--text-tertiary);font-size:12px;display:none}
+  body.showChev .chev{display:block}
+
+  /* ── orbs: 84pt, wide halo wash clipped to the card ── */
+  .orbCol{width:96px;display:flex;align-items:center;justify-content:center;flex:none}
+  .orbWrap{position:relative;width:84px;height:84px}
+  .orb{position:absolute;inset:0;border-radius:50%}
+  /* active (landed Expansive) */
+  .orb.landed{background:radial-gradient(circle at 35% 32%,#c9f2ff,var(--a-cyan) 52%,#0670a8 95%);
+    box-shadow:0 0 60px 22px rgba(0,194,255,.20),0 0 24px 6px rgba(0,194,255,.32)}
+  /* dormant: PulseCyclingAura — tours the four spaces (real cadence ~8s/space; sped up here) */
+  .cycle{position:absolute;inset:0;border-radius:50%;opacity:0;animation:tour 12s linear infinite}
+  .cycle.c1{background:radial-gradient(circle at 35% 32%,#c9f2ff,var(--a-cyan) 52%,#0670a8 95%);
+    box-shadow:0 0 60px 22px rgba(0,194,255,.18),0 0 24px 6px rgba(0,194,255,.3)}
+  .cycle.c2{background:radial-gradient(circle at 35% 32%,#ffd3e6,var(--a-magenta) 52%,#8f0040 95%);
+    box-shadow:0 0 60px 22px rgba(255,0,106,.16),0 0 24px 6px rgba(255,0,106,.28);animation-delay:3s}
+  .cycle.c3{background:radial-gradient(circle at 35% 32%,#f2dbe3,var(--a-rose) 52%,#6e3a4c 95%);
+    box-shadow:0 0 60px 22px rgba(199,106,134,.16),0 0 24px 6px rgba(199,106,134,.28);animation-delay:6s}
+  .cycle.c4{background:radial-gradient(circle at 35% 32%,#ddd0fb,var(--a-indigo) 52%,#4c2d99 95%);
+    box-shadow:0 0 60px 22px rgba(139,92,246,.16),0 0 24px 6px rgba(139,92,246,.28);animation-delay:9s}
+  @keyframes tour{0%{opacity:0}6%{opacity:1}25%{opacity:1}33%{opacity:0}100%{opacity:0}}
+</style>
+</head>
+<body>
+
+  <div class="panel">
+    <p class="brand">VAYL · HOME</p>
+    <h1>The Capacity Map card<br/>· whole-card tap, no pill</h1>
+    <p><b>One action per state:</b> dormant card = begin a check-in; active card = open the Capacity Map on the Map tab. The redo-within-2h affordance moves to the Map hero (which already has one). The pill is gone everywhere.</p>
+    <p><b>Press it</b> (click and hold any card): scale 0.97, no opacity drop — the contract's missing press state, added.</p>
+    <label class="toggleRow"><input type="checkbox" id="chevToggle"/> show the chevron variant</label>
+    <p class="note">Token-accurate: card <code>#12111A</code> (cardBackground), border <code>borderDefault</code>, radius <code>AppRadius.container</code> 20, spectrum hairline inset <code>sp-md</code>, eyebrow <code>textSectionLabel</code>, orb 84pt with the shine.html halo wash. Cycling orb tours the four spaces (sped up ~2.5× for the demo).<br/><br/>Copy per this thread: header is the invitation, value line is the incentive + stakes; paired and unpaired variants differ only in the second sentence. The reciprocity echo ("Alex checked in today") is on card 2 for the pressure-vs-presence judgment call.</p>
+  </div>
+
+  <div class="stage">
+    <p class="cap">1 · Dormant, unpaired <span>— no partner sentence; don't advertise a feature they don't have</span></p>
+    <div class="pulseCard">
+      <div class="hairline"></div>
+      <div class="chev">›</div>
+      <div class="eyebrow">The Capacity Map</div>
+      <div class="heroRow">
+        <div class="heroTxt">What's your capacity?</div>
+        <div class="orbCol"><div class="orbWrap">
+          <div class="cycle c1"></div><div class="cycle c2"></div><div class="cycle c3"></div><div class="cycle c4"></div>
+        </div></div>
+      </div>
+      <div class="subBlock">
+        <div class="valueLine">Thirty seconds. See where you land today.</div>
+      </div>
+    </div>
+
+    <p class="cap">2 · Dormant, paired <span>— stakes sentence + the reciprocity echo (judge the pressure)</span></p>
+    <div class="pulseCard">
+      <div class="hairline"></div>
+      <div class="chev">›</div>
+      <div class="eyebrow">The Capacity Map</div>
+      <div class="heroRow">
+        <div class="heroTxt">What's your capacity?</div>
+        <div class="orbCol"><div class="orbWrap">
+          <div class="cycle c1"></div><div class="cycle c2"></div><div class="cycle c3"></div><div class="cycle c4"></div>
+        </div></div>
+      </div>
+      <div class="subBlock">
+        <div class="valueLine">Thirty seconds. Alex only ever sees how much you have to give, never your answers.</div>
+        <div class="echo"><span class="dot"></span>Alex checked in today</div>
+      </div>
+    </div>
+
+    <p class="cap">3 · Active (checked in) <span>— whole card opens the Map; no edit affordance here</span></p>
+    <div class="pulseCard">
+      <div class="hairline"></div>
+      <div class="chev">›</div>
+      <div class="eyebrow">The Capacity Map</div>
+      <div class="heroRow">
+        <div class="heroTxt">The Expansive Space</div>
+        <div class="orbCol"><div class="orbWrap"><div class="orb landed"></div></div></div>
+      </div>
+      <div class="subBlock">
+        <div class="subLine">Connected · Adventurous</div>
+        <div class="stamp">Brighter than yesterday · 2h ago</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  document.getElementById('chevToggle').addEventListener('change', e =>
+    document.body.classList.toggle('showChev', e.target.checked));
+</script>
+</body>
+</html>
