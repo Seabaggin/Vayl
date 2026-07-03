@@ -162,7 +162,7 @@ struct CuriosityPhase: View {
             // pile.count changing (a card committed) drives the rise: each remaining
             // card animates from its old depth to its new one — crisp, no spring overshoot.
             .animation(
-                reduceMotion ? .easeOut(duration: 0.15) : AppAnimation.curiosityRise,
+                reduceMotion ? AppAnimation.fast : AppAnimation.curiosityRise,
                 value: pile.count
             )
 
