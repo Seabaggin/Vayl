@@ -263,10 +263,10 @@ struct BuildDeckPhase: View {
             recoil(from: strike, degrees: 4.0 + 1.8 * Double(count - 1))
             spawnSparks(at: strike, count: 16 + 10 * (count - 1))
             if count < 3 {   // count 3 is the shatter — its own jolt handles that frame
-                withAnimation(.spring(response: 0.12, dampingFraction: 0.5)) { stagePunch = true }
+                withAnimation(AppAnimation.strikeJolt) { stagePunch = true }
                 Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(reduceMotion ? 0 : 90))
-                    withAnimation(.spring(response: 0.32, dampingFraction: 0.7)) { stagePunch = false }
+                    withAnimation(AppAnimation.strikeJoltSettle) { stagePunch = false }
                 }
             }
             // each release vents a burst, but the shell is more compromised — the
@@ -311,7 +311,7 @@ struct BuildDeckPhase: View {
         withAnimation(AppAnimation.fast.reduceMotionSafe) { kickDeg = degrees }
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(110))
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.55).reduceMotionSafe) {
+            withAnimation(AppAnimation.strikeRecoilReturn.reduceMotionSafe) {
                 kickDeg = 0
             }
         }
@@ -359,7 +359,7 @@ struct BuildDeckPhase: View {
         withAnimation(AppAnimation.fast.reduceMotionSafe) { kickDeg = 1.0 }
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(120))
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.5).reduceMotionSafe) {
+            withAnimation(AppAnimation.knockReturn.reduceMotionSafe) {
                 kickDeg = 0
             }
         }
@@ -377,11 +377,11 @@ struct BuildDeckPhase: View {
             try? await Task.sleep(for: .seconds(reduceMotion ? 0 : 0.45))   // overload holds
             if !reduceMotion {
                 burstFlashOpacity = 0.65
-                withAnimation(.easeOut(duration: 0.5)) { burstFlashOpacity = 0 }
-                withAnimation(.spring(response: 0.18, dampingFraction: 0.6)) { stagePunch = true }
+                withAnimation(AppAnimation.burstFlashDecay) { burstFlashOpacity = 0 }
+                withAnimation(AppAnimation.shatterJolt) { stagePunch = true }
                 Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(160))
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { stagePunch = false }
+                    withAnimation(AppAnimation.shatterJoltSettle) { stagePunch = false }
                 }
             }
             spawnSparks(at: CGPoint(x: 0.5, y: 0.5), count: 34, style: .burst)
@@ -416,7 +416,7 @@ struct BuildDeckPhase: View {
     private func presentLetter() {
         guard !revealExiting, !sheetExpanded else { return }
         // Beat 1 — the deck exits: cards + title + CTA fade out and sink.
-        withAnimation(.easeIn(duration: 0.34).reduceMotionSafe) { revealExiting = true }   // FEEL-GATE
+        withAnimation(AppAnimation.deckExitSink.reduceMotionSafe) { revealExiting = true }
         Task { @MainActor in
             // Beat 2 — tightly behind it, the founder letter rises from the
             // bottom to full. The gap is short (slight overlap with Beat 1's
@@ -424,7 +424,7 @@ struct BuildDeckPhase: View {
             try? await Task.sleep(for: .milliseconds(reduceMotion ? 0 : 220))   // FEEL-GATE: the 1→2 gap
             peekShown = true
             try? await Task.sleep(for: .milliseconds(20))   // one frame at the bottom edge so the rise has a "from"
-            withAnimation(.easeInOut(duration: 0.5).reduceMotionSafe) {          // FEEL-GATE: the rise
+            withAnimation(AppAnimation.letterRise.reduceMotionSafe) {
                 sheetExpanded = true
                 sheetDrag = 0
             }
@@ -453,7 +453,7 @@ struct BuildDeckPhase: View {
 
             // Beat 1 — the deck melts down through the felt; the table's rim
             // begins its working oscillation (the table is the performer)
-            withAnimation(.easeIn(duration: 2.6).reduceMotionSafe) { deckMelt = 1 }
+            withAnimation(AppAnimation.deckMeltDown.reduceMotionSafe) { deckMelt = 1 }
             startRimOscillation()
             // haptic at VISUAL submersion — the absorption band swallows the
             // last sliver ~0.25s before the curve's mathematical end
@@ -477,7 +477,7 @@ struct BuildDeckPhase: View {
             // Beat 3a — the cased deck lies flat where the cards went under —
             // no animation, no life yet (rise pending, lattice asleep)
             caseShown = true
-            withAnimation(.easeOut(duration: 1.0).reduceMotionSafe) { caseOpacity = 1 }
+            withAnimation(AppAnimation.caseFadeIn.reduceMotionSafe) { caseOpacity = 1 }
             try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 0.8))
 
             // Beat 3b — the lift: face-on flat → the standing ¾ box (pose
@@ -494,9 +494,9 @@ struct BuildDeckPhase: View {
             // Beat 3c — the rise has landed: the camera dollies in, the case
             // takes the air and scales up WHILE the felt recedes beneath it
             // (zoom, not growth); the rim settles as the table lets it go
-            withAnimation(.easeInOut(duration: 2.0).reduceMotionSafe) { caseFloat = true }
+            withAnimation(AppAnimation.caseFloatLift.reduceMotionSafe) { caseFloat = true }
             director.recedeTableForForge()
-            withAnimation(.easeOut(duration: 1.4).reduceMotionSafe) {
+            withAnimation(AppAnimation.forgeSettle.reduceMotionSafe) {
                 tableRimBurst = 0
                 tableForgeEnergy = 0
             }
@@ -521,7 +521,7 @@ struct BuildDeckPhase: View {
             caseArmed = true
             startKnocking()   // the deck inside wants out
             // the core lights: the deck's energy is now contained and straining
-            withAnimation(.easeInOut(duration: 1.2).reduceMotionSafe) { coreEnergy = 0.40 }
+            withAnimation(AppAnimation.coreCharge.reduceMotionSafe) { coreEnergy = 0.40 }
             // The reveal now owns the path forward: striking the case blooms into
             // the forged deck (beginShatter → reveal), and the bottom CTA hands
             // off to the letter. A pre-reveal idle peek is wrong — the knock cue
@@ -539,10 +539,10 @@ struct BuildDeckPhase: View {
         } else {
             // 0.8 ceiling — the work has to survive phone scale; at 0.55 the
             // oscillation read as dead air in the recording, not a performance
-            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: AppAnimation.forgeRimOscillation).repeatForever(autoreverses: true)) {
                 tableRimBurst = 0.8
             }
-            withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: AppAnimation.forgeSwayOscillation).repeatForever(autoreverses: true)) {
                 tableForgeEnergy = 1.0
             }
         }

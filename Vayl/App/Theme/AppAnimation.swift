@@ -980,6 +980,58 @@ internal enum AppAnimation {
     /// ease-into-motion-then-accelerate-away cubic as cardPocket (0.4, 0, 1, 1), shorter:
     /// the discard leaves, it is not filed.
     static let mirrorRejectExit: Animation = .timingCurve(0.4, 0, 1, 1, duration: 0.42)
+
+    // — BuildDeck forge ceremony (Beats 1–7). All Loud-register, ceremony-class:
+    //   these tokens must NEVER appear outside BuildDeckPhase / the OB canvas.
+
+    /// Spring pair — the stage JOLT on a case strike: hard kick in (0.12/0.5), settle (0.32/0.7).
+    static let strikeJolt:       Animation = .spring(response: 0.12, dampingFraction: 0.5)
+    static let strikeJoltSettle: Animation = .spring(response: 0.32, dampingFraction: 0.7)
+
+    /// Spring — the case yawing back to rest after a directional strike recoil.
+    static let strikeRecoilReturn: Animation = .spring(response: 0.3, dampingFraction: 0.55)
+
+    /// Spring — the case settling after an autonomous knock twitch (the deck wants out).
+    /// Lower damping than strikeRecoilReturn: the knock wobbles, the strike is commanded.
+    static let knockReturn: Animation = .spring(response: 0.35, dampingFraction: 0.5)
+
+    /// Spring pair — the stage jolt on the SHATTER (third strike): heavier than a strike
+    /// (0.18/0.6 in, 0.4/0.7 settle) — the climax lands harder than its wind-up.
+    static let shatterJolt:       Animation = .spring(response: 0.18, dampingFraction: 0.6)
+    static let shatterJoltSettle: Animation = .spring(response: 0.4, dampingFraction: 0.7)
+
+    /// 0.5s ease-out — the white flash decaying after the case bursts.
+    static let burstFlashDecay: Animation = .easeOut(duration: 0.5)
+
+    /// 0.34s ease-in — the revealed deck (cards + title + CTA) sinking away on hand-off
+    /// to the founder letter. FEEL-GATE origin value.
+    static let deckExitSink: Animation = .easeIn(duration: 0.34)
+
+    /// 0.5s ease-in-out — the founder letter sheet rising bottom → full. FEEL-GATE origin.
+    static let letterRise: Animation = .easeInOut(duration: 0.5)
+
+    /// 2.6s ease-in — the credential deck MELTING down through the felt (Beat 1).
+    /// Ceremony-class duration: the forge's slowest, heaviest move.
+    static let deckMeltDown: Animation = .easeIn(duration: 2.6)
+
+    /// 1.0s ease-out — the forged case fading in on the felt (Beat 3a).
+    static let caseFadeIn: Animation = .easeOut(duration: 1.0)
+
+    /// 2.0s ease-in-out — the standing case taking the air and scaling up (Beat 3c dolly).
+    static let caseFloatLift: Animation = .easeInOut(duration: 2.0)
+
+    /// 1.4s ease-out — the table's rim + sway settling to rest as the felt lets the case go.
+    static let forgeSettle: Animation = .easeOut(duration: 1.4)
+
+    /// 1.2s ease-in-out — the case core lighting up once armed (contained energy).
+    static let coreCharge: Animation = .easeInOut(duration: 1.2)
+
+    /// 0.9s / 1.3s — one leg of the forge's rim-glow and topo-sway oscillations (Beat 1–2,
+    /// "the table works"). Raw Doubles per the ambient-duration convention: build at the
+    /// call site with .easeInOut(duration:) + .repeatForever(autoreverses: true).
+    /// Reduce motion: the oscillation never starts (steady mid glow, still lines).
+    static let forgeRimOscillation:  Double = 0.9
+    static let forgeSwayOscillation: Double = 1.3
 }
 
 // MARK: — Reduce Motion Helpers
