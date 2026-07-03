@@ -810,6 +810,12 @@ internal enum AppAnimation {
     /// Was 17.0s; halved to match the mockup cadence. FEEL: confirm on device.
     static let auraGlassSweep: Double = 8.5
 
+    /// The check-in ball's position-change shift (Q1-Q3 drift). Plain eased interpolation,
+    /// NOT a spring — even a critically-damped spring still has a fast-snap-then-settle
+    /// character; this reads as a smooth, even slide to the new point instead.
+    /// 🎚️ FEEL: confirm on device.
+    static let pulseBallDrift: Animation = .easeInOut(duration: 0.32)
+
     // MARK: — Tab Navigation
     // Tokens for the tab bar orb snap-and-halo and tab content gravity drift.
     // Both are reactive (user-initiated tap). Reduce motion: easeOut(0.15), suppress offsets at call site.
@@ -818,6 +824,9 @@ internal enum AppAnimation {
     /// overshoots ~15% past target then springs back, communicating physical momentum.
     /// Also drives the halo burst scale at the landing icon.
     /// Reduce motion: replace with AppAnimation.fast — orb jumps to position without travel.
+    /// DEPRECATED by the motion system: `orbGlide` replaces this (the overshoot read as
+    /// disconnected from the staple grammar — feel-rejected 2026-07-03). Delete this token
+    /// when RacetrackTabBar migrates (motion spec §7 step 2); do not adopt in new code.
     static let orbSnap: Animation = .spring(response: 0.40, dampingFraction: 0.62)
 
     /// 0.25s ease-out — Tab content gravitational drift on tab switch.
@@ -825,6 +834,103 @@ internal enum AppAnimation {
     /// Outgoing view fades in place (no counter-drift — avoids direction-mismatch on removal).
     /// Reduce motion: call site should suppress the offset and cross-fade only.
     static let tabSwitch: Animation = .easeOut(duration: 0.25)
+
+    // MARK: — Motion System (Staples & Registers)
+    // The app-wide motion grammar. Spec: docs/superpowers/specs/2026-07-03-motion-system-design.md
+    // Feel reference: docs/prototypes/motion-system-staples.html (all values tuned there;
+    // device-feel-gated — starting points until Bryan's device pass confirms).
+    //
+    // Three staples × two registers:
+    //   Staple 1 — Depth Handoff   (screen-level change: settle from depth, recede into it)
+    //   Staple 2 — Weighted Arrival (objects entering: sheets, covers, cards)
+    //   Staple 3 — Charged Tap      (input: the borderFill grammar — shared register, see
+    //                                VaylBorderEffect; its tokens live in the Border Effect
+    //                                section above)
+    //   Loud  = OB + protected covers. Quiet = everything else.
+    //
+    // Appliers (transitions/modifiers with Reduce Motion built in) live in AppMotion.swift —
+    // the AppGlows pattern: values here, thin stateless applications there.
+    //
+    // QUIET-TIER CEILINGS (hard caps, cite in review): scale delta ≤ quietMaxScaleDelta,
+    // travel ≤ quietMaxTravel, duration ≤ 0.55s. Ceremony-class motion (multi-second builds,
+    // dealer motifs) is BANNED outside the OB canvas and .vaylCover contents.
+
+    /// 0.26s ease-out — Staple 1, Quiet register: main-app screen/content swaps.
+    /// Incoming settles 1.01 → 1, outgoing recedes 1 → 0.985, opacity cross-fade. Never a slide.
+    /// Reduce motion: AppMotion's applier collapses to pure opacity.
+    static let depthQuiet: Animation = .easeOut(duration: 0.26)
+
+    /// Staple 1 scale amplitudes. Quiet pair obeys quietMaxScaleDelta; Loud pair is the OB
+    /// phaseHandoff (promoted from OnboardingCanvasView literals — same values, now tokens).
+    /// Loud duration = AppAnimation.slow (the OB step-transition token), unchanged.
+    static let depthQuietScaleIn:  CGFloat = 1.01
+    static let depthQuietScaleOut: CGFloat = 0.985
+    static let depthLoudScaleIn:   CGFloat = 1.02
+    static let depthLoudScaleOut:  CGFloat = 0.97
+
+    /// 0.42s deal-curve — Staple 2, Quiet: a .vaylSheet rising. Instant acceleration, sharp
+    /// deceleration, one confident settle, zero bounce — cubic (0, 0, 0.2, 1), the deal-physics
+    /// deceleration family (cardSlide's curve at sheet weight).
+    /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity — sheet appears in place.
+    static let arrive: Animation = .timingCurve(0, 0, 0.2, 1, duration: 0.42)
+
+    /// 0.55s deal-curve — Staple 2, Loud: a .vaylCover entering the table world. Same curve as
+    /// `arrive`, heavier. The register shift IS the threshold cue into a protected mode.
+    /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity.
+    static let arriveCover: Animation = .timingCurve(0, 0, 0.2, 1, duration: 0.55)
+
+    /// 0.18s — Cover CONTENT settles from depth (Staple 1 nested in Staple 2) this long after
+    /// the cover container starts rising. Consumed as a .delay on the content's settle.
+    /// Reduce motion: unused — content appears with the cover.
+    static let arriveCoverContentLag: Double = 0.18
+
+    /// 0.38s glide — Tab bar orb drifting to the new selection: soft gather, long decelerating
+    /// tail, ZERO overshoot — cubic (0.3, 0, 0.15, 1), the arrival-curve family, so the orb
+    /// speaks the same physics as the sheets and the depth handoff. Replaces orbSnap (the
+    /// spring overshoot was feel-rejected as disconnected). The halo burst re-times to this
+    /// glide's landing, not a spring peak.
+    /// Reduce motion: replace with AppAnimation.fast — orb jumps without travel.
+    static let orbGlide: Animation = .timingCurve(0.3, 0, 0.15, 1, duration: 0.38)
+
+    /// 0.52s long-tail drift — One row of a FIRST-ARRIVAL cascade: cubic (0.25, 0.1, 0.15, 1),
+    /// soft start, slow bleed into rest. Rows overlap ~85% via cascadeStagger so the list reads
+    /// as ONE wave travelling down, not per-row pops. Deliberately slower than `enter`: the
+    /// cascade is the entrance for the whole list, not per-element decoration.
+    /// LAW: only the first data arrival cascades — refreshes fade, never cascade.
+    /// Reduce motion: all rows appear together with a single 0.2s fade (AppMotion applier).
+    static let cascadeRow: Animation = .timingCurve(0.25, 0.1, 0.15, 1, duration: 0.52)
+
+    /// 75ms — Per-row cascade stagger. The overlap ratio is what sells the wave: tighten the
+    /// stagger for a quicker wave, lengthen cascadeRow for a dreamier one — duration alone
+    /// does not fix abruptness.
+    static let cascadeStagger: Double = 0.075
+
+    /// 6 — Cascade row cap. Rows past the cap arrive together WITH the last capped row, so a
+    /// long list never turns the entrance into a parade.
+    static let cascadeCap: Int = 6
+
+    /// 14pt — Cascade row rise distance (obeys quietMaxTravel).
+    static let cascadeRise: CGFloat = 14
+
+    /// 0.28s / ±3pt — Staple 3's "no": a refused (disabled/invalid) commit shivers laterally;
+    /// the border arcs never fill. Pair with .sensoryFeedback(.impact(.medium)) at the call
+    /// site — the haptic is half the refusal.
+    /// Reduce motion: no shiver; the haptic still fires (haptics are not motion).
+    static let refusalDuration:  Double  = 0.28
+    static let refusalAmplitude: CGFloat = 3
+
+    /// 0.10s — Commit dismissal: a task-completing sheet's exit launches this long after the
+    /// commit glow's PEAK (glow peaks at borderGlowIn 0.12s → exit begins 0.22s after release,
+    /// riding the glow's decay out). Cancels (grabber, scrim, Cancel) exit plain on `exit` —
+    /// no charge ever built. Feel-locked at 100ms in the reference (60 buried the glow,
+    /// 160 read as the app admiring its own button).
+    static let commitDismissLag: Double = 0.10
+
+    /// Quiet-register amplitude ceilings — hard caps, not guidelines. A quiet-tier animation
+    /// scaling by more than this delta or travelling further than this is a violation; reach
+    /// for a Loud token only inside the OB canvas or .vaylCover contents.
+    static let quietMaxScaleDelta: Double  = 0.02
+    static let quietMaxTravel:     CGFloat = 16
 }
 
 // MARK: — Reduce Motion Helpers
@@ -849,22 +955,24 @@ extension Animation {
 extension View {
 
     /// Conditionally applies an ambient animation only when reduce motion is not active.
-    /// Uses a Transaction to bind the animation to a specific value — avoids the deprecated
-    /// unbound .animation() modifier which caused unpredictable propagation in iOS 15+.
-    /// When reduce motion is active, the animation is stripped entirely from the transaction.
-    /// The view renders in its static state — not slowed down, fully removed.
+    /// Gated on `value` via the standard `.animation(_:value:)` modifier — this ONLY
+    /// (re-)triggers when `value` itself changes (e.g. the one-time false→true flip an
+    /// `.onAppear` typically does to kick off a `.repeatForever()` loop). Once running,
+    /// an unrelated re-render elsewhere in the app does not restart it.
+    ///
+    /// The previous implementation used `.transaction { transaction.animation = animation }`,
+    /// which is unconditional — it reapplies the ambient animation to EVERY transaction that
+    /// flows through the view, for ANY reason, regardless of whether `value` changed. On a
+    /// screen with frequent nearby `withAnimation(...)` calls (e.g. the Pulse check-in firing
+    /// one on every pill tap), that repeatedly forced the aura's already-looping
+    /// breathe/caustic/sweep layers to reset mid-cycle — visible as the orb "not staying
+    /// static between answer selections" even when its position genuinely hadn't changed.
     ///
     /// Example:
     ///   myGlowView
     ///       .ambientAnimation(.easeInOut(duration: AppAnimation.ambientPulse).repeatForever(),
     ///                         value: isAnimating)
     func ambientAnimation<V: Equatable>(_ animation: Animation, value: V) -> some View {
-        self.transaction { transaction in
-            if UIAccessibility.isReduceMotionEnabled {
-                transaction.animation = nil
-            } else {
-                transaction.animation = animation
-            }
-        }
+        self.animation(UIAccessibility.isReduceMotionEnabled ? nil : animation, value: value)
     }
 }
