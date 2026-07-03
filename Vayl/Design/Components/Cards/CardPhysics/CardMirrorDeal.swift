@@ -113,7 +113,7 @@ public final class CardMirrorDealController {
             guard !Task.isCancelled else { return }
 
             // Both cards travel simultaneously — weighted deceleration
-            withAnimation(.timingCurve(0, 0, 0.2, 1, duration: 0.88)) {
+            withAnimation(AppAnimation.mirrorDealTravel) {
                 leftOffset  = CGSize(width: restXL, height: restY)
                 rightOffset = CGSize(width: restXR, height: restY)
                 leftAngle   = -14
@@ -287,7 +287,7 @@ public final class CardMirrorDealController {
             try? await Task.sleep(for: .milliseconds(80))
             guard !Task.isCancelled else { return }
 
-            withAnimation(.timingCurve(0.4, 0, 0.6, 1, duration: 0.22)) {
+            withAnimation(AppAnimation.mirrorRejectFlipHalf) {
                 rejectedFlipScaleX = 0
             }
 
@@ -296,7 +296,7 @@ public final class CardMirrorDealController {
 
             // 3b. Show card back, complete flip: scaleX 0→1
             rejectedShowBack = true
-            withAnimation(.timingCurve(0.4, 0, 0.6, 1, duration: 0.22)) {
+            withAnimation(AppAnimation.mirrorRejectFlipHalf) {
                 rejectedFlipScaleX = 1
             }
 
@@ -313,7 +313,7 @@ public final class CardMirrorDealController {
             let originXL = -(screenSize.width * 0.65 + cardWidth / 2 + 40)
             let originXR =  (screenSize.width * 0.65 + cardWidth / 2 + 40)
 
-            withAnimation(.timingCurve(0.4, 0, 1, 1, duration: 0.42)) {
+            withAnimation(AppAnimation.mirrorRejectExit) {
                 switch card {
                 case .left:  // rejected is right
                     rightOffset.width = originXR

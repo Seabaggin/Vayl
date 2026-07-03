@@ -964,6 +964,22 @@ internal enum AppAnimation {
     /// 0.42s ease-in-out — the spread RE-COLLECTING to the resting fan after the turnover.
     /// Symmetric ease: the close mirrors the open. Reduce motion: never runs.
     static let fanRecollect: Animation = .easeInOut(duration: 0.42)
+
+    /// 0.88s deal-curve — the ModeSelect mirror deal: both cards travelling simultaneously
+    /// from opposite screen edges, weighted deceleration (cubic 0,0,0.2,1 — the arrival
+    /// family at its heaviest travel).
+    /// Reduce motion: call path is guarded upstream by the phase's RM branch.
+    static let mirrorDealTravel: Animation = .timingCurve(0, 0, 0.2, 1, duration: 0.88)
+
+    /// 0.22s per half — the REJECTED mirror card turning face-down on confirm. Same cubic
+    /// as cardFlipHalf (0.4, 0, 0.6, 1) but faster (0.22 vs 0.29): the discard turn is an
+    /// aside, not a reveal. Two halves compose the 0.44s reject flip.
+    static let mirrorRejectFlipHalf: Animation = .timingCurve(0.4, 0, 0.6, 1, duration: 0.22)
+
+    /// 0.42s — the rejected card sliding back toward its origin and fading. Same
+    /// ease-into-motion-then-accelerate-away cubic as cardPocket (0.4, 0, 1, 1), shorter:
+    /// the discard leaves, it is not filed.
+    static let mirrorRejectExit: Animation = .timingCurve(0.4, 0, 1, 1, duration: 0.42)
 }
 
 // MARK: — Reduce Motion Helpers
