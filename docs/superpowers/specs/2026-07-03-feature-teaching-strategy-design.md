@@ -1,6 +1,10 @@
 # Feature Teaching Strategy: when to tutorial, when to guide
 
-**Status:** options spec awaiting Bryan's A/B picks per feature. Nothing here is a build commitment.
+**Status:** DECIDED 2026-07-03. Bryan's picks: **Sessions 1A (build now, not staged) · Desire Map 2A ·
+Pulse 3B (door + once-ever annotated landing beat) · Path 4B.** Two picks went heavier than the
+consultant recommendation (1A-now over staged; 3B over 3A), both deliberate. Implementation notes:
+3B must land BEFORE Bryan's Pulse on-device pass (category F of the Pulse finalization goal doc) so
+the check-in surface is verified once, not twice; 4B is an amendment to plan 20, not a code item.
 **Scope:** the four novel-mechanic features: Card Sessions, Desire Map, Pulse, The Path. Plus the
 shared infrastructure they'd draw on.
 **Out of scope:** onboarding itself (already a complete teaching system), Learn (it IS the deep-dive
@@ -241,8 +245,13 @@ standard Tier 4 door for the topology vocabulary (O/OO/O-O).
 - **The Path: 4B**, written into plan 20 before building starts, so the framing moment is part of the
   feature's first build rather than a retrofit.
 
-## 6. What happens after picks
+## 6. What happens after picks (updated with decisions)
 
-Each picked letter becomes a small work item in its feature's own track (2A and 3A are
-hours-not-days; 1A is a real segment; 4B is a plan-20 amendment). No shared "tutorial system" project
-exists or should: the doctrine in section 1 plus the door component in section 4 is the whole system.
+- **2A + 3B** (rater contract line, Pulse door + landing beat): one implementation plan, since both
+  are small and 3B should precede the Pulse on-device pass.
+- **1A** (dealer's practice hand): its own plan segment in the Sessions track; folds into the same
+  two-device proof session Bryan already owes plan 16.
+- **4B**: written into plan 20's build steps directly; no separate work item.
+
+No shared "tutorial system" project exists or should: the doctrine in section 1 plus the door
+component in section 4 is the whole system.
