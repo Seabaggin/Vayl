@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Pulse math lab · current vs proposed mapping</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --void:#0a0810; --card:#12111A; --modalBg:#1A1825;
+    --text-primary:#E8E8F0; --text-secondary:rgba(255,255,255,.65); --text-tertiary:rgba(255,255,255,.38);
+    --border-subtle:rgba(255,255,255,.06); --border-default:rgba(255,255,255,.10);
+    --section-label:rgba(192,132,252,.55);
+    --a-cyan:#00C2FF; --a-indigo:#8B5CF6; --a-magenta:#FF006A; --a-rose:#C76A86;
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+    --ease:cubic-bezier(0.22,1,0.36,1);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:#0b0910;color:var(--text-primary);font-family:var(--body)}
+  body{display:flex;gap:38px;align-items:flex-start;justify-content:center;padding:32px 20px 90px;flex-wrap:wrap}
+
+  .col{display:flex;flex-direction:column;gap:14px}
+  h1{font-family:var(--disp);font-size:19px;font-weight:600;margin:0}
+  .sub{font-size:12px;line-height:1.55;color:var(--text-secondary);max-width:330px;margin:0}
+  .sub b{color:var(--text-primary);font-weight:500}
+
+  /* questions */
+  .qcard{width:330px;background:var(--card);border:1px solid var(--border-default);border-radius:16px;padding:12px 14px}
+  .qcard .qt{font-family:var(--disp);font-size:12.5px;font-weight:500;margin-bottom:8px}
+  .qcard .qt span{color:var(--text-tertiary);font-family:var(--body);font-size:10px;margin-left:6px}
+  .pills{display:flex;flex-wrap:wrap;gap:5px}
+  .pill{font-size:11px;font-weight:500;color:var(--text-secondary);padding:6px 11px;border-radius:999px;
+    background:var(--modalBg);border:1.5px solid var(--border-subtle);cursor:pointer;user-select:none;transition:all .15s ease}
+  .pill:hover{border-color:rgba(255,255,255,.18)}
+  .pill.sel{color:var(--text-primary);border-color:rgba(255,255,255,.30);
+    box-shadow:0 0 10px 1px rgba(0,194,255,.14),0 0 14px 2px rgba(108,58,224,.12)}
+
+  /* field */
+  .fieldCard{width:330px;background:var(--void);border:1px solid var(--border-default);border-radius:20px;padding:18px;position:relative}
+  .field{width:100%;aspect-ratio:1;position:relative}
+  .zone{position:absolute;width:92%;height:92%;border-radius:50%;filter:blur(12px)}
+  .z-pro{left:-18%;top:26%;background:radial-gradient(circle,var(--a-rose),transparent 70%);opacity:.30}
+  .z-fri{left:-18%;top:-18%;background:radial-gradient(circle,var(--a-magenta),transparent 70%);opacity:.18}
+  .z-sov{left:26%;top:26%;background:radial-gradient(circle,var(--a-indigo),transparent 70%);opacity:.22}
+  .z-exp{left:26%;top:-18%;background:radial-gradient(circle,var(--a-cyan),transparent 70%);opacity:.15}
+  .ax{position:absolute;font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+  .ax.t{left:50%;top:-2px;transform:translateX(-50%)} .ax.b{left:50%;bottom:-2px;transform:translateX(-50%)}
+  .ax.l{left:-6px;top:50%;transform:translateY(-50%) rotate(-90deg)} .ax.r{right:-6px;top:50%;transform:translateY(-50%) rotate(90deg)}
+  .mid{position:absolute;background:rgba(255,255,255,.05)}
+  .mid.v{left:50%;top:4%;bottom:4%;width:1px} .mid.h{top:50%;left:4%;right:4%;height:1px}
+  .orb{position:absolute;width:26px;height:26px;border-radius:50%;transform:translate(-50%,-50%);
+    transition:left .45s var(--ease),top .45s var(--ease),background .45s ease,box-shadow .45s ease;z-index:3}
+  .orb.cur{opacity:.45;z-index:2;outline:1.5px dashed rgba(255,255,255,.5);outline-offset:2px}
+  .legendRow{display:flex;gap:16px;margin-top:10px;font-size:10.5px;color:var(--text-tertiary)}
+  .legendRow .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  .legendRow .sw.dash{outline:1.5px dashed rgba(255,255,255,.5);outline-offset:1.5px;background:rgba(255,255,255,.3)}
+
+  /* readout */
+  .readout{width:330px;background:var(--card);border:1px solid var(--border-default);border-radius:16px;padding:14px}
+  table{width:100%;border-collapse:collapse;font-size:11.5px}
+  th,td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--border-subtle)}
+  th{color:var(--text-tertiary);font-size:9px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+  td.num{font-variant-numeric:tabular-nums}
+  td .q{font-family:var(--disp);font-weight:600}
+  .flag{color:var(--a-magenta);font-size:10px}
+  .good{color:var(--a-cyan);font-size:10px}
+
+  .bugs{width:330px;font-size:11px;line-height:1.6;color:var(--text-tertiary);border-top:1px solid var(--border-subtle);padding-top:10px}
+  .bugs b{color:var(--text-secondary);font-weight:500}
+  .bugs .n{color:#C084FC;font-family:var(--disp);font-weight:600}
+</style>
+</head>
+<body>
+
+  <div class="col">
+    <h1>Pulse math lab</h1>
+    <p class="sub">Pick answers; both models plot live. <b>Dashed = current shipped math</b>, <b>solid = proposed</b>. The readout shows every intermediate number so nothing is a black box.</p>
+    <div class="qcard"><div class="qt">Q1 · nervous system <span>energy axis</span></div><div class="pills" data-q="0"></div></div>
+    <div class="qcard"><div class="qt">Q2 · focus <span>openness · cur 60% / prop 40%</span></div><div class="pills" data-q="1"></div></div>
+    <div class="qcard"><div class="qt">Q3 · loudest feeling <span>openness · cur 40% / prop 60%</span></div><div class="pills" data-q="2"></div></div>
+    <div class="qcard"><div class="qt">Q4 · how much to give <span>cur: ignored · prop: IS the capacity score</span></div><div class="pills" data-q="3"></div></div>
+    <div class="qcard"><div class="qt">Q5 · ideal speed <span>metadata in both (deliberate)</span></div><div class="pills" data-q="4"></div></div>
+  </div>
+
+  <div class="col">
+    <div class="fieldCard">
+      <div class="field" id="field">
+        <div class="zone z-pro"></div><div class="zone z-fri"></div><div class="zone z-sov"></div><div class="zone z-exp"></div>
+        <div class="mid v"></div><div class="mid h"></div>
+        <div class="ax t">Charged</div><div class="ax b">Depleted</div><div class="ax l">Guarded</div><div class="ax r">Open</div>
+        <div class="orb cur" id="orbCur"></div>
+        <div class="orb" id="orbProp"></div>
+      </div>
+      <div class="legendRow"><span><span class="sw dash"></span>current (shipped)</span><span><span class="sw" id="legSw"></span>proposed</span></div>
+    </div>
+
+    <div class="readout">
+      <table>
+        <tr><th></th><th>current</th><th>proposed</th></tr>
+        <tr><td>energy</td><td class="num" id="cEn">·</td><td class="num" id="pEn">·</td></tr>
+        <tr><td>openness</td><td class="num" id="cOp">·</td><td class="num" id="pOp">·</td></tr>
+        <tr><td>space</td><td id="cQd">·</td><td id="pQd">·</td></tr>
+        <tr><td>capacity score</td><td class="num" id="cCs">·</td><td class="num" id="pCs">·</td></tr>
+        <tr><td>score source</td><td><span class="flag" id="cSrc">energy (Q1) only</span></td><td><span class="good">Q4 verbatim</span></td></tr>
+      </table>
+    </div>
+
+    <div class="bugs">
+      <b>What "proposed" changes, and nothing else:</b><br/>
+      <span class="n">1</span> capacityScore = the Q4 answer mapped 1.0-4.0 (Empty 1 · Low 1.75 · Moderate 2.5 · Good 3.25 · Abundant 4). Currently it's <b>1 + energy × 3</b>: Q1 in a costume; Q4 is never read.<br/>
+      <span class="n">2</span> Q3 made symmetric: Defensive −1.0 (was −0.5). Try Defensive + Deeply Inward in both models: current bottoms out at 0.10 openness, never 0.<br/>
+      <span class="n">3</span> Q2/Q3 weights flipped to 40/60: the loudest feeling underneath is the less curated signal; stated focus is aspirational. 🎚️ debatable, judge by feel here.<br/>
+      <span class="n">4</span> neutral snap made honest: an exact-center axis snaps ±0.16 in the direction of the Q4 answer (capacity ≥ Moderate → charged/open, below → depleted/guarded) instead of always positive. Try Stable + Balanced with Empty vs Abundant.<br/>
+      <span class="n">5</span> "Recharging" re-scored 0.0 → recharging means recovering, not more charged than Stable (which moves to a true midpoint read via the snap). 🎚️ copy could also change instead.
+    </div>
+  </div>
+
+<script>
+  const QUESTIONS = [
+    { pills: ["Overwhelmed","Exhausted","Stable","Recharging","Energized"],
+      cur:  [-1,-0.5,0,0.5,1],
+      prop: [-1,-0.5,0,0.0,1] },                       // Recharging re-scored (bug 5); Stable stays 0
+    { pills: ["Deeply Inward","Just Me","Balanced","Reaching Out","Fully Outward"],
+      cur:  [-1,-0.5,0,0.5,1],
+      prop: [-1,-0.5,0,0.5,1] },
+    { pills: ["Defensive","Anxious","Content","Secure","Adventurous"],
+      cur:  [-0.5,-0.5,0.5,0.75,1],
+      prop: [-1,-0.5,0.5,0.75,1] },                    // symmetric floor (bug 2)
+    { pills: ["Empty","Low","Moderate","Good","Abundant"],
+      cur:  [0,0,0,0,0],
+      prop: [1,1.75,2.5,3.25,4] },                     // prop: Q4 IS the score (bug 1)
+    { pills: ["Solitude","Just Proximity","Light Connection","Deep Dive","Playful"],
+      cur:[0,0,0,0,0], prop:[0,0,0,0,0] },
+  ];
+  const AURA = { Expansive:"#00C2FF", Friction:"#FF006A", Sovereign:"#8B5CF6", Protective:"#C76A86" };
+  const sel = [null,null,null,null,null];
+
+  function snapCur(v){ return Math.abs(v-0.5)<0.001 ? 0.66 : v; }
+  function snapProp(v, capScore){
+    if (Math.abs(v-0.5)>=0.001) return v;
+    const dir = (capScore ?? 2.5) >= 2.5 ? 1 : -1;     // neutral leans where their capacity points (bug 4)
+    return 0.5 + dir*0.16;
+  }
+  const clamp = v => Math.max(0, Math.min(1, v));
+
+  function model(kind){
+    const d = (q) => sel[q]===null ? null : QUESTIONS[q][kind][sel[q]];
+    const e1=d(0), o2=d(1), o3=d(2), q4=sel[3]===null?null:QUESTIONS[3].prop[sel[3]];
+    let energy = 0.5 + (e1??0)*0.5;
+    const w2 = kind==="cur" ? 0.6 : 0.4, w3 = kind==="cur" ? 0.4 : 0.6;   // weight flip (bug 3)
+    let openness = 0.5 + ((o2??0)*w2 + (o3??0)*w3)*0.5;
+    energy = clamp(energy); openness = clamp(openness);
+    if (kind==="cur"){
+      if (e1!==null) energy = snapCur(energy);
+      if (o2!==null||o3!==null) openness = snapCur(openness);
+    } else {
+      if (e1!==null) energy = snapProp(energy, q4);
+      if (o2!==null||o3!==null) openness = snapProp(openness, q4);
+    }
+    const quadrant = energy>=0.5 ? (openness>=0.5?"Expansive":"Friction")
+                                 : (openness>=0.5?"Sovereign":"Protective");
+    const cap = kind==="cur" ? 1+energy*3 : (q4 ?? null);
+    return {energy, openness, quadrant, cap};
+  }
+
+  function render(){
+    const c = model("cur"), p = model("prop");
+    const put = (id,v)=>document.getElementById(id).textContent=v;
+    const f = v => v===null ? "·" : v.toFixed(2);
+    put("cEn",f(c.energy)); put("pEn",f(p.energy));
+    put("cOp",f(c.openness)); put("pOp",f(p.openness));
+    put("cQd",c.quadrant); put("pQd",p.quadrant);
+    put("cCs",c.cap.toFixed(2)); put("pCs",p.cap===null?"· (answer Q4)":p.cap.toFixed(2));
+    place("orbCur",c); place("orbProp",p);
+    document.getElementById("legSw").style.background = AURA[p.quadrant];
+  }
+  function place(id,m){
+    const el = document.getElementById(id);
+    el.style.left = (m.openness*100)+"%";
+    el.style.top  = ((1-m.energy)*100)+"%";
+    const col = AURA[m.quadrant];
+    el.style.background = `radial-gradient(circle at 35% 32%, #fff, ${col} 55%, ${col} 95%)`;
+    el.style.boxShadow = `0 0 16px 4px ${col}55`;
+  }
+
+  document.querySelectorAll(".pills").forEach(row=>{
+    const q = +row.dataset.q;
+    QUESTIONS[q].pills.forEach((label,i)=>{
+      const b=document.createElement("div"); b.className="pill"; b.textContent=label;
+      b.onclick=()=>{ sel[q]=i;
+        row.querySelectorAll(".pill").forEach((x,xi)=>x.classList.toggle("sel",xi===i)); render(); };
+      row.appendChild(b);
+    });
+  });
+  render();
+</script>
+</body>
+</html>
