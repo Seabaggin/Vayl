@@ -90,6 +90,8 @@ final class CarouselPhysics {
 
     /// Spring used by the view to animate `position` on release / programmatic moves.
     var settleAnimation: Animation {
+        // TOKEN-EXEMPT: spring parameters come from the caller's CarouselConfig —
+        // this is a parameterized engine, not a raw value.
         .spring(response: config.response, dampingFraction: config.dampingFraction)
     }
 

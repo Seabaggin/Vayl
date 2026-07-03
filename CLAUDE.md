@@ -203,8 +203,25 @@ myButton
 ### Empty States (required on every data screen)
 Icon (`AppColors.textTertiary`) + headline (`AppFonts.cardTitle`) + sub-label (`AppFonts.caption`) + optional CTA
 
+---
+
+## V1 Launch Scope — Dark Mode Only
+
+**Light mode is deferred to post-launch.** The V1 codebase must contain zero light mode
+references, colors, or infrastructure. This includes:
+- No `@Environment(\.colorScheme)` checks in Views
+- No conditional light/dark color definitions in `AppColors` or token files
+- No `preferredColorScheme()` modifiers
+- No light mode assets or accent definitions
+
+The dark-only constraint simplifies V1 ship, keeps design coherent, and establishes
+intent for future: post-launch light-mode work is a separate, comprehensive pass.
+
+---
+
 ## Violation Checklist
 - [ ] No raw colors, fonts, spacing, radius, or opacity in Views
+- [ ] No raw animation curves/durations anywhere (Views, Stores, sequencers) — AppAnimation tokens only; screen/content transitions use a motion staple (`.vaylDepth` / `arrive` / tap contract), never ad hoc slides (spec: docs/superpowers/specs/2026-07-03-motion-system-design.md)
 - [ ] No UIScreen.main or UIApplication.shared.keyWindow (iOS 26 banned)
 - [ ] No UIWebView or NSURLConnection (iOS 26 hard errors)
 - [ ] No UNAuthorizationOptionAlert, use .Banner variant

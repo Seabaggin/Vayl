@@ -86,6 +86,8 @@ struct AnimatedSignature: View {
         let middleStart = startDelay + firstDuration + penLift
         let lastStart   = middleStart + middleDuration + penLift
 
+        // TOKEN-EXEMPT: durations derive from per-stroke path lengths (geometry-driven),
+        // not constants — there is no value to hoist into AppAnimation.
         withAnimation(.easeInOut(duration: firstDuration).delay(startDelay)) {
             firstProgress = 1
         }

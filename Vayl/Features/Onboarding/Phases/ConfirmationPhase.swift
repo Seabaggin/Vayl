@@ -254,6 +254,8 @@ struct ConfirmationPhase: View {
         // The committed drag offset bleeds out on a slow ease UNDER the gather —
         // a spring snap-back here moved the whole fan leftward, against the
         // swipe that just committed. The deck still lands at the seam point.
+        // TOKEN-EXEMPT: exitSpan is computed from the per-card stagger so the fade
+        // spans the whole gather — duration is derived, not a constant.
         withAnimation(.easeOut(duration: exitSpan).reduceMotionSafe) {
             fanDragX = 0
             nudgeX   = 0
