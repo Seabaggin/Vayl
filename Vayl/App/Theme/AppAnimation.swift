@@ -931,6 +931,25 @@ internal enum AppAnimation {
     /// for a Loud token only inside the OB canvas or .vaylCover contents.
     static let quietMaxScaleDelta: Double  = 0.02
     static let quietMaxTravel:     CGFloat = 16
+
+    // MARK: — OB Ceremony Tokens (tokenized from raw call-site values, 2026-07-03)
+    // Values moved VERBATIM from OB files during the motion-token migration — the token
+    // contract ("zero raw values") now holds inside the OB too. All are Loud-register,
+    // OB-only. Do not re-tune here without a device feel pass; do not reuse in main-app code.
+
+    /// Spring — the name-entry write line kicking down as a character lands (NamePhase).
+    /// Softer than keystrokeBounce (600/12): the line reacts, the key does the snapping.
+    /// Reduce motion: skip — no bounce fires under reduce motion.
+    static let writeLineBounce: Animation = .interpolatingSpring(stiffness: 320, damping: 16)
+
+    /// Spring — the Demo noun field pulsing back after input is cleaned/capped (DemoPhase).
+    /// Reduce motion: acceptable as-is — a 6pt settle, confirmation not travel.
+    static let demoFieldPulse: Animation = .interpolatingSpring(stiffness: 320, damping: 14)
+
+    /// 0.7s ease-out — the Name card being SET DOWN by the dealer (fades in a hair high +
+    /// large, settles to rest). Not a deal: no flight, no slide. FEEL-GATE origin value.
+    /// Reduce motion: skipped at call site — card appears at rest.
+    static let cardSetDown: Animation = .easeOut(duration: 0.7)
 }
 
 // MARK: — Reduce Motion Helpers

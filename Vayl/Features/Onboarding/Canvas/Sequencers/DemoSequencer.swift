@@ -295,7 +295,7 @@ final class DemoSequencer {
     private func pulseNoun() {
         impactSoft.impactOccurred()
         nounPulse = -6
-        withAnimation(.interpolatingSpring(stiffness: 320, damping: 14)) { nounPulse = 0 }
+        withAnimation(AppAnimation.demoFieldPulse) { nounPulse = 0 }
     }
 
     /// The `.onChange(of: noun)` body — clean the input, cap length, arm the seal.

@@ -214,7 +214,7 @@ final class NameSequencer {
 
         // ── Write line bounce ─────────────────────────────
         lineBounce = -3.0
-        withAnimation(.interpolatingSpring(stiffness: 320, damping: 16)) {
+        withAnimation(AppAnimation.writeLineBounce) {
             lineBounce = 0
         }
 
@@ -352,7 +352,7 @@ final class NameSequencer {
         cardOffset = CGSize(width: rest.width, height: rest.height - 24)   // FEEL-GATE: drop distance
         cardScale  = 1.06
         cardAlpha  = 0
-        withAnimation(.easeOut(duration: 0.7)) {                           // FEEL-GATE: settle curve
+        withAnimation(AppAnimation.cardSetDown) {
             cardOffset = rest
             cardScale  = 1.0
             cardAlpha  = 1
