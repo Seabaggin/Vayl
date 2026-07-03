@@ -223,7 +223,6 @@ private struct PhaseOverlayView: View {
     let screenSize: CGSize
     @Binding var tableRimBurst: Double
     @Binding var tableForgeEnergy: Double
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -289,7 +288,6 @@ private struct PhaseOverlayView: View {
     /// slightly forward (1.02 → 1.0); outgoing recedes back (1.0 → 0.97). Under Reduce
     /// Motion this collapses to a pure opacity cross-fade — scale is motion.
     private var phaseHandoff: AnyTransition {
-        guard !reduceMotion else { return .opacity }
         // Confirmation → BuildDeck is a pixel-identical deck handoff (the collapsed
         // credential fan and BuildDeck's VaylDeckStack share point/size/face). A depth
         // scale would counter-scale the two near-identical decks about screen-centre and
@@ -297,10 +295,9 @@ private struct PhaseOverlayView: View {
         // evaluate this against the POST-advance phase, so keying on .buildDeck drops the
         // scale on BOTH sides of this one seam only — every other handoff keeps its depth.
         if director.phase == .buildDeck { return .opacity }
-        return .asymmetric(
-            insertion: .opacity.combined(with: .scale(scale: 1.02)),
-            removal:   .opacity.combined(with: .scale(scale: 0.97))
-        )
+        // Staple 1, Loud register — the OB IS the loud register's reference implementation.
+        // vaylDepth handles the Reduce Motion collapse to .opacity internally.
+        return .vaylDepth(.loud)
     }
 }
 
