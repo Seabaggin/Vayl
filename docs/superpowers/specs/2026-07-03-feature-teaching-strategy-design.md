@@ -1,7 +1,14 @@
 # Feature Teaching Strategy: when to tutorial, when to guide
 
 **Status:** DECIDED 2026-07-03. Bryan's picks: **Sessions 1A (build now, not staged) · Desire Map 2A ·
-Pulse 3B (door + once-ever annotated landing beat) · Path 4B.** Two picks went heavier than the
+Pulse 3B (door + once-ever annotated landing beat) · Path 4B.**
+
+**Post-decision correction (source re-verification):** 2A is ALREADY BUILT. The rater's start screen
+(`DesireMapView.startScreen`, S2.1) states the global contract twice: "you each answer in private, and
+only the desires you **both** want are ever revealed," plus the diamond footnote "If only one of you
+wants it, it stays private. Your no is never shown to your partner." Section 3's claim that the global
+rule is unstated at entry was wrong (this spec's recon read the pill hints but not the start screen).
+No Desire Map work item exists; 2A's pick is satisfied as-is. Two picks went heavier than the
 consultant recommendation (1A-now over staged; 3B over 3A), both deliberate. Implementation notes:
 3B must land BEFORE Bryan's Pulse on-device pass (category F of the Pulse finalization goal doc) so
 the check-in surface is verified once, not twice; 4B is an amendment to plan 20, not a code item.

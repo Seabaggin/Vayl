@@ -47,9 +47,16 @@ order is the suggested sequence.
 ### 🔵 Tier D — Map / Vault (one-shot the scaffold; feel + RLS pass).
 | # | Plan | What it does | Notes |
 |---|---|---|---|
-| **12** | [Map dashboard + Me layer](12-map-dashboard-me-layer.md) | Finish/harden the Me dashboard; promote `LearnSegmented` → shared `VaylSegmented` | Me layer is already ~80% built → a verify-finish-harden pass. Includes an "Explorer Type" → "Your card" product-principle fix. |
+| **12** | [Map dashboard + Me layer](12-map-dashboard-me-layer.md) | Finish/harden the Me dashboard; promote `LearnSegmented` → shared `VaylSegmented` | Me layer is already ~80% built → a verify-finish-harden pass. **Its Seg 3 (Me Card polish) conflicts with Plan 17 — skip Seg 3 if 17 runs first, or treat Seg 3's work as superseded if 12 already ran.** |
 | **13** | [Vault: Agreements + Event Log + consent](13-vault-agreements-eventlog-consent.md) | **Deploy + verify** the already-built Vault (Swift is committed; prod is missing all 5 tables + 2 edge fns) | The consent "decline never discloses" invariant is the load-bearing, testable core. |
 | **14** | [Map Us layer + Pulse partner](14-map-us-layer-and-pulse-partner.md) | Track the pulse prod-drift migration, upgrade the shared row to a 2D position, wire partner fetch | **Top open decision:** ship Me-only + honest Us empty state for V1 and defer this? |
+| **17** | [Shelve the Me Card](17-shelve-me-card.md) | Remove the "Your card" identity/Flavor section from Map's Me layer — no backend, purely local | Trivial, do first among 17-20 — frees the "Forward" slot 20's Path needs. Re-verified: zero Supabase surface, no Us-card ever existed. |
+| **18** | [Pulse foundations + ball feel](18-pulse-foundations-and-feel.md) | One position-mapping source of truth, position-is-the-only-color-source, drift/idle-float/silver-to-start, `.vaylSheet`→`.vaylCover` check-in, dead-code purge (6 files + `PulseTier`) | **DONE** — built 2026-07-01/02. Its own "Phase D done, no action" note is now further stale: Phase G ("PulseStore stays UserDefaults-only, out of scope") has since been superseded too — full Supabase sync (`pulse_entries`) shipped since. See Plan 21. |
+| **19** | [Map Pulse integration finish](19-map-pulse-integration-finish.md) | Builds the "your map" time-window trail on the Me field sheet — the one real gap left from the 2026-06-28 mockup-vs-impl audit | Re-verified: C2/C3/S2-1/S2-2/G1 from that audit are **already fixed in code** — don't re-fix them. Depends on Plan 18 (done). **Still not built — still an open, unanswered decision** (2026-07-03: Bryan confirmed Plan 20/The Path is the separate roadmap feature; this trail is a distinct, still-open call). Independent of Plan 21. |
+| **20** | [The Path (Roadmap) V1](20-the-path-roadmap-v1.md) | Greenfield: `PathNode`/`PathStore`/trail/Mission Brief, Swinging preset seeded, wired as Map's "Forward" pillar for both Me and Us | 100% unbuilt before this — zero prior Swift/Supabase symbols. Depends on Plan 17 (fills the slot it empties). Agency-ladder Rung 1 only (preset, no customize/theorycraft); straight rail, not the mockup's serpentine curve — see its Context section. |
+| **21** | [Pulse finalization](21-pulse-finalization.md) | **Superseded as the primary driver** by `docs/handoffs/2026-07-03-pulse-finalization-goal.md` — kept as a reference appendix (verified-once concrete code sketches), not "the plan" | Fable/agent-driven work on remaining Pulse gaps should start from the goal/handoff doc (outcomes + a rigorous Definition of Final), which better fits an agent needing less prescriptive direction. This file's code sketches are a starting hypothesis for several of that doc's gaps, not a spec — re-verify against source first. **2026-07-03: the goal doc's A-E are all checked/built; only Bryan's on-device pass (F) remains.** |
+| **22** | [Pulse teaching](22-pulse-teaching.md) | Teaching decision 3B: real `PulseInfoSheet` door (Home dormant + Map hero entry points) + a once-ever two-beat field annotation on the first check-in landing | From the decided teaching-strategy spec (`docs/superpowers/specs/2026-07-03-feature-teaching-strategy-design.md`). Land BEFORE Bryan's Pulse on-device pass so the check-in surface is verified once. 2A (Desire Map) needed no plan — already built in `DesireMapView.startScreen`. |
+| **23** | [Session practice hand](23-session-practice-hand.md) | Teaching decision 1A: dealer-voiced four-beat practice overlay on a couple's first-ever session (turns, care mark/safe word, real hold-to-deal practice) | Per-device chrome ONLY — deliberately NOT a card in the shared hand (a locally-gated prepend would desync the two devices' index lockstep). Reuses `hasCompletedCoupleSession`; zero store/sync changes. Fold verification into the plan-16 two-device proof. 4B (The Path framing) lives in plan 20 Step 9, not here. |
 
 ### ⚪ Tier E — Content (Fable drafts; you edit).
 | # | Plan | What it does | Notes |
@@ -68,8 +75,11 @@ Mapped to these plans and sequenced finish-first:
 3. **06** (tests — lock the money/privacy invariants before you refactor) → **07** (empty states + crash SDK).
 4. **Card Session 16** (the core loop, one master pass replacing 08 → 09 → 10 → 11; budget real two-device time here).
 5. **Map 12 → 13 → 14** (13 is deploy-and-verify; 14 is a scope decision).
-6. **15** (content — the 30–50h authoring track; start early, don't compress into the final week).
-7. **Then the manual work below** (V1/V2 device walks, A2 legal, A4 submit).
+6. **17 → 18 → 21 → 20** (Pulse + Map + The Path — 17 first to free the slot, 18 and 21 finish Pulse,
+   20 after 17). **19** (the "your map" time-window trail) is independent and still an open decision —
+   slot it in whenever Bryan confirms he wants it; it doesn't block or get blocked by 20/21.
+7. **15** (content — the 30–50h authoring track; start early, don't compress into the final week).
+8. **Then the manual work below** (V1/V2 device walks, A2 legal, A4 submit).
 
 ---
 
@@ -84,8 +94,11 @@ These are launch-blockers that a code one-shot can't do. No plan file; tracked h
 - **A2 legal** — privacy policy + ToS authoring/hosting + nutrition label. The paywall + sign-in already
   have the tappable stubs waiting for the URLs.
 - **A4 assets + TestFlight + submit** — screenshots, icon audit, age rating, 3–5 day TestFlight.
-- **Pulse feature** — already has its own one-shot plan: `docs/handoffs/2026-06-30-pulse-audit-and-one-shot-plan.md`
-  (Phases A–G). Plan **14** here is its Phase F (the couple/Us layer). Keep them consistent.
+- **Pulse feature** — the 2026-06-30 handoff's Phases A-G are all superseded now: **18** did A-C,
+  **14**'s scope (Phase F, the couple/Us layer) shipped alongside a full Supabase backend that goes
+  beyond Phase G's original "stays local" call, and **21** finishes the remaining gaps (staleness
+  honesty + a sync-loop hole + one dead method). Only **19** (Phase E, the "your map" time-window
+  trail) remains genuinely unbuilt and undecided.
 
 ---
 
@@ -117,6 +130,25 @@ Worth acting on regardless of which plans you run — these are facts about the 
   the closed 5-key write DTO + the structurally alignment-only read DTO. (06)
 - **Token debt is not real.** Once intentional/preview/felt values are excluded, the audit's 72 fonts /
   75 glows / 85 animations collapse to ~10 font repoints + 2 spacing swaps. Don't spend a big pass on it. (03)
+- **Most of the 2026-06-28 Pulse mockup-vs-impl audit is now stale (fixed in code since).** Re-verified
+  2026-07-01: the zone-palette split (C2), the gray "THE PULSE" eyebrow (C3), the missing capsule glow
+  (S2-1), the fixed-44pt Us aura (S2-2), and the 17s glass-sweep cadence (G1) are **all already fixed**.
+  Only the "your map" time-window trail (S1-1) is still a real gap — that's all Plan 19 builds. (18, 19)
+- **The Me Card ("playing card" identity feature) has zero backend surface** — `flavor`/`chosenTitle`
+  are local-only `UserProfile` columns, no migration, no Us-card ever existed (only unused
+  `CoupleCrestSigil`/`CoupleCrestPortrait` scaffolding). Shelving it (Plan 17) is a pure View change. The
+  design spec (`2026-06-27-couple-path-roadmap-design.md` §14) already lists this as a non-goal — Plan
+  12 Seg 3 (which deepens the Me Card) is the one place that tension surfaces; see Plan 17's Open
+  Decisions. (17)
+- **The Path (Roadmap) is 100% unbuilt** — zero Swift symbols, zero Supabase schema, no hook in
+  `MapStore`, confirmed by repo-wide grep. `GettingStartedPathView` (Home's onboarding checklist) is a
+  confirmed DIFFERENT feature — same visual idiom, unrelated data. (20)
+- **Pulse's backend/edit-window/partner-sync build (this session, 2026-07-01/02) landed well ahead of
+  its own docs** — by the time Plan 21 was written, `PulseStore`/`MapStore`/`MapUsLayer` already had a
+  full `pulse_entries` sync loop, a 2-hour edit window, and real partner-history grid pairing, none of
+  which any prior plan doc described. Verified fresh against source rather than trusted from prose — a
+  reminder that these docs drift fast on an actively-worked feature; re-verify before building, don't
+  assume a plan's "current state" section is still accurate once time has passed. (21)
 
 ---
 
