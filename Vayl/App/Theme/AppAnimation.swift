@@ -955,6 +955,15 @@ internal enum AppAnimation {
     /// keep/pass demonstration (not the user's own throw — that's curiosityThrow).
     /// Reduce motion: the demo sequence is skipped entirely at the call site.
     static let curiosityDemoSwipe: Animation = .easeIn(duration: 0.22)
+
+    /// 0.42s ease-out — the monte fan OPENING into a ribbon spread before the turnover
+    /// (ExperienceLevelPhase). FEEL-GATE origin value.
+    /// Reduce motion: the spread sequence never runs (reveal() path).
+    static let fanSpreadOpen: Animation = .easeOut(duration: 0.42)
+
+    /// 0.42s ease-in-out — the spread RE-COLLECTING to the resting fan after the turnover.
+    /// Symmetric ease: the close mirrors the open. Reduce motion: never runs.
+    static let fanRecollect: Animation = .easeInOut(duration: 0.42)
 }
 
 // MARK: — Reduce Motion Helpers

@@ -147,7 +147,7 @@ final class ThreeCardFanController {
         //       room to roll over. The flourish's "open" finally has a job.
         state = .shuffling
         shuffleHapticTrigger.toggle()
-        withAnimation(.easeOut(duration: 0.42)) {
+        withAnimation(AppAnimation.fanSpreadOpen) {
             for i in 0..<3 {
                 angles[i]  = fan[i].angle * 0.30                                        // flatten toward a row
                 offsets[i] = CGSize(width: fan[i].offset.width * 1.5, height: centerY)  // widen + level
@@ -173,7 +173,7 @@ final class ThreeCardFanController {
         if Task.isCancelled { return }
 
         // ── 3. Re-collect to the resting fan for the pick (the flourish's "close").
-        withAnimation(.easeInOut(duration: 0.42)) {
+        withAnimation(AppAnimation.fanRecollect) {
             for i in 0..<3 {
                 angles[i]  = fan[i].angle
                 offsets[i] = CGSize(width: fan[i].offset.width,
