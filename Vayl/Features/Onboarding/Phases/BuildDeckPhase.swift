@@ -18,8 +18,9 @@ import SwiftUI
 ///   Beat 7 · founder letter sheet-peek exit (interim: after the shatter, or as
 ///            an idle fallback — replaced by the reveal carousel in segment 7)
 ///
-/// Timing values below are raw on purpose — feel-tuning per the Build Protocol;
-/// they become AppAnimation tokens once verified on device.
+/// Timing values are AppAnimation tokens (OB Ceremony Tokens section, tokenized
+/// 2026-07-03, values verbatim). Re-tune the tokens directly after a device feel
+/// pass — never by re-introducing raw values here.
 struct BuildDeckPhase: View {
 
     let director:   VaylDirector
