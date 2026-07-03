@@ -68,9 +68,16 @@ promotes it to THE tap contract at every register and adds one move:
    **75ms stagger** (~85% overlap between neighbors), capped at 6 rows (rest arrive with row 6).
    Refreshes/re-fetches fade only — never cascade. The cascade is intentionally slower than
    `enter`: it is the entrance for the whole list, not per-element decoration.
-3. **Commit vs cancel dismissal.** A sheet dismissed by completing its task carries the tap glow
-   into the exit; a cancel just exits. *(OPEN — needs a feel prototype during implementation;
-   ship cancel-style everywhere first, layer the commit glow after.)*
+3. **Commit vs cancel dismissal** (settled in the feel reference, 2026-07-03). A sheet's exit
+   inherits the intent that ended it:
+   - **Commit** (Save/confirm completes the task): charged-tap release → glow peaks at 0.12s +
+     haptic → the sheet's exit launches **100ms after the glow peak** (0.22s after release),
+     0.28s ease-in, scrim fading with it. The glow rides out on the pill inside the departing
+     sheet — the commit's energy visibly sends the work away. Token: `commitDismissLag = 0.10`.
+   - **Cancel** (grabber swipe, scrim tap, Cancel button): plain 0.28s ease-in exit, no charge —
+     "never mind" feels like nothing happened.
+   - Applies to: profile edit save, add agreement, pairing-code confirm, OB credential editor
+     save, check-in submit (cover flavor), paywall success. Previews and canceled edits exit quiet.
 4. **Route-level swaps** (splash → OB → Home): Loud handoff / `cinematicFade`, unchanged.
 
 ## 5. Reduce Motion contract
@@ -96,6 +103,7 @@ orbGlide              .timingCurve(0.3, 0, 0.15, 1, duration: 0.38) // replaces 
 cascadeRow            .timingCurve(0.25, 0.1, 0.15, 1, duration: 0.52)
 cascadeStagger        0.075     cascadeCap  6      cascadeRise  14
 refusalShiver         0.28s, ±3pt keyframes
+commitDismissLag      0.10   // exit starts this long after the commit glow's peak
 quietMaxScaleDelta    0.02      quietMaxTravel  16   // documented ceilings, cited in reviews
 ```
 
@@ -132,7 +140,7 @@ HTML reference but are **starting points until the device pass confirms them**.
 
 ## 8. Open items
 
-- Commit-vs-cancel glow dismissal (law 3) — prototype during step 3.
-- Device feel pass on all Quiet values (especially cascade overlap and orb glide).
+- Device feel pass on all Quiet values (especially cascade overlap, orb glide, and the 100ms
+  commit-dismiss lag, which sits in a narrow window — re-dial on device if it reads laggy).
 - Whether Map/Home hero moments (Pulse expand) count as covers (Loud) or in-place expands (Quiet)
   — decide when those screens are touched next.

@@ -422,6 +422,57 @@
     </div>
   </section>
 
+  <!-- ══════════ LAW 3 — COMMIT vs CANCEL DISMISSAL ══════════ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">LAW 3</span><h2>Commit vs Cancel Dismissal</h2></div>
+    <p class="sec-desc">A sheet's exit inherits the intent that ended it. <b>Commit</b>: press and
+    hold the Save pill, release — the circuit completes, the glow bursts, and the sheet's exit
+    <em>launches off the glow's decay</em>. <b>Cancel</b>: no charge ever built, the sheet just
+    leaves on the plain exit curve. Use the lag dial to find the handoff window: too long reads
+    laggy, too short buries the glow.</p>
+    <div class="demo-row">
+      <div class="phone">
+        <div class="screen">
+          <div class="atmo"></div>
+          <div class="mock-title">Map<em>.</em></div>
+          <div class="mock-sub">Vault · Agreements</div>
+          <div class="mock-card"><h4>Agreements</h4><p>3 active. Last touched Tuesday.</p></div>
+        </div>
+        <div class="dim" id="dim5"></div>
+        <div class="sheet" id="sheet5" style="height:56%;">
+          <h4 style="font-size:15px; margin-bottom:6px;">New agreement</h4>
+          <div class="spectrum-line"></div>
+          <p style="font-size:12.5px; color:var(--text-sec); line-height:1.6; margin-bottom:22px;">
+            "Check in before staying over." Completing this task is a commit —
+            the exit should feel like the button sent it.</p>
+          <div style="display:flex; align-items:center; gap:18px;">
+            <div class="pillwrap">
+              <div class="glow" id="glow5"></div>
+              <div class="hairline" id="hair5"></div>
+              <button class="pill" id="pill5" style="padding:13px 36px; font-size:14px;">Save</button>
+              <svg class="pill-svg" id="svg5"></svg>
+            </div>
+            <button id="cancel5" style="background:none; border:none; color:var(--text-sec); font-size:14px; cursor:pointer;">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="ctl-label">PLAY</div>
+        <button class="ctl" id="b5o">Open sheet</button>
+        <div class="ctl-label">GLOW → EXIT LAG</div>
+        <button class="ctl" id="lag60">60ms — overlapped</button>
+        <button class="ctl active" id="lag100">100ms — the window</button>
+        <button class="ctl" id="lag160">160ms — sequential</button>
+        <div class="vals">
+          <b>Commit</b> · release → glow in 0.12s + haptic →<br>
+          exit starts <span id="lagVal">100</span>ms after glow peak, 0.28s ease-in<br>
+          <b>Cancel</b> · plain exit 0.28s ease-in, no charge<br>
+          (grabber swipe + scrim tap count as cancels)
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="note">
     <b>The contract:</b> every transition in Vayl is one of these three moves. Depth Handoff owns
     screen-level change, Weighted Arrival owns objects entering, Charged Tap owns input. Registers cap
@@ -567,6 +618,71 @@
        { transform: 'translateX(3px)' }, { transform: 'translateX(-2px)' },
        { transform: 'translateX(0)' }],
       { duration: 280, easing: 'ease-out' });
+  });
+
+  // ── Law 3: commit vs cancel dismissal ───────────────────────────────
+  const sheet5 = document.getElementById('sheet5'), dim5 = document.getElementById('dim5'),
+        pill5 = document.getElementById('pill5'), svg5 = document.getElementById('svg5'),
+        hair5 = document.getElementById('hair5'), glow5 = document.getElementById('glow5');
+  let arc5L, arc5R, lag5 = 100;
+  function buildArcs5() {
+    const w = pill5.offsetWidth + 2, h = pill5.offsetHeight + 2, r = h / 2;
+    svg5.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg5.style.width = w + 'px'; svg5.style.height = h + 'px';
+    const dL = `M ${w/2} 1 L ${r} 1 A ${r-1} ${r-1} 0 0 0 ${r} ${h-1} L ${w/2} ${h-1}`;
+    const dR = `M ${w/2} 1 L ${w-r} 1 A ${r-1} ${r-1} 0 0 1 ${w-r} ${h-1} L ${w/2} ${h-1}`;
+    svg5.innerHTML =
+      `<defs><linearGradient id="g5L"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#4be1e8"/></linearGradient>
+       <linearGradient id="g5R"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#e84bd0"/></linearGradient></defs>
+       <path d="${dL}" stroke="url(#g5L)" pathLength="100"/><path d="${dR}" stroke="url(#g5R)" pathLength="100"/>`;
+    [arc5L, arc5R] = svg5.querySelectorAll('path');
+  }
+  buildArcs5(); addEventListener('resize', buildArcs5);
+
+  function openSheet5() {
+    hair5.style.opacity = 1;
+    [arc5L, arc5R].forEach(p => { p.style.strokeDashoffset = 100; });
+    dim5.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 420, easing: 'ease-out', fill: 'forwards' });
+    sheet5.animate([{ transform: 'translateY(105%)' }, { transform: 'translateY(0)' }],
+      { duration: 420, easing: ARRIVE, fill: 'forwards' });
+  }
+  function exitSheet5() {
+    dim5.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 280, easing: 'ease-in', fill: 'forwards' });
+    sheet5.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(105%)' }],
+      { duration: 280, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' });   // exit: ease-in
+  }
+  document.getElementById('b5o').onclick = openSheet5;
+  document.getElementById('cancel5').onclick = exitSheet5;   // cancel: no charge, plain exit
+
+  pill5.addEventListener('pointerdown', () => {
+    pill5.classList.add('pressed');
+    hair5.style.opacity = 0;
+    [arc5L, arc5R].forEach(p => p.animate(
+      [{ strokeDashoffset: 100 }, { strokeDashoffset: 0 }],
+      { duration: 300, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)', fill: 'forwards' }));
+  });
+  pill5.addEventListener('pointerup', () => {
+    pill5.classList.remove('pressed');
+    // glow in 0.12s (peak) → hold → out; exit launches lag ms AFTER the peak
+    glow5.animate(
+      [{ opacity: 0 }, { opacity: 1, offset: 0.23 }, { opacity: 1, offset: 0.46 }, { opacity: 0 }],
+      { duration: 520, easing: 'ease-out', fill: 'forwards' });
+    setTimeout(exitSheet5, 120 + lag5);
+  });
+  pill5.addEventListener('pointerleave', e => {
+    if (!e.buttons) return;
+    pill5.classList.remove('pressed');
+    [arc5L, arc5R].forEach(p => p.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: 100 }],
+      { duration: 160, easing: 'ease-in', fill: 'forwards' }));
+    setTimeout(() => { hair5.style.opacity = 1; }, 160);
+  });
+  [['lag60', 60], ['lag100', 100], ['lag160', 160]].forEach(([id, ms]) => {
+    document.getElementById(id).onclick = e => {
+      lag5 = ms;
+      document.getElementById('lagVal').textContent = ms;
+      ['lag60', 'lag100', 'lag160'].forEach(o =>
+        document.getElementById(o).classList.toggle('active', o === id));
+    };
   });
 
   // ── Tab cadence ──────────────────────────────────────────────────────
