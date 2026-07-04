@@ -9,6 +9,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct VaultSheet: View {
 

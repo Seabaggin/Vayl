@@ -160,7 +160,7 @@ struct ExperienceLevelPhase: View {
             // the card MOVEMENT stays smooth (it's withAnimation-driven on the render
             // server, not this clock). Halves/quarters the per-frame Canvas + drawingGroup work.
             TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { tl in
-                let t = reduceMotion ? 0 : tl.date.timeIntervalSinceReferenceDate
+                let t = (reduceMotion || AppAnimation.lowPower) ? 0 : tl.date.timeIntervalSinceReferenceDate
                 ZStack {
                     ForEach(0..<3, id: \.self) { i in
                         candleCard(slot: i, t: t)

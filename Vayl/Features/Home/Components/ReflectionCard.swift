@@ -691,6 +691,15 @@ struct ReflectionCard: View {
 // MARK: - Date Extension
 
 private extension Date {
+
+    /// Cached — DateFormatter construction is expensive, and relativeString is read
+    /// from `body`, so a fresh formatter per read would be paid on every card render.
+    static let weekdayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE"
+        return f
+    }()
+
     var relativeString: String {
         let days = Calendar.current.dateComponents(
             [.day], from: self, to: Date()
@@ -700,9 +709,7 @@ private extension Date {
         case 1:  return "Yesterday"
         case 2:  return "Two days ago"
         default:
-            let formatter = DateFormatter()
-            formatter.dateFormat = "EEEE"
-            return "Last \(formatter.string(from: self))"
+            return "Last \(Self.weekdayFormatter.string(from: self))"
         }
     }
 }

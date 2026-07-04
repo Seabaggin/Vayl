@@ -16,9 +16,6 @@
 //
 // No streak. No badge. No calendar gap. The orb IS the language; its own glow washes the pane.
 // Tapping the card opens the full Pulse on the Map; the pill (re-)runs a check-in.
-//
-// NOTE (out of scope, tracked as D1.5): the mockup's "brighter than yesterday" trend line needs
-// a new PulseStore trend computation (today's capacity vs the prior entry) that doesn't exist yet.
 
 import SwiftUI
 
@@ -45,14 +42,17 @@ struct HomePulseRail: View {
     var body: some View {
         Group {
             if let entry = todayEntry {
-                let quadrant = entry.resolvedPosition.quadrant
+                let position = entry.resolvedPosition
+                let space    = entry.space
                 card(
-                    orb:       PulseAura(quadrant: quadrant, size: orbSize, haloSpread: orbHaloSpread),
-                    hero:      quadrant.spaceName,
+                    // Bilinear-coloured orb + six-space name, matching the check-in reveal and
+                    // Map hero — a Neutral/Uncharted reading reads the same everywhere.
+                    orb:       PulseAura(ramp: space.ramp(at: position), size: orbSize, haloSpread: orbHaloSpread),
+                    hero:      space.displayName,
                     heroColor: AppColors.textPrimary,
-                    sub:       quadrant.sublabel,
+                    sub:       space.descriptors(at: position),
                     subColor:  AppColors.textSecondary,
-                    timestamp: relativeTime(entry.date)
+                    timestamp: trendAndTimestamp(entry.date)
                 )
             } else {
                 card(
@@ -100,7 +100,9 @@ struct HomePulseRail: View {
 
                 VStack(spacing: AppSpacing.sm) {
                     orb
-                    checkInPill
+                    if pulse.canCheckInToday {
+                        checkInPill
+                    }
                 }
                 .fixedSize()
             }
@@ -158,14 +160,15 @@ struct HomePulseRail: View {
         .accessibilityHint("Opens the Pulse on the Map")
     }
 
-    // MARK: - Check-in pill (both states)
+    // MARK: - Check-in pill (both states — hidden once today's entry has locked
+    // past its 2-hour edit window; see PulseStore.canCheckInToday)
 
     private var checkInPill: some View {
         Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onCheckIn?()
         } label: {
-            Text("Check in")
+            Text(pulse.todayEntry == nil ? "Check in" : "Edit check-in")
                 .font(AppFonts.buttonLabelSmall)
                 .foregroundStyle(AppColors.textSecondary)
                 .padding(.horizontal, AppSpacing.sm)
@@ -175,13 +178,21 @@ struct HomePulseRail: View {
                 )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Check in")
+        .accessibilityLabel(pulse.todayEntry == nil ? "Check in" : "Edit today's check-in")
     }
 
     // MARK: - Helpers
 
-    private var todayEntry: PulseEntry? {
-        pulse.entries.last(where: { Calendar.current.isDateInToday($0.date) })
+    private var todayEntry: PulseEntry? { pulse.todayEntry }
+
+    /// Combines the day-over-day trend (if available) with the relative timestamp
+    /// on one line, matching home-pulse-widget-shine.html's "Brighter than
+    /// yesterday · 2h ago" — the mockup's one remaining unbuilt detail (previously
+    /// tracked as this file's own "D1.5" note, now built). Falls back to the plain
+    /// timestamp on a first-ever entry (no yesterday to compare against).
+    private func trendAndTimestamp(_ date: Date) -> String {
+        guard let trend = pulse.weatherLine else { return relativeTime(date) }
+        return "\(trend) · \(relativeTime(date))"
     }
 
     private func relativeTime(_ date: Date) -> String {

@@ -53,7 +53,7 @@ private struct GlassSpecularSweepModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content.overlay {
-            if !reduceMotion {
+            if !reduceMotion && !AppAnimation.lowPower {
                 // Strip is 2.8× wide so edges stay off-screen throughout the sweep.
                 // Geometry matches the HTML prototype (width:280%, height:124%).
                 let offsetX = active ? size * 0.9 : -size * 0.892

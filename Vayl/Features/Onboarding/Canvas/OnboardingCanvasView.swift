@@ -29,6 +29,14 @@ struct OnboardingCanvasView: View {
         self._director = State(initialValue: director)
     }
 
+    /// True only inside the Xcode Preview canvas. SpriteKit's `SpriteView` fails to
+    /// composite there and blanks the whole preview to a gray backdrop, hiding the
+    /// void + atmosphere. It has nothing to render while walking phases anyway (no
+    /// card flights), so we skip mounting it in previews. No effect on device/sim.
+    private var isPreview: Bool {
+        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+    }
+
     private var atmosphereConfig: AtmosphereConfig {
         switch director.phase {
         case .stat:         return .stat
@@ -88,18 +96,22 @@ struct OnboardingCanvasView: View {
                 // default 60, matching the SwiftUI animations around them
                 // (CADisableMinimumFrameDurationOnPhone is set in Vayl.plist;
                 // non-ProMotion displays clamp to 60 automatically).
-                let flightScene = director.cardFlightScene
-                SpriteView(
-                    scene:   flightScene,
-                    preferredFramesPerSecond: 120,
-                    options: [.allowsTransparency],
-                    shouldRender: { flightScene.shouldRender(at: $0) }
-                )
-                .frame(width: size.width, height: size.height)
-                .allowsHitTesting(false)
-                .ignoresSafeArea()
-                .onAppear {
-                    director.cardFlightScene.size = size
+                // Skipped in the Xcode Preview canvas — SpriteView blanks the whole
+                // preview to gray there (see `isPreview`). Rendered normally on device/sim.
+                if !isPreview {
+                    let flightScene = director.cardFlightScene
+                    SpriteView(
+                        scene:   flightScene,
+                        preferredFramesPerSecond: 120,
+                        options: [.allowsTransparency],
+                        shouldRender: { flightScene.shouldRender(at: $0) }
+                    )
+                    .frame(width: size.width, height: size.height)
+                    .allowsHitTesting(false)
+                    .ignoresSafeArea()
+                    .onAppear {
+                        director.cardFlightScene.size = size
+                    }
                 }
 
                 // ── Layer 5: Table cards ──────────────────────────

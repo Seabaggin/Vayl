@@ -277,14 +277,7 @@ struct SettingsView: View {
                         .font(AppFonts.bodyMedium)
                         .foregroundStyle(AppColors.textPrimary)
 
-                    Group {
-                        Text("$24.99")
-                            .font(AppFonts.bodyMedium.bold())
-                            .foregroundStyle(AppColors.textPrimary)
-                        + Text("  once · yours to keep")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.textTertiary)
-                    }
+                    Text("\(Text("$24.99").font(AppFonts.bodyMedium.bold()).foregroundStyle(AppColors.textPrimary))\(Text("  once · yours to keep").font(AppFonts.caption).foregroundStyle(AppColors.textTertiary))")
                 }
                 .padding(AppSpacing.md)
                 .frame(maxWidth: .infinity, alignment: .leading)

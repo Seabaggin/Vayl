@@ -71,8 +71,13 @@ final class MapStore {
 
     // MARK: - Pulse positions
 
-    /// The partner's current circumplex position. nil until Segment 7 wires PulseSyncService.
+    /// The partner's current circumplex position — derived from their most recent
+    /// `pulse_entries` row. nil when unpaired, not shared, or not yet logged.
     private(set) var partnerPosition: PulsePosition? = nil
+
+    /// The partner's full check-in history (oldest first) — feeds the Us layer's
+    /// paired history grid. Empty for the same reasons partnerPosition can be nil.
+    private(set) var partnerEntries: [PulseEntry] = []
 
     // MARK: - The Us layer
 
@@ -123,6 +128,24 @@ final class MapStore {
         #else
         partnerName = ""       // unpaired / partner has no name → just your name, no toggle
         #endif
+    }
+
+    /// Async: fetches the partner's full Pulse history and derives their current position
+    /// from the latest entry — feeds both the Us field's live orb (G6) and the Us history
+    /// grid's partner column (G4/G5). Unlike loadPartner (name, cached once after first
+    /// success), this re-fetches on every call: the partner may check in again while this
+    /// tab is open elsewhere in the app, and there's no cheap way to know without asking.
+    /// A nil result (offline / fetch failure) leaves whatever's already loaded untouched;
+    /// only an explicit "not paired" clears it.
+    func loadPartnerPulse(appState: AppState) async {
+        guard appState.linkState == .linked else {
+            partnerPosition = nil
+            partnerEntries = []
+            return
+        }
+        guard let entries = await PulseSyncService.shared.fetchPartnerEntries() else { return }
+        partnerEntries = entries
+        partnerPosition = entries.last?.resolvedPosition
     }
 
     private func loadMasthead(appState: AppState, context: ModelContext) {

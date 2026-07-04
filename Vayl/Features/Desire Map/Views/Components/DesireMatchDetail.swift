@@ -38,8 +38,8 @@ struct DesireMatchDetail: View {
             alignmentBadge
                 .padding(.top, AppSpacing.xxs)
 
-            // Celebration line
-            Text(match.celebration)
+            // Couple-framed meaning line (falls back to the generic celebration line)
+            Text(match.displayMeaning)
                 .font(AppFonts.bodyText)
                 .foregroundStyle(AppColors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -50,22 +50,14 @@ struct DesireMatchDetail: View {
                 .padding(.top, AppSpacing.sm)
                 .padding(.bottom, AppSpacing.xs)
 
-            // CTAs
-            Button {
-                onTalkTapped?()
-            } label: {
-                HStack(spacing: AppSpacing.sm) {
-                    Text("Talk about this")
-                        .font(AppFonts.ctaLabel)
-                        .foregroundStyle(badgeColor)
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(badgeColor.opacity(0.7))
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(_DetailPressStyle())
+            // CTAs — the mockup's d-talk is a filled gradient button, not a text row.
+            VaylButton(
+                label: "Talk about this →",
+                style: .primary,
+                size: .fullWidth,
+                action: { onTalkTapped?() }
+            )
+            .frame(height: VaylButtonSize.fullWidth.height)
 
             // Learn link renders only when wired. Until Learn can deep-link to a desire
             // term, the reveal/list pass `onLearnTapped: nil`, so it stays hidden rather

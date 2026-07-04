@@ -26,53 +26,34 @@ struct DesireMapListSheet: View {
     /// Tapped "Talk about this" inside an expanded row — routes to the Vault (wired by the host).
     var onTalk: (RevealMatch) -> Void = { _ in }
 
+    // Content-height when it fits; scrolls on small screens / long lists. vaylSheetChrome
+    // forces maxHeight:.infinity (shared, off-limits), so the chrome wraps BOTH candidates
+    // and .fixedSize(vertical) makes the fitting one hug content — PaywallSheet's recipe.
+    // Dismissal is scrim-tap (mockup screen 9 has no X).
     var body: some View {
+        ViewThatFits(in: .vertical) {
+            sheetStack
+                .vaylSheetChrome()
+                .fixedSize(horizontal: false, vertical: true)
+            ScrollView(showsIndicators: false) { sheetStack }
+                .vaylSheetChrome()
+        }
+    }
+
+    private var sheetStack: some View {
         VStack(spacing: 0) {
             grabHandle
 
-            // Close row
-            HStack {
-                Spacer()
-                Button {
-                    onClose()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textTertiary)
-                        .frame(width: 30, height: 30)
-                        .background(Circle().fill(AppColors.cardBg.opacity(0.55)))
-                        .overlay(Circle().stroke(AppColors.borderSubtle, lineWidth: 1))
-                }
-                .buttonStyle(_DetailPressStyle())
-            }
+            DesireMapListView(
+                matches: matches,
+                priceText: priceText,
+                onUnlockTapped: onUnlockTapped,
+                onTalk: onTalk
+            )
             .padding(.horizontal, AppSpacing.lg)
-            .padding(.bottom, AppSpacing.sm)
-
-            // Content — hugs its height when it fits; scrolls on small screens / long lists
-            ViewThatFits(in: .vertical) {
-                DesireMapListView(
-                    matches: matches,
-                    priceText: priceText,
-                    onUnlockTapped: onUnlockTapped,
-                    onTalk: onTalk
-                )
-                .padding(.horizontal, AppSpacing.lg)
-                .padding(.bottom, AppSpacing.xxl)
-
-                ScrollView(showsIndicators: false) {
-                    DesireMapListView(
-                        matches: matches,
-                        priceText: priceText,
-                        onUnlockTapped: onUnlockTapped,
-                        onTalk: onTalk
-                    )
-                    .padding(.horizontal, AppSpacing.lg)
-                    .padding(.bottom, AppSpacing.xxl)
-                }
-            }
+            .padding(.bottom, AppSpacing.xxl)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .vaylSheetChrome()
     }
 
     private var grabHandle: some View {

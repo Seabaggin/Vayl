@@ -2,14 +2,15 @@
 //
 // A 10-column grid of the user's last 30 check-ins — never "last 30 days."
 //
-// Each cell is a flat tinted-glass chip: a single tier colour (no 3D radial
-// shading), a soft top sheen, and a bright-top / faint-bottom glass rim — the
-// aura palette read as glass, cheap enough for 30 cells (no Canvas, no
-// animation, no per-cell blur).
+// Each cell is a flat tinted-glass chip in its space's colour. Named spaces read as their
+// tier core; Neutral is lavender silver, Uncharted is sage deep. A solo border-state dot
+// crossfades between its two neighbouring space colours — all border dots share ONE
+// TimelineView driver, each offset by its index so they don't pulse in sync.
 //
-// Me mode — one glossy orb per cell in the quadrant's tier colour.
-// Us mode — split bead: your colour fills the top-left half, partner's the
-//           bottom-right, seamed on the diagonal. Solid when you shared a space.
+// Me mode — one dot per cell in the space's colour.
+// Us mode — split bead: your colour fills the top-left half, partner's the bottom-right,
+//           seamed on the diagonal. Solid when you shared a space. Border states round to
+//           their nearest named space in split view (no animation there).
 //
 // Visual reference: docs/prototypes/map-pulse-us.html — .grid / .sgd (upgraded).
 
@@ -18,47 +19,94 @@ import SwiftUI
 struct PulseHistoryGrid: View {
 
     enum Mode {
-        case me([PulseQuadrant])
-        case us([(mine: PulseQuadrant, partner: PulseQuadrant?)], partnerName: String)
+        case me([(date: Date, space: PulseSpace)])
+        case us([(date: Date, mine: PulseSpace, partner: PulseSpace?)], partnerName: String)
     }
 
     let mode: Mode
+
+    /// Which cell (if any) is showing its date/space-name callout below the grid.
+    @State private var selectedIndex: Int? = nil
+    /// Off-screen pause: border dots only run their timeline while the grid is visible.
+    @State private var isVisible: Bool = false
 
     // MARK: - Layout
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 5), count: 10)
 
     var body: some View {
+        // Hoisted once per render — `cells` re-derives from `mode` on every read, and
+        // the grid used to subscript it per row inside the ForEach (a full re-map of
+        // the 30-entry history per dot). One local copy per body evaluation instead.
+        let cells = self.cells
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
             Text(label)
                 .font(AppFonts.overline)
                 .foregroundStyle(AppColors.textTertiary)
 
+            // The grid container is STATIC — only the individual border dots own a timeline, so
+            // named / Neutral / Uncharted dots never re-render (no whole-grid flicker). Border
+            // dots read the same absolute wall-clock, so they stay phase-coherent without a
+            // shared parent driver (offset only by index).
             LazyVGrid(columns: columns, spacing: 5) {
                 ForEach(cells.indices, id: \.self) { i in
-                    AuraDot(tier: cells[i].mine, partner: cells[i].partner)
+                    AuraDot(space: cells[i].mine, partner: cells[i].partner, index: i, animate: isVisible)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            selectedIndex = (selectedIndex == i) ? nil : i
+                        }
                 }
             }
+
+            if let i = selectedIndex {
+                Text(calloutText(for: i))
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .transition(.opacity)
+            }
         }
+        .animation(AppAnimation.fast, value: selectedIndex)
+        .onAppear  { isVisible = true }
+        .onDisappear { isVisible = false }
     }
 
     // MARK: - Cell model
 
-    /// Each cell: the user's tier colour, plus the partner's when they differ
-    /// (nil = solid, i.e. same space or Me mode).
-    private var cells: [(mine: PulseCapacityColor, partner: PulseCapacityColor?)] {
+    /// Each cell: the date, your space, plus the partner's when it differs (nil = solid,
+    /// i.e. same space or Me mode).
+    private var cells: [(date: Date, mine: PulseSpace, partner: PulseSpace?)] {
         switch mode {
-        case .me(let quadrants):
-            return quadrants.map { ($0.capacityColor, nil) }
+        case .me(let days):
+            return days.map { (date: $0.date, mine: $0.space, partner: nil) }
         case .us(let pairs, _):
             return pairs.map { pair in
                 guard let partner = pair.partner, partner != pair.mine else {
-                    return (pair.mine.capacityColor, nil)
+                    return (date: pair.date, mine: pair.mine, partner: nil)
                 }
-                return (pair.mine.capacityColor, partner.capacityColor)
+                return (date: pair.date, mine: pair.mine, partner: partner)
             }
         }
     }
+
+    private func calloutText(for index: Int) -> String {
+        let cell = cells[index]
+        let dateText = Self.dateFormatter.string(from: cell.date)
+        switch mode {
+        case .me:
+            return "\(dateText) — \(cell.mine.displayName)"
+        case .us(_, let name):
+            guard let partner = cell.partner else { return "\(dateText) — \(cell.mine.displayName)" }
+            let displayName = name.isEmpty ? "partner" : name
+            return "\(dateText) — you: \(cell.mine.displayName) · \(displayName): \(partner.displayName)"
+        }
+    }
+
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEE, MMM d"
+        return f
+    }()
 
     // MARK: - Label
 
@@ -73,12 +121,25 @@ struct PulseHistoryGrid: View {
     }
 }
 
-// MARK: - Aura dot (static glossy orb)
+// MARK: - Aura dot (static glossy orb, or an animated border crossfade)
 
 private struct AuraDot: View {
 
-    let tier: PulseCapacityColor
-    var partner: PulseCapacityColor? = nil
+    let space:   PulseSpace
+    var partner: PulseSpace? = nil
+    var index:   Int  = 0
+    /// Whether this dot may run its border-lean timeline (false while the grid is off-screen).
+    var animate: Bool = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// sin() angular speed — one gentle lean cycle per cadence.
+    private var speed: Double { 2 * .pi / AppAnimation.pulseHistoryBorderCadence }
+
+    /// Only a SOLO border dot animates; everything else is a fixed view that never re-renders.
+    private var isAnimatedBorder: Bool {
+        partner == nil && space.borderCores != nil && animate && !reduceMotion && !AppAnimation.lowPower
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -92,19 +153,8 @@ private struct AuraDot: View {
 
     private func orb(_ d: CGFloat) -> some View {
         ZStack {
-            // Flat tinted glass — one colour per half, no 3D radial shading.
             ZStack {
-                if let partner {
-                    Circle().fill(tier.auraCore)
-                        .clipShape(DiagonalHalf(topLeading: true))
-                    Circle().fill(partner.auraCore)
-                        .clipShape(DiagonalHalf(topLeading: false))
-                    SeamLine()
-                        .stroke(AppColors.borderActive, lineWidth: max(0.5, d * 0.02))
-                } else {
-                    Circle().fill(tier.auraCore)
-                }
-
+                fill
                 // Glass sheen — soft reflected light across the upper half.
                 Circle()
                     .fill(
@@ -125,6 +175,46 @@ private struct AuraDot: View {
                     ),
                     lineWidth: max(0.6, d * 0.035)
                 )
+        }
+    }
+
+    @ViewBuilder
+    private var fill: some View {
+        if let partner {
+            // Split bead — border states round to their nearest named colour (dotCoreStatic),
+            // no animation in split view.
+            ZStack {
+                Circle().fill(space.dotCoreStatic)
+                    .clipShape(DiagonalHalf(topLeading: true))
+                Circle().fill(partner.dotCoreStatic)
+                    .clipShape(DiagonalHalf(topLeading: false))
+                SeamLine()
+                    .stroke(AppColors.borderActive, lineWidth: 0.6)
+            }
+        } else if let cores = space.borderCores, isAnimatedBorder {
+            // A border dot lives BETWEEN two spaces, so it renders as a blend of both and only
+            // LEANS gently toward each side — never a full crossfade (that reads as flashing).
+            // Its own timeline reads the absolute clock so all border dots stay phase-coherent
+            // without re-rendering their non-border neighbours. Lean = narrow band ±0.12 around
+            // a 50/50 mix; index offset desyncs them. 🎚️ FEEL: amplitude + cadence on device.
+            TimelineView(.animation(minimumInterval: 0.1)) { timeline in
+                let t = timeline.date.timeIntervalSinceReferenceDate
+                let lean = 0.5 + 0.12 * sin(t * speed + Double(index) * 0.4)
+                borderBlend(cores, lean: lean)
+            }
+        } else if let cores = space.borderCores {
+            // Border at rest (Reduce Motion / off-screen) — a fixed 50/50 blend, no timeline.
+            borderBlend(cores, lean: 0.5)
+        } else {
+            // Solid — named tier, Neutral, or Uncharted.
+            Circle().fill(space.dotCoreStatic)
+        }
+    }
+
+    private func borderBlend(_ cores: (Color, Color), lean: Double) -> some View {
+        ZStack {
+            Circle().fill(cores.1)
+            Circle().fill(cores.0).opacity(lean)
         }
     }
 }
@@ -163,7 +253,7 @@ private struct SeamLine: Shape {
 #Preview("Me — glossy") {
     ZStack {
         AppColors.void.ignoresSafeArea()
-        PulseHistoryGrid(mode: .me(previewMeQuadrants))
+        PulseHistoryGrid(mode: .me(previewMeDays))
             .padding(AppSpacing.lg)
     }
     .preferredColorScheme(.dark)
@@ -178,24 +268,34 @@ private struct SeamLine: Shape {
     .preferredColorScheme(.dark)
 }
 
-private let previewMeQuadrants: [PulseQuadrant] = [
-    .expansive, .expansive, .sovereign, .expansive, .expansive,
-    .sovereign, .expansive, .expansive, .friction,  .expansive,
-    .sovereign, .expansive, .expansive, .sovereign, .expansive,
-    .expansive, .sovereign, .expansive, .expansive, .expansive,
-    .expansive, .sovereign, .expansive, .expansive, .sovereign,
-    .expansive, .expansive, .protective,.expansive, .expansive,
+private let previewMeSpaces: [PulseSpace] = [
+    .expansive, .expansive, .receptive, .expansive, .expansive,
+    .receptive, .expansive, .neutral,   .reactive,  .expansive,
+    .receptive, .expansive, .borderExpansiveReceptive, .receptive, .expansive,
+    .expansive, .receptive, .expansive, .uncharted, .expansive,
+    .expansive, .receptive, .expansive, .expansive, .receptive,
+    .expansive, .expansive, .protective, .expansive, .expansive,
 ]
 
-private let previewUsPairs: [(mine: PulseQuadrant, partner: PulseQuadrant?)] = [
-    (.expansive, .sovereign), (.expansive, .expansive), (.sovereign, .sovereign),
-    (.expansive, .protective),(.expansive, .expansive), (.sovereign, .expansive),
-    (.expansive, .expansive), (.expansive, .sovereign), (.friction,  .protective),
-    (.expansive, .expansive), (.sovereign, .sovereign), (.expansive, .sovereign),
-    (.expansive, .expansive), (.sovereign, .friction),  (.expansive, .expansive),
-    (.expansive, .sovereign), (.sovereign, .sovereign), (.expansive, .expansive),
+private let previewMeDays: [(date: Date, space: PulseSpace)] =
+    previewMeSpaces.enumerated().map { offset, space in
+        (date: Date.daysAgo(previewMeSpaces.count - 1 - offset), space: space)
+    }
+
+private let previewUsSpacePairs: [(PulseSpace, PulseSpace?)] = [
+    (.expansive, .receptive), (.expansive, .expansive), (.receptive, .receptive),
+    (.expansive, .protective),(.expansive, .expansive), (.receptive, .expansive),
+    (.expansive, .expansive), (.expansive, .receptive), (.reactive,  .protective),
+    (.expansive, .expansive), (.receptive, .receptive), (.expansive, .receptive),
+    (.expansive, .expansive), (.receptive, .reactive),  (.expansive, .expansive),
+    (.expansive, .receptive), (.receptive, .receptive), (.expansive, .expansive),
     (.expansive, .protective),(.expansive, .expansive), (.expansive, .expansive),
-    (.sovereign, .expansive), (.expansive, .expansive), (.expansive, .sovereign),
-    (.sovereign, .sovereign), (.expansive, .expansive), (.expansive, .protective),
+    (.receptive, .expansive), (.expansive, .expansive), (.expansive, .receptive),
+    (.receptive, .receptive), (.expansive, .expansive), (.expansive, .protective),
     (.expansive, .expansive), (.expansive, .expansive), (.expansive, .expansive),
 ]
+
+private let previewUsPairs: [(date: Date, mine: PulseSpace, partner: PulseSpace?)] =
+    previewUsSpacePairs.enumerated().map { offset, pair in
+        (date: Date.daysAgo(previewUsSpacePairs.count - 1 - offset), mine: pair.0, partner: pair.1)
+    }

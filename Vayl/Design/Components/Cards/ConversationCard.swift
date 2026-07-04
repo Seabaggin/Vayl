@@ -80,9 +80,9 @@ struct ConversationCard: View {
                     )
             }
             .frame(width: cardWidth, height: cardHeight)
-            .scaleEffect((pulsing && !reduceMotion) ? 1.02 : 1.0)
+            .scaleEffect((pulsing && !reduceMotion && !AppAnimation.lowPower) ? 1.02 : 1.0)
             .animation(
-                (pulsing && !reduceMotion)
+                (pulsing && !reduceMotion && !AppAnimation.lowPower)
                     ? .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
                     : .default,
                 value: pulsing

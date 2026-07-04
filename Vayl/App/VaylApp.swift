@@ -18,6 +18,8 @@ struct VaylApp: App {
     @State private var onboardingStore: OnboardingStore
     @State private var entitlementStore: EntitlementStore
 
+    @Environment(\.scenePhase) private var scenePhase
+
     // MARK: - Init
     // Composition root: build AppState once and inject the SAME instance into
     // OnboardingStore — no throwaway, no post-launch reassignment. VaylApp.init is
@@ -57,12 +59,25 @@ struct VaylApp: App {
                     // Resolve tier (server + local StoreKit) + load the product + start the
                     // purchase-updates listener, now the session is ready (RLS-scoped).
                     await entitlementStore.bootstrap()
+                    // Pull down any Pulse history the device doesn't have locally yet
+                    // (reinstall / new device) — session is ready, so RLS-scoped reads work.
+                    await pulseStore.hydrateFromServer()
                     
                     // Now that session is guaranteed to be checked, retry syncs safely.
                     let onboardingDone = appState.isOnboardingComplete
                     if onboardingDone, let userId = authService.userId {
                         await SyncManager.shared.retryPendingSyncs(userId: userId)
                     }
+                }
+                // Reconcile Pulse on every return to foreground, not just cold launch —
+                // a check-in made offline that reconnects mid-session would otherwise
+                // wait for the next relaunch to reach the server (hydrateFromServer is
+                // bidirectional: pull-merge, then a bounded push-back of unsynced days).
+                // Safe pre-auth: fetchOwnEntries returns nil when signed out, which
+                // hydrateFromServer treats as "leave local state alone."
+                .onChange(of: scenePhase) { _, newPhase in
+                    guard newPhase == .active else { return }
+                    Task { await pulseStore.hydrateFromServer() }
                 }
                 .modelContainer(ModelContainer.appContainer)
         }

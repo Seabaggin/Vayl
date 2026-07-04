@@ -23,7 +23,6 @@ struct MapView: View {
 
     @State private var showCheckIn = false
     @State private var showPulseSheet = false
-    @State private var showMeCard = false
     @State private var showVault = false
     @State private var showPaywall = false
     @State private var vaultStore = VaultStore()
@@ -54,11 +53,9 @@ struct MapView: View {
             // Pin the screen to the true width so an ignoresSafeArea child (the
             // atmosphere) cannot inflate the container and shove the column off-centre.
             .frame(width: layout.screenWidth, alignment: .center)
-            .vaylSheet(
-                isPresented: $showCheckIn,
-                heightFraction: 0.82,
-                screenHeight: layout.screenHeight
-            ) {
+            // Full-screen cover — see HomeDashboardView's matching check-in presentation
+            // for why (PulseField needs real screen geometry, not a sheet's).
+            .vaylCover(isPresented: $showCheckIn, confirmOnExit: false) {
                 PulseCheckInView(store: pulse, onClose: { showCheckIn = false })
             }
             .onChange(of: appState.vaultOpenPending) { _, pending in
@@ -75,17 +72,6 @@ struct MapView: View {
                 PulseFullView(
                     entries: pulse.entries,
                     onDismiss: { showPulseSheet = false }
-                )
-            }
-            .vaylSheet(
-                isPresented: $showMeCard,
-                heightFraction: 0.9,
-                screenHeight: layout.screenHeight
-            ) {
-                MeCardSheet(
-                    card: store.meCard,
-                    onChooseTitle: { store.setTitle($0, context: modelContext) },
-                    onChooseFlavor: { store.setFlavor($0, context: modelContext) }
                 )
             }
             .vaylSheet(
@@ -110,6 +96,7 @@ struct MapView: View {
             store.load(appState: appState, context: modelContext, isCore: entitlements.isCore)
             await vaultStore.loadDesire(appState: appState, context: modelContext, isCore: entitlements.isCore)
             await store.loadPartner(appState: appState)
+            await store.loadPartnerPulse(appState: appState)
         }
     }
 
@@ -196,10 +183,6 @@ struct MapView: View {
                 onCheckIn: { startCheckIn() },
                 onOpenHistory: { showPulseSheet = true }
             )
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                MapSectionHeader(title: "Your card")
-                MeCardCompact(card: store.meCard, onTap: { showMeCard = true })
-            }
             MapRecord(sessions: store.sessions, shares: store.categoryShares)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -211,7 +194,9 @@ struct MapView: View {
             align:            store.alignItems,
             lockedAlignCount: store.lockedAlignCount,
             onOpenVault:      { showVault = true },
+            onCheckIn:        { startCheckIn() },
             partnerPosition:  store.partnerPosition,
+            partnerEntries:   store.partnerEntries,
             partnerName:      store.partnerName
         )
     }

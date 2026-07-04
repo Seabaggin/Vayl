@@ -194,6 +194,7 @@ final class DesireRevealStore: Identifiable {
         do {
             let names = try itemNameMap()
             let categories = try itemCategoryMap()
+            let meanings = try itemMeaningMap()
             let rows = try await service.fetchMatches(coupleId: coupleId)
             let core = entitlements.isCore
             matches = rows.map { row in
@@ -204,7 +205,8 @@ final class DesireRevealStore: Identifiable {
                     alignment: row.matchType,                       // mutual / adjacent
                     isLocked: !core && !row.isFreeReveal,           // free couple locks all but the free one
                     bridgeCardId: row.bridgeCardId,
-                    isFreeReveal: row.isFreeReveal                  // the server-set hero star
+                    isFreeReveal: row.isFreeReveal,                 // the server-set hero star
+                    meaning: row.matchType.flatMap { meanings[row.desireItemId]?[$0.rawValue] }
                 )
             }
             phase = matches.isEmpty ? .empty : .ready
@@ -227,6 +229,10 @@ final class DesireRevealStore: Identifiable {
         try ContentLoader.loadDesireItems().reduce(into: [:]) { $0[$1.id] = $1.category }
     }
 
+    private func itemMeaningMap() throws -> [String: [String: String]] {
+        try ContentLoader.loadDesireItems().reduce(into: [:]) { $0[$1.id] = $1.meaning }
+    }
+
     // MARK: - Actions (stubbed — see file header)
 
     /// Unlock all matches for BOTH partners — runs the Core purchase (M2). On success the
@@ -237,7 +243,7 @@ final class DesireRevealStore: Identifiable {
             guard await entitlements.purchase() else { return }
             #if DEBUG
             if appState.coupleId == nil {
-                matches = matches.map { RevealMatch(id: $0.id, itemName: $0.itemName, itemCategory: $0.itemCategory, alignment: $0.alignment, isLocked: false, bridgeCardId: $0.bridgeCardId, isFreeReveal: $0.isFreeReveal) }
+                matches = matches.map { RevealMatch(id: $0.id, itemName: $0.itemName, itemCategory: $0.itemCategory, alignment: $0.alignment, isLocked: false, bridgeCardId: $0.bridgeCardId, isFreeReveal: $0.isFreeReveal, meaning: $0.meaning) }
                 beatPhase = .revealed
                 return
             }
@@ -286,7 +292,7 @@ final class DesireRevealStore: Identifiable {
         Task {
             #if DEBUG
             if appState.coupleId == nil {
-                matches = matches.map { RevealMatch(id: $0.id, itemName: $0.itemName, itemCategory: $0.itemCategory, alignment: $0.alignment, isLocked: false, bridgeCardId: $0.bridgeCardId, isFreeReveal: $0.isFreeReveal) }
+                matches = matches.map { RevealMatch(id: $0.id, itemName: $0.itemName, itemCategory: $0.itemCategory, alignment: $0.alignment, isLocked: false, bridgeCardId: $0.bridgeCardId, isFreeReveal: $0.isFreeReveal, meaning: $0.meaning) }
                 return
             }
             #endif
@@ -324,8 +330,12 @@ struct RevealMatch: Identifiable, Equatable {
     let bridgeCardId: String?
     /// The one server-set free reveal (the emotional-peak star). Drives the hero on the unlocked sky.
     var isFreeReveal: Bool = false
+    /// Couple-framed reveal copy from desire_items.json (`DesireItem.meaning`), resolved for this
+    /// match's alignment. Falls back to `celebration` when an item has no authored meaning yet.
+    var meaning: String? = nil
 
     /// Celebratory subtitle by alignment (mutual = wholehearted; adjacent = mostly aligned).
+    /// Fallback for items without authored `meaning` copy.
     var celebration: String {
         switch alignment {
         case .mutual:   return "You're both excited about this."
@@ -334,9 +344,12 @@ struct RevealMatch: Identifiable, Equatable {
         }
     }
 
+    /// The line the detail views show: authored meaning when available, else the generic celebration.
+    var displayMeaning: String { meaning ?? celebration }
+
     #if DEBUG
-    static func sample(_ name: String, _ alignment: DesireMatchType, locked: Bool = false, free: Bool = false, category: String? = "emotional") -> RevealMatch {
-        RevealMatch(id: UUID(), itemName: name, itemCategory: category, alignment: alignment, isLocked: locked, bridgeCardId: nil, isFreeReveal: free)
+    static func sample(_ name: String, _ alignment: DesireMatchType, locked: Bool = false, free: Bool = false, category: String? = "emotional", meaning: String? = nil) -> RevealMatch {
+        RevealMatch(id: UUID(), itemName: name, itemCategory: category, alignment: alignment, isLocked: locked, bridgeCardId: nil, isFreeReveal: free, meaning: meaning)
     }
     #endif
 }

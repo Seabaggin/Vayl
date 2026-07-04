@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Pulse cold / no-comparison states</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF;--cyan-l:#7FE0FF;--cyan-d:#0A8FD0;
+    --indigo:#8B5CF6;--indigo-l:#C4B3FF;--indigo-d:#5B37B0;
+    --magenta:#FF006A;--magenta-l:#FF6FA6;--magenta-d:#B00049;
+    --rose:#C76A86;--rose-l:#ECC0CE;--rose-d:#8F4A60;
+    --purple:#6C3AE0;
+    --void:#0a0810;--t1:#E8E8F0;--t2:rgba(255,255,255,.65);--t3:rgba(255,255,255,.4);--hair:rgba(255,255,255,.09);--glass:rgba(255,255,255,.04);
+    --disp:"Clash Display",-apple-system,sans-serif;--body:"Switzer",-apple-system,sans-serif;--r-lg:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  @media(prefers-reduced-motion:reduce){.cl{animation:none!important}.cl.cyan{opacity:1!important}.cl:not(.cyan){opacity:0!important}.orb .fill{animation:none!important}}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),#8B6FD4 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:960px;margin:0 auto;padding:48px 28px 90px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:27px;font-weight:600;margin:0 0 8px}
+  .lede{font-size:13.5px;line-height:1.62;color:var(--t2);margin:0 0 8px;max-width:800px}.lede b{color:var(--t1)}
+
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:32px}
+  @media(max-width:820px){.cols{grid-template-columns:1fr;max-width:320px;margin-inline:auto}}
+  .cap{font-family:var(--disp);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin:0 0 11px;text-align:center;color:var(--t3)}
+  .card{border-radius:var(--r-lg);border:1px solid rgba(0,194,255,.2);background:radial-gradient(120% 40% at 50% 0%,rgba(108,58,224,.12),transparent 62%),var(--glass);padding:16px 15px 17px;text-align:center;min-height:280px;display:flex;flex-direction:column}
+  .card.us{border-color:rgba(255,0,106,.18)}
+  .eyebrow{font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);text-align:left}
+  .card.us .eyebrow{color:var(--magenta-l)}
+
+  /* orb (single color, glassy) */
+  .orb{position:relative;border-radius:50%}
+  .orb .fill{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--cl),var(--c) 54%,var(--cd) 92%);animation:breathe 5.4s ease-in-out infinite}
+  .orb .rim{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 1.5px 4px rgba(255,255,255,.42),inset 0 0 13px 1px rgba(255,255,255,.16)}
+  .cywrap{--c:var(--cyan);--cl:var(--cyan-l);--cd:var(--cyan-d);box-shadow:0 0 30px 8px rgba(0,194,255,.3);border-radius:50%}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+
+  /* cycling orb (4 colors rhythmic) */
+  .corb{position:relative;border-radius:50%}
+  .corb .cl{position:absolute;inset:0;border-radius:50%;opacity:0;animation:cyc 16s ease-in-out infinite}
+  .corb .cl .f{position:absolute;inset:0;border-radius:50%;animation:breathe 5.4s ease-in-out infinite}
+  .cl.cyan{animation-delay:0s;box-shadow:0 0 28px 7px rgba(0,194,255,.32)}
+  .cl.cyan .f{background:radial-gradient(circle at 40% 35%,var(--cyan-l),var(--cyan) 54%,var(--cyan-d) 92%)}
+  .cl.indigo{animation-delay:4s;box-shadow:0 0 28px 7px rgba(139,92,246,.32)}
+  .cl.indigo .f{background:radial-gradient(circle at 40% 35%,var(--indigo-l),var(--indigo) 54%,var(--indigo-d) 92%)}
+  .cl.magenta{animation-delay:8s;box-shadow:0 0 28px 7px rgba(255,0,106,.3)}
+  .cl.magenta .f{background:radial-gradient(circle at 40% 35%,var(--magenta-l),var(--magenta) 54%,var(--magenta-d) 92%)}
+  .cl.rose{animation-delay:12s;box-shadow:0 0 28px 7px rgba(199,106,134,.3)}
+  .cl.rose .f{background:radial-gradient(circle at 40% 35%,var(--rose-l),var(--rose) 54%,var(--rose-d) 92%)}
+  .corb .rim{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 1.5px 4px rgba(255,255,255,.4),inset 0 0 13px 1px rgba(255,255,255,.16);z-index:3}
+  @keyframes cyc{0%{opacity:0}4%{opacity:1}23%{opacity:1}29%{opacity:0}100%{opacity:0}}
+
+  .state{font-family:var(--disp);font-size:18px;font-weight:600;color:#fff;line-height:1.15;margin-top:4px}
+  .enc{font-size:11px;color:var(--t2);line-height:1.45;margin-top:7px;max-width:230px;margin-inline:auto}
+  .cta{margin-top:14px;align-self:center;display:inline-flex;align-items:center;gap:7px;font-family:var(--disp);font-size:13px;font-weight:600;color:#fff;border-radius:22px;padding:9px 20px;background:linear-gradient(90deg,rgba(0,194,255,.22),rgba(255,0,106,.24));border:1px solid rgba(108,58,224,.5)}
+  .spacer{flex:1}
+  .center{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1}
+
+  /* us field */
+  .field{position:relative;width:170px;height:110px;margin:6px auto 4px}
+  .fpos{position:absolute;transform:translate(-50%,-50%)}
+  .tag{position:absolute;transform:translate(-50%,-50%);font-size:8.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+  .capsule{position:absolute;border-radius:999px;border:1.4px solid rgba(150,140,220,.4);transform:translate(-50%,-50%) rotate(-32deg)}
+
+  .note{max-width:820px;margin:28px auto 0;border-radius:12px;border:1px solid var(--hair);background:var(--glass);padding:16px 18px;font-size:12.5px;line-height:1.6;color:var(--t2)}.note b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The Pulse — <span class="spectrum">cold &amp; no-comparison states</span></h1>
+  <p class="lede">Two rules locked: <b>no reading to show → the orb cycles the four spaces rhythmically</b> (already built as PulseCyclingAura, reused for the partner slot), and <b>no comparison yet → the copy encourages the next entry</b> instead of showing a blank trend. Reduce Motion holds the orb on one color.</p>
+
+  <div class="cols">
+
+    <!-- 1 Me, first ever -->
+    <div class="card">
+      <div class="eyebrow">The Pulse · you</div>
+      <div class="center">
+        <div class="cywrap" style="margin-bottom:14px"><div class="corb" style="width:104px;height:104px"><div class="cl cyan"><div class="f"></div></div><div class="cl indigo"><div class="f"></div></div><div class="cl magenta"><div class="f"></div></div><div class="cl rose"><div class="f"></div></div><div class="rim"></div></div></div>
+        <div class="state">Take your first reading</div>
+        <div class="enc">Your Pulse begins with a check-in. It fills in as you go.</div>
+        <div class="cta">Check in ›</div>
+      </div>
+    </div>
+
+    <!-- 2 Me, first entry done -->
+    <div class="card">
+      <div class="eyebrow">The Pulse · you</div>
+      <div class="center">
+        <div class="cywrap" style="margin-bottom:14px"><div class="orb" style="width:104px;height:104px"><div class="fill"></div><div class="rim"></div></div></div>
+        <div class="state">The Expansive Space</div>
+        <div class="enc">Your first reading is in. Check in tomorrow to watch it move.</div>
+      </div>
+    </div>
+
+    <!-- 3 Us, partner not yet -->
+    <div class="card us">
+      <div class="eyebrow">The Pulse · together</div>
+      <div class="center">
+        <div class="field">
+          <div class="capsule" style="left:50%;top:50%;width:120px;height:44px;opacity:.5"></div>
+          <div class="fpos cywrap" style="left:70%;top:30%"><div class="orb" style="width:40px;height:40px"><div class="fill"></div><div class="rim"></div></div></div>
+          <span class="tag" style="left:70%;top:9%;color:var(--cyan)">You</span>
+          <div class="fpos" style="left:30%;top:70%"><div class="corb" style="width:40px;height:40px"><div class="cl cyan"><div class="f"></div></div><div class="cl indigo"><div class="f"></div></div><div class="cl magenta"><div class="f"></div></div><div class="cl rose"><div class="f"></div></div><div class="rim"></div></div></div>
+          <span class="tag" style="left:30%;top:92%;color:var(--t3)">Alex · not yet</span>
+        </div>
+        <div class="state" style="font-size:16px;margin-top:8px">Alex hasn't checked in</div>
+        <div class="enc">Their space fills in the moment they take a reading.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>What each shows:</b> (1) first-ever = the rhythmic cycling orb + "Take your first reading" + the check-in CTA. (2) after the first entry, no yesterday to compare = the real aura + "check in tomorrow to watch it move" (no blank weather line). (3) Us with no partner reading = your real orb + the partner slot as the <b>same cycling orb</b>, tagged "not yet", so the empty half reads as "waiting", not broken. The four distinct partner states (not linked / never checked in / not sharing / stale) still each get their own honest line, this card is the "linked, hasn't checked in yet" one.
+  </div>
+
+</div>
+</body>
+</html>

@@ -43,7 +43,7 @@ struct SpectrumBulletRow: View {
             .fill(AppColors.spectrumBorder)
             .frame(width: 22, height: 22)
             .overlay {
-                if !reduceMotion {
+                if !reduceMotion && !AppAnimation.lowPower {
                     TimelineView(.animation) { tl in
                         specularSweep(at: tl.date.timeIntervalSinceReferenceDate)
                     }

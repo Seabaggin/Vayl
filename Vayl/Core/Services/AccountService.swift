@@ -85,7 +85,10 @@ final class AccountService {
             try? context.delete(model: model)
         }
         try? context.saveWithLogging()
-        for key in ["supabaseProfileId", "pendingProfileSync", "pendingOnboardingSync", "pendingDesireSync"] {
+        // "pulse.entries.v1" is PulseStore's local mirror of pulse_entries — the server
+        // row cascade-deletes with the profile, but a same-device re-onboard would
+        // resurrect the old history from this cache if it survived the wipe.
+        for key in ["supabaseProfileId", "pendingProfileSync", "pendingOnboardingSync", "pendingDesireSync", "pulse.entries.v1"] {
             UserDefaults.standard.removeObject(forKey: key)
         }
         logger.info("Local store wiped")

@@ -41,13 +41,14 @@ final class SessionEntryStore {
 
     init(modelContainer: ModelContainer,
          appState: AppState,
-         realtime: RealtimeSessionService = RealtimeSessionService(),
-         catalog: DeckCatalogService = DeckCatalogService(),
+         realtime: RealtimeSessionService? = nil,
+         catalog: DeckCatalogService? = nil,
          partnerName: @escaping () -> String? = { nil }) {
         self.modelContainer = modelContainer
         self.appState = appState
-        self.realtime = realtime
-        self.catalog = catalog
+        // Construct default services on the main actor (this init's isolation).
+        self.realtime = realtime ?? RealtimeSessionService()
+        self.catalog = catalog ?? DeckCatalogService()
         self.partnerName = partnerName
     }
 

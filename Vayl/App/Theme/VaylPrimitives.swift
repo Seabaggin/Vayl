@@ -46,6 +46,16 @@ enum VaylPrimitives {
     static let roseLight      = UIColor(hex: "#ECC0CE")  // Protective tier highlight
     static let roseDark       = UIColor(hex: "#8F4A60")  // Protective tier deep
 
+    // Neutral Space — Lavender Silver (both axes in the 0.475–0.525 border zone).
+    static let lavenderSilverCore  = UIColor(hex: "#B0AECE")
+    static let lavenderSilverLight = UIColor(hex: "#E4E2F4")
+    static let lavenderSilverDeep  = UIColor(hex: "#4A4868")
+
+    // Uncharted Space — Sage Deep (contradictory answers on both axes; see PulseAnswers).
+    static let sageDeepCore  = UIColor(hex: "#3D9E72")
+    static let sageDeepLight = UIColor(hex: "#96CEB0")
+    static let sageDeepDeep  = UIColor(hex: "#174D35")
+
     static let deepBlue       = UIColor(hex: "#0078FF")
 
     // ── Neutrals — dark side ──────────────────────────────────

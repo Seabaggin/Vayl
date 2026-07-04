@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Map · solo (no partner)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF;--cyan-l:#7FE0FF;--cyan-d:#0A8FD0;--purple:#6C3AE0;--purple-light:#A78BFA;--bridge:#8B6FD4;--magenta:#FF006A;--magentaL:#FF4D94;
+    --void:#0a0810;--t1:#E8E8F0;--t2:rgba(255,255,255,.65);--t3:rgba(255,255,255,.4);--hair:rgba(255,255,255,.09);--glass:rgba(255,255,255,.04);
+    --disp:"Clash Display",-apple-system,sans-serif;--body:"Switzer",-apple-system,sans-serif;--r-lg:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:720px;margin:0 auto;padding:48px 28px 90px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:27px;font-weight:600;margin:0 0 8px}
+  .lede{font-size:13.5px;line-height:1.62;color:var(--t2);margin:0 0 6px;max-width:640px}.lede b{color:var(--t1)}
+
+  .stage{display:flex;justify-content:center;margin-top:34px}
+  .phone{position:relative;width:320px;border-radius:40px;overflow:hidden;background:#040308;box-shadow:0 28px 72px rgba(0,0,0,.55),inset 0 0 0 1.4px rgba(255,255,255,.05);aspect-ratio:320/720}
+  .sky{position:absolute;inset:0;background:radial-gradient(120% 26% at 50% 1%,rgba(108,58,224,.18),transparent 60%),linear-gradient(var(--void),#08060f)}
+  .notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:80px;height:21px;background:#000;border-radius:12px;z-index:30}
+  .home{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:88px;height:3.5px;border-radius:3px;background:rgba(255,255,255,.2);z-index:30}
+  .scr{position:absolute;inset:0;z-index:10;padding:44px 14px 14px;display:flex;flex-direction:column;gap:11px}
+  .mast{display:flex;align-items:flex-start;justify-content:space-between}
+  .mast .nm{font-family:var(--disp);font-size:20px;font-weight:700}
+  .mast .lit{background:linear-gradient(90deg,var(--cyan),var(--bridge) 50%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mast .gear{width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:13px;flex:none}
+  .card{border-radius:var(--r-lg);border:1px solid var(--hair);background:var(--glass);position:relative}
+  .eyebrow{font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+
+  /* aura */
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+  @keyframes caust{0%,100%{transform:translate(0,0) rotate(0)}33%{transform:translate(7%,-6%) rotate(36deg)}66%{transform:translate(-6%,6%) rotate(-28deg)}}
+  .aura{position:relative;border-radius:50%;overflow:hidden;box-shadow:0 0 32px 9px rgba(0,194,255,.3);animation:breathe 5.4s ease-in-out infinite}
+  .aura .body{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,var(--cyan-l),var(--cyan) 46%,var(--cyan-d) 92%)}
+  .aura .caustic{position:absolute;inset:-16%;background:radial-gradient(circle at 35% 38%,rgba(255,255,255,.6),transparent 30%),radial-gradient(circle at 66% 60%,var(--cyan-l),transparent 28%);mix-blend-mode:screen;animation:caust 7s ease-in-out infinite}
+  .aura .rim{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 1.5px 4px rgba(255,255,255,.42),inset 0 0 13px 1px rgba(255,255,255,.16)}
+
+  .pulse{flex:0 0 auto;padding:13px 15px 15px;border-color:rgba(0,194,255,.22);background:linear-gradient(158deg,rgba(108,58,224,.1),rgba(0,194,255,.03));text-align:center}
+  .ptop{display:flex;justify-content:space-between;align-items:center}
+  .taphint{font-size:9px;color:var(--t3)}
+  .state{font-family:var(--disp);font-size:19px;font-weight:600;color:#fff;margin-top:6px}
+  .substate{font-size:10px;color:var(--t2);margin-top:3px}
+  .todayline{font-size:9.5px;color:var(--cyan);margin-top:6px;opacity:.85}
+
+  /* locked path */
+  .pathlk{flex:0 0 auto;height:158px;border-radius:var(--r-lg);border:1px solid rgba(167,139,250,.18);overflow:hidden;position:relative;background:linear-gradient(#0e0b16,#0a0812)}
+  .pathlk .ptrail{position:absolute;inset:0;opacity:.5;filter:saturate(.7)}
+  .pathlk .ptrail svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .pathlk::after{content:"";position:absolute;inset:0;z-index:2;background:radial-gradient(120% 90% at 50% 50%,rgba(10,8,18,.55),rgba(10,8,18,.85))}
+  .lk{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px}
+  .lk .join{display:flex;align-items:center;gap:-6px;margin-bottom:9px}
+  .lk .j{width:20px;height:20px;border-radius:50%;box-shadow:0 0 12px 2px rgba(120,120,220,.4)}
+  .lk .j.a{background:radial-gradient(circle at 40% 35%,var(--cyan-l),var(--cyan) 60%);margin-right:-7px}
+  .lk .j.b{background:radial-gradient(circle at 40% 35%,#FFB4CE,var(--magenta) 60%);border:1.5px dashed rgba(255,255,255,.4);background-clip:padding-box}
+  .lk .ttl{font-family:var(--disp);font-size:16px;font-weight:600;color:#fff}
+  .lk .cp{font-size:11px;color:var(--t2);margin-top:5px;max-width:210px;line-height:1.45}
+  .lk .lnk{font-size:11px;color:var(--purple-light);font-weight:600;margin-top:11px}
+  .lk .chip{position:absolute;top:12px;left:12px;font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--purple-light);opacity:.8}
+
+  /* vault door */
+  .vdoor{flex:0 0 auto;border-radius:var(--r-lg);border:1px solid rgba(0,194,255,.2);background:radial-gradient(130% 90% at 50% 0%,rgba(108,58,224,.14),transparent 70%),var(--glass);padding:14px 15px 15px;text-align:center}
+  .vdoor .em{width:70px;height:70px;margin:2px auto 8px}
+  .vdoor .em svg{width:100%;height:100%;overflow:visible;display:block}
+  .vdoor .dt{font-family:var(--disp);font-size:17px;font-weight:700}
+  .vdoor .dsum{font-size:10px;color:var(--t2);margin-top:4px}
+  .vdoor .dstat{font-size:8.5px;color:var(--t3);margin-top:5px}
+
+  .note{max-width:640px;margin:30px auto 0;border-radius:12px;border:1px solid var(--hair);background:var(--glass);padding:16px 18px;font-size:12.5px;line-height:1.6;color:var(--t2)}.note b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>Map — <span class="spectrum">solo (no partner)</span></h1>
+  <p class="lede">Same three pillars, no Me/Us toggle. <b>Pulse</b> works fully solo. <b>The Path</b> is previewable but gently gated (a shared journey needs a partner). <b>My Vault</b> holds your map and journal. It grows into the full Me/Us Map the moment you pair.</p>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="sky"></div><div class="notch"></div>
+      <div class="scr">
+        <div class="mast"><div class="nm"><span class="lit">Jordan.</span></div><div class="gear">⚙</div></div>
+
+        <!-- PULSE -->
+        <div class="card pulse">
+          <div class="ptop"><div class="eyebrow" style="color:var(--cyan)">The Pulse</div><div class="taphint">tap to map →</div></div>
+          <div class="aura" style="width:104px;height:104px;margin:12px auto 8px"><div class="body"></div><div class="caustic"></div><div class="rim"></div></div>
+          <div class="state">The Expansive Space</div>
+          <div class="substate">Connected · Adventurous</div>
+          <div class="todayline">Brighter than yesterday</div>
+        </div>
+
+        <!-- PATH · locked/preview -->
+        <div class="pathlk">
+          <div class="ptrail">
+            <svg viewBox="0 0 290 158" preserveAspectRatio="xMidYMid slice">
+              <defs><linearGradient id="pg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#00c2ff"/><stop offset=".5" stop-color="#6c3ae0"/><stop offset="1" stop-color="#ff006a"/></linearGradient></defs>
+              <path d="M50,150 C50,132 235,132 235,114 C235,96 55,96 55,78 C55,60 235,60 235,42 C235,26 95,26 95,10" fill="none" stroke="url(#pg)" stroke-width="2.4" stroke-linecap="round"/>
+              <circle cx="50" cy="150" r="5" fill="url(#pg)"/><circle cx="235" cy="114" r="5" fill="url(#pg)"/><circle cx="55" cy="78" r="5" fill="url(#pg)"/><circle cx="235" cy="42" r="5" fill="url(#pg)"/><circle cx="95" cy="10" r="4" fill="url(#pg)"/>
+            </svg>
+          </div>
+          <span class="chip">Forward · The Path</span>
+          <div class="lk">
+            <div class="join"><span class="j a"></span><span class="j b"></span></div>
+            <div class="ttl">A journey you walk together</div>
+            <div class="cp">Preview the paths any time. Walking one begins when you and your partner are both here.</div>
+            <div class="lnk">Invite your partner ›</div>
+          </div>
+        </div>
+
+        <!-- MY VAULT -->
+        <div class="vdoor">
+          <div class="em">
+            <svg viewBox="0 0 100 100">
+              <defs>
+                <linearGradient id="dv" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="92" y2="92"><stop offset="0" stop-color="#00C2FF"/><stop offset=".5" stop-color="#6C3AE0"/><stop offset="1" stop-color="#FF006A"/></linearGradient>
+                <radialGradient id="da"><stop offset="0" stop-color="rgba(127,224,255,.7)"/><stop offset="60%" stop-color="rgba(0,194,255,.24)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+                <radialGradient id="dg" cx="38%" cy="32%" r="80%"><stop offset="0" stop-color="rgba(255,255,255,.95)"/><stop offset="28%" stop-color="rgba(127,224,255,.85)"/><stop offset="70%" stop-color="rgba(0,194,255,.6)"/><stop offset="100%" stop-color="rgba(10,20,45,.92)"/></radialGradient>
+                <filter id="db" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>
+              </defs>
+              <circle cx="50" cy="50" r="15" fill="url(#da)"/>
+              <circle cx="50" cy="50" r="32" fill="none" stroke="url(#dv)" stroke-width="5" opacity=".45" filter="url(#db)"/>
+              <circle cx="50" cy="50" r="32" fill="none" stroke="url(#dv)" stroke-width="2"/>
+              <g stroke="url(#dv)" stroke-width="2.6" stroke-linecap="round"><line x1="50" y1="50" x2="95" y2="50"/><line x1="50" y1="50" x2="72.5" y2="88.97"/><line x1="50" y1="50" x2="27.5" y2="88.97"/><line x1="50" y1="50" x2="5" y2="50"/><line x1="50" y1="50" x2="27.5" y2="11.03"/><line x1="50" y1="50" x2="72.5" y2="11.03"/></g>
+              <g fill="url(#dv)"><circle cx="95" cy="50" r="3.4"/><circle cx="72.5" cy="88.97" r="3.4"/><circle cx="27.5" cy="88.97" r="3.4"/><circle cx="5" cy="50" r="3.4"/><circle cx="27.5" cy="11.03" r="3.4"/><circle cx="72.5" cy="11.03" r="3.4"/></g>
+              <rect x="39" y="39" width="22" height="22" rx="3" transform="rotate(45 50 50)" fill="url(#dg)" stroke="url(#dv)" stroke-width="2.4"/>
+              <path d="M50,40 L60,50 L50,60 L40,50 Z" fill="rgba(255,255,255,.12)"/>
+              <circle cx="45.5" cy="45.5" r="1.6" fill="#fff"/>
+            </svg>
+          </div>
+          <div class="dt">My Vault</div>
+          <div class="dsum">Your map · Your journal</div>
+          <div class="dstat">18 mapped · 7 moments · only you</div>
+        </div>
+      </div>
+      <div class="home"></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>How the gate reads honest, not funnel:</b> the Path shows the real trail faintly (preview, discovery value), the copy names it as an inherently shared thing ("a journey you walk together"), and the invite is one quiet line, not an urgent unlock. No counts, no pressure, and the solo user still has full value in Pulse, My Vault, the Desire Map, and Learn. Inviting stays a doorway, never a wall.
+  </div>
+
+</div>
+</body>
+</html>

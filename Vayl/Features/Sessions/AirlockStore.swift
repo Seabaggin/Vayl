@@ -62,8 +62,9 @@ final class LiveAirlockTransport: AirlockTransport {
     private let service: RealtimeSessionService
     private var channel: RealtimeChannelV2?
 
-    init(service: RealtimeSessionService = RealtimeSessionService()) {
-        self.service = service
+    init(service: RealtimeSessionService? = nil) {
+        // Construct the default service on the main actor (this init's isolation).
+        self.service = service ?? RealtimeSessionService()
     }
 
     func fetchOpenSession(coupleId: UUID) async throws -> CuratedSessionDTO? {
@@ -183,14 +184,15 @@ final class AirlockStore {
         coupleId: UUID,
         myProfileId: UUID,
         role: SessionRole,
-        transport: AirlockTransport = LiveAirlockTransport(),
+        transport: AirlockTransport? = nil,
         presenceTimeout: TimeInterval = 10,
         pollInterval: TimeInterval = 2
     ) {
         self.coupleId = coupleId
         self.myProfileId = myProfileId
         self.role = role
-        self.transportLayer = transport
+        // Construct the default transport on the main actor (this init's isolation).
+        self.transportLayer = transport ?? LiveAirlockTransport()
         self.presenceTimeout = presenceTimeout
         self.pollInterval = pollInterval
     }
@@ -202,7 +204,7 @@ final class AirlockStore {
     static func make(
         coupleId: UUID,
         modelContainer: ModelContainer,
-        transport: AirlockTransport = LiveAirlockTransport()
+        transport: AirlockTransport? = nil
     ) -> AirlockStore? {
         let context = ModelContext(modelContainer)
         guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else {

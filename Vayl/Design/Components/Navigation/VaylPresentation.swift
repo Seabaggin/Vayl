@@ -110,13 +110,29 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
 
     @State private var drag: CGFloat = 0
 
+    /// Resting scrim opacity at full height. Scaled by heightFraction so a short
+    /// sheet barely dims the world and a tall one dims more — Apple's detent behavior.
+    private let scrimOpacityAtFull: Double = 0.5
+    /// Drag past this fraction of the sheet's own height → dismiss on release
+    /// (proportional, so short and tall sheets feel the same, not a fixed 120pt).
+    private let dismissDistanceRatio: CGFloat = 0.25
+    /// A fast flick whose projected travel exceeds this dismisses even below the
+    /// distance threshold — the velocity path, so a quick flick throws it away.
+    private let flingProjection: CGFloat = 240
+
     func body(content: Content) -> some View {
         content.overlay {
             GeometryReader { geo in
+                let sheetHeight = (screenHeight ?? geo.size.height) * heightFraction
+                let dragProgress = sheetHeight > 0 ? min(1, max(0, drag) / sheetHeight) : 0
+                let restingScrim = scrimOpacityAtFull * heightFraction
+
                 ZStack(alignment: .bottom) {
                     if isPresented {
-                        // Whisper scrim — light focus, tap to dismiss.
-                        Color.black.opacity(0.12)
+                        // Scrim dims with the detent (a short sheet barely dims) and
+                        // lifts as you drag the sheet down. Tap to dismiss.
+                        Color.black
+                            .opacity(restingScrim * (1 - dragProgress))
                             .ignoresSafeArea()
                             .contentShape(Rectangle())
                             .onTapGesture { dismiss() }
@@ -136,8 +152,7 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
                         // its surface), then cap the height — otherwise the chrome
                         // re-expands the sheet to full height and the fraction is lost.
                         .vaylSheetChrome()
-                        .frame(height: (screenHeight ?? geo.size.height) * heightFraction,
-                               alignment: .top)
+                        .frame(height: sheetHeight, alignment: .top)
                         .offset(y: max(0, drag))
                         // Drag-to-dismiss on the top chrome zone only, so the
                         // content's own ScrollViews aren't hijacked.
@@ -148,9 +163,11 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
                                 .gesture(
                                     DragGesture()
                                         .onChanged { drag = max(0, $0.translation.height) }
-                                        .onEnded {
-                                            if $0.translation.height > 120 { dismiss() }
-                                            else { withAnimation(AppAnimation.spring.reduceMotionSafe) { drag = 0 } }
+                                        .onEnded { value in
+                                            let past = value.translation.height > sheetHeight * dismissDistanceRatio
+                                            let fling = value.predictedEndTranslation.height > flingProjection
+                                            if past || fling { dismiss() }
+                                            else { withAnimation(AppAnimation.arrive.reduceMotionSafe) { drag = 0 } }
                                         }
                                 )
                         }
@@ -158,7 +175,7 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .animation(AppAnimation.standard.reduceMotionSafe, value: isPresented)
+                .animation(AppAnimation.arrive.reduceMotionSafe, value: isPresented)
             }
             .ignoresSafeArea()
             .allowsHitTesting(isPresented)
@@ -179,7 +196,7 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
 
     private func dismiss() {
         drag = 0
-        withAnimation(AppAnimation.standard.reduceMotionSafe) { isPresented = false }
+        withAnimation(AppAnimation.arrive.reduceMotionSafe) { isPresented = false }
     }
 }
 

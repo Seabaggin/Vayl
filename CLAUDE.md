@@ -203,6 +203,35 @@ myButton
 ### Empty States (required on every data screen)
 Icon (`AppColors.textTertiary`) + headline (`AppFonts.cardTitle`) + sub-label (`AppFonts.caption`) + optional CTA
 
+## Animation Feel Contract
+
+**Default register: slow, breathing, gravitational.** Quiet dark room, not a dashboard.
+When in doubt, go slower and softer. Never guess a duration — pick a token.
+
+### Reach for these first
+| Situation | Token |
+|---|---|
+| Looping ambient | `ambientPulse` (2s) or `ambientDrift` (4s) via `.ambientAnimation()` |
+| Screen swap | `.vaylDepth(.quiet)` + `depthQuiet` |
+| Sheet/cover entry | `arrive` / `arriveCover` |
+| Element appears | `enter` (0.4s ease-out) |
+| Element leaves | `exit` (0.2s ease-in), opacity only |
+| Tap press/release | `fast` down, `spring` (0.5/0.85) up |
+| Glow breathe | `ambientPulse` or `auraBreathe`, opacity 0.3→0.7 only — never 0→1 |
+
+### Three causes of jitter — ban all three
+1. **Competing animations on the same property** — one animation per property per view
+2. **Short loops** — nothing repeating under 2s; `ambientShimmer` (1.2s) is the one decorative exception
+3. **Springs on ambient motion** — springs are for user-initiated interactions only; ambient always uses `.easeInOut`, never `.spring()` on `.repeatForever()`
+
+### Hard rules
+- Glow opacity range: 0.3→0.7. Never 0→1.
+- Springs: `dampingFraction` ≥ 0.75 outside the OB canvas
+- Every loop: `.ambientAnimation(_:value:)`, never raw `.animation()`
+- Ambient animations disabled entirely under Reduce Motion — remove the loop, not just slow it
+- Ambient animations also disabled under **Low Power Mode** (added 2026-07-04): `.ambientAnimation()` gates it automatically; manual mount/start guards must check `reduceMotion || AppAnimation.lowPower` (or `AppAnimation.ambientMotionDisabled`). Reactive animations and one-shot effects are never LPM-gated — user feedback always plays
+- Continuous `TimelineView(.animation)` surfaces need a frame-rate cap matched to their motion (`minimumInterval:`) — a colour drift or slow wander never needs display rate
+
 ---
 
 ## V1 Launch Scope — Dark Mode Only

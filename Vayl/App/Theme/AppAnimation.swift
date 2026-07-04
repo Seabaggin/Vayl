@@ -810,11 +810,30 @@ internal enum AppAnimation {
     /// Was 17.0s; halved to match the mockup cadence. FEEL: confirm on device.
     static let auraGlassSweep: Double = 8.5
 
-    /// The check-in ball's position-change shift (Q1-Q3 drift). Plain eased interpolation,
+    /// The check-in ball's position-change shift (Q1-Q5 drift). Plain eased interpolation,
     /// NOT a spring — even a critically-damped spring still has a fast-snap-then-settle
     /// character; this reads as a smooth, even slide to the new point instead.
     /// 🎚️ FEEL: confirm on device.
     static let pulseBallDrift: Animation = .easeInOut(duration: 0.32)
+
+    /// Uncharted resolution — the field (zone blobs, ghost labels, axis labels) fades to
+    /// opacity 0 when the variance check fires after the final answer. 🎚️ FEEL: tune on device.
+    static let pulseUnchartedFieldFade: Animation = .easeInOut(duration: 1.2)
+
+    /// Uncharted resolution — the orb colour dissolves from its bilinear colour to Sage Deep,
+    /// slightly slower than the field fade so colour lands last. 🎚️ FEEL: tune on device.
+    static let pulseUnchartedColorDissolve: Animation = .easeInOut(duration: 1.5)
+
+    /// Uncharted orb drift — slow, non-repeating-pattern wander around centre; replaces the
+    /// bloom ring as the "landed" signal. Raw duration: construct .easeInOut(duration:).repeatForever
+    /// at the call site. 🎚️ FEEL: amplitude + timing tuned on device.
+    static let pulseUnchartedDrift: Double = 6.0
+
+    /// History-grid border-state dots — one shared TimelineView drives all border dots'
+    /// gentle two-colour LEAN at this cadence (per-dot phase offset by index). Slow on purpose:
+    /// a border dot is a blend that drifts, never a flash. Raw seconds used in the sin() phase
+    /// term, not an Animation. 🎚️ FEEL: tune on device.
+    static let pulseHistoryBorderCadence: Double = 4.5
 
     // MARK: — Tab Navigation
     // Tokens for the tab bar orb snap-and-halo and tab content gravity drift.
@@ -868,11 +887,12 @@ internal enum AppAnimation {
     static let depthLoudScaleIn:   CGFloat = 1.02
     static let depthLoudScaleOut:  CGFloat = 0.97
 
-    /// 0.42s deal-curve — Staple 2, Quiet: a .vaylSheet rising. Instant acceleration, sharp
-    /// deceleration, one confident settle, zero bounce — cubic (0, 0, 0.2, 1), the deal-physics
-    /// deceleration family (cardSlide's curve at sheet weight).
+    /// 0.50s ease-out — Staple 2, Quiet: a .vaylSheet rising, settling, and dismissing.
+    /// One confident glide home, zero bounce. Device-feel-gated to easeOut/0.50 (Bryan's
+    /// pass 2026-07-04, preferred over the earlier 0.42 deal-curve for the workhorse sheet);
+    /// now wired into `.vaylSheet` (VaylPresentation). Shares its curve with desireSheetRise.
     /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity — sheet appears in place.
-    static let arrive: Animation = .timingCurve(0, 0, 0.2, 1, duration: 0.42)
+    static let arrive: Animation = .easeOut(duration: 0.50)
 
     /// 0.55s deal-curve — Staple 2, Loud: a .vaylCover entering the table world. Same curve as
     /// `arrive`, heavier. The register shift IS the threshold cue into a protected mode.
@@ -1034,6 +1054,31 @@ internal enum AppAnimation {
     static let forgeSwayOscillation: Double = 1.3
 }
 
+// MARK: — Ambient Motion Gate (Reduce Motion + Low Power Mode)
+
+extension AppAnimation {
+
+    /// True while the device is in Low Power Mode. Decorative ambient loops are exactly
+    /// the discretionary GPU/CPU cost Low Power Mode exists to cut, so ambient motion
+    /// treats it the same way it treats Reduce Motion: the loop is removed, the static
+    /// state must read complete. Reactive animations are NOT gated on this — user
+    /// feedback always plays.
+    static var lowPower: Bool {
+        ProcessInfo.processInfo.isLowPowerModeEnabled
+    }
+
+    /// The one question every ambient loop asks before starting: Reduce Motion
+    /// (accessibility) OR Low Power Mode (battery). Read at body-evaluation time,
+    /// same semantics as the Reduce Motion check — a mid-session toggle takes
+    /// effect the next time the view re-evaluates or re-appears.
+    /// Call sites that already hold `@Environment(\.accessibilityReduceMotion)`
+    /// should guard with `reduceMotion || AppAnimation.lowPower` so the RM half
+    /// keeps its live environment reactivity.
+    static var ambientMotionDisabled: Bool {
+        UIAccessibility.isReduceMotionEnabled || lowPower
+    }
+}
+
 // MARK: — Reduce Motion Helpers
 
 extension Animation {
@@ -1074,6 +1119,6 @@ extension View {
     ///       .ambientAnimation(.easeInOut(duration: AppAnimation.ambientPulse).repeatForever(),
     ///                         value: isAnimating)
     func ambientAnimation<V: Equatable>(_ animation: Animation, value: V) -> some View {
-        self.animation(UIAccessibility.isReduceMotionEnabled ? nil : animation, value: value)
+        self.animation(AppAnimation.ambientMotionDisabled ? nil : animation, value: value)
     }
 }

@@ -77,7 +77,7 @@ struct DeckPedestal: View {
         .frame(height: 86)
         .allowsHitTesting(false)
         .onAppear {
-            guard !reduceMotion else { return }
+            guard !reduceMotion, !AppAnimation.lowPower else { return }
             withAnimation(
                 .easeInOut(duration: AppAnimation.ambientDrift)
                 .repeatForever(autoreverses: true)

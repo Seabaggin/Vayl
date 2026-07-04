@@ -14,30 +14,28 @@ import SwiftUI
 struct DesireStarDetailSheet: View {
 
     let match: RevealMatch
+    /// Dismissal is scrim-tap (mockup screen 7 has no X). Kept for hosts that add
+    /// their own affordance later (e.g. drag-to-dismiss).
     var onClose: () -> Void = {}
     var onTalkTapped: (() -> Void)? = nil
 
+    // Content-height when it fits; scrolls when it can't (large Dynamic Type).
+    // vaylSheetChrome forces maxHeight:.infinity (shared, off-limits), so the chrome
+    // wraps BOTH candidates and .fixedSize(vertical) makes the fitting one hug content
+    // — same recipe as PaywallSheet.sizedSheet.
     var body: some View {
+        ViewThatFits(in: .vertical) {
+            sheetStack
+                .vaylSheetChrome()
+                .fixedSize(horizontal: false, vertical: true)
+            ScrollView(showsIndicators: false) { sheetStack }
+                .vaylSheetChrome()
+        }
+    }
+
+    private var sheetStack: some View {
         VStack(alignment: .leading, spacing: 0) {
             grabHandle
-
-            // Close row
-            HStack {
-                Spacer()
-                Button {
-                    onClose()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textTertiary)
-                        .frame(width: 30, height: 30)
-                        .background(Circle().fill(AppColors.cardBg.opacity(0.55)))
-                        .overlay(Circle().stroke(AppColors.borderSubtle, lineWidth: 1))
-                }
-                .buttonStyle(_DetailPressStyle())
-            }
-            .padding(.horizontal, AppSpacing.lg)
-            .padding(.bottom, AppSpacing.sm)
 
             // Detail body
             DesireMatchDetail(
@@ -49,7 +47,6 @@ struct DesireStarDetailSheet: View {
             .padding(.bottom, AppSpacing.xxl)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .vaylSheetChrome()
     }
 
     private var grabHandle: some View {

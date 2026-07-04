@@ -37,7 +37,7 @@ struct StarVeil: View {
 
     var body: some View {
         Group {
-            if reduceMotion {
+            if reduceMotion || AppAnimation.lowPower {
                 Canvas { ctx, size in draw(&ctx, size: size, time: nil) }
             } else {
                 TimelineView(.animation) { tl in

@@ -697,6 +697,12 @@ struct AppColors {
         dark:  VaylPrimitives.magentaLight
     )
 
+    /// Renamed vocabulary (2D circumplex): the Reactive Space is the old Friction tier,
+    /// the Receptive Space is the old Sovereign tier. Reference-only aliases so callers
+    /// speak the new names while the underlying colour is unchanged.
+    static let pulseTierReactive  = AppColors.pulseTierFriction
+    static let pulseTierReceptive = AppColors.pulseTierSovereign
+
     // ─────────────────────────────────────────────────────────────
     // MARK: Aura tier color ramps — PulseAura use only
     //
@@ -724,6 +730,20 @@ struct AppColors {
     static let auraLightRose    = Color(uiColor: VaylPrimitives.roseLight)
     static let auraDeepRose     = Color(uiColor: VaylPrimitives.roseDark)
     static let auraGlowRose     = Color(uiColor: VaylPrimitives.rose).opacity(0.26)
+
+    // Neutral Space ramp — Lavender Silver. Does NOT participate in the bilinear blend;
+    // resolved directly when the space is .neutral (both axes in the 0.475–0.525 border zone).
+    static let auraCoreNeutral  = Color(uiColor: VaylPrimitives.lavenderSilverCore)
+    static let auraLightNeutral = Color(uiColor: VaylPrimitives.lavenderSilverLight)
+    static let auraDeepNeutral  = Color(uiColor: VaylPrimitives.lavenderSilverDeep)
+    static let auraGlowNeutral  = Color(uiColor: VaylPrimitives.lavenderSilverCore).opacity(0.22)
+
+    // Uncharted Space ramp — Sage Deep. Fixed colour, does NOT blend; the orb dissolves to
+    // this when the variance check fires (contradictory answers on both axes).
+    static let auraCoreUncharted  = Color(uiColor: VaylPrimitives.sageDeepCore)
+    static let auraLightUncharted = Color(uiColor: VaylPrimitives.sageDeepLight)
+    static let auraDeepUncharted  = Color(uiColor: VaylPrimitives.sageDeepDeep)
+    static let auraGlowUncharted  = Color(uiColor: VaylPrimitives.sageDeepCore).opacity(0.26)
 
     /// Pulse "Us" capsule halo — soft periwinkle glow around the connector stroke.
     /// Mockup parity: map-pulse-us.html `.capsule` box-shadow rgba(130,160,230,.18).

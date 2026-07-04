@@ -280,7 +280,7 @@ struct VaylCardCarousel<Content: View>: View {
     // MARK: - Breathing
 
     private func startBreathing() {
-        guard !reduceMotion else { return }
+        guard !reduceMotion, !AppAnimation.lowPower else { return }
         breathing = false
         withAnimation(.easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true)) {
             breathing = true

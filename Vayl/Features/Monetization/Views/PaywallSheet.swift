@@ -97,12 +97,15 @@ struct PaywallSheet: View {
     @ViewBuilder private var sizedSheet: some View {
         ViewThatFits(in: .vertical) {
             sheetStack
-                .vaylSheetChrome()
+                // Ceremonial exception: the paywall keeps the full spectrum top border.
+                // It is a conversion moment, not a workhorse — the hero treatment is the
+                // point here (same logic as reserving the foil for StatPhase).
+                .vaylSheetChrome(signature: .full)
                 // .fixedSize(vertical) overrides the chrome's maxHeight:.infinity so the sheet hugs
                 // content; horizontal:false keeps full-bleed width (no GeometryReader, no width bug).
                 .fixedSize(horizontal: false, vertical: true)
             ScrollView(showsIndicators: false) { sheetStack }
-                .vaylSheetChrome()
+                .vaylSheetChrome(signature: .full)
         }
     }
 

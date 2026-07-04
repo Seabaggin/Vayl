@@ -39,7 +39,7 @@ struct LivingText: View {
 
     var body: some View {
         Group {
-            if !animated || UIAccessibility.isReduceMotionEnabled {
+            if !animated || AppAnimation.ambientMotionDisabled {
                 staticText
             } else {
                 animatedText

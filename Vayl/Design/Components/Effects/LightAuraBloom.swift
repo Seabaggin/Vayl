@@ -41,8 +41,20 @@ struct LightAuraBloom: View {
     // ── animation state ───────────────────────────────────────────
     @State private var phase: Double = 0
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         guard bloomHeight > 0 else { return AnyView(EmptyView()) }
+        // Ambient gate — Reduce Motion / Low Power Mode render ONE static bloom
+        // frame: no TimelineView tick, no 60Hz Timer, no phase advance.
+        guard !reduceMotion, !AppAnimation.lowPower else {
+            return AnyView(
+                Canvas { ctx, size in
+                    drawBloom(ctx: &ctx, size: size, t: 0)
+                }
+                .allowsHitTesting(false)
+            )
+        }
         return AnyView(
             TimelineView(.animation) { timeline in
                 Canvas { ctx, size in

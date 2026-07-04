@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Check-in: final direction, real design tokens</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    /* ── every value below is a real Vayl token, dark mode. Source cited per rule. ── */
+    --void:            #0a0810;   /* AppColors.void → VaylPrimitives.inkVoid */
+    --modalBg:         #1A1825;   /* AppColors.modalBackground (dark) → inkSurface */
+    --text-primary:    #E8E8F0;   /* AppColors.textPrimary (dark) → inkText */
+    --text-secondary:  rgba(255,255,255,.65);  /* AppColors.textSecondary (dark) */
+    --text-tertiary:   rgba(255,255,255,.38);  /* AppColors.textTertiary (dark) */
+    --text-muted:      rgba(255,255,255,.20);  /* AppColors.textMuted (dark) */
+    --border-subtle:   rgba(255,255,255,.06);  /* AppColors.borderSubtle (dark) */
+    --border-default:  rgba(255,255,255,.10);  /* AppColors.borderDefault (dark) */
+    --section-label:   rgba(192,132,252,.55);  /* AppColors.textSectionLabel (dark) → purpleBright .55 */
+    --cyan:            #00C2FF;   /* AppColors.spectrumCyan → VaylPrimitives.cyan */
+    --purple:          #6C3AE0;   /* AppColors.spectrumPurple → VaylPrimitives.purple */
+    --magenta:         #FF006A;   /* AppColors.spectrumMagenta → VaylPrimitives.magenta */
+    /* PulseField zone/aura colours — AppColors.auraCore* */
+    --aura-cyan:       #00C2FF;   /* auraCoreCyan → VaylPrimitives.cyan */
+    --aura-indigo:     #8B5CF6;   /* auraCoreIndigo → VaylPrimitives.electricViolet */
+    --aura-magenta:    #FF006A;   /* auraCoreMagenta → VaylPrimitives.magenta */
+    --aura-rose:       #C76A86;   /* auraCoreRose → VaylPrimitives.rose */
+
+    /* AppSpacing */
+    --sp-xxs:2px; --sp-xs:4px; --sp-sm:8px; --sp-md:16px; --sp-lg:24px; --sp-xl:32px; --sp-xxl:48px;
+    /* AppRadius */
+    --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:24px; --r-container:20px; --r-pill:999px;
+
+    --disp:"Clash Display",-apple-system,sans-serif;   /* ClashDisplay-* */
+    --body:"Switzer",-apple-system,sans-serif;          /* Switzer-* */
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0b0910;color:var(--text-primary);font-family:var(--body)}
+  .wrap{max-width:900px;margin:0 auto;padding:38px 26px 100px}
+  .brand{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.34em;color:var(--text-tertiary);margin:0 0 6px}
+  h1{font-family:var(--disp);font-size:24px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:13px;line-height:1.6;color:var(--text-secondary);margin:0 0 30px;max-width:720px}
+  .lede code{color:var(--cyan);font-size:12px}
+
+  .row{display:flex;gap:36px;flex-wrap:wrap;align-items:flex-start}
+
+  .phone{position:relative;width:300px;height:650px;border-radius:38px;overflow:hidden;background:#040308;
+    box-shadow:0 26px 64px rgba(0,0,0,.55),inset 0 0 0 1.4px rgba(255,255,255,.05)}
+  .island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:76px;height:21px;background:#000;border-radius:13px;z-index:20}
+  .home{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:88px;height:3.5px;border-radius:3px;background:rgba(255,255,255,.2);z-index:20}
+  .void{position:absolute;inset:0;background:var(--void)}
+
+  /* trail-in atmosphere: same OBVoidBloom mechanism (AppColors.spectrumCyan/Purple/Magenta
+     ellipses + a vertical gradient mask). Recalibrated against the FAITHFUL field's real
+     footprint (bottom edge ~43% down this mock, not the placeholder's ~40%) — mask floor
+     moved to 46% so it starts a few % below the field's actual bottom edge, not into it.
+     Still ~6% earlier + fainter than the original hard 52% line, just measured against the
+     real thing instead of a stand-in. */
+  .bloom{position:absolute;left:0;right:0;top:0;bottom:0;overflow:hidden;z-index:1}
+  .bloom .c{position:absolute;width:80%;height:42%;left:-18%;top:30%;border-radius:50%;background:var(--cyan);opacity:.14;filter:blur(38px)}
+  .bloom .p{position:absolute;width:100%;height:50%;left:0;top:34%;border-radius:50%;background:var(--purple);opacity:.20;filter:blur(45px)}
+  .bloom .m{position:absolute;width:75%;height:40%;right:-18%;top:32%;border-radius:50%;background:var(--magenta);opacity:.13;filter:blur(38px)}
+  .bloom .mask{position:absolute;inset:0;background:linear-gradient(to bottom,
+    var(--void) 0%, var(--void) 46%, rgba(10,8,16,.90) 54%, rgba(10,8,16,.55) 64%,
+    rgba(10,8,16,.18) 78%, rgba(10,8,16,.02) 100%)}
+
+  .content{position:absolute;inset:0;z-index:10;padding:0 var(--sp-lg)}
+  .topClear{height:44px}
+
+  /* header — shrunk from AppFonts.screenTitle (24pt) to AppFonts.cardTitleCompact (16pt) —
+     the title is chrome, not content; the question + orb should own the visual weight.
+     "1 of 5" text replaced by a tappable step row: done/now/future, matching the same
+     node-state language used elsewhere (GettingStartedPathView, the roadmap nodes) —
+     done = filled + connecting line lit, now = larger + accent ring, future = dim outline,
+     not tappable (no skipping ahead, only revisiting what's already answered). */
+  .head{display:flex;align-items:center;justify-content:space-between;padding-top:var(--sp-xs)}
+  .head .t{font-family:var(--disp);font-size:16px;font-weight:600;color:var(--text-primary)}
+  .head .n{font-family:var(--body);font-size:13px;font-weight:400;color:var(--text-muted)}
+
+  /* Numbered steps, no prev/next arrows — the numbers ARE the navigation (tap a done
+     one to revisit it). accent = AppColors.textSectionLabel, the SAME single-tone
+     muted purple "Settings"/"Partner" use, not the 3-stop spectrum gradient. Matches
+     PulseCheckInView.stepDot exactly.
+     Back button is its OWN row above the title/step row (not inline) — the plain
+     chevron-in-a-circle AirlockView.swift:52-61 already uses for a cover's back
+     action (cardBackground fill, borderDefault stroke), not OnboardingNavArrow —
+     that's OB-specific chrome, too ornate for this screen. */
+  .backRow{padding-top:var(--sp-xs);margin-bottom:var(--sp-sm)}
+  .backArrow{width:32px;height:32px;border-radius:50%;background:var(--modalBg);
+    border:1px solid var(--border-default);display:flex;align-items:center;justify-content:center;
+    color:var(--text-secondary);font-size:14px;flex:none}
+  .head{gap:var(--sp-sm)}
+  .steps{display:flex;align-items:center;gap:8px}
+  .step{font-family:var(--body);font-weight:500;color:var(--text-primary);
+    width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
+  .step.future{color:var(--text-tertiary)}
+  .step.now{width:22px;height:22px;font-weight:700;border:2px solid var(--section-label);
+    box-shadow:0 0 8px 1px rgba(192,132,252,.35)}
+
+  /* PulseField, reproduced faithfully — real device is a FIXED 264pt square (PulseCheckInView.fieldSection
+     passes size:264 regardless of screen width), scaled to this mockup's ~0.765 phone scale → 202px.
+     No border/container — it's a borderless diffuse wash, exactly per PulseField.swift's actual code:
+     4 RadialGradient zone blobs (cx/cy/opacity below match zones' real values) + 4 bold ghost quadrant
+     labels (yFrac below matches ghostLabel's real values), no clipping shape. */
+  .fieldWrap{margin-top:var(--sp-lg);display:flex;justify-content:center}
+  .field{width:202px;height:202px;position:relative}
+  .zoneBlob{position:absolute;width:92%;height:92%;border-radius:50%;filter:blur(10px)}
+  /* Protective — rose, cx:0.28 cy:0.72 opacity:0.32 */
+  .z-pro{left:-18%;top:26%;background:radial-gradient(circle,var(--aura-rose) 0%,rgba(199,106,134,.16) 45%,transparent 85%);opacity:.9}
+  /* Friction — magenta, cx:0.28 cy:0.28 opacity:0.20 */
+  .z-fri{left:-18%;top:-18%;background:radial-gradient(circle,var(--aura-magenta) 0%,rgba(255,0,106,.10) 45%,transparent 85%);opacity:.9}
+  /* Sovereign — indigo, cx:0.72 cy:0.72 opacity:0.23 */
+  .z-sov{left:26%;top:26%;background:radial-gradient(circle,var(--aura-indigo) 0%,rgba(139,92,246,.12) 45%,transparent 85%);opacity:.9}
+  /* Expansive — cyan, cx:0.72 cy:0.28 opacity:0.16 */
+  .z-exp{left:26%;top:-18%;background:radial-gradient(circle,var(--aura-cyan) 0%,rgba(0,194,255,.08) 45%,transparent 85%);opacity:.9}
+
+  .qlab{position:absolute;font-family:var(--disp);font-size:15px;font-weight:700;letter-spacing:.01em;width:92%}
+  .ql-fri{left:0;top:11%;text-align:left;color:var(--aura-magenta);opacity:.30}
+  .ql-exp{left:0;top:25%;text-align:right;color:var(--aura-cyan);opacity:.34}
+  .ql-pro{left:0;top:65%;text-align:left;color:var(--aura-rose);opacity:.17}
+  .ql-sov{left:0;top:79%;text-align:right;color:var(--aura-indigo);opacity:.30}
+
+  .orb{position:absolute;left:50%;top:50%;width:34px;height:34px;border-radius:50%;transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 35% 32%,#fff,#c9c9d4 46%,#8f8fa0 92%);box-shadow:0 0 20px 5px rgba(255,255,255,.28);z-index:5}
+  .fieldNote{text-align:center;font-family:var(--body);font-size:9px;color:var(--text-tertiary);margin-top:2px}
+
+  /* question — AppFonts.prompt: display(17, weight:.medium, relativeTo:.body), textPrimary, centered */
+  .qtext{font-family:var(--disp);font-size:17px;font-weight:500;color:var(--text-primary);text-align:center;
+    margin-top:var(--sp-lg);line-height:1.28;padding:0 var(--sp-sm)}
+
+  /* vertical stack — SelectablePill's NATIVE form: full width, no fillWidth override,
+     default height (46pt) + fontSize (15) + AppFonts.body(15, weight:.medium).
+     Unselected: AppColors.modalBackground fill + borderSubtle 1.5pt stroke.
+     Selected (.warm intensity): border → white .22 @ 2pt (pillBorder), soft spectrum glow. */
+  .stack{margin-top:var(--sp-md);display:flex;flex-direction:column;gap:var(--sp-xs)}
+  .row-pill{font-family:var(--body);font-size:15px;font-weight:500;color:var(--text-primary);
+    height:46px;display:flex;align-items:center;justify-content:center;
+    border-radius:var(--r-pill);background:var(--modalBg);border:1.5px solid var(--border-subtle)}
+  .row-pill.sel{border:2px solid rgba(255,255,255,.22);
+    box-shadow:0 0 14px 1px rgba(0,194,255,.15), 0 0 22px 3px rgba(108,58,224,.12), 0 0 8px 2px rgba(255,0,106,.10);
+    background:var(--modalBg)}
+
+  .pillCompare{display:flex;gap:26px;flex-wrap:wrap;margin-top:20px}
+  .pc{width:220px}
+  .pc .pcap{font-family:var(--disp);font-size:12px;font-weight:600;color:#fff;margin-bottom:2px}
+  .pc .pnote{font-size:10.5px;color:var(--text-tertiary);margin-bottom:10px;line-height:1.4}
+  .pc .pnote.warn{color:var(--magenta)}
+  .pc .stackMini{display:flex;flex-direction:column;gap:var(--sp-xs);background:var(--void);padding:14px;border-radius:16px}
+  .pc .row-pill{font-family:var(--body);color:var(--text-primary);border-radius:var(--r-pill);
+    background:var(--modalBg);border:1.5px solid var(--border-subtle);display:flex;align-items:center;justify-content:center}
+  .pc.a .row-pill{height:46px;font-size:15px}
+  .pc.b .row-pill{height:46px;font-size:14px;padding:0 var(--sp-sm)}
+  .pc.c .row-pill{height:41px;font-size:14px}
+
+  .legend{max-width:720px;margin-top:44px;border-top:1px solid var(--border-default);padding-top:22px}
+  .legend h2{font-family:var(--disp);font-size:15px;font-weight:600;margin:0 0 14px}
+  .legend table{width:100%;border-collapse:collapse;font-size:11.5px}
+  .legend th,.legend td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border-subtle);vertical-align:top}
+  .legend th{color:var(--text-tertiary);font-weight:600;font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+  .legend td{color:var(--text-secondary);line-height:1.5}
+  .legend td b{color:var(--text-primary)}
+  .legend td code{color:var(--cyan)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL · CHECK-IN</div>
+  <h1>Final direction — real design tokens, no card</h1>
+  <p class="lede">Void-native (no glass card, per your last call), vertical pill stack in <code>SelectablePill</code>'s actual native form, trail-in atmosphere — <b>recalibrated against a faithful reproduction of the real field</b> (fixed 264pt square, borderless diffuse zone washes, bold ghost quadrant labels, no container) instead of the placeholder circle from earlier passes. Every colour/font/spacing value here is pulled directly from <code>AppColors</code> / <code>AppFonts</code> / <code>AppSpacing</code> / <code>AppRadius</code> — see the legend below for the exact source of each.</p>
+
+  <div class="row">
+    <div class="phone">
+      <div class="void"></div>
+      <div class="bloom"><div class="c"></div><div class="p"></div><div class="m"></div><div class="mask"></div></div>
+      <div class="island"></div>
+      <div class="content">
+        <div class="topClear"></div>
+        <div class="backRow"><div class="backArrow">‹</div></div>
+        <div class="head">
+          <span class="t">Check in</span>
+          <div class="steps">
+            <div class="step">1</div><div class="step">2</div><div class="step">3</div>
+            <div class="step now">4</div>
+            <div class="step future">5</div>
+          </div>
+        </div>
+        <div class="fieldWrap">
+          <div class="field">
+            <div class="zoneBlob z-pro"></div><div class="zoneBlob z-fri"></div>
+            <div class="zoneBlob z-sov"></div><div class="zoneBlob z-exp"></div>
+            <div class="qlab ql-fri">FRICTION</div><div class="qlab ql-exp">EXPANSIVE</div>
+            <div class="qlab ql-pro">PROTECTIVE</div><div class="qlab ql-sov">SOVEREIGN</div>
+            <div class="orb"></div>
+          </div>
+        </div>
+        <div class="fieldNote">field + orb — unchanged</div>
+        <div class="qtext">How much do you have to give right now?</div>
+        <div class="stack">
+          <div class="row-pill">Empty</div>
+          <div class="row-pill">Low</div>
+          <div class="row-pill sel">Moderate</div>
+          <div class="row-pill">Good</div>
+          <div class="row-pill">Abundant</div>
+        </div>
+      </div>
+      <div class="home"></div>
+    </div>
+  </div>
+
+  <div class="pillCompareWrap">
+    <h2 style="font-family:var(--disp);font-size:15px;font-weight:600;margin:36px 0 6px">Pill height — three options</h2>
+    <p class="lede" style="margin-bottom:4px">44pt is Apple's HIG minimum tap target. The current 46pt already clears it with 2pt to spare — a straight 10% cut lands at ~41pt, under the minimum. Two ways to make them read lighter without doing that:</p>
+    <div class="pillCompare">
+      <div class="pc a">
+        <div class="pcap">A — Current (46pt)</div>
+        <div class="pnote">Baseline. Full padding, 15pt label.</div>
+        <div class="stackMini">
+          <div class="row-pill">Empty</div><div class="row-pill">Low</div><div class="row-pill">Moderate</div>
+        </div>
+      </div>
+      <div class="pc b">
+        <div class="pcap">B — Lighter, still 46pt</div>
+        <div class="pnote">Same tap target, tighter horizontal padding + 14pt label. Reads visually smaller without shrinking the touchable area.</div>
+        <div class="stackMini">
+          <div class="row-pill">Empty</div><div class="row-pill">Low</div><div class="row-pill">Moderate</div>
+        </div>
+      </div>
+      <div class="pc c">
+        <div class="pcap">C — Literal −10% (41pt)</div>
+        <div class="pnote warn">Below the 44pt HIG minimum — not recommended, shown only for comparison.</div>
+        <div class="stackMini">
+          <div class="row-pill">Empty</div><div class="row-pill">Low</div><div class="row-pill">Moderate</div>
+        </div>
+      </div>
+    </div>
+    <p class="lede" style="margin-top:14px">My pick is <b>B</b> if the current size reads heavy to you — same accessible tap target, just a touch less visually dense.</p>
+  </div>
+
+  <div class="legend">
+    <h2>Token legend</h2>
+    <table>
+      <tr><th>Element</th><th>Token</th><th>Value (dark)</th></tr>
+      <tr><td>Background floor</td><td><code>AppColors.void</code></td><td><b>#0a0810</b></td></tr>
+      <tr><td>Atmosphere bloom colours</td><td><code>AppColors.spectrumCyan/Purple/Magenta</code></td><td><b>#00C2FF / #6C3AE0 / #FF006A</b></td></tr>
+      <tr><td>Field zone washes (unchanged)</td><td><code>AppColors.auraCoreCyan/Indigo/Magenta/Rose</code></td><td><b>#00C2FF / #8B5CF6 / #FF006A / #C76A86</b> — <code>PulseField.swift:56-59</code>, real cx/cy/opacity</td></tr>
+      <tr><td>Ghost quadrant labels (unchanged)</td><td><code>PulseField.ghostLabel</code></td><td>Clash Display Bold, ~size×0.085, opacity .17-.34</td></tr>
+      <tr><td>"Check in" title</td><td><code>AppFonts.cardTitleCompact</code></td><td><b>ClashDisplay-Semibold 16pt</b>, <code>textPrimary</code> — shrunk from <code>screenTitle</code> (24pt); the title is chrome, not the focus</td></tr>
+      <tr><td>Step numbers (done/now/future)</td><td><code>AppColors.textSectionLabel</code> ring — same token as "Settings"/"Partner" (<code>SettingsComponents.swift:14</code>)</td><td>done/future: plain digit, <code>textPrimary</code> vs <code>textTertiary</code>, no chrome; now: digit + 22pt ring, purpleBright #C084FC @ .55 + glow. Numbers are the navigation — tap a done one to revisit it.</td></tr>
+      <tr><td>Back arrow — own row above the title</td><td>plain <code>chevron.left</code> circle, same pattern as <code>AirlockView.swift:52-61</code></td><td>32pt circle, <code>cardBackground</code> fill + <code>borderDefault</code> stroke + <code>textSecondary</code> icon. Exits the check-in; the step numbers handle revisiting</td></tr>
+      <tr><td>Question text</td><td><code>AppFonts.prompt</code></td><td><b>ClashDisplay-Medium 17pt</b>, <code>textPrimary</code> — this token's own doc comment is literally "the question or statement on a prompt card"</td></tr>
+      <tr><td>Pill row (unselected)</td><td><code>SelectablePill</code> defaults</td><td>height <b>46pt</b>, <code>AppFonts.body(15, .medium)</code>, fill <code>modalBackground</code> (#1A1825), border <code>borderSubtle</code> 1.5pt</td></tr>
+      <tr><td>Pill row (selected, <code>.warm</code>)</td><td><code>SelectablePill.PillBorderModifier</code></td><td>border white .22 @ 2pt + spectrum-tinted glow shadows</td></tr>
+      <tr><td>Row gaps</td><td><code>AppSpacing.xs</code></td><td><b>4pt</b></td></tr>
+      <tr><td>Question → stack gap</td><td><code>AppSpacing.md</code></td><td><b>16pt</b></td></tr>
+      <tr><td>Field → question gap</td><td><code>AppSpacing.lg</code></td><td><b>24pt</b></td></tr>
+      <tr><td>Screen side padding</td><td><code>AppSpacing.lg</code></td><td><b>24pt</b></td></tr>
+      <tr><td>Pill corner radius</td><td><code>AppRadius.pill</code></td><td><b>.infinity</b> (capsule)</td></tr>
+    </table>
+    <p class="lede" style="margin-top:16px">The one thing NOT yet a precise token: the trail-in atmosphere's exact opacity curve. It's built from the same <code>OBVoidBloom</code> mechanism and colours, just with the mask gradient's stops shifted earlier — that's a real code change to <code>OnboardingAtmosphere.swift</code> (a new case, not a hack at the call site), and its exact numbers are a 🎚️ feel value to tune on device, same as every other atmosphere config in that file.</p>
+  </div>
+
+</div>
+</body>
+</html>

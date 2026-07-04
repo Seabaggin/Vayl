@@ -3,7 +3,7 @@
 //  Vayl
 //
 //  The Event Log's small, curated vocabulary. `EventMood` is deliberately NOT the
-//  PulseTier set, so an event's feeling never blurs with your capacity graph. `EventTag`
+//  Pulse quadrant set, so an event's feeling never blurs with your capacity graph. `EventTag`
 //  is a fixed NM-purposeful set, not freeform. Bryan can rework the copy later.
 //
 

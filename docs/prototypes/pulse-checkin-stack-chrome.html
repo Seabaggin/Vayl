@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Check-in: vertical stack, card vs void-native</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF; --indigo:#8B5CF6; --magenta:#FF006A;
+    --t1:#E8E8F0; --t2:rgba(255,255,255,.66); --t3:rgba(255,255,255,.42);
+    --border:rgba(255,255,255,.10);
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0b0910;color:var(--t1);font-family:var(--body)}
+  .wrap{max-width:900px;margin:0 auto;padding:38px 26px 100px}
+  .brand{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.34em;color:var(--t3);margin:0 0 6px}
+  h1{font-family:var(--disp);font-size:24px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:13px;line-height:1.6;color:var(--t2);margin:0 0 34px;max-width:720px}
+  .lede b{color:var(--t1)}
+
+  .phoneRow{display:flex;gap:30px;flex-wrap:wrap}
+  .cap{font-family:var(--disp);font-size:12px;font-weight:600;color:#fff;text-align:center;margin-bottom:4px}
+  .capSub{font-size:10px;color:var(--t3);text-align:center;margin-bottom:12px}
+
+  .phone{position:relative;width:270px;height:585px;border-radius:36px;overflow:hidden;background:#040308;
+    box-shadow:0 24px 58px rgba(0,0,0,.5),inset 0 0 0 1.4px rgba(255,255,255,.05)}
+  .island{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:66px;height:17px;background:#000;border-radius:10px;z-index:20}
+  .home{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:80px;height:3px;border-radius:3px;background:rgba(255,255,255,.2);z-index:20}
+  .void{position:absolute;inset:0;background:#0a0810}
+
+  .bloom{position:absolute;left:0;right:0;top:0;bottom:0;overflow:hidden;z-index:1}
+  .bloom .p{position:absolute;width:100%;height:60%;left:0;top:26%;border-radius:50%;background:var(--indigo);opacity:.22;filter:blur(40px)}
+  .bloom .c{position:absolute;width:80%;height:48%;left:-18%;top:20%;border-radius:50%;background:var(--cyan);opacity:.15;filter:blur(34px)}
+  .bloom .m{position:absolute;width:75%;height:46%;right:-18%;top:24%;border-radius:50%;background:var(--magenta);opacity:.13;filter:blur(34px)}
+  .bloom .mask{position:absolute;inset:0;
+    background:linear-gradient(to bottom,#0a0810 0%,#0a0810 34%,rgba(10,8,16,.92) 44%,rgba(10,8,16,.55) 56%,rgba(10,8,16,.20) 70%,rgba(10,8,16,.02) 100%);}
+
+  .content{position:absolute;inset:0;z-index:10;padding:0 16px}
+  .topClear{height:40px}
+  .head{display:flex;align-items:center;justify-content:space-between;padding-top:7px}
+  .head .t{font-family:var(--disp);font-size:14px;font-weight:700;color:#fff}
+  .head .n{font-size:8.5px;color:var(--t3)}
+
+  .fieldWrap{margin-top:10px;display:flex;justify-content:center}
+  .field{width:150px;height:150px;border-radius:50%;position:relative;
+    background:radial-gradient(closest-side,rgba(255,0,106,.10),transparent 70%),radial-gradient(closest-side at 70% 30%,rgba(0,194,255,.10),transparent 70%);
+    border:1px solid rgba(255,255,255,.06)}
+  .orb{position:absolute;left:50%;top:50%;width:24px;height:24px;border-radius:50%;transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 35% 32%,#fff,#c9c9d4 46%,#8f8fa0 92%);box-shadow:0 0 15px 3px rgba(255,255,255,.26)}
+
+  .qtext{font-family:var(--disp);font-size:12.5px;font-weight:600;color:#fff;text-align:center;margin-top:12px;padding:0 4px;line-height:1.25}
+
+  /* void-native rows — float directly, only their own hairline separates them from the atmosphere */
+  .rowsNative{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .rowsNative .r{font-size:10.5px;font-weight:500;color:var(--t2);padding:9px 12px;border-radius:12px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);text-align:center}
+  .rowsNative .r.sel{color:#fff;background:rgba(0,194,255,.13);border-color:rgba(0,194,255,.4);font-weight:600}
+
+  /* card-held rows — the whole question+rows block sits inside a glass panel */
+  .qcard{margin-top:10px;border-radius:18px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.10);
+    padding:12px 12px 12px;box-shadow:0 16px 32px rgba(0,0,0,.28)}
+  .qcard .qtext{margin-top:0}
+  .rowsCard{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .rowsCard .r{font-size:10.5px;font-weight:500;color:var(--t2);padding:9px 12px;border-radius:12px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);text-align:center}
+  .rowsCard .r.sel{color:#fff;background:rgba(0,194,255,.13);border-color:rgba(0,194,255,.4);font-weight:600}
+
+  .compare{max-width:720px;border-top:1px solid var(--border);padding-top:24px;margin-top:36px}
+  .compare h2{font-family:var(--disp);font-size:15px;font-weight:600;margin:0 0 12px}
+  .rationale{font-size:12.5px;line-height:1.62;color:var(--t2);max-width:720px}
+  .rationale b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL · CHECK-IN</div>
+  <h1>Vertical stack — void-native vs card-held</h1>
+  <p class="lede">Same 5-row stack, same trail-in background, same field. Left: rows float directly on the void like the rest of the screen (option A's approach). Right: the question + rows sit inside one glass panel (option B's approach). Real row count, not a shortened preview.</p>
+
+  <div class="phoneRow">
+    <div>
+      <div class="cap">Void-native</div>
+      <div class="capSub">rows float on the atmosphere directly</div>
+      <div class="phone">
+        <div class="void"></div>
+        <div class="bloom"><div class="c"></div><div class="p"></div><div class="m"></div><div class="mask"></div></div>
+        <div class="island"></div>
+        <div class="content">
+          <div class="topClear"></div>
+          <div class="head"><span class="t">Check in</span><span class="n">1 of 5</span></div>
+          <div class="fieldWrap"><div class="field"><div class="orb"></div></div></div>
+          <div class="qtext">How much do you have to give right now?</div>
+          <div class="rowsNative">
+            <div class="r">Empty</div><div class="r">Low</div>
+            <div class="r sel">Moderate</div><div class="r">Good</div><div class="r">Abundant</div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cap">Card-held</div>
+      <div class="capSub">question + rows contained in one glass panel</div>
+      <div class="phone">
+        <div class="void"></div>
+        <div class="bloom"><div class="c"></div><div class="p"></div><div class="m"></div><div class="mask"></div></div>
+        <div class="island"></div>
+        <div class="content">
+          <div class="topClear"></div>
+          <div class="head"><span class="t">Check in</span><span class="n">1 of 5</span></div>
+          <div class="fieldWrap"><div class="field"><div class="orb"></div></div></div>
+          <div class="qcard">
+            <div class="qtext">How much do you have to give right now?</div>
+            <div class="rowsCard">
+              <div class="r">Empty</div><div class="r">Low</div>
+              <div class="r sel">Moderate</div><div class="r">Good</div><div class="r">Abundant</div>
+            </div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="compare">
+    <h2>The actual difference</h2>
+    <p class="rationale">At 5 rows, the card in the right version reads as a <b>large panel dominating the lower two-thirds of the screen</b> — the glass surface was designed for shorter, denser content (a couple of Map stat rows, a single headline), not a 5-item list; here it just outlines a big empty-feeling rectangle around content that already reads fine on its own. Void-native (left) lets each row breathe individually against the atmosphere instead of being boxed in, and it's honestly the closer match to how <code>SelectablePill</code> already looks in its own previews — full-width rows directly on the background, no wrapper.</p>
+    <p class="rationale" style="margin-top:12px">My read: <b>void-native</b>. The card made sense when pills were a compact single row (there was a real "small discrete moment" to contain); at 5 full rows the content is substantial enough to hold its own, and the card just adds visual weight without adding clarity.</p>
+  </div>
+
+</div>
+</body>
+</html>

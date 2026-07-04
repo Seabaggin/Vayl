@@ -243,7 +243,7 @@ struct MetallicCaseView: View {
         GeometryReader { geo in
             let size = geo.size
             Group {
-                if reduceMotion || flat {
+                if reduceMotion || flat || AppAnimation.lowPower {
                     foilLayer(size: size, t: 0, motion: false)
                 } else {
                     TimelineView(.animation) { tl in

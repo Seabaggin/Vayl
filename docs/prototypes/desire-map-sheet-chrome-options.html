@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Sheet Chrome: Temperament Options</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --void:#0a0810; --cyan:#00c2ff; --purple:#6c3ae0; --purpleL:#a78bfa; --magenta:#ff006a; --magentaL:#ff4d94; --gold:#ffb648; --goldL:#ffd08a;
+    --t-primary:rgba(255,255,255,0.92); --t-secondary:rgba(255,255,255,0.62); --t-tertiary:rgba(255,255,255,0.36); --t-muted:rgba(255,255,255,0.2);
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,BlinkMacSystemFont,sans-serif;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+  html, body { margin:0; height:100%; background:#131218; color:var(--t-primary); font-family:var(--body); }
+  .wrap { display:flex; min-height:100vh; }
+
+  .panel { width:340px; flex-shrink:0; padding:28px 24px 40px; background:#0e0d14; border-right:1px solid #1c1a28; overflow-y:auto; }
+  .panel .brand { font-family:var(--disp); font-size:13px; font-weight:600; letter-spacing:0.34em; margin:0 0 2px; }
+  .panel h2 { font-family:var(--disp); font-size:18px; font-weight:500; margin:0 0 12px; line-height:1.25; }
+  .panel p.lede { font-size:12px; line-height:1.6; color:var(--t-secondary); margin:0 0 20px; }
+  .opt { display:flex; flex-direction:column; gap:4px; text-align:left; width:100%; padding:11px 13px; margin-bottom:8px; border-radius:11px; border:1px solid #1c1a28; background:transparent; cursor:pointer; transition:all 0.15s; }
+  .opt:hover { border-color:rgba(108,58,224,0.4); }
+  .opt.active { border-color:rgba(108,58,224,0.7); background:rgba(108,58,224,0.08); }
+  .opt .oname { font-family:var(--disp); font-size:13.5px; font-weight:600; color:var(--t-primary); display:flex; gap:8px; align-items:baseline; }
+  .opt .oname .letter { font-size:10px; color:var(--purpleL); font-weight:700; }
+  .opt .odesc { font-size:11px; line-height:1.5; color:var(--t-tertiary); }
+  .note { margin-top:20px; padding:12px 14px; border-radius:10px; background:rgba(255,182,72,.06); border:1px solid rgba(255,182,72,.2); font-size:11.5px; line-height:1.55; color:var(--t-secondary); }
+  .note b { color:var(--goldL); }
+
+  .swatchBlock { margin-top:14px; padding:14px; border-radius:11px; background:rgba(255,255,255,.02); border:1px solid #1c1a28; }
+  .swatchTitle { font-size:11px; font-weight:600; color:var(--t-secondary); margin-bottom:10px; }
+  .swatchRow { display:flex; gap:8px; }
+  .swatch { flex:1; height:52px; border-radius:9px; border:1.5px solid rgba(255,255,255,.08); cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; transition:border-color 0.15s, transform 0.15s; }
+  .swatch:hover { transform:translateY(-1px); }
+  .swatch.active { border-color:var(--purpleL); box-shadow:0 0 0 1px var(--purpleL); }
+  .swname { font-size:9px; font-weight:700; color:rgba(255,255,255,.85); text-shadow:0 1px 2px rgba(0,0,0,.8); }
+  .swhex { font-size:8px; color:rgba(255,255,255,.5); text-shadow:0 1px 2px rgba(0,0,0,.8); }
+  .swatchNote { font-size:10.5px; line-height:1.5; color:var(--t-tertiary); margin-top:10px; }
+  .swatchNote b { color:var(--t-secondary); }
+
+  .stage { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; background:radial-gradient(130% 90% at 50% 0%, #1b1a22 0%, #111016 58%); padding:40px; }
+
+  .tierToggle { display:flex; gap:4px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:99px; padding:4px; }
+  .tierToggle button { font-family:var(--body); font-size:12px; font-weight:600; color:var(--t-tertiary); background:transparent; border:none; border-radius:99px; padding:8px 16px; cursor:pointer; transition:all 0.18s; }
+  .tierToggle button.active { color:var(--void); background:linear-gradient(90deg,var(--purpleL),var(--magentaL)); }
+
+  .phone { position:relative; width:370px; height:740px; border-radius:46px; overflow:hidden; background:#050409; box-shadow:0 32px 84px rgba(0,0,0,0.62), inset 0 0 0 1.5px rgba(255,255,255,0.05); flex:none; }
+  .voidbg { position:absolute; inset:0; background:radial-gradient(120% 90% at 50% 6%, #0c0916 0%, var(--void) 48%, #050409 100%); }
+  .notch { position:absolute; top:13px; left:50%; transform:translateX(-50%); width:102px; height:28px; background:#000; border-radius:16px; z-index:40; }
+  .home-ind { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:120px; height:5px; border-radius:3px; background:rgba(255,255,255,0.22); z-index:40; }
+  .sb { position:absolute; top:0; left:0; right:0; z-index:38; display:flex; justify-content:space-between; padding:15px 34px 0; font-size:13px; font-weight:600; color:rgba(255,255,255,0.7); }
+  .bglabel { position:absolute; top:90px; left:0; right:0; text-align:center; font-size:9.5px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--t-muted); z-index:2; }
+
+  .sheetLayer { position:absolute; left:0; right:0; bottom:0; z-index:50; }
+  /* #1A1825 = the REAL AppColors.modalBackground / inkSurface token — not an approximation.
+     It's already the most purple-leaning surface color in the app (more than cards, more
+     than the OB void), so this alone is the "matches everywhere else" answer — no wash needed
+     to fake it. */
+  .sheet { position:relative; background:#1A1825; border-radius:22px 22px 0 0; overflow:visible; padding-top:2px; box-shadow:0 -18px 50px rgba(0,0,0,0.55); }
+  .sheetInner { position:relative; border-radius:22px 22px 0 0; overflow:hidden; }
+  .sheetWash { position:absolute; top:0; left:0; right:0; height:150px; pointer-events:none; transition:background 0.3s; }
+  .sheetBorderTop { position:absolute; top:0; left:0; right:0; height:2px; border-radius:22px 22px 0 0; opacity:0; transition:opacity 0.3s, background 0.3s; }
+  .cornerGlow { position:absolute; top:-14px; left:26px; width:120px; height:70px; border-radius:50%; filter:blur(24px); opacity:0; transition:opacity 0.3s, background 0.3s; pointer-events:none; }
+  .ambientGlow { position:absolute; top:-40px; left:50%; transform:translateX(-50%); width:280px; height:100px; border-radius:50%; filter:blur(38px); opacity:0; transition:opacity 0.3s, background 0.3s; pointer-events:none; }
+
+  /* Real-bloom layer — ports OBVoidBloom's actual recipe (three blurred ellipses,
+     purple dominant/center, cyan+magenta flanking, heavy blur) instead of a flat
+     tinted fill. This is what "deep purple" actually means everywhere else in the
+     app: an ambient glow BEHIND a near-black surface, never the surface color itself. */
+  .realBloom { position:absolute; left:0; right:0; top:-120px; height:220px; pointer-events:none; opacity:0; transition:opacity 0.3s; overflow:visible; }
+  .rb-cyan, .rb-purple, .rb-magenta, .rb-src { position:absolute; border-radius:50%; filter:blur(34px); }
+  .rb-cyan    { left:8%;  top:40px; width:62%; height:90px; background:radial-gradient(closest-side, rgba(0,194,255,.20), transparent 70%); }
+  .rb-purple  { left:16%; top:14px; width:78%; height:120px; background:radial-gradient(closest-side, rgba(108,58,224,.30), transparent 70%); }
+  .rb-magenta { left:44%; top:44px; width:58%; height:88px;  background:radial-gradient(closest-side, rgba(255,0,106,.18), transparent 70%); }
+  .rb-src     { left:28%; top:22px; width:56%; height:96px;  filter:blur(30px); opacity:0; transition:opacity 0.3s, background 0.3s; }
+  .grab { position:relative; width:38px; height:4px; border-radius:3px; margin:11px auto 3px; transition:background 0.3s; }
+
+  .content { position:relative; padding:8px 22px 30px; }
+  .ov { font-size:9px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--t-tertiary); }
+  .ttl { font-family:var(--disp); font-size:22px; font-weight:700; color:var(--t-primary); margin-top:5px; }
+  .row { display:flex; align-items:center; justify-content:space-between; padding:13px 0; border-bottom:1px solid rgba(255,255,255,.07); margin-top:14px; font-size:14.5px; color:var(--t-primary); }
+  .btn-plain { height:46px; border-radius:12px; width:100%; margin-top:20px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.15); color:var(--t-primary); font-family:var(--body); font-size:14.5px; font-weight:600; }
+  .badge { display:inline-flex; gap:6px; margin-top:11px; font-size:10.5px; font-weight:600; padding:5px 10px; border-radius:99px; color:var(--magentaL); background:rgba(255,0,106,.1); border:1px solid rgba(255,0,106,.28); }
+  .meaning { font-size:13.5px; line-height:1.55; color:var(--t-secondary); margin-top:12px; }
+  .btn-talk { height:46px; border-radius:12px; width:100%; margin-top:18px; background:linear-gradient(90deg,rgba(255,0,106,.16),rgba(108,58,224,.24)); border:1px solid rgba(108,58,224,.5); color:var(--t-primary); font-family:var(--body); font-size:14.5px; font-weight:600; }
+  .hook { font-family:var(--disp); font-size:23px; font-weight:700; color:var(--t-primary); text-align:center; margin-top:4px; }
+  .sub { font-size:12.5px; color:var(--t-secondary); text-align:center; margin-top:6px; line-height:1.5; }
+  .price { font-family:var(--disp); font-size:22px; font-weight:700; color:var(--t-primary); text-align:center; margin-top:14px; }
+  .price span { font-size:11.5px; color:var(--t-secondary); font-family:var(--body); font-weight:400; margin-left:4px; }
+  .btn-gold { height:48px; border-radius:13px; width:100%; margin-top:12px; background:linear-gradient(90deg,rgba(255,182,72,.20),rgba(255,209,102,.28)); border:1px solid rgba(255,182,72,.5); color:var(--t-primary); font-family:var(--disp); font-size:14.5px; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="panel">
+    <div class="brand">VAYL</div>
+    <h2>Sheet chrome — 5 temperaments</h2>
+    <p class="lede">Same chrome primitive (<code>VaylSheetChrome</code>), five ways to scale intensity from a routine task (name edit) → contextual content (star detail) → a ceremonial moment (paywall). Toggle tiers per option to feel the jump — or lack of one.</p>
+
+    <button class="opt active" data-opt="A">
+      <span class="oname"><span class="letter">A</span>Quiet default, reserved spectrum</span>
+      <span class="odesc">Routine + contextual both get a plain muted hairline. Full spectrum border kept exactly as today, but ONLY for ceremonial.</span>
+    </button>
+    <button class="opt" data-opt="B">
+      <span class="oname"><span class="letter">B</span>Tint-from-source, no rainbow ever</span>
+      <span class="odesc">Spectrum gradient retired entirely. Every non-routine sheet gets ONE hue pulled from its own content — magenta for a mutual star, gold for the paywall.</span>
+    </button>
+    <button class="opt" data-opt="C">
+      <span class="oname"><span class="letter">C</span>Three-step ladder (A + B combined)</span>
+      <span class="odesc">Routine = plain hairline. Contextual = single-hue accent, thinner. Ceremonial = full spectrum, reserved for real stakes only.</span>
+    </button>
+    <button class="opt" data-opt="D">
+      <span class="oname"><span class="letter">D</span>Corner accent, no full border</span>
+      <span class="odesc">Never trace the whole top edge. A small glow blob at the corner scales in color/size with stakes — most of the mask engineering goes away.</span>
+    </button>
+    <button class="opt" data-opt="E">
+      <span class="oname"><span class="letter">E</span>Glow-only, zero stroke</span>
+      <span class="odesc">No border anywhere, ever. Identity comes entirely from a soft ambient bloom behind the sheet and the grabber color. Routine tier is the "plain grey" floor — included so you can rule it out on purpose.</span>
+    </button>
+
+    <button class="opt" data-opt="F" style="border-color:rgba(255,182,72,.4);">
+      <span class="oname"><span class="letter" style="color:var(--goldL);">F</span>Hairline + grabber constant, mute the rest</span>
+      <span class="odesc"><b style="color:var(--t-secondary)">From the Pulse conversation:</b> the spectrum trace + grabber ARE the identity, kept the same on every tier — no wash, no darken pass, no glow, ever. Stakes differentiate through content (price weight, CTA color), not chrome.</span>
+    </button>
+
+    <button class="opt" data-opt="G" style="border-color:rgba(160,132,252,.5);">
+      <span class="oname"><span class="letter" style="color:var(--goldL);">G</span>The synthesis: real token + F + tint-from-source</span>
+      <span class="odesc">Base fill is the EXACT modalBackground token (#1A1825), not an approximation. Hairline + grabber stay constant (F). A thin contextual wash layers on top only where there's a real source to draw from — routine has none, so it stays plain.</span>
+    </button>
+
+    <button class="opt" data-opt="H" style="border-color:rgba(108,58,224,.6);">
+      <span class="oname"><span class="letter" style="color:var(--purpleL);">H</span>Real bloom, not a tinted fill</span>
+      <span class="odesc"><b style="color:var(--t-secondary)">The actual answer:</b> base fill stays near-black (void-family — no flat color ever reads as "purple" anywhere else in the app either). The purple comes from a soft blurred tri-color bloom behind the sheet, porting OBVoidBloom's real recipe. Hairline + grabber constant (F). Contextual/ceremonial nudge the bloom's balance toward their own source color, same as the atmosphere already varies per screen.</span>
+    </button>
+
+    <div class="note"><b>Reading this:</b> flip between Routine / Contextual / Ceremonial on each option. The question isn't "which looks best on the paywall" (spectrum wins there in every option) — it's which option makes the <b>quiet</b> moments feel quiet without losing the identity.</div>
+
+    <div class="swatchBlock">
+      <div class="swatchTitle">Base fill darkness — pick against the real void backdrop</div>
+      <div class="swatchRow">
+        <button class="swatch" data-fill="0a0810" style="background:#0a0810;">
+          <span class="swname">void</span><span class="swhex">#0a0810</span>
+        </button>
+        <button class="swatch" data-fill="0f0c16" style="background:#0f0c16;">
+          <span class="swname">new?</span><span class="swhex">#0f0c16</span>
+        </button>
+        <button class="swatch" data-fill="120f1a" style="background:#120f1a;">
+          <span class="swname">inkCardOB</span><span class="swhex">#120f1a</span>
+        </button>
+        <button class="swatch" data-fill="1A1825" style="background:#1A1825;">
+          <span class="swname">modalBg</span><span class="swhex">#1A1825</span>
+        </button>
+      </div>
+      <div class="swatchNote">Each option (A–H) now carries its own real default fill — that's what actually changes when you click between them. Nothing here is highlighted until you click a swatch; once you do, it force-overrides every option's default until you refresh.</div>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="tierToggle">
+      <button class="active" data-tier="routine">Routine · name edit</button>
+      <button data-tier="contextual">Contextual · star detail</button>
+      <button data-tier="ceremonial">Ceremonial · paywall</button>
+    </div>
+
+    <div class="phone" id="phone">
+      <div class="voidbg"></div>
+      <div class="notch"></div>
+      <div class="sb"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="bglabel" id="bgLabel">Settings</div>
+
+      <div class="sheetLayer">
+        <div class="sheet">
+          <div class="ambientGlow" id="ambientGlow"></div>
+          <div class="realBloom" id="realBloom">
+            <div class="rb-cyan"></div>
+            <div class="rb-purple"></div>
+            <div class="rb-magenta"></div>
+            <div class="rb-src" id="rbSrc"></div>
+          </div>
+          <div class="sheetInner">
+            <div class="sheetWash" id="sheetWash"></div>
+            <div class="sheetBorderTop" id="sheetBorderTop"></div>
+            <div class="cornerGlow" id="cornerGlow"></div>
+            <div class="grab" id="grab"></div>
+
+            <div class="content" id="content-routine">
+              <div class="ov">Edit</div>
+              <div class="ttl">Your name</div>
+              <div class="row"><span>Jordan</span><span style="color:var(--t-tertiary)">›</span></div>
+              <div class="row" style="border-bottom:none;"><span style="color:var(--t-tertiary); font-size:12px;">Shown to your partner only</span></div>
+              <button class="btn-plain">Done</button>
+            </div>
+
+            <div class="content" id="content-contextual" style="display:none;">
+              <div class="ov">Structures</div>
+              <div class="ttl">Opening Up</div>
+              <div class="badge">✦ You both want this</div>
+              <div class="meaning">You both want to explore opening up, at a pace you set together.</div>
+              <button class="btn-talk">Talk about this →</button>
+            </div>
+
+            <div class="content" id="content-ceremonial" style="display:none;">
+              <div class="hook">Reveal Your Map</div>
+              <div class="sub">See the whole shape of where your desires meet.</div>
+              <div class="price">$24.99<span>· one time · covers both</span></div>
+              <button class="btn-gold">Unlock everything</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-ind"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const NEUTRAL_WASH = 'transparent';
+  const NEUTRAL_GRAB = 'rgba(255,255,255,.28)';
+  const SPECTRUM_GRAD = 'linear-gradient(90deg, var(--cyan), var(--purple), var(--magenta))';
+  const SPECTRUM_WASH = 'linear-gradient(180deg, rgba(108,58,224,.16), rgba(108,58,224,.05) 70%, transparent)';
+  const MAGENTA_WASH = 'radial-gradient(60% 100% at 50% 0%, rgba(255,0,106,.16), transparent 72%)';
+  const GOLD_WASH = 'radial-gradient(60% 100% at 50% 0%, rgba(255,182,72,.18), transparent 72%)';
+
+  const OPTIONS = {
+    A: {
+      fill: '1A1825',
+      bgLabel: { routine: 'Settings', contextual: 'Where you meet', ceremonial: 'Where you meet' },
+      routine:     { border:'none', borderGrad:null, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:NEUTRAL_GRAB, hairline:true },
+      contextual:  { border:'none', borderGrad:null, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:NEUTRAL_GRAB, hairline:true },
+      ceremonial:  { border:'full', borderGrad:SPECTRUM_GRAD, glow:'none', glowGrad:null, wash:SPECTRUM_WASH, grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))' },
+    },
+    B: {
+      fill: '1A1825',
+      bgLabel: { routine: 'Settings', contextual: 'Where you meet', ceremonial: 'Where you meet' },
+      routine:     { border:'none', borderGrad:null, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:NEUTRAL_GRAB, hairline:true },
+      contextual:  { border:'full', borderGrad:'linear-gradient(90deg, rgba(255,0,106,.15), var(--magenta), rgba(255,0,106,.15))', glow:'none', glowGrad:null, wash:MAGENTA_WASH, grab:'var(--magentaL)' },
+      ceremonial:  { border:'full', borderGrad:'linear-gradient(90deg, rgba(255,182,72,.15), var(--gold), rgba(255,182,72,.15))', glow:'none', glowGrad:null, wash:GOLD_WASH, grab:'var(--goldL)' },
+    },
+    C: {
+      fill: '1A1825',
+      bgLabel: { routine: 'Settings', contextual: 'Where you meet', ceremonial: 'Where you meet' },
+      routine:     { border:'none', borderGrad:null, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:NEUTRAL_GRAB, hairline:true },
+      contextual:  { border:'thin', borderGrad:'linear-gradient(90deg, rgba(255,0,106,.10), var(--magentaL), rgba(255,0,106,.10))', glow:'none', glowGrad:null, wash:MAGENTA_WASH, grab:'var(--magentaL)' },
+      ceremonial:  { border:'full', borderGrad:SPECTRUM_GRAD, glow:'none', glowGrad:null, wash:SPECTRUM_WASH, grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))' },
+    },
+    D: {
+      fill: '1A1825',
+      bgLabel: { routine: 'Settings', contextual: 'Where you meet', ceremonial: 'Where you meet' },
+      routine:     { border:'none', borderGrad:null, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:NEUTRAL_GRAB, hairline:false },
+      contextual:  { border:'none', borderGrad:null, glow:'corner', glowGrad:'radial-gradient(circle, rgba(255,0,106,.45), transparent 70%)', wash:NEUTRAL_WASH, grab:'var(--magentaL)' },
+      ceremonial:  { border:'none', borderGrad:null, glow:'corner', glowGrad:'radial-gradient(circle, rgba(108,58,224,.6), rgba(255,0,106,.3) 55%, transparent 78%)', wash:NEUTRAL_WASH, grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))' },
+    },
+    E: {
+      fill: '0a0810',
+      bgLabel: { routine: 'Settings', contextual: 'Where you meet', ceremonial: 'Where you meet' },
+      routine:     { border:'none', borderGrad:null, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:NEUTRAL_GRAB, hairline:false, ambient:null },
+      contextual:  { border:'none', borderGrad:null, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:'var(--magentaL)', hairline:false, ambient:'radial-gradient(circle, rgba(255,0,106,.30), transparent 72%)' },
+      ceremonial:  { border:'none', borderGrad:null, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))', hairline:false, ambient:'radial-gradient(circle, rgba(108,58,224,.34), rgba(255,0,106,.20) 55%, transparent 76%)' },
+    },
+    // F — from the Pulse-conversation resolution: the hairline trace + grabber ARE the
+    // identity, constant on every tier. No wash, no darken pass, no glow, ever. Stakes
+    // differentiate through content only (see the gold CTA / bigger price on ceremonial).
+    F: {
+      fill: '1A1825',
+      bgLabel: { routine: 'Settings', contextual: 'Where you meet', ceremonial: 'Where you meet' },
+      routine:     { border:'thin', borderGrad:SPECTRUM_GRAD, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))' },
+      contextual:  { border:'thin', borderGrad:SPECTRUM_GRAD, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))' },
+      ceremonial:  { border:'thin', borderGrad:SPECTRUM_GRAD, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))' },
+    },
+    // G — the synthesis: exact modalBackground token as base (set on .sheet directly, real
+    // #1A1825, not approximated), F's constant hairline + grabber, PLUS a thin tint-from-source
+    // wash layered on top only for tiers that have a real source color to draw from. Routine
+    // (name edit) has no source, so it stays at the plain token base + hairline, nothing added.
+    G: {
+      fill: '1A1825',
+      bgLabel: { routine: 'Settings', contextual: 'Where you meet', ceremonial: 'Where you meet' },
+      routine:     { border:'thin', borderGrad:SPECTRUM_GRAD, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))' },
+      contextual:  { border:'thin', borderGrad:SPECTRUM_GRAD, glow:'none', glowGrad:null, wash:'radial-gradient(60% 100% at 50% 0%, rgba(255,0,106,.11), transparent 72%)', grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))' },
+      ceremonial:  { border:'thin', borderGrad:SPECTRUM_GRAD, glow:'none', glowGrad:null, wash:'radial-gradient(60% 100% at 50% 0%, rgba(255,182,72,.13), transparent 72%)', grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))' },
+    },
+    // H — base fill reverts to near-black (void-family), because NO flat color reads as
+    // "purple" anywhere in this app — the identity comes from OBVoidBloom's soft blurred
+    // tri-color glow, which DesireRevealView already runs (config: .cardReveal) behind
+    // everything. Hairline + grabber constant (F). The bloom itself is always on, at the
+    // same low intensity the reveal already uses; contextual/ceremonial add one extra
+    // source-colored blob on top, same as the atmosphere's own bottom/global knobs vary
+    // by screen — never a full recolor, just a nudge in the balance.
+    H: {
+      fill: '0f0c16',
+      bgLabel: { routine: 'Settings', contextual: 'Where you meet', ceremonial: 'Where you meet' },
+      routine:     { border:'thin', borderGrad:SPECTRUM_GRAD, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))', bloom:true, src:null },
+      contextual:  { border:'thin', borderGrad:SPECTRUM_GRAD, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))', bloom:true, src:'radial-gradient(closest-side, rgba(255,0,106,.30), transparent 70%)' },
+      ceremonial:  { border:'thin', borderGrad:SPECTRUM_GRAD, glow:'none', glowGrad:null, wash:NEUTRAL_WASH, grab:'linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta))', bloom:true, src:'radial-gradient(closest-side, rgba(255,182,72,.32), transparent 70%)' },
+    },
+  };
+
+  let currentOption = 'A';
+  let currentTier = 'routine';
+  let currentFill = null;      // null until the user explicitly picks a swatch
+  let fillOverridden = false;  // once true, the swatch wins over every option's own default
+
+  const sheetWash = document.getElementById('sheetWash');
+  const sheetBorderTop = document.getElementById('sheetBorderTop');
+  const cornerGlow = document.getElementById('cornerGlow');
+  const ambientGlow = document.getElementById('ambientGlow');
+  const realBloom = document.getElementById('realBloom');
+  const rbSrc = document.getElementById('rbSrc');
+  const grab = document.getElementById('grab');
+  const bgLabel = document.getElementById('bgLabel');
+  const sheet = document.querySelector('.sheet');
+
+  function render() {
+    const cfg = OPTIONS[currentOption][currentTier];
+
+    // Each option carries its OWN recommended base fill (that's the actual point of
+    // options A-H — several of them differ specifically on fill darkness). The swatch
+    // picker only takes over once the user explicitly clicks one, as an override.
+    const activeFill = fillOverridden ? currentFill : OPTIONS[currentOption].fill;
+    sheet.style.background = '#' + activeFill;
+    document.querySelectorAll('.swatch').forEach(b => b.classList.toggle('active', fillOverridden && b.dataset.fill === currentFill));
+
+    // border (full trace across top or thin variant)
+    if (cfg.border === 'full' || cfg.border === 'thin') {
+      sheetBorderTop.style.opacity = 1;
+      sheetBorderTop.style.height = cfg.border === 'thin' ? '1.5px' : '2px';
+      sheetBorderTop.style.background = cfg.borderGrad;
+    } else {
+      sheetBorderTop.style.opacity = 0;
+    }
+
+    // hairline fallback for "none" border options that still want a whisper edge
+    sheet.style.borderTop = cfg.hairline ? '1px solid rgba(255,255,255,.08)' : 'none';
+
+    // real bloom (Option H) — the OBVoidBloom-derived glow, plus an optional
+    // source-colored blob nudging the balance for contextual/ceremonial tiers.
+    realBloom.style.opacity = cfg.bloom ? 1 : 0;
+    if (cfg.src) {
+      rbSrc.style.opacity = 1;
+      rbSrc.style.background = cfg.src;
+    } else {
+      rbSrc.style.opacity = 0;
+    }
+
+    // corner glow
+    if (cfg.glow === 'corner') {
+      cornerGlow.style.opacity = 1;
+      cornerGlow.style.background = cfg.glowGrad;
+    } else {
+      cornerGlow.style.opacity = 0;
+    }
+
+    // ambient embient glow behind sheet (option E)
+    if (cfg.ambient) {
+      ambientGlow.style.opacity = 1;
+      ambientGlow.style.background = cfg.ambient;
+    } else {
+      ambientGlow.style.opacity = 0;
+    }
+
+    sheetWash.style.background = cfg.wash;
+    grab.style.background = cfg.grab;
+    bgLabel.textContent = OPTIONS[currentOption].bgLabel[currentTier];
+
+    document.getElementById('content-routine').style.display = currentTier === 'routine' ? 'block' : 'none';
+    document.getElementById('content-contextual').style.display = currentTier === 'contextual' ? 'block' : 'none';
+    document.getElementById('content-ceremonial').style.display = currentTier === 'ceremonial' ? 'block' : 'none';
+  }
+
+  document.querySelectorAll('.opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.opt').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentOption = btn.dataset.opt;
+      render();
+    });
+  });
+
+  document.querySelectorAll('.tierToggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tierToggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTier = btn.dataset.tier;
+      render();
+    });
+  });
+
+  document.querySelectorAll('.swatch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      fillOverridden = true;
+      currentFill = btn.dataset.fill;
+      render();
+    });
+  });
+
+  render();
+</script>
+</body>
+</html>

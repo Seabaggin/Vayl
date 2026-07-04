@@ -23,6 +23,9 @@ struct DesireItem: Codable, Identifiable, Hashable {
     let sortOrder: Int
     let tracks: [String]        // "curious" / "established"
     let answers: [String: [String]]   // track -> 4 answers, in DesireRatingValue.allCases order
+    /// Couple-framed reveal copy, keyed by DesireMatchType.rawValue ("mutual" / "adjacent").
+    /// Names what THIS couple shares about THIS item — never a verdict about either person.
+    let meaning: [String: String]?
 
     /// The four answer strings for a given track, weight-ordered. nil if this item
     /// isn't part of that track.

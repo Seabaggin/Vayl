@@ -9,6 +9,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct EventEntryEditor: View {
 

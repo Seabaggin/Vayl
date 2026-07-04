@@ -38,7 +38,7 @@ struct SpectrumSparkField: View {
 
     var body: some View {
         // Reduce Motion: no airborne particles — the crack itself is the feedback.
-        if !reduceMotion {
+        if !reduceMotion && !AppAnimation.lowPower {
             TimelineView(.animation) { tl in
                 let now = tl.date.timeIntervalSinceReferenceDate
                 Canvas { ctx, _ in

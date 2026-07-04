@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Check-in: field vs atmosphere mask boundary</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF; --indigo:#8B5CF6; --magenta:#FF006A; --rose:#C76A86;
+    --t1:#E8E8F0; --t2:rgba(255,255,255,.66); --t3:rgba(255,255,255,.42);
+    --border:rgba(255,255,255,.10);
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0b0910;color:var(--t1);font-family:var(--body)}
+  .wrap{max-width:900px;margin:0 auto;padding:38px 26px 100px}
+  .brand{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.34em;color:var(--t3);margin:0 0 6px}
+  h1{font-family:var(--disp);font-size:24px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:13px;line-height:1.6;color:var(--t2);margin:0 0 34px;max-width:720px}
+  .lede b{color:var(--t1)}
+  .lede code{color:var(--cyan);font-size:12px}
+
+  .row{display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start}
+
+  /* Phone at a measured scale: 393x852 logical points (iPhone 16 base), rendered at 0.62x = 244x529 */
+  .phone{position:relative;width:262px;height:568px;border-radius:34px;overflow:hidden;background:#040308;
+    box-shadow:0 26px 64px rgba(0,0,0,.55),inset 0 0 0 1.4px rgba(255,255,255,.05)}
+  .island{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:64px;height:16px;background:#000;border-radius:10px;z-index:20}
+  .home{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:76px;height:3px;border-radius:3px;background:rgba(255,255,255,.2);z-index:20}
+
+  /* void base */
+  .void{position:absolute;inset:0;background:#0a0810}
+
+  /* the 52% mask line — content above it is guaranteed pure void, per OBVoidBloom.swift:141-142 */
+  .maskLine{position:absolute;left:0;right:0;top:52%;height:0;border-top:1.5px dashed var(--cyan);z-index:15}
+  .maskTag{position:absolute;left:6px;top:calc(52% + 4px);font-size:8px;font-weight:700;letter-spacing:.05em;color:var(--cyan);z-index:15;text-transform:uppercase}
+
+  /* atmosphere bloom — ONLY below the mask line, matching OBVoidBloom's own vertical gradient mask */
+  .bloom{position:absolute;left:0;right:0;top:52%;bottom:0;overflow:hidden;z-index:1}
+  .bloom .cyanB{position:absolute;width:80%;height:42%;left:-18%;top:-10%;border-radius:50%;background:var(--cyan);opacity:.14;filter:blur(30px)}
+  .bloom .purpleB{position:absolute;width:100%;height:50%;left:0;top:0;border-radius:50%;background:var(--indigo);opacity:.20;filter:blur(34px)}
+  .bloom .magentaB{position:absolute;width:75%;height:40%;right:-18%;top:-6%;border-radius:50%;background:var(--magenta);opacity:.13;filter:blur(30px)}
+
+  /* content, measured against real PulseCheckInView spacing */
+  .content{position:absolute;inset:0;z-index:10;padding:0 15px}
+  .topClear{height:38px} /* safe area + island clearance */
+  .head{display:flex;align-items:center;justify-content:space-between;padding-top:7px}
+  .head .t{font-family:var(--disp);font-size:14px;font-weight:700;color:#fff}
+  .head .n{font-size:8.5px;color:var(--t3)}
+
+  .fieldWrap{margin-top:12px;display:flex;justify-content:center}
+  .field{width:164px;height:164px;border-radius:50%;position:relative;
+    background:radial-gradient(closest-side,rgba(255,0,106,.10),transparent 70%),radial-gradient(closest-side at 70% 30%,rgba(0,194,255,.10),transparent 70%);
+    border:1px solid rgba(255,255,255,.06)}
+  .orb{position:absolute;left:50%;top:50%;width:26px;height:26px;border-radius:50%;transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 35% 32%,#fff,#c9c9d4 46%,#8f8fa0 92%);box-shadow:0 0 16px 3px rgba(255,255,255,.26)}
+
+  .fieldBottomTag{text-align:center;margin-top:4px;font-size:7.5px;color:var(--t3);letter-spacing:.02em}
+
+  .qtext{font-family:var(--disp);font-size:12px;font-weight:600;color:#fff;text-align:center;margin-top:14px}
+  .pillsWrap{display:flex;gap:5px;overflow:hidden;margin-top:8px;justify-content:center;flex-wrap:wrap;padding:0 4px}
+  .pill{font-size:8.5px;font-weight:500;color:var(--t2);padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);white-space:nowrap}
+  .pill.sel{color:#fff;background:rgba(0,194,255,.14);border-color:rgba(0,194,255,.4)}
+
+  .cap{font-family:var(--disp);font-size:12px;font-weight:600;margin:0 0 12px}
+
+  .measurements{max-width:340px}
+  .measurements .m{display:flex;justify-content:space-between;font-size:11.5px;padding:8px 0;border-bottom:1px solid var(--border)}
+  .measurements .m span:first-child{color:var(--t2)}
+  .measurements .m span:last-child{color:var(--t1);font-weight:600;font-variant-numeric:tabular-nums}
+  .measurements .margin{color:var(--cyan) !important}
+
+  .note{font-size:12px;line-height:1.65;color:var(--t2);max-width:340px;margin-top:20px}
+  .note b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL · CHECK-IN</div>
+  <h1>Field position vs the atmosphere's mask line</h1>
+  <p class="lede">Drawn to real proportions: a 393×852pt device (iPhone 16 baseline), the actual <code>PulseCheckInView</code> spacing (header + <code>AppSpacing.sm</code> + a 264pt field), and <code>OBVoidBloom</code>'s own hard-coded <b>52% mask boundary</b> (<code>OnboardingAtmosphere.swift:141-142</code>) — everything above that line is guaranteed pure void, no matter which config is used. The dashed cyan line is that boundary; the bloom below it is drawn at roughly `.stat`'s intensity, the boldest config in the file.</p>
+
+  <div class="row">
+    <div class="phone">
+      <div class="void"></div>
+      <div class="bloom"><div class="cyanB"></div><div class="purpleB"></div><div class="magentaB"></div></div>
+      <div class="island"></div>
+      <div class="maskLine"></div><div class="maskTag">52% — mask boundary</div>
+
+      <div class="content">
+        <div class="topClear"></div>
+        <div class="head"><span class="t">Check in</span><span class="n">1 of 5</span></div>
+        <div class="fieldWrap">
+          <div class="field"><div class="orb"></div></div>
+        </div>
+        <div class="fieldBottomTag">field bottom edge ↑</div>
+        <div class="qtext">How is your nervous system right now?</div>
+        <div class="pillsWrap">
+          <div class="pill">Overwhelmed</div><div class="pill">Exhausted</div>
+          <div class="pill sel">Stable</div><div class="pill">Recharging</div><div class="pill">Energized</div>
+        </div>
+      </div>
+      <div class="home"></div>
+    </div>
+
+    <div>
+      <div class="cap">The actual margin</div>
+      <div class="measurements">
+        <div class="m"><span>Reference device height</span><span>852pt</span></div>
+        <div class="m"><span>Mask boundary (52%)</span><span>443pt</span></div>
+        <div class="m"><span>Top clearance + header</span><span>~76pt</span></div>
+        <div class="m"><span>Field (264pt circle)</span><span>76 → 340pt</span></div>
+        <div class="m"><span>Field bottom edge</span><span>340pt</span></div>
+        <div class="m"><span class="margin">Clearance before mask</span><span class="margin">103pt</span></div>
+      </div>
+      <p class="note">The field's bottom edge lands at roughly <b>40% down the screen</b> — a full <b>103pt of pure-void margin</b> before the atmosphere is even allowed to show color. The bloom only reaches the question/pill area below, which is exactly where option B's card or option C's accent rule would sit. There's no scenario at this layout where the atmosphere competes with the field — it physically can't, above the line.</p>
+      <p class="note">Only way this margin shrinks: a much shorter device (older/smaller phones) or a larger field size. Both are worth a real device check, but even iPhone SE (667pt tall) keeps the field's bottom edge comfortably inside the void-only zone at this content layout.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

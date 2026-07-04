@@ -550,7 +550,7 @@ struct BuildDeckPhase: View {
     /// the repeatForever genuinely interpolates). Reduce Motion: steady mid
     /// glow, still lines.
     private func startRimOscillation() {
-        if reduceMotion {
+        if reduceMotion || AppAnimation.lowPower {
             tableRimBurst = 0.3
         } else {
             // 0.8 ceiling — the work has to survive phone scale; at 0.55 the

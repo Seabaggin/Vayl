@@ -248,7 +248,7 @@ struct DesireMapView: View {
 
     private var starField: some View {
         Group {
-            if reduceMotion {
+            if reduceMotion || AppAnimation.lowPower {
                 // Reduce Motion: one static frame — no periodic twinkle loop. Twinkling stars
                 // (period > 0) hold at their base opacity; the sky reads fully without motion.
                 Canvas { ctx, size in

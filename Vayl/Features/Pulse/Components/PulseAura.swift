@@ -17,7 +17,7 @@ struct PulseAura: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var breatheScale: CGFloat = 1.0
+    @State private var breatheOpacity: Double = 1.0
     @State private var causticActive = false
     @State private var sweepActive   = false  // drives glassSweep via GlassSpecularSweep factory
 
@@ -31,6 +31,14 @@ struct PulseAura: View {
     /// Colour the aura from an explicit ramp — used by the cycling dormant aura.
     init(ramp: AuraColors, size: CGFloat = 44, haloSpread: CGFloat = 0) {
         self.ramp = ramp
+        self.size = size
+        self.haloSpread = haloSpread
+    }
+
+    /// Continuous position-based colour. No quadrant snap — blends across the full field via
+    /// bilinear interpolation of the four corner ramps. Used by the 2D check-in / field.
+    init(energy: Double, openness: Double, size: CGFloat = 44, haloSpread: CGFloat = 0) {
+        self.ramp = AuraColors.bilinear(energy: energy, openness: openness)
         self.size = size
         self.haloSpread = haloSpread
     }
@@ -72,10 +80,10 @@ struct PulseAura: View {
                     .frame(width: size * haloSpread, height: size * haloSpread)
             }
         }
-        .scaleEffect(breatheScale)
+        .opacity(breatheOpacity)
         .ambientAnimation(
             .easeInOut(duration: AppAnimation.auraBreathe).repeatForever(autoreverses: true),
-            value: breatheScale
+            value: breatheOpacity
         )
         .onAppear { startAmbient() }
         .accessibilityHidden(true)
@@ -166,8 +174,8 @@ struct PulseAura: View {
     // MARK: - Animation control
 
     private func startAmbient() {
-        guard !reduceMotion else { return }
-        breatheScale  = 1.045  // FEEL: tune on device
+        guard !reduceMotion, !AppAnimation.lowPower else { return }
+        breatheOpacity = 0.88  // FEEL: tune on device — opacity breath (no spatial float)
         causticActive = true
         sweepActive   = true
     }
@@ -198,6 +206,39 @@ struct AuraColors {
             deep:  a.deep.blended(with: b.deep,  t),
             glow:  a.glow.blended(with: b.glow,  t)
         )
+    }
+
+    // MARK: - Space ramps that do NOT blend
+
+    /// Neutral Space — Lavender Silver. Sits at field centre, colour is fixed (no bilinear).
+    static let neutral = AuraColors(
+        light: AppColors.auraLightNeutral,
+        core:  AppColors.auraCoreNeutral,
+        deep:  AppColors.auraDeepNeutral,
+        glow:  AppColors.auraGlowNeutral
+    )
+
+    /// Uncharted Space — Sage Deep. The orb dissolves to this when the variance check fires.
+    static let uncharted = AuraColors(
+        light: AppColors.auraLightUncharted,
+        core:  AppColors.auraCoreUncharted,
+        deep:  AppColors.auraDeepUncharted,
+        glow:  AppColors.auraGlowUncharted
+    )
+
+    // MARK: - Bilinear field blend
+
+    /// Continuous colour for a point on the circumplex, interpolating the four corner ramps.
+    /// openness → left↔right (0 = guarded, 1 = open); energy → bottom↔top (0 = low, 1 = high).
+    static func bilinear(energy: Double, openness: Double) -> AuraColors {
+        let expansive  = AuraColors(.cyan)     // top-right    (high energy, open)
+        let reactive   = AuraColors(.magenta)  // top-left     (high energy, guarded)
+        let receptive  = AuraColors(.indigo)   // bottom-right (low energy, open)
+        let protective = AuraColors(.rose)     // bottom-left  (low energy, guarded)
+
+        let top    = lerp(reactive,   expansive, openness)
+        let bottom = lerp(protective, receptive, openness)
+        return lerp(bottom, top, energy)
     }
 }
 
@@ -237,10 +278,15 @@ struct PulseCyclingAura: View {
     ]
 
     var body: some View {
-        if reduceMotion {
+        if reduceMotion || AppAnimation.lowPower {
             PulseAura(ramp: ramps[0], size: size, haloSpread: haloSpread)
         } else {
-            TimelineView(.animation) { timeline in
+            // 30fps cap — the ramp tours a space every `secondsPerSpace` (3.6s), so a
+            // colour step at 30Hz is far below perception; display-rate ticking was
+            // re-lerping four ramps and re-rendering the whole aura every frame for
+            // nothing. Render-gating only: the wall-clock drive and the cycle timing
+            // are untouched, just sampled half as often.
+            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
                 PulseAura(ramp: rampAt(timeline.date), size: size, haloSpread: haloSpread)
             }
         }

@@ -78,7 +78,7 @@ struct SettingsNotificationsView: View {
             let center = UNUserNotificationCenter.current()
             let settings = await center.notificationSettings()
             switch settings.authorizationStatus {
-            case .authorized, .provisional:
+            case .authorized, .provisional, .ephemeral:
                 break
             case .denied:
                 await MainActor.run {

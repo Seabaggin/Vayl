@@ -496,7 +496,7 @@ private struct ModeFaceContent: View {
     }
 
     private func startHoloShift() {
-        guard !reduceMotion else { return }
+        guard !reduceMotion, !AppAnimation.lowPower else { return }
         withAnimation(
             .easeInOut(duration: 2.6)
             .repeatForever(autoreverses: true)

@@ -106,9 +106,10 @@ struct CardCarousel: View {
         .onAppear {
             onPhaseChange?(.floating)
 
-            // Ambient idle loops — disabled entirely under Reduce Motion (the static
-            // resting state must read without motion). The phase callback above always fires.
-            guard !reduceMotion else { return }
+            // Ambient idle loops — disabled entirely under Reduce Motion / Low Power
+            // Mode (the static resting state must read without motion). The phase
+            // callback above always fires.
+            guard !reduceMotion, !AppAnimation.lowPower else { return }
 
             // Border rotation — ambient loop, 4.0s matches AppAnimation.ambientDrift.
             withAnimation(.linear(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: false)) {
@@ -533,13 +534,7 @@ struct CardCarousel: View {
         .allowsHitTesting(phase == .carousel && isActive)
         .onTapGesture {
             if phase == .carousel && isActive {
-                if selecting {
-                    let isAdd = !selectedIDs.contains(cards[i].id)
-                    onToggleSelect?(cards[i])
-                    if isAdd && !reduceMotion { triggerFlyGhost() }
-                } else {
-                    onCardAction?(cards[i], .startSession)
-                }
+                handleCarouselTap()
             }
         }
         .shadow(
@@ -639,9 +634,30 @@ struct CardCarousel: View {
             let isAdd = !selectedIDs.contains(card.id)
             onToggleSelect?(card)
             UISelectionFeedbackGenerator().selectionChanged()
-            if isAdd && !reduceMotion { triggerFlyGhost() }
+            if isAdd {
+                // Adding deals the card away — auto-advance so the next card slides
+                // in on its own, rather than making the user swipe after every pick.
+                if !reduceMotion { triggerFlyGhost() }
+                advanceToNextCard()
+            }
         } else {
             onCardAction?(card, .startSession)
+        }
+    }
+
+    /// Slide the next card into the center — same mechanic as a swipe-end advance,
+    /// but triggered by an add so selecting deals the card away hands-free. Stays put
+    /// on the last card (nothing to advance to) so the final pick doesn't wrap around.
+    private func advanceToNextCard() {
+        guard cards.count > 1, activeIndex < cards.count - 1 else { return }
+        activeIndex += 1
+        // Offset the incoming card to where the old one sat, then settle it to center —
+        // cancels the instant re-slot the activeIndex bump would otherwise cause.
+        dragOffset += (cardW + 16)
+        DispatchQueue.main.async {
+            withAnimation(AppAnimation.spring) {
+                dragOffset = 0
+            }
         }
     }
 

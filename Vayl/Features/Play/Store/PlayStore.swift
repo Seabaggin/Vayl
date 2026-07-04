@@ -50,15 +50,17 @@ final class PlayStore {
     init(modelContainer: ModelContainer,
          appState: AppState,
          entitlements: EntitlementStore,
-         catalog: DeckCatalogService = DeckCatalogService(),
-         realtime: RealtimeSessionService = RealtimeSessionService(),
-         pairing: PairingService = PairingService()) {
+         catalog: DeckCatalogService? = nil,
+         realtime: RealtimeSessionService? = nil,
+         pairing: PairingService? = nil) {
         self.modelContainer = modelContainer
         self.appState = appState
         self.entitlements = entitlements
-        self.catalog = catalog
-        self.realtime = realtime
-        self.pairing = pairing
+        // Construct the default services on the main actor (this init's isolation),
+        // not in a nonisolated default-argument expression.
+        self.catalog = catalog ?? DeckCatalogService()
+        self.realtime = realtime ?? RealtimeSessionService()
+        self.pairing = pairing ?? PairingService()
         load()
     }
 

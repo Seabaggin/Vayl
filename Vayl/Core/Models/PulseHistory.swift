@@ -17,29 +17,38 @@ enum PulseHistory {
         Array(entries.suffix(count))
     }
 
+    /// Last N logged entries as (date, space) — the six-space classification per check-in,
+    /// for the Me history grid. Oldest first, never padded.
+    static func lastLoggedSpaces(_ entries: [PulseEntry], count: Int = 30) -> [(date: Date, space: PulseSpace)] {
+        lastLogged(entries, count: count).map { (date: $0.date, space: $0.space) }
+    }
+
     // MARK: - Us (paired)
 
-    /// For each of YOUR last-N check-ins (oldest first), the partner's quadrant at
-    /// that time — carried forward from their most-recent entry on or before yours.
-    /// Partner half is nil before the partner's first-ever entry.
+    /// For each of YOUR last-N check-ins (oldest first), the partner's space at that time —
+    /// carried forward from their most-recent entry on or before yours. Partner half is nil
+    /// before the partner's first-ever entry.
     ///
     /// This is intentionally a CARRY-FORWARD, not a calendar-day join:
-    ///   - Partner checked in 5 days ago, you checked in today → partner half = that quadrant.
+    ///   - Partner checked in 5 days ago, you checked in today → partner half = that space.
     ///   - Partner has never checked in → every partner half is nil.
-    static func pairedLastLogged(
+    ///
+    /// NOTE: this is the carry-forward-per-your-entry model, not the spec's §7 36hr timezone
+    /// window — that change needs a schema migration and is deferred.
+    static func pairedLastLoggedSpaces(
         mine:    [PulseEntry],
         partner: [PulseEntry],
         count:   Int = 30
-    ) -> [(mine: PulseQuadrant, partner: PulseQuadrant?)] {
+    ) -> [(date: Date, mine: PulseSpace, partner: PulseSpace?)] {
         let myLast = lastLogged(mine, count: count)
-        // Ensure ascending order (PulseStore already does this, but be defensive).
         let sortedPartner = partner.sorted { $0.date < $1.date }
 
         return myLast.map { myEntry in
             let partnerEntry = sortedPartner.last { $0.date <= myEntry.date }
             return (
-                mine:    myEntry.resolvedPosition.quadrant,
-                partner: partnerEntry?.resolvedPosition.quadrant
+                date:    myEntry.date,
+                mine:    myEntry.space,
+                partner: partnerEntry?.space
             )
         }
     }

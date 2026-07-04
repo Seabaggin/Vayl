@@ -317,12 +317,11 @@ struct HomeDashboardView: View {
             .onChange(of: entryStore?.acceptedLaunch) { _, launch in
                 if let launch { joinerLaunch = launch; entryStore?.acceptedLaunch = nil }
             }
-            // Pulse check-in — sheet (discrete task), not a cover (not an immersive mode).
-            .vaylSheet(
-                isPresented: $showPulseCheckIn,
-                heightFraction: 0.82,
-                screenHeight: layout.screenHeight
-            ) {
+            // Pulse check-in — full-screen cover so PulseField gets real screen-derived
+            // geometry instead of a sheet's measured-content sizing (the bug that made it
+            // not land reliably). Not confirm-on-exit: a check-in is quick and low-stakes,
+            // not a protected two-device session.
+            .vaylCover(isPresented: $showPulseCheckIn, confirmOnExit: false) {
                 PulseCheckInView(store: pulseStore, onClose: { showPulseCheckIn = false })
             }
             // The Vayl sheet (custom OB chrome). Pass the real screen height so the

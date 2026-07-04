@@ -50,7 +50,7 @@ struct RotaryDial: View {
         .contentShape(Rectangle())
         .gesture(swapDrag)
         .onAppear {
-            guard !reduceMotion else { return }
+            guard !reduceMotion, !AppAnimation.lowPower else { return }
             withAnimation(.easeInOut(duration: 3.6).repeatForever(autoreverses: true)) { sway = 5 }
         }
     }
