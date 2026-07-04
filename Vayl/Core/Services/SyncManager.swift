@@ -287,8 +287,12 @@ class SyncManager: ObservableObject {
         let context = ModelContext(ModelContainer.appContainer)
         let task = SyncTask(taskType: taskType, entityId: entityId, payload: payload)
         context.insert(task)
-        try? context.save()
-        logger.info("Enqueued SyncTask: \(taskType) for entity \(entityId)")
+        do {
+            try context.saveWithLogging()
+            logger.info("Enqueued SyncTask: \(taskType) for entity \(entityId)")
+        } catch {
+            logger.error("Failed to enqueue SyncTask (\(taskType), entity \(entityId)): \(error.localizedDescription)")
+        }
         
         // Trigger a process run in the background
         Task { await processTaskQueue() }
@@ -313,12 +317,22 @@ class SyncManager: ObservableObject {
                     logger.warning("Unknown taskType in queue: \(task.taskType)")
                 }
                 
-                // On success, remove from queue
+                // On success, remove from queue. If this save fails the delete is lost and the
+                // task re-processes next launch (duplicate push) — so surface the failure.
                 context.delete(task)
-                try? context.save()
+                do {
+                    try context.saveWithLogging()
+                } catch {
+                    logger.error("Failed to persist SyncTask deletion (\(task.taskType)): \(error.localizedDescription)")
+                }
             } catch {
                 task.retryCount += 1
-                try? context.save()
+                // Persist the retry-count bump; a lost save silently drops retry accounting.
+                do {
+                    try context.saveWithLogging()
+                } catch {
+                    logger.error("Failed to persist SyncTask retry bump (\(task.taskType)): \(error.localizedDescription)")
+                }
                 logger.error("SyncTask failed (\(task.taskType), retries: \(task.retryCount)): \(error.localizedDescription)")
             }
         }

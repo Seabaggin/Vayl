@@ -106,6 +106,10 @@ struct CardCarousel: View {
         .onAppear {
             onPhaseChange?(.floating)
 
+            // Ambient idle loops — disabled entirely under Reduce Motion (the static
+            // resting state must read without motion). The phase callback above always fires.
+            guard !reduceMotion else { return }
+
             // Border rotation — ambient loop, 4.0s matches AppAnimation.ambientDrift.
             withAnimation(.linear(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: false)) {
                 borderRotation = 360.0

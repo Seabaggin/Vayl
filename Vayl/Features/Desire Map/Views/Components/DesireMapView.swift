@@ -247,20 +247,37 @@ struct DesireMapView: View {
     ]
 
     private var starField: some View {
-        TimelineView(.periodic(from: .now, by: 0.067)) { timeline in
-            Canvas { ctx, size in
-                let elapsed = timeline.date.timeIntervalSinceReferenceDate
-                    .truncatingRemainder(dividingBy: 1000)
-                for (idx, star) in DesireMapView._bgStars.enumerated() {
-                    let (xr, yr, d, base, period) = star
-                    let opacity: Double = period > 0
-                        ? 0.2 + (sin((elapsed / period + Double(idx) * 0.37) * .pi * 2) * 0.5 + 0.5) * 0.6
-                        : base
-                    let x = size.width * xr
-                    let y = size.height * yr
-                    let r = d / 2
-                    ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: d, height: d)),
-                             with: .color(.white.opacity(opacity)))
+        Group {
+            if reduceMotion {
+                // Reduce Motion: one static frame — no periodic twinkle loop. Twinkling stars
+                // (period > 0) hold at their base opacity; the sky reads fully without motion.
+                Canvas { ctx, size in
+                    for star in DesireMapView._bgStars {
+                        let (xr, yr, d, base, _) = star
+                        let x = size.width * xr
+                        let y = size.height * yr
+                        let r = d / 2
+                        ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: d, height: d)),
+                                 with: .color(.white.opacity(base)))
+                    }
+                }
+            } else {
+                TimelineView(.periodic(from: .now, by: 0.067)) { timeline in
+                    Canvas { ctx, size in
+                        let elapsed = timeline.date.timeIntervalSinceReferenceDate
+                            .truncatingRemainder(dividingBy: 1000)
+                        for (idx, star) in DesireMapView._bgStars.enumerated() {
+                            let (xr, yr, d, base, period) = star
+                            let opacity: Double = period > 0
+                                ? 0.2 + (sin((elapsed / period + Double(idx) * 0.37) * .pi * 2) * 0.5 + 0.5) * 0.6
+                                : base
+                            let x = size.width * xr
+                            let y = size.height * yr
+                            let r = d / 2
+                            ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: d, height: d)),
+                                     with: .color(.white.opacity(opacity)))
+                        }
+                    }
                 }
             }
         }

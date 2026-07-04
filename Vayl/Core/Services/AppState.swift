@@ -150,7 +150,13 @@ final class AppState {
     func markOnboardingComplete(_ profile: UserProfile, context: ModelContext) {
         profile.hasCompletedOnboarding = true
         profile.onboardingCompletedAt  = Date()
-        try? context.save()
+        do {
+            try context.saveWithLogging()
+        } catch {
+            // A lost completion save + the launch reconcile (which trusts UserProfile) could
+            // revert the user to onboarding. Surface the failure rather than swallow it.
+            logger.error("Failed to persist onboarding completion: \(error.localizedDescription)")
+        }
         isOnboardingComplete = true   // didSet writes the UserDefaults cache
     }
 
@@ -160,7 +166,13 @@ final class AppState {
     func resetOnboarding(_ profile: UserProfile?, context: ModelContext?) {
         profile?.hasCompletedOnboarding = false
         profile?.onboardingCompletedAt  = nil
-        if let context { try? context.save() }
+        if let context {
+            do {
+                try context.saveWithLogging()
+            } catch {
+                logger.error("Failed to persist onboarding reset: \(error.localizedDescription)")
+            }
+        }
         isOnboardingComplete = false
     }
 

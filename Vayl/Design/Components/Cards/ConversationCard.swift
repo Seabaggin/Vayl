@@ -23,6 +23,8 @@ struct ConversationCard: View {
     @State private var selectedPill: CardRevealPill? = nil
     @State private var showEncouragement = false
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     // MARK: - Callbacks
 
     var onPillSelected: ((CardRevealPill) -> Void)? = nil
@@ -78,9 +80,9 @@ struct ConversationCard: View {
                     )
             }
             .frame(width: cardWidth, height: cardHeight)
-            .scaleEffect(pulsing ? 1.02 : 1.0)
+            .scaleEffect((pulsing && !reduceMotion) ? 1.02 : 1.0)
             .animation(
-                pulsing
+                (pulsing && !reduceMotion)
                     ? .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
                     : .default,
                 value: pulsing
@@ -308,10 +310,13 @@ struct ConversationCard: View {
                 }
                 .overlay(alignment: .topLeading) {
                     let prefix = AttributedString(parts[0])
-                    let highlighted = try! AttributedString(markdown: "**\(card.highlightedPhrase)**")
+                    // Content-driven phrase: unbalanced markdown metachars (*, [, \) would
+                    // trap on try!. Fall back to a plain (unstyled) phrase rather than crash.
+                    let highlighted = (try? AttributedString(markdown: "**\(card.highlightedPhrase)**"))
+                        ?? AttributedString(card.highlightedPhrase)
                     var combined = prefix
                     combined += highlighted
-                    
+
                     return Text(combined)
                         .font(AppFonts.cardTitle)
                         .foregroundStyle(AppColors.textPrimary)
