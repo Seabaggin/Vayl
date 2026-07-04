@@ -44,7 +44,10 @@ struct SpectrumBulletRow: View {
             .frame(width: 22, height: 22)
             .overlay {
                 if !reduceMotion && !AppAnimation.lowPower {
-                    TimelineView(.animation) { tl in
+                    // 30fps cap — one of these mounts per bullet row (the
+                    // paywall renders several); a slow specular sweep never
+                    // needs display rate.
+                    TimelineView(.animation(minimumInterval: 1 / 30)) { tl in
                         specularSweep(at: tl.date.timeIntervalSinceReferenceDate)
                     }
                 }

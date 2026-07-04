@@ -39,7 +39,6 @@
 
 import Foundation
 import SwiftData
-import Combine
 import OSLog
 
 private let logger = Logger(
@@ -47,8 +46,8 @@ private let logger = Logger(
     category: "SyncManager"
 )
 
-@MainActor  // Runs on main thread — safe for @Published properties that drive UI
-class SyncManager: ObservableObject {
+@MainActor
+class SyncManager {
 
     // MARK: - Singleton
 
@@ -59,11 +58,14 @@ class SyncManager: ObservableObject {
 
     /// True while any sync operation is in progress.
     /// You can use this to show a spinner or "Syncing..." indicator.
-    @Published var isSyncing = false
+    // Nothing in the app observes these today; they are plain status flags
+    // (the vestigial ObservableObject/@Published surface was removed 2026-07-04
+    // — Services must not publish UI state).
+    var isSyncing = false
 
     /// If the last sync failed, this contains the error message.
     /// Nil means everything is fine. You can show this in a toast/alert.
-    @Published var lastSyncError: String?
+    var lastSyncError: String?
 
     // MARK: - Dependencies
 

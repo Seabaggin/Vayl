@@ -746,6 +746,9 @@ struct CardCarousel: View {
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
             // Float loop restart — same 3.2s as onAppear, intentional.
+            // Gated like the onAppear loops: under RM / Low Power the idle
+            // float never ran, so don't restart it here either.
+            guard !reduceMotion, !AppAnimation.lowPower else { return }
             withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
                 floatOffset = -6
             }

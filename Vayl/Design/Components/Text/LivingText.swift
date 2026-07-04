@@ -62,7 +62,9 @@ struct LivingText: View {
     // Animated tri-color breathing text. Per-frame math lives in `Frame` so the
     // TimelineView closure stays trivial to type-check (was 216ms inline).
     private var animatedText: some View {
-        TimelineView(.animation) { timeline in
+        // 30fps cap: the breathing cycles are 4.3–5.0s; display-rate re-layout
+        // of three Text layers (two blurred, screen-blended) is wasted work.
+        TimelineView(.animation(minimumInterval: 1 / 30)) { timeline in
             let f = Frame(
                 elapsed: timeline.date.timeIntervalSinceReferenceDate,
                 isLight: colorScheme == .light
