@@ -1,6 +1,6 @@
 // VaylTests/PulseHistoryTests.swift
 //
-// TDD for PulseHistory — lastLogged + pairedLastLogged.
+// TDD for PulseHistory — lastLogged + pairedLastLoggedSpaces.
 // Pure logic tests: count caps, carry-forward semantics, order preservation.
 
 import XCTest
@@ -47,13 +47,13 @@ final class PulseHistoryTests: XCTestCase {
     func test_paired_nilBeforeFirstPartnerEntry() {
         let partner = [makeEntry(daysAgo: 5, energy: 0.9, openness: 0.9)]
         let mine    = [makeEntry(daysAgo: 10)]   // earlier than partner's first entry
-        XCTAssertNil(PulseHistory.pairedLastLogged(mine: mine, partner: partner).first?.partner)
+        XCTAssertNil(PulseHistory.pairedLastLoggedSpaces(mine: mine, partner: partner).first?.partner)
     }
 
     func test_paired_carryForwardAfterFirstPartnerEntry() {
         let partner = [makeEntry(daysAgo: 5, energy: 0.9, openness: 0.9)]   // .expansive
         let mine    = [makeEntry(daysAgo: 3), makeEntry(daysAgo: 1)]
-        let result  = PulseHistory.pairedLastLogged(mine: mine, partner: partner)
+        let result  = PulseHistory.pairedLastLoggedSpaces(mine: mine, partner: partner)
         XCTAssertEqual(result[0].partner, .expansive)
         XCTAssertEqual(result[1].partner, .expansive)
     }
@@ -67,20 +67,20 @@ final class PulseHistoryTests: XCTestCase {
             makeEntry(daysAgo: 8),   // between the two → partner is .protective
             makeEntry(daysAgo: 1),   // after second → partner is .expansive
         ]
-        let result = PulseHistory.pairedLastLogged(mine: mine, partner: partner)
+        let result = PulseHistory.pairedLastLoggedSpaces(mine: mine, partner: partner)
         XCTAssertEqual(result[0].partner, .protective)
         XCTAssertEqual(result[1].partner, .expansive)
     }
 
     func test_paired_noPartnerEntries_allNil() {
         let mine   = makeEntries(count: 5)
-        let result = PulseHistory.pairedLastLogged(mine: mine, partner: [])
+        let result = PulseHistory.pairedLastLoggedSpaces(mine: mine, partner: [])
         XCTAssertTrue(result.allSatisfy { $0.partner == nil })
     }
 
     func test_paired_countCapped() {
         let mine   = makeEntries(count: 90)
-        let result = PulseHistory.pairedLastLogged(mine: mine, partner: [])
+        let result = PulseHistory.pairedLastLoggedSpaces(mine: mine, partner: [])
         XCTAssertEqual(result.count, 30)
     }
 
