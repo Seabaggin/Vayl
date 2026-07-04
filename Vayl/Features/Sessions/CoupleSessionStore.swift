@@ -686,6 +686,13 @@ final class CoupleSessionStore: Identifiable {
 
     // MARK: - Persistence
 
+    /// Whether this couple has completed a session before — repeat couples get the
+    /// airlock one-liner, not the six bullets (spec 4.5). Store-owned so the view
+    /// never reads persistence to make a flow decision (audit Blueprint C).
+    var isRepeatSession: Bool {
+        UserDefaults.standard.bool(forKey: UserDefaultsKey.hasCompletedCoupleSession)
+    }
+
     /// Writes the completed CardSession + CardResults + DeckProgress (mirrors
     /// SessionStore) and moves to the close. The reflection is written later,
     /// only if the user saves one.

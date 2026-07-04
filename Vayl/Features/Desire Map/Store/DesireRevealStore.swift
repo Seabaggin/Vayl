@@ -58,7 +58,65 @@ final class DesireRevealStore: Identifiable {
 
     /// All matches, each resolved to a display name + alignment + locked flag.
     /// Free couple: the one `is_free_reveal` is unlocked, the rest locked. Core: all unlocked.
-    private(set) var matches: [RevealMatch] = []
+    private(set) var matches: [RevealMatch] = [] {
+        didSet { rebuildConstellation() }
+    }
+
+    // MARK: - Constellation (audit Blueprint C — the hero rule lives HERE, testable)
+
+    /// The generated constellation (positions + MST edges), seeded by the couple so the
+    /// sky is theirs and stable across beats. Rebuilt once per `matches` change — the
+    /// View used to regenerate this (and pick the hero) inside body computed properties.
+    private(set) var layout = ConstellationLayout.Result(points: [], edges: [], heroIndex: 0)
+
+    /// Matches placed onto the layout: the free-reveal (or first mutual) star takes the
+    /// central hero slot; the rest fill the remaining positions in order. Sizes scale
+    /// with count so many stars do not crowd. Indices align with `layout.points`/`.edges`.
+    private(set) var placedStars: [DesireConstellationView.Star] = []
+
+    private func rebuildConstellation() {
+        let seed = appState.coupleId.map { ConstellationLayout.seed(for: $0) } ?? 0
+        let result = ConstellationLayout.generate(count: matches.count, seed: seed)
+        layout = result
+
+        guard !result.points.isEmpty, !matches.isEmpty else {
+            placedStars = []
+            return
+        }
+
+        // The hero rule (monetization-adjacent): the server-set free reveal wins the
+        // hero slot; else the first mutual; else the first match.
+        let hero = matches.first(where: { $0.isFreeReveal })
+            ?? matches.first(where: { $0.alignment == .mutual })
+            ?? matches.first
+        let others = matches.filter { $0.id != hero?.id }
+
+        var placed = [RevealMatch?](repeating: nil, count: result.points.count)
+        if result.heroIndex < placed.count { placed[result.heroIndex] = hero }
+        var oi = 0
+        for i in placed.indices where i != result.heroIndex {
+            if oi < others.count { placed[i] = others[oi]; oi += 1 }
+        }
+
+        let n = max(matches.count, 1)
+        let base = max(9.0, min(16.0, 16.0 * (4.0 / Double(n)).squareRoot()))
+        let heroSize = CGFloat(min(24.0, base * 1.5))
+
+        placedStars = placed.enumerated().compactMap { index, match in
+            guard let match else { return nil }
+            let isHero = index == result.heroIndex
+            return DesireConstellationView.Star(
+                id: match.id.uuidString,
+                point: result.points[index],
+                size: isHero ? heroSize : CGFloat(base),
+                label: match.itemName,
+                isHero: isHero,
+                isLocked: match.isLocked,
+                cadence: match.isLocked ? .locked : .free,
+                isAdjacent: match.alignment == .adjacent
+            )
+        }
+    }
 
     /// Drives the 3-beat ceremony. View observes this to choreograph the visual sequence.
     private(set) var beatPhase: BeatPhase = .idle

@@ -81,12 +81,14 @@ struct DesireMapView: View {
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTick)
         .onAppear {
             store.load()
-            if let firstUnrated = store.items.firstIndex(where: { store.existingRating(for: $0.id) == nil }) {
+            // Resume + greeting decisions are store-owned (Blueprint C); the view
+            // just maps the destination onto its presentation phases.
+            if let firstUnrated = store.firstUnratedIndex {
                 index = firstUnrated
             }
             if !store.items.isEmpty, store.ratedCount > 0 {
-                raterPhase = store.ratedCount >= store.totalCount
-                    ? (partnerComplete ? .ready : .mirror)
+                raterPhase = store.isComplete
+                    ? postRatingPhase
                     : .rating
                 ratingVisible = true
             }
@@ -319,19 +321,11 @@ struct DesireMapView: View {
         }
     }
 
-    private var positiveRatings: [DesireRatingValue] {
-        store.items.compactMap { item in
-            guard let r = store.existingRating(for: item.id),
-                  r == .excitedAboutIt || r == .openToIt else { return nil }
-            return r
-        }
-    }
-
     private func rater(item: DesireItem) -> some View {
         let answers = store.answers(for: item)
         return ZStack(alignment: .top) {
             // Stars only appear for excited + open answers (stars mark desire, not avoidance)
-            _StarAccum(ratings: positiveRatings, riseTrigger: starRiseTick)
+            _StarAccum(ratings: store.positiveRatings, riseTrigger: starRiseTick)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .allowsHitTesting(false)
 
@@ -566,11 +560,20 @@ struct DesireMapView: View {
         }
     }
 
+    /// The store-owned second-finisher branch, mapped onto this view's phases.
+    /// Used by both the returning-user greeting (onAppear) and the charted exit.
+    private var postRatingPhase: RaterPhase {
+        switch store.postRatingDestination(partnerComplete: partnerComplete) {
+        case .ready:  return .ready
+        case .mirror: return .mirror
+        }
+    }
+
     /// Leaves the charted beat for its branch target. Shared by the timed auto-advance
     /// and the tap-to-skip path, so both land on the same destination.
     private func advancePastCharted() {
         withAnimation(AppAnimation.enter) {
-            raterPhase = partnerComplete ? .ready : .mirror
+            raterPhase = postRatingPhase
         }
     }
 
@@ -641,7 +644,7 @@ struct DesireMapView: View {
 
                 // Answer groups
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                    ForEach(Array(ratedItemsByGroup.enumerated()), id: \.element.0) { idx, pair in
+                    ForEach(Array(store.ratedItemsByGroup.enumerated()), id: \.element.0) { idx, pair in
                         _MirrorGroup(rating: pair.0, items: pair.1, index: idx)
                     }
                 }
@@ -693,14 +696,6 @@ struct DesireMapView: View {
         .buttonStyle(_RaterPressStyle())
     }
 
-    private var ratedItemsByGroup: [(DesireRatingValue, [DesireItem])] {
-        let rated = store.items.filter { store.existingRating(for: $0.id) != nil }
-        let grouped = Dictionary(grouping: rated) { store.existingRating(for: $0.id)! }
-        return DesireRatingValue.allCases.compactMap { rating in
-            guard let items = grouped[rating], !items.isEmpty else { return nil }
-            return (rating, items)
-        }
-    }
 
     // MARK: - Empty / error
 

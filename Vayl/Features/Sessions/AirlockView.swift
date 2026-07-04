@@ -28,9 +28,8 @@ struct AirlockView: View {
     @State private var waitingPulse = false
 
     /// Repeat couples get the one-liner, not the six bullets (spec 4.5).
-    private var isRepeatSession: Bool {
-        UserDefaults.standard.bool(forKey: UserDefaultsKey.hasCompletedCoupleSession)
-    }
+    /// Store-owned: the view no longer reads persistence to make a flow decision.
+    private var isRepeatSession: Bool { store.isRepeatSession }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

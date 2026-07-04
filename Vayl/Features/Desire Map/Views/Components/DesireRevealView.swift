@@ -166,9 +166,11 @@ struct DesireRevealView: View {
                     .animation(AppAnimation.desireStarIgnite.delay(0.10).reduceMotionSafe, value: store.beatPhase)
 
                 // Constellation
+                // Layout + hero placement live on the store (Blueprint C) — the view
+                // only renders what it's handed.
                 DesireConstellationView(
-                    stars: placedStars,
-                    edges: layout.edges,
+                    stars: store.placedStars,
+                    edges: store.layout.edges,
                     variant: ceremonyVariant,
                     mode: constellationMode,
                     onTap: { id in
@@ -302,58 +304,12 @@ struct DesireRevealView: View {
         return CeremonyVariant.resolve(coupleId: appState.coupleId)
     }
 
-    /// The generated constellation (positions + MST edges) for the full match set, seeded by the
-    /// couple so the sky is theirs and stable across beats. Deterministic — recomputing is cheap.
-    private var layout: ConstellationLayout.Result {
-        let seed = appState.coupleId.map { ConstellationLayout.seed(for: $0) } ?? 0
-        return ConstellationLayout.generate(count: store.matches.count, seed: seed)
-    }
-
     /// What the constellation does at the current beat.
     private var constellationMode: DesireConstellationView.Mode {
         switch store.beatPhase {
         case .idle, .beat1:   return .intro
         case .beat2, .beat3:  return .teasers
         case .revealed:       return reduceMotion ? .resolved : .assemble
-        }
-    }
-
-    /// Matches placed onto the generated layout: the free-reveal (or first mutual) star takes the
-    /// central hero slot; the rest fill the remaining positions in order. Sizes scale with count
-    /// so many stars do not crowd. Indices align with `layout.points` / `layout.edges`.
-    private var placedStars: [DesireConstellationView.Star] {
-        let result = layout
-        guard !result.points.isEmpty, !store.matches.isEmpty else { return [] }
-
-        let hero = store.matches.first(where: { $0.isFreeReveal })
-            ?? store.matches.first(where: { $0.alignment == .mutual })
-            ?? store.matches.first
-        let others = store.matches.filter { $0.id != hero?.id }
-
-        var placed = [RevealMatch?](repeating: nil, count: result.points.count)
-        if result.heroIndex < placed.count { placed[result.heroIndex] = hero }
-        var oi = 0
-        for i in placed.indices where i != result.heroIndex {
-            if oi < others.count { placed[i] = others[oi]; oi += 1 }
-        }
-
-        let n = max(store.matches.count, 1)
-        let base = max(9.0, min(16.0, 16.0 * (4.0 / Double(n)).squareRoot()))
-        let heroSize = CGFloat(min(24.0, base * 1.5))
-
-        return placed.enumerated().compactMap { index, match in
-            guard let match else { return nil }
-            let isHero = index == result.heroIndex
-            return DesireConstellationView.Star(
-                id: match.id.uuidString,
-                point: result.points[index],
-                size: isHero ? heroSize : CGFloat(base),
-                label: match.itemName,
-                isHero: isHero,
-                isLocked: match.isLocked,
-                cadence: match.isLocked ? .locked : .free,
-                isAdjacent: match.alignment == .adjacent
-            )
         }
     }
 

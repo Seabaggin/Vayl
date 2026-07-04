@@ -165,6 +165,28 @@ final class HomeStore {
         }
     }
 
+    // MARK: - Rater-dismiss outcome (audit Blueprint C — the fork lives HERE, testable)
+
+    /// What Home does after the Desire rater closes. One owner for the
+    /// reveal-vs-celebration-vs-nothing decision (the router previously ran this
+    /// branch itself, duplicating flow knowledge DesireMapView also derived).
+    enum RaterDismissOutcome {
+        case showReveal            // both maps done, reveal unseen → hand off to the reveal
+        case celebrateCompletion   // just finished, partner pending → one-shot charted beat
+        case none
+    }
+
+    /// Refreshes Home state, then resolves the post-rater branch.
+    /// `wasCompleteOnOpen`: whether the user's map was already complete when the
+    /// rater opened — distinguishes a fresh completion from a re-visit.
+    func raterDismissOutcome(wasCompleteOnOpen: Bool) async -> RaterDismissOutcome {
+        await loadAll()
+        guard myMapComplete else { return .none }
+        if partnerMapComplete, !revealDone { return .showReveal }
+        if !wasCompleteOnOpen, isPaired { return .celebrateCompletion }
+        return .none
+    }
+
     // MARK: - Actions
 
     func markPostReflectionDone() {

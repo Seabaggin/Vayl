@@ -188,4 +188,44 @@ final class DesireMapStore: Identifiable {
     func existingRating(for itemId: String) -> DesireRatingValue? {
         ratings[itemId]
     }
+
+    // MARK: - Flow decisions (audit Blueprint C — the rater's forks live HERE, testable)
+
+    /// Where the rater resumes: the first unrated item, or nil when everything is rated
+    /// (or nothing is loaded).
+    var firstUnratedIndex: Int? {
+        items.firstIndex { existingRating(for: $0.id) == nil }
+    }
+
+    /// The post-rating branch — the "second-finisher rule". One owner: both the
+    /// returning-user greeting and the charted-beat exit route through this.
+    enum PostRatingDestination { case ready, mirror }
+    func postRatingDestination(partnerComplete: Bool) -> PostRatingDestination {
+        partnerComplete ? .ready : .mirror
+    }
+
+    /// The positive (excited / open) weights in item order — feeds the accumulating star sky.
+    var positiveRatings: [DesireRatingValue] {
+        items.compactMap { item in
+            guard let r = existingRating(for: item.id),
+                  r == .excitedAboutIt || r == .openToIt else { return nil }
+            return r
+        }
+    }
+
+    /// Rated items grouped by weight, in DesireRatingValue.allCases order, empty groups
+    /// dropped — feeds the mirror screen. (Replaces a view computed property that
+    /// force-unwrapped the rating between two separate lookups.)
+    var ratedItemsByGroup: [(DesireRatingValue, [DesireItem])] {
+        var grouped: [DesireRatingValue: [DesireItem]] = [:]
+        for item in items {
+            if let rating = existingRating(for: item.id) {
+                grouped[rating, default: []].append(item)
+            }
+        }
+        return DesireRatingValue.allCases.compactMap { rating in
+            guard let items = grouped[rating], !items.isEmpty else { return nil }
+            return (rating, items)
+        }
+    }
 }
