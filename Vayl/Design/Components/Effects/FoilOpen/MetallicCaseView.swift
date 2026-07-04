@@ -100,9 +100,15 @@ struct MetallicCaseView: View {
     var tears: [CaseTear] = []
 
     /// When the shatter begins (third crack): `.distantFuture` = sealed.
-    /// Assigning a real date runs the bloom-flood — colorway light floods the
-    /// face through the lattice, then the case dissolves out.
+    /// Assigning a real date runs OVERLOAD then the UN-KNIT — the shell
+    /// disassembles cell by cell along its own hex lattice, uncovering whatever
+    /// the consumer mounted behind the view (formation-in-reverse, not confetti).
     var dissolveStart: Date = .distantFuture
+
+    // Un-knit timeline + wave shape (module tunables — tinker on device).
+    var overloadSpan: Double = 0.45   // held breath: cracks flare, nothing moves
+    var unknitSpan:   Double = 1.25   // the wave front crossing the whole shell
+    var unknitBand:   Double = 3.2    // wave front thickness (lattice units) — cells actively departing
 
     /// Tap-to-crack: when set, taps landing on (or near) the FRONT FACE are
     /// converted to face-local UV at tap time — the inverse-bilinear of the
@@ -256,16 +262,18 @@ struct MetallicCaseView: View {
     }
 
     /// The shatter timeline, two acts from `dissolveStart`:
-    ///   OVERLOAD (0…0.45s) — every crack flares white-hot, the light inside
-    ///   maxes out, nothing moves: the held breath before the shell gives.
-    ///   FLOOD (0.45…2.0s) — the bloom erupts and the case dissolves under it.
-    /// Reduce Motion snaps both to done (the consumer's cross-dissolve covers it).
+    ///   OVERLOAD (0…overloadSpan) — every crack flares white-hot, the light
+    ///   inside maxes out, nothing moves: the held breath before the shell gives.
+    ///   UN-KNIT (overloadSpan…+unknitSpan) — the shell disassembles cell by
+    ///   cell along its hex lattice; `flood` 0→1 is the wave's progress.
+    /// Reduce Motion snaps both to done (the shell is simply gone — the content
+    /// behind stands revealed with no motion).
     private func dissolvePhases(t: Double, motion: Bool) -> (overload: Double, flood: Double) {
         if dissolveStart == .distantFuture { return (0, 0) }
         guard motion else { return (1, 1) }
         let e = t - dissolveStart.timeIntervalSinceReferenceDate
-        let overload = min(1, max(0, e / 0.45))
-        let f = min(1, max(0, (e - 0.45) / 1.55))
+        let overload = min(1, max(0, e / overloadSpan))
+        let f = min(1, max(0, (e - overloadSpan) / unknitSpan))
         return (overload, f * f * (3 - 2 * f))
     }
 
@@ -295,13 +303,18 @@ struct MetallicCaseView: View {
         let geo = caseGeometry(size: size, t: t, motion: motion, pose: pose, calm: overload)
         ZStack {
         // BEHIND the shell: the glowing interior, revealed through erased wounds.
+        // Carries the through-cracks (Segment 5) and drains as the un-knit
+        // sweeps, handing the reveal to whatever the consumer mounted behind.
         if !tears.isEmpty {
-            Canvas { ctx, _ in drawInterior(&ctx, geo: geo) }
+            Canvas { ctx, _ in
+                drawInterior(&ctx, geo: geo, t: t, motion: motion, flood: flood)
+            }
         }
         Canvas { ctx, _ in
             drawCase(&ctx, size: size, geo: geo)
             drawKnock(&ctx, geo: geo, t: t, motion: motion)
             drawTears(&ctx, geo: geo, overload: overload, t: t, motion: motion)
+            eraseUnknit(&ctx, geo: geo, flood: flood)
         }
             // Debossed hex foil — the band phase is driven by the FLOAT TILT, not
             // time, so the light only moves because the box moves (and Reduce
@@ -327,16 +340,17 @@ struct MetallicCaseView: View {
                 .float(Float(envGain)),
                 .float(Float(coreGlow))
             ))
-            // The shell holds + strains through the overload, then VANISHES the
-            // instant it breaks (flood > 0) — the flying shards replace it.
-            .opacity(flood > 0.001 ? max(0, 1 - flood * 10) : 1)
+            // The shell is REMOVED cell by cell by eraseUnknit — no whole-object
+            // fade. A final sliver fade cleans up the fold strips the lattice
+            // wrap can't reach (wrapPoint dies past 90% of the depth).
+            .opacity(flood > 0.92 ? max(0, (1 - flood) / 0.08) : 1)
 
-            // SHATTER: the shell bursts into shards that fly/fall with weight
-            // (Opal-destructive). A plain Canvas (no foil shader) so the pieces
-            // tumble as solid metal, not lattice-lit panels.
-            if flood > 0.001 {
+            // UN-KNIT pieces: the freed cells at the wave front, drawn in a
+            // plain Canvas (no foil shader) so they read as solid metal lifting
+            // clear, plus the seam pre-glow where the lattice is about to give.
+            if flood > 0.001, flood < 0.999 {
                 Canvas { ctx, _ in
-                    drawShatter(&ctx, geo: geo, flood: flood)
+                    drawUnknitPieces(&ctx, geo: geo, flood: flood)
                 }
             }
         }
@@ -641,6 +655,45 @@ struct MetallicCaseView: View {
     /// impact with an expanding shock ring, and taper from a wide wound at the
     /// strike to hairline tips. Light-bleed escalates per tear and floods
     /// during the shatter.
+    /// One strike's authored fracture set — the SAME geometry consumed by the
+    /// shell pass (drawTears) and the interior card pass (drawInterior), so the
+    /// wound reads as going all the way through (Segment 5). Fully deterministic
+    /// (seeded), so both passes computing it independently stay aligned.
+    private struct TearNetwork {
+        let k: Int
+        let tear: CaseTear
+        let lines: [[CGPoint]]
+        let ripAngle: Double
+    }
+
+    /// Build every tear's crack network for the current frame geometry.
+    /// CHOREO — the cracks + rip aim toward the CENTRE: corner strikes spray a
+    /// DIRECTED fan toward the middle (the composition converges there); the
+    /// central kill radiates full. This is what makes the 1-2-3 read as one
+    /// composed failure instead of three scattered hits. The central kill also
+    /// reaches cracks to BOTH previous strikes (connecting the whole network
+    /// before the shatter); corner strikes don't link — their directed fan
+    /// already converges on the centre.
+    private func tearNetworks(geo: CaseGeometry) -> [TearNetwork] {
+        var occupied = Set<Int64>()
+        var nets: [TearNetwork] = []
+        for (k, tear) in tears.enumerated() {
+            let toC = SIMD2(0.5 - Double(tear.faceUV.x), 0.5 - Double(tear.faceUV.y))
+            let centered = (toC.x * toC.x + toC.y * toC.y).squareRoot() < 0.12
+            let anchorAngle = centered ? tear.angleDeg * .pi / 180 : atan2(toC.y, toC.x)
+            let spread = centered ? 2 * Double.pi : 1.8   // tighter = cracks aim AT centre, not the borders
+            let ripAngle = centered ? tear.angleDeg : anchorAngle * 180 / .pi
+            let links: [CGPoint] = centered ? Array(tears.prefix(k)).map { $0.faceUV } : []
+            // count + reach AUTHORED by severity (the designed 1-2-3 escalation)
+            let cracks = radiatingCracks(tear, geo: geo, count: 4 + k,
+                                         reach: 18 + 5 * k, links: links,
+                                         anchorAngle: anchorAngle, spread: spread,
+                                         occupied: &occupied)
+            nets.append(TearNetwork(k: k, tear: tear, lines: cracks, ripAngle: ripAngle))
+        }
+        return nets
+    }
+
     private func drawTears(_ ctx: inout GraphicsContext, geo: CaseGeometry,
                            overload: Double, t: Double, motion: Bool) {
         guard !tears.isEmpty else { return }
@@ -651,9 +704,9 @@ struct MetallicCaseView: View {
         // sizing is relative to the FACE WIDTH so the damage uses the case's real
         // estate (Opal-scale), not a few fixed pixels.
         let faceW = hypot(quad[1].x - quad[0].x, quad[1].y - quad[0].y)
-        var occupied = Set<Int64>()
 
-        for (k, tear) in tears.enumerated() {
+        for net in tearNetworks(geo: geo) {
+            let k = net.k, tear = net.tear
             // DESIGNED 1-2-3 sequence: severity is AUTHORED by strike index, not
             // random — each strike is a heavier impact than the last.
             let sev   = k + 1                                  // 1, 2, 3
@@ -665,30 +718,9 @@ struct MetallicCaseView: View {
             let pulse = motion ? 0.5 + 0.5 * dsin(t * (2 * .pi / 1.6) + phase) : 1.0
             let bleed = min(1.7, (0.5 + 0.22 * Double(k)) * (0.7 + 0.5 * pulse) + 1.0 * overload)
             let widen = 1.0 + 0.25 * Double(k) + 0.5 * overload
+            let ripAngle = net.ripAngle
 
-            // CRACKS RADIATE from the impact — long lines spanning the face, count +
-            // reach AUTHORED by severity. Each strike after the first sends one crack
-            // toward the PREVIOUS strike, so the fractures CONNECT into a spreading
-            // network across the case (the shell progressively failing).
-            // CHOREO — the cracks + rip aim toward the CENTRE: corner strikes spray a
-            // DIRECTED fan toward the middle (the composition converges there); the
-            // central kill radiates full. This is what makes the 1-2-3 read as one
-            // composed failure instead of three scattered hits.
-            let toC = SIMD2(0.5 - Double(tear.faceUV.x), 0.5 - Double(tear.faceUV.y))
-            let centered = (toC.x * toC.x + toC.y * toC.y).squareRoot() < 0.12
-            let anchorAngle = centered ? tear.angleDeg * .pi / 180 : atan2(toC.y, toC.x)
-            let spread = centered ? 2 * Double.pi : 1.8   // tighter = cracks aim AT centre, not the borders
-            let ripAngle = centered ? tear.angleDeg : anchorAngle * 180 / .pi
-
-            // The CENTRAL kill reaches cracks to BOTH previous strikes (connecting
-            // the whole network before the shatter); corner strikes don't link —
-            // their directed fan already converges on the centre.
-            let links: [CGPoint] = centered ? Array(tears.prefix(k)).map { $0.faceUV } : []
-            let cracks = radiatingCracks(tear, geo: geo, count: 4 + k,
-                                         reach: 18 + 5 * k, links: links,
-                                         anchorAngle: anchorAngle, spread: spread,
-                                         occupied: &occupied)
-            for line in cracks {
+            for line in net.lines {
                 drawCrackLine(&ctx, line, growE: growE, widen: widen, bleed: bleed,
                               flash: flash, overload: overload, t: t, motion: motion,
                               spectrum: spectrum)
@@ -864,18 +896,37 @@ struct MetallicCaseView: View {
             startPoint: lightTL, endPoint: lightBR), lineWidth: 2.0)
     }
 
+    /// smoothstep — 0 below `a`, 1 above `b`, eased between.
+    private func sstep(_ x: Double, _ a: Double, _ b: Double) -> Double {
+        let u = min(1, max(0, (x - a) / (b - a)))
+        return u * u * (3 - 2 * u)
+    }
+
     /// The glowing INTERIOR revealed through the erased wounds — a generic lit panel
     /// (spectrum, brightest at centre) clipped to the case silhouette so it only
     /// shows through real negative space. Lives BEHIND the shell Canvas in the
-    /// ZStack. Kept generic so the module stays content-agnostic; swap for real card
-    /// art later by layering it here.
-    private func drawInterior(_ ctx: inout GraphicsContext, geo: CaseGeometry) {
+    /// ZStack. Kept generic so the module stays content-agnostic.
+    ///
+    /// Segment 5 — the wound goes ALL THE WAY THROUGH: the same fracture network
+    /// as the shell (identical seeds → identical geometry via tearNetworks) is
+    /// rendered on this card body as a dark fissure with a hot edge, so a wound
+    /// shows the crack continuing beneath the shell. TRANSIENT by design: the
+    /// fissures cool and seal as the energy drains through the un-knit — the
+    /// actual reveal content the consumer mounts behind is never touched.
+    ///
+    /// During the un-knit the whole layer DRAINS (the escaping essence), handing
+    /// the uncovered holes to the consumer's content behind the module.
+    private func drawInterior(_ ctx: inout GraphicsContext, geo: CaseGeometry,
+                              t: Double, motion: Bool, flood: Double) {
+        let drain = sstep(flood, 0.10, 0.75)
+        guard drain < 0.999 else { return }
         let hull = roundedFacePath(convexHull(geo.proj), softness: cornerSoftness)
         let q = geo.frontQuad
         let center = CGPoint(x: (q[0].x + q[2].x) / 2, y: (q[0].y + q[2].y) / 2)
         let r = hypot(q[2].x - q[0].x, q[2].y - q[0].y) * 0.62
         var g = ctx
         g.clip(to: hull)
+        g.opacity = 1 - drain
         g.fill(hull, with: .radialGradient(
             Gradient(stops: [
                 .init(color: .white.opacity(0.92),            location: 0.0),
@@ -884,121 +935,228 @@ struct MetallicCaseView: View {
                 .init(color: theme.colorway.c0.opacity(0.6),  location: 1.0),
             ]),
             center: center, startRadius: 0, endRadius: r))
+
+        // the through-cracks — grow in sync with the shell's (same 0.30s reveal),
+        // cool + seal as the un-knit settles (a slightly earlier fade than the
+        // glow, so the damage heals before the light finishes leaving)
+        let cool = 1 - sstep(flood, 0.20, 0.70)
+        guard cool > 0.01 else { return }
+        for net in tearNetworks(geo: geo) {
+            let age   = motion ? max(0, t - net.tear.struck.timeIntervalSinceReferenceDate) : 10
+            let grow  = min(1.0, age / 0.30)
+            let growE = 1 - (1 - grow) * (1 - grow)
+            guard growE > 0.01 else { continue }
+            for line in net.lines {
+                let path = revealedPath(line, growE: growE)
+                // hot edge first (the card's energy pressed into the fissure)…
+                var hot = g
+                hot.blendMode = .plusLighter
+                hot.opacity = 0.35 * growE * cool
+                hot.addFilter(.blur(radius: 2.0))
+                hot.stroke(path, with: .color(theme.colorway.c2), lineWidth: 3.2)
+                // …then the dark split itself — damage on a glowing body
+                var fissure = g
+                fissure.opacity = 0.6 * growE * cool
+                fissure.stroke(path, with: .color(AppColors.void), lineWidth: 1.8)
+            }
+        }
     }
 
-    /// Bloom-flood (after the overload): the light inside finally takes the
-    /// shell — it floods the whole silhouette from the last strike outward,
-    /// peaking as the case dissolves beneath it. This is the egg giving way.
-    private func drawBloom(_ ctx: inout GraphicsContext, geo: CaseGeometry, flood: Double) {
-        guard flood > 0.001 else { return }
-        let quad = geo.frontQuad
-        let centerUV = tears.last?.faceUV ?? CGPoint(x: 0.5, y: 0.5)
-        let center = bilerp(quad, Double(centerUV.x), Double(centerUV.y))
-        let radius = hypot(quad[2].x - quad[0].x, quad[2].y - quad[0].y) * 1.05
-        let hull = roundedFacePath(convexHull(geo.proj), softness: cornerSoftness)
-        let peak = dsin(min(flood, 1) * .pi)
-
-        var burst = ctx
-        burst.opacity = peak
-        burst.fill(hull, with: .radialGradient(
-            Gradient(stops: [
-                .init(color: .white,                          location: 0.0),
-                .init(color: .white,                          location: 0.25),
-                .init(color: theme.colorway.c1,               location: 0.6),
-                .init(color: theme.colorway.c2.opacity(0.45), location: 1.0),
-            ]),
-            center: center, startRadius: 0, endRadius: radius))
+    /// The revealed prefix of a crack polyline at growth `growE` (0…1) — the
+    /// propagation animation as a single Path. Shared by the shell's crack pass
+    /// (per-segment styling lives in drawCrackLine) and the interior card pass,
+    /// so the two stay frame-locked.
+    private func revealedPath(_ branch: [CGPoint], growE: Double) -> Path {
+        var path = Path()
+        let n = branch.count - 1
+        guard n > 0 else { return path }
+        let reveal = growE * Double(n)
+        path.move(to: branch[0])
+        for i in 0..<n {
+            let segP = min(max(reveal - Double(i), 0), 1)
+            guard segP > 0 else { break }
+            let a = branch[i], b = branch[i + 1]
+            path.addLine(to: segP >= 1 ? b
+                : CGPoint(x: a.x + (b.x - a.x) * segP, y: a.y + (b.y - a.y) * segP))
+        }
+        return path
     }
 
-    /// The shell SHATTERS (Opal-destructive): the front face bursts into a grid of
-    /// irregular shards that launch radiating from the last strike, tumble, fall
-    /// under gravity, and fade. `flood` 0→1 is the burst progress. Drawn in its own
-    /// un-shadered Canvas so the pieces read as solid flying metal. A hard white
-    /// break-flash punches at the wound on impact.
-    private func drawShatter(_ ctx: inout GraphicsContext, geo: CaseGeometry, flood: Double) {
+    // MARK: - Un-knit (Segment 3): the shell disassembles along its own lattice
+
+    /// One honeycomb cell of the shell during the un-knit wave.
+    ///   lead < 0  — still knitted, but the wave front is near (seam pre-glow)
+    ///   0…1       — departing: erased from the shell, drawn as a freed piece
+    ///   ≥ 1       — gone
+    private struct UnknitCell {
+        let center: SIMD2<Double>   // lattice space
+        let lead: Double
+        let jitter: Double          // per-cell 0…1 (seeded) — organic front + flight variance
+        var q: Double { min(1, max(0, lead)) }
+    }
+
+    /// Enumerate the honeycomb cell centers covering the face + fold overhang
+    /// (the same two offset grids as hexFoilSurface / nearestHexVertex) and
+    /// compute each cell's departure under the wave. The wave radiates from the
+    /// KILL strike (dead centre in the Pincer); a small seeded jitter keeps the
+    /// front organic without breaking the formation-in-reverse read.
+    /// Only cells the front has reached (or is about to) are returned.
+    private func unknitCells(flood: Double) -> [UnknitCell] {
+        guard flood > 0.001 else { return [] }
+        let r3 = 1.7320508
+        let cols = latticeColumns
+        let over = Double(depthFrac) * cols               // fold overhang, lattice units
+        let xLo = -over, xHi = cols + over
+        let yLo = -over, yHi = 1.5 * cols + over
+        // wave origin = the kill strike
+        let o = tears.last.map {
+            SIMD2(Double($0.faceUV.x) * cols, Double($0.faceUV.y) * 1.5 * cols)
+        } ?? SIMD2(0.5 * cols, 0.75 * cols)
+        // the wave must reach the farthest corner
+        let maxD = [SIMD2(xLo, yLo), SIMD2(xHi, yLo), SIMD2(xLo, yHi), SIMD2(xHi, yHi)]
+            .map { c -> Double in
+                let v = c - o
+                return (v.x * v.x + v.y * v.y).squareRoot()
+            }
+            .max() ?? 1
+        let waveD = flood * (maxD + unknitBand)
+        let waveSeed = tears.last?.seed ?? 0x0BAD_CE11
+
+        var cells: [UnknitCell] = []
+        func visit(_ c: SIMD2<Double>) {
+            let v = c - o
+            let d = (v.x * v.x + v.y * v.y).squareRoot()
+            var rng = SplitMix64(seed: UInt64(bitPattern: vertexKey(c)) ^ waveSeed)
+            let jitter = Double.random(in: 0...1, using: &rng)
+            let lead = (waveD - (d + (jitter - 0.5) * 1.6)) / unknitBand
+            guard lead > -0.5 else { return }
+            cells.append(UnknitCell(center: c, lead: lead, jitter: jitter))
+        }
+        let jLo = Int((yLo / r3).rounded(.down)), jHi = Int((yHi / r3).rounded(.up))
+        let iLo = Int(xLo.rounded(.down)), iHi = Int(xHi.rounded(.up))
+        for j in jLo...jHi {
+            let rowY = Double(j) * r3
+            for i in iLo...iHi {
+                visit(SIMD2(Double(i), rowY))                       // grid A
+                visit(SIMD2(Double(i) + 0.5, rowY + r3 * 0.5))      // grid B
+            }
+        }
+        return cells
+    }
+
+    /// A cell's hexagon in screen space, corners scaled about the center
+    /// (`scale` > 1 swallows the groove seam). Nil if any corner falls past a
+    /// fold the camera can't see — that cell has no drawable piece.
+    private func hexCellPath(center: SIMD2<Double>, geo: CaseGeometry,
+                             scale: Double) -> Path? {
+        let R = Self.hexR
+        let offs: [SIMD2<Double>] = [
+            SIMD2(0,  R), SIMD2(0.5,  R / 2), SIMD2(0.5, -R / 2),
+            SIMD2(0, -R), SIMD2(-0.5, -R / 2), SIMD2(-0.5, R / 2),
+        ]
+        var pts: [CGPoint] = []
+        for off in offs {
+            guard let p = wrapPoint(center + off * scale, geo: geo) else { return nil }
+            pts.append(p)
+        }
+        var path = Path()
+        path.move(to: pts[0])
+        for p in pts.dropFirst() { path.addLine(to: p) }
+        path.closeSubpath()
+        return path
+    }
+
+    /// Erase departed cells from the shell — the un-knit's NEGATIVE SPACE. Runs
+    /// inside the shell Canvas (destinationOut) so the hex shader passes the
+    /// holes straight through: whatever the consumer mounted behind the module
+    /// is genuinely UNCOVERED, never cross-faded to. The 1.18 inflation swallows
+    /// the groove seams — the lattice's joints give way with the cell.
+    private func eraseUnknit(_ ctx: inout GraphicsContext, geo: CaseGeometry, flood: Double) {
         guard flood > 0.001 else { return }
+        var cut = ctx
+        cut.blendMode = .destinationOut
+        for cell in unknitCells(flood: flood) where cell.lead > 0 {
+            guard let hex = hexCellPath(center: cell.center, geo: geo, scale: 1.18) else { continue }
+            cut.fill(hex, with: .color(.black))
+        }
+    }
+
+    /// The wave front, drawn OVER the shell in a plain (un-shadered) Canvas:
+    ///   · seam pre-glow — cells the front is about to take flare along their
+    ///     hex outline (the lattice visibly giving way ahead of the wave)
+    ///   · freed pieces — each departing cell lifts a short way OUTWARD from the
+    ///     wave origin, tips slightly, cools and fades. Formation-in-reverse:
+    ///     ordered, light, no gravity, no tumble. (Segment 6 holds heavier
+    ///     per-cell flight physics in reserve pending the device feel pass.)
+    private func drawUnknitPieces(_ ctx: inout GraphicsContext, geo: CaseGeometry, flood: Double) {
+        let cells = unknitCells(flood: flood)
+        guard !cells.isEmpty else { return }
         let quad = geo.frontQuad
-        let strikeUV = tears.last?.faceUV ?? CGPoint(x: 0.5, y: 0.5)
-        let strike = bilerp(quad, Double(strikeUV.x), Double(strikeUV.y))
-        let p = flood
         let spectrum = GraphicsContext.Shading.linearGradient(
             Gradient(colors: [theme.colorway.c0, theme.colorway.c1, theme.colorway.c2]),
             startPoint: quad[0], endPoint: quad[2])
-
-        // break-flash — a hard white burst at the wound, gone fast (the impact light)
-        let flashP = max(0.0, 1 - p / 0.22)
-        if flashP > 0 {
-            let r = hypot(quad[2].x - quad[0].x, quad[2].y - quad[0].y) * (0.35 + 0.5 * (1 - flashP))
-            var fl = ctx
-            fl.opacity = flashP
-            fl.fill(Path(ellipseIn: CGRect(x: strike.x - r, y: strike.y - r, width: r * 2, height: r * 2)),
-                    with: .radialGradient(Gradient(colors: [.white, .white.opacity(0)]),
-                                          center: strike, startRadius: 0, endRadius: r))
-        }
-
-        // shard grid — jittered interior vertices (edges pinned so the face is fully
-        // covered at p = 0, seamless from the vanishing intact shell). Dense so the
-        // pieces are small — they shrink to flecks as they fly (Thanos disintegration).
-        let cols = 9, rows = 14
-        var rng = SplitMix64(seed: (tears.last?.seed ?? 1) ^ 0x5151_BEEF)
-        func jit(_ a: Double) -> Double { Double.random(in: -a...a, using: &rng) }
-        var grid: [[CGPoint]] = []
-        for r in 0...rows {
-            var row: [CGPoint] = []
-            for c in 0...cols {
-                let bu = Double(c) / Double(cols), bv = Double(r) / Double(rows)
-                let ju = (c == 0 || c == cols) ? 0 : jit(0.42 / Double(cols))
-                let jv = (r == 0 || r == rows) ? 0 : jit(0.42 / Double(rows))
-                row.append(CGPoint(x: bu + ju, y: bv + jv))
-            }
-            grid.append(row)
-        }
-
+        let originUV = tears.last?.faceUV ?? CGPoint(x: 0.5, y: 0.5)
+        let origin = bilerp(quad, Double(originUV.x), Double(originUV.y))
         let metal = color(mix(Self.components(theme.colorway.c1), SIMD3(0, 0, 0), 0.5))
         let backMetal = color(mix(Self.components(theme.colorway.c1), SIMD3(0, 0, 0), 0.78))
-        let ease = 1 - (1 - p) * (1 - p)             // easeOut launch
-        let gravity = 1100.0
-        for r in 0..<rows {
-            for c in 0..<cols {
-                let scr = [grid[r][c], grid[r][c + 1], grid[r + 1][c + 1], grid[r + 1][c]]
-                    .map { bilerp(quad, Double($0.x), Double($0.y)) }
-                let cen = CGPoint(x: (scr[0].x + scr[1].x + scr[2].x + scr[3].x) / 4,
-                                  y: (scr[0].y + scr[1].y + scr[2].y + scr[3].y) / 4)
-                let dx = cen.x - strike.x, dy = cen.y - strike.y
-                let len = max(1, hypot(dx, dy))
-                let dir = CGPoint(x: dx / len, y: dy / len)
-                // closer to the strike = launched harder
-                let speed = 90 + Double.random(in: 0...120, using: &rng) + 9000.0 / len
-                let spin  = Double.random(in: -7...7, using: &rng)
-                let ox = dir.x * speed * ease
-                let oy = dir.y * speed * ease + gravity * p * p
-                let ang = spin * p, ca = dcos(ang), sa = dsin(ang)
-                let sc = 1 - 0.82 * p            // shrink each piece to a fleck as it disperses
-                var front: [CGPoint] = []
-                for pt in scr {
-                    let rx = (pt.x - cen.x) * sc, ry = (pt.y - cen.y) * sc
-                    front.append(CGPoint(x: cen.x + (rx * ca - ry * sa) + ox,
-                                         y: cen.y + (rx * sa + ry * ca) + oy))
+
+        for cell in cells {
+            // seam pre-glow just ahead of the front
+            if cell.lead <= 0 {
+                guard let hex = hexCellPath(center: cell.center, geo: geo, scale: 1.0) else { continue }
+                var pre = ctx
+                pre.blendMode = .plusLighter
+                pre.opacity = (0.5 + cell.lead) / 0.5 * 0.35
+                pre.addFilter(.blur(radius: 1.5))
+                pre.stroke(hex, with: spectrum, lineWidth: 1.2)
+                continue
+            }
+            let q = cell.q
+            guard q < 1,
+                  let pc = wrapPoint(cell.center, geo: geo),
+                  let hex = hexCellPath(center: cell.center, geo: geo, scale: 1.0)
+            else { continue }
+
+            // freed piece: short outward lift, slight tip, cool + fade
+            let dx = pc.x - origin.x, dy = pc.y - origin.y
+            let len = max(1, hypot(dx, dy))
+            let qe = 1 - (1 - q) * (1 - q)                     // easeOut departure
+            let travel = (10 + 14 * cell.jitter) * qe
+            let ox = dx / len * travel, oy = dy / len * travel
+            let ang = (cell.jitter - 0.5) * 0.8 * q
+            let ca = dcos(ang), sa = dsin(ang)
+            let sc = 1 - 0.30 * q
+            var piece = Path()
+            hex.forEach { el in
+                func moved(_ p: CGPoint) -> CGPoint {
+                    let rx = (p.x - pc.x) * sc, ry = (p.y - pc.y) * sc
+                    return CGPoint(x: pc.x + (rx * ca - ry * sa) + ox,
+                                   y: pc.y + (rx * sa + ry * ca) + oy)
                 }
-                func poly(_ dx: Double, _ dy: Double) -> Path {
-                    var p = Path()
-                    for (i, q) in front.enumerated() {
-                        let v = CGPoint(x: q.x + dx, y: q.y + dy)
-                        if i == 0 { p.move(to: v) } else { p.addLine(to: v) }
-                    }
-                    p.closeSubpath(); return p
+                switch el {
+                case .move(let p):        piece.move(to: moved(p))
+                case .line(let p):        piece.addLine(to: moved(p))
+                case .closeSubpath:       piece.closeSubpath()
+                default:                  break
                 }
-                let fade = max(0, 1 - p)
-                let ext = 1.5 + 4.0 * sc        // extrusion depth — a heavy chunk, thinning as it shrinks
-                // dark extruded BACK face, offset toward the shadow → 3D thickness
-                var back = ctx
-                back.opacity = fade
-                back.fill(poly(ext, ext), with: .color(backMetal))
-                // lit FRONT face + spectrum broken edge
-                var shard = ctx
-                shard.opacity = fade
-                shard.fill(poly(0, 0), with: .color(metal))
-                shard.stroke(poly(0, 0), with: spectrum, lineWidth: 1.0)
+            }
+            let alpha = 1 - q
+            // thin dark back-offset → the piece reads as solid metal, not paper
+            var back = ctx
+            back.opacity = alpha
+            back.fill(piece.applying(CGAffineTransform(translationX: 1.5 * sc, y: 1.5 * sc)),
+                      with: .color(backMetal))
+            var front = ctx
+            front.opacity = alpha
+            front.fill(piece, with: .color(metal))
+            front.stroke(piece, with: spectrum, lineWidth: 0.8)
+            // detach flare — the seam light releasing as the cell lets go
+            if q < 0.35 {
+                var flare = ctx
+                flare.blendMode = .plusLighter
+                flare.opacity = (0.35 - q) / 0.35 * 0.8
+                flare.addFilter(.blur(radius: 2))
+                flare.stroke(piece, with: spectrum, lineWidth: 1.4)
             }
         }
     }

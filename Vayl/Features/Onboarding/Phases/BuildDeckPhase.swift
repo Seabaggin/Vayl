@@ -13,10 +13,12 @@ import SwiftUI
 ///   Beat 3 · the cased deck lies FLAT and lifeless, lifts to vertical, the
 ///            camera dollies in, and the hex material wakes on arrival
 ///   Beat 4 · stillness, dealer invitation — the case ARMS
-///   Beat 5 · crack ceremony — three strikes, escalating light + haptics,
-///            third → bloom-flood shatter (taps forward to director.ceremony.addFoilTear)
-///   Beat 7 · founder letter sheet-peek exit (interim: after the shatter, or as
-///            an idle fallback — replaced by the reveal carousel in segment 7)
+///   Beat 5 · crack ceremony — three strikes (the locked Pincer), escalating
+///            light + haptics, third → overload + honeycomb UN-KNIT: the shell
+///            disassembles along its hex lattice, uncovering the deck behind it
+///            (taps forward to director.ceremony.addFoilTear)
+///   Beat 6 · the forged deck stands revealed — browse, then the exit CTA
+///   Beat 7 · founder letter sheet-peek exit
 ///
 /// Timing values are AppAnimation tokens (OB Ceremony Tokens section, tokenized
 /// 2026-07-03, values verbatim). Re-tune the tokens directly after a device feel
@@ -83,6 +85,7 @@ struct BuildDeckPhase: View {
     // hand-it-back gesture. User-paced — it only leaves when they tap.
     @State private var revealShown:    Bool = false
     @State private var revealExiting:   Bool = false   // Beat 1: the deck fades out + sinks as the user hands off
+    @State private var revealHeaderShown: Bool = false // deck name + purpose land AFTER the shell is gone
     @State private var ctaShown:       Bool = false    // "Take your deck" fades in after the deck lands
     @State private var revealPhysics   = CarouselPhysics(count: WelcomeDeck.placeholderCards.count)   // match ContextPhase's init
     private var welcomeDeck: WelcomeDeck { WelcomeDeck.of(director.openerDeckType) }
@@ -113,45 +116,10 @@ struct BuildDeckPhase: View {
                     .position(feltCenter)
             }
 
-            // Beat 3 — the cased deck: lies flat and lifeless where the cards
-            // went under, lifts to vertical, then the camera dollies in; the
-            // hex material wakes only after the zoom lands.
-            // Beat 5 — once the invitation arms it, taps crack the foil:
-            // the view forwards face-UV strikes to the director (sole owner of
-            // crack state); the dealer's words are the affordance.
-            if caseShown {
-                // Segment 2 — the charged core glows from WITHIN: coreGlow lights
-                // the case's own hex SEAMS (in MetallicCaseView's shader), so the
-                // energy reads as coming through the deck's structure, not a halo
-                // behind it. Lights at arm, climbs per tap toward the break.
-                MetallicCaseView(
-                    riseStart: caseRiseStart,
-                    latticeWakeStart: latticeWake,
-                    tears: director.ceremony.foilTears.map {
-                        CaseTear(id: $0.id, faceUV: $0.faceUV, seed: $0.seed,
-                                 struck: $0.struck, angleDeg: $0.angleDeg)
-                    },
-                    dissolveStart: caseDissolve,
-                    onFaceTap: caseArmed && caseDissolve == .distantFuture
-                        ? { uv in director.ceremony.addFoilTear(atFaceUV: uv) }
-                        : nil,
-                    knockStart: knockStart,
-                    knockSeed: knockSeed,
-                    coreGlow: coreEnergy
-                )
-                    .frame(width: deckSize.width, height: deckSize.height)
-                    .rotation3DEffect(.degrees(kickDeg),
-                                      axis: (x: kickAxis.x, y: kickAxis.y, z: 0),
-                                      perspective: 0.5)
-                    .scaleEffect(caseFloat ? floatZoom : 1.0)
-                    .position(caseFloat ? floatCenter : feltCenter)
-                    .opacity(caseOpacity)
-                    .accessibilityLabel("Your sealed deck")
-                    .accessibilityHint(caseArmed ? "Tap three times to let it out" : "")
-                    .accessibilityAddTraits(caseArmed ? .isButton : [])
-            }
-
-            // Beat 6 — out of the bloom, the forged deck. Browse freely.
+            // Beat 6 — the forged deck. Mounted BEHIND the shell (earlier in
+            // this ZStack) the moment the un-knit wave starts, so the
+            // disassembling case genuinely UNCOVERS it — object continuity,
+            // no cross-fade, no void (Segment 3). Browse freely once standing.
             if revealShown {
                 VStack(spacing: AppSpacing.lg) {
                     VStack(spacing: AppSpacing.xs) {
@@ -164,6 +132,9 @@ struct BuildDeckPhase: View {
                             .font(AppFonts.bodyMedium)
                             .foregroundStyle(AppColors.textBody)
                     }
+                    // the header waits for the shell to finish un-knitting — the
+                    // uncovered deck stands alone first, THEN is named
+                    .opacity(revealHeaderShown ? 1 : 0)
                     VaylCardCarousel(
                         count:    WelcomeDeck.placeholderCards.count,
                         cardSize: deckSize,
@@ -202,6 +173,44 @@ struct BuildDeckPhase: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .transition(.opacity)
                 }
+            }
+
+            // Beat 3 — the cased deck: lies flat and lifeless where the cards
+            // went under, lifts to vertical, then the camera dollies in; the
+            // hex material wakes only after the zoom lands.
+            // Beat 5 — once the invitation arms it, taps crack the foil:
+            // the view forwards face-UV strikes to the director (sole owner of
+            // crack state); the dealer's words are the affordance.
+            if caseShown {
+                // Segment 2 — the charged core glows from WITHIN: coreGlow lights
+                // the case's own hex SEAMS (in MetallicCaseView's shader), so the
+                // energy reads as coming through the deck's structure, not a halo
+                // behind it. Lights at arm, climbs per tap toward the break.
+                MetallicCaseView(
+                    riseStart: caseRiseStart,
+                    latticeWakeStart: latticeWake,
+                    tears: director.ceremony.foilTears.map {
+                        CaseTear(id: $0.id, faceUV: $0.faceUV, seed: $0.seed,
+                                 struck: $0.struck, angleDeg: $0.angleDeg)
+                    },
+                    dissolveStart: caseDissolve,
+                    onFaceTap: caseArmed && caseDissolve == .distantFuture
+                        ? { uv in director.ceremony.addFoilTear(atFaceUV: uv) }
+                        : nil,
+                    knockStart: knockStart,
+                    knockSeed: knockSeed,
+                    coreGlow: coreEnergy
+                )
+                    .frame(width: deckSize.width, height: deckSize.height)
+                    .rotation3DEffect(.degrees(kickDeg),
+                                      axis: (x: kickAxis.x, y: kickAxis.y, z: 0),
+                                      perspective: 0.5)
+                    .scaleEffect(caseFloat ? floatZoom : 1.0)
+                    .position(caseFloat ? floatCenter : feltCenter)
+                    .opacity(caseOpacity)
+                    .accessibilityLabel("Your sealed deck")
+                    .accessibilityHint(caseArmed ? "Tap three times to let it out" : "")
+                    .accessibilityAddTraits(caseArmed ? .isButton : [])
             }
 
             // sparks knocked loose by the strikes — float free in screen space,
@@ -366,18 +375,25 @@ struct BuildDeckPhase: View {
         }
     }
 
-    /// Third crack — the case view runs OVERLOAD (0.45s: every crack flares
-    /// white, the drift freezes, the held breath) then the FLOOD: the room
-    /// shakes (screen flash + stage punch) and celebration sparks ride the
-    /// light out. The letter peek is the interim landing until the reveal
-    /// (segment 7).
+    /// Third crack — OVERLOAD (0.45s: every crack flares white, the drift
+    /// freezes, the held breath), then the UN-KNIT (Segment 3): the shell
+    /// disassembles cell by cell along its hex lattice, UNCOVERING the forged
+    /// deck already mounted behind it — no cross-fade, no void gap.
+    /// Segment 6: the release beat leans on the wave's own weight — a
+    /// restrained flash + one jolt at the break, and the essence motes STREAM
+    /// out through the opening lattice (two ventings) instead of detonating.
     private func beginShatter() {
         guard caseDissolve == .distantFuture else { return }
         caseDissolve = .now
         Task { @MainActor in
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0 : 0.45))   // overload holds
+            // overload holds — must match MetallicCaseView.overloadSpan
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0 : 0.45))
+            // The deck mounts BEHIND the still-covering shell as the wave starts;
+            // the un-knit does the revealing. The short fade only covers the
+            // sliver of carousel peek that outreaches the case silhouette.
+            withAnimation(AppAnimation.enter.reduceMotionSafe) { revealShown = true }
             if !reduceMotion {
-                burstFlashOpacity = 0.65
+                burstFlashOpacity = 0.4   // restrained — the wave carries the weight
                 withAnimation(AppAnimation.burstFlashDecay) { burstFlashOpacity = 0 }
                 withAnimation(AppAnimation.shatterJolt) { stagePunch = true }
                 Task { @MainActor in
@@ -385,28 +401,27 @@ struct BuildDeckPhase: View {
                     withAnimation(AppAnimation.shatterJoltSettle) { stagePunch = false }
                 }
             }
-            spawnSparks(at: CGPoint(x: 0.5, y: 0.5), count: 34, style: .burst)
-            // Retire the spark field once the celebration motes age out, so its
+            // first venting — essence escaping as the lattice opens
+            spawnSparks(at: CGPoint(x: 0.5, y: 0.5), count: 24, style: .burst)
+            // second, softer venting mid-wave — it STREAMS, not detonates
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0 : 0.55))
+            spawnSparks(at: CGPoint(x: 0.5, y: 0.5), count: 12, style: .strike)
+            // Retire the spark field once the motes age out, so its
             // TimelineView(.animation) stops redrawing through the user-paced reveal.
             sparksClearTask = Task { @MainActor in
                 try? await Task.sleep(for: .seconds(SparkBurst.lifespan))
                 sparkBursts = []
             }
-            // The flood resolves INTO the deck — object continuity, no void.
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.3 : 1.3))   // FEEL-GATE: tune on device
-            // Fade the shattered case + its interior-glow layer out as the deck
-            // arrives, then UNMOUNT it — otherwise the interior-glow Canvas keeps
-            // rendering at full brightness BEHIND the reveal (the post-reveal bug).
-            withAnimation(AppAnimation.enter.reduceMotionSafe) {
-                revealShown = true
-                caseOpacity = 0
-            }
-            Task { @MainActor in
-                try? await Task.sleep(for: .seconds(reduceMotion ? 0.1 : 0.7))
-                caseShown = false
-            }
-            // the deck lands first; the exit CTA fades in a beat later
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 1.2))   // FEEL-GATE: tune on device
+            // Unmount the shell once the wave has consumed it (unknitSpan 1.25
+            // + the sliver fade; 0.55 elapsed above). Nothing visible remains —
+            // the deck is simply standing where the case was.
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.1 : 0.85))
+            caseShown = false
+            caseOpacity = 0
+            // the uncovered deck stands alone a beat, THEN is named…
+            withAnimation(AppAnimation.enter.reduceMotionSafe) { revealHeaderShown = true }
+            // …and the exit CTA follows
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 0.9))   // FEEL-GATE: tune on device
             withAnimation(AppAnimation.enter.reduceMotionSafe) { ctaShown = true }
         }
     }
