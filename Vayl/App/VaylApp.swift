@@ -17,6 +17,7 @@ struct VaylApp: App {
     @State private var authService = AuthService()
     @State private var onboardingStore: OnboardingStore
     @State private var entitlementStore: EntitlementStore
+    @State private var coupleContext: CoupleContext
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -33,9 +34,16 @@ struct VaylApp: App {
             appState: appState
         ))
         // Central tier read-surface — one purchase unlocks both partners. Gates read this (M3+).
-        _entitlementStore = State(initialValue: EntitlementStore(
+        let entitlementStore = EntitlementStore(
             modelContainer: ModelContainer.appContainer,
             appState: appState
+        )
+        _entitlementStore = State(initialValue: entitlementStore)
+        // Couple-fact single source of truth: partner identity + the reveal gate
+        // (2026-07-04 audit, Blueprint A). Surfaces read this; nothing re-derives it.
+        _coupleContext = State(initialValue: CoupleContext(
+            appState: appState,
+            entitlements: entitlementStore
         ))
     }
 
@@ -51,6 +59,7 @@ struct VaylApp: App {
                 .environment(pulseStore)
                 .environment(onboardingStore)
                 .environment(entitlementStore)
+                .environment(coupleContext)
                 .task {
                     // Reconcile the onboarding gate against the durable truth (UserProfile)
                     // before anything routes — init only read the fast UserDefaults cache.
@@ -59,6 +68,9 @@ struct VaylApp: App {
                     // Resolve tier (server + local StoreKit) + load the product + start the
                     // purchase-updates listener, now the session is ready (RLS-scoped).
                     await entitlementStore.bootstrap()
+                    // Hydrate the couple facts (partner identity) once the session
+                    // is ready — every partner-name surface reads CoupleContext.
+                    await coupleContext.refreshIfNeeded()
                     // Pull down any Pulse history the device doesn't have locally yet
                     // (reinstall / new device) — session is ready, so RLS-scoped reads work.
                     await pulseStore.hydrateFromServer()

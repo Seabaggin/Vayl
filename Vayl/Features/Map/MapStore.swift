@@ -31,7 +31,18 @@ final class MapStore {
 
     /// The linked partner's name — drives the "Jordan & Alex." header toggle.
     /// Empty when unpaired or not yet fetched (header falls back to your name only).
-    private(set) var partnerName: String = ""
+    /// Read from CoupleContext — the single owner of partner identity (audit F1);
+    /// this store no longer runs its own fetch.
+    var partnerName: String { couple?.partnerName ?? "" }
+
+    /// Couple-fact source of truth, attached once from the hosting view's `.task`
+    /// (@State store construction can't reach @Environment).
+    private var couple: CoupleContext?
+
+    func configure(couple: CoupleContext) {
+        guard self.couple == nil else { return }
+        self.couple = couple
+    }
 
     // MARK: - The Record (Me layer)
 
@@ -101,33 +112,15 @@ final class MapStore {
 
     // MARK: - Load
 
-    /// Idempotent — safe to call on every appear. `isCore` is the OR'd entitlement
-    /// source of truth (server tier OR local StoreKit ownership), threaded in from the
-    /// View; the desire-match gate reads it rather than the lagging local Couple mirror.
-    func load(appState: AppState, context: ModelContext, isCore: Bool) {
+    /// Idempotent — safe to call on every appear. The desire-match gate reads
+    /// `CoupleContext.canRevealAll` (the OR'd entitlement), never the lagging
+    /// local Couple mirror.
+    func load(appState: AppState, context: ModelContext) {
         loadMasthead(appState: appState, context: context)
         loadRecord(coupleId: appState.coupleId, context: context)
         loadMeCard(context: context)
         loadUs(appState: appState, context: context)
-        Task { await loadServerAlignData(appState: appState, context: context, isCore: isCore) }
-    }
-
-    /// Async: fetches the partner's name for the header toggle. Safe to await on appear.
-    func loadPartner(appState: AppState) async {
-        // Load once, then persist — so "& Alex" fades in a single time and never
-        // flickers in/out on subsequent appears.
-        guard partnerName.isEmpty else { return }
-        if appState.linkState == .linked,
-           let identity = try? await PairingService().fetchPartner(),
-           let name = identity.name, !name.isEmpty {
-            partnerName = name
-            return
-        }
-        #if DEBUG
-        partnerName = "Alex"   // dev: show the toggle without a live paired backend
-        #else
-        partnerName = ""       // unpaired / partner has no name → just your name, no toggle
-        #endif
+        Task { await loadServerAlignData(appState: appState, context: context) }
     }
 
     /// Async: fetches the partner's full Pulse history and derives their current position
@@ -270,14 +263,14 @@ final class MapStore {
 
     /// Fetches server desire matches and updates the Us align list and meCard tags.
     /// Runs after loadUs so the synchronous scaffold is already in place.
-    private func loadServerAlignData(appState: AppState, context: ModelContext, isCore: Bool) async {
+    private func loadServerAlignData(appState: AppState, context: ModelContext) async {
         guard let coupleId = appState.coupleId else { return }
 
         let matchRows = (try? await DesireSyncService.shared.fetchMatches(coupleId: coupleId)) ?? []
 
-        // Gate on the OR'd entitlement (server tier OR local StoreKit ownership), not the
+        // THE gate rule — CoupleContext.canRevealAll (OR'd entitlement), never the
         // local Couple.canRevealDesireMap mirror, which can lag a just-purchased buyer.
-        let canReveal = isCore
+        let canReveal = couple?.canRevealAll ?? false
 
         // Build the Us align list using the server-authoritative gate rule.
         let items = (try? ContentLoader.loadDesireItems()) ?? []

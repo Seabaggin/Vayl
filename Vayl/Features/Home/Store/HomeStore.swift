@@ -45,8 +45,12 @@ final class HomeStore {
     var partnerMapComplete: Bool = false
     var revealDone: Bool = false
     var postReflectionDone: Bool = false
-    var partnerName: String? = nil
     var reflectionStep: Int = 1
+
+    /// Partner identity — read from the couple-fact single source of truth.
+    /// (The old stored copy here had NO production writer — only a DEBUG seed —
+    /// so release builds rendered "your partner" everywhere. 2026-07-04 audit F1.)
+    var partnerName: String? { couple.partnerName }
 
     /// One-shot: set when the user just completed their Desire Map in the rater they closed.
     /// The dashboard plays a brief completion beat once, then clears it — the map is a moment,
@@ -89,21 +93,23 @@ final class HomeStore {
 
     private let modelContainer: ModelContainer
     private let appState: AppState
+    private let couple: CoupleContext
 
     // MARK: - Init
 
-    init(modelContainer: ModelContainer, appState: AppState) {
+    init(modelContainer: ModelContainer, appState: AppState, couple: CoupleContext) {
         self.modelContainer = modelContainer
         self.appState = appState
+        self.couple = couple
 
         #if DEBUG
         // Development quick-jump — skip to dashboard state.
-        // Production always starts at false.
+        // Production always starts at false. (Partner name is no longer seeded
+        // here — CoupleContext owns the one debug fallback.)
         self.myMapComplete = true
         self.partnerMapComplete = true
         self.revealDone = true
         self.postReflectionDone = true
-        self.partnerName = "Alex"
         #endif
     }
 
@@ -184,6 +190,7 @@ final class HomeStore {
     /// Loads all data the home screen depends on in one pass.
     /// Call once on appear from HomeRouterView.
     func loadAll() async {
+        await couple.refreshIfNeeded()   // partner identity (no-op once loaded)
         await loadProfile()
         await loadDesireStatus()
         resolveRecentDeck()
@@ -250,10 +257,11 @@ final class HomeStore {
     /// before the server responds.
     private func resolvePostStatusDesireMapState(coupleId: UUID) {
         guard isPaired else { return }
-        let context = ModelContext(modelContainer)
-        let canReveal = (try? context.fetch(
-            FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
-        ).first)?.canRevealDesireMap ?? false
+        // THE gate rule (CoupleContext.canRevealAll = OR'd entitlement). The old
+        // read here used the local Couple.canRevealDesireMap mirror — the exact
+        // lagging rule MapStore/VaultStore already distrusted, so a just-purchased
+        // buyer saw Map/Vault unlocked while Home stayed on the pre-purchase branch.
+        let canReveal = couple.canRevealAll
 
         if !myMapComplete { desireMapState = .yourTurn; return }
         if canReveal { desireMapState = .fullyUnlocked; return }

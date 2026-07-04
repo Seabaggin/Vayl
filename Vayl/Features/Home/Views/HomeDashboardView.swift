@@ -106,6 +106,7 @@ struct HomeDashboardView: View {
     /// Joiner entry: "‹name› set up a session" banner + join cover.
     @Environment(\.modelContext) private var modelContext
     @Environment(AppState.self) private var appState
+    @Environment(CoupleContext.self) private var coupleContext
     @Environment(\.scenePhase) private var scenePhase
     @State private var entryStore: SessionEntryStore?
     @State private var joinerLaunch: SessionLaunch?
@@ -303,10 +304,10 @@ struct HomeDashboardView: View {
                     entryStore = SessionEntryStore(
                         modelContainer: modelContext.container,
                         appState: appState,
-                        partnerName: { [chip = partnerChipState] in
-                            if case .active(let name, _) = chip { return name }
-                            return nil
-                        }
+                        // Live read of the couple-fact source of truth (the old
+                        // closure captured the chip BY VALUE at store creation,
+                        // so a later-arriving partner name never reached it).
+                        partnerName: { [couple = coupleContext] in couple.partnerName }
                     )
                 }
                 entryStore?.refresh()

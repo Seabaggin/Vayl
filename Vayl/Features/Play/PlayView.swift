@@ -15,6 +15,7 @@ struct PlayView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppState.self) private var appState
     @Environment(EntitlementStore.self) private var entitlements
+    @Environment(CoupleContext.self) private var coupleContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var store: PlayStore?
@@ -47,7 +48,8 @@ struct PlayView: View {
             if entryStore == nil {
                 entryStore = SessionEntryStore(
                     modelContainer: modelContext.container,
-                    appState: appState
+                    appState: appState,
+                    partnerName: { [couple = coupleContext] in couple.partnerName }
                 )
             }
             entryStore?.refresh()

@@ -18,6 +18,7 @@ struct MapView: View {
     @Environment(AppState.self) private var appState
     @Environment(PulseStore.self) private var pulse
     @Environment(EntitlementStore.self) private var entitlements
+    @Environment(CoupleContext.self) private var coupleContext
     @Environment(\.modelContext) private var modelContext
     @State private var store = MapStore()
 
@@ -88,14 +89,18 @@ struct MapView: View {
             ) {
                 PaywallSheet(entry: .reveal, onUnlocked: {
                     showPaywall = false
-                    Task { await vaultStore.loadDesire(appState: appState, context: modelContext, isCore: entitlements.isCore) }
+                    // canRevealAll flips via EntitlementStore the moment the purchase
+                    // applies — the reload just re-fetches rows under the new gate.
+                    Task { await vaultStore.loadDesire(appState: appState, context: modelContext) }
                 })
             }
         }
         .task {
-            store.load(appState: appState, context: modelContext, isCore: entitlements.isCore)
-            await vaultStore.loadDesire(appState: appState, context: modelContext, isCore: entitlements.isCore)
-            await store.loadPartner(appState: appState)
+            store.configure(couple: coupleContext)
+            vaultStore.configure(couple: coupleContext)
+            await coupleContext.refreshIfNeeded()   // partner identity (no-op once loaded)
+            store.load(appState: appState, context: modelContext)
+            await vaultStore.loadDesire(appState: appState, context: modelContext)
             await store.loadPartnerPulse(appState: appState)
         }
     }

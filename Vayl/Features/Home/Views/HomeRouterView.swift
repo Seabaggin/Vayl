@@ -14,11 +14,13 @@ import SwiftData
 struct HomeRouterView: View {
 
     @Environment(AppState.self) private var appState
+    @Environment(CoupleContext.self) private var coupleContext
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         HomeRouterInnerView(
             appState: appState,
+            coupleContext: coupleContext,
             modelContainer: modelContext.container
         )
     }
@@ -53,8 +55,12 @@ private struct HomeRouterInnerView: View {
     @Namespace private var pathNamespace
     @State private var showPath = false
 
-    init(appState: AppState, modelContainer: ModelContainer) {
-        _store = State(initialValue: HomeStore(modelContainer: modelContainer, appState: appState))
+    init(appState: AppState, coupleContext: CoupleContext, modelContainer: ModelContainer) {
+        _store = State(initialValue: HomeStore(
+            modelContainer: modelContainer,
+            appState: appState,
+            couple: coupleContext
+        ))
     }
 
     // MARK: - Body
