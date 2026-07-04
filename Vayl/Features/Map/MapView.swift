@@ -218,10 +218,12 @@ struct MapView: View {
 
 #Preview("Map tab") {
     let state = { let s = AppState(); s.displayName = "Jordan"; return s }()
+    let entitlements = EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state)
     return MapView()
         .environment(state)
         .environment(PulseStore())
-        .environment(EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state))
+        .environment(entitlements)
+        .environment(CoupleContext(appState: state, entitlements: entitlements))
         .modelContainer(.previewContainer)
         .preferredColorScheme(.dark)
 }

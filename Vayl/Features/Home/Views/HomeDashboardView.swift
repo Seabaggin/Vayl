@@ -680,6 +680,13 @@ extension ReflectionCardState: Equatable {
     )
     .environment(PulseStore())
     .environment({ let state = AppState(); state.coupleId = UUID(); return state }())
+    .environment({
+        let state = AppState()
+        return CoupleContext(
+            appState: state,
+            entitlements: EntitlementStore(modelContainer: .previewContainer, appState: state)
+        )
+    }())
     .modelContainer(.previewContainer)
     .preferredColorScheme(.dark)
 }

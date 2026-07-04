@@ -165,9 +165,12 @@ struct PlayView: View {
 
 #if DEBUG
 #Preview("Play") {
-    PlayView(injectedStore: .preview)
-        .environment(AppState())
-        .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
+    let state = AppState()
+    let entitlements = EntitlementStore(modelContainer: .previewContainer, appState: state)
+    return PlayView(injectedStore: .preview)
+        .environment(state)
+        .environment(entitlements)
+        .environment(CoupleContext(appState: state, entitlements: entitlements))
         .modelContainer(.previewContainer)
         .preferredColorScheme(.dark)
 }

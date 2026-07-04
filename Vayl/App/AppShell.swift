@@ -101,10 +101,12 @@ struct AppShell: View {
     let state = AppState()
     state.linkState = .linked
     state.displayName = "Jordan"
+    let entitlements = EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state)
     return AppShell()
         .environment(state)
         .environment(PulseStore())
-        .environment(EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state))
+        .environment(entitlements)
+        .environment(CoupleContext(appState: state, entitlements: entitlements))
         .environment(AuthService())
         .preferredColorScheme(.dark)
         .modelContainer(.previewContainerWithProfile)
@@ -115,10 +117,12 @@ struct AppShell: View {
     state.linkState = .unlinked
     state.appMode = .together
     state.displayName = "Jordan"
+    let entitlements = EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state)
     return AppShell()
         .environment(state)
         .environment(PulseStore())
-        .environment(EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state))
+        .environment(entitlements)
+        .environment(CoupleContext(appState: state, entitlements: entitlements))
         .environment(AuthService())
         .preferredColorScheme(.dark)
         .modelContainer(.previewContainerWithProfile)
@@ -129,10 +133,12 @@ struct AppShell: View {
     state.linkState = .unlinked
     state.appMode = .solo
     state.displayName = "Riley"
+    let entitlements = EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state)
     return AppShell()
         .environment(state)
         .environment(PulseStore())
-        .environment(EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state))
+        .environment(entitlements)
+        .environment(CoupleContext(appState: state, entitlements: entitlements))
         .environment(AuthService())
         .preferredColorScheme(.dark)
         .modelContainer(.previewContainerWithProfile)
