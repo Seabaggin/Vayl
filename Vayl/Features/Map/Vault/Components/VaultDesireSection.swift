@@ -11,6 +11,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct VaultDesireSection: View {
 
@@ -64,7 +65,7 @@ struct VaultDesireSection: View {
     }
 
     private func countChip(_ value: String, _ label: String, tint: Color = AppColors.textPrimary) -> some View {
-        VStack(spacing: 2) {
+        VStack(spacing: AppSpacing.xxs) {   // was 2 → xxs, exact
             Text(value)
                 .font(AppFonts.display(18, weight: .bold, relativeTo: .title3))
                 .foregroundStyle(tint)

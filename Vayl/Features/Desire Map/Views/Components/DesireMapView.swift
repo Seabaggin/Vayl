@@ -158,7 +158,7 @@ struct DesireMapView: View {
                     .foregroundStyle(AppColors.textTertiary)
                     .padding(.bottom, AppSpacing.lg)
 
-                VStack(spacing: 2) {
+                VStack(spacing: AppSpacing.xxs) {   // was 2 → xxs, exact
                     Text("See where your desires")
                         .font(AppFonts.heroTitle)
                         .foregroundStyle(AppColors.textPrimary)

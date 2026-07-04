@@ -176,7 +176,7 @@ struct PairingInviteView: View {
                 HStack(spacing: AppSpacing.sm) {    // was 8 → sm, exact
                     Image(AppIcons.docOnDoc)         // was "doc.on.doc"
                         .font(
-                            Font.custom("Switzer-Medium", size: 14, relativeTo: .caption)
+                            AppFonts.body(14, weight: .medium, relativeTo: .caption)  // was Font.custom("Switzer-Medium", 14, .caption) → AppFonts.body, exact
                         )                           // was .system(size: 14, weight: .medium)
                     Text("Copy code")
                         .font(AppFonts.buttonLabel)
@@ -220,7 +220,7 @@ struct PairingInviteView: View {
         VStack(spacing: AppSpacing.lg) {            // was 24 → lg, exact
             Image(AppIcons.checkmarkCircle)         // was "checkmark.circle.fill"
                 .font(
-                    Font.custom("ClashDisplay-Bold", size: 64, relativeTo: .largeTitle)
+                    AppFonts.displayHero  // was Font.custom("ClashDisplay-Bold", 64, .largeTitle) → displayHero, exact
                 )                                   // was .system(size: 64)
                 .foregroundStyle(AppColors.accentPrimary)
                 .accessibilityHidden(true)          // decorative — state is communicated by text
@@ -255,7 +255,7 @@ struct PairingInviteView: View {
             Image(AppIcons.exclamationTriangle)     // was "exclamationmark.triangle"
             // ⚠️ AppIcons.exclamationTriangle must be added to AppIcons before building
                 .font(
-                    Font.custom("ClashDisplay-Bold", size: 48, relativeTo: .largeTitle)
+                    AppFonts.display(48, weight: .bold, relativeTo: .largeTitle)  // was Font.custom("ClashDisplay-Bold", 48, .largeTitle) → AppFonts.display, exact
                 )                                   // was .system(size: 48)
                 .foregroundStyle(AppColors.accentTertiary)
                 .accessibilityHidden(true)          // decorative — error communicated by text below
@@ -288,7 +288,7 @@ struct PairingInviteView: View {
         VStack(spacing: AppSpacing.lg) {            // 24 — matches error/linked states
             Image(AppIcons.exclamationTriangle)
                 .font(
-                    Font.custom("ClashDisplay-Bold", size: 48, relativeTo: .largeTitle)
+                    AppFonts.display(48, weight: .bold, relativeTo: .largeTitle)  // was Font.custom("ClashDisplay-Bold", 48, .largeTitle) → AppFonts.display, exact
                 )
                 .foregroundStyle(AppColors.accentTertiary)
                 .accessibilityHidden(true)          // decorative — state communicated by text

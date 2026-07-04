@@ -168,7 +168,7 @@ struct PairingSettingsView: View {
             HStack(spacing: AppSpacing.md) {        // was 16 → md, exact
                 Image(systemName: icon)             // icon param — raw string moved to call sites
                     .font(
-                        Font.custom("Switzer-Medium", size: 20, relativeTo: .body)
+                        AppFonts.body(20, weight: .medium, relativeTo: .body)  // was Font.custom("Switzer-Medium", 20, .body) → AppFonts.body, exact
                     )                               // was .system(size: 20, weight: .medium)
                     .foregroundStyle(AppColors.accentPrimary)
                     .frame(width: 36, height: 44)   // height: 44 for A11y min hit target
@@ -189,7 +189,7 @@ struct PairingSettingsView: View {
 
                 Image(AppIcons.chevronRight)        // was "chevron.right"
                     .font(
-                        Font.custom("Switzer-Medium", size: 12, relativeTo: .caption)
+                        AppFonts.body(12, weight: .medium, relativeTo: .caption)  // was Font.custom("Switzer-Medium", 12, .caption) → AppFonts.body, exact
                     )                               // was .system(size: 12, weight: .medium)
                     .foregroundStyle(isLight ? AppColors.textSecondary : AppColors.textTertiary)
                 // isLight ternary retained — different tokens on each branch
