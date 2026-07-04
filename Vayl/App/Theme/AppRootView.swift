@@ -62,6 +62,25 @@ struct AppRootView: View {
         // auth state, then sign-in, then the app. The terminal FounderLetterPhase
         // commits via director.finishOnboarding → isOnboardingComplete flips true and
         // reactive routing carries the user onward.
+        #if DEBUG
+        // Profiling / diagnostic seam: `-vaylForceHome` routes straight to the tab
+        // shell, skipping the OB + auth gates, so unattended perf captures (xctrace,
+        // CPU sampling) can reach Home without an interactive sign-in. DEBUG only —
+        // compiled out of release.
+        if CommandLine.arguments.contains("-vaylForceHome") {
+            AppShell()
+                .themedRoot()
+        } else if !appState.isOnboardingComplete {
+            OnboardingCanvasWrapper()
+                .themedRoot()
+        } else if authService.isAuthenticated {
+            AppShell()
+                .themedRoot()
+        } else {
+            SignInView(authService: authService)
+                .themedRoot()
+        }
+        #else
         if !appState.isOnboardingComplete {
             OnboardingCanvasWrapper()
                 .themedRoot()
@@ -72,6 +91,7 @@ struct AppRootView: View {
             SignInView(authService: authService)
                 .themedRoot()
         }
+        #endif
     }
 
     // MARK: - Body
