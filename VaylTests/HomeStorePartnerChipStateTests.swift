@@ -52,7 +52,7 @@ final class HomeStorePartnerChipStateTests: XCTestCase {
         appState.linkState = .unlinked
 
         let entitlements = EntitlementStore(modelContainer: container, appState: appState)
-        let couple = CoupleContext(appState: appState, entitlements: entitlements)
+        let couple = CoupleContext(appState: appState, entitlements: entitlements, modelContainer: container)
         let store = HomeStore(modelContainer: container, appState: appState, couple: couple)
 
         Self.retain(store, appState, couple, entitlements)

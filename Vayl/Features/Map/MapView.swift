@@ -120,6 +120,7 @@ struct MapView: View {
                 }
             }
             Spacer()
+            SettingsGearButton { appState.settingsPresented = true }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -223,7 +224,7 @@ struct MapView: View {
         .environment(state)
         .environment(PulseStore())
         .environment(entitlements)
-        .environment(CoupleContext(appState: state, entitlements: entitlements))
+        .environment(CoupleContext(appState: state, entitlements: entitlements, modelContainer: .previewContainerWithProfile))
         .modelContainer(.previewContainer)
         .preferredColorScheme(.dark)
 }

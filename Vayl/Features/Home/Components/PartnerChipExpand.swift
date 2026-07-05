@@ -43,19 +43,7 @@ struct PartnerChipExpand: View {
     private func activeContent(name: String, initial: String) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: AppSpacing.sm) {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 22, height: 22)
-                    .overlay(
-                        Text(initial)
-                            .font(.caption2).fontWeight(.bold)
-                            .foregroundStyle(.white)
-                    )
+                PartnerAvatarView(initial: initial, size: 22)
                 Text(name)
                     // cardTitle (22pt) is sized for a screen-level card headline —
                     // too large next to a 22pt avatar circle in a 224pt popover.

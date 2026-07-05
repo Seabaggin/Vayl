@@ -15,7 +15,6 @@ struct SettingsPartnerView: View {
     @State private var showInvite:  Bool = false
     @State private var showJoin:    Bool = false
     @State private var showUnlink:  Bool = false
-    @State private var partnerStore: SettingsPartnerStore? = nil
 
     var body: some View {
         SettingsSubScreenShell(title: "Partner", onBack: {
@@ -27,11 +26,8 @@ struct SettingsPartnerView: View {
                 soloContent
             }
         }
-        .onAppear {
-            if partnerStore == nil {
-                partnerStore = SettingsPartnerStore(modelContainer: modelContext.container)
-            }
-            partnerStore?.loadPairedSince()
+        .task {
+            await coupleContext.refreshIfNeeded()
         }
         .vaylSheet(isPresented: $showInvite, heightFraction: 0.92) {
             PairingInviteView(
@@ -82,31 +78,13 @@ struct SettingsPartnerView: View {
             SettingsSectionLabel(text: "Connected")
             SettingsCard {
                 HStack(spacing: AppSpacing.md) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        AppColors.spectrumCyan,
-                                        AppColors.spectrumPurple,
-                                        AppColors.spectrumMagenta
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 32, height: 32)
-                        Text(partnerInitial)
-                            .font(AppFonts.caption)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-                    }
-                    .accessibilityHidden(true)
+                    PartnerAvatarView(initial: partnerInitial, size: 32)
+                        .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                         Text(partnerHeadline)
                             .font(AppFonts.bodyMedium)
                             .foregroundStyle(AppColors.textPrimary)
-                        Text(partnerStore?.pairedSince.map { "Since \($0.formatted(date: .long, time: .omitted))" } ?? "Linked")
+                        Text(coupleContext.pairedSince.map { "Since \($0.formatted(date: .long, time: .omitted))" } ?? "Linked")
                             .font(AppFonts.caption)
                             .foregroundStyle(AppColors.textTertiary)
                     }

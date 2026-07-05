@@ -14,6 +14,7 @@ struct AppShell: View {
     @State private var transitionDirection: CGFloat = 1
 
     var body: some View {
+        @Bindable var appState = appState
         Group {
             switch selectedTab {
             case .home:
@@ -29,10 +30,13 @@ struct AppShell: View {
             case .learn:
                 TabContentWrapper { LearnView() }
                     .transition(driftTransition)
-            case .settings:
-                TabContentWrapper { SettingsView(isTab: true) }
-                    .transition(driftTransition)
             }
+        }
+        // Settings lives OVER the shell, not in it: the masthead gear on any tab
+        // opens it full screen (discrete-task exit via its own close button, so
+        // no confirm-on-exit).
+        .vaylCover(isPresented: $appState.settingsPresented, confirmOnExit: false) {
+            SettingsView()
         }
         // The tab bar is attached as a bottom SAFE-AREA INSET, not a ZStack overlay.
         // SwiftUI then (1) positions the pill above the home indicator on every device and
@@ -106,7 +110,7 @@ struct AppShell: View {
         .environment(state)
         .environment(PulseStore())
         .environment(entitlements)
-        .environment(CoupleContext(appState: state, entitlements: entitlements))
+        .environment(CoupleContext(appState: state, entitlements: entitlements, modelContainer: .previewContainerWithProfile))
         .environment(AuthService())
         .preferredColorScheme(.dark)
         .modelContainer(.previewContainerWithProfile)
@@ -122,7 +126,7 @@ struct AppShell: View {
         .environment(state)
         .environment(PulseStore())
         .environment(entitlements)
-        .environment(CoupleContext(appState: state, entitlements: entitlements))
+        .environment(CoupleContext(appState: state, entitlements: entitlements, modelContainer: .previewContainerWithProfile))
         .environment(AuthService())
         .preferredColorScheme(.dark)
         .modelContainer(.previewContainerWithProfile)
@@ -138,7 +142,7 @@ struct AppShell: View {
         .environment(state)
         .environment(PulseStore())
         .environment(entitlements)
-        .environment(CoupleContext(appState: state, entitlements: entitlements))
+        .environment(CoupleContext(appState: state, entitlements: entitlements, modelContainer: .previewContainerWithProfile))
         .environment(AuthService())
         .preferredColorScheme(.dark)
         .modelContainer(.previewContainerWithProfile)

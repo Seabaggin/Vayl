@@ -111,27 +111,7 @@ struct PartnerChip: View {
                 onPartnerTap?()
             } label: {
                 HStack(spacing: AppSpacing.sm) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        AppColors.spectrumCyan,
-                                        AppColors.spectrumPurple,
-                                        AppColors.spectrumMagenta
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 20, height: 20)
-                        Text(String(initial))
-                            // .caption2 scales with Dynamic Type — correct for
-                            // single-letter avatar initials in a 20pt circle.
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-                    }
+                    PartnerAvatarView(initial: String(initial))
                     Text(name)
                         .font(AppFonts.caption)
                         .foregroundStyle(AppColors.textSecondary)

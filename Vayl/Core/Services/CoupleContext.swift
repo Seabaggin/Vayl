@@ -23,6 +23,7 @@
 
 import Foundation
 import OSLog
+import SwiftData
 
 private let logger = Logger(
     subsystem: "com.vayl.app",
@@ -56,6 +57,20 @@ final class CoupleContext {
         #endif
     }
 
+    /// Backing cache for the local `UserProfile.linkedAt` couple-fact — when
+    /// pairing completed. Local-only (SwiftData), not something PairingService
+    /// fetches from the server.
+    private var fetchedPairedSince: Date?
+
+    /// When this device's pairing completed, or nil when unlinked / not yet
+    /// fetched. Mirrors `partnerName`'s shape exactly (same DEBUG passthrough
+    /// omitted — pairedSince has no dev-seed need since it's a local field
+    /// that's always readable once linked).
+    var pairedSince: Date? {
+        guard appState.linkState == .linked else { return nil }
+        return fetchedPairedSince
+    }
+
     // MARK: - Reveal gate (single truth rule)
 
     /// Whether every desire match may be shown (vs. free-reveal rows only).
@@ -68,12 +83,15 @@ final class CoupleContext {
     private let appState: AppState
     private let entitlements: EntitlementStore
     private let pairingService: PairingService
+    private let modelContainer: ModelContainer
 
     init(appState: AppState,
          entitlements: EntitlementStore,
+         modelContainer: ModelContainer,
          pairingService: PairingService? = nil) {
         self.appState = appState
         self.entitlements = entitlements
+        self.modelContainer = modelContainer
         self.pairingService = pairingService ?? PairingService()
     }
 
@@ -85,6 +103,7 @@ final class CoupleContext {
     /// exactly once and never flickers).
     func refreshIfNeeded() async {
         guard appState.linkState == .linked else { return }
+        loadPairedSinceIfNeeded()
         guard fetchedPartnerName == nil || fetchedForCoupleId != appState.coupleId else { return }
         do {
             if let identity = try await pairingService.fetchPartner(),
@@ -96,6 +115,15 @@ final class CoupleContext {
         } catch {
             logger.error("CoupleContext: partner fetch failed — \(error.localizedDescription)")
         }
+    }
+
+    /// Local SwiftData read for `UserProfile.linkedAt` — no-ops once already
+    /// loaded, same load-once semantics as the partner-name fetch above.
+    private func loadPairedSinceIfNeeded() {
+        guard fetchedPairedSince == nil else { return }
+        let context = ModelContext(modelContainer)
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
+        fetchedPairedSince = profile.linkedAt
     }
 
     /// Write-through for flows that already know the name (e.g. the pairing
@@ -111,5 +139,6 @@ final class CoupleContext {
     func clearPartner() {
         fetchedPartnerName = nil
         fetchedForCoupleId = nil
+        fetchedPairedSince = nil
     }
 }

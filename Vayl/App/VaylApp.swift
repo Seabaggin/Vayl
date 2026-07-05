@@ -43,7 +43,8 @@ struct VaylApp: App {
         // (2026-07-04 audit, Blueprint A). Surfaces read this; nothing re-derives it.
         _coupleContext = State(initialValue: CoupleContext(
             appState: appState,
-            entitlements: entitlementStore
+            entitlements: entitlementStore,
+            modelContainer: ModelContainer.appContainer
         ))
     }
 

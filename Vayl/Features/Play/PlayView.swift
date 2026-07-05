@@ -66,14 +66,14 @@ struct PlayView: View {
 
             VStack(spacing: 0) {
                 if store.isEmpty {
-                    PlayMastheadView()
+                    PlayMastheadView(onOpenSettings: { appState.settingsPresented = true })
                         .padding(.horizontal, AppSpacing.lg)
                         .padding(.top, AppSpacing.xs)
                     PlayEmptyState(message: store.loadError) { store.retry() }
                 } else {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: AppSpacing.xl) {
-                            PlayMastheadView()
+                            PlayMastheadView(onOpenSettings: { appState.settingsPresented = true })
                                 .padding(.horizontal, AppSpacing.lg)
                                 .padding(.top, AppSpacing.xs)
                             PlayHeroView(store: store, collapse: collapse)
@@ -170,7 +170,7 @@ struct PlayView: View {
     return PlayView(injectedStore: .preview)
         .environment(state)
         .environment(entitlements)
-        .environment(CoupleContext(appState: state, entitlements: entitlements))
+        .environment(CoupleContext(appState: state, entitlements: entitlements, modelContainer: .previewContainer))
         .modelContainer(.previewContainer)
         .preferredColorScheme(.dark)
 }

@@ -755,7 +755,8 @@ extension ReflectionCardState: Equatable {
         let state = AppState()
         return CoupleContext(
             appState: state,
-            entitlements: EntitlementStore(modelContainer: .previewContainer, appState: state)
+            entitlements: EntitlementStore(modelContainer: .previewContainer, appState: state),
+            modelContainer: .previewContainer
         )
     }())
     .modelContainer(.previewContainer)
