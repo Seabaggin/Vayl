@@ -38,7 +38,7 @@ enum PartnerChipDesireMapCopy {
         case .matchReady:
             return "Ready to view"
         case .redoInProgress:
-            return "Redo in progress"
+            return "Redoing your map"
         case .revealed:
             return "Revealed"
         case .fullyUnlocked:
