@@ -83,6 +83,16 @@ final class CoupleSessionStore: Identifiable {
     private(set) var index: Int = 0
     private(set) var records: [(card: Card, status: CardStatus)] = []
 
+    // MARK: - Session settings (two knobs: who reads first, length/pace)
+
+    /// The two chosen knobs for this sitting. `length` implies the in-session
+    /// gentle timer (built later) via `softCapMinutes`. The settings-sheet UI
+    /// is a later device-gated task; this store just holds the model + setters.
+    var sessionSettings = SessionSettings()
+
+    func setReader(_ reader: SessionSettings.Reader) { sessionSettings.reader = reader }
+    func setLength(_ length: SessionSettings.Length) { sessionSettings.length = length }
+
     // MARK: - Close / reflection state
 
     var reflectionWords: Set<String> = []
