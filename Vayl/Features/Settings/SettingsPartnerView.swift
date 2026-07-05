@@ -8,12 +8,14 @@ struct SettingsPartnerView: View {
     var onClose: (() -> Void)? = nil
 
     @Environment(AppState.self)        private var appState
+    @Environment(CoupleContext.self)   private var coupleContext
     @Environment(\.modelContext)       private var modelContext
     @Environment(\.dismiss)            private var dismiss
 
     @State private var showInvite:  Bool = false
     @State private var showJoin:    Bool = false
     @State private var showUnlink:  Bool = false
+    @State private var partnerStore: SettingsPartnerStore? = nil
 
     var body: some View {
         SettingsSubScreenShell(title: "Partner", onBack: {
@@ -24,6 +26,12 @@ struct SettingsPartnerView: View {
             } else {
                 soloContent
             }
+        }
+        .onAppear {
+            if partnerStore == nil {
+                partnerStore = SettingsPartnerStore(modelContainer: modelContext.container)
+            }
+            partnerStore?.loadPairedSince()
         }
         .vaylSheet(isPresented: $showInvite, heightFraction: 0.92) {
             PairingInviteView(
@@ -59,32 +67,50 @@ struct SettingsPartnerView: View {
 
     // MARK: - Linked state
 
+    private var partnerHeadline: String {
+        guard let name = coupleContext.partnerName, !name.isEmpty else { return "Paired" }
+        return "Paired with \(name)"
+    }
+
+    private var partnerInitial: String {
+        guard let name = coupleContext.partnerName, let first = name.first else { return "•" }
+        return String(first).uppercased()
+    }
+
     private var linkedContent: some View {
         VStack(alignment: .leading, spacing: 0) {
             SettingsSectionLabel(text: "Connected")
             SettingsCard {
                 HStack(spacing: AppSpacing.md) {
-                    Image(systemName: "person.2.fill")
-                        .font(AppFonts.bodyMedium)
-                        .foregroundStyle(AppColors.spectrumCyan)
-                        .frame(width: 32, height: 32)
-                        .background(
-                            RoundedRectangle(cornerRadius: AppRadius.sm)
-                                .fill(AppColors.spectrumCyan.opacity(0.10))
-                        )
-                        .accessibilityHidden(true)
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        AppColors.spectrumCyan,
+                                        AppColors.spectrumPurple,
+                                        AppColors.spectrumMagenta
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 32, height: 32)
+                        Text(partnerInitial)
+                            .font(AppFonts.caption)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                    }
+                    .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                        Text("Paired account")
+                        Text(partnerHeadline)
                             .font(AppFonts.bodyMedium)
                             .foregroundStyle(AppColors.textPrimary)
-                        Text("Linked")
+                        Text(partnerStore?.pairedSince.map { "Since \($0.formatted(date: .long, time: .omitted))" } ?? "Linked")
                             .font(AppFonts.caption)
                             .foregroundStyle(AppColors.textTertiary)
                     }
                     Spacer()
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(AppColors.success)
-                        .accessibilityLabel("Linked")
                 }
                 .padding(.vertical, AppSpacing.sm)
             }
