@@ -312,6 +312,12 @@ enum AppIcons {
     static let infoCircle         = "info.circle"
     static let link               = "link"
 
+    // ── Pairing & sharing ──────────────────────────────
+    static let gear                 = "gearshape.fill"
+    static let paperplane           = "paperplane.fill"
+    static let squareAndArrowUp     = "square.and.arrow.up"
+    static let arrowTriangle2Circle = "arrow.triangle.2.circlepath"
+
     // ── Tab bar ───────────────────────────────────────────────
     // Tab icons live on AppTab — not duplicated here.
 }
