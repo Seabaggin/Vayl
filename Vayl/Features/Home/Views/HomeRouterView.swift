@@ -55,6 +55,13 @@ private struct HomeRouterInnerView: View {
     @Namespace private var pathNamespace
     @State private var showPath = false
 
+    // ── Pairing sheet presentation ───────────────────────────────────────
+    // Home is now a first-class entry point for pairing (previously routed to
+    // the Map tab). Mirrors the exact pattern in SettingsPartnerView: fresh
+    // PairingStore per presentation, appState injected via .environment.
+    @State private var showPairingInvite = false
+    @State private var showPairingJoin = false
+
     init(appState: AppState, coupleContext: CoupleContext, modelContainer: ModelContainer) {
         _store = State(initialValue: HomeStore(
             modelContainer: modelContainer,
@@ -101,6 +108,18 @@ private struct HomeRouterInnerView: View {
             if let revealStore = activeReveal {
                 DesireRevealView(store: revealStore)
             }
+        }
+        .vaylSheet(isPresented: $showPairingInvite, heightFraction: 0.92) {
+            PairingInviteView(
+                store: PairingStore(modelContainer: modelContext.container, appState: appState)
+            )
+            .environment(appState)
+        }
+        .vaylSheet(isPresented: $showPairingJoin, heightFraction: 0.92) {
+            PairingJoinView(
+                store: PairingStore(modelContainer: modelContext.container, appState: appState)
+            )
+            .environment(appState)
         }
     }
 
@@ -222,8 +241,15 @@ private struct HomeRouterInnerView: View {
                 onCardAction:        { card, action in
                     handleCardAction(card: card, action: action, deck: loadedDeck, store: store)
                 },
-                onInvitePartner:     { appState.selectedTab = .map },
-                onPartnerTap:        { appState.selectedTab = .map },
+                onInvitePartner:     { showPairingInvite = true },
+                onPartnerTap:        {
+                    switch appState.linkState {
+                    case .linked:
+                        appState.settingsPresented = true
+                    default:
+                        showPairingJoin = true
+                    }
+                },
                 onOpenLexicon:       { appState.selectedTab = .learn },
                 onPulseTap:          { appState.selectedTab = .map },
                 // Interim: route to the Pulse surface. Final: present the shared
@@ -265,7 +291,7 @@ private struct HomeRouterInnerView: View {
                 appState: appState
             )
         case .invitePartner:
-            appState.selectedTab = .map     // pairing lives on the Map tab today (PairingSettingsView)
+            showPairingInvite = true
         case .seeReveal:
             presentReveal()                  // D4 reveal (stub) — full-screen "magic moment"
         case .profile:

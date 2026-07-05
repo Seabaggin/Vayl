@@ -77,6 +77,12 @@ final class PairingStore {
     /// Partner name for display, with a graceful fallback when it's unset.
     var partnerDisplayName: String { partnerName ?? "Your partner" }
 
+    /// When the FIRST invite code was generated for this pairing attempt (mirrors
+    /// `UserProfile.firstInviteSentAt`). Nil until an invite has been sent. Backs
+    /// the invite view's static "sent X ago" caption — read once on appear rather
+    /// than driving a live countdown.
+    private(set) var firstInviteSentAt: Date? = nil
+
     // MARK: - Dependencies
 
     private let modelContainer: ModelContainer
@@ -138,6 +144,16 @@ final class PairingStore {
         guard profile.firstInviteSentAt == nil else { return }
         profile.firstInviteSentAt = Date()
         try? context.saveWithLogging()
+        firstInviteSentAt = profile.firstInviteSentAt
+    }
+
+    /// Reads `firstInviteSentAt` back from disk — call on invite-view appear so
+    /// re-entering a `.waitingForPartner` state (e.g. reopening the sheet) shows
+    /// the correct "sent X ago" caption even without regenerating a code.
+    func loadFirstInviteSentAt() async {
+        let context = ModelContext(modelContainer)
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
+        firstInviteSentAt = profile.firstInviteSentAt
     }
 
     // MARK: - Regenerate
