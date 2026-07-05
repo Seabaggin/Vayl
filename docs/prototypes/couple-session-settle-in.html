@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Settle-in · chest (cards over dimmed Home) → one merged Before-we-start</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --void:#0a0810; --ink:#070610; --cardOB:#120f1a; --card:#12111A; --sheet:#14111c; --cta:#201C34;
+    --cyan:#00C2FF; --cyanL:#4dd8ff; --cyanD:#0670a8;
+    --purple:#6C3AE0; --purpleL:#a78bfa; --violet:#8B5CF6;
+    --magenta:#FF006A; --magentaL:#ff4d94; --magentaD:#8f0040;
+    --rose:#C76A86; --roseL:#e6a8bd; --roseD:#6e3a4c; --bridge:#8b6fd4;
+    --t-display:rgba(232,232,240,0.95); --t-primary:rgba(255,255,255,0.90);
+    --t-secondary:rgba(255,255,255,0.65); --t-tertiary:rgba(255,255,255,0.38); --t-muted:rgba(255,255,255,0.20);
+    --label:rgba(167,139,250,0.55); --border:rgba(255,255,255,0.10); --border-subtle:rgba(255,255,255,0.06);
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,BlinkMacSystemFont,sans-serif;
+    --ease:cubic-bezier(0.22,1,0.36,1); --r-ob:14px; --r-sheet:26px;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; background:#131218; color:var(--t-primary); font-family:var(--body); }
+  .spectrum-text { background:linear-gradient(90deg,var(--cyan),var(--bridge) 46%,var(--magenta)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .wrap { display:flex; min-height:100vh; }
+
+  /* ── side panel ── */
+  .panel { width:332px; flex-shrink:0; padding:30px 26px 60px; background:#0e0d14; border-right:1px solid #1c1a28; height:100vh; position:sticky; top:0; overflow-y:auto; }
+  .panel .brand { font-family:var(--disp); font-size:13px; font-weight:600; letter-spacing:0.34em; margin:0 0 2px; color:var(--t-display); }
+  .panel h2 { font-family:var(--disp); font-size:19px; font-weight:500; margin:0 0 10px; color:var(--t-display); line-height:1.25; }
+  .panel .lede { font-size:12.5px; line-height:1.6; color:var(--t-secondary); margin:0 0 16px; }
+  .panel .lede b { color:var(--t-primary); font-weight:500; }
+  .why { border-top:1px solid #1c1a28; margin-top:14px; padding-top:14px; }
+  .whyH { font-size:9.5px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--label); margin-bottom:8px; }
+  .why p { font-size:11.5px; line-height:1.6; color:var(--t-secondary); margin:0 0 9px; }
+  .why p b { color:var(--t-primary); font-weight:500; }
+  .why ul { margin:0 0 9px; padding:0; list-style:none; }
+  .why li { font-size:11.5px; line-height:1.5; color:var(--t-secondary); margin-bottom:6px; padding-left:14px; position:relative; }
+  .why li::before { content:"·"; position:absolute; left:3px; color:var(--purpleL); font-weight:700; }
+  .why li b { color:var(--t-primary); font-weight:500; }
+  .whyK { color:var(--t-tertiary); font-style:italic; }
+  .decis { border-top:1px solid #1c1a28; margin-top:14px; padding-top:14px; }
+  .decis dt { font-size:9.5px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--label); margin:12px 0 3px; }
+  .decis dd { margin:0; font-size:11.5px; line-height:1.55; color:var(--t-secondary); }
+  .decis dd b { color:var(--t-primary); font-weight:500; }
+  .demo { border-top:1px solid #1c1a28; margin-top:14px; padding-top:14px; }
+  .demo .dh { font-size:9.5px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--label); margin-bottom:9px; }
+  .demoBtns { display:flex; flex-wrap:wrap; gap:7px; }
+  .demoBtns button { font-family:var(--body); font-size:11px; color:var(--t-secondary); background:transparent; border:1px solid #1c1a28; border-radius:8px; padding:7px 11px; cursor:pointer; transition:all 0.2s; }
+  .demoBtns button:hover { border-color:rgba(108,58,224,0.5); color:var(--t-primary); }
+  .hint { border-top:1px solid #1c1a28; margin-top:14px; padding-top:14px; font-size:11px; line-height:1.6; color:var(--t-tertiary); }
+  .hint b { color:var(--t-secondary); font-weight:500; }
+  .rm-row { display:flex; align-items:center; gap:10px; margin:14px 0 0; }
+  .rm-row span { font-size:11.5px; color:var(--t-secondary); }
+  .toggle { width:40px; height:23px; border-radius:12px; cursor:pointer; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); position:relative; transition:background 0.25s; flex:none; }
+  .toggle::after { content:""; position:absolute; top:3px; left:3px; width:15px; height:15px; border-radius:50%; background:#fff; transition:left 0.25s; }
+  .toggle.on { background:linear-gradient(90deg,var(--purple),var(--magenta)); }
+  .toggle.on::after { left:22px; }
+
+  /* ── stage / phones ── */
+  .stage { flex:1; min-width:0; display:flex; align-items:flex-start; justify-content:center; gap:44px; flex-wrap:wrap; padding:46px 40px 80px;
+    background:radial-gradient(130% 90% at 50% 6%,#1b1a22 0%,#111016 60%); }
+  .pcol { display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .pcap { font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--label); max-width:390px; text-align:center; }
+  .pcap .n { font-family:var(--disp); margin-right:7px; color:var(--t-secondary); }
+
+  .phone { position:relative; width:390px; height:844px; border-radius:50px; overflow:hidden; background:var(--ink);
+    box-shadow:0 36px 90px rgba(0,0,0,0.62), inset 0 0 0 1.5px rgba(255,255,255,0.05); flex:none; }
+  .voidbg { position:absolute; inset:0; background:var(--void); }
+  .notch { position:absolute; top:13px; left:50%; transform:translateX(-50%); width:112px; height:30px; background:#000; border-radius:18px; z-index:30; }
+  .home-ind { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:128px; height:5px; border-radius:3px; background:rgba(255,255,255,0.22); z-index:30; }
+  .sb { position:absolute; top:0; left:0; right:0; z-index:29; display:flex; justify-content:space-between; padding:17px 40px 0; font-size:14px; font-weight:600; color:rgba(255,255,255,0.7); pointer-events:none; }
+  .sb .ic { letter-spacing:2px; font-size:11px; opacity:0.72; }
+
+  .obAtmo { position:absolute; inset:0; pointer-events:none; z-index:1; }
+  .obAtmo .drift { position:absolute; inset:0; animation:drift 16s ease-in-out infinite alternate; }
+  body.rm .obAtmo .drift { animation:none; }
+  @keyframes drift { from { transform:translate(0,0); } to { transform:translate(-10px,12px); } }
+  .blob { position:absolute; border-radius:50%; filter:blur(70px); transform:translate(-50%,-50%); }
+  .b-cyan    { left:120px; top:250px; width:420px; height:360px; background:radial-gradient(closest-side,rgba(0,194,255,0.20),transparent 72%); animation:breath 7s ease-in-out infinite; }
+  .b-purple  { left:275px; top:540px; width:460px; height:420px; background:radial-gradient(closest-side,rgba(108,58,224,0.22),transparent 72%); animation:breath 9s ease-in-out 1s infinite; }
+  .b-magenta { left:170px; top:800px; width:470px; height:400px; background:radial-gradient(closest-side,rgba(255,0,106,0.22),transparent 72%); animation:breath 6.5s ease-in-out 0.5s infinite; }
+  body.rm .blob { animation:none; }
+  @keyframes breath { 0%,100% { opacity:0.6; transform:translate(-50%,-50%) scale(1); } 50% { opacity:1; transform:translate(-50%,-50%) scale(1.06); } }
+
+  .screen { position:absolute; inset:0; z-index:4; }
+
+  /* ═══════════════ PHONE 1 · THE CHEST — cards float over dimmed Home, NO container box ═══════════════ */
+  .homeBehind { position:absolute; inset:0; z-index:2; padding:60px 24px 0; filter:blur(3px); opacity:0.5; pointer-events:none; }
+  .hbWord { font-family:var(--disp); font-weight:600; font-size:26px; letter-spacing:0.03em; background:linear-gradient(90deg,var(--cyan),var(--magenta)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hbGs { margin-top:20px; display:flex; align-items:center; gap:14px; padding:15px 16px; border-radius:18px; border:1px solid var(--border); background:rgba(255,255,255,0.03); }
+  .hbGs .ring { width:42px; height:42px; border-radius:50%; flex:none; background:conic-gradient(var(--cyan),var(--purple),var(--magenta) 74%,rgba(255,255,255,0.10) 74%);
+    -webkit-mask:radial-gradient(circle 15px at center,transparent 97%,#000 100%); mask:radial-gradient(circle 15px at center,transparent 97%,#000 100%); }
+  .hbGs .gsT { font-size:11px; color:var(--t-tertiary); }
+  .hbGs .gsH { font-family:var(--disp); font-weight:500; font-size:16px; color:var(--t-secondary); margin-top:2px; }
+  .hbGhost { margin-top:16px; height:148px; border-radius:14px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.015); }
+  .hbTab { position:absolute; bottom:28px; left:24px; right:24px; height:54px; border-radius:20px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.02); display:flex; align-items:center; justify-content:space-around; }
+  .hbTab span { font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--t-muted); }
+  /* dim veil over ALL of Home — getting-started bar obscured too */
+  .chestDim { position:absolute; inset:0; z-index:3; background:rgba(2,2,6,0.74); }
+
+  /* floating layer — transparent, just positions the cards + chrome (no box, no border) */
+  .chestFloat { position:absolute; inset:0; z-index:4; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:150px 26px 150px; }
+  .cogFloat { position:absolute; top:150px; left:26px; z-index:6; width:46px; height:46px; border-radius:15px; cursor:pointer;
+    background:rgba(20,17,28,0.9); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; box-shadow:0 6px 14px rgba(0,0,0,0.4); transition:all 0.2s var(--ease); }
+  .cogFloat:hover { border-color:rgba(167,139,250,0.55); }
+  .cogFloat svg { width:22px; height:22px; }
+  .cogFloat .gdot { position:absolute; top:8px; right:9px; width:6px; height:6px; border-radius:50%; background:var(--cyanL); box-shadow:0 0 6px var(--cyan); }
+  .cogFloat .cogLbl { position:absolute; top:50px; left:4px; font-size:8.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--t-tertiary); white-space:nowrap; }
+  .deckFloat { position:absolute; top:150px; right:30px; z-index:6; }
+  .cornerdeck { position:relative; width:52px; height:40px; }
+  .cmini { position:absolute; width:44px; height:31px; right:0; top:3px; border-radius:6px; background:var(--cardOB); box-shadow:0 4px 9px rgba(0,0,0,0.4); }
+  .cmini .cfr { position:absolute; inset:0; border-radius:6px; padding:0.7px;
+    background:linear-gradient(135deg,rgba(0,194,255,0.45),rgba(108,58,224,0.45) 50%,rgba(255,0,106,0.45)) border-box;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; }
+  .cmini.m2 { transform:rotate(7deg); } .cmini.m3 { transform:rotate(-6deg); }
+  .ccount { position:absolute; right:-5px; top:-7px; min-width:20px; height:20px; padding:0 5px; border-radius:10px; z-index:3;
+    background:linear-gradient(135deg,var(--cyan),var(--magenta)); color:var(--void); font-family:var(--disp); font-weight:600; font-size:11px;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 0 10px rgba(108,58,224,0.5); }
+  .clabel { position:absolute; top:42px; right:0; font-size:8.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--t-tertiary); white-space:nowrap; }
+
+  /* the card = a VaylCardFace with its OWN spectrum frame (the only spectrum border here) */
+  .stack { position:relative; display:flex; align-items:center; justify-content:center; width:100%; height:210px; }
+  .vcard { position:relative; width:288px; height:198px; border-radius:var(--r-ob); overflow:hidden; background:var(--cardOB); box-shadow:0 30px 60px rgba(0,0,0,0.5), 0 0 30px rgba(108,58,224,0.12); }
+  .vcard .catmo { position:absolute; inset:0; background:
+    radial-gradient(circle at 30% 32%,rgba(0,194,255,0.07),transparent 50%),
+    radial-gradient(circle at 72% 70%,rgba(255,0,106,0.07),transparent 50%),
+    radial-gradient(circle at 50% 50%,rgba(108,58,224,0.11),transparent 46%); }
+  .vhair { position:absolute; left:14px; right:14px; height:1.2px; opacity:0.6; background:linear-gradient(90deg,var(--cyan),var(--purple) 50%,var(--magenta)); }
+  .vhair.t { top:1px; } .vhair.b { bottom:1px; }
+  .vouter { position:absolute; inset:0; border-radius:var(--r-ob); padding:1.1px; pointer-events:none;
+    background:linear-gradient(135deg,rgba(0,194,255,0.52),rgba(108,58,224,0.52) 50%,rgba(255,0,106,0.52)) border-box;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; }
+  .vdepth { position:absolute; top:16px; left:20px; font-size:9px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase;
+    background:linear-gradient(90deg,var(--cyanL),var(--magentaL)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .vq { position:absolute; inset:36px 26px 32px; display:flex; align-items:center; justify-content:center; text-align:center;
+    font-family:var(--disp); font-weight:500; font-size:18px; line-height:1.32; color:rgba(255,255,255,0.95); }
+  .vside { position:absolute; top:50%; width:250px; height:176px; border-radius:var(--r-ob); background:var(--cardOB); border:1px solid var(--border-subtle); opacity:0.30; }
+  .vside.l { left:6px; transform:translateY(-50%) translateX(-58%) rotate(-6deg); }
+  .vside.r { right:6px; transform:translateY(-50%) translateX(58%) rotate(6deg); }
+  .tapAdd { font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--cyanL); }
+  .browseHint { font-size:11px; letter-spacing:0.08em; color:var(--t-tertiary); }
+
+  /* VaylButton .primary — pill, #201C34 fill, spectrum border, white ctaLabel, subtle shimmer */
+  .settleFloat { position:absolute; left:44px; right:44px; bottom:100px; z-index:5; }
+  .vbtn { height:52px; border-radius:26px; position:relative; cursor:pointer; overflow:hidden; background:var(--cta);
+    display:flex; align-items:center; justify-content:center; transition:transform 0.15s var(--ease); }
+  .vbtn:active { transform:scale(0.98); }
+  .vbtn .vbsh { position:absolute; inset:0; background:linear-gradient(115deg,transparent 30%,rgba(122,79,216,0.20) 50%,transparent 70%); background-size:220% 100%; animation:vbsh 5.5s linear infinite; }
+  body.rm .vbtn .vbsh { animation:none; opacity:0.25; }
+  @keyframes vbsh { from { background-position:120% 0; } to { background-position:-120% 0; } }
+  .vbtn .vbborder { position:absolute; inset:0; border-radius:26px; padding:1.2px; pointer-events:none;
+    background:linear-gradient(135deg,var(--cyan),var(--purple) 50%,var(--magenta)) border-box;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; }
+  .vbtn .vblabel { position:relative; z-index:2; font-family:var(--body); font-size:15px; font-weight:600; color:#fff; letter-spacing:0.01em; }
+
+  /* ── settings ⅓ sheet ── */
+  .sheetScrim { position:absolute; inset:0; z-index:20; background:rgba(2,2,6,0.5); opacity:0; pointer-events:none; transition:opacity 0.4s var(--ease); }
+  .phone.sheetopen .sheetScrim { opacity:1; pointer-events:auto; }
+  .sheet { position:absolute; left:0; right:0; bottom:0; z-index:21; height:36%; transform:translateY(101%); transition:transform 0.44s var(--ease);
+    background:var(--sheet); backdrop-filter:blur(20px); border-radius:var(--r-sheet) var(--r-sheet) 0 0; border-top:1px solid var(--border); padding:12px 24px 34px; display:flex; flex-direction:column; }
+  .phone.sheetopen .sheet { transform:translateY(0); }
+  .sheet::before { content:""; position:absolute; top:0; left:34px; right:34px; height:1px; background:linear-gradient(90deg,transparent,rgba(0,194,255,0.5),rgba(255,0,106,0.5),transparent); box-shadow:0 0 10px rgba(108,58,224,0.35); }
+  .grab { width:38px; height:4px; border-radius:3px; background:rgba(255,255,255,0.18); margin:0 auto 14px; }
+  .sheetTitle { font-family:var(--disp); font-weight:500; font-size:17px; color:var(--t-display); margin:0 0 2px; }
+  .sheetSub { font-size:11.5px; color:var(--t-tertiary); margin:0 0 16px; }
+  .setRow { margin-bottom:16px; }
+  .setLabel { font-size:10px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--label); margin-bottom:8px; }
+  .setHelp { font-size:10.5px; line-height:1.45; color:var(--t-tertiary); margin-top:9px; }
+  .setHelp b { color:var(--t-secondary); font-weight:500; }
+  .seg { display:flex; gap:7px; }
+  .seg button { flex:1; font-family:var(--body); font-size:12px; color:var(--t-secondary); padding:10px 0; border-radius:11px; border:1px solid var(--border); background:transparent; cursor:pointer; transition:all 0.2s; line-height:1.25; }
+  .seg button.on { color:var(--void); border-color:transparent; background:linear-gradient(135deg,var(--cyan),var(--magenta)); font-weight:600; }
+  .seg button .who-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  .doneBtn { margin-top:auto; height:48px; border-radius:24px; background:var(--cta); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .doneBtn .vbborder { border-radius:24px; }
+  .doneBtn span { position:relative; z-index:2; font-size:14px; font-weight:600; color:#fff; }
+
+  /* ═══════════════ PHONE 2 · ONE "BEFORE WE START" — capacity + ritual + lock-in on one ring ═══════════════ */
+  .p2screen { position:absolute; inset:0; z-index:4; display:flex; flex-direction:column; padding:58px 30px 30px; }
+  .sHdr { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .back { width:34px; height:34px; border-radius:50%; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.03); color:var(--t-secondary);
+    font-size:19px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0 3px 2px 0; }
+  .sMeta { font-size:11.5px; font-weight:500; color:var(--t-secondary); }
+  .eyebrow { font-size:10px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--label); margin:14px 0 6px; display:flex; align-items:center; gap:7px; }
+  .eyebrow .spark { color:var(--purpleL); }
+  .sTitle { font-family:var(--disp); font-weight:500; font-size:23px; line-height:1.15; letter-spacing:-0.01em; color:var(--t-display); margin:0; }
+
+  /* capacity mirror — compact, moved onto Before-we-start; kept quiet so the ring dominates */
+  .capStrip { display:flex; align-items:center; justify-content:center; gap:11px; margin-top:12px; padding:8px 13px; border-radius:13px;
+    border:1px solid var(--border-subtle); background:rgba(255,255,255,0.02); position:relative; }
+  .capStrip .csEye { position:absolute; top:-7px; left:13px; font-size:8px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--label); background:var(--void); padding:0 6px; }
+  .csItem { display:inline-flex; align-items:center; gap:7px; font-size:11.5px; color:var(--t-secondary); }
+  .csItem b { color:var(--t-primary); font-weight:500; }
+  .csOrb { width:16px; height:16px; border-radius:50%; flex:none; }
+  .csOrb.cyan    { background:radial-gradient(circle at 35% 32%,var(--cyanL),var(--cyan) 60%,var(--cyanD)); box-shadow:0 0 10px 1px rgba(0,194,255,0.4); }
+  .csOrb.magenta { background:radial-gradient(circle at 35% 32%,#ffd3e6,var(--magenta) 60%,var(--magentaD)); box-shadow:0 0 10px 1px rgba(255,0,106,0.35); }
+  .csOrb.empty   { border:1.4px dashed rgba(255,255,255,0.25); }
+  .csDot { color:var(--t-muted); }
+
+  /* optional ritual pills */
+  .ritLabel { text-align:center; font-size:10.5px; color:var(--t-tertiary); margin:13px 0 7px; }
+  .ritPills { display:flex; gap:9px; }
+  .ritPill { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:9px 8px; border-radius:13px; cursor:pointer;
+    border:1px solid var(--border); background:rgba(255,255,255,0.02); font-size:12px; color:var(--t-secondary); transition:all 0.2s var(--ease); }
+  .ritPill:hover { border-color:rgba(167,139,250,0.45); color:var(--t-primary); }
+  .ritPill.on { border-color:transparent; background:linear-gradient(135deg,rgba(0,194,255,0.16),rgba(255,0,106,0.16)); color:var(--t-primary); box-shadow:inset 0 0 0 1px rgba(167,139,250,0.4); }
+  .ritPill svg { width:20px; height:20px; flex:none; }
+
+  /* ── the one ring: hosts breath-ritual, then the lock-in ── */
+  .ringArea { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; position:relative; }
+  .infoDot { position:absolute; top:2px; right:0; width:24px; height:24px; border-radius:50%; border:1px solid rgba(255,255,255,0.22);
+    display:flex; align-items:center; justify-content:center; font-family:var(--disp); font-size:12px; color:var(--t-secondary); cursor:pointer; }
+  .ringbox { position:relative; width:238px; height:238px; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0.4; transition:opacity 0.7s var(--ease); }
+  #phone2[data-ring="ready"] .ringbox, #phone2[data-ring="holding"] .ringbox, #phone2[data-ring="synced"] .ringbox, #phone2[data-ring="miss"] .ringbox, #phone2[data-ritual="breathe"] .ringbox { opacity:1; }
+  .ringbox svg { position:absolute; inset:0; overflow:visible; }
+  .ringGlow { opacity:0; transition:opacity 0.7s var(--ease); }
+  #phone2[data-ring="ready"] .ringGlow { opacity:1; animation:ringBreath 3s ease-in-out infinite; }
+  #phone2[data-ring="synced"] .ringGlow { opacity:1; }
+  body.rm .ringGlow { animation:none; }
+  @keyframes ringBreath { 0%,100% { opacity:0.45; } 50% { opacity:0.9; } }
+  /* soft breath orb — only visible while the breathe ritual runs */
+  .breathOrb { width:116px; height:116px; border-radius:50%; background:radial-gradient(circle at 38% 34%,var(--cyanL),var(--cyan) 55%,var(--cyanD) 96%);
+    box-shadow:0 0 40px 10px rgba(0,194,255,0.24); opacity:0; transform:scale(0.6); transition:opacity 0.5s var(--ease), transform 4s cubic-bezier(0.37,0,0.63,1); }
+  #phone2[data-ritual="breathe"] .breathOrb { opacity:0.95; }
+  #phone2[data-ritual="breathe"][data-breath="in"]  .breathOrb { transform:scale(1.05); }
+  #phone2[data-ritual="breathe"][data-breath="out"] .breathOrb { transform:scale(0.6); }
+  body.rm .breathOrb { transition:opacity 0.4s ease; transform:scale(0.85); }
+  .ringHint { position:absolute; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--t-secondary); }
+  #phone2[data-ritual="breathe"] .ringHint { color:var(--t-primary); letter-spacing:0.06em; text-transform:none; font-size:13px; }
+  .syncMsg { font-size:14px; color:var(--t-primary); text-align:center; min-height:19px; font-weight:500; }
+  .syncRule { font-size:11.5px; color:var(--t-tertiary); text-align:center; min-height:15px; margin-top:2px; }
+  .presrow { display:flex; align-items:center; justify-content:center; gap:24px; }
+  .who { display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--t-tertiary); }
+  .who .rdot2 { width:8px; height:8px; border-radius:50%; border:1.3px solid rgba(255,255,255,0.3); }
+  .who.in { color:var(--t-primary); }
+  .who.in .rdot2 { border-color:transparent; }
+  .who.you.in .rdot2 { background:linear-gradient(135deg,var(--cyan),var(--purpleL)); }
+  .who.alex.in .rdot2 { background:linear-gradient(135deg,var(--magentaL),var(--purple)); }
+  .who.waiting .rdot2 { animation:pulse 1.3s ease-in-out infinite; }
+  body.rm .who.waiting .rdot2 { animation:none; }
+  @keyframes pulse { 0%,100% { opacity:0.35; } 50% { opacity:1; } }
+  .whyRow { text-align:center; margin-top:4px; }
+  .whyLink { font-size:11.5px; color:rgba(116,219,255,0.82); cursor:pointer; display:inline-flex; align-items:center; }
+  .iCirc { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; border:1px solid currentColor; font-size:9px; font-style:italic; font-weight:600; margin-left:6px; font-family:var(--disp); }
+
+  /* info sheet (why + how) */
+  .infoScrim { position:absolute; inset:0; z-index:20; background:rgba(2,2,6,0.6); opacity:0; pointer-events:none; transition:opacity 0.35s var(--ease); }
+  .phone.infoopen .infoScrim { opacity:1; pointer-events:auto; }
+  .infoSheet { position:absolute; left:0; right:0; bottom:0; z-index:21; transform:translateY(101%); transition:transform 0.42s var(--ease);
+    background:var(--sheet); border-radius:var(--r-sheet) var(--r-sheet) 0 0; border-top:1px solid var(--border); padding:12px 26px 36px; }
+  .phone.infoopen .infoSheet { transform:translateY(0); }
+  .infoSheet h3 { font-family:var(--disp); font-weight:500; font-size:17px; color:var(--t-display); margin:0 0 4px; }
+  .infoSheet .isub { font-size:12.5px; color:var(--t-secondary); margin:0 0 14px; }
+  .infoSheet .iwhy { font-size:12.5px; line-height:1.6; color:var(--t-secondary); margin:0 0 16px; padding-bottom:14px; border-bottom:1px solid var(--border-subtle); }
+  .infoSheet .iwhy b { color:var(--t-primary); font-weight:500; }
+  .infoSheet .ihow { font-size:10px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--label); margin:0 0 12px; }
+  .iline { display:flex; gap:11px; align-items:flex-start; font-size:13px; line-height:1.4; color:var(--t-secondary); margin-bottom:11px; }
+  .iline .n { flex:none; width:20px; height:20px; border-radius:50%; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:var(--t-primary); }
+  .iline b { color:var(--t-primary); font-weight:500; }
+
+  /* 'how it works' — two rings side by side, filling + releasing in sync */
+  .twoRings { display:flex; align-items:center; justify-content:center; gap:22px; margin:8px 0 14px; }
+  .twoRings .lnk { font-size:20px; color:var(--t-muted); }
+  .miniRing { position:relative; width:84px; height:84px; }
+  .miniRing svg { position:absolute; inset:0; overflow:visible; }
+  .miniRing .mlabel { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--t-tertiary); }
+  .mflash { opacity:0; animation:mFlash 3.6s ease-in-out infinite; }
+  .mprog  { animation:mFill 3.6s ease-in-out infinite; }
+  body.rm .mprog  { animation:none; stroke-dashoffset:68; opacity:1; }
+  body.rm .mflash { animation:none; opacity:0; }
+  @keyframes mFill {
+    0%,4% { stroke-dashoffset:213.6; opacity:0; }
+    10%   { opacity:1; }
+    44%   { stroke-dashoffset:68; opacity:1; }
+    56%   { stroke-dashoffset:68; opacity:1; }
+    63%   { stroke-dashoffset:68; opacity:0.12; }
+    64%   { stroke-dashoffset:213.6; opacity:0; }
+    100%  { stroke-dashoffset:213.6; opacity:0; }
+  }
+  @keyframes mFlash { 0%,54% { opacity:0; } 60% { opacity:0.85; } 76% { opacity:0; } 100% { opacity:0; } }
+  .twoRingsCap { font-size:12.5px; line-height:1.55; color:var(--t-secondary); text-align:center; margin:0 0 14px; }
+  .infoDiv { height:1px; background:var(--border-subtle); margin:2px 0 14px; }
+</style>
+</head>
+<body class="rm-off">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00c2ff"/><stop offset="0.5" stop-color="#7a4fd8"/><stop offset="1" stop-color="#ff006a"/></linearGradient>
+</defs></svg>
+
+<div class="wrap">
+  <aside class="panel">
+    <div class="brand">VAYL</div>
+    <h2>Settle-in · aligned</h2>
+    <p class="lede">Two screens. The <b>chest</b> is card selection — cards float directly over a <b>dimmed Home</b> (no container box; the only spectrum edge is each card's own face). The <b>Before-we-start</b> screen now merges the old rules + lock-in into one: capacity for context, an optional ritual, and the lock-in — all on a single ring.</p>
+
+    <div class="why">
+      <div class="whyH">Why the lock-in exists</div>
+      <p>A session asks two people to be honest and undefended. It only pays off if they actually <b>arrive</b> — present, and choosing it on purpose. The lock-in is the threshold that makes starting <b>a deliberate, shared act</b>.</p>
+      <ul>
+        <li><b>Marks the boundary</b> — the room feels different the moment you cross in.</li>
+        <li><b>Requires intention</b> — the friction turns "kill time" into "let's actually do this."</li>
+        <li><b>Certifies presence</b> — the hold-and-release can't be done alone; both are here before a card turns.</li>
+      </ul>
+      <p class="whyK">The ritual settles emotion; the lock-in settles attention.</p>
+    </div>
+
+    <dl class="decis">
+      <dt>The chest has no box</dt>
+      <dd>Faithful to <b>CardCarousel</b>: cards sit on a plain dim backdrop; the spectrum frame is on each <b>card face</b>, not a container. Cog top-left, card stack top-right, Settle-in below.</dd>
+      <dt>Pulse = mirror, on Before-we-start</dt>
+      <dd>Capacity moved onto the threshold as arrival context. It sets nothing — the couple already picked the cards.</dd>
+      <dt>Ritual + lock-in, one ring</dt>
+      <dd>Tap a ritual and the ring hosts it (breath guide / prompt); then hold that same ring and release together to lock in. One object, two jobs.</dd>
+    </dl>
+
+    <div class="demo">
+      <div class="dh">Before-we-start · try</div>
+      <div class="demoBtns">
+        <button data-go="breathe">breathe ritual</button>
+        <button data-go="good">one good thing</button>
+        <button data-go="reset">reset ring</button>
+      </div>
+    </div>
+
+    <div class="hint"><b>Try it:</b> chest → tap the <b>cog</b> (top-left) for settings. Before-we-start → tap a ritual pill, then <b>press &amp; hold the ring</b> and release. Toggle Alex's check-in to see the no-read state. <b>⚑ Swift-native:</b> the breath cycle, ring fill + both-release tolerance, and the orb aura live on device.</div>
+
+    <div class="rm-row"><div class="toggle" id="alexToggle"></div><span>Alex hasn't checked in today</span></div>
+    <div class="rm-row"><div class="toggle" id="rmToggle"></div><span>Reduce motion</span></div>
+  </aside>
+
+  <main class="stage">
+
+    <!-- ═════ PHONE 1 · THE CHEST ═════ -->
+    <div class="pcol">
+      <div class="pcap"><span class="n">1</span>The chest · cards float over a dimmed Home · no container box</div>
+      <div class="phone" id="phone1">
+        <div class="voidbg"></div>
+        <div class="obAtmo"><div class="drift"><div class="blob b-cyan"></div><div class="blob b-purple"></div><div class="blob b-magenta"></div></div></div>
+        <div class="notch"></div>
+        <div class="sb"><span>9:41</span><span class="ic">●●● ▮</span></div>
+
+        <div class="screen">
+          <!-- Home behind, fully dimmed + blurred (getting-started bar obscured too) -->
+          <div class="homeBehind">
+            <div class="hbWord">VAYL</div>
+            <div class="hbGs"><div class="ring"></div><div><div class="gsT">Your first steps</div><div class="gsH">Map your desires</div></div></div>
+            <div class="hbGhost"></div>
+            <div class="hbTab"><span>Home</span><span>Play</span><span>Map</span><span>Learn</span><span>⚙</span></div>
+          </div>
+          <div class="chestDim"></div>
+
+          <!-- floating chrome + cards — NO box, NO outer gradient border -->
+          <div class="chestFloat">
+            <div class="cogFloat" id="gearBtn" title="Session settings">
+              <span class="gdot"></span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1M18.7 18.7l-2.1-2.1M7.4 7.4L5.3 5.3"/>
+              </svg>
+              <span class="cogLbl">setup</span>
+            </div>
+            <div class="deckFloat">
+              <div class="cornerdeck">
+                <div class="cmini m3"><div class="cfr"></div></div>
+                <div class="cmini m2"><div class="cfr"></div></div>
+                <div class="cmini"><div class="cfr"></div></div>
+                <div class="ccount">3</div><div class="clabel">tonight</div>
+              </div>
+            </div>
+
+            <div class="stack">
+              <div class="vside l"></div>
+              <div class="vside r"></div>
+              <div class="vcard">
+                <div class="catmo"></div>
+                <div class="vhair t"></div><div class="vhair b"></div>
+                <div class="vdepth">warming up</div>
+                <div class="vq">What does a boundary mean to you?</div>
+                <div class="vouter"></div>
+              </div>
+            </div>
+            <div class="tapAdd">tap to add</div>
+            <div class="browseHint">swipe to browse · The Opener · 12 / 28</div>
+          </div>
+
+          <!-- floating Settle CTA (shared VaylButton) -->
+          <div class="settleFloat">
+            <div class="vbtn" id="settleBtn"><div class="vbsh"></div><div class="vbborder"></div><span class="vblabel">Settle in · 3&nbsp;&nbsp;→</span></div>
+          </div>
+
+          <!-- settings ⅓ sheet -->
+          <div class="sheetScrim" id="sheetScrim"></div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <div class="sheetTitle">Session settings</div>
+            <div class="sheetSub">just the two knobs that matter tonight.</div>
+            <div class="setRow">
+              <div class="setLabel">Who reads first</div>
+              <div class="seg" id="segWho">
+                <button class="on" data-v="you"><span class="who-dot" style="background:linear-gradient(135deg,var(--cyan),var(--purpleL))"></span>You</button>
+                <button data-v="alex"><span class="who-dot" style="background:linear-gradient(135deg,var(--magentaL),var(--purple))"></span>Alex</button>
+                <button data-v="either">Let it decide</button>
+              </div>
+            </div>
+            <div class="setRow">
+              <div class="setLabel">Length &amp; pace</div>
+              <div class="seg" id="segLen">
+                <button data-v="short">Short<br><span style="font-size:9.5px;opacity:0.7">~10 min</span></button>
+                <button class="on" data-v="full">Full<br><span style="font-size:9.5px;opacity:0.7">~20 min</span></button>
+                <button data-v="open">Unhurried<br><span style="font-size:9.5px;opacity:0.7">no cap</span></button>
+              </div>
+              <div class="setHelp">Sets a <b>gentle timer</b> on the session — a soft nudge near the end, <b>never a hard stop</b>. Unhurried adds no timer.</div>
+            </div>
+            <div class="doneBtn" id="sheetDone"><div class="vbborder"></div><span>Done</span></div>
+          </div>
+        </div>
+        <div class="home-ind"></div>
+      </div>
+    </div>
+
+    <!-- ═════ PHONE 2 · ONE "BEFORE WE START" ═════ -->
+    <div class="pcol">
+      <div class="pcap"><span class="n">2</span>Before we start · capacity + ritual + lock-in, merged on one ring</div>
+      <div class="phone" id="phone2" data-ring="waiting" data-ritual="none" data-breath="out">
+        <div class="voidbg"></div>
+        <div class="obAtmo"><div class="drift"><div class="blob b-cyan"></div><div class="blob b-purple"></div><div class="blob b-magenta"></div></div></div>
+        <div class="notch"></div>
+        <div class="sb"><span>9:41</span><span class="ic">●●● ▮</span></div>
+
+        <div class="p2screen">
+          <div class="sHdr"><div class="back" id="backBtn">‹</div><div class="sMeta">The Opener · 3 cards</div></div>
+          <div class="eyebrow"><span class="spark">✦</span> Settle in</div>
+          <h1 class="sTitle">Before we start</h1>
+
+          <!-- capacity (pulse), moved here as arrival context -->
+          <div class="capStrip" id="capStrip">
+            <span class="csEye">where you're each at</span>
+            <span class="csItem"><span class="csOrb cyan"></span>You&nbsp;·&nbsp;<b>Abundant</b></span>
+            <span class="csDot">·</span>
+            <span class="csItem" id="csAlex"><span class="csOrb magenta"></span>Alex&nbsp;·&nbsp;<b>Low</b></span>
+          </div>
+
+          <!-- optional ritual -->
+          <div class="ritLabel">take a moment to arrive — optional</div>
+          <div class="ritPills">
+            <div class="ritPill" data-ritual="breathe">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round">
+                <circle cx="12" cy="12" r="3" stroke="#4dd8ff" stroke-width="1.7"/>
+                <circle cx="12" cy="12" r="6.6" stroke="#00c2ff" stroke-width="1.5" opacity="0.6"/>
+                <circle cx="12" cy="12" r="10.2" stroke="#0670a8" stroke-width="1.3" opacity="0.45"/>
+              </svg>Breathe together
+            </div>
+            <div class="ritPill" data-ritual="good">
+              <svg viewBox="0 0 24 24" fill="none">
+                <text x="3" y="18.5" font-size="13" font-weight="700" fill="#ff4d94" style="font-family:'Clash Display',sans-serif">1</text>
+                <g stroke="#ff4d94" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15.6 19.5V8.4"/><path d="M11.9 12.1 15.6 8.4 19.3 12.1"/></g>
+              </svg>One good thing
+            </div>
+          </div>
+
+          <!-- the one ring -->
+          <div class="ringArea">
+            <div class="ringbox" id="ringbox">
+              <svg viewBox="0 0 238 238">
+                <circle class="ringGlow" cx="119" cy="119" r="98" fill="none" stroke="url(#sg)" stroke-width="22" opacity="0" style="filter:blur(9px)"/>
+                <circle cx="119" cy="119" r="98" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="8"/>
+                <circle id="prog" cx="119" cy="119" r="98" fill="none" stroke="url(#sg)" stroke-width="11" stroke-linecap="round" stroke-dasharray="615.8" stroke-dashoffset="615.8" transform="rotate(-90 119 119)"/>
+              </svg>
+              <div class="breathOrb"></div>
+              <div class="ringHint" id="ringHint">hold</div>
+            </div>
+            <div class="syncMsg" id="syncMsg">waiting for Alex…</div>
+            <div class="syncRule" id="syncRule"></div>
+            <div class="presrow">
+              <span class="who you in"><i class="rdot2"></i>You</span>
+              <span class="who alex waiting" id="whoAlex"><i class="rdot2"></i>Alex</span>
+            </div>
+            <div class="whyRow"><span class="whyLink" id="whyLink">how it works <span class="iCirc">i</span></span></div>
+          </div>
+        </div>
+
+        <!-- info sheet -->
+        <div class="infoScrim" id="infoScrim"></div>
+        <div class="infoSheet">
+          <div class="grab"></div>
+          <h3>How it works</h3>
+          <p class="isub">Two phones, one shared beat.</p>
+
+          <div class="twoRings">
+            <div class="miniRing">
+              <svg viewBox="0 0 84 84">
+                <circle class="mflash" cx="42" cy="42" r="34" fill="none" stroke="url(#sg)" stroke-width="10" style="filter:blur(5px)"/>
+                <circle cx="42" cy="42" r="34" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="4"/>
+                <circle class="mprog" cx="42" cy="42" r="34" fill="none" stroke="url(#sg)" stroke-width="5" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" transform="rotate(-90 42 42)"/>
+              </svg>
+              <div class="mlabel">you</div>
+            </div>
+            <span class="lnk">↔</span>
+            <div class="miniRing">
+              <svg viewBox="0 0 84 84">
+                <circle class="mflash" cx="42" cy="42" r="34" fill="none" stroke="url(#sg)" stroke-width="10" style="filter:blur(5px)"/>
+                <circle cx="42" cy="42" r="34" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="4"/>
+                <circle class="mprog" cx="42" cy="42" r="34" fill="none" stroke="url(#sg)" stroke-width="5" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" transform="rotate(-90 42 42)"/>
+              </svg>
+              <div class="mlabel">alex</div>
+            </div>
+          </div>
+          <p class="twoRingsCap">Both press and hold — the rings fill. Let go on the <b style="color:var(--t-primary);font-weight:500">same beat</b>, landing on the same point. Off, and it resets.</p>
+
+          <div class="infoDiv"></div>
+          <div class="ihow">Why it's here</div>
+          <p class="iwhy">A session works best when you both actually <b>arrive</b> — present, and choosing it on purpose. This shared beat <b>can't be done alone</b>, so it proves you're both here and ready before a single card turns.</p>
+        </div>
+
+        <div class="home-ind"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  /* ═══ PHONE 1 · chest ═══ */
+  const p1 = document.getElementById('phone1');
+  document.getElementById('gearBtn').addEventListener('click', () => p1.classList.add('sheetopen'));
+  document.getElementById('sheetScrim').addEventListener('click', () => p1.classList.remove('sheetopen'));
+  document.getElementById('sheetDone').addEventListener('click', () => p1.classList.remove('sheetopen'));
+  document.getElementById('settleBtn').addEventListener('click', () => document.getElementById('phone2').scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' }));
+  function segWire(id) { const g = document.getElementById(id); g.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { g.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on'); })); }
+  segWire('segWho'); segWire('segLen');
+
+  /* ═══ PHONE 2 · before-we-start ═══ */
+  const p2 = document.getElementById('phone2');
+  const ringHint = document.getElementById('ringHint'), syncMsg = document.getElementById('syncMsg'), syncRule = document.getElementById('syncRule');
+  const whoAlex = document.getElementById('whoAlex'), prog = document.getElementById('prog');
+  const C = 615.8, FILL_MS = 2600, TOL = 0.12;
+  let raf = null, startT = 0, holding = false;
+  let breathTimer = null;
+  const setRing = s => { p2.dataset.ring = s; };
+  const setArc = f => prog.setAttribute('stroke-dashoffset', C * (1 - f));
+  // lock-in briefed like a mini-game: one action line + the objective
+  function readyCopy() { ringHint.textContent = 'hold'; syncMsg.textContent = 'Both hold, then let go on the same beat.'; syncRule.textContent = 'Land on the same point and you’re both in.'; }
+  function waitCopy()  { ringHint.textContent = 'hold'; syncMsg.textContent = 'Waiting for Alex to arrive…'; syncRule.textContent = ''; }
+
+  /* capacity (pure mirror) */
+  const alexToggle = document.getElementById('alexToggle');
+  function renderCap() {
+    const csAlex = document.getElementById('csAlex');
+    const noRead = alexToggle.classList.contains('on');
+    csAlex.innerHTML = noRead
+      ? '<span class="csOrb empty"></span>Alex&nbsp;·&nbsp;<b style="color:var(--t-tertiary);font-weight:400">not checked in</b>'
+      : '<span class="csOrb magenta"></span>Alex&nbsp;·&nbsp;<b>Low</b>';
+  }
+  alexToggle.addEventListener('click', function () { this.classList.toggle('on'); renderCap(); });
+
+  /* partner presence → ring wakes */
+  function alexJoins() { if (p2.dataset.ring !== 'waiting') return; whoAlex.className = 'who alex in'; setRing('ready'); if (p2.dataset.ritual === 'none') readyCopy(); }
+
+  /* ── ritual: breathe (hosted in the ring) ── */
+  const ritPills = document.querySelectorAll('.ritPill');
+  ritPills.forEach(p => p.addEventListener('click', () => toggleRitual(p.dataset.ritual)));
+  function clearPills() { ritPills.forEach(p => p.classList.remove('on')); }
+  function stopBreath() { if (breathTimer) { clearTimeout(breathTimer); breathTimer = null; } p2.dataset.breath = 'out'; }
+  function toBaseline() {
+    stopBreath(); clearPills(); p2.dataset.ritual = 'none';
+    if (p2.dataset.ring === 'ready') readyCopy(); else waitCopy();
+  }
+  function toggleRitual(kind) {
+    if (p2.dataset.ritual === kind) { toBaseline(); return; }     // tapping the active ritual ends it
+    stopBreath(); clearPills();
+    document.querySelector('.ritPill[data-ritual="' + kind + '"]').classList.add('on');
+    p2.dataset.ritual = kind;
+    if (kind === 'breathe') runBreath();
+    else { ringHint.textContent = ''; syncMsg.textContent = 'Each say one thing you’re grateful for.'; syncRule.textContent = 'take your time — then tap it again'; }
+  }
+  function runBreath() {
+    stopBreath();
+    ringHint.textContent = 'settle…'; syncMsg.textContent = 'Follow the ring.'; syncRule.textContent = '';
+    if (document.body.classList.contains('rm')) { ringHint.textContent = 'take a slow breath, together'; return; }
+    let n = 0;
+    const cycle = () => {
+      p2.dataset.breath = 'in'; ringHint.textContent = 'breathe in…';
+      breathTimer = setTimeout(() => {
+        p2.dataset.breath = 'out'; ringHint.textContent = 'and out…';
+        breathTimer = setTimeout(() => {
+          n++;
+          if (n >= 3) { ringHint.textContent = 'there you are'; syncMsg.textContent = ''; breathTimer = setTimeout(toBaseline, 1600); return; }
+          cycle();
+        }, 4000);
+      }, 4000);
+    };
+    breathTimer = setTimeout(cycle, 900);
+  }
+
+  /* ── the lock-in (same ring) ── */
+  function startHold() {
+    if (p2.dataset.ring !== 'ready' || p2.dataset.ritual === 'breathe') return;   // breathing owns the ring while it runs
+    if (p2.dataset.ritual === 'good') toBaseline();
+    holding = true; startT = performance.now(); setRing('holding');
+    ringHint.textContent = 'let go'; syncMsg.textContent = 'Now — let go together, on three.'; syncRule.textContent = '';
+    raf = requestAnimationFrame(tick);
+  }
+  function tick(now) { const f = Math.min(1, (now - startT) / FILL_MS); setArc(f); if (f >= 1) { holding = false; cancelAnimationFrame(raf); tooLong(); return; } if (holding) raf = requestAnimationFrame(tick); }
+  function endHold() {
+    if (!holding) return;
+    holding = false; cancelAnimationFrame(raf);
+    const f = Math.min(1, (performance.now() - startT) / FILL_MS);
+    const af = Math.max(0.05, Math.min(0.97, f + (Math.random() * 2 - 1) * 0.09));   // sim Alex release
+    if (Math.abs(f - af) <= TOL) synced(); else miss();
+  }
+  function synced() { setRing('synced'); setArc(1); ringHint.textContent = 'in sync'; syncMsg.textContent = 'In sync — here we go →'; syncRule.textContent = ''; }
+  function miss() { setRing('miss'); ringHint.textContent = 'not together'; syncMsg.textContent = 'You let go apart.'; syncRule.textContent = 'Release on the same beat — try again.'; setTimeout(() => { setArc(0); setRing('ready'); readyCopy(); }, 1600); }
+  function tooLong() { setRing('miss'); ringHint.textContent = 'too long'; syncMsg.textContent = 'Held past full.'; syncRule.textContent = 'Let go before the ring fills — try again.'; setTimeout(() => { setArc(0); setRing('ready'); readyCopy(); }, 1600); }
+  function resetRing() { cancelAnimationFrame(raf); holding = false; setArc(0); stopBreath(); clearPills(); p2.dataset.ritual = 'none'; whoAlex.className = 'who alex waiting'; setRing('waiting'); waitCopy(); setTimeout(alexJoins, 1300); }
+
+  const rb = document.getElementById('ringbox');
+  rb.addEventListener('pointerdown', startHold);
+  rb.addEventListener('pointerup', endHold);
+  rb.addEventListener('pointerleave', endHold);
+  rb.addEventListener('pointercancel', endHold);
+  document.getElementById('backBtn').addEventListener('click', resetRing);
+
+  /* info sheet */
+  document.getElementById('whyLink').addEventListener('click', () => p2.classList.add('infoopen'));
+  document.getElementById('infoScrim').addEventListener('click', () => p2.classList.remove('infoopen'));
+
+  /* panel controls */
+  document.querySelectorAll('.demoBtns button').forEach(b => b.addEventListener('click', () => {
+    const go = b.dataset.go;
+    if (go === 'breathe') toggleRitual('breathe');
+    else if (go === 'good') toggleRitual('good');
+    else resetRing();
+  }));
+  document.getElementById('rmToggle').addEventListener('click', function () { this.classList.toggle('on'); document.body.classList.toggle('rm', this.classList.contains('on')); if (p2.dataset.ritual === 'breathe') runBreath(); });
+
+  /* init */
+  renderCap(); waitCopy();
+  setTimeout(alexJoins, 1500);
+</script>
+</body>
+</html>
