@@ -129,7 +129,10 @@ final class PairingStore {
     /// pairing attempt. Regenerating an expired code does NOT reset it — the
     /// nudge threshold measures "how long you've been trying to pair," not the
     /// lifetime of any single code.
-    private func recordFirstInviteSentIfNeeded() async {
+    ///
+    /// Internal (not private) so `@testable import Vayl` can call this method
+    /// directly in tests, rather than reimplementing its guard logic inline.
+    func recordFirstInviteSentIfNeeded() async {
         let context = ModelContext(modelContainer)
         guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
         guard profile.firstInviteSentAt == nil else { return }
