@@ -102,27 +102,30 @@ Builds the read **before** the mirror UI (per decision). The capacity a partner 
 - Create test: `VaylTests/Sessions/CoupleCapacityStoreTests.swift`
 - Model reuse: `Vayl/Core/Models/Enums/AppPulseEnums.swift` (`PulseCapacityColor`, `PulseQuadrant.capacityColor`)
 
-- [ ] **Step 1: Verify the backend share exists.** Use the Supabase MCP (`list_tables` / `execute_sql`) to confirm how a partner's latest pulse tier is exposed and whether RLS permits the partner to read the tier (not the answers). Record findings inline in the service file's header comment. If the read path does **not** exist, PAUSE and surface it (a `get-partner-capacity` edge function or an RLS-scoped view may be needed) — do not fabricate a client that reads columns that aren't partner-visible.
+- [x] **Step 1: Backend read path — VERIFIED on prod (`ynhjlabjzauamntbyxdp`, 2026-07-05).** The read path already exists and is correctly RLS-gated — no backend build needed for the read:
+  - Table **`public.pulse_shared_capacity`** `(profile_id uuid, couple_id uuid, capacity_score real, updated_at timestamptz)`. Only the **scalar `capacity_score`** is shared — never answers or the 2D position.
+  - RLS read policy `pulse_shared_capacity read`: readable when `profile_id` is yours OR (`couple_id` ∈ your couples AND that `profile_id` has `user_profiles.share_pulse_with_partner = true`). Insert/update/delete are own-only.
+  - So the client reads the **partner's** row: `couple_id = <my couple>`, `profile_id = <partner>`, share-gated automatically by RLS.
+  - **The partner tier is derived from `capacity_score`** (map scalar → `PulseCapacityColor` band), NOT the quadrant. Define the banding against the score's real range/direction (check `PulseAnswers` scoring; higher = more capacity).
 
-Run: (MCP) `list_tables` on the pulse/user_profiles tables; `execute_sql` a SELECT simulating the partner read under RLS.
-Expected: either a confirmed read path (view/function/column), or a documented gap to resolve first.
+- [ ] **Step 1b: Confirm/wire the WRITE path (caveat).** Prod `pulse_shared_capacity` has only **1 row** and **no server-side writer** (no trigger on `pulse_entries`, no plpgsql fn touches it) — the `insert/update own` policies imply the **client** upserts its own row. Verify the app actually upserts `pulse_shared_capacity(profile_id, couple_id, capacity_score)` on pulse check-in completion **when `share_pulse_with_partner = true`**; if not, wire it in the Pulse check-in path (this touches the Pulse feature — flag scope to Bryan before expanding). Without a partner writing their row, the mirror shows the "not checked in" state.
 
 - [ ] **Step 2: Write the failing store test.** The store maps a fetched tier string → `PulseCapacityColor` and exposes a stale/absent state.
 
 ```swift
 // VaylTests/Sessions/CoupleCapacityStoreTests.swift
 @MainActor
-func test_partnerCapacity_mapsTierAndStale() async {
-    let svc = MockCoupleCapacityService(result: .success(.init(tier: .indigo, isFresh: true)))
+func test_partnerCapacity_present_mapsScoreToTier() async {
+    let svc = MockCoupleCapacityService(result: .success(.init(capacityScore: 0.72, updatedAt: .now)))
     let store = CoupleCapacityStore(service: svc, coupleContext: .stub)
     await store.load()
-    XCTAssertEqual(store.partnerTier, .indigo)          // "Good"
+    XCTAssertNotNil(store.partnerTier)                  // score banded → a PulseCapacityColor
     XCTAssertFalse(store.partnerNotCheckedIn)
 }
 
 @MainActor
-func test_partnerCapacity_absentWhenNoCheckin() async {
-    let svc = MockCoupleCapacityService(result: .success(nil))
+func test_partnerCapacity_absentWhenNoSharedRow() async {
+    let svc = MockCoupleCapacityService(result: .success(nil))  // no shared row (partner hasn't checked in / not sharing)
     let store = CoupleCapacityStore(service: svc, coupleContext: .stub)
     await store.load()
     XCTAssertNil(store.partnerTier)
@@ -135,11 +138,25 @@ func test_partnerCapacity_absentWhenNoCheckin() async {
 - [ ] **Step 4: Implement the service + store.** Service is protocol-injected (no Store→Service concretion). Store is `@Observable @MainActor`.
 
 ```swift
-// CoupleCapacityService.swift
-struct PartnerCapacity { let tier: PulseCapacityColor; let isFresh: Bool }
+// CoupleCapacityService.swift — reads public.pulse_shared_capacity for the PARTNER row
+// (couple_id = my couple, profile_id = partner). RLS share-gates it automatically.
+struct PartnerCapacity { let capacityScore: Double; let updatedAt: Date }
 protocol CoupleCapacityService { func fetchPartnerCapacity() async throws -> PartnerCapacity? }
 
-// CoupleCapacityStore.swift
+// PulseCapacityColor+banding — map the shared 1D scalar → a tier band.
+// Define the thresholds against the real capacity_score range/direction (see PulseAnswers scoring).
+extension PulseCapacityColor {
+    init(capacityScore s: Double) {
+        switch s {                       // higher = more capacity; bands are placeholders pending score-range check
+        case ..<0.25: self = .rose       // Empty
+        case ..<0.50: self = .magenta    // Low
+        case ..<0.75: self = .indigo     // Good
+        default:      self = .cyan        // Abundant
+        }
+    }
+}
+
+// CoupleCapacityStore.swift — maps the shared scalar → tier; "not checked in" when there's no shared row
 @Observable @MainActor
 final class CoupleCapacityStore {
     private(set) var partnerTier: PulseCapacityColor?
@@ -148,8 +165,9 @@ final class CoupleCapacityStore {
     init(service: CoupleCapacityService, coupleContext: CoupleContext) { self.service = service }
     func load() async {
         do {
-            if let cap = try await service.fetchPartnerCapacity(), cap.isFresh {
-                partnerTier = cap.tier; partnerNotCheckedIn = false
+            if let cap = try await service.fetchPartnerCapacity() {
+                partnerTier = PulseCapacityColor(capacityScore: cap.capacityScore)
+                partnerNotCheckedIn = false
             } else { partnerTier = nil; partnerNotCheckedIn = true }
         } catch { partnerTier = nil; partnerNotCheckedIn = true }
     }
