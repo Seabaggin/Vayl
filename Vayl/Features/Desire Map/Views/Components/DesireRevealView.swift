@@ -37,6 +37,7 @@ struct DesireRevealView: View {
             // ── Background ──────────────────────────────
             AppColors.void.ignoresSafeArea()
             OnboardingAtmosphere(config: .cardReveal).ignoresSafeArea()
+            DesireStarfield().ignoresSafeArea()
 
             // ── Content ─────────────────────────────────
             VStack(spacing: 0) {
