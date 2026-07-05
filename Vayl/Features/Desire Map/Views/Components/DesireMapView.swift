@@ -317,11 +317,10 @@ struct DesireMapView: View {
                         ForEach(Array(answers.enumerated()), id: \.offset) { idx, label in
                             if idx < DesireRatingValue.allCases.count {
                                 let weight = DesireRatingValue.allCases[idx]
-                                _RaterPill(
+                                DesireAnswerPill(
                                     label: label,
                                     hint: pillHint(for: weight),
-                                    accent: accentColor(for: weight),
-                                    isBoundary: weight == .notForMe,
+                                    weight: weight,
                                     isSelected: store.existingRating(for: item.id) == weight
                                 ) { choose(weight, for: item) }
                             }
@@ -678,15 +677,6 @@ struct DesireMapView: View {
         withAnimation(AppAnimation.desireDepthEnter.reduceMotionSafe) { index -= 1 }
     }
 
-    private func accentColor(for weight: DesireRatingValue) -> Color {
-        switch weight {
-        case .excitedAboutIt: return AppColors.spectrumCyan
-        case .openToIt:       return AppColors.spectrumPurple
-        case .probablyNot:    return AppColors.textTertiary
-        case .notForMe:       return AppColors.spectrumMagenta
-        }
-    }
-
     private func pillHint(for weight: DesireRatingValue) -> String {
         switch weight {
         case .excitedAboutIt: return "i want this"
@@ -704,66 +694,6 @@ private struct _RaterPressStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(AppAnimation.fast, value: configuration.isPressed)
-    }
-}
-
-// MARK: - Rater pill (S2.2, replaces RatingRow)
-
-private struct _RaterPill: View {
-    let label: String
-    let hint: String
-    let accent: Color
-    let isBoundary: Bool
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: AppSpacing.md) {
-                Circle()
-                    .fill(accent)
-                    .frame(width: 9, height: 9)
-
-                Text(label)
-                    .font(AppFonts.bodyMedium)
-                    .foregroundStyle(isSelected ? AppColors.textPrimary : AppColors.textSecondary)
-
-                Spacer(minLength: 0)
-
-                if isBoundary {
-                    Image(systemName: "lock.fill")
-                        .font(AppFonts.meta)
-                        .foregroundStyle(AppColors.textTertiary.opacity(0.45))
-                } else if !hint.isEmpty {
-                    Text(hint)
-                        .font(AppFonts.meta)
-                        .foregroundStyle(AppColors.textTertiary)
-                }
-            }
-            .padding(.horizontal, AppSpacing.md)
-            .frame(height: 54)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                    .fill(isSelected
-                        ? AnyShapeStyle(LinearGradient(
-                            colors: [AppColors.spectrumMagenta.opacity(0.14), AppColors.spectrumPurple.opacity(0.18)],
-                            startPoint: .leading, endPoint: .trailing
-                          ))
-                        : AnyShapeStyle(AppColors.whisperFill)
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                    .stroke(
-                        isSelected ? AppColors.spectrumPurple.opacity(0.80) : Color.white.opacity(0.10),
-                        lineWidth: isSelected ? 1.5 : 1
-                    )
-            )
-            .shadow(color: isSelected ? AppColors.spectrumPurple.opacity(0.28) : .clear, radius: 11)
-        }
-        .buttonStyle(_RaterPressStyle())
-        .animation(AppAnimation.fast, value: isSelected)
     }
 }
 
