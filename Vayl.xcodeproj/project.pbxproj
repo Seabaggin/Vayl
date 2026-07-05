@@ -43,6 +43,7 @@
 		AA00000LAAAA000000000001 /* HomeStorePartnerChipStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000LAAAA000000000002 /* HomeStorePartnerChipStateTests.swift */; };
 		AA00000MAAAA000000000001 /* PartnerChipDesireMapCopyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000MAAAA000000000002 /* PartnerChipDesireMapCopyTests.swift */; };
 		AA00000NAAAA000000000001 /* PartnerChipPulseCopyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000NAAAA000000000002 /* PartnerChipPulseCopyTests.swift */; };
+		AA00000OAAAA000000000001 /* CoupleContextPairedSinceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000OAAAA000000000002 /* CoupleContextPairedSinceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +97,7 @@
 		AA00000LAAAA000000000002 /* HomeStorePartnerChipStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeStorePartnerChipStateTests.swift; sourceTree = "<group>"; };
 		AA00000MAAAA000000000002 /* PartnerChipDesireMapCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnerChipDesireMapCopyTests.swift; sourceTree = "<group>"; };
 		AA00000NAAAA000000000002 /* PartnerChipPulseCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnerChipPulseCopyTests.swift; sourceTree = "<group>"; };
+		AA00000OAAAA000000000002 /* CoupleContextPairedSinceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoupleContextPairedSinceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -210,6 +212,7 @@
 				AA00000LAAAA000000000002 /* HomeStorePartnerChipStateTests.swift */,
 				AA00000MAAAA000000000002 /* PartnerChipDesireMapCopyTests.swift */,
 				AA00000NAAAA000000000002 /* PartnerChipPulseCopyTests.swift */,
+				AA00000OAAAA000000000002 /* CoupleContextPairedSinceTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -423,6 +426,7 @@
 				AA00000LAAAA000000000001 /* HomeStorePartnerChipStateTests.swift in Sources */,
 				AA00000MAAAA000000000001 /* PartnerChipDesireMapCopyTests.swift in Sources */,
 				AA00000NAAAA000000000001 /* PartnerChipPulseCopyTests.swift in Sources */,
+				AA00000OAAAA000000000001 /* CoupleContextPairedSinceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

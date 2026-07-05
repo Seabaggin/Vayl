@@ -61,11 +61,15 @@ final class CoupleContext {
     /// pairing completed. Local-only (SwiftData), not something PairingService
     /// fetches from the server.
     private var fetchedPairedSince: Date?
+    private var fetchedPairedSinceForCoupleId: UUID?
 
     /// When this device's pairing completed, or nil when unlinked / not yet
-    /// fetched. Mirrors `partnerName`'s shape exactly (same DEBUG passthrough
-    /// omitted — pairedSince has no dev-seed need since it's a local field
-    /// that's always readable once linked).
+    /// fetched. Mirrors `partnerName`'s shape exactly: gated on linkState, and
+    /// its loader is keyed on `fetchedPairedSinceForCoupleId` so an unlink +
+    /// re-pair with a different partner in the same app session refetches
+    /// instead of serving the first partner's stale paired-since date (same
+    /// DEBUG passthrough omitted — pairedSince has no dev-seed need since it's
+    /// a local field that's always readable once linked).
     var pairedSince: Date? {
         guard appState.linkState == .linked else { return nil }
         return fetchedPairedSince
@@ -118,12 +122,15 @@ final class CoupleContext {
     }
 
     /// Local SwiftData read for `UserProfile.linkedAt` — no-ops once already
-    /// loaded, same load-once semantics as the partner-name fetch above.
+    /// loaded for the current couple, same coupleId-keyed load-once semantics
+    /// as the partner-name fetch above (guards against serving a prior
+    /// partner's paired-since date after an unlink + re-pair in one session).
     private func loadPairedSinceIfNeeded() {
-        guard fetchedPairedSince == nil else { return }
+        guard fetchedPairedSince == nil || fetchedPairedSinceForCoupleId != appState.coupleId else { return }
         let context = ModelContext(modelContainer)
         guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
         fetchedPairedSince = profile.linkedAt
+        fetchedPairedSinceForCoupleId = appState.coupleId
     }
 
     /// Write-through for flows that already know the name (e.g. the pairing
@@ -140,5 +147,6 @@ final class CoupleContext {
         fetchedPartnerName = nil
         fetchedForCoupleId = nil
         fetchedPairedSince = nil
+        fetchedPairedSinceForCoupleId = nil
     }
 }
