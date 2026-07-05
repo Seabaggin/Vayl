@@ -64,6 +64,11 @@ final class HomeStore {
 
     private(set) var firstInviteSentAt: Date? = nil
 
+    /// Partner's current Pulse position, for the chip's quick-view tile only
+    /// (current position, not history — the 30-day grid stays exclusive to Map).
+    /// Nil if the partner hasn't logged, or has `share_pulse_with_partner` off.
+    private(set) var partnerPulsePosition: PulsePosition? = nil
+
     // MARK: - Deck Loading
 
     var deck: Deck? = nil
@@ -232,11 +237,31 @@ final class HomeStore {
         await couple.refreshIfNeeded()   // partner identity (no-op once loaded)
         await loadProfile()
         await loadDesireStatus()
+        await loadPartnerPulsePosition()
         resolveRecentDeck()
         await loadDeckProgress()
         await loadReflectionState()
         await loadDeck()
         await loadLexiconContent()
+    }
+
+    // MARK: - Partner Pulse Load
+
+    /// Reads the partner's current Pulse position via PulseSyncService directly —
+    /// Store-to-Store coupling across features (going through MapStore) is what
+    /// the architecture rules forbid; Store->Service is fine. Gating (couple
+    /// membership + the partner's own share_pulse_with_partner flag) is enforced
+    /// server-side by get_partner_pulse_positions(), never here.
+    func loadPartnerPulsePosition() async {
+        guard case .linked = appState.linkState else {
+            partnerPulsePosition = nil
+            return
+        }
+        guard let entries = await PulseSyncService.shared.fetchPartnerEntries() else {
+            partnerPulsePosition = nil
+            return
+        }
+        partnerPulsePosition = entries.last?.resolvedPosition
     }
 
     // MARK: - Lexicon Content Load
