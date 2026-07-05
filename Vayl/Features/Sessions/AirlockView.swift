@@ -156,10 +156,9 @@ struct AirlockView: View {
                 .foregroundStyle(AppColors.textPrimary)
                 .padding(.top, AppSpacing.sm)
 
-            BandwidthSlider(selection: $store.bandwidth)
+            // TODO: replaced by BeforeWeStartView (pre-roll redesign Task 8)
+            EmptyView()
                 .padding(.top, AppSpacing.xl)
-                .disabled(lockedIn)
-                .opacity(lockedIn ? 0.6 : 1)
 
             Spacer(minLength: 0)
 
