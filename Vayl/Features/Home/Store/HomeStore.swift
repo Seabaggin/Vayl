@@ -57,6 +57,13 @@ final class HomeStore {
     /// never a persistent home state.
     var showCompletionBeat: Bool = false
 
+    /// How long an invite can sit unclaimed before the chip shifts from quiet
+    /// "invite pending" to the warmer "nudge" tone. Matches the approved
+    /// tap-to-expand design (docs/superpowers/specs/2026-07-05-partner-chip-and-pairing-design.md).
+    private static let nudgeThreshold: TimeInterval = 3 * 24 * 60 * 60 // 3 days
+
+    private(set) var firstInviteSentAt: Date? = nil
+
     // MARK: - Deck Loading
 
     var deck: Deck? = nil
@@ -131,7 +138,12 @@ final class HomeStore {
             }
             return .invitePending
         case .unlinked:
-            return isPaired ? .invitePending : .none
+            guard isPaired else { return .none }
+            if let sentAt = firstInviteSentAt,
+               Date().timeIntervalSince(sentAt) >= Self.nudgeThreshold {
+                return .nudge
+            }
+            return .invitePending
         }
     }
 
@@ -308,6 +320,7 @@ final class HomeStore {
             }
 
             myMapComplete = profile.hasCompletedDesireMap
+            firstInviteSentAt = profile.firstInviteSentAt
             desireMapState = resolveDesireMapState(from: profile)
 
             logger.info("HomeStore: profile loaded — mapComplete: \(profile.hasCompletedDesireMap)")
