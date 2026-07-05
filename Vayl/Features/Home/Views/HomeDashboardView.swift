@@ -28,6 +28,9 @@ struct HomeDashboardView: View {
     var partnerChipState: PartnerChipState = .none
     var cards: [Card] = []
     var desireMapState: DesireMapState = .hidden
+    /// The partner's current Pulse position, for the chip's expand quick-view tile
+    /// only (current position, not history — nil renders "Not sharing").
+    var partnerPulsePosition: PulsePosition? = nil
     var reflectionCardState: ReflectionCardState = .hidden
     var pickUpItems: [PickUpItem] = []
     var stageIndex: Int = 1
@@ -78,6 +81,12 @@ struct HomeDashboardView: View {
     @State private var heroVisible     = false
     @State private var pulseVisible    = false
     @State private var lexVisible      = false
+
+    /// Whether the partner chip's quick-view popover (`PartnerChipExpand`) is
+    /// open. Only meaningful for `.active` — the chip's tap handler only
+    /// toggles this in that state; other states keep routing through
+    /// `onPartnerTap` as before.
+    @State private var isChipExpanded = false
 
     /// The deck's phase (floating → spread → lifted → carousel), reported by
     /// CardCarousel. The room recedes once the deck is engaged.
@@ -393,12 +402,48 @@ struct HomeDashboardView: View {
                 animated: false
             )
             Spacer()
-            PartnerChip(
-                state: partnerChipState,
-                waiting: isWaitingOnPartner,
-                onInviteTap: onInvitePartner,
-                onPartnerTap: onPartnerTap
-            )
+            ZStack(alignment: .topTrailing) {
+                PartnerChip(
+                    state: partnerChipState,
+                    waiting: isWaitingOnPartner,
+                    onInviteTap: onInvitePartner,
+                    onPartnerTap: {
+                        switch partnerChipState {
+                        case .active:
+                            withAnimation(AppAnimation.standard) { isChipExpanded.toggle() }
+                        default:
+                            // .invitePending / .nudge / .none route through the existing
+                            // onPartnerTap wiring today (Map tab). A later task replaces
+                            // this with the real pairing sheet — not this task's concern.
+                            onPartnerTap?()
+                        }
+                    }
+                )
+
+                if isChipExpanded, case .active = partnerChipState {
+                    PartnerChipExpand(
+                        state: partnerChipState,
+                        desireMapState: desireMapState,
+                        partnerPulsePosition: partnerPulsePosition,
+                        onDesireMapTap: {
+                            isChipExpanded = false
+                            onPartnerTap?() // existing Map-tab routing
+                        },
+                        onPulseTap: {
+                            isChipExpanded = false
+                            onPartnerTap?() // existing Map-tab routing
+                        },
+                        onManageTap: {
+                            isChipExpanded = false
+                            onPartnerTap?() // existing routing — a later task points this at Settings
+                        }
+                    )
+                    .offset(y: 44)
+                    .transition(.scale(scale: 0.8, anchor: .topTrailing).combined(with: .opacity))
+                    .zIndex(1)
+                }
+            }
+            SettingsGearButton { onOpenSettings?() }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

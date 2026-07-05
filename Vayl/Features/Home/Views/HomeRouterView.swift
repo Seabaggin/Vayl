@@ -207,6 +207,7 @@ private struct HomeRouterInnerView: View {
                 partnerChipState:    store.partnerChipState,
                 cards:               loadedDeck.orderedCards,
                 desireMapState:      store.desireMapState,
+                partnerPulsePosition: store.partnerPulsePosition,
                 reflectionCardState: store.reflectionCardState,
                 pickUpItems:         [],
                 stageIndex:          store.stageIndex,
@@ -228,7 +229,7 @@ private struct HomeRouterInnerView: View {
                 // Interim: route to the Pulse surface. Final: present the shared
                 // check-in sheet in place (Bryan's PulseWidget pass).
                 onCheckIn:           { appState.selectedTab = .map },
-                onOpenSettings:      { appState.selectedTab = .settings }
+                onOpenSettings:      { appState.settingsPresented = true }
             )
         }
     }
