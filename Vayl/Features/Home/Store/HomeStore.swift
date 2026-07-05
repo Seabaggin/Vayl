@@ -130,6 +130,11 @@ final class HomeStore {
         appState.appMode == .solo
     }
 
+    // Note: this reads Date() directly, which @Observable doesn't track — the
+    // UI won't re-render purely because wall-clock time crosses the threshold
+    // while the app sits idle in foreground. In practice Home re-renders often
+    // enough via other state changes that this is an accepted staleness window,
+    // not a bug.
     var partnerChipState: PartnerChipState {
         switch appState.linkState {
         case .linked:
@@ -307,7 +312,10 @@ final class HomeStore {
     // MARK: - Profile Load
 
     /// Reads UserProfile to resolve map completion and desire map state.
-    private func loadProfile() async {
+    /// Internal (not private) specifically so @testable import Vayl can call it
+    /// directly in tests without triggering loadAll()'s network-touching siblings
+    /// (loadLexiconContent() in particular has no offline guard).
+    func loadProfile() async {
         let context = ModelContext(modelContainer)
 
         do {
