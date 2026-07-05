@@ -19,9 +19,19 @@ import SwiftData
 @MainActor
 final class PairingStoreFirstInviteSentAtTests: XCTestCase {
 
+    // Workaround for a Swift @MainActor isolated-deinit runtime double-free
+    // (swift_task_deinitOnExecutorImpl → POINTER_BEING_FREED_WAS_NOT_ALLOCATED) that aborts
+    // the app-hosted test host whenever an @Observable @MainActor AppState/store deallocates
+    // mid-suite. Keeping them alive for the process means the buggy isolated deinit never runs
+    // during the test run. Test-only; not a production concern (the app never deinits AppState).
+    private static var retained: [AnyObject] = []
+    private static func retain(_ objects: AnyObject...) { retained.append(contentsOf: objects) }
+
     private func makeStore(container: ModelContainer) -> PairingStore {
         let appState = AppState()
-        return PairingStore(modelContainer: container, appState: appState)
+        let store = PairingStore(modelContainer: container, appState: appState)
+        Self.retain(store, appState)
+        return store
     }
 
     func testFirstInviteSentAtIsNotOverwrittenOnSecondCall() async throws {
