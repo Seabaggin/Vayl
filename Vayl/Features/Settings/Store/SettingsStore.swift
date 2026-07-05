@@ -210,6 +210,7 @@ final class SettingsStore {
             profile.coupleId = nil
             profile.partnerGenderIdentity = nil
             profile.partnerPronouns = nil
+            profile.firstInviteSentAt = nil
             if let coupleId {
                 try? context.delete(model: Couple.self,
                                     where: #Predicate { $0.id == coupleId })

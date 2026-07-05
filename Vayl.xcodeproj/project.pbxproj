@@ -36,6 +36,7 @@
 		AA00000EAAAA000000000001 /* SessionBuilderStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000EAAAA000000000002 /* SessionBuilderStoreTests.swift */; };
 		AA00000FAAAA000000000001 /* ContentLintTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000FAAAA000000000002 /* ContentLintTests.swift */; };
 		AA00000GAAAA000000000001 /* CompositionDerivationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000GAAAA000000000002 /* CompositionDerivationTests.swift */; };
+		AA00000HAAAA000000000001 /* PairingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000HAAAA000000000002 /* PairingStoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,6 +83,7 @@
 		AA00000EAAAA000000000002 /* SessionBuilderStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionBuilderStoreTests.swift; sourceTree = "<group>"; };
 		AA00000FAAAA000000000002 /* ContentLintTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentLintTests.swift; sourceTree = "<group>"; };
 		AA00000GAAAA000000000002 /* CompositionDerivationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompositionDerivationTests.swift; sourceTree = "<group>"; };
+		AA00000HAAAA000000000002 /* PairingStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -189,6 +191,7 @@
 				AA00000EAAAA000000000002 /* SessionBuilderStoreTests.swift */,
 				AA00000FAAAA000000000002 /* ContentLintTests.swift */,
 				AA00000GAAAA000000000002 /* CompositionDerivationTests.swift */,
+				AA00000HAAAA000000000002 /* PairingStoreTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -395,6 +398,7 @@
 				AA00000EAAAA000000000001 /* SessionBuilderStoreTests.swift in Sources */,
 				AA00000FAAAA000000000001 /* ContentLintTests.swift in Sources */,
 				AA00000GAAAA000000000001 /* CompositionDerivationTests.swift in Sources */,
+				AA00000HAAAA000000000001 /* PairingStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -575,7 +579,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -612,7 +616,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -632,7 +636,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vayl.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vayl";
 			};
 			name = Debug;
@@ -653,7 +657,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vayl.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vayl";
 			};
 			name = Release;
@@ -672,7 +676,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_TARGET_NAME = "Open Lightly";
 			};
 			name = Debug;
@@ -691,7 +695,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_TARGET_NAME = "Open Lightly";
 			};
 			name = Release;

@@ -115,6 +115,7 @@ final class PairingStore {
         do {
             let (code, expiresAt) = try await pairingService.generateCode()
             codeExpiresAt = expiresAt
+            await recordFirstInviteSentIfNeeded()
             linkState = .waitingForPartner(code: code)
             logger.info("Invite generated — code: \(code)")
             await pollForPartner(code: code, deadline: expiresAt)
@@ -122,6 +123,18 @@ final class PairingStore {
             linkState = .error(error.localizedDescription)
             logger.error("Generate invite failed: \(error.localizedDescription)")
         }
+    }
+
+    /// Stamps `firstInviteSentAt` the first time an invite is generated for this
+    /// pairing attempt. Regenerating an expired code does NOT reset it — the
+    /// nudge threshold measures "how long you've been trying to pair," not the
+    /// lifetime of any single code.
+    private func recordFirstInviteSentIfNeeded() async {
+        let context = ModelContext(modelContainer)
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
+        guard profile.firstInviteSentAt == nil else { return }
+        profile.firstInviteSentAt = Date()
+        try? context.saveWithLogging()
     }
 
     // MARK: - Regenerate
@@ -332,6 +345,7 @@ final class PairingStore {
         profile.coupleId  = coupleId
         profile.isLinked  = true
         profile.linkedAt  = Date()
+        profile.firstInviteSentAt = nil
 
         do {
             try context.saveWithLogging()
