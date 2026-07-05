@@ -98,7 +98,7 @@ struct PartnerChipExpand: View {
                 }
                 .padding(AppSpacing.md)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableCardStyle())
         }
         .frame(width: 224)
         .themedCard()
@@ -126,7 +126,7 @@ struct PartnerChipExpand: View {
             .background(AppColors.whisperFill)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableCardStyle())
     }
 
     @ViewBuilder
@@ -158,7 +158,7 @@ struct PartnerChipExpand: View {
             .background(AppColors.whisperFill)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableCardStyle())
     }
 }
 

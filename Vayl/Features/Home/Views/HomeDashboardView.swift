@@ -20,6 +20,17 @@
 import SwiftUI
 import SwiftData
 
+/// Reports `PartnerChip`'s real rendered height up to `HomeDashboardView` so
+/// `PartnerChipExpand`'s popover offset can be derived rather than guessed —
+/// a hardcoded offset doesn't scale with the chip's growth at larger Dynamic
+/// Type sizes.
+private struct ChipHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 struct HomeDashboardView: View {
 
     // MARK: - Injected Properties
@@ -87,6 +98,12 @@ struct HomeDashboardView: View {
     /// toggles this in that state; other states keep routing through
     /// `onPartnerTap` as before.
     @State private var isChipExpanded = false
+
+    /// The partner chip's real rendered height, measured via `ChipHeightKey`
+    /// (`PartnerChip` grows taller than the eyeballed default at larger
+    /// Dynamic Type sizes). 44 is a sane fallback for the first frame only,
+    /// not a final value — `PartnerChipExpand`'s offset always reads this.
+    @State private var chipHeight: CGFloat = 44
 
     /// The deck's phase (floating → spread → lifted → carousel), reported by
     /// CardCarousel. The room recedes once the deck is engaged.
@@ -419,6 +436,12 @@ struct HomeDashboardView: View {
                         }
                     }
                 )
+                .background(
+                    GeometryReader { chipGeo in
+                        Color.clear
+                            .preference(key: ChipHeightKey.self, value: chipGeo.size.height)
+                    }
+                )
 
                 if isChipExpanded, case .active = partnerChipState {
                     PartnerChipExpand(
@@ -438,11 +461,15 @@ struct HomeDashboardView: View {
                             onPartnerTap?() // existing routing — a later task points this at Settings
                         }
                     )
-                    .offset(y: 44)
+                    // Derived from the chip's real measured height (not a
+                    // fixed guess) so larger Dynamic Type sizes, which grow
+                    // the chip taller, don't push the popover into overlap.
+                    .offset(y: chipHeight + AppSpacing.xs)
                     .transition(.scale(scale: 0.8, anchor: .topTrailing).combined(with: .opacity))
                     .zIndex(1)
                 }
             }
+            .onPreferenceChange(ChipHeightKey.self) { chipHeight = $0 }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
