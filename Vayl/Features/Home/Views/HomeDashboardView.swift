@@ -443,7 +443,6 @@ struct HomeDashboardView: View {
                     .zIndex(1)
                 }
             }
-            SettingsGearButton { onOpenSettings?() }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
