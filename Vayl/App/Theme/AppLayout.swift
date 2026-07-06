@@ -187,6 +187,19 @@ struct AppLayout {
     /// screen width. Matches the visual design at standard iPhone widths.
     static let citationPanelMaxWidth: CGFloat = 300
 
+    // MARK: - Map Dashboard Pulse Card
+
+    /// 218pt — The Map dashboard Pulse card — ONE height shared by the Me and Us
+    /// lenses so the lens flip never shifts the slots below (Map dashboard spec §1).
+    /// Orb sizes derive from it; never hardcode a second number.
+    static let mapPulseCardHeight: CGFloat = 218
+
+    /// Me aura ≈ 104/218 of the card (final mockup ratio, spec §3.1).
+    static var mapMeAuraSize: CGFloat { mapPulseCardHeight * 0.48 }
+
+    /// Us split orb ≈ 98/218 of the card (final mockup ratio, spec §3.2).
+    static var mapUsOrbSize: CGFloat { mapPulseCardHeight * 0.45 }
+
     // MARK: - OB Card Geometry
     // These values are exclusive to the Onboarding canvas.
     // They must never appear in main-app screens — the table metaphor

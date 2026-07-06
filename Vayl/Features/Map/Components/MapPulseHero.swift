@@ -2,7 +2,8 @@
 //
 // The Me layer's Pulse section on the Map tab.
 //
-// Glance: aura hero (148pt) + Space name + sublabel + weather one-liner.
+// Glance: aura hero (AppLayout.mapMeAuraSize) + Space name + sublabel + weather one-liner.
+// Card pinned to AppLayout.mapPulseCardHeight — the shared Me/Us footprint (Map dashboard spec §1).
 // "tap to map →" opens a sheet with the full 2D field at the user's current position.
 //
 // Visual reference: docs/prototypes/map-pulse-final.html — "Me · the glance" phone.
@@ -31,7 +32,7 @@ struct MapPulseHero: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     showMap = true
                 } label: {
-                    PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: 148)
+                    PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: AppLayout.mapMeAuraSize)
                         .frame(maxWidth: .infinity)
                         .padding(.top, AppSpacing.lg)
                         .opacity(isStale ? PulseFieldEntry.staleOpacity : 1.0)
@@ -80,6 +81,7 @@ struct MapPulseHero: View {
                 emptyStateBlock
             }
         }
+        .frame(minHeight: AppLayout.mapPulseCardHeight, alignment: .top)
         .vaylCover(isPresented: $showMap, confirmOnExit: false) {
             MapFieldSheet(
                 position:   currentPosition,
@@ -121,7 +123,7 @@ struct MapPulseHero: View {
 
     private var emptyStateBlock: some View {
         VStack(spacing: 0) {
-            PulseCyclingAura(size: 148)
+            PulseCyclingAura(size: AppLayout.mapMeAuraSize)
                 .frame(maxWidth: .infinity)
                 .padding(.top, AppSpacing.lg)
 
