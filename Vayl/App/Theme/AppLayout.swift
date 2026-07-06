@@ -194,10 +194,11 @@ struct AppLayout {
     /// Orb sizes derive from it; never hardcode a second number.
     static let mapPulseCardHeight: CGFloat = 218
 
-    /// ≈ 104/218 of the card. Shared by BOTH lenses' hero orb (Me's single aura
-    /// and Us's split orb, 2026-07-05 — the Us card got the same hero treatment
-    /// as Me's instead of its own smaller compact size) for visual parity.
-    static var mapMeAuraSize: CGFloat { mapPulseCardHeight * 0.48 }
+    /// ≈ 135/218 of the card (bumped from 0.48 2026-07-05 — the orb is the ONE
+    /// breathing hero on the dashboard and read too modest against the card's
+    /// whitespace at the old size). Shared by BOTH lenses' hero orb (Me's single
+    /// aura and Us's split orb) for visual parity. FEEL: tune further on device.
+    static var mapMeAuraSize: CGFloat { mapPulseCardHeight * 0.62 }
 
     // MARK: - OB Card Geometry
     // These values are exclusive to the Onboarding canvas.
