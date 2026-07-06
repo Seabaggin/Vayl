@@ -242,7 +242,14 @@ struct SplitOrbView: View {
     private func halfView(_ half: Half) -> some View {
         switch half {
         case .cycling:
+            // Unwritten (this person has never checked in) — dimmed the same
+            // as an ember, scoped to THIS half only (clipped by the caller's
+            // HalfCircle). A vivid rotating ramp next to a real, current
+            // reading drew the eye to the wrong side; "no answer yet" should
+            // recede, not out-shine an actual answer.
             PulseCyclingAura(size: size)
+                .saturation(embersSaturation)
+                .opacity(PulseFieldEntry.staleOpacity)
         case .solid(let aura):
             PulseAura(ramp: aura, size: size)
         case .ember(let aura):
