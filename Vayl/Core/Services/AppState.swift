@@ -81,6 +81,13 @@ final class AppState {
     /// Transient flag: set true to signal MapView to auto-open the Vault.
     /// MapView resets it to false immediately after presenting.
     var vaultOpenPending: Bool = false
+    /// Settings is a full-screen cover over the whole shell (not a tab).
+    /// The masthead gear on any tab sets this; AppShell presents it.
+    var settingsPresented: Bool = false
+    /// Transient flag: true while the Home deck/chest is engaged (lifted/carousel).
+    /// Home sets it from CardCarousel's onPhaseChange; AppShell reads it to recede
+    /// the tab bar so only the chest is lit. Resets to false on .floating/.spread.
+    var deckEngaged: Bool = false
     var loadState: AppLoadState = .idle
 
     // MARK: - Init

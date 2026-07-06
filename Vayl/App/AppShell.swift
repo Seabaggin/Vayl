@@ -59,6 +59,13 @@ struct AppShell: View {
                     }
                 }
             ))
+            // Recede with Home when the deck/chest is engaged, so only the chest stays lit.
+            // Matches the greeting/getting-started fade in HomeDashboardView; taps are
+            // blocked while engaged so a stray tab tap can't yank you out mid-selection.
+            .opacity(appState.deckEngaged ? 0.25 : 1)
+            .blur(radius: appState.deckEngaged ? 6 : 0)
+            .allowsHitTesting(!appState.deckEngaged)
+            .animation(AppAnimation.enter, value: appState.deckEngaged)
             .padding(.top, AppSpacing.sm)
             // Drop the pill into the home-indicator strip and set the gap ourselves: without
             // this, `.safeAreaInset` floats the bar ABOVE the ~34pt system inset, which reads
@@ -82,6 +89,8 @@ struct AppShell: View {
         }
         .onChange(of: selectedTab) { _, newTab in
             if appState.selectedTab != newTab { appState.selectedTab = newTab }
+            // Leaving Home clears the chest-recede flag so it can't dim another tab's bar.
+            if newTab != .home { appState.deckEngaged = false }
         }
     }
 

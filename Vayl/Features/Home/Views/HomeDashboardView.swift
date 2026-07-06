@@ -218,7 +218,10 @@ struct HomeDashboardView: View {
                                 onTap: { onOpenPath?() }
                             )
                             .padding(.top, AppSpacing.md)
-                            .opacity(greetingVisible ? 1 : 0)
+                            // Recede with the rest of Home when the deck engages (matches greetingBlock).
+                            .opacity(greetingVisible ? (deckEngaged ? 0.25 : 1) : 0)
+                            .blur(radius: deckEngaged ? 6 : 0)
+                            .animation(AppAnimation.enter, value: deckEngaged)
                         }
 
                         // Top void — the hero's approach.
@@ -233,6 +236,8 @@ struct HomeDashboardView: View {
                             onNavigateToPlay: onNavigateToPlay,
                             onPhaseChange: { phase in
                                 deckPhase = phase
+                                // Mirror engagement to the shell so the tab bar recedes too.
+                                appState.deckEngaged = (phase != .floating && phase != .spread)
                                 // Dismiss / clicked-out → start tonight's hand over.
                                 // Idempotent: settleIn() already clears + bumps
                                 // deckReset (which re-fires .floating), and first
