@@ -24,6 +24,34 @@ final class MapStore {
     /// Which layer the segmented control is showing.
     var layer: Layer = .me
 
+    // MARK: - Lens gating (Map dashboard spec §2.3)
+
+    /// Us exists only after linking: partner identity loaded. Views render no
+    /// toggle, no sublabel, no Us content when this is false.
+    var hasUs: Bool { !partnerName.isEmpty }
+
+    /// If the Us lens vanished (unlink, partner cleared), snap back to Me.
+    func enforceLensGate() {
+        if !hasUs && layer == .us { layer = .me }
+    }
+
+    // MARK: - Us reveal ceremony flag (spec §2.4)
+
+    private let defaults: UserDefaults
+    /// Single source for the key — SettingsStore's unlink reset uses the same statics.
+    static let usRevealKey = "map.usRevealSeen"
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    var usRevealSeen: Bool { defaults.bool(forKey: Self.usRevealKey) }
+    func markUsRevealSeen() { defaults.set(true, forKey: Self.usRevealKey) }
+    /// Unlink resets the flag so a future re-link earns the ceremony again (§2.3).
+    func resetUsReveal() { defaults.set(false, forKey: Self.usRevealKey) }
+    /// Static variant for callers without a MapStore (the Settings unlink path).
+    static func resetUsRevealGlobally() { UserDefaults.standard.set(false, forKey: usRevealKey) }
+
     // MARK: - Derived masthead
 
     private(set) var displayName: String = ""

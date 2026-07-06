@@ -222,6 +222,9 @@ final class SettingsStore {
             try? context.saveWithLogging()
         }
 
+        // Re-linking must earn the Us reveal ceremony again (Map spec §2.3).
+        MapStore.resetUsRevealGlobally()
+
         appState.unlink()   // clears coupleId + linkState → routing re-renders unlinked
         accountPhase = .idle
         logger.info("Unlink complete — partner link dissolved")
