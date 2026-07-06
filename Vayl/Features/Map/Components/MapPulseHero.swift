@@ -36,7 +36,7 @@ struct MapPulseHero: View {
                     PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: AppLayout.mapMeAuraSize)
                         .frame(maxWidth: .infinity)
                         .padding(.top, AppSpacing.lg)
-                        .opacity(isStale ? PulseFieldEntry.staleOpacity : 1.0)
+                        .opacity(isQuiet ? PulseFieldEntry.staleOpacity : 1.0)
                 }
                 .buttonStyle(.plain)
                 .scaleEffect(isPressed ? 0.96 : 1.0)
@@ -95,6 +95,7 @@ struct MapPulseHero: View {
                 position:   currentPosition,
                 space:      currentSpace,
                 isStale:    isStale,
+                isQuiet:    isQuiet,
                 staleSince: pulse.entries.last.map { pulse.relativeDay(for: $0.date) }
             )
         }
@@ -203,8 +204,14 @@ struct MapPulseHero: View {
     /// True when the position shown is your last known one, not today's — Map
     /// (unlike Home) shows the last entry regardless of age, so the sublabel/orb
     /// need to say so rather than read like a live "today" status. Single source
-    /// of truth lives on PulseStore now (was duplicated here).
+    /// of truth lives on PulseStore now (was duplicated here). Governs COPY only
+    /// ("As of 2 days ago") — see `isQuiet` for the separate opacity trigger.
     private var isStale: Bool { pulse.isPositionStale }
+
+    /// True once the reading has gone quiet (4+ days) — the same threshold the
+    /// Us orb dims on. Governs the aura's OPACITY, so a 1-3-day-old reading looks
+    /// equally vivid in Me and Us instead of Me dimming a day sooner than Us does.
+    private var isQuiet: Bool { pulse.isPositionQuiet }
 
     private var staleSublabel: String? {
         guard isStale, let last = pulse.entries.last else { return nil }
@@ -220,7 +227,10 @@ struct MapPulseHero: View {
 private struct MapFieldSheet: View {
     let position:   PulsePosition
     let space:      PulseSpace
+    /// Governs copy softening only ("Your last Pulse: … (2 days ago)").
     let isStale:    Bool
+    /// Governs the aura's opacity — the same 4-day threshold Us dims on.
+    let isQuiet:    Bool
     let staleSince: String?
 
     @Environment(\.vaylDismiss) private var dismiss
@@ -240,7 +250,7 @@ private struct MapFieldSheet: View {
                             entries: [PulseFieldEntry(
                                 position: space == .uncharted ? PulsePosition(energy: 0.5, openness: 0.5) : position,
                                 auraSize: 60,
-                                opacity:  isStale ? PulseFieldEntry.staleOpacity : 1.0,
+                                opacity:  isQuiet ? PulseFieldEntry.staleOpacity : 1.0,
                                 space:    space
                             )],
                             size: w,
