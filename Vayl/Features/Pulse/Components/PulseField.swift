@@ -155,6 +155,10 @@ struct PulseField: View {
             .foregroundStyle(color.opacity(isActive ? 0.34 : 0.17))
             .frame(width: size * 0.92, alignment: leading ? .leading : .trailing)
             .position(x: size * 0.5, y: size * yFrac)
+            // Same gap the zones had before their screen-blend fix: flat opacity text sitting on
+            // top of the atmosphere reads as stamped-on rather than glowing. Screen blending here
+            // matches the same technique now used by `zones` above.
+            .blendMode(.screen)
     }
 
     // MARK: - Aura layer
