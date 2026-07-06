@@ -33,13 +33,18 @@ struct MapPulseHero: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     showMap = true
                 } label: {
-                    ZStack {
-                        MapHeroAmbientGlow(
-                            color:   currentSpace.ramp(at: currentPosition).glow,
-                            orbSize: AppLayout.mapMeAuraSize
-                        )
-                        PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: AppLayout.mapMeAuraSize)
-                    }
+                    // .background, NOT a ZStack sibling — a ZStack sizes itself to
+                    // its largest child, and the glow's outer wash is ~2.6x the orb,
+                    // which was inflating this whole block's reported height and
+                    // pushing everything below it down. .background renders the
+                    // glow behind the aura without it participating in layout.
+                    PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: AppLayout.mapMeAuraSize)
+                        .background {
+                            MapHeroAmbientGlow(
+                                color:   currentSpace.ramp(at: currentPosition).glow,
+                                orbSize: AppLayout.mapMeAuraSize
+                            )
+                        }
                         .frame(maxWidth: .infinity)
                         .padding(.top, AppSpacing.lg)
                         .opacity(isQuiet ? PulseFieldEntry.staleOpacity : 1.0)
