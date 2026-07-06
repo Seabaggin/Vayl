@@ -238,11 +238,12 @@ struct HomeDashboardView: View {
                         // Top void — the hero's approach.
                         Color.clear.frame(height: layout.screenHeight * 0.04)
 
-                        // Deck header — plain (not LivingText: a functional label reading
-                        // the deck you're browsing shouldn't compete with the card for
-                        // attention; LivingText is reserved for hero moments like the
-                        // greeting name). Title + explored count, hidden if no title.
-                        if !deckTitle.isEmpty {
+                        // Deck header — appears only once the user has clicked into the
+                        // chest (deckEngaged); the floating card stays unlabeled. Plain
+                        // text, not LivingText: a functional label reading the deck you're
+                        // browsing shouldn't compete with the card for attention —
+                        // LivingText is reserved for hero moments like the greeting name.
+                        if !deckTitle.isEmpty && deckEngaged {
                             VStack(spacing: AppSpacing.xxs) {
                                 Text(deckTitle)
                                     .font(AppFonts.cardTitleCompact)
@@ -251,8 +252,7 @@ struct HomeDashboardView: View {
                                     .font(AppFonts.caption)
                                     .foregroundStyle(AppColors.textTertiary)
                             }
-                            .opacity(greetingVisible ? (deckEngaged ? 0.35 : 1) : 0)
-                            .blur(radius: deckEngaged ? 4 : 0)
+                            .transition(.opacity)
                             .animation(AppAnimation.enter, value: deckEngaged)
                             .padding(.bottom, AppSpacing.sm)
                         }
