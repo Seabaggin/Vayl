@@ -127,6 +127,14 @@ struct DesireStarView: View {
                     .opacity(bloomed ? 1 : 0)
             }
         }
+        // A star with a label is visually taller than one without (VStack + label height), but
+        // the constellation lines and `.position(...)` in DesireConstellationView must always
+        // target the GLYPH's centre, not the glyph+label group's centre. Pinning the reported
+        // frame to just the glyph's own haloSize×haloSize box, top-aligned, keeps the label a
+        // pure visual overflow below that box (SwiftUI doesn't clip un-clipped overflow) without
+        // it ever shifting what external `.position(...)` calls centre on. Without this, any
+        // labeled star (currently: the hero) renders visibly offset from its own connecting line.
+        .frame(width: haloSize, height: haloSize, alignment: .top)
         .onAppear { startEntrance() }
         .task(id: "\(state == .lit)-\(!reduceMotion)") {
             guard !reduceMotion, state == .lit else { return }
