@@ -170,29 +170,31 @@ struct DesireRevealView: View {
                     // Constellation
                     // Layout + hero placement live on the store (Blueprint C) — the view
                     // only renders what it's handed.
-                    DesireConstellationView(
-                        stars: store.placedStars,
-                        edges: store.layout.edges,
-                        variant: ceremonyVariant,
-                        mode: constellationMode,
-                        onTap: { id in
-                            hapticTick += 1
-                            if let match = store.matches.first(where: { $0.id.uuidString == id }) {
-                                store.selectStar(match)
-                            }
+                    //
+                    // Beat2/3 pull the sky into a compact band to make room for the locked rows;
+                    // beat1 and the unlocked sky are full-bleed — the constellation IS the screen
+                    // (mockup 6/10). This used to be ONE `DesireConstellationView` instance whose
+                    // frame height animated between the two sizes — but every star's `.position()`
+                    // is a fraction of that same resolving frame (via the view's own internal
+                    // GeometryReader), so animating the frame meant animating every star's position
+                    // at once, reading as the sky shifting rather than settling in place, with
+                    // lines chasing wherever the stars landed. Two independently-sized instances,
+                    // cross-faded via `.transition(.opacity)` on an `if/else` (which swaps view
+                    // identity — the old branch is removed, the new one inserted), avoids this
+                    // entirely: each instance's frame never changes during its own lifetime, so its
+                    // stars never move. This is the same phase-swap pattern already used everywhere
+                    // else in this app (e.g. DesireMapView's `content` switch), not a new technique.
+                    Group {
+                        if store.beatPhase == .beat2 || store.beatPhase == .beat3 {
+                            constellationView
+                                .frame(maxWidth: .infinity, maxHeight: 220)
+                                .transition(.opacity)
+                        } else {
+                            constellationView
+                                .frame(maxWidth: .infinity, maxHeight: geo.size.height)
+                                .transition(.opacity)
                         }
-                    )
-                    .frame(maxWidth: .infinity)
-                    // beat2/3 pull the sky in to make room for the locked rows; beat1 and the
-                    // unlocked sky are full-bleed — the constellation IS the screen (mockup 6/10).
-                    // Both sides of this toggle are now a real, finite height (geo.size.height vs.
-                    // 220) instead of `.infinity` vs. 220 — SwiftUI cannot smoothly interpolate a
-                    // frame height FROM `.infinity` (there's no meaningful midpoint), so the old
-                    // version snapped instantly instead of compressing, and every star (whose
-                    // `.position()` is a fraction of this same frame's resolved size, via
-                    // DesireConstellationView's own internal GeometryReader) jumped in lockstep
-                    // rather than animating into its new spot.
-                    .frame(maxHeight: (store.beatPhase == .beat2 || store.beatPhase == .beat3) ? 220 : geo.size.height)
+                    }
                     .padding(.vertical, AppSpacing.lg)
                     .opacity(store.beatPhase != .idle ? 1 : 0)
                     // Fix #3b: opacity reveal gated behind reduceMotionSafe; the per-star ignite + line
@@ -206,6 +208,25 @@ struct DesireRevealView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    /// The constellation, factored out so both the full-bleed and compact frame sizes in
+    /// `beatReveal` construct an identical instance — only the `.frame(...)` applied at each call
+    /// site differs. Kept as a plain (non-`@ViewBuilder`) property since it's always exactly one
+    /// view, not conditional content.
+    private var constellationView: some View {
+        DesireConstellationView(
+            stars: store.placedStars,
+            edges: store.layout.edges,
+            variant: ceremonyVariant,
+            mode: constellationMode,
+            onTap: { id in
+                hapticTick += 1
+                if let match = store.matches.first(where: { $0.id.uuidString == id }) {
+                    store.selectStar(match)
+                }
+            }
+        )
     }
 
     @ViewBuilder
