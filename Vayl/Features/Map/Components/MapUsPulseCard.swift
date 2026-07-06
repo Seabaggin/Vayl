@@ -47,13 +47,13 @@ struct MapUsPulseCard: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, AppSpacing.sm)
         }
-        .padding(AppSpacing.md)
         // minHeight, not a hard height — matches MapPulseHero's own reasoning
         // (spec §1's shared footprint is the common case, not a hard guarantee;
         // the quiet-acknowledgment line can push a genuinely fuller card taller).
         .frame(minHeight: AppLayout.mapPulseCardHeight, alignment: .top)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .vaylGlassCard(accent: AppColors.spectrumMagenta, radius: AppRadius.container)
+        // NO card chrome — MapPulseHero (Me) has none either. This is a hero
+        // sitting on the atmosphere, not a bordered card like the Vault door.
         .contentShape(Rectangle())
         .scaleEffect(isPressed ? 0.96 : 1.0)
         .sensoryFeedback(.impact(weight: .light), trigger: isPressed) { _, now in now }
