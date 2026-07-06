@@ -20,9 +20,10 @@ struct VaultDoorCard: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // FEEL: tune on device — total spin+delay must stay under 0.5s (spec §4).
-    private let spinDegrees:     Double = 60
-    // FEEL: tune on device.
-    private let spinToOpenDelay: Double = 0.28
+    private let spinDegrees:      Double = 60
+    // FEEL: tied to AppAnimation.spring's response (0.5s) — sheet arrives once
+    // the spin visually settles, not mid-flight.
+    private let spinSettleDelay:  Double = 0.5
 
     var body: some View {
         Button {
@@ -32,7 +33,7 @@ struct VaultDoorCard: View {
                 return
             }
             withAnimation(AppAnimation.spring) { spinning = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + spinToOpenDelay) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + spinSettleDelay) {
                 onOpen()
                 spinning = false
             }
@@ -78,8 +79,10 @@ struct VaultDoorCard: View {
 private struct VaultEmblem: View {
 
     private let spokeCount   = 6
-    private let ringInset:   CGFloat = 6     // in the 100x100 space
-    private let coreRadius:  CGFloat = 12    // in the 100x100 space
+    private let ringInset:      CGFloat = 6     // in the 100x100 space
+    private let coreRadius:     CGFloat = 12    // in the 100x100 space
+    // FEEL: tune on device.
+    private let glowBlurRadius: CGFloat = 3
 
     private var spectrumGradient: LinearGradient {
         LinearGradient(
@@ -112,7 +115,7 @@ private struct VaultEmblem: View {
         var layer = context
 
         if glow {
-            layer.addFilter(.blur(radius: 3 * scale))
+            layer.addFilter(.blur(radius: glowBlurRadius * scale))
             layer.opacity = 0.35
         } else {
             layer.opacity = 1.0
