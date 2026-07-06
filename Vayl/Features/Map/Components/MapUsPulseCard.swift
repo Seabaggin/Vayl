@@ -86,7 +86,7 @@ struct MapUsPulseCard: View {
     private var orb: some View {
         switch state {
         case .wholeUnwritten:
-            PulseCyclingAura(size: AppLayout.mapMeAuraSize)
+            PulseCyclingAura(size: AppLayout.mapMeAuraSize, haloSpread: AppLayout.mapHeroHaloSpread)
         case .split(let mine, let partner):
             SplitOrbView(
                 mine:    half(for: mine, aura: myAura),
@@ -230,12 +230,51 @@ struct SplitOrbView: View {
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
+        // Ambient halo — added AFTER the clip (same pattern PulseAura's own
+        // haloSpread uses) so it bleeds outside the orb's circle instead of
+        // being cut off by it. A per-half halo would sit INSIDE the clip
+        // above and get masked away by HalfCircle, so this is one shared
+        // bloom for the whole orb, blended from both people's colours —
+        // only shown once both sides have a real reading (a cycling half's
+        // colour keeps shifting, so it has no fixed colour to glow with).
+        .background {
+            if let haloGlow {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            gradient: Gradient(stops: [
+                                .init(color: haloGlow, location: 0.0),
+                                .init(color: haloGlow, location: 0.34),
+                                .init(color: .clear,   location: 1.0),
+                            ]),
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: size * AppLayout.mapHeroHaloSpread * 0.5
+                        )
+                    )
+                    .frame(width: size * AppLayout.mapHeroHaloSpread, height: size * AppLayout.mapHeroHaloSpread)
+            }
+        }
         .scaleEffect(breathe ? 1.045 : 1.0)
         .ambientAnimation(
             .easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true),
             value: breathe
         )
         .onAppear { startBreathe() }
+    }
+
+    /// Blended glow colour for the shared ambient halo — nil (no halo) while
+    /// either half is still `.cycling`, since there's no fixed colour to
+    /// glow with while it's actively shifting.
+    private var haloGlow: Color? {
+        func auraColors(_ half: Half) -> AuraColors? {
+            switch half {
+            case .solid(let a), .ember(let a): return a
+            case .cycling: return nil
+            }
+        }
+        guard let a = auraColors(mine), let b = auraColors(partner) else { return nil }
+        return AuraColors.lerp(a, b, 0.5).glow
     }
 
     @ViewBuilder

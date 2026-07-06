@@ -33,7 +33,11 @@ struct MapPulseHero: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     showMap = true
                 } label: {
-                    PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: AppLayout.mapMeAuraSize)
+                    PulseAura(
+                        ramp: currentSpace.ramp(at: currentPosition),
+                        size: AppLayout.mapMeAuraSize,
+                        haloSpread: AppLayout.mapHeroHaloSpread
+                    )
                         .frame(maxWidth: .infinity)
                         .padding(.top, AppSpacing.lg)
                         .opacity(isQuiet ? PulseFieldEntry.staleOpacity : 1.0)
@@ -144,7 +148,7 @@ struct MapPulseHero: View {
 
     private var emptyStateBlock: some View {
         VStack(spacing: 0) {
-            PulseCyclingAura(size: AppLayout.mapMeAuraSize)
+            PulseCyclingAura(size: AppLayout.mapMeAuraSize, haloSpread: AppLayout.mapHeroHaloSpread)
                 .frame(maxWidth: .infinity)
                 .padding(.top, AppSpacing.lg)
 

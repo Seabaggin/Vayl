@@ -200,6 +200,13 @@ struct AppLayout {
     /// aura and Us's split orb) for visual parity. FEEL: tune further on device.
     static var mapMeAuraSize: CGFloat { mapPulseCardHeight * 0.62 }
 
+    /// Ambient bloom multiple for the Pulse hero orb (`PulseAura.haloSpread`) —
+    /// a soft wash bleeding beyond the orb's own edge, same recipe as the Home
+    /// Pulse rail's halo (2.8, tuned there for a much smaller orb). 1.7 keeps
+    /// it a *subtle* bloom at the hero's larger size, not a floodlight.
+    /// FEEL: tune on device.
+    static let mapHeroHaloSpread: CGFloat = 1.7
+
     // MARK: - OB Card Geometry
     // These values are exclusive to the Onboarding canvas.
     // They must never appear in main-app screens — the table metaphor
