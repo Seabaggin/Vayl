@@ -71,7 +71,7 @@ struct DesireConstellationView: View {
                             state: starState(index, star),
                             label: showsLabel(star) ? star.label : nil,
                             cadence: star.cadence,
-                            ignites: ignites,
+                            ignites: ignites(index),
                             ring: (star.isAdjacent && !star.isLocked) ? .dashed : .none
                         )
                         .position(x: star.point.x * geo.size.width,
@@ -86,11 +86,20 @@ struct DesireConstellationView: View {
 
     // MARK: - Per-star rendering
 
-    /// New stars ignite (two-seed merge) during the intro hero beat and the full assembly only.
-    private var ignites: Bool { mode == .intro || mode == .assemble }
+    /// Only the hero plays the two-seed ignite entrance during `.intro` — it's the one star
+    /// growing brighter in a system that's already fully present; every other star is simply
+    /// there from the start, dim and static, not arriving. During `.assemble` every star ignites
+    /// as the telegraphed ceremony reveals it, which is unchanged.
+    private func ignites(_ index: Int) -> Bool {
+        switch mode {
+        case .intro:              return index == heroIndex
+        case .assemble:           return true
+        case .teasers, .resolved: return false
+        }
+    }
 
     private func starState(_ index: Int, _ star: Star) -> DesireStarView.StarState {
-        (mode == .teasers && star.isLocked) ? .dim : .lit
+        ((mode == .teasers || mode == .intro) && star.isLocked) ? .dim : .lit
     }
 
     private func showsLabel(_ star: Star) -> Bool {
@@ -180,9 +189,10 @@ struct DesireConstellationView: View {
         gatherContracted = false
         sweepProgress = 0
         switch mode {
-        case .intro:
-            revealed = stars.isEmpty ? [] : [heroIndex]
-        case .teasers, .resolved:
+        case .intro, .teasers, .resolved:
+            // The whole sky is present from beat1 onward — the hero is already in its rightful
+            // place among the rest, simply lit while they sit dim. It ignites there in place;
+            // it doesn't arrive alone and get a system overlaid onto it later.
             revealed = Set(stars.indices)
         case .assemble:
             revealed = []
