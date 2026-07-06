@@ -246,10 +246,10 @@ struct HomeDashboardView: View {
                         if !deckTitle.isEmpty && deckEngaged {
                             VStack(spacing: AppSpacing.xxs) {
                                 Text(deckTitle)
-                                    .font(AppFonts.cardTitleCompact)
+                                    .font(AppFonts.sectionHeading)
                                     .foregroundStyle(AppColors.textPrimary)
                                 Text("\(cardsCompleted) / \(cards.count) explored")
-                                    .font(AppFonts.caption)
+                                    .font(AppFonts.bodyMedium)
                                     .foregroundStyle(AppColors.textTertiary)
                             }
                             .transition(.opacity)
