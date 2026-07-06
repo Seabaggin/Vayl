@@ -208,7 +208,7 @@ struct MapView: View {
     private var layerContent: some View {
         switch store.layer {
         case .me: meLayer
-        case .us: store.hasUs ? AnyView(usLayer) : AnyView(meLayer)
+        case .us: if store.hasUs { usLayer } else { meLayer }
         }
     }
 
