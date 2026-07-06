@@ -44,6 +44,7 @@
 		AA00000MAAAA000000000001 /* PartnerChipDesireMapCopyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000MAAAA000000000002 /* PartnerChipDesireMapCopyTests.swift */; };
 		AA00000NAAAA000000000001 /* PartnerChipPulseCopyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000NAAAA000000000002 /* PartnerChipPulseCopyTests.swift */; };
 		AA00000OAAAA000000000001 /* CoupleContextPairedSinceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000OAAAA000000000002 /* CoupleContextPairedSinceTests.swift */; };
+		AA00000PAAAA000000000001 /* UsOrbStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000PAAAA000000000002 /* UsOrbStateTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -98,6 +99,7 @@
 		AA00000MAAAA000000000002 /* PartnerChipDesireMapCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnerChipDesireMapCopyTests.swift; sourceTree = "<group>"; };
 		AA00000NAAAA000000000002 /* PartnerChipPulseCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnerChipPulseCopyTests.swift; sourceTree = "<group>"; };
 		AA00000OAAAA000000000002 /* CoupleContextPairedSinceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoupleContextPairedSinceTests.swift; sourceTree = "<group>"; };
+		AA00000PAAAA000000000002 /* UsOrbStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsOrbStateTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -213,6 +215,7 @@
 				AA00000MAAAA000000000002 /* PartnerChipDesireMapCopyTests.swift */,
 				AA00000NAAAA000000000002 /* PartnerChipPulseCopyTests.swift */,
 				AA00000OAAAA000000000002 /* CoupleContextPairedSinceTests.swift */,
+				AA00000PAAAA000000000002 /* UsOrbStateTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -427,6 +430,7 @@
 				AA00000MAAAA000000000001 /* PartnerChipDesireMapCopyTests.swift in Sources */,
 				AA00000NAAAA000000000001 /* PartnerChipPulseCopyTests.swift in Sources */,
 				AA00000OAAAA000000000001 /* CoupleContextPairedSinceTests.swift in Sources */,
+				AA00000PAAAA000000000001 /* UsOrbStateTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
