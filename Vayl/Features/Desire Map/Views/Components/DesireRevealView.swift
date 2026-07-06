@@ -141,62 +141,71 @@ struct DesireRevealView: View {
     // revealed: all matches lit, confident lines — post-unlock celebration
 
     private var beatReveal: some View {
-        ZStack {
-            // Tap-anywhere-to-advance background (nodes' own tap gestures take priority)
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    hapticTick += 1
-                    store.advanceBeat()
-                }
-
-            VStack(spacing: 0) {
-                // Beat progress dots (hidden when idle or fully revealed)
-                if store.beatPhase != .idle && store.beatPhase != .revealed {
-                    beatDots
-                        .padding(.top, AppSpacing.xs)
-                }
-
-                // Overline
-                Text(store.beatPhase == .revealed ? "Your shared sky" : "Where you meet")
-                    .font(AppFonts.overline)
-                    .foregroundStyle(AppColors.textTertiary)
-                    .tracking(1.5)
-                    .padding(.top, AppSpacing.md)
-                    .opacity(store.beatPhase != .idle ? 1 : 0)
-                    .animation(AppAnimation.desireStarIgnite.delay(0.10).reduceMotionSafe, value: store.beatPhase)
-
-                // Constellation
-                // Layout + hero placement live on the store (Blueprint C) — the view
-                // only renders what it's handed.
-                DesireConstellationView(
-                    stars: store.placedStars,
-                    edges: store.layout.edges,
-                    variant: ceremonyVariant,
-                    mode: constellationMode,
-                    onTap: { id in
+        GeometryReader { geo in
+            ZStack {
+                // Tap-anywhere-to-advance background (nodes' own tap gestures take priority)
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture {
                         hapticTick += 1
-                        if let match = store.matches.first(where: { $0.id.uuidString == id }) {
-                            store.selectStar(match)
-                        }
+                        store.advanceBeat()
                     }
-                )
-                .frame(maxWidth: .infinity)
-                // beat2/3 pull the sky in to make room for the locked rows; beat1 and the
-                // unlocked sky are full-bleed — the constellation IS the screen (mockup 6/10).
-                .frame(maxHeight: (store.beatPhase == .beat2 || store.beatPhase == .beat3) ? 220 : .infinity)
-                .padding(.vertical, AppSpacing.lg)
-                .opacity(store.beatPhase != .idle ? 1 : 0)
-                // Fix #3b: opacity reveal gated behind reduceMotionSafe; the per-star ignite + line
-                // draw live inside DesireConstellationView (also Reduce-Motion aware).
-                .animation(AppAnimation.desireStarIgnite.reduceMotionSafe, value: store.beatPhase)
 
-                // Bottom section: caption at beat1/revealed, locked rows at beat2/beat3
-                bottomSection
-                    .animation(AppAnimation.enter.reduceMotionSafe, value: store.beatPhase)
+                VStack(spacing: 0) {
+                    // Beat progress dots (hidden when idle or fully revealed)
+                    if store.beatPhase != .idle && store.beatPhase != .revealed {
+                        beatDots
+                            .padding(.top, AppSpacing.xs)
+                    }
+
+                    // Overline
+                    Text(store.beatPhase == .revealed ? "Your shared sky" : "Where you meet")
+                        .font(AppFonts.overline)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .tracking(1.5)
+                        .padding(.top, AppSpacing.md)
+                        .opacity(store.beatPhase != .idle ? 1 : 0)
+                        .animation(AppAnimation.desireStarIgnite.delay(0.10).reduceMotionSafe, value: store.beatPhase)
+
+                    // Constellation
+                    // Layout + hero placement live on the store (Blueprint C) — the view
+                    // only renders what it's handed.
+                    DesireConstellationView(
+                        stars: store.placedStars,
+                        edges: store.layout.edges,
+                        variant: ceremonyVariant,
+                        mode: constellationMode,
+                        onTap: { id in
+                            hapticTick += 1
+                            if let match = store.matches.first(where: { $0.id.uuidString == id }) {
+                                store.selectStar(match)
+                            }
+                        }
+                    )
+                    .frame(maxWidth: .infinity)
+                    // beat2/3 pull the sky in to make room for the locked rows; beat1 and the
+                    // unlocked sky are full-bleed — the constellation IS the screen (mockup 6/10).
+                    // Both sides of this toggle are now a real, finite height (geo.size.height vs.
+                    // 220) instead of `.infinity` vs. 220 — SwiftUI cannot smoothly interpolate a
+                    // frame height FROM `.infinity` (there's no meaningful midpoint), so the old
+                    // version snapped instantly instead of compressing, and every star (whose
+                    // `.position()` is a fraction of this same frame's resolved size, via
+                    // DesireConstellationView's own internal GeometryReader) jumped in lockstep
+                    // rather than animating into its new spot.
+                    .frame(maxHeight: (store.beatPhase == .beat2 || store.beatPhase == .beat3) ? 220 : geo.size.height)
+                    .padding(.vertical, AppSpacing.lg)
+                    .opacity(store.beatPhase != .idle ? 1 : 0)
+                    // Fix #3b: opacity reveal gated behind reduceMotionSafe; the per-star ignite + line
+                    // draw live inside DesireConstellationView (also Reduce-Motion aware).
+                    .animation(AppAnimation.desireStarIgnite.reduceMotionSafe, value: store.beatPhase)
+
+                    // Bottom section: caption at beat1/revealed, locked rows at beat2/beat3
+                    bottomSection
+                        .animation(AppAnimation.enter.reduceMotionSafe, value: store.beatPhase)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder
