@@ -88,6 +88,9 @@ final class AppState {
     /// Home sets it from CardCarousel's onPhaseChange; AppShell reads it to recede
     /// the tab bar so only the chest is lit. Resets to false on .floating/.spread.
     var deckEngaged: Bool = false
+    /// Two-knob session settings, set from the chest cog on Home and seeded into the
+    /// session at launch. Lives here because CoupleSessionStore isn't alive during card selection.
+    var sessionSettings = SessionSettings()
     var loadState: AppLoadState = .idle
 
     // MARK: - Init

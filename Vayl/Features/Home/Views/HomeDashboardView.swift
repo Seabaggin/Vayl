@@ -131,6 +131,9 @@ struct HomeDashboardView: View {
     @State private var showPulseCheckIn = false
     @Environment(PulseStore.self) private var pulseStore
 
+    /// Presents the two-knob session-settings sheet from the chest cog.
+    @State private var showSessionSettingsSheet = false
+
     /// Tonight's hand, set when the carousel hands off via `onStartHand`. Non-nil
     /// drives the protected session cover. DEBUG-only couch mode (spec rule 26):
     /// release "Settle in" routes to Play instead.
@@ -167,7 +170,8 @@ struct HomeDashboardView: View {
     // MARK: - Body
 
     var body: some View {
-        GeometryReader { geo in
+        @Bindable var appState = appState
+        return GeometryReader { geo in
             let layout = AppLayout.from(geo)
             // The hero owns the first screen; the collapsed Pulse and the Lexicon share the
             // rest. All three are a plain stack the ScrollView lays out — the layout engine
@@ -449,6 +453,19 @@ struct HomeDashboardView: View {
             ) {
                 PulseInfoSheet()
             }
+            .vaylSheet(
+                isPresented: $showSessionSettingsSheet,
+                heightFraction: 0.5,
+                screenHeight: layout.screenHeight
+            ) {
+                SessionSettingsSheet(
+                    reader: $appState.sessionSettings.reader,
+                    length: $appState.sessionSettings.length,
+                    partnerName: coupleContext.partnerName ?? "Partner"
+                ) {
+                    showSessionSettingsSheet = false
+                }
+            }
         }
     }
 
@@ -641,6 +658,14 @@ struct HomeDashboardView: View {
                     y: layout.safeAreaInsets.top + 24
                 )
 
+            // Settings cog — top-leading, opposite the corner deck. Opens the
+            // two-knob session-settings sheet (who reads / length & pace).
+            settingsCog
+                .position(
+                    x: 24 + 22,
+                    y: layout.safeAreaInsets.top + 24
+                )
+
             if !handIDs.isEmpty {
                 VStack {
                     Spacer()
@@ -690,6 +715,11 @@ struct HomeDashboardView: View {
         .animation(AppAnimation.spring, value: handIDs.count)
     }
 
+    /// Chest settings cog — opens the two-knob session-settings sheet.
+    private var settingsCog: some View {
+        SettingsCogButton { showSessionSettingsSheet = true }
+    }
+
     private func runEntranceAnimations() {
         withAnimation(AppAnimation.slow.delay(0.10))   { greetingVisible = true }
         withAnimation(AppAnimation.spring.delay(0.30)) { heroVisible     = true }
@@ -737,6 +767,37 @@ struct HomeDashboardView: View {
         }
     }
     #endif
+}
+
+// MARK: - Settings Cog Button
+
+/// Small circular glass button for the chest's top-leading corner. Opens the
+/// two-knob session-settings sheet. Owns its own press state (tap contract).
+private struct SettingsCogButton: View {
+    var action: () -> Void
+    @State private var isPressed = false
+
+    var body: some View {
+        Image(systemName: "gearshape")
+            .font(AppFonts.bodyMedium)
+            .foregroundStyle(AppColors.spectrumText)
+            .frame(width: 44, height: 44)
+            .background(
+                Circle().fill(AppColors.glassSurface)
+            )
+            .overlay(
+                Circle().strokeBorder(AppColors.borderDefault, lineWidth: 0.7)
+            )
+            .scaleEffect(isPressed ? 0.96 : 1.0)
+            .sensoryFeedback(.impact(weight: .light), trigger: isPressed)
+            .onTapGesture {
+                isPressed = true
+                action()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                    isPressed = false
+                }
+            }
+    }
 }
 
 // MARK: - Debug Grid Overlay

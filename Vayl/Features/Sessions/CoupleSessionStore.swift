@@ -141,6 +141,8 @@ final class CoupleSessionStore: Identifiable {
         self.perCardTimerSeconds = launch.session?.perCardTimer ?? [:]
         self.modelContainer = modelContainer
         self.appState = appState
+        // Seed the two-knob session settings from AppState (set via the Home chest cog).
+        self.sessionSettings = appState.sessionSettings
         self.presenceSeconds = presenceSeconds
         self.transitionSeconds = transitionSeconds
         self.realtime = realtime
