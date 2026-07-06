@@ -85,10 +85,10 @@ final class DesireRevealStore: Identifiable {
         }
 
         // The hero rule (monetization-adjacent): the server-set free reveal wins the
-        // hero slot; else the first mutual; else the first match.
-        let hero = matches.first(where: { $0.isFreeReveal })
-            ?? matches.first(where: { $0.alignment == .mutual })
-            ?? matches.first
+        // hero slot; else the first mutual; else the first match. Shared with `heroMatch`
+        // below so the constellation's lit star and the locked list's visible row always
+        // agree on which match is "the one revealed."
+        let hero = Self.selectHero(from: matches)
         let others = matches.filter { $0.id != hero?.id }
 
         var placed = [RevealMatch?](repeating: nil, count: result.points.count)
@@ -140,6 +140,19 @@ final class DesireRevealStore: Identifiable {
     #endif
 
     // MARK: - Derived
+
+    /// The one match everyone in the ceremony sees named — the constellation's hero star
+    /// and the locked list's single visible row both derive from this same selection.
+    var heroMatch: RevealMatch? { Self.selectHero(from: matches) }
+
+    /// The hero-selection rule: the server-set free reveal wins; else the first mutual;
+    /// else the first match. A shared `static` function so `rebuildConstellation()` and
+    /// `heroMatch` can't drift into disagreeing about which match is the hero.
+    private static func selectHero(from matches: [RevealMatch]) -> RevealMatch? {
+        matches.first(where: { $0.isFreeReveal })
+            ?? matches.first(where: { $0.alignment == .mutual })
+            ?? matches.first
+    }
 
     var unlockedMatches: [RevealMatch] { matches.filter { !$0.isLocked } }
     var lockedMatches:   [RevealMatch] { matches.filter { $0.isLocked } }
