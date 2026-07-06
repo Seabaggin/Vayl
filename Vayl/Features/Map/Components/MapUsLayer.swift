@@ -45,10 +45,6 @@ struct MapUsLayer: View {
         UsOrbState.resolve(mine: pulse.entries, partner: partnerEntries)
     }
 
-    private var usGridPairs: [(date: Date, mine: PulseSpace, partner: PulseSpace?)] {
-        PulseHistory.pairedLastLoggedSpaces(mine: pulse.entries, partner: partnerEntries)
-    }
-
     /// False for a user who has never checked in at all — distinct from "no partner
     /// data yet." Without this, `myPosition` falls back to dead-center, which resolves
     /// to .expansive (the tie-break rule), fabricating a real-looking reading for
@@ -65,10 +61,6 @@ struct MapUsLayer: View {
             if pulse.canCheckInToday {
                 checkInPill
                     .padding(.top, AppSpacing.xxs)
-            }
-            if !usGridPairs.isEmpty {
-                PulseHistoryGrid(mode: .us(usGridPairs, partnerName: partnerName))
-                    .padding(.top, AppSpacing.xs)
             }
         }
         .frame(maxWidth: .infinity)

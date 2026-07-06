@@ -88,8 +88,11 @@ struct MapView: View {
                 screenHeight: layout.screenHeight
             ) {
                 PulseFullView(
-                    entries: pulse.entries,
-                    onDismiss: { showPulseSheet = false }
+                    mapStore:        store,
+                    myEntries:       pulse.entries,
+                    partnerEntries:  store.partnerEntries,
+                    partnerName:     store.partnerName,
+                    onDismiss:       { showPulseSheet = false }
                 )
             }
             .vaylSheet(

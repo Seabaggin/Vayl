@@ -71,16 +71,16 @@ struct MapPulseHero: View {
                     checkInPill
                         .padding(.top, AppSpacing.md)
                 }
-
-                // History grid — last 30 logged check-ins, never "last 30 days".
-                if !meGridDays.isEmpty {
-                    PulseHistoryGrid(mode: .me(meGridDays))
-                        .padding(.top, AppSpacing.lg)
-                }
             } else {
                 emptyStateBlock
             }
         }
+        // NOTE: kept as minHeight, not a hard height. The history grid that used to
+        // live here (and justified the original minHeight) moved to PulseFullView,
+        // but the check-in pill is conditional (pulse.canCheckInToday) and its
+        // presence/absence still changes total content height enough that a hard
+        // height risks clipping the pill on some content combinations. Revisit once
+        // on-device sizing confirms a fixed height never clips.
         .frame(minHeight: AppLayout.mapPulseCardHeight, alignment: .top)
         .vaylCover(isPresented: $showMap, confirmOnExit: false) {
             MapFieldSheet(
@@ -103,15 +103,27 @@ struct MapPulseHero: View {
                 .foregroundStyle(AppColors.textSectionLabel)
             Spacer()
             if hasHistory {
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    showMap = true
-                } label: {
-                    Text("tap to map →")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textMuted)
+                HStack(spacing: AppSpacing.sm) {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        onOpenHistory()
+                    } label: {
+                        Text("History")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textMuted)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        showMap = true
+                    } label: {
+                        Text("tap to map →")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textMuted)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -179,10 +191,6 @@ struct MapPulseHero: View {
     /// resolves to .expansive, which would otherwise read as a real, live reading
     /// ("You're in an Expansive day") for someone who's logged nothing at all.
     private var hasHistory: Bool { !pulse.entries.isEmpty }
-
-    private var meGridDays: [(date: Date, space: PulseSpace)] {
-        PulseHistory.lastLoggedSpaces(pulse.entries)
-    }
 
     /// True when the position shown is your last known one, not today's — Map
     /// (unlike Home) shows the last entry regardless of age, so the sublabel/orb
