@@ -270,13 +270,13 @@
    ========================================================================== */
 const BUILD_ROADMAP = {
   meta: {
-    updated: "2026-06-30",
+    updated: "2026-07-04",
     deadline: "2026-07-24",        // hard submit target — shown for reference, not used to schedule
     workHoursPerDay: 4,            // your focused hours/day toward Vayl
     workDaysPerWeek: 6,            // productive days/week (calendar conversion)
     trustPrior: 2,                 // λ — loosened 6→2 (2026-06-25): 11+ done segs landing near ~10% of estimate is enough data to trust your velocity; λ=6 was over-damping the projection toward the raw estimates (read ~Jul 16; your demonstrated pace is ~Jul 9)
     baseSpread: 0.45,             // base uncertainty band; tightens as you complete more
-    current: { phase: "desire", segment: "D4" },
+    current: { phase: "map", segment: "T3" }, // moved from desire/D4 2026-07-04 — Settings + Card Sessions (S2-S5) landed and moved to verifying; Map/T3 (Pulse redesign + Vault discussion cards) is now the largest segment with real open scope left (The Record, Me Card polish, Vault Agreements/Event Log, cohesion sweep)
     // Launch-blocker filter: the segments that genuinely gate the launch bar (full loop + Settings + compliance). Edit freely.
     launchBlockers: ["D4","M2","M3","M5","S2","S3","S4","T3","T5","C1","C2","V1","V2","A1","A2","A3","A4"]
   },
@@ -519,17 +519,17 @@ const BUILD_ROADMAP = {
           ]
         },
         {
-          id: "D5", title: "Map tab houses the compare", status: "todo", est: 5,
+          id: "D5", title: "Map tab houses the compare", status: "verifying", est: 5,
           oneThing: "The couple's alignment lives on Map: a 'where you align' preview + the full reveal in the Vault.",
-          build: "FOLDED INTO T3 (Map bridge doc 2026-06-24): `MapView` is no longer the `PairingSettingsView` stub. The ongoing alignment now lives in two places — the Us layer's 'where you align' preview (mutual / adjacent from `DesireMatch`) and the Vault's Desire segment (the full D4 reveal + consent unlock). Build it there (T3 Seg 4 + Seg 5), reusing `DesireRevealStore` — don't duplicate reveal logic. This segment stays as the Desire-phase tracking entry; the actual surface ships in T3.",
+          build: "✅ BUILT this week, folded into T3 (Map bridge doc 2026-06-24). `MapUsLayer.swift` renders the 'where you align' preview as a 30-entry Pulse/alignment grid driven by real `DesireMatch` data (distance>0.45 → 'wide day' framing). The Vault side landed via the Discussion Card sub-project (2026-06-27): `VaultStore` (discussion state) + `DiscussionCardView`, with the Vault's consent rows opening a discussion card and `DesireRevealView`'s reveal wayfinder dismissing + routing directly into the Vault. Both share the existing reveal data — no duplicate reveal logic.",
           feel: "The couple's shared surface — calm, returnable, a place the relationship lives.",
-          done: "Map's Us layer shows the alignment preview; the Vault's Desire segment hosts the full reveal (built in T3).",
+          done: "Map's Us layer shows the alignment preview; the Vault's Desire segment hosts the full reveal (built in T3). REMAINING: Bryan's device/feel pass on the Us-layer grid and the discussion-card flow.",
           constraints: "Reuse the reveal mechanic — no new reveal logic. Surface is owned by Tabs T3 Seg 4–5; keep D5 as the cross-phase pointer.",
           risk: "Don't build a second Map surface here — it lands in T3. Coordinate so the Vault Desire segment and D4's reveal share one `DesireRevealStore`.",
           refs: [{ label: "Map tab bridge doc", href: "../handoffs/2026-06-24-map-tab-bridge.md" }],
           checklist: [
-            { group: "Front-end", done: false, text: "Us-layer 'where you align' preview (mutual / adjacent from `DesireMatch`) — built in T3 Seg 4" },
-            { group: "Front-end", done: false, text: "Vault Desire segment hosts the full D4 reveal — built in T3 Seg 5; reuse `DesireRevealStore`" }
+            { group: "Front-end", done: true, text: "Us-layer 'where you align' preview (mutual / adjacent from `DesireMatch`) — built in T3 Seg 4 (`MapUsLayer.swift`)" },
+            { group: "Front-end", done: true, text: "Vault Desire segment hosts the full D4 reveal — built in T3 Seg 5 via Discussion Card sub-project (`VaultStore` + `DiscussionCardView`); reveal wayfinder routes into Vault" }
           ],
           questions: [
             { lens: "design", who: "bryan", q: "RESOLVED (bridge doc) — Map holds Pulse, The Record (session history), the Me Card, together stats, and the Vault (Desire Map + Agreements + safe word + Event Log). The compare is the Us-layer preview + Vault Desire segment." }
@@ -721,7 +721,7 @@ const BUILD_ROADMAP = {
     /* ════════════════ PHASE 4 — CARD SESSION SYSTEM ════════════════ */
     {
       id: "sessions", n: 3, title: "Card Session System — the core loop",
-      status: "next",
+      status: "active",
       goal: "The couple curated card session works end-to-end on two devices: server-authoritative + real-time, from the Airlock 'both here' handshake through a synced player to post-session reflection.",
       why: "This IS the product's core loop — the actual 'sitting' the whole app orchestrates toward — and it was nearly missed in the plan. The data layer already exists; the real work is the experience flow + the two-device real-time tissue, which is NEW to this stack (it has only ever polled). So the build de-risks real-time FIRST, then layers UI, Player, Builder, post-session.",
       visual: {
@@ -754,20 +754,20 @@ const BUILD_ROADMAP = {
           ]
         },
         {
-          id: "S2", title: "Real-time handshake (the risky core)", status: "inprogress", est: 16,
+          id: "S2", title: "Real-time handshake (the risky core)", status: "verifying", est: 16,
           oneThing: "Two devices reach a server-authoritative 'both here → active' handshake over Supabase Realtime, with a poll fallback.",
-          build: "🔶 IN PROGRESS 2026-06-21 — `AirlockStore` state machine + Airlock UI built local-only (no Supabase Realtime channel wired yet); the two-device realtime sync is the remaining work. `channel(coupleId:)` presence (track AFTER subscribe; listeners registered BEFORE subscribe — verified supabase-swift 2.41.1); postgres-changes stream of `curated_sessions` UPDATEs → DTO; `AirlockStore` (`@Observable @MainActor`, modeled on `PairingStore`) orchestrating `lobby → airlock → active`, role from `Couple.partnerAId == myUserId`, idempotent active-flip EXACTLY once when both present + both consented; `pollOpenSession` fallback (per `PairingService.pollForClaim`) with `a_present`/`b_present` heartbeat.",
+          build: "✅ BUILT 2026-07-01 (Fable plan 16, section 1). `AirlockStore` now runs the full ladder (`waitingForPartner → bothPresent → bandwidthSet → consented → active`) against a real `LiveAirlockTransport` — `channel(coupleId:)` presence + `curated_sessions` postgres-changes row updates wired live (`service.presenceChanges()` / `service.rowUpdates()`), not local-only. Backend migrations applied to prod via MCP. 131 tests green per the plan-16 pass. REMAINING: Bryan's two-device proof on physical hardware (sim Sign-in-with-Apple is flaky) + feel tuning — no more building expected here.",
           feel: "Debug UI only — the feel comes in C2.",
           done: "Two devices: presence joins/leaves; A mutates row → B sees within ~1s; both present + bandwidth + consent → row flips `active` exactly once, both Stores reach `.active`. With Realtime disabled, the same handshake completes via poll.",
           constraints: "Handshake only — no Player, no Builder, debug UI only. Adding poll must NOT regress the realtime path.",
           risk: "Real-time is NEW to this stack (only ever polled) — the highest-risk segment, de-risked here first. Listener-before-subscribe / track-after-subscribe ordering and the conditional-update advance guard are load-bearing. Sim Sign-in-with-Apple is flaky → verify the final handshake on ≥1 physical device.",
           refs: [{ label: "PairingService.swift (poll template)", href: "../../Vayl/Core/Services/PairingService.swift" }],
           checklist: [
-            { group: "Realtime", done: false, text: "Channel + presence (joins/leaves); `track` after subscribe" },
-            { group: "Realtime", done: false, text: "postgres-changes UPDATE stream → DTO (listener registered before subscribe)" },
-            { group: "Store", done: false, text: "`AirlockStore` state machine (lobby→airlock→active), role A/B, idempotent single active-flip" },
-            { group: "Fallback", done: false, text: "`pollOpenSession` + `a_present`/`b_present` heartbeat; switch on subscribe failure" },
-            { group: "Verify", done: false, text: "Handshake completes on 2 devices via realtime AND via poll (no realtime regression)" }
+            { group: "Realtime", done: true, text: "Channel + presence (joins/leaves); `track` after subscribe" },
+            { group: "Realtime", done: true, text: "postgres-changes UPDATE stream → DTO (listener registered before subscribe)" },
+            { group: "Store", done: true, text: "`AirlockStore` state machine (lobby→airlock→active), role A/B, idempotent single active-flip" },
+            { group: "Fallback", done: true, text: "`pollOpenSession` + `a_present`/`b_present` heartbeat; switch on subscribe failure" },
+            { group: "Verify", done: false, text: "Handshake confirmed on 2 physical devices via realtime AND via poll (Bryan's device pass — not yet run)" }
           ],
           questions: [
             { lens: "deps", who: "claude", q: "Confirm the supabase-swift Realtime ordering (listeners before `subscribeWithError`, `track` after) holds on-device." },
@@ -775,19 +775,19 @@ const BUILD_ROADMAP = {
           ]
         },
         {
-          id: "S3", title: "Entry + Airlock UI", status: "todo", est: 10,
+          id: "S3", title: "Entry + Airlock UI", status: "verifying", est: 10,
           oneThing: "Real entry from Home / Deck Library + the Lobby / Airlock real UI (bandwidth + consent).",
-          build: "RELABELED todo 2026-06-30 (checklist unbuilt, not actually verifying). Entry on Home / Deck Library (`fetchOpenSession` on `.task`/`scenePhase==.active`; present via `.sheet(item:)` per `HomeRouterView`) + a partner pending-session banner. Replace the debug UI with `SessionLobbyView` (consent to the session shape) + `AirlockView` (presence 'both here' + bandwidth sliders + ~3s hold + consent; `.screenshotProtected()`); persist bandwidth via `LockInSession`.",
+          build: "✅ BUILT 2026-07-01 (Fable plan 16, section 2). Debug UI replaced with real `SessionLobbyView` (consent to session shape) + `AirlockView`/`AirlockStore` wired to `LiveAirlockTransport`; player sync landed alongside it in the same section. REMAINING: Bryan's two-device proof + feel tuning (per plan-16 status) — no more building expected here.",
           feel: "The Airlock is the session's first emotional beat — 'both here' should feel like a held breath before the dive, not a loading screen.",
           done: "A starts from Home; B's Home shows a pending banner → opens the lobby; two devices run the full Airlock with real UI to `active`; `LockInSession` rows written.",
           constraints: "Replaces debug UI; navigate to a placeholder 'active' screen (Player is S4). `PlayView` OFF-LIMITS (generative). `AppShell` uses local `@State selectedTab` — may need wiring to route a partner into a pending session.",
           risk: "`AppShell` local `selectedTab` (not `appState`) — wiring needed to route a partner into a pending session.",
           refs: [{ label: "HomeRouterView.swift", href: "../../Vayl/Features/Home/Views/HomeRouterView.swift" }],
           checklist: [
-            { group: "Front-end", done: false, text: "Home / Deck Library entry (`fetchOpenSession` on `.task`/`scenePhase`) + partner pending banner via `.sheet(item:)`" },
-            { group: "Front-end", done: false, text: "`SessionLobbyView` — the session shape to consent to" },
-            { group: "Front-end", done: false, text: "`AirlockView` — presence 'both here' + bandwidth sliders + ~3s hold + consent; `.screenshotProtected()`" },
-            { group: "Back-end", done: false, text: "Persist bandwidth via `LockInSession`" }
+            { group: "Front-end", done: true, text: "Home / Deck Library entry (`fetchOpenSession` on `.task`/`scenePhase`) + partner pending banner via `.sheet(item:)`" },
+            { group: "Front-end", done: true, text: "`SessionLobbyView` — the session shape to consent to" },
+            { group: "Front-end", done: true, text: "`AirlockView` — presence 'both here' + bandwidth sliders + ~3s hold + consent; `.screenshotProtected()`" },
+            { group: "Back-end", done: true, text: "Persist bandwidth via `LockInSession`" }
           ],
           questions: [
             { lens: "design", who: "bryan", q: "Lobby — does the joining partner see the full session shape (deck, card count, timers) before consenting, or just 'X invited you'?" },
@@ -795,19 +795,19 @@ const BUILD_ROADMAP = {
           ]
         },
         {
-          id: "S4", title: "Player core (synced cards, timer, reveal, safety)", status: "todo", est: 18,
+          id: "S4", title: "Player core (synced cards, timer, reveal, safety)", status: "verifying", est: 18,
           oneThing: "Both devices render the same card in lockstep — server-authoritative advance, synced gentle timer, one reveal mechanic, safety + presence cues.",
-          build: "RELABELED todo 2026-06-30 (checklist unbuilt, not actually verifying). `CuratedPlayerStore` + extend `SessionView`: render `card_ids[current_index]` from the update stream; Next/Skip → `advance` (conditional update, no double-advance); completion writes `CardSession`/`CardResult`/`DeckProgress` (the `saveSession` pattern). Synced per-card timer from `timer_started_at`+`per_card_timer` (soft chime + 'wrap up' / 'keep going' via Broadcast, never hard-cut). One reveal — Whisper: private text → both seal → simultaneous 3-2-1 (answers exchanged at reveal via Broadcast, NOT stored). Keep-awake + dim via `connectedScenes`; safe word 'red' (sets `safe_word_used`, graceful dual exit) + pause; active-listener role + soft turn cue per card.",
+          build: "✅ BUILT 2026-07-01 (Fable plan 16, section 3). `SessionPlayerView` + `RevealEngine` landed — and the reveal mechanic set is bigger than planned: FIVE living-card faces (whisper, whatIf, unspoken, mirror, snapshot), each with sealed/revealed phases, not just Whisper. REMAINING: Bryan's two-device proof + feel tuning — the safety/presence-cue polish should get a specific look during that pass since it wasn't called out separately in the plan-16 summary.",
           feel: "Lockstep should feel like two people holding the same object — when one turns the card, both feel it move. Timers nudge gently; the reveal is a held-breath 3-2-1, never a jump-scare.",
           done: "Same card on both; either advances, both move together; simultaneous taps don't double-advance; completion persists `CardSession`. Synced countdown → at zero, chime + 'wrap up' (no auto-advance); 'keep going' clears both. Whisper: neither sees the other until both seal; simultaneous reveal; answers not persisted. Screen stays awake, dims after idle, restores on tap; 'red' ends both; pause works; cues render.",
           constraints: "Player only. Don't touch the legacy `couple_session_records`. No `UIScreen.main`. No mic / audio capture.",
           risk: "Simultaneous-advance double-fire — the conditional-update guard is load-bearing. Reveal answers must NEVER persist (privacy).",
           refs: [],
           checklist: [
-            { group: "D1 sync", done: false, text: "Synced card display from the update stream; server-authoritative `advance` (conditional, no double-advance); completion persists `CardSession`/`CardResult`/`DeckProgress`" },
-            { group: "D2 timer", done: false, text: "Synced per-card gentle timer (soft chime + wrap-up / keep-going via Broadcast, never hard-cut)" },
-            { group: "D3 reveal", done: false, text: "Whisper — private text → both seal → simultaneous 3-2-1; answers exchanged at reveal, not stored" },
-            { group: "D4 safety", done: false, text: "Keep-awake + dim (`connectedScenes`); safe word 'red' dual-exit + pause; active-listener turn cue" }
+            { group: "D1 sync", done: true, text: "Synced card display from the update stream; server-authoritative `advance` (conditional, no double-advance); completion persists `CardSession`/`CardResult`/`DeckProgress`" },
+            { group: "D2 timer", done: true, text: "Synced per-card gentle timer (soft chime + wrap-up / keep-going via Broadcast, never hard-cut)" },
+            { group: "D3 reveal", done: true, text: "Reveal mechanics — whisper, whatIf, unspoken, mirror, snapshot; sealed → simultaneous reveal; answers exchanged, not stored" },
+            { group: "D4 safety", done: false, text: "Keep-awake + dim (`connectedScenes`); safe word 'red' dual-exit + pause; active-listener turn cue — verify specifically during device pass" }
           ],
           questions: [
             { lens: "design", who: "bryan", q: "Is Whisper the right single reveal mechanic to ship first, or a different living-card type?" },
@@ -815,18 +815,18 @@ const BUILD_ROADMAP = {
           ]
         },
         {
-          id: "S5", title: "Builder + fast paths", status: "todo", est: 14,
+          id: "S5", title: "Builder + fast paths", status: "verifying", est: 14,
           oneThing: "Produce real `SessionPlan`s — authored order by default, customizable, with quick / save / reuse / preset fast paths.",
-          build: "`SessionBuilderStore` + `SessionBuilderView`: seed `orderedCardIds` from `deck.orderedCards` (rituals included); `openSession` snapshots it (replaces the stub). Reorder / drop cards (authored order = default); per-card / global timers; settings (depth ceiling, together/apart → `isLDR`, sensitive, safe word); live time estimate; soft over-length nudge + opt-in firm cap. Fast paths: quick auto-pick (depth + length), save (persist a `SessionPlan`), same-as-last (`lastUsedAt`), presets (clone authored decks).",
+          build: "✅ BUILT 2026-07-01 (Fable plan 16, section 3, same section as S4). `SessionBuilderStore` + `SessionBuilderView` confirmed live — reorder/trim, per-card/global timers, settings. REMAINING: confirm the fast-path set (quick/save/same-as-last/presets) is fully wired, not just reorder+timers — verify this specifically during Bryan's device pass, plan-16 summary didn't itemize it separately from S4.",
           feel: "Customization is an invitation, never an obligation — the authored order is right there, ready to play; tweaking is for those who want it.",
           done: "Build + play a real 'the-opener' session in authored order (replacing the stub) with ZERO transport/Airlock changes; a custom session reflects order/timers/settings in the Player; rituals remain by default; the cap nudge fires when long; each fast path produces a valid `SessionPlan` that plays identically.",
           constraints: "Don't touch the transport / Airlock interfaces or the Player internals. Multi-deck is gated by content.",
           risk: "Authored-order must stay the DEFAULT — don't force customization.",
           refs: [],
           checklist: [
-            { group: "E1", done: false, text: "Authored-order `SessionPlan` from `deck.orderedCards` (rituals incl.); `openSession` snapshots it; replaces the stub" },
-            { group: "E2", done: false, text: "Reorder / trim + per-card / global timers + settings (depth / LDR / sensitive / safe word) + live estimate + soft cap nudge" },
-            { group: "E3", done: false, text: "Fast paths — quick / save & reuse / same-as-last / presets" }
+            { group: "E1", done: true, text: "Authored-order `SessionPlan` from `deck.orderedCards` (rituals incl.); `openSession` snapshots it; replaces the stub" },
+            { group: "E2", done: true, text: "Reorder / trim + per-card / global timers + settings (depth / LDR / sensitive / safe word) + live estimate + soft cap nudge" },
+            { group: "E3", done: false, text: "Fast paths — quick / save & reuse / same-as-last / presets — confirm during device pass" }
           ],
           questions: [
             { lens: "content", who: "bryan", q: "Naming nit — Content Bible 'The Starting Line' vs code `the-opener`. Which ships?" },
@@ -894,7 +894,7 @@ const BUILD_ROADMAP = {
     /* ════════════════ PHASE 5 — MAP (relationship dashboard) ════════════════ */
     {
       id: "map", n: 4, title: "Map — the relationship dashboard",
-      status: "next",
+      status: "active",
       goal: "Map is the couple's returnable home: a Me / Us dashboard hosting Pulse, the Me Card, the Record, and the Vault — and where the Desire-Map compare lives after the reveal.",
       why: "Slice 3 of the core loop — where the relationship lives between sittings. Absorbs the Desire-Map post-completion (D5), Pulse, and Agreements. Home / Play / Learn / Settings folded out to their own phases.",
       visual: {
@@ -909,7 +909,7 @@ const BUILD_ROADMAP = {
         {
           id: "T3", title: "Map — Me / Us dashboard + Vault", status: "inprogress", est: 18,
           oneThing: "Map becomes an individual-leaning couple dashboard with a Me / Us toggle, hosting Pulse, the Me Card, and the Vault.",
-          build: "🔶 STARTED 2026-06-24 (Seg 0 shell underway; `MapView`/`MapStore`/`MeCardSheet` exist, ~2.3k LOC — no longer a stub). SCOPE CHANGED + RESIZED: the old single 'Your Mirror' dashboard is now a Me / Us toggle dashboard built to a 7-segment plan (bridge doc 2026-06-24). 'The Mirror' coinage is CUT (AI-coined, Bryan dislikes it). Seg 0 — shell + `MapStore` + define the ONE canonical `.vaylGlassCard` (cohesion rule: one card language, not the mockup's three) + Home-grammar masthead + Me/Us toggle (promote `LearnSegmented` to a shared control). Seg 1 — Pulse hero (Me): reuse `Features/Pulse/*`, a two-line couple compare (no interpretation), check-in via `.vaylCover`. Seg 2 — The Record (Me): session history + category spread from `CardSession`. Seg 3 — The Me Card: title-led identity (Flavor color + chosen Title from a shortlist + 'Drawn to' tags derived from `DesireMatch` mutual matches + opt-in sigil) — the biggest NEW piece. Seg 4 — Us layer: together stats + couple card + 'where you align' preview. Seg 5 — The Vault (`.vaylSheet`, its own backend mini-project): Desire Map (reuse `DesireRevealStore`) + Agreements (net-new, FREE safety primitive) + Event Log (net-new, FREE) + consent exchange (Edge-Function-mediated; decline never discloses). Seg 6 — Settings + cohesion sweep. Pulse→Supabase migration is EXPLICITLY OUT of Map V1 (Pulse stays on `pulse.entries.v1` UserDefaults for now). (Absorbs old W4.)",
+          build: "🔶 STARTED 2026-06-24, MAJOR PROGRESS this week (2026-06-27 → 07-04). Pulse was fully redesigned as a 2D circumplex (`PulsePosition` energy/openness axes + quadrant resolution, `PulseAura` caustic-under-glass component, `PulseField` check-in) and now hosts as `MapPulseHero` — a real Seg 1 hero, not the old 1D graph. Seg 4 (Us layer) landed: `MapUsLayer.swift` renders a 30-entry alignment grid off real `DesireMatch` data. Seg 5 (Vault) got its Discussion Card sub-project (2026-06-27): `VaultStore` + `DiscussionCardView`, consent rows opening discussion cards, reveal wayfinder routing into the Vault — covers the Desire Map hosting; Agreements + Event Log (the net-new free safety primitives) are NOT yet confirmed built. The Record (Seg 2) and Me Card polish (Seg 3, beyond the pre-existing `MeCardSheet` shell) are unconfirmed this pass — check before assuming done. <b>2026-07-05: dashboard finalized to spec (`docs/superpowers/specs/2026-07-05-map-tab-dashboard-design.md`) and BUILT + code-reviewed, 9-task plan (`docs/superpowers/plans/2026-07-05-map-tab-dashboard-plan.md`) fully executed</b> — `UsOrbState` per-half state machine (unwritten/current/quiet, TDD), shared `mapPulseCardHeight` token, `MapStore` lens gating (`hasUs`) + persisted one-shot Us-reveal-ceremony flag with unlink reset, lens sublabel + ambient tint, compact split-orb `MapUsPulseCard` (demolished the old inline field), `PulseFullView` rebuilt from its stub with me/us modes + interior lens toggle (both dashboard history grids relocated off-dashboard per spec), the Us reveal ceremony (name ignition → self-performing flip → dealer line), `VaultDoorCard` with spin-open (fixed a dead `onOpenVault` wiring bug in the process), and the shared-orb Pulse consent caption (confirmed the `share_pulse_with_partner` toggle chain was already fully wired end-to-end). Seg 6 cohesion sweep not started; My-Vault door / Path / Roadmap are their own upcoming specs.",
           feel: "Map = an individual-leaning couple dashboard, calm and returnable. Co-equal Me and Us layers behind one toggle. Keep the existing Pulse check-in cinematics; ONE glass-card language across every surface.",
           done: "On device, Map shows the Me / Us dashboard: Me (Pulse hero + The Record + Me Card), Us (together stats + couple card + alignment preview), Vault reachable via `.vaylSheet`. Everything uses the canonical card + tokens + empty states.",
           constraints: "Build to the bridge-doc cohesion contract (one `.vaylGlassCard`, tokens only, View → `MapStore` → services). Reuse Pulse / Desire / Couple — don't duplicate. The Vault is its own sequenced mini-project (consent invariant: decline never discloses).",
@@ -920,11 +920,12 @@ const BUILD_ROADMAP = {
             { label: "PulseStore.swift", href: "../../Vayl/Features/Pulse/Store/PulseStore.swift" }
           ],
           checklist: [
-            { group: "Seg 0", done: false, text: "Shell + `MapStore` + define the canonical `.vaylGlassCard` + Home-grammar masthead + Me/Us toggle (started)" },
-            { group: "Seg 1–2", done: false, text: "Pulse hero (Me, two-line compare, no streaks, check-in `.vaylCover`) + The Record (session history + category spread)" },
-            { group: "Seg 3", done: false, text: "The Me Card — title-led identity (Flavor / Title / Drawn-to tags from `DesireMatch` + opt-in sigil)" },
-            { group: "Seg 4", done: false, text: "Us layer — together stats + couple card + 'where you align' preview" },
-            { group: "Seg 5", done: false, text: "The Vault (`.vaylSheet`): Desire Map (reuse reveal) + Agreements (free) + Event Log (free) + consent exchange (decline never discloses)" },
+            { group: "Seg 0", done: true, text: "Shell + `MapStore` + define the canonical `.vaylGlassCard` + Home-grammar masthead + Me/Us toggle" },
+            { group: "Seg 1", done: true, text: "Pulse hero (Me) — redesigned as 2D circumplex (`PulsePosition`/`PulseAura`/`PulseField`), hosted as `MapPulseHero`" },
+            { group: "Seg 2", done: false, text: "The Record (Me) — session history + category spread from `CardSession` — not confirmed built" },
+            { group: "Seg 3", done: false, text: "The Me Card — title-led identity polish beyond the existing `MeCardSheet` shell (Flavor / Title / Drawn-to tags / opt-in sigil) — not confirmed this pass" },
+            { group: "Seg 4", done: true, text: "Us layer — 'where you align' preview built (`MapUsLayer.swift`, 30-entry grid off `DesireMatch`); confirm 'together stats + couple card' framing on device" },
+            { group: "Seg 5", done: false, text: "The Vault (`.vaylSheet`) — Desire Map discussion-card hosting DONE (`VaultStore` + `DiscussionCardView` + consent rows); Agreements + Event Log (net-new free primitives) NOT yet confirmed" },
             { group: "Seg 6", done: false, text: "Settings + cohesion sweep (canonical card + tokens + empty states everywhere)" }
           ],
           questions: [
@@ -938,7 +939,7 @@ const BUILD_ROADMAP = {
     /* ════════════════ PHASE 6 — SETTINGS ════════════════ */
     {
       id: "settings", n: 5, title: "Settings — control panel",
-      status: "later",
+      status: "done",
       goal: "A complete, truthful Settings page: profile, pairing entry, account actions, plus the App-Store-required Delete Account / Sign Out (logic lands in A1).",
       why: "Slice 4 — launch-required. Delete Account is a hard App Store blocker; restore-purchase, manage-pairing, theme, and legal all live here. Folded out of the old Tabs phase.",
       visual: {
@@ -949,19 +950,19 @@ const BUILD_ROADMAP = {
       },
       segments: [
         {
-          id: "T5", title: "Settings — real page (not a tab)", status: "todo", est: 6,
+          id: "T5", title: "Settings — real page (not a tab)", status: "done", est: 6, actual: 8,
           oneThing: "Settings is a complete, truthful page: profile, pairing entry, account actions.",
-          build: "Finalize the Settings page (its own route, not in the tabbar): profile edit (name/pronouns sync to remote), partner-pairing entry, theme, and the account-action host. Account Delete + release Sign Out themselves ship in App-Store A1 — Settings provides their home here.",
+          build: "✅ DONE — full vertical built 06-28 → 07-01 (Seg 1-4 + 'finish the Settings vertical end to end', Fable plan 04). `SettingsIdentityView` (profile edit, name/pronouns), `SettingsPartnerView` (linked-partner display + unlink entry point), account actions in `SettingsView`. `SettingsStore.saveIdentity()` calls `SyncManager.shared.pushDisplayIdentity()` — confirmed real Supabase sync, not local-only. Beyond scope: working Unlink Partner with a tier-aware warning (buyer keeps purchase/Lifetime, non-payer loses access + hits paywall on re-pair, gated on `entitlements.isCore`), plus Privacy/Notifications/Appearance sub-screens wired to Supabase + `UNUserNotificationCenter`.",
           feel: "Calm, legible, trustworthy — the place the user feels in control of their data.",
           done: "Settings shows real profile data, edits sync to remote, pairing is reachable, and the account-action section is present (wired in A1).",
           constraints: "Settings + Profile/Auth services. The Delete/Sign-Out logic lands in A1 — here just the surface + profile edit.",
           risk: "Profile edits must sync to remote (the OB name→remote gap was a real bug found in P3) — verify edits propagate.",
           refs: [{ label: "SettingsView.swift", href: "../../Vayl/Features/Settings/SettingsView.swift" }],
           checklist: [
-            { group: "Front-end", done: false, text: "Profile edit (name / pronouns) UI" },
-            { group: "Front-end", done: false, text: "Partner-pairing entry point + linked-partner display" },
-            { group: "Front-end", done: false, text: "Account-actions section present (Sign Out / Delete — logic in A1)" },
-            { group: "Back-end", done: false, text: "Profile edits sync to remote `user_profiles` (verify propagation)" }
+            { group: "Front-end", done: true, text: "Profile edit (name / pronouns) UI" },
+            { group: "Front-end", done: true, text: "Partner-pairing entry point + linked-partner display" },
+            { group: "Front-end", done: true, text: "Account-actions section present (Sign Out / Delete — logic in A1)" },
+            { group: "Back-end", done: true, text: "Profile edits sync to remote `user_profiles` (`SettingsStore.saveIdentity()` → `SyncManager.pushDisplayIdentity()`, confirmed)" }
           ],
           questions: [
             { lens: "design", who: "bryan", q: "What lives in Settings for V1 beyond profile / pairing / account / theme (notifications, safe word, data export)?" }
@@ -985,9 +986,9 @@ const BUILD_ROADMAP = {
       },
       segments: [
         {
-          id: "C1", title: "Decks / cards to launch volume", status: "todo", est: 6,
+          id: "C1", title: "Decks / cards to launch volume", status: "verifying", est: 6,
           oneThing: "Author enough decks to feel like a product, not a demo.",
-          build: "Expand beyond the single 10-card 'The Opener' deck. Decide the launch set and write to the existing `Card`/`Deck` JSON schema.",
+          build: "✅ VOLUME LANDED 2026-07-01 (Fable plan 16, section 4 — 12-deck launch catalog + exemplars + content lint). `Vayl/Resources/Decks/` now holds 16 decks (was 1): the-opener, the-check-in, the-first-time, before-tonight, after-last-night, communication-intimacy, appreciation, sex-and-pleasure, flavors-discovery, swinging, jealousy, when-it-gets-hard, opener-opening/steady/wider/return. REMAINING: Bryan's content-quality/tone review (this segment tracks volume; C2 locks the desire/assessment sets separately).",
           feel: "Every card is the product's voice — warm, curious, never clinical or instructional.",
           done: "Launch deck set authored, loads via ContentLoader, plays on device.",
           constraints: "Content JSON + index. No model changes (schema is mature).",
