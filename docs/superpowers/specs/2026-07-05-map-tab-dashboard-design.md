@@ -89,12 +89,17 @@ state read below ("The Expansive Space"), substate, today-line. Tap → Pulse fu
 - **Stale** (last entry not today): last color at `PulseFieldEntry.staleOpacity`
   (0.6) + softened copy (existing `isPositionStale` handling).
 
-### 3.2 Us card — the compact split orb
-The Us dashboard Pulse collapses to a compact card (same footprint as Me): split orb
-(~98pt) left, relational read beside it ("A wide day · You in Expansive / Alex in
-Protective · a step apart"). The current full-width `PulseField` square + capsule +
-split 30-grid move OUT of the dashboard into the tap-open full view (`PulseFullView`
-grows a `.us` mode). This demolishes today's inline `MapUsLayer` field. Confirmed.
+### 3.2 Us card — the same hero treatment as Me (revised 2026-07-05)
+Originally specced as a compact card (split orb left, relational read beside it).
+**Superseded**: the Us card now mirrors Me's hero composition exactly — centered
+split orb at the same size as Me's aura (`AppLayout.mapMeAuraSize`, shared token),
+headline + names-read centered below it, same vertical rhythm as Me's
+aura → state-name → sublabel column. Two lenses, one visual weight — neither reads
+as the "smaller" pillar. The relational read ("A wide day · You in Expansive / Alex
+in Protective · a step apart") is unchanged in content, just centered under the orb
+instead of beside it. The full-width `PulseField` square + capsule + split 30-grid
+still move OUT of the dashboard into the tap-open full view (`PulseFullView`'s `.us`
+mode) — that demolition of the old inline `MapUsLayer` field stands as specced.
 
 ### 3.3 Us orb state machine (per half)
 Exception first: when NEITHER partner has ever checked in, the orb is not split —

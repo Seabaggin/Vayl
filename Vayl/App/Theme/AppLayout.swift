@@ -194,11 +194,10 @@ struct AppLayout {
     /// Orb sizes derive from it; never hardcode a second number.
     static let mapPulseCardHeight: CGFloat = 218
 
-    /// Me aura ≈ 104/218 of the card (final mockup ratio, spec §3.1).
+    /// ≈ 104/218 of the card. Shared by BOTH lenses' hero orb (Me's single aura
+    /// and Us's split orb, 2026-07-05 — the Us card got the same hero treatment
+    /// as Me's instead of its own smaller compact size) for visual parity.
     static var mapMeAuraSize: CGFloat { mapPulseCardHeight * 0.48 }
-
-    /// Us split orb ≈ 98/218 of the card (final mockup ratio, spec §3.2).
-    static var mapUsOrbSize: CGFloat { mapPulseCardHeight * 0.45 }
 
     // MARK: - OB Card Geometry
     // These values are exclusive to the Onboarding canvas.

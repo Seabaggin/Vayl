@@ -1,12 +1,16 @@
 // Features/Map/Components/MapUsPulseCard.swift
 //
-// The compact Us Pulse card — Map dashboard spec §3.2-3.3. Replaces the old inline
-// full-width PulseField block with a fixed-height card: a two-half "split orb"
-// (SplitOrbView) on the left, a headline + names-read on the right. State is
+// The Us Pulse hero — Map dashboard spec §3.2-3.3, restyled 2026-07-05 to match
+// MapPulseHero's hero treatment instead of the original compact side-by-side
+// card: a centered "split orb" (SplitOrbView, sized the same as the Me aura for
+// visual parity) with the headline + names-read centered below it, same shape
+// as MapPulseHero's aura → state-name → sublabel column. State is
 // UsOrbState-driven — computed ONCE by the caller and threaded through, never
 // re-derived here.
 //
-// Visual reference: docs/superpowers/specs/2026-07-05-map-tab-dashboard-design.md §3.2-3.3.
+// Visual reference: MapPulseHero.swift (structure this mirrors); the original
+// compact-card mockup in docs/superpowers/specs/2026-07-05-map-tab-dashboard-design.md
+// §3.2-3.3 no longer applies to the composition, only to the state rules.
 
 import SwiftUI
 
@@ -32,20 +36,22 @@ struct MapUsPulseCard: View {
     @State private var isPressed = false
 
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
-            orb
-            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                Text("THE PULSE · TOGETHER")
-                    .font(AppFonts.overline)
-                    .tracking(1.0)
-                    .foregroundStyle(AppColors.spectrumMagenta)
+        VStack(alignment: .leading, spacing: 0) {
+            header
 
-                bodyContent
-            }
-            Spacer(minLength: 0)
+            orb
+                .frame(maxWidth: .infinity)
+                .padding(.top, AppSpacing.lg)
+
+            content
+                .frame(maxWidth: .infinity)
+                .padding(.top, AppSpacing.sm)
         }
         .padding(AppSpacing.md)
-        .frame(height: AppLayout.mapPulseCardHeight)
+        // minHeight, not a hard height — matches MapPulseHero's own reasoning
+        // (spec §1's shared footprint is the common case, not a hard guarantee;
+        // the quiet-acknowledgment line can push a genuinely fuller card taller).
+        .frame(minHeight: AppLayout.mapPulseCardHeight, alignment: .top)
         .frame(maxWidth: .infinity, alignment: .leading)
         .vaylGlassCard(accent: AppColors.spectrumMagenta, radius: AppRadius.container)
         .contentShape(Rectangle())
@@ -58,18 +64,34 @@ struct MapUsPulseCard: View {
         }
     }
 
-    // MARK: - Orb
+    // MARK: - Header (mirrors MapPulseHero.sectionHeader)
+
+    private var header: some View {
+        HStack {
+            Text("THE PULSE · TOGETHER")
+                .font(AppFonts.overline)
+                .tracking(1.0)
+                .foregroundStyle(AppColors.spectrumMagenta)
+            Spacer()
+            Text("tap to open →")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textMuted)
+        }
+    }
+
+    // MARK: - Orb (hero-sized — same AppLayout.mapMeAuraSize as the Me aura,
+    // for visual parity between the two lenses, not the old smaller compact size)
 
     @ViewBuilder
     private var orb: some View {
         switch state {
         case .wholeUnwritten:
-            PulseCyclingAura(size: AppLayout.mapUsOrbSize)
+            PulseCyclingAura(size: AppLayout.mapMeAuraSize)
         case .split(let mine, let partner):
             SplitOrbView(
                 mine:    half(for: mine, aura: myAura),
                 partner: half(for: partner, aura: partnerAura),
-                size:    AppLayout.mapUsOrbSize
+                size:    AppLayout.mapMeAuraSize
             )
         }
     }
@@ -82,33 +104,39 @@ struct MapUsPulseCard: View {
         }
     }
 
-    // MARK: - Body content
+    // MARK: - Content (mirrors MapPulseHero's centered state-name + sublabel column)
 
     @ViewBuilder
-    private var bodyContent: some View {
+    private var content: some View {
         switch state {
         case .wholeUnwritten:
-            Text("The Pulse starts with a check-in")
-                .font(AppFonts.display(15, weight: .semibold, relativeTo: .subheadline))
-                .foregroundStyle(AppColors.textPrimary)
-            Text("One check-in from either of you begins the shared read.")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: AppSpacing.xxs) {
+                Text("The Pulse starts with a check-in")
+                    .font(AppFonts.screenTitle)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .multilineTextAlignment(.center)
+                Text("One check-in from either of you begins the shared read.")
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
 
         case .split(let mine, let partner):
-            Text(headline(mine: mine, partner: partner))
-                .font(AppFonts.display(15, weight: .semibold, relativeTo: .subheadline))
-                .foregroundStyle(AppColors.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: AppSpacing.xxs) {
+                Text(headline(mine: mine, partner: partner))
+                    .font(AppFonts.screenTitle)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .multilineTextAlignment(.center)
 
-            namesRead(mine: mine, partner: partner)
+                namesRead(mine: mine, partner: partner)
 
-            if partner == .quiet, let last = partnerLastEntry {
-                Text("\(displayName) hasn't checked in since \(relativeDay(last.date))")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textTertiary)
-                    .padding(.top, AppSpacing.xxs)
+                if partner == .quiet, let last = partnerLastEntry {
+                    Text("\(displayName) hasn't checked in since \(relativeDay(last.date))")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, AppSpacing.xxs)
+                }
             }
         }
     }
@@ -134,7 +162,7 @@ struct MapUsPulseCard: View {
 
     @ViewBuilder
     private func namesRead(mine: UsOrbState.HalfState, partner: UsOrbState.HalfState) -> some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+        VStack(spacing: AppSpacing.xxs) {
             if mine != .unwritten {
                 Text("You in \(mySpaceName)")
                     .font(AppFonts.caption)
@@ -148,6 +176,7 @@ struct MapUsPulseCard: View {
                     .opacity(partner == .quiet ? PulseFieldEntry.staleOpacity : 1.0)
             }
         }
+        .multilineTextAlignment(.center)
         .padding(.top, AppSpacing.xxs)
     }
 
