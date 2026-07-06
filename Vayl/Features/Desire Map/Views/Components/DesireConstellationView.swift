@@ -108,16 +108,23 @@ struct DesireConstellationView: View {
             path.addLine(to: scaled(stars[edge.b].point, size))
         }
         .trim(from: 0, to: drawn ? 1 : 0)
-        .stroke(Color.white.opacity(0.5), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
+        .stroke(Color.white.opacity(lineOpacity), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
         .animation(AppAnimation.desireLineDraw.reduceMotionSafe, value: drawn)
     }
 
     private func lineDrawn(_ edge: ConstellationLayout.Edge) -> Bool {
         switch mode {
-        case .resolved:        return true
-        case .assemble:        return revealed.contains(edge.a) && revealed.contains(edge.b)
-        case .intro, .teasers: return false
+        case .resolved:  return true
+        case .assemble:  return revealed.contains(edge.a) && revealed.contains(edge.b)
+        case .teasers:   return true
+        case .intro:     return false
         }
+    }
+
+    /// Teaser-beat lines read as a hint of connection, not a confirmed one — dimmer than
+    /// the confident weight used once the sky is actually lit (resolved / mid-assembly).
+    private var lineOpacity: Double {
+        mode == .teasers ? 0.18 : 0.5
     }
 
     // MARK: - Telegraph
