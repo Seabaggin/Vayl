@@ -268,6 +268,12 @@ struct HomeDashboardView: View {
                         .opacity(heroVisible ? 1 : 0)
                         .animation(AppAnimation.spring, value: heroVisible)
                         .zIndex(10)
+                        // When the chest opens, settle the card toward vertical center so it
+                        // uses the lower space instead of staying crammed up top under the
+                        // SETUP / TONIGHT chrome. Proportional geometry, like the top-void and
+                        // heroIsolation above. Feel value: tune the fraction on device.
+                        .offset(y: deckEngaged ? layout.screenHeight * 0.12 : 0)
+                        .animation(AppAnimation.enter, value: deckEngaged)
 
                         // Flexible hero-isolation void: the deck floats up top while the Pulse
                         // + Lexicon settle at the bottom (it fills the collapsed screen's slack).
@@ -652,19 +658,34 @@ struct HomeDashboardView: View {
         ZStack {
             // Corner "tonight" deck — positioned EXPLICITLY in the top-right corner.
             // (A Spacer/padding chain was rendering it off-screen.)
-            cornerDeck
-                .position(
-                    x: layout.screenWidth - 48,
-                    y: layout.safeAreaInsets.top + 24
-                )
+            // Corner "tonight" deck + label, top-right.
+            VStack(spacing: AppSpacing.xs) {
+                cornerDeck
+                Text("Tonight")
+                    .font(AppFonts.label)
+                    .tracking(1.4)
+                    .textCase(.uppercase)
+                    .foregroundStyle(AppColors.textTertiary)
+            }
+            .position(
+                x: layout.screenWidth - 48,
+                y: layout.safeAreaInsets.top + 34
+            )
 
-            // Settings cog — top-leading, opposite the corner deck. Opens the
+            // Settings cog + label — top-leading, opposite the corner deck. Opens the
             // two-knob session-settings sheet (who reads / length & pace).
-            settingsCog
-                .position(
-                    x: 24 + 22,
-                    y: layout.safeAreaInsets.top + 24
-                )
+            VStack(spacing: AppSpacing.xs) {
+                settingsCog
+                Text("Setup")
+                    .font(AppFonts.label)
+                    .tracking(1.4)
+                    .textCase(.uppercase)
+                    .foregroundStyle(AppColors.textTertiary)
+            }
+            .position(
+                x: 24 + 22,
+                y: layout.safeAreaInsets.top + 34
+            )
 
             if !handIDs.isEmpty {
                 VStack {
