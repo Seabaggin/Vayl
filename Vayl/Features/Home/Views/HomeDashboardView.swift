@@ -280,6 +280,23 @@ struct HomeDashboardView: View {
                 }
                 .scrollIndicators(.hidden)
 
+                // Outside-tap dismiss for the partner-chip popover. A full-screen,
+                // invisible tap-catcher: sits ABOVE the ScrollView content (so a tap
+                // doesn't fall through to a deck card underneath) but BELOW the chip
+                // itself, whose zIndex(1) — set in greetingBlock — always wins ties
+                // and keeps the chip/expand card's own buttons tappable. Only
+                // mounted while the popover is open, so it never intercepts normal
+                // Home interaction at rest.
+                if isChipExpanded {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation(AppAnimation.standard) { isChipExpanded = false }
+                        }
+                        .ignoresSafeArea()
+                        .zIndex(0.5)
+                }
+
                 // "Settle in" rides above the carousel's screen dim once a card is in
                 // tonight's hand, and carries the hand into the session.
                 if deckPhase == .carousel {

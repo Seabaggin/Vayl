@@ -42,18 +42,28 @@ struct PartnerChipExpand: View {
     @ViewBuilder
     private func activeContent(name: String, initial: String) -> some View {
         VStack(spacing: 0) {
-            HStack(spacing: AppSpacing.sm) {
-                PartnerAvatarView(initial: initial, size: 22)
-                Text(name)
-                    // cardTitle (22pt) is sized for a screen-level card headline —
-                    // too large next to a 22pt avatar circle in a 224pt popover.
-                    // cardTitleCompact (16pt) is the token meant for exactly this:
-                    // dense rows / compact widget titles.
-                    .font(AppFonts.cardTitleCompact)
-                    .foregroundStyle(AppColors.textPrimary)
-                Spacer()
+            HStack {
+                HStack(spacing: AppSpacing.sm) {
+                    PartnerAvatarView(initial: initial, size: 22)
+                    Text(name)
+                        // cardTitle (22pt) is sized for a screen-level card headline —
+                        // too large next to a 22pt avatar circle in a 224pt popover.
+                        // cardTitleCompact (16pt) is the token meant for exactly this:
+                        // dense rows / compact widget titles.
+                        .font(AppFonts.cardTitleCompact)
+                        .foregroundStyle(AppColors.textPrimary)
+                    Spacer()
+                }
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.sm)
+                // Same glass-capsule treatment as the at-rest PartnerChip's .active
+                // case, so the header reads as that pill continuing into the
+                // expanded card rather than a bare row on the card background.
+                .glassEffect(.regular, in: Capsule())
             }
-            .padding(AppSpacing.md)
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.top, AppSpacing.md)
+            .padding(.bottom, AppSpacing.sm)
 
             HStack(spacing: AppSpacing.sm) {
                 tile(
