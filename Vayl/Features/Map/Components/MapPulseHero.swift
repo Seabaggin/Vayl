@@ -33,11 +33,13 @@ struct MapPulseHero: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     showMap = true
                 } label: {
-                    PulseAura(
-                        ramp: currentSpace.ramp(at: currentPosition),
-                        size: AppLayout.mapMeAuraSize,
-                        haloSpread: AppLayout.mapHeroHaloSpread
-                    )
+                    ZStack {
+                        MapHeroAmbientGlow(
+                            color:   currentSpace.ramp(at: currentPosition).glow,
+                            orbSize: AppLayout.mapMeAuraSize
+                        )
+                        PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: AppLayout.mapMeAuraSize)
+                    }
                         .frame(maxWidth: .infinity)
                         .padding(.top, AppSpacing.lg)
                         .opacity(isQuiet ? PulseFieldEntry.staleOpacity : 1.0)
@@ -148,7 +150,10 @@ struct MapPulseHero: View {
 
     private var emptyStateBlock: some View {
         VStack(spacing: 0) {
-            PulseCyclingAura(size: AppLayout.mapMeAuraSize, haloSpread: AppLayout.mapHeroHaloSpread)
+            // No ambient glow here: the cycling ramp's colour is always shifting,
+            // and a static wash behind it would just look mismatched — the
+            // moving colour already carries "not yet answered" on its own.
+            PulseCyclingAura(size: AppLayout.mapMeAuraSize)
                 .frame(maxWidth: .infinity)
                 .padding(.top, AppSpacing.lg)
 

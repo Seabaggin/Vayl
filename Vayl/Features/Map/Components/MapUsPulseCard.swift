@@ -86,7 +86,10 @@ struct MapUsPulseCard: View {
     private var orb: some View {
         switch state {
         case .wholeUnwritten:
-            PulseCyclingAura(size: AppLayout.mapMeAuraSize, haloSpread: AppLayout.mapHeroHaloSpread)
+            // No ambient glow here — same reasoning as MapPulseHero's empty
+            // state: a cycling ramp has no fixed colour for a static wash to
+            // match, and the movement already reads as "not yet answered."
+            PulseCyclingAura(size: AppLayout.mapMeAuraSize)
         case .split(let mine, let partner):
             SplitOrbView(
                 mine:    half(for: mine, aura: myAura),
@@ -230,29 +233,16 @@ struct SplitOrbView: View {
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
-        // Ambient halo — added AFTER the clip (same pattern PulseAura's own
-        // haloSpread uses) so it bleeds outside the orb's circle instead of
-        // being cut off by it. A per-half halo would sit INSIDE the clip
-        // above and get masked away by HalfCircle, so this is one shared
-        // bloom for the whole orb, blended from both people's colours —
-        // only shown once both sides have a real reading (a cycling half's
-        // colour keeps shifting, so it has no fixed colour to glow with).
+        // Ambient wash — added AFTER the clip so it bleeds outside the orb's
+        // circle instead of being cut off by it. A per-half glow would sit
+        // INSIDE the clip above and get masked away by HalfCircle, so this is
+        // one shared wash for the whole orb, blended from both people's
+        // colours — only shown once both sides have a real reading (a
+        // cycling half's colour keeps shifting, so it has no fixed colour to
+        // glow with).
         .background {
             if let haloGlow {
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            gradient: Gradient(stops: [
-                                .init(color: haloGlow, location: 0.0),
-                                .init(color: haloGlow, location: 0.34),
-                                .init(color: .clear,   location: 1.0),
-                            ]),
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: size * AppLayout.mapHeroHaloSpread * 0.5
-                        )
-                    )
-                    .frame(width: size * AppLayout.mapHeroHaloSpread, height: size * AppLayout.mapHeroHaloSpread)
+                MapHeroAmbientGlow(color: haloGlow, orbSize: size)
             }
         }
         .scaleEffect(breathe ? 1.045 : 1.0)
