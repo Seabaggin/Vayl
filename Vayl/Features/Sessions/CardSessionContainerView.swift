@@ -84,7 +84,15 @@ private struct CoupleSessionFlow: View {
 
     var body: some View {
         ZStack {
-            SessionAtmosphere(turn: turn)
+            // Before-we-start (airlock) uses the canonical OnboardingAtmosphere
+            // instead of SessionAtmosphere — SessionAtmosphere's blobs read too
+            // bright for this screen (Bryan's call). The live session keeps
+            // SessionAtmosphere's turn-tinting untouched.
+            if store.phase == .airlock {
+                OnboardingAtmosphere(config: .stat)
+            } else {
+                SessionAtmosphere(turn: turn)
+            }
 
             content
         }
