@@ -103,13 +103,23 @@ struct DesireConstellationView: View {
     @ViewBuilder
     private func line(_ edge: ConstellationLayout.Edge, in size: CGSize) -> some View {
         let drawn = lineDrawn(edge)
-        Path { path in
+        let path = Path { path in
             path.move(to: scaled(stars[edge.a].point, size))
             path.addLine(to: scaled(stars[edge.b].point, size))
         }
-        .trim(from: 0, to: drawn ? 1 : 0)
-        .stroke(Color.white.opacity(lineOpacity), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
-        .animation(AppAnimation.desireLineDraw.reduceMotionSafe, value: drawn)
+        if mode == .teasers {
+            // Teaser-beat lines fade in already at full length. A trim/draw-on animation here
+            // reads as lines being traced across the screen and thrown on top of the stars —
+            // a plain opacity fade reads as a soft, ambient connection instead.
+            path
+                .stroke(Color.white.opacity(drawn ? lineOpacity : 0), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
+                .animation(AppAnimation.enter.reduceMotionSafe, value: drawn)
+        } else {
+            path
+                .trim(from: 0, to: drawn ? 1 : 0)
+                .stroke(Color.white.opacity(lineOpacity), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
+                .animation(AppAnimation.desireLineDraw.reduceMotionSafe, value: drawn)
+        }
     }
 
     private func lineDrawn(_ edge: ConstellationLayout.Edge) -> Bool {
