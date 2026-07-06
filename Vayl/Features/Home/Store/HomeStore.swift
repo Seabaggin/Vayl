@@ -29,6 +29,16 @@ final class HomeStore {
     /// View reads this. View never writes this.
     var homeState: HomeState { resolveHomeState() }
 
+    /// The post-onboarding "first steps" activation, derived from the same flags as `homeState`.
+    var gettingStarted: GettingStarted {
+        GettingStarted.resolve(
+            myMapComplete: myMapComplete,
+            isPaired: isPaired,
+            partnerMapComplete: partnerMapComplete,
+            revealDone: revealDone
+        )
+    }
+
     // MARK: - Map Completion
 
     var myMapComplete: Bool = false
@@ -38,11 +48,20 @@ final class HomeStore {
     var partnerName: String? = nil
     var reflectionStep: Int = 1
 
+    /// One-shot: set when the user just completed their Desire Map in the rater they closed.
+    /// The dashboard plays a brief completion beat once, then clears it — the map is a moment,
+    /// never a persistent home state.
+    var showCompletionBeat: Bool = false
+
     // MARK: - Deck Loading
 
     var deck: Deck? = nil
     var deckLoadError: String? = nil
     var isLoadingDeck: Bool = false
+
+    /// The deck Home leads with — the couple's most-recently-played deck, resolved
+    /// from DeckProgress.lastPlayedAt. Falls back to the opener for a fresh couple.
+    private var recentDeckId: String = "the-opener"
 
     // MARK: - Dashboard Data
 
@@ -59,6 +78,12 @@ final class HomeStore {
 
     /// Reflection card state — derived from most recent CardSession.
     var reflectionCardState: ReflectionCardState = .hidden
+
+    // MARK: - Lexicon (Home "Today") content
+
+    /// Server-overridden daily-5 content, fetched once per Home load. Nil → HomeLexicon
+    /// uses its bundled baseline. Owned here so the view never calls ContentService (H-2).
+    var lexiconRemotePool: LexiconRemotePool? = nil
 
     // MARK: - Dependencies
 
@@ -109,13 +134,16 @@ final class HomeStore {
     /// Resolves the current HomeState from completion flags.
     /// Each guard gates the next state — order is intentional.
     private func resolveHomeState() -> HomeState {
-        // Solo users with no partner yet reach their starter deck directly —
-        // the Desire Map is a paired-couple surface and must not gate them.
+        // Home ALWAYS leads with the card dashboard — the deck is the premiere product; the
+        // Desire Map is secondary and must never gate Home. The post-map progression (your turn →
+        // waiting on partner → reveal-ready) is surfaced quietly in the Getting Started path and a
+        // one-shot completion beat — not as a full-screen takeover. The reveal itself stays
+        // reachable via the Getting Started `seeReveal` step (gated on both maps, inherently).
+        // Home always leads with the dashboard. `.gated` is vestigial (renders the dashboard);
+        // `.postReflection/.waiting/.matchReady` are removed — "waiting on your partner" is driven
+        // by the Getting Started tracker + partner pill, and the both-complete celebration is a
+        // separate screen (Segment 3).
         if isSolo && appState.linkState == .unlinked { return .soloUnpaired }
-        guard myMapComplete      else { return .gated }
-        guard postReflectionDone else { return .postReflection }
-        guard partnerMapComplete  else { return .waiting }
-        guard revealDone          else { return .matchReady }
         return .dashboard
     }
 
@@ -137,6 +165,16 @@ final class HomeStore {
         postReflectionDone = true
     }
 
+    /// Trigger the one-shot map-completion beat (called by the router when the rater the user
+    /// just closed flipped the map false → true).
+    func celebrateMapCompletion() {
+        showCompletionBeat = true
+    }
+
+    func dismissCompletionBeat() {
+        showCompletionBeat = false
+    }
+
     func advanceReflectionStep() {
         reflectionStep += 1
     }
@@ -147,9 +185,81 @@ final class HomeStore {
     /// Call once on appear from HomeRouterView.
     func loadAll() async {
         await loadProfile()
+        await loadDesireStatus()
+        resolveRecentDeck()
         await loadDeckProgress()
         await loadReflectionState()
         await loadDeck()
+        await loadLexiconContent()
+    }
+
+    // MARK: - Lexicon Content Load
+
+    /// Fetches server-driven daily-5 content. Best-effort — leaves lexiconRemotePool nil on
+    /// any failure so HomeLexicon keeps its bundled baseline.
+    private func loadLexiconContent() async {
+        let f = await ContentService.shared.fetchFindings()
+        let t = await ContentService.shared.fetchGlossary()
+        let q = await ContentService.shared.fetchQuotes()
+        if f != nil || t != nil || q != nil {
+            lexiconRemotePool = LexiconRemotePool(findings: f, terms: t, quotes: q)
+        }
+    }
+
+    // MARK: - Recent Deck
+
+    /// Picks the couple's most-recently-played deck (by lastPlayedAt, then firstOpenedAt).
+    /// Leaves `recentDeckId` at the opener default when there's no history.
+    private func resolveRecentDeck() {
+        guard let coupleId = appState.coupleId else { return }
+        let context = ModelContext(modelContainer)
+        do {
+            let all = try context.fetch(FetchDescriptor<DeckProgress>(
+                predicate: #Predicate { $0.coupleId == coupleId }
+            ))
+            let recent = all.max {
+                ($0.lastPlayedAt ?? $0.firstOpenedAt ?? .distantPast) <
+                ($1.lastPlayedAt ?? $1.firstOpenedAt ?? .distantPast)
+            }
+            if let recent, !recent.deckId.isEmpty, recent.lastPlayedAt != nil {
+                recentDeckId = recent.deckId
+                logger.info("HomeStore: recent deck = \(recent.deckId)")
+            }
+        } catch {
+            logger.error("HomeStore: recent deck resolve failed — \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - Desire Status Load (D-read)
+
+    /// Reads the couple's `desire_map_status` to drive the waiting → match-ready flow.
+    /// `partnerMapComplete` is derived from `bothComplete` — we only reach the partner gate
+    /// once our own map is done, so `bothComplete` equals the partner's completion at that point.
+    private func loadDesireStatus() async {
+        guard appState.appMode == .together, let coupleId = appState.coupleId else { return }
+        guard let status = try? await DesireSyncService.shared.fetchStatus(coupleId: coupleId) else { return }
+        partnerMapComplete = status.bothComplete
+        let progress = try? await DesireSyncService.shared.fetchRevealProgress(coupleId: coupleId)
+        revealDone = progress?.hasSeenFree ?? false
+        resolvePostStatusDesireMapState(coupleId: coupleId)
+    }
+
+    /// Refines desireMapState after server status is known (partner completion + reveal progress).
+    /// Called at the end of loadDesireStatus, after revealDone and partnerMapComplete are set.
+    /// The initial state from loadProfile/resolveDesireMapState is still useful as a fast-path
+    /// before the server responds.
+    private func resolvePostStatusDesireMapState(coupleId: UUID) {
+        guard isPaired else { return }
+        let context = ModelContext(modelContainer)
+        let canReveal = (try? context.fetch(
+            FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
+        ).first)?.canRevealDesireMap ?? false
+
+        if !myMapComplete { desireMapState = .yourTurn; return }
+        if canReveal { desireMapState = .fullyUnlocked; return }
+        if revealDone { desireMapState = .freeRevealSeen(matchCount: 0); return }
+        if partnerMapComplete { desireMapState = .bothReady; return }
+        desireMapState = .youDone(partnerName: partnerName ?? "your partner")
     }
 
     // MARK: - Profile Load
@@ -186,10 +296,11 @@ final class HomeStore {
             return profile.hasCompletedDesireMap ? .youDone(partnerName: "your partner") : .yourTurn
         case .linked:
             if !profile.hasCompletedDesireMap { return .yourTurn }
-            // Partner completion is not yet tracked locally —
-            // TODO: read partner status from Couple record when sync layer exists.
-            // For now surface bothReady when this user is done and linked.
-            return .bothReady
+            // Conservative fast-path: the partner's completion is not known until the server
+            // resolve (resolvePostStatusDesireMapState) runs a hop later. Show "waiting" rather
+            // than optimistically flashing "both ready" — the server resolve upgrades to
+            // .bothReady / .fullyUnlocked once it confirms.
+            return .youDone(partnerName: partnerName ?? "your partner")
         }
     }
 
@@ -203,10 +314,11 @@ final class HomeStore {
         }
 
         let context = ModelContext(modelContainer)
+        let deckId = recentDeckId
 
         do {
             var descriptor = FetchDescriptor<DeckProgress>(
-                predicate: #Predicate { $0.coupleId == coupleId && $0.deckId == "the-opener" }
+                predicate: #Predicate { $0.coupleId == coupleId && $0.deckId == deckId }
             )
             descriptor.fetchLimit = 1
             let results = try context.fetch(descriptor)
@@ -270,14 +382,31 @@ final class HomeStore {
         deckLoadError = nil
 
         do {
-            let loaded = try ContentLoader.loadDeck(id: "the-opener")
+            let loaded = try ContentLoader.loadDeck(id: recentDeckId)
             deck = loaded
             logger.info("HomeStore: deck loaded — \(loaded.id)")
         } catch {
-            deckLoadError = error.localizedDescription
-            logger.error("HomeStore: deck load failed — \(error.localizedDescription)")
+            // Recent deck couldn't be loaded — fall back to the opener.
+            if recentDeckId != "the-opener", let fallback = try? ContentLoader.loadDeck(id: "the-opener") {
+                recentDeckId = "the-opener"
+                deck = fallback
+                logger.info("HomeStore: recent deck failed, fell back to the-opener")
+            } else {
+                deckLoadError = error.localizedDescription
+                logger.error("HomeStore: deck load failed — \(error.localizedDescription)")
+            }
         }
 
         isLoadingDeck = false
     }
+}
+
+// MARK: - LexiconRemotePool
+
+/// The three server content arrays HomeLexicon needs to rebuild its pool. Nil arrays mean
+/// "no server override for this kind"; the view falls back to bundled JSON per kind.
+struct LexiconRemotePool {
+    let findings: [ResearchFinding]?
+    let terms:    [LexiconTerm]?
+    let quotes:   [MediaQuote]?
 }

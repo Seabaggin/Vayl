@@ -7,6 +7,10 @@ const MIME = {
   '.html': 'text/html',
   '.js':   'application/javascript',
   '.css':  'text/css',
+  '.jpg':  'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png':  'image/png',
+  '.webp': 'image/webp',
 };
 
 http.createServer((req, res) => {

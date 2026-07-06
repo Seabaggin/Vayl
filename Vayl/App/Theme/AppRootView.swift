@@ -3,7 +3,8 @@ import SwiftUI
 #if DEBUG
 /// Set to true to always route to OnboardingCanvasView on launch.
 /// Flip to false to restore normal auth/onboarding routing.
-private let forceOnboarding = true
+/// (Currently false so the session work can be tested past the OB.)
+private let forceOnboarding = false
 #endif
 
 // ─────────────────────────────────────────────────────────────
@@ -16,7 +17,9 @@ private let forceOnboarding = true
 //      moves to background so the next foreground is treated
 //      as a resume, not a cold launch.
 //   2. After splash, route to auth or onboarding based on
-//      persistent state read from UserDefaults / AuthService.
+//      AppState (onboarding gate) / AuthService. Routing is
+//      reactive — AppState is @Observable, so completing
+//      onboarding transitions the root without a relaunch.
 //
 // Does NOT own app-level stores — those live in VaylApp and
 // flow down via environment. This view only reads environment
@@ -28,6 +31,7 @@ struct AppRootView: View {
     // MARK: - Environment
 
     @Environment(AuthService.self) private var authService
+    @Environment(AppState.self)    private var appState
     @Environment(\.scenePhase)     private var scenePhase
 
     // MARK: - State
@@ -52,14 +56,20 @@ struct AppRootView: View {
 
     @ViewBuilder
     private var routedDestination: some View {
-        if authService.isAuthenticated {
+        // Onboarding gates FIRST. A user without a completed onboarding has no local
+        // UserProfile (it's created by OnboardingStore.commit), and pairing's
+        // persistLink requires one — so route through OnboardingCanvas regardless of
+        // auth state, then sign-in, then the app. The terminal FounderLetterPhase
+        // commits via director.finishOnboarding → isOnboardingComplete flips true and
+        // reactive routing carries the user onward.
+        if !appState.isOnboardingComplete {
+            OnboardingCanvasWrapper()
+                .themedRoot()
+        } else if authService.isAuthenticated {
             AppShell()
                 .themedRoot()
-        } else if UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
-            SignInView(authService: authService)
-                .themedRoot()
         } else {
-            OnboardingCanvasWrapper()
+            SignInView(authService: authService)
                 .themedRoot()
         }
     }

@@ -9,7 +9,22 @@ struct SettingsCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             content
         }
-        .padding(AppSpacing.md)
-        .cardStyle()
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.xs)
+        .vaylGlassCard(radius: AppRadius.container)
+        .overlay(alignment: .top) {
+            LinearGradient(
+                colors: [
+                    .clear,
+                    AppColors.spectrumCyan.opacity(0.28),
+                    AppColors.spectrumPurple.opacity(0.26),
+                    AppColors.spectrumMagenta.opacity(0.28),
+                    .clear
+                ],
+                startPoint: .leading, endPoint: .trailing
+            )
+            .frame(height: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
     }
 }

@@ -1,0 +1,974 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "type": "file",
+      "name": "CardMirrorDeal.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "summary": "Mirror-deal card physics controller for the onboarding ModeSelectPhase, dealing two cards from opposite edges that land simultaneously, then handling lift, confirm, and reject animations.",
+      "tags": [
+        "store",
+        "state",
+        "observable",
+        "card-physics",
+        "animation"
+      ],
+      "complexity": "complex",
+      "languageNotes": "iOS 26 @Observable @MainActor controller driving SwiftUI transforms via withAnimation owned at the view layer."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:MirrorDealState",
+      "type": "class",
+      "name": "MirrorDealState",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "lineRange": [
+        18,
+        27
+      ],
+      "summary": "Equatable state machine enum for the mirror deal lifecycle (idle, dealing, resting, faceUp, lifted, confirming, exiting, done).",
+      "tags": [
+        "state",
+        "type-definition",
+        "enum"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:MirrorCard",
+      "type": "class",
+      "name": "MirrorCard",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "lineRange": [
+        29,
+        32
+      ],
+      "summary": "Equatable enum identifying the two mirror cards (left = Solo Discovery, right = Together).",
+      "tags": [
+        "type-definition",
+        "enum"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:CardMirrorDealController",
+      "type": "class",
+      "name": "CardMirrorDealController",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "lineRange": [
+        34,
+        344
+      ],
+      "summary": "@Observable @MainActor controller owning the mirror-deal animation: deal, lift, switchLift, confirm, and cleanup of two simultaneously-traveling cards.",
+      "tags": [
+        "store",
+        "state",
+        "observable",
+        "card-physics",
+        "animation"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:deal",
+      "type": "function",
+      "name": "deal",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "lineRange": [
+        85,
+        159
+      ],
+      "summary": "Fires the mirror deal: both cards travel simultaneously from opposite screen edges to resting positions with timed landing haptics and staggered face-up flips.",
+      "tags": [
+        "animation",
+        "card-physics",
+        "haptics"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:lift",
+      "type": "function",
+      "name": "lift",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "lineRange": [
+        167,
+        198
+      ],
+      "summary": "Lifts the tapped card to a cinematic center position while receding and dimming the unchosen card; animation owned by the calling view.",
+      "tags": [
+        "animation",
+        "card-physics",
+        "interaction"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:switchLift",
+      "type": "function",
+      "name": "switchLift",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "lineRange": [
+        203,
+        229
+      ],
+      "summary": "Switches the lifted state to the other card using absolute (non-accumulated) transforms without returning to resting.",
+      "tags": [
+        "animation",
+        "card-physics",
+        "interaction"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:confirm",
+      "type": "function",
+      "name": "confirm",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "lineRange": [
+        245,
+        336
+      ],
+      "summary": "Runs the confirm sequence: pockets the chosen card to the corner deck while the rejected card flips face-down and exits, firing onLanded then onConfirm at choreographed times.",
+      "tags": [
+        "animation",
+        "card-physics",
+        "haptics"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "type": "file",
+      "name": "CarouselPhysics.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "summary": "Reusable orientation-agnostic 1-D scroll engine for card carousels, owning a continuous card-index position driven by display-synced SwiftUI springs.",
+      "tags": [
+        "store",
+        "state",
+        "observable",
+        "card-physics",
+        "scroll-engine"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Nested Sendable Config struct with nonisolated init; SwiftUI-native motion model with no manual integration loop."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift:CarouselPhysics",
+      "type": "class",
+      "name": "CarouselPhysics",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "lineRange": [
+        19,
+        149
+      ],
+      "summary": "@Observable @MainActor scroll engine exposing continuous position, drag intents, and velocity-projected settle for carousel views.",
+      "tags": [
+        "store",
+        "state",
+        "observable",
+        "card-physics"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift:Config",
+      "type": "class",
+      "name": "Config",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "lineRange": [
+        26,
+        53
+      ],
+      "summary": "Sendable Equatable value type holding all tunable carousel feel constants (drag sensitivity, projection, max flick, spring response/damping).",
+      "tags": [
+        "type-definition",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift:settle",
+      "type": "function",
+      "name": "settle",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "lineRange": [
+        120,
+        131
+      ],
+      "summary": "Projects a target card from release velocity, clamps it to maxFlick and topology bounds, and snaps position; must be called inside withAnimation.",
+      "tags": [
+        "card-physics",
+        "scroll-engine",
+        "gesture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "type": "file",
+      "name": "ThreeCardFanController.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "summary": "Three-card-monte fan controller orchestrating SpriteKit deal flights, spread-turnover reveal, lift, and confirm physics for the candle/experience-level selection.",
+      "tags": [
+        "store",
+        "state",
+        "observable",
+        "card-physics",
+        "animation"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Bridges a SpriteKit CardFlightScene for the deal, then hands off to SwiftUI card backs; respects Reduce Motion."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:ThreeMonteState",
+      "type": "class",
+      "name": "ThreeMonteState",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "lineRange": [
+        13,
+        40
+      ],
+      "summary": "Equatable state machine enum for the three-card fan lifecycle, carrying CandleIntensity in its lifted/confirming/done cases.",
+      "tags": [
+        "state",
+        "type-definition",
+        "enum"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:ThreeCardFanController",
+      "type": "class",
+      "name": "ThreeCardFanController",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "lineRange": [
+        42,
+        335
+      ],
+      "summary": "@Observable @MainActor controller managing three-card fan positions, flips, z-ordering, and the deal/reveal/lift/confirm sequences.",
+      "tags": [
+        "store",
+        "state",
+        "observable",
+        "card-physics",
+        "animation"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:deal",
+      "type": "function",
+      "name": "deal",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "lineRange": [
+        63,
+        130
+      ],
+      "summary": "Flies three card backs one at a time from the dealer point into fan slots via the SpriteKit flight scene with correct z-ordering.",
+      "tags": [
+        "animation",
+        "card-physics",
+        "spritekit"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:spreadTurnoverReveal",
+      "type": "function",
+      "name": "spreadTurnoverReveal",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "lineRange": [
+        142,
+        186
+      ],
+      "summary": "Opens the fan into a spread, sweep-turns the cards face-up left to right, then re-collects them into the resting fan.",
+      "tags": [
+        "animation",
+        "card-physics"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:lift",
+      "type": "function",
+      "name": "lift",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "lineRange": [
+        218,
+        239
+      ],
+      "summary": "Lifts the tapped card to a cinematic position while receding the other two cards.",
+      "tags": [
+        "animation",
+        "card-physics",
+        "interaction"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:confirm",
+      "type": "function",
+      "name": "confirm",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "lineRange": [
+        254,
+        306
+      ],
+      "summary": "Pockets the chosen card to the corner deck, clears the non-selected cards, and fires onConfirm at landing.",
+      "tags": [
+        "animation",
+        "card-physics"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:runEntrance",
+      "type": "function",
+      "name": "runEntrance",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "lineRange": [
+        312,
+        327
+      ],
+      "summary": "Runs the full entrance sequence (deal, SpriteKit-to-SwiftUI handoff, flourish, reveal).",
+      "tags": [
+        "animation",
+        "card-physics",
+        "orchestration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardRevealPillButton.swift",
+      "type": "file",
+      "name": "CardRevealPillButton.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardRevealPillButton.swift",
+      "summary": "Toggleable pill-shaped selection button for card reveal options, scaling when selected with a staggered entrance and dimming sibling pills.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "interaction"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardRevealPillButton.swift:CardRevealPillButton",
+      "type": "class",
+      "name": "CardRevealPillButton",
+      "filePath": "Vayl/Design/Components/Cards/CardRevealPillButton.swift",
+      "lineRange": [
+        1,
+        105
+      ],
+      "summary": "SwiftUI View rendering a single selectable reveal pill with spectrum border, scale, staggered entrance, and accessibility traits.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardShadows.swift",
+      "type": "file",
+      "name": "CardShadows.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardShadows.swift",
+      "summary": "View extension providing a reusable dual-shadow card modifier (accent color wash plus a black depth shadow), theme-aware.",
+      "tags": [
+        "design-system",
+        "view-modifier",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardStyle.swift",
+      "type": "file",
+      "name": "CardStyle.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardStyle.swift",
+      "summary": "Reusable card-shell ViewModifier and convenience extension applying background, rounded clip, and border stroke to eliminate repetition.",
+      "tags": [
+        "design-system",
+        "view-modifier",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardStyle.swift:CardStyle",
+      "type": "class",
+      "name": "CardStyle",
+      "filePath": "Vayl/Design/Components/Cards/CardStyle.swift",
+      "lineRange": [
+        1,
+        50
+      ],
+      "summary": "ViewModifier applying background fill, rounded-rectangle clip, and border stroke for a standard card shell.",
+      "tags": [
+        "design-system",
+        "view-modifier",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CategoryTileView.swift",
+      "type": "file",
+      "name": "CategoryTileView.swift",
+      "filePath": "Vayl/Design/Components/Cards/CategoryTileView.swift",
+      "summary": "Home-screen category grid tile displaying an emoji, title, completion count, and progress bar with theme-aware styling.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CategoryTileView.swift:CategoryTileView",
+      "type": "class",
+      "name": "CategoryTileView",
+      "filePath": "Vayl/Design/Components/Cards/CategoryTileView.swift",
+      "lineRange": [
+        1,
+        90
+      ],
+      "summary": "SwiftUI View rendering a category tile with emoji icon, title, card-count label, and a completion progress bar.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/ConversationCard.swift",
+      "type": "file",
+      "name": "ConversationCard.swift",
+      "filePath": "Vayl/Design/Components/Cards/ConversationCard.swift",
+      "summary": "3D-flipping conversation card with a question/fuse-timer front and a response pill-grid back, managing flip state, pill selection, encouragement, and ghost-deck atmosphere.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/ConversationCard.swift:ConversationCard",
+      "type": "class",
+      "name": "ConversationCard",
+      "filePath": "Vayl/Design/Components/Cards/ConversationCard.swift",
+      "lineRange": [
+        1,
+        423
+      ],
+      "summary": "SwiftUI View for a flippable conversation card composing front and back faces, pill selection handling, and optional fuse timer and ghost deck.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/ConversationCard.swift:highlightedQuestion",
+      "type": "function",
+      "name": "highlightedQuestion",
+      "filePath": "Vayl/Design/Components/Cards/ConversationCard.swift",
+      "lineRange": [
+        297,
+        327
+      ],
+      "summary": "Builds an AttributedString question with markdown highlighting applied to a specific target phrase.",
+      "tags": [
+        "ui",
+        "text",
+        "formatting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/ConversationCard.swift:handlePillSelection",
+      "type": "function",
+      "name": "handlePillSelection",
+      "filePath": "Vayl/Design/Components/Cards/ConversationCard.swift",
+      "lineRange": [
+        339,
+        354
+      ],
+      "summary": "Records the selected pill, invokes onPillSelected, then schedules the encouragement display and onContinue callback on delays.",
+      "tags": [
+        "interaction",
+        "ui",
+        "state"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "type": "file",
+      "name": "ConversationCardTypes.swift",
+      "filePath": "Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "summary": "Model types backing the conversation card: OBCard onboarding data, pill/response enums, content discriminators, and fuse/ghost-deck configuration.",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "models"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/ConversationCardTypes.swift:OBCard",
+      "type": "class",
+      "name": "OBCard",
+      "filePath": "Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "lineRange": [
+        1,
+        54
+      ],
+      "summary": "Model struct holding onboarding card data: overline, question, highlighted phrase, and back-face content.",
+      "tags": [
+        "data-model",
+        "type-definition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/ConversationCardTypes.swift:CardRevealPill",
+      "type": "class",
+      "name": "CardRevealPill",
+      "filePath": "Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "lineRange": [
+        1,
+        54
+      ],
+      "summary": "String-backed CaseIterable Identifiable enum of response pill labels (ready, figuring, scared, almostSaid, noApology).",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "enum"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/ConversationCardTypes.swift:ConversationCardContent",
+      "type": "class",
+      "name": "ConversationCardContent",
+      "filePath": "Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "lineRange": [
+        1,
+        54
+      ],
+      "summary": "Enum discriminating the conversation card content source (free prompt vs onboarding OBCard).",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "enum"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/ConversationCardTypes.swift:GhostDeckMode",
+      "type": "class",
+      "name": "GhostDeckMode",
+      "filePath": "Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "lineRange": [
+        1,
+        54
+      ],
+      "summary": "Enum configuring the background card-deck atmosphere (none, atmospheric, navigable).",
+      "tags": [
+        "data-model",
+        "type-definition",
+        "enum"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CuriosityCardBack.swift",
+      "type": "file",
+      "name": "CuriosityCardBack.swift",
+      "filePath": "Vayl/Design/Components/Cards/CuriosityCardBack.swift",
+      "summary": "Face-down side of the curiosity picker card rendering a laser-engraved maze texture with an embedded orbit animation that stops on flip.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CuriosityCardBack.swift:CuriosityCardBack",
+      "type": "class",
+      "name": "CuriosityCardBack",
+      "filePath": "Vayl/Design/Components/Cards/CuriosityCardBack.swift",
+      "lineRange": [
+        1,
+        160
+      ],
+      "summary": "SwiftUI View drawing the curiosity card back: gradient base, ambient glow, maze pattern with orbit, corner marks, and spectrum border.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CuriosityFlipCard.swift",
+      "type": "file",
+      "name": "CuriosityFlipCard.swift",
+      "filePath": "Vayl/Design/Components/Cards/CuriosityFlipCard.swift",
+      "summary": "Generic 3D flip container for curiosity picker cards: a maze/orbit back face and caller-supplied front content, orchestrating the flip and orbit lifecycle.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CuriosityFlipCard.swift:CuriosityFlipCard",
+      "type": "class",
+      "name": "CuriosityFlipCard",
+      "filePath": "Vayl/Design/Components/Cards/CuriosityFlipCard.swift",
+      "lineRange": [
+        1,
+        73
+      ],
+      "summary": "Generic SwiftUI View flipping between a CuriosityCardBack and arbitrary front content with a spring rotation3D animation.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "card"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/FuseTimerView.swift",
+      "type": "file",
+      "name": "FuseTimerView.swift",
+      "filePath": "Vayl/Design/Components/Cards/FuseTimerView.swift",
+      "summary": "Canvas-drawn fuse/spark countdown timer that travels a glowing spark along a rounded-rectangle border with a progressive burn effect.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "animation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/FuseTimerView.swift:FuseTimerView",
+      "type": "class",
+      "name": "FuseTimerView",
+      "filePath": "Vayl/Design/Components/Cards/FuseTimerView.swift",
+      "lineRange": [
+        1,
+        141
+      ],
+      "summary": "SwiftUI View rendering an animated fuse spark via Canvas with unburned-segment, ember, and multi-layer spark-head passes.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "animation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/PremiumCardShell.swift",
+      "type": "file",
+      "name": "PremiumCardShell.swift",
+      "filePath": "Vayl/Design/Components/Cards/PremiumCardShell.swift",
+      "summary": "Generic glass-morphic card container wrapping arbitrary content in an eight-layer premium composition with optional fuse-burn progress animation.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "design-system"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/PremiumCardShell.swift:PremiumCardShell",
+      "type": "class",
+      "name": "PremiumCardShell",
+      "filePath": "Vayl/Design/Components/Cards/PremiumCardShell.swift",
+      "lineRange": [
+        1,
+        221
+      ],
+      "summary": "Generic SwiftUI View composing base fill, specular and internal reflections, ambient orbs, premium border, and an optional fuse spark over content.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "design-system"
+      ],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:MirrorDealState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:MirrorCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:CardMirrorDealController",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "target": "function:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:deal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "target": "function:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:lift",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "target": "function:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:switchLift",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift",
+      "target": "function:Vayl/Design/Components/Cards/CardPhysics/CardMirrorDeal.swift:confirm",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift:CarouselPhysics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift:Config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift",
+      "target": "function:Vayl/Design/Components/Cards/CardPhysics/CarouselPhysics.swift:settle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:ThreeMonteState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:ThreeCardFanController",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "target": "function:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:deal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "target": "function:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:spreadTurnoverReveal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "target": "function:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:lift",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "target": "function:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:confirm",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift",
+      "target": "function:Vayl/Design/Components/Cards/CardPhysics/ThreeCardFanController.swift:runEntrance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardRevealPillButton.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardRevealPillButton.swift:CardRevealPillButton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardStyle.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardStyle.swift:CardStyle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CategoryTileView.swift",
+      "target": "class:Vayl/Design/Components/Cards/CategoryTileView.swift:CategoryTileView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/ConversationCard.swift",
+      "target": "class:Vayl/Design/Components/Cards/ConversationCard.swift:ConversationCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/ConversationCard.swift",
+      "target": "function:Vayl/Design/Components/Cards/ConversationCard.swift:highlightedQuestion",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/ConversationCard.swift",
+      "target": "function:Vayl/Design/Components/Cards/ConversationCard.swift:handlePillSelection",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/ConversationCard.swift",
+      "target": "file:Vayl/Design/Components/Cards/FuseTimerView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/ConversationCard.swift",
+      "target": "file:Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/ConversationCard.swift",
+      "target": "file:Vayl/Design/Components/Cards/AtmosphericGhostDeck.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "target": "class:Vayl/Design/Components/Cards/ConversationCardTypes.swift:OBCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "target": "class:Vayl/Design/Components/Cards/ConversationCardTypes.swift:CardRevealPill",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "target": "class:Vayl/Design/Components/Cards/ConversationCardTypes.swift:ConversationCardContent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/ConversationCardTypes.swift",
+      "target": "class:Vayl/Design/Components/Cards/ConversationCardTypes.swift:GhostDeckMode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CuriosityCardBack.swift",
+      "target": "class:Vayl/Design/Components/Cards/CuriosityCardBack.swift:CuriosityCardBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CuriosityCardBack.swift",
+      "target": "file:Vayl/Design/Components/Effects/MazePatternView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CuriosityFlipCard.swift",
+      "target": "class:Vayl/Design/Components/Cards/CuriosityFlipCard.swift:CuriosityFlipCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CuriosityFlipCard.swift",
+      "target": "file:Vayl/Design/Components/Cards/CuriosityCardBack.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/FuseTimerView.swift",
+      "target": "class:Vayl/Design/Components/Cards/FuseTimerView.swift:FuseTimerView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/PremiumCardShell.swift",
+      "target": "class:Vayl/Design/Components/Cards/PremiumCardShell.swift:PremiumCardShell",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    }
+  ]
+}

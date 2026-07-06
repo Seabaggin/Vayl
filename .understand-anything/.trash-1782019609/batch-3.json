@@ -1,0 +1,562 @@
+{
+  "nodes": [
+    {
+      "id": "config:supabase/config.toml",
+      "type": "config",
+      "name": "config.toml",
+      "filePath": "supabase/config.toml",
+      "summary": "Supabase CLI config registering the lookup-code and create-pair edge functions with JWT verification enabled and their Deno import maps.",
+      "tags": ["configuration", "serverless", "supabase", "edge-function"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/functions/compute-desire-matches/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "supabase/functions/compute-desire-matches/index.ts",
+      "summary": "Deno edge function (service-role): marks a partner's Desire Map complete, resolves the couple track, and when both finish computes positive matches over shared items (excluding boundaries) into desire_matches with one server-authoritative free reveal.",
+      "tags": ["edge-function", "api-handler", "serverless", "desire-map", "matching"],
+      "complexity": "moderate",
+      "languageNotes": "isFreeReveal and the match write are server-authoritative so the paywall cannot be bypassed by the client."
+    },
+    {
+      "id": "function:supabase/functions/compute-desire-matches/index.ts:matchType",
+      "type": "function",
+      "name": "matchType",
+      "filePath": "supabase/functions/compute-desire-matches/index.ts",
+      "lineRange": [32, 37],
+      "summary": "Classifies two partner ratings on a shared desire item into mutual (both excited), adjacent (any other positive pairing), or null (no match).",
+      "tags": ["matching", "utility", "desire-map", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:supabase/functions/create-pair/.npmrc",
+      "type": "config",
+      "name": ".npmrc",
+      "filePath": "supabase/functions/create-pair/.npmrc",
+      "summary": "Placeholder npm registry configuration comment for the create-pair edge function's private package imports.",
+      "tags": ["configuration", "serverless", "npm"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:supabase/functions/create-pair/deno.json",
+      "type": "config",
+      "name": "deno.json",
+      "filePath": "supabase/functions/create-pair/deno.json",
+      "summary": "Deno import map for the create-pair edge function, aliasing the Supabase functions-js JSR package.",
+      "tags": ["configuration", "serverless", "deno", "import-map"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/functions/create-pair/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "supabase/functions/create-pair/index.ts",
+      "summary": "Deno edge function (service-role): validates a pairing code (existence, expiry, self-pair, prior-couple guards), creates a couples row, marks both profiles linked, and consumes the code.",
+      "tags": ["edge-function", "api-handler", "serverless", "pairing"],
+      "complexity": "moderate",
+      "languageNotes": "Earlier variant that keys couples on the ids passed in the body; rapid-task is the profile-id-resolving successor used by the iOS app."
+    },
+    {
+      "id": "file:supabase/functions/get-partner/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "supabase/functions/get-partner/index.ts",
+      "summary": "Deno edge function (service-role): returns only the linked partner's display name and pronouns for the caller's couple, since per-row RLS cannot expose cross-partner columns.",
+      "tags": ["edge-function", "api-handler", "serverless", "pairing", "privacy"],
+      "complexity": "simple",
+      "languageNotes": "Column-scoped service-role read is the only path a partner's name reaches the client without exposing the rest of the row."
+    },
+    {
+      "id": "file:supabase/functions/grant-entitlement/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "supabase/functions/grant-entitlement/index.ts",
+      "summary": "Deno edge function (service-role): the only path that grants Core to a couple, authorizing via Apple StoreKit receipt or an admin secret, writing the entitlements ledger, then recomputing the couple's access_tier.",
+      "tags": ["edge-function", "api-handler", "serverless", "monetization", "entitlement"],
+      "complexity": "moderate",
+      "languageNotes": "Apple JWS verification is an M2 seam that fails closed (returns null) so the Apple path cannot bypass the paywall before it is hardened."
+    },
+    {
+      "id": "function:supabase/functions/grant-entitlement/index.ts:verifyAppleTransaction",
+      "type": "function",
+      "name": "verifyAppleTransaction",
+      "filePath": "supabase/functions/grant-entitlement/index.ts",
+      "lineRange": [54, 66],
+      "summary": "Fail-closed M1 stub for Apple StoreKit 2 signed-transaction (JWS) verification; returns null unless APPLE_VERIFICATION_ENABLED is set, deferring real x5c/ES256 verification to M2.",
+      "tags": ["monetization", "security", "validation", "serverless"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:supabase/functions/lookup-code/.npmrc",
+      "type": "config",
+      "name": ".npmrc",
+      "filePath": "supabase/functions/lookup-code/.npmrc",
+      "summary": "Placeholder npm registry configuration comment for the lookup-code edge function's private package imports.",
+      "tags": ["configuration", "serverless", "npm"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:supabase/functions/lookup-code/deno.json",
+      "type": "config",
+      "name": "deno.json",
+      "filePath": "supabase/functions/lookup-code/deno.json",
+      "summary": "Deno import map for the lookup-code edge function, aliasing the Supabase functions-js JSR package.",
+      "tags": ["configuration", "serverless", "deno", "import-map"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/functions/lookup-code/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "supabase/functions/lookup-code/index.ts",
+      "summary": "Deno edge function (service-role): validates a pairing code's existence and expiry and returns the inviter's display name and pronouns for the 'you're pairing with...' preview.",
+      "tags": ["edge-function", "api-handler", "serverless", "pairing"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/functions/rapid-task/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "supabase/functions/rapid-task/index.ts",
+      "summary": "Deno edge function (slug rapid-task, the app's create-couple endpoint): claims a pairing code, resolves both partners' profile ids, creates the couples row, links both profiles, inherits any payer-portable entitlement, and deletes the code.",
+      "tags": ["edge-function", "api-handler", "serverless", "pairing"],
+      "complexity": "moderate",
+      "languageNotes": "Resolves user_profiles.id from auth ids before insert to satisfy the couples FK, fixing the earlier auth-id FK violation."
+    },
+    {
+      "id": "file:Vayl/App/AppShell.swift",
+      "type": "file",
+      "name": "AppShell.swift",
+      "filePath": "Vayl/App/AppShell.swift",
+      "summary": "Root authenticated container view that switches between the Home, Play, Map, and Learn tabs and anchors the RacetrackTabBar above the home indicator.",
+      "tags": ["component", "navigation", "entry-point", "tab-bar"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/App/AppShell.swift:AppShell",
+      "type": "class",
+      "name": "AppShell",
+      "filePath": "Vayl/App/AppShell.swift",
+      "lineRange": [8, 38],
+      "summary": "SwiftUI View holding the selected AppTab and rendering the matching feature tab wrapped in TabContentWrapper with the RacetrackTabBar overlay.",
+      "tags": ["component", "navigation", "tab-bar"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/App/ModelContainer.swift",
+      "type": "file",
+      "name": "ModelContainer.swift",
+      "filePath": "Vayl/App/ModelContainer.swift",
+      "summary": "Defines the SwiftData SchemaV1 (the single registry of all @Model types) and the app's disk-backed and in-memory ModelContainer factories.",
+      "tags": ["data-model", "persistence", "swiftdata", "configuration"],
+      "complexity": "moderate",
+      "languageNotes": "Explicit Application Support store URL keeps the database inside the Data Protection sandbox; fatalError on init surfaces schema mismatches at launch."
+    },
+    {
+      "id": "class:Vayl/App/ModelContainer.swift:SchemaV1",
+      "type": "class",
+      "name": "SchemaV1",
+      "filePath": "Vayl/App/ModelContainer.swift",
+      "lineRange": [20, 45],
+      "summary": "VersionedSchema enum listing every registered SwiftData @Model type (Couple, UserProfile, CardSession, EntitlementRecord, and more) as the single source of truth for the persistence schema.",
+      "tags": ["data-model", "persistence", "swiftdata", "schema-definition"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/App/ModelContainer.swift:AppMigrationPlan",
+      "type": "class",
+      "name": "AppMigrationPlan",
+      "filePath": "Vayl/App/ModelContainer.swift",
+      "lineRange": [53, 56],
+      "summary": "SchemaMigrationPlan enum registering SchemaV1 with empty migration stages, correct while no shipped users exist.",
+      "tags": ["persistence", "swiftdata", "migration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppAnimation.swift",
+      "type": "file",
+      "name": "AppAnimation.swift",
+      "filePath": "Vayl/App/Theme/AppAnimation.swift",
+      "summary": "Design-token namespace of all named SwiftUI animations and ambient durations (reactive springs, OB card physics, looping shimmers) plus Reduce-Motion-safe helpers.",
+      "tags": ["type-definition", "configuration", "animation", "design-tokens"],
+      "complexity": "complex",
+      "languageNotes": "Provides reduceMotionSafe and an ambientAnimation modifier so every looping animation has a Reduce Motion fallback."
+    },
+    {
+      "id": "class:Vayl/App/Theme/AppAnimation.swift:AppAnimation",
+      "type": "class",
+      "name": "AppAnimation",
+      "filePath": "Vayl/App/Theme/AppAnimation.swift",
+      "lineRange": [29, 631],
+      "summary": "Enum namespace exposing the app's reactive animations, OB card-physics curves, and ambient looping durations as the only sanctioned animation tokens.",
+      "tags": ["type-definition", "animation", "design-tokens"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppColors.swift",
+      "type": "file",
+      "name": "AppColors.swift",
+      "filePath": "Vayl/App/Theme/AppColors.swift",
+      "summary": "Central color-token system (void/surfaces/text/accent/feedback/shadows and spectrum gradient stops) that all views must reference instead of raw colors, with Color hex helpers.",
+      "tags": ["type-definition", "configuration", "design-tokens", "color"],
+      "complexity": "complex",
+      "languageNotes": "Sole source of color after the dark-only consolidation removed the legacy AppPalette light/dark system."
+    },
+    {
+      "id": "class:Vayl/App/Theme/AppColors.swift:AppColors",
+      "type": "class",
+      "name": "AppColors",
+      "filePath": "Vayl/App/Theme/AppColors.swift",
+      "lineRange": [20, 668],
+      "summary": "Struct of static color tokens spanning OB canvas, surfaces, text tiers, accents, feedback, shadows, and the cyan-purple-magenta spectrum gradient.",
+      "tags": ["type-definition", "design-tokens", "color"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppElevation.swift",
+      "type": "file",
+      "name": "AppElevation.swift",
+      "filePath": "Vayl/App/Theme/AppElevation.swift",
+      "summary": "Elevation/shadow token namespace plus cardElevation/modalElevation view modifiers that apply the correct shadow stack for the current color scheme.",
+      "tags": ["type-definition", "design-tokens", "shadow", "component"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/App/Theme/AppElevation.swift:AppElevation",
+      "type": "class",
+      "name": "AppElevation",
+      "filePath": "Vayl/App/Theme/AppElevation.swift",
+      "lineRange": [27, 220],
+      "summary": "Enum namespace defining card and modal shadow elevation tokens and the OB physics cardShadow(elevation:) ramp.",
+      "tags": ["type-definition", "design-tokens", "shadow"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppFonts.swift",
+      "type": "file",
+      "name": "AppFonts.swift",
+      "filePath": "Vayl/App/Theme/AppFonts.swift",
+      "summary": "Typography token system mapping semantic roles (heroTitle, cardTitle, bodyText, ctaLabel) to the ClashDisplay and Switzer faces with display/body constructors for custom sizes.",
+      "tags": ["type-definition", "configuration", "design-tokens", "typography"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/App/Theme/AppFonts.swift:AppFonts",
+      "type": "class",
+      "name": "AppFonts",
+      "filePath": "Vayl/App/Theme/AppFonts.swift",
+      "lineRange": [19, 229],
+      "summary": "Struct of semantic font tokens over the ClashDisplay (display) and Switzer (body) families plus dynamic-type-aware constructors.",
+      "tags": ["type-definition", "design-tokens", "typography"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppGlows.swift",
+      "type": "file",
+      "name": "AppGlows.swift",
+      "filePath": "Vayl/App/Theme/AppGlows.swift",
+      "summary": "Glow-effect token namespace and view modifiers (spectrumBorderGlow, cornerDeckGlow, safetyGlow) so views express glows through tokens instead of raw shadows.",
+      "tags": ["type-definition", "design-tokens", "glow", "component"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/App/Theme/AppGlows.swift:AppGlows",
+      "type": "class",
+      "name": "AppGlows",
+      "filePath": "Vayl/App/Theme/AppGlows.swift",
+      "lineRange": [30, 311],
+      "summary": "Enum namespace holding the app's spectrum, corner-deck, accent-focus, and safety glow parameters consumed by the AppGlows view modifiers.",
+      "tags": ["type-definition", "design-tokens", "glow"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppGrid.swift",
+      "type": "file",
+      "name": "AppGrid.swift",
+      "filePath": "Vayl/App/Theme/AppGrid.swift",
+      "summary": "Layout-grid token struct defining column counts, gutters, and grid math used to align content to the app's spacing system.",
+      "tags": ["type-definition", "configuration", "design-tokens", "layout"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/App/Theme/AppGrid.swift:AppGrid",
+      "type": "class",
+      "name": "AppGrid",
+      "filePath": "Vayl/App/Theme/AppGrid.swift",
+      "lineRange": [33, 119],
+      "summary": "Struct of grid tokens (columns, gutters, margins) providing the structural layout grid for app surfaces.",
+      "tags": ["type-definition", "design-tokens", "layout"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppLayout.swift",
+      "type": "file",
+      "name": "AppLayout.swift",
+      "filePath": "Vayl/App/Theme/AppLayout.swift",
+      "summary": "GeometryProxy-derived layout resolver exposing screen/card/safe-area metrics and the mandatory OB and session card sizing helpers, replacing all UIScreen.main usage.",
+      "tags": ["type-definition", "layout", "design-tokens", "geometry"],
+      "complexity": "complex",
+      "languageNotes": "AppLayout.from(geo) is the iOS-26-compliant replacement for UIScreen.main.bounds; OB/session card sizes are all proportional helpers."
+    },
+    {
+      "id": "class:Vayl/App/Theme/AppLayout.swift:AppLayout",
+      "type": "class",
+      "name": "AppLayout",
+      "filePath": "Vayl/App/Theme/AppLayout.swift",
+      "lineRange": [38, 320],
+      "summary": "Struct resolved from a GeometryProxy that vends screen/card/safe-area dimensions plus static OB card, fan, and session card sizing functions.",
+      "tags": ["type-definition", "layout", "geometry"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppRadius.swift",
+      "type": "file",
+      "name": "AppRadius.swift",
+      "filePath": "Vayl/App/Theme/AppRadius.swift",
+      "summary": "Semantic corner-radius token namespace (micro through sheet, plus OB-only obCard/cornerCard/foilEdge) that every clip and rounded-rectangle must reference.",
+      "tags": ["type-definition", "configuration", "design-tokens", "radius"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/App/Theme/AppRadius.swift:AppRadius",
+      "type": "class",
+      "name": "AppRadius",
+      "filePath": "Vayl/App/Theme/AppRadius.swift",
+      "lineRange": [22, 92],
+      "summary": "Enum namespace of corner-radius tokens on a 4pt grid, including device-matched sheet corners and OB-canvas-exclusive card radii.",
+      "tags": ["type-definition", "design-tokens", "radius"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppRootView.swift",
+      "type": "file",
+      "name": "AppRootView.swift",
+      "filePath": "Vayl/App/Theme/AppRootView.swift",
+      "summary": "Top-level routing gate that shows the splash once per cold launch, then reactively routes to onboarding, sign-in, or AppShell based on AppState and AuthService.",
+      "tags": ["component", "navigation", "entry-point", "routing"],
+      "complexity": "moderate",
+      "languageNotes": "Onboarding gates before auth because pairing's persistLink needs the local UserProfile that OnboardingStore.commit creates."
+    },
+    {
+      "id": "class:Vayl/App/Theme/AppRootView.swift:AppRootView",
+      "type": "class",
+      "name": "AppRootView",
+      "filePath": "Vayl/App/Theme/AppRootView.swift",
+      "lineRange": [29, 99],
+      "summary": "SwiftUI View reading AuthService, AppState, and scenePhase to decide the post-splash destination and suppress splash replay on foreground resume.",
+      "tags": ["component", "navigation", "routing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppSafeArea.swift",
+      "type": "file",
+      "name": "AppSafeArea.swift",
+      "filePath": "Vayl/App/Theme/AppSafeArea.swift",
+      "summary": "Safe-area utilities: a real-safe-area environment key and AppLayout extension so views can read true device insets without UIScreen, with helper view modifiers.",
+      "tags": ["utility", "layout", "safe-area", "component"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppSpacing.swift",
+      "type": "file",
+      "name": "AppSpacing.swift",
+      "filePath": "Vayl/App/Theme/AppSpacing.swift",
+      "summary": "Semantic spacing token namespace (xxs through xxl on an 8pt grid) that every padding, gap, and offset must reference instead of raw numbers.",
+      "tags": ["type-definition", "configuration", "design-tokens", "spacing"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/App/Theme/AppSpacing.swift:AppSpacing",
+      "type": "class",
+      "name": "AppSpacing",
+      "filePath": "Vayl/App/Theme/AppSpacing.swift",
+      "lineRange": [17, 53],
+      "summary": "Enum namespace of CGFloat spacing tokens on an 8pt grid, the sole sanctioned source for padding and gap values.",
+      "tags": ["type-definition", "design-tokens", "spacing"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/App/Theme/AppTheme.swift",
+      "type": "file",
+      "name": "AppTheme.swift",
+      "filePath": "Vayl/App/Theme/AppTheme.swift",
+      "summary": "Defines the ThemeMode enum (system/light/dark) retained for persistence after the app was hard-locked to dark and the legacy AppPalette was removed.",
+      "tags": ["type-definition", "configuration", "theme"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/App/Theme/AppTheme.swift:ThemeMode",
+      "type": "class",
+      "name": "ThemeMode",
+      "filePath": "Vayl/App/Theme/AppTheme.swift",
+      "lineRange": [12, 34],
+      "summary": "CaseIterable enum of theme modes with display names and SF Symbol icons, kept for settings persistence though the app forces dark.",
+      "tags": ["type-definition", "theme", "enum"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:supabase/functions/compute-desire-matches/index.ts",
+      "target": "function:supabase/functions/compute-desire-matches/index.ts:matchType",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:supabase/functions/grant-entitlement/index.ts",
+      "target": "function:supabase/functions/grant-entitlement/index.ts:verifyAppleTransaction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "config:supabase/config.toml",
+      "target": "file:supabase/functions/lookup-code/index.ts",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:supabase/config.toml",
+      "target": "file:supabase/functions/create-pair/index.ts",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:supabase/functions/create-pair/deno.json",
+      "target": "file:supabase/functions/create-pair/index.ts",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:supabase/functions/lookup-code/deno.json",
+      "target": "file:supabase/functions/lookup-code/index.ts",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:supabase/functions/create-pair/.npmrc",
+      "target": "file:supabase/functions/create-pair/index.ts",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:supabase/functions/lookup-code/.npmrc",
+      "target": "file:supabase/functions/lookup-code/index.ts",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:Vayl/App/AppShell.swift",
+      "target": "class:Vayl/App/AppShell.swift:AppShell",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/ModelContainer.swift",
+      "target": "class:Vayl/App/ModelContainer.swift:SchemaV1",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/ModelContainer.swift",
+      "target": "class:Vayl/App/ModelContainer.swift:AppMigrationPlan",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppAnimation.swift",
+      "target": "class:Vayl/App/Theme/AppAnimation.swift:AppAnimation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppColors.swift",
+      "target": "class:Vayl/App/Theme/AppColors.swift:AppColors",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppElevation.swift",
+      "target": "class:Vayl/App/Theme/AppElevation.swift:AppElevation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppFonts.swift",
+      "target": "class:Vayl/App/Theme/AppFonts.swift:AppFonts",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppGlows.swift",
+      "target": "class:Vayl/App/Theme/AppGlows.swift:AppGlows",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppGrid.swift",
+      "target": "class:Vayl/App/Theme/AppGrid.swift:AppGrid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppLayout.swift",
+      "target": "class:Vayl/App/Theme/AppLayout.swift:AppLayout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppRadius.swift",
+      "target": "class:Vayl/App/Theme/AppRadius.swift:AppRadius",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppRootView.swift",
+      "target": "class:Vayl/App/Theme/AppRootView.swift:AppRootView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppSpacing.swift",
+      "target": "class:Vayl/App/Theme/AppSpacing.swift:AppSpacing",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppTheme.swift",
+      "target": "class:Vayl/App/Theme/AppTheme.swift:ThemeMode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/App/Theme/AppSafeArea.swift",
+      "target": "file:Vayl/App/Theme/AppLayout.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

@@ -54,48 +54,44 @@ enum PulseCapacityColor: String, Codable, CaseIterable {
     }
 }
 
-/// Tier derived from pulse capacityScore.
-/// Names are not final — revisit when PulseEntry shape is confirmed.
-/// Visual properties (color, lightColor) live in AppColors.swift extension.
-enum PulseTier: String, CaseIterable, Codable {
-    case expansive   // 3.5+
-    case sovereign   // 2.5–3.5
-    case friction    // 1.5–2.5
-    case protective  // below 1.5
+/// The four corner quadrants of the capacity circumplex (energy x openness).
+/// These are the geometric anchors of the space system; the richer six-space
+/// classification (incl. Neutral / Uncharted / border states) lives in `PulseSpace`.
+/// Axis rule: midline (0.5) ties resolve toward charged/open.
+/// Note: `reactive`/`receptive` were formerly named `friction`/`sovereign` — the case
+/// identifiers are never persisted (quadrant is derived from PulsePosition), so the
+/// rename is display-and-vocabulary only.
+enum PulseQuadrant: String, CaseIterable, Codable {
+    case expansive   // high energy + open    (top-right)
+    case reactive    // high energy + guarded (top-left)
+    case receptive   // low energy  + open    (bottom-right)
+    case protective  // low energy  + guarded (bottom-left)
 
-    static func tier(for score: Double) -> PulseTier {
-        switch score {
-        case 3.5...: return .expansive
-        case 2.5...: return .sovereign
-        case 1.5...: return .friction
-        default:     return .protective
-        }
-    }
-
-    var label: String {
+    var spaceName: String {
         switch self {
         case .expansive:  return "The Expansive Space"
-        case .sovereign:  return "The Sovereign Space"
-        case .friction:   return "The Friction Space"
+        case .reactive:   return "The Reactive Space"
+        case .receptive:  return "The Receptive Space"
         case .protective: return "The Protective Space"
-        }
-    }
-
-    var color: Color {
-        switch self {
-        case .expansive:  return AppColors.pulseTierExpansive
-        case .sovereign:  return AppColors.pulseTierSovereign
-        case .friction:   return AppColors.pulseTierFriction
-        case .protective: return AppColors.pulseTierProtective
         }
     }
 
     var sublabel: String {
         switch self {
-        case .expansive:  return "Connected · Adventurous"
-        case .sovereign:  return "Grounded · Secure"
-        case .friction:   return "Anxious · Defensive"
-        case .protective: return "Overwhelmed · Need Space"
+        case .expansive:  return "Connected · Vibrant"
+        case .reactive:   return "Buzzing · Tense"
+        case .receptive:  return "Gentle · Available"
+        case .protective: return "Still · Withdrawn"
+        }
+    }
+
+    /// Capacity-tier colour token for the aura body.
+    var capacityColor: PulseCapacityColor {
+        switch self {
+        case .expansive:  return .cyan
+        case .receptive:  return .indigo
+        case .reactive:   return .magenta
+        case .protective: return .rose
         }
     }
 }

@@ -3,8 +3,8 @@
 //  Vayl
 //
 //  Location: Models/Persistence/PulseEntry.swift
-//  PulseCapacityColor and PulseTier live in AppEnums.swift
-//  Their color properties live in AppColors.swift as extensions
+//  PulseCapacityColor lives in AppPulseEnums.swift
+//  Its color properties live in AppColors.swift as extensions
 //
 
 import Foundation
@@ -17,42 +17,98 @@ import Foundation
 struct PulseEntry: Identifiable, Codable {
     var id:            UUID               = UUID()
     var date:          Date
-    var capacityScore: Double              // 1.0–4.0 — clamped result of check-in math
-    var glowColor:     PulseCapacityColor  // Q4 answer — maps to AppColors
+    var capacityScore: Double              // kept for back-compat decode; prefer resolvedPosition.capacityScore
+    var glowColor:     PulseCapacityColor  // derived from Q1-3 position (pos.quadrant.capacityColor), NOT a Q4 answer
     var speed:         String              // Q5 answer label
 
-    // Q1–Q3 answers — displayed in dot summary sheet
+    // Q1-Q3 answers
     var nervousSystem: String              // Q1 answer label
     var focus:         String              // Q2 answer label
     var feeling:       String              // Q3 answer label
-}
 
-// MARK: - Tier convenience
+    /// Q4 answer label ("Empty"..."Abundant") — reflective metadata, doesn't affect
+    /// position/colour. nil only for entries persisted before this field existed.
+    var capacity: String? = nil
 
-extension PulseEntry {
-    var tier: PulseTier {
-        PulseTier.tier(for: capacityScore)
+    var position: PulsePosition? = nil     // nil for pre-redesign entries
+
+    /// When this day's entry was FIRST completed — distinct from `date` (the calendar
+    /// day it belongs to). Anchors the edit window: PulseStore.add() carries this
+    /// forward across same-day re-edits rather than resetting it, so redoing a check-in
+    /// can't extend how long it stays editable. nil for entries predating this field
+    /// (resolvedCreatedAt falls back to `date`, which locks them immediately — correct,
+    /// since anything old enough to lack this field is definitely past the window).
+    var createdAt: Date? = nil
+
+    /// How long a day's entry can still be redone after its first completion.
+    static let editWindow: TimeInterval = 2 * 60 * 60
+
+    var resolvedCreatedAt: Date { createdAt ?? date }
+
+    /// Whether this entry can still be redone (re-checked-in) today. A completed
+    /// check-in is a sealed snapshot of that moment, not an open diary entry — once
+    /// the window passes, it's locked until a new day starts.
+    var isEditable: Bool {
+        Date().timeIntervalSince(resolvedCreatedAt) <= Self.editWindow
+    }
+
+    /// Effective position: stored field, or reconstructed from legacy capacityScore (openness mid).
+    var resolvedPosition: PulsePosition {
+        position ?? PulsePosition(energy: (capacityScore - 1) / 3, openness: 0.5)
+    }
+
+    var quadrant: PulseQuadrant { resolvedPosition.quadrant }
+
+    /// The five stored answer labels in question order (nil for any not captured — legacy rows).
+    var answerLabels: [String?] { [nervousSystem, focus, feeling, capacity, speed] }
+
+    /// The six-space classification. Uncharted is re-derived from the stored answer labels
+    /// (the flag isn't persisted). Legacy entries whose labels predate the current pill set
+    /// resolve to a named/border space, never Uncharted — their labels won't match and the
+    /// variance check returns false.
+    var space: PulseSpace {
+        PulseSpace.resolve(resolvedPosition, isUncharted: PulseAnswers.isUncharted(answerLabels))
     }
 }
 
 // MARK: - Preview Data
 
 extension PulseEntry {
-    static let previews: [PulseEntry] = [
-        .init(date: .daysAgo(13), capacityScore: 1.8, glowColor: .magenta, speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive"),
-        .init(date: .daysAgo(12), capacityScore: 3.4, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous"),
-        .init(date: .daysAgo(11), capacityScore: 2.1, glowColor: .magenta, speed: "Just Proximity",   nervousSystem: "Exhausted",   focus: "Deeply Inward",  feeling: "Anxious"),
-        .init(date: .daysAgo(10), capacityScore: 3.8, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous"),
-        .init(date: .daysAgo(9),  capacityScore: 1.4, glowColor: .rose,    speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive"),
-        .init(date: .daysAgo(8),  capacityScore: 2.9, glowColor: .indigo,  speed: "Light Connection", nervousSystem: "Stable",      focus: "Balanced",       feeling: "Content"),
-        .init(date: .daysAgo(7),  capacityScore: 3.6, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous"),
-        .init(date: .daysAgo(6),  capacityScore: 1.6, glowColor: .rose,    speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive"),
-        .init(date: .daysAgo(5),  capacityScore: 2.4, glowColor: .indigo,  speed: "Just Proximity",   nervousSystem: "Stable",      focus: "Just Me",        feeling: "Content"),
-        .init(date: .daysAgo(4),  capacityScore: 3.9, glowColor: .cyan,    speed: "Playful",          nervousSystem: "Energized",   focus: "Reaching Out",   feeling: "Adventurous"),
-        .init(date: .daysAgo(3),  capacityScore: 1.2, glowColor: .rose,    speed: "Solitude",         nervousSystem: "Overwhelmed", focus: "Deeply Inward",  feeling: "Defensive"),
-        .init(date: .daysAgo(2),  capacityScore: 3.2, glowColor: .cyan,    speed: "Deep Dive",        nervousSystem: "Recharging",  focus: "Reaching Out",   feeling: "Adventurous"),
-        .init(date: .daysAgo(1),  capacityScore: 2.6, glowColor: .indigo,  speed: "Light Connection", nervousSystem: "Stable",      focus: "Balanced",       feeling: "Secure"),
-    ]
+    static let previews: [PulseEntry] = {
+        // Each entry carries a real 2D position computed from its full Q1-Q5 answers so the
+        // circumplex field places the aura correctly even without a live check-in.
+        func make(_ daysAgo: Int, _ ns: String, _ focus: String, _ feeling: String,
+                  _ capacity: String, _ speed: String) -> PulseEntry {
+            let answers: [String?] = [ns, focus, feeling, capacity, speed]
+            let pos = PulseAnswers.position(answers)
+            return PulseEntry(
+                date:          .daysAgo(daysAgo),
+                capacityScore: pos.capacityScore,
+                glowColor:     pos.quadrant.capacityColor,
+                speed:         speed,
+                nervousSystem: ns,
+                focus:         focus,
+                feeling:       feeling,
+                capacity:      capacity,
+                position:      pos
+            )
+        }
+        return [
+            make(13, "Overwhelmed", "Deeply Inward", "Sensitive",   "Empty",       "Solitude"),
+            make(12, "Energized",   "Reaching Out",  "Adventurous", "Overflowing", "Deep Dive"),
+            make(11, "Exhausted",   "Deeply Inward", "Anxious",     "Running Low", "Quietly Together"),
+            make(10, "Energized",   "Reaching Out",  "Adventurous", "Overflowing", "Deep Dive"),
+            make(9,  "Overwhelmed", "Deeply Inward", "Sensitive",   "Empty",       "Solitude"),
+            make(8,  "Recharging",  "Present",       "Content",     "Just Enough", "Light Connection"),
+            make(7,  "Energized",   "Reaching Out",  "Adventurous", "Overflowing", "Deep Dive"),
+            make(6,  "Overwhelmed", "Deeply Inward", "Sensitive",   "Empty",       "Solitude"),
+            make(5,  "Recharging",  "Needing Space", "Content",     "Just Enough", "Quietly Together"),
+            make(4,  "Energized",   "Reaching Out",  "Adventurous", "Overflowing", "Playful"),
+            make(3,  "Overwhelmed", "Deeply Inward", "Sensitive",   "Empty",       "Solitude"),
+            make(2,  "Recharging",  "Reaching Out",  "Warm",        "Plenty",      "Deep Dive"),
+            make(1,  "Centered",    "Present",       "Warm",        "Plenty",      "Light Connection"),
+        ]
+    }()
 }
 
 // MARK: - Date Extension

@@ -35,11 +35,26 @@ enum VaylPrimitives {
     static let purpleVivid    = UIColor(hex: "#9333EA")
     static let electricViolet = UIColor(hex: "#8B5CF6")
     static let spectrumBridge = UIColor(hex: "#8B6FD4") // mid-spectrum gradient bridge — cyan to magenta wordmark sweep
+    static let periwinkle     = UIColor(hex: "#82A0E6") // soft cornflower blue — Pulse capsule halo (map-pulse-us.html .capsule glow)
 
     static let magenta        = UIColor(hex: "#FF006A")
     static let magentaLight   = UIColor(hex: "#FF4D94")
     static let magentaDark    = UIColor(hex: "#BE185D")
     static let pink           = UIColor(hex: "#FF2D8A")
+
+    static let rose           = UIColor(hex: "#C76A86")  // Protective/Empty tier core
+    static let roseLight      = UIColor(hex: "#ECC0CE")  // Protective tier highlight
+    static let roseDark       = UIColor(hex: "#8F4A60")  // Protective tier deep
+
+    // Neutral Space — Lavender Silver (both axes in the 0.475–0.525 border zone).
+    static let lavenderSilverCore  = UIColor(hex: "#B0AECE")
+    static let lavenderSilverLight = UIColor(hex: "#E4E2F4")
+    static let lavenderSilverDeep  = UIColor(hex: "#4A4868")
+
+    // Uncharted Space — Sage Deep (contradictory answers on both axes; see PulseAnswers).
+    static let sageDeepCore  = UIColor(hex: "#3D9E72")
+    static let sageDeepLight = UIColor(hex: "#96CEB0")
+    static let sageDeepDeep  = UIColor(hex: "#174D35")
 
     static let deepBlue       = UIColor(hex: "#0078FF")
 

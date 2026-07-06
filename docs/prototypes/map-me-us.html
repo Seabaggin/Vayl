@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Map · Me / Us lens</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --void:#0a0810;--glass:rgba(255,255,255,.04);
+    --cyan:#00c2ff;--purple:#6c3ae0;--purpleL:#a78bfa;--magenta:#ff006a;--magentaL:#ff4d94;--bridge:#8b6fd4;
+    --t1:rgba(236,234,242,.95);--t2:rgba(255,255,255,.62);--t3:rgba(255,255,255,.34);--hair:rgba(255,255,255,.08);
+    --disp:"Clash Display",sans-serif;--body:"Switzer",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:880px;margin:0 auto;padding:44px 28px 80px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:28px;font-weight:600;margin:0 0 10px}
+  .lede{font-size:13.5px;line-height:1.6;color:var(--t2);max-width:720px;margin:0 0 6px}.lede b{color:var(--t1)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:30px}
+  @media(max-width:760px){.cols{grid-template-columns:1fr;max-width:380px;margin-inline:auto}}
+  .lab{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .lab .ln{font-family:var(--disp);font-size:16px;font-weight:600}
+  .lab .lt{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--purpleL)}
+
+  .phone{position:relative;border-radius:40px;overflow:hidden;background:#050409;box-shadow:0 28px 70px rgba(0,0,0,.55),inset 0 0 0 1.4px rgba(255,255,255,.05);aspect-ratio:390/812}
+  .voidbg{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 4%,#0c0916,var(--void) 50%,#050409 100%)}
+  .blob{position:absolute;border-radius:50%;filter:blur(58px);opacity:.5}
+  .b1{left:30%;top:64%;width:230px;height:200px;background:radial-gradient(closest-side,rgba(108,58,224,.2),transparent 73%)}
+  .b2{left:74%;top:52%;width:160px;height:160px;background:radial-gradient(closest-side,rgba(255,0,106,.1),transparent 73%)}
+  .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:96px;height:26px;background:#000;border-radius:16px;z-index:9}
+  .scr{position:absolute;inset:0;z-index:5;padding:54px 20px 16px;display:flex;flex-direction:column;gap:16px}
+
+  /* masthead — your styling: period travels, partner faded in Me */
+  .mast{display:flex;align-items:center;justify-content:space-between}
+  .mast .name{font-family:var(--disp);font-size:30px;font-weight:700;letter-spacing:-.01em}
+  .mast .lit{background:linear-gradient(90deg,var(--cyan),var(--bridge) 50%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mast .faded{color:var(--t3);opacity:.45}
+  .mast .gear{width:34px;height:34px;border-radius:50%;border:1px solid var(--hair);background:var(--glass);display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:15px;flex:none}
+
+  /* pulse hero (lens-aware) */
+  .pulse{border-radius:18px;background:var(--glass);border:1px solid var(--hair);padding:14px 14px 11px}
+  .pulse .ph{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+  .pulse .pk{font-size:9.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(160,125,205,.5)}
+  .pulse .pv{font-size:10.5px;color:var(--t2)}
+  .pulse svg{display:block;width:100%;height:64px}
+  .legend{display:flex;gap:14px;margin-top:8px}
+  .legend span{font-size:9.5px;color:var(--t3);display:flex;align-items:center;gap:5px}
+  .dotc{width:7px;height:7px;border-radius:50%}.dyou{background:var(--cyan)}.dthem{background:var(--magenta)}
+
+  .sh{font-family:var(--disp);font-size:14px;font-weight:600;color:var(--t1);margin:4px 2px -2px}
+
+  /* shelf cards (no privacy chips) */
+  .vcard{border-radius:15px;background:var(--glass);border:1px solid var(--hair);padding:13px;display:flex;flex-direction:column;gap:9px}
+  .vtop{display:flex;align-items:center;gap:10px}
+  .vico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none;border:1px solid var(--hair)}
+  .vtt{font-family:var(--disp);font-size:14px;font-weight:600;color:var(--t1)}
+  .vch{margin-left:auto;color:var(--t3);font-size:17px}
+  .vprev{font-size:11px;color:var(--t2);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .pchip{font-size:10px;color:var(--t1);background:rgba(255,255,255,.05);border:1px solid var(--hair);border-radius:7px;padding:2px 7px}
+  .pchip b{font-weight:600}
+  .pchip.cy b{color:var(--cyan)}.pchip.pu b{color:var(--purpleL)}.pchip.mg b{color:var(--magentaL)}
+  .mrow{display:flex;align-items:center;gap:9px;font-size:11.5px}
+  .mrow .md{width:7px;height:7px;border-radius:2px;flex:none}.md.mut{background:var(--magenta)}.md.adj{background:var(--purple)}
+  .mrow .mb{margin-left:auto;font-size:9px;color:var(--t3)}
+  .locked{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--t3);border-top:1px solid var(--hair);padding-top:8px}.locked .lp{margin-left:auto;color:var(--purpleL)}
+  .home{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:104px;height:4px;border-radius:3px;background:rgba(255,255,255,.2);z-index:9}
+  .od{font-size:11.5px;line-height:1.55;color:var(--t2);margin-top:13px}.od b{color:var(--t1)}
+  footer{margin-top:34px;border-top:1px solid var(--hair);padding-top:18px;font-size:12px;color:var(--t3);line-height:1.6}footer b{color:var(--t2)}
+  svg defs linearGradient{}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The Map: <span class="spectrum">the Me / Us lens</span></h1>
+  <p class="lede">The tab starts on <b>Me</b> (your name lit, <span style="color:var(--t3)">&amp; Alex</span> faded). Tap the faded partner name and the same screen flips to <b>Us</b> — Pulse gains the second line, and the kept things re-sort. No reload, no privacy chips, just the lens. The period travels to mark which end is live.</p>
+
+  <svg width="0" height="0"><defs>
+    <linearGradient id="ap" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00c2ff"/><stop offset=".5" stop-color="#6c3ae0"/><stop offset="1" stop-color="#ff006a"/></linearGradient>
+  </defs></svg>
+
+  <div class="cols">
+
+    <!-- ════ ME ════ -->
+    <div>
+      <div class="lab"><span class="ln">Me</span><span class="lt">your layer · default</span></div>
+      <div class="phone">
+        <div class="voidbg"></div><div class="blob b1"></div><div class="blob b2"></div><div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div class="name"><span class="lit">Jordan.</span><span class="faded"> &amp; Alex</span></div><div class="gear">⚙</div></div>
+          <!-- Pulse: your line only -->
+          <div class="pulse">
+            <div class="ph"><span class="pk">The Pulse</span><span class="pv">your trend · steady</span></div>
+            <svg viewBox="0 0 300 64" preserveAspectRatio="none">
+              <polyline points="6,42 54,24 102,36 150,20 198,32 246,16 294,28" fill="none" stroke="#00c2ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".92"/>
+              <circle cx="294" cy="28" r="2.8" fill="#fff"/>
+            </svg>
+            <div class="legend"><span><i class="dotc dyou"></i>You</span></div>
+          </div>
+          <div class="sh">The Vault</div>
+          <div class="vcard">
+            <div class="vtop"><div class="vico" style="color:var(--purpleL)">◈</div><div class="vtt">Your map</div><span class="vch">›</span></div>
+            <div class="vprev"><span class="pchip"><b>17</b> rated</span><span class="pchip cy"><b>9</b> yes</span><span class="pchip pu"><b>5</b> curious</span><span class="pchip"><b>3</b> private</span></div>
+          </div>
+          <div class="vcard">
+            <div class="vtop"><div class="vico" style="color:var(--magentaL)">✎</div><div class="vtt">Your journal</div><span class="vch">›</span></div>
+            <div class="vprev"><span class="pchip">Last entry <b>2d ago</b></span><span class="pchip"><b>12</b> entries</span></div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+      <div class="od"><b>You, alone.</b> Pulse is your single line; the Vault holds the two things only you see, your full private map and your journal.</div>
+    </div>
+
+    <!-- ════ US ════ -->
+    <div>
+      <div class="lab"><span class="ln">Us</span><span class="lt">tap &amp; Alex to flip</span></div>
+      <div class="phone">
+        <div class="voidbg"></div><div class="blob b1"></div><div class="blob b2"></div><div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div class="name"><span class="lit">Jordan &amp; Alex.</span></div><div class="gear">⚙</div></div>
+          <!-- Pulse: both lines, intersecting -->
+          <div class="pulse">
+            <div class="ph"><span class="pk">The Pulse</span><span class="pv">in sync 4 of 7</span></div>
+            <svg viewBox="0 0 300 64" preserveAspectRatio="none">
+              <polyline points="6,42 54,24 102,36 150,20 198,32 246,16 294,28" fill="none" stroke="#00c2ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".92"/>
+              <polyline points="6,30 54,38 102,22 150,30 198,18 246,30 294,20" fill="none" stroke="#ff006a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".88"/>
+              <circle cx="150" cy="25" r="2.6" fill="#fff"/><circle cx="222" cy="24" r="2.6" fill="#fff"/>
+            </svg>
+            <div class="legend"><span><i class="dotc dyou"></i>You</span><span><i class="dotc dthem"></i>Alex</span></div>
+          </div>
+          <div class="sh">The Vault</div>
+          <div class="vcard">
+            <div class="vtop"><div class="vico" style="color:var(--purpleL)">◈</div><div class="vtt">Where you align</div><span class="vch">›</span></div>
+            <div class="mrow"><span class="md mut"></span>Watching something together<span class="mb">Mutual</span></div>
+            <div class="mrow"><span class="md mut"></span>A weekend away, just you two<span class="mb">Mutual</span></div>
+            <div class="mrow"><span class="md adj"></span>A third, occasionally<span class="mb">Adjacent</span></div>
+            <div class="locked">🔒 <span>4 more you share</span><span class="lp">Unlock the full map</span></div>
+          </div>
+          <div class="vcard">
+            <div class="vtop"><div class="vico" style="color:var(--cyan)">⬡</div><div class="vtt">Agreements</div><span class="vch">›</span></div>
+            <div class="vprev"><span class="pchip">Safe word <b>red</b></span><span class="pchip"><b>3</b> kept</span></div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+      <div class="od"><b>The two of you, mapped onto each other.</b> Pulse gains Alex's line crossing yours; the Vault swaps to the shared things, where you align and the agreements you hold.</div>
+    </div>
+
+  </div>
+
+  <footer><b>Same screen, one flip.</b> The transition is the whole point: tapping <span style="color:var(--t3)">&amp; Alex</span> draws the magenta line in over your cyan one (the intersections light), the period slides to the end, and "Your map / Your journal" cross-dissolve into "Where you align / Agreements." Everything obeys one rule, your layer, then the two of you laid onto it. That motion is the next thing to prototype in Swift. <b>Static frames here; nothing built.</b></footer>
+</div>
+</body>
+</html>

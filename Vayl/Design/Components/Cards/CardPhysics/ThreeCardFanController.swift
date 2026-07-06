@@ -16,10 +16,9 @@ final class ThreeCardFanController {
     var angles:     [Double] = [0, 0, 0]
     var scales:     [Double] = [1, 1, 1]
     var alphas:     [Double] = [1, 1, 1]
-    var flipScaleX: [Double] = [1, 1, 1]
-    var showFace:   [Bool]   = [false, false, false]
+    var showFace:   [Bool]   = [false, false, false]   // false = back, true = face — drives the 3D turn in the view
     var elevations: [Double] = [0, 0, 0]
-    var zIndices:   [Double] = [0, 2, 1]   // fan order: left under, right mid, center top
+    var zIndices:   [Double] = [0, 1, 2]   // monotonic rightward fan — each card laps the one to its left; rightmost on top
     var confirmHapticTrigger = false
     var shuffleHapticTrigger = false
 
@@ -49,19 +48,18 @@ final class ThreeCardFanController {
                                    height: fan[i].offset.height + centerY)
             angles[i]     = fan[i].angle
             showFace[i]   = false
-            flipScaleX[i] = 1.0
             alphas[i]     = 0
         }
-        zIndices = [0, 2, 1]
+        zIndices = [0, 1, 2]
         state = .idle
     }
 
     // MARK: - Deal-in
 
     /// Flies three face-down card backs from the dealer point to the fan slots via SpriteKit,
-    /// one at a time (left → right → center), each with a spring settle at landing.
+    /// one at a time, dealt across L→C→R so each card laps the previous (rightmost on top).
     ///
-    /// Deal order: slot 0 (left), slot 2 (right), slot 1 (center — on top).
+    /// Deal order: slot 0 (left), slot 1 (center), slot 2 (right) — monotonic rightward fan.
     func deal(screenSize: CGSize, backImage: UIImage) async {
         state = .dealing
         if flightScene.size != screenSize { flightScene.size = screenSize }
@@ -74,7 +72,7 @@ final class ThreeCardFanController {
                                     y: screenSize.height * AppLayout.dealPointYFrac)
         let dealerSK = CGPoint(x: dealerSwiftUI.x, y: screenSize.height - dealerSwiftUI.y)
 
-        let order = [0, 2, 1]   // left, right, center-last (center on top)
+        let order = [0, 1, 2]   // deal across L→C→R; each card laps the previous (rightmost on top)
         for slot in order {
             if Task.isCancelled {
                 for i in 0..<3 { flightScene.clearCard(id: "monte-\(i)") }
@@ -116,6 +114,10 @@ final class ThreeCardFanController {
                 return
             }
 
+            // Landing tick — every other deal in the OB lands with one; the
+            // monte was the only silent deal.
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
             // Leave the card as a resting sprite on the flight layer. The SwiftUI
             // back is NOT revealed until every card has landed (see runEntrance) —
             // otherwise a later-dealt card flies beneath an already-handed-off
@@ -127,58 +129,51 @@ final class ThreeCardFanController {
         }
     }
 
-    // MARK: - Flourish (SwiftUI rigid-group fan sweep)
+    // MARK: - Spread-turnover reveal (ribbon-spread turnover)
 
-    /// Dealer-style flourish on the SwiftUI cards (run AFTER the sprite→SwiftUI handoff,
-    /// so the cards are face-down `VaylCardBack` views the whole time). Pure animation over
-    /// the published `angles` / `offsets` / `scales` / `sweep` — no SpriteKit.
+    /// The reveal, redesigned as a real card move: open the fan into a spread, sweep-turn
+    /// each card face-up in a left→right wave (a genuine 3D edge-turn driven by `showFace`
+    /// in the view — not a flat scaleX squish), then re-collect to the resting fan for the
+    /// pick. Replaces the old open→sway→close flourish + in-place flip: the "open" and
+    /// "re-collect" beats now bracket a turnover that actually means something.
     ///
-    /// Clip-free by construction:
-    ///   1. **Open** — the fan widens so the cards SEPARATE (overlap only decreases).
-    ///   2. **Sweep sway** — a rigid group rotation about the fan center (`sweep`); every
-    ///      card shares the same transform, so relative position & z never change → no card
-    ///      ever crosses another.
-    ///   3. **Close** — restore the canonical fan, so `reveal()`/`lift()` and the
-    ///      slot→intensity mapping are unaffected.
-    ///
-    /// Durations/magnitudes are felt constants — tune on device. Cadence lives in
-    /// `Task.sleep`, matching the codebase's hint-loop pattern.
-    func flourish(screenSize: CGSize) async {
-        state = .shuffling
-
+    /// Runs only on the non-Reduce-Motion entrance (the RM path uses `reveal()` — instant).
+    /// Durations/stagger are felt constants — tune on device (FEEL-GATE).
+    func spreadTurnoverReveal(screenSize: CGSize) async {
         let fan     = AppLayout.monteFanLayout(in: screenSize.width)
         let centerY = AppLayout.obTableCardCenterY(in: screenSize.height) - screenSize.height / 2
 
-        // ── 1. Open — widen angles & push the outer cards apart (overlap shrinks). ──
+        // ── 1. Open into a ribbon — flatten the fan, widen and level it so each card has
+        //       room to roll over. The flourish's "open" finally has a job.
+        state = .shuffling
         shuffleHapticTrigger.toggle()
-        withAnimation(.easeOut(duration: 0.35)) {
+        withAnimation(AppAnimation.fanSpreadOpen) {
             for i in 0..<3 {
-                angles[i]  = fan[i].angle * 1.9
-                offsets[i] = CGSize(width: fan[i].offset.width * 1.5,
-                                    height: fan[i].offset.height + centerY)
-                scales[i]  = 1.04
+                angles[i]  = fan[i].angle * 0.30                                        // flatten toward a row
+                offsets[i] = CGSize(width: fan[i].offset.width * 1.5, height: centerY)  // widen + level
+                scales[i]  = 1.0
             }
         }
+        try? await Task.sleep(for: .milliseconds(440))
+        if Task.isCancelled { resetFan(screenSize: screenSize); return }
+
+        // ── 2. Sweep-turn — a left→right wave; each card rolls face-up over its edge.
+        //       Flipping showFace drives the 3D crossfade in the view; the stagger here IS
+        //       the wave (each turn starts before the previous finishes). A light tick rides
+        //       each turn so the sweep is felt, not just seen.
+        state = .revealing
+        for i in 0..<3 {
+            showFace[i] = true
+            shuffleHapticTrigger.toggle()
+            try? await Task.sleep(for: .milliseconds(150))   // wave stagger — FEEL-GATE
+            if Task.isCancelled { return }
+        }
+        // Let the last card finish its turn before re-collecting.
         try? await Task.sleep(for: .milliseconds(380))
-        if Task.isCancelled { resetFan(screenSize: screenSize); return }
+        if Task.isCancelled { return }
 
-        // ── 2. Sweep sway — rigid group rotation; no relative motion, cannot clip. ──
-        shuffleHapticTrigger.toggle()
-        withAnimation(.easeInOut(duration: 0.28)) { sweep = -10 }
-        try? await Task.sleep(for: .milliseconds(300))
-        if Task.isCancelled { resetFan(screenSize: screenSize); return }
-
-        shuffleHapticTrigger.toggle()
-        withAnimation(.easeInOut(duration: 0.36)) { sweep = 10 }
-        try? await Task.sleep(for: .milliseconds(380))
-        if Task.isCancelled { resetFan(screenSize: screenSize); return }
-
-        withAnimation(.easeInOut(duration: 0.28)) { sweep = 0 }
-        try? await Task.sleep(for: .milliseconds(280))
-        if Task.isCancelled { resetFan(screenSize: screenSize); return }
-
-        // ── 3. Close — back to the canonical fan. ──────────────────────────────────
-        withAnimation(.easeOut(duration: 0.35)) {
+        // ── 3. Re-collect to the resting fan for the pick (the flourish's "close").
+        withAnimation(AppAnimation.fanRecollect) {
             for i in 0..<3 {
                 angles[i]  = fan[i].angle
                 offsets[i] = CGSize(width: fan[i].offset.width,
@@ -186,7 +181,8 @@ final class ThreeCardFanController {
                 scales[i]  = 1.0
             }
         }
-        try? await Task.sleep(for: .milliseconds(350))   // settle quietly before the reveal
+        try? await Task.sleep(for: .milliseconds(440))
+        state = .faceUp
     }
 
     /// Snap the cards back to the canonical fan — used if the flourish is cancelled mid-way.
@@ -201,26 +197,12 @@ final class ThreeCardFanController {
         }
     }
 
-    // MARK: - Reveal
+    // MARK: - Reveal (instant — Reduce Motion + snapshot fallback)
 
-    /// Flip each card face-up in succession (L→R), assigning the face at the half-flip.
-    /// Each half uses `cardFlipHalf` (0.29s), so the two halves compose the full 0.58s flip.
+    /// Instant face-up. Used by the Reduce-Motion path and the snapshot-fail fallback.
+    /// The animated ribbon turnover lives in `spreadTurnoverReveal` (non-RM entrance).
     func reveal() async {
-        state = .revealing
-        // Reduce Motion: skip the flip rotation entirely — the face swaps in place
-        // (per the cardFlip token's documented fallback), no scaleX animation, no sleeps.
-        if UIAccessibility.isReduceMotionEnabled {
-            for i in 0..<3 { showFace[i] = true }
-            state = .faceUp
-            return
-        }
-        for i in 0..<3 {
-            withAnimation(AppAnimation.cardFlipHalf) { flipScaleX[i] = 0.0 }
-            try? await Task.sleep(for: .milliseconds(290))  // wait for first half to complete
-            showFace[i] = true              // identity becomes visible at the half-flip
-            withAnimation(AppAnimation.cardFlipHalf) { flipScaleX[i] = 1.0 }
-            try? await Task.sleep(for: .milliseconds(290))  // wait for second half to complete
-        }
+        for i in 0..<3 { showFace[i] = true }
         state = .faceUp
     }
 
@@ -251,7 +233,7 @@ final class ThreeCardFanController {
                 angles[i]   = fan[i].angle
                 scales[i]   = 0.9
                 alphas[i]   = 0.6   // bright enough to read as "still tappable" — easy switching
-                zIndices[i] = [0, 2, 1][i]
+                zIndices[i] = [0, 1, 2][i]
             }
         }
     }
@@ -290,8 +272,15 @@ final class ThreeCardFanController {
                         offsets[idx] = CGSize(width: cornerX - screenSize.width  / 2,
                                               height: cornerY - screenSize.height / 2)
                         scales[idx]  = AppLayout.cornerDeckWidth / cardWidth
+                    } else {
+                        alphas[idx] = 0
                     }
-                    alphas[idx]  = 0
+                }
+                // Alpha rides its own late curve so the card stays visible for
+                // ~90% of the flight and dissolves INTO the deck — fading with
+                // the whole travel made it vanish at launch.
+                if !reduceMotion {
+                    withAnimation(AppAnimation.pocketAlphaFade) { alphas[idx] = 0 }
                 }
             }
             try? await Task.sleep(for: .milliseconds(520))
@@ -304,7 +293,7 @@ final class ThreeCardFanController {
             withAnimation(AppAnimation.exit.reduceMotionSafe) {
                 for i in 0..<3 where i != chosenIdx { alphas[i] = 0 }
             }
-            try? await Task.sleep(for: .milliseconds(350))
+            try? await Task.sleep(for: .milliseconds(250))
             guard !Task.isCancelled else { return }
 
             // 4. Settle beat over the cleared felt.
@@ -329,13 +318,11 @@ final class ThreeCardFanController {
             // positions: reveal the backs, hold one frame so they paint, then clear the
             // sprites. The flourish runs entirely on the SwiftUI cards after this.
             showSwiftUIBacks()
-            try? await Task.sleep(for: .milliseconds(32))
+            try? await Task.sleep(for: .milliseconds(50))
             guard !Task.isCancelled else { return }
             for i in 0..<3 { flightScene.clearCard(id: "monte-\(i)") }
-            // Rigid-group SwiftUI flourish (clip-free), then the flip-reveal.
-            await flourish(screenSize: screenSize)
-            guard !Task.isCancelled else { return }
-            await reveal()
+            // Ribbon-spread turnover on the SwiftUI cards: spread → sweep-turn → re-collect.
+            await spreadTurnoverReveal(screenSize: screenSize)
         }
     }
 

@@ -1,0 +1,1128 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Features/Home/Views/GettingStartedPathView.swift",
+      "type": "file",
+      "name": "GettingStartedPathView.swift",
+      "filePath": "Vayl/Features/Home/Views/GettingStartedPathView.swift",
+      "summary": "The expanded 'Path' overlay listing the couple's first steps to their reveal; destination of the matched-geometry morph from GettingStartedEntryCard, presented over a blurred Home.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "onboarding"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Views/GettingStartedPathView.swift:GettingStartedPathView",
+      "type": "class",
+      "name": "GettingStartedPathView",
+      "filePath": "Vayl/Features/Home/Views/GettingStartedPathView.swift",
+      "lineRange": [
+        5,
+        75
+      ],
+      "summary": "SwiftUI View rendering the spectrum step rail and copy for the Getting Started Path; only .active steps are tappable.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Views/GettingStartedPathView.swift:PathStepRow",
+      "type": "class",
+      "name": "PathStepRow",
+      "filePath": "Vayl/Features/Home/Views/GettingStartedPathView.swift",
+      "lineRange": [
+        78,
+        145
+      ],
+      "summary": "Private SwiftUI View for one Path node: a spectrum rail segment plus a state-styled node (done/active/upcoming/locked) and step copy.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "type": "file",
+      "name": "HomeDashboardView.swift",
+      "filePath": "Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "summary": "The main Home dashboard view: composes the greeting, card chest/carousel hero, desire-map indicator, reflection card, pick-up list, partner chip, and ambient prism/constellation zones into the scrolling home surface with a choreographed entrance.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "entry-point"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Pure render layer fed entirely by HomeStore-derived inputs via initializer args; orchestrates many sub-components."
+    },
+    {
+      "id": "class:Vayl/Features/Home/Views/HomeDashboardView.swift:HomeDashboardView",
+      "type": "class",
+      "name": "HomeDashboardView",
+      "filePath": "Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "lineRange": [
+        15,
+        597
+      ],
+      "summary": "SwiftUI View assembling the full home dashboard from injected state and callbacks; owns the entrance animation and ambient-zone layout but no business logic.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Views/HomeDashboardView.swift:runEntranceAnimations",
+      "type": "function",
+      "name": "runEntranceAnimations",
+      "filePath": "Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "lineRange": [
+        580,
+        596
+      ],
+      "summary": "Drives the staggered entrance choreography for the dashboard's elements.",
+      "tags": [
+        "view",
+        "ui",
+        "animation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Views/HomeGateView.swift",
+      "type": "file",
+      "name": "HomeGateView.swift",
+      "filePath": "Vayl/Features/Home/Views/HomeGateView.swift",
+      "summary": "Retired-from-routing gate screen that pitched the Desire Map as 'step 1 of 2' with a privacy info card and a choreographed entrance; kept on disk but no longer in the Home routing flow.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex",
+      "languageNotes": "ViewThatFits with a scroll fallback for SE/large-text; entrance stagger preserved."
+    },
+    {
+      "id": "class:Vayl/Features/Home/Views/HomeGateView.swift:HomeGateView",
+      "type": "class",
+      "name": "HomeGateView",
+      "filePath": "Vayl/Features/Home/Views/HomeGateView.swift",
+      "lineRange": [
+        12,
+        297
+      ],
+      "summary": "SwiftUI View for the (now vestigial) pre-map gate, with overline/headline/info-card content and a Start-Your-Desire-Map CTA.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "type": "file",
+      "name": "HomeRouterView.swift",
+      "filePath": "Vayl/Features/Home/Views/HomeRouterView.swift",
+      "summary": "Thin Home routing view: owns appState/modelContext, constructs HomeStore, and switches on store.homeState to render the dashboard while hosting the session sheet, desire-map rater, reveal cover, Path overlay, and completion beat.",
+      "tags": [
+        "view",
+        "ui",
+        "entry-point"
+      ],
+      "complexity": "complex",
+      "languageNotes": "All routing/state lives in HomeStore; this file only renders and wires presentation + action handlers."
+    },
+    {
+      "id": "class:Vayl/Features/Home/Views/HomeRouterView.swift:HomeRouterView",
+      "type": "class",
+      "name": "HomeRouterView",
+      "filePath": "Vayl/Features/Home/Views/HomeRouterView.swift",
+      "lineRange": [
+        14,
+        25
+      ],
+      "summary": "Outer SwiftUI View that reads the environment and hands appState + modelContainer to the inner router.",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Views/HomeRouterView.swift:HomeRouterInnerView",
+      "type": "class",
+      "name": "HomeRouterInnerView",
+      "filePath": "Vayl/Features/Home/Views/HomeRouterView.swift",
+      "lineRange": [
+        27,
+        308
+      ],
+      "summary": "Private SwiftUI View that constructs and drives HomeStore, presents the session/map/reveal/path/beat surfaces, and routes card and getting-started actions.",
+      "tags": [
+        "view",
+        "ui",
+        "state"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Views/HomeRouterView.swift:handleCardAction",
+      "type": "function",
+      "name": "handleCardAction",
+      "filePath": "Vayl/Features/Home/Views/HomeRouterView.swift",
+      "lineRange": [
+        216,
+        234
+      ],
+      "summary": "Routes a dashboard card action: starts a SessionStore-backed session resuming from progress, or switches to the Play tab.",
+      "tags": [
+        "view",
+        "event-handler"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Views/HomeRouterView.swift:handleStep",
+      "type": "function",
+      "name": "handleStep",
+      "filePath": "Vayl/Features/Home/Views/HomeRouterView.swift",
+      "lineRange": [
+        240,
+        258
+      ],
+      "summary": "Routes a tapped Getting Started Path step to its surface (open the desire-map rater, switch to pairing on Map, present the reveal, or no-op for profile).",
+      "tags": [
+        "view",
+        "event-handler"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Views/HomeRouterView.swift:handleRaterDismiss",
+      "type": "function",
+      "name": "handleRaterDismiss",
+      "filePath": "Vayl/Features/Home/Views/HomeRouterView.swift",
+      "lineRange": [
+        267,
+        275
+      ],
+      "summary": "On rater close, refreshes Home and fires the one-shot completion beat when the map just flipped to complete.",
+      "tags": [
+        "view",
+        "event-handler"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Views/MapCompletionBeatView.swift",
+      "type": "file",
+      "name": "MapCompletionBeatView.swift",
+      "filePath": "Vayl/Features/Home/Views/MapCompletionBeatView.swift",
+      "summary": "A brief one-shot celebration beat shown over the Home dashboard the moment the user finishes their Desire Map; tap to continue, reusing the reveal's prism emblem motif.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Views/MapCompletionBeatView.swift:MapCompletionBeatView",
+      "type": "class",
+      "name": "MapCompletionBeatView",
+      "filePath": "Vayl/Features/Home/Views/MapCompletionBeatView.swift",
+      "lineRange": [
+        15,
+        92
+      ],
+      "summary": "Transient SwiftUI overlay View that dims the dashboard, shows a pulsing prism emblem and forward-looking copy, and calls onDone on tap.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "type": "file",
+      "name": "ConstellationNode.swift",
+      "filePath": "Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "summary": "The Learn 'constellation' visualization: a model for stat/term nodes plus the floating, tappable node views, proximity connection lines, a detail bottom sheet, and the container ConstellationView.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "data-model"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Mixes a small data model (ConstellationNode/Satellite) with several private views and a ViewModifier; nodes float and fire a burst on tap."
+    },
+    {
+      "id": "class:Vayl/Features/Learn/Views/ConstellationNode.swift:ConstellationView",
+      "type": "class",
+      "name": "ConstellationView",
+      "filePath": "Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "lineRange": [
+        483,
+        712
+      ],
+      "summary": "Main SwiftUI View laying out constellation nodes over a canvas with proximity links, tap handling, a legend, and a detail sheet.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Learn/Views/ConstellationNode.swift:ConstellationNodeView",
+      "type": "class",
+      "name": "ConstellationNodeView",
+      "filePath": "Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "lineRange": [
+        190,
+        329
+      ],
+      "summary": "Private SwiftUI View for a single floating constellation node with shimmer and a tap burst animation.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Learn/Views/ConstellationNode.swift:ConstellationSheet",
+      "type": "class",
+      "name": "ConstellationSheet",
+      "filePath": "Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "lineRange": [
+        335,
+        477
+      ],
+      "summary": "Private bottom-sheet View showing a tapped node's header, body, source, and satellite detail cards.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Learn/Views/ConstellationNode.swift:ConstellationNode",
+      "type": "class",
+      "name": "ConstellationNode",
+      "filePath": "Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "lineRange": [
+        37,
+        48
+      ],
+      "summary": "Identifiable data model for one constellation node (stat or term) and its satellites.",
+      "tags": [
+        "data-model",
+        "type-definition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Learn/Views/ConstellationNode.swift:constellationCanvas",
+      "type": "function",
+      "name": "constellationCanvas",
+      "filePath": "Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "lineRange": [
+        569,
+        618
+      ],
+      "summary": "Builds the node + connection-line canvas, positioning each node and drawing proximity links.",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Learn/Views/LearnView.swift",
+      "type": "file",
+      "name": "LearnView.swift",
+      "filePath": "Vayl/Features/Learn/Views/LearnView.swift",
+      "summary": "Placeholder Learn tab screen showing only a 'Learn' title over the page background; the real Learn content hub is not yet built.",
+      "tags": [
+        "view",
+        "ui",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Learn/Views/LearnView.swift:LearnView",
+      "type": "class",
+      "name": "LearnView",
+      "filePath": "Vayl/Features/Learn/Views/LearnView.swift",
+      "lineRange": [
+        14,
+        23
+      ],
+      "summary": "Minimal SwiftUI View stub for the Learn tab.",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Map/MapView.swift",
+      "type": "file",
+      "name": "MapView.swift",
+      "filePath": "Vayl/Features/Map/MapView.swift",
+      "summary": "Temporary Map tab harness that renders PairingSettingsView for partner-linking verification; to be replaced by the real Map / Desire Map implementation.",
+      "tags": [
+        "view",
+        "ui",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Map/MapView.swift:MapView",
+      "type": "class",
+      "name": "MapView",
+      "filePath": "Vayl/Features/Map/MapView.swift",
+      "lineRange": [
+        22,
+        26
+      ],
+      "summary": "Thin SwiftUI View wrapper that currently shows the pairing settings screen.",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Map/PrismView.swift",
+      "type": "file",
+      "name": "PrismView.swift",
+      "filePath": "Vayl/Features/Map/PrismView.swift",
+      "summary": "The Map-tab 'prism' widget: a mode-switching surface (Journal / Reflect / Agreements) with time-aware prompts, a solo-card draw, cursor-blink journaling, and expandable agreement rows, wrapped in the HomeWidgetShell chrome.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Large multi-mode view; each mode is a separate ViewBuilder for type-check performance."
+    },
+    {
+      "id": "class:Vayl/Features/Map/PrismView.swift:PrismView",
+      "type": "class",
+      "name": "PrismView",
+      "filePath": "Vayl/Features/Map/PrismView.swift",
+      "lineRange": [
+        69,
+        769
+      ],
+      "summary": "SwiftUI View rendering the three-mode prism widget with a pill switcher and per-mode content.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Map/PrismView.swift:PrismMode",
+      "type": "class",
+      "name": "PrismMode",
+      "filePath": "Vayl/Features/Map/PrismView.swift",
+      "lineRange": [
+        15,
+        65
+      ],
+      "summary": "CaseIterable enum for the prism's modes (journal/reflect/agreements) carrying label, color, private label, and a time-aware prompt.",
+      "tags": [
+        "data-model",
+        "type-definition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Map/PrismView.swift:journalContent",
+      "type": "function",
+      "name": "journalContent",
+      "filePath": "Vayl/Features/Map/PrismView.swift",
+      "lineRange": [
+        231,
+        403
+      ],
+      "summary": "Builds the journaling mode UI (prompt, cursor-blink text entry, solo card draw).",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Map/PrismView.swift:reflectContent",
+      "type": "function",
+      "name": "reflectContent",
+      "filePath": "Vayl/Features/Map/PrismView.swift",
+      "lineRange": [
+        408,
+        583
+      ],
+      "summary": "Builds the reflect mode UI surface for the prism widget.",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "type": "file",
+      "name": "EntitlementStore.swift",
+      "filePath": "Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "summary": "Monetization Store: the central @Observable read surface for the couple's access tier (isCore/tier), OR-ing the couple's server tier with local StoreKit ownership, and driving purchase/restore and background transaction updates.",
+      "tags": [
+        "store",
+        "state",
+        "observable",
+        "service"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Couple-level entitlement: one purchase unlocks both partners; Views read isCore and call purchase()/restore() while StoreKitService + EntitlementService do the I/O."
+    },
+    {
+      "id": "class:Vayl/Features/Monetization/Store/EntitlementStore.swift:EntitlementStore",
+      "type": "class",
+      "name": "EntitlementStore",
+      "filePath": "Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "lineRange": [
+        19,
+        206
+      ],
+      "summary": "@Observable @MainActor Store resolving Core entitlement from server + StoreKit, exposing isCore/corePriceText and running purchase()/restore()/bootstrap().",
+      "tags": [
+        "store",
+        "state",
+        "observable"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Monetization/Store/EntitlementStore.swift:bootstrap",
+      "type": "function",
+      "name": "bootstrap",
+      "filePath": "Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "lineRange": [
+        77,
+        86
+      ],
+      "summary": "App-launch entry: loads the Core product, resolves the tier, and starts the StoreKit transaction-updates listener.",
+      "tags": [
+        "store",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Monetization/Store/EntitlementStore.swift:refresh",
+      "type": "function",
+      "name": "refresh",
+      "filePath": "Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "lineRange": [
+        92,
+        106
+      ],
+      "summary": "Re-resolves isCore from local StoreKit ownership and the couple's server tier, keeping the last tier on a network blip.",
+      "tags": [
+        "store",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Monetization/Store/EntitlementStore.swift:purchase",
+      "type": "function",
+      "name": "purchase",
+      "filePath": "Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "lineRange": [
+        114,
+        140
+      ],
+      "summary": "Runs the Core purchase, unlocks the buyer locally, pushes the signed JWS to the server so the partner unlocks too, then re-resolves.",
+      "tags": [
+        "store",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Monetization/Store/EntitlementStore.swift:restore",
+      "type": "function",
+      "name": "restore",
+      "filePath": "Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "lineRange": [
+        145,
+        159
+      ],
+      "summary": "Explicit Restore Purchases path: re-syncs from the App Store, re-grants the couple server-side if Core is owned, then re-resolves.",
+      "tags": [
+        "store",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "type": "file",
+      "name": "PaywallSheet.swift",
+      "filePath": "Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "summary": "The reusable Vayl paywall: one Core-scoped bottom sheet ($24.99 one-time, both unlock) presented from three doors (reveal / settings / play-deck) whose only difference is the hook header; purchase and restore run through EntitlementStore.",
+      "tags": [
+        "view",
+        "ui",
+        "api-handler"
+      ],
+      "complexity": "complex",
+      "languageNotes": "ViewThatFits content-height with a scroll backstop for large Dynamic Type; legal links open an in-app Safari sheet."
+    },
+    {
+      "id": "class:Vayl/Features/Monetization/Views/PaywallSheet.swift:PaywallSheet",
+      "type": "class",
+      "name": "PaywallSheet",
+      "filePath": "Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "lineRange": [
+        14,
+        428
+      ],
+      "summary": "SwiftUI View for the paywall sheet, composing hook header, value bullets, price row, CTA, and legal footer; calls EntitlementStore.purchase()/restore().",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Monetization/Views/PaywallSheet.swift:purchase",
+      "type": "function",
+      "name": "purchase",
+      "filePath": "Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "lineRange": [
+        392,
+        400
+      ],
+      "summary": "Kicks off the Core purchase via EntitlementStore and invokes onUnlocked when it succeeds.",
+      "tags": [
+        "view",
+        "event-handler"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Monetization/Views/PaywallSheet.swift:restorePurchases",
+      "type": "function",
+      "name": "restorePurchases",
+      "filePath": "Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "lineRange": [
+        404,
+        417
+      ],
+      "summary": "Runs EntitlementStore.restore(), opening the gate on success or showing a 'nothing to restore' alert.",
+      "tags": [
+        "view",
+        "event-handler"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "type": "file",
+      "name": "CardFlightEngine.swift",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "summary": "Onboarding card-deal engine: owns the OB card landing-slot pool and bridges SwiftUI to the SpriteKit CardFlightScene, flying card-back snapshots from off-screen to natural resting slots and returning their final offset/angle.",
+      "tags": [
+        "service",
+        "animation",
+        "sequencer"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "@MainActor class holding a weak VaylDirector; uses ImageRenderer to snapshot VaylCardBack and async/await over the scene's rest callback."
+    },
+    {
+      "id": "class:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift:CardFlightEngine",
+      "type": "class",
+      "name": "CardFlightEngine",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "lineRange": [
+        5,
+        147
+      ],
+      "summary": "@MainActor engine that claims landing slots and deals single cards through the director's CardFlightScene, resolving rested positions via a checked continuation.",
+      "tags": [
+        "service",
+        "animation",
+        "sequencer"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift:dealSingleCard",
+      "type": "function",
+      "name": "dealSingleCard",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "lineRange": [
+        79,
+        141
+      ],
+      "summary": "Snapshots a VaylCardBack, picks a far-enough landing slot, decides overshoot, and flies the card via SpriteKit, returning its resting offset/angle/flightID.",
+      "tags": [
+        "animation",
+        "sequencer"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift:sailCard",
+      "type": "function",
+      "name": "sailCard",
+      "filePath": "Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "lineRange": [
+        37,
+        74
+      ],
+      "summary": "Flies a single card image through the SpriteKit scene between two points and awaits its rested position and rotation.",
+      "tags": [
+        "animation",
+        "sequencer"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Features/Home/Views/GettingStartedPathView.swift",
+      "target": "class:Vayl/Features/Home/Views/GettingStartedPathView.swift:GettingStartedPathView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/GettingStartedPathView.swift",
+      "target": "class:Vayl/Features/Home/Views/GettingStartedPathView.swift:PathStepRow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/GettingStartedPathView.swift",
+      "target": "file:Vayl/Features/Home/Models/GettingStarted.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "class:Vayl/Features/Home/Views/HomeDashboardView.swift:HomeDashboardView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Home/Components/GettingStartedEntryCard.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Home/Components/CardChestContainer.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Home/Components/DesireMapIndicator.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Home/Components/ReflectionCard.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Home/Components/PickUpCard.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Home/Components/GravLiftView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Home/Components/ReflectionBannerView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Home/Components/PartnerChip.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Pulse/PulseWidget.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Map/PrismView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Design/Components/Effects/AuroraGlowField.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Design/Components/Effects/HomeGlowField.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "target": "file:Vayl/Design/Components/Text/LivingText.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeGateView.swift",
+      "target": "class:Vayl/Features/Home/Views/HomeGateView.swift:HomeGateView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "class:Vayl/Features/Home/Views/HomeRouterView.swift:HomeRouterView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "class:Vayl/Features/Home/Views/HomeRouterView.swift:HomeRouterInnerView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "file:Vayl/Features/Home/Store/HomeStore.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "file:Vayl/Features/Sessions/SessionStore.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "file:Vayl/Features/Sessions/SessionView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "file:Vayl/Features/Desire Map/Store/DesireMapStore.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "file:Vayl/Features/Desire Map/Views/DesireMapView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "file:Vayl/Features/Desire Map/Store/DesireRevealStore.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "file:Vayl/Features/Desire Map/Views/DesireRevealView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "file:Vayl/Features/Home/Views/HomeDashboardView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "file:Vayl/Features/Home/Views/GettingStartedPathView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "target": "file:Vayl/Features/Home/Views/MapCompletionBeatView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Views/MapCompletionBeatView.swift",
+      "target": "class:Vayl/Features/Home/Views/MapCompletionBeatView.swift:MapCompletionBeatView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "target": "class:Vayl/Features/Learn/Views/ConstellationNode.swift:ConstellationView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "target": "class:Vayl/Features/Learn/Views/ConstellationNode.swift:ConstellationNodeView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "target": "class:Vayl/Features/Learn/Views/ConstellationNode.swift:ConstellationSheet",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Learn/Views/ConstellationNode.swift",
+      "target": "class:Vayl/Features/Learn/Views/ConstellationNode.swift:ConstellationNode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Learn/Views/LearnView.swift",
+      "target": "class:Vayl/Features/Learn/Views/LearnView.swift:LearnView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Map/MapView.swift",
+      "target": "class:Vayl/Features/Map/MapView.swift:MapView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Map/MapView.swift",
+      "target": "file:Vayl/Features/Pairing/PairingSettingsView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Map/PrismView.swift",
+      "target": "class:Vayl/Features/Map/PrismView.swift:PrismView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Map/PrismView.swift",
+      "target": "class:Vayl/Features/Map/PrismView.swift:PrismMode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Map/PrismView.swift",
+      "target": "file:Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "target": "class:Vayl/Features/Monetization/Store/EntitlementStore.swift:EntitlementStore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "target": "file:Vayl/Core/Services/EntitlementService.swift",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "target": "file:Vayl/Core/Services/StoreKitService.swift",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "target": "class:Vayl/Features/Monetization/Views/PaywallSheet.swift:PaywallSheet",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "target": "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "target": "file:Vayl/Design/Components/Effects/VaylButton.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "target": "file:Vayl/Design/Components/Text/LivingText.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "target": "file:Vayl/Design/Components/Text/SpectrumBulletRow.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "target": "file:Vayl/Design/Components/Effects/GlowOrb.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "target": "file:Vayl/Design/Components/Effects/SpectrumHairline.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Monetization/Views/PaywallSheet.swift",
+      "target": "file:Vayl/Design/Components/Navigation/SafariView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "target": "class:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift:CardFlightEngine",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "target": "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "target": "file:Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift",
+      "target": "file:Vayl/Design/Components/Cards/VaylCardBack.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

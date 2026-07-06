@@ -118,7 +118,11 @@ struct ContentLoader {
         try load([String: String].self, from: "assessment_questions")
     }
 
-    static func loadDesireItems() throws -> [[String: String]] {
-        try load([String: String].self, from: "desire_items")
+    static func loadDesireItems() throws -> [DesireItem] {
+        try load(DesireItem.self, from: "desire_items")
+    }
+
+    static func loadCompanionCards() throws -> [CompanionCardPool] {
+        try load(CompanionCardPool.self, from: "companion_cards")
     }
 }

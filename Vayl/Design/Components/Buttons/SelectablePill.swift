@@ -24,6 +24,11 @@ struct SelectablePill: View {
     var height: CGFloat = 46
     var fontSize: CGFloat = 15
     var showFlame: Bool = true
+    /// true (default) = the pill fills its row (a vertical list of full-width options).
+    /// Set false for a horizontal row of pills (e.g. inside a ScrollView(.horizontal) +
+    /// HStack) — multiple maxWidth: .infinity siblings competing for that axis's
+    /// effectively-unbounded proposed width collapses/overlaps them.
+    var fillWidth: Bool = true
     var action: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
@@ -172,22 +177,27 @@ struct SelectablePill: View {
             // AppFonts.body replaces .system(size:weight:) —
             // scales correctly with Dynamic Type via relativeTo: .body.
             .font(AppFonts.body(fontSize, weight: .medium, relativeTo: .body))
-            .foregroundStyle(isLight ? AppColors.textSecondary : Color.white)
+            // textPrimary, not raw Color.white — token-compliant, and this IS the
+            // label the user needs to read/tap, not subtext, so it stays full
+            // brightness whether the pill is selected or not.
+            .foregroundStyle(isLight ? AppColors.textSecondary : AppColors.textPrimary)
             .lineLimit(1)
             .minimumScaleFactor(0.85)
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, fillWidth ? 0 : AppSpacing.md)
+            .frame(maxWidth: fillWidth ? .infinity : nil)
             .frame(height: height)
-            .background(isLight
-                ? (isSelected
-                    ? AppColors.glassFrostPillSelected
-                    : AppColors.glassFrostPill)
-                : AppColors.modalBackground)
-            .overlay {
+            // Shimmer moved from .overlay (drawn ON TOP of the text, muting it toward
+            // grey — HolographicShimmer's own root is an opaque fill, not a transparent
+            // decoration) into .background (drawn BEHIND it), so the label always
+            // renders crisp on top instead of blended under a semi-opaque texture layer.
+            .background {
                 if isLight {
+                    (isSelected ? AppColors.glassFrostPillSelected : AppColors.glassFrostPill)
                     LightModeShimmer(duration: lightShimmerSpeed, usePillColors: true)
                         .opacity(lightShimmerOpacity)
                         .allowsHitTesting(false)
                 } else {
+                    AppColors.modalBackground
                     HolographicShimmer(duration: shimmerSpeed)
                         .opacity(shimmerOpacity)
                         .allowsHitTesting(false)

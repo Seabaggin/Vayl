@@ -1,0 +1,328 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "Vayl/App/Theme/ThemeManager.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 46,
+      "nonEmptyLines": 38,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/ThemeModifiers.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 74,
+      "nonEmptyLines": 62,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/VaylPrimitives.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 157,
+      "nonEmptyLines": 132,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/VaylApp.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 69,
+      "nonEmptyLines": 61,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/AppIconRetreival.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 40,
+      "nonEmptyLines": 40,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Assets.xcassets/AccentColor.colorset/Contents.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 11,
+      "nonEmptyLines": 11,
+      "sections": [
+        {
+          "heading": "colors",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "info",
+          "level": 1,
+          "line": 7
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "Vayl/Assets.xcassets/AppIcon.appiconset/Contents.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 36,
+      "nonEmptyLines": 36,
+      "sections": [
+        {
+          "heading": "images",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "info",
+          "level": 1,
+          "line": 32
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "Vayl/Assets.xcassets/Contents.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 6,
+      "nonEmptyLines": 6,
+      "sections": [
+        {
+          "heading": "info",
+          "level": 1,
+          "line": 2
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "Vayl/Assets.xcassets/gender-man.symbolset/Contents.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "sections": [
+        {
+          "heading": "info",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "symbols",
+          "level": 1,
+          "line": 6
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "Vayl/Assets.xcassets/gender-non-binary.symbolset/Contents.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "sections": [
+        {
+          "heading": "info",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "symbols",
+          "level": 1,
+          "line": 6
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "Vayl/Assets.xcassets/gender-trans.symbolset/Contents.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "sections": [
+        {
+          "heading": "info",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "symbols",
+          "level": 1,
+          "line": 6
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "Vayl/Assets.xcassets/gender-woman.symbolset/Contents.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "sections": [
+        {
+          "heading": "info",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "symbols",
+          "level": 1,
+          "line": 6
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "Vayl/Core/Debug/DiagnosticOverlay.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 179,
+      "nonEmptyLines": 158,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Debug/DragDebugView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 79,
+      "nonEmptyLines": 70,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/AcknowledgementRecord.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 87,
+      "nonEmptyLines": 70,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/Card.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 270,
+      "nonEmptyLines": 256,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/CardSession.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 112,
+      "nonEmptyLines": 96,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/CompanionCard.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 17,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/Couple.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 98,
+      "nonEmptyLines": 75,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/Deck.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 118,
+      "nonEmptyLines": 101,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/DeckProgress.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 47,
+      "nonEmptyLines": 40,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/DesireItem.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 37,
+      "nonEmptyLines": 33,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/DesireMatch.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 81,
+      "nonEmptyLines": 65,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/DesireRating.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 124,
+      "nonEmptyLines": 98,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/EntitlementRecord.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 149,
+      "nonEmptyLines": 121,
+      "metrics": {}
+    }
+  ]
+}

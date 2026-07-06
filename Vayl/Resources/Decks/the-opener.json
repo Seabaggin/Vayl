@@ -9,7 +9,7 @@
   "required_entitlement": null,
   "tags": ["foundation", "free", "entry", "starter"],
   "sort_order": 1,
-  "schema_version": 1,
+  "schema_version": 2,
   "cards": [
     {
       "id": "opener-01",
@@ -41,8 +41,8 @@
       "can_skip": false,
       "register": "flexible",
       "context_beat_type": "interstitial",
-      "context_beat_copy": "Something worth knowing before you go further:\n\nA boundary is a limit you set for yourself — not a rule you can set for someone else.\n\n\"I won't sleep with anyone without a condom\" is a boundary. It's yours. Your partner is still free to make their own choice — but now you know if you're compatible.",
-      "back_copy": "If either of you answered no to the second question — that's a starting point, not a red flag. What specific boundary has felt ignored? Name it out loud before the next card.",
+      "context_beat_copy": "Something worth knowing before you go further:\n\nA boundary is a limit you set for yourself, not a rule you can set for someone else.\n\n\"I won't sleep with anyone without a condom\" is a boundary. It's yours. Your partner is still free to make their own choice. Now you both know where you actually stand.",
+      "back_copy": "If either of you answered no to the second question, you just found your starting point.\n\nWhat specific boundary has felt ignored? Name it out loud before the next card.",
       "is_gendered_card": false,
       "gendered_for": null,
       "sort_order": 2
@@ -190,6 +190,42 @@
       "is_gendered_card": false,
       "gendered_for": null,
       "sort_order": 10
+    },
+    {
+      "id": "opener-06f",
+      "deck_id": "the-opener",
+      "text": "In most NM spaces, one of you may find the outside landscape slower than expected.\n\nFewer sparks. More waiting. A quiet question that can creep in...\n\nAm I enough?\n\nIf that turns out to be you, how do you want to be met?\n\nWhat do you want to promise each other before anyone finds out which way it goes?",
+      "highlight_words": ["Am I enough?"],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "flexible",
+      "sort_order": 6
+    },
+    {
+      "id": "opener-07f",
+      "deck_id": "the-opener",
+      "text": "And one of you may find more attention than you anticipated.\n\nThat can feel electric, but it can also complicate things. Enjoying the newness will take balance.\n\nIf that turns out to be you, how do you intend to find that balance?\n\nWhat feels exciting? What feels scary?",
+      "highlight_words": ["electric", "balance"],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "flexible",
+      "sort_order": 7
     }
   ]
 }

@@ -17,6 +17,7 @@ struct AtmosphericGhostDeck: View {
     ]
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var drifting = false
 
     let cardSize: CGSize
@@ -33,7 +34,7 @@ struct AtmosphericGhostDeck: View {
                 )
                 .rotationEffect(.degrees(ghosts[0].rotation + (drifting ? 1.5 : 0)))
                 .opacity(colorScheme == .light ? 0.90 : ghosts[0].opacity)
-                .animation(
+                .ambientAnimation(
                     .easeInOut(duration: 8.0).repeatForever(autoreverses: true),
                     value: drifting
                 )
@@ -47,12 +48,13 @@ struct AtmosphericGhostDeck: View {
                 )
                 .rotationEffect(.degrees(ghosts[1].rotation + (drifting ? -1.5 : 0)))
                 .opacity(colorScheme == .light ? 0.75 : ghosts[1].opacity)
-                .animation(
+                .ambientAnimation(
                     .easeInOut(duration: 9.5).repeatForever(autoreverses: true),
                     value: drifting
                 )
         }
         .onAppear {
+            guard !reduceMotion else { return }
             drifting = true
         }
     }

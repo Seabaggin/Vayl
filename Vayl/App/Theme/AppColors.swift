@@ -290,6 +290,14 @@ struct AppColors {
         dark:  VaylPrimitives.cyan.withAlphaComponent(0.60)
     )
 
+    /// Section headers and eyebrow labels — the lavender-purple from docs/prototypes/settings-v2.html.
+    /// Matches `--label: rgba(160,125,205,0.5)` in HTML prototypes. Softer than textCardLabel
+    /// (which skews cyan in Midnight). Use for .sec-h style grouping labels in list screens.
+    static let textSectionLabel = Color.dynamic(
+        light: VaylPrimitives.purple.withAlphaComponent(0.65),
+        dark:  VaylPrimitives.purpleBright.withAlphaComponent(0.55)
+    )
+
     // ─────────────────────────────────────────────
     // MARK: Accent — action and emphasis
     // ─────────────────────────────────────────────
@@ -396,6 +404,15 @@ struct AppColors {
         dark:  VaylPrimitives.pureBlack.withAlphaComponent(0.50)
     )
 
+    /// Full-screen backdrop dim behind an elevated/engaged surface (an open
+    /// carousel, a reveal's bottom sheet). Heavier than `shadowDeep`, which is
+    /// for a resting modal scrim — this is for a surface the user is actively
+    /// inside. Values sourced from CardCarousel's existing tuned dim.
+    static let scrimHeavy = Color.dynamic(
+        light: VaylPrimitives.pureBlack.withAlphaComponent(0.35),
+        dark:  VaylPrimitives.pureBlack.withAlphaComponent(0.75)
+    )
+
     /// Dawn tinted shadow — magenta channel. Cards in light mode.
     static let shadowMagenta = Color.dynamic(
         light: VaylPrimitives.magenta.withAlphaComponent(0.18),
@@ -463,6 +480,24 @@ struct AppColors {
     static let glassFrostCTA = Color.dynamic(
         light: VaylPrimitives.frostCTA,
         dark:  VaylPrimitives.inkSurface
+    )
+
+    /// Translucent glass surface for cards that float on the void + atmosphere
+    /// (the Map tab and any void-native surface). Unlike `glassFrostCard` /
+    /// `cardBackground` (the opaque `inkCard`), this lets the aurora bloom read
+    /// through the card. The canonical `.vaylGlassCard` fill — mockup parity is
+    /// rgba(255,255,255,0.03) over the void.
+    static let glassSurface = Color.dynamic(
+        light: VaylPrimitives.frostCard,
+        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.03)
+    )
+
+    /// Barely-there tonal wash — a hint of surface without committing to a fill.
+    /// Unlike `glassSurface` (opaque frost in light mode), this stays translucent
+    /// on both appearances. For a subtle background tint on rows, pills, and tiles.
+    static let whisperFill = Color.dynamic(
+        light: VaylPrimitives.pureBlack.withAlphaComponent(0.03),
+        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.04)
     )
 
     // ─────────────────────────────────────────────
@@ -661,18 +696,69 @@ struct AppColors {
         light: VaylPrimitives.wineFaint,
         dark:  VaylPrimitives.magentaLight
     )
+
+    /// Renamed vocabulary (2D circumplex): the Reactive Space is the old Friction tier,
+    /// the Receptive Space is the old Sovereign tier. Reference-only aliases so callers
+    /// speak the new names while the underlying colour is unchanged.
+    static let pulseTierReactive  = AppColors.pulseTierFriction
+    static let pulseTierReceptive = AppColors.pulseTierSovereign
+
+    // ─────────────────────────────────────────────────────────────
+    // MARK: Aura tier color ramps — PulseAura use only
+    //
+    // Each tier: core (midpoint) / light (inner highlight) / deep (outer edge) / glow (shadow).
+    // Maps to HTML: .cyan → expansive, .indigo → sovereign, .magenta → friction, .rose → protective.
+    // FEEL: intensities tuned on device against docs/prototypes/pulse-aura-glass.html.
+    // ─────────────────────────────────────────────────────────────
+
+    static let auraCoreCyan     = Color(uiColor: VaylPrimitives.cyan)
+    static let auraLightCyan    = Color(uiColor: VaylPrimitives.cyanLight)
+    static let auraDeepCyan     = Color(uiColor: VaylPrimitives.cyanDark)
+    static let auraGlowCyan     = Color(uiColor: VaylPrimitives.cyan).opacity(0.30)
+
+    static let auraCoreIndigo   = Color(uiColor: VaylPrimitives.electricViolet)
+    static let auraLightIndigo  = Color(uiColor: VaylPrimitives.purpleBright)
+    static let auraDeepIndigo   = Color(uiColor: VaylPrimitives.purple)
+    static let auraGlowIndigo   = Color(uiColor: VaylPrimitives.electricViolet).opacity(0.30)
+
+    static let auraCoreMagenta  = Color(uiColor: VaylPrimitives.magenta)
+    static let auraLightMagenta = Color(uiColor: VaylPrimitives.magentaLight)
+    static let auraDeepMagenta  = Color(uiColor: VaylPrimitives.magentaDark)
+    static let auraGlowMagenta  = Color(uiColor: VaylPrimitives.magenta).opacity(0.28)
+
+    static let auraCoreRose     = Color(uiColor: VaylPrimitives.rose)
+    static let auraLightRose    = Color(uiColor: VaylPrimitives.roseLight)
+    static let auraDeepRose     = Color(uiColor: VaylPrimitives.roseDark)
+    static let auraGlowRose     = Color(uiColor: VaylPrimitives.rose).opacity(0.26)
+
+    // Neutral Space ramp — Lavender Silver. Does NOT participate in the bilinear blend;
+    // resolved directly when the space is .neutral (both axes in the 0.475–0.525 border zone).
+    static let auraCoreNeutral  = Color(uiColor: VaylPrimitives.lavenderSilverCore)
+    static let auraLightNeutral = Color(uiColor: VaylPrimitives.lavenderSilverLight)
+    static let auraDeepNeutral  = Color(uiColor: VaylPrimitives.lavenderSilverDeep)
+    static let auraGlowNeutral  = Color(uiColor: VaylPrimitives.lavenderSilverCore).opacity(0.22)
+
+    // Uncharted Space ramp — Sage Deep. Fixed colour, does NOT blend; the orb dissolves to
+    // this when the variance check fires (contradictory answers on both axes).
+    static let auraCoreUncharted  = Color(uiColor: VaylPrimitives.sageDeepCore)
+    static let auraLightUncharted = Color(uiColor: VaylPrimitives.sageDeepLight)
+    static let auraDeepUncharted  = Color(uiColor: VaylPrimitives.sageDeepDeep)
+    static let auraGlowUncharted  = Color(uiColor: VaylPrimitives.sageDeepCore).opacity(0.26)
+
+    /// Pulse "Us" capsule halo — soft periwinkle glow around the connector stroke.
+    /// Mockup parity: map-pulse-us.html `.capsule` box-shadow rgba(130,160,230,.18).
+    static let pulseCapsuleGlow = Color(uiColor: VaylPrimitives.periwinkle).opacity(0.18)
 }
 
 
 // MARK: - Color.dynamic
 
 extension Color {
-    /// Resolves automatically for light and dark via UIColor(dynamicProvider:).
+    /// Always resolves to the dark variant — app is dark-only (Act 1).
+    /// light: param is retained for future Dawn-mode work; it is currently ignored.
     /// No @Environment(\.colorScheme) branching required in views.
     static func dynamic(light: UIColor, dark: UIColor) -> Color {
-        Color(UIColor(dynamicProvider: { traits in
-            traits.userInterfaceStyle == .dark ? dark : light
-        }))
+        Color(uiColor: dark)
     }
 }
 
@@ -681,5 +767,46 @@ extension Color {
 extension Color {
     init(hex: String) {
         self.init(uiColor: UIColor(hex: hex))
+    }
+}
+
+// MARK: - PulseCapacityColor aura ramp
+
+extension PulseCapacityColor {
+    /// Aura body radial gradient center color.
+    var auraCore: Color {
+        switch self {
+        case .cyan:    return AppColors.auraCoreCyan
+        case .indigo:  return AppColors.auraCoreIndigo
+        case .magenta: return AppColors.auraCoreMagenta
+        case .rose:    return AppColors.auraCoreRose
+        }
+    }
+    /// Aura body inner highlight (lightest, at center).
+    var auraLight: Color {
+        switch self {
+        case .cyan:    return AppColors.auraLightCyan
+        case .indigo:  return AppColors.auraLightIndigo
+        case .magenta: return AppColors.auraLightMagenta
+        case .rose:    return AppColors.auraLightRose
+        }
+    }
+    /// Aura body outer edge color (darkest, at rim).
+    var auraDeep: Color {
+        switch self {
+        case .cyan:    return AppColors.auraDeepCyan
+        case .indigo:  return AppColors.auraDeepIndigo
+        case .magenta: return AppColors.auraDeepMagenta
+        case .rose:    return AppColors.auraDeepRose
+        }
+    }
+    /// Glow shadow color for the soft outer halo.
+    var auraGlow: Color {
+        switch self {
+        case .cyan:    return AppColors.auraGlowCyan
+        case .indigo:  return AppColors.auraGlowIndigo
+        case .magenta: return AppColors.auraGlowMagenta
+        case .rose:    return AppColors.auraGlowRose
+        }
     }
 }

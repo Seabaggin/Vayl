@@ -16,12 +16,46 @@ struct HomeRouterView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.modelContext) private var modelContext
 
-    @State private var store: HomeStore? = nil
+    var body: some View {
+        HomeRouterInnerView(
+            appState: appState,
+            modelContainer: modelContext.container
+        )
+    }
+}
 
-    // ── Session presentation ─────────────────────────────────────────────
-    // Created here because HomeRouterView owns appState and modelContext.
-    // Presented as a sheet over the home content.
-    @State private var activeSession: SessionStore? = nil
+private struct HomeRouterInnerView: View {
+
+    @Environment(AppState.self) private var appState
+    @Environment(EntitlementStore.self) private var entitlements
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var store: HomeStore
+
+    // ── Desire Map rater presentation ────────────────────────────────────
+    // Presented as a .vaylCover so the rater is a protected, immersive, unhurried
+    // beat (interactive-dismiss disabled; exit is explicit via vaylDismiss).
+    // Reachable for unpaired users too (head-start hook).
+    @State private var activeMap: DesireMapStore? = nil
+
+    // Captured when the rater opens, so the dismiss handler can tell whether the user JUST
+    // completed (false → true) and should see the one-shot completion beat.
+    @State private var mapWasCompleteOnOpen = false
+
+    // ── Desire-Map reveal presentation (D4) ──────────────────────────────
+    // Full-screen "magic moment" — celebrates where the couple aligns (free/locked split).
+    @State private var activeReveal: DesireRevealStore? = nil
+
+    // ── Getting Started "Path" overlay ───────────────────────────────────
+    // The day-1 activation expands the dashboard entry card (matched geometry)
+    // into a Path overlay over a blurred Home. Hosted here — not a cover — so
+    // the blurred Home shows behind it.
+    @Namespace private var pathNamespace
+    @State private var showPath = false
+
+    init(appState: AppState, modelContainer: ModelContainer) {
+        _store = State(initialValue: HomeStore(modelContainer: modelContainer, appState: appState))
+    }
 
     // MARK: - Body
 
@@ -30,20 +64,37 @@ struct HomeRouterView: View {
             let layout = AppLayout.from(geo)
 
             Group {
-                if let store {
-                    routedContent(store: store, layout: layout)
-                } else {
-                    ProgressView()
-                        .tint(AppColors.accentPrimary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
+                routedContent(store: store, layout: layout)
             }
         }
-        .task {
-            await bootstrapStore()
+        .vaylCover(
+            isPresented: Binding(
+                get: { activeMap != nil },
+                set: { if !$0 { activeMap = nil } }
+            ),
+            confirmOnExit: false,
+            // The rater is a natural-end exit (no confirm dialog). The dismiss handler
+            // fires via the cover's onExit hook, preserving the completion-beat behavior.
+            onExit: handleRaterDismiss
+        ) {
+            if let mapStore = activeMap {
+                DesireMapView(
+                    store: mapStore,
+                    partnerName: store.partnerName ?? "your partner",
+                    partnerComplete: store.partnerMapComplete
+                )
+            }
         }
-        .sheet(item: $activeSession) { session in
-            SessionView(store: session)
+        .vaylCover(
+            isPresented: Binding(
+                get: { activeReveal != nil },
+                set: { if !$0 { activeReveal = nil } }
+            ),
+            confirmOnExit: false
+        ) {
+            if let revealStore = activeReveal {
+                DesireRevealView(store: revealStore)
+            }
         }
     }
 
@@ -52,58 +103,52 @@ struct HomeRouterView: View {
     @ViewBuilder
     private func routedContent(store: HomeStore, layout: AppLayout) -> some View {
         ZStack {
-            switch store.homeState {
+            // Home leads with the dashboard from day one; .gated is vestigial. The waiting/reveal
+            // progression is surfaced via the Getting Started path + partner pill, not a dashboard
+            // card. The dashboard blurs behind the one-shot map-charted moment.
+            Group {
+                switch store.homeState {
+                case .gated, .dashboard, .soloUnpaired:
+                    dashboardContent(store: store)
+                        .transition(.opacity)
+                }
+            }
+            .blur(radius: store.showCompletionBeat ? 18 : 0)
+            .animation(AppAnimation.enter, value: store.showCompletionBeat)
 
-            case .gated:
-                HomeGateView(
-                    isPaired: store.isPaired,
-                    onStartMap: { /* route to DesireMapView */ }
-                )
-                .transition(.opacity)
+            // The Path overlay sits above the dashboard so the blurred Home shows behind it.
+            if showPath {
+                Color.black.opacity(0.45)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .onTapGesture { withAnimation(AppAnimation.spring) { showPath = false } }
 
-            case .postReflection:
-                PostMapReflectionView(
-                    step: Binding(
-                        get: { store.reflectionStep },
-                        set: { _ in }
-                    ),
-                    onComplete: {
-                        withAnimation(AppAnimation.enter) {
-                            store.markPostReflectionDone()
-                        }
+                GettingStartedPathView(
+                    gettingStarted: store.gettingStarted,
+                    namespace: pathNamespace,
+                    onSelect: { kind in
+                        withAnimation(AppAnimation.spring) { showPath = false }
+                        handleStep(kind, store: store)
                     },
-                    onSkipAll: {
-                        withAnimation(AppAnimation.enter) {
-                            store.markPostReflectionDone()
-                        }
-                    }
+                    onClose: { withAnimation(AppAnimation.spring) { showPath = false } }
                 )
+                .padding(.horizontal, AppSpacing.lg)
                 .transition(.opacity)
+            }
 
-            case .waiting:
-                HomeWaitingView(
-                    isPaired: store.isPaired,
+            // One-shot completion beat — a brief moment over the dashboard, never a home state.
+            if store.showCompletionBeat {
+                MapChartedMoment(
                     partnerName: store.partnerName ?? "your partner",
-                    onInvite: { /* open share sheet */ }
+                    onDone: { store.dismissCompletionBeat() }
                 )
                 .transition(.opacity)
-
-            case .matchReady:
-                HomeMatchReadyView(
-                    onReveal: { /* route to reveal / paywall */ }
-                )
-                .transition(.opacity)
-
-            case .dashboard:
-                dashboardContent(store: store)
-                    .transition(.opacity)
-
-            case .soloUnpaired:
-                dashboardContent(store: store)
-                    .transition(.opacity)
+                .zIndex(1)
             }
         }
         .animation(AppAnimation.enter, value: store.homeState)
+        .animation(AppAnimation.spring, value: showPath)
+        .animation(AppAnimation.enter, value: store.showCompletionBeat)
         .task {
             await store.loadAll()
         }
@@ -162,11 +207,22 @@ struct HomeRouterView: View {
                 cardsCompleted:      store.cardsCompleted,
                 recentEvents:        [],
                 isSolo:              store.isSolo,
+                lexiconRemotePool:   store.lexiconRemotePool,
+                gettingStarted:      store.gettingStarted,
+                pathNamespace:       pathNamespace,
+                pathOpen:            showPath,
+                onOpenPath:          { withAnimation(AppAnimation.spring) { showPath = true } },
                 onCardAction:        { card, action in
                     handleCardAction(card: card, action: action, deck: loadedDeck, store: store)
                 },
                 onInvitePartner:     { appState.selectedTab = .map },
-                onPartnerTap:        { appState.selectedTab = .map }
+                onPartnerTap:        { appState.selectedTab = .map },
+                onOpenLexicon:       { appState.selectedTab = .learn },
+                onPulseTap:          { appState.selectedTab = .map },
+                // Interim: route to the Pulse surface. Final: present the shared
+                // check-in sheet in place (Bryan's PulseWidget pass).
+                onCheckIn:           { appState.selectedTab = .map },
+                onOpenSettings:      { appState.selectedTab = .settings }
             )
         }
     }
@@ -178,15 +234,6 @@ struct HomeRouterView: View {
     private func handleCardAction(card: Card, action: CardAction, deck: Deck, store: HomeStore) {
         switch action {
 
-        case .startSession:
-            // Resume from current progress — startIndex from store.cardsCompleted
-            activeSession = SessionStore(
-                deck: deck,
-                startIndex: store.cardsCompleted,
-                modelContainer: modelContext.container,
-                appState: appState
-            )
-
         case .navigateToPlay:
             appState.selectedTab = .play
 
@@ -195,14 +242,58 @@ struct HomeRouterView: View {
         }
     }
 
-    // MARK: - Store Bootstrap
+    // MARK: - Getting Started Step Router
 
-    private func bootstrapStore() async {
-        guard store == nil else { return }
-        store = HomeStore(
-            modelContainer: modelContext.container,
-            appState: appState
-        )
+    /// Routes a tapped Path step to its destination. Only `.active` steps are tappable
+    /// (enforced in GettingStartedPathView), so this just opens the right surface.
+    private func handleStep(_ kind: GettingStartedStepKind, store: HomeStore) {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        // TODO(Moments): when gettingStarted advances a step (e.g. map → invite), fire a warm
+        // HomeEvent/Moment ("First Spark") via the (future) Moments surface. No silent flag.
+        switch kind {
+        case .mapDesires:
+            mapWasCompleteOnOpen = store.myMapComplete
+            activeMap = DesireMapStore(
+                modelContainer: modelContext.container,
+                appState: appState
+            )
+        case .invitePartner:
+            appState.selectedTab = .map     // pairing lives on the Map tab today (PairingSettingsView)
+        case .seeReveal:
+            presentReveal()                  // D4 reveal (stub) — full-screen "magic moment"
+        case .profile:
+            break                            // profile already done
+        }
+    }
+
+    /// Presents the Desire-Map reveal (D4). Reads matches + the entitlement gate via the store.
+    private func presentReveal() {
+        activeReveal = DesireRevealStore(appState: appState, entitlements: entitlements)
+    }
+
+    /// Gap between the rater cover dismissing and the reveal cover rising. Two covers on one
+    /// host cannot transition at once, so the reveal waits for the rater's dismiss to settle.
+    private static let raterToRevealHandoff: Double = 0.35
+
+    /// On rater close: refresh Home, then branch. If both maps are now complete and the reveal
+    /// has not been seen, hand straight off to the reveal (the second-finisher gift, or a first
+    /// finisher re-entering once their partner has finished). Otherwise, if the map JUST flipped
+    /// to complete (first finisher, partner still pending), play the one-shot completion beat.
+    /// The map is a moment, not a home state.
+    private func handleRaterDismiss() {
+        Task {
+            let wasComplete = mapWasCompleteOnOpen
+            await store.loadAll()
+            guard store.myMapComplete == true else { return }
+            if store.partnerMapComplete, !store.revealDone {
+                try? await Task.sleep(for: .seconds(Self.raterToRevealHandoff))
+                presentReveal()
+            } else if !wasComplete, store.isPaired {
+                // First finisher, paired: the one-shot map-charted moment. (Solo completion is
+                // the solo-funnel beat, deferred — no partner to "see where you align" with yet.)
+                store.celebrateMapCompletion()
+            }
+        }
     }
 
     // MARK: - Debug Controls
@@ -213,6 +304,17 @@ struct HomeRouterView: View {
             Text("HomeState: \(String(describing: store.homeState))")
                 .font(AppFonts.meta)
                 .foregroundStyle(AppColors.textTertiary)
+
+            Button("OB ✓") {
+                let profile: UserProfile
+                if let existing = try? modelContext.fetch(FetchDescriptor<UserProfile>()).first {
+                    profile = existing
+                } else {
+                    profile = UserProfile(displayName: "Debug User")
+                    modelContext.insert(profile)
+                }
+                appState.markOnboardingComplete(profile, context: modelContext)
+            }
 
             Button(store.myMapComplete ? "Map ✓" : "Map ✗") {
                 store.myMapComplete.toggle()
@@ -226,6 +328,12 @@ struct HomeRouterView: View {
             Button(store.revealDone ? "Reveal ✓" : "Reveal ✗") {
                 store.revealDone.toggle()
             }
+            // Direct reveal entry for testing — the production link is the Getting Started
+            // `.seeReveal` step, only reachable once BOTH partners finish. One button per variant
+            // so all three telegraphs are feelable solo (production picks one by coupleId).
+            Button("Reveal · Gather ▶")      { presentSampleReveal(.gather) }
+            Button("Reveal · Sweep ▶")       { presentSampleReveal(.sweep) }
+            Button("Reveal · Constellate ▶") { presentSampleReveal(.constellate) }
         }
         .font(AppFonts.overline)
         .foregroundStyle(AppColors.accentPrimary)
@@ -234,6 +342,19 @@ struct HomeRouterView: View {
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
         .padding(.trailing, AppSpacing.md)
         .bottomContentInset(layout)
+    }
+
+    /// Opens the reveal with sample matches and a forced ceremony variant (debug feel-testing).
+    private func presentSampleReveal(_ variant: CeremonyVariant) {
+        let reveal = DesireRevealStore.previewStore(matches: [
+            .sample("New Relationship Energy", .mutual, free: true),
+            .sample("Overnight Stays With Others", .adjacent, locked: true),
+            .sample("Meeting Your Partner's Connections", .mutual, locked: true),
+            .sample("Shared Space Agreements", .mutual, locked: true),
+            .sample("Deep Conversations Outside", .adjacent, locked: true),
+        ], entitlements: entitlements)
+        reveal.debugVariantOverride = variant
+        activeReveal = reveal
     }
     #endif
 }

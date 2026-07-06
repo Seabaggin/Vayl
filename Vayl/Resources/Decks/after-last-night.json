@@ -1,0 +1,240 @@
+{
+  "id": "after-last-night",
+  "title": "After Last Night",
+  "subtitle": "The morning-after conversation.",
+  "category": "experienceArc",
+  "act": 1,
+  "intensity": 4,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": [
+    "experience",
+    "core",
+    "processing"
+  ],
+  "sort_order": 9,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "aln-01",
+      "deck_id": "after-last-night",
+      "text": "One word for last night.\n\nNot the word you think you should say.\n\nThe one that's actually there.",
+      "highlight_words": [
+        "One word"
+      ],
+      "type": "snapshot",
+      "intensity": 2,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    },
+    {
+      "id": "aln-02",
+      "deck_id": "after-last-night",
+      "text": "What surprised you?\n\nAbout them. About yourself.\n\nAbout how it actually felt.",
+      "highlight_words": [
+        "surprised"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 2
+    },
+    {
+      "id": "aln-03",
+      "deck_id": "after-last-night",
+      "text": "What was better than you expected?",
+      "highlight_words": [
+        "better"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "excited",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 3
+    },
+    {
+      "id": "aln-04",
+      "deck_id": "after-last-night",
+      "text": "Where is last night sitting in your body right now?\n\nDon't explain it.\n\nJust point to it.",
+      "highlight_words": [
+        "your body"
+      ],
+      "type": "bodyCheck",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 4
+    },
+    {
+      "id": "aln-05",
+      "deck_id": "after-last-night",
+      "text": "Was there a moment you looked for each other?\n\nWhat were you checking for when you did?",
+      "highlight_words": [
+        "looked for each other"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 5
+    },
+    {
+      "id": "aln-06",
+      "deck_id": "after-last-night",
+      "text": "Is there a moment you keep replaying?\n\nWhat is it asking you?",
+      "highlight_words": [
+        "replaying"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "anxious",
+      "context_beat_type": "banner",
+      "context_beat_copy": "Almost everyone replays something the morning after. Give it a minute of daylight.",
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 6
+    },
+    {
+      "id": "aln-07",
+      "deck_id": "after-last-night",
+      "text": "Did anything land differently than you both agreed it would?\n\nName it plainly.\n\nNo verdicts yet. Just the truth of it.",
+      "highlight_words": [
+        "land differently"
+      ],
+      "type": "prompt",
+      "intensity": 6,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": "If something crossed a line, say which line, out loud.\n\nYou can decide together what it needs after the deck, when you've both been heard.",
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 7
+    },
+    {
+      "id": "aln-08",
+      "deck_id": "after-last-night",
+      "text": "What's one thing about last night you haven't said out loud yet?",
+      "highlight_words": [
+        "haven't said out loud"
+      ],
+      "type": "whisper",
+      "intensity": 6,
+      "who_starts": "both",
+      "is_sensitive": true,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 8
+    },
+    {
+      "id": "aln-09",
+      "deck_id": "after-last-night",
+      "text": "What did last night teach you about what you two need before the next time?\n\nBe specific.\n\nSmall things count.",
+      "highlight_words": [
+        "before the next time"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 9
+    },
+    {
+      "id": "aln-10",
+      "deck_id": "after-last-night",
+      "text": "What are you glad you did?\n\nSay it without softening it.",
+      "highlight_words": [
+        "glad"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "excited",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 10
+    },
+    {
+      "id": "aln-11",
+      "deck_id": "after-last-night",
+      "text": "One thing you'd do again.\n\nOne thing you'd do differently.\n\nSay both. Then tell each other one thing the other did last night, or this morning, that you're grateful for.",
+      "highlight_words": [
+        "again",
+        "differently"
+      ],
+      "type": "closingRitual",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 11
+    }
+  ]
+}

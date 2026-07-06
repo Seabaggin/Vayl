@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Home v2 · “The Observatory” (accurate card hero)</title>
+<style>
+  :root {
+    --void: #0a0810;
+    --cardBg: #0d0a14;     /* the prompt card is a CARD — solid dark, not glass */
+    --cyan: #00c2ff;
+    --purple: #6c3ae0;
+    --magenta: #ff006a;
+    --label: rgba(160,125,205,0.45);
+    --t-display: rgba(255,255,255,0.92);
+    --t-primary: rgba(255,255,255,0.88);
+    --t-secondary: rgba(255,255,255,0.55);
+    --t-tertiary: rgba(255,255,255,0.30);
+    --t-whisper: rgba(255,255,255,0.28);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%;
+    background: #16161c; color: #e7e7f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .wrap { display: flex; height: 100vh; }
+
+  /* ── Side panel ── */
+  .panel {
+    width: 270px; flex-shrink: 0; padding: 26px 22px;
+    background: #101016; border-right: 1px solid #1e1b2c; overflow-y: auto;
+  }
+  .panel h1 { font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); margin: 0 0 4px; }
+  .panel h2 { font-size: 17px; font-weight: 600; color: var(--t-display); margin: 0 0 14px; }
+  .panel p  { font-size: 12.5px; line-height: 1.55; color: var(--t-secondary); }
+  .panel ul { padding-left: 16px; margin: 8px 0 18px; }
+  .panel li { font-size: 12px; line-height: 1.5; color: var(--t-secondary); margin-bottom: 6px; }
+  .panel .nav a {
+    display: block; font-size: 12px; padding: 7px 10px; margin-bottom: 5px;
+    color: var(--t-secondary); text-decoration: none;
+    border: 1px solid #1e1b2c; border-radius: 8px;
+  }
+  .panel .nav a.active { color: var(--t-display); border-color: rgba(108,58,224,0.5); }
+  .replayBtn {
+    display: block; width: 100%; font-size: 12px; font-weight: 600; padding: 8px 10px; margin-bottom: 6px;
+    color: var(--t-primary); background: rgba(108,58,224,0.14); border: 1px solid rgba(108,58,224,0.4);
+    border-radius: 8px; cursor: pointer; text-align: left;
+  }
+  .replayBtn:hover { background: rgba(108,58,224,0.24); }
+  .toggleRow { display: flex; align-items: center; gap: 10px; margin: 18px 0; }
+  .toggleRow span { font-size: 12px; color: var(--t-secondary); }
+  .toggle {
+    width: 42px; height: 24px; border-radius: 12px; cursor: pointer;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+    position: relative; transition: background 0.25s ease;
+  }
+  .toggle::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+    border-radius: 50%; background: #fff; transition: left 0.25s ease;
+  }
+  .toggle.on { background: linear-gradient(90deg, var(--purple), var(--magenta)); box-shadow: 0 0 14px rgba(108,58,224,0.45); }
+  .toggle.on::after { left: 23px; }
+
+  .stage {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(120% 80% at 50% 18%, #20202a 0%, #121217 60%);
+    min-width: 0;
+  }
+
+  /* ── Phone ── */
+  .phone {
+    position: relative; width: 390px; height: 844px;
+    border-radius: 47px; overflow: hidden;
+    background: var(--void);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    touch-action: none; user-select: none;
+  }
+
+  /* ── Atmosphere — nebula field + starfield (matches the shipped Home look) ── */
+  .atmo { position: absolute; inset: 0; opacity: 0.30; pointer-events: none; transition: opacity 2.4s ease; }
+  body.present .atmo { opacity: 0.46; }
+  body.rm .atmo { transition: none; opacity: 0.46; }
+  .nebula {
+    position: absolute; left: 50%; top: -8%; width: 150%; height: 70%;
+    transform: translateX(-50%);
+    background: radial-gradient(55% 60% at 50% 30%, rgba(108,58,224,0.40), rgba(108,58,224,0.10) 60%, transparent 80%);
+    filter: blur(40px);
+  }
+  .blob { position: absolute; border-radius: 50%; filter: blur(52px); }
+  .bC { left: -110px; top: 30px;  width: 360px; height: 300px; background: radial-gradient(closest-side, rgba(0,194,255,0.30), transparent 72%); }
+  .bM { right: -120px; top: 80px; width: 340px; height: 290px; background: radial-gradient(closest-side, rgba(255,0,106,0.26), transparent 72%); }
+  .bB { left: -60px; bottom: -40px; width: 380px; height: 320px; background: radial-gradient(closest-side, rgba(0,140,255,0.22), transparent 72%); }
+  .stars { position: absolute; inset: 0; pointer-events: none; }
+  .stars i { position: absolute; border-radius: 50%; background: #fff; }
+  .stars i.tw { animation: twinkle 2s ease-in-out infinite alternate; } /* AppAnimation.ambientPulse */
+  @keyframes twinkle { from { opacity: 0.12; } to { opacity: 0.55; } }
+  body.rm .stars i.tw { animation: none; opacity: 0.3; }
+
+  /* ── Screen ── */
+  .screen {
+    position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
+    padding: 0 0 120px; scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+
+  .statusbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 28px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.65);
+  }
+  .statusbar .icons { letter-spacing: 2px; font-size: 11px; opacity: 0.7; }
+
+  /* Header — the shipped look: gradient display wordmark + partner pill w/ chevron */
+  .header { display: flex; align-items: center; padding: 14px 18px 0; }
+  .header .name {
+    font-size: 34px; font-weight: 800; letter-spacing: 0.01em;
+    background: linear-gradient(95deg, var(--cyan) 5%, var(--purple) 50%, var(--magenta) 95%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .partnerPill {
+    margin-left: auto; display: flex; align-items: center; gap: 7px;
+    height: 36px; padding: 0 10px 0 6px; border-radius: 18px; cursor: pointer;
+    background: rgba(18,15,26,0.85); backdrop-filter: blur(40px);
+    border: 1px solid rgba(255,255,255,0.07);
+  }
+  .partnerPill .avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.85);
+  }
+  .partnerPill .pname { font-size: 14px; font-weight: 600; color: var(--t-secondary); }
+  .partnerPill .chev { font-size: 14px; color: var(--t-whisper); }
+
+  /* ════ THE HERO — a levitating prompt card on a pedestal of light ════
+     The card is the room's primary light source. It hovers (ambientDrift),
+     its light lands on the void as the pedestal strip + bloom beneath.   */
+  .hero { position: relative; height: 430px; margin-top: 8px; }
+  .deckTrack { position: absolute; inset: 0; }
+  .qcard {
+    position: absolute; left: 34px; top: 22px; width: 322px; height: 300px;
+    border-radius: 28px; padding: 30px 28px;
+    background: var(--cardBg);
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05);
+    display: flex; align-items: center;
+    cursor: pointer; will-change: transform, opacity;
+    transition: transform 0.45s cubic-bezier(0.32, 1.15, 0.45, 1), opacity 0.35s ease; /* AppAnimation.spring approx */
+  }
+  .qcard .q {
+    font-size: 20px; font-weight: 600; line-height: 1.45; color: var(--t-display);
+  }
+  /* the Dealer's signature — ✦ corner marks at 15%, carried over from OB cards */
+  .qcard .fl { position: absolute; font-size: 10px; color: rgba(255,255,255,0.15); }
+  .qcard .fl.tl { top: 12px; left: 14px; } .qcard .fl.tr { top: 12px; right: 14px; }
+  .qcard .fl.bl { bottom: 12px; left: 14px; } .qcard .fl.br { bottom: 12px; right: 14px; }
+
+  /* levitation — the card breathes in the air. 2 × ambientDrift. RM: still. */
+  .levit { animation: levitate 4s ease-in-out infinite alternate; }
+  @keyframes levitate { from { transform: translateY(0); } to { transform: translateY(-7px); } }
+  body.rm .levit { animation: none; }
+  body.carousel .levit { animation: none; } /* in hand, not floating */
+
+  /* the pedestal — the card's light landing on an unseen surface */
+  .pedestal { position: absolute; left: 50%; top: 352px; width: 250px; transform: translateX(-50%); pointer-events: none; }
+  .pBloom {
+    position: absolute; left: 50%; top: -66px; transform: translateX(-50%);
+    width: 230px; height: 96px;
+    background: radial-gradient(closest-side, rgba(108,58,224,0.50), rgba(108,58,224,0.12) 62%, transparent);
+    filter: blur(22px);
+    animation: bloomBreathe 4s ease-in-out infinite alternate; /* counter-phase to the levitation */
+  }
+  @keyframes bloomBreathe { from { opacity: 0.85; transform: translateX(-50%) scaleX(1); } to { opacity: 0.55; transform: translateX(-50%) scaleX(0.90); } }
+  body.rm .pBloom { animation: none; opacity: 0.7; }
+  .pStrip {
+    height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan) 18%, #7a5cff 50%, var(--magenta) 82%, transparent);
+    box-shadow: 0 0 14px rgba(108,58,224,0.85), 0 0 4px rgba(0,194,255,0.6);
+    transition: width 0.45s cubic-bezier(0.32, 1.15, 0.45, 1); /* widens to carry the deck */
+  }
+  body.carousel .pedestal { width: 320px; }
+
+  /* deck meta — only while the deck is in hand */
+  .deckMeta {
+    position: absolute; left: 0; right: 0; top: 374px; text-align: center;
+    opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+  }
+  body.carousel .deckMeta { opacity: 1; }
+  .deckMeta .dots { display: flex; justify-content: center; gap: 6px; }
+  .deckMeta .dots i { width: 5px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.16); transition: all 0.3s ease; }
+  .deckMeta .dots i.on { width: 16px; background: var(--cyan); box-shadow: 0 0 8px rgba(0,194,255,0.5); }
+  .deckMeta .count { margin-top: 8px; font-size: 11px; color: var(--t-whisper); }
+
+  /* ── DECK-IN-HAND (carousel): the ambient zone recedes — deckFocused mechanic.
+     In: AppAnimation.enter 0.4s · Out: AppAnimation.fast 0.15s (JS-swapped)   */
+  .pulseRail, .constellation { transition: filter 0.4s ease-out, opacity 0.4s ease-out; }
+  body.unfocusing .pulseRail, body.unfocusing .constellation { transition: filter 0.15s ease-out, opacity 0.15s ease-out; }
+  body.carousel .pulseRail, body.carousel .constellation { filter: blur(20px); opacity: 0.06; pointer-events: none; }
+  body.rm .pulseRail, body.rm .constellation { transition: opacity 0.15s ease !important; }
+  body.rm.carousel .pulseRail, body.rm.carousel .constellation { filter: none; opacity: 0.15; }
+  .tabbar { transition: opacity 0.4s ease-out; }
+  body.carousel .tabbar { opacity: 0.15; }
+
+  .overline {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.17em; text-transform: uppercase;
+    color: var(--label);
+  }
+
+  /* ── THE PULSE — instrument rail. State + ember at rest; graph materialises. ── */
+  .pulseRail { position: relative; margin-top: 16px; cursor: pointer; }
+  .pulseRail .head { display: flex; align-items: baseline; padding: 0 18px; }
+  .pulseRail .trend { margin-left: auto; font-size: 12px; color: var(--t-whisper); }
+  .pulseRail .state { font-size: 24px; font-weight: 700; color: var(--t-display); padding: 5px 18px 0; }
+  .pulseRail .sub { font-size: 13px; color: var(--t-tertiary); padding: 3px 18px 0; }
+  .pulseRail svg { display: block; width: 390px; height: 116px; margin-top: 2px; }
+  .proj { opacity: 0; transition: opacity 0.65s ease-out, filter 0.65s ease-out; filter: blur(6px); }
+  .pulseRail.lit .proj { opacity: 1; filter: blur(0); }
+  body.rm .proj { transition: opacity 0.15s ease; filter: none; }
+  .days {
+    display: flex; justify-content: space-between; padding: 0 26px;
+    font-size: 10px; font-weight: 600; color: var(--t-whisper);
+    opacity: 0; transition: opacity 0.65s ease-out 0.1s;
+  }
+  .pulseRail.lit .days { opacity: 1; }
+  body.rm .days { transition: opacity 0.15s ease; }
+  .days .d { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 22px; }
+  .days .dd { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.18); }
+  .days .d.now .dd { width: 9px; height: 9px; background: var(--magenta); box-shadow: 0 0 12px rgba(255,0,106,0.9); }
+  .days .d.now { color: rgba(255,255,255,0.6); }
+  .history {
+    padding: 6px 18px 0; font-size: 12px; color: var(--t-whisper);
+    opacity: 0; transition: opacity 0.5s ease 0.2s;
+  }
+  .pulseRail.lit .history { opacity: 1; }
+  /* the ember IS the today-node — it sits at the path end and never moves;
+     the graph materialises around it (settled-hand pattern)                */
+  .nodeEmber { position: absolute; right: 9px; top: 74px; width: 30px; height: 30px; pointer-events: none; }
+  .nodeEmber .core {
+    position: absolute; inset: 10px; border-radius: 50%; background: var(--magenta);
+    box-shadow: 0 0 14px rgba(255,0,106,0.9);
+  }
+  .nodeEmber .halo {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 1.5px solid rgba(255,0,106,0.45);
+    animation: emberBreathe 2s ease-in-out infinite alternate; /* AppAnimation.ambientPulse */
+  }
+  @keyframes emberBreathe { from { transform: scale(0.9); opacity: 0.5; } to { transform: scale(1.12); opacity: 1; } }
+  body.rm .nodeEmber .halo { animation: none; opacity: 0.8; }
+
+  /* ── THE CONSTELLATION — tray-less, compact, below the fold is fine ── */
+  .constellation { margin-top: 28px; position: relative; }
+  .constellation .head { display: flex; align-items: baseline; padding: 0 18px 12px; }
+  .constellation .count { margin-left: auto; font-size: 12px; color: var(--t-whisper); }
+  .carouselC { position: relative; height: 168px; }
+  .ccard {
+    position: absolute; top: 0; left: 18px; width: 322px; height: 160px;
+    border-radius: 20px; padding: 16px 20px;
+    background: rgba(18,15,26,0.92); backdrop-filter: blur(40px);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.06);
+    overflow: hidden; cursor: grab; will-change: transform, opacity;
+  }
+  .ccard::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 4%, var(--cyan) 26%, var(--purple) 54%, var(--magenta) 80%, transparent 96%);
+    opacity: 0.28;
+  }
+  .ccard .tag { position: absolute; top: 16px; right: 20px; font-size: 9px; font-weight: 700; letter-spacing: 0.16em; color: var(--cyan); opacity: 0.85; }
+  .ccard .term { display: flex; align-items: center; gap: 9px; font-size: 19px; font-weight: 700; color: var(--t-display); margin: 0 0 8px; }
+  .ccard .node { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .ccard .def { font-size: 12.5px; line-height: 1.5; color: var(--t-secondary); }
+  .dotsC { display: flex; justify-content: center; gap: 7px; margin-top: 8px; }
+  .dotsC i { width: 5px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.16); transition: all 0.3s ease; }
+  .dotsC i.on { width: 16px; background: var(--cyan); box-shadow: 0 0 8px rgba(0,194,255,0.5); }
+
+  /* ── ARRIVAL — the card descends onto its light (BrandView placement) ── */
+  body.arrive1 .header, body.arrive1 .statusbar { animation: whisperIn 0.6s ease-out 0.10s backwards; }
+  body.arrive1 .qcard.active { animation: cardDescend 0.9s cubic-bezier(0.25, 1.05, 0.4, 1) 0.35s backwards; } /* cinematic placement */
+  @keyframes cardDescend { from { transform: translateY(-54px); opacity: 0; } }
+  body.arrive1 .pedestal { animation: pedestalBloom 0.7s ease-out 0.95s backwards; } /* light answers the landing */
+  @keyframes pedestalBloom { from { opacity: 0; transform: translateX(-50%) scaleX(0.5); } }
+  body.arrive1 .pulseRail { animation: whisperIn 0.7s ease-out 1.25s backwards; }
+  body.arrive1 .constellation { animation: whisperIn 0.7s ease-out 1.40s backwards; }
+  body.arrive1 .tabbar { animation: whisperIn 0.5s ease-out 1.5s backwards; }
+  body.arrive2 .header, body.arrive2 .statusbar { animation: whisperIn 0.35s ease-out backwards; }
+  body.arrive2 .qcard.active { animation: cardSettle 0.4s cubic-bezier(0.30, 1.16, 0.42, 1) 0.08s backwards; } /* squared */
+  @keyframes cardSettle { from { transform: translateY(-6px); opacity: 0.5; } }
+  body.arrive2 .pulseRail, body.arrive2 .constellation, body.arrive2 .tabbar { animation: whisperIn 0.35s ease-out 0.20s backwards; }
+  @keyframes whisperIn { from { opacity: 0; } }
+  /* Reduce Motion: arrival doesn't play — enforced in JS (playArrival skips classes) */
+
+  /* ── Racetrack tab bar ── */
+  .tabbar {
+    position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+    width: 340px; height: 64px; border-radius: 32px;
+    background: rgba(10,8,16,0.97); backdrop-filter: blur(30px);
+    border: 1px solid rgba(255,255,255,0.055);
+    display: flex; align-items: center; justify-content: space-around;
+    z-index: 40;
+  }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; width: 60px; }
+  .tab svg { width: 21px; height: 21px; stroke: rgba(255,255,255,0.22); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .tab span { font-size: 10px; color: rgba(255,255,255,0.22); font-weight: 400; }
+  .tab .adot { width: 4px; height: 4px; border-radius: 50%; background: transparent; }
+  .tab.active svg { stroke: url(#tabGrad); }
+  .tab.active span { color: rgba(255,255,255,0.65); font-weight: 600; }
+  .tab.active .adot { background: linear-gradient(90deg, var(--cyan), var(--magenta)); box-shadow: 0 0 6px rgba(255,0,106,0.6); }
+
+  /* ── Pulse analytics bottom sheet ── */
+  .scrim {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.45); z-index: 50;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 560px; z-index: 51;
+    border-radius: 26px 26px 0 0; padding: 10px 22px 0;
+    background: rgba(21,16,30,0.97); backdrop-filter: blur(40px);
+    box-shadow: 0 -24px 70px rgba(0,0,0,0.80), inset 0 1px 0 rgba(255,255,255,0.07);
+    transform: translateY(105%);
+    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* sheet entrance per scope §2 */
+  }
+  .sheet::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; border-radius: 1px;
+    background: linear-gradient(90deg, transparent 4%, var(--cyan) 26%, var(--purple) 54%, var(--magenta) 80%, transparent 96%);
+    opacity: 0.60;
+  }
+  .sheet .handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); margin: 4px auto 16px; cursor: pointer; }
+  .sheet h3 { margin: 0 0 2px; font-size: 20px; font-weight: 700; color: var(--t-display); }
+  .sheet .sub { font-size: 12px; color: var(--t-tertiary); margin-bottom: 18px; }
+  .sheet svg { width: 100%; height: 150px; }
+  .statGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .stat {
+    border-radius: 16px; padding: 14px 16px;
+    background: rgba(18,15,26,0.9); border: 1px solid rgba(255,255,255,0.07); position: relative; overflow: hidden;
+  }
+  .stat::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent); }
+  .stat .v { font-size: 22px; font-weight: 700; color: var(--t-display); }
+  .stat .k { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--label); margin-top: 3px; }
+  body.sheetOpen .scrim { opacity: 1; pointer-events: auto; }
+  body.sheetOpen .sheet { transform: translateY(0); }
+  body.rm .sheet { transition: opacity 0.15s ease, transform 0s; }
+
+  @media (max-width: 880px) { .panel { display: none; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="tabGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#00c2ff"/><stop offset="55%" stop-color="#6c3ae0"/><stop offset="100%" stop-color="#ff006a"/>
+  </linearGradient>
+  <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#00c2ff"/><stop offset="52%" stop-color="#6c3ae0"/><stop offset="100%" stop-color="#ff006a"/>
+  </linearGradient>
+</defs></svg>
+
+<div class="wrap">
+  <aside class="panel">
+    <h1>Vayl · Home v2 — accurate hero</h1>
+    <h2>The Observatory</h2>
+    <p>The hero is the real one: a levitating prompt card on a pedestal of light. <b>Tap it</b> — the deck comes into hand as a swipeable carousel and the room recedes (the deckFocused mechanic). Below the card: the Pulse as an instrument rail (ember + state at rest, graph materialises on attention), then the Constellation past the fold.</p>
+    <ul>
+      <li>Tap the card → deck-in-hand. Swipe through prompts. Tap below the deck to set it down</li>
+      <li>Tap the Pulse rail once → graph lights. Again → full history sheet</li>
+      <li>The pedestal: card light landing on the void — same physics as the ember below it</li>
+      <li>Constellation sits past the fold deliberately — ambient context, not a primary action</li>
+    </ul>
+    <button class="replayBtn" id="replay1">▶ Replay — First Arrival</button>
+    <button class="replayBtn" id="replay2">▶ Replay — Return Visit</button>
+    <div class="toggleRow"><div class="toggle" id="rmToggle"></div><span>Reduce Motion</span></div>
+    <h1 style="margin-top:22px">Compare</h1>
+    <div class="nav">
+      <a href="/home-v2-observatory.html" class="active">v2 A · The Observatory (this)</a>
+      <a href="/home-v2-orbit.html">v2 B · The Orbit (minimal)</a>
+      <a href="/home-v2-constellation-lab.html">v2 · Constellation Lab (4 variants)</a>
+      <a href="/home-settled-hand.html">v1 · The Settled Hand</a>
+      <a href="/home-atmospheric-focus.html">v1 · Atmospheric Focus</a>
+      <a href="/home-naked-hud.html">v1 · Naked HUD</a>
+    </div>
+  </aside>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="atmo">
+        <div class="nebula"></div>
+        <div class="blob bC"></div><div class="blob bM"></div><div class="blob bB"></div>
+      </div>
+      <div class="stars" id="stars"></div>
+
+      <div class="screen" id="screen">
+        <div class="statusbar"><span>9:41</span><span class="icons">▮▮▮ ▰</span></div>
+
+        <div class="header">
+          <span class="name">Jordan.</span>
+          <div class="partnerPill"><div class="avatar">A</div><span class="pname">Alex</span><span class="chev">›</span></div>
+        </div>
+
+        <!-- ════ HERO: levitating prompt card + pedestal + deck-in-hand ════ -->
+        <div class="hero" id="hero">
+          <div class="pedestal"><div class="pBloom"></div><div class="pStrip"></div></div>
+          <div class="deckTrack" id="deckTrack"></div>
+          <div class="deckMeta">
+            <div class="dots" id="deckDots"></div>
+            <div class="count" id="deckCount"></div>
+          </div>
+        </div>
+
+        <!-- ════ THE PULSE — instrument rail ════ -->
+        <div class="pulseRail" id="pulseRail">
+          <div class="head"><span class="overline">The Pulse</span><span class="trend">7-day trend</span></div>
+          <div class="state">The Sovereign Space</div>
+          <div class="sub">Grounded · Secure</div>
+          <div class="nodeEmber"><div class="halo"></div><div class="core"></div></div>
+          <svg viewBox="0 0 390 116">
+            <g class="proj">
+              <path d="M 24 84 L 78 74 L 132 79 L 186 56 L 240 47 L 294 53 L 366 22"
+                    fill="none" stroke="url(#sparkGrad)" stroke-width="7" stroke-linecap="round"
+                    opacity="0.35" filter="blur(7px)"/>
+              <path d="M 24 84 L 78 74 L 132 79 L 186 56 L 240 47 L 294 53 L 366 22"
+                    fill="none" stroke="url(#sparkGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+          </svg>
+          <div class="days">
+            <div class="d"><i class="dd"></i>M</div><div class="d"><i class="dd"></i>T</div>
+            <div class="d"><i class="dd"></i>W</div><div class="d"><i class="dd"></i>T</div>
+            <div class="d"><i class="dd"></i>F</div><div class="d"><i class="dd"></i>S</div>
+            <div class="d now"><i class="dd"></i>S</div>
+          </div>
+          <div class="history">View Full History</div>
+        </div>
+
+        <!-- ════ THE CONSTELLATION — past the fold, deliberately ════ -->
+        <div class="constellation">
+          <div class="head"><span class="overline">The Constellation</span><span class="count" id="cCount">1 of 5</span></div>
+          <div class="carouselC" id="carouselC"></div>
+          <div class="dotsC" id="dotsC"></div>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab active"><svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg><span>Home</span><i class="adot"></i></div>
+        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg><span>Play</span><i class="adot"></i></div>
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg><span>Map</span><i class="adot"></i></div>
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5Z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></svg><span>Learn</span><i class="adot"></i></div>
+      </div>
+
+      <div class="scrim" id="scrim"></div>
+      <div class="sheet" id="sheet">
+        <div class="handle" id="sheetHandle"></div>
+        <h3>The Pulse</h3>
+        <div class="sub">30-day capacity · full history stub</div>
+        <svg viewBox="0 0 346 150">
+          <path d="M 6 120 C 40 110 60 124 90 112 S 150 84 180 90 S 250 56 280 60 S 330 30 340 24"
+                fill="none" stroke="url(#sparkGrad)" stroke-width="6" opacity="0.3" filter="blur(6px)"/>
+          <path d="M 6 120 C 40 110 60 124 90 112 S 150 84 180 90 S 250 56 280 60 S 330 30 340 24"
+                fill="none" stroke="url(#sparkGrad)" stroke-width="2.2"/>
+          <circle cx="340" cy="24" r="4" fill="#ff006a"/>
+        </svg>
+        <div class="statGrid">
+          <div class="stat"><div class="v">14</div><div class="k">Sessions</div></div>
+          <div class="stat"><div class="v">86</div><div class="k">Cards</div></div>
+          <div class="stat"><div class="v">9</div><div class="k">Together</div></div>
+          <div class="stat"><div class="v">3.2</div><div class="k">Depth</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════ Reduce Motion ════ */
+const rmToggle = document.getElementById('rmToggle');
+rmToggle.addEventListener('click', () => {
+  rmToggle.classList.toggle('on');
+  document.body.classList.toggle('rm');
+});
+
+/* ════ Starfield ════ */
+(() => {
+  const stars = document.getElementById('stars');
+  for (let i = 0; i < 70; i++) {
+    const s = document.createElement('i');
+    const sz = 1 + Math.random() * 1.6;
+    s.style.width = s.style.height = sz + 'px';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.opacity = 0.12 + Math.random() * 0.32;
+    if (Math.random() < 0.22) { s.className = 'tw'; s.style.animationDelay = (Math.random() * 2) + 's'; }
+    stars.appendChild(s);
+  }
+})();
+
+/* ════ THE DECK — one floating card at rest; tap → deck-in-hand carousel ════ */
+const DECK = [
+  "What are the anchors that have kept you two tethered to each other through everything so far?",
+  "Where does communication between you two usually fall apart? What does that moment typically look like?",
+  "What's one thing you've never said out loud because the timing never felt right?",
+  "When do you feel most like a team — and when most like two people managing a schedule?",
+  "If nothing could go wrong, what would you ask for first?",
+];
+const track = document.getElementById('deckTrack');
+const deckDots = document.getElementById('deckDots');
+const deckCount = document.getElementById('deckCount');
+let deckIdx = 0, inHand = false;
+
+DECK.forEach((q, i) => {
+  const c = document.createElement('div');
+  c.className = 'qcard';
+  c.dataset.i = i;
+  c.innerHTML = `<span class="fl tl">✦</span><span class="fl tr">✦</span><span class="fl bl">✦</span><span class="fl br">✦</span><div class="q">${q}</div>`;
+  track.appendChild(c);
+  const d = document.createElement('i');
+  deckDots.appendChild(d);
+});
+
+function renderDeck() {
+  [...track.children].forEach(c => {
+    const off = +c.dataset.i - deckIdx;
+    c.classList.toggle('active', off === 0);
+    if (!inHand) {
+      /* at rest: only the active card exists, floating */
+      c.style.transform = off === 0 ? '' : `translateX(${off * 400}px)`;
+      c.style.opacity = off === 0 ? 1 : 0;
+      c.classList.toggle('levit', off === 0);
+    } else {
+      /* in hand: neighbours peek — Strava-style pager */
+      c.classList.remove('levit');
+      if (Math.abs(off) > 1) { c.style.transform = `translateX(${off * 340}px) scale(0.85)`; c.style.opacity = 0; }
+      else if (off === 0)    { c.style.transform = 'scale(0.94)'; c.style.opacity = 1; }
+      else                   { c.style.transform = `translateX(${off * 318}px) scale(0.86)`; c.style.opacity = 0.45; }
+    }
+  });
+  [...deckDots.children].forEach((d, i) => d.className = i === deckIdx ? 'on' : '');
+  deckCount.textContent = `Card ${deckIdx + 1} of ${DECK.length} · Relationship Health`;
+}
+
+function setHand(open) {
+  if (inHand === open) return;
+  inHand = open;
+  if (open) {
+    document.body.classList.remove('unfocusing');
+    document.body.classList.add('carousel');      /* ambient recedes: AppAnimation.enter */
+  } else {
+    document.body.classList.add('unfocusing');    /* ambient returns: AppAnimation.fast */
+    document.body.classList.remove('carousel');
+    setTimeout(() => document.body.classList.remove('unfocusing'), 200);
+  }
+  renderDeck();
+}
+
+/* tap card → take deck in hand; drag to page; tap outside → set it down */
+let dStart = 0, dDx = 0, dDragging = false;
+track.addEventListener('pointerdown', e => {
+  const card = e.target.closest('.qcard');
+  if (!card) return;
+  dDragging = true; dStart = e.clientX; dDx = 0;
+  track.setPointerCapture(e.pointerId);
+});
+track.addEventListener('pointermove', e => {
+  if (!dDragging || !inHand) return;
+  dDx = e.clientX - dStart;
+  [...track.children].forEach(c => {
+    const off = +c.dataset.i - deckIdx;
+    if (Math.abs(off) <= 1) {
+      c.style.transition = 'none';
+      const base = off === 0 ? 0 : off * 318;
+      const scale = off === 0 ? 0.94 : 0.86;
+      c.style.transform = `translateX(${base + dDx}px) scale(${scale})`;
+    }
+  });
+});
+track.addEventListener('pointerup', () => {
+  if (!dDragging) return;
+  dDragging = false;
+  [...track.children].forEach(c => c.style.transition = '');
+  if (!inHand) {
+    if (Math.abs(dDx) < 6) setHand(true);          // tap the floating card → deck in hand
+    return;
+  }
+  if (dDx < -60 && deckIdx < DECK.length - 1) deckIdx++;
+  else if (dDx > 60 && deckIdx > 0) deckIdx--;
+  dDx = 0;
+  renderDeck();
+});
+document.getElementById('screen').addEventListener('click', e => {
+  if (inHand && !e.target.closest('.hero')) setHand(false);
+});
+document.getElementById('hero').addEventListener('click', e => {
+  if (inHand && !e.target.closest('.qcard') && Math.abs(dDx) < 6) setHand(false); // tap beside the deck sets it down
+});
+
+/* ════ THE PULSE rail — ember at rest, graph materialises, then history ════ */
+const pulseRail = document.getElementById('pulseRail');
+let dissolveTimer = null;
+pulseRail.addEventListener('pointerenter', () => { clearTimeout(dissolveTimer); pulseRail.classList.add('lit'); });
+pulseRail.addEventListener('pointerleave', () => { dissolveTimer = setTimeout(() => pulseRail.classList.remove('lit'), 1600); });
+pulseRail.addEventListener('click', () => {
+  if (pulseRail.classList.contains('lit')) document.body.classList.add('sheetOpen');
+  else pulseRail.classList.add('lit');
+});
+document.getElementById('scrim').addEventListener('click', () => document.body.classList.remove('sheetOpen'));
+document.getElementById('sheetHandle').addEventListener('click', () => document.body.classList.remove('sheetOpen'));
+
+/* ════ Constellation ════ */
+const TERMS = [
+  { t: 'Compersion',   c: '#00c2ff', d: "Finding genuine joy in your partner's happiness with another person. Often described as the opposite of jealousy." },
+  { t: 'NRE',          c: '#6c3ae0', d: "New Relationship Energy — the rush of intensity at the start of a new connection. Naming it helps you enjoy it without letting it steer." },
+  { t: 'Metamour',     c: '#ff006a', d: "Your partner's partner. A relationship of its own, even if you never become close." },
+  { t: 'Polycule',     c: '#00c2ff', d: "The connected network of relationships around you and your partners. Every polycule has its own shape." },
+  { t: 'Kitchen Table',c: '#6c3ae0', d: "A style where everyone involved could comfortably share a meal together. One possible shape, not the goal." },
+];
+const carouselC = document.getElementById('carouselC');
+const dotsC = document.getElementById('dotsC');
+const cCount = document.getElementById('cCount');
+let cur = 0;
+
+TERMS.forEach((_, i) => { const d = document.createElement('i'); if (i === 0) d.className = 'on'; dotsC.appendChild(d); });
+
+function makeCCard(i) {
+  const el = document.createElement('div');
+  el.className = 'ccard';
+  el.innerHTML = `<span class="tag">Glossary</span>
+    <div class="term"><span class="node" style="background:${TERMS[i].c};box-shadow:0 0 10px ${TERMS[i].c}"></span>${TERMS[i].t}</div>
+    <div class="def">${TERMS[i].d}</div>`;
+  return el;
+}
+function layoutC(animated) {
+  carouselC.innerHTML = '';
+  for (let k = 2; k >= 0; k--) {
+    const i = cur + k;
+    if (i >= TERMS.length) continue;
+    const card = makeCCard(i);
+    const peek = k === 0 ? 0 : (k === 1 ? 330 : 344);
+    const scale = k === 0 ? 1 : (k === 1 ? 0.93 : 0.88);
+    card.style.transform = `translateX(${peek}px) scale(${scale})`;
+    card.style.opacity = k === 0 ? 1 : (k === 1 ? 0.55 : 0.25);
+    if (k === 0) card.id = 'topC';
+    if (animated && !document.body.classList.contains('rm')) {
+      card.style.transition = 'transform 0.5s cubic-bezier(0.32, 1.15, 0.45, 1), opacity 0.4s ease';
+    }
+    carouselC.appendChild(card);
+  }
+  [...dotsC.children].forEach((d, i) => d.className = i === cur ? 'on' : '');
+  cCount.textContent = `${cur + 1} of ${TERMS.length}`;
+  bindCDrag();
+}
+function bindCDrag() {
+  const top = document.getElementById('topC');
+  if (!top) return;
+  let sx = 0, dx = 0, dragging = false;
+  top.style.touchAction = 'none';
+  top.addEventListener('pointerdown', e => {
+    dragging = true; sx = e.clientX; top.setPointerCapture(e.pointerId);
+    top.style.transition = 'none'; top.style.cursor = 'grabbing';
+    e.stopPropagation();
+  });
+  top.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    dx = e.clientX - sx;
+    if (cur === 0 && dx > 0) dx *= 0.3;
+    top.style.transform = `translateX(${dx}px) rotate(${dx * 0.035}deg)`;
+  });
+  top.addEventListener('pointerup', () => {
+    if (!dragging) return;
+    dragging = false; top.style.cursor = 'grab';
+    const rm = document.body.classList.contains('rm');
+    if (dx < -70 && cur < TERMS.length - 1) {
+      top.style.transition = rm ? 'opacity 0.15s ease' : 'transform 0.4s cubic-bezier(0.5, 0, 0.75, 0.4), opacity 0.3s ease';
+      top.style.transform = `translateX(-420px) rotate(-12deg)`; top.style.opacity = 0;
+      cur++; setTimeout(() => layoutC(true), rm ? 150 : 220);
+    } else if (dx > 70 && cur > 0) {
+      cur--; layoutC(true);
+    } else {
+      top.style.transition = rm ? 'opacity 0.15s ease' : 'transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1)';
+      top.style.transform = 'translateX(0) rotate(0deg)';
+    }
+    dx = 0;
+  });
+}
+
+/* ════ Arrival ════ */
+function playArrival(mode) {
+  document.body.classList.remove('arrive1', 'arrive2', 'present', 'carousel');
+  inHand = false; renderDeck();
+  void document.body.offsetWidth;
+  if (!document.body.classList.contains('rm')) document.body.classList.add(mode);
+  setTimeout(() => document.body.classList.add('present'), 50); /* the room warms to presence */
+}
+document.getElementById('replay1').addEventListener('click', () => playArrival('arrive1'));
+document.getElementById('replay2').addEventListener('click', () => playArrival('arrive2'));
+
+renderDeck();
+layoutC(false);
+document.body.classList.add('arrive1');
+setTimeout(() => document.body.classList.add('present'), 50);
+</script>
+</body>
+</html>

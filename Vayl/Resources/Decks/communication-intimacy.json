@@ -1,0 +1,239 @@
+{
+  "id": "communication-intimacy",
+  "title": "Communication & Intimacy",
+  "subtitle": "The unsaid things.",
+  "category": "relationshipCore",
+  "act": 1,
+  "intensity": 3,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": [
+    "core",
+    "communication",
+    "intimacy"
+  ],
+  "sort_order": 3,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "ci-01",
+      "deck_id": "communication-intimacy",
+      "text": "How were hard things handled in the house you grew up in?\n\nWhat did you swear you'd do differently?",
+      "highlight_words": [
+        "do differently"
+      ],
+      "type": "prompt",
+      "intensity": 2,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    },
+    {
+      "id": "ci-02",
+      "deck_id": "communication-intimacy",
+      "text": "What's one line you'd want drawn before anything new?\n\nSay it as yours. Start the sentence with the word I.",
+      "highlight_words": [
+        "one line"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": "interstitial",
+      "context_beat_copy": "Before this card, a quiet distinction:\n\nA boundary belongs to the person who sets it. It describes what you will do, and it travels with you into every room.\n\nA rule tries to steer someone else. Tonight, speak in boundaries.",
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 2
+    },
+    {
+      "id": "ci-03",
+      "deck_id": "communication-intimacy",
+      "text": "What's the subject you two quietly route around?\n\nHow long has it had the room to itself?",
+      "highlight_words": [
+        "route around"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 3
+    },
+    {
+      "id": "ci-04",
+      "deck_id": "communication-intimacy",
+      "text": "When you're hurt, what do you actually do?\n\nOne of you answers for yourself.\n\nThe other answers what they believe the answer is.\n\nThe gap is the conversation.",
+      "highlight_words": [
+        "actually do"
+      ],
+      "type": "mirror",
+      "intensity": 4,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 4
+    },
+    {
+      "id": "ci-05",
+      "deck_id": "communication-intimacy",
+      "text": "When you're upset, do you want to be fixed, held, or left alone?\n\nHow is your partner supposed to know which one tonight is?",
+      "highlight_words": [
+        "fixed, held, or left alone"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 5
+    },
+    {
+      "id": "ci-06",
+      "deck_id": "communication-intimacy",
+      "text": "You're allowed to say it badly.\n\nFirst drafts count here.",
+      "highlight_words": [
+        "say it badly"
+      ],
+      "type": "permissionCard",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "anxious",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 6
+    },
+    {
+      "id": "ci-07",
+      "deck_id": "communication-intimacy",
+      "text": "Is there a need that's been showing up dressed as smaller complaints?\n\nWhat is it actually asking for?",
+      "highlight_words": [
+        "smaller complaints"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 7
+    },
+    {
+      "id": "ci-08",
+      "deck_id": "communication-intimacy",
+      "text": "When something's wrong, how do you want me to ask?\n\nWhat words would actually get through?",
+      "highlight_words": [
+        "how do you want me to ask"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": "Agree on it tonight: the exact phrase either of you can say that means we need to talk.\n\nPick words that carry no dread. Then keep them.",
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 8
+    },
+    {
+      "id": "ci-09",
+      "deck_id": "communication-intimacy",
+      "text": "One word for how heard you feel lately.",
+      "highlight_words": [
+        "heard"
+      ],
+      "type": "snapshot",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 9
+    },
+    {
+      "id": "ci-10",
+      "deck_id": "communication-intimacy",
+      "text": "What would need to change for the hard conversations to feel safe by default?\n\nSmall and specific beats grand.",
+      "highlight_words": [
+        "safe by default"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 10
+    },
+    {
+      "id": "ci-11",
+      "deck_id": "communication-intimacy",
+      "text": "The Unsaid, Said.\n\nEach of you says one sentence you've been carrying unsaid.\n\nThe other may only answer: thank you for telling me.\n\nThen you're done.",
+      "highlight_words": [
+        "one sentence"
+      ],
+      "type": "closingRitual",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 11
+    }
+  ]
+}

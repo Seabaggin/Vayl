@@ -1,0 +1,319 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 5,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "supabase/migrations/20260101000000_baseline.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 937,
+      "nonEmptyLines": 374,
+      "definitions": [
+        {
+          "name": "AS",
+          "kind": "table",
+          "fields": [],
+          "startLine": 88,
+          "endLine": 93
+        },
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_id",
+            "question_key",
+            "answer",
+            "created_at"
+          ],
+          "startLine": 125,
+          "endLine": 131
+        },
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_id",
+            "result_key",
+            "result_value",
+            "created_at"
+          ],
+          "startLine": 137,
+          "endLine": 143
+        },
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "couple_id",
+            "card_id",
+            "status",
+            "updated_at"
+          ],
+          "startLine": 149,
+          "endLine": 155
+        },
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "couple_id",
+            "started_at",
+            "ended_at",
+            "cards_discussed"
+          ],
+          "startLine": 161,
+          "endLine": 167
+        },
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_a",
+            "user_b",
+            "shared_safe_word",
+            "matches_revealed",
+            "created_at"
+          ],
+          "startLine": 173,
+          "endLine": 180
+        },
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "couple_id",
+            "initiator_id",
+            "deck_id",
+            "deck_variant",
+            "card_ids",
+            "per_card_timer",
+            "global_timer_seconds",
+            "status",
+            "current_index",
+            "a_present",
+            "b_present",
+            "a_bandwidth",
+            "b_bandwidth",
+            "a_consented",
+            "b_consented",
+            "timer_started_at",
+            "reveal_state",
+            "safe_word_used",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 186,
+          "endLine": 209
+        },
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "couple_id",
+            "desire_item_id",
+            "alignment_level",
+            "created_at",
+            "partner_a_value",
+            "partner_b_value",
+            "gap_size",
+            "bridge_card_id"
+          ],
+          "startLine": 217,
+          "endLine": 227
+        },
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_id",
+            "desire_item_id",
+            "rating",
+            "created_at"
+          ],
+          "startLine": 233,
+          "endLine": 240
+        },
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "created_by",
+            "code",
+            "expires_at",
+            "claimed_by",
+            "claimed_at",
+            "couple_id"
+          ],
+          "startLine": 246,
+          "endLine": 254
+        },
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "auth_id",
+            "name",
+            "pronouns",
+            "sexual_orientation",
+            "role_preference",
+            "user_mode",
+            "experience_level",
+            "default_difficulty",
+            "curiosity_selections",
+            "surprise_me_enabled",
+            "myth_buster_complete",
+            "myth_buster_skipped",
+            "nm_flavor",
+            "pairing_code",
+            "is_linked",
+            "partner_label",
+            "has_completed_onboarding",
+            "has_completed_assessment",
+            "onboarding_dropoff_screen",
+            "created_at",
+            "couple_id",
+            "linked_at",
+            "display_name",
+            "nm_card_response",
+            "ground_rules_accepted_at",
+            "onboarding_completed_at",
+            "app_mode",
+            "nm_stage"
+          ],
+          "startLine": 260,
+          "endLine": 290
+        },
+        {
+          "name": "curated_sessions_one_open_per_couple",
+          "kind": "index",
+          "fields": [],
+          "startLine": 361,
+          "endLine": 361
+        },
+        {
+          "name": "user_profiles_auth_id_key",
+          "kind": "index",
+          "fields": [],
+          "startLine": 365,
+          "endLine": 365
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 13
+      }
+    },
+    {
+      "path": "supabase/migrations/20260616223000_p5d_revoke_anon_default_privileges.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 21,
+      "nonEmptyLines": 19,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 0
+      }
+    },
+    {
+      "path": "supabase/migrations/20260617000000_desire_map_backend.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 45,
+      "nonEmptyLines": 40,
+      "definitions": [
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "couple_id",
+            "track",
+            "partner_a_complete",
+            "partner_b_complete",
+            "partner_a_completed_at",
+            "partner_b_completed_at",
+            "full_reveal_unlocked",
+            "full_reveal_at",
+            "waiting_state_since",
+            "created_at"
+          ],
+          "startLine": 21,
+          "endLine": 34
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 1
+      }
+    },
+    {
+      "path": "supabase/migrations/20260617120000_monetization_entitlements.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 62,
+      "nonEmptyLines": 57,
+      "definitions": [
+        {
+          "name": "public",
+          "kind": "table",
+          "fields": [
+            "id",
+            "couple_id",
+            "product_id",
+            "is_active"
+          ],
+          "startLine": 26,
+          "endLine": 39
+        },
+        {
+          "name": "entitlements_couple_id_idx",
+          "kind": "index",
+          "fields": [],
+          "startLine": 41,
+          "endLine": 41
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 2
+      }
+    },
+    {
+      "path": "supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 80,
+      "nonEmptyLines": 74,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 0
+      }
+    }
+  ]
+}

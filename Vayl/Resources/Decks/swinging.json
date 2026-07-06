@@ -1,0 +1,281 @@
+{
+  "id": "swinging",
+  "title": "The Swinging Deck",
+  "subtitle": "Practical, specific, same team.",
+  "category": "styleSpecific",
+  "act": 1,
+  "intensity": 5,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": [
+    "core",
+    "style",
+    "swinging"
+  ],
+  "sort_order": 7,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "sw-01",
+      "deck_id": "swinging",
+      "text": "What does swinging mean to you two?\n\nTogether only? Separate rooms? Soft? Full?\n\nDefine it before anything else gets decided.",
+      "highlight_words": [
+        "Define it"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    },
+    {
+      "id": "sw-02",
+      "deck_id": "swinging",
+      "text": "The setting question.\n\nClub, house party, friends, apps?\n\nWhich sounds fun? Which sounds terrifying?",
+      "highlight_words": [
+        "fun",
+        "terrifying"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 2
+    },
+    {
+      "id": "sw-03",
+      "deck_id": "swinging",
+      "text": "How ready do you feel for the nearest real step?\n\nToday. Honestly.",
+      "highlight_words": [
+        "Honestly"
+      ],
+      "type": "unspoken",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 3
+    },
+    {
+      "id": "sw-04",
+      "deck_id": "swinging",
+      "text": "What needs to be agreed in advance?\n\nWhat are you comfortable deciding in the room?",
+      "highlight_words": [
+        "in advance",
+        "in the room"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 4
+    },
+    {
+      "id": "sw-05",
+      "deck_id": "swinging",
+      "text": "For him:\n\nIn a room where everything is visible, where does the measuring-up worry show up for you?\n\nSay it plainly. Every man in that room has a version of it.\n\nThen, for her: tell him what you'd actually be noticing.",
+      "highlight_words": [
+        "measuring-up"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "mf",
+      "sort_order": 5
+    },
+    {
+      "id": "sw-05f",
+      "deck_id": "swinging",
+      "text": "Whichever of you worries more about performing:\n\nIn a room where everything is visible, where does that worry show up?\n\nSay it plainly.\n\nThen the other: say what you'd actually be noticing.",
+      "highlight_words": [
+        "performing"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "flexible",
+      "sort_order": 5
+    },
+    {
+      "id": "sw-06",
+      "deck_id": "swinging",
+      "text": "For her:\n\nBeing read first and approached most comes with a job: reading the room for safety while trying to have fun in it.\n\nWhat would make that job lighter?\n\nThen, for him: how do you make the room feel safer without hovering?",
+      "highlight_words": [
+        "reading the room"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "mf",
+      "sort_order": 6
+    },
+    {
+      "id": "sw-06f",
+      "deck_id": "swinging",
+      "text": "Whichever of you gets read first and approached most:\n\nThat comes with a job: reading the room for safety while trying to have fun in it.\n\nWhat would make the job lighter?\n\nThen the other: how do you help without hovering?",
+      "highlight_words": [
+        "approached most"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "flexible",
+      "sort_order": 6
+    },
+    {
+      "id": "sw-07",
+      "deck_id": "swinging",
+      "text": "What if someone approaches you two mid-party...\n\nand only one of you is interested?\n\nPlay it out. Both versions.",
+      "highlight_words": [
+        "only one of you"
+      ],
+      "type": "whatIf",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 7
+    },
+    {
+      "id": "sw-08",
+      "deck_id": "swinging",
+      "text": "Sexual health, said plainly.\n\nProtection. Testing cadence. The non-negotiables.\n\nGet specific enough that nothing is left to assumption.",
+      "highlight_words": [
+        "non-negotiables"
+      ],
+      "type": "prompt",
+      "intensity": 6,
+      "who_starts": "partnerB",
+      "is_sensitive": true,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": "If you disagreed on any non-negotiable, that item gets settled outside a party.\n\nNever at one.",
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 8
+    },
+    {
+      "id": "sw-09",
+      "deck_id": "swinging",
+      "text": "The exit plan.\n\nWhat happens when one of you wants to leave and the other is having the night of their life?",
+      "highlight_words": [
+        "exit plan"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 9
+    },
+    {
+      "id": "sw-10",
+      "deck_id": "swinging",
+      "text": "Your favorite memory of the two of you being a team in a room full of strangers.\n\nTell it like a story. Take the long version.",
+      "highlight_words": [
+        "a team"
+      ],
+      "type": "coolOff",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 10
+    },
+    {
+      "id": "sw-11",
+      "deck_id": "swinging",
+      "text": "The Room Signal.\n\nPick the word or gesture that means \"find me\" in any room.\n\nPractice it once now, seriously.\n\nThen once more, laughing.",
+      "highlight_words": [
+        "find me"
+      ],
+      "type": "closingRitual",
+      "intensity": 4,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 11
+    }
+  ]
+}

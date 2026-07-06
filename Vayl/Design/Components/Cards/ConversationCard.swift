@@ -23,6 +23,8 @@ struct ConversationCard: View {
     @State private var selectedPill: CardRevealPill? = nil
     @State private var showEncouragement = false
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     // MARK: - Callbacks
 
     var onPillSelected: ((CardRevealPill) -> Void)? = nil
@@ -78,9 +80,9 @@ struct ConversationCard: View {
                     )
             }
             .frame(width: cardWidth, height: cardHeight)
-            .scaleEffect(pulsing ? 1.02 : 1.0)
+            .scaleEffect((pulsing && !reduceMotion && !AppAnimation.lowPower) ? 1.02 : 1.0)
             .animation(
-                pulsing
+                (pulsing && !reduceMotion && !AppAnimation.lowPower)
                     ? .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
                     : .default,
                 value: pulsing
@@ -146,7 +148,7 @@ struct ConversationCard: View {
 
             // Border
             RoundedRectangle(cornerRadius: cornerRadius)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(AppColors.borderSubtle, lineWidth: 1)
         }
     }
 
@@ -192,7 +194,7 @@ struct ConversationCard: View {
             .padding(AppSpacing.xl)
 
             RoundedRectangle(cornerRadius: cornerRadius)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(AppColors.borderSubtle, lineWidth: 1)
         }
     }
 
@@ -222,14 +224,14 @@ struct ConversationCard: View {
                     RoundedRectangle(cornerRadius: AppRadius.pill)
                         .fill(isSelected
                               ? AppColors.accentSecondary.opacity(0.15)
-                              : Color.white.opacity(0.04))
+                              : AppColors.whisperFill)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: AppRadius.pill)
                         .stroke(
                             isSelected
                                 ? AnyShapeStyle(AppColors.spectrumBorder)
-                                : AnyShapeStyle(Color.white.opacity(0.08)),
+                                : AnyShapeStyle(AppColors.borderDefault),
                             lineWidth: isSelected ? 1.5 : 1
                         )
                 )
@@ -308,10 +310,13 @@ struct ConversationCard: View {
                 }
                 .overlay(alignment: .topLeading) {
                     let prefix = AttributedString(parts[0])
-                    let highlighted = try! AttributedString(markdown: "**\(card.highlightedPhrase)**")
+                    // Content-driven phrase: unbalanced markdown metachars (*, [, \) would
+                    // trap on try!. Fall back to a plain (unstyled) phrase rather than crash.
+                    let highlighted = (try? AttributedString(markdown: "**\(card.highlightedPhrase)**"))
+                        ?? AttributedString(card.highlightedPhrase)
                     var combined = prefix
                     combined += highlighted
-                    
+
                     return Text(combined)
                         .font(AppFonts.cardTitle)
                         .foregroundStyle(AppColors.textPrimary)
@@ -342,13 +347,12 @@ struct ConversationCard: View {
         }
         onPillSelected?(pill)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
             withAnimation(AppAnimation.enter) {
                 showEncouragement = true
             }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
+            try? await Task.sleep(for: .milliseconds(700))
             onContinue?()
         }
     }

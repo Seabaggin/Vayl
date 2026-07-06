@@ -184,6 +184,7 @@ struct VaylCardCarousel<Content: View>: View {
             .scaleEffect(t.scale * (isFront && breathing ? 1.02 : 1.0)
                          * liftScale * fadeScale * heroExitScale * defocusScale)
             .rotationEffect(.degrees(t.rotation))
+            .blur(radius: reduceMotion ? 0 : t.blur)   // depth-of-field — the focal card stays crisp
             .offset(x: t.x,
                     y: t.y + (isHero ? confirmedCardYHint : 0) + liftY + heroExitY)
             .opacity(t.opacity * fadeBack * exitOpacity)
@@ -192,7 +193,7 @@ struct VaylCardCarousel<Content: View>: View {
 
     // MARK: - Stacked layout math (demo, ground truth)
 
-    private struct Transform { var x: CGFloat; var y: CGFloat; var scale: CGFloat; var rotation: Double; var opacity: Double; var z: Double }
+    private struct Transform { var x: CGFloat; var y: CGFloat; var scale: CGFloat; var rotation: Double; var opacity: Double; var z: Double; var blur: CGFloat }
 
     private func transform(slot: Int, lean: Double) -> Transform {
         // Continuous signed distance from the scroll position to this slot.
@@ -214,8 +215,11 @@ struct VaylCardCarousel<Content: View>: View {
         let y       = CGFloat(ad) * lift
         let opacity = max(1 - ad * layout.opacityFalloff, 0)
         let rotation = delta * layout.rotationPerCard + lean   // no round() branch → no pop
+        // Depth-of-field: off-center cards soften so the front reads as the focal plane
+        // (Strava-style rack focus). Grows linearly with distance; ~0 on the centered card.
+        let blur     = CGFloat(ad) * layout.blurPerCard
 
-        return Transform(x: x, y: y, scale: scale, rotation: rotation, opacity: opacity, z: -ad)
+        return Transform(x: x, y: y, scale: scale, rotation: rotation, opacity: opacity, z: -ad, blur: blur)
     }
 
     // MARK: - Gesture
@@ -276,7 +280,7 @@ struct VaylCardCarousel<Content: View>: View {
     // MARK: - Breathing
 
     private func startBreathing() {
-        guard !reduceMotion else { return }
+        guard !reduceMotion, !AppAnimation.lowPower else { return }
         breathing = false
         withAnimation(.easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true)) {
             breathing = true
@@ -306,6 +310,10 @@ struct StackLayout: Equatable {
     var yLiftFraction:       CGFloat = 0.07
     var rotationPerCard:     Double  = 2.5
     var leanPerCardPerVel:   Double  = 1.3
+    /// Depth-of-field: blur (points) added per card-distance from center. Off-center cards
+    /// soften so the front reads as the focal plane (Strava-style rack focus). 0 disables.
+    /// Kept small — only the immediate peek is visible (opacity hits 0 by delta 2). FEEL-GATE.
+    var blurPerCard:         CGFloat = 2.0
 
     static let standard = StackLayout()
 }

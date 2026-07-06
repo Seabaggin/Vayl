@@ -1,13 +1,14 @@
 // Features/Onboarding/Models/ContextOption.swift
 //
-// Pure data model for the ContextPhase 2×3 matrix.
-// Content keyed on (AppMode, NMStage). 24 contexts across 6 cells, each cell
-// holding 3 concrete situations + 1 first-class "undecided" card.
+// Pure data model for the ContextPhase options. Reason-based, collapsed to 4 sets:
+// solo/couple × {curious, in-it} — exploring + experienced merged (the experienced cohort
+// treats NM as lower-stakes, "not as big a deal"). Every card is first-person "I": the OB is
+// two-device, each partner onboards alone and speaks only for themselves — never "we" / "you
+// both". See spec docs/superpowers/specs/2026-06-20-contextphase-redesign-design.md.
 //
-// `context` is the routing value — all downstream branches on it.
-// `accent` is decorative ONLY — never branch on it.
-// `derivedRegister` keeps SituationalRegister alive so VaylDirector's exit line,
-// deck weighting, and Compass "heavy context" check work unchanged.
+// `context` is the persisted routing tag; `derivedRegister` (anxious/excited/flexible) is the
+// behavioural driver — it feeds the dealer's exit line and opener-deck selection. Nothing
+// downstream branches on the specific context. `accent` is decorative ONLY — never branch on it.
 
 import Foundation
 
@@ -24,24 +25,28 @@ struct ContextOption: Identifiable {
     let subtitle: String
     let detail:   String
 
-    /// Derived from `context`. Undecided → flexible (lowest-stakes routing).
+    /// Derived from `context`. The behavioural contract — downstream keys on the register,
+    /// never on the specific context. Curious cohorts carry the anxiety (the leap); the
+    /// in-it cohorts skew flexible (comfortable, lower-stakes).
     var derivedRegister: SituationalRegister {
         switch context {
-        case .partneredUndisclosed,
-             .partneredHesitantCurious,
-             .coupleProcessingCurious,
-             .coupleStalledConversation,
-             .coupleReorienting,
-             .coupleEvolving:
+        case .soloUndisclosed,
+             .coupleNervous,
+             .coupleInitiator,
+             .coupleRecalibrating:
             return .anxious
-        case .singleExploring,
-             .singleExperienced,
-             .soloPolyIndependent,
-             .coupleSolidifying,
-             .coupleFreshIntentional,
-             .coupleSkillBuilding:
+        case .single,
+             .soloIntentional,
+             .coupleExcited,
+             .coupleGoDeeper:
             return .excited
-        default:
+        case .soloLearning,
+             .soloSeekingClarity,
+             .soloExpandKnowledge,
+             .soloCheckingOut,
+             .coupleFiguringOut,
+             .coupleGetBetter,
+             .coupleKeepItFun:
             return .flexible
         }
     }
@@ -49,117 +54,77 @@ struct ContextOption: Identifiable {
 
 extension ContextOption {
 
-    /// Total resolver. Returns the option set for (AppMode, NMStage).
+    /// Total resolver. Exploring + experienced share the "in it" set per mode.
     static func options(appMode: AppMode, stage: NMStage) -> [ContextOption] {
         switch (appMode, stage) {
-        case (.together, .curious):     return coupleCurious
-        case (.together, .exploring):   return coupleExploring
-        case (.together, .experienced): return coupleExperienced
-        case (.solo, .curious):         return soloCurious
-        case (.solo, .exploring):       return soloExploring
-        case (.solo, .experienced):     return soloExperienced
+        case (.solo, .curious):                                   return soloCurious
+        case (.solo, .exploring), (.solo, .experienced):         return soloInIt
+        case (.together, .curious):                              return coupleCurious
+        case (.together, .exploring), (.together, .experienced): return coupleInIt
         }
     }
 
-    // MARK: Solo × Curious
+    // MARK: Solo · Curious — why you're exploring alone, new to NM
     static let soloCurious: [ContextOption] = [
-        .init(id: "single_curious", context: .singleCurious, accent: .spark,
-              title: "I'm single", subtitle: "NM is new territory for me",
-              detail: "No relationship to navigate — just you and your curiosity. We'll start with the fundamentals and let you explore at your own pace."),
-        .init(id: "partnered_supportive_curious", context: .partneredSupportiveCurious, accent: .flame,
-              title: "My partner's on board", subtitle: "They're supportive of me looking into this",
-              detail: "You've opened the door — we'll help you figure out what you actually want before the bigger conversations begin."),
-        .init(id: "partnered_undisclosed", context: .partneredUndisclosed, accent: .inferno,
-              title: "I haven't brought it up", subtitle: "I have a partner, but the conversation hasn't happened",
-              detail: "You're still figuring out what this means to you. We'll help you get clarity before you decide whether or how to start the conversation."),
-        .init(id: "partnered_hesitant_curious", context: .partneredHesitantCurious, accent: .nova,
-              title: "I've brought it up", subtitle: "They're hesitant — we're not on the same page yet",
-              detail: "You've started the conversation, but you're not aligned. We'll help you understand their hesitation and find language that lowers the temperature instead of raising it."),
-        .init(id: "solo_curious_undecided", context: .soloCuriousUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "Real life rarely fits neat boxes",
-              detail: "That's okay — most people's lives are messier than a list of options. Start here and we'll help you figure out the rest as you go."),
+        .init(id: "solo_learning", context: .soloLearning, accent: .spark,
+              title: "I'm here to learn", subtitle: "Curious about NM — maybe just that",
+              detail: "Maybe you'll explore it for real one day, maybe you're just curious. Either way — understand it first, no pressure to go further."),
+        .init(id: "solo_undisclosed", context: .soloUndisclosed, accent: .flame,
+              title: "I don't know how to bring it up", subtitle: "I want to, but the conversation feels hard",
+              detail: "You're into the idea; raising it with your partner is the hard part. Get clear on what you want, then find language that lowers the temperature instead of raising it."),
+        .init(id: "solo_seeking_clarity", context: .soloSeekingClarity, accent: .inferno,
+              title: "I want to gain clarity", subtitle: "Getting clear on what I want, on my own",
+              detail: "Before anyone else is involved, understand your own desires and limits. Map what you actually want, on your own terms."),
+        .init(id: "single_curious", context: .single, accent: .nova,
+              title: "I'm single", subtitle: "Exploring on my own",
+              detail: "No relationship to navigate — just you and your curiosity. Start with the fundamentals, at your own pace."),
     ]
 
-    // MARK: Solo × Exploring
-    static let soloExploring: [ContextOption] = [
-        .init(id: "single_exploring", context: .singleExploring, accent: .spark,
-              title: "I'm single", subtitle: "Dating and still figuring out who I am in NM",
-              detail: "You've moved past curiosity — now it's about building a real sense of your identity, boundaries, and what you want from connections."),
-        .init(id: "partnered_hands_off", context: .partneredHandsOff, accent: .flame,
-              title: "Partnered, but here on my own", subtitle: "I have a partner — exploring the app on my own",
-              detail: "Your partner is on board but this is your journey. We'll focus on your individual growth while keeping the relationship in view."),
-        .init(id: "multiple_undefined", context: .multipleUndefined, accent: .inferno,
-              title: "I have multiple partners", subtitle: "Here to navigate it on my own",
-              detail: "You're holding more than one connection and steering it yourself. We'll help you navigate the balance — communication, time, and what you actually want from each."),
-        .init(id: "solo_exploring_undecided", context: .soloExploringUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "Still taking shape — that's okay",
-              detail: "You know you're exploring — you're just not sure which box fits. That's fine. We'll meet you where you are and let the label catch up later."),
+    // MARK: Solo · In it — why you're exploring alone, already practicing
+    static let soloInIt: [ContextOption] = [
+        .init(id: "solo_intentional", context: .soloIntentional, accent: .spark,
+              title: "I want to explore more intentionally", subtitle: "On my own terms, more deliberately",
+              detail: "You're already practicing — now you want to bring intention to it. Be more deliberate about what you're already doing."),
+        .init(id: "solo_expand_knowledge", context: .soloExpandKnowledge, accent: .flame,
+              title: "I want to expand my knowledge", subtitle: "Going past the basics",
+              detail: "You know the fundamentals — now go deeper. There's always another layer to understand."),
+        .init(id: "solo_checking_out", context: .soloCheckingOut, accent: .inferno,
+              title: "I'm just checking it out", subtitle: "Seeing what's here, no agenda",
+              detail: "No particular plan — just seeing what the app offers. A fine place to start; poke around and find what's useful."),
+        .init(id: "single_in_it", context: .single, accent: .nova,
+              title: "I'm single", subtitle: "Exploring on my own",
+              detail: "No relationship to navigate — just you and your own practice, at your own pace."),
     ]
 
-    // MARK: Solo × Experienced
-    static let soloExperienced: [ContextOption] = [
-        .init(id: "single_experienced", context: .singleExperienced, accent: .spark,
-              title: "I'm single", subtitle: "Solo, and clear on who I am in NM",
-              detail: "You've done the work. This is about staying intentional, continuing to grow, and finding the connections that fit the life you've built."),
-        .init(id: "partnered_aware", context: .partneredAware, accent: .flame,
-              title: "I have an established partner", subtitle: "We're solid — this is my own space to manage it",
-              detail: "Your partner is aware and supportive, but your NM journey is yours to navigate. We'll focus on depth, skill, and continued self-awareness."),
-        .init(id: "solo_poly_independent", context: .soloPolyIndependent, accent: .inferno,
-              title: "I have multiple partners", subtitle: "Solo poly — multiple relationships, no hierarchy",
-              detail: "You move through connections on your own terms. We'll support the craft of that — communication, transitions, autonomy, and care without hierarchy."),
-        .init(id: "solo_experienced_undecided", context: .soloExperiencedUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "Your structure shifts with the season",
-              detail: "Experienced doesn't always mean settled. If your situation is genuinely fluid, start here — we'll build around what's true right now."),
-    ]
-
-    // MARK: Couple × Curious
+    // MARK: Couple · Curious — first-person, new to it (higher-stakes)
     static let coupleCurious: [ContextOption] = [
-        .init(id: "couple_symmetric_curious", context: .coupleSymmetricCurious, accent: .spark,
-              title: "We're both curious", subtitle: "Neither of us has done this before",
-              detail: "You're starting from the same place, which is a real advantage. We'll build shared language and give you both room to think out loud before any decisions get made."),
-        .init(id: "couple_initiator_curious", context: .coupleInitiatorCurious, accent: .flame,
-              title: "I'm the one who started the conversation", subtitle: "My partner's open, still finding their footing",
-              detail: "You brought this to the table. We'll help you share what you want without pressure — and give your partner room to arrive at their own pace."),
-        .init(id: "couple_processing_curious", context: .coupleProcessingCurious, accent: .inferno,
-              title: "My partner brought this up", subtitle: "I'm open, but still processing it",
-              detail: "This started with them, and you're still finding your feet. We'll go at your pace — no pushing, just space to figure out what you actually think."),
-        .init(id: "couple_stalled_conversation", context: .coupleStalledConversation, accent: .inferno,
-              title: "We talked, but it stalled", subtitle: "But the conversation never really went anywhere",
-              detail: "Something got in the way — timing, fear, uncertainty. We'll help you pick up the thread and figure out why it stalled before trying again."),
-        .init(id: "couple_curious_undecided", context: .coupleCuriousUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "You don't need it figured out to start",
-              detail: "That's more common than you'd think. Start here — you don't need to have it figured out to begin figuring it out together."),
+        .init(id: "couple_excited", context: .coupleExcited, accent: .spark,
+              title: "I'm excited to explore this with my partner", subtitle: "Ready to dive in",
+              detail: "That energy is a real advantage. Build the shared language and the room to think out loud before any decisions get made."),
+        .init(id: "couple_nervous", context: .coupleNervous, accent: .flame,
+              title: "I want this, but I'm nervous", subtitle: "Into the idea, finding my footing",
+              detail: "You want this, and the nerves are normal. Go at a pace that keeps you honest about what you're feeling as you figure it out."),
+        .init(id: "couple_initiator", context: .coupleInitiator, accent: .inferno,
+              title: "I brought this to my partner", subtitle: "I raised it — they're catching up",
+              detail: "You opened the door. Say what you want without pressure — and leave your partner room to arrive at their own pace."),
+        .init(id: "couple_figuring_out", context: .coupleFiguringOut, accent: .ember,
+              title: "I'm still figuring out what I want", subtitle: "Open, but not sure yet",
+              detail: "You don't need it mapped out to begin. Start here and figure out what you want as you go."),
     ]
 
-    // MARK: Couple × Exploring
-    static let coupleExploring: [ContextOption] = [
-        .init(id: "couple_solidifying", context: .coupleSolidifying, accent: .spark,
-              title: "We're ready to go deeper", subtitle: "Now we want to go deeper with intention",
-              detail: "You've moved past curiosity — now it's about building a shared identity in NM. We'll help you name what's working, what isn't, and where you want to go."),
-        .init(id: "couple_reorienting", context: .coupleReorienting, accent: .flame,
-              title: "Something has shifted", subtitle: "We're figuring out our footing again",
-              detail: "Your dynamic has changed — a new connection, a boundary that isn't working, or just a feeling that things are off. We'll help you recalibrate together."),
-        .init(id: "couple_parallel_exploring", context: .coupleParallelExploring, accent: .inferno,
-              title: "We explore in parallel", subtitle: "Together, but each on our own path",
-              detail: "You're a couple but your NM journeys run in parallel. We'll support both your individual growth and the connection that holds it all together."),
-        .init(id: "couple_exploring_undecided", context: .coupleExploringUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "Layered and shifting — that's normal",
-              detail: "Exploring rarely looks like one clean thing. If your dynamic is layered or shifting, start here — we'll help you make sense of it as you go."),
-    ]
-
-    // MARK: Couple × Experienced
-    static let coupleExperienced: [ContextOption] = [
-        .init(id: "couple_fresh_intentional", context: .coupleFreshIntentional, accent: .spark,
-              title: "We know what we're doing", subtitle: "We want to stay intentional and keep it alive",
-              detail: "Experience doesn't make things automatic. We'll help you stay curious about each other and your dynamic without letting it run on autopilot."),
-        .init(id: "couple_skill_building", context: .coupleSkillBuilding, accent: .flame,
-              title: "Better at the hard stuff", subtitle: "Communication, conflict, care — the meta-skills",
-              detail: "You're good at NM. Now you want to be excellent at the relationship craft underneath it — the conversations, the repairs, the emotional fluency."),
-        .init(id: "couple_evolving", context: .coupleEvolving, accent: .inferno,
-              title: "We're rethinking our structure", subtitle: "Expanding, reorienting, or rebuilding our dynamic",
-              detail: "Something about how you've set this up needs to evolve. We'll help you think through what that means and how to move through it without losing what matters."),
-        .init(id: "couple_experienced_undecided", context: .coupleExperiencedUndecided, accent: .ember,
-              title: "None of these quite fit", subtitle: "Past labels, just here to grow",
-              detail: "That's a legitimate place to be. You don't need a category — we'll focus on what's useful and let you steer."),
+    // MARK: Couple · In it — first-person, already in it (comfortable, lower-stakes)
+    static let coupleInIt: [ContextOption] = [
+        .init(id: "couple_go_deeper", context: .coupleGoDeeper, accent: .spark,
+              title: "I want to go deeper with my partner", subtitle: "Past the basics, into the real thing",
+              detail: "Past curiosity, into depth. Name what's working, what isn't, and where you want to go."),
+        .init(id: "couple_get_better", context: .coupleGetBetter, accent: .flame,
+              title: "I want to get better at the hard parts", subtitle: "The conversations, conflict, repair",
+              detail: "You're good at the structure — now the craft underneath it: the conversations, the repairs, the emotional fluency."),
+        .init(id: "couple_recalibrating", context: .coupleRecalibrating, accent: .inferno,
+              title: "Something's shifted — I want to work through it", subtitle: "A change I want to navigate",
+              detail: "Something's changed — a new connection, a boundary that isn't working, or a feeling that things are off. Time to recalibrate."),
+        .init(id: "couple_keep_it_fun", context: .coupleKeepItFun, accent: .ember,
+              title: "I want to keep it fun", subtitle: "Keeping the spark, no heavy agenda",
+              detail: "Things are good — you just don't want them running on autopilot. Stay playful and curious about your partner."),
     ]
 }

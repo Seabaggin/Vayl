@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Map tab · layout blocking</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --void:#0a0810;--cyan:#00c2ff;--purple:#6c3ae0;--purpleL:#a78bfa;--magenta:#ff006a;--bridge:#8b6fd4;
+    --t1:rgba(236,234,242,.95);--t2:rgba(255,255,255,.6);--t3:rgba(255,255,255,.34);--hair:rgba(255,255,255,.09);
+    --disp:"Clash Display",sans-serif;--body:"Switzer",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:820px;margin:0 auto;padding:44px 28px 70px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:26px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:13px;line-height:1.55;color:var(--t2);margin:0 0 8px}.lede b{color:var(--t1)}
+  .key{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0 28px;font-size:10.5px;color:var(--t3)}
+  .key span{display:flex;align-items:center;gap:6px}
+  .ktag{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border-radius:20px}
+  .now{color:var(--cyan);background:rgba(0,194,255,.12)}
+  .fwd{color:var(--purpleL);background:rgba(167,139,250,.14)}
+  .back{color:var(--bridge);background:rgba(139,111,212,.14)}
+  .kept{color:var(--t2);background:rgba(255,255,255,.06)}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:30px;justify-items:center}
+  @media(max-width:680px){.two{grid-template-columns:1fr}}
+  .cap{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin:0 0 12px;text-align:center}
+  .cap.me{color:var(--cyan)}.cap.us{color:var(--magenta)}
+
+  .phone{position:relative;width:300px;max-width:100%;border-radius:38px;overflow:hidden;background:#050409;box-shadow:0 26px 64px rgba(0,0,0,.55),inset 0 0 0 1.4px rgba(255,255,255,.05);aspect-ratio:300/640}
+  .voidbg{position:absolute;inset:0;background:radial-gradient(120% 36% at 50% 0%,rgba(108,58,224,.18),transparent 62%),linear-gradient(#0c0918,#0a0810 60%,#08060f)}
+  .notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:76px;height:21px;background:#000;border-radius:13px;z-index:9}
+  .home{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:88px;height:3.5px;border-radius:3px;background:rgba(255,255,255,.2);z-index:9}
+  .scr{position:absolute;inset:0;z-index:5;padding:42px 14px 14px;display:flex;flex-direction:column;gap:9px}
+
+  .blk{border-radius:15px;border:1px solid var(--hair);background:rgba(255,255,255,.035);padding:11px 13px;display:flex;flex-direction:column;justify-content:center;position:relative}
+  .blk .nm{font-family:var(--disp);font-size:13.5px;font-weight:600;color:var(--t1)}
+  .blk .ro{font-size:9.5px;color:var(--t3);margin-top:2px;line-height:1.35}
+  .blk .tg{position:absolute;top:10px;right:11px;font-size:7px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:20px}
+
+  /* masthead block */
+  .mast{flex:0 0 auto;border:0;background:transparent;padding:2px 4px;display:flex;align-items:baseline;justify-content:space-between}
+  .mast .t{font-family:var(--disp);font-size:19px;font-weight:700}
+  .mast .lit{background:linear-gradient(90deg,var(--cyan),var(--bridge) 50%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mast .fade{color:var(--t3);opacity:.45}
+  .mast .g{color:var(--t3);font-size:13px}
+
+  .band{flex:1.1}
+  .hero{flex:3.2;border-color:rgba(108,58,224,.34);background:linear-gradient(160deg,rgba(108,58,224,.08),rgba(0,194,255,.03))}
+  .hero .nm{font-size:15px}
+  .mid{flex:1.8}
+  .entry{flex:1.4}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>Map tab — <span class="spectrum">layout blocking</span></h1>
+  <p class="lede">Just the <b>order and relative weight</b>, no feature internals. Three pillars on each side, <b>The Pulse · The Path · The Vault</b>, same names both lenses (the masthead carries the My/Our). <b>Pulse is the hero.</b> The record now lives inside the Vault, so both sides share one three-block skeleton and the flip reads as the same three things rearranging.</p>
+  <div class="key">
+    <span><span class="ktag now">Now</span> The Pulse · the hero</span>
+    <span><span class="ktag fwd">Forward</span> The Path</span>
+    <span><span class="ktag kept">Kept</span> The Vault (incl. the record)</span>
+  </div>
+
+  <div class="two">
+
+    <!-- ME -->
+    <div>
+      <div class="cap me">Me · your inner world</div>
+      <div class="phone">
+        <div class="voidbg"></div><div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div class="t"><span class="lit">Jordan.</span><span class="fade"> &amp; Alex</span></div><div class="g">⚙</div></div>
+          <div class="blk hero"><span class="tg now">Now</span><div class="nm">The Pulse</div><div class="ro">your capacity · named state + your arc + how deep you are · the hero</div></div>
+          <div class="blk mid"><span class="tg fwd">Forward</span><div class="nm">The Path</div><div class="ro">chart your own course (collapsed → expands)</div></div>
+          <div class="blk entry" style="flex:1.8"><span class="tg kept">Kept</span><div class="nm">The Vault</div><div class="ro">your journal · your private map</div></div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <!-- US -->
+    <div>
+      <div class="cap us">Us · the shared world</div>
+      <div class="phone">
+        <div class="voidbg"></div><div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div class="t"><span class="lit">Jordan &amp; Alex.</span></div><div class="g">⚙</div></div>
+          <div class="blk hero"><span class="tg now">Now</span><div class="nm">The Pulse</div><div class="ro">both of you · named state + both arcs · in sync · the hero</div></div>
+          <div class="blk mid"><span class="tg fwd">Forward</span><div class="nm">The Path</div><div class="ro">your couple roadmap (collapsed → expands)</div></div>
+          <div class="blk entry" style="flex:2.2"><span class="tg kept">Kept</span><div class="nm">The Vault</div><div class="ro">where you align · agreements · your record (sessions · where conversations have gone)</div></div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

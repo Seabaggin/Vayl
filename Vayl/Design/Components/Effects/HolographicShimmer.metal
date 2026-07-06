@@ -305,3 +305,265 @@ half4 holoSpecular(float2 position,
     float4 result = mix(base, float4(1.0), (spec * 0.60 + spec2) * base.a * 0.50);
     return half4(result);
 }
+
+// MARK: - Holographic foil surface (MetallicCaseView)
+// Electric holographic foil applied over the Canvas-drawn 3D box. NOT a soft
+// gradient — sharp, high-contrast SPECTRUM specular bands (cyan↔purple↔magenta)
+// broken up by simplex crinkle + Voronoi micro-facet glints, sweeping with a
+// time/tilt phase. Reads like real holo foil (cf. Pokémon TCG Pocket), not frosted
+// glass. Reuses fbmS / snoise / voronoiF1F2. Alpha-gated; premultiplied output.
+
+// Cyclic Vayl-spectrum ramp: cyan → purple → magenta → cyan over t in 0...1.
+float3 spectrumRamp(float t) {
+    t = fract(t) * 3.0;
+    float3 c0 = float3(0.00, 0.76, 1.00);   // cyan
+    float3 c1 = float3(0.42, 0.23, 0.88);   // purple
+    float3 c2 = float3(1.00, 0.00, 0.42);   // magenta
+    if (t < 1.0) return mix(c0, c1, t);
+    if (t < 2.0) return mix(c1, c2, t - 1.0);
+    return mix(c2, c0, t - 2.0);
+}
+
+[[stitchable]]
+half4 holoFoilSurface(float2 position,
+                      half4  currentColor,
+                      float2 size,
+                      float  time,        // phase — advances with the float
+                      float  intensity,   // ~0.7  electric sheen strength
+                      float  scale,       // ~9    crinkle / facet frequency
+                      float  sharpness,   // ~7    specular sharpness (jagged glints)
+                      float  shine,       // ~0.6  glossy white specular (polished reflection)
+                      float  pattern)     // 0 = oil-slick · 1 = liquid chrome
+{
+    half a = currentColor.a;
+    if (a < 0.01h) return currentColor;        // leave the void alone
+
+    float2 uv   = position / size;
+    float3 base = float3(currentColor.rgb) / max(float(a), 0.001);  // straight colour
+
+    // domain-warp so the iridescence FLOWS organically (foil crinkle)
+    // 0.10 — kept low so the ordered spectrum sweep stays legible; 0.25 wisped
+    // the colour bands into plasma and scrambled the cyan→purple→magenta order.
+    float w1 = fbmS(uv * (scale * 0.5),       time * 0.30, 3);
+    float w2 = fbmS(uv * (scale * 0.5) + 5.0, time * 0.25, 3);
+    float2 p  = uv + float2(w1, w2) * 0.10;
+
+    float2 dir   = normalize(float2(0.5, 1.0));
+    float  proj  = dot(p, dir);             // warped → organic iridescence colour flow
+    float  cproj = dot(uv, dir);            // clean → a concentrated highlight band
+
+    // moving highlight — a clean sweeping band where light catches the foil. Tight, so the
+    // spectrum only IGNITES here; the rest of the surface stays dark.
+    float lum       = 0.5 + 0.5 * sin(cproj * 2.4 + time * 0.45);
+    float highlight = pow(lum, 6.0);
+
+    // ONE ordered spectrum sweep, pinned in card order (cyan→purple→magenta along
+    // the sweep axis, like every card hairline). proj spans ~[0, 1.34] across the
+    // face, so ×0.5 maps it onto ramp t ∈ [0, 0.67] — exactly cyan→magenta with no
+    // wrap seam. No time term: the spectrum is printed; the HIGHLIGHT is what moves.
+    float3 irid  = spectrumRamp(proj * 0.5);
+    // ── surface texture (pattern) ──────────────────────────────────────────────
+    float3 surface;        // colour added over the dark base
+    float  surfSpark;      // how much sparkle this pattern wants
+    if (pattern < 0.5) {
+        // 0 — DEEP HOLOGRAPHIC: the HUE flows (cyan→purple→magenta) but at a STEADY deep brightness
+        //     — never bright/neon, never drained to dark. A solid deep jewel surface that shimmers.
+        // Hue-preserving deepen — scalar multiply only. Channel-wise squaring
+        // (irid * irid) shifted magenta (1, 0, .42) toward crimson (1, 0, .18),
+        // a colour outside the Vayl spectrum.
+        float3 deep = irid * 0.40;
+        surface     = deep * 0.45 * intensity                  // consistent deep colour (no brightness valleys)
+                    + irid * highlight * intensity * 0.35;     // one moving brighter sheen on top
+        surfSpark   = 0.12;
+    } else {
+        // 1 — LIQUID CHROME: smooth flowing SILVER reflections (achromatic — like mercury);
+        //     spectrum only IGNITES in the moving highlight. Polished liquid metal, not rainbow.
+        float refl = fbmS(uv * (scale * 0.35), time * 0.22, 4);
+        refl = pow(0.5 + 0.5 * refl, 2.4);                  // smooth, dark-biased, sharp brights
+        float3 silver = float3(0.78, 0.80, 0.92);           // cool achromatic chrome
+        surface   = silver * refl       * intensity * 0.80  // silvery flowing reflections
+                  + irid   * highlight  * intensity * 0.60; // spectrum flashes in the highlight only
+        surfSpark = 0.0;                                    // chrome is smooth — no sparkle
+    }
+
+    // controlled gloss — a bright core inside the highlight + drifting hot-spot, spectrum-
+    // TINTED (not pure white) so it reads as a polished glint, never a blown-out plasma.
+    float  gloss     = pow(lum, 16.0);
+    float2 spot      = float2(0.5 + 0.30 * sin(time * 0.40), 0.38 + 0.14 * cos(time * 0.33));
+    float  hot       = pow(smoothstep(0.5, 0.0, distance(uv, spot)), 2.0);
+    float3 glossCol  = mix(irid, float3(1.0), 0.45);
+    float3 shineTerm = glossCol * (gloss + hot * 0.6) * shine;
+
+    // sparse sparkle — biased to the lit region (oil-slick only)
+    float spk     = snoise(uv * scale * 5.0 + time * 0.8);
+    float sparkle = smoothstep(0.62, 0.88, spk) * (0.25 + 0.75 * highlight) * surfSpark;
+
+    // dark base dominant; surface texture + gloss + sparkle on top
+    float3 col = base + surface + shineTerm + irid * sparkle;
+    col = clamp(col, 0.0, 1.0);
+    return half4(half3(col * float(a)), a);    // re-premultiply
+}
+
+// MARK: - Debossed hex foil (MetallicCaseView)
+// Face-space material: screen pixels map into the front face's local UV via
+// inverse bilinear over the projected quad, so the lattice foreshortens with
+// tilt and TERMINATES at the box fold. Side faces pass through untouched —
+// stamped foil only fronts the box. One anisotropic band, phase-driven by the
+// float tilt (NOT time): the float is the sole animation driver.
+
+static float foilModf(float x, float y) { return x - y * floor(x / y); }
+static float2 foilMod2(float2 x, float2 y) {
+    return float2(foilModf(x.x, y.x), foilModf(x.y, y.y));
+}
+static float foilCross2(float2 a, float2 b) { return a.x * b.y - a.y * b.x; }
+
+// Inverse bilinear (iq): point p in quad (a,b,c,d = TL,TR,BR,BL) → UV in [0,1]².
+// Returns (-1,-1) when p has no valid mapping.
+static float2 invBilinear(float2 p, float2 a, float2 b, float2 c, float2 d) {
+    float2 e = b - a, f = d - a, g = a - b + c - d, h = p - a;
+    float k2 = foilCross2(g, f);
+    float k1 = foilCross2(e, f) + foilCross2(h, g);
+    float k0 = foilCross2(h, e);
+    float u, v;
+    if (abs(k2) < 1e-4) {                       // parallelogram fast path
+        if (abs(k1) < 1e-6) return float2(-1.0);
+        v = -k0 / k1;
+        u = (h.x - f.x * v) / (e.x + g.x * v);
+    } else {
+        float w = k1 * k1 - 4.0 * k0 * k2;
+        if (w < 0.0) return float2(-1.0);
+        w = sqrt(w);
+        float v1 = (-k1 - w) / (2.0 * k2);
+        v = (v1 >= 0.0 && v1 <= 1.0) ? v1 : (-k1 + w) / (2.0 * k2);
+        u = (h.x - f.x * v) / (e.x + g.x * v);
+    }
+    return float2(u, v);
+}
+
+// 3-stop ordered ramp c0→c1→c2, NON-cyclic — same shape as the card hairline
+// gradient (.leading → .trailing stops at 0 / 0.5 / 1). No wrap seam.
+static float3 ramp3(float t, float3 c0, float3 c1, float3 c2) {
+    t = clamp(t, 0.0, 1.0);
+    return t < 0.5 ? mix(c0, c1, t * 2.0) : mix(c1, c2, (t - 0.5) * 2.0);
+}
+
+// Nearest hex edge for a point in cell-local coords. Returns
+// (distance-to-edge, outward edge normal xy). Grid: pointy-top hexes tiled
+// on r = (1, √3); cell centers sit at distance 0.5 from each edge.
+static float3 hexEdge(float2 gv) {
+    float2 p  = abs(gv);
+    float2 n1 = normalize(float2(1.0, 1.7320508));
+    float  c  = dot(p, n1);
+    float  d  = 0.5 - max(c, p.x);
+    float2 n  = (p.x > c) ? float2(1.0, 0.0) : n1;
+    n = float2(gv.x < 0.0 ? -n.x : n.x,
+               gv.y < 0.0 ? -n.y : n.y);
+    return float3(d, n.x, n.y);
+}
+
+// Anodized micro-grain: smooth fine value-noise locked to face UV so it rides
+// the material through tilt (no time term → no swim, no float32 precision loss).
+// Breaks the flat solid fill into believable brushed/anodized metal.
+static float foilGrain(float2 p) {
+    float2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = cellHash(i).x;
+    float b = cellHash(i + float2(1.0, 0.0)).x;
+    float c = cellHash(i + float2(0.0, 1.0)).x;
+    float d = cellHash(i + float2(1.0, 1.0)).x;
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+[[stitchable]]
+half4 hexFoilSurface(float2 position,
+                     half4  currentColor,
+                     float2 qa, float2 qb,    // front quad TL, TR (view points)
+                     float2 qc, float2 qd,    // front quad BR, BL
+                     half4  rampA,            // colorway stop 0
+                     half4  rampB,            // colorway stop 1
+                     half4  rampC,            // colorway stop 2
+                     float  phase,            // band phase — from float tilt, NOT time
+                     float  lattice,          // hex columns across face width (~13)
+                     float  grooveW,          // groove half-width, cell units (~0.10)
+                     float  bandSharp,        // band specular exponent (~10)
+                     float  bandGain,         // band strength (~0.9)
+                     float  glintGain,        // per-cell glint strength (~0.5)
+                     float  latticeFade,      // 0…1 — material wakes during the rise
+                     float  grainGain,        // anodized micro-grain amplitude (flats)
+                     float  grainScale,       // grain frequency across the face width
+                     float  fresnelGain,      // grazing-edge rim brightening (panel border)
+                     float  envGain,          // two-tone vertical environment gradient
+                     float  coreGlow)         // inner energy leaking through the groove seams
+{
+    half a = currentColor.a;
+    if (a < 0.01h) return currentColor;                  // leave the void alone
+
+    float2 uvq = invBilinear(position, qa, qb, qc, qd);
+    // Outside the front face (side/top faces, silhouette margins): plain metal.
+    if (uvq.x < 0.0 || uvq.x > 1.0 || uvq.y < 0.0 || uvq.y > 1.0) return currentColor;
+
+    float3 base = float3(currentColor.rgb) / max(float(a), 0.001);
+
+    // one anisotropic band — tilt-phase, ordered colorway along the sweep axis
+    float2 dir  = normalize(float2(0.5, 1.0));
+    float  cpn  = dot(uvq, dir) / 1.3416;                // 0…1 across the face
+    float  lum  = 0.5 + 0.5 * sin(cpn * 2.6 + phase);
+    float  band = pow(lum, bandSharp);
+
+    float3 ink = ramp3(cpn, float3(rampA.rgb), float3(rampB.rgb), float3(rampC.rgb));
+
+    // ---- debossed hex lattice in face space (v spans 1.5× the face width) ----
+    const float2 r   = float2(1.0, 1.7320508);
+    float2 huv = float2(uvq.x, uvq.y * 1.5) * lattice;
+    float2 ga  = foilMod2(huv, r) - r * 0.5;
+    float2 gb  = foilMod2(huv - r * 0.5, r) - r * 0.5;
+    float2 gv  = dot(ga, ga) < dot(gb, gb) ? ga : gb;
+    float2 id  = huv - gv;                       // cell id — per-cell variation
+    float3 e   = hexEdge(gv);                    // x: dist to edge · yz: outward normal
+
+    // V-groove: 1 at the edge line, 0 on the flats
+    float groove = 1.0 - smoothstep(0.0, grooveW, e.x);
+
+    // emboss flanks: lit toward the sweep axis, shadowed away — the relief read
+    float facing = dot(float2(e.y, e.z), dir);
+
+    // per-cell shimmer: deterministic phase offset so cells ignite in sequence,
+    // not in unison, as the band crosses (light over cut glass)
+    float2 cell  = cellHash(id);
+    float  twink = 0.75 + 0.25 * sin(cell.x * 6.2832 + phase * (1.0 + cell.y));
+
+    // latticeFade gates ALL carved-structure light — at 0 (lying flat, grazing
+    // angles) the case is plain anodized metal; the lattice wakes as it rises.
+    float lit    = groove * max(0.0,  facing) * (0.16 + band * bandGain) * twink * latticeFade;
+    float shadow = groove * max(0.0, -facing) * 0.55 * latticeFade;
+    float glint  = groove * band * smoothstep(0.60, 0.95, twink) * glintGain * latticeFade;
+
+    float3 col = base
+        + ink * lit                              // lit flank ignites in the colorway
+        - base * shadow                          // shadow flank carves below base
+        + mix(ink, float3(1.0), 0.5) * glint     // hot glints where band crosses cells
+        + ink * band * 0.05 * latticeFade;       // faint sheen on flats — band stays legible
+    // anodized micro-grain — ALWAYS on (real metal is grained awake or asleep),
+    // tinted by the metal's own colour so it reads as the surface, not an overlay.
+    float grain = (foilGrain(uvq * grainScale) - 0.5)
+                + (foilGrain(uvq * grainScale * 2.7) - 0.5) * 0.5;
+    col += base * grain * grainGain;
+    // #2 grazing/fresnel — a soft bright rim just inside the panel border (the
+    // edge catching the room). Approximation of grazing reflectance on the flat
+    // front panel: brighten toward the nearest u/v edge.
+    float2 d2  = min(uvq, 1.0 - uvq);
+    float  rim = 1.0 - smoothstep(0.0, 0.12, min(d2.x, d2.y));
+    col += mix(float3(1.0), ink, 0.4) * rim * fresnelGain;
+    // #3 two-tone environment — cool/bright "sky" up top, deeper toward the
+    // bottom: a vertical gradient the metal appears to reflect (matte → metallic).
+    col += base * (0.5 - uvq.y) * envGain;
+    // CORE GLOW — a FAINT "it's charged/armed" hint in the lattice seams, nothing
+    // more. The lattice must NEVER dominate the cracks: the real light-from-within
+    // is light PEERING THROUGH the cracks/tears as they open (Segments 3–4), not a
+    // lit lattice. Kept low so the bright white-cored cracks always read on top.
+    // Ungated by latticeFade — the energy sits behind the surface.
+    col += ink * groove * coreGlow * 0.30;
+    col += ink * coreGlow * 0.02;
+    col = clamp(col, 0.0, 1.0);
+    return half4(half3(col * float(a)), a);
+}

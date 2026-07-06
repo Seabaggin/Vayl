@@ -54,6 +54,7 @@ struct TileOrbitView: View {
     var glowScale:  Double  = 1.0    // reduce for tight contexts like card backs
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var isLight: Bool { colorScheme == .light }
 
     // MARK: - Color cycle anchors
@@ -84,7 +85,9 @@ struct TileOrbitView: View {
     // MARK: - Body
 
     var body: some View {
-        if isActive {
+        // Ambient gate — comet orbits are decoration; Reduce Motion / Low Power
+        // Mode fall back to the same static resting arc the inactive state draws.
+        if isActive && !reduceMotion && !AppAnimation.lowPower {
             TimelineView(.animation) { tl in
                 Canvas { context, canvasSize in
                     let elapsed = tl.date.timeIntervalSinceReferenceDate

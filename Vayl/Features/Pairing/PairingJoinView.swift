@@ -149,7 +149,7 @@ struct PairingJoinView: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
-                        .fill(isLight ? AppColors.cardBackground : Color.white.opacity(0.04))
+                        .fill(isLight ? AppColors.cardBackground : AppColors.whisperFill)
                         .overlay(
                             RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
                                 .strokeBorder(
@@ -184,7 +184,7 @@ struct PairingJoinView: View {
         VStack(spacing: AppSpacing.lg) {            // was 24 → lg, exact
             Image(AppIcons.checkmarkCircle)         // was "checkmark.circle.fill"
                 .font(
-                    Font.custom("ClashDisplay-Bold", size: 64, relativeTo: .largeTitle)
+                    AppFonts.displayHero  // was Font.custom("ClashDisplay-Bold", 64, .largeTitle) → displayHero, exact
                 )                                   // was .system(size: 64)
                 .foregroundStyle(AppColors.accentPrimary)
                 .accessibilityHidden(true)          // decorative — state communicated by text
@@ -194,10 +194,20 @@ struct PairingJoinView: View {
                     .font(AppFonts.screenTitle)
                     .foregroundStyle(AppColors.textPrimary) // was isLight ? x : x — same both sides
 
-                Text("You've successfully connected\nwith your partner.")
+                Text("\(store.partnerDisplayName) is ready to begin with you.")
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
                     .multilineTextAlignment(.center)
+            }
+
+            if let proposal = store.compositionProposal {
+                CompositionConfirmCard(
+                    proposal: proposal,
+                    onConfirm: { Task { await store.confirmComposition() } },
+                    onKeepFlexible: { store.dismissComposition() }
+                )
+                .transition(.opacity)
+                .animation(AppAnimation.standard, value: store.compositionProposal)
             }
         }
     }
@@ -209,7 +219,7 @@ struct PairingJoinView: View {
             Image(AppIcons.exclamationTriangle)     // was "exclamationmark.triangle"
             // ⚠️ confirm AppIcons.exclamationTriangle was added during PairingInviteView pass
                 .font(
-                    Font.custom("ClashDisplay-Bold", size: 48, relativeTo: .largeTitle)
+                    AppFonts.display(48, weight: .bold, relativeTo: .largeTitle)  // was Font.custom("ClashDisplay-Bold", 48, .largeTitle) → AppFonts.display, exact
                 )                                   // was .system(size: 48)
                 .foregroundStyle(AppColors.accentTertiary)
                 .accessibilityHidden(true)          // decorative — error communicated by text below

@@ -10,7 +10,7 @@ const MIME = {
 };
 
 http.createServer((req, res) => {
-  const file = req.url === '/' ? '/vayl-roadmap.html' : req.url;
+  const file = req.url === '/' ? '/vayl-build-roadmap.html' : req.url;
   const fp   = path.join(dir, file);
   if (!fp.startsWith(dir)) { res.writeHead(403); return res.end(); }
   fs.readFile(fp, (err, data) => {

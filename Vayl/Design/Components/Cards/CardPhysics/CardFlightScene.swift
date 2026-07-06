@@ -17,9 +17,30 @@ final class CardFlightScene: SKScene {
     /// Consumed on use and reset to false automatically — no cleanup needed.
     var pendingShouldOvershoot: Bool = false
 
+    /// Timestamp of the last frame that still had card nodes — drives shouldRender.
+    private var lastOccupiedTime: TimeInterval = 0
+
     override func didMove(to view: SKView) {
         backgroundColor = .clear
         physicsWorld.gravity = .zero
+    }
+
+    /// Frame gate for the hosting SpriteView. The scene is empty for all but a
+    /// few seconds of any phase, yet an ungated SpriteView renders (and presents
+    /// a Metal drawable) at full rate the entire time it is on screen — idle GPU
+    /// work competing with every SwiftUI animation around it. Render while cards
+    /// exist, plus a short grace period after the scene empties so the frame
+    /// that ERASES the last cleared sprite actually reaches the screen.
+    ///
+    /// Wire as: `SpriteView(..., shouldRender: { scene.shouldRender(at: $0) })`.
+    func shouldRender(at time: TimeInterval) -> Bool {
+        if !children.isEmpty {
+            lastOccupiedTime = time
+            return true
+        }
+        // 0.25s grace — a handful of frames to flush node removal; the SwiftUI
+        // handoff overlap (~2 frames) is well inside it.
+        return time - lastOccupiedTime < 0.25
     }
 
     /// Flies one card from `origin` to `destination`.
@@ -140,7 +161,8 @@ final class CardFlightScene: SKScene {
             guard let self, let n = self.cardNodes[id] else { return }
             self.restedIDs.insert(id)
             let pos = n.position, rot = n.zRotation
-            DispatchQueue.main.async {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 if let handler = self.onCardRested[id] {
                     self.onCardRested.removeValue(forKey: id)
                     handler(id, pos, rot)

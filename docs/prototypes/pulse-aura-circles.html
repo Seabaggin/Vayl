@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — aura, just a circle</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF; --cyan-light:#7FE0FF; --cyan-deep:#0A8FD0;
+    --void:#0a0810; --t1:#E8E8F0; --t2:rgba(255,255,255,.65); --t3:rgba(255,255,255,.4);
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0c0a12;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),#8B6FD4 45%,#FF006A);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:860px;margin:0 auto;padding:44px 28px 70px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:25px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:13px;line-height:1.55;color:var(--t2);margin:0 0 26px}.lede b{color:var(--t1)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  @media(max-width:780px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:440px){.grid{grid-template-columns:1fr}}
+  .tile{border-radius:20px;overflow:hidden;background:radial-gradient(120% 60% at 50% 0%, rgba(108,58,224,.1), transparent 62%),linear-gradient(var(--void),#08060f);border:1px solid rgba(255,255,255,.06);padding:30px 16px 16px;text-align:center}
+  .stage{height:150px;display:flex;align-items:center;justify-content:center}
+  .nm{font-family:var(--disp);font-size:13.5px;font-weight:600;margin-top:14px}
+  .note{font-size:10px;color:var(--t3);margin-top:5px;line-height:1.4}
+
+  @keyframes breathe{0%,100%{transform:scale(1);opacity:.95}50%{transform:scale(1.05);opacity:1}}
+  @media(prefers-reduced-motion:reduce){.c{animation:none}}
+  .c{width:118px;height:118px;border-radius:50%;animation:breathe 5.2s ease-in-out infinite}
+
+  /* 1 · emission — bright center, fades to nothing (most ethereal) */
+  .c1{background:radial-gradient(circle, #EAFBFF 0%, var(--cyan-light) 14%, var(--cyan) 44%, rgba(0,194,255,.22) 68%, transparent 82%);box-shadow:0 0 54px 16px rgba(0,194,255,.28)}
+
+  /* 2 · core + halo — solid even disc, soft glow ring (clearest color) */
+  .c2{background:radial-gradient(circle, var(--cyan-light) 0%, var(--cyan) 40%, var(--cyan) 72%, var(--cyan-deep) 100%);box-shadow:0 0 0 0 transparent,0 0 30px 8px rgba(0,194,255,.5),0 0 64px 20px rgba(0,194,255,.22)}
+
+  /* 3 · soft orb — centered volume, no highlight, soft edge (closest to original, de-planeted) */
+  .c3{background:radial-gradient(circle at 50% 50%, var(--cyan-light) 0%, var(--cyan) 50%, var(--cyan-deep) 88%, rgba(10,143,208,.3) 100%);box-shadow:0 0 40px 12px rgba(0,194,255,.32);filter:saturate(1.05)}
+
+  /* 4 · core + faint rim — even body, glowing edge ring (subtle dimension, no planet) */
+  .c4{position:relative;background:radial-gradient(circle, var(--cyan) 0%, var(--cyan) 58%, var(--cyan-deep) 100%);box-shadow:0 0 34px 9px rgba(0,194,255,.4)}
+  .c4::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 10px 1px rgba(159,232,255,.85),inset 0 0 22px 2px rgba(0,194,255,.4)}
+
+  .od{font-size:12px;line-height:1.6;color:var(--t2);margin-top:24px}.od b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The aura, <span class="spectrum">just a circle</span></h1>
+  <p class="lede">No highlight, centered light, clear color. Breathing. Four small variations on "a glowing circle that emits rather than reflects."</p>
+
+  <div class="grid">
+    <div class="tile"><div class="stage"><div class="c c1"></div></div><div class="nm">1 · Emission</div><div class="note">Bright center fading to nothing. Most ethereal, softest edge.</div></div>
+    <div class="tile"><div class="stage"><div class="c c2"></div></div><div class="nm">2 · Core + halo</div><div class="note">Even, solid body with a soft glow ring. Clearest, most saturated color.</div></div>
+    <div class="tile"><div class="stage"><div class="c c3"></div></div><div class="nm">3 · Soft orb</div><div class="note">The original, de-planeted: centered volume, no glossy highlight.</div></div>
+    <div class="tile"><div class="stage"><div class="c c4"></div></div><div class="nm">4 · Inner rim</div><div class="note">Even body with a glowing inner edge. Dimension without a fake light source.</div></div>
+  </div>
+
+  <p class="od"><b>My lean:</b> <b>2 (Core + halo)</b> or <b>1 (Emission)</b>. Both read as light, hold the tier color cleanly, and scale to a tiny widget dot without losing meaning. 3 is the safest "it's just the orb, fixed." 4 adds a touch of dimension if 2 feels too flat. Pick one and I will run the field, the comparison thread, and the Home widget on it.</p>
+</div>
+</body>
+</html>

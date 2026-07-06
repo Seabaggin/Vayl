@@ -18,6 +18,8 @@ struct LightModeShimmer: View {
     @State private var phase1: CGFloat = 0   // primary horizontal sweep
     @State private var phase2: CGFloat = 0   // secondary diagonal sweep
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     // Primary sweep — matches HolographicShimmer's colour slot count
     // and opacity range exactly. Only the hues differ (warm vs neon).
     private var primaryColors: [Color] {
@@ -85,6 +87,10 @@ struct LightModeShimmer: View {
         }
         .clipped()
         .onAppear {
+            // Ambient gate — Reduce Motion / Low Power Mode: no sweeps ever start;
+            // the gradients rest at phase 0 (the static state is visually complete).
+            guard !reduceMotion, !AppAnimation.lowPower else { return }
+
             // Primary sweep — same timing as HolographicShimmer
             withAnimation(
                 .easeInOut(duration: usePillColors ? min(duration, 5.5) : duration)

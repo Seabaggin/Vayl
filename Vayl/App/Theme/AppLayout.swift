@@ -314,6 +314,12 @@ struct AppLayout {
     /// entire table world simultaneously.
     static let tableHorizonYFrac: CGFloat = 0.32
 
+    /// 0.13 — Dealer-line anchor while the forged case floats (BuildDeck Beat 4).
+    /// At 2× zoom the case occupies the horizon band where projected text normally
+    /// lives — a line at tableHorizonYFrac would type invisibly behind it. This
+    /// anchor projects the line into the clear air above the case.
+    static let forgeFloatTextYFrac: CGFloat = 0.13
+
     /// 0.34 — Arc peak Y fraction for the circular table surface.
     /// Matches the HTML reference prototype where the table edge sits at H*0.34,
     /// giving the "zoomed in on the table" perspective the user wants.
@@ -413,6 +419,20 @@ struct AppLayout {
 
     /// 0.5pt — Letter-spacing applied to the user's name in the greeting display.
     static let nameLetterSpacing: CGFloat = 0.5
+
+    // MARK: - StatPhase Hero Numeral
+    // Exclusive to the StatPhase "1 in 5" hero. Never use elsewhere.
+
+    /// Responsive point size for the holographic stat hero numeral.
+    /// Lives here (not as inline literals in StatPhase) so the hero scales by the
+    /// same geometry rules as every other OB element. Three steps, by usable height
+    /// and width: short devices (SE) shrink to 100pt to clear the cascade; tall wide
+    /// devices (Pro Max) grow to 164pt; the common case sits at 140pt. Dynamic Type
+    /// still scales the result via AppFonts.statHero's relativeTo: .largeTitle anchor.
+    static func statHeroSize(usableHeight: CGFloat, screenWidth: CGFloat) -> CGFloat {
+        if usableHeight <= 700 { return 100 }
+        return screenWidth > 390 ? 164 : 140
+    }
 
     // MARK: - OB Flourish Geometry
     // Exclusive to VaylFlourishView. Never use in main-app screens.

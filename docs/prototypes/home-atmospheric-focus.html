@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Home · Hybrid 2+6 “Naked HUD + Atmospheric Focus” ★ RECOMMENDED</title>
+<style>
+  :root {
+    --void: #0a0810;
+    --cardBg: #120f1a;
+    --cardBg2: #15101e;
+    --cyan: #00c2ff;       /* accentPrimary  */
+    --purple: #6c3ae0;     /* accentSecondary */
+    --magenta: #ff006a;    /* accentTertiary  */
+    --label: rgba(160,125,205,0.45);
+    --t-display: rgba(255,255,255,0.92);
+    --t-primary: rgba(255,255,255,0.88);
+    --t-secondary: rgba(255,255,255,0.55);
+    --t-tertiary: rgba(255,255,255,0.30);
+    --t-whisper: rgba(255,255,255,0.28);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%;
+    background: #16161c; color: #e7e7f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .wrap { display: flex; height: 100vh; }
+
+  /* ── Side panel ─────────────────────────────────────────── */
+  .panel {
+    width: 270px; flex-shrink: 0; padding: 26px 22px;
+    background: #101016; border-right: 1px solid #1e1b2c;
+    overflow-y: auto;
+  }
+  .panel h1 { font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); margin: 0 0 4px; }
+  .panel h2 { font-size: 17px; font-weight: 600; color: var(--t-display); margin: 0 0 14px; }
+  .panel p  { font-size: 12.5px; line-height: 1.55; color: var(--t-secondary); }
+  .panel ul { padding-left: 16px; margin: 8px 0 18px; }
+  .panel li { font-size: 12px; line-height: 1.5; color: var(--t-secondary); margin-bottom: 6px; }
+  .panel .nav a {
+    display: block; font-size: 12px; padding: 7px 10px; margin-bottom: 5px;
+    color: var(--t-secondary); text-decoration: none;
+    border: 1px solid #1e1b2c; border-radius: 8px;
+  }
+  .panel .nav a.active { color: var(--t-display); border-color: rgba(108,58,224,0.5); }
+  .toggleRow { display: flex; align-items: center; gap: 10px; margin: 18px 0; }
+  .toggleRow span { font-size: 12px; color: var(--t-secondary); }
+  .toggle {
+    width: 42px; height: 24px; border-radius: 12px; cursor: pointer;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+    position: relative; transition: background 0.25s ease;
+  }
+  .toggle::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+    border-radius: 50%; background: #fff; transition: left 0.25s ease;
+  }
+  .toggle.on { background: linear-gradient(90deg, var(--purple), var(--magenta)); box-shadow: 0 0 14px rgba(108,58,224,0.45); }
+  .toggle.on::after { left: 23px; }
+  .attnReadout { font-size: 11px; color: var(--t-whisper); margin-top: 8px; }
+  .attnReadout b { color: var(--cyan); font-weight: 600; }
+
+  .stage {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(120% 80% at 50% 18%, #20202a 0%, #121217 60%);
+    min-width: 0;
+  }
+
+  /* ── Phone ─────────────────────────────────────────────── */
+  .phone {
+    position: relative; width: 390px; height: 844px;
+    border-radius: 47px; overflow: hidden;
+    background: var(--void);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    touch-action: none; user-select: none;
+  }
+
+  /* ── Atmosphere — five blobs. THE CONCEPT: emphasis follows attention. ──
+     Each blob's opacity crossfades between attention states over 0.9s ease —
+     deliberately slower than any reactive token so it reads as the room
+     responding, not the UI animating. “Felt, not seen.”                    */
+  .atmo { position: absolute; inset: 0; opacity: 0.38; pointer-events: none; }
+  .blob {
+    position: absolute; border-radius: 50%; filter: blur(52px); transform: translate(-50%,-50%);
+    transition: opacity 0.9s ease; /* atmosphere crossfade — ambient, not reactive */
+  }
+  .b1 { left: 68px;  top: 97px;  width: 460px; height: 370px; background: radial-gradient(closest-side, rgba(0,194,255,0.55), transparent 72%); }
+  .b2 { left: 319px; top: 146px; width: 420px; height: 340px; background: radial-gradient(closest-side, rgba(255,0,106,0.50), transparent 72%); }
+  .b3 { left: 188px; top: 390px; width: 320px; height: 290px; background: radial-gradient(closest-side, rgba(108,58,224,0.55), transparent 72%); }
+  .b4 { left: 105px; top: 714px; width: 420px; height: 356px; background: radial-gradient(closest-side, rgba(0,140,255,0.45), transparent 72%); }
+  .b5 { left: 300px; top: 634px; width: 316px; height: 280px; background: radial-gradient(closest-side, rgba(255,0,106,0.42), transparent 72%); }
+
+  /* attention emphasis profiles — which blobs lean toward the watched module */
+  body[data-attention="deck"]          .b1 { opacity: 1.0; }
+  body[data-attention="deck"]          .b2 { opacity: 1.0; }
+  body[data-attention="deck"]          .b3 { opacity: 0.55; }
+  body[data-attention="deck"]          .b4 { opacity: 0.40; }
+  body[data-attention="deck"]          .b5 { opacity: 0.40; }
+  body[data-attention="pulse"]         .b1 { opacity: 0.45; }
+  body[data-attention="pulse"]         .b2 { opacity: 0.60; }
+  body[data-attention="pulse"]         .b3 { opacity: 1.0;  }
+  body[data-attention="pulse"]         .b4 { opacity: 0.55; }
+  body[data-attention="pulse"]         .b5 { opacity: 0.70; }
+  body[data-attention="constellation"] .b1 { opacity: 0.40; }
+  body[data-attention="constellation"] .b2 { opacity: 0.40; }
+  body[data-attention="constellation"] .b3 { opacity: 0.65; }
+  body[data-attention="constellation"] .b4 { opacity: 1.0;  }
+  body[data-attention="constellation"] .b5 { opacity: 1.0;  }
+  /* under Reduce Motion the attention drift is removed entirely — uniform atmosphere */
+  body.rm .blob { transition: none; opacity: 1 !important; }
+
+  /* ambient drift — 2 × AppAnimation.ambientDrift (4.0s). Removed under Reduce Motion. */
+  .atmo .drift { position: absolute; inset: 0; animation: drift 8s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: translate(0,0); } to { transform: translate(6px,-8px); } }
+  body.rm .atmo .drift { animation: none; }
+
+  /* ── Screen content ─────────────────────────────────────── */
+  .screen {
+    position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
+    padding: 0 0 120px;
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+
+  .statusbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 28px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.65);
+  }
+  .statusbar .icons { letter-spacing: 2px; font-size: 11px; opacity: 0.7; }
+
+  .header { display: flex; align-items: center; padding: 18px 18px 0; }
+  .header .name { font-size: 21px; font-weight: 600; color: rgba(255,255,255,0.58); letter-spacing: 0.01em; }
+  .gearBtn {
+    width: 30px; height: 30px; border-radius: 50%; margin-left: 10px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: transform 0.15s ease; /* AppAnimation.fast */
+  }
+  .gearBtn:active { transform: scale(0.96); }
+  .gearBtn svg { width: 14px; height: 14px; stroke: rgba(255,255,255,0.40); fill: none; stroke-width: 1.6; }
+  .partnerPill {
+    margin-left: auto; display: flex; align-items: center; gap: 8px;
+    height: 36px; padding: 0 14px 0 6px; border-radius: 18px; cursor: pointer;
+    background: rgba(18,15,26,0.85); backdrop-filter: blur(40px);
+    border: 1px solid rgba(255,255,255,0.07); position: relative; overflow: hidden;
+    transition: transform 0.15s ease; /* AppAnimation.fast */
+  }
+  .partnerPill:active { transform: scale(0.96); }
+  .partnerPill::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 4%, var(--cyan) 26%, var(--purple) 54%, var(--magenta) 80%, transparent 96%);
+    opacity: 0.30;
+  }
+  .partnerPill .avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--purple), var(--magenta));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff;
+  }
+  .partnerPill .pname { font-size: 13px; font-weight: 600; color: var(--t-primary); }
+
+  .overline {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.17em; text-transform: uppercase;
+    color: var(--label);
+  }
+
+  /* ── Module 1 — The Deck ── */
+  .deckZone { position: relative; margin: 26px 18px 0; }
+  .ghost {
+    position: absolute; inset: 0;
+    border-radius: 20px; background: var(--cardBg);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .g1 { transform: rotate(-3deg)   scale(0.96) translateY(6px);  opacity: 0.55; }
+  .g2 { transform: rotate(2deg)    scale(0.92) translateY(10px); opacity: 0.45; }
+  .g3 { transform: rotate(-5.5deg) scale(0.89) translateY(13px); opacity: 0.35; }
+  .deckHero {
+    position: relative; border-radius: 20px; padding: 18px 18px 16px;
+    background: rgba(18,15,26,0.92); backdrop-filter: blur(40px);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.06);
+    overflow: hidden; cursor: pointer;
+    transition: transform 0.15s ease; /* AppAnimation.fast — press state */
+  }
+  .deckHero:active { transform: scale(0.975) translateY(1px); }
+  .deckHero::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 4%, var(--cyan) 26%, var(--purple) 54%, var(--magenta) 80%, transparent 96%);
+    opacity: 0.30;
+    transition: opacity 0.4s ease-out; /* hairline answers the hold — AppAnimation.enter */
+  }
+  body.focusDeck .deckHero::before { opacity: 0.65; }
+  .deckHero .row { display: flex; align-items: center; }
+  .deckHero .title { font-size: 24px; font-weight: 700; color: var(--t-display); margin: 8px 0 6px; }
+  .deckHero .meta { font-size: 13px; color: var(--t-tertiary); }
+  .deckArrow {
+    margin-left: auto; width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.75); font-size: 18px;
+  }
+
+  /* ── DECK FOCUS — mirrors HomeDashboardView's deckFocused mechanic:
+     other modules → blur(20px) + opacity floor 0.06.
+     Focus in:  AppAnimation.enter (0.4s ease-out)
+     Focus out: AppAnimation.fast  (0.15s ease-out) — applied via JS class    */
+  .pulse, .constellation {
+    transition: filter 0.4s ease-out, opacity 0.4s ease-out;
+  }
+  body.unfocusing .pulse, body.unfocusing .constellation {
+    transition: filter 0.15s ease-out, opacity 0.15s ease-out;
+  }
+  body.focusDeck .pulse, body.focusDeck .constellation {
+    filter: blur(20px); opacity: 0.06; pointer-events: none;
+  }
+  /* during focus the room leans hard into the deck */
+  body.focusDeck .b1 { opacity: 1.0 !important; }
+  body.focusDeck .b2 { opacity: 1.0 !important; }
+  body.focusDeck .b3 { opacity: 0.25 !important; }
+  body.focusDeck .b4 { opacity: 0.12 !important; }
+  body.focusDeck .b5 { opacity: 0.12 !important; }
+  /* Reduce Motion: blur swap becomes a plain opacity fade at 0.15s, no blur */
+  body.rm .pulse, body.rm .constellation { transition: opacity 0.15s ease !important; }
+  body.rm.focusDeck .pulse, body.rm.focusDeck .constellation { filter: none; opacity: 0.15; }
+
+  /* ── Module 2 — The Pulse (naked) ── */
+  .pulse { position: relative; margin-top: 34px; cursor: pointer; }
+  .pulse .head { display: flex; align-items: baseline; padding: 0 18px; }
+  .pulse .trend { margin-left: auto; font-size: 12px; color: var(--t-whisper); }
+  .pulse .state { font-size: 27px; font-weight: 700; color: var(--t-display); padding: 6px 18px 0; }
+  .pulse .today { display: flex; align-items: center; gap: 6px; position: absolute; right: 18px; top: 30px; font-size: 13px; color: var(--t-secondary); }
+  .pulse .today .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--magenta); box-shadow: 0 0 10px rgba(255,0,106,0.8); }
+  .pulse svg { display: block; width: 390px; height: 132px; margin-top: 4px; }
+  .days {
+    display: flex; justify-content: space-between; padding: 2px 26px 0;
+    font-size: 10px; font-weight: 600; color: var(--t-whisper);
+  }
+  .days .d { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 22px; }
+  .days .dd { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.18); }
+  .days .d.f .dd, .days .d.sa .dd { background: rgba(155,89,214,0.8); }
+  .days .d.now .dd { width: 9px; height: 9px; background: var(--magenta); box-shadow: 0 0 12px rgba(255,0,106,0.9); }
+  .days .d.now { color: rgba(255,255,255,0.6); }
+  .nodeCast {
+    position: absolute; right: 10px; top: 96px; width: 150px; height: 90px;
+    background: radial-gradient(closest-side, rgba(255,0,106,0.22), transparent 70%);
+    filter: blur(18px); pointer-events: none;
+  }
+
+  /* ── Module 3 — The Constellation (tray-less) ── */
+  .constellation { margin-top: 32px; position: relative; }
+  .constellation .head { display: flex; align-items: baseline; padding: 0 18px 14px; }
+  .constellation .count { margin-left: auto; font-size: 12px; color: var(--t-whisper); }
+  .carousel { position: relative; height: 196px; }
+  .ccard {
+    position: absolute; top: 0; left: 18px; width: 322px; height: 188px;
+    border-radius: 20px; padding: 18px 20px;
+    background: rgba(18,15,26,0.92); backdrop-filter: blur(40px);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.06);
+    overflow: hidden; cursor: grab;
+    will-change: transform, opacity;
+  }
+  .ccard::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 4%, var(--cyan) 26%, var(--purple) 54%, var(--magenta) 80%, transparent 96%);
+    opacity: 0.28;
+  }
+  .ccard .tag { position: absolute; top: 18px; right: 20px; font-size: 9px; font-weight: 700; letter-spacing: 0.16em; color: var(--cyan); opacity: 0.85; }
+  .ccard .term { display: flex; align-items: center; gap: 9px; font-size: 21px; font-weight: 700; color: var(--t-display); margin: 2px 0 10px; }
+  .ccard .node { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .ccard .def { font-size: 13.5px; line-height: 1.55; color: var(--t-secondary); }
+  .dots { display: flex; justify-content: center; gap: 7px; margin-top: 8px; }
+  .dots i { width: 5px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.16); transition: all 0.3s ease; /* AppAnimation.standard */ }
+  .dots i.on { width: 16px; background: var(--cyan); box-shadow: 0 0 8px rgba(0,194,255,0.5); }
+  .swipeHint { text-align: center; font-size: 11px; color: var(--t-whisper); margin-top: 10px; }
+
+  /* ── Racetrack tab bar ──────────────────────────────────── */
+  .tabbar {
+    position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+    width: 340px; height: 64px; border-radius: 32px;
+    background: rgba(10,8,16,0.97); backdrop-filter: blur(30px);
+    border: 1px solid rgba(255,255,255,0.055);
+    display: flex; align-items: center; justify-content: space-around;
+    z-index: 40;
+    transition: opacity 0.4s ease-out;
+  }
+  body.focusDeck .tabbar { opacity: 0.15; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; width: 60px; }
+  .tab svg { width: 21px; height: 21px; stroke: rgba(255,255,255,0.22); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .tab span { font-size: 10px; color: rgba(255,255,255,0.22); font-weight: 400; }
+  .tab .adot { width: 4px; height: 4px; border-radius: 50%; background: transparent; }
+  .tab.active svg { stroke: url(#tabGrad); }
+  .tab.active span { color: rgba(255,255,255,0.65); font-weight: 600; }
+  .tab.active .adot { background: linear-gradient(90deg, var(--cyan), var(--magenta)); box-shadow: 0 0 6px rgba(255,0,106,0.6); }
+
+  /* ── Pulse analytics bottom sheet ── */
+  .scrim {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.45); z-index: 50;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease; /* AppAnimation.standard */
+  }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 560px; z-index: 51;
+    border-radius: 26px 26px 0 0; padding: 10px 22px 0;
+    background: rgba(21,16,30,0.97); backdrop-filter: blur(40px);
+    box-shadow: 0 -24px 70px rgba(0,0,0,0.80), inset 0 1px 0 rgba(255,255,255,0.07);
+    transform: translateY(105%);
+    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* sheet entrance per scope §2 */
+  }
+  .sheet::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; border-radius: 1px;
+    background: linear-gradient(90deg, transparent 4%, var(--cyan) 26%, var(--purple) 54%, var(--magenta) 80%, transparent 96%);
+    opacity: 0.60;
+  }
+  .sheet .handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); margin: 4px auto 16px; cursor: pointer; }
+  .sheet h3 { margin: 0 0 2px; font-size: 20px; font-weight: 700; color: var(--t-display); }
+  .sheet .sub { font-size: 12px; color: var(--t-tertiary); margin-bottom: 18px; }
+  .sheet svg { width: 100%; height: 150px; }
+  .statGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .stat {
+    border-radius: 16px; padding: 14px 16px;
+    background: rgba(18,15,26,0.9); border: 1px solid rgba(255,255,255,0.07); position: relative; overflow: hidden;
+  }
+  .stat::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent); }
+  .stat .v { font-size: 22px; font-weight: 700; color: var(--t-display); }
+  .stat .k { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--label); margin-top: 3px; }
+  body.sheetOpen .scrim { opacity: 1; pointer-events: auto; }
+  body.sheetOpen .sheet { transform: translateY(0); }
+  body.rm .sheet { transition: opacity 0.15s ease, transform 0s; }
+
+  @media (max-width: 880px) { .panel { display: none; } }
+</style>
+</head>
+<body data-attention="deck">
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="tabGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#00c2ff"/><stop offset="55%" stop-color="#6c3ae0"/><stop offset="100%" stop-color="#ff006a"/>
+  </linearGradient>
+  <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#00c2ff"/><stop offset="52%" stop-color="#6c3ae0"/><stop offset="100%" stop-color="#ff006a"/>
+  </linearGradient>
+</defs></svg>
+
+<div class="wrap">
+  <aside class="panel">
+    <h1>Vayl · Home Concepts</h1>
+    <h2>2 + 6 — Atmospheric Focus ★</h2>
+    <p>The recommended hybrid. Same Naked HUD layout, plus the room responds to attention: the atmosphere's blobs quietly lean toward whichever module you're on, and <b>pressing &amp; holding the Deck</b> drops everything else into a heavy blur — the existing <code>deckFocused</code> mechanic, generalized.</p>
+    <ul>
+      <li>Hover / touch each module — the background light should shift so slowly you almost miss it</li>
+      <li><b>Press and hold the Deck</b> — others blur to 6%, the room concentrates behind it. Release — 200ms later it breathes back</li>
+      <li>Is the attention drift felt-not-seen, or is it noticeable enough to be decoration?</li>
+      <li>Toggle Reduce Motion — attention drift is removed entirely; focus becomes a plain fade</li>
+    </ul>
+    <div class="toggleRow"><div class="toggle" id="rmToggle"></div><span>Reduce Motion</span></div>
+    <div class="attnReadout">attention: <b id="attnLabel">deck</b></div>
+    <h1 style="margin-top:22px">Compare</h1>
+    <div class="nav">
+      <a href="/home-naked-hud.html">2 · Naked HUD</a>
+      <a href="/home-atmospheric-focus.html" class="active">2+6 · Atmospheric Focus ★ (this)</a>
+      <a href="/home-z-axis-stack.html">1 · Z-Axis Stack</a>
+      <a href="/home-breathing-aperture.html">4 · Breathing Aperture</a>
+      <a href="/home-settled-hand.html">5 · The Settled Hand (carte blanche)</a>
+      <a href="/home-v2-observatory.html">v2 A · The Observatory (accurate hero)</a>
+      <a href="/home-v2-orbit.html">v2 B · The Orbit (accurate hero)</a>
+    </div>
+  </aside>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="atmo"><div class="drift">
+        <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+        <div class="blob b4"></div><div class="blob b5"></div>
+      </div></div>
+
+      <div class="screen" id="screen">
+        <div class="statusbar"><span>9:41</span><span class="icons">▮▮▮ ▰</span></div>
+
+        <div class="header">
+          <span class="name">Jordan</span>
+          <div class="gearBtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.5-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.5 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.5-2-1.5A7 7 0 0 0 19 12Z"/></svg></div>
+          <div class="partnerPill"><div class="avatar">A</div><span class="pname">Alex</span></div>
+        </div>
+
+        <!-- ── Module 1: THE DECK ── -->
+        <div class="deckZone" id="deckZone" data-module="deck">
+          <div class="ghost g3"></div><div class="ghost g2"></div><div class="ghost g1"></div>
+          <div class="deckHero">
+            <span class="overline">Your Deck</span>
+            <div class="row">
+              <div>
+                <div class="title">Start a Session</div>
+                <div class="meta">12 cards · Relationship Health</div>
+              </div>
+              <div class="deckArrow">→</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Module 2: THE PULSE — naked ── -->
+        <div class="pulse" id="pulseModule" data-module="pulse">
+          <div class="head"><span class="overline">The Pulse</span><span class="trend">7-day trend</span></div>
+          <div class="today"><span class="dot"></span><span>Today</span></div>
+          <div class="state">Connected</div>
+          <div class="nodeCast"></div>
+          <svg viewBox="0 0 390 132">
+            <path d="M 24 96 L 78 84 L 132 90 L 186 64 L 240 54 L 294 60 L 366 26"
+                  fill="none" stroke="url(#sparkGrad)" stroke-width="7" stroke-linecap="round"
+                  opacity="0.35" filter="blur(7px)"/>
+            <path d="M 24 96 L 78 84 L 132 90 L 186 64 L 240 54 L 294 60 L 366 26"
+                  fill="none" stroke="url(#sparkGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="366" cy="26" r="4.5" fill="#ff006a"/>
+            <circle cx="366" cy="26" r="9" fill="none" stroke="rgba(255,0,106,0.45)" stroke-width="1.5"/>
+          </svg>
+          <div class="days">
+            <div class="d"><i class="dd"></i>M</div><div class="d"><i class="dd"></i>T</div>
+            <div class="d"><i class="dd"></i>W</div><div class="d"><i class="dd"></i>T</div>
+            <div class="d f"><i class="dd"></i>F</div><div class="d sa"><i class="dd"></i>S</div>
+            <div class="d now"><i class="dd"></i>S</div>
+          </div>
+        </div>
+
+        <!-- ── Module 3: THE CONSTELLATION — tray-less ── -->
+        <div class="constellation" data-module="constellation">
+          <div class="head"><span class="overline">The Constellation</span><span class="count" id="cCount">1 of 5</span></div>
+          <div class="carousel" id="carousel"></div>
+          <div class="dots" id="dots"></div>
+          <div class="swipeHint">swipe to explore</div>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab active"><svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg><span>Home</span><i class="adot"></i></div>
+        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg><span>Play</span><i class="adot"></i></div>
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg><span>Map</span><i class="adot"></i></div>
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5Z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></svg><span>Learn</span><i class="adot"></i></div>
+      </div>
+
+      <div class="scrim" id="scrim"></div>
+      <div class="sheet" id="sheet">
+        <div class="handle" id="sheetHandle"></div>
+        <h3>The Pulse</h3>
+        <div class="sub">30-day capacity · stub for the existing full-analytics pattern</div>
+        <svg viewBox="0 0 346 150">
+          <path d="M 6 120 C 40 110 60 124 90 112 S 150 84 180 90 S 250 56 280 60 S 330 30 340 24"
+                fill="none" stroke="url(#sparkGrad)" stroke-width="6" opacity="0.3" filter="blur(6px)"/>
+          <path d="M 6 120 C 40 110 60 124 90 112 S 150 84 180 90 S 250 56 280 60 S 330 30 340 24"
+                fill="none" stroke="url(#sparkGrad)" stroke-width="2.2"/>
+          <circle cx="340" cy="24" r="4" fill="#ff006a"/>
+        </svg>
+        <div class="statGrid">
+          <div class="stat"><div class="v">14</div><div class="k">Sessions</div></div>
+          <div class="stat"><div class="v">86</div><div class="k">Cards</div></div>
+          <div class="stat"><div class="v">9</div><div class="k">Together</div></div>
+          <div class="stat"><div class="v">3.2</div><div class="k">Depth</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════ Reduce Motion ════ */
+const rmToggle = document.getElementById('rmToggle');
+rmToggle.addEventListener('click', () => {
+  rmToggle.classList.toggle('on');
+  document.body.classList.toggle('rm');
+});
+
+/* ════ ATTENTION ENGINE — the room leans toward what you're looking at.
+   Priority: active pointer on a module > module nearest the screen's center band.
+   This generalizes HomeGlowField(morphProgress:) from the Swift code.        ════ */
+const attnLabel = document.getElementById('attnLabel');
+const screenEl = document.getElementById('screen');
+const modules = [...document.querySelectorAll('[data-module]')];
+let pointerAttention = null;
+let scrollDerived = null;   // only set once the user actually scrolls — the Deck holds default attention (focal on return visits)
+
+function setAttention(name) {
+  if (document.body.dataset.attention !== name) {
+    document.body.dataset.attention = name;
+    attnLabel.textContent = name;
+  }
+}
+function scrollAttention() {
+  const mid = 422; // phone vertical center
+  let best = 'deck', bestDist = Infinity;
+  modules.forEach(m => {
+    const r = m.getBoundingClientRect();
+    const phoneTop = screenEl.getBoundingClientRect().top;
+    const center = (r.top - phoneTop) + r.height / 2;
+    const d = Math.abs(center - mid);
+    if (d < bestDist) { bestDist = d; best = m.dataset.module; }
+  });
+  return best;
+}
+function applyAttention() { setAttention(pointerAttention || scrollDerived || 'deck'); }
+
+modules.forEach(m => {
+  m.addEventListener('pointerenter', () => { pointerAttention = m.dataset.module; applyAttention(); });
+  m.addEventListener('pointerleave', () => { pointerAttention = null; applyAttention(); });
+});
+screenEl.addEventListener('scroll', () => { scrollDerived = scrollAttention(); applyAttention(); });
+
+/* ════ DECK PRESS-AND-HOLD FOCUS — extends the shipped deckFocused mechanic.
+   Hold 350ms → focus. Release → restore after 200ms (mirrors the Swift
+   Task.sleep(200ms) delayed unfocus in HomeDashboardView).                  ════ */
+const deckZone = document.getElementById('deckZone');
+let holdTimer = null, releaseTimer = null;
+
+deckZone.addEventListener('pointerdown', () => {
+  clearTimeout(releaseTimer);
+  holdTimer = setTimeout(() => {
+    document.body.classList.remove('unfocusing');
+    document.body.classList.add('focusDeck');   /* in: AppAnimation.enter 0.4s */
+  }, 350);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev =>
+  deckZone.addEventListener(ev, () => {
+    clearTimeout(holdTimer);
+    if (document.body.classList.contains('focusDeck')) {
+      releaseTimer = setTimeout(() => {
+        document.body.classList.add('unfocusing'); /* out: AppAnimation.fast 0.15s */
+        document.body.classList.remove('focusDeck');
+        setTimeout(() => document.body.classList.remove('unfocusing'), 200);
+      }, 200);
+    }
+  })
+);
+
+/* ════ Pulse → bottom sheet ════ */
+document.getElementById('pulseModule').addEventListener('click', () => document.body.classList.add('sheetOpen'));
+document.getElementById('scrim').addEventListener('click', () => document.body.classList.remove('sheetOpen'));
+document.getElementById('sheetHandle').addEventListener('click', () => document.body.classList.remove('sheetOpen'));
+
+/* ════ Constellation carousel ════ */
+const TERMS = [
+  { t: 'Compersion',   c: '#00c2ff', d: "Finding genuine joy in your partner's happiness with another person. Often described as the opposite of jealousy — it doesn't always come naturally, but it can be cultivated." },
+  { t: 'NRE',          c: '#6c3ae0', d: "New Relationship Energy — the rush of intensity at the start of a new connection. Naming it helps you enjoy it without letting it steer." },
+  { t: 'Metamour',     c: '#ff006a', d: "Your partner's partner. A relationship of its own, even if you never become close — many people find clarity just from having the word." },
+  { t: 'Polycule',     c: '#00c2ff', d: "The connected network of relationships around you and your partners. Every polycule has its own shape — there is no standard issue." },
+  { t: 'Kitchen Table',c: '#6c3ae0', d: "A style where everyone involved could comfortably share a meal together. One possible shape, not the goal." },
+];
+const carousel = document.getElementById('carousel');
+const dotsEl = document.getElementById('dots');
+const countEl = document.getElementById('cCount');
+let current = 0;
+
+TERMS.forEach((_, i) => { const d = document.createElement('i'); if (i === 0) d.className = 'on'; dotsEl.appendChild(d); });
+
+function makeCard(i) {
+  const el = document.createElement('div');
+  el.className = 'ccard';
+  el.innerHTML = `<span class="tag">Glossary</span>
+    <div class="term"><span class="node" style="background:${TERMS[i].c};box-shadow:0 0 10px ${TERMS[i].c}"></span>${TERMS[i].t}</div>
+    <div class="def">${TERMS[i].d}</div>`;
+  return el;
+}
+
+function layout(animated) {
+  carousel.innerHTML = '';
+  for (let k = 2; k >= 0; k--) {
+    const i = current + k;
+    if (i >= TERMS.length) continue;
+    const card = makeCard(i);
+    const peek = k === 0 ? 0 : (k === 1 ? 330 : 344);
+    const scale = k === 0 ? 1 : (k === 1 ? 0.93 : 0.88);
+    const op = k === 0 ? 1 : (k === 1 ? 0.55 : 0.25);
+    card.style.transform = `translateX(${peek}px) scale(${scale})`;
+    card.style.opacity = op;
+    if (k === 0) card.id = 'topCard';
+    if (animated && !document.body.classList.contains('rm')) {
+      card.style.transition = 'transform 0.5s cubic-bezier(0.32, 1.15, 0.45, 1), opacity 0.4s ease'; /* AppAnimation.spring approx */
+    }
+    carousel.appendChild(card);
+  }
+  [...dotsEl.children].forEach((d, i) => d.className = i === current ? 'on' : '');
+  countEl.textContent = `${current + 1} of ${TERMS.length}`;
+  bindDrag();
+}
+
+function bindDrag() {
+  const top = document.getElementById('topCard');
+  if (!top) return;
+  let startX = 0, dx = 0, dragging = false;
+  top.style.touchAction = 'none';
+  top.addEventListener('pointerdown', e => {
+    dragging = true; startX = e.clientX; top.setPointerCapture(e.pointerId);
+    top.style.transition = 'none'; top.style.cursor = 'grabbing';
+  });
+  top.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    dx = e.clientX - startX;
+    if (current === 0 && dx > 0) dx *= 0.3;
+    top.style.transform = `translateX(${dx}px) rotate(${dx * 0.035}deg)`; /* rotation-on-drag */
+  });
+  top.addEventListener('pointerup', () => {
+    if (!dragging) return;
+    dragging = false; top.style.cursor = 'grab';
+    const rm = document.body.classList.contains('rm');
+    if (dx < -70 && current < TERMS.length - 1) {
+      top.style.transition = rm ? 'opacity 0.15s ease' : 'transform 0.4s cubic-bezier(0.5, 0, 0.75, 0.4), opacity 0.3s ease';
+      top.style.transform = `translateX(-420px) rotate(-12deg)`; top.style.opacity = 0;
+      current++; setTimeout(() => layout(true), rm ? 150 : 220);
+    } else if (dx > 70 && current > 0) {
+      current--; layout(true);
+    } else {
+      top.style.transition = rm ? 'opacity 0.15s ease' : 'transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1)'; /* AppAnimation.standard */
+      top.style.transform = 'translateX(0) rotate(0deg)';
+    }
+    dx = 0;
+  });
+}
+
+layout(false);
+applyAttention();
+</script>
+</body>
+</html>

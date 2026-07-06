@@ -1,0 +1,637 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "type": "file",
+      "name": "CandleCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "summary": "Card face that renders an animated candle/flame visualization via a Canvas-driven renderer, used as an expressive OB card surface.",
+      "tags": ["view", "component", "ui", "card-face", "animation"],
+      "complexity": "complex",
+      "languageNotes": "Heavy procedural rendering split across enums (CandlePalette, CandleNoise, CandleRenderer) and geometry/config structs (CandleGeo, FlameCfg)."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift:CandleCardFace",
+      "type": "class",
+      "name": "CandleCardFace",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "lineRange": [77, 131],
+      "summary": "SwiftUI view hosting the animated candle Canvas and driving its time-based flame animation.",
+      "tags": ["view", "component", "card-face", "animation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift:CandleRenderer",
+      "type": "class",
+      "name": "CandleRenderer",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "lineRange": [132, 858],
+      "summary": "Stateless rendering enum that draws the candle, flame, and glow into a graphics context each frame.",
+      "tags": ["design-system", "rendering", "card-face", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift:CandleGeo",
+      "type": "class",
+      "name": "CandleGeo",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "lineRange": [32, 76],
+      "summary": "Geometry value type holding proportional candle layout metrics derived from card size.",
+      "tags": ["data-model", "type-definition", "geometry"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift",
+      "type": "file",
+      "name": "CompassCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift",
+      "summary": "Card face rendering a compass/heading-ruler instrument that deflects toward a value, used for directional selection interactions.",
+      "tags": ["view", "component", "ui", "card-face"],
+      "complexity": "complex",
+      "languageNotes": "Composes a HeadingRuler subview and a RulerIndex Shape; deflection math factored into private CompassDeflection/CompassGeometry types."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift:CompassCardFace",
+      "type": "class",
+      "name": "CompassCardFace",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift",
+      "lineRange": [165, 347],
+      "summary": "SwiftUI view rendering the animated compass card face and its heading ruler.",
+      "tags": ["view", "component", "card-face"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift:HeadingRuler",
+      "type": "class",
+      "name": "HeadingRuler",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift",
+      "lineRange": [348, 411],
+      "summary": "Private view drawing the scrolling heading ruler tick marks for the compass face.",
+      "tags": ["view", "component", "card-face"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift",
+      "type": "file",
+      "name": "CompassOptionCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift",
+      "summary": "Lightweight card face presenting a single compass option label, a variant surface in the compass selection flow.",
+      "tags": ["view", "component", "ui", "card-face"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift:CompassOptionCardFace",
+      "type": "class",
+      "name": "CompassOptionCardFace",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift",
+      "lineRange": [15, 69],
+      "summary": "SwiftUI view rendering a single labeled compass option card.",
+      "tags": ["view", "component", "card-face"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift",
+      "type": "file",
+      "name": "CompassSliderCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift",
+      "summary": "Card face combining the compass instrument with a slider affordance for continuous value selection.",
+      "tags": ["view", "component", "ui", "card-face"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift:CompassSliderCardFace",
+      "type": "class",
+      "name": "CompassSliderCardFace",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift",
+      "lineRange": [17, 109],
+      "summary": "SwiftUI view pairing the compass visual with a draggable slider for value input.",
+      "tags": ["view", "component", "card-face"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift",
+      "type": "file",
+      "name": "ContextCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift",
+      "summary": "Card face presenting an onboarding context prompt with a decorative book object illustration.",
+      "tags": ["view", "component", "ui", "card-face", "onboarding"],
+      "complexity": "complex",
+      "languageNotes": "Embeds a private BookObject subview that procedurally draws the book illustration."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift:ContextCardFace",
+      "type": "class",
+      "name": "ContextCardFace",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift",
+      "lineRange": [27, 103],
+      "summary": "SwiftUI view rendering the context-prompt card face with illustration and copy.",
+      "tags": ["view", "component", "card-face", "onboarding"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift:BookObject",
+      "type": "class",
+      "name": "BookObject",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift",
+      "lineRange": [104, 302],
+      "summary": "Private view procedurally drawing the decorative book illustration on the context card.",
+      "tags": ["view", "component", "card-face"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift",
+      "type": "file",
+      "name": "ControllerCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift",
+      "summary": "Card face drawing a single game-controller illustration via ControllerPainter, signifying solo-controller play mode.",
+      "tags": ["view", "component", "ui", "card-face"],
+      "complexity": "simple",
+      "languageNotes": "Delegates all drawing to the shared ControllerPainter enum."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift:ControllerCardFace",
+      "type": "class",
+      "name": "ControllerCardFace",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift",
+      "lineRange": [12, 61],
+      "summary": "SwiftUI view that renders a single controller via ControllerPainter inside a Canvas.",
+      "tags": ["view", "component", "card-face"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift",
+      "type": "file",
+      "name": "ControllerPainter.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift",
+      "summary": "Shared stateless painter that draws the game-controller shape into a graphics context, reused by the single and dual controller card faces.",
+      "tags": ["design-system", "rendering", "card-face"],
+      "complexity": "complex",
+      "languageNotes": "Enum-as-namespace exposing static draw/bodyPath helpers; no instance state."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift:ControllerPainter",
+      "type": "class",
+      "name": "ControllerPainter",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift",
+      "lineRange": [15, 329],
+      "summary": "Namespace enum with static methods for building and drawing the controller silhouette and its glow passes.",
+      "tags": ["design-system", "rendering", "card-face"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift:draw",
+      "type": "function",
+      "name": "draw",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift",
+      "lineRange": [65, 329],
+      "summary": "Static method that strokes the controller shape with glow and crisp passes into the given context.",
+      "tags": ["rendering", "card-face"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift",
+      "type": "file",
+      "name": "DualControllerCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift",
+      "summary": "Card face drawing two game controllers via ControllerPainter, signifying paired two-device play mode.",
+      "tags": ["view", "component", "ui", "card-face"],
+      "complexity": "simple",
+      "languageNotes": "Reuses ControllerPainter.draw twice for the two-controller composition."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift:DualControllerCardFace",
+      "type": "class",
+      "name": "DualControllerCardFace",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift",
+      "lineRange": [20, 85],
+      "summary": "SwiftUI view rendering two controllers via ControllerPainter inside a Canvas.",
+      "tags": ["view", "component", "card-face"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift",
+      "type": "file",
+      "name": "RadioTunerCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift",
+      "summary": "Card face rendering a radio-tuner dial metaphor for selecting along a continuous frequency-like scale.",
+      "tags": ["view", "component", "ui", "card-face"],
+      "complexity": "complex",
+      "languageNotes": "Tuner layout math factored into a private RadioTunerGeometry struct."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift:RadioTunerCardFace",
+      "type": "class",
+      "name": "RadioTunerCardFace",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift",
+      "lineRange": [25, 139],
+      "summary": "SwiftUI view rendering the animated radio-tuner dial card face.",
+      "tags": ["view", "component", "card-face"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift",
+      "type": "file",
+      "name": "SlotMachineCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift",
+      "summary": "Card face rendering a slot-machine reel metaphor for a randomized/spin-style selection surface.",
+      "tags": ["view", "component", "ui", "card-face", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift:SlotMachineCardFace",
+      "type": "class",
+      "name": "SlotMachineCardFace",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift",
+      "lineRange": [27, 374],
+      "summary": "SwiftUI view rendering the animated slot-machine reel card face.",
+      "tags": ["view", "component", "card-face", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift",
+      "type": "file",
+      "name": "SnapshotCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift",
+      "summary": "Card face presenting a static snapshot/summary surface, used to display a captured selection or result.",
+      "tags": ["view", "component", "ui", "card-face"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift:SnapshotCardFace",
+      "type": "class",
+      "name": "SnapshotCardFace",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift",
+      "lineRange": [15, 95],
+      "summary": "SwiftUI view rendering the snapshot summary card face.",
+      "tags": ["view", "component", "card-face"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift",
+      "type": "file",
+      "name": "TypewriterCardFace.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift",
+      "summary": "Card face presenting prompt text with an animated typewriter reveal effect.",
+      "tags": ["view", "component", "ui", "card-face", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift:TypewriterCardFace",
+      "type": "class",
+      "name": "TypewriterCardFace",
+      "filePath": "Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift",
+      "lineRange": [22, 276],
+      "summary": "SwiftUI view animating text onto the card with a typewriter character-reveal effect.",
+      "tags": ["view", "component", "card-face", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardFrontView.swift",
+      "type": "file",
+      "name": "CardFrontView.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardFrontView.swift",
+      "summary": "Renders the front face shell of a card (size, corner radius, light/dark, arrow-trigger state) hosting card-face content.",
+      "tags": ["view", "component", "ui", "card"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardFrontView.swift:CardFrontView",
+      "type": "class",
+      "name": "CardFrontView",
+      "filePath": "Vayl/Design/Components/Cards/CardFrontView.swift",
+      "lineRange": [8, 112],
+      "summary": "SwiftUI view rendering the front shell/frame of a card given size and state inputs.",
+      "tags": ["view", "component", "card"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardLayout.swift",
+      "type": "file",
+      "name": "CardLayout.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardLayout.swift",
+      "summary": "Constants namespace defining standard card dimensions, corner radius, and horizontal margin used across card components.",
+      "tags": ["data-model", "type-definition", "design-system", "layout"],
+      "complexity": "simple",
+      "languageNotes": "Enum-as-namespace of static CGFloat layout constants (313x438 poker aspect)."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardLayout.swift:CardLayout",
+      "type": "class",
+      "name": "CardLayout",
+      "filePath": "Vayl/Design/Components/Cards/CardLayout.swift",
+      "lineRange": [23, 39],
+      "summary": "Namespace enum exposing the canonical card size, corner radius, and margin constants.",
+      "tags": ["type-definition", "design-system", "layout"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift",
+      "type": "file",
+      "name": "CardFlightScene.swift",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift",
+      "summary": "SpriteKit scene that simulates physics-based card flight (dealing/throwing) for animated card transitions.",
+      "tags": ["service", "physics", "animation", "spritekit"],
+      "complexity": "moderate",
+      "languageNotes": "Subclasses SKScene; drives physics-body card motion outside the SwiftUI render path."
+    },
+    {
+      "id": "class:Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift:CardFlightScene",
+      "type": "class",
+      "name": "CardFlightScene",
+      "filePath": "Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift",
+      "lineRange": [6, 165],
+      "summary": "Final SKScene subclass managing physics bodies and forces for animated card flight.",
+      "tags": ["physics", "animation", "spritekit"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift:CandleCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift:CandleCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift:CandleRenderer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift:CandleGeo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift:CandleCardFace",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CandleCardFace.swift:CandleRenderer",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift:CompassCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift:CompassCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift:HeadingRuler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift:CompassCardFace",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CompassCardFace.swift:HeadingRuler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift:CompassOptionCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CompassOptionCardFace.swift:CompassOptionCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift:CompassSliderCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/CompassSliderCardFace.swift:CompassSliderCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift:ContextCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift:ContextCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift:BookObject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift:ContextCardFace",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/ContextCardFace.swift:BookObject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift:ControllerCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift:ControllerCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Design/Components/Cards/CardFaces/ControllerCardFace.swift:ControllerCardFace",
+      "target": "function:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift:draw",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift:ControllerPainter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift:ControllerPainter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift",
+      "target": "function:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift:draw",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift:ControllerPainter",
+      "target": "function:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift:draw",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift:DualControllerCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift:DualControllerCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:Vayl/Design/Components/Cards/CardFaces/DualControllerCardFace.swift:DualControllerCardFace",
+      "target": "function:Vayl/Design/Components/Cards/CardFaces/ControllerPainter.swift:draw",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift:RadioTunerCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/RadioTunerCardFace.swift:RadioTunerCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift:SlotMachineCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/SlotMachineCardFace.swift:SlotMachineCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift:SnapshotCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/SnapshotCardFace.swift:SnapshotCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift:TypewriterCardFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFaces/TypewriterCardFace.swift:TypewriterCardFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFrontView.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFrontView.swift:CardFrontView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardFrontView.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardFrontView.swift:CardFrontView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardLayout.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardLayout.swift:CardLayout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardLayout.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardLayout.swift:CardLayout",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift:CardFlightScene",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift",
+      "target": "class:Vayl/Design/Components/Cards/CardPhysics/CardFlightScene.swift:CardFlightScene",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

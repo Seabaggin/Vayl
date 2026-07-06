@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vayl — Tab Transition Motion</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #07061A;
+  --purple: #7B52E0;
+  --purple-glow: rgba(123,82,224,0.7);
+  --purple-dim: rgba(123,82,224,0.22);
+  --bar-bg: rgba(14,12,32,0.97);
+  --border: rgba(255,255,255,0.09);
+  --icon-active: #ffffff;
+  --icon-inactive: rgba(255,255,255,0.30);
+}
+
+body {
+  background: #05040f;
+  font-family: -apple-system, 'SF Pro Display', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px 72px;
+  min-height: 100vh;
+  color: #fff;
+  gap: 10px;
+}
+
+h1 {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: rgba(255,255,255,0.85);
+}
+
+.sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.32);
+  text-align: center;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+.grid {
+  display: flex;
+  gap: 18px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.variant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.variant-name {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--purple);
+}
+
+.variant-desc {
+  font-size: 11px;
+  color: rgba(255,255,255,0.30);
+  text-align: center;
+  max-width: 160px;
+  line-height: 1.45;
+}
+
+/* ── Phone frame ── */
+.phone {
+  width: 168px;
+  height: 320px;
+  background: var(--void);
+  border-radius: 30px;
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgba(123,82,224,0.12),
+    0 12px 40px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* Screen */
+.screen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.screen-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 40% at 50% 60%, rgba(60,30,130,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.screen-label {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  color: rgba(255,255,255,0.22);
+  user-select: none;
+  position: relative;
+  z-index: 1;
+}
+
+/* Bar zone */
+.bar-area {
+  padding: 5px 8px 9px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pill {
+  background: var(--bar-bg);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 3px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Orb — positioned via JS left: */
+.orb {
+  position: absolute;
+  top: 50%;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  transform: translateY(-50%) translateX(-50%);
+  pointer-events: none;
+  z-index: 1;
+  will-change: left, transform;
+}
+
+.orb::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(123,82,224,0.62) 0%,
+    rgba(123,82,224,0.24) 40%,
+    rgba(123,82,224,0.06) 65%,
+    transparent 75%
+  );
+  filter: blur(5px);
+}
+
+/* Tab buttons */
+.tab-btn {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  z-index: 3;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab-btn svg {
+  width: 19px;
+  height: 19px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--icon-inactive);
+  transition: color 0.2s, filter 0.2s;
+  will-change: transform, filter;
+}
+
+.tab-btn.active svg {
+  color: var(--icon-active);
+  filter: drop-shadow(0 0 5px rgba(160,120,255,0.9));
+}
+
+/* ── Shared animation helpers ── */
+
+/* V1: Spring Pop — icon scale */
+@keyframes spring-pop {
+  0%   { transform: scale(1); }
+  15%  { transform: scale(0.62); }
+  55%  { transform: scale(1.28); }
+  75%  { transform: scale(0.93); }
+  90%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+.v1-pop { animation: spring-pop 0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+/* V2: Squash & Stretch — applied to orb via JS inline */
+
+/* V3: Ripple ring */
+.ripple-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid rgba(160,120,255,0.75);
+  pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+}
+@keyframes ripple-out {
+  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0.85; }
+  100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
+}
+
+/* V4: Streak */
+.streak {
+  position: absolute;
+  top: 50%;
+  height: 1.5px;
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 10;
+  transform: translateY(-50%);
+  opacity: 0;
+}
+
+/* V5: Landing flash */
+.land-flash {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.75) 0%, rgba(200,170,255,0.4) 40%, transparent 70%);
+}
+</style>
+</head>
+<body>
+
+<h1>Tab Transition · Motion Variants</h1>
+<p class="sub">Click any tab icon to trigger. Each variant is motion-based — something moves to the destination, not away from it.</p>
+
+<div class="grid" id="grid"></div>
+
+<script>
+// ── Icons (SF Symbol proxies) ──
+const ICONS = {
+  home:     `<path d="M3 10L12 3l9 7v10H3V10z"/><path d="M9.5 21v-6.5h5V21"/>`,
+  play:     `<rect x="4" y="3" width="7" height="18" rx="1.5"/><rect x="13" y="3" width="7" height="18" rx="1.5"/>`,
+  map:      `<path d="M12 2a6 6 0 0 0-6 6c0 4.5 6 11 6 11s6-6.5 6-11a6 6 0 0 0-6-6z"/><circle cx="12" cy="8" r="2"/>`,
+  learn:    `<path d="M4 5h16v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5z"/><path d="M4 5c0-1.1.9-2 2-2h12a2 2 0 0 1 2 2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="9" x2="15" y2="9"/>`,
+  settings: `<circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2m-3.5-6.5-1.5 1.5m-8 8-1.5 1.5m0-11 1.5 1.5m8 8 1.5 1.5"/>`,
+};
+const TAB_KEYS  = ['home','play','map','learn','settings'];
+const TAB_NAMES = ['Home','Play','Map','Learn','Settings'];
+
+const VARIANTS = [
+  { id:'v1', name:'Spring Pop',      desc:'Icon bounces to life on landing' },
+  { id:'v2', name:'Squash & Stretch', desc:'Orb deforms mid-flight, squashes on arrival' },
+  { id:'v3', name:'Ripple',          desc:'Ring radiates from the landing point' },
+  { id:'v4', name:'Streak',          desc:'Light races across the bar, icon flashes on arrival' },
+  { id:'v5', name:'Snap & Halo',     desc:'Orb overshoots then snaps back, icon lights up' },
+];
+
+// ── Build DOM ──
+const grid = document.getElementById('grid');
+
+VARIANTS.forEach(v => {
+  const col = document.createElement('div');
+  col.className = 'variant';
+
+  const phone = document.createElement('div');
+  phone.className = `phone`;
+  phone.dataset.variant = v.id;
+  phone.dataset.active = '0';
+
+  // Screen
+  const screen = document.createElement('div');
+  screen.className = 'screen';
+  const screenBg = document.createElement('div');
+  screenBg.className = 'screen-bg';
+  const label = document.createElement('div');
+  label.className = 'screen-label';
+  label.textContent = TAB_NAMES[0];
+  screen.appendChild(screenBg);
+  screen.appendChild(label);
+
+  // Bar
+  const barArea = document.createElement('div');
+  barArea.className = 'bar-area';
+  const pill = document.createElement('div');
+  pill.className = 'pill';
+
+  // Orb
+  const orb = document.createElement('div');
+  orb.className = 'orb';
+  pill.appendChild(orb);
+
+  // Tab buttons
+  TAB_KEYS.forEach((key, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.innerHTML = `<svg viewBox="0 0 24 24">${ICONS[key]}</svg>`;
+    btn.dataset.idx = i;
+
+    btn.addEventListener('click', () => {
+      const prevIdx = parseInt(phone.dataset.active);
+      const nextIdx = i;
+      if (prevIdx === nextIdx) return;
+
+      // Deactivate all
+      pill.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+      // Update label
+      label.textContent = TAB_NAMES[nextIdx];
+      phone.dataset.active = nextIdx;
+
+      // Activate target (visual only; animation handles timing)
+      btn.classList.add('active');
+
+      // Move orb position data
+      const slotW = pill.clientWidth / TAB_KEYS.length;
+      const targetX = slotW * (nextIdx + 0.5);
+
+      // Run variant animation
+      ANIMATIONS[v.id](phone, pill, orb, prevIdx, nextIdx, slotW, targetX);
+    });
+    pill.appendChild(btn);
+  });
+
+  barArea.appendChild(pill);
+  phone.appendChild(screen);
+  phone.appendChild(barArea);
+  col.appendChild(phone);
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'variant-name';
+  nameEl.textContent = v.name;
+  const descEl = document.createElement('div');
+  descEl.className = 'variant-desc';
+  descEl.textContent = v.desc;
+
+  col.appendChild(nameEl);
+  col.appendChild(descEl);
+  grid.appendChild(col);
+
+  // Init orb position
+  requestAnimationFrame(() => {
+    const slotW = pill.clientWidth / TAB_KEYS.length;
+    orb.style.left = slotW * 0.5 + 'px';
+  });
+});
+
+// ── Helpers ──
+function springTransition(fromX, toX) {
+  // cubic-bezier for spring overshoot
+  return `cubic-bezier(0.34, 1.56, 0.64, 1)`;
+}
+
+function easeSlide() {
+  return `cubic-bezier(0.4, 0, 0.2, 1)`;
+}
+
+function moveOrb(orb, toX, duration, easing) {
+  orb.style.transition = `left ${duration}ms ${easing}`;
+  orb.style.left = toX + 'px';
+}
+
+function getIconSvg(pill, idx) {
+  return pill.querySelectorAll('.tab-btn svg')[idx];
+}
+
+// ── Variant Animations ──
+const ANIMATIONS = {
+
+  // V1: Spring Pop — orb slides smoothly, destination icon springs in
+  v1(phone, pill, orb, from, to, slotW, targetX) {
+    // Slide orb with spring
+    moveOrb(orb, targetX, 480, 'cubic-bezier(0.34, 1.56, 0.64, 1)');
+
+    // Icon spring bounce
+    const icon = getIconSvg(pill, to);
+    icon.style.transition = 'none';
+    icon.style.transform = 'scale(0.65)';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      icon.classList.remove('v1-pop');
+      void icon.offsetWidth; // reflow
+      icon.classList.add('v1-pop');
+      icon.style.transform = '';
+      // Clean up after
+      setTimeout(() => { icon.classList.remove('v1-pop'); }, 600);
+    }));
+  },
+
+  // V2: Squash & Stretch — orb deforms, squashes on landing
+  v2(phone, pill, orb, from, to, slotW, targetX) {
+    const fromX = slotW * (from + 0.5);
+    const dir = to > from ? 1 : -1;
+    const travel = Math.abs(targetX - fromX);
+    const stretchX = 1 + 0.55 * (travel / (slotW * 5));  // more stretch = more slots crossed
+
+    // Phase 1: squish (coil)
+    orb.style.transition = 'transform 0.12s ease-in';
+    orb.style.transform = `translateY(-50%) translateX(-50%) scaleX(${1 - dir*0.25}) scaleY(1.3)`;
+
+    setTimeout(() => {
+      // Phase 2: launch + stretch
+      orb.style.transition = `left 0.32s cubic-bezier(0.6, 0, 0.4, 1), transform 0.32s ease-in`;
+      orb.style.left = targetX + 'px';
+      orb.style.transform = `translateY(-50%) translateX(-50%) scaleX(${stretchX}) scaleY(0.65)`;
+
+      setTimeout(() => {
+        // Phase 3: squash on landing
+        orb.style.transition = 'transform 0.1s ease-out';
+        orb.style.transform = `translateY(-50%) translateX(-50%) scaleX(0.72) scaleY(1.38)`;
+
+        setTimeout(() => {
+          // Phase 4: settle
+          orb.style.transition = 'transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          orb.style.transform = 'translateY(-50%) translateX(-50%) scale(1)';
+        }, 100);
+      }, 310);
+    }, 110);
+  },
+
+  // V3: Ripple — orb spring-slides, ring expands from landing
+  v3(phone, pill, orb, from, to, slotW, targetX) {
+    moveOrb(orb, targetX, 420, 'cubic-bezier(0.34, 1.56, 0.64, 1)');
+
+    // Fire ripple when orb arrives (~spring settle ~350ms in)
+    setTimeout(() => {
+      const ring = document.createElement('div');
+      ring.className = 'ripple-ring';
+      ring.style.cssText = `
+        left: ${targetX}px;
+        top: 50%;
+        width: 28px;
+        height: 28px;
+      `;
+      pill.appendChild(ring);
+      ring.style.animation = 'ripple-out 0.55s cubic-bezier(0.2, 0, 0.6, 1) forwards';
+      setTimeout(() => ring.remove(), 600);
+    }, 320);
+  },
+
+  // V4: Streak — horizontal light sweeps to destination, icon flashes on arrival
+  v4(phone, pill, orb, from, to, slotW, targetX) {
+    const fromX = slotW * (from + 0.5);
+    const dir = to > from ? 1 : -1;
+    const left  = Math.min(fromX, targetX);
+    const width = Math.abs(targetX - fromX);
+
+    // Streak element
+    const streak = document.createElement('div');
+    streak.className = 'streak';
+
+    if (dir > 0) {
+      // Left→right: gradient goes left (faded) → right (bright)
+      streak.style.background = 'linear-gradient(90deg, transparent, rgba(160,120,255,0.5), rgba(200,170,255,1))';
+    } else {
+      streak.style.background = 'linear-gradient(90deg, rgba(200,170,255,1), rgba(160,120,255,0.5), transparent)';
+    }
+
+    streak.style.cssText += `
+      left: ${left}px;
+      width: 0px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 1;
+    `;
+    pill.appendChild(streak);
+
+    // Animate streak width growing
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      streak.style.transition = `width ${180}ms cubic-bezier(0.6, 0, 1, 1)`;
+      streak.style.width = width + 'px';
+    }));
+
+    // Flash icon + move orb after streak lands
+    setTimeout(() => {
+      streak.style.transition = 'opacity 0.12s ease-out';
+      streak.style.opacity = '0';
+      setTimeout(() => streak.remove(), 150);
+
+      // Move orb
+      moveOrb(orb, targetX, 200, 'cubic-bezier(0.4, 0, 0.2, 1)');
+
+      // Icon flash at destination
+      const icon = getIconSvg(pill, to);
+      icon.style.transition = 'filter 0s';
+      icon.style.filter = 'drop-shadow(0 0 10px rgba(255,240,255,1)) brightness(2.5)';
+      setTimeout(() => {
+        icon.style.transition = 'filter 0.4s ease-out';
+        icon.style.filter = '';
+      }, 60);
+    }, 175);
+  },
+
+  // V5: Snap & Halo — orb overshoots target, snaps back; icon receives a halo on arrival
+  v5(phone, pill, orb, from, to, slotW, targetX) {
+    const fromX = slotW * (from + 0.5);
+    const overshoot = (targetX - fromX) * 0.18; // overshoot amount
+
+    // Slide to overshoot position fast
+    orb.style.transition = 'left 0.22s cubic-bezier(0.4, 0, 1, 1)';
+    orb.style.left = (targetX + overshoot) + 'px';
+
+    // Snap back to target (spring)
+    setTimeout(() => {
+      orb.style.transition = 'left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      orb.style.left = targetX + 'px';
+
+      // Halo: expanding glow flash around icon on snap-back
+      const flash = document.createElement('div');
+      flash.className = 'land-flash';
+      flash.style.cssText = `
+        left: ${targetX}px;
+        top: 50%;
+        width: 40px;
+        height: 40px;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0);
+      `;
+      pill.appendChild(flash);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        flash.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out';
+        flash.style.transform = 'translate(-50%, -50%) scale(2.0)';
+        flash.style.opacity = '0';
+      }));
+      setTimeout(() => flash.remove(), 400);
+    }, 210);
+  },
+
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,477 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Core/Debug/DragDebugView.swift",
+      "type": "file",
+      "name": "DragDebugView.swift",
+      "filePath": "Vayl/Core/Debug/DragDebugView.swift",
+      "summary": "DEBUG-only isolated drag-gesture test view: a draggable circle plus an event log to confirm DragGesture fires and hit-testing is not blocked.",
+      "tags": ["debug", "view", "ui", "gesture", "diagnostics"],
+      "complexity": "simple",
+      "languageNotes": "Wrapped in #if DEBUG with a #Preview for canvas-only use."
+    },
+    {
+      "id": "class:Vayl/Core/Debug/DragDebugView.swift:DragDebugView",
+      "type": "class",
+      "name": "DragDebugView",
+      "filePath": "Vayl/Core/Debug/DragDebugView.swift",
+      "lineRange": [11, 73],
+      "summary": "Debug View with a draggable circle driven by DragGesture and a rolling on-screen event log for diagnosing gesture/hit-testing issues.",
+      "tags": ["debug", "view", "gesture", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/AcknowledgementRecord.swift",
+      "type": "file",
+      "name": "AcknowledgementRecord.swift",
+      "filePath": "Vayl/Core/Models/AcknowledgementRecord.swift",
+      "summary": "SwiftData @Model recording that a user tapped through the 3-card ground-rules modal in The Opener; a device-only legal/ethical record with copy versioning.",
+      "tags": ["data-model", "swiftdata", "persistence", "legal"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/AcknowledgementRecord.swift:AcknowledgementRecord",
+      "type": "class",
+      "name": "AcknowledgementRecord",
+      "filePath": "Vayl/Core/Models/AcknowledgementRecord.swift",
+      "lineRange": [33, 87],
+      "summary": "@Model storing acknowledgement timestamp, copy version, and which ground-rule statements were tapped; computed isCurrent re-prompts when copy version increments.",
+      "tags": ["data-model", "swiftdata", "persistence", "legal"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/Card.swift",
+      "type": "file",
+      "name": "Card.swift",
+      "filePath": "Vayl/Core/Models/Card.swift",
+      "summary": "Read-only Codable content model for a single prompt card loaded from JSON, with derived flags (reveal mechanic, context beat, ceremonial, living) plus The Opener sample data.",
+      "tags": ["data-model", "type-definition", "codable", "content"],
+      "complexity": "complex",
+      "languageNotes": "Content layer is never stored in SwiftData; the String cardId is the only join to the progress layer."
+    },
+    {
+      "id": "class:Vayl/Core/Models/Card.swift:Card",
+      "type": "class",
+      "name": "Card",
+      "filePath": "Vayl/Core/Models/Card.swift",
+      "lineRange": [17, 77],
+      "summary": "Codable, Identifiable struct describing a prompt card (text, intensity, type, gendering, context beat) with derived booleans for reveal/ceremonial/living classification.",
+      "tags": ["data-model", "type-definition", "codable", "content"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Core/Models/CardSession.swift",
+      "type": "file",
+      "name": "CardSession.swift",
+      "filePath": "Vayl/Core/Models/CardSession.swift",
+      "summary": "SwiftData @Models for deck-play tracking: couple-owned CardSession, per-card CardResult outcomes, and the unlinked-user SoloSession prep deck.",
+      "tags": ["data-model", "swiftdata", "persistence", "session"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/CardSession.swift:CardSession",
+      "type": "class",
+      "name": "CardSession",
+      "filePath": "Vayl/Core/Models/CardSession.swift",
+      "lineRange": [24, 58],
+      "summary": "@Model for one couple-owned sitting with a deck — tracks pass number, attempt/discuss/skip/bookmark counts, Lock-In bandwidth, and cascades CardResult children.",
+      "tags": ["data-model", "swiftdata", "persistence", "session"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/CardSession.swift:CardResult",
+      "type": "class",
+      "name": "CardResult",
+      "filePath": "Vayl/Core/Models/CardSession.swift",
+      "lineRange": [66, 82],
+      "summary": "@Model recording the outcome (discussed/skipped/bookmarked) of a single card within a session; String cardId joins to the JSON content layer.",
+      "tags": ["data-model", "swiftdata", "persistence"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/CardSession.swift:SoloSession",
+      "type": "class",
+      "name": "SoloSession",
+      "filePath": "Vayl/Core/Models/CardSession.swift",
+      "lineRange": [93, 111],
+      "summary": "@Model for an unlinked user's 5-card solo prep deck session, owned by userId and retained as permanent history after a partner is linked.",
+      "tags": ["data-model", "swiftdata", "persistence", "session"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/CompanionCard.swift",
+      "type": "file",
+      "name": "CompanionCard.swift",
+      "filePath": "Vayl/Core/Models/CompanionCard.swift",
+      "summary": "Stub Codable model for a Desire Map companion card that bridges a match into a next-step conversation prompt and optional suggested deck.",
+      "tags": ["data-model", "type-definition", "codable", "stub"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/CompanionCard.swift:CompanionCard",
+      "type": "class",
+      "name": "CompanionCard",
+      "filePath": "Vayl/Core/Models/CompanionCard.swift",
+      "lineRange": [13, 19],
+      "summary": "Codable, Identifiable, Hashable struct linking a DesireMatch (via bridgeCardId) to a conversation prompt and an optional suggested deck.",
+      "tags": ["data-model", "type-definition", "codable", "stub"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/Couple.swift",
+      "type": "file",
+      "name": "Couple.swift",
+      "filePath": "Vayl/Core/Models/Couple.swift",
+      "summary": "SwiftData @Model for a linked partner connection — owns the shared safe word, entitlement tier, Desire Map reveal state, and cascading session/match/progress relationships.",
+      "tags": ["data-model", "swiftdata", "persistence", "entitlement"],
+      "complexity": "moderate",
+      "languageNotes": "Entitlement lives on Couple so one purchase covers both partners; dissolution archives rather than deletes."
+    },
+    {
+      "id": "class:Vayl/Core/Models/Couple.swift:Couple",
+      "type": "class",
+      "name": "Couple",
+      "filePath": "Vayl/Core/Models/Couple.swift",
+      "lineRange": [18, 98],
+      "summary": "@Model holding the two partner IDs, connection plan, shared safe word, entitlement tier/unlock metadata, and cascade relationships to DesireMatch, CardSession, and DeckProgress.",
+      "tags": ["data-model", "swiftdata", "persistence", "entitlement"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Core/Models/Deck.swift",
+      "type": "file",
+      "name": "Deck.swift",
+      "filePath": "Vayl/Core/Models/Deck.swift",
+      "summary": "Read-only Codable content model for a deck loaded from JSON, with entitlement gating, gender-dynamic card filtering, ordering, and ritual-presence helpers.",
+      "tags": ["data-model", "type-definition", "codable", "content"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Core/Models/Deck.swift:Deck",
+      "type": "class",
+      "name": "Deck",
+      "filePath": "Vayl/Core/Models/Deck.swift",
+      "lineRange": [24, 80],
+      "summary": "Codable, Identifiable deck struct holding metadata and its cards; methods gate availability by AccessTier and filter/sort cards by GenderDynamic and sortOrder.",
+      "tags": ["data-model", "type-definition", "codable", "content"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Core/Models/DeckProgress.swift",
+      "type": "file",
+      "name": "DeckProgress.swift",
+      "filePath": "Vayl/Core/Models/DeckProgress.swift",
+      "summary": "SwiftData @Model tracking a couple's resume position through a deck across sittings (current card index, unwrapped flag, first-opened/completed dates).",
+      "tags": ["data-model", "swiftdata", "persistence", "progress"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/DeckProgress.swift:DeckProgress",
+      "type": "class",
+      "name": "DeckProgress",
+      "filePath": "Vayl/Core/Models/DeckProgress.swift",
+      "lineRange": [27, 46],
+      "summary": "@Model keyed by coupleId + String deckId persisting mid-deck resume index and ceremonial-unwrap state; distinct from per-card CardResult.",
+      "tags": ["data-model", "swiftdata", "persistence", "progress"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/DesireItem.swift",
+      "type": "file",
+      "name": "DesireItem.swift",
+      "filePath": "Vayl/Core/Models/DesireItem.swift",
+      "summary": "Codable model for a single cohort-adaptive Desire Map prompt loaded from JSON, with per-track answer strings (weight-ordered) and cohort-appearance helpers.",
+      "tags": ["data-model", "type-definition", "codable", "content"],
+      "complexity": "simple",
+      "languageNotes": "Only the answer weight (index) is ever stored/synced; the displayed string is cohort-specific copy."
+    },
+    {
+      "id": "class:Vayl/Core/Models/DesireItem.swift:DesireItem",
+      "type": "class",
+      "name": "DesireItem",
+      "filePath": "Vayl/Core/Models/DesireItem.swift",
+      "lineRange": [17, 37],
+      "summary": "Codable, Identifiable, Hashable struct describing a desire prompt (category, sensitivity, tracks, per-track answers) with answers(for:) and appears(in:) lookups.",
+      "tags": ["data-model", "type-definition", "codable", "content"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/DesireMatch.swift",
+      "type": "file",
+      "name": "DesireMatch.swift",
+      "filePath": "Vayl/Core/Models/DesireMatch.swift",
+      "summary": "SwiftData @Model for a server-computed mutual/adjacent Desire Map match; reveal state and free-reveal flag are Edge-Function-authoritative to keep the paywall un-bypassable.",
+      "tags": ["data-model", "swiftdata", "persistence", "desire-map"],
+      "complexity": "simple",
+      "languageNotes": "Contains no individual ratings — only confirmed mutual positives computed server-side."
+    },
+    {
+      "id": "class:Vayl/Core/Models/DesireMatch.swift:DesireMatch",
+      "type": "class",
+      "name": "DesireMatch",
+      "filePath": "Vayl/Core/Models/DesireMatch.swift",
+      "lineRange": [21, 81],
+      "summary": "@Model holding coupleId, itemId, match type, and reveal state; isFreeReveal/revealedAt are set only by the Edge Function, with bridgeCardId linking to a CompanionCard.",
+      "tags": ["data-model", "swiftdata", "persistence", "desire-map"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/DesireRating.swift",
+      "type": "file",
+      "name": "DesireRating.swift",
+      "filePath": "Vayl/Core/Models/DesireRating.swift",
+      "summary": "SwiftData @Models for the app's most sensitive data: per-user private DesireMapEntry ratings (notForMe never syncs) and the couple-level DesireMapStatus completion/reveal tracker.",
+      "tags": ["data-model", "swiftdata", "persistence", "desire-map", "security"],
+      "complexity": "moderate",
+      "languageNotes": "Three-layer enforcement (Swift filter + Edge Function + RLS) keeps notForMe ratings on-device and partner-inaccessible. Despite the file name, it defines DesireMapEntry and DesireMapStatus."
+    },
+    {
+      "id": "class:Vayl/Core/Models/DesireRating.swift:DesireMapEntry",
+      "type": "class",
+      "name": "DesireMapEntry",
+      "filePath": "Vayl/Core/Models/DesireRating.swift",
+      "lineRange": [22, 50],
+      "summary": "@Model storing one user's private rating for a desire item; userId never crosses to the partner and isSyncable excludes notForMe so the sacred boundary never leaves the device.",
+      "tags": ["data-model", "swiftdata", "persistence", "security"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/DesireRating.swift:DesireMapStatus",
+      "type": "class",
+      "name": "DesireMapStatus",
+      "filePath": "Vayl/Core/Models/DesireRating.swift",
+      "lineRange": [58, 124],
+      "summary": "@Model tracking per-couple Desire Map completion booleans and reveal state (both readable by partners) plus an explicit waitingStateSince powering the 7-day timer.",
+      "tags": ["data-model", "swiftdata", "persistence", "desire-map"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Core/Models/EntitlementRecord.swift",
+      "type": "file",
+      "name": "EntitlementRecord.swift",
+      "filePath": "Vayl/Core/Models/EntitlementRecord.swift",
+      "summary": "SwiftData @Models for purchase records: couple-level EntitlementRecord (Core unlock, founding-member, lifetime/expiry) and the permanent $7.99 ConnectionEntitlement.",
+      "tags": ["data-model", "swiftdata", "persistence", "entitlement"],
+      "complexity": "moderate",
+      "languageNotes": "Receipt validation is server-side via Edge Function; purchasedBy is support-only and never shown to either partner."
+    },
+    {
+      "id": "class:Vayl/Core/Models/EntitlementRecord.swift:EntitlementRecord",
+      "type": "class",
+      "name": "EntitlementRecord",
+      "filePath": "Vayl/Core/Models/EntitlementRecord.swift",
+      "lineRange": [31, 102],
+      "summary": "@Model recording a Core-unlock StoreKit purchase for a couple, with founding-member, active, and lifetime/expiry computed state.",
+      "tags": ["data-model", "swiftdata", "persistence", "entitlement"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Core/Models/EntitlementRecord.swift:ConnectionEntitlement",
+      "type": "class",
+      "name": "ConnectionEntitlement",
+      "filePath": "Vayl/Core/Models/EntitlementRecord.swift",
+      "lineRange": [115, 148],
+      "summary": "@Model for a permanent $7.99 additional-connection purchase with no expiry, surviving relationship dissolution.",
+      "tags": ["data-model", "swiftdata", "persistence", "entitlement"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Core/Debug/DragDebugView.swift",
+      "target": "class:Vayl/Core/Debug/DragDebugView.swift:DragDebugView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/AcknowledgementRecord.swift",
+      "target": "class:Vayl/Core/Models/AcknowledgementRecord.swift:AcknowledgementRecord",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Card.swift",
+      "target": "class:Vayl/Core/Models/Card.swift:Card",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Models/Card.swift:Card",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Models/CardSession.swift",
+      "target": "class:Vayl/Core/Models/CardSession.swift:CardSession",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/CardSession.swift",
+      "target": "class:Vayl/Core/Models/CardSession.swift:CardResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/CardSession.swift",
+      "target": "class:Vayl/Core/Models/CardSession.swift:SoloSession",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Models/CardSession.swift:CardSession",
+      "target": "class:Vayl/Core/Models/CardSession.swift:CardResult",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Core/Models/CardSession.swift:CardResult",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Models/CompanionCard.swift",
+      "target": "class:Vayl/Core/Models/CompanionCard.swift:CompanionCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/Couple.swift",
+      "target": "class:Vayl/Core/Models/Couple.swift:Couple",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Models/Couple.swift:Couple",
+      "target": "class:Vayl/Core/Models/DesireMatch.swift:DesireMatch",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Core/Models/Couple.swift:Couple",
+      "target": "class:Vayl/Core/Models/CardSession.swift:CardSession",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Core/Models/Couple.swift:Couple",
+      "target": "class:Vayl/Core/Models/DeckProgress.swift:DeckProgress",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Core/Models/Couple.swift:Couple",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Models/Deck.swift",
+      "target": "class:Vayl/Core/Models/Deck.swift:Deck",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Models/Deck.swift:Deck",
+      "target": "class:Vayl/Core/Models/Card.swift:Card",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Core/Models/Deck.swift:Deck",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Models/DeckProgress.swift",
+      "target": "class:Vayl/Core/Models/DeckProgress.swift:DeckProgress",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/DesireItem.swift",
+      "target": "class:Vayl/Core/Models/DesireItem.swift:DesireItem",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/DesireMatch.swift",
+      "target": "class:Vayl/Core/Models/DesireMatch.swift:DesireMatch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Models/DesireMatch.swift:DesireMatch",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Core/Models/DesireMatch.swift:DesireMatch",
+      "target": "class:Vayl/Core/Models/CompanionCard.swift:CompanionCard",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:Vayl/Core/Models/DesireRating.swift",
+      "target": "class:Vayl/Core/Models/DesireRating.swift:DesireMapEntry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/DesireRating.swift",
+      "target": "class:Vayl/Core/Models/DesireRating.swift:DesireMapStatus",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:Vayl/Core/Models/DesireRating.swift:DesireMapEntry",
+      "target": "file:Vayl/Core/Models/Enums/AppEnums.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Core/Models/EntitlementRecord.swift",
+      "target": "class:Vayl/Core/Models/EntitlementRecord.swift:EntitlementRecord",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Core/Models/EntitlementRecord.swift",
+      "target": "class:Vayl/Core/Models/EntitlementRecord.swift:ConnectionEntitlement",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    }
+  ]
+}

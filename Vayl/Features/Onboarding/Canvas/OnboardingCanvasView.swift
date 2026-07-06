@@ -19,6 +19,7 @@ struct OnboardingCanvasView: View {
 
     @State var director: VaylDirector
     @State private var tableRimBurst: Double = 0
+    @State private var tableForgeEnergy: Double = 0
 
     @MainActor init() {
         self._director = State(initialValue: VaylDirector())
@@ -26,6 +27,14 @@ struct OnboardingCanvasView: View {
 
     init(director: VaylDirector) {
         self._director = State(initialValue: director)
+    }
+
+    /// True only inside the Xcode Preview canvas. SpriteKit's `SpriteView` fails to
+    /// composite there and blanks the whole preview to a gray backdrop, hiding the
+    /// void + atmosphere. It has nothing to render while walking phases anyway (no
+    /// card flights), so we skip mounting it in previews. No effect on device/sim.
+    private var isPreview: Bool {
+        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     }
 
     private var atmosphereConfig: AtmosphereConfig {
@@ -39,10 +48,6 @@ struct OnboardingCanvasView: View {
         }
     }
 
-    // OnboardingStore is injected from the environment at the root.
-    // VaylDirector needs a reference to it for commit() at founderLetter.
-    @Environment(OnboardingStore.self) private var onboardingStore
-
     var body: some View {
         GeometryReader { geo in
             let size = geo.size
@@ -55,7 +60,8 @@ struct OnboardingCanvasView: View {
                 // ── Layer 2: Atmosphere ───────────────────────────
                 OnboardingAtmosphere(config: atmosphereConfig)
                     .opacity(0.68)
-                    .animation(AppAnimation.standard, value: atmosphereConfig)
+                    // Config crossfade is owned by OnboardingAtmosphere's internal
+                    // atmosphereShift — no second animation here (was double-driving it).
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
 
@@ -63,8 +69,9 @@ struct OnboardingCanvasView: View {
                 TableSurfaceView(
                     fade:               director.tableFade,
                     rimBurst:           tableRimBurst,
-                    dissolutionWarp:    director.dissolutionWarp,
-                    dissolutionFlowOut: director.dissolutionFlowOut
+                    dissolutionWarp:    director.gender.dissolutionWarp,
+                    dissolutionFlowOut: director.gender.dissolutionFlowOut,
+                    forgeEnergy:        tableForgeEnergy
                 )
                 .ignoresSafeArea()
 
@@ -82,19 +89,29 @@ struct OnboardingCanvasView: View {
                 // Scene is sized in .onAppear because size is zero
                 // at CardFlightScene() init time.
                 //
-                // PERF NOTE: SpriteView renders continuously even when inFlightCards is empty.
-                // Consider gating with .opacity(director.inFlightCards.isEmpty ? 0 : 1)
-                // to eliminate idle GPU cost. Test on A14 before enabling — opacity 0 may
-                // not stop Metal rendering on all devices.
-                SpriteView(
-                    scene:   director.cardFlightScene,
-                    options: [.allowsTransparency]
-                )
-                .frame(width: size.width, height: size.height)
-                .allowsHitTesting(false)
-                .ignoresSafeArea()
-                .onAppear {
-                    director.cardFlightScene.size = size
+                // shouldRender — the scene gates its own frames (renders only
+                // while cards exist + a short grace to flush removals), so the
+                // idle SpriteView costs no GPU behind the rest of the OB.
+                // 120fps — deals render at ProMotion rate instead of the SKView
+                // default 60, matching the SwiftUI animations around them
+                // (CADisableMinimumFrameDurationOnPhone is set in Vayl.plist;
+                // non-ProMotion displays clamp to 60 automatically).
+                // Skipped in the Xcode Preview canvas — SpriteView blanks the whole
+                // preview to gray there (see `isPreview`). Rendered normally on device/sim.
+                if !isPreview {
+                    let flightScene = director.cardFlightScene
+                    SpriteView(
+                        scene:   flightScene,
+                        preferredFramesPerSecond: 120,
+                        options: [.allowsTransparency],
+                        shouldRender: { flightScene.shouldRender(at: $0) }
+                    )
+                    .frame(width: size.width, height: size.height)
+                    .allowsHitTesting(false)
+                    .ignoresSafeArea()
+                    .onAppear {
+                        director.cardFlightScene.size = size
+                    }
                 }
 
                 // ── Layer 5: Table cards ──────────────────────────
@@ -110,9 +127,15 @@ struct OnboardingCanvasView: View {
                 }
 
                 // ── Layer 7: Projected dealer text ────────────────
-                if director.projectedTextVisible,
-                   let text = director.projectedText {
-                    ProjectedTextView(text: text, screenSize: size)
+                // Suppressed during .context — ContextPhase renders its OWN copy
+                // above its card stack (this canvas layer sits below the phase
+                // overlay), so rendering both double-composites the dealer line.
+                // Mirrors the corner-deck phase guard below.
+                if director.projector.projectedTextVisible,
+                   let text = director.projector.projectedText,
+                   director.phase != .context {
+                    ProjectedTextView(text: text, screenSize: size,
+                                      anchorYFrac: director.projector.projectedTextAnchorYFrac)
                         .transition(.opacity)
                 }
 
@@ -121,7 +144,15 @@ struct OnboardingCanvasView: View {
                 // cover it — deck is only visible during canvas/table moments.
                 // Corner deck follows the table world — visible when tableFade > 0 and a card has been collected.
                 // Never independently toggled; visibility is purely derived from state.
-                if director.tableFade > 0.01 && !director.cornerDeckCards.isEmpty {
+                // Hidden during .confirmation — the credential cards deal out of the
+                // corner into the review fan (ConfirmationPhase), so the source deck
+                // would otherwise double up with them.
+                // Also hidden during .buildDeck — those same six credentials have
+                // collapsed into the centre deck that the forge melts; a corner deck
+                // fading back in top-right would double them and contradict "yours alone".
+                if director.tableFade > 0.01 && !director.cornerDeckCards.isEmpty
+                    && director.phase != .confirmation
+                    && director.phase != .buildDeck {
                     CornerDeckView(
                         cards:      director.cornerDeckCards,
                         screenSize: size,
@@ -132,7 +163,9 @@ struct OnboardingCanvasView: View {
                 }
 
                 // ── Layer 9: Phase overlays ───────────────────────
-                PhaseOverlayView(director: director, screenSize: size, tableRimBurst: $tableRimBurst)
+                PhaseOverlayView(director: director, screenSize: size,
+                                 tableRimBurst: $tableRimBurst,
+                                 tableForgeEnergy: $tableForgeEnergy)
                     .frame(width: size.width, height: size.height)
                     .ignoresSafeArea()
 
@@ -146,7 +179,6 @@ struct OnboardingCanvasView: View {
         }
         .ignoresSafeArea()
         .onAppear {
-            director.onboardingStore = onboardingStore
             director.start()
         }
     }
@@ -160,67 +192,54 @@ struct OnboardingCanvasView: View {
 // on Face ID phones). Those values are injected into the environment before the
 // canvas's own .ignoresSafeArea() gets to consume them.
 struct OnboardingCanvasWrapper: View {
+    @State private var director = VaylDirector()
+
     var body: some View {
-        GeometryReader { geo in
-            OnboardingCanvasView()
-                .environment(\.realSafeArea, geo.safeAreaInsets)
-                .ignoresSafeArea()
+        @Bindable var director = director
+        return GeometryReader { geo in
+            ZStack {
+                OnboardingCanvasView(director: director)
+                    .environment(\.realSafeArea, geo.safeAreaInsets)
+                    .ignoresSafeArea()
+
+                // ConfirmationPhase edit sheet. Hosted HERE — outside the canvas
+                // boundary — and driven by director.editingCredential. A CUSTOM
+                // full-bleed, medium-detent bottom sheet (not native .sheet):
+                // iOS 26 native sheets inset to floating cards, so this is the
+                // only way to get edge-to-edge full width. Medium detent keeps
+                // the review fan visible above it.
+                if let credential = director.editingCredential {
+                    CredentialEditorOverlay(director: director, credential: credential)
+                }
+
+                // Single-user couples-first greeting (ContextPhase) — hosted here, outside
+                // the canvas, same as the edit overlay above.
+                if director.showSingleGreeting {
+                    SingleGreetingOverlay(director: director)
+                }
+            }
+            .animation(AppAnimation.standard.reduceMotionSafe, value: director.editingCredential)
+            .animation(AppAnimation.standard.reduceMotionSafe, value: director.showSingleGreeting)
         }
     }
 }
 
 // MARK: - Phase Router
-// Switch on director.phase. All transitions use .opacity.
-// VaylDirector is the only thing that changes director.phase.
+// Switch on director.phase. VaylDirector is the only thing that changes director.phase.
+// Phases hand over with a continuous depth cross-fade (see `phaseHandoff`): the arriving
+// phase settles in from slightly forward, the departing phase recedes back — so the canvas
+// reads as one space with z-depth, not a slideshow. Reduce Motion → pure opacity.
 
 private struct PhaseOverlayView: View {
     let director:   VaylDirector
     let screenSize: CGSize
     @Binding var tableRimBurst: Double
+    @Binding var tableForgeEnergy: Double
 
     var body: some View {
         ZStack {
-            switch director.phase {
-            case .stat:
-                StatPhase(director: director)
-                    .transition(.opacity)
-
-            case .name:
-                NamePhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
-                    .transition(.opacity)
-
-            case .gender:
-                GenderPhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
-                    .transition(.opacity)
-
-            case .modeSelect:
-                ModeSelectPhase(director: director, screenSize: screenSize)
-                    .transition(.opacity)
-
-            case .experienceLevel:
-                ExperienceLevelPhase(director: director, screenSize: screenSize)
-                    .transition(.opacity)
-
-            case .context:
-                ContextPhase(director: director, screenSize: screenSize)
-                    .transition(.opacity)
-
-            case .curiosity:
-                CuriosityPhase(director: director, screenSize: screenSize)
-                    .transition(.opacity)
-
-            case .confirmation:
-                ConfirmationPhase(director: director)
-                    .transition(.opacity)
-
-            case .buildDeck:
-                BuildDeckPhase(director: director, screenSize: screenSize)
-                    .transition(.opacity)
-
-            case .founderLetter:
-                FounderLetterPhase(director: director)
-                    .transition(.opacity)
-            }
+            phaseContent
+                .transition(phaseHandoff)
         }
         // Pin the ZStack to screen dimensions.
         // Card transforms during NamePhase (offset to deal origin,
@@ -229,7 +248,68 @@ private struct PhaseOverlayView: View {
         // outside the smaller collapsed boundary.
         .frame(width: screenSize.width, height: screenSize.height)
         .ignoresSafeArea()
-        .animation(AppAnimation.standard, value: director.phase)
+        // `slow` (0.5s) over `standard` (0.3s) — slow's own token doc names it the
+        // onboarding step-transition animation. reduceMotionSafe → fast opacity confirm.
+        .animation(AppAnimation.slow.reduceMotionSafe, value: director.phase)
+    }
+
+    /// The active phase view. Each case is a distinct type, so changing `director.phase`
+    /// changes identity → `phaseHandoff` plays on the outgoing + incoming phase.
+    @ViewBuilder
+    private var phaseContent: some View {
+        switch director.phase {
+        case .stat:
+            StatPhase(director: director)
+
+        case .demo:
+            DemoPhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
+
+        case .name:
+            NamePhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
+
+        case .gender:
+            GenderPhase(director: director, screenSize: screenSize, tableRimBurst: $tableRimBurst)
+
+        case .modeSelect:
+            ModeSelectPhase(director: director, screenSize: screenSize)
+
+        case .experienceLevel:
+            ExperienceLevelPhase(director: director, screenSize: screenSize)
+
+        case .context:
+            ContextPhase(director: director, screenSize: screenSize)
+
+        case .curiosity:
+            CuriosityPhase(director: director, screenSize: screenSize)
+
+        case .confirmation:
+            ConfirmationPhase(director: director)
+
+        case .buildDeck:
+            BuildDeckPhase(director: director, screenSize: screenSize,
+                           tableRimBurst: $tableRimBurst,
+                           tableForgeEnergy: $tableForgeEnergy)
+
+        case .founderLetter:
+            FounderLetterPhase(director: director)
+        }
+    }
+
+    /// Continuous phase-to-phase depth handoff. FEEL-GATE — the scale magnitudes are
+    /// starting points; verify on device and dial to taste. Incoming settles in from
+    /// slightly forward (1.02 → 1.0); outgoing recedes back (1.0 → 0.97). Under Reduce
+    /// Motion this collapses to a pure opacity cross-fade — scale is motion.
+    private var phaseHandoff: AnyTransition {
+        // Confirmation → BuildDeck is a pixel-identical deck handoff (the collapsed
+        // credential fan and BuildDeck's VaylDeckStack share point/size/face). A depth
+        // scale would counter-scale the two near-identical decks about screen-centre and
+        // double-image the swap. Both the leaving Confirmation and the arriving BuildDeck
+        // evaluate this against the POST-advance phase, so keying on .buildDeck drops the
+        // scale on BOTH sides of this one seam only — every other handoff keeps its depth.
+        if director.phase == .buildDeck { return .opacity }
+        // Staple 1, Loud register — the OB IS the loud register's reference implementation.
+        // vaylDepth handles the Reduce Motion collapse to .opacity internally.
+        return .vaylDepth(.loud)
     }
 }
 
@@ -246,7 +326,8 @@ private struct PhaseOverlayView: View {
         @State private var menuVisible = true
 
         var body: some View {
-            GeometryReader { geo in
+            @Bindable var director = director
+            return GeometryReader { geo in
             ZStack(alignment: .bottom) {
                 OnboardingCanvasView(director: director)
                     .environment(\.realSafeArea, geo.safeAreaInsets)
@@ -259,9 +340,14 @@ private struct PhaseOverlayView: View {
                             HStack(spacing: 10) {
                                 ForEach(OBPhase.allCases, id: \.self) { phase in
                                     Button {
-                                        withAnimation(AppAnimation.standard) {
-                                            director.phase = phase
-                                        }
+                                        // Jump through the real navigation path so the target
+                                        // phase's entry routine runs (advance → handlePhaseEntry).
+                                        // Setting director.phase directly skips entry — e.g.
+                                        // Curiosity never arms curiosityDemoActive, so its deal
+                                        // bails on the guard and the phase looks stuck until you
+                                        // reach it through a real transition. The canvas already
+                                        // cross-fades on director.phase, so no withAnimation here.
+                                        director.advance(to: phase)
                                     } label: {
                                         Text(String(describing: phase))
                                             .font(.caption.weight(.bold))
@@ -303,8 +389,20 @@ private struct PhaseOverlayView: View {
                     }
                     Spacer()
                 }
+
+                // Mirror OnboardingCanvasWrapper's custom editor overlay so the
+                // ConfirmationPhase edit sheet works in the preview too.
+                if let credential = director.editingCredential {
+                    CredentialEditorOverlay(director: director, credential: credential)
+                }
+
+                if director.showSingleGreeting {
+                    SingleGreetingOverlay(director: director)
+                }
             }
             } // GeometryReader
+            .animation(AppAnimation.standard, value: director.editingCredential)
+            .animation(AppAnimation.standard, value: director.showSingleGreeting)
         }
     }
 

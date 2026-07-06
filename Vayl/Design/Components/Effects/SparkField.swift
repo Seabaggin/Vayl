@@ -287,7 +287,20 @@ struct SparkField: View {
     // never accidentally reset mid-animation.
     @StateObject private var system = SparkSystem()
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
+        // Ambient gate — the ember field is pure decoration. Under Reduce Motion /
+        // Low Power Mode it doesn't mount at all: no 30fps TimelineView tick, no
+        // Canvas raster. The scene it dresses is visually complete without it.
+        if reduceMotion || AppAnimation.lowPower {
+            Color.clear.allowsHitTesting(false)
+        } else {
+            sparkCanvas
+        }
+    }
+
+    private var sparkCanvas: some View {
         TimelineView(.animation(minimumInterval: 1/30, paused: false)) { timeline in
             Canvas { context, size in
                 // Reference timeline.date — required so SwiftUI

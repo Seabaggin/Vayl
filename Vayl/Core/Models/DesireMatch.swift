@@ -16,7 +16,6 @@ import SwiftData
 //
 // isFreeReveal is server-authoritative — the client cannot set this to true.
 // If the client could set it, the paywall is trivially bypassed.
-// revealedAt is nil until the paywall is cleared.
 
 @Model
 final class DesireMatch {
@@ -35,7 +34,7 @@ final class DesireMatch {
     // MARK: - Reveal State
 
     var isFreeReveal: Bool      // the one free match — set by Edge Function only
-    var revealedAt: Date?       // nil until paywall cleared
+    var bridgeCardId: String?   // stub link to a CompanionCard (the desire-map → deck/conversation bridge)
 
     // MARK: - Init
 
@@ -50,13 +49,7 @@ final class DesireMatch {
         self.matchType = matchType
         self.computedAt = Date()
         self.isFreeReveal = false   // always set by Edge Function — never client
-        self.revealedAt = nil
-    }
-
-    // MARK: - Computed
-
-    var isRevealed: Bool {
-        revealedAt != nil
+        self.bridgeCardId = nil
     }
 
     // MARK: - Preview Helpers

@@ -1,0 +1,77 @@
+{
+  "nodes": [
+    {
+      "id": "config:Vayl/Resources/Content/assessment_questions.json",
+      "type": "config",
+      "name": "assessment_questions.json",
+      "filePath": "Vayl/Resources/Content/assessment_questions.json",
+      "summary": "Seed bank of ENM-readiness assessment questions (scale and multi-select), each tagged with a domain, weight, and sort order, consumed via ContentLoader.loadAssessmentQuestions(). Several entries are flagged as placeholders pending validated content.",
+      "tags": ["configuration", "data", "assessment", "onboarding", "content-seed"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:Vayl/Resources/Content/cards.json",
+      "type": "config",
+      "name": "cards.json",
+      "filePath": "Vayl/Resources/Content/cards.json",
+      "summary": "Card-session content deck: education, prompt, and educationPrompt cards keyed to a category_id, with speaking-turn, difficulty, sensitivity, and free/paid gating. Loaded through ContentLoader.loadCards() to drive the couple card experience.",
+      "tags": ["configuration", "data", "deck-content", "card-session", "content-seed"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:Vayl/Resources/Content/categories.json",
+      "type": "config",
+      "name": "categories.json",
+      "filePath": "Vayl/Resources/Content/categories.json",
+      "summary": "Category taxonomy for the Learn/card content (communication, boundaries, intimacy, etc.) with SF Symbol icons, phase grouping, card counts, and unlock gating. Loaded via ContentLoader.loadCategories() to organize and gate content sections.",
+      "tags": ["configuration", "data", "taxonomy", "deck-content", "gating"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Resources/Content/desire_items.json",
+      "type": "config",
+      "name": "desire_items.json",
+      "filePath": "Vayl/Resources/Content/desire_items.json",
+      "summary": "Desire Map item catalog: per-item name, description, category, sensitivity, track membership (curious/established), and track-specific answer scales. Decoded into the DesireItem model via ContentLoader.loadDesireItems() to populate the Desire Map rater.",
+      "tags": ["configuration", "data", "desire-map", "content-seed", "data-model"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:Vayl/Resources/Content/assessment_questions.json",
+      "target": "file:Vayl/Core/Services/ContentLoader.swift",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:Vayl/Resources/Content/cards.json",
+      "target": "file:Vayl/Core/Services/ContentLoader.swift",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:Vayl/Resources/Content/categories.json",
+      "target": "file:Vayl/Core/Services/ContentLoader.swift",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:Vayl/Resources/Content/desire_items.json",
+      "target": "file:Vayl/Core/Services/ContentLoader.swift",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:Vayl/Resources/Content/desire_items.json",
+      "target": "file:Vayl/Core/Models/DesireItem.swift",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

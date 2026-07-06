@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Path · Me zoomed in / Us zoomed out</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF;--purple:#6C3AE0;--purple-light:#A78BFA;--bridge:#8B6FD4;--magenta:#FF006A;--magentaL:#FF4D94;
+    --void:#0a0810;--t1:#E8E8F0;--t2:rgba(255,255,255,.65);--t3:rgba(255,255,255,.4);--hair:rgba(255,255,255,.09);--glass:rgba(255,255,255,.04);
+    --disp:"Clash Display",-apple-system,sans-serif;--body:"Switzer",-apple-system,sans-serif;--r-lg:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:900px;margin:0 auto;padding:48px 28px 90px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:27px;font-weight:600;margin:0 0 8px}
+  .lede{font-size:13.5px;line-height:1.62;color:var(--t2);margin:0 0 4px;max-width:800px}.lede b{color:var(--t1)}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:30px;justify-items:center;margin-top:34px}
+  @media(max-width:700px){.two{grid-template-columns:1fr;max-width:340px;margin-inline:auto}}
+  .col{width:320px;max-width:100%}
+  .cap{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px;text-align:center}
+  .cap.me{color:var(--cyan)}.cap.us{color:var(--magenta)}
+  .zoom{font-size:10.5px;color:var(--t3);text-align:center;margin:0 0 13px}
+
+  .card{border-radius:var(--r-lg);border:1px solid rgba(167,139,250,.22);background:var(--glass);padding:12px 15px 13px}
+  .wtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .eyebrow{font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--purple-light)}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:600;color:var(--t2);border:1px solid var(--hair);border-radius:20px;padding:3px 9px}
+  .chip .dm{width:7px;height:7px;border-radius:2px;background:linear-gradient(135deg,var(--cyan),var(--magenta));transform:rotate(45deg)}
+  .trail{position:relative;height:172px;border-radius:12px;overflow:hidden;background:linear-gradient(#0e0b16,#0a0812);border:1px solid rgba(255,255,255,.05)}
+  .trail svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .tphase{position:absolute;z-index:4;font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--purple-light);opacity:.75}
+  .nd{position:absolute;transform:translate(-50%,-50%);border-radius:50%;z-index:3}
+  .done{background:linear-gradient(135deg,var(--cyan),var(--purple) 55%,var(--magenta));box-shadow:0 0 5px rgba(255,255,255,.4),0 0 10px 1px rgba(108,58,224,.4)}
+  .done::before{content:"";position:absolute;inset:26%;border-radius:50%;background:rgba(255,255,255,.22)}
+  .now{background:#0a0712;border:2px solid var(--cyan);box-shadow:0 0 0 4px rgba(0,194,255,.12),0 0 14px 2px rgba(0,194,255,.5)}
+  .now::before{content:"";position:absolute;inset:26%;border-radius:50%;background:#fff;box-shadow:0 0 7px #fff}
+  .fut{background:#0b0814;border:1.5px solid rgba(255,255,255,.2)}
+  .stance::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--fc)}
+  .lbl{position:absolute;z-index:5;font-family:var(--disp);font-weight:600;color:#fff}
+  .spill{position:absolute;z-index:5;display:inline-flex;align-items:center;gap:4px;font-size:8px;font-weight:700;border-radius:20px;padding:2px 7px;border:1px solid var(--fc);color:var(--fc)}
+  .spill .d{width:5px;height:5px;border-radius:50%;background:var(--fc)}
+  .heretag{position:absolute;z-index:5;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--cyan)}
+
+  .prow{display:flex;align-items:baseline;gap:9px;margin-top:10px}
+  .prow .lm{font-family:var(--disp);font-size:15px;font-weight:600;color:#fff}
+  .stanceChip{display:inline-flex;align-items:center;gap:6px;font-size:9.5px;font-weight:600;border-radius:20px;padding:3px 9px;color:var(--magentaL);border:1px solid rgba(255,77,148,.35);background:rgba(255,0,106,.07)}
+  .stanceChip .d{width:7px;height:7px;border-radius:50%;background:var(--magentaL)}
+  .togeth{font-size:10px;color:var(--cyan);font-weight:600;display:flex;align-items:center;gap:6px}
+  .togeth i{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 7px var(--cyan)}
+  .pfoot{display:flex;justify-content:space-between;align-items:center;font-size:9.5px;color:var(--t3);margin-top:9px}
+  .pfoot .lnk{color:var(--purple-light)}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:760px;margin:34px auto 0}
+  @media(max-width:620px){.cols{grid-template-columns:1fr}}
+  .note{border-radius:12px;border:1px solid var(--hair);background:var(--glass);padding:15px 16px}
+  .note h4{font-family:var(--disp);font-size:13px;font-weight:600;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+  .note h4 .dot{width:8px;height:8px;border-radius:50%}
+  .note p{font-size:12px;line-height:1.55;color:var(--t2);margin:0}.note b{color:var(--t1)}
+  .anno{max-width:760px;font-size:12.5px;line-height:1.62;color:var(--t2);margin:22px auto 0}.anno b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The Path — <span class="spectrum">zoom is the lens</span></h1>
+  <p class="lede">Same trail, two cameras. <b>Me zooms in</b>: a few big nodes around where you are, your stance and notes on what's next, forward-leaning. <b>Us zooms out</b>: the whole winding road small, everything walked together glowing, the shared arc. Scale and emphasis both differ, so the two read apart instantly.</p>
+
+  <div class="two">
+
+    <!-- ME · zoomed in -->
+    <div class="col">
+      <div class="cap me">Me · your read</div>
+      <div class="zoom">zoomed in · you are here, and what's next</div>
+      <div class="card">
+        <div class="wtop"><div class="eyebrow">The Path · your read</div><div class="chip"><span class="dm"></span>Swinging</div></div>
+        <div class="trail">
+          <span class="tphase" style="top:8px;left:12px">Phase 2 · Proximal Energy</span>
+          <svg viewBox="0 0 240 172">
+            <defs><linearGradient id="mg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#00c2ff"/><stop offset=".5" stop-color="#6c3ae0"/><stop offset="1" stop-color="#ff006a"/></linearGradient><filter id="mgl" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4"/></filter></defs>
+            <path d="M158,150 C158,124 96,124 96,96" fill="none" stroke="url(#mg)" stroke-width="7" opacity=".5" filter="url(#mgl)"/>
+            <path d="M158,150 C158,124 96,124 96,96" fill="none" stroke="url(#mg)" stroke-width="3" stroke-linecap="round"/>
+            <path d="M96,96 C96,66 168,60 168,30" fill="none" stroke="rgba(167,139,250,.34)" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1.5 7"/>
+          </svg>
+          <!-- 3 big nodes -->
+          <div class="nd done" style="left:65.8%;top:87%;width:13px;height:13px"></div>
+          <div class="nd now" style="left:40%;top:56%;width:28px;height:28px"></div>
+          <div class="nd fut stance" style="left:70%;top:17.5%;width:15px;height:15px;--fc:var(--purple-light)"></div>
+          <!-- labels -->
+          <span class="heretag" style="left:53%;top:50%">Here now</span>
+          <span class="lbl" style="left:12px;top:118px;font-size:14px">The strip club</span>
+          <span class="spill" style="left:12px;top:138px;--fc:var(--magentaL)"><span class="d"></span>let's talk first</span>
+          <span class="lbl" style="right:12px;top:20px;font-size:11px;text-align:right">Flirt at a bar</span>
+          <span class="spill" style="right:12px;top:40px;--fc:var(--purple-light)"><span class="d"></span>curious</span>
+        </div>
+        <div class="pfoot"><span>your next step</span><span class="lnk">Your notes ›</span></div>
+      </div>
+    </div>
+
+    <!-- US · zoomed out -->
+    <div class="col">
+      <div class="cap us">Us · couple roadmap</div>
+      <div class="zoom">zoomed out · the whole road you've walked together</div>
+      <div class="card">
+        <div class="wtop"><div class="eyebrow">The Path · couple roadmap</div><div class="chip"><span class="dm"></span>Swinging</div></div>
+        <div class="trail">
+          <svg viewBox="0 0 240 172">
+            <defs><linearGradient id="ug" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#00c2ff"/><stop offset=".5" stop-color="#6c3ae0"/><stop offset="1" stop-color="#ff006a"/></linearGradient><filter id="ugl" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3"/></filter></defs>
+            <!-- walked (bright, lower) -->
+            <path d="M42,160 C42,150 200,150 200,140 C200,129 40,129 40,118 C40,109 150,109 150,100" fill="none" stroke="url(#ug)" stroke-width="5" opacity=".5" filter="url(#ugl)"/>
+            <path d="M42,160 C42,150 200,150 200,140 C200,129 40,129 40,118 C40,109 150,109 150,100" fill="none" stroke="url(#ug)" stroke-width="2.2" stroke-linecap="round"/>
+            <!-- ahead (dim) -->
+            <path d="M150,100 C150,90 205,90 205,80 C205,70 40,70 40,60 C40,51 200,51 200,42 C200,33 45,33 45,24 C45,16 120,16 120,10" fill="none" stroke="rgba(167,139,250,.3)" stroke-width="2" stroke-linecap="round" stroke-dasharray="1.5 7"/>
+          </svg>
+          <span class="tphase" style="top:150px;left:12px;opacity:.6">Phase 1</span>
+          <span class="tphase" style="top:96px;right:12px;opacity:.6">Phase 2</span>
+          <span class="tphase" style="top:44px;left:12px;opacity:.5">Phase 3</span>
+          <!-- walked small nodes -->
+          <div class="nd done" style="left:17.5%;top:93%;width:8px;height:8px"></div>
+          <div class="nd done" style="left:83%;top:81.4%;width:8px;height:8px"></div>
+          <div class="nd done" style="left:16.7%;top:68.6%;width:8px;height:8px"></div>
+          <!-- now -->
+          <div class="nd now" style="left:62.5%;top:58%;width:15px;height:15px"></div>
+          <!-- ahead small -->
+          <div class="nd fut" style="left:85.4%;top:46.5%;width:7px;height:7px"></div>
+          <div class="nd fut" style="left:16.7%;top:34.9%;width:7px;height:7px"></div>
+          <div class="nd fut" style="left:83.3%;top:24.4%;width:7px;height:7px"></div>
+          <div class="nd fut" style="left:18.8%;top:14%;width:7px;height:7px"></div>
+          <div class="nd fut" style="left:50%;top:5.8%;width:6px;height:6px"></div>
+          <span class="heretag" style="left:52%;top:64%">Here, together</span>
+        </div>
+        <div class="prow"><span class="lm">The strip club</span><span class="togeth"><i></i>3 walked together</span></div>
+        <div class="pfoot"><span>your whole road</span><span class="lnk">Explore paths ›</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="note"><h4><span class="dot" style="background:var(--cyan)"></span>Me · zoomed in</h4><p>Big nodes, tight crop on <b>you-are-here + next step</b>. Your stance flags and notes are legible. Forward-leaning: "my next move and how I feel about it." Full screen zooms to your current phase with your annotations.</p></div>
+    <div class="note"><h4><span class="dot" style="background:var(--magentaL)"></span>Us · zoomed out</h4><p>Small nodes, the <b>whole winding road</b>, walked-together glowing, phases visible. Retrospective: "look how far we've come." Full screen is the entire 13-landmark trail with Mission Briefs.</p></div>
+  </div>
+
+  <div class="anno">
+    <b>Why this is the right differentiator:</b> it is one map, two cameras, so it stays honest and cheap (same data). The zoom encodes the lens meaning directly, Me is close and personal and forward, Us is wide and shared and retrospective, and it stacks with the annotation layer you already have (stance flags on Me, clean shared trail on Us). One wording guardrail kept: the Me zoom centers on <b>your position and next step</b>, never "what you looked at" (that would drift toward tracking, off-limits).
+  </div>
+
+</div>
+</body>
+</html>

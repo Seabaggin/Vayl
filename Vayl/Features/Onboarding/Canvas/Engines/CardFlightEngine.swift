@@ -85,11 +85,11 @@ final class CardFlightEngine {
         let cardW = AppLayout.obTableCardWidth(in: screenSize.width)  * AppLayout.obTableCardCinematicScale
         let cardH = AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale
 
-        let renderer = ImageRenderer(
-            content: VaylCardBack().frame(width: cardW, height: cardH)
-        )
-        renderer.scale = scale
-        guard let cardImage = renderer.uiImage else {
+        // Yield before rasterizing so any in-flight SwiftUI animation frames
+        // are committed first — a cache MISS in CardBackRaster is a synchronous
+        // main-thread rasterize (hits return instantly).
+        await Task.yield()
+        guard let cardImage = CardBackRaster.image(width: cardW, height: cardH, scale: scale) else {
             print("[CardFlightEngine] dealSingleCard: VaylCardBack snapshot failed")
             return nil
         }

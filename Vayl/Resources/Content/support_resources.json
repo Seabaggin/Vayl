@@ -1,0 +1,8 @@
+[
+  { "id": "open-path", "tier": "ongoing", "title": "Open Path Collective", "detail": "Affordable therapy, sliding scale", "action": "https://openpathcollective.org", "icon": "heart.text.square" },
+  { "id": "psych-today", "tier": "ongoing", "title": "Psychology Today", "detail": "Filtered for non-monogamy-affirming therapists", "action": "https://www.psychologytoday.com", "icon": "slider.horizontal.3" },
+  { "id": "kap", "tier": "ongoing", "title": "Kink Aware Professionals", "detail": "Poly & kink-affirming directory", "action": "https://www.kapprofessionals.org", "icon": "checkmark.seal" },
+  { "id": "988", "tier": "crisis", "title": "988 Suicide & Crisis Lifeline", "detail": "Call or text 988 · 24/7", "action": "tel:988", "icon": "phone.fill" },
+  { "id": "crisis-text", "tier": "crisis", "title": "Crisis Text Line", "detail": "Text HOME to 741741", "action": "sms:741741", "icon": "message.fill" },
+  { "id": "dv-hotline", "tier": "crisis", "title": "The Hotline · Domestic violence", "detail": "1-800-799-7233 · 24/7 confidential", "action": "tel:18007997233", "icon": "shield.lefthalf.filled" }
+]

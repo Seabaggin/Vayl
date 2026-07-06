@@ -42,6 +42,14 @@ struct VaylCardFace: View {
     /// so the bookmark ribbon drops in on confirm. Ignored by all other faces.
     var confirmed:  Bool                         = false
 
+    /// Deck identity tint (Play / session). nil = the canonical fixed look — Onboarding
+    /// passes nothing and renders byte-identical to before.
+    var colorway:   FoilColorway?                = nil
+    /// Card weight 0…1 (from intensity) — drives the base-heat glow. Ignored when colorway is nil.
+    var heat:       Double                       = 0
+    /// Faint category-glyph watermark — a path in a 44×40 box. nil = none.
+    var glyphPath:  Path?                         = nil
+
     var body: some View {
         GeometryReader { geo in
             let size      = geo.size
@@ -54,7 +62,7 @@ struct VaylCardFace: View {
                 AppColors.cardBg
 
                 // ── 2 · Atmosphere ─────────────────────────────────
-                FaceAtmosphere(size: size, shortSide: shortSide)
+                FaceAtmosphere(size: size, shortSide: shortSide, colorway: colorway, heat: heat)
 
                 // ── 3 · Spectrum border glow ───────────────────────
                 // Resting-state ambient bloom at card edge.
@@ -68,6 +76,17 @@ struct VaylCardFace: View {
                     )
                     .blur(radius: AppGlows.spectrumBorder.outer.radius)
                     .padding(0.75)
+
+                // ── 3b · Deck identity + card weight (Play / session only) ─
+                // Generated from the deck colorway + card intensity; nil colorway = OB,
+                // skipped entirely → canonical look. Sits behind the question text; the
+                // shell (frame, hairlines, border, drawingGroup) is untouched.
+                if let colorway {
+                    if let glyphPath {
+                        GlyphWatermark(path: glyphPath, color: colorway.c1, heat: heat)
+                    }
+                    CardHeatGlow(colorway: colorway, heat: heat)
+                }
 
                 // ── 4 · Content face — when VaylCardContent is provided ─
                 // Extracted to contentFace(for:size:) so the GeometryReader body
@@ -187,6 +206,15 @@ struct VaylCardFace: View {
                 value:      value,
                 dragging:   dragging
             )
+        case .snapshot(let verb, let noun, let toneProgress, let sealProgress):
+            SnapshotCardFace(
+                cardWidth:    size.width,
+                cardHeight:   size.height,
+                verb:         verb,
+                noun:         noun,
+                toneProgress: toneProgress,
+                sealProgress: sealProgress
+            )
         case .context(let number, let title, let subtitle, let detail):
             ContextCardFace(
                 number:    number,
@@ -196,11 +224,12 @@ struct VaylCardFace: View {
                 isFront:   isFront,
                 confirmed: confirmed
             )
-        case .curiosity(let category):
-            CuriosityCardFace(
+        case .curiosity(let category, let deflection):
+            CompassCardFace(
                 cardWidth:  size.width,
                 cardHeight: size.height,
-                topic:      category
+                topic:      category,
+                deflection: deflection
             )
         default:
             EmptyView()
@@ -224,11 +253,19 @@ private struct FaceGestures: ViewModifier {
                 .onTapGesture { onAction?(.tapped) }
                 .gesture(
                     DragGesture(minimumDistance: 10)
+                        .onChanged { value in
+                            // Live drag forwarding (opt-in via .dragChanged) — lets a phase make
+                            // the lifted card track the finger. Consumers that don't handle
+                            // .dragChanged ignore it, so no existing card's behaviour changes.
+                            onAction?(.dragChanged(translation: value.translation))
+                        }
                         .onEnded { value in
                             let velocity    = value.predictedEndLocation.y - value.location.y
                             let translation = value.translation.height
                             if translation <= -(cardHeight * 0.14) || velocity <= -400 {
-                                onAction?(.swipedUp)
+                                onAction?(.swipedUp)                      // committed hand-off
+                            } else {
+                                onAction?(.dragEnded(velocity: .zero))   // released short → spring back
                             }
                         }
                 )
@@ -246,26 +283,33 @@ private struct FaceGestures: ViewModifier {
 private struct FaceAtmosphere: View {
     let size:      CGSize
     let shortSide: CGFloat
+    var colorway:  FoilColorway? = nil
+    var heat:      Double        = 0
 
     var body: some View {
+        if let colorway {
+            tinted(colorway)
+        } else {
+            canonical
+        }
+    }
+
+    /// The canonical fixed look — cyan / magenta / purple. Onboarding and any untinted
+    /// caller. Unchanged from the original face.
+    private var canonical: some View {
         ZStack {
-            // Blob A — cyan, upper-left
             RadialGradient(
                 colors: [AppColors.spectrumCyan.opacity(0.07), .clear],
                 center: UnitPoint(x: 0.30, y: 0.32),
                 startRadius: 0,
                 endRadius: shortSide * 0.48
             )
-
-            // Blob B — magenta, lower-right
             RadialGradient(
                 colors: [AppColors.spectrumMagenta.opacity(0.07), .clear],
                 center: UnitPoint(x: 0.72, y: 0.70),
                 startRadius: 0,
                 endRadius: shortSide * 0.48
             )
-
-            // Blob C — purple, center
             RadialGradient(
                 colors: [AppColors.spectrumPurple.opacity(0.11), .clear],
                 center: .center,
@@ -273,6 +317,80 @@ private struct FaceAtmosphere: View {
                 endRadius: shortSide * 0.44
             )
         }
+    }
+
+    /// Deck-tinted: the three blobs take the deck's colorway, and overall presence rises
+    /// with the card's heat (intensity). Same geometry as canonical.
+    private func tinted(_ cw: FoilColorway) -> some View {
+        let base = 0.07 + heat * 0.10
+        return ZStack {
+            RadialGradient(
+                colors: [cw.c0.opacity(base), .clear],
+                center: UnitPoint(x: 0.30, y: 0.30),
+                startRadius: 0,
+                endRadius: shortSide * 0.50
+            )
+            RadialGradient(
+                colors: [cw.c2.opacity(base), .clear],
+                center: UnitPoint(x: 0.72, y: 0.72),
+                startRadius: 0,
+                endRadius: shortSide * 0.50
+            )
+            RadialGradient(
+                colors: [cw.c1.opacity(base + 0.04), .clear],
+                center: .center,
+                startRadius: 0,
+                endRadius: shortSide * 0.46
+            )
+        }
+    }
+}
+
+// MARK: - CardHeatGlow
+
+/// Bottom-up glow in the deck colorway — taller and brighter with heat (card intensity).
+/// Play / session only; sits behind the question text.
+private struct CardHeatGlow: View {
+    let colorway: FoilColorway
+    let heat:     Double
+
+    var body: some View {
+        GeometryReader { geo in
+            LinearGradient(
+                colors: [colorway.c2.opacity(0), colorway.c1.opacity(0.05 + heat * 0.20)],
+                startPoint: .top,
+                endPoint:   .bottom
+            )
+            .frame(height: geo.size.height * (0.22 + heat * 0.34))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        }
+        .blendMode(.plusLighter)
+        .allowsHitTesting(false)
+    }
+}
+
+// MARK: - GlyphWatermark
+
+/// Faint category-glyph watermark behind the question. Takes a Path in a 44×40 box, so
+/// Design stays decoupled from Play's DeckGlyphKind, and tints it to the colorway.
+private struct GlyphWatermark: View {
+    let path:  Path
+    let color: Color
+    let heat:  Double
+
+    var body: some View {
+        GeometryReader { geo in
+            let s  = min(geo.size.width, geo.size.height) * 0.5 / 44
+            let gw = 44 * s
+            let gh = 40 * s
+            let t  = CGAffineTransform(scaleX: s, y: s)
+                .concatenating(.init(translationX: (geo.size.width - gw) / 2,
+                                     y: (geo.size.height - gh) / 2))
+            path.applying(t)
+                .stroke(color.opacity(0.10 + heat * 0.05),
+                        style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+        }
+        .allowsHitTesting(false)
     }
 }
 
@@ -378,7 +496,7 @@ private struct ModeFaceContent: View {
     }
 
     private func startHoloShift() {
-        guard !reduceMotion else { return }
+        guard !reduceMotion, !AppAnimation.lowPower else { return }
         withAnimation(
             .easeInOut(duration: 2.6)
             .repeatForever(autoreverses: true)

@@ -5,7 +5,8 @@
       "name": "mockup",
       "runtimeExecutable": "node",
       "runtimeArgs": ["docs/mockups/server.js"],
-      "port": 7331
+      "port": 7331,
+      "autoPort": false
     },
     {
       "name": "roadmap",
@@ -15,8 +16,8 @@
     },
     {
       "name": "prototypes",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "7333"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["docs/prototypes/server.js"],
       "port": 7333
     }
   ]

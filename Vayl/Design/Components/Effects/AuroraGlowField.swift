@@ -91,6 +91,8 @@ struct AuroraGlowField: View {
     @State private var blobPhase:   [CGFloat] = Array(repeating: 0,     count: 9)
     @State private var hasStarted = false
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
@@ -104,7 +106,7 @@ struct AuroraGlowField: View {
             }
         }
         .allowsHitTesting(false)
-        .animation(.easeInOut(duration: 1.0), value: config)
+        .animation(AppAnimation.atmosphereShift, value: config)
         .onAppear {
             guard !hasStarted else { return }
             hasStarted = true
@@ -265,6 +267,11 @@ struct AuroraGlowField: View {
         let loopDurations: [Double] = [8,    10,   9,    11,   12,   14,   10,   13,   11  ]
         let loopDelays:    [Double] = [0.80, 1.00, 1.20, 1.30, 1.50, 1.60, 1.80, 1.90, 2.00]
 
+        // Ambient gate — the fade-IN is an opacity-only entrance and may run under
+        // Reduce Motion; the drift LOOP is ambient and is never scheduled under
+        // Reduce Motion / Low Power Mode (blobs hold their resting positions).
+        let ambientAllowed = !reduceMotion && !AppAnimation.lowPower
+
         for i in 0..<9 {
             withAnimation(
                 .easeInOut(duration: fadeDurations[i])
@@ -272,6 +279,7 @@ struct AuroraGlowField: View {
             ) {
                 blobVisible[i] = true
             }
+            guard ambientAllowed else { continue }
             DispatchQueue.main.asyncAfter(deadline: .now() + loopDelays[i]) {
                 withAnimation(
                     .linear(duration: loopDurations[i])

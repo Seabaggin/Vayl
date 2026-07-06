@@ -1,0 +1,207 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "Vayl/Core/Models/Enums/AppAccessEnums.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 55,
+      "nonEmptyLines": 50,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/Enums/AppCardEnums.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 250,
+      "nonEmptyLines": 218,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/Enums/AppDesireEnums.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 95,
+      "nonEmptyLines": 83,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/Enums/AppEnums.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 346,
+      "nonEmptyLines": 300,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/Enums/AppOBEnums.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 258,
+      "nonEmptyLines": 225,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/Enums/AppPulseEnums.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 180,
+      "nonEmptyLines": 157,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/Enums/AppTab.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 29,
+      "nonEmptyLines": 25,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/Enums/UserDefaultsKey.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 18,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/LockInSession.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 114,
+      "nonEmptyLines": 91,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/MilestoneRecord.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 102,
+      "nonEmptyLines": 83,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/PulseEntry.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 68,
+      "nonEmptyLines": 58,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/SessionRecord.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 98,
+      "nonEmptyLines": 78,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Models/UserProfile.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 189,
+      "nonEmptyLines": 163,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Persistence/DataStore.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 222,
+      "nonEmptyLines": 191,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Persistence/ModelContext+Extensions.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 35,
+      "nonEmptyLines": 30,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Services/AppState.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 201,
+      "nonEmptyLines": 172,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Services/AuthService.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 184,
+      "nonEmptyLines": 153,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Services/ContentLoader.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 124,
+      "nonEmptyLines": 106,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Services/DesireSyncService.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 247,
+      "nonEmptyLines": 213,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Services/EntitlementService.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 84,
+      "nonEmptyLines": 70,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Services/LegalLinks.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 41,
+      "nonEmptyLines": 34,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Services/PairingService.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 247,
+      "nonEmptyLines": 202,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Services/ProfileService.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 257,
+      "nonEmptyLines": 226,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Services/RealtimeSessionService.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 293,
+      "nonEmptyLines": 250,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Core/Services/StoreKitService.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 109,
+      "nonEmptyLines": 95,
+      "metrics": {}
+    }
+  ]
+}

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vayl — Desire Map Rater (feel-proto)</title>
+<!--
+  D1.0 FEEL-PROTO — cohort-adaptive card rater.
+  TWO TRACKS: Curious (aspirational/future) vs Established (exploring+experienced merged, reflective/past).
+  - Real tokens: void #0a0810, spectrum #00C2FF→#6C3AE0→#FF006A, card #120f1a, text #E8E8F0.
+  - 4-point backend weights (fixed): excitedAboutIt / openToIt / probablyNot / notForMe.
+  - Per-item, per-track bespoke answers. Only the WEIGHT is stored; the string is display-only.
+  - Curious = 18 items; Established = 20 (drops "start exploring", adds Recalibrating + 2 maintenance Qs).
+  - Couple rule (real app): if EITHER partner is Curious → both get the Curious 18. The toggle here is a DEMO control;
+    the real app derives the track from UserProfile.nmStage. Fonts approximate ClashDisplay/Switzer.
+-->
+<style>
+  :root {
+    --void: #0a0810;
+    --card: #120f1a;
+    --card-raised: #17131f;
+    --text: #E8E8F0;
+    --text-muted: rgba(232,232,240,0.56);
+    --text-faint: rgba(232,232,240,0.34);
+    --cyan: #00C2FF;
+    --purple: #8B6FD4;
+    --purple-deep: #6C3AE0;
+    --magenta: #FF006A;
+    --hairline: rgba(255,255,255,0.09);
+    --hairline-bright: rgba(255,255,255,0.16);
+    --spectrum: linear-gradient(120deg, var(--cyan), var(--purple-deep), var(--magenta));
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: -apple-system, "SF Pro Text", "Switzer", "Helvetica Neue", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100dvh;
+  }
+  .atmosphere {
+    position: fixed; inset: -20%; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(40% 35% at 22% 18%, rgba(0,194,255,0.16), transparent 70%),
+      radial-gradient(45% 40% at 82% 26%, rgba(108,58,224,0.18), transparent 72%),
+      radial-gradient(50% 45% at 50% 92%, rgba(255,0,106,0.12), transparent 70%);
+    filter: blur(8px);
+    animation: drift 16s ease-in-out infinite alternate;
+  }
+  @keyframes drift {
+    0%   { transform: translate3d(0,0,0) scale(1); }
+    100% { transform: translate3d(2%, -2%, 0) scale(1.08); }
+  }
+  .stage {
+    position: relative; z-index: 1;
+    width: min(390px, 100vw); height: min(844px, 100dvh);
+    display: flex; flex-direction: column;
+    padding: max(env(safe-area-inset-top), 14px) 22px max(env(safe-area-inset-bottom), 22px);
+  }
+
+  /* demo-only cohort toggle */
+  .demo-cap { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-faint); text-align: center; margin-bottom: 6px; }
+  .track-toggle { display: flex; gap: 4px; padding: 4px; background: rgba(255,255,255,0.04); border: 1px solid var(--hairline); border-radius: 99px; margin-bottom: 14px; }
+  .track-toggle button { flex: 1; padding: 9px 10px; border: none; background: transparent; color: var(--text-faint); font-size: 13px; font-weight: 600; border-radius: 99px; cursor: pointer; transition: color .2s ease, background .25s ease, box-shadow .25s ease; letter-spacing: .02em; }
+  .track-toggle button.on { background: var(--spectrum); color: #fff; box-shadow: 0 0 16px -4px var(--purple-deep); }
+
+  .topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .back { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--hairline); background: rgba(255,255,255,0.03); color: var(--text-muted); font-size: 17px; display: grid; place-items: center; cursor: pointer; transition: transform .12s ease, opacity .2s ease; flex: 0 0 auto; }
+  .back:active { transform: scale(0.92); }
+  .back:disabled { opacity: 0.25; cursor: default; }
+  .progress-wrap { flex: 1; }
+  .progress-track { height: 4px; border-radius: 99px; background: rgba(255,255,255,0.07); overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: var(--spectrum); border-radius: 99px; transition: width .5s cubic-bezier(.2,.8,.2,1); box-shadow: 0 0 12px rgba(108,58,224,0.5); }
+  .count { font-size: 12px; color: var(--text-faint); letter-spacing: .04em; margin-top: 7px; }
+
+  .deck { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+  .ghost { position: absolute; left: 0; right: 0; margin: auto; width: 100%; height: 78%; border-radius: 26px; background: var(--card); border: 1px solid var(--hairline); z-index: 0; }
+  .ghost.g1 { transform: translateY(16px) scale(0.945); opacity: 0.55; }
+  .ghost.g2 { transform: translateY(30px) scale(0.89);  opacity: 0.28; }
+  .card { position: relative; z-index: 2; width: 100%; min-height: 78%; border-radius: 26px; background: linear-gradient(180deg, var(--card-raised), var(--card)); border: 1px solid var(--hairline-bright); padding: 30px 26px 26px; display: flex; flex-direction: column; box-shadow: 0 28px 60px rgba(0,0,0,0.55), 0 0 0 0.5px rgba(255,255,255,0.04); overflow: hidden; }
+  .card::before { content: ""; position: absolute; top: 0; left: 22px; right: 22px; height: 2px; background: var(--spectrum); opacity: 0.85; border-radius: 99px; }
+  .overline { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-faint); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .overline .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+  .name { margin-top: 16px; font-family: "Clash Display", "SF Pro Display", -apple-system, system-ui, sans-serif; font-size: 29px; line-height: 1.12; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
+  .desc { margin-top: 13px; font-size: 15px; line-height: 1.55; color: var(--text-muted); max-width: 31ch; }
+  .spacer { flex: 1; min-height: 14px; }
+  .prompt-label { font-size: 12.5px; color: var(--text-faint); margin-bottom: 12px; letter-spacing: .02em; }
+  .privacy-note { margin-top: 13px; font-size: 11.5px; line-height: 1.4; color: var(--text-faint); text-align: center; }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt { position: relative; display: flex; align-items: center; gap: 13px; width: 100%; padding: 14px 16px; border-radius: 15px; background: rgba(255,255,255,0.035); border: 1px solid var(--hairline); color: var(--text); font-size: 15.5px; font-weight: 500; cursor: pointer; text-align: left; transition: transform .14s ease, background .2s ease, border-color .25s ease, box-shadow .25s ease; }
+  .opt:active { transform: scale(0.975); }
+  .opt .accent { width: 4px; height: 22px; border-radius: 99px; flex: 0 0 auto; background: var(--a, var(--text-faint)); box-shadow: 0 0 10px var(--a, transparent); }
+  .opt .opt-label { flex: 1; }
+  .opt[data-k="excitedAboutIt"] { --a: var(--cyan); }
+  .opt[data-k="openToIt"]       { --a: var(--purple); }
+  .opt[data-k="probablyNot"]    { --a: rgba(232,232,240,0.42); }
+  .opt[data-k="notForMe"]       { --a: var(--magenta); }
+  .opt.selected { background: rgba(255,255,255,0.07); border-color: var(--a); box-shadow: 0 0 0 1px var(--a), 0 0 22px -4px var(--a); }
+  .opt.flash { animation: flash .42s ease; }
+  @keyframes flash { 0% { box-shadow: 0 0 0 1px var(--a); } 40% { box-shadow: 0 0 0 1px var(--a), 0 0 34px 2px var(--a); } 100% { box-shadow: 0 0 0 1px var(--a), 0 0 22px -4px var(--a); } }
+
+  .card.leave-up   { animation: leaveUp .40s cubic-bezier(.4,0,.2,1) forwards; }
+  .card.leave-down { animation: leaveDown .40s cubic-bezier(.4,0,.2,1) forwards; }
+  .card.enter-up   { animation: enterUp .44s cubic-bezier(.16,.84,.3,1); }
+  .card.enter-down { animation: enterDown .44s cubic-bezier(.16,.84,.3,1); }
+  @keyframes leaveUp   { to { transform: translateY(-46px) scale(.95); opacity: 0; } }
+  @keyframes leaveDown { to { transform: translateY(46px)  scale(.95); opacity: 0; } }
+  @keyframes enterUp   { from { transform: translateY(48px) scale(.96); opacity: 0; } }
+  @keyframes enterDown { from { transform: translateY(-48px) scale(.96); opacity: 0; } }
+
+  .done { display: none; }
+  .deck.complete .card, .deck.complete .ghost { display: none; }
+  .deck.complete .done { display: flex; }
+  .done { position: relative; z-index: 2; width: 100%; min-height: 78%; border-radius: 26px; background: linear-gradient(180deg, var(--card-raised), var(--card)); border: 1px solid var(--hairline-bright); flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 30px; box-shadow: 0 28px 60px rgba(0,0,0,0.55); animation: enterUp .5s cubic-bezier(.16,.84,.3,1); }
+  .ring { width: 92px; height: 92px; border-radius: 50%; background: conic-gradient(from 0deg, var(--cyan), var(--purple-deep), var(--magenta), var(--cyan)); display: grid; place-items: center; margin-bottom: 26px; box-shadow: 0 0 40px -6px var(--purple-deep); animation: spin 9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ring .inner { width: 78px; height: 78px; border-radius: 50%; background: var(--card); display: grid; place-items: center; font-size: 30px; }
+  .done h2 { font-family: "Clash Display","SF Pro Display",system-ui,sans-serif; font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+  .done p  { margin-top: 12px; color: var(--text-muted); font-size: 15px; line-height: 1.5; max-width: 26ch; }
+  .done .priv { margin-top: 18px; font-size: 12.5px; color: var(--text-faint); display: inline-flex; gap: 6px; align-items: center; }
+  .restart { margin-top: 30px; padding: 14px 30px; border-radius: 99px; border: 1px solid var(--hairline-bright); background: rgba(255,255,255,0.05); color: var(--text); font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .14s ease; }
+  .restart:active { transform: scale(.96); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .atmosphere, .ring { animation: none; }
+    .card.leave-up, .card.leave-down, .card.enter-up, .card.enter-down, .opt.flash, .done { animation-duration: .001s; }
+    .progress-fill { transition: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="atmosphere"></div>
+
+  <div class="stage">
+    <div class="demo-cap">demo control — real app sets this from onboarding</div>
+    <div class="track-toggle">
+      <button id="t-c" class="on">Curious</button>
+      <button id="t-e">Established</button>
+    </div>
+
+    <div class="topbar">
+      <button class="back" id="back" aria-label="Previous">‹</button>
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" id="fill"></div></div>
+        <div class="count" id="count">1 of 18</div>
+      </div>
+    </div>
+
+    <div class="deck" id="deck">
+      <div class="ghost g2"></div>
+      <div class="ghost g1"></div>
+      <div class="card" id="card">
+        <div class="overline"><span class="dot"></span><span id="cat">STRUCTURES</span></div>
+        <div class="name" id="name">—</div>
+        <div class="desc" id="desc">—</div>
+        <div class="spacer"></div>
+        <div class="prompt-label">How do you feel about this?</div>
+        <div class="options" id="options"></div>
+        <div class="privacy-note">🔒 Private to you — only matches you both share are ever revealed.</div>
+      </div>
+
+      <div class="done" id="done">
+        <div class="ring"><div class="inner">✦</div></div>
+        <h2>Your Desire Map is complete</h2>
+        <p>When your partner finishes theirs, you'll see what you share.</p>
+        <span class="priv">🔒 Saved privately to your device</span>
+        <button class="restart" id="restart">Rate again</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Weight order is fixed: [excitedAboutIt, openToIt, probablyNot, notForMe] → cyan/purple/neutral/magenta.
+  const WEIGHTS = ["excitedAboutIt","openToIt","probablyNot","notForMe"];
+
+  // tracks: which cohort(s) see the item. c = Curious, e = Established (exploring+experienced).
+  // c:[...] = Curious answers, e:[...] = Established answers (each 4, in WEIGHTS order).
+  const ITEMS = [
+    // ── structural opener: track-specific item ──────────────────────────────
+    {id:"opening", t:["c"], cat:"structures", name:"Exploring an Open Relationship",
+      desc:"How actively you want to start exploring openness — the appetite and the pace, not whether.",
+      c:["Yes — I want to start exploring","Curious, but slowly","Just the idea for now","I'm only ready to think about it"]},
+    {id:"recalibrating", t:["e"], cat:"structures", name:"Where We Take This Next",
+      desc:"How you feel about where your relationship is now — and where you want it to go from here.",
+      e:["Let's keep growing it","Happy holding where we are","I want to slow things down","I need us to de-escalate"]},
+
+    // ── shared items (both tracks, two voices) ──────────────────────────────
+    {id:"swinging", t:["c"], cat:"structures", name:"Swinging or Playing Together",
+      desc:"Sexual experiences with others that you share as a couple — same room, same event, together.",
+      c:["Yes — that excites me","I'm curious to try it","I'm nervous about it","Not for me"],
+      e:["We love playing together","Still enjoy it now and then","We've cooled on it","Not something I want now"]},
+    {id:"trips_apart", t:["c"], cat:"structures", name:"Taking Trips Apart",
+      desc:"Spending holidays, vacations, or major events apart rather than always together.",
+      c:["I'd love that freedom","Open to small steps first","The idea makes me anxious","I need us together for those"],
+      e:["I value the independence","Fine, with check-ins","I've found it hard","I'd rather travel together now"]},
+    {id:"polyamory", t:["c"], cat:"structures", name:"Polyamory — Loving More Than One",
+      desc:"Developing deep romantic love with more than one person, with everyone's knowledge and consent.",
+      c:["This really calls to me","I'm curious about it","Probably not for me","Not for me"],
+      e:["I love loving more than one","Open, but not seeking it","Leaning back toward fewer","Not for me anymore"]},
+    {id:"hierarchy", t:["c"], cat:"structures", name:"Our Relationship Comes First",
+      desc:"Keeping your partnership the clear 'primary,' with other connections second.",
+      c:["Yes — we always come first","Mostly, with some flex","I'd rather not rank it","I don't want a hierarchy"],
+      e:["Our primary bond anchors me","Mostly, though it's loosened","I want less hierarchy now","We've outgrown ranking it"]},
+    {id:"emotional_connections", t:["c"], cat:"emotional", name:"Emotional Connections With Others",
+      desc:"Forming meaningful emotional bonds — not just sexual ones — outside your partnership.",
+      c:["Yes — I want that depth","I'm open to it","I'd keep it lighter","Not for me"],
+      e:["I cherish my other bonds","Open as they come","I'm pulling those back","I want to keep it sexual only"]},
+    {id:"nre", t:["c","e"], cat:"emotional", name:"New Relationship Energy (NRE)",
+      desc:"The excitement and intensity of a new connection — the butterflies, the giddiness — yours or theirs.",
+      c:["I welcome it","I can work with it","It's hard for me","I can't be okay with it"],
+      e:["I ride it well now","I manage it with reassurance","Past NRE destabilized us","I won't go through that again"]},
+    {id:"partner_falling_in_love", t:["c","e"], cat:"emotional", name:"Your Partner Falling in Love",
+      desc:"The possibility that your partner develops deep romantic feelings for someone else.",
+      c:["I'd be happy for them","I could grow into it","That scares me","I couldn't accept that"],
+      e:["I've seen it and we're solid","Okay, with our usual support","It's been hard before","I can't do that again"]},
+    {id:"jealousy", t:["c","e"], cat:"emotional", name:"Handling Jealousy Together",
+      desc:"Whether you work through jealous feelings as a team, or handle them on your own.",
+      c:["Let's face it as a team","I'll bring things to you","I tend to hide it","I'd rather deal with it alone"],
+      e:["Our teamwork carries us","I self-soothe, then share","I've learned to process alone","I expect full emotional independence"]},
+    {id:"group_sexual", t:["c"], cat:"sexual", name:"Group Sexual Experiences",
+      desc:"Sexual experiences involving more than two people — threesomes, moresomes, group play.",
+      c:["Excited to explore","I'm curious","Probably not","Not for me"],
+      e:["Still a favorite for us","Open now and then","We've moved past it","Not for me anymore"]},
+    {id:"intimate_details", t:["c","e"], cat:"communication", name:"Hearing the Intimate Details of Dates",
+      desc:"How much you want to know about your partner's experiences with others.",
+      c:["Tell me everything","The general picture","Just the essentials","I'd rather not know"],
+      e:["I still want the full story","High-level summaries are enough","Less detail than before","Only what affects my health"]},
+    {id:"safer_sex", t:["c","e"], cat:"health", name:"Safer Sex Boundaries",
+      desc:"How firm your agreements are about protection, testing, and barriers with others.",
+      c:["Non-negotiable for me","Important to me","Somewhat flexible","I'm relaxed about it"],
+      e:["Still non-negotiable","Firm, with trusted exceptions","More flexible than we were","We're relaxed about it now"]},
+    {id:"overnight_stays", t:["c","e"], cat:"logistics", name:"Overnight Stays With Others",
+      desc:"You or your partner spending the night at someone else's place after a date.",
+      c:["Totally fine with me","I'm open to it","I'd prefer not","Not okay with me"],
+      e:["Completely comfortable","Fine with a heads-up","I've found it hard","I'd rather they didn't"]},
+    {id:"time_attention", t:["c","e"], cat:"logistics", name:"Time and Attention",
+      desc:"How you share time — evenings, weekends, trips — when other connections are in the picture.",
+      c:["I trust we'll balance it","We can work it out","I worry about it","This is a dealbreaker"],
+      e:["We balance it well","Mostly good, needs tending","It's been a strain","I need more of your time back"]},
+    {id:"finances", t:["c","e"], cat:"logistics", name:"Joint Finances for Outside Dates",
+      desc:"Whether shared money funds dating others, or outside dates stay self-funded.",
+      c:["Shared money is fine","Okay, with a budget","I'd prefer separate fun money","Outside dates must be self-funded"],
+      e:["Our shared system works","Works, but let's revisit budgets","I've felt resentment about it","We need separate finances for this"]},
+    {id:"reconnection", t:["c","e"], cat:"emotional", name:"Reconnection Time After a Date",
+      desc:"Whether you want a ritual to reconnect after a date, or space to decompress alone.",
+      c:["I'll want to reconnect right away","A check-in would help","I think I'll need space","Leave me alone afterward"],
+      e:["Our rituals ground me","I like it, don't need it","I just decompress alone now","I won't do forced rituals"]},
+    {id:"metamours", t:["c","e"], cat:"communication", name:"Meeting Your Partner's Other Connections",
+      desc:"Getting to know the people your partner dates or is involved with (metamours).",
+      c:["I'd love to","I'm open to it","I'd keep my distance","I'd rather not"],
+      e:["I value knowing them","Open, case by case","I prefer more separation now","I keep metamours at arm's length"]},
+    {id:"social_disclosure", t:["c","e"], cat:"communication", name:"Who Knows About Us",
+      desc:"How open you are with friends, family, or community about being non-monogamous.",
+      c:["Fully open about it","Some people can know","Keep it very private","No one can know"],
+      e:["We're openly out","Out to our circle","More private than before","I need this kept private"]},
+
+    // (the 3 established maintenance Qs consolidated into "Where We Take This Next" above)
+  ];
+
+  const CAT_LABEL = { structures:"Structures", emotional:"Emotional", sexual:"Sexual", communication:"Communication", health:"Health", logistics:"Logistics", "check-in":"Check-In" };
+
+  let track = "c";                 // "c" Curious | "e" Established
+  let index = 0;
+  const ratings = {};              // itemId -> weight
+  let animating = false;
+
+  const card = document.getElementById("card");
+  const deck = document.getElementById("deck");
+  const elCat = document.getElementById("cat");
+  const elName = document.getElementById("name");
+  const elDesc = document.getElementById("desc");
+  const elOpts = document.getElementById("options");
+  const elFill = document.getElementById("fill");
+  const elCount = document.getElementById("count");
+  const elBack = document.getElementById("back");
+
+  function activeItems() { return ITEMS.filter(it => it.t.includes(track)); }
+  function answersFor(item) { return track === "c" ? item.c : item.e; }
+  function ratedCount() { return activeItems().filter(it => ratings[it.id] !== undefined).length; }
+
+  function renderProgress() {
+    const items = activeItems();
+    elFill.style.width = (ratedCount() / items.length) * 100 + "%";
+    elCount.textContent = (index >= items.length)
+      ? items.length + " of " + items.length + " · complete"
+      : (index + 1) + " of " + items.length;
+    elBack.disabled = index === 0;
+  }
+
+  function renderCard() {
+    const item = activeItems()[index];
+    elCat.textContent = (CAT_LABEL[item.cat] || item.cat).toUpperCase();
+    elName.textContent = item.name;
+    elDesc.textContent = item.desc;
+    elOpts.innerHTML = "";
+    answersFor(item).forEach((label, i) => {
+      const k = WEIGHTS[i];
+      const b = document.createElement("button");
+      b.className = "opt" + (ratings[item.id] === k ? " selected" : "");
+      b.dataset.k = k;
+      b.innerHTML = '<span class="accent"></span><span class="opt-label">' + label + '</span>';
+      b.addEventListener("click", () => choose(k));
+      elOpts.appendChild(b);
+    });
+    renderProgress();
+  }
+
+  function choose(k) {
+    if (animating) return;
+    const items = activeItems();
+    const item = items[index];
+    const reRate = ratings[item.id] !== undefined;
+    ratings[item.id] = k;
+    [...elOpts.children].forEach(c => c.classList.toggle("selected", c.dataset.k === k));
+    [...elOpts.children].find(c => c.dataset.k === k).classList.add("flash");
+    renderProgress();
+    animating = true;
+    setTimeout(() => {
+      if (index >= items.length - 1) showDone();
+      else transitionTo(index + 1, "up");
+    }, reRate ? 200 : 300);
+  }
+
+  function transitionTo(newIndex, dir) {
+    const leave = dir === "up" ? "leave-up" : "leave-down";
+    const enter = dir === "up" ? "enter-up" : "enter-down";
+    card.classList.add(leave);
+    setTimeout(() => {
+      index = newIndex;
+      card.classList.remove(leave);
+      renderCard();
+      card.classList.add(enter);
+      setTimeout(() => { card.classList.remove(enter); animating = false; }, 440);
+    }, 360);
+  }
+
+  elBack.addEventListener("click", () => {
+    if (animating || index === 0) return;
+    animating = true;
+    transitionTo(index - 1, "down");
+  });
+
+  function showDone() { deck.classList.add("complete"); animating = false; renderProgress(); }
+
+  document.getElementById("restart").addEventListener("click", () => resetTo(track));
+
+  function resetTo(t) {
+    track = t;
+    index = 0;
+    document.getElementById("t-c").classList.toggle("on", t === "c");
+    document.getElementById("t-e").classList.toggle("on", t === "e");
+    deck.classList.remove("complete");
+    renderCard();
+    card.classList.add("enter-up");
+    setTimeout(() => card.classList.remove("enter-up"), 440);
+  }
+
+  document.getElementById("t-c").addEventListener("click", () => { if (track !== "c") resetTo("c"); });
+  document.getElementById("t-e").addEventListener("click", () => { if (track !== "e") resetTo("e"); });
+
+  renderCard();
+</script>
+</body>
+</html>

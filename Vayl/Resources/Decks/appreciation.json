@@ -1,0 +1,219 @@
+{
+  "id": "appreciation",
+  "title": "The Appreciation Deck",
+  "subtitle": "The one that isn't hard.",
+  "category": "wildcard",
+  "act": 1,
+  "intensity": 1,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": [
+    "wildcard",
+    "core",
+    "warm"
+  ],
+  "sort_order": 12,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "app-01",
+      "deck_id": "appreciation",
+      "text": "What's your favorite thing you two have survived together?",
+      "highlight_words": [
+        "survived together"
+      ],
+      "type": "prompt",
+      "intensity": 1,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    },
+    {
+      "id": "app-02",
+      "deck_id": "appreciation",
+      "text": "What do they do that they don't even notice...\n\nthat you'd miss within a day if it stopped?",
+      "highlight_words": [
+        "don't even notice"
+      ],
+      "type": "prompt",
+      "intensity": 1,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 2
+    },
+    {
+      "id": "app-03",
+      "deck_id": "appreciation",
+      "text": "One word for who they've been to you lately.",
+      "highlight_words": [
+        "One word"
+      ],
+      "type": "snapshot",
+      "intensity": 1,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 3
+    },
+    {
+      "id": "app-04",
+      "deck_id": "appreciation",
+      "text": "When did you last feel proud of them?\n\nTell the story. Take your time.",
+      "highlight_words": [
+        "proud"
+      ],
+      "type": "prompt",
+      "intensity": 2,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 4
+    },
+    {
+      "id": "app-05",
+      "deck_id": "appreciation",
+      "text": "What's one thing about yourself you're quietly proud of right now?\n\nOne of you answers for yourself.\n\nThe other answers what they think you'll say.",
+      "highlight_words": [
+        "quietly proud"
+      ],
+      "type": "mirror",
+      "intensity": 2,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 5
+    },
+    {
+      "id": "app-06",
+      "deck_id": "appreciation",
+      "text": "What's something they taught you without meaning to?",
+      "highlight_words": [
+        "without meaning to"
+      ],
+      "type": "prompt",
+      "intensity": 2,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 6
+    },
+    {
+      "id": "app-07",
+      "deck_id": "appreciation",
+      "text": "Right now: hold eye contact for ten slow seconds.\n\nNo talking.\n\nWhoever laughs first owes the other one true compliment, out loud.",
+      "highlight_words": [
+        "ten slow seconds"
+      ],
+      "type": "dare",
+      "intensity": 2,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "excited",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 7
+    },
+    {
+      "id": "app-08",
+      "deck_id": "appreciation",
+      "text": "What's a hard season they carried you through?\n\nDid you ever fully thank them for it?",
+      "highlight_words": [
+        "carried you through"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": "If the answer was no, this is the moment.\n\nSay the thank you now, the whole thing, like it's overdue. Because it is.",
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 8
+    },
+    {
+      "id": "app-09",
+      "deck_id": "appreciation",
+      "text": "What about the life you're building together still feels a little like getting away with something?",
+      "highlight_words": [
+        "getting away with something"
+      ],
+      "type": "prompt",
+      "intensity": 2,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "excited",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 9
+    },
+    {
+      "id": "app-10",
+      "deck_id": "appreciation",
+      "text": "Look at each other.\n\nFinish this sentence out loud, one at a time:\n\n\"I'd choose all of this again because...\"",
+      "highlight_words": [
+        "choose all of this again"
+      ],
+      "type": "closingRitual",
+      "intensity": 2,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 10
+    }
+  ]
+}

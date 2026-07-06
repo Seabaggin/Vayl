@@ -40,12 +40,19 @@ struct StatPhase: View {
     @State private var holoShiftPhase:  CGFloat = -0.35
     @State private var holoFlashOffset: CGFloat =  2.5
     @State private var glowPulseHigh  = false
-    @State private var castPulseHigh  = false
+
+    // Arrival ignition — one-time light-catch fired as the numeral seats (~0.76s).
+    @State private var igniteGlow:   Double  = 0     // additive glow bloom, 0 at rest
+    @State private var igniteSweepX: CGFloat = 2.5    // bright sweep parked off-screen right
+    @State private var softHaptic = UIImpactFeedbackGenerator(style: .soft)
+
+    // Ignition rendering constants — felt on device, not AppColors candidates.
+    private let kGlowBloomBoost: Double  = 0.40   // additive peak → ~0.80 composite over resting 0.40
+    private let kLandScaleFrom:  CGFloat = 0.90   // hero scales up from 0.90 as it seats
 
     // Entrance cascade — fires in sequence via startAllAnimations()
     @State private var showStat      = false
     @State private var showStatLabel = false
-    @State private var showCiteTap   = false
     @State private var showEthos     = false
     @State private var showCTA       = false
 
@@ -74,12 +81,9 @@ struct StatPhase: View {
             let usableH  = geo.size.height - safeArea.top - safeArea.bottom
             let scale    = usableH / kReferenceHeight
 
-            // TODO: 100/140/164pt outside AppFonts type scale.
-            // AppFonts.heroTitle (42pt) and displayHero (64pt) are the largest tokens.
-            // A dedicated AppFonts.statHero token is required. Tracked as spec gap.
-            let statFontSize: CGFloat = usableH <= 700
-                ? 100
-                : (screenW > 390 ? 164 : 140)
+            // Hero numeral size resolves from AppLayout (responsive by usable height +
+            // width) and renders via AppFonts.statHero — no inline literals in the View.
+            let statFontSize = AppLayout.statHeroSize(usableHeight: usableH, screenWidth: screenW)
 
             ZStack {
                 // Phase inherits void and atmosphere from OnboardingCanvasView.
@@ -130,11 +134,13 @@ struct StatPhase: View {
                             action: {
                                 guard !hasAdvanced else { return }
                                 hasAdvanced = true
-                                withAnimation(.easeOut(duration: 0.65)) { statAlpha = 0.0 }
+                                withAnimation(AppAnimation.statExitFade) { statAlpha = 0.0 }
                                 Task { @MainActor in
-                                    // Brief beat — just enough for the fade to land, not a hitch
-                                    try? await Task.sleep(for: .milliseconds(150))
-                                    director.advance(to: .name)
+                                    // Hold until the fade is ~88% done (easeOut) — the
+                                    // 0.3s phase cross-fade absorbs the tail. Advancing
+                                    // earlier unmounts the view and renders as a hard cut.
+                                    try? await Task.sleep(for: .milliseconds(450))
+                                    director.advance(to: .demo)
                                 }
                             }
                         )
@@ -148,12 +154,31 @@ struct StatPhase: View {
                     }
                     .opacity(statAlpha)
                 }
+
+                // ── Citation pop-out — dims everything behind, tap to dismiss ──
+                if citeOpen {
+                    ZStack {
+                        Color.black.opacity(0.62)
+                            .ignoresSafeArea()
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(AppAnimation.statCitationToggle) { citeOpen = false }
+                            }
+                        CitationCard()
+                            .padding(.horizontal, AppLayout.screenMargin)
+                    }
+                    .transition(.opacity)
+                    .zIndex(50)
+                    .accessibilityAddTraits(.isModal)
+                }
             }
         }
         .onAppear {
             guard !hasAnimated else { return }
             hasAnimated = true
+            softHaptic.prepare()
             startAllAnimations()
+            fireIgnitionOnLand()
         }
         .task {
             // One runloop after onAppear so SwiftUI commits the initial @State
@@ -165,11 +190,13 @@ struct StatPhase: View {
             holoShiftPhase  = 0.65
             holoFlashOffset = -0.5
             glowPulseHigh   = true
-            castPulseHigh   = true
         }
         .onDisappear {
             hasAnimated = false
             statAlpha   = 1.0
+            // Reset ignition so a re-entry (e.g. dev phase-jump) lands clean.
+            igniteGlow   = 0
+            igniteSweepX = 2.5
             // hasAdvanced intentionally NOT reset.
             // One-way latch — prevents double-fire of director.advance.
         }
@@ -196,7 +223,8 @@ struct StatPhase: View {
                 holoShiftPhase:  holoShiftPhase,
                 holoFlashOffset: holoFlashOffset,
                 glowPulseHigh:   glowPulseHigh,
-                castPulseHigh:   castPulseHigh,
+                igniteSweepX:    igniteSweepX,
+                igniteGlow:      igniteGlow,
                 fontSize:        statFontSize
             )
             .ambientAnimation(
@@ -211,34 +239,20 @@ struct StatPhase: View {
                 .easeInOut(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: true),
                 value: glowPulseHigh
             )
-            .ambientAnimation(
-                .easeInOut(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: true),
-                value: castPulseHigh
-            )
             .opacity(showStat ? 1 : 0)
-            .scaleEffect(showStat ? 1.0 : 0.94)
+            .scaleEffect(showStat ? 1.0 : kLandScaleFrom)
             .accessibilityLabel("1 in 5 Americans have engaged in consensual non-monogamy at some point in their lives.")
             .accessibilityAddTraits(.isStaticText)
             // Stat is a declaration, not a header — needs air below.
             .padding(.bottom, AppSpacing.xl)
 
             // ── Body copy + citation — tightly coupled semantic unit ──────
-            VStack(spacing: AppSpacing.lg) {
-                Text(bodyText)
-                    .font(AppFonts.body(18, weight: .regular, relativeTo: .body))
-                    .lineSpacing(10.8)
-                    .foregroundStyle(AppColors.textPrimary)
-                    .multilineTextAlignment(.center)
-                    .opacity(showStatLabel ? 1 : 0)
-                    .offset(y: showStatLabel ? 0 : 14)
-                    .accessibilityHidden(true)
-
-                CitationTapView(citeOpen: $citeOpen)
-                    .opacity(showCiteTap ? 1 : 0)
-                    .offset(y: showCiteTap ? 0 : 14)
-            }
-            // Different semantic register — needs clear separation from stat block.
-            .padding(.bottom, AppSpacing.xxl)
+            // Claim with an inline source ⓘ (taps to reveal the citation), panel below.
+            CitationTapView(citeOpen: $citeOpen)
+                .opacity(showStatLabel ? 1 : 0)
+                .offset(y: showStatLabel ? 0 : 14)
+                // Different semantic register — needs clear separation from stat block.
+                .padding(.bottom, AppSpacing.xxl)
 
             // ── Ethos line — emotional punctuation, own semantic zone ─────
             EthosTextView()
@@ -279,18 +293,37 @@ struct StatPhase: View {
             holoShiftPhase  = 0.3
             holoFlashOffset = 0
             glowPulseHigh   = true
-            castPulseHigh   = true
             showStat        = true
             showStatLabel   = true
-            showCiteTap     = true
             showEthos       = true
             showCTA         = true
         } else {
             withAnimation(AppAnimation.cinematicFade)      { showStat      = true }
             withAnimation(AppAnimation.slow.delay(0.5))    { showStatLabel = true }
-            withAnimation(AppAnimation.slow.delay(0.7))    { showCiteTap   = true }
             withAnimation(AppAnimation.slow.delay(1.0))    { showEthos     = true }
             withAnimation(AppAnimation.spring.delay(1.4))  { showCTA       = true }
+        }
+    }
+
+    // MARK: - Arrival Ignition
+    //
+    // Fires once, ~0.76s into the stat's land, so the light catches the numeral as it
+    // seats: a bright specular sweep crosses it, the glow blooms past its resting level
+    // then settles, and a soft haptic lands. Reduce motion: the soft tap still fires
+    // (haptics are not motion), but the sweep + bloom are skipped.
+
+    private func fireIgnitionOnLand() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(AppAnimation.statIgnitionDelay))
+            guard !hasAdvanced else { return }   // user already tapped Begin — don't ignite a leaving screen
+
+            softHaptic.impactOccurred()          // soft land tap
+            guard !reduceMotion else { return }  // skip the visual ignition under reduce motion
+
+            withAnimation(AppAnimation.statIgnitionSweep) { igniteSweepX = -2.5 }
+            withAnimation(AppAnimation.statGlowBloomIn)   { igniteGlow   = kGlowBloomBoost }
+            try? await Task.sleep(for: .seconds(AppAnimation.statGlowBloomHold))
+            withAnimation(AppAnimation.statGlowBloomSettle) { igniteGlow = 0 }
         }
     }
 
@@ -300,32 +333,15 @@ struct StatPhase: View {
         let holoShiftPhase:  CGFloat
         let holoFlashOffset: CGFloat
         let glowPulseHigh:   Bool
-        let castPulseHigh:   Bool
+        let igniteSweepX:    CGFloat   // bright one-time sweep position (parked off-screen at rest)
+        let igniteGlow:      Double    // additive ignition bloom opacity (0 at rest)
 
         var fontSize: CGFloat = 140
 
         private let txt = "1 in 5"
 
-        // Glow breathe cycle opacity. Rendering constants for ambient pulse.
-        // Not AppColors candidates — these are View opacity levels, not colors.
-        private let kGlowPulseHigh: CGFloat = 0.40  // breathe peak — glow without washing out numeral
-        private let kGlowPulseLow:  CGFloat = 0.25  // breathe floor — minimum presence at rest
-
-        // Cast shadow pulse opacity. Same rationale as glow breathe constants.
-        private let kCastPulseHigh: CGFloat = 1.00  // shadow at full presence when numeral breathes up
-        private let kCastPulseLow:  CGFloat = 0.70  // 70% retains shadow at rest without disappearing
-
-        // Specular highlight physics constants. Simulate light reflectance on a
-        // holographic surface — not semantic tokens, not design decisions.
-        private let kSpecularPrimary:   CGFloat = 0.30  // primary highlight peak
-        private let kSpecularSecondary: CGFloat = 0.18  // secondary highlight
-
-        // Cast shadow radial gradient opacity stops. Atmospheric rendering constants.
-        private let kCastShadowPrimary:   CGFloat = 0.18  // cast shadow primary stop
-        private let kCastShadowSecondary: CGFloat = 0.10  // cast shadow secondary stop
-
         private var fnt: Font {
-            AppFonts.display(fontSize, weight: .bold, relativeTo: .largeTitle)
+            AppFonts.statHero(fontSize)
         }
 
         // -3.2 × (fontSize / 140) — tracking scaled proportionally to font size.
@@ -333,97 +349,22 @@ struct StatPhase: View {
         // an AppSpacing candidate — letterform spacing, not UI element spacing.
         private var trk: CGFloat { -3.2 * (fontSize / 140) }
 
-        // Cast ellipse geometry — all proportional to fontSize.
-        private var castWidth:  CGFloat { 300 * (fontSize / 140) }
-        private var castHeight: CGFloat { 55  * (fontSize / 140) }
-        private var castOffset: CGFloat { 70  * (fontSize / 140) }
-
-        // Negative padding prevents the blurred glow duplicate from hard-clipping
-        // at the view boundary. Rendering artefact bleed offset — not a spacing token.
-        private let kGlowBleedPad: CGFloat = -6
-
-        private var holoStops: [Gradient.Stop] {
-            [
-                .init(color: AppColors.accentPrimary,   location: 0.00),
-                .init(color: AppColors.accentSecondary, location: 0.25),
-                .init(color: AppColors.accentTertiary,  location: 0.50),
-                .init(color: AppColors.accentTertiary,  location: 0.65),
-                .init(color: AppColors.accentSecondary, location: 0.80),
-                .init(color: AppColors.accentPrimary,   location: 1.00),
-            ]
-        }
-
-        private var activeGradient: LinearGradient {
-            LinearGradient(
-                stops:      holoStops,
-                startPoint: UnitPoint(x: -holoShiftPhase, y: -0.2),
-                endPoint:   UnitPoint(x:  2.0 - holoShiftPhase, y: 1.2)
-            )
-        }
-
-        private var baseText: some View {
-            Text(txt).font(fnt).tracking(trk)
-        }
-
         var body: some View {
-            ZStack {
-                // Glow bloom — blurred duplicate beneath the numeral.
-                // Decorative — hidden from VoiceOver at the StatNumberView call site.
-                baseText
-                    .foregroundStyle(.clear)
-                    .overlay { activeGradient.mask { baseText } }
-                    .blur(radius: 12)
-                    .opacity(glowPulseHigh ? kGlowPulseHigh : kGlowPulseLow)
-                    .padding(kGlowBleedPad)
-                    .accessibilityHidden(true)
-
-                // Ground cast shadow — ellipse beneath numeral.
-                Ellipse()
-                    .fill(RadialGradient(stops: [
-                        .init(color: AppColors.accentSecondary.opacity(kCastShadowPrimary),   location: 0),
-                        .init(color: AppColors.accentPrimary.opacity(kCastShadowSecondary),   location: 0.4),
-                        .init(color: .clear, location: 0.7)
-                    ], center: .center, startRadius: 0, endRadius: 150))
-                    .frame(width: castWidth, height: castHeight)
-                    .blur(radius: 20)
-                    .scaleEffect(x: castPulseHigh ? 1.12 : 1.0, y: 1.0)
-                    .opacity(castPulseHigh ? kCastPulseHigh : kCastPulseLow)
-                    .offset(y: castOffset)
-                    .accessibilityHidden(true)
-
-                // Core gradient numeral — visual representation only.
-                // Semantic label applied at StatNumberView call site.
-                baseText
-                    .foregroundStyle(.clear)
-                    .overlay { activeGradient.mask { baseText } }
-                    .accessibilityHidden(true)
-
-                // Specular highlight sweep — holographic light catch.
-                baseText
-                    .foregroundStyle(.clear)
-                    .overlay {
-                        LinearGradient(
-                            stops: [
-                                .init(color: .clear,                                location: 0.00),
-                                .init(color: .clear,                                location: 0.30),
-                                .init(color: Color.white.opacity(kSpecularPrimary), location: 0.38),
-                                .init(color: Color.white.opacity(0),                location: 0.42),
-                                .init(color: .clear,                                location: 0.50),
-                                .init(color: Color.white.opacity(kSpecularSecondary), location: 0.60),
-                                .init(color: .clear,                                location: 0.65),
-                                .init(color: .clear,                                location: 1.00),
-                            ],
-                            startPoint: UnitPoint(x: -0.1, y:  1.0),
-                            endPoint:   UnitPoint(x:  1.1, y: -0.25)
-                        )
-                        .frame(width: 800)
-                        .offset(x: holoFlashOffset * 320)
-                        .mask { baseText }
-                    }
-                    .clipped()
-                    .accessibilityHidden(true)
-            }
-            .fixedSize()
+            // Single source of truth for the glass recipe (gradient + glow + specular).
+            // StatPhase drives the animation values + arrival-ignition layers; the core
+            // renders the pixels. Semantic label applied at the StatNumberView call site,
+            // so internals stay accessibilityHidden inside the core.
+            HolographicTextCore(
+                text:         txt,
+                font:         fnt,
+                tracking:     trk,
+                shift:        holoShiftPhase,
+                flash:        holoFlashOffset,
+                glowHigh:     glowPulseHigh,
+                igniteGlow:   igniteGlow,
+                igniteSweepX: igniteSweepX,
+                fixedSize:    true
+            )
         }
     }
 
@@ -432,11 +373,6 @@ struct StatPhase: View {
     private struct CitationTapView: View {
         @Binding var citeOpen: Bool
 
-        // Frosted glass surface opacity constants — translucent pill simulation.
-        // Granularity is below the semantic AppColors system coverage.
-        // Rendering constants only — not candidates for AppColors tokens.
-        private let kGlassFill:   CGFloat = 0.06
-        private let kGlassBorder: CGFloat = 0.12
 
         private struct CiteButtonStyle: ButtonStyle {
             func makeBody(configuration: Configuration) -> some View {
@@ -448,103 +384,105 @@ struct StatPhase: View {
             }
         }
 
+        var body: some View {
+            Button {
+                withAnimation(AppAnimation.statCitationToggle) {   // FEEL-GATE: calm dim + fade
+                    citeOpen.toggle()
+                }
+            } label: {
+                // Hand-set to 3 lines so the gradient ⓘ can ride the last line as a real
+                // Image (a glyph inside Text can't carry a gradient). The whole sentence
+                // taps to reveal the citation; minimumScaleFactor holds 3 lines on narrow
+                // widths. FEEL-GATE: the line breaks, and the ⓘ size (as big as fits).
+                VStack(spacing: AppSpacing.xxs) {
+                    Text("Americans have engaged in")
+                    Text("consensual non\u{2011}monogamy at")
+                    HStack(alignment: .center, spacing: AppSpacing.xs) {
+                        Text("some point in their lives.")
+                        Image(systemName: AppIcons.infoCircle)
+                            .font(.system(size: 23.5, weight: .regular))   // FEEL-GATE
+                            .foregroundStyle(AppColors.spectrumText)
+                    }
+                }
+                .font(AppFonts.body(22, weight: .regular, relativeTo: .title3))
+                .foregroundColor(AppColors.textPrimary)
+                .multilineTextAlignment(.center)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .contentShape(Rectangle())
+                .accessibilityHidden(true)
+            }
+            .buttonStyle(CiteButtonStyle())
+            .accessibilityLabel(citeOpen ? "Hide research citation" : "About this research")
+            .accessibilityAddTraits(.isButton)
+        }
+    }
+    
+    // MARK: - Citation Card (pop-out)
+
+    private struct CitationCard: View {
         private func citationBody() -> AttributedString {
             var result = AttributedString()
-
             var first = AttributedString("Two nationally representative studies")
-            first.font = AppFonts.body(11.5, weight: .semibold, relativeTo: .caption2)
+            first.font = AppFonts.body(17, weight: .semibold, relativeTo: .body)   // FEEL-GATE: fills the box
             result.append(first)
-
             var second = AttributedString(" of 8,718 single adults. Roughly 1 in 5 reported engaging in CNM \u{2014} consistent across age, income, religion, race, political affiliation, and region.")
-            second.font = AppFonts.body(11.5, weight: .regular, relativeTo: .caption2)
+            second.font = AppFonts.body(17, weight: .regular, relativeTo: .body)
             result.append(second)
-
             return result
         }
 
         var body: some View {
-            VStack(spacing: 0) {
-                Button {
-                    withAnimation(AppAnimation.materialExpand) {
-                        citeOpen.toggle()
-                    }
-                } label: {
-                    HStack(spacing: AppSpacing.xs) {
-                        Image(systemName: AppIcons.infoCircle)
-                            .font(AppFonts.body(15, weight: .regular, relativeTo: .caption2))
-                            .foregroundStyle(AppColors.accentPrimary)
-                            .accessibilityHidden(true)
-                        Text("About this research")
-                            .font(AppFonts.body(11, weight: .medium, relativeTo: .caption2))
-                            .foregroundStyle(AppColors.textPrimary)
-                            .tracking(0.3)
-                    }
-                    .frame(height: AppLayout.pillHeight)
-                    .padding(.horizontal, AppLayout.pillHPad)
-                    .background {
-                        Capsule()
-                            .fill(Color.white.opacity(kGlassFill))
-                            .overlay {
-                                Capsule()
-                                    .stroke(Color.white.opacity(kGlassBorder), lineWidth: 1)
-                            }
-                    }
-                    .contentShape(Capsule().inset(by: -8))
-                }
-                .buttonStyle(CiteButtonStyle())
-                .accessibilityLabel(citeOpen ? "Hide research citation" : "About this research")
-                .accessibilityAddTraits(.isButton)
-
-                if citeOpen {
-                    let citShadow = AppElevation.citationPanel.midnightShadow
-
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(citationBody())
-                            .foregroundColor(AppColors.textPrimary)
-                            // 11.5 × 0.7 — 70% line height ratio at 11.5pt.
-                            // Tighter than the standard 0.6 ratio — citation copy
-                            // is dense and benefits from slightly more leading.
-                            .lineSpacing(11.5 * 0.7)
-
-                        Text("Haupert et al., 2017 · Journal of Sex Research")
-                            .font(AppFonts.caption.italic())
-                            .foregroundStyle(AppColors.textTertiary)
-                            .padding(.top, AppSpacing.sm)
-                    }
-                    .frame(maxWidth: AppLayout.citationPanelMaxWidth, alignment: .leading)
-                    .padding(.vertical,   AppSpacing.md)
-                    .padding(.horizontal, AppSpacing.md)
-                    .background(
-                        RoundedRectangle(cornerRadius: AppRadius.md)
-                            .fill(AppColors.cardBackground)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppRadius.md)
-                                    .stroke(AppColors.borderActive, lineWidth: 1)
-                            )
-                    )
-                    .shadow(
-                        color:  citShadow.color,
-                        radius: citShadow.radius,
-                        x:      citShadow.x,
-                        y:      citShadow.y
-                    )
-                    .padding(.top, AppSpacing.md)
-                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
-                    .accessibilityElement(children: .combine)
-                    
-                }
+            let shadow = AppElevation.citationPanel.midnightShadow
+            VStack(alignment: .leading, spacing: 0) {
+                // Small spectrum overline — structure + fills the top of the box.
+                Text("The finding")
+                    .font(AppFonts.body(13, weight: .bold, relativeTo: .footnote))
+                    .tracking(1.4)
+                    .textCase(.uppercase)
+                    .foregroundStyle(AppColors.spectrumText)
+                    .padding(.bottom, AppSpacing.sm)
+                Text(citationBody())
+                    .foregroundColor(AppColors.textPrimary)
+                    .lineSpacing(7)
+                Text("Haupert et al., 2017 · Journal of Sex Research")
+                    .font(AppFonts.body(12.5, weight: .regular, relativeTo: .caption).italic())
+                    .foregroundStyle(AppColors.textTertiary)
+                    .padding(.top, AppSpacing.sm)
             }
+            // minHeight makes the card read squarer (≈ its width once padded); .leading
+            // centers the copy vertically in the taller box. FEEL-GATE: minHeight.
+            .frame(maxWidth: AppLayout.citationPanelMaxWidth, minHeight: 250, alignment: .leading)
+            .padding(AppSpacing.lg)
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .fill(AppColors.cardBg)   // app's purplish OB surface
+                    .overlay(
+                        // Spectrum gradient border — in line with the rest of the app.
+                        RoundedRectangle(cornerRadius: AppRadius.lg)
+                            .strokeBorder(AppColors.spectrumText, lineWidth: 1.5)
+                    )
+            )
+            .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+            .accessibilityElement(children: .combine)
         }
     }
-    
+
     // MARK: - Ethos Text
 
     private struct EthosTextView: View {
 
         var body: some View {
-            HStack(spacing: 0) {
-                Text("You're not alone.")
-                    .font(AppFonts.body(15, weight: .semibold, relativeTo: .callout))
+            // Two-line: white setup over the gradient punchline. (The longer, larger copy
+            // can't sit on one line, and a two-color HStack can't wrap — so the wrap is
+            // deliberate, and it gives the takeaway the presence it was missing.)
+            VStack(spacing: AppSpacing.xs) {   // FEEL-GATE: inter-line gap
+                Text("That's about as ordinary as")
+                    .font(AppFonts.body(20, weight: .bold, relativeTo: .title3))
+                    .tracking(0.2)
+                    .foregroundStyle(AppColors.textPrimary)
+                Text("owning a cat.")
+                    .font(AppFonts.body(20, weight: .bold, relativeTo: .title3))
                     .foregroundStyle(LinearGradient(
                         colors: [
                             AppColors.ethosGradientLead,
@@ -553,20 +491,12 @@ struct StatPhase: View {
                         startPoint: .topLeading,
                         endPoint:   .bottomTrailing
                     ))
-                Text(" And this isn't new.")
-                    .font(AppFonts.body(15, weight: .medium, relativeTo: .callout))
-                    .tracking(0.2)
-                    .foregroundStyle(AppColors.textPrimary)
-                
             }
-            // 14 × 0.6 — standard 60% line height ratio at 14pt.
-            // Intentional typographic constant, not an AppSpacing candidate.
-            .lineSpacing(15 * 0.6)
             .multilineTextAlignment(.center)
             // Combine both Text nodes so VoiceOver reads the full
             // sentence as one unit rather than two fragments.
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("You're not alone. And this isn't new.")
+            .accessibilityLabel("That's about as ordinary as owning a cat.")
         }
     }
     
@@ -584,7 +514,7 @@ struct StatPhase: View {
 #Preview("Light") {
     ZStack {
         AppColors.pageBackground.ignoresSafeArea()
-        OnboardingAtmosphere(config: .stat, sparkConfig: .statView, opacity: 1.0)
+        OnboardingAtmosphere(config: .stat, opacity: 1.0)
             .ignoresSafeArea()
         StatPhase(director: VaylDirector())
     }

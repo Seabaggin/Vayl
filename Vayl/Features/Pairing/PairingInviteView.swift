@@ -21,6 +21,11 @@ struct PairingInviteView: View {
 
     @State var store: PairingStore
 
+    // MARK: - Local State
+
+    /// Drives the ambient breathe on the waiting indicator. Toggled on appear.
+    @State private var breathe = false
+
     // MARK: - Environment
 
     @Environment(\.colorScheme) private var colorScheme
@@ -53,22 +58,26 @@ struct PairingInviteView: View {
 
     @ViewBuilder
     private var content: some View {
-        switch store.linkState {
-        case .idle, .generating:
-            generatingState
+        if store.codeExpired {
+            expiredState
+        } else {
+            switch store.linkState {
+            case .idle, .generating:
+                generatingState
 
-        case .waitingForPartner(let code):
-            waitingState(code: code)
+            case .waitingForPartner(let code):
+                waitingState(code: code)
 
-        case .linked(let coupleId):
-            linkedState(coupleId: coupleId)
+            case .linked(let coupleId):
+                linkedState(coupleId: coupleId)
 
-        case .error(let message):
-            errorState(message: message)
+            case .error(let message):
+                errorState(message: message)
 
-        case .joining:
-            // Should not appear in invite flow
-            generatingState
+            case .joining:
+                // Should not appear in invite flow
+                generatingState
+            }
         }
     }
 
@@ -98,7 +107,7 @@ struct PairingInviteView: View {
                     .foregroundStyle(AppColors.textPrimary) // was isLight ? x : x — same both sides
                     .multilineTextAlignment(.center)
 
-                Text("Share this code with your partner.\nIt expires in 24 hours.")
+                Text("Share this code with your partner.")
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
                     .multilineTextAlignment(.center)
@@ -107,20 +116,38 @@ struct PairingInviteView: View {
             // Code display
             codeDisplay(code: code)
 
-            // Waiting indicator
-            HStack(spacing: AppSpacing.sm) {        // was 10 → sm (8), snap per handoff
-                ProgressView()
-                    .tint(AppColors.accentPrimary)
-                Text("Waiting for your partner...")
-                    .font(AppFonts.bodyText)
-                    .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
+            // Waiting indicator + live expiry countdown
+            VStack(spacing: AppSpacing.sm) {        // was 8 → sm, exact
+                HStack(spacing: AppSpacing.sm) {    // was 10 → sm (8), snap per handoff
+                    ProgressView()
+                        .tint(AppColors.accentPrimary)
+                    Text("Waiting for your partner...")
+                        .font(AppFonts.bodyText)
+                        .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
+                }
+                .padding(.vertical, AppSpacing.sm)      // was 12 → sm (8), snap per handoff
+                .padding(.horizontal, AppSpacing.lg)    // was 20 → lg (24), snap per handoff
+                .background(
+                    RoundedRectangle(cornerRadius: AppRadius.md) // was 12 → md, exact
+                        .fill(isLight ? AppColors.cardBackground : AppColors.modalBackground)
+                )
+                .opacity(breathe ? 1.0 : 0.55)
+                .ambientAnimation(AppAnimation.cardBreathe, value: breathe)
+
+                if let expiresAt = store.codeExpiresAt, expiresAt > Date() {
+                    HStack(spacing: AppSpacing.xxs) {   // 2pt — tight label/value pairing
+                        Text("Expires in")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textTertiary)
+                        Text(timerInterval: Date()...expiresAt, countsDown: true)
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textTertiary)
+                            .monospacedDigit()
+                    }
+                    .accessibilityElement(children: .combine)
+                }
             }
-            .padding(.vertical, AppSpacing.sm)      // was 12 → sm (8), snap per handoff
-            .padding(.horizontal, AppSpacing.lg)    // was 20 → lg (24), snap per handoff
-            .background(
-                RoundedRectangle(cornerRadius: AppRadius.md) // was 12 → md, exact
-                    .fill(isLight ? AppColors.cardBackground : AppColors.modalBackground)
-            )
+            .onAppear { breathe = true }
         }
     }
 
@@ -149,7 +176,7 @@ struct PairingInviteView: View {
                 HStack(spacing: AppSpacing.sm) {    // was 8 → sm, exact
                     Image(AppIcons.docOnDoc)         // was "doc.on.doc"
                         .font(
-                            Font.custom("Switzer-Medium", size: 14, relativeTo: .caption)
+                            AppFonts.body(14, weight: .medium, relativeTo: .caption)  // was Font.custom("Switzer-Medium", 14, .caption) → AppFonts.body, exact
                         )                           // was .system(size: 14, weight: .medium)
                     Text("Copy code")
                         .font(AppFonts.buttonLabel)
@@ -169,7 +196,7 @@ struct PairingInviteView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
-                .fill(isLight ? AppColors.cardBackground : Color.white.opacity(0.04))
+                .fill(isLight ? AppColors.cardBackground : AppColors.whisperFill)
                 .overlay(
                     RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
                         .strokeBorder(
@@ -193,7 +220,7 @@ struct PairingInviteView: View {
         VStack(spacing: AppSpacing.lg) {            // was 24 → lg, exact
             Image(AppIcons.checkmarkCircle)         // was "checkmark.circle.fill"
                 .font(
-                    Font.custom("ClashDisplay-Bold", size: 64, relativeTo: .largeTitle)
+                    AppFonts.displayHero  // was Font.custom("ClashDisplay-Bold", 64, .largeTitle) → displayHero, exact
                 )                                   // was .system(size: 64)
                 .foregroundStyle(AppColors.accentPrimary)
                 .accessibilityHidden(true)          // decorative — state is communicated by text
@@ -203,10 +230,20 @@ struct PairingInviteView: View {
                     .font(AppFonts.screenTitle)
                     .foregroundStyle(AppColors.textPrimary) // was isLight ? x : x — same both sides
 
-                Text("Your partner joined successfully.\nYou're ready to begin.")
+                Text("\(store.partnerDisplayName) is ready to begin with you.")
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textSecondary) // was isLight ? x : x — same both sides
                     .multilineTextAlignment(.center)
+            }
+
+            if let proposal = store.compositionProposal {
+                CompositionConfirmCard(
+                    proposal: proposal,
+                    onConfirm: { Task { await store.confirmComposition() } },
+                    onKeepFlexible: { store.dismissComposition() }
+                )
+                .transition(.opacity)
+                .animation(AppAnimation.standard, value: store.compositionProposal)
             }
         }
     }
@@ -218,7 +255,7 @@ struct PairingInviteView: View {
             Image(AppIcons.exclamationTriangle)     // was "exclamationmark.triangle"
             // ⚠️ AppIcons.exclamationTriangle must be added to AppIcons before building
                 .font(
-                    Font.custom("ClashDisplay-Bold", size: 48, relativeTo: .largeTitle)
+                    AppFonts.display(48, weight: .bold, relativeTo: .largeTitle)  // was Font.custom("ClashDisplay-Bold", 48, .largeTitle) → AppFonts.display, exact
                 )                                   // was .system(size: 48)
                 .foregroundStyle(AppColors.accentTertiary)
                 .accessibilityHidden(true)          // decorative — error communicated by text below
@@ -241,6 +278,38 @@ struct PairingInviteView: View {
             .buttonStyle(.borderedProminent)
             .tint(AppColors.accentPrimary)
             .accessibilityLabel("Try Again")
+            .accessibilityAddTraits(.isButton)
+        }
+    }
+
+    // MARK: - Expired State
+
+    private var expiredState: some View {
+        VStack(spacing: AppSpacing.lg) {            // 24 — matches error/linked states
+            Image(AppIcons.exclamationTriangle)
+                .font(
+                    AppFonts.display(48, weight: .bold, relativeTo: .largeTitle)  // was Font.custom("ClashDisplay-Bold", 48, .largeTitle) → AppFonts.display, exact
+                )
+                .foregroundStyle(AppColors.accentTertiary)
+                .accessibilityHidden(true)          // decorative — state communicated by text
+
+            VStack(spacing: AppSpacing.sm) {        // 8
+                Text("Code expired")
+                    .font(AppFonts.screenTitle)
+                    .foregroundStyle(AppColors.textPrimary)
+
+                Text("This code timed out before your partner joined.\nGenerate a fresh one to try again.")
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            Button("Generate new code") {
+                Task { await store.regenerate() }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AppColors.accentPrimary)
+            .accessibilityLabel("Generate a new pairing code")
             .accessibilityAddTraits(.isButton)
         }
     }

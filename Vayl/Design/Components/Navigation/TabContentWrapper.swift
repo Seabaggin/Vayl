@@ -17,50 +17,46 @@ struct TabContentWrapper<Content: View>: View {
 
     let content: Content
 
-    init(@ViewBuilder content: () -> Content) {
+    /// Linear-style bottom dissolve where content meets the bar. ON for scrolling-list tabs
+    /// so items don't hard-cut at the bar. OFF for Home, whose Lexicon is anchored at the
+    /// bottom of the screen and must stay fully visible (a fade would eat its CTA).
+    var fade: Bool = true
+
+    init(fade: Bool = true, @ViewBuilder content: () -> Content) {
+        self.fade = fade
         self.content = content()
     }
 
-    @Environment(\.colorScheme) private var colorScheme
+    // Effect-surface value: how far the dissolve rises before the bar.
+    private let fadeHeight: CGFloat = 110
 
+    @ViewBuilder
     var body: some View {
-        GeometryReader { geo in
-            let bottomInset      = geo.safeAreaInsets.bottom
-            let barHeight:       CGFloat = 62
-            let barOffset:       CGFloat = bottomInset + 8
-            let totalClearance:  CGFloat = barHeight + barOffset + 16
-            let fadeHeight:      CGFloat = 120
-
+        // Bottom CLEARANCE is owned by AppShell's `.safeAreaInset(edge: .bottom)` (the bar
+        // reserves its own measured height for every tab). This wrapper only adds the
+        // optional dissolve. No `.ignoresSafeArea()` on the mask — it must match the inset
+        // content frame so the fade lands ABOVE the bar, not behind it at the physical edge.
+        if fade {
+            content.mask(fadeMask.ignoresSafeArea())
+        } else {
             content
-                .contentMargins(
-                    .bottom,
-                    totalClearance,
-                    for: .scrollContent
-                )
-                .contentMargins(
-                    .bottom,
-                    barHeight + barOffset,
-                    for: .scrollIndicators
-                )
-                .mask(
-                    VStack(spacing: 0) {
-                        Rectangle()
-                            .fill(AppColors.pageBackground)
-                        LinearGradient(
-                            stops: [
-                                .init(color: .black,               location: 0.00),
-                                .init(color: .black,               location: 0.15),
-                                .init(color: .black.opacity(0.85), location: 0.40),
-                                .init(color: .black.opacity(0.40), location: 0.70),
-                                .init(color: .clear,               location: 1.00),
-                            ],
-                            startPoint: .top,
-                            endPoint:   .bottom
-                        )
-                        .frame(height: fadeHeight)
-                    }
-                    .ignoresSafeArea()
-                )
+        }
+    }
+
+    private var fadeMask: some View {
+        VStack(spacing: 0) {
+            Rectangle().fill(Color.black)   // content above the fade: fully visible
+            LinearGradient(
+                stops: [
+                    .init(color: .black,               location: 0.00),
+                    .init(color: .black.opacity(0.85), location: 0.35),
+                    .init(color: .black.opacity(0.40), location: 0.70),
+                    .init(color: .clear,               location: 1.00),
+                ],
+                startPoint: .top,
+                endPoint:   .bottom
+            )
+            .frame(height: fadeHeight)
         }
     }
 }

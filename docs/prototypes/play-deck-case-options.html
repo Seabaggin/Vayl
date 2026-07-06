@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Play · static deck-case options (Segment 2)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=switzer@400,500,600,700&display=swap">
+<style>
+  :root{
+    --void:#040308; --cbg:#12111A;
+    --hair:rgba(255,255,255,0.06); --hair2:rgba(255,255,255,0.10);
+    --cy:#00C2FF; --pu:#6C3AE0; --mg:#FF006A; --bridge:#8B6FD4;
+    --tp:#E8E8F0; --tb:rgba(255,255,255,0.82); --ts:rgba(255,255,255,0.65);
+    --tt:rgba(255,255,255,0.38); --tm:rgba(255,255,255,0.20);
+    --lbl:rgba(160,125,205,0.55); --gold:#C8960A; --gold-lt:#DDB13B;
+    --sp:linear-gradient(135deg,#00C2FF,#6C3AE0,#FF006A);
+    --display:'Clash Display',-apple-system,sans-serif;
+    --body:'Switzer',-apple-system,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:radial-gradient(120% 80% at 50% 0%,#17171f 0%,#0a0a0e 60%);color:var(--tb);font-family:var(--body);padding:40px 28px 80px}
+  h1{font-family:var(--display);font-size:24px;font-weight:600;color:var(--tp);max-width:1100px;margin:0 auto}
+  .lede{font-size:13.5px;line-height:1.6;color:var(--ts);max-width:760px;margin:10px auto 4px}
+  .row{display:flex;gap:34px;justify-content:center;flex-wrap:wrap;max-width:1100px;margin:34px auto 0}
+  .opt{width:330px}
+  .opt h2{font-family:var(--display);font-size:16px;font-weight:600;color:var(--tp)}
+  .opt .pitch{font-size:12px;line-height:1.5;color:var(--ts);margin:5px 0 16px;min-height:52px}
+  .opt h2 .pick{font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--cy);border:1px solid rgba(0,194,255,0.5);border-radius:8px;padding:2px 7px;margin-left:8px;vertical-align:middle}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 14px;background:radial-gradient(120% 80% at 50% 0%,#0e0d15,#060509);border:1px solid var(--hair);border-radius:18px;padding:20px}
+
+  .dcell .dc-cat{font-size:8px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--lbl);margin:10px 0 3px}
+  .dcell .dc-title{font-size:13.5px;font-weight:600;color:var(--tp);line-height:1.15}
+  .dcell .dc-meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:10px;color:var(--tt)}
+  .dcell .dc-meta .idot{width:6px;height:6px;border-radius:50%}
+
+  /* ════ BASE CASE (shared) ════ */
+  .dcase{position:relative;width:100%;aspect-ratio:1 / 1.2;border-radius:14px;overflow:hidden;
+    border:1px solid rgba(255,255,255,0.07);
+    box-shadow:0 18px 38px rgba(0,0,0,0.55), inset 0 1.5px 0 rgba(255,255,255,0.10);}
+  .dcase .foil{position:absolute;inset:0;opacity:0.5;pointer-events:none;
+    -webkit-mask:linear-gradient(162deg,#000 0%,rgba(0,0,0,0.42) 58%,rgba(0,0,0,0.12) 100%);
+            mask:linear-gradient(162deg,#000 0%,rgba(0,0,0,0.42) 58%,rgba(0,0,0,0.12) 100%)}
+  .dcase .catch{position:absolute;left:6%;right:6%;top:4%;height:36%;border-radius:11px 11px 50% 50%;pointer-events:none;
+    background:linear-gradient(180deg,rgba(0,194,255,0.16),transparent 72%);mix-blend-mode:screen}
+  .dcase .frameGlow,.dcase .frame{position:absolute;inset:7px;border-radius:11px;pointer-events:none;border:1px solid transparent;
+    background:linear-gradient(125deg,var(--cy),var(--pu),var(--mg)) border-box;
+    -webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+  .dcase .frameGlow{border-width:1.4px;opacity:0.5;filter:blur(3px)}
+  .dcase .frame{opacity:0.9}
+  .dcase .emblem{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);opacity:0.95;z-index:2;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.5))}
+  .dcase .pill{position:absolute;top:9px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;letter-spacing:0.12em;border-radius:9px;padding:3px 8px;z-index:4}
+  .dcase .pill.soon{color:var(--cy);border:1px solid rgba(0,194,255,0.5);background:rgba(4,3,8,0.55)}
+  .dcase .pill.core{color:var(--gold-lt);border:1px solid rgba(221,177,59,0.45);background:rgba(200,150,10,0.12)}
+
+  /* metal bg helper: each card sets --glow + --tint */
+  .metal{position:absolute;inset:0;
+    background:radial-gradient(120% 95% at 50% 0%, var(--glow), transparent 58%),
+               linear-gradient(158deg, var(--tint) 0%, #16121e 45%, #0b0912 80%, #070510)}
+
+  /* ── Option B: bold colorway wash (bigger bloom, larger emblem, thinner frame) ── */
+  .optB .dcase .metal{background:radial-gradient(120% 100% at 50% 5%, var(--glowB), transparent 66%),
+               linear-gradient(158deg, var(--tintB) 0%, #14101d 50%, #0a0810 100%)}
+  .optB .dcase .frameGlow{opacity:0.32}
+  .optB .dcase .frame{opacity:0.65;border-width:0.8px}
+  .optB .dcase .emblem{top:50%;transform:translate(-50%,-50%) scale(1.3)}
+  .optB .dcase .foil{opacity:0.32}
+
+  /* ── Option C: etched mono (quiet/editorial — no bloom, denser fine hex) ── */
+  .optC .dcase .metal{background:linear-gradient(158deg,#15121c 0%,#0c0a12 60%,#070510 100%)}
+  .optC .dcase .foil{opacity:0.7}
+  .optC .dcase .catch{background:linear-gradient(180deg,rgba(180,200,255,0.10),transparent 70%)}
+  .optC .dcase .emblem{opacity:0.85}
+
+  /* sealed (Core locked) */
+  .dcase.sealed{filter:grayscale(0.55) brightness(0.74)}
+  .dcase.sealed .frame,.dcase.sealed .frameGlow{opacity:0.3;filter:none}
+  .dcase.sealed .emblem{opacity:0.5}
+  .dcase .seal{display:none;position:absolute;left:-8%;right:-8%;top:50%;height:13%;transform:translateY(-50%) rotate(-7deg);z-index:3;
+    background:linear-gradient(180deg,transparent,rgba(200,150,10,0.20) 50%,transparent)}
+  .dcase.sealed .seal{display:flex;align-items:center;justify-content:center}
+  .dcase .seal::after{content:'✦';color:var(--gold-lt);font-size:13px;text-shadow:0 0 8px rgba(221,177,59,0.55)}
+
+  .tierWrap{max-width:760px;margin:50px auto 0}
+  .tierWrap h2{font-family:var(--display);font-size:16px;color:var(--tp);margin-bottom:4px}
+  .tierWrap p{font-size:12.5px;line-height:1.55;color:var(--ts);margin-bottom:18px}
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .tiers .lab{text-align:center;font-size:11px;color:var(--ts);margin-top:9px}
+  .tiers .lab b{color:var(--tp);font-weight:600;font-family:var(--display)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="spec" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00C2FF"/><stop offset="52%" stop-color="#6C3AE0"/><stop offset="100%" stop-color="#FF006A"/></linearGradient>
+  <pattern id="hexFoil" width="22" height="25.4" patternUnits="userSpaceOnUse">
+    <path d="M11 0 L22 6.35 L22 19.05 L11 25.4 L0 19.05 L0 6.35 Z" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="0.6"/>
+    <path d="M11 0 L22 6.35 L22 19.05 L11 25.4 L0 19.05 L0 6.35 Z" fill="none" stroke="rgba(0,194,255,0.06)" stroke-width="0.6" transform="translate(0.5,0.5)"/>
+  </pattern>
+  <pattern id="hexFine" width="15" height="17.3" patternUnits="userSpaceOnUse">
+    <path d="M7.5 0 L15 4.33 L15 12.99 L7.5 17.3 L0 12.99 L0 4.33 Z" fill="none" stroke="rgba(255,255,255,0.11)" stroke-width="0.5"/>
+  </pattern>
+  <g id="emblem"><g fill="none" stroke="url(#spec)" stroke-width="2" stroke-linejoin="round"><rect x="6" y="10" width="20" height="27" rx="3" transform="rotate(-16 16 23)" opacity="0.5"/><rect x="12" y="8" width="20" height="27" rx="3" opacity="0.9"/><rect x="18" y="10" width="20" height="27" rx="3" transform="rotate(16 28 23)" opacity="0.5"/></g></g>
+</defs></svg>
+
+<h1>Play · static deck-case — Segment 2 options</h1>
+<p class="lede">The wall's perceived-empty problem was the old case rendering near-blank dark boxes (the 3D <code>MetallicCaseView</code> in flat mode loses its tilt-driven foil band). These are fully static (no shader, no per-frame work), so a whole wall stays cheap. Each deck's colorway (category spectrum slice + per-deck hue nudge) tints the metal + frame. <b>Option A is what I built in Swift</b> tonight; B and C are alternatives to redirect toward in the morning.</p>
+
+<div class="row">
+
+  <!-- ── A ── -->
+  <div class="opt optA">
+    <h2>A — Lit foil <span class="pick">BUILT</span></h2>
+    <div class="pitch">Hue-tinted anodized metal + top-lit honeycomb + cool catch-light + 2-pass spectrum frame + category emblem. Reads as a real foil case at a glance; the wall feels full.</div>
+    <div class="grid">
+      <div class="dcell">
+        <div class="dcase" style="--glow:rgba(0,194,255,0.22);--tint:rgba(0,194,255,0.16)">
+          <div class="metal"></div>
+          <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFoil)"/></svg></div>
+          <div class="catch"></div><div class="frameGlow"></div><div class="frame"></div>
+          <svg class="emblem" width="44" height="40" viewBox="0 0 44 40"><use href="#emblem"/></svg>
+        </div>
+        <div class="dc-cat">Foundation</div><div class="dc-title">The Opener</div>
+        <div class="dc-meta"><span class="idot" style="background:#00C2FF"></span>Easy · 10 cards</div>
+      </div>
+      <div class="dcell">
+        <div class="dcase" style="--glow:rgba(108,58,224,0.24);--tint:rgba(108,58,224,0.18)">
+          <div class="metal"></div>
+          <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFoil)"/></svg></div>
+          <div class="catch"></div><div class="frameGlow"></div><div class="frame"></div>
+          <div class="pill soon">SOON</div>
+          <svg class="emblem" width="44" height="40" viewBox="0 0 44 40"><use href="#emblem"/></svg>
+        </div>
+        <div class="dc-cat">Relationship Core</div><div class="dc-title">Communication</div>
+        <div class="dc-meta"><span class="idot" style="background:#6C3AE0"></span>Medium · 20 cards</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── B ── -->
+  <div class="opt optB">
+    <h2>B — Bold wash</h2>
+    <div class="pitch">More colour, less metal: a bigger colorway bloom, a larger emblem, a thinner frame. Louder and more playful; risks looking less premium / more same-y across decks.</div>
+    <div class="grid">
+      <div class="dcell">
+        <div class="dcase" style="--glowB:rgba(0,194,255,0.4);--tintB:rgba(0,194,255,0.26)">
+          <div class="metal"></div>
+          <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFoil)"/></svg></div>
+          <div class="catch"></div><div class="frameGlow"></div><div class="frame"></div>
+          <svg class="emblem" width="44" height="40" viewBox="0 0 44 40"><use href="#emblem"/></svg>
+        </div>
+        <div class="dc-cat">Foundation</div><div class="dc-title">The Opener</div>
+        <div class="dc-meta"><span class="idot" style="background:#00C2FF"></span>Easy · 10 cards</div>
+      </div>
+      <div class="dcell">
+        <div class="dcase" style="--glowB:rgba(255,0,106,0.4);--tintB:rgba(255,0,106,0.24)">
+          <div class="metal"></div>
+          <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFoil)"/></svg></div>
+          <div class="catch"></div><div class="frameGlow"></div><div class="frame"></div>
+          <svg class="emblem" width="44" height="40" viewBox="0 0 44 40"><use href="#emblem"/></svg>
+        </div>
+        <div class="dc-cat">Advanced</div><div class="dc-title">The Audit</div>
+        <div class="dc-meta"><span class="idot" style="background:#FF006A"></span>Sensitive · 14 cards</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── C ── -->
+  <div class="opt optC">
+    <h2>C — Etched mono</h2>
+    <div class="pitch">Quiet + editorial: no colour bloom, a finer denser lattice, colour only in the frame + emblem. Most premium / restrained; risks reading too uniform-dark on the wall (the original complaint).</div>
+    <div class="grid">
+      <div class="dcell">
+        <div class="dcase">
+          <div class="metal"></div>
+          <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFine)"/></svg></div>
+          <div class="catch"></div><div class="frameGlow"></div><div class="frame"></div>
+          <svg class="emblem" width="44" height="40" viewBox="0 0 44 40"><use href="#emblem"/></svg>
+        </div>
+        <div class="dc-cat">Foundation</div><div class="dc-title">The Opener</div>
+        <div class="dc-meta"><span class="idot" style="background:#00C2FF"></span>Easy · 10 cards</div>
+      </div>
+      <div class="dcell">
+        <div class="dcase">
+          <div class="metal"></div>
+          <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFine)"/></svg></div>
+          <div class="catch"></div><div class="frameGlow"></div><div class="frame"></div>
+          <svg class="emblem" width="44" height="40" viewBox="0 0 44 40"><use href="#emblem"/></svg>
+        </div>
+        <div class="dc-cat">NM Specific</div><div class="dc-title">Jealousy &amp; Compersion</div>
+        <div class="dc-meta"><span class="idot" style="background:#8B6FD4"></span>Deep · 24 cards</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Tiers ── -->
+<div class="tierWrap">
+  <h2>Two tiers: Free vs Core (Option A)</h2>
+  <p>No "coming soon" at launch. A free starter set (The Opener + a couple of gentle Foundation decks) is fully playable; everything deeper is Vayl Core (the one-time purchase). Every case stays <b>vivid</b> — Core decks just add a gold CORE tag, so the wall reads as an enticing "what Core unlocks" gallery, not a dimmed one.</p>
+  <div class="tiers">
+    <div>
+      <div class="dcase" style="--glow:rgba(0,194,255,0.22);--tint:rgba(0,194,255,0.16)">
+        <div class="metal"></div>
+        <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFoil)"/></svg></div>
+        <div class="catch"></div><div class="frameGlow"></div><div class="frame"></div>
+        <svg class="emblem" width="44" height="40" viewBox="0 0 44 40"><use href="#emblem"/></svg>
+      </div>
+      <div class="lab"><b>Free</b><br>full foil, Begin</div>
+    </div>
+    <div>
+      <div class="dcase" style="--glow:rgba(0,194,255,0.22);--tint:rgba(0,194,255,0.16)">
+        <div class="metal"></div>
+        <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFoil)"/></svg></div>
+        <div class="catch"></div><div class="frameGlow"></div><div class="frame"></div>
+        <svg class="emblem" width="44" height="40" viewBox="0 0 44 40"><use href="#emblem"/></svg>
+      </div>
+      <div class="lab"><b>Free starter</b><br>vivid, Begin</div>
+    </div>
+    <div>
+      <div class="dcase" style="--glow:rgba(255,0,106,0.24);--tint:rgba(255,0,106,0.18)">
+        <div class="metal"></div>
+        <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFoil)"/></svg></div>
+        <div class="catch"></div><div class="frameGlow"></div><div class="frame"></div>
+        <div class="pill core">CORE</div>
+        <svg class="emblem" width="44" height="40" viewBox="0 0 44 40"><use href="#emblem"/></svg>
+      </div>
+      <div class="lab"><b>Core</b><br>vivid + gold CORE tag</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -23,7 +23,7 @@ final class CarouselPhysics {
     // MARK: - Config
 
     /// All tunable feel constants. Defaults are the demo's "halfway" preset.
-    struct Config: Equatable {
+    struct Config: Equatable, Sendable {
         /// Points of horizontal drag required to advance one full card.
         var dragSensitivity: CGFloat = 133
         /// Seconds of release velocity projected forward to choose the target card.
@@ -32,11 +32,24 @@ final class CarouselPhysics {
         var maxFlick: Int = 5
         /// SwiftUI spring response (seconds) — lower is snappier.
         var response: Double = 0.35
-        /// SwiftUI damping fraction — 1.0 crisp/no-overshoot, lower = springier/jigglier.
         /// 0.70 gives a lively overshoot-and-settle without losing render-server smoothness.
         var dampingFraction: Double = 0.70
 
-        static let standard = Config()
+        nonisolated init(
+            dragSensitivity: CGFloat = 133,
+            projection: Double = 0.16,
+            maxFlick: Int = 5,
+            response: Double = 0.35,
+            dampingFraction: Double = 0.70
+        ) {
+            self.dragSensitivity = dragSensitivity
+            self.projection = projection
+            self.maxFlick = maxFlick
+            self.response = response
+            self.dampingFraction = dampingFraction
+        }
+
+        nonisolated static let standard = Config()
     }
 
     var config: Config
@@ -77,6 +90,8 @@ final class CarouselPhysics {
 
     /// Spring used by the view to animate `position` on release / programmatic moves.
     var settleAnimation: Animation {
+        // TOKEN-EXEMPT: spring parameters come from the caller's CarouselConfig —
+        // this is a parameterized engine, not a raw value.
         .spring(response: config.response, dampingFraction: config.dampingFraction)
     }
 

@@ -26,18 +26,6 @@ import SwiftData
     }
 }
 
-enum DesireLevel: String, CaseIterable, Hashable {
-    case excitedAboutIt, openToIt, probablyNot, notForMe
-    var displayLabel: String {
-        switch self {
-        case .excitedAboutIt: return "Excited about it"
-        case .openToIt:       return "Open to it"
-        case .probablyNot:    return "Probably not"
-        case .notForMe:       return "Not for me"
-        }
-    }
-}
-
 // MARK: - DataStore
 // Central persistence layer for Open Lightly.
 // Every read/write to SwiftData goes through here.
@@ -159,34 +147,6 @@ final class DataStore {
             predicate: #Predicate { $0.category == category }
         )
         return (try? context.fetch(descriptor)) ?? []
-    }
-
-    // MARK: - Desire Map Ratings
-
-    /// Fetches a single rating record by prompt ID (used for desire map items).
-    /// Returns nil if no rating exists yet for this prompt.
-    func fetchRating(forPromptId promptId: String) -> RatingRecord? {
-        let descriptor = FetchDescriptor<RatingRecord>(
-            predicate: #Predicate { $0.promptText == promptId }
-        )
-        return try? context.fetch(descriptor).first
-    }
-
-    /// Saves or updates a desire map rating.
-    /// Desire ratings are stored as RatingRecords with no parent session.
-    func saveDesireRating(itemId: String, category: String, level: DesireLevel) {
-        if let existing = fetchRating(forPromptId: itemId) {
-            existing.reaction = String(level.rawValue)
-        } else {
-            let record = RatingRecord(
-                promptText: itemId,
-                category: category,
-                reaction: String(level.rawValue),
-                session: nil
-            )
-            context.insert(record)
-        }
-        try? context.save()
     }
 
     // MARK: - Streak

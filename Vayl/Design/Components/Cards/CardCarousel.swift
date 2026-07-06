@@ -52,6 +52,23 @@ struct CardCarousel: View {
     var onNavigateToPlay: (() -> Void)? = nil
     var onPhaseChange: ((CarouselPhase) -> Void)? = nil
 
+    // Hand-selection mode — when `selecting`, tapping the active card toggles it
+    // into tonight's hand (via onToggleSelect) instead of starting a session.
+    // `selectedIDs` marks which cards are already in the hand.
+    var selecting: Bool = false
+    var selectedIDs: Set<String> = []
+    var onToggleSelect: ((Card) -> Void)? = nil
+
+    /// Backdrop dim opacity when engaged. nil keeps the default (light 0.35 / dark
+    /// 0.75) — pass a softer value (e.g. Home) to fade the room rather than black it out.
+    var dimOpacity: Double? = nil
+
+    /// Deck identity for Play / session cards — tints each face and adds the glyph
+    /// watermark; per-card heat comes from the card's intensity. nil (Home's hand-builder,
+    /// OB) keeps the canonical look.
+    var colorway:  FoilColorway? = nil
+    var glyphPath: Path?         = nil
+
     @State private var phase:              CarouselPhase = .floating
     @State private var activeIndex:        Int     = 0
     @State private var dragOffset:         CGFloat = 0
@@ -64,6 +81,8 @@ struct CardCarousel: View {
     @State private var borderRotation:     Double  = 0.0
     @State private var floatOffset:        CGFloat = 0
     @State private var bloomOpacity:       Double  = 0.5
+    @State private var flyGhostActive:     Bool    = false
+    @State private var flyProgress:        CGFloat = 0
 
     @Environment(\.colorScheme)               private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -87,18 +106,21 @@ struct CardCarousel: View {
         .onAppear {
             onPhaseChange?(.floating)
 
+            // Ambient idle loops — disabled entirely under Reduce Motion / Low Power
+            // Mode (the static resting state must read without motion). The phase
+            // callback above always fires.
+            guard !reduceMotion, !AppAnimation.lowPower else { return }
+
             // Border rotation — ambient loop, 4.0s matches AppAnimation.ambientDrift.
             withAnimation(.linear(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: false)) {
                 borderRotation = 360.0
             }
 
             DispatchQueue.main.async {
-                DispatchQueue.main.async {
-                    // Float loop — 3.2s intentional, slightly below ambientDrift (4.0s).
-                    // Gives card a faster, more responsive idle breath.
-                    withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
-                        floatOffset = -6
-                    }
+                // Float loop — 3.2s intentional, slightly below ambientDrift (4.0s).
+                // Gives card a faster, more responsive idle breath.
+                withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
+                    floatOffset = -6
                 }
             }
 
@@ -116,6 +138,7 @@ struct CardCarousel: View {
             auroraBloom
             backingCards
             carouselCards
+            flyGhostView
         }
         .frame(maxWidth: .infinity)
         // Height gives clearance above and below for lifted/carousel state.
@@ -158,7 +181,7 @@ struct CardCarousel: View {
 
     private var dimmingBackdrop: some View {
         Rectangle()
-            .fill(Color.black.opacity(isLight ? 0.35 : 0.75))
+            .fill(dimOpacity.map { Color.black.opacity($0) } ?? AppColors.scrimHeavy)
             .frame(width: 3000, height: 3000)
             .opacity((phase == .floating || phase == .spread) ? 0 : 1)
             .allowsHitTesting(phase != .floating && phase != .spread)
@@ -207,6 +230,12 @@ struct CardCarousel: View {
                     handleFloatingTap()
                 } else if phase == .lifted {
                     handleDismissQuickview()
+                } else if phase == .carousel {
+                    // This overlay sits ABOVE the cards, so the active card's own
+                    // tap can't fire — handle the carousel tap here. In selecting
+                    // mode tapping the centered card adds it to tonight's hand (it
+                    // flies to the corner deck → "Settle in →"); otherwise it starts.
+                    handleCarouselTap()
                 }
             }
             .highPriorityGesture(
@@ -260,6 +289,15 @@ struct CardCarousel: View {
 
         withAnimation(AppAnimation.spring) {
             verticalDragOffset = 0
+        }
+
+        // A near-stationary touch is a TAP, not a swipe. The high-priority drag
+        // (minimumDistance 5) otherwise swallows taps on device — finger jitter
+        // turns them into micro-drags — so the active card never gets selected.
+        // Detect it here and route to the mockup's tap-to-add.
+        if abs(value.translation.width) < 10, abs(value.translation.height) < 10 {
+            handleCarouselTap()
+            return
         }
 
         let predicted  = value.predictedEndTranslation.width
@@ -403,14 +441,15 @@ struct CardCarousel: View {
         let isActive        = i == activeIndex
 
         ZStack {
-            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
-                .fill(AppColors.pageBackground.opacity(0.9))
-                .overlay(
-                    Text(cards[i].text)
-                        .font(AppFonts.bodyText)
-                        .foregroundStyle(.white)
-                        .padding(AppSpacing.md)
-                )
+            // Real card face — restored. The front cards had been stubbed to a flat
+            // page-coloured rect with plain text; VaylCardFace brings back the
+            // spectrum frame, hairlines, and atmosphere. Landscape frame (cardW × cardH).
+            VaylCardFace(
+                question:  cards[i].text,
+                colorway:  colorway,
+                heat:      Double(cards[i].intensity.rawValue - 1) / 7.0,
+                glyphPath: glyphPath
+            )
                 .frame(width: cardW, height: cardH)
 
             LinearGradient(
@@ -419,12 +458,12 @@ struct CardCarousel: View {
                 endPoint:   .init(x: 0.8 - (progress * 1.5), y: 1)
             )
             .blendMode(.screen)
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.obCard, style: .continuous))
             .allowsHitTesting(false)
             .opacity(phase == .carousel ? 1 : 0)
 
             let specularOpacity: Double = (isActive && specularActive && phase != .carousel) ? 1 : 0
-            RoundedRectangle(cornerRadius: AppRadius.xl)
+            RoundedRectangle(cornerRadius: AppRadius.obCard)
                 .fill(LinearGradient(
                     stops: [
                         .init(color: .clear,                                 location: 0),
@@ -437,10 +476,41 @@ struct CardCarousel: View {
                     endPoint:   .init(x: specularPhase * 1.4 - 0.1, y: 1)
                 ))
                 .blendMode(.screen)
-                .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl))
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.obCard))
                 .opacity(specularOpacity)
         }
         .frame(width: cardW, height: cardH)
+        .overlay(alignment: .topTrailing) {
+            // Selected for tonight's hand — spectrum check badge.
+            if selecting && selectedIDs.contains(cards[i].id) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(AppColors.void)
+                    .frame(width: 24, height: 24)
+                    .background(Circle().fill(AppColors.spectrumBorder))
+                    .shadow(color: AppColors.accentSecondary.opacity(0.5), radius: 6)
+                    .padding(10)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if selecting && isActive && phase == .carousel {
+                selectHint(added: selectedIDs.contains(cards[i].id))
+                    .offset(y: 30)   // sit BELOW the card, not on it
+            }
+        }
+        .overlay(alignment: .topLeading) {
+            // Depth band, top-left — the mockup's per-card .vdepth.
+            if phase == .carousel {
+                Text(depthLabel(forIndex: i))
+                    .font(AppFonts.label)
+                    .tracking(1.6)
+                    .textCase(.uppercase)
+                    .foregroundStyle(AppColors.spectrumText)
+                    .padding(.top, AppSpacing.md)
+                    .padding(.leading, AppSpacing.lg)
+            }
+        }
         .padding(.top, AppSpacing.sm)
         // .padding(.bottom, -8) — intentional negative bleed offset.
         // Keeps the card visually anchored without a gap below. Not an AppSpacing candidate.
@@ -464,7 +534,7 @@ struct CardCarousel: View {
         .allowsHitTesting(phase == .carousel && isActive)
         .onTapGesture {
             if phase == .carousel && isActive {
-                onCardAction?(cards[i], .startSession)
+                handleCarouselTap()
             }
         }
         .shadow(
@@ -495,6 +565,100 @@ struct CardCarousel: View {
             return AppColors.accentSecondary.opacity((isActive ? 0.35 : 0.0) + abs(clampedProgress) * 0.45)
         }
         return AppColors.accentSecondary.opacity(0.001)
+    }
+
+    // MARK: - Hand Selection Affordances
+
+    /// The active card's add hint — cyan "tap to add", hidden once picked (the
+    /// check badge takes over), matching the mockup's .vadd.
+    @ViewBuilder
+    private func selectHint(added: Bool) -> some View {
+        if !added {
+            Text("tap to add")
+                .font(AppFonts.buttonLabelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(AppColors.textAccent)
+        }
+    }
+
+    /// Depth band for a card by its position in the deck — warming up → deepening
+    /// → opening up → deep — matching the mockup's per-card progression.
+    private func depthLabel(forIndex i: Int) -> String {
+        guard cards.count > 1 else { return "warming up" }
+        switch Double(i) / Double(cards.count - 1) {
+        case ..<0.25: return "warming up"
+        case ..<0.5:  return "deepening"
+        case ..<0.75: return "opening up"
+        default:      return "deep"
+        }
+    }
+
+    /// Transient ghost that flies toward the corner deck on add — the arc feedback
+    /// from the prototype, without changing the toggle-in-place selection model.
+    /// `flyProgress` 0 → 1: full-size at the card → shrunk + up-right + gone.
+    @ViewBuilder
+    private var flyGhostView: some View {
+        if flyGhostActive {
+            RoundedRectangle(cornerRadius: AppRadius.obCard, style: .continuous)
+                .fill(AppColors.cardBg)
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppRadius.obCard, style: .continuous)
+                        .strokeBorder(AppColors.spectrumBorder, lineWidth: 1)
+                )
+                .frame(width: cardW, height: cardH)
+                .scaleEffect(1.0 - flyProgress * 0.84)
+                .offset(x: flyProgress * 130, y: -40 + flyProgress * -150)
+                .opacity(Double(1 - flyProgress))
+                .allowsHitTesting(false)
+        }
+    }
+
+    private func triggerFlyGhost() {
+        flyGhostActive = true
+        flyProgress = 0
+        withAnimation(AppAnimation.cardPocket) { flyProgress = 1 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            flyGhostActive = false
+            flyProgress = 0
+        }
+    }
+
+    /// Tap on the centered card in carousel phase (routed from glassTrackpad, which
+    /// otherwise swallows it). Selecting mode → add/remove from tonight's hand;
+    /// non-selecting → start the session for that card.
+    private func handleCarouselTap() {
+        guard cards.indices.contains(activeIndex) else { return }
+        let card = cards[activeIndex]
+        if selecting {
+            let isAdd = !selectedIDs.contains(card.id)
+            onToggleSelect?(card)
+            UISelectionFeedbackGenerator().selectionChanged()
+            if isAdd {
+                // Adding deals the card away — auto-advance so the next card slides
+                // in on its own, rather than making the user swipe after every pick.
+                if !reduceMotion { triggerFlyGhost() }
+                advanceToNextCard()
+            }
+        } else {
+            onCardAction?(card, .startSession)
+        }
+    }
+
+    /// Slide the next card into the center — same mechanic as a swipe-end advance,
+    /// but triggered by an add so selecting deals the card away hands-free. Stays put
+    /// on the last card (nothing to advance to) so the final pick doesn't wrap around.
+    private func advanceToNextCard() {
+        guard cards.count > 1, activeIndex < cards.count - 1 else { return }
+        activeIndex += 1
+        // Offset the incoming card to where the old one sat, then settle it to center —
+        // cancels the instant re-slot the activeIndex bump would otherwise cause.
+        dragOffset += (cardW + 16)
+        DispatchQueue.main.async {
+            withAnimation(AppAnimation.spring) {
+                dragOffset = 0
+            }
+        }
     }
 
     // MARK: - Specular Glint

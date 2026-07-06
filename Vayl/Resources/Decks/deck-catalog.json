@@ -1,0 +1,122 @@
+[
+  {
+    "id": "the-opener",
+    "title": "The Opener",
+    "subtitle": "Where are we, actually.",
+    "category": "foundationEntry",
+    "intensity": 2,
+    "card_count": 10,
+    "is_locked": false,
+    "required_entitlement": null
+  },
+  {
+    "id": "the-check-in",
+    "title": "The Check-In",
+    "subtitle": "A short, warm pulse.",
+    "category": "foundationEntry",
+    "intensity": 1,
+    "card_count": 6,
+    "is_locked": false,
+    "required_entitlement": null
+  },
+  {
+    "id": "communication-intimacy",
+    "title": "Communication & Intimacy",
+    "subtitle": "The unsaid things.",
+    "category": "relationshipCore",
+    "intensity": 3,
+    "card_count": 11,
+    "is_locked": true,
+    "required_entitlement": "core"
+  },
+  {
+    "id": "sex-and-pleasure",
+    "title": "Sex & Pleasure",
+    "subtitle": "Said out loud, on purpose.",
+    "category": "relationshipCore",
+    "intensity": 6,
+    "card_count": 11,
+    "is_locked": true,
+    "required_entitlement": "core"
+  },
+  {
+    "id": "jealousy",
+    "title": "Jealousy & What It's Telling You",
+    "subtitle": "Information, if you'll read it.",
+    "category": "nmSpecific",
+    "intensity": 5,
+    "card_count": 11,
+    "is_locked": true,
+    "required_entitlement": "core"
+  },
+  {
+    "id": "flavors-discovery",
+    "title": "Flavors: Discovery Edition",
+    "subtitle": "A fitting room, no purchase required.",
+    "category": "nmSpecific",
+    "intensity": 3,
+    "card_count": 10,
+    "is_locked": true,
+    "required_entitlement": "core"
+  },
+  {
+    "id": "swinging",
+    "title": "The Swinging Deck",
+    "subtitle": "Practical, specific, same team.",
+    "category": "styleSpecific",
+    "intensity": 5,
+    "card_count": 11,
+    "is_locked": true,
+    "required_entitlement": "core"
+  },
+  {
+    "id": "before-tonight",
+    "title": "Before Tonight",
+    "subtitle": "Set the frame, then play.",
+    "category": "experienceArc",
+    "intensity": 4,
+    "card_count": 10,
+    "is_locked": true,
+    "required_entitlement": "core"
+  },
+  {
+    "id": "after-last-night",
+    "title": "After Last Night",
+    "subtitle": "The morning-after conversation.",
+    "category": "experienceArc",
+    "intensity": 4,
+    "card_count": 11,
+    "is_locked": true,
+    "required_entitlement": "core"
+  },
+  {
+    "id": "the-first-time",
+    "title": "The First Time",
+    "subtitle": "The one before the first one.",
+    "category": "experienceArc",
+    "intensity": 4,
+    "card_count": 10,
+    "is_locked": true,
+    "required_entitlement": "core"
+  },
+  {
+    "id": "when-it-gets-hard",
+    "title": "When It Gets Hard",
+    "subtitle": "The way back to each other.",
+    "category": "experienceArc",
+    "intensity": 7,
+    "card_count": 11,
+    "is_locked": true,
+    "required_entitlement": "core"
+  },
+  {
+    "id": "appreciation",
+    "title": "The Appreciation Deck",
+    "subtitle": "The one that isn't hard.",
+    "category": "wildcard",
+    "intensity": 1,
+    "card_count": 10,
+    "is_locked": true,
+    "required_entitlement": "core"
+  }
+]

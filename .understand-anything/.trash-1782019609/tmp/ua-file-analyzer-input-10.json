@@ -1,0 +1,31 @@
+{
+  "projectRoot": "/Users/bryanjorden/Documents/School/Code/Vayl",
+  "batchFiles": [
+    {"path": "Vayl/Features/Home/Components/DesireMapIndicator.swift", "language": "swift", "sizeLines": 298, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Components/GettingStartedEntryCard.swift", "language": "swift", "sizeLines": 46, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Components/GravLiftView.swift", "language": "swift", "sizeLines": 190, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Components/HomeWidgetShell.swift", "language": "swift", "sizeLines": 702, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Components/PartnerChip.swift", "language": "swift", "sizeLines": 289, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Components/PickUpCard.swift", "language": "swift", "sizeLines": 118, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Components/ReflectionBannerView.swift", "language": "swift", "sizeLines": 397, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Components/ReflectionCard.swift", "language": "swift", "sizeLines": 708, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Components/ResearchTicker.swift", "language": "swift", "sizeLines": 123, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Models/GettingStarted.swift", "language": "swift", "sizeLines": 86, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Models/HomeEventEngine.swift", "language": "swift", "sizeLines": 103, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Models/HomeModels.swift", "language": "swift", "sizeLines": 151, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Store/HomeStore.swift", "language": "swift", "sizeLines": 323, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Views/GettingStartedPathView.swift", "language": "swift", "sizeLines": 145, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Views/HomeDashboardView.swift", "language": "swift", "sizeLines": 760, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Views/HomeGateView.swift", "language": "swift", "sizeLines": 297, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Views/HomeRouterView.swift", "language": "swift", "sizeLines": 310, "fileCategory": "code"},
+    {"path": "Vayl/Features/Home/Views/MapCompletionBeatView.swift", "language": "swift", "sizeLines": 102, "fileCategory": "code"},
+    {"path": "Vayl/Features/Learn/Views/ConstellationNode.swift", "language": "swift", "sizeLines": 772, "fileCategory": "code"},
+    {"path": "Vayl/Features/Learn/Views/LearnView.swift", "language": "swift", "sizeLines": 23, "fileCategory": "code"},
+    {"path": "Vayl/Features/Map/MapView.swift", "language": "swift", "sizeLines": 26, "fileCategory": "code"},
+    {"path": "Vayl/Features/Map/PrismView.swift", "language": "swift", "sizeLines": 833, "fileCategory": "code"},
+    {"path": "Vayl/Features/Monetization/Store/EntitlementStore.swift", "language": "swift", "sizeLines": 206, "fileCategory": "code"},
+    {"path": "Vayl/Features/Monetization/Views/PaywallSheet.swift", "language": "swift", "sizeLines": 454, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Canvas/Engines/CardFlightEngine.swift", "language": "swift", "sizeLines": 147, "fileCategory": "code"}
+  ],
+  "batchImportData": {}
+}

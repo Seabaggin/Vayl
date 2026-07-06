@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — StatPhase 10/10 Motion Reference</title>
+<style>
+  :root {
+    --void: #0a0810;
+    --cyan: #00c2ff;       /* accentPrimary (dark) */
+    --purple: #6c3ae0;     /* accentSecondary */
+    --magenta: #ff006a;    /* accentTertiary (dark) */
+    --text: #e7e7f0;
+    --muted: #8a8a9a;
+    --line: #1e1b2c;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%;
+    background: #16161c; color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .wrap { display: flex; height: 100vh; }
+  .stage {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(120% 80% at 50% 18%, #20202a 0%, #121217 60%);
+    min-width: 0;
+  }
+
+  /* ── Phone ─────────────────────────────────────────────── */
+  .phone {
+    position: relative; width: 390px; height: 844px;
+    border-radius: 47px; overflow: hidden;
+    background: var(--void);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    touch-action: none;
+  }
+
+  /* Change ② — breathing void bloom (tri-color, rising from below) */
+  .bloom {
+    position: absolute; left: 50%; bottom: -8%;
+    width: 150%; height: 60%;
+    transform: translateX(-50%) scale(1);
+    filter: blur(58px);
+    background:
+      radial-gradient(40% 60% at 30% 70%, rgba(0,194,255,0.20), transparent 70%),
+      radial-gradient(46% 64% at 50% 66%, rgba(108,58,224,0.28), transparent 72%),
+      radial-gradient(38% 58% at 70% 70%, rgba(255,0,106,0.18), transparent 70%);
+    will-change: transform, opacity;
+  }
+  .voidMask {
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(to bottom,
+      var(--void) 0%, var(--void) 50%,
+      rgba(10,8,16,0.92) 60%, rgba(10,8,16,0.68) 72%,
+      rgba(10,8,16,0.22) 86%, rgba(10,8,16,0.02) 100%);
+  }
+
+  /* ── Rising table world (plunge target) ────────────────── */
+  .feltworld {
+    position: absolute; inset: 0; transform: translateY(100%);
+    opacity: 0; will-change: transform, opacity;
+  }
+  .felt {
+    position: absolute; left: 50%; top: 30%;
+    width: 150%; height: 90%; transform: translateX(-50%);
+    background: radial-gradient(60% 50% at 50% 0%, rgba(108,58,224,0.16), transparent 60%),
+                radial-gradient(120% 80% at 50% 30%, #14101e 0%, #0c0912 70%);
+    border-top-left-radius: 50% 22%; border-top-right-radius: 50% 22%;
+    box-shadow: 0 -1px 0 rgba(255,255,255,0.06);
+  }
+  .dealglow {
+    position: absolute; left: 50%; top: 32%; width: 120px; height: 120px;
+    transform: translate(-50%,-50%); border-radius: 50%; filter: blur(14px); opacity: 0.40;
+    background: radial-gradient(circle, rgba(245,200,130,0.5), rgba(255,0,106,0.12) 45%, transparent 70%);
+    will-change: transform, opacity;
+  }
+  /* spectrum rim light along the table edge — flashes as the felt crests */
+  .tableRim {
+    position: absolute; left: 50%; top: 30%; width: 150%; height: 3px;
+    transform: translateX(-50%); opacity: 0; filter: blur(1.4px);
+    background: linear-gradient(90deg, transparent, var(--cyan), var(--purple), var(--magenta), transparent);
+    box-shadow: 0 0 18px rgba(108,58,224,0.6);
+  }
+  .nhint {
+    position: absolute; left: 0; right: 0; top: 38%; text-align: center;
+    font-style: italic; font-family: Georgia, "Times New Roman", serif;
+    font-size: 19px; color: rgba(245,235,215,0.92);
+    text-shadow: 0 3px 10px rgba(0,0,0,0.55);
+    opacity: 0; transform: translateY(18px);   /* writes in AFTER the table lands */
+  }
+  /* tunnel-in darkening on the plunge */
+  .vignette {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0;
+    background: radial-gradient(120% 90% at 50% 60%, transparent 38%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* ── Stat content ──────────────────────────────────────── */
+  .content {
+    position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 96px 28px 0; will-change: transform, opacity;
+  }
+  .flourish {
+    width: 54px; height: 14px; margin-bottom: 16px; opacity: 0;
+    background: linear-gradient(90deg, transparent, var(--purple), transparent);
+    filter: blur(0.4px); border-radius: 99px;
+  }
+  .stat { position: relative; height: 180px; display: flex; align-items: center; justify-content: center;
+          margin-bottom: 30px; opacity: 0; transform: scale(0.92); will-change: transform; }
+  .stat .layer {
+    position: absolute; font-weight: 800; font-size: 150px; letter-spacing: -3.2px;
+    line-height: 1; white-space: nowrap;
+    background-size: 220% 220%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .stat .fill {
+    background-image: linear-gradient(115deg,
+      var(--cyan) 0%, var(--purple) 25%, var(--magenta) 50%,
+      var(--magenta) 65%, var(--purple) 80%, var(--cyan) 100%);
+  }
+  .stat .glow {
+    background-image: linear-gradient(115deg, var(--cyan), var(--purple), var(--magenta), var(--purple), var(--cyan));
+    filter: blur(12px); opacity: 0.40;
+  }
+  .stat .spec {
+    background-image: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.85) 40%,
+      transparent 46%, transparent 58%, rgba(255,255,255,0.45) 63%, transparent 68%);
+    background-size: 320% 100%; background-position-x: 140%;
+  }
+  .stat .cast {
+    position: absolute; bottom: 6px; width: 300px; height: 55px; border-radius: 50%;
+    filter: blur(20px);
+    background: radial-gradient(circle, rgba(108,58,224,0.18), rgba(0,194,255,0.10) 40%, transparent 70%);
+    opacity: 0.7; z-index: -1;
+  }
+  .copy { font-size: 18px; line-height: 1.55; text-align: center; color: var(--text);
+          opacity: 0; transform: translateY(14px); margin-bottom: 22px; max-width: 320px; }
+  .cite { opacity: 0; transform: translateY(14px); margin-bottom: 30px; }
+  .cite span { display:inline-flex; gap:6px; align-items:center; padding: 7px 14px; border-radius: 999px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    font-size: 11px; font-weight: 500; color: var(--text); }
+  .ethos { opacity: 0; transform: translateY(8px); font-size: 15px; font-weight: 600; }
+  .ethos b { background: linear-gradient(120deg, var(--cyan), var(--purple));
+             -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  .cta {
+    position: absolute; left: 28px; right: 28px; bottom: 54px; height: 56px;
+    border-radius: 999px; display: flex; align-items: center; justify-content: center;
+    background: rgb(32,28,52); color: #fff; font-weight: 600; font-size: 17px;
+    border: 1px solid rgba(255,255,255,0.10); opacity: 0; transform: translateY(10px);
+    cursor: pointer; user-select: none; will-change: transform, opacity;
+  }
+  .cta.press { transform: scale(0.98); }
+  .haptic { position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    font-size: 10px; letter-spacing: 1px; color: var(--magenta); opacity: 0; text-transform: uppercase; }
+
+  /* ── Panel ─────────────────────────────────────────────── */
+  .panel { width: 372px; flex: 0 0 372px; background: #100d18; padding: 18px 20px;
+           overflow-y: auto; border-left: 1px solid var(--line); }
+  h1 { font-size: 15px; letter-spacing: 0.4px; margin: 0 0 4px; }
+  h2 { font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin: 20px 0 10px; }
+  .tag { display:inline-block; font-size:9px; padding:1px 6px; border-radius:99px; margin-left:6px;
+         background:#1c1a2a; color:var(--muted); vertical-align: middle; }
+  .sub { font-size: 11px; color: var(--muted); margin: 0 0 14px; line-height: 1.5; }
+  .ctl { margin-bottom: 12px; }
+  .ctl label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+  .ctl label b { color: var(--cyan); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--purple); }
+  .repbtns { display: flex; gap: 8px; margin-bottom: 8px; }
+  .repbtns > button { flex: 1; }
+  button { background: linear-gradient(90deg, var(--cyan), var(--purple), var(--magenta));
+    color: white; border: 0; border-radius: 10px; padding: 10px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  button.ghost { background: #1c1a2a; color: var(--text); border: 1px solid var(--line); }
+  .seggroup { display:flex; gap:6px; margin:6px 0 12px; }
+  button.seg { flex:1; background:#1c1a2a; color:var(--muted); border:1px solid var(--line);
+    border-radius:10px; padding:9px 6px; font-weight:600; }
+  button.seg.on { background: linear-gradient(90deg, rgba(0,194,255,.22), rgba(108,58,224,.30), rgba(255,0,106,.22));
+    color:var(--text); border-color:var(--purple); }
+  .toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 8px 0; }
+  .out { background: #07070c; border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10.5px; line-height: 1.55;
+    white-space: pre; color: #b8b8c8; overflow-x: auto; margin-top: 8px; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage">
+    <div class="phone" id="phone">
+      <div class="bloom" id="bloom"></div>
+      <div class="voidMask"></div>
+
+      <div class="feltworld" id="feltworld">
+        <div class="felt"></div>
+        <div class="tableRim"></div>
+        <div class="dealglow"></div>
+        <div class="nhint">Let's get acquainted.</div>
+      </div>
+      <div class="vignette" id="vignette"></div>
+
+      <div class="content" id="content">
+        <div class="flourish" id="flourish"></div>
+        <div class="stat" id="stat">
+          <div class="cast"></div>
+          <div class="layer glow">1 in 5</div>
+          <div class="layer fill">1 in 5</div>
+          <div class="layer spec" id="spec">1 in 5</div>
+        </div>
+        <div class="copy" id="copy">Americans have engaged in consensual non&#8209;monogamy at some point in their lives.</div>
+        <div class="cite" id="cite"><span>ⓘ&nbsp; About this research</span></div>
+        <div class="ethos" id="ethos"><b>You're not alone.</b>&nbsp;And this isn't new.</div>
+      </div>
+
+      <div class="haptic" id="haptic">• tap •</div>
+      <div class="cta" id="cta">Begin</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h1>StatPhase → 10/10 <span class="tag" id="statePill">idle</span></h1>
+    <p class="sub">The whole screen <b>breathes</b> (in · hold · out · rest). <b>Begin</b> is a 3-act exit:
+      <b>① commit</b> (gather a breath, content recedes) → <b>② a held pause</b> in the living void →
+      <b>③ the table introduces itself</b> (fades in, settles, then speaks). Measured &amp; cinematic, never
+      rushed. <b>Replay</b> arrival, <b>Begin</b> for the exit. Tune, then <b>Copy values</b>.</p>
+
+    <div class="repbtns">
+      <button id="replay">⟳ Replay arrival</button>
+      <button id="begin" class="ghost">Begin → plunge</button>
+    </div>
+
+    <h2>① Arrival ignition</h2>
+    <div class="ctl"><label>Land scale from <b id="vLandScale">0.90</b></label>
+      <input id="landScale" type="range" min="0.80" max="1.00" step="0.01" value="0.90"></div>
+    <div class="ctl"><label>Ignition sweep (ms) <b id="vSweep">680</b></label>
+      <input id="sweep" type="range" min="300" max="1200" step="20" value="680"></div>
+    <div class="ctl"><label>Glow bloom overshoot peak <b id="vOver">0.80</b></label>
+      <input id="over" type="range" min="0.40" max="1.00" step="0.02" value="0.80"></div>
+    <div class="ctl"><label>Bloom settle (ms) <b id="vSettle">460</b></label>
+      <input id="settle" type="range" min="200" max="900" step="20" value="460"></div>
+    <label class="toggle"><input type="checkbox" id="haptOn" checked> haptic on land (.impact soft)</label>
+
+    <h2>② Breathing — in · hold · out · rest <span class="tag">the vibe</span></h2>
+    <div class="ctl"><label>Breath period (s) <b id="vPer">7.5</b></label>
+      <input id="per" type="range" min="4" max="14" step="0.5" value="7.5"></div>
+    <div class="ctl"><label>Inhale ratio (vs exhale) <b id="vInhale">0.42</b></label>
+      <input id="inhale" type="range" min="0.25" max="0.60" step="0.02" value="0.42"></div>
+    <div class="ctl"><label>Hold at full breath (s) <b id="vHold">0.8</b></label>
+      <input id="hold" type="range" min="0" max="2.5" step="0.1" value="0.8"></div>
+    <div class="ctl"><label>Bloom depth (%) <b id="vAmp">6.0</b></label>
+      <input id="amp" type="range" min="0" max="14" step="0.5" value="6"></div>
+    <div class="ctl"><label>Stat-breathes-too depth (%) <b id="vStatAmp">2.25</b></label>
+      <input id="statAmp" type="range" min="0" max="6" step="0.25" value="2.25"></div>
+
+    <h2>③ Act 1 — commit (the plunge)</h2>
+    <div class="seggroup">
+      <button class="seg on" id="pDive">Dive in ↓</button>
+      <button class="seg" id="pLift">Lift away ↑</button>
+    </div>
+    <div class="ctl"><label>Beat before cascade (ms) <b id="vAnt">240</b></label>
+      <input id="ant" type="range" min="0" max="900" step="20" value="240"></div>
+    <div class="ctl"><label>+ hold (ms) <b id="vHeld">120</b></label>
+      <input id="held" type="range" min="0" max="600" step="20" value="120"></div>
+    <div class="ctl"><label>Content clears — cascade (ms) <b id="vClear">720</b></label>
+      <input id="clear" type="range" min="300" max="1300" step="20" value="720"></div>
+    <div class="ctl"><label>Cascade stagger (ms) <b id="vStagger">110</b></label>
+      <input id="stagger" type="range" min="0" max="260" step="10" value="110"></div>
+    <div class="ctl"><label>Recede depth (scale) <b id="vPdepth">0.86</b></label>
+      <input id="pdepth" type="range" min="0.60" max="1.00" step="0.01" value="0.86"></div>
+
+    <h2>④ Act 2 — the pause <span class="tag">held void</span></h2>
+    <div class="ctl"><label>Pause before table (ms) <b id="vPause">360</b></label>
+      <input id="pause" type="range" min="0" max="1400" step="20" value="360"></div>
+
+    <h2>⑤ Act 3 — table introduces itself</h2>
+    <div class="ctl"><label>Table fade-in (ms) <b id="vTableFade">1100</b></label>
+      <input id="tableFade" type="range" min="400" max="2200" step="20" value="1100"></div>
+    <div class="ctl"><label>Fade curve <span style="color:var(--muted);font-weight:400">(no movement — opacity only)</span></label></div>
+    <div class="seggroup">
+      <button class="seg on" id="fGentle">Gentle (materialize)</button>
+      <button class="seg" id="fLand">Soft-land</button>
+    </div>
+    <div class="ctl"><label>Rim-light draw-on <b id="vRimFlash">0.70</b></label>
+      <input id="rimFlash" type="range" min="0" max="1" step="0.05" value="0.7"></div>
+    <label class="toggle"><input type="checkbox" id="igniteOn" checked> deal-point warms up + dealer line writes in last</label>
+
+    <hr>
+    <button id="copy" class="ghost" style="width:100%">Copy Swift values</button>
+    <div class="out" id="out"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const els = {
+  phone:$('phone'), bloom:$('bloom'), feltworld:$('feltworld'), content:$('content'),
+  flourish:$('flourish'), stat:$('stat'), spec:$('spec'), glow:document.querySelector('.glow'),
+  copy:$('copy'), cite:$('cite'), ethos:$('ethos'), cta:$('cta'), haptic:$('haptic'),
+  tableRim:document.querySelector('.tableRim'), dealglow:document.querySelector('.dealglow'),
+  nhint:document.querySelector('.nhint'), vignette:$('vignette'),
+  pill:$('statePill'), out:$('out')
+};
+
+const P = {
+  landScale:0.90, sweep:680, over:0.80, settle:460, hapt:true,
+  per:7.5, inhale:0.42, hold:0.8, amp:6, statAmp:2.25,
+  dive:true, ant:240, held:120, clear:720, stagger:110, pdepth:0.86,
+  pause:360, tableFade:1100, rimFlash:0.7, ignite:true,
+  fadeCurve:'cubic-bezier(.4,0,.3,1)', fadeCurveName:'gentle'
+};
+
+function bind(id, key, fmt){
+  const el=$(id), out=$('v'+id.charAt(0).toUpperCase()+id.slice(1));
+  const set=()=>{ P[key]=parseFloat(el.value); if(out) out.textContent=fmt?fmt(P[key]):el.value; emit(); };
+  el.addEventListener('input', set); set();
+}
+bind('landScale','landScale', v=>v.toFixed(2));
+bind('sweep','sweep'); bind('over','over', v=>v.toFixed(2)); bind('settle','settle');
+bind('per','per', v=>v.toFixed(1)); bind('inhale','inhale', v=>v.toFixed(2));
+bind('hold','hold', v=>v.toFixed(1)); bind('amp','amp', v=>v.toFixed(1));
+bind('statAmp','statAmp', v=>v.toFixed(2));
+bind('ant','ant'); bind('held','held'); bind('clear','clear'); bind('stagger','stagger'); bind('pdepth','pdepth', v=>v.toFixed(2));
+bind('pause','pause'); bind('tableFade','tableFade'); bind('rimFlash','rimFlash', v=>v.toFixed(2));
+$('haptOn').addEventListener('change', e=>{ P.hapt=e.target.checked; });
+$('igniteOn').addEventListener('change', e=>{ P.ignite=e.target.checked; });
+$('fGentle').addEventListener('click', ()=>{ P.fadeCurve='cubic-bezier(.4,0,.3,1)'; P.fadeCurveName='gentle';
+  $('fGentle').classList.add('on'); $('fLand').classList.remove('on'); emit(); });
+$('fLand').addEventListener('click', ()=>{ P.fadeCurve='cubic-bezier(.2,.7,.2,1)'; P.fadeCurveName='soft-land';
+  $('fLand').classList.add('on'); $('fGentle').classList.remove('on'); emit(); });
+$('pDive').addEventListener('click', ()=>{P.dive=true; $('pDive').classList.add('on'); $('pLift').classList.remove('on'); emit();});
+$('pLift').addEventListener('click', ()=>{P.dive=false; $('pLift').classList.add('on'); $('pDive').classList.remove('on'); emit();});
+
+/* ── Organic breath: in · hold · out · rest ───────────────── */
+function breathPhase(t){
+  const inhale = P.per * P.inhale;
+  const hold   = P.hold;
+  const rest   = P.per * 0.20;
+  const exhale = Math.max(0.5, P.per - inhale - hold - rest);
+  const cycle  = inhale + hold + exhale + rest;
+  let x = t % cycle;
+  const ease = u => (1 - Math.cos(Math.PI*u))/2; // easeInOutSine
+  if (x < inhale) return ease(x/inhale);          // breathe in
+  x -= inhale;
+  if (x < hold)   return 1;                        // hold full
+  x -= hold;
+  if (x < exhale) return 1 - ease(x/exhale);       // breathe out
+  return 0;                                        // rest empty
+}
+
+let t0 = performance.now();
+let exiting = false, atRest = false;
+function ambient(now){
+  if (!exiting) {
+    const t = (now - t0)/1000;
+    const b = breathPhase(t);                       // 0 empty .. 1 full inhale
+    els.bloom.style.transition = 'none';
+    const s = 1 + (P.amp/100)*b;
+    els.bloom.style.transform = `translateX(-50%) translateY(${(-b*10).toFixed(2)}px) scale(${s.toFixed(4)})`;
+    els.bloom.style.opacity = (0.72 + 0.28*b).toFixed(3);
+    if (atRest) {                                   // stat breathes WITH the void
+      els.stat.style.transition = 'none';
+      els.glow.style.transition = 'none';
+      const ss = 1 + (P.statAmp/100)*b;
+      els.stat.style.transform = `scale(${ss.toFixed(4)}) translateY(${(-b*4).toFixed(2)}px)`;
+      els.glow.style.opacity = (0.36 + 0.20*b).toFixed(3);
+    }
+    const gp = 50 + 40*Math.sin(t*(2*Math.PI/4.0));
+    document.querySelectorAll('.fill,.glow').forEach(e=> e.style.backgroundPosition = `${gp}% 50%`);
+  }
+  requestAnimationFrame(ambient);
+}
+requestAnimationFrame(ambient);
+
+/* ── Helpers ──────────────────────────────────────────────── */
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+function setT(el, ms, ease='cubic-bezier(.2,.8,.2,1)'){ el.style.transition = `all ${ms}ms ${ease}`; }
+function resetStat(){
+  exiting=false; atRest=false;
+  els.content.style.transition='none'; els.content.style.transform='translateY(0)'; els.content.style.opacity='1';
+  els.flourish.style.transition='none'; els.flourish.style.opacity='0';
+  els.stat.style.transition='none'; els.stat.style.opacity='0'; els.stat.style.transform=`scale(${P.landScale})`;
+  els.copy.style.transition='none'; els.copy.style.opacity='0'; els.copy.style.transform='translateY(14px)';
+  els.cite.style.transition='none'; els.cite.style.opacity='0'; els.cite.style.transform='translateY(14px)';
+  els.ethos.style.transition='none'; els.ethos.style.opacity='0'; els.ethos.style.transform='translateY(8px)';
+  els.cta.style.transition='none'; els.cta.style.opacity='0'; els.cta.style.transform='translateY(10px)';
+  els.glow.style.transition='none'; els.glow.style.opacity='0.40';
+  els.spec.style.transition='none'; els.spec.style.backgroundPositionX='140%';
+  // table-reveal elements — table sits at its RESTING position, just hidden ("always there")
+  els.feltworld.getAnimations?.().forEach(a=>a.cancel());
+  els.feltworld.style.transition='none'; els.feltworld.style.transform='translateY(0)'; els.feltworld.style.opacity='0';
+  els.tableRim.style.transition='none'; els.tableRim.style.opacity='0';
+  els.dealglow.style.transition='none'; els.dealglow.style.transform='translate(-50%,-50%) scale(1)'; els.dealglow.style.opacity='0.40';
+  els.nhint.style.transition='none'; els.nhint.style.opacity='0'; els.nhint.style.transform='translateY(0)';
+  els.vignette.style.transition='none'; els.vignette.style.opacity='0';
+  void els.phone.offsetWidth;
+}
+
+/* ── Arrival (Replay) ─────────────────────────────────────── */
+async function arrival(){
+  els.pill.textContent='arrival'; resetStat();
+  setT(els.flourish, 600); els.flourish.style.opacity='0.9';
+  setT(els.stat, 1200, 'cubic-bezier(.16,1,.3,1)');
+  els.stat.style.opacity='1'; els.stat.style.transform='scale(1)';
+  setTimeout(igniteOnLand, 760);
+  await wait(500); setT(els.copy,500); els.copy.style.opacity='1'; els.copy.style.transform='translateY(0)';
+  await wait(200); setT(els.cite,500); els.cite.style.opacity='1'; els.cite.style.transform='translateY(0)';
+  await wait(300); setT(els.ethos,560,'cubic-bezier(.16,1,.3,1)'); els.ethos.style.opacity='1'; els.ethos.style.transform='translateY(0)';
+  await wait(450); setT(els.cta,520,'cubic-bezier(.2,.8,.2,1)'); els.cta.style.opacity='1'; els.cta.style.transform='translateY(0)';
+  els.pill.textContent='breathing'; atRest=true;   // hand off to the breath loop
+}
+function igniteOnLand(){
+  els.spec.style.transition=`background-position ${P.sweep}ms cubic-bezier(.16,1,.3,1)`;
+  els.spec.style.backgroundPositionX='-60%';
+  els.glow.style.transition=`opacity 140ms ease-out`; els.glow.style.opacity=String(P.over);
+  setTimeout(()=>{ els.glow.style.transition=`opacity ${P.settle}ms cubic-bezier(.22,1,.36,1)`; els.glow.style.opacity='0.40'; }, 150);
+  if(P.hapt){ if(navigator.vibrate) navigator.vibrate(8);
+    els.haptic.style.transition='opacity 80ms'; els.haptic.style.opacity='1';
+    setTimeout(()=>{ els.haptic.style.transition='opacity 400ms'; els.haptic.style.opacity='0'; }, 140); }
+}
+
+/* ── Begin → 3-act exit: commit · pause · table introduction ──── */
+async function plunge(){
+  exiting = true; atRest = false;
+  els.cta.classList.add('press'); await wait(90); els.cta.classList.remove('press');
+
+  // ════ ACT 1 — COMMIT ════
+  // NO pre-movement — nothing jumps. The cascade is the MVP. This is just a held
+  // beat with the faintest whisper of glow so the tap registers. Everything else
+  // stays exactly where it was, then the cascade carries it away.
+  els.pill.textContent='…';
+  if(navigator.vibrate) navigator.vibrate(5);
+  setT(els.glow, P.ant, 'ease-out'); els.glow.style.opacity='0.50';   // most-subtle anticipation, no movement
+  await wait(P.ant + P.held);
+
+  // …then commit: the content recedes as a staggered cascade, hero "1 in 5" LAST
+  const dive = P.dive, cDir = dive ? 1 : -1;
+  const cEase = dive ? 'cubic-bezier(.5,0,.75,.25)' : 'cubic-bezier(.4,0,.6,1)';
+  els.pill.textContent = dive ? 'commit ↓' : 'commit ↑';
+  if(navigator.vibrate) navigator.vibrate([0,10,24,18]);
+  const wave = [els.ethos, els.cite, els.copy, els.flourish, els.stat]; // bottom-up
+  wave.forEach((el, i) => {
+    const d = i * P.stagger;
+    el.style.transition = `transform ${P.clear}ms ${cEase} ${d}ms, opacity ${Math.round(P.clear*0.7)}ms ease-in ${d}ms`;
+    el.style.transform = `translateY(${cDir*(dive?84:-74)}px) scale(${P.pdepth})`;
+    el.style.opacity = '0';
+  });
+  els.cta.style.transition=`opacity ${Math.round(P.clear*0.5)}ms ease-in`; els.cta.style.opacity='0';
+  // the void deepens slightly as the stage clears — but never to black
+  els.vignette.style.transition=`opacity ${P.clear}ms ease-in`; els.vignette.style.opacity='0.6';
+  await wait(P.clear + (wave.length-1)*P.stagger);
+
+  // ════ ACT 2 — THE PAUSE ════  a held, quiet beat in the living, breathing void
+  els.pill.textContent='…';
+  await wait(P.pause);
+
+  // ════ ACT 3 — THE TABLE INTRODUCES ITSELF ════
+  // it was ALWAYS THERE in the dark — no movement, just light coming up on it. Opacity only.
+  els.pill.textContent='the table';
+  els.feltworld.getAnimations?.().forEach(a=>a.cancel());
+  els.feltworld.style.transition='none';
+  els.feltworld.style.transform='translateY(0)'; els.feltworld.style.opacity='0';   // resting position, hidden
+  void els.feltworld.offsetWidth;
+  els.feltworld.style.transition=`opacity ${P.tableFade}ms ${P.fadeCurve}`;          // pure fade, chosen curve
+  els.feltworld.style.opacity='1';
+  // rim light DRAWS on like a horizon appearing (not a flash), then settles to a faint glow
+  setTimeout(()=>{
+    els.tableRim.style.transition=`opacity ${Math.round(P.tableFade*0.55)}ms ease-out`;
+    els.tableRim.style.opacity=String(P.rimFlash);
+    setTimeout(()=>{ els.tableRim.style.transition='opacity 800ms ease-in-out'; els.tableRim.style.opacity='0.16'; }, P.tableFade*0.55);
+  }, P.tableFade*0.18);
+  if(P.ignite){
+    setTimeout(()=>{ els.dealglow.style.transition=`opacity ${Math.round(P.tableFade*0.7)}ms ease-out, transform ${Math.round(P.tableFade*0.7)}ms cubic-bezier(.2,.8,.2,1)`;
+      els.dealglow.style.transform='translate(-50%,-50%) scale(1.18)'; els.dealglow.style.opacity='1';   // warms in place, barely grows
+      if(navigator.vibrate) navigator.vibrate(6); }, P.tableFade*0.32);
+    // the table introduces itself, THEN the dealer speaks
+    // dealer line: PURE fade (no rise — consistent with "appears by light, not movement"),
+    // and crisper (480ms) so the actionable line resolves to readable quickly for every user.
+    setTimeout(()=>{ els.nhint.style.transition='opacity 480ms ease-out';
+      els.nhint.style.opacity='1'; }, P.tableFade*0.82);
+  }
+  await wait(P.tableFade + 600);
+  els.pill.textContent='→ NamePhase';
+}
+
+els.cta.addEventListener('pointerdown', ()=> els.cta.classList.add('press'));
+els.cta.addEventListener('pointerup', ()=>{ els.cta.classList.remove('press'); plunge(); });
+$('replay').addEventListener('click', arrival);
+$('begin').addEventListener('click', plunge);
+
+/* ── Emit Swift-ready spec ────────────────────────────────── */
+function emit(){
+  els.out.textContent =
+`// ① Arrival ignition (fire as numeral seats, ~760ms into land)
+landScaleFrom   = ${P.landScale.toFixed(2)}
+ignitionSweep   = .easeOut ${(P.sweep/1000).toFixed(2)}s
+glowBloomPeak   = ${P.over.toFixed(2)}   (resting 0.40)
+glowBloomSettle = .timingCurve(.22,1,.36,1) ${(P.settle/1000).toFixed(2)}s
+landHaptic      = ${P.hapt ? '.impact(weight: .soft)' : 'none'}
+
+// ② Breathing  (.ambientAnimation — disabled under Reduce Motion)
+breathPeriod    = ${P.per.toFixed(1)}s
+inhaleRatio     = ${P.inhale.toFixed(2)}   // inhale vs exhale (asymmetry)
+holdAtFull      = ${P.hold.toFixed(1)}s
+bloomDepth      = ${P.amp.toFixed(1)}%
+statBreathDepth = ${P.statAmp.toFixed(2)}%   // number swells WITH the void
+// curve per phase = easeInOutSine in/out, hold at full, rest empty
+
+// ── EXIT = 3 acts (sequential, NOT overlapped — fits the phase model) ──
+// Total ≈ ${((P.ant+P.held+P.clear+(4*P.stagger)+P.pause+P.tableFade+600)/1000).toFixed(2)}s
+
+// ③ ACT 1 — commit (the plunge) — ${P.dive ? 'DIVE IN ↓' : 'LIFT AWAY ↑'}
+preCascadeBeat  = ${(P.ant/1000).toFixed(2)}s + ${(P.held/1000).toFixed(2)}s hold  // glow whisper only — NO movement
+contentClear    = ${P.dive ? '.timingCurve(.5,0,.75,.25)' : '.timingCurve(.4,0,.6,1)'} ${(P.clear/1000).toFixed(2)}s   // THE MVP — staggered cascade
+cascadeStagger  = ${P.stagger}ms  // order: ethos→cite→copy→flourish→stat (hero LAST)
+recedeDepth     = ${P.pdepth.toFixed(2)} scale, content ${P.dive ? 'sinks' : 'lifts'}
+commitHaptic    = .impact(weight: .medium)
+
+// ④ ACT 2 — the pause (void stays alive & breathing, NOT black)
+pauseBeforeTable = ${(P.pause/1000).toFixed(2)}s
+
+// ⑤ ACT 3 — the table introduces itself (pure FADE, no movement — "always there")
+tableFadeIn     = opacity 0→1 over ${(P.tableFade/1000).toFixed(2)}s, curve ${P.fadeCurveName} ${P.fadeCurve}
+//                NO translate/scale on the felt — it sits at rest, light comes up on it
+rimDrawOn       = horizon line → ${P.rimFlash.toFixed(2)} over ${Math.round(P.tableFade*0.55)}ms, settle 0.16
+dealPointWarm   = ${P.ignite ? 'scale 1→1.45 + .impact, at '+Math.round(P.tableFade*0.32)+'ms' : 'off'}
+dealerLineIn    = ${P.ignite ? 'pure fade 480ms at '+Math.round(P.tableFade*0.82)+'ms (LAST, no movement)' : 'off'}`;
+}
+$('copy').addEventListener('click', ()=>{ navigator.clipboard?.writeText(els.out.textContent);
+  $('copy').textContent='Copied ✓'; setTimeout(()=>$('copy').textContent='Copy Swift values',1200); });
+
+/* boot */
+resetStat(); emit(); setTimeout(arrival, 300);
+</script>
+</body>
+</html>

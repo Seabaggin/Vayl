@@ -290,13 +290,20 @@ private enum ProgressBarStrings {
         )
     }
 
-    /// Locale-correct percentage, e.g. "75%" or "75 %" depending on locale.
-    static func percentValue(ratio: CGFloat) -> String {
+    /// Cached — percentValue is read from the accessibility value in `body`, which
+    /// re-evaluates at 30fps during the completion effect; a fresh NumberFormatter
+    /// per read would be paid on every one of those frames.
+    private static let percentFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle           = .percent
         formatter.locale                = .current
         formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: Double(ratio)))
+        return formatter
+    }()
+
+    /// Locale-correct percentage, e.g. "75%" or "75 %" depending on locale.
+    static func percentValue(ratio: CGFloat) -> String {
+        percentFormatter.string(from: NSNumber(value: Double(ratio)))
             ?? "\(Int(ratio * 100))%"
     }
 
@@ -518,7 +525,7 @@ struct OnboardingProgressBar: View {
         )
 
         return Group {
-            if showCompletionEffect && !reduceMotion {
+            if showCompletionEffect && !reduceMotion && !AppAnimation.lowPower {
                 TimelineView(timelineSchedule) { tl in
                     let e  = clock.elapsed(at: tl.date)
                     let sp = AnimationMath.shimmerPhase(

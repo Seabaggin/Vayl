@@ -1,0 +1,237 @@
+{
+  "id": "when-it-gets-hard",
+  "title": "When It Gets Hard",
+  "subtitle": "The way back to each other.",
+  "category": "experienceArc",
+  "act": 1,
+  "intensity": 7,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": [
+    "core",
+    "experience",
+    "repair"
+  ],
+  "sort_order": 11,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "wh-01",
+      "deck_id": "when-it-gets-hard",
+      "text": "Each of you says what you need from tonight.\n\nAnd one thing that is still true about you two.\n\nThen begin.",
+      "highlight_words": [
+        "still true"
+      ],
+      "type": "openingRitual",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    },
+    {
+      "id": "wh-02",
+      "deck_id": "when-it-gets-hard",
+      "text": "What happened, in each of your words.\n\nOne at a time.\n\nNo corrections while the other speaks.",
+      "highlight_words": [
+        "No corrections"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": "interstitial",
+      "context_beat_copy": "Before this card:\n\nYou don't have to fix all of it tonight.\n\nYou only have to be honest in the same room. That's the whole assignment.",
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 2
+    },
+    {
+      "id": "wh-03",
+      "deck_id": "when-it-gets-hard",
+      "text": "Where is the hurt sitting right now?\n\nLocate it. Don't argue it.",
+      "highlight_words": [
+        "Locate it"
+      ],
+      "type": "bodyCheck",
+      "intensity": 4,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 3
+    },
+    {
+      "id": "wh-04",
+      "deck_id": "when-it-gets-hard",
+      "text": "Which part actually hurt most?",
+      "highlight_words": [
+        "hurt most"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": "banner",
+      "context_beat_copy": "The headline and the wound are rarely the same size.",
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 4
+    },
+    {
+      "id": "wh-05",
+      "deck_id": "when-it-gets-hard",
+      "text": "What did you need in that moment that didn't come?",
+      "highlight_words": [
+        "didn't come"
+      ],
+      "type": "prompt",
+      "intensity": 6,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 5
+    },
+    {
+      "id": "wh-06",
+      "deck_id": "when-it-gets-hard",
+      "text": "No prompt.\n\nA breath.\n\nSometimes the silence is the card.",
+      "highlight_words": [],
+      "type": "pause",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 6
+    },
+    {
+      "id": "wh-07",
+      "deck_id": "when-it-gets-hard",
+      "text": "Is there a piece of this that's yours to own?\n\nSay it without the word \"but\".",
+      "highlight_words": [
+        "yours to own"
+      ],
+      "type": "prompt",
+      "intensity": 6,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": "Whoever went first just made it safer for the other one.\n\nGo again if there's more.",
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 7
+    },
+    {
+      "id": "wh-08",
+      "deck_id": "when-it-gets-hard",
+      "text": "What do you need to hear right now?\n\nYou're allowed to ask for it word for word.",
+      "highlight_words": [
+        "word for word"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "anxious",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 8
+    },
+    {
+      "id": "wh-09",
+      "deck_id": "when-it-gets-hard",
+      "text": "What does repaired look like?\n\nSomething each of you could do this week. Small and real.",
+      "highlight_words": [
+        "Small and real"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 9
+    },
+    {
+      "id": "wh-10",
+      "deck_id": "when-it-gets-hard",
+      "text": "What do you love about us that this didn't touch?",
+      "highlight_words": [
+        "didn't touch"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 10
+    },
+    {
+      "id": "wh-11",
+      "deck_id": "when-it-gets-hard",
+      "text": "Started, Not Finished.\n\nName it honestly: repair started tonight.\n\nEach of you says the next single step, and when.\n\nThen stop. No relitigating after this card.",
+      "highlight_words": [
+        "next single step"
+      ],
+      "type": "closingRitual",
+      "intensity": 4,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 11
+    }
+  ]
+}

@@ -1,0 +1,599 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Features/Pulse/PulseFullView.swift",
+      "type": "file",
+      "name": "PulseFullView.swift",
+      "filePath": "Vayl/Features/Pulse/PulseFullView.swift",
+      "summary": "Full Pulse history screen (stub) for the Me|Us tab — owns window selection and camera state, hosts a scrollable PulseGraph plus an insights placeholder and a full-screen dot burn summary overlay.",
+      "tags": ["view", "pulse", "history", "stub", "design-system"],
+      "complexity": "complex",
+      "languageNotes": "SwiftUI view; geometry resolved via AppLayout.from(geo), no UIScreen usage."
+    },
+    {
+      "id": "class:Vayl/Features/Pulse/PulseFullView.swift:PulseFullView",
+      "type": "class",
+      "name": "PulseFullView",
+      "filePath": "Vayl/Features/Pulse/PulseFullView.swift",
+      "lineRange": [21, 284],
+      "summary": "View struct rendering the full Pulse timeline with window selector, horizontally/vertically scrollable graph, insights scaffold, and a dot-tap burn summary overlay.",
+      "tags": ["view", "pulse", "history", "graph"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Pulse/PulseGraph.swift",
+      "type": "file",
+      "name": "PulseGraph.swift",
+      "filePath": "Vayl/Features/Pulse/PulseGraph.swift",
+      "summary": "Core drawing primitive for the Pulse capacity timeline — a breathing spectrum EKG line with tier guide lines, tappable tier badges, animated welding sparks on the live segment, and an empty-state heartbeat demo.",
+      "tags": ["view", "pulse", "graph", "canvas", "design-system"],
+      "complexity": "complex",
+      "languageNotes": "Custom GraphicsContext Canvas drawing plus an Animatable subview (PulseGraphCanvas) driving drawProgress; reduce-motion fallbacks on every looping .task animation."
+    },
+    {
+      "id": "class:Vayl/Features/Pulse/PulseGraph.swift:PulseGraph",
+      "type": "class",
+      "name": "PulseGraph",
+      "filePath": "Vayl/Features/Pulse/PulseGraph.swift",
+      "lineRange": [34, 143],
+      "summary": "Public view wrapper that chooses a touch-glow button path or a plain canvas, runs the breath/heartbeat/demo animation tasks, and presents the TierGuideSheet when a tier badge is tapped.",
+      "tags": ["view", "pulse", "graph", "animation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Pulse/PulseGraph.swift:PulseGraphCanvas",
+      "type": "class",
+      "name": "PulseGraphCanvas",
+      "filePath": "Vayl/Features/Pulse/PulseGraph.swift",
+      "lineRange": [147, 941],
+      "summary": "Animatable canvas that computes graph geometry and renders tier guides, glow/crisp lines, live dot, dot overlays, and the welding-spark draw-in effect for the latest segment.",
+      "tags": ["view", "pulse", "canvas", "rendering"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Pulse/PulseSheetView.swift",
+      "type": "file",
+      "name": "PulseSheetView.swift",
+      "filePath": "Vayl/Features/Pulse/PulseSheetView.swift",
+      "summary": "Sheet presented from the Pulse home widget — mirrors the widget header, shows streak/avg-tier/trend stats, a window selector and graph card, and a single 'Open in Map' exit.",
+      "tags": ["view", "pulse", "sheet", "stats", "design-system"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Pulse/PulseSheetView.swift:PulseSheetView",
+      "type": "class",
+      "name": "PulseSheetView",
+      "filePath": "Vayl/Features/Pulse/PulseSheetView.swift",
+      "lineRange": [24, 534],
+      "summary": "View struct computing streak, average tier and a trend label from entries, rendering the stats row, window buttons, an iridescent graph card and the Open-in-Map CTA.",
+      "tags": ["view", "pulse", "sheet", "graph"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Pulse/PulseWidget.swift",
+      "type": "file",
+      "name": "PulseWidget.swift",
+      "filePath": "Vayl/Features/Pulse/PulseWidget.swift",
+      "summary": "Compact Pulse timeline widget for the Home dashboard — reads entries from PulseStore, renders a chrome-free graph with a floating tier header, and launches the check-in cover and full-history sheet.",
+      "tags": ["view", "pulse", "widget", "home", "design-system"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Pulse/PulseWidget.swift:PulseWidget",
+      "type": "class",
+      "name": "PulseWidget",
+      "filePath": "Vayl/Features/Pulse/PulseWidget.swift",
+      "lineRange": [11, 252],
+      "summary": "View struct binding to the injected PulseStore, presenting the PulseSheetView and CheckInShell, and committing a completed check-in entry back to the store.",
+      "tags": ["view", "pulse", "widget", "store-binding"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Pulse/Store/PulseStore.swift",
+      "type": "file",
+      "name": "PulseStore.swift",
+      "filePath": "Vayl/Features/Pulse/Store/PulseStore.swift",
+      "summary": "Observable store owning the local list of daily PulseEntry check-ins, persisting them to UserDefaults with one-entry-per-day dedup and DEBUG preview seeding.",
+      "tags": ["store", "pulse", "persistence", "observable"],
+      "complexity": "simple",
+      "languageNotes": "@Observable class persisting via JSONEncoder/UserDefaults; not @MainActor."
+    },
+    {
+      "id": "class:Vayl/Features/Pulse/Store/PulseStore.swift:PulseStore",
+      "type": "class",
+      "name": "PulseStore",
+      "filePath": "Vayl/Features/Pulse/Store/PulseStore.swift",
+      "lineRange": [10, 63],
+      "summary": "@Observable store that loads, adds (deduping same-day), removes, and saves PulseEntry records to UserDefaults under a versioned key.",
+      "tags": ["store", "pulse", "persistence", "observable"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Vayl/Features/Pulse/TierGuideSheet.swift",
+      "type": "file",
+      "name": "TierGuideSheet.swift",
+      "filePath": "Vayl/Features/Pulse/TierGuideSheet.swift",
+      "summary": "Explanatory sheet presented when a Pulse tier badge is tapped, describing the four capacity tiers — Expansive, Sovereign, Protective, Contracted.",
+      "tags": ["view", "pulse", "sheet", "design-system"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Pulse/TierGuideSheet.swift:TierGuideSheet",
+      "type": "class",
+      "name": "TierGuideSheet",
+      "filePath": "Vayl/Features/Pulse/TierGuideSheet.swift",
+      "lineRange": [21, 116],
+      "summary": "View struct listing the four capacity tiers with colored letter badges, names, sublabels and descriptions in a scrollable layout.",
+      "tags": ["view", "pulse", "sheet", "reference"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Sessions/Debug/PresenceDebugView.swift",
+      "type": "file",
+      "name": "PresenceDebugView.swift",
+      "filePath": "Vayl/Features/Sessions/Debug/PresenceDebugView.swift",
+      "summary": "DEBUG-only two-device harness (store + view) that joins a Supabase couple channel via RealtimeSessionService and tracks presence join/leave deltas; throwaway scaffold ahead of the real AirlockStore.",
+      "tags": ["view", "store", "debug", "realtime", "sessions"],
+      "complexity": "moderate",
+      "languageNotes": "Wrapped in #if DEBUG; @Observable @MainActor store consumes Supabase RealtimeChannelV2 presence streams."
+    },
+    {
+      "id": "class:Vayl/Features/Sessions/Debug/PresenceDebugView.swift:PresenceDebugStore",
+      "type": "class",
+      "name": "PresenceDebugStore",
+      "filePath": "Vayl/Features/Sessions/Debug/PresenceDebugView.swift",
+      "lineRange": [22, 94],
+      "summary": "@Observable @MainActor store that validates UUIDs, joins/leaves the realtime session channel, and maintains the present-user set from presence change deltas.",
+      "tags": ["store", "realtime", "presence", "debug"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Sessions/Debug/PresenceDebugView.swift:PresenceDebugView",
+      "type": "class",
+      "name": "PresenceDebugView",
+      "filePath": "Vayl/Features/Sessions/Debug/PresenceDebugView.swift",
+      "lineRange": [98, 195],
+      "summary": "Debug view with couple/user ID fields, Join/Leave buttons, a connection status row, and a live present-user list.",
+      "tags": ["view", "debug", "realtime", "sessions"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Sessions/SessionPlan.swift",
+      "type": "file",
+      "name": "SessionPlan.swift",
+      "filePath": "Vayl/Features/Sessions/SessionPlan.swift",
+      "summary": "SwiftData @Model for a curated couple session plan — ordered card ids with optional per-card and global timers, preset/LDR flags, and a hardcoded stub for early two-device verification.",
+      "tags": ["data-model", "sessions", "swiftdata", "persistence"],
+      "complexity": "moderate",
+      "languageNotes": "@Model persistable; live two-device state lives server-side in Supabase, this is local truth only."
+    },
+    {
+      "id": "class:Vayl/Features/Sessions/SessionPlan.swift:SessionPlan",
+      "type": "class",
+      "name": "SessionPlan",
+      "filePath": "Vayl/Features/Sessions/SessionPlan.swift",
+      "lineRange": [22, 61],
+      "summary": "SwiftData model holding deck/variant references, the user-editable card play order, per-card and global timer maps, and preset/LDR/usage metadata.",
+      "tags": ["data-model", "sessions", "swiftdata"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Sessions/SessionStore.swift",
+      "type": "file",
+      "name": "SessionStore.swift",
+      "filePath": "Vayl/Features/Sessions/SessionStore.swift",
+      "summary": "Brain of the card session flow — owns card navigation, records per-card results, and persists the completed CardSession, CardResults and DeckProgress to SwiftData, then enqueues a Supabase sync.",
+      "tags": ["store", "sessions", "swiftdata", "persistence", "observable"],
+      "complexity": "complex",
+      "languageNotes": "@Observable @MainActor store; ModelContext created fresh at write time, dependencies injected via init, OSLog logging."
+    },
+    {
+      "id": "class:Vayl/Features/Sessions/SessionStore.swift:SessionStore",
+      "type": "class",
+      "name": "SessionStore",
+      "filePath": "Vayl/Features/Sessions/SessionStore.swift",
+      "lineRange": [32, 240],
+      "summary": "@Observable @MainActor store advancing through a deck's cards, computing progress and result tallies, and saving session/result/progress records plus enqueuing a SyncManager task on completion.",
+      "tags": ["store", "sessions", "swiftdata", "sync"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Sessions/SessionStore.swift:saveSession",
+      "type": "function",
+      "name": "saveSession",
+      "filePath": "Vayl/Features/Sessions/SessionStore.swift",
+      "lineRange": [129, 209],
+      "summary": "Writes the completed CardSession, its CardResults and DeckProgress to SwiftData, resolves the session number, and enqueues an async Supabase sync via SyncManager.",
+      "tags": ["persistence", "swiftdata", "sync", "sessions"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Sessions/SessionStore.swift:updateDeckProgress",
+      "type": "function",
+      "name": "updateDeckProgress",
+      "filePath": "Vayl/Features/Sessions/SessionStore.swift",
+      "lineRange": [213, 239],
+      "summary": "Updates or creates DeckProgress.currentCardIndex mid-session so the couple can resume from the correct card if they leave.",
+      "tags": ["persistence", "swiftdata", "sessions"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Sessions/SessionView.swift",
+      "type": "file",
+      "name": "SessionView.swift",
+      "filePath": "Vayl/Features/Sessions/SessionView.swift",
+      "summary": "Thin render-only card session view driven entirely by SessionStore — shows the current card, progress pips, skip/bookmark/discussed controls, and a session-complete summary.",
+      "tags": ["view", "sessions", "card-session", "design-system"],
+      "complexity": "complex",
+      "languageNotes": "Screenshot-protected; all logic delegated to the injected SessionStore."
+    },
+    {
+      "id": "class:Vayl/Features/Sessions/SessionView.swift:SessionView",
+      "type": "class",
+      "name": "SessionView",
+      "filePath": "Vayl/Features/Sessions/SessionView.swift",
+      "lineRange": [13, 254],
+      "summary": "View struct rendering session content (top bar, card text, pips, controls) or the completion summary based on SessionStore state, forwarding taps to recordAndAdvance.",
+      "tags": ["view", "sessions", "card-session"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Settings/SettingsView.swift",
+      "type": "file",
+      "name": "SettingsView.swift",
+      "filePath": "Vayl/Features/Settings/SettingsView.swift",
+      "summary": "Settings screen with profile, partner pairing, appearance, privacy, data export and danger-zone sections, plus DEBUG-only presence-debug and logout-reset entries.",
+      "tags": ["view", "settings", "navigation", "design-system"],
+      "complexity": "complex",
+      "languageNotes": "NavigationStack root; AppStorage-backed screenshot-protection toggle; DEBUG-only dev rows."
+    },
+    {
+      "id": "class:Vayl/Features/Settings/SettingsView.swift:SettingsView",
+      "type": "class",
+      "name": "SettingsView",
+      "filePath": "Vayl/Features/Settings/SettingsView.swift",
+      "lineRange": [9, 266],
+      "summary": "View struct composing the settings sections, pairing-code copy interaction, screenshot-protection toggle, and reset-all-data confirmation alert.",
+      "tags": ["view", "settings", "navigation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Settings/SettingsView.swift:DebugLogoutView",
+      "type": "class",
+      "name": "DebugLogoutView",
+      "filePath": "Vayl/Features/Settings/SettingsView.swift",
+      "lineRange": [271, 290],
+      "summary": "DEBUG-only button that signs out via AuthService and resets onboarding durable state via AppState so launch reconcile cannot flip onboarding back to complete.",
+      "tags": ["view", "debug", "settings", "auth"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Resources/Decks/deck-index.json",
+      "type": "config",
+      "name": "deck-index.json",
+      "filePath": "Vayl/Resources/Decks/deck-index.json",
+      "summary": "Manifest listing the available bundled deck content ids — currently just 'the-opener'.",
+      "tags": ["configuration", "deck", "content", "manifest"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Resources/Decks/the-opener.json",
+      "type": "config",
+      "name": "the-opener.json",
+      "filePath": "Vayl/Resources/Decks/the-opener.json",
+      "summary": "Authored card-deck content file for 'The Opener' deck — the ordered prompt cards a couple plays in a session.",
+      "tags": ["configuration", "deck", "content", "data"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:Vayl/Vayl.entitlements",
+      "type": "config",
+      "name": "Vayl.entitlements",
+      "filePath": "Vayl/Vayl.entitlements",
+      "summary": "App capability entitlements enabling Sign in with Apple (Default) and complete file data protection (NSFileProtectionComplete).",
+      "tags": ["configuration", "ios", "capabilities", "security"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Vayl.plist",
+      "type": "config",
+      "name": "Vayl.plist",
+      "filePath": "Vayl/Vayl.plist",
+      "summary": "Info.plist supplying Supabase URL/anon-key build settings and registering the bundled Clash Display, Switzer, Zodiak, Volkhov and IBM Plex Mono fonts via UIAppFonts.",
+      "tags": ["configuration", "ios", "fonts", "build-system"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Vayl/Vayl.storekit",
+      "type": "config",
+      "name": "Vayl.storekit",
+      "filePath": "Vayl/Vayl.storekit",
+      "summary": "StoreKit test configuration defining the single non-consumable 'Vayl Core Lifetime' product (com.vayl.core.lifetime, $24.99) backing the paywall.",
+      "tags": ["configuration", "ios", "monetization", "storekit"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:VaylTests/CandleIntensityTests.swift",
+      "type": "file",
+      "name": "CandleIntensityTests.swift",
+      "filePath": "VaylTests/CandleIntensityTests.swift",
+      "summary": "Unit tests asserting CandleIntensity's ordered cases match the experience-row slots and map to the correct NMStage values.",
+      "tags": ["test", "unit-test", "enum", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:VaylTests/ContextOptionTests.swift",
+      "type": "file",
+      "name": "ContextOptionTests.swift",
+      "filePath": "VaylTests/ContextOptionTests.swift",
+      "summary": "Unit tests for the reason-based ContextPhase redesign — verifies cell option counts, solo single-anchoring, exploring/experienced set sharing, register derivation, and full RelationshipContext reachability.",
+      "tags": ["test", "unit-test", "onboarding", "validation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:VaylTests/GettingStartedTests.swift",
+      "type": "file",
+      "name": "GettingStartedTests.swift",
+      "filePath": "VaylTests/GettingStartedTests.swift",
+      "summary": "Unit tests for GettingStarted.resolve — checks step ordering and active/done/locked states across paired/unpaired and map-completion permutations.",
+      "tags": ["test", "unit-test", "onboarding", "state-machine"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:VaylTests/MonteRowGeometryTests.swift",
+      "type": "file",
+      "name": "MonteRowGeometryTests.swift",
+      "filePath": "VaylTests/MonteRowGeometryTests.swift",
+      "summary": "Unit test verifying AppLayout.monteFanLayout produces an upright center card, mirror-symmetric outer angles/offsets, and a fan that fits within the screen width.",
+      "tags": ["test", "unit-test", "layout", "geometry"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Features/Pulse/PulseFullView.swift",
+      "target": "class:Vayl/Features/Pulse/PulseFullView.swift:PulseFullView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/PulseGraph.swift",
+      "target": "class:Vayl/Features/Pulse/PulseGraph.swift:PulseGraph",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/PulseGraph.swift",
+      "target": "class:Vayl/Features/Pulse/PulseGraph.swift:PulseGraphCanvas",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/PulseSheetView.swift",
+      "target": "class:Vayl/Features/Pulse/PulseSheetView.swift:PulseSheetView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/PulseWidget.swift",
+      "target": "class:Vayl/Features/Pulse/PulseWidget.swift:PulseWidget",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/Store/PulseStore.swift",
+      "target": "class:Vayl/Features/Pulse/Store/PulseStore.swift:PulseStore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/TierGuideSheet.swift",
+      "target": "class:Vayl/Features/Pulse/TierGuideSheet.swift:TierGuideSheet",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Sessions/Debug/PresenceDebugView.swift",
+      "target": "class:Vayl/Features/Sessions/Debug/PresenceDebugView.swift:PresenceDebugStore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Sessions/Debug/PresenceDebugView.swift",
+      "target": "class:Vayl/Features/Sessions/Debug/PresenceDebugView.swift:PresenceDebugView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Sessions/SessionPlan.swift",
+      "target": "class:Vayl/Features/Sessions/SessionPlan.swift:SessionPlan",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Sessions/SessionStore.swift",
+      "target": "class:Vayl/Features/Sessions/SessionStore.swift:SessionStore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Sessions/SessionStore.swift",
+      "target": "function:Vayl/Features/Sessions/SessionStore.swift:saveSession",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Sessions/SessionStore.swift",
+      "target": "function:Vayl/Features/Sessions/SessionStore.swift:updateDeckProgress",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Sessions/SessionView.swift",
+      "target": "class:Vayl/Features/Sessions/SessionView.swift:SessionView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Settings/SettingsView.swift",
+      "target": "class:Vayl/Features/Settings/SettingsView.swift:SettingsView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Settings/SettingsView.swift",
+      "target": "class:Vayl/Features/Settings/SettingsView.swift:DebugLogoutView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/PulseWidget.swift",
+      "target": "file:Vayl/Features/Pulse/Store/PulseStore.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/PulseWidget.swift",
+      "target": "file:Vayl/Features/Pulse/PulseSheetView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/PulseSheetView.swift",
+      "target": "file:Vayl/Features/Pulse/PulseGraph.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/PulseFullView.swift",
+      "target": "file:Vayl/Features/Pulse/PulseGraph.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/PulseGraph.swift",
+      "target": "file:Vayl/Features/Pulse/TierGuideSheet.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Pulse/Store/PulseStore.swift",
+      "target": "file:Vayl/Core/Models/PulseEntry.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Sessions/SessionView.swift",
+      "target": "file:Vayl/Features/Sessions/SessionStore.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Sessions/SessionStore.swift:SessionStore",
+      "target": "file:Vayl/Core/Services/SyncManager.swift",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Sessions/SessionStore.swift",
+      "target": "file:Vayl/Core/Services/AppState.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Sessions/Debug/PresenceDebugView.swift:PresenceDebugStore",
+      "target": "file:Vayl/Core/Services/RealtimeSessionService.swift",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Settings/SettingsView.swift",
+      "target": "file:Vayl/Features/Pairing/PairingSettingsView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Settings/SettingsView.swift",
+      "target": "file:Vayl/Features/Sessions/Debug/PresenceDebugView.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Settings/SettingsView.swift:DebugLogoutView",
+      "target": "file:Vayl/Core/Services/AuthService.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:Vayl/Features/Settings/SettingsView.swift:DebugLogoutView",
+      "target": "file:Vayl/Core/Services/AppState.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:Vayl/Vayl.storekit",
+      "target": "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:Vayl/Vayl.entitlements",
+      "target": "file:Vayl/App/VaylApp.swift",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:Vayl/Vayl.plist",
+      "target": "file:Vayl/App/VaylApp.swift",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:Vayl/Resources/Decks/deck-index.json",
+      "target": "config:Vayl/Resources/Decks/the-opener.json",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:Vayl/Resources/Decks/the-opener.json",
+      "target": "file:Vayl/Features/Sessions/SessionPlan.swift",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

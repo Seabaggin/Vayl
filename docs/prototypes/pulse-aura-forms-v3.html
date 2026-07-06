@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — aura forms v3 (alive)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF; --cyan-light:#9BE8FF; --purple:#6C3AE0; --purple-light:#A78BFA; --bridge:#8B6FD4; --magenta:#FF006A;
+    --void:#0a0810; --t1:#E8E8F0; --t2:rgba(255,255,255,.65); --t3:rgba(255,255,255,.4);
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0c0a12;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:880px;margin:0 auto;padding:44px 28px 70px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:25px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:13px;line-height:1.55;color:var(--t2);margin:0 0 26px}.lede b{color:var(--t1)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr;max-width:320px;margin-inline:auto}}
+  .tile{border-radius:20px;overflow:hidden;background:radial-gradient(120% 60% at 50% 0%, rgba(108,58,224,.12), transparent 62%),linear-gradient(var(--void),#08060f);border:1px solid rgba(255,255,255,.06);padding:26px 16px 16px;text-align:center}
+  .stage{height:170px;display:flex;align-items:center;justify-content:center;position:relative}
+  .small{display:flex;gap:14px;align-items:center;justify-content:center;margin-top:6px;opacity:.95}
+  .small .lbl{font-size:8px;color:var(--t3);letter-spacing:.08em;text-transform:uppercase}
+  .nm{font-family:var(--disp);font-size:14px;font-weight:600;margin-top:14px}
+  .note{font-size:10.5px;color:var(--t3);margin-top:6px;line-height:1.4}
+
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  @keyframes flick{0%,100%{transform:scaleY(1) scaleX(1) translateX(0)}25%{transform:scaleY(1.05) scaleX(.98) translateX(-1px)}60%{transform:scaleY(.97) scaleX(1.02) translateX(1px)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes spinR{to{transform:rotate(-360deg)}}
+  @keyframes corebreathe{0%,100%{opacity:.92;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}}
+  @keyframes d1{0%,100%{transform:translate(0,0)}50%{transform:translate(14px,-10px)}}
+  @keyframes d2{0%,100%{transform:translate(0,0)}50%{transform:translate(-12px,12px)}}
+  @keyframes d3{0%,100%{transform:translate(0,0)}50%{transform:translate(10px,14px)}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+
+  /* 1 · FLAME (outline + two-pass glow, no fill) */
+  .flame{width:120px;height:140px;transform-origin:50% 92%;animation:flick 3.4s ease-in-out infinite}
+  .flameS{width:34px;height:40px;transform-origin:50% 92%;animation:flick 3.4s ease-in-out infinite}
+
+  /* 2 · ORBITAL NODE */
+  .orbit{position:relative;width:150px;height:150px}
+  .orbitS{position:relative;width:40px;height:40px}
+  .core{position:absolute;left:50%;top:50%;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%);
+    background:radial-gradient(circle,#fff,var(--cyan) 55%,transparent 78%);box-shadow:0 0 16px 4px rgba(0,194,255,.7),0 0 34px 10px rgba(0,194,255,.28);animation:corebreathe 4.5s ease-in-out infinite}
+  .coreS{width:9px;height:9px}.coreS{box-shadow:0 0 8px 2px rgba(0,194,255,.7)}
+  .ring{position:absolute;inset:0;animation:spin 14s linear infinite}
+  .ring.r2{inset:20px;animation:spinR 10s linear infinite}
+  .ring.r3{inset:8px;animation:spin 18s linear infinite}
+  .sat{position:absolute;left:50%;top:0;width:7px;height:7px;border-radius:50%;transform:translateX(-50%);background:var(--cyan);box-shadow:0 0 7px 1px rgba(0,194,255,.6)}
+  .sat.s2{width:5px;height:5px;opacity:.8}.sat.s3{width:6px;height:6px;opacity:.9}
+
+  /* 3 · MEMBRANE (ring + inhabited interior, void shows through) */
+  .mem{position:relative;width:140px;height:140px;border-radius:50%;border:2px solid var(--cyan);
+    box-shadow:0 0 18px 2px rgba(0,194,255,.4), inset 0 0 22px 2px rgba(0,194,255,.18);animation:breathe 6s ease-in-out infinite}
+  .memS{width:36px;height:36px;border:1.5px solid var(--cyan);box-shadow:0 0 8px 1px rgba(0,194,255,.45)}
+  .inh{position:absolute;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px 1px rgba(0,194,255,.6)}
+  .i1{width:9px;height:9px;left:38%;top:34%;animation:d1 5s ease-in-out infinite}
+  .i2{width:6px;height:6px;left:58%;top:54%;opacity:.85;animation:d2 6.5s ease-in-out infinite}
+  .i3{width:5px;height:5px;left:46%;top:62%;opacity:.7;animation:d3 5.8s ease-in-out infinite}
+
+  .od{font-size:12px;line-height:1.6;color:var(--t2);margin-top:24px}.od b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The aura, <span class="spectrum">alive</span></h1>
+  <p class="lede">Three directions from three deep passes, all on cyan (Abundant). None is an object with a surface; all keep a crisp, clear color. They only live in motion, so watch them.</p>
+
+  <div class="grid">
+
+    <!-- FLAME -->
+    <div class="tile">
+      <div class="stage">
+        <svg class="flame" viewBox="0 0 120 140" fill="none">
+          <defs><linearGradient id="fl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BE8FF"/><stop offset="1" stop-color="#00C2FF"/></linearGradient></defs>
+          <path d="M60 128 C26 110 30 74 50 52 C58 42 54 30 60 12 C68 30 74 44 82 58 C96 80 92 112 60 128 Z" stroke="#00C2FF" stroke-width="12" opacity=".2" filter="blur(6px)"/>
+          <path d="M60 128 C26 110 30 74 50 52 C58 42 54 30 60 12 C68 30 74 44 82 58 C96 80 92 112 60 128 Z" stroke="url(#fl)" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M60 120 C44 108 46 86 58 70 C62 64 60 56 60 46 C62 58 66 66 70 74 C78 88 76 108 60 120 Z" stroke="#9BE8FF" stroke-width="1" opacity=".5"/>
+        </svg>
+      </div>
+      <div class="small">
+        <svg class="flameS" viewBox="0 0 120 140" fill="none"><path d="M60 128 C26 110 30 74 50 52 C58 42 54 30 60 12 C68 30 74 44 82 58 C96 80 92 112 60 128 Z" stroke="#00C2FF" stroke-width="6"/></svg>
+        <span class="lbl">widget size</span>
+      </div>
+      <div class="nm">1 · Outline flame</div>
+      <div class="note">A process, not a thing. Card-face outline + glow. Shape shifts by tier, so color and form agree.</div>
+    </div>
+
+    <!-- ORBITAL NODE -->
+    <div class="tile">
+      <div class="stage">
+        <div class="orbit">
+          <div class="ring"><div class="sat"></div></div>
+          <div class="ring r2"><div class="sat s2"></div></div>
+          <div class="ring r3"><div class="sat s3"></div></div>
+          <div class="core"></div>
+        </div>
+      </div>
+      <div class="small">
+        <div class="orbitS"><div class="ring" style="animation-duration:11s"><div class="sat" style="width:4px;height:4px"></div></div><div class="core coreS"></div></div>
+        <span class="lbl">widget size</span>
+      </div>
+      <div class="nm">2 · Orbital node</div>
+      <div class="note">Your constellation node, breathing. Crisp core for color; orbits read as drawn-in vs open.</div>
+    </div>
+
+    <!-- MEMBRANE -->
+    <div class="tile">
+      <div class="stage">
+        <div class="mem"><div class="inh i1"></div><div class="inh i2"></div><div class="inh i3"></div></div>
+      </div>
+      <div class="small">
+        <div class="mem memS"></div>
+        <span class="lbl">widget size</span>
+      </div>
+      <div class="nm">3 · Inhabited membrane</div>
+      <div class="note">A tier-color ring with the void showing through and life drifting inside the boundary.</div>
+    </div>
+
+  </div>
+
+  <p class="od"><b>My read after sitting with all three:</b> <b>2 (Orbital node)</b> is the strongest, it is a true native extension (the constellation node you already have, given breath), the core keeps the color dead clear, the orbit-tightness gives you a felt "posture" that maps naturally onto the openness axis, and it has no surface so it can never read as a ball. <b>1 (Flame)</b> is the most evocative and the shape-by-tier idea is lovely, but a flame carries heat/passion/candle baggage that may not map cleanly to "capacity," and it lives closest to your card-face grammar so it could get confused with a card element. <b>3 (Membrane)</b> is a beautiful middle path but the ring silhouette flirts with reading as a progress/loading ring. Tell me which to develop (my vote is the orbital node) and I will rebuild the field, the comparison thread, and the Home widget around it.</p>
+</div>
+</body>
+</html>

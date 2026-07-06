@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Desire Map · Reveal Ceremony</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --void: #0a0810; --ink: #070610; --card: #120f1a; --cardUp: #17131f;
+  --cyan: #00c2ff; --purple: #6c3ae0; --magenta: #ff006a; --bridge: #8b6fd4;
+  --t-display: rgba(236,234,242,.95); --t-primary: rgba(255,255,255,.90);
+  --t-secondary: rgba(255,255,255,.55); --t-ghost: rgba(255,255,255,.18);
+  --hairline: rgba(255,255,255,.08);
+  --disp: "Clash Display",-apple-system,sans-serif;
+  --body: "Switzer",-apple-system,BlinkMacSystemFont,sans-serif;
+}
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
+html, body { min-height:100vh; background:#0f0e14; font-family:var(--body); color:var(--t-primary);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; gap:16px; }
+
+/* ── Phone shell ── */
+.phone {
+  position:relative; width:390px; height:844px; border-radius:50px; overflow:hidden;
+  background:var(--ink); box-shadow:0 36px 90px rgba(0,0,0,.65),inset 0 0 0 1.5px rgba(255,255,255,.05); flex:none;
+}
+.voidbg { position:absolute; inset:0; background:var(--void); }
+.notch { position:absolute; top:13px; left:50%; transform:translateX(-50%); width:112px; height:30px; background:#000; border-radius:18px; z-index:22; }
+.home-ind { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:128px; height:5px; border-radius:3px; background:rgba(255,255,255,.22); z-index:22; }
+.status-bar { position:absolute; top:0; left:0; right:0; z-index:20; display:flex; justify-content:space-between; padding:17px 40px 0; font-size:14px; font-weight:600; color:rgba(255,255,255,.7); pointer-events:none; }
+.status-bar .ic { letter-spacing:2px; font-size:11px; opacity:.72; }
+
+/* Atmosphere */
+.atmo { position:absolute; inset:0; pointer-events:none; z-index:0; }
+.atmo .drift { position:absolute; inset:0; animation:drift 20s ease-in-out infinite alternate; }
+.blob { position:absolute; border-radius:50%; filter:blur(64px); transform:translate(-50%,-50%); }
+@keyframes drift { from{transform:translate(0,0)} to{transform:translate(-12px,14px)} }
+@media(prefers-reduced-motion:reduce){ .atmo .drift{animation:none} }
+
+/* ── Main screen ── */
+.screen {
+  position:absolute; inset:0; z-index:10; cursor:pointer;
+  padding:58px 28px 40px;
+  display:flex; flex-direction:column; align-items:center;
+  overflow:hidden;
+}
+
+/* Beat dots */
+.beat-dots { display:flex; align-items:center; gap:6px; padding:14px 0 0; flex-shrink:0; }
+.beat-dot {
+  height:6px; width:6px; border-radius:99px; background:rgba(255,255,255,.12);
+  transition:width 360ms cubic-bezier(.32,0,.08,1), background 360ms ease;
+}
+.beat-dot.active {
+  width:20px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple) 52%,var(--magenta));
+  box-shadow:0 0 8px rgba(108,58,224,.45);
+}
+
+/* Tap hint */
+.tap-hint {
+  font-size:10px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--t-ghost);
+  margin-top:10px; flex-shrink:0;
+  opacity:1; transition:opacity 400ms ease;
+}
+.tap-hint.hidden { opacity:0; pointer-events:none; }
+
+/* Overline "Your alignment" */
+.ceremony-overline {
+  font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:rgba(255,255,255,.28);
+  margin-top:20px; flex-shrink:0;
+  opacity:0; transform:translateY(8px);
+  transition:opacity 600ms ease, transform 600ms cubic-bezier(.32,0,.08,1);
+}
+.ceremony-overline.show { opacity:1; transform:translateY(0); }
+
+/* ── Fan area ── */
+.fan-area {
+  position:relative; height:300px; width:100%;
+  display:flex; align-items:center; justify-content:center;
+  margin-top:18px; flex-shrink:0;
+}
+
+/* Ghost card wrappers — entry animation */
+/* SwiftUI note: each card uses .offset(y: arrived ? 0 : 60) + .opacity(arrived ? 1 : 0) animated with withAnimation(.spring(response:0.5, dampingFraction:0.8)) */
+.card-wrap {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  opacity:0; transform:translateY(70px);
+  transition:opacity 480ms ease, transform 480ms cubic-bezier(.32,0,.08,1);
+  pointer-events:none;
+}
+.card-wrap.left-wrap  { transition-delay:0ms; }
+.card-wrap.center-wrap { transition-delay:70ms; }
+.card-wrap.right-wrap { transition-delay:140ms; }
+.card-wrap.arrived { opacity:1; transform:translateY(0); }
+
+/* Inner ghost cards */
+.ghost-inner {
+  width:224px; height:300px; border-radius:18px;
+  background:linear-gradient(160deg,var(--cardUp),var(--card));
+  border:1px solid var(--hairline);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.left-wrap .ghost-inner  { transform:rotate(-9deg) translateX(-72px) translateY(6px) scale(.86); opacity:.35; }
+.right-wrap .ghost-inner { transform:rotate(9deg)  translateX(72px)  translateY(6px) scale(.86); opacity:.35; }
+
+/* Card back face content */
+.card-back-mark {
+  font-family:var(--disp); font-size:28px; font-weight:700; letter-spacing:-.02em;
+  background:linear-gradient(135deg,var(--cyan),var(--purple) 50%,var(--magenta));
+  -webkit-background-clip:text; background-clip:text; color:transparent; opacity:.38;
+  user-select:none;
+}
+
+/* ── Pulse ring (beat 1) ── */
+/* SwiftUI note: .overlay { Circle().stroke(..spectrumGradient..) .scaleEffect(pulsing) .opacity(pulsing ? 0.6 : 0) }.animation(.easeInOut(duration:1.4).repeatForever()) */
+.pulse-ring-container {
+  position:absolute; inset:-10px;
+  border-radius:calc(18px + 10px);
+  border:1.5px solid rgba(108,58,224,.5);
+  opacity:0; pointer-events:none;
+  transition:opacity 400ms ease;
+}
+.pulse-ring-container.beating {
+  opacity:1;
+  animation:ring-pulse 1.4s ease-in-out infinite;
+}
+.pulse-ring-glow {
+  position:absolute; inset:-14px;
+  border-radius:calc(18px + 14px);
+  border:1px solid rgba(108,58,224,.2);
+  opacity:0;
+}
+.pulse-ring-container.beating + .pulse-ring-glow {
+  opacity:1;
+  animation:ring-pulse-outer 1.4s ease-in-out infinite;
+  animation-delay:200ms;
+}
+@keyframes ring-pulse { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.05);opacity:.2} }
+@keyframes ring-pulse-outer { 0%,100%{transform:scale(1);opacity:.4} 50%{transform:scale(1.07);opacity:.06} }
+@media(prefers-reduced-motion:reduce){ .pulse-ring-container.beating,.pulse-ring-container.beating+.pulse-ring-glow{animation:none} }
+
+/* ── Card flip mechanism ── */
+/* SwiftUI note: .rotation3DEffect(.degrees(flipped ? 180 : 0), axis:(0,1,0))
+   Front face shows when flipped; back shows initially. Use .matchedGeometryEffect for content swap. */
+.flipper-outer { perspective:1400px; position:relative; }
+.flipper {
+  width:224px; height:300px;
+  transform-style:preserve-3d; -webkit-transform-style:preserve-3d;
+  transition:transform 540ms ease-in-out;
+}
+.flipper.flipped { transform:rotateY(180deg); }
+.face {
+  position:absolute; inset:0; border-radius:18px;
+  backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  overflow:hidden;
+}
+.face.back {
+  background:linear-gradient(160deg,var(--cardUp),var(--card));
+  border:1px solid var(--hairline);
+  display:flex; align-items:center; justify-content:center;
+}
+.face.front {
+  transform:rotateY(180deg);
+  background:linear-gradient(160deg,#1a1427,#120f1a);
+  border:1px solid rgba(108,58,224,.38);
+  box-shadow:0 0 24px rgba(108,58,224,.22);
+  padding:20px 18px;
+  display:flex; flex-direction:column; gap:12px;
+}
+/* After flip: card lifts slightly — .flipper.settled */
+/* SwiftUI note: .shadow(color:..., radius:28) .offset(y: settled ? -4 : 0) */
+.flipper.settled { transform:rotateY(180deg) translateY(-4px); }
+
+/* Front face content */
+.front-over { display:flex; align-items:center; gap:6px; }
+.f-dot { width:5px; height:5px; border-radius:50%; background:linear-gradient(135deg,var(--cyan),var(--magenta)); flex-shrink:0; }
+.f-cat { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.35); }
+.front-title { font-family:var(--disp); font-size:20px; font-weight:700; letter-spacing:-.01em; line-height:1.25; color:var(--t-display); }
+.front-sub { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--t-ghost); }
+.front-sub-star { font-size:9px; background:linear-gradient(90deg,var(--cyan),var(--magenta)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.front-rule { width:36px; height:1px; background:var(--hairline); margin:0; }
+.front-desc { font-size:12px; color:rgba(255,255,255,.4); line-height:1.55; }
+.front-link { font-size:11px; color:rgba(255,255,255,.2); margin-top:auto; letter-spacing:.02em; }
+
+/* ── Locked section (beat 3) ── */
+.locked-section {
+  width:100%; margin-top:16px; flex-shrink:0;
+  display:flex; flex-direction:column; gap:7px;
+}
+.locked-row {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:0 14px; height:46px; border-radius:11px;
+  background:rgba(255,255,255,.02); border:1px solid var(--hairline);
+  opacity:0; transform:translateY(22px);
+  transition:opacity 360ms ease, transform 360ms cubic-bezier(.32,0,.08,1);
+  flex-shrink:0;
+}
+.locked-row.show { opacity:1; transform:translateY(0); }
+.locked-text {
+  font-size:13px; color:rgba(255,255,255,.3);
+  filter:blur(5px); flex:1; overflow:hidden; white-space:nowrap;
+  user-select:none; pointer-events:none;
+}
+.lock-icon { font-size:12px; opacity:.3; flex-shrink:0; }
+.count-block { display:flex; flex-direction:column; align-items:center; gap:8px; padding-top:10px; }
+.count-text { font-size:13px; color:var(--t-ghost); opacity:0; transition:opacity 400ms ease; }
+.count-text.show { opacity:1; }
+.spectrum-hairline { width:60px; height:1px; background:linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta)); opacity:0; transition:opacity 400ms ease 100ms; }
+.spectrum-hairline.show { opacity:.4; }
+
+/* ── Paywall ── */
+/* SwiftUI note: .vaylSheet (half-detent) containing PaywallView. Never .vaylCover — paywall is not immersive. */
+.paywall-scrim {
+  position:absolute; inset:0; z-index:14;
+  background:rgba(10,8,16,0); pointer-events:none;
+  transition:background 500ms ease;
+}
+.paywall-scrim.show { background:rgba(10,8,16,.5); pointer-events:auto; }
+
+.paywall-sheet {
+  position:absolute; bottom:0; left:0; right:0; height:486px;
+  background:linear-gradient(180deg,#160f22,#120f1a 40%);
+  border-radius:22px 22px 0 0;
+  border-top:1px solid rgba(108,58,224,.18);
+  z-index:20;
+  transform:translateY(100%);
+  transition:transform 500ms cubic-bezier(.32,0,.08,1);
+  display:flex; flex-direction:column;
+  pointer-events:auto;
+  /* SwiftUI note: interactiveDismissDisabled(false) — sheet IS dismissable */
+}
+.paywall-sheet.open { transform:translateY(0); }
+
+.grabber { width:36px; height:4px; border-radius:2px; background:rgba(255,255,255,.15); margin:10px auto 0; flex-shrink:0; }
+.sheet-content { flex:1; padding:20px 24px 24px; display:flex; flex-direction:column; gap:0; overflow:hidden; }
+.sheet-hook { font-family:var(--disp); font-size:22px; font-weight:700; letter-spacing:-.02em; color:var(--t-display); text-align:center; line-height:1.2; }
+.sheet-sub { font-size:14px; color:var(--t-secondary); text-align:center; line-height:1.55; margin-top:8px; }
+.sheet-divider { width:100%; height:1px; background:var(--hairline); margin:16px 0; flex-shrink:0; }
+.outcome-list { display:flex; flex-direction:column; gap:11px; }
+.outcome-row { display:flex; align-items:center; gap:12px; }
+.outcome-icon { width:26px; height:26px; border-radius:7px; background:rgba(108,58,224,.12); border:1px solid rgba(108,58,224,.2); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+.outcome-label { font-size:13px; color:rgba(255,255,255,.7); }
+.price-btn {
+  margin-top:16px; width:100%; border-radius:14px; padding:0 20px; height:56px;
+  background:linear-gradient(90deg,rgba(0,194,255,.15),rgba(108,58,224,.25));
+  border:1px solid rgba(108,58,224,.5); box-shadow:0 0 24px rgba(108,58,224,.24);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  cursor:pointer; user-select:none; flex-shrink:0;
+  transition:all 160ms ease;
+}
+.price-btn:active { transform:scale(.97); }
+.price-label { font-family:var(--disp); font-size:16px; font-weight:700; letter-spacing:-.01em; color:var(--t-display); }
+.price-sub { font-size:11px; color:var(--t-secondary); }
+.sheet-footer { border-top:1px solid var(--hairline); margin-top:14px; padding-top:12px; text-align:center; font-size:11px; color:var(--t-ghost); flex-shrink:0; letter-spacing:.02em; }
+
+/* ─────── HINT LABEL OUTSIDE PHONE ─────── */
+.hint { font-size:12px; color:rgba(255,255,255,.28); text-align:center; letter-spacing:.03em; }
+
+/* ─────── AUTO-PLAY CONTROL PANEL (feel the inter-beat holds before Swift) ─────── */
+.controls {
+  display:flex; flex-direction:column; gap:14px; align-items:stretch;
+  width:390px; max-width:100%; padding:16px 18px; margin-top:4px;
+  background:rgba(255,255,255,.03); border:1px solid var(--hairline); border-radius:16px;
+  font-family:var(--body);
+}
+.controls-row { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.controls-row.top { border-bottom:1px solid var(--hairline); padding-bottom:13px; }
+.ctl-label { font-size:12px; font-weight:600; letter-spacing:.04em; color:var(--t-secondary); }
+.ctl-label .val { color:var(--t-primary); font-variant-numeric:tabular-nums; margin-left:7px; }
+.slider-block { display:flex; flex-direction:column; gap:7px; }
+.controls input[type=range] {
+  -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:99px; cursor:pointer;
+  background:linear-gradient(90deg,var(--cyan),var(--purple) 52%,var(--magenta)); outline:none;
+}
+.controls input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%;
+  background:#fff; border:2px solid var(--purple); cursor:pointer; box-shadow:0 0 8px rgba(108,58,224,.5);
+}
+.switch { display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+.switch input { width:40px; height:22px; accent-color:var(--purple); cursor:pointer; }
+.btn-replay {
+  border:1px solid rgba(108,58,224,.5); background:rgba(108,58,224,.14); color:var(--t-primary);
+  font-family:var(--body); font-size:13px; font-weight:600; letter-spacing:.02em;
+  padding:8px 18px; border-radius:99px; cursor:pointer; transition:transform 140ms ease;
+}
+.btn-replay:active { transform:scale(.96); }
+.ctl-hint { font-size:11px; color:var(--t-ghost); text-align:center; line-height:1.5; letter-spacing:.02em; }
+</style>
+</head>
+<body>
+
+<div class="phone" id="phone">
+  <div class="voidbg"></div>
+  <div class="atmo"><div class="drift">
+    <div class="blob" style="left:195px;top:700px;width:400px;height:340px;background:radial-gradient(closest-side,rgba(108,58,224,.18),transparent 73%)"></div>
+    <div class="blob" style="left:80px;top:280px;width:280px;height:260px;background:radial-gradient(closest-side,rgba(0,194,255,.09),transparent 76%)"></div>
+    <div class="blob" style="left:320px;top:500px;width:220px;height:220px;background:radial-gradient(closest-side,rgba(255,0,106,.07),transparent 74%)"></div>
+  </div></div>
+  <div class="notch"></div>
+  <div class="status-bar"><span>9:41</span><span class="ic">●●● ▮</span></div>
+
+  <!-- Main clickable screen -->
+  <div class="screen" id="screen" onclick="onScreenTap()">
+
+    <!-- Beat progress dots -->
+    <div class="beat-dots">
+      <div class="beat-dot" id="d0"></div>
+      <div class="beat-dot" id="d1"></div>
+      <div class="beat-dot" id="d2"></div>
+      <div class="beat-dot" id="d3"></div>
+    </div>
+
+    <div class="tap-hint" id="tapHint">tap to begin</div>
+
+    <!-- Overline (appears beat 1) -->
+    <div class="ceremony-overline" id="overline">Your alignment</div>
+
+    <!-- ── Fan area ── -->
+    <div class="fan-area">
+
+      <!-- Left ghost -->
+      <div class="card-wrap left-wrap" id="leftWrap">
+        <div class="ghost-inner">
+          <div class="card-back-mark">✦</div>
+        </div>
+      </div>
+
+      <!-- Right ghost -->
+      <div class="card-wrap right-wrap" id="rightWrap">
+        <div class="ghost-inner">
+          <div class="card-back-mark">✦</div>
+        </div>
+      </div>
+
+      <!-- Center card (the one that flips) -->
+      <div class="card-wrap center-wrap" id="centerWrap">
+        <!-- Pulse ring sits outside flipper so it doesn't flip with the card -->
+        <div class="pulse-ring-container" id="pulseRing"></div>
+        <div class="pulse-ring-glow" id="pulseRingGlow"></div>
+        <div class="flipper-outer">
+          <div class="flipper" id="flipper">
+            <!-- Back face (initially shown) -->
+            <div class="face back">
+              <div class="card-back-mark" style="font-size:36px;opacity:.32">✦</div>
+            </div>
+            <!-- Front face (shown after flip) -->
+            <!-- SwiftUI note: haptic: .impact(.medium) fires when flip animation reaches its midpoint -->
+            <div class="face front">
+              <div class="front-over">
+                <div class="f-dot"></div>
+                <div class="f-cat">structures</div>
+              </div>
+              <div class="front-title">Opening Up</div>
+              <div class="front-sub">You both marked this <span class="front-sub-star">✦</span></div>
+              <div class="front-rule"></div>
+              <div class="front-desc">How do you want to open up, and at what pace — the desire, not the decision.</div>
+              <div class="front-link">Talk about this →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /fan-area -->
+
+    <!-- ── Locked section (appears beat 3) ── -->
+    <div class="locked-section">
+      <div class="locked-row" id="lr0"><div class="locked-text">Swinging or Playing Together</div><div class="lock-icon">🔒</div></div>
+      <div class="locked-row" id="lr1"><div class="locked-text">Multiple Loving Relationships</div><div class="lock-icon">🔒</div></div>
+      <div class="locked-row" id="lr2"><div class="locked-text">New Relationship Energy</div><div class="lock-icon">🔒</div></div>
+      <div class="locked-row" id="lr3"><div class="locked-text">Emotional Connections Outside</div><div class="lock-icon">🔒</div></div>
+      <div class="count-block">
+        <div class="count-text" id="countText">4 more aligned desires</div>
+        <div class="spectrum-hairline" id="specLine"></div>
+      </div>
+    </div>
+
+  </div><!-- /screen -->
+
+  <!-- Paywall scrim (intercepts clicks when sheet is open) -->
+  <div class="paywall-scrim" id="paywallScrim" onclick="closePaywall()"></div>
+
+  <!-- Paywall sheet -->
+  <div class="paywall-sheet" id="paywallSheet">
+    <div class="grabber"></div>
+    <div class="sheet-content">
+      <div class="sheet-hook">Reveal Your Map</div>
+      <div class="sheet-sub">Made to take your curiosity<br>somewhere deeper.</div>
+      <div class="sheet-divider"></div>
+      <div class="outcome-list">
+        <div class="outcome-row"><div class="outcome-icon">✦</div><div class="outcome-label">See where your desires meet</div></div>
+        <div class="outcome-row"><div class="outcome-icon">◎</div><div class="outcome-label">Talk openly about what you want</div></div>
+        <div class="outcome-row"><div class="outcome-icon">⟳</div><div class="outcome-label">Explore opening up together</div></div>
+        <div class="outcome-row"><div class="outcome-icon">⬡</div><div class="outcome-label">Reach agreements that feel good</div></div>
+      </div>
+      <div class="sheet-divider"></div>
+      <div class="price-btn">
+        <div class="price-label">$24.99 · one time · covers both</div>
+        <div class="price-sub">Lifetime access for you and Alex</div>
+      </div>
+      <div class="sheet-footer">Restore Purchases · Terms · Privacy</div>
+    </div>
+  </div>
+
+  <div class="home-ind"></div>
+</div>
+
+<div class="hint" id="globalHint">Tap anywhere to advance through each beat</div>
+
+<!-- ─────── Auto-play control panel: feel the two inter-beat holds ─────── -->
+<div class="controls" id="controls">
+  <div class="controls-row top">
+    <label class="switch"><input type="checkbox" id="autoToggle"><span class="ctl-label">Auto-play</span></label>
+    <button class="btn-replay" id="replayBtn">↻ Replay</button>
+  </div>
+  <div class="slider-block">
+    <div class="ctl-label">Flip-settle → gap hold<span class="val" id="hold12Val">1.50s</span></div>
+    <input type="range" id="hold12" min="400" max="3000" step="50" value="1500" />
+  </div>
+  <div class="slider-block">
+    <div class="ctl-label">Count → paywall hold<span class="val" id="hold23Val">1.20s</span></div>
+    <input type="range" id="hold23" min="400" max="3000" step="50" value="1200" />
+  </div>
+  <div class="ctl-hint">Turn on Auto-play to feel the holds hands-free. Tap the screen mid-hold to skip ahead (the real tap-to-advance accelerator). Tune the two sliders, then hand me the values.</div>
+</div>
+
+<script>
+/* SwiftUI note: In SwiftUI, beats are a @Published enum on DesireRevealStore.
+   Each beat transition uses withAnimation(.spring(response:0.5)) or explicit DispatchQueue.main.asyncAfter.
+   Haptic at beat 2 flip: UIImpactFeedbackGenerator(style:.medium).impactOccurred() */
+
+let beat = 0;
+const BEATS = 4;
+
+const phone    = document.getElementById('phone');
+const dots     = [0,1,2,3].map(i => document.getElementById('d'+i));
+const tapHint  = document.getElementById('tapHint');
+const overline = document.getElementById('overline');
+const leftWrap = document.getElementById('leftWrap');
+const rightWrap= document.getElementById('rightWrap');
+const centerWrap = document.getElementById('centerWrap');
+const pulseRing= document.getElementById('pulseRing');
+const pulseGlow= document.getElementById('pulseRingGlow');
+const flipper  = document.getElementById('flipper');
+const lockedRows = [0,1,2,3].map(i => document.getElementById('lr'+i));
+const countText= document.getElementById('countText');
+const specLine = document.getElementById('specLine');
+const paywallScrim = document.getElementById('paywallScrim');
+const paywallSheet = document.getElementById('paywallSheet');
+const globalHint   = document.getElementById('globalHint');
+
+function updateDots(b) {
+  dots.forEach((d,i) => d.classList.toggle('active', i < b));
+}
+
+function advance() {
+  if (beat >= BEATS) return;
+  beat++;
+  updateDots(beat);
+  applyBeat(beat);
+}
+
+function applyBeat(b) {
+  // Hide "tap to begin" after first beat
+  if (b >= 1) tapHint.classList.add('hidden');
+
+  if (b === 1) {
+    // Fan arrives — overline + 3 cards
+    overline.classList.add('show');
+    leftWrap.classList.add('arrived');
+    setTimeout(() => centerWrap.classList.add('arrived'), 70);
+    setTimeout(() => {
+      rightWrap.classList.add('arrived');
+      pulseRing.classList.add('beating');
+    }, 140);
+  }
+
+  if (b === 2) {
+    // Cinematic flip
+    /* haptic: medium impact */
+    pulseRing.classList.remove('beating');
+    setTimeout(() => {
+      flipper.classList.add('flipped');
+      setTimeout(() => flipper.classList.add('settled'), 540);
+    }, 60);
+  }
+
+  if (b === 3) {
+    // Locked rows slide up (staggered 80ms)
+    lockedRows.forEach((row, i) => {
+      setTimeout(() => row.classList.add('show'), i * 80);
+    });
+    setTimeout(() => {
+      countText.classList.add('show');
+      specLine.classList.add('show');
+    }, 4 * 80 + 140);
+  }
+
+  if (b === 4) {
+    // Paywall sheet rises
+    globalHint.textContent = 'Tap outside the sheet to close';
+    paywallScrim.classList.add('show');
+    paywallSheet.classList.add('open');
+  }
+}
+
+function closePaywall() {
+  // Returns to beat 3 (gap) state for re-exploration
+  cancelPending();
+  beat = 3; seqIdx = 2;
+  updateDots(3);
+  paywallScrim.classList.remove('show');
+  paywallSheet.classList.remove('open');
+  globalHint.textContent = autoPlay
+    ? 'Hit Replay to feel the run again'
+    : 'Tap anywhere to advance through each beat';
+}
+
+/* ─── Auto-play: feel the inter-beat holds hands-free (pre-Swift, per the build protocol).
+   The two locked intra-beat timings stay fixed; only the two HOLDS are tunable here.
+   Tap-to-skip during a hold mirrors the real tap-to-advance accelerator. ─── */
+const autoToggle = document.getElementById('autoToggle');
+const replayBtn  = document.getElementById('replayBtn');
+const hold12El   = document.getElementById('hold12');
+const hold23El   = document.getElementById('hold23');
+const hold12Val  = document.getElementById('hold12Val');
+const hold23Val  = document.getElementById('hold23Val');
+
+let autoPlay = false;
+let pendingTimer = null;
+let seqIdx = -1;
+
+const LEAD_IN  = 600;        // cover opens → fan lands (lead-in, fixed)
+const FAN_FLIP = 1400;       // fan sits ~one ring-pulse → flip (locked-ish, fixed)
+const FLIP_MS  = 600;        // 60ms pre-delay + 540ms flip → counts the hold from flip-settle
+const COUNT_MS = 4 * 80 + 140; // locked rows stagger + count appear (matches applyBeat beat 3)
+
+// Ordered auto-play stops: apply a beat, then hold before the next. Holds 2 and 3 are tunable.
+const SEQ = [
+  { apply: () => step(1), hold: () => FAN_FLIP },                 // fan
+  { apply: () => step(2), hold: () => FLIP_MS + (+hold12El.value) }, // flip → (settle + hold12) → gap
+  { apply: () => step(3), hold: () => COUNT_MS + (+hold23El.value) }, // gap+count → hold23 → paywall
+  { apply: () => step(4), hold: () => null },                     // paywall (end)
+];
+
+function step(b) { beat = b; updateDots(b); applyBeat(b); }
+function cancelPending() { if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; } }
+
+// Wipe every additive class so a run starts clean (the manual flow only ever adds classes).
+function resetVisual() {
+  cancelPending();
+  beat = 0; seqIdx = -1;
+  updateDots(0);
+  tapHint.classList.remove('hidden');
+  overline.classList.remove('show');
+  leftWrap.classList.remove('arrived');
+  centerWrap.classList.remove('arrived');
+  rightWrap.classList.remove('arrived');
+  pulseRing.classList.remove('beating');
+  flipper.classList.remove('flipped', 'settled');
+  lockedRows.forEach(r => r.classList.remove('show'));
+  countText.classList.remove('show');
+  specLine.classList.remove('show');
+  paywallScrim.classList.remove('show');
+  paywallSheet.classList.remove('open');
+  globalHint.textContent = autoPlay
+    ? 'Auto-playing — tap the screen mid-hold to skip ahead'
+    : 'Tap anywhere to advance through each beat';
+}
+
+function autoStart() {
+  resetVisual();
+  tapHint.classList.add('hidden');
+  globalHint.textContent = 'Auto-playing — tap the screen mid-hold to skip ahead';
+  pendingTimer = setTimeout(nextStop, LEAD_IN);
+}
+
+function nextStop() {
+  pendingTimer = null;
+  seqIdx++;
+  const stop = SEQ[seqIdx];
+  if (!stop) return;
+  stop.apply();
+  const h = stop.hold();
+  if (h != null && autoPlay) pendingTimer = setTimeout(nextStop, h);
+}
+
+// Screen tap: manual advance, or — during auto-play — an accelerator that skips the current hold.
+function onScreenTap() {
+  if (autoPlay) {
+    if (pendingTimer) { cancelPending(); nextStop(); }
+    return;
+  }
+  advance();
+}
+
+autoToggle.addEventListener('change', () => {
+  autoPlay = autoToggle.checked;
+  if (autoPlay) autoStart();
+  else { cancelPending(); globalHint.textContent = 'Tap anywhere to advance through each beat'; }
+});
+replayBtn.addEventListener('click', () => { if (autoPlay) autoStart(); else resetVisual(); });
+hold12El.addEventListener('input', () => { hold12Val.textContent = (hold12El.value / 1000).toFixed(2) + 's'; });
+hold23El.addEventListener('input', () => { hold23Val.textContent = (hold23El.value / 1000).toFixed(2) + 's'; });
+</script>
+</body>
+</html>

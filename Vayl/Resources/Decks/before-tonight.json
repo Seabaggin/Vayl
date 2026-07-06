@@ -1,0 +1,219 @@
+{
+  "id": "before-tonight",
+  "title": "Before Tonight",
+  "subtitle": "Set the frame, then play.",
+  "category": "experienceArc",
+  "act": 1,
+  "intensity": 4,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": [
+    "core",
+    "experience",
+    "pregame"
+  ],
+  "sort_order": 8,
+  "schema_version": 2,
+  "cards": [
+    {
+      "id": "bt-01",
+      "deck_id": "before-tonight",
+      "text": "What are you hoping tonight feels like?\n\nOne honest sentence each.\n\nWhat would help you walk out the door settled?",
+      "highlight_words": [
+        "tonight feels like"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    },
+    {
+      "id": "bt-02",
+      "deck_id": "before-tonight",
+      "text": "One word for what's in your chest right now.",
+      "highlight_words": [
+        "One word"
+      ],
+      "type": "snapshot",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 2
+    },
+    {
+      "id": "bt-03",
+      "deck_id": "before-tonight",
+      "text": "Signals for tonight.\n\nWhat do green, yellow, and red each look like on you?\n\nBe specific enough to spot across a room.",
+      "highlight_words": [
+        "green, yellow, and red"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 3
+    },
+    {
+      "id": "bt-04",
+      "deck_id": "before-tonight",
+      "text": "The what-ifs worth saying now.\n\nOne of you wants to leave. One of you connects and the other doesn't. The plan changes.\n\nWalk each one through before it can surprise you.",
+      "highlight_words": [
+        "what-ifs"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 4
+    },
+    {
+      "id": "bt-05",
+      "deck_id": "before-tonight",
+      "text": "How far does tonight go, at most?\n\nPlace it. Calibrate before the door, never at it.",
+      "highlight_words": [
+        "at most"
+      ],
+      "type": "unspoken",
+      "intensity": 4,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 5
+    },
+    {
+      "id": "bt-06",
+      "deck_id": "before-tonight",
+      "text": "What would make you check on me tonight?\n\nWhat should I do when you do?",
+      "highlight_words": [
+        "check on me"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 6
+    },
+    {
+      "id": "bt-07",
+      "deck_id": "before-tonight",
+      "text": "Aftercare, decided in advance.\n\nWhat does coming home look like?\n\nDebrief tonight or sleep first? Touch or space?",
+      "highlight_words": [
+        "coming home"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 7
+    },
+    {
+      "id": "bt-08",
+      "deck_id": "before-tonight",
+      "text": "Either of you can call tonight off.\n\nAt any point. For any reason.\n\nIt costs nothing. It proves the whole thing works.",
+      "highlight_words": [
+        "call tonight off"
+      ],
+      "type": "permissionCard",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "anxious",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 8
+    },
+    {
+      "id": "bt-09",
+      "deck_id": "before-tonight",
+      "text": "What are you most looking forward to watching the other one enjoy?",
+      "highlight_words": [
+        "watching the other one enjoy"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "excited",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 9
+    },
+    {
+      "id": "bt-10",
+      "deck_id": "before-tonight",
+      "text": "The Thread.\n\nEach of you finishes this, out loud:\n\n\"Whatever happens tonight, the thing I'm coming home to is...\"\n\nThen go.",
+      "highlight_words": [
+        "coming home to"
+      ],
+      "type": "closingRitual",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 10
+    }
+  ]
+}

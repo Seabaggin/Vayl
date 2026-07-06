@@ -40,6 +40,12 @@
 import Foundation
 import SwiftData
 import Combine
+import OSLog
+
+private let logger = Logger(
+    subsystem: "com.vayl.app",
+    category: "SyncManager"
+)
 
 @MainActor  // Runs on main thread — safe for @Published properties that drive UI
 class SyncManager: ObservableObject {
@@ -98,17 +104,83 @@ class SyncManager: ObservableObject {
                 throw SyncError.profileMissingId
             }
             UserDefaults.standard.set(profileId.uuidString, forKey: "supabaseProfileId")
-            #if DEBUG
-            print("✅ Profile synced to Supabase")
-            #endif
+            logger.info("✅ Profile synced to Supabase")
             return profileId
         } catch {
             lastSyncError = error.localizedDescription
             UserDefaults.standard.set(true, forKey: "pendingProfileSync")
-            #if DEBUG
-            print("❌ Profile sync failed: \(error.localizedDescription)")
-            #endif
+            logger.error("❌ Profile sync failed: \(error.localizedDescription)")
             throw error
+        }
+    }
+
+    // =========================================================================
+    // MARK: - Display Identity Sync (P3 — partner-visible name/pronouns)
+    // =========================================================================
+
+    /// Pushes the local profile's display name + pronouns to the remote
+    /// `user_profiles` row so a linked partner can read them. Best-effort — the
+    /// name is only consumed on the linked screen, so a transient failure is
+    /// non-fatal and is simply retried next time pairing is opened.
+    func pushDisplayIdentity(localProfile: UserProfile) async {
+        let trimmedName = localProfile.displayName.trimmingCharacters(in: .whitespaces)
+        let pronouns = localProfile.pronouns.isEmpty
+            ? nil
+            : localProfile.pronouns.joined(separator: ", ")
+        do {
+            try await profileService.updateIdentity(
+                name: trimmedName.isEmpty ? nil : trimmedName,
+                pronouns: pronouns,
+                gender: localProfile.genderIdentity
+            )
+            logger.info("✅ Display identity synced to Supabase")
+        } catch {
+            logger.warning("⚠️ Display identity sync failed (non-fatal): \(error.localizedDescription)")
+        }
+    }
+
+    func pushNMStage(_ stage: String) async {
+        do {
+            try await profileService.updateNMStage(stage)
+            logger.info("✅ NM stage synced: \(stage)")
+        } catch {
+            logger.warning("⚠️ NM stage sync failed (non-fatal): \(error.localizedDescription)")
+        }
+    }
+
+    func pushSharePulse(_ value: Bool) async {
+        do {
+            try await profileService.updateSharePulse(value)
+            logger.info("✅ Share pulse preference synced: \(value)")
+        } catch {
+            logger.warning("⚠️ Share pulse sync failed (non-fatal): \(error.localizedDescription)")
+        }
+    }
+
+    // =========================================================================
+    // MARK: - Desire Map Sync (D2)
+    // =========================================================================
+
+    /// Pushes the user's desire-map weights + nm_stage to Supabase after the local
+    /// `DesireMapEntry` rows are saved. Best-effort: on failure, flags `pendingDesireSync`
+    /// so the rater re-syncs on next open. Mirrors the profile-sync pattern. All weights
+    /// sync (incl. `notForMe`) — boundaries are obscured at the reveal layer, not here.
+    func syncDesireMap(ratings: [PendingDesireRating], nmStage: String) async {
+        guard !ratings.isEmpty else { return }
+        isSyncing = true
+        defer { isSyncing = false }
+        do {
+            try await DesireSyncService.shared.syncRatings(ratings)
+            try await profileService.updateNMStage(nmStage)
+            // Mark this side complete + compute matches if both partners are done (server-side).
+            try await DesireSyncService.shared.computeMatches()
+            UserDefaults.standard.set(false, forKey: "pendingDesireSync")
+            lastSyncError = nil
+            logger.info("✅ Desire map synced (\(ratings.count) weights, stage \(nmStage))")
+        } catch {
+            lastSyncError = error.localizedDescription
+            UserDefaults.standard.set(true, forKey: "pendingDesireSync")
+            logger.error("❌ Desire map sync failed — will retry on next rater open: \(error.localizedDescription)")
         }
     }
 
@@ -135,43 +207,26 @@ class SyncManager: ObservableObject {
     // MARK: - Complete Onboarding (Local + Remote)
     // =========================================================================
 
-    /// Marks onboarding as complete in BOTH SwiftData and Supabase.
+    /// Pushes the onboarding-complete flag to Supabase. **Remote-only.**
     ///
-    /// FLOW:
-    /// 1. Set `hasCompletedOnboarding = true` on the local SwiftData model (instant)
-    /// 2. Save the SwiftData context (persists to disk)
-    /// 3. Push the same flag to Supabase (async, might fail)
-    /// 4. If Supabase push fails → flag for retry
+    /// Local completion is owned by `AppState.markOnboardingComplete` — the single
+    /// writer of the durable truth (UserProfile), the in-memory surface, and the
+    /// UserDefaults cache. Intended flow: set local via AppState first, then call
+    /// this to sync upstream. On failure, flags a retry that `retryPendingSyncs`
+    /// picks up on the next launch.
     ///
-    /// WHY LOCAL FIRST?
-    /// Because the app checks `hasCompletedOnboarding` on every launch to decide
-    /// whether to show onboarding or the home screen. If we waited for Supabase,
-    /// the user could be stuck in onboarding if they're offline.
-    ///
-    /// - Parameters:
-    ///   - profileId: Supabase profile UUID
-    ///   - localProfile: The SwiftData UserProfile model instance
-    ///   - modelContext: The SwiftData ModelContext (needed to call .save())
-    func completeOnboarding(
-        localProfile: UserProfile,
-        modelContext: ModelContext
-    ) async throws {
+    /// - Note: this previously also wrote the local flag + UserDefaults cache; those
+    ///   writes were removed so local completion has exactly one writer (AppState).
+    func pushOnboardingComplete() async throws {
         guard let profileIdString = UserDefaults.standard.string(forKey: "supabaseProfileId"),
               let profileId = UUID(uuidString: profileIdString) else {
             throw SyncError.profileMissingId
         }
-        localProfile.hasCompletedOnboarding = true
-        try? modelContext.save()
-        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         do {
             try await profileService.markOnboardingComplete(profileId: profileId)
-            #if DEBUG
-            print("✅ Onboarding flag synced to Supabase")
-            #endif
+            logger.info("✅ Onboarding flag synced to Supabase")
         } catch {
-            #if DEBUG
-            print("❌ Onboarding sync failed — will retry: \(error)")
-            #endif
+            logger.error("❌ Onboarding sync failed — will retry: \(error)")
             UserDefaults.standard.set(true, forKey: "pendingOnboardingSync")
         }
     }
@@ -188,55 +243,97 @@ class SyncManager: ObservableObject {
     ///
     /// ```swift
     /// .task {
-    ///     if let userId = authService.userId, let profile = localProfile {
-    ///         await SyncManager.shared.retryPendingSyncs(
-    ///             userId: userId,
-    ///             localProfile: profile
-    ///         )
+    ///     if let userId = authService.userId {
+    ///         await SyncManager.shared.retryPendingSyncs(userId: userId)
     ///     }
     /// }
     /// ```
     ///
     /// HOW IT WORKS:
-    /// 1. Checks UserDefaults for "pendingProfileSync" flag
-    /// 2. If true → re-attempts the profile sync using local SwiftData data
+    /// 1. Checks UserDefaults for "pendingOnboardingSync" flag
+    /// 2. If true → re-attempts the onboarding-complete push
     /// 3. If the retry succeeds → clears the flag
     /// 4. If it fails again → flag stays set, will retry next launch
-    /// 5. Same pattern for "pendingOnboardingSync"
     ///
-    /// - Parameters:
-    ///   - userId: Authenticated user's UUID
-    ///   - localProfile: The local SwiftData UserProfile (has the data to push)
-    func retryPendingSyncs(userId: UUID, localProfile: UserProfile?) async {
-        if UserDefaults.standard.bool(forKey: "pendingProfileSync"),
-           localProfile != nil {
-            do {
-                try await syncProfileToSupabase(authId: userId)
-                if lastSyncError == nil {
-                    UserDefaults.standard.set(false, forKey: "pendingProfileSync")
-                    #if DEBUG
-                    print("✅ Pending profile sync completed on retry")
-                    #endif
-                }
-            } catch {
-                #if DEBUG
-                print("❌ Pending profile sync retry failed: \(error)")
-                #endif
-            }
-        }
+    /// Profile creation is no longer retried here — as of Pairing Segment P2 it's
+    /// handled at sign-in by `AuthService.ensureRemoteProfile()`, which self-heals
+    /// on failure (leaves the `supabaseProfileId` cache nil so the next launch retries).
+    ///
+    /// - Parameter userId: Authenticated user's UUID
+    func retryPendingSyncs(userId: UUID) async {
+        // 1) Process legacy UserDefaults queue
         if UserDefaults.standard.bool(forKey: "pendingOnboardingSync"),
            let profileIdString = UserDefaults.standard.string(forKey: "supabaseProfileId"),
            let profileId = UUID(uuidString: profileIdString) {
             do {
                 try await profileService.markOnboardingComplete(profileId: profileId)
                 UserDefaults.standard.set(false, forKey: "pendingOnboardingSync")
-                #if DEBUG
-                print("✅ Pending onboarding sync completed on retry")
-                #endif
+                logger.info("✅ Pending onboarding sync completed on retry")
             } catch {
-                #if DEBUG
-                print("⚠️ Retry failed for onboarding sync — will try again next launch")
-                #endif
+                logger.warning("⚠️ Retry failed for onboarding sync — will try again next launch")
+            }
+        }
+        
+        // 2) Process durable SwiftData SyncTask queue
+        await processTaskQueue()
+    }
+    
+    // =========================================================================
+    // MARK: - Durable Background Queue (SyncTask)
+    // =========================================================================
+
+    /// Enqueues a task into SwiftData for reliable background synchronization.
+    func enqueueSyncTask(taskType: String, entityId: String, payload: Data? = nil) {
+        let context = ModelContext(ModelContainer.appContainer)
+        let task = SyncTask(taskType: taskType, entityId: entityId, payload: payload)
+        context.insert(task)
+        do {
+            try context.saveWithLogging()
+            logger.info("Enqueued SyncTask: \(taskType) for entity \(entityId)")
+        } catch {
+            logger.error("Failed to enqueue SyncTask (\(taskType), entity \(entityId)): \(error.localizedDescription)")
+        }
+        
+        // Trigger a process run in the background
+        Task { await processTaskQueue() }
+    }
+    
+    /// Processes all pending SyncTasks in the local queue.
+    private func processTaskQueue() async {
+        let context = ModelContext(ModelContainer.appContainer)
+        let descriptor = FetchDescriptor<SyncTask>(sortBy: [SortDescriptor(\.createdAt)])
+        
+        guard let tasks = try? context.fetch(descriptor), !tasks.isEmpty else { return }
+        logger.info("Processing \(tasks.count) pending SyncTasks")
+        
+        for task in tasks {
+            do {
+                switch task.taskType {
+                case "sync_session":
+                    if let payload = task.payload {
+                        try await SessionSyncService.shared.pushSession(payload: payload)
+                    }
+                default:
+                    logger.warning("Unknown taskType in queue: \(task.taskType)")
+                }
+                
+                // On success, remove from queue. If this save fails the delete is lost and the
+                // task re-processes next launch (duplicate push) — so surface the failure.
+                context.delete(task)
+                do {
+                    try context.saveWithLogging()
+                } catch {
+                    logger.error("Failed to persist SyncTask deletion (\(task.taskType)): \(error.localizedDescription)")
+                }
+            } catch {
+                task.retryCount += 1
+                // Persist the retry-count bump; a lost save silently drops retry accounting.
+                do {
+                    try context.saveWithLogging()
+                } catch {
+                    logger.error("Failed to persist SyncTask retry bump (\(task.taskType)): \(error.localizedDescription)")
+                }
+                logger.error("SyncTask failed (\(task.taskType), retries: \(task.retryCount)): \(error.localizedDescription)")
             }
         }
     }

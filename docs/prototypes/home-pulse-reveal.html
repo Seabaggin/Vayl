@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vayl — Home Pulse Reveal (bounded, fits both ends)</title>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --void:#06060c; --card:#0e0e18;
+    --cyan:#39d8ff; --purple:#a780ff; --magenta:#ff5fd0;
+    --text:#f3f0ff; --body:#c7c2dc; --muted:#8a85a3; --faint:#5d5878;
+    --display:"Clash Display", system-ui, -apple-system, sans-serif;
+    --sans:"Switzer", system-ui, -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:#020205; color:var(--text); font-family:var(--sans);
+    display:flex; flex-direction:column; align-items:center; gap:18px;
+    padding:34px 16px 60px; min-height:100%;
+  }
+  .caption{ color:var(--muted); font-size:13px; text-align:center; max-width:450px; line-height:1.5; }
+  .caption b{ color:var(--body); font-weight:600; }
+
+  .phone{
+    position:relative; width:390px; height:800px; border-radius:46px; overflow:hidden;
+    background:
+      radial-gradient(120% 70% at 50% 118%, rgba(167,128,255,.16), transparent 60%),
+      radial-gradient(90% 55% at 50% 122%, rgba(255,95,208,.10), transparent 60%),
+      var(--void);
+    box-shadow:0 0 0 9px #14141c, 0 30px 80px rgba(0,0,0,.6);
+  }
+  .scroller{ position:absolute; inset:0; overflow-y:scroll; -webkit-overflow-scrolling:touch; z-index:2; }
+  .scroller::-webkit-scrollbar{ display:none; }
+  .scroller{ scrollbar-width:none; }
+  .track{ width:1px; }
+  .stage{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
+  .content{ position:absolute; top:0; left:0; right:0; padding:0 22px; will-change:transform; }
+
+  .topinset{ height:50px; }
+  .header{ display:flex; align-items:center; justify-content:space-between; }
+  .wordmark{
+    font-family:var(--display); font-weight:700; font-size:34px; letter-spacing:-.01em;
+    background:linear-gradient(95deg, var(--cyan), var(--purple) 55%, var(--magenta));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .pchip{ width:34px; height:34px; border-radius:50%; border:1.5px solid rgba(167,128,255,.5); background:rgba(255,255,255,.03); }
+  .topvoid{ height:26px; }
+
+  .deck{
+    height:200px; border-radius:18px; position:relative;
+    background:linear-gradient(180deg, rgba(20,20,32,.95), rgba(10,10,20,.95));
+    box-shadow:0 24px 60px rgba(120,90,220,.22), 0 2px 0 rgba(255,255,255,.03) inset;
+    display:flex; align-items:center; justify-content:center; text-align:center; padding:26px;
+  }
+  .deck::before{
+    content:""; position:absolute; inset:0; border-radius:18px; padding:1.4px;
+    background:linear-gradient(135deg, var(--cyan), var(--purple) 50%, var(--magenta));
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude; opacity:.85;
+  }
+  .deck p{ font-family:var(--display); font-weight:600; font-size:19px; line-height:1.32; color:var(--text); }
+  .pedestal{
+    position:absolute; left:50%; bottom:-4px; transform:translateX(-50%);
+    width:60%; height:3px; border-radius:3px;
+    background:linear-gradient(90deg, transparent, var(--purple), var(--magenta), transparent);
+    filter:blur(.4px);
+  }
+  .heroIso{ height:84px; }
+
+  .pulseHead{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .space{
+    font-family:var(--display); font-weight:600; font-size:28px; letter-spacing:-.01em; white-space:nowrap;
+    background:linear-gradient(95deg, var(--purple), rgba(167,128,255,.55));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .sub{ color:var(--faint); font-size:13px; margin-top:3px; }
+  .plus{
+    flex:0 0 auto; width:34px; height:34px; border-radius:50%;
+    border:1.5px solid rgba(167,128,255,.75); background:rgba(255,255,255,.04);
+    color:var(--text); font-size:17px; display:flex; align-items:center; justify-content:center;
+  }
+  .graphSlot{
+    height:0px; overflow:hidden; margin-top:14px;
+    -webkit-mask-image:linear-gradient(90deg, transparent, #000 9%, #000 100%);
+            mask-image:linear-gradient(90deg, transparent, #000 9%, #000 100%);
+  }
+  .graphSlot svg{ display:block; width:100%; height:100%; }
+
+  .lexGap{ height:42px; }
+  .lexicon{ text-align:center; padding:0 6px; }
+  .overline{ color:var(--faint); font-size:11px; letter-spacing:.18em; text-transform:uppercase; }
+  .keyword{
+    font-family:var(--display); font-weight:700; font-size:48px; line-height:1.04; margin-top:14px;
+    background:linear-gradient(95deg, var(--cyan), var(--purple) 55%, var(--magenta));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 40px rgba(167,128,255,.25);
+  }
+  .lexbody{ color:var(--body); font-size:15px; line-height:1.5; margin-top:14px; }
+  .lexcta{ color:var(--cyan); font-size:11px; letter-spacing:.16em; text-transform:uppercase; margin-top:16px; }
+
+  .hud{
+    width:390px; display:flex; flex-direction:column; gap:10px;
+    background:#0c0c14; border:1px solid #1c1c28; border-radius:14px; padding:14px 16px;
+    font-size:12.5px; color:var(--body);
+  }
+  .hud .row{ display:flex; align-items:center; gap:10px; justify-content:space-between; }
+  .hud label{ color:var(--muted); }
+  .hud input[type=range]{ flex:1; accent-color:var(--purple); }
+  .hud .nums{ font-variant-numeric:tabular-nums; color:var(--faint); }
+  .hud .hint{ color:var(--faint); font-size:11.5px; line-height:1.45; }
+  .hud .ok{ font-weight:600; color:#7CFFB2; }
+  .hud .bad{ font-weight:600; color:#ff5fd0; }
+</style>
+</head>
+<body>
+
+  <div class="caption">
+    <b>Bounded, both ends fit.</b> The scroll caps at full expansion (hero just clears the top, Lexicon lands fully
+    visible at the bottom), so nothing clips at either end. The graph is shorter now so title + graph + lexicon all share
+    one screen when expanded. Slide the graph height to find the balance.
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="scroller" id="scroller"><div class="track" id="track"></div></div>
+    <div class="stage">
+      <div class="content" id="content">
+        <div class="topinset"></div>
+        <div class="header">
+          <div class="wordmark">VAYL.</div>
+          <div class="pchip"></div>
+        </div>
+        <div class="topvoid"></div>
+        <div class="deck">
+          <p>What are the anchors that have kept you two tethered to each other through everything so far?</p>
+          <div class="pedestal" id="pedestal"></div>
+        </div>
+        <div class="heroIso"></div>
+        <div class="pulse">
+          <div class="pulseHead">
+            <div>
+              <div class="space">The Sovereign Space</div>
+              <div class="sub">Grounded · Secure · ⓘ</div>
+            </div>
+            <div class="plus">+</div>
+          </div>
+          <div class="graphSlot" id="graphSlot">
+            <svg viewBox="0 0 100 44" preserveAspectRatio="none" id="graphSvg">
+              <defs>
+                <linearGradient id="spark" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#39d8ff"/>
+                  <stop offset="0.5" stop-color="#a780ff"/>
+                  <stop offset="1" stop-color="#ff5fd0"/>
+                </linearGradient>
+                <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#a780ff" stop-opacity="0.22"/>
+                  <stop offset="0.6" stop-color="#a780ff" stop-opacity="0.04"/>
+                  <stop offset="1" stop-color="#a780ff" stop-opacity="0"/>
+                </linearGradient>
+                <filter id="glow" x="-20%" y="-40%" width="140%" height="180%">
+                  <feGaussianBlur stdDeviation="1.6"/>
+                </filter>
+              </defs>
+              <line x1="0" y1="43.5" x2="100" y2="43.5" stroke="#a780ff" stroke-opacity="0.16" stroke-width="0.4"/>
+              <path id="areaPath" fill="url(#area)" d=""/>
+              <polyline id="sparkGlow" fill="none" stroke="url(#spark)" stroke-width="2.6"
+                        stroke-linecap="round" stroke-linejoin="round" opacity="0.4" filter="url(#glow)" points=""/>
+              <polyline id="sparkLine" fill="none" stroke="url(#spark)" stroke-width="1.1"
+                        stroke-linecap="round" stroke-linejoin="round" points=""/>
+              <circle id="ember" cx="100" cy="14" r="2.4" fill="#ff5fd0"/>
+              <circle id="emberHalo" cx="100" cy="14" r="4.6" fill="none" stroke="#ff5fd0" stroke-opacity="0.5" stroke-width="0.8"/>
+            </svg>
+          </div>
+        </div>
+        <div class="lexGap"></div>
+        <div class="lexicon">
+          <div class="overline">From the Research</div>
+          <div class="keyword">Compersion</div>
+          <div class="lexbody">Finding genuine joy in your partner's happiness with another person.</div>
+          <div class="lexcta">See the research →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hud">
+    <div class="row">
+      <label>Graph height at full</label>
+      <span class="nums"><span id="ghVal">240</span>px</span>
+    </div>
+    <div class="row"><input type="range" id="gh" min="170" max="300" step="10" value="240" /></div>
+    <div class="row">
+      <span class="nums">scroll <span id="sVal">0</span> / <span id="capVal">320</span></span>
+      <span>top: <span id="topState" class="ok">clear</span> · bottom: <span id="botState" class="ok">lexicon shows</span></span>
+    </div>
+    <div class="hint">Cap is fixed at the hero-clear distance, so full expansion is the bottom of the scroll. If the lexicon line turns pink, the graph is too tall to share the screen with the title + lexicon — shorten it.</div>
+  </div>
+
+<script>
+  const scroller = document.getElementById('scroller');
+  const track    = document.getElementById('track');
+  const content  = document.getElementById('content');
+  const stageH   = 800;
+  const graphSlot= document.getElementById('graphSlot');
+  const pedestal = document.getElementById('pedestal');
+  const pulse    = document.querySelector('.pulse');
+  const lexicon  = document.querySelector('.lexicon');
+  const sparkLine= document.getElementById('sparkLine');
+  const sparkGlow= document.getElementById('sparkGlow');
+  const areaPath = document.getElementById('areaPath');
+  const ember    = document.getElementById('ember');
+  const emberHalo= document.getElementById('emberHalo');
+
+  let GRAPH_H = 240;          // graph height at full (slider)
+  let CAP     = 320;          // scroll cap = full expansion = hero-clear distance (auto-measured)
+
+  const data = [0.30, 0.62, 0.45, 0.80, 0.38, 0.66, 0.78];
+  (function buildPaths(){
+    const n = data.length;
+    const pts = data.map((v,i)=>[ (i/(n-1))*100, 44 - v*40 ]);
+    const poly = pts.map(p=>p[0].toFixed(2)+','+p[1].toFixed(2)).join(' ');
+    sparkLine.setAttribute('points', poly);
+    sparkGlow.setAttribute('points', poly);
+    let d = `M ${pts[0][0]} ${pts[0][1]} `;
+    for(let i=1;i<pts.length;i++) d += `L ${pts[i][0]} ${pts[i][1]} `;
+    d += `L 100 44 L 0 44 Z`;
+    areaPath.setAttribute('d', d);
+    const last = pts[n-1];
+    [ember,emberHalo].forEach(e=>{ e.setAttribute('cx',last[0]); e.setAttribute('cy',last[1]); });
+  })();
+
+  const ghVal=document.getElementById('ghVal');
+  const capVal=document.getElementById('capVal');
+  const sVal=document.getElementById('sVal');
+  const topState=document.getElementById('topState');
+  const botState=document.getElementById('botState');
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+  // The cap is the scroll needed to bring the pulse title up to a clean ~72px from the
+  // top (hero just off). Measured so it adapts to the layout.
+  function measureCap(){
+    graphSlot.style.height = GRAPH_H + 'px';     // measure with graph full
+    const titleTop = pulse.offsetTop;            // content-Y of the pulse title
+    CAP = Math.round(titleTop - 72);
+    track.style.height = (stageH + CAP) + 'px';
+    capVal.textContent = CAP;
+  }
+
+  let ticking=false;
+  function update(){
+    const s = clamp(scroller.scrollTop, 0, CAP);
+    const f = CAP > 0 ? s / CAP : 0;
+    const h = f * GRAPH_H;
+    graphSlot.style.height = h + 'px';
+    graphSlot.style.opacity = (0.12 + 0.88*f).toFixed(3);
+    pedestal.style.opacity = (0.9 * (1 - f)).toFixed(3);
+    content.style.transform = `translateY(${-s}px)`;
+    sVal.textContent = Math.round(s);
+
+    // fit check at full expansion
+    const lexBottomFull = (lexicon.offsetTop + lexicon.offsetHeight) - CAP; // screen-Y at s=CAP
+    const fits = lexBottomFull <= stageH - 28;
+    botState.textContent = fits ? 'lexicon shows' : 'lexicon clipped';
+    botState.className = fits ? 'ok' : 'bad';
+  }
+  scroller.addEventListener('scroll', ()=>{
+    if(ticking) return; ticking=true;
+    requestAnimationFrame(()=>{ update(); ticking=false; });
+  }, {passive:true});
+
+  const gh=document.getElementById('gh');
+  gh.addEventListener('input', ()=>{
+    GRAPH_H = parseInt(gh.value,10);
+    ghVal.textContent = GRAPH_H; measureCap(); update();
+  });
+
+  measureCap(); update();
+</script>
+</body>
+</html>

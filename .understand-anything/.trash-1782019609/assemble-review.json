@@ -1,0 +1,18 @@
+{
+  "fixedSectionOk": true,
+  "nodesRecovered": 0,
+  "edgesRestored": 0,
+  "crossBatchEdgesAdded": 0,
+  "typesRemapped": 0,
+  "complexityRemapped": 0,
+  "notes": [
+    "Merge was lossless: sum of 20 batch files = 693 nodes / 738 edges, identical to assembled output. No nodes or edges dropped.",
+    "Full coverage: all 279 scanned source files have at least one node. Nothing missing to recover.",
+    "Integrity clean: 0 nodes missing id, 0 duplicate ids, 0 dangling edges, 0 unknown node types, 0 type/id-prefix mismatches, 0 unknown complexity values.",
+    "Quality clean: every node has a non-empty summary, >=1 tag (avg 3.55, range 1-5), and a valid complexity (complex 207 / moderate 248 / simple 238).",
+    "The 11 summaries containing the word 'placeholder' are accurate descriptions of genuinely stubbed code (LearnView, PlayView, CompanionCardStore, WelcomeDeck cards, Pulse stubs, .npmrc comments) — not low-effort summaries. Consistent with project state (Learn/Play tabs not yet built, D4 reveal stub).",
+    "importMap empty and only 1 'imports' edge present, as expected: single-target Swift app with no tree-sitter Swift parser; cross-file architecture is correctly modeled via depends_on (242), contains (389), calls (21), exports (50) instead. Not flagged as a defect per dispatch instructions.",
+    "The 'Fixed' section pattern counts are reasonable: 5 bare-path->class: prefix additions (~0.7% of nodes) and 15 edge-reference rewrites — small, localized LLM output normalization, well under the >30% systemic-issue threshold.",
+    "Rare edge types verified semantically valid: 'implements' (VaylDirector->OnboardingStage), single 'imports' (ConversationCard->ConversationCardTypes same-file-pair), and 5 'related' edges all connect real existing nodes."
+  ]
+}

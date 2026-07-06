@@ -1,0 +1,219 @@
+{
+  "id": "the-first-time",
+  "title": "The First Time",
+  "subtitle": "The one before the first one.",
+  "category": "experienceArc",
+  "act": 1,
+  "intensity": 4,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": [
+    "core",
+    "experience",
+    "milestone"
+  ],
+  "sort_order": 10,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "ft-01",
+      "deck_id": "the-first-time",
+      "text": "Before card one:\n\nEach of you says out loud what you need from tonight's conversation.\n\nThen begin.",
+      "highlight_words": [
+        "what you need"
+      ],
+      "type": "openingRitual",
+      "intensity": 2,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    },
+    {
+      "id": "ft-02",
+      "deck_id": "the-first-time",
+      "text": "How long has this been an idea?\n\nWhat finally made it real?",
+      "highlight_words": [
+        "finally made it real"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 2
+    },
+    {
+      "id": "ft-03",
+      "deck_id": "the-first-time",
+      "text": "What are you afraid this changes?\n\nSay the real fear, even if it sounds dramatic out loud.",
+      "highlight_words": [
+        "real fear"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "anxious",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 3
+    },
+    {
+      "id": "ft-04",
+      "deck_id": "the-first-time",
+      "text": "What do you hope you find out about yourself?",
+      "highlight_words": [
+        "about yourself"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "excited",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 4
+    },
+    {
+      "id": "ft-05",
+      "deck_id": "the-first-time",
+      "text": "The thing about the first time you haven't said out loud yet.",
+      "highlight_words": [
+        "haven't said out loud"
+      ],
+      "type": "whisper",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": true,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 5
+    },
+    {
+      "id": "ft-06",
+      "deck_id": "the-first-time",
+      "text": "What from your story together do you want to hold onto tightest as you walk in?",
+      "highlight_words": [
+        "hold onto tightest"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 6
+    },
+    {
+      "id": "ft-07",
+      "deck_id": "the-first-time",
+      "text": "You're allowed to get all the way to the doorstep and turn around.\n\nFirsts don't expire.",
+      "highlight_words": [
+        "Firsts don't expire."
+      ],
+      "type": "permissionCard",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "anxious",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 7
+    },
+    {
+      "id": "ft-08",
+      "deck_id": "the-first-time",
+      "text": "How will you want to be found afterward?\n\nTalking, touching, quiet, fed?",
+      "highlight_words": [
+        "be found"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 8
+    },
+    {
+      "id": "ft-09",
+      "deck_id": "the-first-time",
+      "text": "What will you tell each other if it's wonderful?\n\nWhat if it's just fine?\n\nBoth answers count.",
+      "highlight_words": [
+        "Both answers count."
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 9
+    },
+    {
+      "id": "ft-10",
+      "deck_id": "the-first-time",
+      "text": "The Day After Promise.\n\nEach of you makes one small promise for the morning after. Out loud.\n\nThe deck ends when both are said.",
+      "highlight_words": [
+        "one small promise"
+      ],
+      "type": "closingRitual",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 10
+    }
+  ]
+}

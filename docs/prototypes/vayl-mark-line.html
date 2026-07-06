@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Figure-8 · line work</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600&f[]=switzer@400,500&display=swap" rel="stylesheet" />
+<style>
+  :root{--void:#0a0810;--card:#0e0d14;--cyan:#00c2ff;--purple:#6c3ae0;--magenta:#ff006a;--bridge:#8b6fd4;
+    --t1:rgba(255,255,255,.92);--t2:rgba(255,255,255,.6);--t3:rgba(255,255,255,.34);--hair:#1c1a28;
+    --disp:"Clash Display",sans-serif;--body:"Switzer",sans-serif;}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:1000px;margin:0 auto;padding:44px 30px 80px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:28px;font-weight:600;margin:0 0 10px}
+  .lede{font-size:13.5px;line-height:1.6;color:var(--t2);max-width:680px;margin:0 0 6px}.lede b{color:var(--t1)}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .cand{background:var(--card);border:1px solid var(--hair);border-radius:16px;overflow:hidden}
+  .cand.pick{border-color:rgba(108,58,224,.5)}
+  .ch{display:flex;justify-content:space-between;align-items:baseline;padding:14px 16px 0}
+  .cn{font-family:var(--disp);font-size:15px;font-weight:600}
+  .pf{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--void);background:linear-gradient(90deg,var(--cyan),var(--magenta));border-radius:5px;padding:2px 7px}
+  .stage{margin:12px;border-radius:12px;background:radial-gradient(120% 100% at 50% 12%,#161320,#070610);height:170px;display:flex;align-items:center;justify-content:center}
+  .stage svg{width:150px}
+  .sizes{display:flex;align-items:center;justify-content:center;gap:20px;padding:0 16px 6px}
+  .sizes svg{display:block}
+  .sizes .s40{width:40px}.sizes .s24{width:24px}
+  .sizes .cap{font-size:9px;color:var(--t3);text-align:center;margin-top:4px;letter-spacing:.08em;text-transform:uppercase}
+  .desc{font-size:11.5px;line-height:1.55;color:var(--t2);padding:6px 16px 16px}.desc b{color:var(--t1)}
+
+  .ctx{margin-top:28px;display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+  .mini{width:230px;border-radius:16px;background:radial-gradient(130% 110% at 50% 0%,#171426,#100d18 70%);border:1px solid rgba(108,58,224,.16);padding:18px 16px;text-align:center}
+  .mini .ring{width:64px;height:52px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center}.mini .ring svg{width:50px}
+  .mini h4{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 3px}.mini p{font-size:10.5px;line-height:1.45;color:var(--t2);margin:0}
+  .ctx .lab{font-size:12px;color:var(--t3);max-width:220px;line-height:1.5}
+  footer{margin-top:30px;border-top:1px solid var(--hair);padding-top:16px;font-size:12px;color:var(--t3);line-height:1.6}footer b{color:var(--t2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>Figure-8 <span class="spectrum">— line work</span></h1>
+  <p class="lede">One continuous stroke, the knot drawn as a clean monoline with proper <b>over/under</b> gaps. Spectrum along the line (cyan → purple → magenta). Scales, goes monochrome, no texture to fight.</p>
+
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <linearGradient id="sp" gradientUnits="userSpaceOnUse" x1="22" y1="34" x2="178" y2="96">
+        <stop offset="0" stop-color="#00c2ff"/><stop offset=".5" stop-color="#6c3ae0"/><stop offset="1" stop-color="#ff006a"/>
+      </linearGradient>
+      <!-- closed emblem figure-8: two diagonals + two side loops, cross at center -->
+      <path id="k" d="M78 38 L122 92 C160 98 172 82 172 65 C172 48 160 32 122 38 L78 92 C40 98 28 82 28 65 C28 48 40 32 78 38 Z"/>
+      <path id="kover" d="M110 52 L90 78"/>
+      <path id="kfull" d="M122 38 L78 92"/>
+      <!-- open figure-8 with tails -->
+      <path id="t" d="M50 110 C62 96 70 92 78 86 L122 40 C158 34 172 50 172 66 C172 82 158 96 122 90 L80 44 C44 38 30 52 30 67 C30 80 40 92 60 96"/>
+      <path id="tover" d="M112 52 L92 76"/>
+    </defs>
+  </svg>
+
+  <div class="grid">
+
+    <!-- A · EMBLEM (pick) -->
+    <section class="cand pick">
+      <div class="ch"><div class="cn">A · Emblem</div><span class="pf">pick</span></div>
+      <div class="stage">
+        <svg viewBox="0 0 200 130">
+          <use href="#k" fill="none" stroke="url(#sp)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+          <use href="#kfull" fill="none" stroke="#070610" stroke-width="17" stroke-linecap="round"/>
+          <use href="#kfull" fill="none" stroke="url(#sp)" stroke-width="10" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="sizes">
+        <div><svg class="s40" viewBox="0 0 200 130"><use href="#k" fill="none" stroke="url(#sp)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><use href="#kfull" fill="none" stroke="#070610" stroke-width="21" stroke-linecap="round"/><use href="#kfull" fill="none" stroke="url(#sp)" stroke-width="13" stroke-linecap="round"/></svg><div class="cap">40</div></div>
+        <div><svg class="s24" viewBox="0 0 200 130"><use href="#k" fill="none" stroke="url(#sp)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/><use href="#kfull" fill="none" stroke="#070610" stroke-width="26" stroke-linecap="round"/><use href="#kfull" fill="none" stroke="url(#sp)" stroke-width="16" stroke-linecap="round"/></svg><div class="cap">24</div></div>
+      </div>
+      <div class="desc"><b>Closed, no loose ends.</b> The most stable as a mark, an emblem that holds at any size. Symmetric, calm.</div>
+    </section>
+
+    <!-- B · TAILS -->
+    <section class="cand">
+      <div class="ch"><div class="cn">B · Tails</div></div>
+      <div class="stage">
+        <svg viewBox="0 0 200 130">
+          <use href="#t" fill="none" stroke="url(#sp)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+          <use href="#tover" fill="none" stroke="#070610" stroke-width="15" stroke-linecap="round"/>
+          <use href="#tover" fill="none" stroke="url(#sp)" stroke-width="9" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="sizes">
+        <div><svg class="s40" viewBox="0 0 200 130"><use href="#t" fill="none" stroke="url(#sp)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><use href="#tover" fill="none" stroke="#070610" stroke-width="19" stroke-linecap="round"/><use href="#tover" fill="none" stroke="url(#sp)" stroke-width="12" stroke-linecap="round"/></svg><div class="cap">40</div></div>
+        <div><svg class="s24" viewBox="0 0 200 130"><use href="#t" fill="none" stroke="url(#sp)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="cap">24</div></div>
+      </div>
+      <div class="desc"><b>The literal figure-8</b>, with the standing + working ends showing. More "knot," a little less tidy at tiny sizes.</div>
+    </section>
+
+    <!-- C · LIGHT -->
+    <section class="cand">
+      <div class="ch"><div class="cn">C · Light</div></div>
+      <div class="stage">
+        <svg viewBox="0 0 200 130">
+          <use href="#k" fill="none" stroke="url(#sp)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <use href="#kfull" fill="none" stroke="#070610" stroke-width="12" stroke-linecap="round"/>
+          <use href="#kfull" fill="none" stroke="url(#sp)" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="sizes">
+        <div><svg class="s40" viewBox="0 0 200 130"><use href="#k" fill="none" stroke="url(#sp)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><use href="#kfull" fill="none" stroke="#070610" stroke-width="15" stroke-linecap="round"/><use href="#kfull" fill="none" stroke="url(#sp)" stroke-width="9" stroke-linecap="round"/></svg><div class="cap">40</div></div>
+        <div><svg class="s24" viewBox="0 0 200 130"><use href="#k" fill="none" stroke="url(#sp)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="cap">24</div></div>
+      </div>
+      <div class="desc"><b>Same emblem, thinner.</b> More delicate / editorial; the heavier A reads better small.</div>
+    </section>
+
+  </div>
+
+  <div class="ctx">
+    <div class="mini"><div class="ring"><svg viewBox="0 0 200 130"><use href="#k" fill="none" stroke="url(#sp)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><use href="#kfull" fill="none" stroke="#100d18" stroke-width="18" stroke-linecap="round"/><use href="#kfull" fill="none" stroke="url(#sp)" stroke-width="11" stroke-linecap="round"/></svg></div><h4>That's yours now</h4><p>When Alex finishes,<br>you'll see where you align.</p></div>
+    <div class="lab">A (the emblem) in the waiting card. One spectrum line, over/under gap at the center crossing, calm and legible.</div>
+  </div>
+
+  <footer><b>Recommend A.</b> Closed emblem reads cleanest small and is the most stable mark. The over/under is a real gap (the line passes behind itself at center), the one detail that makes it a knot and not an infinity sign. Tunable in seconds: weight, loop roundness, gap size, spectrum direction. Pick a lane and I'll lock it, then it's a trivial SVG/Shape in Swift. <b>Nothing built yet.</b></footer>
+</div>
+</body>
+</html>

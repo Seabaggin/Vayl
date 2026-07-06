@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vayl — The Path, as an overlay over Home</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=switzer@400,500,600,700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --void:#0a0810; --void-2:#0c0a14; --card:#120f1a; --raised:#17131f;
+    --text:#ECECF3; --muted:rgba(236,236,243,.56); --faint:rgba(236,236,243,.32); --ghost:rgba(236,236,243,.14);
+    --cyan:#00C2FF; --purple:#6C3AE0; --magenta:#FF006A;
+    --hair:rgba(255,255,255,.08); --hair-br:rgba(255,255,255,.16);
+    --spectrum:linear-gradient(115deg,var(--cyan),var(--purple),var(--magenta));
+    --display:"Clash Display","SF Pro Display",system-ui,sans-serif;
+    --body:"Switzer","SF Pro Text",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:#050409;color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center;gap:14px;min-height:100dvh;padding:22px 12px 44px}
+  .hint{font-size:12.5px;color:var(--faint);text-align:center;max-width:380px;line-height:1.5}
+  .hint b{color:var(--muted)}
+
+  .phone{position:relative;flex:0 0 auto;width:392px;max-width:96vw;height:844px;border-radius:46px;overflow:hidden;
+    background:radial-gradient(120% 80% at 50% -10%,var(--void-2),var(--void) 60%);
+    border:1px solid #1c1828;box-shadow:0 40px 120px -30px #000}
+  .atmos{position:absolute;inset:-25%;pointer-events:none;
+    background:radial-gradient(38% 28% at 20% 12%,rgba(0,194,255,.15),transparent 70%),
+      radial-gradient(40% 30% at 84% 30%,rgba(255,0,106,.13),transparent 72%),
+      radial-gradient(48% 40% at 50% 102%,rgba(108,58,224,.17),transparent 74%);
+    filter:blur(6px);animation:drift 18s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate3d(2%,-2%,0) scale(1.07)}}
+
+  /* ── HOME (the base screen) ─────────────────────────── */
+  .home{position:absolute;inset:0;padding:64px 26px 30px;display:flex;flex-direction:column;
+    transition:filter .5s ease, transform .5s ease, opacity .5s ease}
+  .phone.open .home{filter:blur(9px) saturate(.85);transform:scale(.97);opacity:.55}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .mark{font-family:var(--display);font-weight:600;font-size:33px;letter-spacing:-.02em;
+    background:var(--spectrum);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .chip{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 7px;border:1px solid var(--hair);border-radius:999px;background:rgba(255,255,255,.025)}
+  .chip .av{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:var(--spectrum)}
+  .chip .nm{font-size:14px;font-weight:600}.chip .cv{color:var(--faint)}
+  .over{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;font-weight:600;color:var(--faint)}
+  .over.spec{background:var(--spectrum);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:.9}
+
+  /* the EXPANDABLE entry card — tap to open the Path */
+  .entry{display:flex;align-items:center;gap:14px;padding:15px 16px;border-radius:18px;cursor:pointer;
+    border:1px solid var(--hair-br);background:linear-gradient(180deg,rgba(108,58,224,.12),rgba(255,255,255,.02));
+    margin-bottom:24px;transition:transform .16s ease, box-shadow .25s ease}
+  .entry:active{transform:scale(.985)}
+  .entry .ring{width:38px;height:38px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+    background:conic-gradient(var(--cyan) 0 33%, var(--ghost) 33% 100%);position:relative}
+  .entry .ring::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--card)}
+  .entry .ring b{position:relative;font-size:12px;font-weight:700;font-family:var(--display);color:var(--text)}
+  .entry .mid{flex:1;min-width:0}
+  .entry .mid .o{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);font-weight:700}
+  .entry .mid .t{font-size:15px;font-weight:600;margin-top:2px}
+  .entry .cv{color:var(--muted);font-size:20px}
+
+  .prompt{border:1px solid var(--hair);border-radius:24px;padding:28px 26px;position:relative;
+    background:linear-gradient(180deg,var(--raised),rgba(18,15,26,.4));margin-bottom:26px}
+  .prompt .q{font-family:var(--display);font-weight:500;font-size:22px;line-height:1.32;letter-spacing:-.01em}
+  .prompt .spk{position:absolute;color:var(--faint);font-size:12px}
+  .ptitle{font-family:var(--display);font-weight:500;font-size:25px;letter-spacing:-.01em;margin-top:6px}
+  .psub{font-size:13px;color:var(--muted);margin-top:2px}
+  .pulse{height:108px;margin:6px -6px 0}.pulse svg{width:100%;height:100%;overflow:visible}
+  .ptease{font-size:12px;color:var(--faint);text-align:center;margin-top:4px}
+  .research{text-align:center;margin-top:auto;padding-top:18px}
+  .research .big{font-family:var(--display);font-weight:500;font-size:36px;letter-spacing:-.01em;margin-top:4px}
+  .research p{font-size:13px;color:var(--muted);margin-top:5px;max-width:30ch;margin-inline:auto;line-height:1.45}
+  @keyframes beat{0%,100%{opacity:.55}50%{opacity:1}}
+  .beat-glow{animation:beat 1.6s ease-in-out infinite}
+
+  /* ── SCRIM + OVERLAY (the Path) ─────────────────────── */
+  .scrim{position:absolute;inset:0;background:rgba(5,4,9,.45);opacity:0;pointer-events:none;transition:opacity .5s ease;z-index:10}
+  .phone.open .scrim{opacity:1;pointer-events:auto}
+  .overlay{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+    padding:26px;pointer-events:none}
+  .pathcard{width:100%;border-radius:28px;padding:26px 24px 22px;position:relative;
+    background:linear-gradient(180deg,#161320,#100d18);border:1px solid var(--hair-br);
+    box-shadow:0 40px 80px -20px #000, 0 0 60px -20px var(--purple);
+    opacity:0;transform-origin:center;will-change:transform,opacity;overflow:hidden}
+  .pathcard::before{content:"";position:absolute;top:0;left:24px;right:24px;height:2px;border-radius:9px;background:var(--spectrum);opacity:.9}
+  .pc-inner{opacity:0;transition:opacity .4s ease}
+  .phone.open .pc-inner{opacity:1;transition-delay:.14s}
+  .phone.open .overlay{pointer-events:auto}
+  .close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;border:1px solid var(--hair);
+    background:rgba(255,255,255,.04);color:var(--muted);display:grid;place-items:center;cursor:pointer;font-size:13px}
+  .pc-intro h1{font-family:var(--display);font-weight:500;font-size:24px;letter-spacing:-.01em;margin-top:8px;line-height:1.15}
+  .pc-intro p{font-size:13.5px;color:var(--muted);margin-top:7px;max-width:30ch;line-height:1.5}
+  .path{margin-top:24px}
+  .step{position:relative;display:flex;gap:16px;padding-bottom:24px}
+  .step:last-child{padding-bottom:0}
+  .rail{position:relative;flex:0 0 30px;display:flex;justify-content:center}
+  .rail::before{content:"";position:absolute;top:30px;bottom:-24px;width:2px;left:50%;transform:translateX(-50%);background:linear-gradient(var(--cyan),var(--purple))}
+  .step:last-child .rail::before{display:none}
+  .step.todo .rail::before,.step.locked .rail::before{background:var(--ghost)}
+  .node{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;z-index:2;flex:0 0 auto}
+  .step.done .node{background:var(--spectrum);color:#fff;box-shadow:0 0 16px -3px var(--purple)}
+  .step.active .node{background:var(--card);border:2px solid var(--cyan);color:var(--cyan);box-shadow:0 0 22px -2px var(--cyan);animation:beat 1.8s ease-in-out infinite}
+  .step.todo .node{background:var(--card);border:2px solid var(--hair-br);color:var(--faint)}
+  .step.locked .node{background:var(--card);border:2px dashed var(--ghost);color:var(--faint)}
+  .scopy .t{font-family:var(--display);font-weight:500;font-size:17px;letter-spacing:-.01em}
+  .step.done .scopy .t,.step.todo .scopy .t,.step.locked .scopy .t{color:var(--muted)}
+  .scopy .s{font-size:12.5px;color:var(--faint);margin-top:2px}
+  .scopy .go{display:inline-block;margin-top:8px;font-size:13px;font-weight:600;color:var(--cyan)}
+  .pc-foot{margin-top:18px;text-align:center;font-size:11px;color:var(--faint)}
+</style>
+</head>
+<body>
+  <div class="hint">Tap <b>“Your first steps”</b> on Home → the Path opens as an overlay (Home blurs behind). Tap <b>✕</b> or the dimmed area → it fades back to Home.</div>
+
+  <div class="phone" id="phone">
+    <div class="atmos"></div>
+
+    <!-- HOME (base) -->
+    <div class="home">
+      <div class="top"><div class="mark">Jordan.</div><div class="chip"><span class="av">A</span><span class="nm">Alex</span><span class="cv">›</span></div></div>
+
+      <div class="entry" id="entry">
+        <div class="ring"><b>1/3</b></div>
+        <div class="mid"><div class="o">Your first steps</div><div class="t">Map your desires</div></div>
+        <div class="cv">›</div>
+      </div>
+
+      <div class="prompt"><span class="spk" style="top:12px;left:14px">✦</span><span class="spk" style="top:12px;right:14px">✦</span><span class="spk" style="bottom:12px;left:14px">✦</span><span class="spk" style="bottom:12px;right:14px">✦</span>
+        <div class="q">What are the anchors that have kept you two tethered to each other so far?</div></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="over spec">The Pulse</span><span style="font-size:12px;color:var(--faint)">begins as you rate</span></div>
+      <div class="ptitle">Your Pulse</div>
+      <div class="psub">Waiting for your first signals</div>
+      <div class="pulse" data-pulse></div>
+      <div class="ptease">Comes alive as you map your desires</div>
+
+      <div class="research"><div class="over">From the research</div><div class="big">1 in 5</div><p>have explored consensual non-monogamy. You're in better company than you think.</p></div>
+    </div>
+
+    <!-- SCRIM -->
+    <div class="scrim" id="scrim"></div>
+
+    <!-- OVERLAY (the Path) -->
+    <div class="overlay">
+      <div class="pathcard">
+        <button class="close" id="close">✕</button>
+        <div class="pc-inner">
+        <div class="pc-intro">
+          <div class="over spec">Begin together</div>
+          <h1>Three steps to your first reveal.</h1>
+          <p>Each one brings the two of you closer to what you share.</p>
+        </div>
+        <div class="path">
+          <div class="step done"  style="animation-delay:.06s"><div class="rail"><div class="node">✓</div></div><div class="scopy"><div class="t">Set up your space</div><div class="s">Done in onboarding</div></div></div>
+          <div class="step active" style="animation-delay:.13s"><div class="rail"><div class="node">2</div></div><div class="scopy"><div class="t">Map your desires</div><div class="s">Rate what you want, privately</div><span class="go">Start →</span></div></div>
+          <div class="step todo"   style="animation-delay:.20s"><div class="rail"><div class="node">3</div></div><div class="scopy"><div class="t">Bring in Alex</div><div class="s">Already linked — they map theirs too</div></div></div>
+          <div class="step locked" style="animation-delay:.27s"><div class="rail"><div class="node">✦</div></div><div class="scopy"><div class="t">See what you share</div><div class="s">Unlocks when you both finish</div></div></div>
+        </div>
+        <div class="pc-foot">🔒 Private to you — only what you both share is ever revealed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  function pulseSVG(){return `<svg viewBox="0 0 360 130" preserveAspectRatio="none">
+    <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#00C2FF"/><stop offset=".55" stop-color="#6C3AE0"/><stop offset="1" stop-color="#FF006A"/></linearGradient>
+    <clipPath id="rev"><rect x="0" y="0" height="130" width="0"><animate attributeName="width" values="0;360;360;0;0" keyTimes="0;.5;.92;.93;1" dur="14s" repeatCount="indefinite" calcMode="spline" keySplines=".4 0 .2 1;0 0 1 1;0 0 1 1;0 0 1 1"/></rect></clipPath></defs>
+    <g clip-path="url(#rev)"><g opacity="0"><animate attributeName="opacity" values="0;.95;.95;0;0" keyTimes="0;.1;.82;.92;1" dur="14s" repeatCount="indefinite"/>
+      <polyline points="14,74 80,50 150,80 210,44 276,60 346,38" fill="none" stroke="url(#g)" stroke-opacity=".32" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="filter:blur(4px)"/>
+      <polyline points="14,74 80,50 150,80 210,44 276,60 346,38" fill="none" stroke="url(#g)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+    <g opacity="0"><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;.42;.52;.82;.92;1" dur="14s" repeatCount="indefinite"/>
+      <circle class="beat-glow" cx="346" cy="38" r="9" fill="#FF006A" opacity=".4"/><circle cx="346" cy="38" r="4.5" fill="#FF006A"/></g></svg>`}
+  document.querySelector('[data-pulse]').innerHTML = pulseSVG();
+  const phone=document.getElementById('phone');
+  const entry=document.getElementById('entry');
+  const card=document.querySelector('.pathcard');
+
+  // FLIP: the card grows from the entry bar's rect → its full centered rect (and back).
+  function flip(toOpen){
+    const e=entry.getBoundingClientRect();
+    card.style.transition='none';
+    card.style.transform='none';
+    const t=card.getBoundingClientRect();              // natural (target) rect
+    const sx=e.width/t.width, sy=e.height/t.height;
+    const dx=(e.left+e.width/2)-(t.left+t.width/2);
+    const dy=(e.top+e.height/2)-(t.top+t.height/2);
+    const collapsed=`translate(${dx}px,${dy}px) scale(${sx}, ${sy})`;
+    if(toOpen){
+      card.style.opacity='1';
+      card.style.transform=collapsed;                  // start AS the bar
+      void card.offsetWidth;                           // commit the collapsed frame (no rAF — robust in headless too)
+      card.style.transition='transform .54s cubic-bezier(.2,.85,.25,1), opacity .25s ease';
+      card.style.transform='none';                     // …expand into the card
+    }else{
+      void card.offsetWidth;
+      card.style.transition='transform .44s cubic-bezier(.4,0,.2,1), opacity .3s ease .12s';
+      card.style.transform=collapsed;                  // …shrink back into the bar
+      card.style.opacity='0';
+    }
+  }
+  function open(){ phone.classList.add('open'); flip(true); }
+  function close(){ phone.classList.remove('open'); flip(false); }
+  entry.addEventListener('click', open);
+  document.getElementById('close').addEventListener('click', close);
+  document.getElementById('scrim').addEventListener('click', close);
+</script>
+</body>
+</html>

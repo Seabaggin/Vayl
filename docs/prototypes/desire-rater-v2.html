@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Desire Map · Rater v2</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+/* ── Design tokens matched to AppTheme.swift ── */
+:root {
+  /* Backgrounds — AppColors */
+  --page:    #030305;   /* inkBase / pageBackground */
+  --card:    #12111A;   /* inkCard / cardBackground */
+  --surface: #1A1825;   /* inkSurface / elevated */
+  --input:   #0C0C10;   /* inkRaised / input */
+  --void:    #0A0810;   /* inkVoid / OB canvas — used for phone bg in mockup */
+
+  /* Spectrum — AppColors.spectrumCyan/Purple/Magenta */
+  --cyan:    #00C2FF;
+  --purple:  #6C3AE0;
+  --magenta: #FF006A;
+  --bridge:  #8B6FD4;
+
+  /* Card intensity tints — AppColors.cardIntensity */
+  --tint-cyan:    #061018;
+  --tint-purple:  #080614;
+  --tint-magenta: #120610;
+
+  /* Text — AppColors.text* */
+  --t-bright:    #E8E8F0;                  /* textPrimary on dark */
+  --t-primary:   rgba(232,232,240,.95);    /* textPrimary */
+  --t-secondary: rgba(232,232,240,.65);    /* textSecondary */
+  --t-tertiary:  rgba(232,232,240,.38);    /* textTertiary */
+  --t-muted:     rgba(232,232,240,.20);    /* textMuted */
+
+  /* Borders — AppColors.border* */
+  --b-subtle:  rgba(255,255,255,.06);      /* borderSubtle */
+  --b-default: rgba(255,255,255,.10);      /* borderDefault */
+  --b-active:  rgba(255,255,255,.15);      /* borderActive */
+  --b-purple:  rgba(108,58,224,.14);       /* borderPurple */
+
+  /* Radius — AppRadius */
+  --r-sm:   8px;
+  --r-md:   12px;
+  --r-lg:   16px;
+  --r-xl:   24px;
+  --r-cont: 20px;  /* container */
+  --r-pill: 999px;
+
+  /* Spacing — AppSpacing */
+  --sp-xs:  4px;
+  --sp-sm:  8px;
+  --sp-md:  16px;
+  --sp-lg:  24px;
+  --sp-xl:  32px;
+
+  /* Typography */
+  --disp: "Clash Display",-apple-system,sans-serif;
+  --body: "Switzer",-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
+html, body {
+  min-height:100vh; background:var(--page);
+  font-family:var(--body); color:var(--t-primary);
+  display:flex; align-items:center; justify-content:center; padding:40px 20px;
+}
+
+/* ── Phone shell ── */
+.phone {
+  position:relative; width:390px; height:844px; border-radius:50px; overflow:hidden; flex:none;
+  background:var(--void);
+  box-shadow:0 36px 90px rgba(0,0,0,.75), inset 0 0 0 1.5px rgba(255,255,255,.05);
+}
+.notch { position:absolute; top:13px; left:50%; transform:translateX(-50%); width:112px; height:30px; background:#000; border-radius:18px; z-index:20; }
+.home-ind { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:128px; height:5px; border-radius:3px; background:rgba(255,255,255,.22); z-index:20; }
+.status-bar { position:absolute; top:0; left:0; right:0; z-index:18; display:flex; justify-content:space-between; padding:17px 40px 0; font-size:14px; font-weight:600; color:rgba(255,255,255,.65); pointer-events:none; }
+.status-bar .ic { letter-spacing:2px; font-size:11px; opacity:.65; }
+
+/* Phone atmosphere — AppColors ambient blobs */
+.phone-atmo { position:absolute; inset:0; pointer-events:none; z-index:0; }
+.phone-atmo .drift { position:absolute; inset:0; animation:bgdrift 18s ease-in-out infinite alternate; }
+.blob { position:absolute; border-radius:50%; filter:blur(64px); transform:translate(-50%,-50%); }
+@keyframes bgdrift { from{transform:translate(0,0)} to{transform:translate(-10px,12px)} }
+@media(prefers-reduced-motion:reduce){ .phone-atmo .drift{animation:none} }
+
+/* ── Screen layout ── */
+/* SwiftUI note: VStack(spacing:0) inside .background(AppColors.void) */
+.screen {
+  position:absolute; inset:0; z-index:10;
+  display:flex; flex-direction:column;
+  padding:58px var(--sp-lg) var(--sp-xl);
+}
+
+/* ── Top bar ── */
+/* SwiftUI note: HStack(spacing:AppSpacing.md) { backBtn / ProgressView / countLabel } */
+.topbar {
+  display:flex; align-items:center; gap:var(--sp-md);
+  flex-shrink:0; margin-bottom:var(--sp-md);
+}
+
+/* Back button — 36×36 circle with cardBg + borderSubtle */
+/* SwiftUI note: Circle().fill(AppColors.cardBackground).overlay(Circle().stroke(AppColors.borderSubtle,lineWidth:1)) */
+.back-btn {
+  width:36px; height:36px; border-radius:50%;
+  background:var(--card); border:1px solid var(--b-subtle);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; flex:none; user-select:none;
+  font-size:14px; color:var(--t-tertiary);
+  transition:all 150ms ease;
+}
+.back-btn:hover { border-color:var(--b-default); color:var(--t-secondary); }
+
+.prog-wrap { flex:1; display:flex; align-items:center; gap:var(--sp-md); }
+
+/* Progress track — 4pt height Capsule, AppSpacing.md gap */
+/* SwiftUI note: Capsule().fill(AppColors.textTertiary.opacity(0.18)).overlay(Capsule().fill(spectrumGrad).frame(width:ratio*total)) */
+.prog-track {
+  flex:1; height:4px; background:rgba(232,232,240,.12); border-radius:var(--r-pill); overflow:hidden;
+}
+.prog-fill {
+  height:100%; border-radius:var(--r-pill);
+  background:linear-gradient(90deg,var(--cyan),var(--purple) 52%,var(--magenta));
+  box-shadow:0 0 8px rgba(108,58,224,.5);
+  transition:width 440ms cubic-bezier(.32,0,.08,1);
+}
+
+/* Count — AppFonts.caption (13pt Switzer regular), textTertiary */
+.item-count {
+  font-size:13px; font-weight:400; color:var(--t-tertiary);
+  white-space:nowrap; flex:none;
+}
+
+/* ── Fan area ── */
+/* SwiftUI note: ZStack(alignment:.center) { ghosts.rotationEffect / mainCard.zIndex(1) } .frame(maxHeight:.infinity) */
+.fan-wrap {
+  flex:1; position:relative;
+  display:flex; align-items:center; justify-content:center;
+  perspective:900px;
+}
+
+/* Ghost cards — VAYL ✦ back, spectrum border, atmosphere */
+/* SwiftUI note: ghost cards use same VaylCardFace shell at 0.88 scale + rotationEffect(±14°) + opacity(0.55) */
+.ghost {
+  position:absolute; width:320px; height:370px; border-radius:var(--r-cont);
+  background:linear-gradient(160deg,var(--surface),var(--card));
+  /* Spectrum border via padding-box trick */
+  border:1.1px solid rgba(108,58,224,.35);
+  box-shadow:0 10px 32px rgba(0,0,0,.55);
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+  transition:transform 300ms cubic-bezier(.34,1.56,.64,1), opacity 280ms ease;
+}
+.ghost-mark {
+  font-family:var(--disp); font-size:28px; font-weight:600; letter-spacing:-.02em;
+  background:linear-gradient(135deg,var(--cyan),var(--purple) 50%,var(--magenta));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  opacity:.22; user-select:none;
+}
+/* Fanned positions — ±14° matches AppAnimation.deckFan feel */
+.ghost.left  { transform:rotate(-14deg) translateX(-14px) translateY(8px) scale(.88); opacity:.55; }
+.ghost.right { transform:rotate(14deg)  translateX(14px)  translateY(8px) scale(.88); opacity:.55; }
+/* Mount stacked state */
+.ghost.stacked { transform:rotate(0deg) translateX(0) translateY(0) scale(.96); opacity:0; }
+/* Compress during deal */
+.ghost.left.compressed  { transform:rotate(-5deg) translateX(-4px) translateY(4px) scale(.92); opacity:.35; }
+.ghost.right.compressed { transform:rotate(5deg)  translateX(4px)  translateY(4px) scale(.92); opacity:.35; }
+
+/* ── Main card ── */
+/* SwiftUI note: RoundedRectangle(cornerRadius:AppRadius.container)
+   .fill(cardBg + intensityTint)
+   .overlay(spectrumBorder — 1.1pt outer + 0.55pt inset)
+   .shadow(color:purple.opacity(0.28), radius:24)
+   + ZStack interior: atmosphere blobs (opacity 0.07–0.11) behind content */
+.main-card {
+  position:relative; width:320px; z-index:3; border-radius:var(--r-cont);
+  /* Category tint + spectrum gradient border */
+  padding:var(--sp-lg) var(--sp-lg) var(--sp-md);
+  display:flex; flex-direction:column; gap:var(--sp-sm);
+  overflow:hidden; /* clips interior blobs */
+  transition:transform 380ms cubic-bezier(.32,0,.08,1), opacity 300ms ease, background 500ms ease;
+}
+
+/* Category-tinted spectrum border — using cardIntensity tints */
+/* SwiftUI note: AppColors.cardIntensity.cyan/purple/magenta as card fill, spectrumBorder as border */
+.main-card[data-cat="structures"] {
+  background:
+    linear-gradient(160deg,var(--tint-cyan),var(--card)) padding-box,
+    linear-gradient(135deg,rgba(0,194,255,.7),rgba(108,58,224,.55) 52%,rgba(255,0,106,.55)) border-box;
+  border:1.1px solid transparent;
+  box-shadow:0 0 30px rgba(0,194,255,.12), 0 0 14px rgba(108,58,224,.16), 0 22px 56px rgba(0,0,0,.8);
+}
+.main-card[data-cat="connection"] {
+  background:
+    linear-gradient(160deg,var(--tint-purple),var(--card)) padding-box,
+    linear-gradient(135deg,rgba(108,58,224,.72),rgba(0,194,255,.42) 30%,rgba(255,0,106,.55) 80%) border-box;
+  border:1.1px solid transparent;
+  box-shadow:0 0 34px rgba(108,58,224,.28), 0 0 12px rgba(0,194,255,.08), 0 22px 56px rgba(0,0,0,.8);
+}
+.main-card[data-cat="intimacy"] {
+  background:
+    linear-gradient(160deg,var(--tint-magenta),var(--card)) padding-box,
+    linear-gradient(135deg,rgba(255,0,106,.65),rgba(108,58,224,.55) 50%,rgba(0,194,255,.48)) border-box;
+  border:1.1px solid transparent;
+  box-shadow:0 0 30px rgba(255,0,106,.16), 0 0 14px rgba(108,58,224,.16), 0 22px 56px rgba(0,0,0,.8);
+}
+
+/* Interior card atmosphere blobs — mirrors VaylCardFace FaceAtmosphere
+   Blob A (cyan) upper-left: center(30%,32%), radius 48% of shortSide (≈154px), opacity 0.07
+   Blob B (magenta) lower-right: center(72%,70%), same radius, opacity 0.07
+   Blob C (purple) center: center(50%,50%), radius 44% of shortSide (≈141px), opacity 0.11 */
+.main-card::before {
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(ellipse 154px 154px at 30% 32%, rgba(0,194,255,.07) 0%, transparent 100%),
+    radial-gradient(ellipse 154px 154px at 72% 70%, rgba(255,0,106,.07) 0%, transparent 100%),
+    radial-gradient(ellipse 141px 141px at 50% 50%, rgba(108,58,224,.11) 0%, transparent 100%);
+}
+
+/* Inset frame — 0.55pt at 27% opacity (inner secondary border, 9pt inset) */
+.main-card::after {
+  content:''; position:absolute; pointer-events:none; z-index:0;
+  inset:9px; border-radius:calc(var(--r-cont) - 6px);
+  border:0.55px solid rgba(255,255,255,.12);
+}
+
+/* Card content (z-index:1 to sit above ::before atmosphere) */
+.card-content { position:relative; z-index:1; display:flex; flex-direction:column; gap:var(--sp-sm); }
+
+/* Category overline — AppFonts.overline (11pt Switzer semibold), textTertiary */
+/* SwiftUI note: HStack(spacing:AppSpacing.sm) { Circle().fill(AppColors.spectrumCyan).frame(5) / Text(category).font(AppFonts.overline) } */
+.card-over { display:flex; align-items:center; gap:var(--sp-sm); }
+/* Category dot always spectrumCyan — AppColors.spectrumCyan */
+.spec-dot { width:5px; height:5px; border-radius:50%; background:var(--cyan); flex-shrink:0; }
+.cat-label { font-size:11px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--t-tertiary); }
+
+/* Card title — AppFonts.cardTitle (22pt ClashDisplay semibold) */
+/* SwiftUI note: Text(item.name).font(AppFonts.cardTitle).foregroundStyle(AppColors.textPrimary) */
+.card-title {
+  font-family:var(--disp); font-size:22px; font-weight:600; letter-spacing:-.01em; line-height:1.22;
+  color:var(--t-bright);
+}
+
+/* Description — AppFonts.bodyText (16pt Switzer regular), textSecondary */
+/* SwiftUI note: Text(item.description).font(AppFonts.bodyText).foregroundStyle(AppColors.textSecondary) */
+.card-desc { font-size:16px; font-weight:400; line-height:1.5; color:var(--t-secondary); }
+
+/* Divider before tiles — hairline at 40% opacity */
+.card-rule {
+  width:36px; height:1px; margin:4px 0;
+  background:linear-gradient(90deg,rgba(232,232,240,.2),transparent);
+}
+
+/* ── 2×2 tile grid ── */
+/* SwiftUI note: LazyVGrid(columns:[GridItem(.flexible()),GridItem(.flexible())],spacing:AppSpacing.sm)
+   Each tile: .background(AppColors.cardBackground).clipShape(RoundedRectangle(cornerRadius:AppRadius.md))
+   .overlay(RoundedRectangle(cornerRadius:AppRadius.md).stroke(borderColor,lineWidth:selected?1.5:1))
+   .scaleEffect(selected?0.98:1).sensoryFeedback(.impact(weight:.light)) */
+.tile-grid { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-sm); }
+
+.tile {
+  border-radius:var(--r-md); padding:var(--sp-md) var(--sp-md) var(--sp-md) 18px;
+  min-height:72px;
+  display:flex; align-items:center; gap:10px;
+  cursor:pointer; user-select:none; position:relative;
+  background:var(--card); border:1px solid var(--b-subtle);
+  transition:all 160ms ease;
+}
+
+/* Left accent pill — 4×22pt RoundedRectangle, radius pill — matches RatingRow accent pill in Swift */
+/* SwiftUI note: RoundedRectangle(cornerRadius:.infinity).fill(accentColor).frame(width:4,height:22) */
+.tile::before {
+  content:''; position:absolute;
+  left:10px; top:50%; transform:translateY(-50%);
+  width:4px; height:22px; border-radius:var(--r-pill);
+}
+.tile.tc::before { background:var(--cyan); }
+.tile.tp::before { background:var(--purple); }
+.tile.tn::before { background:rgba(232,232,240,.25); }
+.tile.tm::before { background:var(--magenta); }
+
+/* Tile label — AppFonts.bodyMedium (15pt Switzer medium) */
+.tile-lbl { font-size:15px; font-weight:500; color:var(--t-secondary); line-height:1.35; }
+
+/* Hover (desktop preview) */
+.tile.tc:hover { background:rgba(0,194,255,.05); border-color:rgba(0,194,255,.18); }
+.tile.tp:hover { background:rgba(108,58,224,.06); border-color:rgba(108,58,224,.22); }
+.tile.tn:hover { background:rgba(255,255,255,.04); border-color:var(--b-default); }
+.tile.tm:hover { background:rgba(255,0,106,.05); border-color:rgba(255,0,106,.18); }
+
+/* Selected — accent@10% bg + 1.5pt accent border, scale 0.98 (AppAnimation.spring) */
+.tile.sel { transform:scale(.98); }
+.tile.sel.tc { background:rgba(0,194,255,.10); border:1.5px solid rgba(0,194,255,.44); box-shadow:0 0 14px rgba(0,194,255,.18); }
+.tile.sel.tc .tile-lbl { color:var(--t-primary); }
+.tile.sel.tp { background:rgba(108,58,224,.12); border:1.5px solid rgba(108,58,224,.50); box-shadow:0 0 14px rgba(108,58,224,.22); }
+.tile.sel.tp .tile-lbl { color:var(--t-primary); }
+.tile.sel.tn { background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.24); }
+.tile.sel.tn .tile-lbl { color:var(--t-primary); }
+.tile.sel.tm { background:rgba(255,0,106,.10); border:1.5px solid rgba(255,0,106,.44); box-shadow:0 0 14px rgba(255,0,106,.16); }
+.tile.sel.tm .tile-lbl { color:var(--t-primary); }
+
+/* Privacy note — AppFonts.meta (10pt Switzer regular), textMuted */
+/* SwiftUI note: Text("🔒 just you — Alex will never see this").font(AppFonts.meta).foregroundStyle(AppColors.textMuted) */
+.privacy-note { font-size:10px; font-weight:400; color:var(--t-muted); text-align:center; padding-top:2px; }
+
+/* ── Transition states ── */
+.main-card.exit      { transform:translateY(-130%) rotate(-5deg); opacity:0; transition:transform 360ms cubic-bezier(.4,0,.2,1),opacity 260ms ease; }
+.main-card.offscreen { transform:translateY(130%); opacity:0; transition:none; }
+.main-card.enter     { transform:translateY(0); opacity:1; transition:transform 380ms cubic-bezier(.32,0,.08,1),opacity 300ms ease; }
+/* Mount: starts invisible + offset, transitions to resting */
+.main-card.mounting  { opacity:0; transform:translateY(14px); }
+
+/* ── Completion screen ── */
+/* SwiftUI note: VStack { spectrumRing / Text("Your Desire Map is complete").font(AppFonts.sectionHeading) / Text(sub).font(AppFonts.bodyText) } */
+.completion {
+  position:absolute; inset:0; z-index:14;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:var(--sp-xl);
+  background:var(--void); opacity:0; pointer-events:none; transition:opacity 600ms ease;
+}
+.completion.show { opacity:1; pointer-events:auto; }
+
+/* Spectrum ring — 88pt circle matching completion badge spec */
+.ring-wrap { position:relative; width:88px; height:88px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.ring {
+  position:absolute; inset:0; border-radius:50%;
+  background:conic-gradient(from 0deg,var(--cyan),var(--purple),var(--magenta),var(--cyan));
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),white calc(100% - 2.5px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),white calc(100% - 2.5px));
+  animation:spin 5s linear infinite;
+  filter:drop-shadow(0 0 10px rgba(108,58,224,.6));
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+@media(prefers-reduced-motion:reduce){ .ring{animation:none} }
+.ring-void {
+  position:absolute; inset:7px; border-radius:50%; background:var(--void);
+  display:flex; align-items:center; justify-content:center;
+}
+.ring-star {
+  font-family:var(--disp); font-size:24px;
+  background:linear-gradient(135deg,var(--cyan),var(--purple) 50%,var(--magenta));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+/* AppFonts.sectionHeading = 20pt ClashDisplay medium */
+.comp-head { font-family:var(--disp); font-size:20px; font-weight:500; letter-spacing:-.01em; color:var(--t-bright); text-align:center; line-height:1.3; }
+/* AppFonts.bodyText = 16pt Switzer regular */
+.comp-sub  { font-size:16px; font-weight:400; color:var(--t-secondary); text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <!-- Phone atmosphere — faint ambient blobs matching AppColors OB palette -->
+  <div class="phone-atmo"><div class="drift">
+    <div class="blob" style="left:195px;top:680px;width:380px;height:300px;background:radial-gradient(closest-side,rgba(108,58,224,.14),transparent 73%)"></div>
+    <div class="blob" style="left:100px;top:200px;width:260px;height:240px;background:radial-gradient(closest-side,rgba(0,194,255,.07),transparent 76%)"></div>
+    <div class="blob" style="left:310px;top:430px;width:200px;height:200px;background:radial-gradient(closest-side,rgba(255,0,106,.06),transparent 74%)"></div>
+  </div></div>
+
+  <div class="notch"></div>
+  <div class="status-bar"><span>9:41</span><span class="ic">●●● ▮</span></div>
+
+  <div class="screen">
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="back-btn">‹</div>
+      <div class="prog-wrap">
+        <div class="prog-track"><div class="prog-fill" id="pFill" style="width:28%"></div></div>
+      </div>
+      <div class="item-count" id="iCount">6 of 18</div>
+    </div>
+
+    <!-- Fan -->
+    <div class="fan-wrap">
+      <div class="ghost left"><div class="ghost-mark">✦</div></div>
+      <div class="ghost right"><div class="ghost-mark">✦</div></div>
+
+      <div class="main-card" id="card" data-cat="structures">
+        <!-- Interior atmosphere + inset frame handled by ::before / ::after -->
+        <div class="card-content">
+          <div class="card-over">
+            <div class="spec-dot"></div>
+            <div class="cat-label" id="cCat">structures</div>
+          </div>
+          <div class="card-title"  id="cTitle">Exploring an Open Relationship</div>
+          <div class="card-desc"   id="cDesc">How actively you want to start exploring openness — the appetite and the pace, not whether.</div>
+          <div class="card-rule"></div>
+          <div class="tile-grid"   id="tileGrid"></div>
+          <div class="privacy-note">🔒 just you — Alex will never see this</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Completion -->
+  <div class="completion" id="comp">
+    <div class="phone-atmo" style="z-index:0"><div class="drift">
+      <div class="blob" style="left:195px;top:422px;width:320px;height:320px;background:radial-gradient(closest-side,rgba(108,58,224,.22),transparent 72%)"></div>
+    </div></div>
+    <div class="ring-wrap"><div class="ring"></div><div class="ring-void"><div class="ring-star">✦</div></div></div>
+    <div class="comp-head">Your Desire Map<br>is complete</div>
+    <div class="comp-sub">We'll let you know<br>when Alex finishes</div>
+  </div>
+
+  <div class="home-ind"></div>
+</div>
+
+<script>
+/* SwiftUI note: DesireMapStore holds [DesireItem], currentIndex:Int, ratings:[String:Int].
+   Binds to DesireMapView via @Environment. Card swap uses:
+   AnyTransition.asymmetric(
+     insertion: .move(edge:.bottom).combined(with:.opacity),
+     removal:   .move(edge:.top).combined(with:.opacity)
+   ) inside withAnimation(AppAnimation.spring) */
+
+const items = [
+  { cat:'structures', name:'Exploring an Open Relationship',
+    desc:'How actively you want to start exploring openness — the appetite and the pace, not whether.',
+    ans:['Yes — I want to start exploring','Curious, but slowly','Just the idea for now',"I'm only ready to think about it"] },
+  { cat:'connection',  name:'Swinging or Playing Together',
+    desc:'Sexual experiences with others that you share as a couple — same room, same event, together.',
+    ans:["Yes — that excites me","I'm curious to try it","I'm nervous about it","Not for me"] },
+  { cat:'intimacy',    name:'Multiple Loving Relationships',
+    desc:"Romantic love with more than one person at once — openly and with everyone's knowledge.",
+    ans:["Yes — I want this","I'd explore it","Probably not for me","Not for me"] },
+  { cat:'connection',  name:'Emotional Connections Outside',
+    desc:'Forming deep emotional bonds outside the relationship — closeness beyond friendship.',
+    ans:["Yes, that feels freeing","I'd be open to it","I'd want limits around it","Not for me"] },
+  { cat:'structures',  name:'New Relationship Energy',
+    desc:'The intensity that comes at the start of a new connection — how you feel about chasing it.',
+    ans:["I love that feeling","I'm curious about it","I'd want to pace it","Not for me"] },
+];
+const TOTAL = 18;
+/* Tile classes: cyan / purple / neutral / magenta — matches RatingRow accent colors */
+const TILE_CLS = ['tc','tp','tn','tm'];
+
+let idx = 0, num = 6, busy = false;
+const card   = document.getElementById('card');
+const pFill  = document.getElementById('pFill');
+const iCount = document.getElementById('iCount');
+const comp   = document.getElementById('comp');
+
+function render(i) {
+  const it = items[i % items.length];
+  card.dataset.cat = it.cat;
+  document.getElementById('cCat').textContent   = it.cat;
+  document.getElementById('cTitle').textContent  = it.name;
+  document.getElementById('cDesc').textContent   = it.desc;
+  const grid = document.getElementById('tileGrid');
+  grid.innerHTML = '';
+  it.ans.forEach((a, k) => {
+    const t = document.createElement('div');
+    t.className = 'tile ' + TILE_CLS[k];
+    t.innerHTML = `<div class="tile-lbl">${a}</div>`;
+    t.addEventListener('click', () => choose(t));
+    grid.appendChild(t);
+  });
+  pFill.style.width  = Math.round((num - 1) / TOTAL * 100) + '%';
+  iCount.textContent = num + ' of ' + TOTAL;
+}
+
+/* Ghost helpers — compress / expand mirrors AppAnimation.deckFan spring */
+function ghostEls() { return document.querySelectorAll('.ghost'); }
+
+function compressGhosts() {
+  /* Fast ease-in: physical reaction to tap — AppAnimation.fast (0.15s) */
+  ghostEls().forEach(g => {
+    g.style.transition = 'transform 80ms ease-in, opacity 80ms ease';
+    g.classList.add('compressed');
+  });
+}
+function expandGhosts() {
+  /* Spring re-expand: AppAnimation.deckFan spring(response:0.70, dampingFraction:0.88) → CSS: .34,1.56,.64,1 */
+  ghostEls().forEach(g => {
+    g.style.transition = '';
+    g.classList.remove('compressed');
+  });
+}
+
+function choose(el) {
+  /* SwiftUI note: store.submitRating(id:item.id, value:rating)
+     .sensoryFeedback(.impact(weight:.light), trigger: selection) */
+  if (busy) return; busy = true;
+  document.querySelectorAll('.tile').forEach(t => t.classList.remove('sel'));
+  el.classList.add('sel');
+  compressGhosts();
+
+  setTimeout(() => {
+    if (num >= TOTAL) {
+      expandGhosts();
+      pFill.style.width  = '100%';
+      iCount.textContent = TOTAL + ' of ' + TOTAL;
+      setTimeout(() => comp.classList.add('show'), 200);
+      busy = false; return;
+    }
+    expandGhosts();
+    card.classList.add('exit');
+    setTimeout(() => {
+      idx++; num++;
+      render(idx);
+      card.classList.remove('exit');
+      card.classList.add('offscreen');
+      void card.offsetWidth;
+      requestAnimationFrame(() => {
+        card.classList.remove('offscreen');
+        card.classList.add('enter');
+        setTimeout(() => { card.classList.remove('enter'); busy = false; }, 420);
+      });
+    }, 360);
+  }, 300);
+}
+
+/* Mount animation — stack → fan
+   SwiftUI note: .onAppear { withAnimation(AppAnimation.deckFan) { fanned = true } } */
+ghostEls().forEach(g => g.classList.add('stacked'));
+card.classList.add('mounting');
+render(idx);
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  ghostEls().forEach(g => g.classList.remove('stacked'));
+  card.classList.remove('mounting');
+}));
+</script>
+</body>
+</html>

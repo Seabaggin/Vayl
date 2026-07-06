@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — card-look variability (deck identity + intensity)</title>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=switzer@400,500,600,700&display=swap">
+<style>
+  :root{
+    --void:#040308; --cbg:#12111A;
+    --cy:#00C2FF; --pu:#6C3AE0; --mg:#FF006A;
+    --tp:#E8E8F0; --tb:rgba(255,255,255,0.86); --ts:rgba(255,255,255,0.62); --tt:rgba(255,255,255,0.38);
+    --sp:linear-gradient(135deg,#00C2FF,#6C3AE0,#FF006A);
+    --display:'Clash Display',-apple-system,sans-serif;
+    --body:'Switzer',-apple-system,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:radial-gradient(120% 80% at 50% 0%,#15151c 0%,#09090d 60%);color:var(--tb);font-family:var(--body);padding:40px 28px 90px}
+  h1{font-family:var(--display);font-size:23px;font-weight:600;color:var(--tp);max-width:1080px;margin:0 auto}
+  .lede{font-size:13.5px;line-height:1.6;color:var(--ts);max-width:780px;margin:10px auto 0}
+  .lede b{color:var(--tb)}
+  .appWrap{max-width:1080px;margin:38px auto 0}
+  .appHead{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+  .appHead h2{font-family:var(--display);font-size:18px;font-weight:600;color:var(--tp)}
+  .appHead .tag{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--cy);border:1px solid rgba(0,194,255,0.45);border-radius:8px;padding:2px 8px}
+  .appHead .tag.rec{color:#8B6FD4;border-color:rgba(139,111,212,0.5)}
+  .appNote{font-size:12.5px;line-height:1.5;color:var(--ts);margin-bottom:18px;max-width:740px}
+  .cards{display:flex;gap:26px;flex-wrap:wrap}
+  .col{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .col .clab{font-size:11px;color:var(--ts);text-align:center;max-width:190px}
+  .col .clab b{color:var(--tb);font-weight:600;font-family:var(--display)}
+  .col .heat{font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--tt)}
+
+  /* ───────── faithful VaylCardFace recipe ───────── */
+  .vcard{position:relative;width:190px;height:285px;border-radius:18px;overflow:hidden;background:var(--cbg);
+    box-shadow:0 22px 48px rgba(0,0,0,0.6)}
+  .vcard .atmo{position:absolute;inset:0}
+  .vcard .blob{position:absolute;border-radius:50%;filter:blur(34px)}
+  /* default (current app): fixed cyan/magenta/purple, identical on every card */
+  .vcard .b-cy{width:150px;height:150px;left:6%;top:4%;background:radial-gradient(closest-side,rgba(0,194,255,0.07),transparent 70%)}
+  .vcard .b-mg{width:150px;height:150px;right:4%;bottom:4%;background:radial-gradient(closest-side,rgba(255,0,106,0.07),transparent 70%)}
+  .vcard .b-pu{width:170px;height:170px;left:50%;top:50%;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(108,58,224,0.11),transparent 70%)}
+  .vcard .bglow{position:absolute;inset:0.75px;border-radius:18px;border:1.4px solid rgba(108,58,224,0.5);filter:blur(3px)}
+  .vcard .frame{position:absolute;inset:9px;border-radius:13px;border:0.6px solid rgba(139,111,212,0.6);opacity:0.27}
+  .vcard .outer{position:absolute;inset:0.75px;border-radius:18px;border:1.1px solid rgba(139,111,212,0.85);opacity:0.52}
+  .vcard .hair{position:absolute;left:14px;right:14px;height:1.2px;background:linear-gradient(90deg,transparent,rgba(0,194,255,0.55),rgba(108,58,224,0.6),rgba(255,0,106,0.55),transparent);opacity:0.6}
+  .vcard .hair.t{top:0.75px}.vcard .hair.b{bottom:0.75px}
+  .vcard .glyph{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);opacity:0;pointer-events:none}
+  .vcard .heatwash{position:absolute;left:0;right:0;bottom:0;height:0;pointer-events:none}
+  .vcard .q{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:26px 22px;font-size:14px;line-height:1.44;color:var(--tb);font-weight:500;z-index:2}
+  .vcard .q em{font-style:normal;color:var(--tp)}
+
+  /* ════ A — TINTED: blobs take the deck colour; intensity sets warmth/opacity ════ */
+  .appA .vcard .b-cy,.appA .vcard .b-mg{display:none}
+  .appA .vcard .b-pu{background:radial-gradient(closest-side, color-mix(in srgb, var(--d) 70%, transparent) calc(var(--heat)*0 + 0%), transparent 72%)}
+  .appA .vcard .b-pu{width:190px;height:190px;
+    background:radial-gradient(closest-side, var(--d), transparent 72%);
+    opacity:calc(0.10 + var(--heat) * 0.26)}
+  .appA .vcard .b-top{position:absolute;left:50%;top:0;width:170px;height:120px;transform:translateX(-50%);border-radius:50%;filter:blur(36px);
+    background:radial-gradient(closest-side, var(--d), transparent 70%);opacity:calc(0.06 + var(--heat)*0.22)}
+
+  /* ════ B — SIGNATURE: A + faint category glyph + intensity heat rising from the base ════ */
+  .appB .vcard .b-cy,.appB .vcard .b-mg{display:none}
+  .appB .vcard .b-pu{width:185px;height:185px;background:radial-gradient(closest-side, var(--d), transparent 72%);opacity:calc(0.09 + var(--heat)*0.20)}
+  .appB .vcard .glyph{opacity:calc(0.10 + var(--heat)*0.05)}
+  .appB .vcard .glyph svg *{stroke:var(--d)}
+  .appB .vcard .heatwash{height:calc(40% * var(--heat) + 12%);
+    background:linear-gradient(0deg, color-mix(in srgb, var(--d) 55%, transparent), transparent);
+    opacity:calc(0.25 + var(--heat)*0.55)}
+
+  /* ════ C — WORLDS: full colorway wash + glyph + strong heat + tinted frame + lit highlight ════ */
+  .appC .vcard{background:linear-gradient(160deg, color-mix(in srgb, var(--d) 14%, var(--cbg)), var(--void))}
+  .appC .vcard .b-cy{display:none}
+  .appC .vcard .b-mg{width:150px;height:150px;background:radial-gradient(closest-side, var(--d), transparent 70%);opacity:calc(0.10 + var(--heat)*0.30)}
+  .appC .vcard .b-pu{width:190px;height:190px;background:radial-gradient(closest-side, var(--d), transparent 70%);opacity:calc(0.12 + var(--heat)*0.32)}
+  .appC .vcard .glyph{opacity:calc(0.13 + var(--heat)*0.06)}
+  .appC .vcard .glyph svg *{stroke:var(--d)}
+  .appC .vcard .frame{border-color:color-mix(in srgb, var(--d) 70%, transparent);opacity:calc(0.3 + var(--heat)*0.3)}
+  .appC .vcard .outer{border-color:color-mix(in srgb, var(--d) 80%, transparent)}
+  .appC .vcard .heatwash{height:calc(50% * var(--heat) + 10%);
+    background:linear-gradient(0deg, color-mix(in srgb, var(--d) 70%, transparent), transparent);
+    opacity:calc(0.3 + var(--heat)*0.55)}
+  .appC .vcard .q em{color:var(--d);text-shadow:0 0 10px color-mix(in srgb, var(--d) 60%, transparent)}
+
+  /* current-state strip */
+  .nowWrap{max-width:1080px;margin:34px auto 0;padding-top:8px}
+  .nowWrap .appNote{margin-bottom:14px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <g id="g-cards"><g fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><rect x="6" y="10" width="20" height="27" rx="3" transform="rotate(-16 16 23)"/><rect x="12" y="8" width="20" height="27" rx="3"/><rect x="18" y="10" width="20" height="27" rx="3" transform="rotate(16 28 23)"/></g></g>
+  <g id="g-compass"><g fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><circle cx="22" cy="20" r="13"/><path d="M22 12 L27 23 L22 28 L17 23 Z"/></g></g>
+</defs></svg>
+
+<h1>Card-look variability — deck identity + intensity</h1>
+<p class="lede">Both layers you chose, shown three ways from subtle to bold. In each: the <b>same deck</b> (The Opener, a cool Foundation deck) at its <b>calmest card</b> vs its <b>most intense card</b> shows the within-session ramp; a <b>different deck</b> (Desire &amp; Fantasy, warmer) shows the across-deck shift. Everything here is generated from data you already author — the deck's colorway, the card's intensity, the category glyph — so <b>no new per-card authoring</b>. Pick one, blend, or push the dial.</p>
+
+<!-- A -->
+<div class="appWrap appA">
+  <div class="appHead"><h2>A · Tinted</h2><span class="tag">subtlest</span></div>
+  <div class="appNote">The only change: the card's ambient glow takes the deck's colour, and its strength rises with the card's intensity. Cards stay obviously siblings; it reads as a quiet temperature, not a redesign. Lowest risk, lowest drama.</div>
+  <div class="cards">
+    <div class="col">
+      <div class="vcard" style="--d:#1FB6EF;--heat:0.18">
+        <div class="atmo"><div class="b-top"></div><div class="blob b-cy"></div><div class="blob b-mg"></div><div class="blob b-pu"></div></div>
+        <div class="bglow"></div><div class="hair t"></div><div class="hair b"></div><div class="frame"></div><div class="outer"></div>
+        <div class="q">What are the <em>anchors</em> that have kept you two tethered through everything so far?</div>
+      </div>
+      <div class="clab"><b>The Opener</b> · card 1<div class="heat">Foundation · intensity 2</div></div>
+    </div>
+    <div class="col">
+      <div class="vcard" style="--d:#1FB6EF;--heat:0.95">
+        <div class="atmo"><div class="b-top"></div><div class="blob b-cy"></div><div class="blob b-mg"></div><div class="blob b-pu"></div></div>
+        <div class="bglow"></div><div class="hair t"></div><div class="hair b"></div><div class="frame"></div><div class="outer"></div>
+        <div class="q">What <em>excites</em> you most about where this could go?</div>
+      </div>
+      <div class="clab"><b>The Opener</b> · card 10<div class="heat">same deck · intensity 8</div></div>
+    </div>
+    <div class="col">
+      <div class="vcard" style="--d:#9B5DE0;--heat:0.62">
+        <div class="atmo"><div class="b-top"></div><div class="blob b-cy"></div><div class="blob b-mg"></div><div class="blob b-pu"></div></div>
+        <div class="bglow"></div><div class="hair t"></div><div class="hair b"></div><div class="frame"></div><div class="outer"></div>
+        <div class="q">What's a <em>curiosity</em> you've never said out loud?</div>
+      </div>
+      <div class="clab"><b>Desire &amp; Fantasy</b><div class="heat">Identity · intensity 6</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- B -->
+<div class="appWrap appB">
+  <div class="appHead"><h2>B · Signature</h2><span class="tag rec">recommended start</span></div>
+  <div class="appNote">A, plus two cues: a faint <b>category glyph</b> watermark (each deck family has a mark — cards, spark, knot, compass, network, key) so a deck is recognisable at a glance, and a <b>heat that rises from the base</b> with intensity, so a card visibly "runs hotter." Clear identity and clear weight, still all generated.</div>
+  <div class="cards">
+    <div class="col">
+      <div class="vcard" style="--d:#1FB6EF;--heat:0.18">
+        <div class="atmo"><div class="blob b-pu"></div></div>
+        <div class="heatwash"></div>
+        <div class="glyph"><svg width="120" height="110" viewBox="0 0 44 40"><use href="#g-cards"/></svg></div>
+        <div class="bglow"></div><div class="hair t"></div><div class="hair b"></div><div class="frame"></div><div class="outer"></div>
+        <div class="q">What are the <em>anchors</em> that have kept you two tethered through everything so far?</div>
+      </div>
+      <div class="clab"><b>The Opener</b> · card 1<div class="heat">Foundation · intensity 2</div></div>
+    </div>
+    <div class="col">
+      <div class="vcard" style="--d:#1FB6EF;--heat:0.95">
+        <div class="atmo"><div class="blob b-pu"></div></div>
+        <div class="heatwash"></div>
+        <div class="glyph"><svg width="120" height="110" viewBox="0 0 44 40"><use href="#g-cards"/></svg></div>
+        <div class="bglow"></div><div class="hair t"></div><div class="hair b"></div><div class="frame"></div><div class="outer"></div>
+        <div class="q">What <em>excites</em> you most about where this could go?</div>
+      </div>
+      <div class="clab"><b>The Opener</b> · card 10<div class="heat">same deck · intensity 8</div></div>
+    </div>
+    <div class="col">
+      <div class="vcard" style="--d:#9B5DE0;--heat:0.62">
+        <div class="atmo"><div class="blob b-pu"></div></div>
+        <div class="heatwash"></div>
+        <div class="glyph"><svg width="120" height="110" viewBox="0 0 44 40"><use href="#g-compass"/></svg></div>
+        <div class="bglow"></div><div class="hair t"></div><div class="hair b"></div><div class="frame"></div><div class="outer"></div>
+        <div class="q">What's a <em>curiosity</em> you've never said out loud?</div>
+      </div>
+      <div class="clab"><b>Desire &amp; Fantasy</b><div class="heat">Identity · intensity 6</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- C -->
+<div class="appWrap appC">
+  <div class="appHead"><h2>C · Worlds</h2><span class="tag">boldest</span></div>
+  <div class="appNote">Each deck feels like its own world: a full colorway wash on the base, the glyph, a strong base-heat, a colorway-tinted frame, and the highlight word lit in the deck colour. Most dramatic and most distinct — but cards are less obviously one family, and it leans hardest on the colour reading well at every intensity.</div>
+  <div class="cards">
+    <div class="col">
+      <div class="vcard" style="--d:#1FB6EF;--heat:0.18">
+        <div class="atmo"><div class="blob b-mg"></div><div class="blob b-pu"></div></div>
+        <div class="heatwash"></div>
+        <div class="glyph"><svg width="124" height="113" viewBox="0 0 44 40"><use href="#g-cards"/></svg></div>
+        <div class="bglow"></div><div class="hair t"></div><div class="hair b"></div><div class="frame"></div><div class="outer"></div>
+        <div class="q">What are the <em>anchors</em> that have kept you two tethered through everything so far?</div>
+      </div>
+      <div class="clab"><b>The Opener</b> · card 1<div class="heat">Foundation · intensity 2</div></div>
+    </div>
+    <div class="col">
+      <div class="vcard" style="--d:#1FB6EF;--heat:0.95">
+        <div class="atmo"><div class="blob b-mg"></div><div class="blob b-pu"></div></div>
+        <div class="heatwash"></div>
+        <div class="glyph"><svg width="124" height="113" viewBox="0 0 44 40"><use href="#g-cards"/></svg></div>
+        <div class="bglow"></div><div class="hair t"></div><div class="hair b"></div><div class="frame"></div><div class="outer"></div>
+        <div class="q">What <em>excites</em> you most about where this could go?</div>
+      </div>
+      <div class="clab"><b>The Opener</b> · card 10<div class="heat">same deck · intensity 8</div></div>
+    </div>
+    <div class="col">
+      <div class="vcard" style="--d:#9B5DE0;--heat:0.62">
+        <div class="atmo"><div class="blob b-mg"></div><div class="blob b-pu"></div></div>
+        <div class="heatwash"></div>
+        <div class="glyph"><svg width="124" height="113" viewBox="0 0 44 40"><use href="#g-compass"/></svg></div>
+        <div class="bglow"></div><div class="hair t"></div><div class="hair b"></div><div class="frame"></div><div class="outer"></div>
+        <div class="q">What's a <em>curiosity</em> you've never said out loud?</div>
+      </div>
+      <div class="clab"><b>Desire &amp; Fantasy</b><div class="heat">Identity · intensity 6</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- current state -->
+<div class="nowWrap">
+  <div class="appHead"><h2 style="font-family:var(--display);font-size:15px;color:var(--ts)">For reference · today</h2></div>
+  <div class="appNote">Every card in every deck renders this one face — fixed cyan/magenta/purple glow, no deck colour, no intensity read.</div>
+  <div class="cards">
+    <div class="col">
+      <div class="vcard">
+        <div class="atmo"><div class="blob b-cy"></div><div class="blob b-mg"></div><div class="blob b-pu"></div></div>
+        <div class="bglow"></div><div class="hair t"></div><div class="hair b"></div><div class="frame"></div><div class="outer"></div>
+        <div class="q">What are the anchors that have kept you two tethered through everything so far?</div>
+      </div>
+      <div class="clab"><b>any deck</b> · any card<div class="heat">always identical</div></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -4,6 +4,11 @@ struct LivingText: View {
     let text: String
     var font: Font = AppFonts.display(28, weight: .semibold, relativeTo: .title2)
 
+    /// When false, renders the static gradient (no breathing glow). Used where a
+    /// perpetually-animating word reads as gimmick rather than polish (e.g. the
+    /// Home greeting name). Defaults true to preserve every existing caller.
+    var animated: Bool = true
+
     @Environment(\.colorScheme) private var colorScheme
 
     // MARK: - Gradient Stops
@@ -34,7 +39,7 @@ struct LivingText: View {
 
     var body: some View {
         Group {
-            if UIAccessibility.isReduceMotionEnabled {
+            if !animated || AppAnimation.ambientMotionDisabled {
                 staticText
             } else {
                 animatedText
@@ -65,20 +70,23 @@ struct LivingText: View {
             let baseGradient = LinearGradient(colors: f.stops, startPoint: .leading, endPoint: .trailing)
 
             ZStack {
-                // Outer bloom — wide, atmospheric.
+                // Outer bloom — wide, atmospheric. Screen blend so it reads as
+                // emitted light on the near-black void, not translucent paint.
                 Text(text)
                     .font(font)
                     .foregroundStyle(baseGradient)
                     .blur(radius: f.glowBlur * 1.6)
                     .opacity(f.glowOpacity * 0.40)
+                    .blendMode(.screen)
                     .accessibilityHidden(true)
 
-                // Inner glow — tighter halo ring.
+                // Inner glow — tighter halo ring. Screen-blended for the same reason.
                 Text(text)
                     .font(font)
                     .foregroundStyle(baseGradient)
                     .blur(radius: f.glowBlur * 0.45)
                     .opacity(f.glowOpacity * 0.80)
+                    .blendMode(.screen)
                     .accessibilityHidden(true)
 
                 // Primary crisp layer — full opacity, no blur.
@@ -115,26 +123,19 @@ private struct Frame {
         let scalePhase: CGFloat = CGFloat(elapsed.truncatingRemainder(dividingBy: scaleCycle) / scaleCycle)
         let scaleIntensity: CGFloat = CGFloat(sin(scalePhase * .pi * 2) * 0.5 + 0.5)
 
-        // Tri-color glow — each color blooms at a different phase.
-        let cyanPhase:    CGFloat = CGFloat(elapsed / 3.0).truncatingRemainder(dividingBy: 1.0)
-        let magentaPhase: CGFloat = CGFloat(elapsed / 4.0).truncatingRemainder(dividingBy: 1.0)
-        let midPhase:     CGFloat = CGFloat(elapsed / 5.0).truncatingRemainder(dividingBy: 1.0)
-
-        let cyanGlow:    CGFloat = CGFloat(sin(cyanPhase    * .pi * 2) * 0.5 + 0.5)
-        let magentaGlow: CGFloat = CGFloat(sin(magentaPhase * .pi * 2) * 0.5 + 0.5)
-        let midGlow:     CGFloat = CGFloat(sin(midPhase     * .pi * 2) * 0.5 + 0.5)
-
-        // Animated gradient stops — opacity of each color breathes independently.
+        // Spectrum stops at FULL opacity — the readable core must never fade.
+        // The wash came from breathing each stop's alpha down to 0.70 here;
+        // breathing now lives entirely in the glow layers (see animatedText).
         self.stops = isLight
             ? [
-                AppColors.accentTertiary.opacity(0.75 + cyanGlow * 0.25),
-                AppColors.progressBarLeading.opacity(0.75 + midGlow * 0.25),
-                AppColors.progressBarTrailing.opacity(0.75 + magentaGlow * 0.25),
+                AppColors.accentTertiary,
+                AppColors.progressBarLeading,
+                AppColors.progressBarTrailing,
               ]
             : [
-                AppColors.accentPrimary.opacity(0.70 + cyanGlow * 0.30),
-                AppColors.accentSecondary.opacity(0.70 + midGlow * 0.30),
-                AppColors.accentTertiary.opacity(0.70 + magentaGlow * 0.30),
+                AppColors.accentPrimary,
+                AppColors.accentSecondary,
+                AppColors.accentTertiary,
               ]
 
         self.glowOpacity = isLight

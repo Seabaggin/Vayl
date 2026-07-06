@@ -1,0 +1,386 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "supabase/config.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 22,
+      "nonEmptyLines": 20,
+      "sections": [
+        {
+          "heading": "functions.lookup-code",
+          "level": 2,
+          "line": 2
+        },
+        {
+          "heading": "functions.create-pair",
+          "level": 2,
+          "line": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "supabase/functions/compute-desire-matches/index.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 171,
+      "nonEmptyLines": 149,
+      "functions": [
+        {
+          "name": "json",
+          "startLine": 23,
+          "endLine": 28,
+          "params": [
+            "body",
+            "status"
+          ]
+        },
+        {
+          "name": "matchType",
+          "startLine": 32,
+          "endLine": 37,
+          "params": [
+            "a",
+            "b"
+          ]
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "json",
+          "callee": "JSON.stringify",
+          "lineNumber": 24
+        },
+        {
+          "caller": "matchType",
+          "callee": "positive",
+          "lineNumber": 35
+        },
+        {
+          "caller": "matchType",
+          "callee": "positive",
+          "lineNumber": 35
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "supabase/functions/create-pair/.npmrc",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 3,
+      "nonEmptyLines": 3,
+      "metrics": {}
+    },
+    {
+      "path": "supabase/functions/create-pair/deno.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 5,
+      "nonEmptyLines": 5,
+      "sections": [
+        {
+          "heading": "imports",
+          "level": 1,
+          "line": 2
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "supabase/functions/create-pair/index.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 143,
+      "nonEmptyLines": 128,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "supabase/functions/get-partner/index.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 86,
+      "nonEmptyLines": 74,
+      "functions": [
+        {
+          "name": "json",
+          "startLine": 20,
+          "endLine": 25,
+          "params": [
+            "body",
+            "status"
+          ]
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "json",
+          "callee": "JSON.stringify",
+          "lineNumber": 21
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "supabase/functions/grant-entitlement/index.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 155,
+      "nonEmptyLines": 136,
+      "functions": [
+        {
+          "name": "json",
+          "startLine": 36,
+          "endLine": 41,
+          "params": [
+            "body",
+            "status"
+          ]
+        },
+        {
+          "name": "verifyAppleTransaction",
+          "startLine": 54,
+          "endLine": 66,
+          "params": [
+            "_signedTransaction",
+            "_expectedProductId"
+          ]
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "json",
+          "callee": "JSON.stringify",
+          "lineNumber": 37
+        },
+        {
+          "caller": "verifyAppleTransaction",
+          "callee": "Deno.env.get",
+          "lineNumber": 58
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "supabase/functions/lookup-code/.npmrc",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 3,
+      "nonEmptyLines": 3,
+      "metrics": {}
+    },
+    {
+      "path": "supabase/functions/lookup-code/deno.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 5,
+      "nonEmptyLines": 5,
+      "sections": [
+        {
+          "heading": "imports",
+          "level": 1,
+          "line": 2
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "supabase/functions/lookup-code/index.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 87,
+      "nonEmptyLines": 78,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "supabase/functions/rapid-task/index.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 126,
+      "nonEmptyLines": 107,
+      "functions": [
+        {
+          "name": "json",
+          "startLine": 20,
+          "endLine": 25,
+          "params": [
+            "body",
+            "status"
+          ]
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "json",
+          "callee": "JSON.stringify",
+          "lineNumber": 21
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "Vayl/App/AppShell.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 72,
+      "nonEmptyLines": 62,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/ModelContainer.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 119,
+      "nonEmptyLines": 104,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppAnimation.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 621,
+      "nonEmptyLines": 522,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppColors.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 685,
+      "nonEmptyLines": 576,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppElevation.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 281,
+      "nonEmptyLines": 239,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppFonts.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 230,
+      "nonEmptyLines": 195,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppGlows.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 414,
+      "nonEmptyLines": 358,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppGrid.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 120,
+      "nonEmptyLines": 99,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppLayout.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 459,
+      "nonEmptyLines": 372,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppRadius.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 92,
+      "nonEmptyLines": 76,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppRootView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 99,
+      "nonEmptyLines": 87,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppSafeArea.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 166,
+      "nonEmptyLines": 150,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppSpacing.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 53,
+      "nonEmptyLines": 42,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/App/Theme/AppTheme.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 39,
+      "nonEmptyLines": 32,
+      "metrics": {}
+    }
+  ]
+}

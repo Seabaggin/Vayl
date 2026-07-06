@@ -1,0 +1,31 @@
+{
+  "projectRoot": "/Users/bryanjorden/Documents/School/Code/Vayl",
+  "batchFiles": [
+    {"path": "Vayl/Features/Onboarding/Canvas/Math/CanvasEasing.swift", "language": "swift", "sizeLines": 19, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Canvas/OBDeepCardFace.swift", "language": "swift", "sizeLines": 765, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift", "language": "swift", "sizeLines": 387, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Canvas/OnboardingStage.swift", "language": "swift", "sizeLines": 25, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift", "language": "swift", "sizeLines": 445, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Canvas/TableSurfaceView.swift", "language": "swift", "sizeLines": 911, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Canvas/VaylDirector.swift", "language": "swift", "sizeLines": 851, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Components/CornerDeckView.swift", "language": "swift", "sizeLines": 87, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Components/DeckWrapView.swift", "language": "swift", "sizeLines": 65, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Components/FounderLetterSheet.swift", "language": "swift", "sizeLines": 54, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Components/HandBackFollow.swift", "language": "swift", "sizeLines": 44, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Components/LiftHalo.swift", "language": "swift", "sizeLines": 46, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Components/OnboardingAtmosphere.swift", "language": "swift", "sizeLines": 219, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Layout/OnboardingLayout.swift", "language": "swift", "sizeLines": 100, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Models/CardLandingSlot.swift", "language": "swift", "sizeLines": 33, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Models/ContextOption.swift", "language": "swift", "sizeLines": 130, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Models/CuriosityDeck.swift", "language": "swift", "sizeLines": 96, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Models/CuriositySortCard.swift", "language": "swift", "sizeLines": 11, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Models/DemoDictionary.swift", "language": "swift", "sizeLines": 60, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Models/FoilTear.swift", "language": "swift", "sizeLines": 40, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Models/OnboardingData.swift", "language": "swift", "sizeLines": 100, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Models/VaylCardModel.swift", "language": "swift", "sizeLines": 101, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Models/WelcomeDeck.swift", "language": "swift", "sizeLines": 33, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift", "language": "swift", "sizeLines": 630, "fileCategory": "code"},
+    {"path": "Vayl/Features/Onboarding/Phases/ConfirmationPhase.swift", "language": "swift", "sizeLines": 399, "fileCategory": "code"}
+  ],
+  "batchImportData": {}
+}

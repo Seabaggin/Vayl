@@ -8,16 +8,15 @@ import SwiftData
 
 // MARK: - DesireMapEntry
 // One person's private rating for a single Desire Map item.
-// Replaces DesireRating.swift — delete that file once this compiles.
 //
-// CRITICAL — Most sensitive data in the app.
-// Three enforcement layers — all three must hold simultaneously:
-//   1. Swift: notForUs never included in any Supabase write payload
-//   2. Edge Function: filters before writing to desire_matches table
-//   3. Supabase RLS: partner cannot query desire_map_entries at all, ever
-//
-// userId is PRIVATE — never crosses to the partner's device or view.
-// notForUs ratings NEVER leave the device under any circumstances.
+// PRIVACY: matches the ratified "sync-all, obscure at the match layer" posture
+// (see DesireRatingValue in AppDesireEnums). userId is PRIVATE and never shown to
+// the partner. All four weights sync to desire_ratings, INCLUDING notForMe. The
+// boundary is enforced partner-vs-partner, not by withholding at upload:
+//   1. Supabase RLS: a partner can never query your desire_ratings, ever.
+//   2. Edge function: notForMe is excluded from desire_matches, so it never
+//      surfaces in the shared reveal.
+// The old "notForMe never leaves the device" model is retired.
 
 @Model
 final class DesireMapEntry {
@@ -40,13 +39,6 @@ final class DesireMapEntry {
         self.completedAt = Date()
     }
 
-    // MARK: - Computed
-
-    /// Whether this entry should ever be included in a sync payload.
-    /// notForUs entries always return false — they never leave the device.
-    var isSyncable: Bool {
-        rating != .notForUs
-    }
 }
 
 // MARK: - DesireMapStatus
@@ -70,10 +62,10 @@ final class DesireMapStatus {
     var partnerACompletedAt: Date?
     var partnerBCompletedAt: Date?
 
-    // MARK: - Reveal State
+    // MARK: - Waiting State
+    // Reveal/unlock state is NOT mirrored here: Available = bothComplete (above),
+    // Unlocked = couples.access_tier (EntitlementStore), Seen = desire_reveal_progress.
 
-    var fullRevealUnlocked: Bool    // true after paywall cleared
-    var fullRevealAt: Date?
     var waitingStateSince: Date?    // set when first partner completes — powers 7-day timer
 
     // MARK: - Computed
@@ -95,8 +87,6 @@ final class DesireMapStatus {
         self.partnerBComplete = false
         self.partnerACompletedAt = nil
         self.partnerBCompletedAt = nil
-        self.fullRevealUnlocked = false
-        self.fullRevealAt = nil
         self.waitingStateSince = nil
     }
 

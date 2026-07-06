@@ -16,8 +16,7 @@ struct ScoreRing: View {
     @State private var progress: CGFloat = 0
 
     // Spectrum sweep: cyan → purple → magenta → cyan (full arc).
-    // AngularGradient matches AppPalette.ringGradient — migrated off
-    // legacy theme env so Color.dynamic tokens resolve correctly.
+    // Built from AppColors spectrum tokens — no legacy theme env.
     private var ringGradient: AngularGradient {
         AngularGradient(
             colors: [

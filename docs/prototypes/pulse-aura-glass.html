@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — aura: living caustic under glass</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --void:#0a0810; --t1:#E8E8F0; --t2:rgba(255,255,255,.65); --t3:rgba(255,255,255,.4);
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0c0a12;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,#00C2FF,#8B6FD4 45%,#FF006A);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:820px;margin:0 auto;padding:44px 28px 70px;text-align:center}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px;text-align:left}
+  h1{font-family:var(--disp);font-size:25px;font-weight:600;margin:0 0 6px;text-align:left}
+  .lede{font-size:13px;line-height:1.55;color:var(--t2);margin:0 0 26px;text-align:left}
+
+  .hero{border-radius:24px;background:radial-gradient(120% 60% at 50% 0%, rgba(108,58,224,.12), transparent 62%),linear-gradient(var(--void),#08060f);border:1px solid rgba(255,255,255,.06);padding:48px 20px}
+  .rowK{font-family:var(--disp);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin:30px 0 14px}
+  .tiers{display:flex;gap:30px;justify-content:center;flex-wrap:wrap}
+  .tcell{display:flex;flex-direction:column;align-items:center;gap:9px}
+  .tcell .lbl{font-size:10px;color:var(--t2)}
+  .tcell .lbl b{display:block;font-family:var(--disp);color:var(--t1);font-size:11px}
+  .widget{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:24px;color:var(--t3);font-size:11px}
+
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+  @keyframes causticDrift{0%,100%{transform:translate(0,0) rotate(0deg)}33%{transform:translate(7%,-6%) rotate(36deg)}66%{transform:translate(-6%,6%) rotate(-28deg)}}
+  /* incremental: the glint crosses once, then the surface rests (off-screen, invisible) until the next pass */
+  @keyframes sweep{
+    0%{transform:translateX(-64%);opacity:0}
+    6%{transform:translateX(-52%);opacity:1}
+    17%{transform:translateX(-8%);opacity:1}
+    21%{transform:translateX(0%);opacity:0}
+    100%{transform:translateX(-64%);opacity:0}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+
+  .aura{position:relative;border-radius:50%;overflow:hidden;box-shadow:0 0 40px 12px var(--glow);animation:breathe 5.4s ease-in-out infinite}
+  .aura .body{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle, var(--cl) 0%, var(--c) 46%, var(--cd) 92%)}
+  .aura .caustic{position:absolute;inset:-16%;
+    background:
+      radial-gradient(circle at 35% 38%, rgba(255,255,255,.6), transparent 30%),
+      radial-gradient(circle at 66% 60%, var(--cl), transparent 28%),
+      radial-gradient(circle at 50% 80%, var(--c), transparent 30%);
+    mix-blend-mode:screen;animation:causticDrift 7s ease-in-out infinite}
+  .aura .glass{position:absolute;top:-12%;bottom:-12%;left:0;width:280%;
+    background:linear-gradient(112deg, transparent 36%, rgba(255,255,255,.30) 40.5%, transparent 45%, transparent 57%, rgba(255,255,255,.15) 61%, transparent 65%);
+    animation:sweep 8.5s ease-in-out infinite}
+  .aura .rim{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 1.5px 4px rgba(255,255,255,.42), inset 0 0 13px 1px rgba(255,255,255,.16)}
+
+  /* tier colors */
+  .cyan   {--c:#00C2FF;--cl:#7FE0FF;--cd:#0A8FD0;--glow:rgba(0,194,255,.3)}
+  .indigo {--c:#8B5CF6;--cl:#C4B5FD;--cd:#5B3FB8;--glow:rgba(139,92,246,.3)}
+  .magenta{--c:#FF006A;--cl:#FF8FB6;--cd:#B0004A;--glow:rgba(255,0,106,.28)}
+  .rose   {--c:#C76A86;--cl:#ECC0CE;--cd:#8F4A60;--glow:rgba(199,106,134,.26)}
+
+  .s150{width:150px;height:150px}.s80{width:80px;height:80px}.s32{width:32px;height:32px}
+
+  .od{font-size:12px;line-height:1.6;color:var(--t2);margin-top:26px;text-align:left}.od b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>Living caustic, <span class="spectrum">under glass</span></h1>
+  <p class="lede">The caustic light moves inside; the StatPhase "1 in 5" specular sweeps across the surface on top; a soft rim makes it read as glass. Clear color, alive, not a ball.</p>
+
+  <div class="hero">
+    <div class="aura cyan s150" style="margin:0 auto"><div class="body"></div><div class="caustic"></div><div class="glass"></div><div class="rim"></div></div>
+    <div class="rowK">The four states (color must still read through the glass)</div>
+    <div class="tiers">
+      <div class="tcell"><div class="aura cyan s80"><div class="body"></div><div class="caustic"></div><div class="glass"></div><div class="rim"></div></div><div class="lbl"><b>Cyan</b>Abundant</div></div>
+      <div class="tcell"><div class="aura indigo s80"><div class="body"></div><div class="caustic"></div><div class="glass"></div><div class="rim"></div></div><div class="lbl"><b>Indigo</b>Good</div></div>
+      <div class="tcell"><div class="aura magenta s80"><div class="body"></div><div class="caustic"></div><div class="glass"></div><div class="rim"></div></div><div class="lbl"><b>Magenta</b>Low</div></div>
+      <div class="tcell"><div class="aura rose s80"><div class="body"></div><div class="caustic"></div><div class="glass"></div><div class="rim"></div></div><div class="lbl"><b>Rose</b>Empty</div></div>
+    </div>
+    <div class="widget">
+      <div class="aura cyan s32"><div class="body"></div><div class="caustic"></div><div class="glass"></div><div class="rim"></div></div>
+      <span>widget size, the sweep still glints</span>
+    </div>
+  </div>
+
+  <p class="od"><b>What you are seeing:</b> three layers under one rim. The <b>caustic</b> drifts inside (light through water), the <b>glass sweep</b> is the exact 1-in-5 specular (a bright band plus a softer second band crossing diagonally on a slow loop), and the <b>rim</b> reads as the curved edge of glass. The body keeps a clear tier color so all four states are unmistakable even through the glass. If this is it, I will rebuild the field, the comparison thread, and the Home widget on this aura, then we can finally close Pulse and get back to the rest of the Map.</p>
+</div>
+</body>
+</html>

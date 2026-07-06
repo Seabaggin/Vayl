@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Pulse, final (glass aura + time windows)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  /* tokens from Vayl/App/Theme */
+  :root{
+    --cyan:#00C2FF; --cyan-light:#7FE0FF; --cyan-deep:#0A8FD0;
+    --purple:#6C3AE0; --purple-light:#A78BFA; --bridge:#8B6FD4; --magenta:#FF006A; --indigo:#8B5CF6; --rose:#C76A86;
+    --void:#0a0810; --card:#120f1a;
+    --t1:#E8E8F0; --t2:rgba(255,255,255,.65); --t3:rgba(255,255,255,.4); --t-muted:rgba(255,255,255,.2);
+    --glass-s:rgba(255,255,255,.06); --border:rgba(255,255,255,.1);
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:980px;margin:0 auto;padding:44px 26px 70px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:25px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:13px;line-height:1.55;color:var(--t2);margin:0 0 24px}.lede b{color:var(--t1)}
+  .row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;justify-items:center}
+  @media(max-width:900px){.row{grid-template-columns:1fr;max-width:300px;margin-inline:auto}}
+  .cap{font-family:var(--disp);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin:0 0 11px;text-align:center;color:var(--purple-light)}
+
+  .phone{position:relative;width:288px;max-width:100%;border-radius:38px;overflow:hidden;background:#040308;box-shadow:0 26px 64px rgba(0,0,0,.55),inset 0 0 0 1.3px rgba(255,255,255,.05);aspect-ratio:288/610}
+  .sky{position:absolute;inset:0;background:radial-gradient(120% 26% at 50% 1%,rgba(108,58,224,.18),transparent 60%),linear-gradient(var(--void),#08060f)}
+  .star{position:absolute;width:1.5px;height:1.5px;border-radius:50%;background:#fff;opacity:.32}
+  .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:74px;height:20px;background:#000;border-radius:12px;z-index:30}
+  .home{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:84px;height:3.5px;border-radius:3px;background:rgba(255,255,255,.2);z-index:30}
+  .scr{position:absolute;inset:0;z-index:10;padding:42px 14px 12px;display:flex;flex-direction:column}
+  .mast{display:flex;align-items:flex-start;justify-content:space-between}
+  .mast .nm{font-family:var(--disp);font-size:19px;font-weight:700}
+  .mast .lit{background:linear-gradient(90deg,var(--cyan),var(--bridge) 50%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mast .fade{color:var(--t3);opacity:.45}
+  .mast .sub{font-size:10px;color:var(--t3);margin-top:2px}
+  .mast .gear{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--glass-s);display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:13px;flex:none}
+  .ovl{display:flex;align-items:center;justify-content:space-between;margin:14px 2px 0}
+  .ovl .k{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--purple-light);opacity:.7}
+  .ovl .hint{font-size:9.5px;color:var(--t3)}
+
+  /* ── glass aura ── */
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+  @keyframes causticDrift{0%,100%{transform:translate(0,0) rotate(0deg)}33%{transform:translate(7%,-6%) rotate(36deg)}66%{transform:translate(-6%,6%) rotate(-28deg)}}
+  @keyframes sweep{0%{transform:translateX(-64%);opacity:0}6%{transform:translateX(-52%);opacity:1}17%{transform:translateX(-8%);opacity:1}21%{transform:translateX(0);opacity:0}100%{transform:translateX(-64%);opacity:0}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  .aura{position:relative;border-radius:50%;overflow:hidden;box-shadow:0 0 36px 10px var(--glow);animation:breathe 5.4s ease-in-out infinite}
+  .aura .body{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,var(--cl) 0%,var(--c) 46%,var(--cd) 92%)}
+  .aura .caustic{position:absolute;inset:-16%;background:radial-gradient(circle at 35% 38%,rgba(255,255,255,.6),transparent 30%),radial-gradient(circle at 66% 60%,var(--cl),transparent 28%),radial-gradient(circle at 50% 80%,var(--c),transparent 30%);mix-blend-mode:screen;animation:causticDrift 7s ease-in-out infinite}
+  .aura .glass{position:absolute;top:-12%;bottom:-12%;left:0;width:280%;background:linear-gradient(112deg,transparent 36%,rgba(255,255,255,.3) 40.5%,transparent 45%,transparent 57%,rgba(255,255,255,.15) 61%,transparent 65%);animation:sweep 8.5s ease-in-out infinite}
+  .aura .rim{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 1.5px 4px rgba(255,255,255,.42),inset 0 0 13px 1px rgba(255,255,255,.16)}
+  .cyan{--c:#00C2FF;--cl:#7FE0FF;--cd:#0A8FD0;--glow:rgba(0,194,255,.3)}
+  .rose{--c:#C76A86;--cl:#ECC0CE;--cd:#8F4A60;--glow:rgba(199,106,134,.26)}
+
+  .state{font-family:var(--disp);font-size:21px;font-weight:600;color:#fff;text-align:center;line-height:1.1}
+  .substate{font-size:10.5px;color:var(--t2);margin-top:3px;text-align:center}
+  .todayline{font-size:10px;color:var(--cyan);margin-top:7px;text-align:center;opacity:.85}
+  .gridK{font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--t3);margin:auto 2px 7px}
+  .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin-bottom:2px}
+  .gd{aspect-ratio:1;border-radius:50%}
+  .gd.ab{background:var(--cyan)}.gd.go{background:var(--indigo)}.gd.lo{background:var(--magenta)}.gd.em{background:var(--rose)}
+
+  /* ── field ── */
+  .field{position:relative;width:248px;height:248px;margin:14px auto 4px}
+  .zone{position:absolute;width:74%;height:74%;border-radius:50%;filter:blur(26px);opacity:.16}
+  .z-exp{top:-7%;right:-7%;background:radial-gradient(closest-side,var(--cyan),transparent)}
+  .z-fri{top:-7%;left:-7%;background:radial-gradient(closest-side,var(--magenta),transparent)}
+  .z-pro{bottom:-7%;left:-7%;background:radial-gradient(closest-side,var(--rose),transparent)}
+  .z-sov{bottom:-7%;right:-7%;background:radial-gradient(closest-side,var(--indigo),transparent)}
+  .qlab{position:absolute;font-family:var(--disp);font-size:8.5px;font-weight:600;opacity:.7}
+  .q-exp{top:4px;right:6px;color:rgba(127,224,255,.8)}.q-fri{top:4px;left:6px;color:rgba(255,77,148,.65)}.q-pro{bottom:4px;left:6px;color:rgba(199,106,134,.7)}.q-sov{bottom:4px;right:6px;color:rgba(167,139,250,.7)}
+  .axlab{position:absolute;font-size:7px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t-muted)}
+  .ax-up{top:-12px;left:50%;transform:translateX(-50%)}.ax-dn{bottom:-12px;left:50%;transform:translateX(-50%)}.ax-l{left:-14px;top:50%;transform:translateY(-50%) rotate(-90deg)}.ax-r{right:-14px;top:50%;transform:translateY(-50%) rotate(90deg)}
+  .fmark{position:absolute;border-radius:50%;background:var(--cyan);transform:translate(-50%,-50%)}
+  .flab{position:absolute;font-size:8px;font-weight:700;color:var(--t3);transform:translate(-50%,-50%)}
+  .auraPos{position:absolute;transform:translate(-50%,-50%)}
+  .tag{position:absolute;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transform:translate(-50%,-50%)}
+
+  .read{font-family:var(--disp);font-size:14px;font-weight:600;color:#fff;text-align:center;margin-top:4px;line-height:1.25}
+  .readsub{font-size:10.5px;color:var(--t2);margin-top:4px;text-align:center;max-width:240px;margin-inline:auto;line-height:1.4}
+
+  .od{grid-column:1/-1;font-size:12px;line-height:1.6;color:var(--t2);margin-top:24px}.od b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The Pulse, <span class="spectrum">final</span></h1>
+  <p class="lede">Finalized glass-caustic aura. The map now uses <b>time-window markers</b> instead of a trail: now is the live aura, then 1w / 1m / 3m as smaller, fainter dots with a connector flowing up toward today. Recency reads three ways at once.</p>
+
+  <div class="row">
+
+    <!-- 1 GLANCE -->
+    <div>
+      <div class="cap">Me · the glance</div>
+      <div class="phone">
+        <div class="sky"></div>
+        <div class="star" style="left:18%;top:8%"></div><div class="star" style="left:78%;top:6%"></div><div class="star" style="left:44%;top:12%"></div><div class="star" style="left:30%;top:26%"></div><div class="star" style="left:84%;top:30%"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div><div class="nm"><span class="lit">Jordan.</span><span class="fade"> &amp; Alex</span></div><div class="sub">Curious · 14 weeks on Vayl</div></div><div class="gear">⚙</div></div>
+          <div class="ovl"><span class="k">The Pulse</span><span class="hint">tap to map →</span></div>
+          <div class="aura cyan" style="width:148px;height:148px;margin:20px auto 8px"><div class="body"></div><div class="caustic"></div><div class="glass"></div><div class="rim"></div></div>
+          <div class="state">The Expansive Space</div>
+          <div class="substate">Connected · Adventurous</div>
+          <div class="todayline">Brighter than yesterday</div>
+          <div class="gridK">Your last 30 days</div>
+          <div class="grid">
+            <div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd lo"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd ab"></div>
+            <div class="gd ab"></div><div class="gd go"></div><div class="gd em"></div><div class="gd lo"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd go"></div><div class="gd ab"></div>
+            <div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd ab"></div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <!-- 2 YOUR MAP -->
+    <div>
+      <div class="cap">Me · your map (time windows)</div>
+      <div class="phone">
+        <div class="sky"></div><div class="star" style="left:16%;top:9%"></div><div class="star" style="left:80%;top:7%"></div><div class="star" style="left:46%;top:14%"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div><div class="nm"><span class="lit">Jordan.</span><span class="fade"> &amp; Alex</span></div><div class="sub">The Pulse · your map</div></div><div class="gear">⚙</div></div>
+          <div class="field" style="margin-top:28px">
+            <div class="zone z-exp"></div><div class="zone z-fri"></div><div class="zone z-pro"></div><div class="zone z-sov"></div>
+            <span class="axlab ax-up">Charged</span><span class="axlab ax-dn">Quiet</span><span class="axlab ax-l">Guarded</span><span class="axlab ax-r">Open</span>
+            <span class="qlab q-exp">Expansive</span><span class="qlab q-fri">Friction</span><span class="qlab q-pro">Protective</span><span class="qlab q-sov">Sovereign</span>
+            <!-- connector flowing up toward now -->
+            <svg viewBox="0 0 248 248" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+              <defs><linearGradient id="conn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="rgba(0,194,255,.1)"/><stop offset="1" stop-color="rgba(0,194,255,.55)"/></linearGradient></defs>
+              <path d="M170,196 L173,154 L176,112 L179,70" fill="none" stroke="url(#conn)" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2 5"/>
+            </svg>
+            <!-- time-window markers: smaller + fainter as they go back -->
+            <div class="fmark" style="left:68.5%;top:79%;width:6px;height:6px;opacity:.3"></div><span class="flab" style="left:62%;top:79%">3m</span>
+            <div class="fmark" style="left:69.7%;top:62%;width:8px;height:8px;opacity:.5"></div><span class="flab" style="left:63%;top:62%">1m</span>
+            <div class="fmark" style="left:71%;top:45%;width:10px;height:10px;opacity:.78;box-shadow:0 0 6px rgba(0,194,255,.5)"></div><span class="flab" style="left:64%;top:45%">1w</span>
+            <!-- now -->
+            <div class="auraPos aura cyan" style="left:72%;top:28%;width:46px;height:46px"><div class="body"></div><div class="caustic"></div><div class="glass"></div><div class="rim"></div></div>
+            <span class="tag" style="left:72%;top:11%;color:var(--cyan)">Now</span>
+          </div>
+          <div class="read">You're in an Expansive day</div>
+          <div class="readsub">Charged and open. Your check-ins have been opening up over the last month.</div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <!-- 3 US -->
+    <div>
+      <div class="cap">Us · two auras + thread</div>
+      <div class="phone">
+        <div class="sky"></div><div class="star" style="left:18%;top:8%"></div><div class="star" style="left:74%;top:10%"></div><div class="star" style="left:46%;top:15%"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div><div class="nm"><span class="lit">Jordan &amp; Alex.</span></div><div class="sub">The Pulse · together</div></div><div class="gear">⚙</div></div>
+          <div class="field" style="margin-top:28px">
+            <div class="zone z-exp"></div><div class="zone z-fri"></div><div class="zone z-pro"></div><div class="zone z-sov"></div>
+            <span class="axlab ax-up">Charged</span><span class="axlab ax-dn">Quiet</span><span class="axlab ax-l">Guarded</span><span class="axlab ax-r">Open</span>
+            <span class="qlab q-exp">Expansive</span><span class="qlab q-fri">Friction</span><span class="qlab q-pro">Protective</span><span class="qlab q-sov">Sovereign</span>
+            <svg viewBox="0 0 248 248" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+              <defs><linearGradient id="thread" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00C2FF"/><stop offset="1" stop-color="#C76A86"/></linearGradient></defs>
+              <path d="M178,68 Q120,124 70,180" fill="none" stroke="url(#thread)" stroke-width="6" stroke-linecap="round" opacity=".3" filter="blur(3px)"/>
+              <path d="M178,68 Q120,124 70,180" fill="none" stroke="url(#thread)" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>
+            </svg>
+            <div class="auraPos aura cyan" style="left:72%;top:28%;width:44px;height:44px"><div class="body"></div><div class="caustic"></div><div class="glass"></div><div class="rim"></div></div>
+            <span class="tag" style="left:72%;top:11%;color:var(--cyan)">You</span>
+            <div class="auraPos aura rose" style="left:28%;top:72%;width:44px;height:44px"><div class="body"></div><div class="caustic"></div><div class="glass"></div><div class="rim"></div></div>
+            <span class="tag" style="left:28%;top:89%;color:var(--rose)">Alex</span>
+          </div>
+          <div class="read">A wide day between you</div>
+          <div class="readsub">You're charged and open; Alex is drained and guarded, needing space.</div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <p class="od"><b>The trail is gone.</b> The map now reads now → 1w → 1m → 3m: the live glass aura is today, each older window is a smaller and fainter dot, and the dashed connector flows up toward the aura so the direction itself says "recent." You see you have been opening up over the month without a confusing cloud of dots, and the copy stays descriptive ("your check-ins have been opening up"), never a verdict. The aura is the finalized glass-caustic one at every size, breathing, the glint crossing about every 8 seconds.</p>
+
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Pulse, resolved (aura + atmospheric field)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  /* tokens from Vayl/App/Theme (VaylPrimitives · AppColors dark · AppSpacing · AppRadius) */
+  :root{
+    --cyan:#00C2FF; --cyan-light:#4DD8FF; --purple:#6C3AE0; --purple-light:#A78BFA; --bridge:#8B6FD4;
+    --magenta:#FF006A; --magenta-light:#FF4D94; --indigo:#8B5CF6;
+    --rose:#C76A86;
+    --void:#0a0810; --card:#120f1a; --surface:#1A1825;
+    --t1:#E8E8F0; --t2:rgba(255,255,255,.65); --t3:rgba(255,255,255,.38); --t-muted:rgba(255,255,255,.20);
+    --glass:rgba(255,255,255,.06); --border:rgba(255,255,255,.10);
+    --r-lg:16px; --r-xl:24px;
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:980px;margin:0 auto;padding:44px 26px 70px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:25px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:13px;line-height:1.55;color:var(--t2);margin:0 0 4px}.lede b{color:var(--t1)}
+  .tk{font-size:11px;color:var(--t3);margin:0 0 24px}
+  .row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;justify-items:center}
+  @media(max-width:900px){.row{grid-template-columns:1fr;max-width:300px;margin-inline:auto}}
+  .cap{font-family:var(--disp);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin:0 0 11px;text-align:center;color:var(--purple-light)}
+
+  .phone{position:relative;width:288px;max-width:100%;border-radius:38px;overflow:hidden;background:#040308;box-shadow:0 26px 64px rgba(0,0,0,.55),inset 0 0 0 1.3px rgba(255,255,255,.05);aspect-ratio:288/600}
+  .sky{position:absolute;inset:0;background:radial-gradient(120% 26% at 50% 1%,rgba(108,58,224,.18),transparent 60%),linear-gradient(var(--void),#08060f)}
+  .star{position:absolute;width:1.5px;height:1.5px;border-radius:50%;background:#fff;opacity:.34}
+  .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:74px;height:20px;background:#000;border-radius:12px;z-index:30}
+  .home{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:84px;height:3.5px;border-radius:3px;background:rgba(255,255,255,.2);z-index:30}
+  .scr{position:absolute;inset:0;z-index:10;padding:42px 14px 12px;display:flex;flex-direction:column}
+  .mast{display:flex;align-items:flex-start;justify-content:space-between}
+  .mast .nm{font-family:var(--disp);font-size:19px;font-weight:700}
+  .mast .lit{background:linear-gradient(90deg,var(--cyan),var(--bridge) 50%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mast .fade{color:var(--t3);opacity:.45}
+  .mast .sub{font-size:10px;color:var(--t3);margin-top:2px}
+  .mast .gear{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--glass);display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:13px;flex:none}
+  .ov{display:flex;align-items:center;justify-content:space-between;margin:14px 2px 0}
+  .ov .k{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--purple-light);opacity:.7}
+  .ov .hint{font-size:9.5px;color:var(--t3)}
+
+  /* breathing aura */
+  @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.94}50%{transform:translate(-50%,-50%) scale(1.05);opacity:1}}
+  @media(prefers-reduced-motion:reduce){.aura,.orb{animation:none!important}}
+  .orb{position:relative;width:150px;height:150px;border-radius:50%;margin:18px auto 8px;
+    background:radial-gradient(circle at 40% 36%, var(--cyan-light), var(--cyan) 36%, rgba(0,194,255,.16) 64%, transparent 74%);
+    box-shadow:0 0 44px 7px rgba(0,194,255,.5),0 0 100px 24px rgba(0,194,255,.24);
+    animation:breatheC 5.6s ease-in-out infinite}
+  @keyframes breatheC{0%,100%{transform:scale(1);opacity:.95}50%{transform:scale(1.05);opacity:1}}
+  .state{font-family:var(--disp);font-size:21px;font-weight:600;color:#fff;text-align:center;line-height:1.1}
+  .substate{font-size:10.5px;color:var(--t2);margin-top:3px;text-align:center}
+  .todayline{font-size:10px;color:var(--cyan);margin-top:7px;text-align:center;opacity:.85}
+
+  .gridK{font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--t3);margin:auto 2px 7px}
+  .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin-bottom:2px}
+  .gd{aspect-ratio:1;border-radius:50%}
+  .gd.ab{background:var(--cyan);box-shadow:0 0 5px rgba(0,194,255,.4)}
+  .gd.go{background:var(--indigo);box-shadow:0 0 5px rgba(139,92,246,.36)}
+  .gd.lo{background:var(--magenta);box-shadow:0 0 5px rgba(255,0,106,.36)}
+  .gd.em{background:var(--rose)}
+
+  /* the atmospheric field (no grid lines) */
+  .field{position:relative;width:256px;height:256px;margin:16px auto 6px}
+  .zone{position:absolute;width:74%;height:74%;border-radius:50%;filter:blur(26px);opacity:.17}
+  .z-exp{top:-7%;right:-7%;background:radial-gradient(closest-side,var(--cyan),transparent)}
+  .z-fri{top:-7%;left:-7%;background:radial-gradient(closest-side,var(--magenta),transparent)}
+  .z-pro{bottom:-7%;left:-7%;background:radial-gradient(closest-side,var(--rose),transparent)}
+  .z-sov{bottom:-7%;right:-7%;background:radial-gradient(closest-side,var(--indigo),transparent)}
+  .qlab{position:absolute;font-family:var(--disp);font-size:9px;font-weight:600;letter-spacing:.06em;color:var(--t3);opacity:.7}
+  .q-exp{top:6px;right:8px;color:rgba(77,216,255,.7)}
+  .q-fri{top:6px;left:8px;color:rgba(255,77,148,.6)}
+  .q-pro{bottom:6px;left:8px;color:rgba(199,106,134,.7)}
+  .q-sov{bottom:6px;right:8px;color:rgba(167,139,250,.7)}
+  .axlab{position:absolute;font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t-muted)}
+  .ax-up{top:-12px;left:50%;transform:translateX(-50%)}
+  .ax-dn{bottom:-12px;left:50%;transform:translateX(-50%)}
+  .ax-l{left:-12px;top:50%;transform:translateY(-50%) rotate(-90deg)}
+  .ax-r{right:-12px;top:50%;transform:translateY(-50%) rotate(90deg)}
+
+  .aura{position:absolute;border-radius:50%;transform:translate(-50%,-50%);width:var(--s);height:var(--s);
+    background:radial-gradient(circle at 42% 38%, var(--cl), var(--c) 40%, transparent 72%);
+    box-shadow:0 0 calc(var(--s)*.5) calc(var(--s)*.12) var(--gl);
+    animation:breathe 5.4s ease-in-out infinite;z-index:5}
+  .aura .nub{position:absolute;left:50%;top:108%;transform:translateX(-50%);font-size:8.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+
+  .trail{position:absolute;border-radius:50%;transform:translate(-50%,-50%);background:var(--cyan);box-shadow:0 0 6px rgba(0,194,255,.4);z-index:3}
+
+  .read{font-family:var(--disp);font-size:14px;font-weight:600;color:#fff;text-align:center;margin-top:4px;line-height:1.25}
+  .readsub{font-size:10.5px;color:var(--t2);margin-top:4px;text-align:center;max-width:240px;margin-inline:auto;line-height:1.4}
+
+  .od{grid-column:1/-1;font-size:12px;line-height:1.6;color:var(--t2);margin-top:24px}.od b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The Pulse, <span class="spectrum">resolved</span></h1>
+  <p class="lede">Three zoom levels of one thing. <b>Glance</b>: a breathing aura in your tier color. <b>Your map</b>: that aura becomes a dot in an atmospheric field (energy up, openness right), a short fading trail behind it. <b>Us</b>: two living auras joined by a thread, the gap made felt and mapped at once. No grid lines, no verdicts.</p>
+  <p class="tk">Real <code>VaylPrimitives</code> / <code>AppColors</code> hexes. Quadrant names are the existing <code>PulseTier</code> states (Expansive · Friction · Protective · Sovereign).</p>
+
+  <div class="row">
+
+    <!-- 1 · GLANCE -->
+    <div>
+      <div class="cap">Me · the glance</div>
+      <div class="phone">
+        <div class="sky"></div>
+        <div class="star" style="left:18%;top:8%"></div><div class="star" style="left:78%;top:6%"></div><div class="star" style="left:44%;top:12%"></div><div class="star" style="left:30%;top:26%"></div><div class="star" style="left:84%;top:30%"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div><div class="nm"><span class="lit">Jordan.</span><span class="fade"> &amp; Alex</span></div><div class="sub">Curious · 14 weeks on Vayl</div></div><div class="gear">⚙</div></div>
+          <div class="ov"><span class="k">The Pulse</span><span class="hint">tap to map →</span></div>
+          <div class="orb"></div>
+          <div class="state">The Expansive Space</div>
+          <div class="substate">Connected · Adventurous</div>
+          <div class="todayline">Brighter than yesterday</div>
+          <div class="gridK">Your last 30 days</div>
+          <div class="grid">
+            <div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd lo"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd ab"></div>
+            <div class="gd ab"></div><div class="gd go"></div><div class="gd em"></div><div class="gd lo"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd go"></div><div class="gd ab"></div>
+            <div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd go"></div><div class="gd ab"></div><div class="gd ab"></div><div class="gd ab"></div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <!-- 2 · YOUR MAP -->
+    <div>
+      <div class="cap">Me · your map + trail</div>
+      <div class="phone">
+        <div class="sky"></div>
+        <div class="star" style="left:16%;top:9%"></div><div class="star" style="left:80%;top:7%"></div><div class="star" style="left:46%;top:14%"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div><div class="nm"><span class="lit">Jordan.</span><span class="fade"> &amp; Alex</span></div><div class="sub">The Pulse · your map</div></div><div class="gear">⚙</div></div>
+          <div class="field" style="margin-top:30px">
+            <div class="zone z-exp"></div><div class="zone z-fri"></div><div class="zone z-pro"></div><div class="zone z-sov"></div>
+            <span class="axlab ax-up">Charged</span><span class="axlab ax-dn">Quiet</span><span class="axlab ax-l">Guarded</span><span class="axlab ax-r">Open</span>
+            <span class="qlab q-exp">Expansive</span><span class="qlab q-fri">Friction</span><span class="qlab q-pro">Protective</span><span class="qlab q-sov">Sovereign</span>
+            <!-- fading trail Sovereign → Expansive -->
+            <div class="trail" style="left:73%;top:77%;width:6px;height:6px;opacity:.22"></div>
+            <div class="trail" style="left:77%;top:63%;width:7px;height:7px;opacity:.38"></div>
+            <div class="trail" style="left:74%;top:49%;width:8px;height:8px;opacity:.55"></div>
+            <div class="trail" style="left:78%;top:36%;width:9px;height:9px;opacity:.75"></div>
+            <!-- current aura -->
+            <div class="aura" style="left:76%;top:24%;--s:52px;--c:var(--cyan);--cl:var(--cyan-light);--gl:rgba(0,194,255,.45)"></div>
+          </div>
+          <div class="read">You're in an Expansive day</div>
+          <div class="readsub">Charged and open. You've climbed up out of Sovereign across the last few check-ins.</div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <!-- 3 · US -->
+    <div>
+      <div class="cap">Us · two auras + thread</div>
+      <div class="phone">
+        <div class="sky"></div>
+        <div class="star" style="left:18%;top:8%"></div><div class="star" style="left:74%;top:10%"></div><div class="star" style="left:46%;top:15%"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div><div class="nm"><span class="lit">Jordan &amp; Alex.</span></div><div class="sub">The Pulse · together</div></div><div class="gear">⚙</div></div>
+          <div class="field" style="margin-top:30px">
+            <div class="zone z-exp"></div><div class="zone z-fri"></div><div class="zone z-pro"></div><div class="zone z-sov"></div>
+            <span class="axlab ax-up">Charged</span><span class="axlab ax-dn">Quiet</span><span class="axlab ax-l">Guarded</span><span class="axlab ax-r">Open</span>
+            <span class="qlab q-exp">Expansive</span><span class="qlab q-fri">Friction</span><span class="qlab q-pro">Protective</span><span class="qlab q-sov">Sovereign</span>
+            <!-- the living thread -->
+            <svg viewBox="0 0 256 256" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+              <defs><linearGradient id="thread" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00C2FF"/><stop offset="1" stop-color="#C76A86"/></linearGradient></defs>
+              <path d="M195,61 Q120,118 61,195" fill="none" stroke="url(#thread)" stroke-width="7" stroke-linecap="round" opacity=".35" filter="blur(3px)"/>
+              <path d="M195,61 Q120,118 61,195" fill="none" stroke="url(#thread)" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>
+            </svg>
+            <div class="aura" style="left:76%;top:24%;--s:48px;--c:var(--cyan);--cl:var(--cyan-light);--gl:rgba(0,194,255,.42)"><span class="nub" style="color:var(--cyan)">You</span></div>
+            <div class="aura" style="left:24%;top:76%;--s:48px;--c:var(--rose);--cl:#E59CB0;--gl:rgba(199,106,134,.42);animation-delay:-2.2s"><span class="nub" style="color:var(--rose)">Alex</span></div>
+          </div>
+          <div class="read">A wide day between you</div>
+          <div class="readsub">You're charged and open; Alex is drained and guarded, needing space. The thread is long today.</div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <p class="od"><b>Glance</b> answers "how am I" before you think. <b>Your map</b> places that same aura in the field and trails the last few check-ins (capped, so it never accretes into "this is who you are" — that is the assessment guardrail). <b>Us</b> is the payoff: each partner is the Me aura, scaled down, sitting at its real position, and the <b>thread</b> makes the gap a thing you feel, long and cool when you are far, short and warm when you are close. Mapped clarity (you can read exactly where each of you is and in which state) plus the aura's emotion, finally in the same picture. Copy is weather, never verdict ("an Expansive day," not "you are Expansive").</p>
+
+  </div>
+</div>
+</body>
+</html>

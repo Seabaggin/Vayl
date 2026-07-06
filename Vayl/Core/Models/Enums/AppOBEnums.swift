@@ -23,7 +23,8 @@ import SwiftUI
 /// stat has no overlay — the canvas itself is the content.
 enum OBPhase: CaseIterable {
     case stat               // "1 in 5", dealer copy, CTA → table world
-    case name               // table fades in, dealer types, card deals/flips, name input → deck[1]
+    case demo               // first card: teach tap+swipe, snapshot sentence "I [verb][noun]" → emotionalRegister → deck[1]
+    case name               // table fades in, dealer types, card deals/flips, name input → deck[2]
     case modeSelect         // mirror deal, two cards, tap to lift, swipe up → deck[2]
     case gender             // slot machine drag, reel spin, card tear, drum picker → deck[3]
     case experienceLevel    // Monte deal, shuffle, flip, candle face, swipe up → deck[4]
@@ -38,14 +39,49 @@ enum OBPhase: CaseIterable {
 /// Each case maps to exactly one field on OnboardingData.
 /// Used to tag VaylCardModel with what credential it carries
 /// when it pockets to the corner deck.
-/// CaseIterable allows the corner deck to verify all six are present.
-enum OBCredential: String, CaseIterable {
-    case name               // OnboardingData.displayName — deck[1]
-    case gender             // OnboardingData.genderIdentity — deck[2]
-    case mode               // OnboardingData.appMode — deck[3]
-    case experienceLevel    // OnboardingData.nmStage — deck[4]
-    case context            // OnboardingData.relationshipContext + situationalRegister — deck[5]
-    case curiosity          // OnboardingData.curiositySelections — deck[6]
+/// The verb on the DemoPhase snapshot card — "I [need / want / desire] [noun]."
+/// The verb modulates the card's tone gradient (cool → warm) and, combined with
+/// the noun's keyword category, triangulates the user's EmotionalRegister
+/// (see DemoDictionary).
+public enum DemoVerb: String, Codable, CaseIterable, Identifiable {
+    case need, want, desire
+
+    public var id: String { rawValue }
+
+    /// Tone position for the card gradient: need = coolest, desire = warmest.
+    var toneProgress: Double {
+        switch self {
+        case .need:   return 0.0
+        case .want:   return 0.5
+        case .desire: return 1.0
+        }
+    }
+}
+
+/// CaseIterable allows the corner deck to verify all seven are present.
+enum OBCredential: String, CaseIterable, Identifiable {
+    case snapshot           // OnboardingData.demoVerb/demoNoun → emotionalRegister — deck[1]
+    case name               // OnboardingData.displayName — deck[2]
+    case gender             // OnboardingData.genderIdentity — deck[3]
+    case mode               // OnboardingData.appMode — deck[4]
+    case experienceLevel    // OnboardingData.nmStage — deck[5]
+    case context            // OnboardingData.relationshipContext + situationalRegister — deck[6]
+    case curiosity          // OnboardingData.curiositySelections — deck[7]
+
+    // id is provided by the RawRepresentable+Identifiable extension (id == rawValue).
+
+    /// Short label for the confirmation edit-sheet header.
+    var displayName: String {
+        switch self {
+        case .snapshot:        return "Baseline"
+        case .name:            return "Name"
+        case .gender:          return "Gender"
+        case .mode:            return "Mode"
+        case .experienceLevel: return "Experience"
+        case .context:         return "Context"
+        case .curiosity:       return "Curiosity"
+        }
+    }
 }
 // MARK: - Dealer Typing
 //
@@ -84,7 +120,11 @@ internal enum AppDealerTyping {
     static func charDelay(_ char: Character, prev: Character?) -> Double {
         let base = 58.0
         switch char {
-        case ".", "!", "?": return base * 3.8
+        case ".":
+            // A dot continuing an ellipsis ticks, it doesn't pause —
+            // "..." costs one full stop + two ticks, not three stops.
+            return prev == "." ? base : base * 3.8
+        case "!", "?", "…": return base * 3.8
         case ",":           return base * 2.6
         case "'":           return base * 1.3
         case " ":           return base * 1.4
@@ -92,6 +132,31 @@ internal enum AppDealerTyping {
             if prev == nil || prev == " " { return base * 1.1 }
             return base * Double.random(in: 0.88...1.06)
         }
+    }
+
+    // MARK: — Type duration
+
+    /// Expected total type-out time for a line, in ms — deterministic mean of
+    /// charDelay over the string (body-char variance ±10% averages to ~0.97).
+    /// Phases use this to gate interactivity until the dealer has finished
+    /// asking. Table must mirror charDelay above.
+    static func typeDuration(_ text: String) -> Int {
+        let base = 58.0
+        var prev: Character? = nil
+        var total = 0.0
+        for char in text {
+            switch char {
+            case ".":           total += prev == "." ? base : base * 3.8
+            case "!", "?", "…": total += base * 3.8
+            case ",":           total += base * 2.6
+            case "'":           total += base * 1.3
+            case " ":           total += base * 1.4
+            default:
+                total += (prev == nil || prev == " ") ? base * 1.1 : base * 0.97
+            }
+            prev = char
+        }
+        return Int(total)
     }
 
     // MARK: — Hang times
@@ -109,6 +174,15 @@ internal enum AppDealerTyping {
     static let shuffleExitAnim:  Animation = .timingCurve(0.4, 0, 0.6, 1, duration: 0.25)
     static let shuffleEnterAnim: Animation = .timingCurve(0.2, 0.8, 0.3, 1, duration: 0.20)
 
+    // MARK: — Float-away (lift-lesson prompt exit — gentler than the shuffle swap)
+
+    /// Once the card is hovered, the "Tap the card" prompt drifts up and dissolves on a
+    /// long ease-out so it floats away, rather than snapping out like the shuffle swap
+    /// used between ordinary lines. Felt values — tune on device.
+    static let floatAwayAnim:  Animation = .easeOut(duration: 0.55)
+    static let floatAwayMs:    Int       = 550
+    static let floatAwayDrift: CGFloat   = -48
+
     // MARK: — Final fade (line 3 exit after card lands)
 
     static let finalFadeMs:   Int       = 350
@@ -116,9 +190,16 @@ internal enum AppDealerTyping {
 
     // MARK: — Font
 
-    /// PostScript name for Volkhov Italic — confirmed via TTF name table.
-    static let fontName: String  = "Volkhov-Italic"
+    /// PostScript name for Menlo Regular — built-in system font, no bundling required.
+    static let fontName: String  = "Menlo-Regular"
     static let fontSize: CGFloat = 22
+
+    /// The dealer's voice as a SwiftUI Font — the single source every dealer-copy
+    /// renderer (ProjectedTextView and NamePhase) reads, so the typeface/size changes
+    /// in exactly one place.
+    static var font: Font {
+        Font.custom(fontName, size: fontSize, relativeTo: .title2)
+    }
 }
 /// Which opener deck sequence is assigned after OB data collection.
 /// Evaluated silently by VaylDirector.evaluateOpenerDeckType() at the

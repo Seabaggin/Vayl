@@ -7,7 +7,7 @@ import Foundation
 import Supabase
 import OSLog
 
-private let logger = Logger(
+nonisolated private let logger = Logger(
     subsystem: "com.vayl.app",
     category: "PairingService"
 )
@@ -19,7 +19,8 @@ private enum SupabaseTable {
 }
 
 private enum SupabaseFunction {
-    static let createCouple = "create-couple"
+    static let createCouple = "rapid-task"   // function display-name is "create-couple"; deployed slug is "rapid-task"
+    static let getPartner   = "get-partner"  // returns the linked partner's name + pronouns only
 }
 
 // MARK: - Response Models
@@ -38,6 +39,15 @@ struct PairingCodeRow: Decodable {
     enum CodingKeys: String, CodingKey {
         case claimedBy = "claimed_by"
     }
+}
+
+/// The linked partner's display identity, as returned by `get-partner`.
+/// Any field may be nil if the partner hasn't set it yet (or an older
+/// `get-partner` deployment omits the key — all fields decode optionally).
+struct PartnerIdentity: Decodable {
+    let name: String?
+    let pronouns: String?
+    let gender: String?     // raw OB GenderPhase answer — composition derivation input
 }
 
 // MARK: - PairingService
@@ -61,23 +71,36 @@ final class PairingService {
 
     // MARK: - Generate Code
 
-    /// Inserts a new pairing code row for the current user.
-    /// Returns the generated code string.
-    /// Throws on any Supabase failure.
-    func generateCode() async throws -> String {
+    /// Inserts a new pairing code row for the current user and reads back the
+    /// DB-assigned `expires_at` (the column defaults to `now() + 24h`).
+    /// Returns the code plus its expiry so the waiting UI can count down and the
+    /// poll can bound itself. Throws on any Supabase failure.
+    func generateCode() async throws -> (code: String, expiresAt: Date) {
+        struct GeneratedCodeRow: Decodable {
+            let code: String
+            let expiresAt: Date
+            enum CodingKeys: String, CodingKey {
+                case code
+                case expiresAt = "expires_at"
+            }
+        }
+
         let code = makeCode()
         let userId = try await currentUserId()
 
-        try await supabase
+        let row: GeneratedCodeRow = try await supabase
             .from(SupabaseTable.pairingCodes)
             .insert([
                 "created_by": userId.uuidString,
                 "code": code
             ])
+            .select("code, expires_at")
+            .single()
             .execute()
+            .value
 
-        logger.info("Pairing code generated: \(code)")
-        return code
+        logger.info("Pairing code generated: \(row.code)")
+        return (row.code, row.expiresAt)
     }
 
     // MARK: - Claim Code
@@ -97,61 +120,128 @@ final class PairingService {
         return response.coupleId
     }
 
+    // MARK: - Fetch Partner
+
+    /// Invokes `get-partner` and returns the linked partner's name + pronouns.
+    /// Returns nil when the caller isn't linked or the partner has no name yet.
+    /// Throws only on transport/decode failure.
+    func fetchPartner() async throws -> PartnerIdentity? {
+        struct PartnerResponse: Decodable { let partner: PartnerIdentity? }
+        let response: PartnerResponse = try await supabase.functions.invoke(
+            SupabaseFunction.getPartner,
+            options: FunctionInvokeOptions()
+        )
+        return response.partner
+    }
+
     // MARK: - Poll For Claim
 
-    /// Polls the pairing_codes table every 3 seconds until claimed_by is not null.
+    /// Polls every 3 seconds until the partner joins, the `deadline` passes, or
+    /// the code expires in the DB — whichever comes first.
     /// Returns the coupleId when the partner joins.
-    /// Throws if polling fails or task is cancelled.
-    func pollForClaim(code: String) async throws -> UUID {
-        let normalized = code.trimmingCharacters(in: .whitespaces).uppercased()
-
-        while true {
-            try Task.checkCancellation()
-
-            let rows: [PairingCodeRow] = try await supabase
-                .from(SupabaseTable.pairingCodes)
-                .select("claimed_by")
-                .eq("code", value: normalized)
-                .execute()
-                .value
-
-            if let row = rows.first, let claimedBy = row.claimedBy {
-                logger.info("Partner joined — claimedBy: \(claimedBy)")
-                // Fetch couple_id for this code
-                let coupleId = try await fetchCoupleId(code: normalized)
-                return coupleId
-            }
-
-            try await Task.sleep(for: .seconds(3))
+    /// Throws `PairingError.expiredCode` if the code times out before a partner
+    /// joins, or rethrows on cancellation / network failure.
+    func pollForClaim(code: String, deadline: Date) async throws -> UUID {
+        struct ProfileCoupleRow: Decodable, Sendable {
+            let coupleId: UUID?
+            enum CodingKeys: String, CodingKey { case coupleId = "couple_id" }
         }
+
+        let myAuthId = try await currentUserId()
+
+        let channel = supabase.channel("pairing:\(myAuthId.uuidString)")
+        let changes = channel.postgresChange(
+            AnyAction.self,
+            schema: "public",
+            table: "user_profiles",
+            filter: .eq("auth_id", value: myAuthId.uuidString)
+        )
+        
+        try await channel.subscribeWithError()
+        defer { Task { await self.supabase.removeChannel(channel) } }
+        
+        // 1) Partner joined? (initial check before stream starts)
+        let initialRows: [ProfileCoupleRow] = try await supabase
+            .from("user_profiles")
+            .select("couple_id")
+            .eq("auth_id", value: myAuthId.uuidString)
+            .execute()
+            .value
+            
+        if let coupleId = initialRows.first?.coupleId {
+            logger.info("Linked (initial) — coupleId: \(coupleId)")
+            return coupleId
+        }
+
+        // 2) Listen for realtime changes or timeout
+        return try await withThrowingTaskGroup(of: UUID.self) { group in
+            group.addTask {
+                for await _ in changes {
+                    let rows: [ProfileCoupleRow] = try await self.supabase
+                        .from("user_profiles")
+                        .select("couple_id")
+                        .eq("auth_id", value: myAuthId.uuidString)
+                        .execute()
+                        .value
+                    if let coupleId = rows.first?.coupleId {
+                        logger.info("Linked (realtime) — coupleId: \(coupleId)")
+                        return coupleId
+                    }
+                }
+                throw CancellationError()
+            }
+            
+            group.addTask {
+                let timeToWait = deadline.timeIntervalSinceNow
+                if timeToWait > 0 {
+                    try await Task.sleep(for: .seconds(timeToWait))
+                }
+                logger.info("Pairing code expired (deadline reached)")
+                throw PairingError.expiredCode
+            }
+            
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
+        }
+    }
+
+    // MARK: - Connection Composition (spec §9)
+
+    /// Reads the couple's connection_composition. RLS scopes the row to couple
+    /// members, so a non-member reads nothing → returns .flexible (the default).
+    func fetchComposition(coupleId: UUID) async throws -> GenderDynamic {
+        struct Row: Decodable {
+            let connectionComposition: String
+            enum CodingKeys: String, CodingKey {
+                case connectionComposition = "connection_composition"
+            }
+        }
+        let rows: [Row] = try await supabase
+            .from("couples")
+            .select("connection_composition")
+            .eq("id", value: coupleId.uuidString)
+            .execute()
+            .value
+        guard let raw = rows.first?.connectionComposition,
+              let value = GenderDynamic(rawValue: raw) else { return .flexible }
+        return value
+    }
+
+    /// Writes connection_composition via the set_connection_composition RPC
+    /// (SECURITY DEFINER + is_couple_member guard — couples has no member
+    /// UPDATE policy by design). Throws on non-membership or invalid value.
+    func setComposition(coupleId: UUID, _ value: GenderDynamic) async throws {
+        try await supabase
+            .rpc("set_connection_composition", params: [
+                "p_couple_id": coupleId.uuidString,
+                "p_value": value.rawValue,
+            ])
+            .execute()
+        logger.info("connection_composition set to \(value.rawValue)")
     }
 
     // MARK: - Private Helpers
-
-    /// Fetches the couple_id from the pairing_codes row after claim.
-    /// The Edge Function writes couple_id before deleting the row —
-    /// there is a brief window where it exists.
-    private func fetchCoupleId(code: String) async throws -> UUID {
-        struct CoupleIdRow: Decodable {
-            let coupleId: UUID?
-            enum CodingKeys: String, CodingKey {
-                case coupleId = "couple_id"
-            }
-        }
-
-        let rows: [CoupleIdRow] = try await supabase
-            .from(SupabaseTable.pairingCodes)
-            .select("couple_id")
-            .eq("code", value: code)
-            .execute()
-            .value
-
-        guard let coupleId = rows.first?.coupleId else {
-            throw PairingError.coupleIdNotFound
-        }
-
-        return coupleId
-    }
 
     /// Returns the current authenticated user's UUID.
     /// Throws if no session exists.

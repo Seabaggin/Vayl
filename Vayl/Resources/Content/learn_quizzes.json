@@ -1,0 +1,4 @@
+[
+  { "id": "flavor", "kind": "flavor", "title": "What's Your Flavor of NM?", "subtitle": "Where you actually land — not where you think you should.", "question_count": 12 },
+  { "id": "boundary", "kind": "boundary", "title": "Where Are Your Lines?", "subtitle": "Boundaries as a spectrum, not a checklist.", "question_count": 12 }
+]

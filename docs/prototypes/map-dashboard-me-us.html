@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Map dashboard · Me vs Us (consolidated)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF;--cyan-light:#7FE0FF;--cyan-deep:#0A8FD0;
+    --purple:#6C3AE0;--purple-light:#A78BFA;--bridge:#8B6FD4;--magenta:#FF006A;--magentaL:#FF4D94;--indigo:#8B5CF6;--rose:#C76A86;
+    --void:#0a0810;
+    --t1:#E8E8F0;--t2:rgba(255,255,255,.65);--t3:rgba(255,255,255,.4);--t-muted:rgba(255,255,255,.2);--hair:rgba(255,255,255,.09);--glass:rgba(255,255,255,.04);--border:rgba(255,255,255,.1);
+    --disp:"Clash Display",-apple-system,sans-serif;--body:"Switzer",-apple-system,sans-serif;--r-md:12px;--r-lg:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:900px;margin:0 auto;padding:48px 28px 90px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:27px;font-weight:600;margin:0 0 8px}
+  .lede{font-size:13.5px;line-height:1.62;color:var(--t2);margin:0 0 4px;max-width:770px}.lede b{color:var(--t1)}
+  .rulep{font-size:12.5px;line-height:1.6;color:var(--t2);max-width:770px;margin:8px 0 0}.rulep b{color:var(--t1)}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:34px;justify-items:center;margin-top:34px}
+  @media(max-width:740px){.two{grid-template-columns:1fr}}
+  .cap{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin:0 0 14px;text-align:center}
+  .cap.me{color:var(--cyan)}.cap.us{color:var(--magenta)}
+
+  .phone{position:relative;width:320px;max-width:100%;border-radius:40px;overflow:hidden;background:#040308;box-shadow:0 28px 72px rgba(0,0,0,.55),inset 0 0 0 1.4px rgba(255,255,255,.05);aspect-ratio:320/745}
+  .sky{position:absolute;inset:0;background:radial-gradient(120% 26% at 50% 1%,rgba(108,58,224,.18),transparent 60%),linear-gradient(var(--void),#08060f)}
+  .sky.us{background:radial-gradient(120% 26% at 50% 1%,rgba(255,0,106,.14),transparent 60%),radial-gradient(90% 16% at 20% 4%,rgba(108,58,224,.14),transparent 70%),linear-gradient(var(--void),#08060f)}
+  .star{position:absolute;width:1.5px;height:1.5px;border-radius:50%;background:#fff;opacity:.3}
+  .notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:80px;height:21px;background:#000;border-radius:12px;z-index:30}
+  .home{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:88px;height:3.5px;border-radius:3px;background:rgba(255,255,255,.2);z-index:30}
+  .scr{position:absolute;inset:0;z-index:10;padding:44px 14px 14px;display:flex;flex-direction:column;gap:11px}
+
+  .mast{display:flex;align-items:flex-start;justify-content:space-between}
+  .mast .nm{font-family:var(--disp);font-size:20px;font-weight:700}
+  .mast .lit{background:linear-gradient(90deg,var(--cyan),var(--bridge) 50%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mast .fade{color:var(--t3);opacity:.45}
+  .mast .gear{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:13px;flex:none}
+
+  .card{border-radius:var(--r-lg);border:1px solid var(--hair);background:var(--glass);position:relative}
+  .eyebrow{font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+  .taphint{font-size:9px;color:var(--t3)}
+
+  /* ── glass-caustic aura ── */
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+  @keyframes causticDrift{0%,100%{transform:translate(0,0) rotate(0deg)}33%{transform:translate(7%,-6%) rotate(36deg)}66%{transform:translate(-6%,6%) rotate(-28deg)}}
+  @keyframes sweep{0%{transform:translateX(-64%);opacity:0}6%{transform:translateX(-52%);opacity:1}17%{transform:translateX(-8%);opacity:1}21%{transform:translateX(0);opacity:0}100%{transform:translateX(-64%);opacity:0}}
+  @keyframes ring{0%{transform:scale(1);opacity:.5}100%{transform:scale(2.1);opacity:0}}
+  .aura{position:relative;border-radius:50%;overflow:hidden;box-shadow:0 0 34px 9px var(--glow);animation:breathe 5.4s ease-in-out infinite}
+  .aura .body{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,var(--cl) 0%,var(--c) 46%,var(--cd) 92%)}
+  .aura .caustic{position:absolute;inset:-16%;background:radial-gradient(circle at 35% 38%,rgba(255,255,255,.6),transparent 30%),radial-gradient(circle at 66% 60%,var(--cl),transparent 28%),radial-gradient(circle at 50% 80%,var(--c),transparent 30%);mix-blend-mode:screen;animation:causticDrift 7s ease-in-out infinite}
+  .aura .glass{position:absolute;top:-12%;bottom:-12%;left:0;width:280%;background:linear-gradient(112deg,transparent 36%,rgba(255,255,255,.3) 40.5%,transparent 45%,transparent 57%,rgba(255,255,255,.15) 61%,transparent 65%);animation:sweep 8.5s ease-in-out infinite}
+  .aura .rim{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 1.5px 4px rgba(255,255,255,.42),inset 0 0 13px 1px rgba(255,255,255,.16)}
+  .cyan{--c:#00C2FF;--cl:#7FE0FF;--cd:#0A8FD0;--glow:rgba(0,194,255,.3)}
+  .rose{--c:#C76A86;--cl:#ECC0CE;--cd:#8F4A60;--glow:rgba(199,106,134,.26)}
+
+  /* ── split orb (Us) ── */
+  .splitorb{position:relative;width:98px;height:98px;border-radius:50%;overflow:hidden;box-shadow:0 0 30px 7px rgba(150,120,200,.26);animation:breathe 5.4s ease-in-out infinite;flex:none}
+  .splitorb .halves{position:absolute;inset:0;background:linear-gradient(135deg,#00C2FF 0 49.4%,rgba(255,255,255,.22) 49.4% 50.6%,#C76A86 50.6% 100%)}
+  .splitorb .hl{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.5),transparent 34%)}
+  .splitorb .rim{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 1.5px 4px rgba(255,255,255,.42),inset 0 0 13px 1px rgba(255,255,255,.16)}
+
+  /* PULSE cards */
+  .pulse{flex:0 0 auto;padding:13px 15px 15px;border-color:rgba(0,194,255,.22);background:linear-gradient(158deg,rgba(108,58,224,.1),rgba(0,194,255,.03))}
+  .pulse.us{border-color:rgba(255,0,106,.2);background:linear-gradient(158deg,rgba(255,0,106,.08),rgba(108,58,224,.06))}
+  .ptop{display:flex;justify-content:space-between;align-items:center}
+  .state{font-family:var(--disp);font-size:19px;font-weight:600;color:#fff;text-align:center;line-height:1.1}
+  .substate{font-size:10px;color:var(--t2);text-align:center;margin-top:3px}
+  .todayline{font-size:9.5px;color:var(--cyan);text-align:center;margin-top:6px;opacity:.85}
+  .usbody{display:flex;align-items:center;gap:16px;margin-top:8px}
+  .usread .st{font-family:var(--disp);font-size:19px;font-weight:600;color:#fff;line-height:1.1}
+  .usread .names{font-size:10.5px;margin-top:9px;line-height:1.5}
+  .usread .names .you{color:var(--cyan);font-weight:600}.usread .names .al{color:var(--rose);font-weight:600}
+  .usread .cross{font-size:9.5px;color:var(--t3);margin-top:9px}
+
+  /* ── PATH · winding trail preview ── */
+  .path{flex:0 0 auto;padding:12px 15px 13px;border-color:rgba(167,139,250,.22)}
+  .wtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .wtop .eyebrow{color:var(--purple-light)}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:600;color:var(--t2);border:1px solid var(--hair);border-radius:20px;padding:3px 9px}
+  .chip .dm{width:7px;height:7px;border-radius:2px;background:linear-gradient(135deg,var(--cyan),var(--magenta));transform:rotate(45deg)}
+  .trail{position:relative;height:132px;border-radius:12px;overflow:hidden;background:linear-gradient(#0e0b16,#0a0812);border:1px solid rgba(255,255,255,.05)}
+  .trail svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .tnode{position:absolute;transform:translate(-50%,-50%);border-radius:50%;z-index:3}
+  .tnode.done{width:12px;height:12px;background:linear-gradient(135deg,var(--cyan),var(--purple) 55%,var(--magenta));box-shadow:0 0 4px rgba(255,255,255,.4),0 0 9px 1px rgba(108,58,224,.4)}
+  .tnode.done::before{content:"";position:absolute;inset:3px;border-radius:50%;background:rgba(255,255,255,.22)}
+  .tnode.now{width:19px;height:19px;background:#0a0712;border:2px solid var(--cyan);box-shadow:0 0 0 4px rgba(0,194,255,.1),0 0 16px 3px rgba(0,194,255,.55)}
+  .tnode.now::before{content:"";position:absolute;inset:4px;border-radius:50%;background:#fff;box-shadow:0 0 7px #fff}
+  .tnode.future{width:10px;height:10px;background:#0b0814;border:1.5px solid rgba(255,255,255,.2)}
+  .tnode.stance::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--fc)}
+  .tnow-lab{position:absolute;z-index:4;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--cyan)}
+  .tphase{position:absolute;top:8px;left:12px;z-index:4;font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--purple-light);opacity:.8}
+  .prow{display:flex;align-items:baseline;gap:9px;margin-top:10px}
+  .prow .lm{font-family:var(--disp);font-size:15px;font-weight:600;color:#fff}
+  .stanceChip{display:inline-flex;align-items:center;gap:6px;font-size:9.5px;font-weight:600;border-radius:20px;padding:3px 9px;color:var(--magentaL);border:1px solid rgba(255,77,148,.35);background:rgba(255,0,106,.07)}
+  .stanceChip .d{width:7px;height:7px;border-radius:50%;background:var(--magentaL)}
+  .togeth{font-size:10px;color:var(--cyan);font-weight:600;display:flex;align-items:center;gap:6px}
+  .togeth i{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 7px var(--cyan)}
+  .pfoot{display:flex;justify-content:space-between;align-items:center;font-size:9.5px;color:var(--t3);margin-top:9px}
+  .pfoot .lnk{color:var(--purple-light)}
+
+  /* ── VAULT · preview boxes ── */
+  .vault{flex:0 0 auto;padding:12px 14px 14px;border-color:rgba(255,77,148,.2)}
+  .vault .eyebrow{color:var(--magentaL)}
+  .vtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .lock{font-size:9px;color:var(--t3)}
+  .vgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .vtile{border-radius:13px;border:1px solid var(--hair);background:rgba(255,255,255,.04);padding:11px 12px;position:relative;min-height:86px;display:flex;flex-direction:column}
+  .vtile.wide{grid-column:1 / -1;min-height:0}
+  .vprev{flex:1;position:relative;margin-bottom:9px;min-height:34px}
+  .vname{font-family:var(--disp);font-size:12.5px;font-weight:600;color:var(--t1)}
+  .vct{font-size:9px;color:var(--t3);margin-top:2px}
+  .varr{position:absolute;top:11px;right:11px;color:var(--t3);font-size:12px}
+  /* map preview: constellation */
+  .cdot{position:absolute;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px rgba(0,194,255,.6)}
+  /* journal preview: moment lines */
+  .jline{position:absolute;height:3px;border-radius:2px;background:rgba(167,139,250,.5)}
+  .jorb{position:absolute;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,var(--cyan) 55%,var(--purple));box-shadow:0 0 7px rgba(0,194,255,.6)}
+  /* meet preview: overlap */
+  .mdot{position:absolute;width:20px;height:20px;border-radius:50%;filter:blur(1px)}
+  /* agreements preview */
+  .aline{position:absolute;height:3px;border-radius:2px;background:rgba(255,255,255,.22)}
+  /* record wide */
+  .recrow{display:flex;align-items:center;gap:11px}
+  .recrow .rt{flex:none}
+  .spread{display:flex;gap:3px;height:9px;border-radius:5px;overflow:hidden;flex:1}
+  .spread b{border-radius:2px}
+
+  /* differentiation strip */
+  .diff{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:840px;margin:44px auto 0}
+  @media(max-width:680px){.diff{grid-template-columns:1fr}}
+  .dc{border-radius:var(--r-md);border:1px solid var(--hair);background:var(--glass);padding:15px 16px}
+  .dc h4{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;gap:8px}
+  .dc h4 .dot{width:8px;height:8px;border-radius:50%}
+  .dc .role{font-size:8.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin-bottom:10px}
+  .dc .ln{font-size:11.5px;line-height:1.5;color:var(--t2);padding:6px 0;border-top:1px solid var(--hair)}
+  .dc .ln:first-of-type{border-top:0}
+  .dc .ln b{color:var(--t1)}
+  .dc .meT{color:var(--cyan);font-weight:700;font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+  .dc .usT{color:var(--magentaL);font-weight:700;font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+
+  /* ── VAULT door (static on dashboard) ── */
+  .vdoor{flex:0 0 auto;border-radius:var(--r-lg);border:1px solid rgba(255,77,148,.2);background:radial-gradient(130% 90% at 50% 0%,rgba(108,58,224,.14),transparent 70%),var(--glass);padding:14px 15px 15px;text-align:center}
+  .vdoor.me{border-color:rgba(0,194,255,.2)}
+  .vdoor .em{width:74px;height:74px;margin:2px auto 9px}
+  .vdoor .svg{width:100%;height:100%;overflow:visible;display:block}
+  .vdoor .dt{font-family:var(--disp);font-size:17px;font-weight:700}
+  .vdoor .dsum{font-size:10px;color:var(--t2);margin-top:4px}
+  .vdoor .dstat{font-size:8.5px;color:var(--t3);margin-top:5px}
+  .vdoor .open{margin-top:10px;display:inline-flex;align-items:center;gap:6px;font-family:var(--disp);font-size:11px;font-weight:600;color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:20px;padding:6px 14px}
+
+  /* equal Me/Us toggle */
+  .lenstoggle{display:inline-flex;gap:3px;padding:3px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid var(--hair)}
+  .lenstoggle button{font-family:var(--disp);font-size:13px;font-weight:600;padding:5px 17px;border-radius:16px;border:0;background:transparent;color:var(--t3);cursor:pointer;line-height:1}
+  .lenstoggle button.on{color:#fff;background:linear-gradient(90deg,rgba(0,194,255,.28),rgba(255,0,106,.3));box-shadow:0 0 12px rgba(108,58,224,.32)}
+  .tap{cursor:pointer}
+  /* full-screen open */
+  .fs{position:absolute;inset:0;z-index:20;background:radial-gradient(120% 30% at 50% 0%,rgba(108,58,224,.22),transparent 60%),linear-gradient(var(--void),#08060f);display:none;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;padding:46px 18px 20px}
+  .fs.show{display:flex}
+  .fs .bk{position:absolute;top:48px;left:18px;color:var(--t2);font-size:13px;font-weight:600;font-family:var(--disp);cursor:pointer}
+  .fs .ttl{font-family:var(--disp);font-size:25px;font-weight:700}
+  .fs .sub{font-size:11px;color:var(--t3);max-width:200px;line-height:1.5}
+
+  /* full-bleed roadmap surface (no box-in-box) */
+  .pathfs{position:relative;overflow:hidden;padding:0;border:1px solid rgba(167,139,250,.22);border-radius:var(--r-lg);background:linear-gradient(#0e0b16,#0a0812);height:200px;flex:0 0 auto}
+  .pathfs .ptrail{position:absolute;inset:0}
+  .pathfs .ptrail svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .pathfs::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(180deg,rgba(12,9,20,.74),transparent 24%,transparent 56%,rgba(12,9,20,.92))}
+  .poverlay{position:relative;z-index:4;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:12px 14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>Map dashboard — <span class="spectrum">Me vs Us</span></h1>
+  <p class="lede">One skeleton, one flip. Three pillars in the same slots on both lenses. <b>Pulse</b> (Now) · <b>Path</b> (Forward) · <b>Vault</b> (Kept). Me/Us switches via the existing name-toggle masthead, and <b>tapping any pillar opens it full screen</b> (try it on either phone). History and detail stay hidden until you open the pillar.</p>
+  <p class="rulep">The honest rule: <b>Me = yours / private, Us = ours / shared.</b> Pulse: your glass aura vs the split you/Alex orb. Path: a lean slice of your winding trail. Vault: one sealed door, My Vault / Our Vault, that opens the archive. <b>One thing breathes</b> (the Pulse); everything else is still.</p>
+
+  <div class="two">
+
+    <!-- ═══ ME ═══ -->
+    <div>
+      <div class="cap me">Me · your inner world</div>
+      <div class="phone">
+        <div class="sky"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div class="nm"><span class="lit">Jordan.</span><span class="fade"> &amp; Alex</span></div><div class="gear">⚙</div></div>
+
+          <!-- PULSE me · glance only, history hidden -->
+          <div class="card pulse tap" data-full="The Pulse">
+            <div class="ptop"><div class="eyebrow" style="color:var(--cyan)">The Pulse · you</div><div class="taphint">tap to map →</div></div>
+            <div class="aura cyan" style="width:112px;height:112px;margin:14px auto 10px"><div class="body"></div><div class="caustic"></div><div class="glass"></div><div class="rim"></div></div>
+            <div class="state">The Expansive Space</div>
+            <div class="substate">Connected · Adventurous</div>
+            <div class="todayline">Brighter than yesterday</div>
+          </div>
+
+          <!-- PATH me · full-bleed roadmap surface -->
+          <div class="card pathfs tap" data-full="The Path">
+            <div class="ptrail">
+              <svg viewBox="0 0 290 200" preserveAspectRatio="xMidYMid slice">
+                <defs><linearGradient id="tg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#00c2ff"/><stop offset=".5" stop-color="#6c3ae0"/><stop offset="1" stop-color="#ff006a"/></linearGradient><filter id="tgl" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4"/></filter></defs>
+                <path d="M55,184 C55,158 235,158 235,134 C235,112 60,112 60,90" fill="none" stroke="url(#tg)" stroke-width="6" opacity=".5" filter="url(#tgl)"/>
+                <path d="M55,184 C55,158 235,158 235,134 C235,112 60,112 60,90" fill="none" stroke="url(#tg)" stroke-width="2.6" stroke-linecap="round"/>
+                <path d="M60,90 C60,66 235,66 235,44 C235,24 95,24 95,10" fill="none" stroke="rgba(167,139,250,.32)" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1.5 7"/>
+              </svg>
+              <div class="tnode done" style="left:19%;top:92%"></div>
+              <div class="tnode done" style="left:81%;top:67%"></div>
+              <div class="tnode now" style="left:20.7%;top:45%"></div>
+              <div class="tnode future stance" style="left:81%;top:22%;--fc:var(--purple-light)"></div>
+              <div class="tnode future stance" style="left:32.8%;top:5%;--fc:var(--t3)"></div>
+              <span class="tnow-lab" style="left:29%;top:39%">Here now</span>
+            </div>
+            <div class="poverlay">
+              <div class="wtop"><div class="eyebrow">The Path · your read</div><div class="chip"><span class="dm"></span>Swinging</div></div>
+              <div>
+                <div class="prow"><span class="lm">The strip club</span><span class="stanceChip"><span class="d"></span>let's talk first</span></div>
+                <div class="pfoot"><span>Phase 2 · at your pace</span><span class="lnk">Your notes ›</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VAULT me · door -->
+          <div class="vdoor me tap" data-full="My Vault">
+            <div class="em">
+              <svg class="svg" viewBox="0 0 100 100">
+                <defs>
+                  <linearGradient id="dvm" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="92" y2="92"><stop offset="0" stop-color="#00C2FF"/><stop offset=".5" stop-color="#6C3AE0"/><stop offset="1" stop-color="#FF006A"/></linearGradient>
+                  <radialGradient id="dam"><stop offset="0" stop-color="rgba(127,224,255,.7)"/><stop offset="60%" stop-color="rgba(0,194,255,.24)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+                  <radialGradient id="dgm" cx="38%" cy="32%" r="80%"><stop offset="0" stop-color="rgba(255,255,255,.95)"/><stop offset="28%" stop-color="rgba(127,224,255,.85)"/><stop offset="70%" stop-color="rgba(0,194,255,.6)"/><stop offset="100%" stop-color="rgba(10,20,45,.92)"/></radialGradient>
+                  <filter id="dbm" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>
+                </defs>
+                <circle cx="50" cy="50" r="15" fill="url(#dam)"/>
+                <circle cx="50" cy="50" r="32" fill="none" stroke="url(#dvm)" stroke-width="5" opacity=".45" filter="url(#dbm)"/>
+                <circle cx="50" cy="50" r="32" fill="none" stroke="url(#dvm)" stroke-width="2"/>
+                <g stroke="url(#dvm)" stroke-width="2.6" stroke-linecap="round"><line x1="50" y1="50" x2="95" y2="50"/><line x1="50" y1="50" x2="72.5" y2="88.97"/><line x1="50" y1="50" x2="27.5" y2="88.97"/><line x1="50" y1="50" x2="5" y2="50"/><line x1="50" y1="50" x2="27.5" y2="11.03"/><line x1="50" y1="50" x2="72.5" y2="11.03"/></g>
+                <g fill="url(#dvm)"><circle cx="95" cy="50" r="3.4"/><circle cx="72.5" cy="88.97" r="3.4"/><circle cx="27.5" cy="88.97" r="3.4"/><circle cx="5" cy="50" r="3.4"/><circle cx="27.5" cy="11.03" r="3.4"/><circle cx="72.5" cy="11.03" r="3.4"/></g>
+                <rect x="39" y="39" width="22" height="22" rx="3" transform="rotate(45 50 50)" fill="url(#dgm)" stroke="url(#dvm)" stroke-width="2.4"/>
+                <path d="M50,40 L60,50 L50,60 L40,50 Z" fill="rgba(255,255,255,.12)"/>
+                <circle cx="45.5" cy="45.5" r="1.6" fill="#fff"/>
+              </svg>
+            </div>
+            <div class="dt">My Vault</div>
+            <div class="dsum">Your map · Your journal</div>
+            <div class="dstat">18 mapped · 7 moments · only you</div>
+            <div class="open">Open ›</div>
+          </div>
+        </div>
+        <div class="fs"><span class="bk">‹ Back</span><div class="ttl"></div><div class="sub">full screen · this pillar opens as a cover you return from</div></div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <!-- ═══ US ═══ -->
+    <div>
+      <div class="cap us">Us · the shared world</div>
+      <div class="phone">
+        <div class="sky us"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div class="nm"><span class="lit">Jordan &amp; Alex.</span></div><div class="gear">⚙</div></div>
+
+          <!-- PULSE us · split orb -->
+          <div class="card pulse us tap" data-full="The Pulse">
+            <div class="ptop"><div class="eyebrow" style="color:var(--magentaL)">The Pulse · together</div><div class="taphint">tap to open →</div></div>
+            <div class="usbody">
+              <div class="splitorb"><div class="halves"></div><div class="hl"></div><div class="rim"></div></div>
+              <div class="usread">
+                <div class="st">A wide<br>day</div>
+                <div class="names"><span class="you">You</span> in Expansive<br><span class="al">Alex</span> in Protective</div>
+                <div class="cross">◑ a step apart</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PATH us · full-bleed roadmap surface -->
+          <div class="card pathfs tap" data-full="The Path">
+            <div class="ptrail">
+              <svg viewBox="0 0 290 200" preserveAspectRatio="xMidYMid slice">
+                <defs><linearGradient id="tg2" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#00c2ff"/><stop offset=".5" stop-color="#6c3ae0"/><stop offset="1" stop-color="#ff006a"/></linearGradient><filter id="tgl2" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4"/></filter></defs>
+                <path d="M55,184 C55,158 235,158 235,134 C235,112 60,112 60,90" fill="none" stroke="url(#tg2)" stroke-width="6" opacity=".5" filter="url(#tgl2)"/>
+                <path d="M55,184 C55,158 235,158 235,134 C235,112 60,112 60,90" fill="none" stroke="url(#tg2)" stroke-width="2.6" stroke-linecap="round"/>
+                <path d="M60,90 C60,66 235,66 235,44 C235,24 95,24 95,10" fill="none" stroke="rgba(167,139,250,.32)" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1.5 7"/>
+              </svg>
+              <div class="tnode done" style="left:19%;top:92%"></div>
+              <div class="tnode done" style="left:81%;top:67%"></div>
+              <div class="tnode now" style="left:20.7%;top:45%"></div>
+              <div class="tnode future" style="left:81%;top:22%"></div>
+              <div class="tnode future" style="left:32.8%;top:5%"></div>
+              <span class="tnow-lab" style="left:29%;top:39%">Here now</span>
+            </div>
+            <div class="poverlay">
+              <div class="wtop"><div class="eyebrow">The Path · couple roadmap</div><div class="chip"><span class="dm"></span>Swinging</div></div>
+              <div>
+                <div class="prow"><span class="lm">The strip club</span><span class="togeth"><i></i>together</span></div>
+                <div class="pfoot"><span>Phase 2 · at your pace</span><span class="lnk">Explore paths ›</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VAULT us · door -->
+          <div class="vdoor tap" data-full="Our Vault">
+            <div class="em">
+              <svg class="svg" viewBox="0 0 100 100">
+                <defs>
+                  <linearGradient id="dvu" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="92" y2="92"><stop offset="0" stop-color="#00C2FF"/><stop offset=".5" stop-color="#6C3AE0"/><stop offset="1" stop-color="#FF006A"/></linearGradient>
+                  <radialGradient id="dau"><stop offset="0" stop-color="rgba(255,180,210,.7)"/><stop offset="60%" stop-color="rgba(255,0,106,.24)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+                  <radialGradient id="dgu" cx="38%" cy="32%" r="80%"><stop offset="0" stop-color="rgba(255,255,255,.95)"/><stop offset="28%" stop-color="rgba(255,140,180,.85)"/><stop offset="70%" stop-color="rgba(255,0,106,.55)"/><stop offset="100%" stop-color="rgba(40,8,25,.92)"/></radialGradient>
+                  <filter id="dbu" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>
+                </defs>
+                <circle cx="50" cy="50" r="15" fill="url(#dau)"/>
+                <circle cx="50" cy="50" r="32" fill="none" stroke="url(#dvu)" stroke-width="5" opacity=".45" filter="url(#dbu)"/>
+                <circle cx="50" cy="50" r="32" fill="none" stroke="url(#dvu)" stroke-width="2"/>
+                <g stroke="url(#dvu)" stroke-width="2.6" stroke-linecap="round"><line x1="50" y1="50" x2="95" y2="50"/><line x1="50" y1="50" x2="72.5" y2="88.97"/><line x1="50" y1="50" x2="27.5" y2="88.97"/><line x1="50" y1="50" x2="5" y2="50"/><line x1="50" y1="50" x2="27.5" y2="11.03"/><line x1="50" y1="50" x2="72.5" y2="11.03"/></g>
+                <g fill="url(#dvu)"><circle cx="95" cy="50" r="3.4"/><circle cx="72.5" cy="88.97" r="3.4"/><circle cx="27.5" cy="88.97" r="3.4"/><circle cx="5" cy="50" r="3.4"/><circle cx="27.5" cy="11.03" r="3.4"/><circle cx="72.5" cy="11.03" r="3.4"/></g>
+                <rect x="39" y="39" width="22" height="22" rx="3" transform="rotate(45 50 50)" fill="url(#dgu)" stroke="url(#dvu)" stroke-width="2.4"/>
+                <path d="M50,40 L60,50 L50,60 L40,50 Z" fill="rgba(255,255,255,.12)"/>
+                <circle cx="45.5" cy="45.5" r="1.6" fill="#fff"/>
+              </svg>
+            </div>
+            <div class="dt">Our Vault</div>
+            <div class="dsum">Where you meet · Agreements · The record</div>
+            <div class="dstat">7 shared · 4 agreements · 12 sessions</div>
+            <div class="open">Open ›</div>
+          </div>
+        </div>
+        <div class="fs"><span class="bk">‹ Back</span><div class="ttl"></div><div class="sub">full screen · this pillar opens as a cover you return from</div></div>
+        <div class="home"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- differentiation strip -->
+  <div class="diff">
+    <div class="dc">
+      <h4><span class="dot" style="background:var(--cyan)"></span>The Pulse</h4>
+      <div class="role">Now · the hero</div>
+      <div class="ln"><span class="meT">Me</span> &nbsp;Your glass aura + today's read. Tapping opens your last-30 grid + time-window map (history stays hidden here).</div>
+      <div class="ln"><span class="usT">Us</span> &nbsp;<b>One split orb</b>, your half + Alex's, collapsing to solid in the same space. Tapping opens the capsule field + split check-in grid.</div>
+    </div>
+    <div class="dc">
+      <h4><span class="dot" style="background:var(--purple-light)"></span>The Path</h4>
+      <div class="role">Forward · full-bleed roadmap surface</div>
+      <div class="ln"><span class="meT">Me</span> &nbsp;A slice of your winding road with your <b>stance</b> on it. Tapping opens the full trail + your notes.</div>
+      <div class="ln"><span class="usT">Us</span> &nbsp;The same slice, shared: walked / here / ahead. Tapping opens the full trail + Mission Briefs.</div>
+    </div>
+    <div class="dc">
+      <h4><span class="dot" style="background:var(--magentaL)"></span>The Vault</h4>
+      <div class="role">Kept · one door, opens a place</div>
+      <div class="ln"><span class="meT">Me</span> &nbsp;<b>My Vault</b>: your map + your journal, private. The handle spins and opens your screen.</div>
+      <div class="ln"><span class="usT">Us</span> &nbsp;<b>Our Vault</b>: where you meet, agreements, the record. One sealed door into the shared archive.</div>
+    </div>
+  </div>
+
+</div>
+<script>
+  document.querySelectorAll('.phone .tap').forEach(function(el){
+    el.addEventListener('click',function(){
+      var fs=el.closest('.phone').querySelector('.fs');
+      fs.querySelector('.ttl').textContent=el.getAttribute('data-full');
+      fs.classList.add('show');
+    });
+  });
+  document.querySelectorAll('.fs .bk').forEach(function(b){
+    b.addEventListener('click',function(){b.closest('.fs').classList.remove('show');});
+  });
+</script>
+</body>
+</html>

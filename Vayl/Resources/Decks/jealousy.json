@@ -1,0 +1,279 @@
+{
+  "id": "jealousy",
+  "title": "Jealousy & What It's Telling You",
+  "subtitle": "Information, if you'll read it.",
+  "category": "nmSpecific",
+  "act": 1,
+  "intensity": 5,
+  "is_locked": true,
+  "required_entitlement": "core",
+  "tags": [
+    "core",
+    "nm",
+    "jealousy"
+  ],
+  "sort_order": 5,
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "j-01",
+      "deck_id": "jealousy",
+      "text": "What's your earliest memory of jealousy?\n\nLong before this relationship. Maybe before any relationship.",
+      "highlight_words": [
+        "earliest memory"
+      ],
+      "type": "prompt",
+      "intensity": 3,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": "banner",
+      "context_beat_copy": "Jealousy has a memory. It's older than the two of you.",
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    },
+    {
+      "id": "j-02",
+      "deck_id": "jealousy",
+      "text": "How was jealousy handled around you growing up?\n\nPunished? Romanticized? Hidden until it burst?",
+      "highlight_words": [
+        "Punished? Romanticized?"
+      ],
+      "type": "prompt",
+      "intensity": 4,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 2
+    },
+    {
+      "id": "j-03",
+      "deck_id": "jealousy",
+      "text": "Where does jealousy live in your body when it arrives?\n\nDon't explain it.\n\nLocate it.",
+      "highlight_words": [
+        "your body"
+      ],
+      "type": "bodyCheck",
+      "intensity": 4,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 3
+    },
+    {
+      "id": "j-04",
+      "deck_id": "jealousy",
+      "text": "The last time it flared...\n\nWhat set it off?\n\nWhat was it pointing at underneath?",
+      "highlight_words": [
+        "underneath"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": "interstitial",
+      "context_beat_copy": "Before this card:\n\nJealousy is a signal with a job. It shows up to point at something that matters to you. A need. A fear. A line.\n\nYou can read the signal without obeying it. Tonight you're just reading.",
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 4
+    },
+    {
+      "id": "j-05",
+      "deck_id": "jealousy",
+      "text": "For him:\n\nHas the question ever visited you... could someone simply do this better?\n\nSay where comparison sneaks in for you, even when it arrives dressed as curiosity.\n\nThen, for her: name one thing about him nobody else could replace.",
+      "highlight_words": [
+        "replace"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "mf",
+      "sort_order": 5
+    },
+    {
+      "id": "j-05f",
+      "deck_id": "jealousy",
+      "text": "Whichever of you carries the quieter fear of being outgrown:\n\nSay where comparison sneaks in for you, even when it arrives dressed as curiosity.\n\nThen the other: name one thing about them nobody else could replace.",
+      "highlight_words": [
+        "outgrown"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "flexible",
+      "sort_order": 5
+    },
+    {
+      "id": "j-06",
+      "deck_id": "jealousy",
+      "text": "For her:\n\nWhat happens to your own feelings when you're busy managing someone else's?\n\nWhere have you shrunk your joy to keep the peace?\n\nSay one place you want that to stop.",
+      "highlight_words": [
+        "shrunk your joy"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "mf",
+      "sort_order": 6
+    },
+    {
+      "id": "j-06f",
+      "deck_id": "jealousy",
+      "text": "Whichever of you dims your own excitement to protect the other:\n\nWhere has that been happening lately?\n\nSay one place you want it to stop.",
+      "highlight_words": [
+        "dims"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": true,
+      "gendered_for": "flexible",
+      "sort_order": 6
+    },
+    {
+      "id": "j-07",
+      "deck_id": "jealousy",
+      "text": "One word for your relationship with jealousy right now.",
+      "highlight_words": [
+        "One word"
+      ],
+      "type": "snapshot",
+      "intensity": 4,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 7
+    },
+    {
+      "id": "j-08",
+      "deck_id": "jealousy",
+      "text": "What reassurance actually works on you?\n\nWords, touch, time, proof?\n\nWhich well-meant reassurance does nothing at all?",
+      "highlight_words": [
+        "actually works"
+      ],
+      "type": "prompt",
+      "intensity": 6,
+      "who_starts": "partnerB",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "anxious",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": "Say the useless kind out loud too.\n\nNobody should keep spending effort where it never lands.",
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 8
+    },
+    {
+      "id": "j-09",
+      "deck_id": "jealousy",
+      "text": "What if I came home lit up after a great date...\n\nWhat's the first thing you'd want me to do walking in the door?",
+      "highlight_words": [
+        "lit up"
+      ],
+      "type": "whatIf",
+      "intensity": 5,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "excited",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 9
+    },
+    {
+      "id": "j-10",
+      "deck_id": "jealousy",
+      "text": "When have you felt something close to pride watching me light up for someone else?\n\nWhat made that moment safe enough for pride?\n\nWhat would it take to get more of them?",
+      "highlight_words": [
+        "pride"
+      ],
+      "type": "prompt",
+      "intensity": 5,
+      "who_starts": "partnerA",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 10
+    },
+    {
+      "id": "j-11",
+      "deck_id": "jealousy",
+      "text": "The Working Signal.\n\nEach of you tells the other the exact sentence to say when jealousy shows up mid-experience.\n\nNow repeat each other's sentence back. Once. Out loud.",
+      "highlight_words": [
+        "exact sentence"
+      ],
+      "type": "closingRitual",
+      "intensity": 3,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 11
+    }
+  ]
+}

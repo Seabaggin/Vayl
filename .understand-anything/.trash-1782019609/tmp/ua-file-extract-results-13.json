@@ -1,0 +1,241 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 20,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "Vayl/Features/Pulse/PulseFullView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 301,
+      "nonEmptyLines": 259,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pulse/PulseGraph.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 986,
+      "nonEmptyLines": 846,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pulse/PulseSheetView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 572,
+      "nonEmptyLines": 508,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pulse/PulseWidget.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 341,
+      "nonEmptyLines": 303,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pulse/Store/PulseStore.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 63,
+      "nonEmptyLines": 49,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Pulse/TierGuideSheet.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 128,
+      "nonEmptyLines": 112,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Sessions/Debug/PresenceDebugView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 196,
+      "nonEmptyLines": 167,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Sessions/SessionPlan.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 78,
+      "nonEmptyLines": 72,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Sessions/SessionStore.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 240,
+      "nonEmptyLines": 198,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Sessions/SessionView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 280,
+      "nonEmptyLines": 236,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Features/Settings/SettingsView.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 298,
+      "nonEmptyLines": 272,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Resources/Decks/deck-index.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 3,
+      "nonEmptyLines": 3,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 0
+      }
+    },
+    {
+      "path": "Vayl/Resources/Decks/the-opener.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 195,
+      "nonEmptyLines": 195,
+      "sections": [
+        {
+          "heading": "id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "title",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "subtitle",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "category",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "act",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "intensity",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "is_locked",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "required_entitlement",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "sort_order",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "schema_version",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "cards",
+          "level": 1,
+          "line": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "Vayl/Vayl.entitlements",
+      "language": "entitlements",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Vayl.plist",
+      "language": "xml",
+      "fileCategory": "config",
+      "totalLines": 29,
+      "nonEmptyLines": 29,
+      "metrics": {}
+    },
+    {
+      "path": "Vayl/Vayl.storekit",
+      "language": "storekit",
+      "fileCategory": "code",
+      "totalLines": 32,
+      "nonEmptyLines": 32,
+      "metrics": {}
+    },
+    {
+      "path": "VaylTests/CandleIntensityTests.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 12,
+      "metrics": {}
+    },
+    {
+      "path": "VaylTests/ContextOptionTests.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 104,
+      "nonEmptyLines": 93,
+      "metrics": {}
+    },
+    {
+      "path": "VaylTests/GettingStartedTests.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 38,
+      "nonEmptyLines": 33,
+      "metrics": {}
+    },
+    {
+      "path": "VaylTests/MonteRowGeometryTests.swift",
+      "language": "swift",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 17,
+      "metrics": {}
+    }
+  ]
+}

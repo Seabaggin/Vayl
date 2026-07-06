@@ -215,6 +215,8 @@ struct HolographicShimmer: View {
 
     @State private var phaseOffset: Double = Double.random(in: 0...100)
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         // Rectangle is the layout root — it accepts whatever frame
         // the parent proposes and fills it exactly.
@@ -227,12 +229,29 @@ struct HolographicShimmer: View {
                 GeometryReader { geo in
                     let size = geo.size
 
-                    TimelineView(.animation) { tl in
-                        let t = tl.date.timeIntervalSinceReferenceDate
-                        let noisePosition = valueNoise1D(t * noiseSpeed + phaseOffset)
-                        let sweepOffset = (noisePosition * 2 - 1.5) * size.width
+                    // Ambient gate — under Reduce Motion / Low Power Mode the shimmer
+                    // holds ONE static frame (sweep parked, orbs posed by the
+                    // per-instance phase offset, no per-frame TimelineView tick).
+                    // The surface stays fully dressed; only the motion is removed.
+                    if reduceMotion || AppAnimation.lowPower {
+                        shimmerFrame(t: phaseOffset, size: size)
+                    } else {
+                        TimelineView(.animation) { tl in
+                            shimmerFrame(t: tl.date.timeIntervalSinceReferenceDate, size: size)
+                        }
+                    }
+                }
+            )
+    }
 
-                        ZStack {
+    /// One rendered frame of the shimmer at absolute time `t` — shared by the live
+    /// TimelineView path and the static Reduce Motion / Low Power fallback.
+    @ViewBuilder
+    private func shimmerFrame(t: Double, size: CGSize) -> some View {
+        let noisePosition = valueNoise1D(t * noiseSpeed + phaseOffset)
+        let sweepOffset = (noisePosition * 2 - 1.5) * size.width
+
+        ZStack {
                             // Layer 0: Base — opaque foundation for the ZStack.
                             Color(.sRGB, red: 32/255, green: 28/255, blue: 52/255)
 
@@ -305,12 +324,9 @@ struct HolographicShimmer: View {
                                 xStretch: 3.5
                             )
                             .blendMode(.softLight)
-                            .opacity(0.096)
-                        }
-                        .frame(width: size.width, height: size.height)
-                    }
-                }
-            )
+            .opacity(0.096)
+        }
+        .frame(width: size.width, height: size.height)
     }
 }
 

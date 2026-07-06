@@ -42,7 +42,9 @@ final class UserProfile {
     var appMode: AppMode                        // together / solo
     var relationshipContext: String?            // ContextPhase — maps to RelationshipContext enum
     var situationalRegister: String?            // ContextPhase — maps to SituationalRegister enum
-    var emotionalRegister: String?              // CompassPhase Q3 — maps to EmotionalRegister enum (NOT ContextPhase)
+    var emotionalRegister: String?              // DemoPhase snapshot — maps to EmotionalRegister enum (was Compass Q3)
+    var demoVerb: String?                       // DemoPhase snapshot — DemoVerb.rawValue ("I [verb] [noun]")
+    var demoNoun: String?                       // DemoPhase snapshot — the noun the user typed
     var ageRange: AgeRange?                     // ContextPhase — set during relationalContext step
     var agency: String?                         // CompassPhase Q1 — maps to AgencySignal enum
     var motivation: String?                     // CompassPhase Q2 — maps to MotivationShape enum
@@ -70,6 +72,13 @@ final class UserProfile {
 
     var hasCompletedDesireMap: Bool
 
+    // MARK: - Identity Card (Map)
+    // Net-new V1 identity, set on the Me Card and persisted here. Optional so the
+    // additive change is a lightweight SwiftData migration (no real users yet).
+
+    var flavor: String?         // Flavor.rawValue — explorer / anchor / catalyst / architect
+    var chosenTitle: String?    // the Title chosen from the flavor's shortlist
+
     // MARK: - Init
 
     init(
@@ -83,6 +92,8 @@ final class UserProfile {
         relationshipContext: String? = nil,
         situationalRegister: String? = nil,
         emotionalRegister: String? = nil,
+        demoVerb: String? = nil,
+        demoNoun: String? = nil,
         ageRange: AgeRange? = nil,
         agency: String? = nil,
         motivation: String? = nil,
@@ -90,7 +101,9 @@ final class UserProfile {
         archetype: ArchetypeTag = .curious,
         curiositySelections: [String] = [],
         nmCardResponse: String? = nil,
-        openerDeckType: OpenerDeckType = .anxious
+        openerDeckType: OpenerDeckType = .anxious,
+        flavor: String? = nil,
+        chosenTitle: String? = nil
     ) {
         self.id = UUID()
         self.accountId = nil
@@ -105,6 +118,8 @@ final class UserProfile {
         self.relationshipContext = relationshipContext
         self.situationalRegister = situationalRegister
         self.emotionalRegister = emotionalRegister
+        self.demoVerb = demoVerb
+        self.demoNoun = demoNoun
         self.ageRange = ageRange
         self.agency = agency
         self.motivation = motivation
@@ -122,6 +137,8 @@ final class UserProfile {
         self.coupleId = nil
         self.linkedAt = nil
         self.hasCompletedDesireMap = false
+        self.flavor = flavor
+        self.chosenTitle = chosenTitle
     }
 
     // MARK: - Computed

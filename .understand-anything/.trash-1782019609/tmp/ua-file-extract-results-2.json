@@ -1,0 +1,63 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 4,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "Vayl/Resources/Content/assessment_questions.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 227,
+      "nonEmptyLines": 227,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 0
+      }
+    },
+    {
+      "path": "Vayl/Resources/Content/cards.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 254,
+      "nonEmptyLines": 254,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 0
+      }
+    },
+    {
+      "path": "Vayl/Resources/Content/categories.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 68,
+      "nonEmptyLines": 68,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 0
+      }
+    },
+    {
+      "path": "Vayl/Resources/Content/desire_items.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 241,
+      "nonEmptyLines": 241,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 0
+      }
+    }
+  ]
+}

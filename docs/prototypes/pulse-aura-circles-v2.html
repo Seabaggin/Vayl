@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — aura circles, pushed</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF; --cyan-light:#7FE0FF; --cyan-deep:#0A8FD0; --white:#EAFBFF;
+    --purple:#6C3AE0; --magenta:#FF006A; --bridge:#8B6FD4;
+    --void:#0a0810; --t1:#E8E8F0; --t2:rgba(255,255,255,.65); --t3:rgba(255,255,255,.4);
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0c0a12;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:880px;margin:0 auto;padding:44px 28px 70px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:25px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:13px;line-height:1.55;color:var(--t2);margin:0 0 18px}
+  .rowK{font-family:var(--disp);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);margin:22px 0 12px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  @media(max-width:680px){.grid{grid-template-columns:1fr;max-width:280px;margin-inline:auto}}
+  .tile{border-radius:20px;overflow:hidden;background:radial-gradient(120% 60% at 50% 0%, rgba(108,58,224,.1), transparent 62%),linear-gradient(var(--void),#08060f);border:1px solid rgba(255,255,255,.06);padding:30px 16px 16px;text-align:center}
+  .stage{height:150px;display:flex;align-items:center;justify-content:center}
+  .nm{font-family:var(--disp);font-size:13px;font-weight:600;margin-top:14px}
+  .note{font-size:10px;color:var(--t3);margin-top:5px;line-height:1.4}
+
+  @keyframes breathe{0%,100%{transform:scale(1);opacity:.95}50%{transform:scale(1.05);opacity:1}}
+  @keyframes causticDrift{0%,100%{transform:translate(0,0) rotate(0deg)}33%{transform:translate(8px,-6px) rotate(40deg)}66%{transform:translate(-7px,6px) rotate(-30deg)}}
+  @keyframes pulseRing{0%{transform:scale(.7);opacity:.6}80%{opacity:0}100%{transform:scale(2.3);opacity:0}}
+  @keyframes orbitGlint{to{transform:rotate(360deg)}}
+  @keyframes spectrumShift{0%,100%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(18deg)}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  .c{position:relative;width:118px;height:118px;border-radius:50%;animation:breathe 5.2s ease-in-out infinite}
+
+  /* ── EMISSION variations ── */
+  .e-base{background:radial-gradient(circle,var(--white) 0%,var(--cyan-light) 15%,var(--cyan) 45%,rgba(0,194,255,.2) 69%,transparent 82%)}
+  /* E1 spectrum bloom */
+  .e1{background:radial-gradient(circle,var(--white) 0%,var(--cyan-light) 15%,var(--cyan) 43%,rgba(0,194,255,.16) 66%,transparent 80%)}
+  .e1::after{content:"";position:absolute;inset:-22%;border-radius:50%;z-index:-1;
+    background:radial-gradient(circle,transparent 40%,rgba(108,58,224,.32) 60%,rgba(255,0,106,.22) 78%,transparent 90%);
+    mix-blend-mode:screen;filter:blur(8px);animation:spectrumShift 6s ease-in-out infinite}
+  /* E2 living caustic */
+  .e2{overflow:hidden}.e2{background:radial-gradient(circle,var(--white) 0%,var(--cyan-light) 16%,var(--cyan) 46%,rgba(0,194,255,.2) 70%,transparent 82%);box-shadow:0 0 48px 14px rgba(0,194,255,.26)}
+  .e2::before{content:"";position:absolute;inset:-15%;border-radius:50%;
+    background:radial-gradient(circle at 36% 40%,rgba(234,251,255,.6),transparent 30%),radial-gradient(circle at 66% 62%,rgba(127,224,255,.45),transparent 28%),radial-gradient(circle at 50% 78%,rgba(0,194,255,.35),transparent 28%);
+    mix-blend-mode:screen;animation:causticDrift 7s ease-in-out infinite}
+  /* E3 pulse ring */
+  .e3{background:radial-gradient(circle,var(--white) 0%,var(--cyan-light) 16%,var(--cyan) 46%,rgba(0,194,255,.2) 70%,transparent 82%)}
+  .e3::after{content:"";position:absolute;inset:18%;border-radius:50%;border:2px solid var(--cyan-light);animation:pulseRing 3.4s ease-out infinite}
+
+  /* ── CORE + HALO variations ── */
+  /* C1 spectrum halo */
+  .c1{background:radial-gradient(circle,var(--cyan-light) 0%,var(--cyan) 42%,var(--cyan) 74%,var(--cyan-deep) 100%)}
+  .c1::after{content:"";position:absolute;inset:-30%;border-radius:50%;z-index:-1;
+    background:radial-gradient(circle,rgba(0,194,255,.5) 30%,rgba(108,58,224,.34) 55%,rgba(255,0,106,.2) 74%,transparent 88%);filter:blur(7px)}
+  /* C2 traveling glint */
+  .c2{overflow:hidden;background:radial-gradient(circle,var(--cyan-light) 0%,var(--cyan) 44%,var(--cyan) 76%,var(--cyan-deep) 100%);box-shadow:0 0 32px 8px rgba(0,194,255,.42)}
+  .c2 .glint{position:absolute;inset:0;animation:orbitGlint 6s linear infinite}
+  .c2 .glint::after{content:"";position:absolute;top:6%;left:50%;width:30%;height:14%;transform:translateX(-50%);border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.95),transparent);filter:blur(1px)}
+  /* C3 annular / void center */
+  .c3{background:radial-gradient(circle,rgba(10,8,16,.95) 0%,rgba(10,8,16,.7) 26%,var(--cyan) 48%,var(--cyan) 60%,rgba(0,194,255,.18) 80%,transparent 92%);box-shadow:0 0 30px 8px rgba(0,194,255,.4)}
+  .c3::after{content:"";position:absolute;inset:34%;border-radius:50%;box-shadow:0 0 14px 2px rgba(0,194,255,.35)}
+
+  .od{font-size:12px;line-height:1.6;color:var(--t2);margin-top:24px}.od b{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>Circles, <span class="spectrum">pushed</span></h1>
+  <p class="lede">Three of Emission, three of Core + halo. Risk in what the light does, not in the silhouette.</p>
+
+  <div class="rowK">Emission</div>
+  <div class="grid">
+    <div class="tile"><div class="stage"><div class="c e1"></div></div><div class="nm">E1 · Spectrum bloom</div><div class="note">Cyan core, but the outer halo bleeds into purple then magenta. Vayl spectrum at the edge.</div></div>
+    <div class="tile"><div class="stage"><div class="c e2"></div></div><div class="nm">E2 · Living caustic</div><div class="note">Light moves inside it, like sun through water. Never still, never repeats.</div></div>
+    <div class="tile"><div class="stage"><div class="c e3"></div></div><div class="nm">E3 · Pulse ring</div><div class="note">A ring of light expands out and fades on a slow beat. Literally a pulse.</div></div>
+  </div>
+
+  <div class="rowK">Core + halo</div>
+  <div class="grid">
+    <div class="tile"><div class="stage"><div class="c c1"></div></div><div class="nm">C1 · Spectrum halo</div><div class="note">Solid clear cyan body, the glow around it runs the full spectrum.</div></div>
+    <div class="tile"><div class="stage"><div class="c c2"><div class="glint"></div></div></div><div class="nm">C2 · Traveling glint</div><div class="note">A single bright catch of light slowly orbits the rim. Alive, not a lit planet.</div></div>
+    <div class="tile"><div class="stage"><div class="c c3"></div></div><div class="nm">C3 · Void center</div><div class="note">Light is a luminous shell; the void shows through the middle. A lens, not a coin.</div></div>
+  </div>
+
+  <p class="od"><b>My picks to push further:</b> <b>E2 (living caustic)</b> is the most alive and the most unmistakably Vayl, light behaving like light. <b>C3 (void center)</b> is the boldest, it makes the aura a window into the void rather than an object, which is very on-brand and very different from a ball. <b>E1 / C1 (spectrum)</b> are the safe-but-strong picks if you want the brand spectrum present. Tell me which one (or which two to combine, e.g. caustic interior + spectrum halo) and I will build the field, comparison, and widget on it.</p>
+</div>
+</body>
+</html>

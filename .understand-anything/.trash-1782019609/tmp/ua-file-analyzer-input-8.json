@@ -1,0 +1,31 @@
+{
+  "projectRoot": "/Users/bryanjorden/Documents/School/Code/Vayl",
+  "batchFiles": [
+    {"path": "Vayl/Design/Components/Effects/FoilOpen/FoilDeckTheme.swift", "language": "swift", "sizeLines": 36, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/FoilOpen/MetallicCaseView.swift", "language": "swift", "sizeLines": 1406, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/FoilOpen/SpectrumSparkField.swift", "language": "swift", "sizeLines": 120, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/GlowOrb.swift", "language": "swift", "sizeLines": 35, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/GlowUnderline.swift", "language": "swift", "sizeLines": 72, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/GlowUnderlineView.swift", "language": "swift", "sizeLines": 59, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/GradBadge.swift", "language": "swift", "sizeLines": 44, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/HolographicShimmer.metal", "language": "metal", "sizeLines": 569, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/HolographicShimmer.swift", "language": "swift", "sizeLines": 335, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/HomeGlowField.swift", "language": "swift", "sizeLines": 268, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/LightAuraBloom.swift", "language": "swift", "sizeLines": 125, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/LightModeShimmer.swift", "language": "swift", "sizeLines": 107, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/MazePatternView.swift", "language": "swift", "sizeLines": 185, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/OrbitSpark.metal", "language": "metal", "sizeLines": 64, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/OrbitSparkBorderView.swift", "language": "swift", "sizeLines": 58, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/PillBorder.swift", "language": "swift", "sizeLines": 145, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/SectionHeader.swift", "language": "swift", "sizeLines": 17, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/SparkField.swift", "language": "swift", "sizeLines": 628, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/SpectrumHairline.swift", "language": "swift", "sizeLines": 85, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/TileOrbitView.swift", "language": "swift", "sizeLines": 353, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/VaylBorderEffect.swift", "language": "swift", "sizeLines": 447, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/VaylButton.swift", "language": "swift", "sizeLines": 305, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Effects/VaylFlourishView.swift", "language": "swift", "sizeLines": 217, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Input/InteractiveField.swift", "language": "swift", "sizeLines": 40, "fileCategory": "code"},
+    {"path": "Vayl/Design/Components/Input/ToggleRow.swift", "language": "swift", "sizeLines": 28, "fileCategory": "code"}
+  ],
+  "batchImportData": {}
+}

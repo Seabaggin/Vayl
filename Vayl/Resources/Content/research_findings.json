@@ -1,0 +1,53 @@
+[
+  {
+    "id": "haupert",
+    "type": "prevalence",
+    "stat": "1 in 5",
+    "headline": "1 in 5 have explored CNM",
+    "finding": "Roughly 1 in 5 Americans has engaged in consensual non-monogamy at some point in their lives.",
+    "bullets": [
+      "Evenly distributed across age, income, religion, race, and politics — a cross-section, not a subculture.",
+      "Consistent across studies — a baseline, not a passing trend."
+    ],
+    "limitation": "Prevalence counts any lifetime experience; it can't tell us how many practice CNM currently or how satisfied they were.",
+    "citation": "Haupert, M.L. et al. (2017). Journal of Sex & Marital Therapy, 43(5).",
+    "author": "Haupert et al.",
+    "year": 2017,
+    "topics": ["prevalence", "normalization"],
+    "connected": ["rubel", "conley"]
+  },
+  {
+    "id": "conley",
+    "type": "myth",
+    "stat": null,
+    "headline": "Monogamy myths",
+    "finding": "Many assumed benefits of monogamy over CNM aren't supported by evidence — including around STI risk and jealousy.",
+    "bullets": [
+      "CNM practitioners tend to have more explicit safer-sex conversations and test more regularly.",
+      "Stability correlates with communication quality, not structure."
+    ],
+    "limitation": "These are population-level comparisons; they don't predict how any individual relationship will fare.",
+    "citation": "Conley, T.D. et al. (2013). Perspectives on Psychological Science, 8(2).",
+    "author": "Conley et al.",
+    "year": 2013,
+    "topics": ["myths", "stigma"],
+    "connected": ["rubel", "haupert"]
+  },
+  {
+    "id": "rubel",
+    "type": "comparison",
+    "stat": null,
+    "headline": "Wellbeing holds when chosen",
+    "finding": "CNM relationships show no significant difference in wellbeing or relationship quality vs. monogamous ones — when genuinely consensual.",
+    "bullets": [
+      "Communication quality is higher in CNM relationships — the structure demands it.",
+      "The biggest predictor of success is whether both people truly chose it."
+    ],
+    "limitation": "Mostly cross-sectional samples that may over-represent people already doing well in CNM.",
+    "citation": "Rubel, A.N. & Bogaert, A.F. (2015). Journal of Sex Research, 52(9).",
+    "author": "Rubel + Bogaert",
+    "year": 2015,
+    "topics": ["wellbeing", "normalization"],
+    "connected": ["haupert", "johnson"]
+  }
+]

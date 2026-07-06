@@ -38,7 +38,10 @@ enum SchemaV1: VersionedSchema {
         ConnectionEntitlement.self,
         LockInSession.self,
         AcknowledgementRecord.self,
-        MilestoneRecord.self
+        MilestoneRecord.self,
+        SyncTask.self,
+        SessionReflection.self,
+        EventLogEntry.self
     ]
 }
 
@@ -67,7 +70,12 @@ extension ModelContainer {
     ///
     /// fatalError on failure is intentional — catches schema mismatches
     /// at launch rather than producing silent data loss.
-    static var appContainer: ModelContainer {
+    ///
+    /// `static let`, not `static var` — the container is built once and
+    /// cached. Every caller (VaylApp's .modelContainer, EntitlementStore,
+    /// hydrateOnboardingState, SyncManager) must see the SAME instance, or
+    /// writes through one Store's context silently don't appear in another's.
+    static let appContainer: ModelContainer = {
         do {
             let schema = Schema(SchemaV1.models)
 
@@ -92,7 +100,7 @@ extension ModelContainer {
         } catch {
             fatalError("❌ Failed to create ModelContainer: \(error.localizedDescription)")
         }
-    }
+    }()
 
     /// In-memory container for SwiftUI previews and unit tests.
     /// Identical schema to appContainer — nothing hits disk.
@@ -112,6 +120,34 @@ extension ModelContainer {
             )
         } catch {
             fatalError("❌ Failed to create preview ModelContainer: \(error.localizedDescription)")
+        }
+    }
+
+    /// In-memory container seeded with a completed UserProfile.
+    /// Use for any preview that exercises code gated on onboarding completion:
+    /// DesireMapView, DesireRevealView, AppShell (where the rater/reveal are reachable).
+    static var previewContainerWithProfile: ModelContainer {
+        do {
+            let schema = Schema(SchemaV1.models)
+            let config = ModelConfiguration(
+                "VaylPreviewWithProfile",
+                schema: schema,
+                isStoredInMemoryOnly: true
+            )
+            let container = try ModelContainer(
+                for: schema,
+                migrationPlan: AppMigrationPlan.self,
+                configurations: [config]
+            )
+            let context = ModelContext(container)
+            let profile = UserProfile(displayName: "Jordan")
+            profile.hasCompletedOnboarding = true
+            profile.onboardingCompletedAt = Date()
+            context.insert(profile)
+            try? context.save()
+            return container
+        } catch {
+            fatalError("❌ Failed to create preview ModelContainer (with profile): \(error.localizedDescription)")
         }
     }
 }

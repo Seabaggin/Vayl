@@ -9,60 +9,9 @@
 
 import SwiftUI
 
-// MARK: — Pure Math Helpers
-// Module-level private functions — no CoreGraphics, no UIKit, pure arithmetic.
-// Called exclusively from the Canvas closure in TableSurfaceView.
-
-/// Linear interpolation between two CGFloat values.
-private func lerp(_ a: CGFloat, _ b: CGFloat, _ t: CGFloat) -> CGFloat {
-    a + (b - a) * t
-}
-
-/// Clamp a CGFloat to a closed range.
-private func clamp(_ value: CGFloat, _ minimum: CGFloat, _ maximum: CGFloat) -> CGFloat {
-    Swift.max(minimum, Swift.min(maximum, value))
-}
-
-/// Fractal Brownian Motion — 4 octaves.
-/// Combines layered sin/cos noise at increasing frequencies and decreasing
-/// amplitudes to produce organic, terrain-like variation along a 2D field.
-/// x, y are normalised noise-space coordinates, not screen pixels.
-private func fbm(_ x: CGFloat, _ y: CGFloat, _ octaves: Int) -> CGFloat {
-    var v: CGFloat         = 0
-    var amplitude: CGFloat = 1.0
-    var frequency: CGFloat = 1.0
-    var sum: CGFloat       = 0
-
-    for octave in 0 ..< octaves {
-        let o     = CGFloat(octave)
-        let sx    = x * frequency
-        let sy    = y * frequency
-        let layer =
-            sin(sx * 1.10 + sy * 0.65 + o * 2.3) +
-            cos(sx * 0.72 - sy * 1.28 + o * 1.8)
-        v   += amplitude * layer
-        sum += amplitude * 2
-        amplitude *= 0.52
-        frequency *= 1.95
-    }
-
-    return v / sum
-}
-
-/// Domain-warped FBM.
-/// Displaces the input coordinates using two fbm samples before the final
-/// evaluation. Produces the characteristic curved, flowing distortion visible
-/// in the topo lines — straight vertical lines would read as digital.
-private func domainWarp(_ x: CGFloat, _ y: CGFloat, _ warpStrength: CGFloat) -> CGFloat {
-    let wx = fbm(x,       y,       4)
-    let wy = fbm(x + 3.8, y + 1.6, 4)
-    return fbm(x + warpStrength * wx, y + warpStrength * wy, 4)
-}
-
 // MARK: — TableSurfaceView
-
 /// Layer 3 in OnboardingCanvasView.
-/// Draws the full Vayl card table in a single Canvas pass:
+/// Draws the full Vayl card table:
 ///   0. Upper void atmosphere — blobs in the card travel zone above the arc
 ///   1. Felt fill
 ///   2. Vignette — corner and top darkening
@@ -74,14 +23,28 @@ private func domainWarp(_ x: CGFloat, _ y: CGFloat, _ warpStrength: CGFloat) -> 
 /// Visibility is controlled entirely by fade — never by conditional rendering.
 /// VaylDirector writes fade. SwiftUI animates it. This view never animates itself.
 /// This view never responds to gestures and never holds state.
+///
+/// STRUCTURE — three stacked Canvases, split by what actually animates:
+///   • TableBaseCanvas  (atmosphere + felt + vignette) — static; drawn once per size.
+///   • TableTopoCanvas  (contour lines) — Animatable over warp/flowOut/forgeEnergy;
+///     redraws per frame ONLY during the gender dissolution and the forge ceremony,
+///     from precomputed TopoField samples (no per-frame noise evaluation).
+///   • TableRimCanvas   (compass + amber pool + rim arc) — Animatable over rimBurst;
+///     redraws per frame only while a rim burst decays.
+///   `fade` is a plain `.opacity` on the stack — SwiftUI animates the composited
+///   texture natively, so a table fade re-renders NOTHING.
+/// The previous single-Canvas version made ALL of body's inputs animatable, which
+/// re-evaluated the entire surface (62 noise-driven contour lines included) on
+/// every frame of every fade and every card-landing rim burst — the main source
+/// of dropped frames across the whole OB.
 struct TableSurfaceView: View {
 
-    // ── Parameter ─────────────────────────────────────────────────────────────
+    // ── Parameters ────────────────────────────────────────────────────────────
 
     /// 0.0 = invisible, 1.0 = fully present.
     /// Never animated by this view — caller drives the value.
     /// VaylDirector is the only thing that writes this.
-    let fade: Double
+    var fade: Double
     /// 0.0 = resting spectrum rim. 1.0 = full impact flare.
     /// Caller drives — VaylDirector does not own this value.
     var rimBurst: Double = 0
@@ -94,68 +57,81 @@ struct TableSurfaceView: View {
     /// Driven by VaylDirector.dissolutionFlowOut. Zero when no card is crystallising.
     var dissolutionFlowOut: Double = 0
 
+    /// 0.0–1.0 — the table "works": topo lines sway laterally with a per-line
+    /// phase (forge ceremony). BuildDeckPhase oscillates this while the deck
+    /// is being forged under the felt. Zero everywhere else.
+    var forgeEnergy: Double = 0
+
     // ── Body ──────────────────────────────────────────────────────────────────
 
     var body: some View {
-        Canvas { context, size in
-            // ── Primary geometry ──────────────────────────────────────────────
-            // All geometry constants derive from AppLayout tokens.
-            // Nothing is hardcoded inside any sub-layer function.
-            let W      = size.width
-            let H      = size.height
-            let TY     = H * AppLayout.tableArcPeakYFrac    // arc peak Y on screen
-            let tableR = H * AppLayout.tableArcRadiusFrac   // large radius — top cap only
-            let cx     = W * 0.50                           // horizontal center
-            let cy     = TY + tableR                        // circle center below screen
-            let dpX    = cx                                 // deal point x — arc centerline
-            let dpY    = TY + 1                             // deal point y — sits on arc
-
-            drawUpperAtmosphere(
-                context: context, size: size,
-                W: W, H: H, TY: TY
-            )
-            drawFeltFill(
-                context: context, size: size,
-                cx: cx, cy: cy, tableR: tableR
-            )
-            drawVignette(
-                context: context, size: size,
-                W: W, H: H
-            )
-            drawTopoLines(
-                context: context, size: size,
-                cx: cx, cy: cy, tableR: tableR,
-                TY: TY, W: W, H: H,
+        ZStack {
+            TableBaseCanvas()
+            TableTopoCanvas(
                 dissolutionWarp:    dissolutionWarp,
-                dissolutionFlowOut: dissolutionFlowOut
+                dissolutionFlowOut: dissolutionFlowOut,
+                forgeEnergy:        forgeEnergy
             )
-            drawCompassStar(
-                context: context,
-                dpX: dpX, dpY: dpY, starSize: 20
-            )
-            drawAmberPool(
-                context: context, size: size,
-                dpX: dpX, dpY: dpY, W: W
-            )
-            drawSpectrumRim(
-                context: context, size: size,
-                cx: cx, cy: cy, tableR: tableR,
-                TY: TY, W: W, dpX: dpX, dpY: dpY,
-                rimBurst: rimBurst
-            )
+            TableRimCanvas(rimBurst: rimBurst)
         }
         .opacity(fade)
-        .animation(AppAnimation.cinematicFade, value: fade)
+        // No .animation(value: fade) here — the caller's withAnimation drives the
+        // opacity natively. A view-level animation would retarget every caller
+        // curve and low-pass all table fades to one duration regardless of intent.
         .allowsHitTesting(false)
         .ignoresSafeArea()
     }
 }
 
-// MARK: — Layer 0: Upper Void Atmosphere
+// MARK: — Preview
+#Preview("Table Surface — Dark") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        TableSurfaceView(fade: 1.0)
+    }
+    .preferredColorScheme(.dark)
+}
 
-private extension TableSurfaceView {
+// MARK: — Shared geometry
 
-    func drawUpperAtmosphere(
+/// The primary table geometry every layer derives from. All constants come from
+/// AppLayout tokens — nothing hardcoded inside any sub-layer function.
+private struct TableGeometry {
+    let W:      CGFloat
+    let H:      CGFloat
+    let TY:     CGFloat   // arc peak Y on screen
+    let tableR: CGFloat   // large radius — top cap only
+    let cx:     CGFloat   // horizontal center
+    let cy:     CGFloat   // circle center below screen
+    let dpX:    CGFloat   // deal point x — arc centerline
+    let dpY:    CGFloat   // deal point y — sits on arc
+
+    init(size: CGSize) {
+        W      = size.width
+        H      = size.height
+        TY     = H * AppLayout.tableArcPeakYFrac
+        tableR = H * AppLayout.tableArcRadiusFrac
+        cx     = W * 0.50
+        cy     = TY + tableR
+        dpX    = cx
+        dpY    = TY + 1
+    }
+}
+
+// MARK: — Base canvas (static: atmosphere + felt + vignette)
+
+private struct TableBaseCanvas: View {
+
+    var body: some View {
+        Canvas { context, size in
+            let g = TableGeometry(size: size)
+            drawUpperAtmosphere(context: context, size: size, W: g.W, H: g.H, TY: g.TY)
+            drawFeltFill(context: context, size: size, cx: g.cx, cy: g.cy, tableR: g.tableR)
+            drawVignette(context: context, size: size, W: g.W, H: g.H)
+        }
+    }
+
+    private func drawUpperAtmosphere(
         context: GraphicsContext,
         size:    CGSize,
         W:       CGFloat,
@@ -213,13 +189,8 @@ private extension TableSurfaceView {
             )
         }
     }
-}
 
-// MARK: — Layer 1: Felt Fill
-
-private extension TableSurfaceView {
-
-    func drawFeltFill(
+    private func drawFeltFill(
         context: GraphicsContext,
         size:    CGSize,
         cx:      CGFloat,
@@ -249,13 +220,8 @@ private extension TableSurfaceView {
             )
         )
     }
-}
 
-// MARK: — Layer 2: Vignette
-
-private extension TableSurfaceView {
-
-    func drawVignette(
+    private func drawVignette(
         context: GraphicsContext,
         size:    CGSize,
         W:       CGFloat,
@@ -311,103 +277,102 @@ private extension TableSurfaceView {
     }
 }
 
-// MARK: — Layer 3: Topo Lines
+// MARK: — Topo canvas (animatable: dissolution warp/flow + forge sway)
 
-private extension TableSurfaceView {
+private struct TableTopoCanvas: View, Animatable {
 
-    func drawTopoLines(
-        context:            GraphicsContext,
-        size:               CGSize,
-        cx:                 CGFloat,
-        cy:                 CGFloat,
-        tableR:             CGFloat,
-        TY:                 CGFloat,
-        W:                  CGFloat,
-        H:                  CGFloat,
-        dissolutionWarp:    Double = 0,
-        dissolutionFlowOut: Double = 0
-    ) {
-        // 62 — topo line count. Rendering constant — produces the correct
-        // visual density of contour lines across the felt surface.
-        let lineCount     = 62
-        let tableRSqInner = (tableR - 2) * (tableR - 2)
+    var dissolutionWarp:    Double
+    var dissolutionFlowOut: Double
+    var forgeEnergy:        Double
+
+    // Without Animatable conformance a Canvas view receives only the FINAL
+    // value of a withAnimation change — the dissolution and forge oscillation
+    // would freeze. Conforming makes these genuinely interpolate per frame.
+    var animatableData: AnimatablePair<Double, AnimatablePair<Double, Double>> {
+        get {
+            AnimatablePair(forgeEnergy, AnimatablePair(dissolutionWarp, dissolutionFlowOut))
+        }
+        set {
+            forgeEnergy        = newValue.first
+            dissolutionWarp    = newValue.second.first
+            dissolutionFlowOut = newValue.second.second
+        }
+    }
+
+    var body: some View {
+        Canvas { context, size in
+            drawTopoLines(context: context, size: size)
+        }
+    }
+
+    private func drawTopoLines(context: GraphicsContext, size: CGSize) {
+        let field = TopoField.shared.field(for: size)
+
+        let activeWarp  = dissolutionWarp > 0.001 || dissolutionFlowOut > 0.001
+        let activeForge = forgeEnergy > 0.001
+
+        // ── Resting fast path ──────────────────────────────────────────────────
+        // No displacement active (the whole OB outside the gender dissolution and
+        // the forge ceremony): stroke the precomputed paths and return.
+        guard activeWarp || activeForge else {
+            for line in field.restingPaths {
+                context.stroke(
+                    line.path,
+                    with: .color(AppColors.tableTopoLine.opacity(line.alpha)),
+                    lineWidth: line.width
+                )
+            }
+            return
+        }
+
+        // ── Animated path — displace cached base samples per frame ────────────
+        let g = TableGeometry(size: size)
+        let tableRSqInner = (g.tableR - 2) * (g.tableR - 2)
 
         // ── Card geometry for dissolution warp + flow-around ──────────────────
-        // Computed once per drawTopoLines call — not inside the inner loop.
         // Derived entirely from AppLayout tokens — no raw geometry values.
-        let cardW:      CGFloat = AppLayout.obTableCardWidth(in: W) * AppLayout.obTableCardCinematicScale
+        let cardW:      CGFloat = AppLayout.obTableCardWidth(in: g.W) * AppLayout.obTableCardCinematicScale
         let cardH:      CGFloat = cardW * 1.5   // 3:2 portrait ratio — matches obTableCardHeight derivation
-        let cardCX:     CGFloat = W * 0.50
-        let cardCY:     CGFloat = H * AppLayout.obGenderCardRestYFrac
+        let cardCX:     CGFloat = g.W * 0.50
+        let cardCY:     CGFloat = g.H * AppLayout.obGenderCardRestYFrac
         let cardRadius: CGFloat = AppRadius.obCard
 
-        // Tuning constants — named locals matching existing TableSurfaceView comment style.
-        // Rendering constants — calibrated against the HTML prototype.
+        // Tuning constants — calibrated against the HTML prototype.
         let warpPullStrength:    CGFloat = 0.55  // inward pull magnitude at influence edge
         let flowInsidePush:      CGFloat = 0.92  // push-to-boundary strength inside card
         let flowOutsideBend:     CGFloat = 0.70  // tangential bend strength outside card
         let flowInfluenceRadius: CGFloat = 0.38  // influence zone as fraction of cardW
 
-        let activeWarp = dissolutionWarp > 0.001 || dissolutionFlowOut > 0.001
+        let netWarp = CGFloat(dissolutionWarp) * (1 - CGFloat(dissolutionFlowOut))
+        let netFlow = CGFloat(dissolutionFlowOut) * 0.68
+        let fe      = CGFloat(forgeEnergy)
 
-        for li in 0 ..< lineCount {
-            let t      = CGFloat(li) / CGFloat(lineCount - 1)
-            let startX = lerp(cx - tableR * 0.96, cx + tableR * 0.96, t)
+        for line in field.lines {
+            var path      = Path()
+            var wasInside = false
 
-            let isIndex   = (li % 7 == 6)
-            // 0.165 / 0.100 — index and standard line opacities.
-            // Rendering constants — index lines are bolder for readability.
-            let alpha     = isIndex ? 0.165 : 0.100
-            // 0.75 / 0.45 — index and standard line widths. Rendering constants.
-            let lineWidth = isIndex ? CGFloat(0.75) : CGFloat(0.45)
-            // 0.713 / 1.05 — seed values for per-line noise phase offset.
-            // Rendering constants — ensure lines look hand-drawn, not stamped.
-            let seed      = CGFloat(li) * 0.713 + 1.05
+            for sample in line.samples {
+                var px = sample.x
+                let py = sample.y
 
-            var path             = Path()
-            var wasInside        = false
-            var currentPathStart = false
-
-            let yStart = Int(TY) - 6
-            let yEnd   = Int(H)
-
-            for pyInt in yStart ... yEnd {
-                let py      = CGFloat(pyInt)
-                let depthT  = clamp((py - TY) / (H - TY), 0, 1.05)
-                // 0.40 — fan sweep scale. Rendering constant — controls how much
-                // lines converge toward the bottom of the circle.
-                let sweep   = depthT * depthT * W * 0.40
-                // 0.09 — lateral fan bias scale. Rendering constant — adds subtle
-                // asymmetric perspective to the line convergence.
-                let fanBias = (1.0 - t) * depthT * W * 0.09
-
-                let nx = (startX / W) * 2.2 + seed * 0.28
-                let ny = depthT * 2.8 + seed * 0.14
-                let ws = 0.30 + 0.22 * sin(depthT * .pi)
-
-                let n1 = domainWarp(nx, ny, ws)
-                let n2 = fbm(nx * 1.7 + 0.5, ny * 1.3 + seed * 0.4, 4) * 0.50
-                let n3 = fbm(nx * 3.8 + 1.1, ny * 2.6 + seed * 0.8, 3) * 0.22
-
-                // 10 / 26 — noise amplitude range. Rendering constants —
-                // lines are tighter at the horizon, more organic at depth.
-                let noiseAmp: CGFloat = 10 + depthT * 26
-                let noiseX            = (n1 + n2 * 0.45 + n3 * 0.20) * noiseAmp
-                var px                = startX - sweep - fanBias + noiseX
+                // ── Forge sway — the table works (BuildDeck ceremony) ─────────
+                // Each line breathes laterally with its own phase; amplitude
+                // scales with forgeEnergy so the felt is dead-still at 0.
+                // 4.5 — max sway amplitude (pt). Rendering constant.
+                if activeForge {
+                    px += sin(sample.depthT * 5.2 + line.seed * 4.7 + fe * .pi * 2) * 4.5 * fe
+                }
 
                 // ── Dissolution warp + flow-around ────────────────────────────
                 // Only runs when the gender card is crystallising.
-                // Skipped entirely when dissolutionWarp and dissolutionFlowOut are both 0.
                 if activeWarp {
                     // — Phase 1: WARP — topo lines pulled inward toward card centre.
                     // Decays as flowOut rises — warp gives way to flow-around.
-                    let netWarp = CGFloat(dissolutionWarp) * (1 - CGFloat(dissolutionFlowOut))
                     if netWarp > 0.001 {
                         let wdx = px - cardCX
                         let wdy = py - cardCY
                         let wd  = sqrt(wdx*wdx + wdy*wdy)
                         // 0.85 — warp influence radius as fraction of cardW.
-                        // Rendering constant — lines beyond this distance are unaffected.
                         let wr = cardW * 0.85
                         if wd < wr && wd > 0.001 {
                             let wf = pow(1 - wd/wr, 2.2)
@@ -419,7 +384,6 @@ private extension TableSurfaceView {
                     // SDF gives the signed distance to the card outline:
                     //   < 0 = inside card   → push point to nearest boundary
                     //   > 0 = outside, near → bend tangentially along boundary
-                    let netFlow = CGFloat(dissolutionFlowOut) * 0.68
                     if netFlow > 0.001 {
                         let sdf        = rrSDF(px: px, py: py,
                                                cx: cardCX, cy: cardCY,
@@ -444,54 +408,37 @@ private extension TableSurfaceView {
                     }
                 }
 
-                let dx     = px - cx
-                let dyCir  = py - cy
+                let dx     = px - g.cx
+                let dyCir  = py - g.cy
                 let distSq = dx * dx + dyCir * dyCir
-                let inside = distSq < tableRSqInner && py >= TY - 2
+                let inside = distSq < tableRSqInner && py >= g.TY - 2
 
                 if inside {
-                    if !wasInside {
-                        path.move(to: CGPoint(x: px, y: py))
-                        currentPathStart = true
-                    } else {
-                        path.addLine(to: CGPoint(x: px, y: py))
-                    }
-                } else {
-                    if wasInside && currentPathStart {
-                        context.stroke(
-                            path,
-                            with: .color(AppColors.tableTopoLine.opacity(alpha)),
-                            lineWidth: lineWidth
-                        )
-                        path             = Path()
-                        currentPathStart = false
-                    }
+                    if !wasInside { path.move(to: CGPoint(x: px, y: py)) }
+                    else          { path.addLine(to: CGPoint(x: px, y: py)) }
                 }
                 wasInside = inside
             }
 
-            if wasInside && currentPathStart {
+            if !path.isEmpty {
                 context.stroke(
                     path,
-                    with: .color(AppColors.tableTopoLine.opacity(alpha)),
-                    lineWidth: lineWidth
+                    with: .color(AppColors.tableTopoLine.opacity(line.alpha)),
+                    lineWidth: line.width
                 )
             }
         }
     }
-}
 
-// MARK: — Dissolution SDF Helpers
-
-private extension TableSurfaceView {
+    // MARK: - Dissolution SDF Helpers
 
     /// Signed distance field for a rounded rectangle.
     /// Returns < 0 if `(px, py)` is inside, > 0 if outside.
     /// Used by drawTopoLines to determine which flow-around force to apply.
-    func rrSDF(px: CGFloat, py: CGFloat,
-               cx: CGFloat, cy: CGFloat,
-               w:  CGFloat, h:  CGFloat,
-               r:  CGFloat) -> CGFloat {
+    private func rrSDF(px: CGFloat, py: CGFloat,
+                       cx: CGFloat, cy: CGFloat,
+                       w:  CGFloat, h:  CGFloat,
+                       r:  CGFloat) -> CGFloat {
         let qx = abs(px - cx) - w / 2 + r
         let qy = abs(py - cy) - h / 2 + r
         return sqrt(max(qx, 0) * max(qx, 0) + max(qy, 0) * max(qy, 0))
@@ -501,10 +448,10 @@ private extension TableSurfaceView {
     /// X coordinate of the nearest point on the rounded-rect boundary to `(px, py)`.
     /// For inside points: returns the x of the nearest face centre.
     /// For outside points: returns the x of the nearest corner arc tangent point.
-    func nearestOnRRx(px: CGFloat, py: CGFloat,
-                      cx: CGFloat, cy: CGFloat,
-                      w:  CGFloat, h:  CGFloat,
-                      r:  CGFloat) -> CGFloat {
+    private func nearestOnRRx(px: CGFloat, py: CGFloat,
+                              cx: CGFloat, cy: CGFloat,
+                              w:  CGFloat, h:  CGFloat,
+                              r:  CGFloat) -> CGFloat {
         let hw = w / 2
         let hh = h / 2
         let dx = px - cx
@@ -536,11 +483,32 @@ private extension TableSurfaceView {
     }
 }
 
-// MARK: — Layer 4: Compass Star
+// MARK: — Rim canvas (compass + amber pool + rim arc; animatable: rimBurst)
 
-private extension TableSurfaceView {
+private struct TableRimCanvas: View, Animatable {
 
-    func drawCompassStar(
+    var rimBurst: Double
+
+    var animatableData: Double {
+        get { rimBurst }
+        set { rimBurst = newValue }
+    }
+
+    var body: some View {
+        Canvas { context, size in
+            let g = TableGeometry(size: size)
+            drawCompassStar(context: context, dpX: g.dpX, dpY: g.dpY, starSize: 20)
+            drawAmberPool(context: context, size: size, dpX: g.dpX, dpY: g.dpY, W: g.W)
+            drawSpectrumRim(
+                context: context, size: size,
+                cx: g.cx, cy: g.cy, tableR: g.tableR,
+                TY: g.TY, W: g.W, dpX: g.dpX, dpY: g.dpY,
+                rimBurst: rimBurst
+            )
+        }
+    }
+
+    private func drawCompassStar(
         context:  GraphicsContext,
         dpX:      CGFloat,
         dpY:      CGFloat,
@@ -681,13 +649,8 @@ private extension TableSurfaceView {
         context.fill(octPath,
                      with: .color(AppColors.tableCompassStar.opacity(0.72)))
     }
-}
 
-// MARK: — Layer 5: Amber Overhead Pool
-
-private extension TableSurfaceView {
-
-    func drawAmberPool(
+    private func drawAmberPool(
         context: GraphicsContext,
         size:    CGSize,
         dpX:     CGFloat,
@@ -715,13 +678,8 @@ private extension TableSurfaceView {
             )
         )
     }
-}
 
-// MARK: — Layer 6: Spectrum Rim
-
-private extension TableSurfaceView {
-
-    func drawSpectrumRim(
+    private func drawSpectrumRim(
         context:  GraphicsContext,
         size:     CGSize,
         cx:       CGFloat,
@@ -867,14 +825,4 @@ private extension TableSurfaceView {
             )
         }
     }
-}
-
-// MARK: — Preview
-
-#Preview("Table Surface — Dark") {
-    ZStack {
-        AppColors.void.ignoresSafeArea()
-        TableSurfaceView(fade: 1.0)
-    }
-    .preferredColorScheme(.dark)
 }

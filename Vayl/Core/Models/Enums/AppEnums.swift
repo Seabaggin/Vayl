@@ -180,22 +180,22 @@ enum SituationalRegister: String, CaseIterable, Codable {
 }
 
 /// Where this user's relationship actually stands — the concrete starting point.
-/// Written EXCLUSIVELY by ContextPhase (1:1 with the chosen option).
-/// Together and solo modes draw from disjoint subsets of these cases.
-/// Governs the content category entry point.
+/// Written EXCLUSIVELY by ContextPhase (1:1 with the chosen option). Reason-based:
+/// solo = why you're exploring alone, couple = your first-person goal/feeling about the
+/// relationship. Solo and couple draw from disjoint subsets (`single` is solo-only, shared
+/// across both solo cells). Persisted for record only — nothing branches on the specific
+/// case; the behavioural driver is the derived SituationalRegister (ContextOption.derivedRegister).
 enum RelationshipContext: String, CaseIterable, Codable {
-    // Solo × Curious
-    case singleCurious, partneredSupportiveCurious, partneredUndisclosed, partneredHesitantCurious, soloCuriousUndecided
-    // Solo × Exploring
-    case singleExploring, partneredHandsOff, multipleUndefined, soloExploringUndecided
-    // Solo × Experienced
-    case singleExperienced, partneredAware, soloPolyIndependent, soloExperiencedUndecided
-    // Couple × Curious — first-person: initiator / processing capture asymmetry by comparison
-    case coupleSymmetricCurious, coupleInitiatorCurious, coupleProcessingCurious, coupleStalledConversation, coupleCuriousUndecided
-    // Couple × Exploring
-    case coupleSolidifying, coupleReorienting, coupleParallelExploring, coupleExploringUndecided
-    // Couple × Experienced
-    case coupleFreshIntentional, coupleSkillBuilding, coupleEvolving, coupleExperiencedUndecided
+    // Solo · Curious — reasons to explore alone, new to NM
+    case soloLearning, soloUndisclosed, soloSeekingClarity
+    // Solo · In it — reasons to explore alone, already practicing
+    case soloIntentional, soloExpandKnowledge, soloCheckingOut
+    // Single — shared across both solo cells; triggers the couples-first greeting
+    case single
+    // Couple · Curious — first-person, new to it
+    case coupleExcited, coupleNervous, coupleInitiator, coupleFiguringOut
+    // Couple · In it — first-person, already in it
+    case coupleGoDeeper, coupleGetBetter, coupleRecalibrating, coupleKeepItFun
 }
 
 /// Internal routing tag. Never shown to the user in any form.

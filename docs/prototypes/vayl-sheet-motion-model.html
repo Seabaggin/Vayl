@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — .vaylSheet Motion Model (token-faithful)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --void:#0a0810; --cyan:#00c2ff; --purple:#6c3ae0; --purpleL:#a78bfa; --magenta:#ff006a; --magentaL:#ff4d94; --gold:#ffb648; --goldL:#ffd08a;
+    --t-primary:rgba(255,255,255,0.92); --t-secondary:rgba(255,255,255,0.62); --t-tertiary:rgba(255,255,255,0.36); --t-muted:rgba(255,255,255,0.2);
+    --disp:"Clash Display",-apple-system,sans-serif; --body:"Switzer",-apple-system,BlinkMacSystemFont,sans-serif;
+    --line:#1c1a28;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; height:100%; background:#131218; color:var(--t-primary); font-family:var(--body); }
+  .wrap { display:flex; min-height:100vh; }
+
+  /* ---- control panel ---- */
+  .panel { width:346px; flex-shrink:0; padding:26px 24px 40px; background:#0e0d14; border-right:1px solid var(--line); overflow-y:auto; user-select:none; }
+  .brand { font-family:var(--disp); font-size:13px; font-weight:600; letter-spacing:0.34em; margin:0 0 3px; }
+  .panel h2 { font-family:var(--disp); font-size:18px; font-weight:500; margin:0 0 6px; line-height:1.25; }
+  .panel .lede { font-size:12px; line-height:1.6; color:var(--t-secondary); margin:0 0 6px; }
+  .panel .lede b { color:var(--t-primary); font-weight:500; }
+  .tokchip { display:inline-block; font-family:ui-monospace,monospace; font-size:10px; color:var(--purpleL); border:1px solid rgba(108,58,224,.35); background:rgba(108,58,224,.08); border-radius:6px; padding:2px 7px; margin:2px 3px 2px 0; }
+
+  .group { border-top:1px solid var(--line); padding:14px 0 4px; margin-top:12px; }
+  .group h3 { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--t-tertiary); margin:0 0 12px; display:flex; justify-content:space-between; }
+  .group h3 .law { color:var(--goldL); font-weight:600; letter-spacing:.04em; text-transform:none; }
+
+  .seg { display:flex; gap:6px; margin-bottom:12px; }
+  .seg button { flex:1; font-family:var(--body); font-size:11px; font-weight:500; color:var(--t-secondary); background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:9px; padding:8px 4px; cursor:pointer; transition:.15s; line-height:1.3; }
+  .seg button small { display:block; font-size:9px; color:var(--t-muted); margin-top:2px; font-family:ui-monospace,monospace; }
+  .seg button.on { color:var(--t-primary); background:rgba(108,58,224,.16); border-color:rgba(108,58,224,.5); }
+  .seg button.on small { color:var(--purpleL); }
+
+  .knob { margin-bottom:15px; }
+  .knob .kl { display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:6px; }
+  .knob .kl .name { color:var(--t-secondary); }
+  .knob .kl .val { color:var(--purpleL); font-variant-numeric:tabular-nums; font-weight:600; }
+  .knob .kl .val.over { color:var(--magentaL); }
+  .knob .hint { font-size:10px; color:var(--t-muted); line-height:1.45; margin-top:5px; }
+  input[type=range] { -webkit-appearance:none; width:100%; height:3px; border-radius:2px; background:#262331; outline:none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--purpleL); border:2px solid #0e0d14; box-shadow:0 0 8px rgba(108,58,224,.6); cursor:pointer; }
+
+  .row-toggle { display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--t-secondary); padding:8px 0; }
+  .switch { width:40px; height:23px; border-radius:99px; background:#262331; position:relative; cursor:pointer; transition:.18s; flex:none; }
+  .switch.on { background:rgba(108,58,224,.7); }
+  .switch .dot { position:absolute; top:2px; left:2px; width:19px; height:19px; border-radius:50%; background:#fff; transition:.18s; }
+  .switch.on .dot { left:19px; }
+
+  .actions { display:flex; gap:8px; margin-top:16px; }
+  .actions button { flex:1; font-family:var(--body); font-size:12px; color:var(--t-secondary); background:transparent; border:1px solid var(--line); border-radius:9px; padding:10px; cursor:pointer; }
+  .actions button:hover { border-color:rgba(108,58,224,.5); color:var(--t-primary); }
+  .dump { margin-top:14px; font-family:ui-monospace,monospace; font-size:10.5px; line-height:1.7; color:var(--t-tertiary); background:#0a0910; border:1px solid var(--line); border-radius:9px; padding:12px; white-space:pre-wrap; }
+  .dump b { color:var(--goldL); font-weight:600; }
+
+  .hapchip { display:inline-flex; align-items:center; gap:6px; font-size:10.5px; color:var(--magentaL); border:1px solid rgba(255,77,148,0.3); border-radius:20px; padding:3px 10px; margin-top:14px; }
+  .hapdot { width:6px; height:6px; border-radius:50%; background:var(--magentaL); }
+
+  /* ---- stage ---- */
+  .stage { flex:1; display:flex; align-items:center; justify-content:center; background:radial-gradient(130% 90% at 50% 0%, #1b1a22 0%, #111016 58%); padding:40px; }
+  .phone { position:relative; width:380px; height:806px; border-radius:48px; overflow:hidden; background:#050409; box-shadow:0 32px 84px rgba(0,0,0,0.62), inset 0 0 0 1.5px rgba(255,255,255,0.05); flex:none; }
+
+  .bgwrap { position:absolute; inset:0; transform-origin:center 50%; will-change:transform, filter; }
+  .voidbg { position:absolute; inset:0; background:radial-gradient(120% 90% at 50% 6%, #0c0916 0%, var(--void) 48%, #050409 100%); }
+  .field { position:absolute; inset:0; }
+  .st { position:absolute; border-radius:50%; background:#fff; animation:twk var(--d,4s) ease-in-out infinite alternate; animation-delay:var(--dl,0s); }
+  @keyframes twk { from{opacity:.15} to{opacity:.55} }
+
+  .notch { position:absolute; top:13px; left:50%; transform:translateX(-50%); width:108px; height:30px; background:#000; border-radius:18px; z-index:40; }
+  .home-ind { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:128px; height:5px; border-radius:3px; background:rgba(255,255,255,0.22); z-index:40; }
+  .sb { position:absolute; top:0; left:0; right:0; z-index:38; display:flex; justify-content:space-between; padding:17px 38px 0; font-size:14px; font-weight:600; color:rgba(255,255,255,0.7); }
+  .sb .ic { letter-spacing:2px; font-size:11px; opacity:0.72; }
+
+  .home { position:absolute; inset:0; padding:70px 26px 0; z-index:2; }
+  .home .mast { font-family:var(--disp); font-size:30px; font-weight:600; letter-spacing:-.01em; }
+  .home .mast .dot { color:var(--purpleL); }
+  .home .card { margin-top:20px; height:118px; border-radius:20px; background:linear-gradient(135deg, rgba(108,58,224,.16), rgba(255,0,106,.09)); border:1px solid rgba(255,255,255,.08); }
+  .home .rowc { margin-top:14px; height:60px; border-radius:15px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
+  .launch { position:absolute; left:26px; right:26px; bottom:120px; height:52px; border-radius:14px; background:linear-gradient(90deg,rgba(0,194,255,.16),rgba(108,58,224,.26)); border:1px solid rgba(108,58,224,.5); display:flex; align-items:center; justify-content:center; font-family:var(--disp); font-weight:600; font-size:14.5px; cursor:pointer; z-index:6; }
+
+  .scrim { position:absolute; inset:0; z-index:45; background:#050409; opacity:0; pointer-events:none; }
+  .sheetLayer { position:absolute; left:0; right:0; bottom:0; z-index:50; touch-action:none; will-change:transform; }
+  /* AppRadius.sheet, continuous top corners; AppColors.modalBackground + purple tint + darken (VaylSheetChrome) */
+  .sheet { position:relative; background:linear-gradient(180deg,#161020,#100d18 46%); border-radius:24px 24px 0 0; box-shadow:0 -20px 60px rgba(0,0,0,0.5); overflow:hidden; transform-origin:bottom center; display:flex; flex-direction:column; }
+  /* spectrum top-edge trace (VaylSheetChrome: cyan→purple→magenta, eased tail down the sides) */
+  .sheet .edge { position:absolute; top:0; left:0; right:0; height:1.5px; background:linear-gradient(90deg,transparent,var(--cyan) 12%,var(--purple),var(--magenta) 88%,transparent); opacity:.9; z-index:3;
+    -webkit-mask:linear-gradient(90deg,transparent,#000 2%,#000 98%,transparent); mask:linear-gradient(90deg,transparent,#000 2%,#000 98%,transparent); }
+  .sheet .edgeGlow { position:absolute; top:0; left:0; right:0; height:70px; z-index:2; pointer-events:none; opacity:.5;
+    background:linear-gradient(90deg,transparent,rgba(0,194,255,.25),rgba(108,58,224,.3),rgba(255,0,106,.25),transparent);
+    -webkit-mask:linear-gradient(#000,transparent); mask:linear-gradient(#000,transparent); filter:blur(6px); }
+  .tintwash { position:absolute; top:0; left:0; right:0; height:160px; pointer-events:none; opacity:.85; background:radial-gradient(60% 100% at 50% 0%, rgba(108,58,224,.14), transparent 72%); }
+  .grabwrap { flex:none; padding:12px 0 6px; touch-action:none; cursor:grab; z-index:4; }
+  .grab { width:40px; height:5px; border-radius:3px; background:rgba(108,58,224,.6); margin:0 auto; transition:background .15s, width .15s; } /* AppColors.spectrumBorder @0.6 */
+  .grab.armed { background:var(--magentaL); width:52px; }
+
+  /* ---- chrome restraint variants (toggle to feel how much signature a workhorse sheet needs) ---- */
+  /* Trace: spectrum border stays, glow gone, thinner + dimmer */
+  .sheet.trace .edgeGlow, .sheet.hairline .edgeGlow, .sheet.material .edgeGlow { display:none; }
+  .sheet.trace .edge { opacity:.4; height:1px; }
+  /* Hairline: one neutral separator, spectrum only on the grabber */
+  .sheet.hairline .edge { background:rgba(255,255,255,.13); opacity:1; height:1px; -webkit-mask:none; mask:none; }
+  .sheet.hairline .tintwash { opacity:.4; }
+  /* Material: no line at all — Apple-style. Surface + shadow + a faint top highlight carry it */
+  .sheet.material .edge { display:none; }
+  .sheet.material .tintwash { opacity:.35; }
+  .sheet.material { box-shadow:0 -26px 72px rgba(0,0,0,0.62); }
+  .sheet.material::after { content:""; position:absolute; top:0; left:0; right:0; height:1px; background:rgba(255,255,255,.09); z-index:3; pointer-events:none; }
+
+  .sheetScroll { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
+  .sheetScroll::-webkit-scrollbar { width:0; }
+
+  .c { padding:4px 24px 40px; }
+  .c-cat { font-size:9px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--t-tertiary); }
+  .c-name { font-family:var(--disp); font-size:24px; font-weight:700; margin-top:5px; }
+  .c-body { font-size:14.5px; line-height:1.6; color:var(--t-secondary); margin-top:14px; }
+  .c-field { height:46px; border-radius:12px; margin-top:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+  .c-cta { height:50px; border-radius:13px; margin-top:22px; width:100%; background:linear-gradient(90deg,rgba(255,0,106,.16),rgba(108,58,224,.24)); border:1px solid rgba(108,58,224,.5); color:var(--t-primary); font-family:var(--disp); font-size:15px; font-weight:600; cursor:pointer; }
+
+  .hapticToast { position:absolute; left:50%; top:-30px; transform:translate(-50%, 0); background:rgba(20,16,28,0.92); border:1px solid rgba(255,77,148,0.4); color:var(--magentaL); font-size:10px; font-weight:600; letter-spacing:.06em; padding:5px 12px; border-radius:20px; opacity:0; pointer-events:none; transition:opacity 0.12s, transform 0.12s; white-space:nowrap; z-index:9; }
+  .hapticToast.show { opacity:1; transform:translate(-50%, -8px); }
+  .hint { position:absolute; bottom:40px; left:0; right:0; text-align:center; font-size:11px; color:var(--t-muted); z-index:4; transition:opacity .3s; }
+  .hint.hide { opacity:0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="panel">
+    <div class="brand">VAYL</div>
+    <h2>.vaylSheet — motion model</h2>
+    <p class="lede">Token-faithful to <b>AppAnimation.swift</b>. The rise is the real Staple-2 curve; the backdrop obeys the quiet-register ceilings; nothing bounces (that's the law, not a taste). Feel it, confirm the token, then it's the single Swift <b>.vaylSheet</b>.</p>
+    <div style="margin:4px 0 2px;">
+      <span class="tokchip">arrive · (0,0,.2,1) 0.42s</span>
+      <span class="tokchip">quietMaxScaleDelta 0.02</span>
+      <span class="tokchip">quietMaxTravel 16pt</span>
+    </div>
+
+    <div class="group">
+      <h3>Sheet under test</h3>
+      <div class="seg" id="heightSeg">
+        <button data-h="0.5">Short<small>0.50</small></button>
+        <button data-h="0.66" class="on">Medium<small>0.66</small></button>
+        <button data-h="0.92">Tall<small>0.92</small></button>
+      </div>
+      <div class="row-toggle">
+        <span>Content scrolls (tall editors)</span>
+        <div class="switch" id="scrollSw"><div class="dot"></div></div>
+      </div>
+      <div class="knob hint" style="margin:0;">Handle-drag always dismisses. Body-drag dismisses only when the scroll is at the top — otherwise it scrolls. (Apple's sheet rule.)</div>
+      <div class="row-toggle" style="margin-top:8px;">
+        <span>Reduce Motion</span>
+        <div class="switch" id="rmSw"><div class="dot"></div></div>
+      </div>
+      <div class="knob hint" style="margin:0;">Contract: movement → opacity. Sheet cross-fades in place, backdrop holds still.</div>
+    </div>
+
+    <div class="group">
+      <h3>Chrome <span class="law">how much signature?</span></h3>
+      <div class="seg" id="chromeSeg">
+        <button data-k="full">Full<small>border+glow</small></button>
+        <button data-k="trace">Trace<small>border, no glow</small></button>
+        <button data-k="hairline" class="on">Hairline<small>grabber only</small></button>
+        <button data-k="material">Material<small>Apple-style</small></button>
+      </div>
+      <div class="knob hint" style="margin:0;">Full = today (spectrum fires 3×: grabber + border + glow). Rightward = more restraint. Hairline/Material keep the spectrum as one accent on the grabber.</div>
+    </div>
+
+    <div class="group">
+      <h3>Rise <span class="law">Staple 2 · Quiet · zero bounce</span></h3>
+      <div class="seg" id="curveSeg">
+        <button data-c="arrive">arrive<small>(0,0,.2,1)·0.42</small></button>
+        <button data-c="desire" class="on">desireSheetRise<small>easeOut·0.50</small></button>
+      </div>
+      <div class="knob">
+        <div class="kl"><span class="name">Duration (device-tune)</span><span class="val" id="v-dur">0.50s</span></div>
+        <input type="range" id="k-dur" min="0.30" max="0.55" value="0.50" step="0.01" />
+        <div class="hint">Both are real tokens (starting points). Ceiling 0.55s. Switching the curve resets this to its token default.</div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Dismiss</h3>
+      <div class="knob">
+        <div class="kl"><span class="name">Distance threshold</span><span class="val" id="v-ratio">25%</span></div>
+        <input type="range" id="k-ratio" min="10" max="50" value="25" step="1" />
+        <div class="hint">Drag past this fraction of sheet height → releases to dismiss.</div>
+      </div>
+      <div class="knob">
+        <div class="kl"><span class="name">Fling velocity</span><span class="val" id="v-vel">0.75</span></div>
+        <input type="range" id="k-vel" min="0.3" max="1.6" value="0.75" step="0.05" />
+        <div class="hint">px/ms — a fast flick dismisses below the distance threshold.</div>
+      </div>
+      <div class="knob">
+        <div class="kl"><span class="name">Overscroll rubber-band</span><span class="val" id="v-stiff">70</span></div>
+        <input type="range" id="k-stiff" min="20" max="160" value="70" step="5" />
+        <div class="hint">Resistance when you pull the open sheet UP past rest. Not a bounce — a damped ceiling, like iOS overscroll.</div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Backdrop <span class="law">scales with detent</span></h3>
+      <div class="knob hint" style="margin:-4px 0 12px;">Effect is multiplied by the sheet's rest height, so a Short sheet barely touches the background and a Tall one pushes it back — exactly how Apple's own detented sheets behave.</div>
+      <div class="knob">
+        <div class="kl"><span class="name">Max blur (at full)</span><span class="val" id="v-blur">12px</span></div>
+        <input type="range" id="k-blur" min="0" max="24" value="12" step="1" />
+      </div>
+      <div class="knob">
+        <div class="kl"><span class="name">Scale-back (at full)</span><span class="val" id="v-scale">3%</span></div>
+        <input type="range" id="k-scale" min="0" max="8" value="3" step="0.5" />
+        <div class="hint">Backdrop eases back as the sheet rises, tracking drag progress.</div>
+      </div>
+      <div class="knob">
+        <div class="kl"><span class="name">Scrim darkness (at full)</span><span class="val" id="v-scrim">50%</span></div>
+        <input type="range" id="k-scrim" min="0" max="85" value="50" step="5" />
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="resetBtn">Reset</button>
+      <button id="openBtn">Open sheet</button>
+    </div>
+    <div class="dump" id="dump"></div>
+    <div class="hapchip"><span class="hapdot"></span>haptic ticks shown as toasts — felt on device only</div>
+  </aside>
+
+  <main class="stage">
+    <div class="phone" id="phone">
+      <div class="bgwrap" id="bgwrap">
+        <div class="voidbg"></div>
+        <div class="field" id="field"></div>
+        <div class="home">
+          <div class="mast">Vayl<span class="dot">.</span></div>
+          <div class="card"></div>
+          <div class="rowc"></div>
+          <div class="rowc"></div>
+        </div>
+      </div>
+
+      <div class="notch"></div>
+      <div class="sb"><span>9:41</span><span class="ic">●●● ▮</span></div>
+      <div class="launch" id="launchBtn">Open a sheet</div>
+      <div class="hint" id="hint">tap “Open a sheet”, or the button in the panel</div>
+
+      <div class="scrim" id="scrim"></div>
+
+      <div class="sheetLayer" id="sheetLayer">
+        <div class="sheet hairline" id="sheet">
+          <div class="edgeGlow"></div>
+          <div class="edge"></div>
+          <div class="tintwash"></div>
+          <div class="hapticToast" id="hapticToast">tick</div>
+          <div class="grabwrap" id="grabwrap"><div class="grab" id="grab"></div></div>
+          <div class="sheetScroll" id="sheetScroll">
+            <div class="c" id="sheetContent"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-ind"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ---- twinkle field ----
+  const field = document.getElementById('field');
+  const rand = (a,b)=>a+Math.random()*(b-a);
+  let fh='';
+  for(let i=0;i<40;i++){ const s=rand(0.7,1.7).toFixed(2);
+    fh+=`<div class="st" style="width:${s}px;height:${s}px;left:${rand(0,100).toFixed(1)}%;top:${rand(0,100).toFixed(1)}%;--d:${rand(2.6,5).toFixed(1)}s;--dl:${rand(0,4).toFixed(1)}s"></div>`; }
+  field.innerHTML=fh;
+
+  // ---- refs ----
+  const bgwrap=document.getElementById('bgwrap');
+  const scrim=document.getElementById('scrim');
+  const sheetLayer=document.getElementById('sheetLayer');
+  const sheet=document.getElementById('sheet');
+  const grab=document.getElementById('grab');
+  const grabwrap=document.getElementById('grabwrap');
+  const sheetScroll=document.getElementById('sheetScroll');
+  const sheetContent=document.getElementById('sheetContent');
+  const hapticToast=document.getElementById('hapticToast');
+  const hint=document.getElementById('hint');
+  const dump=document.getElementById('dump');
+
+  // ---- real curve tokens (CSS beziers matching the Swift timingCurves) ----
+  const CURVES = {
+    arrive: { css:'cubic-bezier(0,0,0.2,1)', dur:0.42, label:'AppAnimation.arrive' },   // Staple 2, Quiet — the .vaylSheet rise
+    desire: { css:'cubic-bezier(0,0,0.58,1)', dur:0.50, label:'AppAnimation.desireSheetRise' }, // legacy easeOut 0.50
+  };
+  // dismiss uses the exit family (ease-in, energy draining away). AppAnimation.exit = easeIn 0.2 conceptually.
+  const EXIT_CSS = 'cubic-bezier(0.42,0,1,1)';
+
+  // ---- tunables ----
+  const P = { curve:'desire', chrome:'hairline', ratio:.25, vel:.75, stiff:70, blur:12, scale:.03, scrim:.50 };
+  const DEFAULT = JSON.parse(JSON.stringify(P));
+  let dur = CURVES.desire.dur;
+
+  // ---- content variants ----
+  const SHORT = `<div class="c-cat">If you need a beat</div><div class="c-name">Care</div><div class="c-body">Pause · a 6-second hug · say one thing you love · skip this card.</div><button class="c-cta">Resume</button>`;
+  const MED = `<div class="c-cat">Structures</div><div class="c-name">Opening Up</div><div class="c-body">You both want to explore opening up, at a pace you set together.</div><button class="c-cta">Talk about this →</button>`;
+  function tall(){ let rows=''; for(let i=0;i<9;i++) rows+=`<div class="c-field"></div>`;
+    return `<div class="c-cat">Edit profile</div><div class="c-name">Your details</div><div class="c-body">A tall, scrolling editor — the case app-wide adoption has to get right.</div>${rows}<button class="c-cta">Save</button>`; }
+
+  let heightFrac=.66, scrolls=false, reduceMotion=false;
+  function loadContent(){
+    sheetContent.innerHTML = heightFrac<=.5 ? SHORT : heightFrac>=.92 ? tall() : MED;
+    sheetScroll.style.overflowY = scrolls ? 'auto' : 'hidden';
+  }
+
+  const PHONE_H = 806;
+  let sheetPx = 0, isOpen=false, dragging=false, startY=0, startT=0, cur=0, samples=[], armed=false, dragMode='none';
+
+  function measure(){
+    sheetPx = Math.round(PHONE_H * heightFrac);
+    sheet.style.height = sheetPx + 'px';
+    if(!isOpen){ sheetLayer.style.transform = `translateY(${sheetPx}px)`; cur=sheetPx; }
+  }
+
+  // backdrop effect is scaled by the detent height — a short sheet barely dims the world.
+  function detentFactor(){ return heightFrac; }
+  function setProgress(p){
+    p=Math.max(0,Math.min(1,p));
+    if(reduceMotion){ bgwrap.style.filter='none'; bgwrap.style.transform='none'; scrim.style.opacity=(p*P.scrim*detentFactor()).toFixed(2); return; }
+    const f = detentFactor();
+    bgwrap.style.filter = `blur(${(p*P.blur*f).toFixed(1)}px)`;
+    bgwrap.style.transform = `scale(${(1 - p*P.scale*f).toFixed(3)})`;
+    scrim.style.opacity = (p*P.scrim*f).toFixed(2);
+  }
+
+  function applyTranslate(v, withTransition){
+    cur=v;
+    sheetLayer.style.transition = withTransition ? `transform ${dur}s ${CURVES[P.curve].css}` : 'none';
+    sheetLayer.style.transform = `translateY(${v}px)`;
+    setProgress(1 - Math.max(0,Math.min(sheetPx,v))/sheetPx);
+  }
+
+  function flashHaptic(t){ hapticToast.textContent=t; hapticToast.classList.add('show'); clearTimeout(flashHaptic._t); flashHaptic._t=setTimeout(()=>hapticToast.classList.remove('show'),260); }
+
+  function openSheet(){
+    loadContent(); measure(); isOpen=true; hint.classList.add('hide'); flashHaptic('tick · open');
+    if(reduceMotion){
+      sheetLayer.style.transition='opacity .15s ease-out'; sheetLayer.style.opacity='0';
+      sheetLayer.style.transform='translateY(0)'; cur=0;
+      requestAnimationFrame(()=>{ sheetLayer.style.opacity='1'; setProgress(1); });
+      return;
+    }
+    sheetLayer.style.opacity='1';
+    requestAnimationFrame(()=>applyTranslate(0,true));
+  }
+  function closeSheet(fast,vel){
+    isOpen=false;
+    if(reduceMotion){
+      sheetLayer.style.transition='opacity .15s ease-in'; sheetLayer.style.opacity='0';
+      setProgress(0); flashHaptic('tick · dismiss');
+      setTimeout(()=>{ sheetLayer.style.transform=`translateY(${sheetPx}px)`; hint.classList.remove('hide'); },160);
+      return;
+    }
+    const d = fast ? Math.max(0.16,Math.min(0.30, sheetPx/Math.max(vel,0.4)/1000)) : Math.min(0.34,dur);
+    sheetLayer.style.transition=`transform ${d}s ${EXIT_CSS}`;
+    sheetLayer.style.transform=`translateY(${sheetPx}px)`;
+    setProgress(0);
+    flashHaptic(fast?'tick · fling':'tick · dismiss');
+    setTimeout(()=>hint.classList.remove('hide'),300);
+  }
+
+  document.getElementById('launchBtn').addEventListener('click',openSheet);
+  document.getElementById('openBtn').addEventListener('click',openSheet);
+  scrim.addEventListener('click',()=>{ if(isOpen) closeSheet(false,0); });
+
+  // ---- drag ----
+  function canBodyDrag(){ return !scrolls || sheetScroll.scrollTop<=0; }
+  function down(e, fromHandle){
+    if(!isOpen || reduceMotion) return;
+    const y=e.touches?e.touches[0].clientY:e.clientY;
+    dragMode = fromHandle ? 'handle' : (canBodyDrag()?'body':'none');
+    if(dragMode==='none') return;
+    dragging=true; startY=y; startT=cur; samples=[{y,t:performance.now()}]; armed=false;
+    sheetLayer.style.transition='none';
+    if(fromHandle) e.preventDefault();
+  }
+  function move(e){
+    if(!dragging) return;
+    const y=e.touches?e.touches[0].clientY:e.clientY;
+    let next=startT+(y-startY);
+    if(next<0){ const over=-next; next=-(over/(1+over/P.stiff)); } // damped overscroll up
+    applyTranslate(next,false);
+    if(e.cancelable) e.preventDefault();
+    const nowArmed = next > sheetPx*P.ratio;
+    if(nowArmed!==armed){ armed=nowArmed; grab.classList.toggle('armed',armed); if(armed) flashHaptic('tick · armed'); }
+    samples.push({y,t:performance.now()}); if(samples.length>5) samples.shift();
+  }
+  function up(){
+    if(!dragging) return; dragging=false; grab.classList.remove('armed');
+    let vel=0; if(samples.length>=2){ const a=samples[0],b=samples[samples.length-1],dt=b.t-a.t; if(dt>0) vel=(b.y-a.y)/dt; }
+    const past = cur > sheetPx*P.ratio, fling = vel > P.vel;
+    if(past||fling) closeSheet(fling,Math.max(vel,0.6));
+    else { applyTranslate(0,true); flashHaptic('tick · settle'); }
+    dragMode='none';
+  }
+  grabwrap.addEventListener('mousedown',e=>down(e,true));
+  grabwrap.addEventListener('touchstart',e=>down(e,true),{passive:false});
+  sheet.addEventListener('mousedown',e=>{ if(e.target.closest('button')||e.target.closest('.grabwrap')) return; down(e,false); });
+  sheet.addEventListener('touchstart',e=>{ if(e.target.closest('button')||e.target.closest('.grabwrap')) return; down(e,false); },{passive:false});
+  window.addEventListener('mousemove',move);
+  window.addEventListener('touchmove',move,{passive:false});
+  window.addEventListener('mouseup',up);
+  window.addEventListener('touchend',up);
+
+  // ---- controls ----
+  document.getElementById('heightSeg').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...e.currentTarget.children].forEach(c=>c.classList.toggle('on',c===b));
+    heightFrac=parseFloat(b.dataset.h);
+    if(heightFrac>=.92 && !scrolls){ scrolls=true; document.getElementById('scrollSw').classList.add('on'); }
+    if(isOpen){ loadContent(); measure(); applyTranslate(0,false); } else measure();
+    syncDump();
+  });
+  const scrollSw=document.getElementById('scrollSw');
+  scrollSw.addEventListener('click',()=>{ scrolls=!scrolls; scrollSw.classList.toggle('on',scrolls); loadContent(); syncDump(); });
+  const rmSw=document.getElementById('rmSw');
+  rmSw.addEventListener('click',()=>{ reduceMotion=!reduceMotion; rmSw.classList.toggle('on',reduceMotion); if(isOpen) setProgress(1); syncDump(); });
+
+  document.getElementById('chromeSeg').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...e.currentTarget.children].forEach(c=>c.classList.toggle('on',c===b));
+    P.chrome=b.dataset.k; sheet.className='sheet '+P.chrome; syncDump();
+  });
+
+  document.getElementById('curveSeg').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...e.currentTarget.children].forEach(c=>c.classList.toggle('on',c===b));
+    P.curve=b.dataset.c; dur=CURVES[P.curve].dur;
+    document.getElementById('k-dur').value=dur; document.getElementById('v-dur').textContent=dur.toFixed(2)+'s';
+    syncDump();
+  });
+
+  function slider(id,valId,fmt,set,over){
+    const el=document.getElementById(id), lab=document.getElementById(valId);
+    el.addEventListener('input',()=>{ const raw=parseFloat(el.value); set(raw); lab.textContent=fmt(raw);
+      lab.classList.toggle('over', over?over(raw):false);
+      if(isOpen && !dragging) setProgress(1 - Math.max(0,Math.min(sheetPx,cur))/sheetPx); syncDump(); });
+  }
+  slider('k-dur','v-dur',v=>v.toFixed(2)+'s',v=>dur=v);
+  slider('k-ratio','v-ratio',v=>v+'%',v=>P.ratio=v/100);
+  slider('k-vel','v-vel',v=>v.toFixed(2),v=>P.vel=v);
+  slider('k-stiff','v-stiff',v=>String(v),v=>P.stiff=v);
+  slider('k-blur','v-blur',v=>v+'px',v=>P.blur=v);
+  slider('k-scale','v-scale',v=>v+'%',v=>P.scale=v/100, v=>v/100>0.02); // quietMaxScaleDelta flag
+  slider('k-scrim','v-scrim',v=>v+'%',v=>P.scrim=v/100);
+
+  function syncDump(){
+    const eff=(P.scale*detentFactor()*100).toFixed(1);
+    dump.innerHTML =
+`sheet   height:<b>${heightFrac}</b> scroll:<b>${scrolls}</b> RM:<b>${reduceMotion}</b>
+chrome  <b>${P.chrome}</b>
+rise    <b>${CURVES[P.curve].label}</b>
+        ${CURVES[P.curve].css} · <b>${dur.toFixed(2)}s</b>
+dismiss ratio:<b>${P.ratio.toFixed(2)}</b> fling:<b>${P.vel.toFixed(2)}</b> band:<b>${P.stiff}</b>
+backdrop blur:<b>${P.blur}px</b> scale:<b>${P.scale.toFixed(3)}</b> scrim:<b>${P.scrim.toFixed(2)}</b>
+        eff scale @${heightFrac}: <b>${eff}%</b> (ceiling 2.0%)`;
+  }
+
+  document.getElementById('resetBtn').addEventListener('click',()=>{
+    Object.assign(P,JSON.parse(JSON.stringify(DEFAULT))); dur=CURVES.desire.dur;
+    const set=(id,v)=>document.getElementById(id).value=v;
+    set('k-dur',.50); set('k-ratio',25); set('k-vel',.75); set('k-stiff',70); set('k-blur',12); set('k-scale',3); set('k-scrim',50);
+    document.getElementById('v-dur').textContent='0.50s'; document.getElementById('v-ratio').textContent='25%';
+    document.getElementById('v-vel').textContent='0.75'; document.getElementById('v-stiff').textContent='70';
+    document.getElementById('v-blur').textContent='12px'; document.getElementById('v-scale').textContent='3%';
+    document.getElementById('v-scale').classList.remove('over'); document.getElementById('v-scrim').textContent='50%';
+    [...document.getElementById('curveSeg').children].forEach(c=>c.classList.toggle('on',c.dataset.c==='desire'));
+    [...document.getElementById('chromeSeg').children].forEach(c=>c.classList.toggle('on',c.dataset.k==='hairline'));
+    sheet.className='sheet '+P.chrome;
+    syncDump();
+  });
+
+  loadContent(); measure(); syncDump();
+</script>
+</body>
+</html>

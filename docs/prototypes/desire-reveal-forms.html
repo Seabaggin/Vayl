@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Desire Map · Reveal Form A/B (Constellation vs List)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --void: #0a0810; --ink: #070610; --card: #120f1a; --cardUp: #17131f;
+  --cyan: #00c2ff; --purple: #6c3ae0; --magenta: #ff006a; --bridge: #8b6fd4;
+  --t-display: rgba(236,234,242,.95); --t-primary: rgba(255,255,255,.90);
+  --t-secondary: rgba(255,255,255,.55); --t-ghost: rgba(255,255,255,.18);
+  --hairline: rgba(255,255,255,.08);
+  --disp: "Clash Display",-apple-system,sans-serif;
+  --body: "Switzer",-apple-system,BlinkMacSystemFont,sans-serif;
+}
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
+html, body { min-height:100vh; background:#0f0e14; font-family:var(--body); color:var(--t-primary);
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:34px 20px 60px; gap:20px; }
+.page-title { font-family:var(--disp); font-size:18px; font-weight:600; letter-spacing:.01em; color:var(--t-secondary); text-align:center; }
+
+/* ── Stage: two phones side by side ── */
+.stage { display:flex; flex-wrap:wrap; gap:34px; align-items:flex-start; justify-content:center; }
+.col { display:flex; flex-direction:column; align-items:center; gap:12px; }
+.col .cap { font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--t-ghost); }
+.col.reco .cap { color:var(--purple); }
+
+/* ── Phone shell ── */
+.phone {
+  position:relative; width:360px; height:780px; border-radius:46px; overflow:hidden;
+  background:var(--ink); box-shadow:0 30px 76px rgba(0,0,0,.6),inset 0 0 0 1.5px rgba(255,255,255,.05); flex:none;
+}
+.voidbg { position:absolute; inset:0; background:var(--void); }
+.notch { position:absolute; top:12px; left:50%; transform:translateX(-50%); width:104px; height:28px; background:#000; border-radius:16px; z-index:22; }
+.home-ind { position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:118px; height:5px; border-radius:3px; background:rgba(255,255,255,.22); z-index:22; }
+.status-bar { position:absolute; top:0; left:0; right:0; z-index:20; display:flex; justify-content:space-between; padding:16px 36px 0; font-size:13px; font-weight:600; color:rgba(255,255,255,.7); pointer-events:none; }
+.status-bar .ic { letter-spacing:2px; font-size:10px; opacity:.72; }
+
+/* Atmosphere */
+.atmo { position:absolute; inset:0; pointer-events:none; z-index:0; }
+.atmo .drift { position:absolute; inset:0; animation:drift 20s ease-in-out infinite alternate; }
+.blob { position:absolute; border-radius:50%; filter:blur(60px); transform:translate(-50%,-50%); }
+@keyframes drift { from{transform:translate(0,0)} to{transform:translate(-12px,14px)} }
+@media(prefers-reduced-motion:reduce){ .atmo .drift{animation:none} }
+
+/* ── Screen ── */
+.screen { position:absolute; inset:0; z-index:10; cursor:pointer; padding:60px 26px 34px;
+  display:flex; flex-direction:column; align-items:center; overflow:hidden; }
+
+/* Overline */
+.overline { font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:rgba(255,255,255,.28);
+  flex-shrink:0; opacity:0; transform:translateY(8px);
+  transition:opacity 600ms ease, transform 600ms cubic-bezier(.32,0,.08,1); }
+.overline.show { opacity:1; transform:translateY(0); }
+
+/* ════════════════ CONSTELLATION (left) ════════════════ */
+.fieldwrap { position:relative; width:100%; flex:1; margin-top:8px; }
+.field { position:absolute; left:50%; top:48%; transform:translate(-50%,-50%); width:286px; height:286px; }
+/* The soft "where you meet" overlap region — appears as the field reveals. */
+.field-glow { position:absolute; inset:-12%; border-radius:50%;
+  background:radial-gradient(closest-side, rgba(108,58,224,.13), rgba(0,194,255,.04) 60%, transparent 74%);
+  opacity:0; transition:opacity 800ms ease; }
+.field.revealed .field-glow { opacity:1; }
+
+.node { position:absolute; display:flex; flex-direction:column; align-items:center; gap:9px; width:128px;
+  transform:translate(-50%,-50%) scale(.5); opacity:0;
+  transition:opacity 620ms ease, transform 620ms cubic-bezier(.32,0,.08,1); }
+.node.shown { opacity:.5; transform:translate(-50%,-50%) scale(.92); }
+.node.lit   { opacity:1; transform:translate(-50%,-50%) scale(1); }
+.dot { width:13px; height:13px; border-radius:50%; position:relative; flex:none; }
+.dot::after { content:''; position:absolute; inset:-11px; border-radius:50%;
+  background:radial-gradient(closest-side, currentColor, transparent 70%); opacity:0; transition:opacity 540ms ease; }
+.node.lit .dot::after { opacity:.6; }
+.mut .dot { background:linear-gradient(135deg,var(--cyan),var(--purple)); color:rgba(108,58,224,.85); }
+.adj .dot { background:linear-gradient(135deg,var(--purple),var(--magenta)); color:rgba(255,0,106,.7); }
+.nlabel { font-size:11px; text-align:center; line-height:1.3; color:var(--t-secondary); max-width:128px; transition:filter 600ms ease, color 600ms ease; }
+.node:not(.lit) .nlabel { filter:blur(5px); color:var(--t-ghost); }
+.node.free .nlabel { font-weight:600; color:var(--t-primary); }
+/* one-shot ignite flare when a node lights */
+@keyframes flarePop { 0%{box-shadow:0 0 0 0 rgba(108,58,224,0);} 28%{box-shadow:0 0 26px 9px rgba(108,58,224,.5);} 100%{box-shadow:0 0 13px 2px rgba(108,58,224,.22);} }
+.node.lit .dot { animation:flarePop 720ms ease-out; }
+@media(prefers-reduced-motion:reduce){ .node.lit .dot{animation:none} .node,.field-glow{transition:opacity 200ms ease;} }
+
+.c-sub { flex-shrink:0; text-align:center; margin-top:6px; min-height:46px; }
+.c-mark { font-size:12px; color:var(--t-secondary); opacity:0; transition:opacity 500ms ease; }
+.c-mark.show { opacity:1; }
+.c-mark .star { background:linear-gradient(90deg,var(--cyan),var(--magenta)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.c-count { font-size:12px; color:var(--t-ghost); margin-top:8px; opacity:0; transition:opacity 480ms ease; }
+.c-count.show { opacity:1; }
+.c-line { width:54px; height:1px; margin:9px auto 0; background:linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta)); opacity:0; transition:opacity 480ms ease 120ms; }
+.c-line.show { opacity:.45; }
+
+/* ════════════════ LIST (right) ════════════════ */
+.l-stack { width:100%; flex:1; margin-top:18px; display:flex; flex-direction:column; gap:9px; align-items:stretch; }
+.free-card { border-radius:16px; padding:16px 16px 14px; background:linear-gradient(160deg,#1a1427,#120f1a);
+  border:1px solid rgba(108,58,224,.34); box-shadow:0 0 22px rgba(108,58,224,.18);
+  opacity:0; transform:translateY(24px); transition:opacity 520ms ease, transform 520ms cubic-bezier(.32,0,.08,1); }
+.free-card.show { opacity:1; transform:translateY(0); }
+.fc-over { display:flex; align-items:center; gap:6px; margin-bottom:9px; }
+.fc-dot { width:5px; height:14px; border-radius:99px; background:linear-gradient(180deg,var(--cyan),var(--purple)); }
+.fc-cat { font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.35); }
+.fc-title { font-family:var(--disp); font-size:19px; font-weight:700; letter-spacing:-.01em; color:var(--t-display); line-height:1.2; }
+.fc-sub { font-size:12px; color:var(--t-secondary); margin-top:5px; display:flex; align-items:center; gap:5px; }
+.fc-sub .star { font-size:10px; background:linear-gradient(90deg,var(--cyan),var(--magenta)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.fc-link { font-size:11px; color:var(--bridge); margin-top:11px; letter-spacing:.02em; }
+
+.locked-row { display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:0 14px; height:46px; border-radius:11px; background:rgba(255,255,255,.02); border:1px solid var(--hairline);
+  opacity:0; transform:translateY(20px); transition:opacity 360ms ease, transform 360ms cubic-bezier(.32,0,.08,1); }
+.locked-row.show { opacity:1; transform:translateY(0); }
+.locked-row .pip { width:4px; height:18px; border-radius:99px; flex:none; }
+.locked-row.mut .pip { background:rgba(108,58,224,.6); }
+.locked-row.adj .pip { background:rgba(255,0,106,.5); }
+.locked-text { font-size:13px; color:rgba(255,255,255,.34); filter:blur(5px); flex:1;
+  overflow:hidden; white-space:nowrap; transition:filter 500ms ease, color 500ms ease; }
+.locked-row.unlocked .locked-text { filter:blur(0); color:var(--t-primary); }
+.locked-row.unlocked { border-color:rgba(108,58,224,.3); }
+.lock-icon { font-size:12px; opacity:.32; flex:none; transition:opacity 400ms ease; }
+.locked-row.unlocked .lock-icon { opacity:0; }
+.l-count { text-align:center; margin-top:10px; }
+.l-count-text { font-size:13px; color:var(--t-ghost); opacity:0; transition:opacity 400ms ease; }
+.l-count-text.show { opacity:1; }
+.l-line { width:54px; height:1px; margin:9px auto 0; background:linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta)); opacity:0; transition:opacity 400ms ease 100ms; }
+.l-line.show { opacity:.45; }
+
+/* ════════════════ Shared paywall (per phone) ════════════════ */
+.scrim { position:absolute; inset:0; z-index:14; background:rgba(10,8,16,0); pointer-events:none; transition:background 500ms ease; }
+.scrim.show { background:rgba(10,8,16,.5); pointer-events:auto; }
+.paywall { position:absolute; bottom:0; left:0; right:0; z-index:20;
+  background:linear-gradient(180deg,#160f22,#120f1a 42%); border-radius:22px 22px 0 0; border-top:1px solid rgba(108,58,224,.2);
+  transform:translateY(100%); transition:transform 500ms cubic-bezier(.32,0,.08,1);
+  display:flex; flex-direction:column; padding-bottom:24px; }
+.paywall.open { transform:translateY(0); }
+.grabber { width:36px; height:4px; border-radius:2px; background:rgba(255,255,255,.16); margin:10px auto 0; }
+.pw-body { padding:16px 22px 6px; display:flex; flex-direction:column; gap:12px; }
+.pw-hook { font-family:var(--disp); font-size:21px; font-weight:700; letter-spacing:-.02em; color:var(--t-display); text-align:center; }
+.pw-sub { font-size:13px; color:var(--t-secondary); text-align:center; line-height:1.5; }
+.pw-divider { height:1px; background:var(--hairline); }
+.pw-btn { border-radius:14px; height:54px; background:linear-gradient(90deg,rgba(0,194,255,.16),rgba(108,58,224,.26));
+  border:1px solid rgba(108,58,224,.5); box-shadow:0 0 22px rgba(108,58,224,.22);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer; transition:transform 140ms ease; }
+.pw-btn:active { transform:scale(.97); }
+.pw-label { font-family:var(--disp); font-size:15px; font-weight:700; color:var(--t-display); }
+.pw-sub2 { font-size:11px; color:var(--t-secondary); }
+.pw-foot { text-align:center; font-size:11px; color:var(--t-ghost); margin-top:4px; letter-spacing:.02em; }
+
+/* ── Controls ── */
+.controls { display:flex; flex-direction:column; gap:14px; width:420px; max-width:100%; padding:16px 18px; margin-top:4px;
+  background:rgba(255,255,255,.03); border:1px solid var(--hairline); border-radius:16px; }
+.controls-row { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.controls-row.top { border-bottom:1px solid var(--hairline); padding-bottom:13px; }
+.btn { border:1px solid rgba(108,58,224,.5); background:rgba(108,58,224,.14); color:var(--t-primary);
+  font-family:var(--body); font-size:13px; font-weight:600; letter-spacing:.02em; padding:8px 18px; border-radius:99px; cursor:pointer; transition:transform 140ms ease; }
+.btn:active { transform:scale(.96); }
+.btn.ghost { border-color:var(--hairline); background:rgba(255,255,255,.03); color:var(--t-secondary); }
+.ctl-label { font-size:12px; font-weight:600; letter-spacing:.04em; color:var(--t-secondary); }
+.ctl-label .val { color:var(--t-primary); font-variant-numeric:tabular-nums; margin-left:7px; }
+.slider-block { display:flex; flex-direction:column; gap:7px; }
+.controls input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:99px; cursor:pointer;
+  background:linear-gradient(90deg,var(--cyan),var(--purple) 52%,var(--magenta)); outline:none; }
+.controls input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%;
+  background:#fff; border:2px solid var(--purple); cursor:pointer; box-shadow:0 0 8px rgba(108,58,224,.5); }
+.ctl-hint { font-size:11px; color:var(--t-ghost); text-align:center; line-height:1.5; letter-spacing:.02em; }
+</style>
+</head>
+<body>
+
+<div class="page-title">Desire Map · Reveal form — feel both, same conversion arc</div>
+
+<div class="stage">
+
+  <!-- ══════════ LEFT: CONSTELLATION ══════════ -->
+  <div class="col reco">
+    <div class="cap">Constellation</div>
+    <div class="phone">
+      <div class="voidbg"></div>
+      <div class="atmo"><div class="drift">
+        <div class="blob" style="left:180px;top:640px;width:380px;height:320px;background:radial-gradient(closest-side,rgba(108,58,224,.18),transparent 73%)"></div>
+        <div class="blob" style="left:74px;top:260px;width:260px;height:240px;background:radial-gradient(closest-side,rgba(0,194,255,.09),transparent 76%)"></div>
+        <div class="blob" style="left:300px;top:470px;width:210px;height:210px;background:radial-gradient(closest-side,rgba(255,0,106,.07),transparent 74%)"></div>
+      </div></div>
+      <div class="notch"></div>
+      <div class="status-bar"><span>9:41</span><span class="ic">●●● ▮</span></div>
+
+      <div class="screen" id="screenC" onclick="tapSide('C')">
+        <div class="overline" id="overlineC">Where you meet</div>
+        <div class="fieldwrap">
+          <div class="field" id="fieldC">
+            <div class="field-glow"></div>
+            <div class="node free mut" id="cFree" style="left:50%;top:40%">
+              <div class="dot"></div><div class="nlabel">Opening Up</div>
+            </div>
+            <div class="node mut" id="cN0" style="left:26%;top:26%">
+              <div class="dot"></div><div class="nlabel">New Relationship Energy</div>
+            </div>
+            <div class="node adj" id="cN1" style="left:75%;top:30%">
+              <div class="dot"></div><div class="nlabel">Playing Together</div>
+            </div>
+            <div class="node mut" id="cN2" style="left:32%;top:71%">
+              <div class="dot"></div><div class="nlabel">Multiple Loving Relationships</div>
+            </div>
+            <div class="node adj" id="cN3" style="left:71%;top:67%">
+              <div class="dot"></div><div class="nlabel">Emotional Connections Outside</div>
+            </div>
+          </div>
+        </div>
+        <div class="c-sub">
+          <div class="c-mark" id="cMark">You both marked this <span class="star">✦</span></div>
+          <div class="c-count" id="cCount">4 more you share</div>
+          <div class="c-line" id="cLine"></div>
+        </div>
+      </div>
+
+      <div class="scrim" id="scrimC" onclick="closePay('C')"></div>
+      <div class="paywall" id="payC">
+        <div class="grabber"></div>
+        <div class="pw-body">
+          <div class="pw-hook">Reveal Your Map</div>
+          <div class="pw-sub">See the whole shape of where your desires meet.</div>
+          <div class="pw-divider"></div>
+          <div class="pw-btn" onclick="unlock('C')">
+            <div class="pw-label">$24.99 · one time · covers both</div>
+            <div class="pw-sub2">Lifetime access for you and Alex</div>
+          </div>
+          <div class="pw-foot">Restore · Terms · Privacy</div>
+        </div>
+      </div>
+      <div class="home-ind"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ RIGHT: LIST ══════════ -->
+  <div class="col">
+    <div class="cap">List</div>
+    <div class="phone">
+      <div class="voidbg"></div>
+      <div class="atmo"><div class="drift">
+        <div class="blob" style="left:180px;top:640px;width:380px;height:320px;background:radial-gradient(closest-side,rgba(108,58,224,.18),transparent 73%)"></div>
+        <div class="blob" style="left:74px;top:260px;width:260px;height:240px;background:radial-gradient(closest-side,rgba(0,194,255,.09),transparent 76%)"></div>
+        <div class="blob" style="left:300px;top:470px;width:210px;height:210px;background:radial-gradient(closest-side,rgba(255,0,106,.07),transparent 74%)"></div>
+      </div></div>
+      <div class="notch"></div>
+      <div class="status-bar"><span>9:41</span><span class="ic">●●● ▮</span></div>
+
+      <div class="screen" id="screenL" onclick="tapSide('L')">
+        <div class="overline" id="overlineL">Where you align</div>
+        <div class="l-stack">
+          <div class="free-card" id="lFree">
+            <div class="fc-over"><div class="fc-dot"></div><div class="fc-cat">structures</div></div>
+            <div class="fc-title">Opening Up</div>
+            <div class="fc-sub">You both marked this <span class="star">✦</span></div>
+            <div class="fc-link">Talk about this →</div>
+          </div>
+          <div class="locked-row mut" id="lR0"><div class="pip"></div><div class="locked-text">New Relationship Energy</div><div class="lock-icon">🔒</div></div>
+          <div class="locked-row adj" id="lR1"><div class="pip"></div><div class="locked-text">Playing Together</div><div class="lock-icon">🔒</div></div>
+          <div class="locked-row mut" id="lR2"><div class="pip"></div><div class="locked-text">Multiple Loving Relationships</div><div class="lock-icon">🔒</div></div>
+          <div class="locked-row adj" id="lR3"><div class="pip"></div><div class="locked-text">Emotional Connections Outside</div><div class="lock-icon">🔒</div></div>
+          <div class="l-count">
+            <div class="l-count-text" id="lCount">4 more you share</div>
+            <div class="l-line" id="lLine"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scrim" id="scrimL" onclick="closePay('L')"></div>
+      <div class="paywall" id="payL">
+        <div class="grabber"></div>
+        <div class="pw-body">
+          <div class="pw-hook">Reveal Your Map</div>
+          <div class="pw-sub">See every desire you share, named in full.</div>
+          <div class="pw-divider"></div>
+          <div class="pw-btn" onclick="unlock('L')">
+            <div class="pw-label">$24.99 · one time · covers both</div>
+            <div class="pw-sub2">Lifetime access for you and Alex</div>
+          </div>
+          <div class="pw-foot">Restore · Terms · Privacy</div>
+        </div>
+      </div>
+      <div class="home-ind"></div>
+    </div>
+  </div>
+
+</div><!-- /stage -->
+
+<div class="controls">
+  <div class="controls-row top">
+    <div style="display:flex;gap:10px;">
+      <button class="btn" id="playBtn">▶ Play both</button>
+      <button class="btn ghost" id="replayBtn">↻ Reset</button>
+    </div>
+    <div class="ctl-label" id="statusLabel">Both at rest</div>
+  </div>
+  <div class="slider-block">
+    <div class="ctl-label">Free-reveal → gap hold<span class="val" id="hold12Val">1.50s</span></div>
+    <input type="range" id="hold12" min="400" max="3000" step="50" value="1500" />
+  </div>
+  <div class="slider-block">
+    <div class="ctl-label">Count → paywall hold<span class="val" id="hold23Val">1.20s</span></div>
+    <input type="range" id="hold23" min="400" max="3000" step="50" value="1200" />
+  </div>
+  <div class="ctl-hint">"Play both" runs the two forms in lockstep through the same arc. Tap a single phone to step it on its own. Tap the price button to feel unlock-in-place.</div>
+</div>
+
+<script>
+const hold12El = document.getElementById('hold12');
+const hold23El = document.getElementById('hold23');
+const hold12Val = document.getElementById('hold12Val');
+const hold23Val = document.getElementById('hold23Val');
+const statusLabel = document.getElementById('statusLabel');
+
+// Per-side element maps.
+const C = {
+  beat: 0,
+  overline: document.getElementById('overlineC'),
+  field: document.getElementById('fieldC'),
+  free: document.getElementById('cFree'),
+  locked: ['cN0','cN1','cN2','cN3'].map(id => document.getElementById(id)),
+  mark: document.getElementById('cMark'),
+  count: document.getElementById('cCount'),
+  line: document.getElementById('cLine'),
+  scrim: document.getElementById('scrimC'),
+  pay: document.getElementById('payC'),
+};
+const L = {
+  beat: 0,
+  overline: document.getElementById('overlineL'),
+  free: document.getElementById('lFree'),
+  locked: ['lR0','lR1','lR2','lR3'].map(id => document.getElementById(id)),
+  count: document.getElementById('lCount'),
+  line: document.getElementById('lLine'),
+  scrim: document.getElementById('scrimL'),
+  pay: document.getElementById('payL'),
+};
+const SIDE = { C, L };
+
+let pendingTimer = null;
+function cancelPending() { if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; } }
+
+// Apply exactly beat b's additions for a side (cumulative across calls, like the real beat advance).
+function applyC(b) {
+  if (b === 1) { C.overline.classList.add('show'); C.field.classList.add('revealed'); C.free.classList.add('shown','lit'); C.mark.classList.add('show'); }
+  if (b === 2) { C.locked.forEach((n,i) => setTimeout(() => n.classList.add('shown'), i*90)); setTimeout(() => { C.count.classList.add('show'); C.line.classList.add('show'); }, 4*90+120); }
+  if (b === 3) { C.scrim.classList.add('show'); C.pay.classList.add('open'); }
+}
+function applyL(b) {
+  if (b === 1) { L.overline.classList.add('show'); L.free.classList.add('show'); }
+  if (b === 2) { L.locked.forEach((r,i) => setTimeout(() => r.classList.add('show'), i*80)); setTimeout(() => { L.count.classList.add('show'); L.line.classList.add('show'); }, 4*80+140); }
+  if (b === 3) { L.scrim.classList.add('show'); L.pay.classList.add('open'); }
+}
+function applySide(side, b) { side === 'C' ? applyC(b) : applyL(b); }
+
+function stepSide(side, b) { const s = SIDE[side]; s.beat = b; applySide(side, b); }
+function tapSide(side) { const s = SIDE[side]; if (s.beat < 3) stepSide(side, s.beat + 1); }
+
+// Unlock-in-place: lower the sheet, names/nodes resolve.
+function unlock(side) {
+  const s = SIDE[side];
+  s.scrim.classList.remove('show'); s.pay.classList.remove('open');
+  if (side === 'C') { C.locked.forEach((n,i) => setTimeout(() => n.classList.add('lit'), i*110)); C.count.textContent = 'Your shared sky'; }
+  else { L.locked.forEach((r,i) => setTimeout(() => r.classList.add('unlocked'), i*90)); L.count.textContent = 'Everything you share'; }
+  statusLabel.textContent = 'Unlocked in place';
+}
+function closePay(side) { const s = SIDE[side]; s.scrim.classList.remove('show'); s.pay.classList.remove('open'); s.beat = 2; }
+
+// ── Reset everything ──
+function resetSide(side) {
+  const s = SIDE[side]; s.beat = 0;
+  s.overline.classList.remove('show');
+  s.scrim.classList.remove('show'); s.pay.classList.remove('open');
+  s.count.classList.remove('show'); s.line.classList.remove('show');
+  if (side === 'C') {
+    C.field.classList.remove('revealed');
+    C.free.classList.remove('shown','lit');
+    C.locked.forEach(n => n.classList.remove('shown','lit'));
+    C.mark.classList.remove('show');
+    C.count.textContent = '4 more you share';
+  } else {
+    L.free.classList.remove('show');
+    L.locked.forEach(r => r.classList.remove('show','unlocked'));
+    L.count.textContent = '4 more you share';
+  }
+}
+function resetBoth() { cancelPending(); resetSide('C'); resetSide('L'); statusLabel.textContent = 'Both at rest'; }
+
+// ── Play both in lockstep through the arc ──
+function stepBoth(b) { stepSide('C', b); stepSide('L', b); }
+function playBoth() {
+  resetBoth();
+  const h12 = +hold12El.value, h23 = +hold23El.value;
+  const LEAD = 600, COUNT_C = 4*90+120, COUNT_L = 4*80+140, COUNT = Math.max(COUNT_C, COUNT_L);
+  statusLabel.textContent = 'Beat 1 — the free desire lands';
+  pendingTimer = setTimeout(() => {
+    stepBoth(1);
+    statusLabel.textContent = 'Beat 1 — holding…';
+    pendingTimer = setTimeout(() => {
+      stepBoth(2);
+      statusLabel.textContent = 'Beat 2 — the gap opens';
+      pendingTimer = setTimeout(() => {
+        stepBoth(3);
+        statusLabel.textContent = 'Beat 3 — the ask · tap price to unlock';
+      }, COUNT + h23);
+    }, h12);
+  }, LEAD);
+}
+
+document.getElementById('playBtn').addEventListener('click', playBoth);
+document.getElementById('replayBtn').addEventListener('click', resetBoth);
+hold12El.addEventListener('input', () => { hold12Val.textContent = (hold12El.value/1000).toFixed(2)+'s'; });
+hold23El.addEventListener('input', () => { hold23Val.textContent = (hold23El.value/1000).toFixed(2)+'s'; });
+</script>
+</body>
+</html>

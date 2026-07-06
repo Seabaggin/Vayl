@@ -1,147 +1,144 @@
-# Vayl — Session Handoff
-**Date:** 2026-05-30  
-**Project:** Vayl iOS app — SwiftUI couples/solo exploration app  
-**Codebase:** `/Users/bryanjorden/Documents/School/Code/Vayl`
+# Handoff — Home deck / card carousel
+
+Date: 2026-06-22
+Status: **Mostly final.** One task remains (see "Next task"), to start in the next chat.
+
+(Replaces an older 2026-05-30 OB Compass/Context handoff — recoverable from git history.)
 
 ---
 
-## Who you're working with
-Bryan — solo iOS dev, strong architecture instincts, building Vayl. Prefers tight build protocol: one segment at a time, verified on device before next segment begins. "Build succeeds" is not done — feel is done.
+## What it is (the interaction)
+
+The Home "deck" is the floating card. Tapping it makes the deck **elevate in place**
+(no cover, nothing slides up): it spreads → lifts → becomes a browsable carousel,
+and the rest of Home fades softly behind it. Tapping a card **adds it to tonight's
+hand** (check badge + a card flies to the corner pile). A **"Settle in · N →"** bar
+at the bottom carries the hand into the session.
+
+Phase sequence (owned by `CardCarousel`): `floating → spread → lifted → carousel`.
 
 ---
 
-## Architecture (non-negotiable)
-4-layer: **View** (renders, forwards taps only) → **Store** (`@Observable @MainActor`) → **Service** (network/IO) → **Model** (pure struct). `director.advance()` is the ONLY way to change OB phase. `tableFade` written ONLY by `VaylDirector`. No View writes to `VaylCardModel` directly.
+## Architecture (where things live)
 
-**Design token contract:** zero raw values in Views. Use `AppColors`, `AppFonts`, `AppSpacing`, `AppRadius`, `AppAnimation`, `AppLayout`, `AppGlows`, `AppElevation`. All looping animations wrapped in `.ambientAnimation()`.
-
-**iOS 26 mandatory:** no `UIScreen.main`, no `UIApplication.shared.keyWindow`. Use `AppLayout.from(geo)` for geometry (never `UIScreen.main.bounds`).
-
----
-
-## OB Canvas Architecture
-Single persistent canvas (`OnboardingCanvasView`) for the entire OB flow. Layer order:  
-`void → atmosphere → TableSurfaceView (tableFade) → DealPoint → SpriteKit card flight → tableCards → inFlightCards → ProjectedText → phaseOverlay → CornerDeck`
-
-**VaylDirector** (`Features/Onboarding/Canvas/VaylDirector.swift`) — `@Observable @MainActor` phase machine. Owns all state, animation, and sequencing. Key methods used this session:
-- `advance(to: OBPhase)` — sole phase gate
-- `tableFade` — 0.0 = table gone, 1.0 = table present. Only director writes this.
-- `showDealerLine(_ text:, hideAfter:)` — auto-fading projected copy
-- `showDealerLineManual(_ text:)` — persistent projected copy
-- `hideDealerLine()`
-- `recedeTableForContext()` — fades tableFade to 0
-- `showContextHeadline()` — bridging copy, `hideAfter: 2.8`
-- `showExpLevelExitLine(_ intensity:)` — selection-responsive exit copy
-- `concludeContext(relationshipContext:, situationalRegister:)` — writes data, pockets credential, returns table, shows responsive copy, advances to `.compass`
-- `commitExperienceLevel(_ intensity:)` — writes nmStage, pockets credential, pulses deck
+- **`Vayl/Design/Components/Cards/CardCarousel.swift`** — the real, in-place elevating
+  deck. It owns the floating card, the spread/lift/carousel physics, the **screen dim**
+  (a 3000×3000 `.background` rectangle that fades in — this is what "envelops the
+  screen"; there is **no** `fullScreenCover`, because a cover always slides up), the
+  swipe/drag, the fly-to-corner ghost, and selecting-mode (`onToggleSelect`).
+  - The only change made here is an **additive** `dimOpacity: Double?` param
+    (default `nil` = original behavior). OB phases use a **different** component
+    (`VaylCardCarousel`), so `CardCarousel` is Home-only and safe to touch.
+  - The "tap to add" hint sits **below** the card (`selectHint` overlay, `.offset(y: 30)`).
+- **`Vayl/Features/Home/Views/HomeDashboardView.swift`** — owns the deck *state* and
+  *chrome*:
+  - `@State deckPhase` (from `CardCarousel.onPhaseChange`)
+  - `@State handIDs: [String]` — tonight's hand
+  - `@State deckReset: Int` — bumped on settle to rebuild the carousel back to floating
+  - `deckEngaged` = `deckPhase != .floating && != .spread` → drives the room recede
+  - `deckChrome(layout:)` — the corner "tonight" deck (explicitly `.position`ed,
+    top-right) + the "Settle in" bar (bottom)
+  - `toggleHand(_:)`, `settleIn()` (sets `sessionHand` → the `.vaylCover` session)
+- **`Vayl/Features/Home/Components/CardChestContainer.swift`** — collapsed to just
+  `NoiseTexture` (the old chest reinventions were deleted).
 
 ---
 
-## OB Phase Sequence
-```
-stat → name → modeSelect → gender → experienceLevel → context → compass → curiosity → confirmation → buildDeck → founderLetter
-```
+## Tunable dials (current values)
 
-**Corner deck credentials:** name[1], gender[2], mode[3], experienceLevel[4], context[5], curiosity[6]. Compass is ephemeral — no deck card.
-
----
-
-## What Was Built This Session
-
-### New reusable components
-| File | What it does |
-|------|-------------|
-| `Design/Components/Cards/CardPhysics/CarouselPhysics.swift` | 1D scalar browse engine. SwiftUI-native spring (`response 0.35`, `dampingFraction 0.70`). Drag 1:1 finger; release calls `settle(predictedVelocity:)` inside `withAnimation` — vsync-locked, no Task.sleep loop. |
-| `Design/Components/Cards/VaylCardCarousel.swift` | Generic `VaylCardCarousel<Content: View>`. Inputs: `count`, `cardSize`, `physics`, `confirmedIndex`, `confirmedCardYHint`, `exiting`, `defocusUnselected`, `layout: StackLayout`. Recycled-window infinite scroll with stable modular node identity (no re-rasterization). Confirmed card: raises, spectrum ring, jiggle hint. Exit: hero flies up, unselected drift out of focus. |
-| `Design/Components/Cards/CardFaces/ContextCardFace.swift` | Dark-only context card face. Renders number/title/subtitle/detail. Detail gated by `isFront`. |
-| `Design/Components/Cards/CardPhysics/ThreeCardFanController.swift` | `@Observable @MainActor` fan controller for ExperienceLevel. 3-card deal/shuffle/flip/lift/confirm sequence via SpriteKit. |
-
-### VaylCardFace changes
-- Added `isFront: Bool` prop (forwarded to `ContextCardFace`)
-- `.context(number:title:subtitle:detail:)` content case now renders `ContextCardFace` (was `EmptyView`)
-- Added `FaceGestures` modifier — built-in tap/swipe gestures only attach when `onAction != nil`, so faces are inert inside the carousel
-
-### OBPhase rename
-`OBPhase.quiz` → `OBPhase.compass`. `QuizPhase.swift` deleted. `CompassPhase.swift` is a **stub** (advances to `.curiosity`). Full Compass build (3-question calibration — agency/motivation/register, `CompassStore`, `CoupleCompass` derivation) is the next planned task. Spec: `/Users/bryanjorden/Downloads/Vayl OB — Late May/CompassPhase — Spec.md`.
-
-### ContextPhase (fully built, choreography tuned)
-`Features/Onboarding/Phases/ContextPhase.swift`
-
-**Data model:** `ContextCardData` (private struct, re-homed from deleted `ContextOption`). Writes `RelationshipContext` + `SituationalRegister` (not `EmotionalRegister` — that belongs to Compass Q3). Solo: 3 cards. Together: 4 cards.
-
-**Sequence:**
-1. Context arrives to clean silent felt (ExpLevel exit line has already cleared)
-2. 700ms silence
-3. `showContextHeadline()` — `"Now — how are you actually showing up to this?"` (solo) / `"...you two..."` (together) — breathes 1.6s on felt
-4. Felt dissolves + carousel assembles **simultaneously** as copy fades (1.2s overlap)
-5. Browse — tap front card to confirm → hero raises (−18% h), others recede (opacity 0.45, scale 0.88). Ring/glow on confirmed. Sparse swipe-up tug (3% flick, 2200ms initial delay, 6000ms rest).
-6. Swipe up → hero flies up (`cardPocket`) → 150ms → others drift out of focus (`exit`)
-7. `concludeContext()` → table returns, deck receives `.context`, responsive line, 2s hold → `advance(to: .compass)`
-
-**Responsive exit copy (per `situationalRegister`):** `.anxious → "We'll take this slow."` / `.excited → "Let's keep that momentum."` / `.flexible → "Good — let's find the shape of it."`
-
-### ExperienceLevelPhase changes
-- `.done` case now shows selection-dependent exit line (`showExpLevelExitLine`) and delays `advance(to: .context)` by 2.6s, so Context always arrives to a clean, silent table
-- Exit lines: `.curious → "Good place to start."` / `.exploring → "There's a lot to work with."` / `.experienced → "Let's build on that."`
+| Thing | Where | Value |
+|---|---|---|
+| Screen dim when open | `HomeDashboardView` → `CardCarousel(dimOpacity:)` | `0.15` |
+| Room fade (greeting + Pulse/Lexicon) | `HomeDashboardView` | `opacity 0.25`, `blur 6` |
+| Corner deck position | `deckChrome` → `cornerDeck.position(...)` | `x: screenWidth - 48`, `y: safeTop + 24` |
+| "tap to add" offset below card | `CardCarousel.carouselCard` | `.offset(y: 30)` |
 
 ---
 
-## Data Fields Written by Context Phase
-`OnboardingData.relationshipContext: String?` — `RelationshipContext.rawValue`  
-`OnboardingData.situationalRegister: String?` — `SituationalRegister.rawValue`  
-**NOT** `emotionalRegister` — that is Compass Q3's field exclusively.
+## Carryover — DONE (2026-06-22), awaiting device feel
 
-**Key enums** (in `Core/Models/Enums/AppEnums.swift`):
-- `SituationalRegister`: `.anxious` / `.excited` / `.flexible`
-- `RelationshipContext`: `.notTalked` / `.talking` / `.someExperience` / `.needsReset` (together) + `.single` / `.partneredOpen` / `.partneredHidden` (solo)
+**Clicking out of the carousel now CLEARS tonight's hand (start over).** Implemented
+in `HomeDashboardView`'s `CardCarousel.onPhaseChange` (`if phase == .floating { handIDs = [] }`).
+Build-verified. Device check: add a card → tap out → reopen should show an empty hand
++ empty corner pile.
 
 ---
 
-## Deferred / Next Up
-1. **CompassPhase** — full 3-question build. Spec at `/Users/bryanjorden/Downloads/Vayl OB — Late May/CompassPhase — Spec.md`. Currently a stub that advances to `.curiosity`.
-2. **VaylCardCarousel → Home migration** — existing `CardCarousel.swift` (Home, 1 usage: `CardChestContainer`) still uses old discrete-step physics. Plan was to migrate it to use `CarouselPhysics` + `VaylCardCarousel` in a follow-up session.
-3. **Context exit choreography** — the lay-flat + vacuum pull of remaining cards (per original spec) is not fully implemented. Currently the unselected cards just drift out of focus. The `defocusUnselected` flag is in place.
-4. **Physics on-device feel** — the carousel spring (`response 0.35`, `dampingFraction 0.70`) was tuned in a browser demo and accepted as ground truth, but may need device adjustment. `CarouselPhysics.Config.standard` is the single tuning point.
+## Home look-refinement (in progress, 2026-06-22)
+
+Focus shifted from the deck (settled) to the **resting Home** look. Bar: "vibrant but
+measured, premium iOS, with my own flair." Working mode: full spec → approve → build →
+Bryan feel-checks on device.
+
+**Composition pass — BUILT (awaiting device feel).** Replaced the top-stacked column
+(all slack pooled in one bottom Spacer = dead space) with a **floated-block rhythm**:
+header pinned top; hero + Pulse + Lexicon float as ONE group centered in the void below
+the header (two equal flex `Spacer(minLength: lg)` top & bottom share the leftover
+height). Two FIXED internal gaps encode the hierarchy on every device:
+`heroIsolation = screenHeight * 0.085` (the deck's "sun" void) and
+`horizonVoid = screenHeight * 0.060` (Pulse → Lexicon separator, replaces the old uniform
+`xl` spacing). `lowerModules` is now `lowerModules(horizonVoid:)`. All values dial-able.
+Files: only `HomeDashboardView.swift`.
+
+**Depth-ontology hierarchy — BUILT (awaiting device feel).** Organizing principle for
+making Pulse/Lexicon 2nd/3rd fiddle WITHOUT muting them: hierarchy by DEPTH + ANIMACY,
+not opacity. Three layers — (1) hero = OBJECT above the surface (border+shadow+lift+
+pedestal+float; the ONLY element allowed a border/drop-shadow), (2) Pulse = LIGHT in the
+surface (no border/shadow/lift), (3) Lexicon = TYPE on the surface (flat, can be richly
+set). A floating object beats a flat glow regardless of brightness, so secondaries keep
+full detail. The earlier "axis collision" is now INTENTIONAL (layers may hold different
+axes). Hero sole-object audit = CLEAN.
+
+**Pulse redesign — BUILT (`HomePulseRail` only; PulseWidget/PulseGraph untouched).**
+Dissolved the widget chrome (no "THE PULSE" overline / chevron / bold title). Graph LEADS
++ an `AreaShape` melts the line down into the atmosphere bloom (purple→clear). Quick
+reference = the current `PulseTier` (`.label` + `.sublabel`, e.g. "The Sovereign Space /
+Grounded · Secure") from the user's LATEST real check-in; 0 entries → "Check in to begin"
+(no faked Space). Ember is state-aware (`EmberNode(inviting:)` = hollow ring when today
+is unchecked, filled when checked-in-today). Worded "CHECK IN →" affordance when
+!checkedInToday.
+
+**Check-in routing — interim wired, shared sheet DEFERRED to the PulseWidget pass.**
+Bryan's intent: both Home AND Map open the SAME check-in sheet IN PLACE (no tab-yank) =
+"what DailyCheckIn will become". `onCheckIn` callback added
+(HomePulseRail→HomeDashboardView→HomeRouterView); interim routes to `.map`. Swap to the
+in-place shared sheet when it exists. `CheckInShell` is coupled to PulseWidget (camera
+bindings + PulseGraph + onComplete) so cannot be hosted from Home this session.
+
+**Optional remaining tune:** a NEW `.home` AtmosphereConfig to peak the bloom behind the
+Pulse (NEVER mutate `.stat`; shared with OB StatPhase + LearnView). NOT built on purpose:
+atmosphere is a feel value, not a guess (the old custom HomeAtmosphere read flat), and
+the vibrancy-inversion is largely resolved already (lively Pulse now lives in the bloom,
+calm Lexicon in its tail). Tune from a screenshot if wanted.
+
+### Resting-Home tensions — status
+1. ~~Axis collision~~ — resolved by the depth ontology (intentional layer axes).
+2. ~~Vertical rhythm / dead space~~ — composition pass.
+3. ~~Lower modules different quiet-languages~~ — Pulse chrome dissolved (now light).
+4. ~~Vibrancy inverted~~ — largely resolved (Pulse-in-bloom); optional `.home` tune remains.
 
 ---
 
-## Key Files Map
-```
-Canvas:
-  VaylDirector.swift                  — phase machine, all state/animation
-  OnboardingCanvasView.swift          — layer stack, phase router
-  TableSurfaceView.swift              — felt surface
+## Deferred / watch items
 
-Cards:
-  VaylCardFace.swift                  — front face shell (content-switched)
-  VaylCardBack.swift                  — back face
-  VaylCardContent.swift               — content enum (add new face types here)
-  VaylCardCarousel.swift              — reusable browse carousel (this session)
-  CardPhysics/CarouselPhysics.swift   — scalar spring engine (this session)
-  CardPhysics/ThreeCardFanController.swift — 3-card fan for ExpLevel (this session)
-  CardFaces/ContextCardFace.swift     — context card face (this session)
-  CardFaces/CandleCardFace.swift      — ExpLevel candle face
-
-Phases (all in Features/Onboarding/Phases/):
-  NamePhase          → deck[1]
-  ModeSelectPhase    → deck[2]
-  GenderPhase        → deck[3] (slot machine + dissolution sequence, complex)
-  ExperienceLevelPhase → deck[4] (3-card fan, modified this session)
-  ContextPhase       → deck[5] (fully built this session)
-  CompassPhase       → STUB (next major build)
-  CuriosityPhase     → deck[6]
-
-Data:
-  OnboardingData.swift               — all OB fields
-  AppOBEnums.swift                   — OBPhase, OBCredential
-  AppEnums.swift                     — EmotionalRegister, SituationalRegister, RelationshipContext
-```
+- **Pedestal light-strip** (the `home-final` "pedestal of light" under the resting
+  card) was dropped — `CardCarousel` brings its own aurora glow. Re-add if wanted.
+- **Fly-to-corner ghost** flies to a fixed point in `CardCarousel`
+  (`.offset(x: 130, y: -40 + progress * -150)`). The corner deck is now pinned at
+  `(screenWidth - 48, safeTop + 24)`. If the ghost doesn't land on the deck, line up
+  the ghost target to that spot.
+- **Greeting dim** relies on the carousel backdrop + the explicit fade; confirm it
+  reads consistently with the Pulse/Lexicon fade.
 
 ---
 
-## Build / Debug
-- **Project:** `Vayl.xcodeproj`, scheme `Vayl`
-- **Dev jump menu:** `OnboardingCanvasView` `#Preview "Full OB Flow"` has a phase-jump toolbar
-- **Build:** `xcodebuild -scheme Vayl -destination 'generic/platform=iOS Simulator' -configuration Debug -derivedDataPath /tmp/vayl-dd build CODE_SIGNING_ALLOWED=NO`
-  (Use a fresh `-derivedDataPath` if Xcode has the DB locked)
-- **CLAUDE.md** at project root has full token contract, iOS 26 rules, and violation checklist
+## Constraints honored
+
+- `RacetrackTabBar` — untouched.
+- `PulseWidget` / `PulseGraph` (the real pulse instrument) — untouched. The Home Pulse
+  rail is a separate lightweight component.
+- `CardCarousel` — only an additive `dimOpacity` param; OB (which uses
+  `VaylCardCarousel`) is unaffected.
+
+Spec (superseded by the `CardCarousel` approach, but states/decisions still hold):
+`docs/superpowers/specs/2026-06-22-deck-punch-out-design.md`.

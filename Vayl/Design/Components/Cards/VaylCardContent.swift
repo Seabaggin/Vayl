@@ -26,8 +26,9 @@ public enum VaylCardContent: Equatable {
     /// Context selection face — numbered card with title, subtitle, detail.
     case context(number: String, title: String, subtitle: String, detail: String)
 
-    /// Curiosity category face.
-    case curiosity(category: String)
+    /// Curiosity category face — gimbaled compass operated by the keep/pass swipe.
+    /// deflection −1.0 (full PASS) … 1.0 (full KEEP) drives the needle.
+    case curiosity(category: String, deflection: Double = 0)
 
     /// Session prompt face.
     case session(prompt: String, highlights: [String])
@@ -69,6 +70,13 @@ public enum VaylCardContent: Equatable {
     /// `dragging` scales the thumb while the user is actively dragging.
     /// The drag gesture itself is an overlay owned by the phase — this only draws.
     case compassSlider(value: Double, dragging: Bool)
+
+    /// DemoPhase snapshot card — "I [verb] [noun]." sentence completion.
+    /// `toneProgress` 0.0 (need, cool) → 1.0 (desire, warm) tints the face.
+    /// `sealProgress` 0.0 (composing: chevron + underline visible) → 1.0 (sealed:
+    /// brackets fused into a clean sentence). The verb drum and noun field are
+    /// gesture overlays owned by the phase — this face only draws the sentence.
+    case snapshot(verb: DemoVerb, noun: String, toneProgress: Double, sealProgress: Double)
 }
 
 /// Visual style for the glass bar motif on mode cards.

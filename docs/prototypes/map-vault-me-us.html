@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — The Vault · Me vs Us</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --void:#0a0810;--cyan:#00c2ff;--purple:#6c3ae0;--purpleL:#a78bfa;--magenta:#ff006a;--magentaL:#ff4d94;--bridge:#8b6fd4;
+    --t1:rgba(236,234,242,.95);--t2:rgba(255,255,255,.6);--t3:rgba(255,255,255,.34);--hair:rgba(255,255,255,.09);--glass:rgba(255,255,255,.04);
+    --disp:"Clash Display",sans-serif;--body:"Switzer",sans-serif;--r-md:12px;--r-lg:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#100e16;color:var(--t1);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:960px;margin:0 auto;padding:48px 28px 90px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:27px;font-weight:600;margin:0 0 8px}
+  .lede{font-size:13.5px;line-height:1.62;color:var(--t2);margin:0 0 8px;max-width:770px}.lede b{color:var(--t1)}
+  h2{font-family:var(--disp);font-size:18px;font-weight:600;margin:56px 0 4px}h2 .n{color:var(--t3);font-weight:500;margin-right:10px}
+  .sub{font-size:12.5px;line-height:1.6;color:var(--t2);margin:0 0 24px;max-width:720px}.sub b{color:var(--t1)}
+
+  .spine{display:flex;gap:10px;max-width:770px;margin:10px 0 0}
+  @media(max-width:620px){.spine{flex-direction:column}}
+  .sp{flex:1;border-radius:var(--r-md);border:1px solid var(--hair);background:var(--glass);padding:13px 14px}
+  .sp .k{font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+  .sp.now .k{color:var(--cyan)}.sp.fwd .k{color:var(--purpleL)}.sp.kept .k{color:var(--magentaL)}
+  .sp .t{font-family:var(--disp);font-size:14px;font-weight:600;margin-top:5px}
+  .sp .d{font-size:11px;color:var(--t3);margin-top:3px;line-height:1.4}
+  .sp.kept{border-color:rgba(255,77,148,.32);background:linear-gradient(150deg,rgba(255,0,106,.07),transparent)}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:32px;justify-items:center}
+  @media(max-width:720px){.two{grid-template-columns:1fr}}
+  .cap{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin:0 0 13px;text-align:center}
+  .cap.me{color:var(--cyan)}.cap.us{color:var(--magenta)}
+
+  /* ── compact dashboard block ── */
+  .vblock{width:300px;max-width:100%;border-radius:var(--r-lg);border:1px solid rgba(255,77,148,.22);background:var(--glass);padding:14px 15px}
+  .vtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .eyebrow{font-size:8.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--magentaL)}
+  .lock{font-size:10px;color:var(--t3)}
+  .shelf{display:flex;align-items:center;gap:11px;padding:10px 2px;border-top:1px solid var(--hair)}
+  .shelf:first-of-type{border-top:0}
+  .shelf i{width:30px;height:30px;border-radius:9px;border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;font-size:14px;flex:none;color:var(--t2)}
+  .shelf .nm{font-family:var(--disp);font-size:13px;font-weight:600;color:var(--t1)}
+  .shelf .mt{font-size:9.5px;color:var(--t3);margin-top:1px;line-height:1.3}
+  .shelf .ct{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t3)}
+  .shelf .arr{color:var(--t3);font-size:13px}
+  .minibar{display:flex;gap:2px;width:44px;height:6px}
+  .minibar b{border-radius:2px}
+  .vfoot{font-size:9.5px;color:var(--t3);text-align:center;padding-top:10px;border-top:1px solid var(--hair);margin-top:2px}
+  .vfoot .lnk{color:var(--magentaL)}
+
+  /* ── full vault (pushed screen) ── */
+  .phone{position:relative;width:320px;max-width:100%;border-radius:40px;overflow:hidden;background:#050409;box-shadow:0 28px 70px rgba(0,0,0,.55),inset 0 0 0 1.4px rgba(255,255,255,.05);aspect-ratio:320/650}
+  .voidbg{position:absolute;inset:0;background:radial-gradient(120% 30% at 50% 0%,rgba(255,0,106,.12),transparent 60%),radial-gradient(90% 18% at 20% 6%,rgba(108,58,224,.16),transparent 70%),linear-gradient(#0c0918,#0a0810 58%,#08060f)}
+  .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:82px;height:22px;background:#000;border-radius:13px;z-index:9}
+  .home{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:92px;height:3.5px;border-radius:3px;background:rgba(255,255,255,.2);z-index:9}
+  .scr{position:absolute;inset:0;z-index:5;padding:44px 15px 16px;display:flex;flex-direction:column;gap:10px}
+  .nav{display:flex;align-items:center;gap:10px;padding:2px 2px 4px}
+  .nav .bk{color:var(--t2);font-size:16px}
+  .nav .ttl{font-family:var(--disp);font-size:17px;font-weight:600}
+  .nav .lens{margin-left:auto;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid var(--hair)}
+  .nav .lens.me{color:var(--cyan)}.nav .lens.us{color:var(--magentaL)}
+  .fcard{border-radius:var(--r-lg);border:1px solid var(--hair);background:var(--glass);padding:14px 15px}
+  .fhead{display:flex;align-items:center;gap:12px;margin-bottom:11px}
+  .fhead i{width:34px;height:34px;border-radius:10px;border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--t2);flex:none}
+  .fhead .nm{font-family:var(--disp);font-size:15px;font-weight:600}
+  .fhead .mt{font-size:9.5px;color:var(--t3);margin-top:1px}
+  .fhead .ct{margin-left:auto;font-size:10px;color:var(--t3)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .tc{font-size:9.5px;font-weight:600;border-radius:20px;padding:4px 10px;border:1px solid var(--hair);color:var(--t2)}
+  .tc.glow{border-color:rgba(0,194,255,.4);color:var(--cyan);background:rgba(0,194,255,.08)}
+  .tc.shared{border-color:rgba(255,77,148,.4);color:var(--magentaL);background:rgba(255,0,106,.08)}
+  .snip{font-size:11px;line-height:1.45;color:var(--t2)}
+  .agr{font-size:11.5px;color:var(--t1);padding:7px 0;border-top:1px solid var(--hair)}
+  .agr:first-child{border-top:0}
+  .spread{display:flex;gap:3px;height:9px;border-radius:5px;overflow:hidden;margin-top:4px}
+  .spread b{border-radius:2px}
+  .empty{border:1px dashed var(--hair);border-radius:var(--r-md);padding:14px;text-align:center;color:var(--t3)}
+  .empty .ic{font-size:18px;opacity:.6}
+  .empty .h{font-family:var(--disp);font-size:12px;color:var(--t2);margin-top:6px}
+  .empty .s{font-size:10px;margin-top:3px}
+  .priv-badge{display:inline-flex;align-items:center;gap:5px;font-size:9px;color:var(--t3);margin-top:2px}
+  .anno{max-width:760px;font-size:12.5px;line-height:1.62;color:var(--t2);margin:22px auto 0}.anno b{color:var(--t1)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:760px;margin:22px auto 0}
+  @media(max-width:620px){.cols{grid-template-columns:1fr}}
+  .note{border-radius:var(--r-md);border:1px solid var(--hair);background:var(--glass);padding:15px 16px}
+  .note h4{font-family:var(--disp);font-size:13px;font-weight:600;margin:0 0 8px}
+  .note p{font-size:12px;line-height:1.55;color:var(--t2);margin:0}.note b{color:var(--t1)}
+
+  /* ── journal: launcher + timeline + live slider ── */
+  .launch{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .lt{border-radius:11px;border:1px solid var(--hair);background:rgba(255,255,255,.03);padding:10px 11px;display:flex;flex-direction:column;gap:2px}
+  .lt .ic{font-size:15px;color:var(--purpleL)}
+  .lt .n{font-family:var(--disp);font-size:11px;font-weight:600;color:var(--t1)}
+  .lt .s{font-size:8px;color:var(--t3);line-height:1.3}
+  .lt.feat{grid-column:1 / -1;flex-direction:row;align-items:center;gap:11px;border-color:rgba(255,77,148,.3);background:linear-gradient(120deg,rgba(255,0,106,.08),transparent)}
+  .lt.feat .ic{color:var(--magentaL);font-size:18px}
+  .tl{position:relative;padding-left:15px}
+  .tl::before{content:"";position:absolute;left:3px;top:6px;bottom:6px;width:1px;background:var(--hair)}
+  .tlrow{position:relative;padding:9px 0;border-top:1px solid var(--hair)}
+  .tlrow:first-child{border-top:0}
+  .tlrow::before{content:"";position:absolute;left:-15px;top:15px;width:7px;height:7px;border-radius:50%;background:var(--purpleL);box-shadow:0 0 0 3px rgba(167,139,250,.12)}
+  .td{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--t3)}
+  .tprev{font-size:11px;color:var(--t2);margin-top:4px;line-height:1.4}
+  .seal{font-size:11.5px;color:var(--t1);font-style:italic;margin-top:5px;line-height:1.4}
+  .mtrack{position:relative;height:14px;margin:8px 2px 2px}
+  .mtrack::before{content:"";position:absolute;top:50%;left:0;right:0;height:2px;transform:translateY(-50%);border-radius:2px;background:linear-gradient(90deg,rgba(0,194,255,.4),rgba(255,0,106,.4))}
+  .mtrack .ghost,.mtrack .orb{position:absolute;top:50%;transform:translate(-50%,-50%);border-radius:50%}
+  .mtrack .ghost{width:8px;height:8px;background:rgba(255,255,255,.2)}
+  .mtrack .orb{width:11px;height:11px;background:radial-gradient(circle at 40% 35%,#fff,var(--cyan) 55%,var(--purple));box-shadow:0 0 8px rgba(0,194,255,.6)}
+  .pyr{display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin-top:7px}
+  .pyr b{height:5px;border-radius:2px;background:var(--purpleL);opacity:.8}
+  .poles{display:flex;justify-content:space-between;font-size:10px;color:var(--t2);line-height:1.3;margin-bottom:15px}
+  .slider{position:relative;height:16px;margin:0 8px}
+  .strack{position:absolute;top:50%;left:0;right:0;height:4px;transform:translateY(-50%);border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--purple) 50%,var(--magenta))}
+  .sghost{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3)}
+  .slabel{position:absolute;top:15px;transform:translateX(-50%);font-size:8px;color:var(--t3);white-space:nowrap}
+  .sorb{position:absolute;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,var(--cyan) 50%,var(--purple));box-shadow:0 0 4px #fff,0 0 16px 3px rgba(0,194,255,.6)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The Vault — <span class="spectrum">Me vs Us</span></h1>
+  <p class="lede">The <b>Kept</b> pillar: the couple's memory and holdings. It's the cleanest lens of the three, because private vs shared is a real line, not a framing trick. <b>Me</b> holds what's yours (your map, your journal). <b>Us</b> holds what's shared (where you align, your agreements, your record). Same rule as everywhere: Me = yours, Us = ours.</p>
+
+  <div class="spine">
+    <div class="sp now"><div class="k">Now</div><div class="t">The Pulse</div><div class="d">your capacity, right now</div></div>
+    <div class="sp fwd"><div class="k">Forward</div><div class="t">The Path</div><div class="d">the road, and your read on it</div></div>
+    <div class="sp kept"><div class="k">Kept</div><div class="t">The Vault</div><div class="d">what you've mapped, agreed, done</div></div>
+  </div>
+
+  <!-- ── dashboard block ── -->
+  <h2><span class="n">01</span>On the dashboard (compact)</h2>
+  <p class="sub">The Vault is the <b>most compact pillar</b>: a single block with shelf previews, tapping any shelf pushes into it. It sits calm below the Pulse hero and the Path. Me shows two private shelves; Us shows three shared ones.</p>
+  <div class="two">
+    <div>
+      <div class="cap me">Me lens</div>
+      <div class="vblock">
+        <div class="vtop"><div class="eyebrow">The Vault · yours</div><div class="lock">🔒 private</div></div>
+        <div class="shelf"><i>◈</i><div><div class="nm">Your map</div><div class="mt">what you're drawn to</div></div><div class="ct">18 rated<span class="arr">›</span></div></div>
+        <div class="shelf"><i>✎</i><div><div class="nm">Your journal</div><div class="mt">notes only you see</div></div><div class="ct">7<span class="arr">›</span></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="cap us">Us lens</div>
+      <div class="vblock">
+        <div class="vtop"><div class="eyebrow">The Vault · shared</div></div>
+        <div class="shelf"><i>✧</i><div><div class="nm">Where you meet</div><div class="mt">your aligned map</div></div><div class="ct">7 shared<span class="arr">›</span></div></div>
+        <div class="shelf"><i>⬡</i><div><div class="nm">Agreements</div><div class="mt">what you've settled on</div></div><div class="ct">4<span class="arr">›</span></div></div>
+        <div class="shelf"><i>▦</i><div><div class="nm">The record</div><div class="mt">where talks have gone</div></div>
+          <div class="minibar"><b style="flex:3;background:var(--cyan)"></b><b style="flex:2;background:var(--purpleL)"></b><b style="flex:1;background:var(--magentaL)"></b></div><span class="arr">›</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── full vault ── -->
+  <h2><span class="n">02</span>The full Vault (pushed)</h2>
+  <p class="sub">Tapping the block, or any shelf, pushes into the Vault. A back-titled screen (not a modal), because you're drilling a real hierarchy. Each shelf is a card with a real preview and its own empty state.</p>
+  <div class="two">
+
+    <!-- ME VAULT -->
+    <div>
+      <div class="cap me">Me · yours</div>
+      <div class="phone">
+        <div class="voidbg"></div><div class="notch"></div>
+        <div class="scr">
+          <div class="nav"><span class="bk">‹</span><span class="ttl">The Vault</span><span class="lens me">Yours</span></div>
+
+          <div class="fcard">
+            <div class="fhead"><i>◈</i><div><div class="nm">Your map</div><div class="mt">what you're drawn to</div></div><div class="ct">18 rated</div></div>
+            <div class="chips"><span class="tc">Watching</span><span class="tc">Public thrill</span><span class="tc">Being wanted</span><span class="tc">Slow build</span><span class="tc">+14</span></div>
+            <div class="priv-badge">🔒 Private until you both reveal</div>
+          </div>
+
+          <div class="fcard">
+            <div class="fhead"><i>✎</i><div><div class="nm">Your journal</div><div class="mt">freeform + notes from the Path</div></div><div class="ct">7 notes</div></div>
+            <div class="snip">"The strip club, before we go: I want to agree on the lap-dance question first, not in the moment."</div>
+            <div class="priv-badge" style="margin-top:9px">✦ pinned to · The strip club</div>
+          </div>
+
+          <div class="empty"><div class="ic">◈</div><div class="h">Keep going on your map</div><div class="s">Rate more to see where you and Alex might meet.</div></div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <!-- US VAULT -->
+    <div>
+      <div class="cap us">Us · ours</div>
+      <div class="phone">
+        <div class="voidbg"></div><div class="notch"></div>
+        <div class="scr">
+          <div class="nav"><span class="bk">‹</span><span class="ttl">The Vault</span><span class="lens us">Shared</span></div>
+
+          <div class="fcard">
+            <div class="fhead"><i>✧</i><div><div class="nm">Where you meet</div><div class="mt">your aligned map</div></div><div class="ct">7 shared</div></div>
+            <div class="chips"><span class="tc shared">Watching</span><span class="tc shared">Public thrill</span><span class="tc shared">Being wanted</span><span class="tc shared">+4</span></div>
+          </div>
+
+          <div class="fcard">
+            <div class="fhead"><i>⬡</i><div><div class="nm">Agreements</div></div><div class="ct">4 kept</div></div>
+            <div class="agr">You always leave together.</div>
+            <div class="agr">Either person can call it, any time, no reason needed.</div>
+            <div class="agr">A check-in the morning after.</div>
+          </div>
+
+          <div class="fcard">
+            <div class="fhead"><i>▦</i><div><div class="nm">The record</div><div class="mt">where your talks have gone</div></div><div class="ct">12 sessions</div></div>
+            <div class="spread"><b style="flex:4;background:var(--cyan)"></b><b style="flex:3;background:var(--purpleL)"></b><b style="flex:2;background:var(--magentaL)"></b><b style="flex:1;background:var(--bridge)"></b></div>
+            <div class="snip" style="margin-top:8px">Most in Boundaries, then Fantasy, then Jealousy.</div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="note"><h4>The map does the Path move</h4><p><b>Your map</b> (Me, private ratings) becomes <b>Where you meet</b> (Us, the overlap). Same data, two honest lenses: rank-your-own on Me, compare-two-points on Us. The Desire Map reveal is what lights the Us shelf.</p></div>
+    <div class="note"><h4>One journal, two doors</h4><p>A note written on a Path node lands in <b>Your journal</b>, tagged to that landmark (see the pinned note). No second journal. You can also write freeform here. Private always, until you choose to share.</p></div>
+  </div>
+
+  <!-- ── inside the journal ── -->
+  <h2><span class="n">03</span>Inside "Your journal" — where the mechanics live</h2>
+  <p class="sub">The journal shelf opens to your private <b>moments</b>: dated snapshots, unlike the standing map. You start one by choosing how to reflect, and past ones stack as a timeline you can revisit. The interactive prompts we discussed are not separate features, they are the <b>kinds</b> of moment.</p>
+  <div class="two">
+
+    <!-- journal home -->
+    <div>
+      <div class="cap me">Your journal · home</div>
+      <div class="phone">
+        <div class="voidbg"></div><div class="notch"></div>
+        <div class="scr">
+          <div class="nav"><span class="bk">‹</span><span class="ttl">Your journal</span><span class="lens me">🔒 Yours</span></div>
+
+          <div class="fcard" style="padding:13px 14px">
+            <div class="eyebrow" style="color:var(--purpleL);margin-bottom:9px">Start a moment</div>
+            <div class="launch">
+              <div class="lt"><span class="ic">✎</span><span class="n">Just write</span><span class="s">freeform, then cut to the truth</span></div>
+              <div class="lt"><span class="ic">◐</span><span class="n">Between two pulls</span><span class="s">a slider reading</span></div>
+              <div class="lt"><span class="ic">▲</span><span class="n">What's starved</span><span class="s">rank your needs</span></div>
+              <div class="lt"><span class="ic">◧</span><span class="n">Two voices</span><span class="s">anxious + expansive</span></div>
+              <div class="lt feat"><span class="ic">✧</span><div><span class="n">The Jealousy Map</span><div class="s">a guided 5-card walk, for when it's sitting heavy</div></div><span style="margin-left:auto;color:var(--magentaL)">›</span></div>
+            </div>
+          </div>
+
+          <div class="fcard" style="padding:13px 14px">
+            <div class="eyebrow" style="color:var(--t3);margin-bottom:4px">Your moments</div>
+            <div class="tl">
+              <div class="tlrow"><div class="td">Today · Between two pulls</div>
+                <div class="mtrack"><span class="ghost" style="left:40%"></span><span class="orb" style="left:62%"></span></div>
+                <div class="tprev">drifting toward the new since last time</div></div>
+              <div class="tlrow"><div class="td">Tue · The Jealousy Map</div>
+                <div class="seal">"I'm not scared they'll like her. I'm scared I'll be forgotten."</div></div>
+              <div class="tlrow"><div class="td">Sun · What's starved</div>
+                <div class="pyr"><b style="width:38%"></b><b style="width:64%"></b><b style="width:88%"></b></div>
+                <div class="tprev">Reassurance on top, then Novelty, then Autonomy</div></div>
+              <div class="tlrow"><div class="td">Jun 24 · pinned to The strip club</div>
+                <div class="tprev">"agree on the lap-dance question before, not in the moment"</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <!-- tension slider live -->
+    <div>
+      <div class="cap me">Between two pulls · live</div>
+      <div class="fcard" style="width:320px;max-width:100%;padding:16px 17px">
+        <div class="eyebrow" style="color:var(--cyan);margin-bottom:4px">A reading</div>
+        <div style="font-family:var(--disp);font-size:17px;font-weight:600;margin-bottom:18px">Where are you, right now?</div>
+        <div class="poles"><span>The safety<br>of my primary</span><span style="text-align:right">The electricity<br>of someone new</span></div>
+        <div class="slider">
+          <div class="strack"></div>
+          <span class="sghost" style="left:40%"></span><span class="slabel" style="left:40%">2 weeks ago</span>
+          <span class="sorb" style="left:62%"></span>
+        </div>
+        <div class="snip" style="margin-top:26px">You've moved toward the new since last time. Just noticing, nothing to fix.</div>
+        <div class="priv-badge" style="margin-top:12px">🔒 A moment, kept for you. You'll find it here when you come back.</div>
+      </div>
+
+      <div class="note" style="margin-top:18px">
+        <h4>It's a 1D Pulse</h4>
+        <p>The orb, the aura, and the "2 weeks ago" ghost all reuse the Pulse engine (position model + history overlay). This is why it's the near-free one to build, and it stitches the journal to the hero visually.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="anno">
+    <b>How the mechanics live here:</b> each is a <b>kind of moment</b>, not a separate feature. <b>Between two pulls</b> is a 1D Pulse (reuses the aura + position-over-time overlay). <b>What's starved</b> reuses the rater's drag + pills, and stays a mirror ("here's how you ranked today", never a type). <b>Two voices</b> is a split layout. <b>The Erasure</b> is the distillation step that turns a paragraph into the one italic sentence you see sealed in the timeline: it powers "Just write" and the Jealousy Map's core, it is not its own tile. Everything is private, dated, and kept, while the standing map stays separate and permanent. A sealed moment surfaces when you return, never as a notification.
+  </div>
+
+  <div class="anno">
+    <b>The fork for you:</b> this shows the Vault as a compact block that pushes into a full screen. The alternative is heavier inline rows on the dashboard (more present, but the tab gets tall under the Pulse hero + Path). I lean compact-and-push for calm. <b>Also confirm:</b> lean means no "saved articles / decks" shelf, the Vault holds what you made together, not a reading list. Say if you want the record given more room than a shelf, since it folded in from the old Me layer.
+  </div>
+
+</div>
+</body>
+</html>

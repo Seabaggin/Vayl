@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Pick tonight's cards · corner deck</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --void: #0a0810; --ink: #070610; --cardBg: #120f1a;
+    --cyan: #00c2ff; --cyanL: #4dd8ff; --purple: #6c3ae0; --purpleL: #a78bfa;
+    --magenta: #ff006a; --magentaL: #ff4d94; --bridge: #8b6fd4;
+    --disp: "Clash Display", -apple-system, sans-serif;
+    --body: "Switzer", -apple-system, BlinkMacSystemFont, sans-serif;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #131218; color: rgba(255,255,255,0.9); font-family: var(--body); }
+  .spectrum-text { background: linear-gradient(90deg, var(--cyan), var(--bridge) 42%, var(--magenta)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .wrap { display: flex; min-height: 100vh; }
+
+  .panel { width: 320px; flex-shrink: 0; padding: 30px 26px 60px; background: #0e0d14; border-right: 1px solid #1c1a28; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
+  .panel .brand { font-family: var(--disp); font-size: 13px; font-weight: 600; letter-spacing: 0.34em; margin: 0 0 2px; color: rgba(236,234,242,0.95); }
+  .panel h2 { font-family: var(--disp); font-size: 19px; font-weight: 500; margin: 0 0 10px; color: rgba(236,234,242,0.95); line-height: 1.25; }
+  .panel .lede { font-size: 12.5px; line-height: 1.6; color: rgba(255,255,255,0.55); margin: 0 0 18px; }
+  .step { display: flex; gap: 11px; font-size: 12px; line-height: 1.5; color: rgba(255,255,255,0.55); margin-bottom: 11px; }
+  .step .k { font-family: var(--disp); font-weight: 600; font-size: 12px; min-width: 16px; }
+  .step b { color: rgba(255,255,255,0.9); font-weight: 500; }
+  .hint { border-top: 1px solid #1c1a28; margin-top: 16px; padding-top: 16px; font-size: 11.5px; line-height: 1.6; color: rgba(255,255,255,0.34); }
+  .hint b { color: rgba(255,255,255,0.55); font-weight: 500; }
+  .btns { display: flex; gap: 8px; margin-top: 16px; }
+  .btns button { flex: 1; font-family: var(--body); font-size: 11.5px; color: rgba(255,255,255,0.6); background: transparent; border: 1px solid #1c1a28; border-radius: 8px; padding: 8px 0; cursor: pointer; }
+  .btns button:hover { border-color: rgba(108,58,224,0.5); color: rgba(255,255,255,0.9); }
+  .rm-row { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; }
+  .rm-row span { font-size: 11.5px; color: rgba(255,255,255,0.55); }
+  .toggle { width: 40px; height: 23px; border-radius: 12px; cursor: pointer; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); position: relative; transition: background 0.25s; flex: none; }
+  .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: left 0.25s; }
+  .toggle.on { background: linear-gradient(90deg, var(--purple), var(--magenta)); }
+  .toggle.on::after { left: 22px; }
+
+  .stage { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 40px;
+    background: radial-gradient(130% 90% at 50% 10%, #1b1a22 0%, #111016 60%); }
+
+  .phone { position: relative; width: 390px; height: 844px; border-radius: 50px; overflow: hidden; background: var(--ink);
+    box-shadow: 0 36px 90px rgba(0,0,0,0.62), inset 0 0 0 1.5px rgba(255,255,255,0.05); }
+  .voidbg { position: absolute; inset: 0; background: radial-gradient(135% 115% at 50% 20%, #17111f 0%, #0d0916 50%, #07060e 100%); }
+  .atmo { position: absolute; inset: 0; pointer-events: none; }
+  .atmo .drift { position: absolute; inset: 0; animation: drift 16s ease-in-out infinite alternate; }
+  body.rm .atmo .drift { animation: none; }
+  @keyframes drift { from { transform: translate(0,0); } to { transform: translate(-10px, 12px); } }
+  .blob { position: absolute; border-radius: 50%; filter: blur(72px); transform: translate(-50%,-50%); }
+  .b-cyan    { left:110px; top:340px; width:440px; height:380px; background: radial-gradient(closest-side, rgba(0,194,255,0.18), transparent 72%); animation: breath 7s ease-in-out infinite; }
+  .b-purple  { left:270px; top:560px; width:470px; height:430px; background: radial-gradient(closest-side, rgba(108,58,224,0.2), transparent 72%); animation: breath 9s ease-in-out 1s infinite; }
+  .b-magenta { left:190px; top:800px; width:480px; height:410px; background: radial-gradient(closest-side, rgba(255,0,106,0.22), transparent 72%); animation: breath 6.5s ease-in-out 0.5s infinite; }
+  body.rm .blob { animation: none; }
+  @keyframes breath { 0%,100% { opacity: 0.6; transform: translate(-50%,-50%) scale(1); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.06); } }
+  .notch { position: absolute; top: 13px; left: 50%; transform: translateX(-50%); width: 112px; height: 30px; background: #000; border-radius: 18px; z-index: 9; }
+  .home-ind { position: absolute; bottom: 9px; left: 50%; transform: translateX(-50%); width: 128px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.22); z-index: 9; }
+  .sb { position: absolute; top: 0; left: 0; right: 0; z-index: 8; display: flex; justify-content: space-between; padding: 17px 40px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7); pointer-events: none; }
+  .sb .ic { letter-spacing: 2px; font-size: 11px; opacity: 0.72; }
+
+  /* top bar: back · deck name · corner deck */
+  .topbar { position: absolute; top: 58px; left: 30px; right: 24px; z-index: 6; display: flex; align-items: flex-start; justify-content: space-between; }
+  .back { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.7);
+    font-size: 19px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0 3px 2px 0; }
+  .deckname { text-align: center; margin-top: 4px; }
+  .deckname .nm { font-family: var(--disp); font-weight: 500; font-size: 15px; color: rgba(236,234,242,0.95); }
+  .deckname .sub { font-size: 10.5px; letter-spacing: 0.04em; color: rgba(255,255,255,0.42); margin-top: 2px; }
+
+  /* corner deck — your hand builds here, OB-style */
+  .cornerdeck { position: relative; width: 56px; height: 44px; cursor: pointer; }
+  .cmini { position: absolute; width: 46px; height: 33px; right: 0; top: 0; border-radius: 6px; background: var(--cardBg); transform-origin: bottom right;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4); transition: transform 0.4s var(--ease), opacity 0.4s var(--ease); }
+  .cmini .cfr { position: absolute; inset: 0; border-radius: 6px; padding: 0.7px; pointer-events: none;
+    background: linear-gradient(135deg, rgba(0,194,255,0.45), rgba(108,58,224,0.45) 50%, rgba(255,0,106,0.45)) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .ccount { position: absolute; right: -6px; top: -8px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; z-index: 3;
+    background: linear-gradient(135deg, var(--cyan), var(--magenta)); color: #0a0810; font-family: var(--disp); font-weight: 600; font-size: 11px;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(108,58,224,0.5); }
+  .clabel { position: absolute; top: 48px; right: 0; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.4); white-space: nowrap; }
+
+  .instr { position: absolute; top: 120px; left: 0; right: 0; text-align: center; z-index: 5; }
+  .instr .t { font-family: var(--disp); font-weight: 500; font-size: 22px; color: rgba(236,234,242,0.95); }
+  .instr .s { font-size: 12.5px; color: rgba(255,255,255,0.5); margin-top: 6px; }
+
+  /* carousel of landscape session cards */
+  .carousel { position: absolute; top: 300px; left: 0; right: 0; height: 240px; z-index: 4; }
+  .pcard { position: absolute; left: 50%; top: 50%; width: 300px; height: 212px; transform: translate(-50%,-50%); border-radius: 16px; overflow: hidden;
+    background: var(--cardBg); transition: transform 0.42s var(--ease), opacity 0.42s var(--ease); cursor: pointer; }
+  .pcard .pfr { position: absolute; inset: 0; border-radius: 16px; padding: 1px; pointer-events: none;
+    background: linear-gradient(135deg, rgba(0,194,255,0.5), rgba(108,58,224,0.5) 50%, rgba(255,0,106,0.5)) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .pcard .pdepth { position: absolute; top: 16px; left: 18px; font-size: 9.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+    background: linear-gradient(90deg, var(--cyanL), var(--magentaL)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .pcard .pq { position: absolute; inset: 40px 26px 44px; display: flex; align-items: center; justify-content: center; text-align: center;
+    font-family: var(--disp); font-weight: 500; font-size: 19px; line-height: 1.34; color: rgba(255,255,255,0.95); }
+  .pcard .padd { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(116,219,255,0.75); }
+  .pcard.left  { transform: translate(-50%,-50%) translateX(-228px) scale(0.78); opacity: 0.32; }
+  .pcard.right { transform: translate(-50%,-50%) translateX(228px) scale(0.78); opacity: 0.32; }
+  .pcard.far   { opacity: 0; pointer-events: none; }
+  .pcard.added { opacity: 0; transform: translate(-50%,-50%) translate(135px,-330px) scale(0.16); pointer-events: none; }
+
+  .navrow { position: absolute; bottom: 168px; left: 0; right: 0; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 22px; }
+  .nav { width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.75);
+    font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .nav:hover { border-color: rgba(255,255,255,0.3); }
+  .navdots { display: flex; gap: 5px; }
+  .navdots i { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.18); }
+  .navdots i.on { background: linear-gradient(135deg, var(--cyan), var(--magenta)); }
+  .navdots i.picked { background: rgba(255,255,255,0.5); }
+
+  .startbtn { position: absolute; bottom: 42px; left: 30px; right: 30px; z-index: 6; padding: 16px; border-radius: 18px; text-align: center; cursor: pointer;
+    font-family: var(--body); font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.02);
+    transition: all 0.3s var(--ease); }
+  .startbtn.ready { color: #0a0810; border-color: transparent; background: linear-gradient(120deg, var(--cyan), var(--magenta)); }
+</style>
+</head>
+<body class="rm-off">
+<div class="wrap">
+  <aside class="panel">
+    <div class="brand">VAYL</div>
+    <h2>Pick tonight's cards</h2>
+    <p class="lede">A session is a short hand, not the whole deck. You browse one deck and tap the cards you want; each flies to the <b>corner deck</b> that holds tonight's hand.</p>
+    <div class="step"><span class="k spectrum-text">1</span><span>Browse the deck's cards in the carousel. Read, swipe.</span></div>
+    <div class="step"><span class="k spectrum-text">2</span><span><b>Tap a card</b> to add it — it flies to the corner deck, which builds your hand (3 to 5).</span></div>
+    <div class="step"><span class="k spectrum-text">3</span><span><b>Start</b> when you've got a few. It carries that hand into the airlock.</span></div>
+    <div class="hint">Same gesture as OB's corner deck, so the app speaks one card language end to end. <b>⚑ Swift-native:</b> the fly-to-corner arc + carousel physics are tuned on device (CardCarousel + the OB corner-deck controller).</div>
+    <div class="btns"><button id="addBtn">+ add card</button><button id="resetBtn">↺ reset</button></div>
+    <div class="rm-row"><div class="toggle" id="rmToggle"></div><span>Reduce motion</span></div>
+  </aside>
+
+  <main class="stage">
+    <div class="phone" id="phone">
+      <div class="voidbg"></div>
+      <div class="atmo"><div class="drift"><div class="blob b-cyan"></div><div class="blob b-purple"></div><div class="blob b-magenta"></div></div></div>
+      <div class="notch"></div>
+      <div class="sb"><span>9:41</span><span class="ic">●●● ▮</span></div>
+
+      <div class="topbar">
+        <button class="back" aria-label="Back">‹</button>
+        <div class="deckname"><div class="nm">The Opener</div><div class="sub">28 cards · shallow to deep</div></div>
+        <div class="cornerdeck" id="cornerdeck">
+          <div class="ccount" id="ccount">0</div>
+          <div class="clabel">tonight</div>
+        </div>
+      </div>
+
+      <div class="instr"><div class="t">Pick tonight's cards</div><div class="s">tap to add · 3 to 5 feels right</div></div>
+
+      <div class="carousel" id="carousel"></div>
+
+      <div class="navrow">
+        <button class="nav" id="prevBtn">‹</button>
+        <div class="navdots" id="navdots"></div>
+        <button class="nav" id="nextBtn">›</button>
+      </div>
+
+      <div class="startbtn" id="startbtn">add a few to start</div>
+      <div class="home-ind"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const cards = [
+    { depth: "warming up", q: "What made you smile today?" },
+    { depth: "warming up", q: "What's a small thing I do that you love?" },
+    { depth: "deepening",  q: "When did you last feel really seen by me?" },
+    { depth: "deepening",  q: "What have you wanted to ask me but never have?" },
+    { depth: "opening up", q: "Where do you want us to be a year from now?" },
+    { depth: "opening up", q: "What's a fear you haven't said out loud to me?" },
+    { depth: "deep",       q: "When do you feel closest to me?" },
+    { depth: "deep",       q: "What do you need more of from me right now?" },
+  ];
+  const phone = document.getElementById('phone'), carousel = document.getElementById('carousel'), navdots = document.getElementById('navdots');
+  const ccount = document.getElementById('ccount'), startbtn = document.getElementById('startbtn');
+  let idx = 0, hand = [], busy = false;
+
+  function buildCards() {
+    carousel.innerHTML = '';
+    cards.forEach((c, i) => {
+      const el = document.createElement('div');
+      el.className = 'pcard'; el.dataset.i = i;
+      el.innerHTML = '<div class="pdepth">' + c.depth + '</div><div class="pq">' + c.q + '</div><div class="padd">tap to add</div><div class="pfr"></div>';
+      el.addEventListener('click', () => { if (i === idx) add(); else { idx = i; render(); } });
+      carousel.appendChild(el);
+    });
+    navdots.innerHTML = cards.map(() => '<i></i>').join('');
+  }
+  function render() {
+    [...carousel.children].forEach((el, i) => {
+      el.classList.remove('left', 'right', 'far');
+      if (hand.includes(i)) { el.classList.add('added'); return; }
+      el.classList.remove('added');
+      const d = i - idx;
+      if (d === 0) {} else if (d === -1) el.classList.add('left');
+      else if (d === 1) el.classList.add('right');
+      else el.classList.add('far');
+    });
+    [...navdots.children].forEach((d, i) => { d.className = ''; if (hand.includes(i)) d.classList.add('picked'); if (i === idx) d.classList.add('on'); });
+    ccount.textContent = hand.length;
+    const n = hand.length;
+    startbtn.textContent = n === 0 ? 'add a few to start' : 'Start · ' + n + (n === 1 ? ' card' : ' cards');
+    startbtn.classList.toggle('ready', n >= 1);
+  }
+  function add() {
+    if (busy || hand.includes(idx)) return;
+    busy = true;
+    const el = carousel.querySelector('.pcard[data-i="' + idx + '"]');
+    el.classList.add('added');                                  // flies to the corner deck
+    hand.push(idx);
+    // drop a card into the corner stack
+    const mini = document.createElement('div'); mini.className = 'cmini';
+    mini.innerHTML = '<div class="cfr"></div>';
+    const k = Math.min(hand.length, 3);
+    mini.style.transform = 'rotate(' + ((k - 2) * 7) + 'deg) translateY(' + (-(k - 1) * 2) + 'px)';
+    document.getElementById('cornerdeck').appendChild(mini);
+    setTimeout(() => {
+      // advance to the next unpicked card
+      let next = idx; for (let s = 1; s <= cards.length; s++) { const c = (idx + s) % cards.length; if (!hand.includes(c)) { next = c; break; } }
+      idx = next; render(); busy = false;
+    }, 420);
+    render();
+  }
+  function nav(dir) {
+    if (busy) return;
+    for (let s = 1; s <= cards.length; s++) { const c = (idx + dir * s + cards.length * 9) % cards.length; if (!hand.includes(c)) { idx = c; break; } }
+    render();
+  }
+  function reset() {
+    hand = []; idx = 0; busy = false;
+    document.querySelectorAll('.cmini').forEach(m => m.remove());
+    render();
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', () => nav(-1));
+  document.getElementById('nextBtn').addEventListener('click', () => nav(1));
+  document.getElementById('addBtn').addEventListener('click', add);
+  document.getElementById('resetBtn').addEventListener('click', reset);
+  document.getElementById('rmToggle').addEventListener('click', function () { this.classList.toggle('on'); document.body.classList.toggle('rm', this.classList.contains('on')); });
+
+  buildCards(); render();
+</script>
+</body>
+</html>

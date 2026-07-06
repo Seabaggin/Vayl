@@ -1,0 +1,155 @@
+[
+  {
+    "order": 1,
+    "title": "Entry & Composition Root",
+    "description": "Start where the app starts. VaylApp.swift is the @main entry point and composition root: it constructs the shared AppState, injects it into the Store graph, wires environment objects, and kicks off session and entitlement bootstrap on launch. Reading this first gives you the runtime skeleton, every major subsystem hangs off the dependencies created here.",
+    "nodeIds": [
+      "file:Vayl/App/VaylApp.swift"
+    ],
+    "languageLesson": "A SwiftUI App conforms to the App protocol and is tagged @main. Its `body` returns a Scene (a WindowGroup), not a View. This struct is constructed once and is the single place to build app-wide singletons and inject them with .environment(...) so every child view can read them."
+  },
+  {
+    "order": 2,
+    "title": "Boot & Onboarding-First Routing",
+    "description": "Two files decide how the app comes alive. ModelContainer.swift declares SchemaV1, the single registry of every @Model type, and builds the disk-backed and in-memory SwiftData containers. AppRootView.swift is the top-level gate: it shows the splash once per cold launch, then reactively routes to onboarding, sign-in, or the main AppShell based on AppState and AuthService. This is the 'onboarding-first vs main' fork the rest of the tour branches from.",
+    "nodeIds": [
+      "file:Vayl/App/ModelContainer.swift",
+      "file:Vayl/App/Theme/AppRootView.swift",
+      "file:Vayl/App/AppShell.swift"
+    ],
+    "languageLesson": "SwiftData uses a versioned Schema and a ModelContainer as the persistence backbone (the modern replacement for Core Data's NSPersistentContainer). Registering every @Model in one SchemaV1 keeps migrations coherent; an in-memory container variant is invaluable for previews and tests."
+  },
+  {
+    "order": 3,
+    "title": "The Design-Token System",
+    "description": "Before any feature view makes sense, learn the rule everything obeys: zero raw values in Views. The App/Theme layer defines the entire visual vocabulary, AppColors, AppFonts, AppSpacing, and AppLayout, while ThemeModifiers exposes the view modifiers (cards, hairlines, glows) that views compose instead of calling primitives like .red or .shadow directly. Internalize these tokens now and every screen you read later becomes legible.",
+    "nodeIds": [
+      "file:Vayl/App/Theme/AppColors.swift",
+      "file:Vayl/App/Theme/AppFonts.swift",
+      "file:Vayl/App/Theme/AppSpacing.swift",
+      "file:Vayl/App/Theme/AppLayout.swift",
+      "file:Vayl/App/Theme/ThemeModifiers.swift"
+    ],
+    "languageLesson": "AppLayout resolves geometry from a GeometryProxy rather than UIScreen.main.bounds, this is mandatory under the iOS 26 SDK, where global window/screen singletons are hard compiler errors. The pattern: pass `geo` down, call AppLayout.from(geo), and read screen/card dimensions from the result."
+  },
+  {
+    "order": 4,
+    "title": "The 4-Layer Store Architecture",
+    "description": "This is the architectural heart of the app, taught through the Home tab. HomeRouterView (the View) renders pixels and forwards taps, reading all of its state from HomeStore, an @Observable @MainActor class that owns state and makes decisions by calling Services. HomeDashboardView shows how a rich screen composes purely from Store state. The contract is strict: Views never touch a Service, network, or database directly, they only read Stores and call Store methods.",
+    "nodeIds": [
+      "file:Vayl/Features/Home/Views/HomeRouterView.swift",
+      "file:Vayl/Features/Home/Store/HomeStore.swift",
+      "file:Vayl/Features/Home/Views/HomeDashboardView.swift"
+    ],
+    "languageLesson": "@Observable (the Swift macro) replaces the older ObservableObject/@Published pattern: any stored property a View reads becomes an automatic dependency, so the View re-renders only when the exact value it used changes. Marking the Store @MainActor guarantees all state mutation happens on the main thread."
+  },
+  {
+    "order": 5,
+    "title": "Core Models & SwiftData Persistence",
+    "description": "Models are pure data shapes with no logic and no dependencies, the vocabulary every layer shares. UserProfile, Couple, and CardSession are the domain nouns the whole app revolves around (a user, the pair they form, and a completed card session). The Persistence layer, DataStore and the ModelContext extensions, wraps SwiftData reads and writes so Stores can save and fetch these @Model types without scattering raw context calls.",
+    "nodeIds": [
+      "file:Vayl/Core/Models/UserProfile.swift",
+      "file:Vayl/Core/Models/Couple.swift",
+      "file:Vayl/Core/Models/CardSession.swift",
+      "file:Vayl/Core/Persistence/DataStore.swift",
+      "file:Vayl/Core/Persistence/ModelContext+Extensions.swift"
+    ],
+    "languageLesson": "A SwiftData @Model class is a reference type whose properties are transparently persisted and observed. Relationships between models (a Couple referencing two UserProfiles) are declared as plain stored properties; SwiftData infers the inverse and manages the backing store."
+  },
+  {
+    "order": 6,
+    "title": "Core Services & the Supabase Bridge",
+    "description": "Services handle network and I/O and are injected into Stores, never the reverse. This cluster is the app's connection to its backend: SupabaseManager constructs the shared SupabaseClient, SyncManager pushes local profile, identity, desire ratings, and onboarding state up to Supabase (retrying queued tasks), AuthService manages sessions, and ContentLoader loads bundled card content. AppState ties them together as the shared environment object you saw created in Step 1.",
+    "nodeIds": [
+      "file:Vayl/Core/Services/SupabaseManager.swift",
+      "file:Vayl/Core/Services/SyncManager.swift",
+      "file:Vayl/Core/Services/AuthService.swift",
+      "file:Vayl/Core/Services/ContentLoader.swift",
+      "file:Vayl/Core/Services/AppState.swift"
+    ],
+    "languageLesson": "These services lean on Swift's async/await for network calls and isolate side effects behind a clean API so Stores stay testable. SyncManager's retry-queue pattern, persist locally first, then enqueue a remote push that survives transient failures, is the app's offline-tolerant sync strategy."
+  },
+  {
+    "order": 7,
+    "title": "The Onboarding Director",
+    "description": "Now the most distinctive subsystem: the animated onboarding canvas. VaylDirector is its brain, an @Observable @MainActor coordinator (the single highest fan-in file in the codebase) that owns the current phase, every card collection and its physics state, the table fade, and crucially the only advance() path. OnboardingCanvasView renders the stage it describes, and OnboardingStage is the protocol contract between them. The non-negotiable rule: director.advance() is the ONLY way to change phase.",
+    "nodeIds": [
+      "file:Vayl/Features/Onboarding/Canvas/VaylDirector.swift",
+      "file:Vayl/Features/Onboarding/Canvas/OnboardingCanvasView.swift",
+      "file:Vayl/Features/Onboarding/Canvas/OnboardingStage.swift"
+    ],
+    "languageLesson": "VaylDirector is a state machine: phase is the single source of truth and advance() is the lone gated transition. Funneling every transition through one method (rather than letting views flip state) keeps a complex, choreographed animation sequence deterministic and replayable, the same discipline as a reducer in unidirectional-data-flow architectures."
+  },
+  {
+    "order": 8,
+    "title": "Onboarding Phases & Sequencers",
+    "description": "Each onboarding beat is its own phase view, driven by the director from Step 7. NamePhase is the dealer's explicit guided lesson that first teaches the tap-lift then swipe-up gestures; ContextPhase and BuildDeckPhase gather the user's situation and assemble their deck. GenderSequencer shows the Sequencer pattern, a per-phase choreography helper the director forwards to for timed, multi-step card motion. Together these turn the director's phase enum into the felt, on-screen experience.",
+    "nodeIds": [
+      "file:Vayl/Features/Onboarding/Phases/NamePhase.swift",
+      "file:Vayl/Features/Onboarding/Phases/ContextPhase.swift",
+      "file:Vayl/Features/Onboarding/Phases/BuildDeckPhase.swift",
+      "file:Vayl/Features/Onboarding/Canvas/Sequencers/GenderSequencer.swift"
+    ],
+    "languageLesson": "Onboarding copy always addresses one person ('you'/'I'), never 'we', because onboarding is two-device and each partner completes it alone. The Sequencer pattern decomposes a long animation into discrete, individually-tunable steps so timing can be felt and adjusted without rewriting the phase view."
+  },
+  {
+    "order": 9,
+    "title": "The Two-Device Card Session",
+    "description": "The card session is the app's most protected experience, a safe-worded, two-device flow. SessionStore is its brain: it owns card navigation, records per-card results, and persists the completed CardSession, results, and DeckProgress to SwiftData before enqueuing a Supabase sync. SessionView renders the session, and SessionPlan defines the ordered run of cards. Because it is safe-worded and stateful mid-flow, this screen is always presented as a protected cover with confirm-on-exit, never a swipe-away sheet.",
+    "nodeIds": [
+      "file:Vayl/Features/Sessions/SessionStore.swift",
+      "file:Vayl/Features/Sessions/SessionView.swift",
+      "file:Vayl/Features/Sessions/SessionPlan.swift"
+    ],
+    "languageLesson": "Notice the persistence ordering, save locally to SwiftData first, then enqueue the remote sync. The session survives even if the network is down, and the queued push (handled by SyncManager from Step 6) reconciles later. This 'local-first, sync-eventually' pattern recurs across every write path in the app."
+  },
+  {
+    "order": 10,
+    "title": "Pairing: Linking Two Devices",
+    "description": "Before two people can share a session they must pair. PairingStore owns the pairing flow on the client; PairingInviteView generates and shows a code for one partner, while PairingJoinView consumes a code on the other. This is the client half of the handshake, the server half (validating and consuming codes, creating the couple) lives in the edge functions you will read in Step 12. Keep that split in mind: the Store orchestrates, the backend is authoritative.",
+    "nodeIds": [
+      "file:Vayl/Features/Pairing/PairingStore.swift",
+      "file:Vayl/Features/Pairing/PairingInviteView.swift",
+      "file:Vayl/Features/Pairing/PairingJoinView.swift"
+    ]
+  },
+  {
+    "order": 11,
+    "title": "Desire Map & Monetization",
+    "description": "The Desire Map is the primary conversion moment. DesireMapStore drives the rating flow where each partner privately rates desires; DesireRevealStore powers the D4 reveal, fetching the couple's alignment-only matches and resolving the free-versus-locked split against the EntitlementStore, the paywall gate. DesireRevealView stages that reveal, and PaywallSheet presents the single lifetime upgrade. The architecture deliberately ties the emotional payoff (seeing your matches) to the purchase decision.",
+    "nodeIds": [
+      "file:Vayl/Features/Desire Map/Store/DesireMapStore.swift",
+      "file:Vayl/Features/Desire Map/Store/DesireRevealStore.swift",
+      "file:Vayl/Features/Desire Map/Views/DesireRevealView.swift",
+      "file:Vayl/Features/Monetization/Store/EntitlementStore.swift",
+      "file:Vayl/Features/Monetization/Views/PaywallSheet.swift"
+    ],
+    "languageLesson": "EntitlementStore is the client mirror of a server-authoritative truth: entitlements are granted only by a service-role edge function and never written from the client, so a jailbroken device cannot fake access. The Store reads entitlement state to gate UI, but the source of truth is the backend in Step 12."
+  },
+  {
+    "order": 12,
+    "title": "The Supabase Edge Functions",
+    "description": "The server-side brain. These Deno/TypeScript edge functions run with the service role and enforce every rule the client cannot be trusted with. create-pair and lookup-code complete the pairing handshake from Step 10 (validating, guarding against self-pair and prior couples, consuming the code). compute-desire-matches computes the server-authoritative matches behind the reveal in Step 11, grant-entitlement is the only path that grants a purchase, and get-partner resolves partner identity for the paired experience.",
+    "nodeIds": [
+      "file:supabase/functions/create-pair/index.ts",
+      "file:supabase/functions/lookup-code/index.ts",
+      "file:supabase/functions/compute-desire-matches/index.ts",
+      "file:supabase/functions/grant-entitlement/index.ts",
+      "file:supabase/functions/get-partner/index.ts"
+    ],
+    "languageLesson": "Supabase edge functions are Deno runtimes: each function is an index.ts serving an HTTP handler, with imports pinned via deno.json. Running with the service-role key bypasses row-level security, so these functions are exactly where authoritative, security-sensitive logic (matching, entitlement grants, pairing consumption) must live, never in the client."
+  },
+  {
+    "order": 13,
+    "title": "The Database Schema",
+    "description": "Finish at the foundation everything rests on. The baseline migration provisions the entire backend, Postgres extensions, helper functions, and the core tables with row-level security scoped to couple membership. user_profiles is the person, couples is the pair (the FK relationship that drives every shared feature), and desire_matches stores the computed results the reveal reads. A later migration layers on the monetization entitlements table, the server-authoritative source behind the EntitlementStore from Step 11.",
+    "nodeIds": [
+      "table:supabase/migrations/20260101000000_baseline.sql",
+      "table:supabase/migrations/20260101000000_baseline.sql:user_profiles",
+      "table:supabase/migrations/20260101000000_baseline.sql:couples",
+      "table:supabase/migrations/20260101000000_baseline.sql:desire_matches",
+      "table:supabase/migrations/20260617120000_monetization_entitlements.sql"
+    ],
+    "languageLesson": "Row-Level Security (RLS) policies scoped to couple membership are the backbone of privacy here: a Postgres policy ensures a user can only read rows belonging to their own couple, enforced by the database itself rather than application code. Migrations are ordered and incremental, each timestamped file evolves the schema forward in lockstep with app releases."
+  }
+]

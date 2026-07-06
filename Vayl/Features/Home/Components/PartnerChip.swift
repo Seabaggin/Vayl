@@ -4,6 +4,9 @@ import SwiftUI
 
 struct PartnerChip: View {
     let state: PartnerChipState
+    /// You finished your Desire Map and are waiting on your partner — surfaces a small aperture
+    /// in the active pill (the desire-map waiting status, no dashboard card).
+    var waiting: Bool = false
     var onInviteTap:  (() -> Void)? = nil
     var onPartnerTap: (() -> Void)? = nil
 
@@ -159,6 +162,11 @@ struct PartnerChip: View {
                             ? AppColors.textSecondary
                             : AppColors.textSecondary)
 
+                    if waiting {
+                        VaylMark(ringCount: 1, glow: 0.55, showsCore: true)
+                            .frame(width: 15, height: 15)
+                    }
+
                     Image(systemName: AppIcons.chevronRight)
                         // .caption2 scales with Dynamic Type — correct for
                         // small directional indicators in compact chips.
@@ -168,21 +176,10 @@ struct PartnerChip: View {
                             ? AppColors.textTertiary
                             : AppColors.textTertiary)
                 }
-                .padding(.horizontal, AppSpacing.sm)
+                .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.sm)
-                .background {
-                    Capsule()
-                        .fill(isLight
-                            ? AppColors.glassFrostCard
-                            : Color.white.opacity(0.04))
-                }
-                .overlay {
-                    Capsule()
-                        .stroke(isLight
-                            ? AppColors.borderSubtle
-                            : Color.white.opacity(0.08),
-                            lineWidth: 1)
-                }
+                // iOS 26 Liquid Glass — the partner pill is a native floating control.
+                .glassEffect(.regular, in: Capsule())
             }
             .buttonStyle(.plain)
 
@@ -195,21 +192,9 @@ struct PartnerChip: View {
                         ? AppColors.textTertiary
                         : AppColors.textTertiary)
             }
-            .padding(.horizontal, AppSpacing.sm)
+            .padding(.horizontal, AppSpacing.md)
             .padding(.vertical, AppSpacing.sm)
-            .background {
-                Capsule()
-                    .fill(isLight
-                        ? AppColors.glassFrostCard
-                        : Color.white.opacity(0.04))
-            }
-            .overlay {
-                Capsule()
-                    .stroke(isLight
-                        ? AppColors.borderSubtle
-                        : Color.white.opacity(0.06),
-                        lineWidth: 1)
-            }
+            .glassEffect(.regular, in: Capsule())
 
         // ── Nudge state — V1.1 stub ────────────────────────────
         case .nudge:

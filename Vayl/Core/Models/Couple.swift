@@ -34,10 +34,13 @@ final class Couple {
     var sharedSafeWord: String          // default "red" — only shared config
     var relationshipTenure: RelationshipTenure?  // set by first together-mode partner during OB
 
-    // MARK: - Desire Map State
+    // MARK: - Connection Composition
+    // Which gendered card variants this couple sees (mf / mm / ff / flexible).
+    // Wayfinding vocabulary, never identity: derived from both partners' OB
+    // gender answers at pairing (one-tap confirm), changeable in Settings,
+    // consumed by Deck.cards(for:). Mirrors couples.connection_composition.
 
-    var matchesRevealed: Bool
-    var desireMapRevealedAt: Date?
+    var connectionComposition: GenderDynamic = GenderDynamic.flexible
 
     // MARK: - Entitlement
     // Lives on Couple — one purchase unlocks both partners.
@@ -49,14 +52,18 @@ final class Couple {
     var isFoundingMember: Bool              // first year Pro free when Act 2 launches
 
     // MARK: - Relationships
+    // deleteRule .nullify (not .cascade): per the type's own contract above, a
+    // dissolved Couple is ARCHIVED, not deleted — its history must survive. Cascade
+    // would wipe every session / progress / match on unlink (the Seg 9 footgun).
+    // The child rows keep their own coupleId UUID, so the history stays attributable.
 
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .nullify)
     var desireMatches: [DesireMatch] = []
 
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .nullify)
     var cardSessions: [CardSession] = []
 
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .nullify)
     var deckProgress: [DeckProgress] = []
 
     // MARK: - Init
@@ -65,7 +72,8 @@ final class Couple {
         partnerAId: UUID,
         partnerBId: UUID,
         connectionType: ConnectionPlan = .primary,
-        relationshipTenure: RelationshipTenure? = nil
+        relationshipTenure: RelationshipTenure? = nil,
+        connectionComposition: GenderDynamic = .flexible
     ) {
         self.id = UUID()
         self.partnerAId = partnerAId
@@ -74,8 +82,7 @@ final class Couple {
         self.connectionType = connectionType
         self.sharedSafeWord = "red"
         self.relationshipTenure = relationshipTenure
-        self.matchesRevealed = false
-        self.desireMapRevealedAt = nil
+        self.connectionComposition = connectionComposition
         self.entitlementTier = .free
         self.coreUnlockedAt = nil
         self.coreUnlockedBy = nil

@@ -227,7 +227,7 @@ struct ReflectionCard: View {
             }
             .padding(AppSpacing.md)
         }
-        .sheet(isPresented: $showFullPillSheet) {
+        .vaylSheet(isPresented: $showFullPillSheet) {
             fullPillSheet
         }
     }
@@ -630,7 +630,7 @@ struct ReflectionCard: View {
             // Dynamic Type scaling would make "──" oversized relative
             // to the 7pt dots it connects.
             Text("──")
-                .font(Font.custom("Switzer-Regular", size: 9, relativeTo: .caption2))
+                .font(AppFonts.body(9, relativeTo: .caption2))
                 .foregroundStyle(AppColors.textTertiary)
 
             ForEach(0..<dots.count, id: \.self) { i in
@@ -647,7 +647,7 @@ struct ReflectionCard: View {
                 }
                 if i < dots.count - 1 {
                     Text("──")
-                        .font(Font.custom("Switzer-Regular", size: 9, relativeTo: .caption2))
+                        .font(AppFonts.body(9, relativeTo: .caption2))
                         .foregroundStyle(AppColors.textTertiary)
                 }
             }
@@ -691,6 +691,15 @@ struct ReflectionCard: View {
 // MARK: - Date Extension
 
 private extension Date {
+
+    /// Cached — DateFormatter construction is expensive, and relativeString is read
+    /// from `body`, so a fresh formatter per read would be paid on every card render.
+    static let weekdayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE"
+        return f
+    }()
+
     var relativeString: String {
         let days = Calendar.current.dateComponents(
             [.day], from: self, to: Date()
@@ -700,9 +709,7 @@ private extension Date {
         case 1:  return "Yesterday"
         case 2:  return "Two days ago"
         default:
-            let formatter = DateFormatter()
-            formatter.dateFormat = "EEEE"
-            return "Last \(formatter.string(from: self))"
+            return "Last \(Self.weekdayFormatter.string(from: self))"
         }
     }
 }

@@ -65,35 +65,17 @@ struct AtmosphereIntensity: Equatable {
 
 struct OnboardingAtmosphere: View {
 
-    var config:      AtmosphereConfig   = .stat
-    var sparkConfig: SparkConfiguration = .statView
-    var opacity:     Double             = 1.0
-
-    @Environment(\.colorScheme) private var colorScheme
-
-    private var auroraConfig: AuroraConfig {
-        let i = colorScheme == .light ? config.light : config.dark
-        return AuroraConfig(
-            topOpacityMult:    i.top,
-            midOpacityMult:    i.mid,
-            bottomOpacityMult: i.bottom,
-            globalOpacity:     i.global
-        )
-    }
+    var config:  AtmosphereConfig = .stat
+    var opacity: Double           = 1.0
+    /// Where the void-only zone ends and the bloom starts fading in, as a fraction of
+    /// screen height. 0.52 (default) matches every existing screen's "no colour above
+    /// 52%" contract exactly — unchanged unless a caller opts into an earlier value.
+    var maskStart: CGFloat = 0.52
 
     var body: some View {
-        Group {
-            if colorScheme == .light {
-                ZStack {
-                    AuroraGlowField(config: auroraConfig)
-                    SparkField(config: sparkConfig)
-                }
-            } else {
-                OBVoidBloom(intensity: config.dark)
-                    .animation(.easeInOut(duration: 1.0), value: config)
-            }
-        }
-        .opacity(opacity)
+        OBVoidBloom(intensity: config.dark, maskStart: maskStart)
+            .animation(AppAnimation.atmosphereShift, value: config)
+            .opacity(opacity)
     }
 }
 
@@ -110,6 +92,7 @@ struct OnboardingAtmosphere: View {
 
 private struct OBVoidBloom: View {
     let intensity: AtmosphereIntensity
+    var maskStart: CGFloat = 0.52
 
     private var bloomRise: CGFloat {
         CGFloat(0.28 + intensity.mid * 0.18)
@@ -160,15 +143,18 @@ private struct OBVoidBloom: View {
                     )
 
                 // ── Vertical mask ──────────────────────────────────
-                // Hard contract: no color above 52% of screen height.
-                // Content zone always sits on pure void.
+                // Hard contract: no color above `maskStart` (52% by default) of screen
+                // height — content zone always sits on pure void. The three ramp stops
+                // below keep the same relative shape as the default 52% curve, just
+                // shifted so a caller can start the fade-in earlier (e.g. the check-in
+                // field's own trail-in) without changing anyone else's rendering.
                 LinearGradient(
                     stops: [
                         .init(color: AppColors.void,              location: 0.00),
-                        .init(color: AppColors.void,              location: 0.52),
-                        .init(color: AppColors.void.opacity(0.94),location: 0.60),
-                        .init(color: AppColors.void.opacity(0.70),location: 0.70),
-                        .init(color: AppColors.void.opacity(0.25),location: 0.84),
+                        .init(color: AppColors.void,              location: maskStart),
+                        .init(color: AppColors.void.opacity(0.94),location: maskStart + 0.08),
+                        .init(color: AppColors.void.opacity(0.70),location: maskStart + 0.18),
+                        .init(color: AppColors.void.opacity(0.25),location: maskStart + 0.32),
                         .init(color: AppColors.void.opacity(0.02),location: 1.00),
                     ],
                     startPoint: .top,
@@ -177,6 +163,17 @@ private struct OBVoidBloom: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
             }
+            // Rasterize the bloom to one Metal texture. Without this the three
+            // large-radius ellipse blurs are live Core Animation filters,
+            // re-evaluated on the GPU every frame anything on screen animates —
+            // a constant tax under the whole OB (and Home). Rasterized, the
+            // texture re-renders only while the bloom itself changes (the 1s
+            // atmosphereShift config crossfade), then composites for free.
+            // opaque: the void base fills the bounds, so no alpha channel needed.
+            // FEEL-GATE: blur now samples within screen bounds — verify the
+            // left/right edge falloff on device (difference, if visible at all,
+            // is a slightly dimmer strip inside the blur radius at the sides).
+            .drawingGroup(opaque: true)
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
@@ -207,13 +204,4 @@ private struct OBVoidBloom: View {
             .ignoresSafeArea()
     }
     .preferredColorScheme(.dark)
-}
-
-#Preview("Stat — Light") {
-    ZStack {
-        AppColors.pageBackground.ignoresSafeArea()
-        OnboardingAtmosphere(config: .stat, sparkConfig: .statView, opacity: 1.0)
-            .ignoresSafeArea()
-    }
-    .preferredColorScheme(.light)
 }

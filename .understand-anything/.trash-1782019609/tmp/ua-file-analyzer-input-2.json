@@ -1,0 +1,15 @@
+{
+  "projectRoot": "/Users/bryanjorden/Documents/School/Code/Vayl",
+  "batchFiles": [
+    {"path": "Vayl/Resources/Content/assessment_questions.json", "language": "json", "sizeLines": 227, "fileCategory": "config"},
+    {"path": "Vayl/Resources/Content/cards.json", "language": "json", "sizeLines": 254, "fileCategory": "config"},
+    {"path": "Vayl/Resources/Content/categories.json", "language": "json", "sizeLines": 68, "fileCategory": "config"},
+    {"path": "Vayl/Resources/Content/desire_items.json", "language": "json", "sizeLines": 241, "fileCategory": "config"}
+  ],
+  "batchImportData": {
+    "Vayl/Resources/Content/assessment_questions.json": [],
+    "Vayl/Resources/Content/cards.json": [],
+    "Vayl/Resources/Content/categories.json": [],
+    "Vayl/Resources/Content/desire_items.json": []
+  }
+}

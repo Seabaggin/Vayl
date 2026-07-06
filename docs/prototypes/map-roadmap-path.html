@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Map · the couple's path</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --void:#0a0810;--glass:rgba(255,255,255,.04);
+    --cyan:#00c2ff;--purple:#6c3ae0;--purpleL:#a78bfa;--magenta:#ff006a;--magentaL:#ff4d94;--bridge:#8b6fd4;
+    --t1:rgba(236,234,242,.95);--t2:rgba(255,255,255,.62);--t3:rgba(255,255,255,.34);--hair:rgba(255,255,255,.08);
+    --disp:"Clash Display",sans-serif;--body:"Switzer",sans-serif;
+    --done:#6c3ae0;--rail-future:rgba(255,255,255,.13);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body)}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:1060px;margin:0 auto;padding:44px 28px 80px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:28px;font-weight:600;margin:0 0 10px}
+  .lede{font-size:13.5px;line-height:1.6;color:var(--t2);max-width:760px;margin:0 0 4px}.lede b{color:var(--t1)}
+  .cols{display:grid;grid-template-columns:340px 1fr;gap:34px;margin-top:30px;align-items:start}
+  @media(max-width:820px){.cols{grid-template-columns:1fr;max-width:380px;margin-inline:auto}}
+
+  .phone{position:relative;border-radius:40px;overflow:hidden;background:#050409;box-shadow:0 28px 70px rgba(0,0,0,.55),inset 0 0 0 1.4px rgba(255,255,255,.05);aspect-ratio:390/812}
+  .voidbg{position:absolute;inset:0;background:radial-gradient(120% 70% at 50% 0%,#0d0a18,var(--void) 55%,#050409 100%)}
+  .blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.5}
+  .b1{left:24%;top:40%;width:230px;height:220px;background:radial-gradient(closest-side,rgba(108,58,224,.2),transparent 73%)}
+  .b2{left:72%;top:66%;width:170px;height:170px;background:radial-gradient(closest-side,rgba(255,0,106,.1),transparent 73%)}
+  .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:96px;height:26px;background:#000;border-radius:16px;z-index:9}
+  .scr{position:absolute;inset:0;z-index:5;padding:50px 18px 14px;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+  .home{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:104px;height:4px;border-radius:3px;background:rgba(255,255,255,.2);z-index:9}
+
+  .mast{display:flex;align-items:baseline;justify-content:space-between}
+  .mast .name{font-family:var(--disp);font-size:24px;font-weight:700}
+  .mast .name .lit{background:linear-gradient(90deg,var(--cyan),var(--bridge) 50%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mast .gear{color:var(--t3);font-size:15px}
+  .ov{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--purpleL);margin:2px 2px -4px}
+  .subt{font-size:10.5px;color:var(--t3);margin:0 2px 2px}
+
+  /* ── the path ── */
+  .path{position:relative;flex:1;overflow:hidden;padding-top:4px}
+  .row{position:relative;display:grid;grid-template-columns:34px 1fr;gap:10px;min-height:46px}
+  .gut{position:relative;display:flex;justify-content:center}
+  /* vertical rail segment */
+  .gut::before{content:"";position:absolute;top:-6px;bottom:-6px;width:2.5px;background:var(--seg,var(--rail-future));left:50%;transform:translateX(-50%)}
+  .row.seg-done{--seg:var(--done)}
+  .row.seg-now{--seg:linear-gradient(var(--done),var(--cyan))}
+  .node{position:relative;z-index:2;width:17px;height:17px;border-radius:50%;margin-top:5px;background:#0c0a16}
+  .node.done{background:linear-gradient(135deg,var(--cyan),var(--purple) 55%,var(--magenta));box-shadow:0 0 8px rgba(108,58,224,.5)}
+  .node.now{background:#0c0a16;border:2px solid var(--cyan);box-shadow:0 0 0 4px rgba(0,194,255,.12),0 0 14px rgba(0,194,255,.5)}
+  .node.future{background:#0c0a16;border:2px solid var(--rail-future)}
+  .lab{padding-top:3px}
+  .lab .tt{font-size:12.5px;font-weight:600;color:var(--t1);line-height:1.25}
+  .row.future .lab .tt{color:var(--t3);font-weight:500}
+  .lab .ds{font-size:10px;color:var(--t2);margin-top:1px}
+  .row.now .lab .tt{color:#fff}
+  .badge{display:inline-block;font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);margin-top:3px}
+
+  /* OO dual-verify gate */
+  .gate{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:2px 0 2px 6px}
+  .gate .dots{position:relative;width:34px;display:flex;justify-content:center;gap:5px}
+  .gate .dots i{width:12px;height:12px;border-radius:50%;display:block}
+  .gate.done .dots i{background:linear-gradient(135deg,var(--cyan),var(--magenta))}
+  .gate.future .dots i{background:#0c0a16;border:2px solid var(--rail-future)}
+  .gate .gl{font-size:9.5px;color:var(--t2)}.gate .gl b{color:var(--t1);font-weight:600}
+  .gate .gt{font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--purpleL)}
+
+  /* O/O parallel fork */
+  .fork{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative;padding:6px 0}
+  .fork::before{content:"";position:absolute;top:-2px;left:25%;right:25%;height:14px;border-top:2.5px solid var(--done);border-left:2.5px solid var(--done);border-right:2.5px solid var(--done);border-radius:10px 10px 0 0;opacity:.55}
+  .lane{position:relative;padding-top:16px}
+  .lane h5{font-family:var(--disp);font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin:0 0 5px;text-align:center}
+  .lane.you h5{color:var(--cyan)}.lane.them h5{color:var(--magentaL)}
+  .lane .lrail{position:absolute;top:30px;bottom:6px;left:50%;width:2.5px;transform:translateX(-50%);background:var(--lr,var(--rail-future))}
+  .lane.you .lrail{background:linear-gradient(var(--cyan),var(--rail-future))}
+  .lane.them .lrail{background:linear-gradient(var(--magentaL),var(--rail-future))}
+  .lstep{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;margin-bottom:9px;z-index:2}
+  .lstep .ln{width:14px;height:14px;border-radius:50%}
+  .lstep.done .ln{background:linear-gradient(135deg,var(--cyan),var(--purple))}
+  .lstep.now.you .ln{background:#0c0a16;border:2px solid var(--cyan);box-shadow:0 0 10px rgba(0,194,255,.55)}
+  .lstep.now.them .ln{background:#0c0a16;border:2px solid var(--magentaL);box-shadow:0 0 10px rgba(255,77,148,.5)}
+  .lstep.future .ln{background:#0c0a16;border:2px solid var(--rail-future)}
+  .lstep .lt{font-size:9.5px;text-align:center;line-height:1.2;color:var(--t2);max-width:84px}
+  .lstep.future .lt{color:var(--t3)}
+
+  /* right column cards */
+  .stack{display:flex;flex-direction:column;gap:18px}
+  .card{border-radius:18px;background:var(--glass);border:1px solid var(--hair);padding:16px}
+  .card h3{font-family:var(--disp);font-size:13px;font-weight:600;margin:0 0 3px;color:var(--t1)}
+  .card .cs{font-size:11.5px;color:var(--t2);line-height:1.5;margin:0}
+  .detail{border:1px solid rgba(0,194,255,.35);box-shadow:0 0 26px rgba(0,194,255,.1)}
+  .detail .ov2{font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:6px}
+  .detail h3{font-size:16px;margin-bottom:5px}
+  .acts{display:flex;gap:8px;margin-top:13px}
+  .act{flex:1;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;font-family:var(--disp)}
+  .act.prim{background:linear-gradient(90deg,rgba(0,194,255,.18),rgba(255,0,106,.2));border:1px solid rgba(108,58,224,.5);color:#fff}
+  .act.ghost{border:1px solid var(--hair);color:var(--t2)}
+  .jlink{margin-top:11px;font-size:11px;color:var(--purpleL);display:flex;align-items:center;gap:6px}
+
+  /* journal log */
+  .jentry{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--hair)}
+  .jentry:first-of-type{border-top:0;padding-top:6px}
+  .jico{width:26px;height:26px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;border:1px solid var(--hair)}
+  .jt{font-size:12px;font-weight:600;color:var(--t1)}
+  .jb{font-size:11px;color:var(--t2);line-height:1.4;margin-top:1px}
+  .jk{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:4px;display:inline-block}
+  .jk.date{color:var(--cyan)}.jk.feel{color:var(--purpleL)}.jk.scared{color:var(--magentaL)}
+  footer{margin-top:34px;border-top:1px solid var(--hair);padding-top:18px;font-size:12px;color:var(--t3);line-height:1.65}footer b{color:var(--t2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>The Map: <span class="spectrum">the path toward opening</span></h1>
+  <p class="lede">Your Getting Started path, expanded vertically and allowed to <b>branch</b> — so the road from "we're curious" to "we're doing this" stops being unclear. The branching <b>is</b> the couple logic: a shared step is one node, a both-must-agree step splits to two and merges, a do-at-your-own-pace step forks into your lane and theirs. Walking a landmark and writing how it felt are the same gesture — so the path feeds the journal. <i>(Open-relationship path shown, voice warmed from the clinical spec.)</i></p>
+
+  <div class="cols">
+
+    <!-- ════ THE PATH ════ -->
+    <div class="phone">
+      <div class="voidbg"></div><div class="blob b1"></div><div class="blob b2"></div><div class="notch"></div>
+      <div class="scr">
+        <div class="mast"><div class="name"><span class="lit">Jordan &amp; Alex.</span></div><div class="gear">⚙</div></div>
+        <div class="ov">Your path</div>
+        <div class="subt">Open · no finish line, only your next step</div>
+
+        <div class="path">
+          <!-- O done -->
+          <div class="row seg-done"><div class="gut"><span class="node done"></span></div>
+            <div class="lab"><div class="tt">The what-if talk</div><div class="ds">Fears and fantasies, out loud.</div></div></div>
+
+          <!-- OO done (dual verify) -->
+          <div class="gate done"><div class="dots"><i></i><i></i></div><div><div class="gt">You both agreed</div><div class="gl"><b>Your shared guardrails</b> · testing, honesty, no vetoes</div></div></div>
+
+          <!-- O/O fork -->
+          <div class="fork">
+            <div class="lane you"><h5>You</h5><div class="lrail"></div>
+              <div class="lstep done"><span class="ln"></span><span class="lt">Your profile</span></div>
+              <div class="lstep now you"><span class="ln"></span><span class="lt">First conversation</span></div>
+              <div class="lstep future"><span class="ln"></span><span class="lt">A coffee</span></div>
+            </div>
+            <div class="lane them"><h5>Alex</h5><div class="lrail"></div>
+              <div class="lstep done"><span class="ln"></span><span class="lt">Your profile</span></div>
+              <div class="lstep done"><span class="ln"></span><span class="lt">First coffee</span></div>
+              <div class="lstep now them"><span class="ln"></span><span class="lt">A second date</span></div>
+            </div>
+          </div>
+
+          <!-- OO future merge -->
+          <div class="gate future"><div class="dots"><i></i><i></i></div><div><div class="gt">When you're both ready</div><div class="gl">Come back together · the honest debrief</div></div></div>
+
+          <!-- O future -->
+          <div class="row future"><div class="gut"><span class="node future"></span></div>
+            <div class="lab"><div class="tt">An overnight</div></div></div>
+          <div class="row future"><div class="gut"><span class="node future"></span></div>
+            <div class="lab"><div class="tt">Check in on all of it</div></div></div>
+        </div>
+      </div>
+      <div class="home"></div>
+    </div>
+
+    <!-- ════ NODE DETAIL + JOURNAL ════ -->
+    <div class="stack">
+      <div class="card detail">
+        <div class="ov2">Your lane · when you're ready</div>
+        <h3>First conversation</h3>
+        <p class="cs">A first real exchange with someone new. No pressure, no timeline — Alex doesn't have to be at the same place you are.</p>
+        <div class="acts"><div class="act prim">We're here now</div><div class="act ghost">Not yet</div></div>
+        <div class="jlink">✎ How does it feel? Add it to your journal →</div>
+      </div>
+
+      <div class="card">
+        <h3>The Vault · your journal</h3>
+        <p class="cs" style="margin-bottom:8px">The lived record of walking the path — a date, or just a feeling you want out of your head. Private to you.</p>
+        <div class="jentry"><div class="jico" style="color:var(--cyan)">☕</div><div><div class="jt">Coffee with Sam</div><div class="jb">Nervous going in. Came home lighter than I expected.</div><span class="jk date">Date</span></div></div>
+        <div class="jentry"><div class="jico" style="color:var(--purpleL)">💭</div><div><div class="jt">A flash of jealousy, Thursday</div><div class="jb">Named it out loud instead of swallowing it. It got smaller.</div><span class="jk feel">Feeling</span></div></div>
+        <div class="jentry"><div class="jico" style="color:var(--magentaL)">⚑</div><div><div class="jt">The overnight is coming up</div><div class="jb">Honestly scared. Writing it down so it stops just spinning.</div><span class="jk scared">Scared</span></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer><b>How the topology reads:</b> a single node = a shared beat you move through together · the two-dot <b>gate</b> = both of you have to agree before the path continues (drawn as a pinch, not a checkbox) · the <b>fork</b> = your lane and Alex's run in parallel and uneven, because one of you moving faster is allowed, not a race. Nothing says "you're behind" — the future is dim, open territory, not an empty progress bar. <b>The journal closes the loop:</b> marking "we're here now" is the same tap that asks "how did it feel," and that becomes an entry. <b>Open questions:</b> the full voice pass (clinical → warm) for all 4 flavors + variants, and whether the path is the Map's hero or a card you open from it. Static mock; nothing built.</footer>
+</div>
+</body>
+</html>

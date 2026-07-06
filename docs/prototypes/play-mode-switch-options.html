@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Play · mode-switch options (A/B/C)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=switzer@400,500,600,700&display=swap">
+<style>
+  :root{
+    --void:#040308; --cbg:#12111A; --raised:#1A1825;
+    --hair:rgba(255,255,255,0.06); --hair2:rgba(255,255,255,0.10);
+    --cy:#00C2FF; --pu:#6C3AE0; --mg:#FF006A; --bridge:#8B6FD4;
+    --tp:#E8E8F0; --tb:rgba(255,255,255,0.82); --ts:rgba(255,255,255,0.65);
+    --tt:rgba(255,255,255,0.38); --tm:rgba(255,255,255,0.20);
+    --gold-lt:#DDB13B; --lbl:rgba(160,125,205,0.55);
+    --sp:linear-gradient(135deg,#00C2FF,#6C3AE0,#FF006A);
+    --display:'Clash Display',-apple-system,sans-serif;
+    --body:'Switzer',-apple-system,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:radial-gradient(120% 80% at 50% 0%,#17171f 0%,#0a0a0e 60%);color:var(--tb);font-family:var(--body);min-height:100vh;padding:34px 24px 60px}
+  .clash{font-family:var(--display)}
+  .pageHead{max-width:1180px;margin:0 auto 30px}
+  .pageHead h1{font-family:var(--display);font-size:22px;font-weight:600;color:var(--tp);letter-spacing:-0.01em}
+  .pageHead p{font-size:13.5px;line-height:1.6;color:var(--ts);margin-top:8px;max-width:760px}
+  .pageHead .safe{color:var(--cy)}
+
+  .row{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;max-width:1240px;margin:0 auto}
+  .col{width:360px}
+
+  .phone{width:360px;height:600px;background:var(--void);border-radius:46px;border:1.5px solid rgba(255,255,255,0.1);overflow:hidden;position:relative;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.04) inset,0 30px 90px rgba(0,0,0,0.7),0 0 50px rgba(108,58,224,0.1)}
+  .atmo{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(55px)}
+  .b1{width:240px;height:240px;background:radial-gradient(circle,rgba(0,194,255,0.09),transparent 70%);top:-30px;left:-30px}
+  .b2{width:220px;height:220px;background:radial-gradient(circle,rgba(255,0,106,0.06),transparent 70%);top:230px;right:-40px}
+  .b3{width:260px;height:260px;background:radial-gradient(circle,rgba(108,58,224,0.08),transparent 70%);bottom:40px;left:-20px}
+
+  .sb{height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;position:relative;z-index:5}
+  .sbt{font-size:14px;font-weight:600;color:var(--tp)}
+  .bat{width:21px;height:11px;border:1.4px solid rgba(244,241,255,0.7);border-radius:2px;position:relative}
+  .bat::after{content:'';position:absolute;right:-3px;top:3px;width:2px;height:5px;background:rgba(244,241,255,0.5);border-radius:0 1px 1px 0}
+  .batf{position:absolute;inset:2px;right:4px;background:var(--tp);border-radius:1px;width:62%}
+  .island{position:absolute;left:50%;top:11px;transform:translateX(-50%);width:120px;height:35px;border-radius:35px;background:#000;z-index:6;box-shadow:0 1px 1px rgba(255,255,255,0.05) inset}
+
+  .screen{position:absolute;inset:0;z-index:2;padding:0 20px}
+  .swzone{padding-top:18px;min-height:96px}
+
+  /* shared hero */
+  .hero{margin-top:22px}
+  .h-ey{font-size:9.5px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:rgba(108,58,224,0.9);display:flex;align-items:center;gap:5px;justify-content:center}
+  .h-name{font-family:var(--display);font-size:23px;font-weight:700;color:var(--tp);text-align:center;margin-top:7px;letter-spacing:-0.01em}
+  .h-meta{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px;font-size:11.5px;color:var(--ts)}
+  .h-meta .idot{width:7px;height:7px;border-radius:50%;background:var(--cy)}
+  .h-meta .sep{width:3px;height:3px;border-radius:50%;background:var(--tm)}
+  .vcard{position:relative;height:150px;margin-top:16px;border-radius:18px;overflow:hidden;background:var(--cbg);box-shadow:0 24px 50px rgba(0,0,0,0.55)}
+  .vcard .va{position:absolute;border-radius:50%;filter:blur(32px)}
+  .vcard .va.cy{width:130px;height:130px;left:8%;top:6%;background:radial-gradient(closest-side,rgba(0,194,255,0.18),transparent 70%)}
+  .vcard .va.mg{width:130px;height:130px;right:6%;bottom:4%;background:radial-gradient(closest-side,rgba(255,0,106,0.16),transparent 70%)}
+  .vcard .va.pu{width:150px;height:150px;left:50%;top:50%;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(108,58,224,0.2),transparent 70%)}
+  .vcard .bglow{position:absolute;inset:0.75px;border-radius:18px;border:1.4px solid rgba(108,58,224,0.5);filter:blur(3px)}
+  .vcard .outer{position:absolute;inset:0.75px;border-radius:18px;border:1.1px solid rgba(139,111,212,0.85);opacity:0.52}
+  .vcard .hair{position:absolute;left:14px;right:14px;height:1.2px;background:linear-gradient(90deg,transparent,rgba(0,194,255,0.55),rgba(108,58,224,0.6),rgba(255,0,106,0.55),transparent);opacity:0.6}
+  .vcard .hair.t{top:0.75px}.vcard .hair.b{bottom:0.75px}
+  .vcard .vq{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px 24px;font-size:14px;line-height:1.42;color:var(--tb);font-weight:500}
+  .dots{display:flex;gap:6px;justify-content:center;margin-top:13px}
+  .ddot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.16)}
+  .ddot.on{width:18px;border-radius:3px;background:var(--sp)}
+
+  /* ───────── A · glass twin-glyph switch ───────── */
+  .mswitch{display:inline-flex;align-items:center;gap:4px;padding:5px;border-radius:999px;
+    background:rgba(20,18,30,0.7);backdrop-filter:blur(20px);border:1px solid var(--hair2);
+    box-shadow:0 10px 30px rgba(0,0,0,0.45),0 0 22px rgba(108,58,224,0.1)}
+  .center{display:flex;justify-content:center}
+  .mseg{display:flex;align-items:center;gap:8px;padding:9px 16px 9px 13px;border-radius:999px;transition:.3s}
+  .mseg .lbl{font-size:13px;font-weight:600}
+  .mseg.on{background:linear-gradient(135deg,rgba(0,194,255,0.16),rgba(108,58,224,0.2),rgba(255,0,106,0.14));border:1px solid rgba(108,58,224,0.4)}
+  .mseg.on .lbl{background:var(--sp);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mseg.locked{opacity:0.5}
+  .mseg.locked .lbl{color:var(--ts)}
+  .mseg.locked .ti{font-size:11px;color:var(--gold-lt);margin-left:-3px}
+
+  /* ───────── B · editorial masthead ───────── */
+  .masthead{padding-top:4px}
+  .mh-ey{font-size:9.5px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--lbl)}
+  .mh-row{display:flex;align-items:flex-end;gap:14px;margin-top:6px}
+  .mh-title{font-family:var(--display);font-size:34px;font-weight:700;line-height:0.95;letter-spacing:-0.01em;
+    background:var(--sp);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mh-under{height:3px;width:62px;border-radius:2px;background:var(--sp);margin-top:8px;box-shadow:0 0 12px rgba(108,58,224,0.5)}
+  .mh-alt{font-family:var(--display);font-size:18px;font-weight:600;color:var(--tt);display:flex;align-items:center;gap:5px;padding-bottom:3px}
+  .mh-alt .ti{font-size:12px;color:var(--gold-lt)}
+
+  /* ───────── C · deck-of-modes ───────── */
+  .modedeck{position:relative;height:84px;margin-top:2px}
+  .mcard{position:absolute;left:50%;transform:translateX(-50%);width:300px;border-radius:14px;padding:13px 16px;display:flex;align-items:center;gap:11px}
+  .mcard.back{top:0;width:268px;transform:translateX(-50%) scale(0.97);background:var(--cbg);border:1px solid var(--hair);opacity:0.6;filter:grayscale(0.5) brightness(0.78);z-index:1}
+  .mcard.front{top:20px;background:linear-gradient(145deg,#1a1626,#120f1e);z-index:2;
+    border:1px solid transparent;background-clip:padding-box;
+    box-shadow:0 16px 34px rgba(0,0,0,0.5),0 0 24px rgba(108,58,224,0.18)}
+  .mcard.front::before{content:'';position:absolute;inset:0;border-radius:14px;padding:1px;
+    background:var(--sp);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0.85}
+  .mc-txt{display:flex;flex-direction:column}
+  .mc-k{font-size:8.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--lbl)}
+  .mc-t{font-family:var(--display);font-size:16px;font-weight:600;color:var(--tp);line-height:1.1;margin-top:2px}
+  .mcard.back .mc-t{color:var(--ts)}
+  .mc-seal{margin-left:auto;font-size:8px;font-weight:700;letter-spacing:0.1em;color:var(--gold-lt);border:1px solid rgba(221,177,59,0.4);border-radius:8px;padding:3px 7px;text-transform:uppercase}
+
+  .gi svg{display:block}
+
+  .cap{margin-top:16px;text-align:center}
+  .cap .t{font-family:var(--display);font-size:15px;font-weight:600;color:var(--tp)}
+  .cap .d{font-size:12px;line-height:1.5;color:var(--ts);margin-top:5px}
+  .cap .rec{display:inline-block;margin-top:8px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--cy);border:1px solid rgba(0,194,255,0.4);border-radius:8px;padding:3px 9px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="spec" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#00C2FF"/><stop offset="52%" stop-color="#6C3AE0"/><stop offset="100%" stop-color="#FF006A"/>
+  </linearGradient>
+</defs></svg>
+
+<div class="pageHead">
+  <h1>Play · mode-switch, three premium directions</h1>
+  <p>The rotary is gone. Each option keeps the two-world identity (Cards now · Simulator teased for Act&nbsp;2) but renders it <b>flat and static</b>, sitting <span class="safe">below the Dynamic Island, clear of Live Activities</span>. The mode switch (which game) is distinct from the deck hero beneath it (which deck). Same hero in all three so you judge only the switch.</p>
+</div>
+
+<div class="row">
+
+  <!-- ░░░ A ░░░ -->
+  <div class="col">
+    <div class="phone">
+      <div class="atmo"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+      <div class="island"></div>
+      <div class="sb"><span class="sbt">9:41</span><div class="bat"><div class="batf"></div></div></div>
+      <div class="screen">
+        <div class="swzone center">
+          <div class="mswitch">
+            <div class="mseg on">
+              <span class="gi"><svg width="26" height="24" viewBox="0 0 44 40"><g fill="none" stroke="url(#spec)" stroke-width="2.4" stroke-linejoin="round">
+                <rect x="6" y="10" width="20" height="27" rx="3" transform="rotate(-16 16 23)" opacity="0.55"/>
+                <rect x="12" y="8" width="20" height="27" rx="3" opacity="0.95"/>
+                <rect x="18" y="10" width="20" height="27" rx="3" transform="rotate(16 28 23)" opacity="0.55"/></g></svg></span>
+              <span class="lbl">Cards</span>
+            </div>
+            <div class="mseg locked">
+              <span class="gi"><svg width="26" height="24" viewBox="0 0 44 40"><g fill="none" stroke="url(#spec)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 31 L10 22 Q10 16 16 16 L26 16 Q33 16 33 10"/>
+                <circle cx="10" cy="31" r="3.4"/><circle cx="22" cy="16" r="2.6" opacity="0.7"/><circle cx="33" cy="9" r="3.4"/></g></svg></span>
+              <span class="lbl">Simulator</span><i class="ti ti-lock"></i>
+            </div>
+          </div>
+        </div>
+        <div class="hero">
+          <div class="h-ey"><i class="ti ti-player-play"></i> Continue</div>
+          <div class="h-name">The Opener</div>
+          <div class="h-meta"><span class="idot"></span> Easy <span class="sep"></span> 10 cards</div>
+          <div class="vcard">
+            <div class="va cy"></div><div class="va mg"></div><div class="va pu"></div>
+            <div class="bglow"></div><div class="outer"></div>
+            <div class="hair t"></div><div class="hair b"></div>
+            <div class="vq">What are the anchors that have kept you two tethered to each other through everything so far?</div>
+          </div>
+          <div class="dots"><span class="ddot on"></span><span class="ddot"></span><span class="ddot"></span><span class="ddot"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="cap">
+      <div class="t">A · Glass twin-glyph switch</div>
+      <div class="d">Frosted spectrum-glass capsule, your two glyphs + labels, lit active cell, locked Simulator teaser. Most legible, most conventional.</div>
+    </div>
+  </div>
+
+  <!-- ░░░ B ░░░ -->
+  <div class="col">
+    <div class="phone">
+      <div class="atmo"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+      <div class="island"></div>
+      <div class="sb"><span class="sbt">9:41</span><div class="bat"><div class="batf"></div></div></div>
+      <div class="screen">
+        <div class="swzone">
+          <div class="masthead">
+            <div class="mh-ey">Play mode</div>
+            <div class="mh-row">
+              <div>
+                <div class="mh-title">Cards</div>
+                <div class="mh-under"></div>
+              </div>
+              <div class="mh-alt">Simulator <i class="ti ti-lock"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="hero">
+          <div class="h-ey"><i class="ti ti-player-play"></i> Continue</div>
+          <div class="h-name">The Opener</div>
+          <div class="h-meta"><span class="idot"></span> Easy <span class="sep"></span> 10 cards</div>
+          <div class="vcard">
+            <div class="va cy"></div><div class="va mg"></div><div class="va pu"></div>
+            <div class="bglow"></div><div class="outer"></div>
+            <div class="hair t"></div><div class="hair b"></div>
+            <div class="vq">What are the anchors that have kept you two tethered to each other through everything so far?</div>
+          </div>
+          <div class="dots"><span class="ddot on"></span><span class="ddot"></span><span class="ddot"></span><span class="ddot"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="cap">
+      <div class="t">B · Editorial masthead</div>
+      <div class="d">Big Clash world title + spectrum underline as the active indicator; Simulator ghosted &amp; locked beside it. Most distinctly Vayl, content-forward.</div>
+      <span class="rec">recommended</span>
+    </div>
+  </div>
+
+  <!-- ░░░ C ░░░ -->
+  <div class="col">
+    <div class="phone">
+      <div class="atmo"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+      <div class="island"></div>
+      <div class="sb"><span class="sbt">9:41</span><div class="bat"><div class="batf"></div></div></div>
+      <div class="screen">
+        <div class="swzone">
+          <div class="modedeck">
+            <div class="mcard back">
+              <span class="gi"><svg width="22" height="20" viewBox="0 0 44 40"><g fill="none" stroke="url(#spec)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.7">
+                <path d="M10 31 L10 22 Q10 16 16 16 L26 16 Q33 16 33 10"/>
+                <circle cx="10" cy="31" r="3.4"/><circle cx="22" cy="16" r="2.6" opacity="0.7"/><circle cx="33" cy="9" r="3.4"/></g></svg></span>
+              <div class="mc-txt"><span class="mc-k">Mode 2</span><span class="mc-t">Simulator</span></div>
+              <span class="mc-seal">Act 2</span>
+            </div>
+            <div class="mcard front">
+              <span class="gi"><svg width="24" height="22" viewBox="0 0 44 40"><g fill="none" stroke="url(#spec)" stroke-width="2.4" stroke-linejoin="round">
+                <rect x="6" y="10" width="20" height="27" rx="3" transform="rotate(-16 16 23)" opacity="0.55"/>
+                <rect x="12" y="8" width="20" height="27" rx="3" opacity="0.95"/>
+                <rect x="18" y="10" width="20" height="27" rx="3" transform="rotate(16 28 23)" opacity="0.55"/></g></svg></span>
+              <div class="mc-txt"><span class="mc-k">Now playing</span><span class="mc-t">Cards</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="hero">
+          <div class="h-ey"><i class="ti ti-player-play"></i> Continue</div>
+          <div class="h-name">The Opener</div>
+          <div class="h-meta"><span class="idot"></span> Easy <span class="sep"></span> 10 cards</div>
+          <div class="vcard">
+            <div class="va cy"></div><div class="va mg"></div><div class="va pu"></div>
+            <div class="bglow"></div><div class="outer"></div>
+            <div class="hair t"></div><div class="hair b"></div>
+            <div class="vq">What are the anchors that have kept you two tethered to each other through everything so far?</div>
+          </div>
+          <div class="dots"><span class="ddot on"></span><span class="ddot"></span><span class="ddot"></span><span class="ddot"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="cap">
+      <div class="t">C · Deck-of-modes</div>
+      <div class="d">The modes are themselves a tiny deck: Cards in front, Simulator sealed behind. Tap the back card to bring it forward. Most on-brand to the card metaphor.</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

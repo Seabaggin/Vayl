@@ -1,0 +1,833 @@
+{
+  "nodes": [
+    {
+      "id": "file:Vayl/Features/Home/Components/DesireMapIndicator.swift",
+      "type": "file",
+      "name": "DesireMapIndicator.swift",
+      "filePath": "Vayl/Features/Home/Components/DesireMapIndicator.swift",
+      "summary": "Dashboard component that renders the couple's Desire Map status across its many states (youDone, bothReady, freeRevealSeen, redoInProgress) with state-specific cards and CTAs.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Components/DesireMapIndicator.swift:DesireMapIndicator",
+      "type": "class",
+      "name": "DesireMapIndicator",
+      "filePath": "Vayl/Features/Home/Components/DesireMapIndicator.swift",
+      "lineRange": [
+        5,
+        298
+      ],
+      "summary": "SwiftUI View switching on DesireMapState to show the right status card; each case card was extracted into its own property/function to keep type-checking fast.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Components/DesireMapIndicator.swift:redoInProgressCard",
+      "type": "function",
+      "name": "redoInProgressCard",
+      "filePath": "Vayl/Features/Home/Components/DesireMapIndicator.swift",
+      "lineRange": [
+        212,
+        273
+      ],
+      "summary": "Builds the 'check-in / redo in progress' card showing your and the partner's redo status with a conditional remind CTA.",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Components/GettingStartedEntryCard.swift",
+      "type": "file",
+      "name": "GettingStartedEntryCard.swift",
+      "filePath": "Vayl/Features/Home/Components/GettingStartedEntryCard.swift",
+      "summary": "Compact dashboard entry card ('Your first steps') showing onboarding-path progress; carries the matched-geometry source that morphs into the full Path overlay when tapped.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Components/GettingStartedEntryCard.swift:GettingStartedEntryCard",
+      "type": "class",
+      "name": "GettingStartedEntryCard",
+      "filePath": "Vayl/Features/Home/Components/GettingStartedEntryCard.swift",
+      "lineRange": [
+        5,
+        46
+      ],
+      "summary": "SwiftUI View rendering a progress ring + next-step title; source of the matchedGeometryEffect expand-to-Path morph.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Components/GravLiftView.swift",
+      "type": "file",
+      "name": "GravLiftView.swift",
+      "filePath": "Vayl/Features/Home/Components/GravLiftView.swift",
+      "summary": "Decorative tractor-beam 'grav lift' effect (layered cones, halo, and scan lines) that breathes with a phase input; non-interactive ambient visual behind the home hero card.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Pure layered LinearGradient/EllipticalGradient composition driven by a breathPhase sine; allowsHitTesting(false) + accessibilityHidden."
+    },
+    {
+      "id": "class:Vayl/Features/Home/Components/GravLiftView.swift:GravLiftView",
+      "type": "class",
+      "name": "GravLiftView",
+      "filePath": "Vayl/Features/Home/Components/GravLiftView.swift",
+      "lineRange": [
+        8,
+        130
+      ],
+      "summary": "SwiftUI View composing the levitation light cone from gradient layers, opacity driven by a breathing sine wave.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "type": "file",
+      "name": "HomeWidgetShell.swift",
+      "filePath": "Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "summary": "Reusable home-dashboard widget chrome: a generic container that wraps arbitrary content in a themed surface with inset shadows, a spectrum rim, and an underglow; also defines the OrbLayer ambient backdrop.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "container"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Generic over Content: View; light/dark surfaces built as separate functions to keep the SwiftUI type-checker fast."
+    },
+    {
+      "id": "class:Vayl/Features/Home/Components/HomeWidgetShell.swift:HomeWidgetShell",
+      "type": "class",
+      "name": "HomeWidgetShell",
+      "filePath": "Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "lineRange": [
+        171,
+        583
+      ],
+      "summary": "Generic SwiftUI container View providing the standard home widget surface (background, rim, shadows, underglow) around injected content.",
+      "tags": [
+        "view",
+        "component",
+        "container",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Components/HomeWidgetShell.swift:OrbLayer",
+      "type": "class",
+      "name": "OrbLayer",
+      "filePath": "Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "lineRange": [
+        31,
+        164
+      ],
+      "summary": "SwiftUI View rendering a primary + secondary set of soft glowing orbs as an ambient backdrop inside home widgets.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Components/HomeWidgetShell.swift:darkSurface",
+      "type": "function",
+      "name": "darkSurface",
+      "filePath": "Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "lineRange": [
+        233,
+        330
+      ],
+      "summary": "Builds the dark-mode widget surface fill and layered gradients for the widget shell.",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Components/HomeWidgetShell.swift:lightSurface",
+      "type": "function",
+      "name": "lightSurface",
+      "filePath": "Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "lineRange": [
+        335,
+        442
+      ],
+      "summary": "Builds the light-mode widget surface fill and layered gradients for the widget shell.",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Components/HomeWidgetShell.swift:rim",
+      "type": "function",
+      "name": "rim",
+      "filePath": "Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "lineRange": [
+        490,
+        563
+      ],
+      "summary": "Computes the spectrum rim overlay stroke that traces the widget edge.",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Components/PartnerChip.swift",
+      "type": "file",
+      "name": "PartnerChip.swift",
+      "filePath": "Vayl/Features/Home/Components/PartnerChip.swift",
+      "summary": "Dashboard chip that renders the partner-presence affordance across states (no partner / invite-pending / active / multiple stub), using holographic shimmer for the invite states.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Components/PartnerChip.swift:PartnerChip",
+      "type": "class",
+      "name": "PartnerChip",
+      "filePath": "Vayl/Features/Home/Components/PartnerChip.swift",
+      "lineRange": [
+        5,
+        219
+      ],
+      "summary": "SwiftUI View switching on PartnerChipState to show an invite button, pending badge, or active partner capsule.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Components/PickUpCard.swift",
+      "type": "file",
+      "name": "PickUpCard.swift",
+      "filePath": "Vayl/Features/Home/Components/PickUpCard.swift",
+      "summary": "Dashboard 'pick up where you left off' list card rendering in-progress content items (timeline, article, judgment, autopsy) with a pulsing activity dot and a see-all action.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Components/PickUpCard.swift:PickUpCard",
+      "type": "class",
+      "name": "PickUpCard",
+      "filePath": "Vayl/Features/Home/Components/PickUpCard.swift",
+      "lineRange": [
+        5,
+        107
+      ],
+      "summary": "SwiftUI View listing up to two PickUpItems with per-item tap callbacks; renders EmptyView when there is nothing in progress.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Components/ReflectionBannerView.swift",
+      "type": "file",
+      "name": "ReflectionBannerView.swift",
+      "filePath": "Vayl/Features/Home/Components/ReflectionBannerView.swift",
+      "summary": "Bottom-sheet reflection capture banner shown after a session: lets the user pick feeling pills or write a note, toggle sharing with the partner, and submit; drag-to-dismiss.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "input"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Components/ReflectionBannerView.swift:ReflectionBannerView",
+      "type": "class",
+      "name": "ReflectionBannerView",
+      "filePath": "Vayl/Features/Home/Components/ReflectionBannerView.swift",
+      "lineRange": [
+        5,
+        398
+      ],
+      "summary": "SwiftUI View for the post-session reflection panel (inline pill grid + note editor + share toggle + full-pill sheet) with a drag-dismiss gesture.",
+      "tags": [
+        "view",
+        "component",
+        "ui",
+        "input"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Components/ReflectionBannerView.swift:bannerPillButton",
+      "type": "function",
+      "name": "bannerPillButton",
+      "filePath": "Vayl/Features/Home/Components/ReflectionBannerView.swift",
+      "lineRange": [
+        225,
+        280
+      ],
+      "summary": "Builds one selectable feeling-pill button with selected/unselected spectrum styling and haptics.",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Components/ReflectionCard.swift",
+      "type": "file",
+      "name": "ReflectionCard.swift",
+      "filePath": "Vayl/Features/Home/Components/ReflectionCard.swift",
+      "summary": "Large dashboard reflection card rendering the full reflection lifecycle (pending / waiting-on-partner / both-reflected / summary) with a paged, swipeable layout and a pill-selection sheet.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Components/ReflectionCard.swift:ReflectionCard",
+      "type": "class",
+      "name": "ReflectionCard",
+      "filePath": "Vayl/Features/Home/Components/ReflectionCard.swift",
+      "lineRange": [
+        5,
+        689
+      ],
+      "summary": "SwiftUI View switching on ReflectionCardState to render the appropriate reflection card; each state is a dedicated builder function for type-check performance.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Components/ReflectionCard.swift:pendingCard",
+      "type": "function",
+      "name": "pendingCard",
+      "filePath": "Vayl/Features/Home/Components/ReflectionCard.swift",
+      "lineRange": [
+        81,
+        233
+      ],
+      "summary": "Builds the 'reflect on your last session' pending card with pill grid and CTA (the largest of the reflection card states).",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Components/ReflectionCard.swift:bothReflectedCard",
+      "type": "function",
+      "name": "bothReflectedCard",
+      "filePath": "Vayl/Features/Home/Components/ReflectionCard.swift",
+      "lineRange": [
+        303,
+        379
+      ],
+      "summary": "Builds the both-partners-reflected comparison card showing each person's pills and notes side by side.",
+      "tags": [
+        "view",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Components/ResearchTicker.swift",
+      "type": "file",
+      "name": "ResearchTicker.swift",
+      "filePath": "Vayl/Features/Home/Components/ResearchTicker.swift",
+      "summary": "Ambient, non-interactive ticker that cycles a curated list of CNM research facts, definitions, and reframes on a timer with a cross-fade.",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Components/ResearchTicker.swift:ResearchTicker",
+      "type": "class",
+      "name": "ResearchTicker",
+      "filePath": "Vayl/Features/Home/Components/ResearchTicker.swift",
+      "lineRange": [
+        5,
+        107
+      ],
+      "summary": "SwiftUI View cycling a hardcoded ResearchFact array every 10s with an opacity cross-fade; decorative (hit-testing disabled).",
+      "tags": [
+        "view",
+        "component",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Models/GettingStarted.swift",
+      "type": "file",
+      "name": "GettingStarted.swift",
+      "filePath": "Vayl/Features/Home/Models/GettingStarted.swift",
+      "summary": "Pure Model-layer derivation of the post-onboarding 'first steps' activation: resolves the ordered step list and their states (done/active/upcoming/locked) from the couple's flags.",
+      "tags": [
+        "data-model",
+        "state"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "No SwiftUI; the displayed Path and entry card both read this derived value, which is never stored."
+    },
+    {
+      "id": "class:Vayl/Features/Home/Models/GettingStarted.swift:GettingStarted",
+      "type": "class",
+      "name": "GettingStarted",
+      "filePath": "Vayl/Features/Home/Models/GettingStarted.swift",
+      "lineRange": [
+        48,
+        86
+      ],
+      "summary": "Equatable value type holding the ordered onboarding steps with progress/nextStep helpers and a static resolve() that derives state from completion flags.",
+      "tags": [
+        "data-model",
+        "state"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Models/GettingStarted.swift:resolve",
+      "type": "function",
+      "name": "resolve",
+      "filePath": "Vayl/Features/Home/Models/GettingStarted.swift",
+      "lineRange": [
+        63,
+        85
+      ],
+      "summary": "Static factory that derives the GettingStarted activation (exactly one .active step, reveal gated on both maps) from myMapComplete/isPaired/partnerMapComplete/revealDone.",
+      "tags": [
+        "data-model",
+        "factory",
+        "state"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Models/HomeEventEngine.swift",
+      "type": "file",
+      "name": "HomeEventEngine.swift",
+      "filePath": "Vayl/Features/Home/Models/HomeEventEngine.swift",
+      "summary": "Pure logic struct that selects the home greeting's two-line sub-copy from a prioritized list of HomeEvents (partner events \u2192 milestones \u2192 time/absence \u2192 stage defaults).",
+      "tags": [
+        "data-model",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Models/HomeEventEngine.swift:HomeEventEngine",
+      "type": "class",
+      "name": "HomeEventEngine",
+      "filePath": "Vayl/Features/Home/Models/HomeEventEngine.swift",
+      "lineRange": [
+        8,
+        103
+      ],
+      "summary": "Stateless struct whose single static oneLiner() maps app/event state to one localized greeting string by priority.",
+      "tags": [
+        "data-model",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Models/HomeEventEngine.swift:oneLiner",
+      "type": "function",
+      "name": "oneLiner",
+      "filePath": "Vayl/Features/Home/Models/HomeEventEngine.swift",
+      "lineRange": [
+        14,
+        102
+      ],
+      "summary": "Static function returning the greeting sub-copy by walking events in priority order, then falling back to stage-based defaults.",
+      "tags": [
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Models/HomeModels.swift",
+      "type": "file",
+      "name": "HomeModels.swift",
+      "filePath": "Vayl/Features/Home/Models/HomeModels.swift",
+      "summary": "View-layer Model definitions for the Home screen: the ReflectionCardState and HomeState routing enums, reflection pill groups, pick-up items, research facts, and the HomeEvent enum.",
+      "tags": [
+        "data-model",
+        "type-definition"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "No business logic and no SwiftData; pure structs/enums consumed by the Home views and HomeStore."
+    },
+    {
+      "id": "class:Vayl/Features/Home/Models/HomeModels.swift:HomeState",
+      "type": "class",
+      "name": "HomeState",
+      "filePath": "Vayl/Features/Home/Models/HomeModels.swift",
+      "lineRange": [
+        147,
+        151
+      ],
+      "summary": "Routing enum that drives HomeRouterView (dashboard / soloUnpaired / vestigial gated); computed by HomeStore, never set by the view.",
+      "tags": [
+        "data-model",
+        "state",
+        "type-definition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Vayl/Features/Home/Models/HomeModels.swift:ReflectionCardState",
+      "type": "class",
+      "name": "ReflectionCardState",
+      "filePath": "Vayl/Features/Home/Models/HomeModels.swift",
+      "lineRange": [
+        11,
+        30
+      ],
+      "summary": "Enum modeling the reflection card's lifecycle states (hidden / pendingYours / waitingOnPartner / bothReflected / summary) with their associated payloads.",
+      "tags": [
+        "data-model",
+        "state",
+        "type-definition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Vayl/Features/Home/Store/HomeStore.swift",
+      "type": "file",
+      "name": "HomeStore.swift",
+      "filePath": "Vayl/Features/Home/Store/HomeStore.swift",
+      "summary": "The Home feature's Store: an @Observable @MainActor brain that owns all routing state, derives HomeState/GettingStarted, loads profile/desire-status/deck-progress/reflection/deck data, and tracks the one-shot map-completion beat.",
+      "tags": [
+        "store",
+        "state",
+        "observable"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Dependencies injected via init; ModelContext created fresh at write time; reads SwiftData (UserProfile/DeckProgress/CardSession) and remote DesireSyncService."
+    },
+    {
+      "id": "class:Vayl/Features/Home/Store/HomeStore.swift:HomeStore",
+      "type": "class",
+      "name": "HomeStore",
+      "filePath": "Vayl/Features/Home/Store/HomeStore.swift",
+      "lineRange": [
+        22,
+        323
+      ],
+      "summary": "@Observable @MainActor Store deciding all Home routing and loading; the view renders, the store decides.",
+      "tags": [
+        "store",
+        "state",
+        "observable"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Store/HomeStore.swift:resolveHomeState",
+      "type": "function",
+      "name": "resolveHomeState",
+      "filePath": "Vayl/Features/Home/Store/HomeStore.swift",
+      "lineRange": [
+        126,
+        138
+      ],
+      "summary": "Derives the current HomeState from completion + link flags; Home always leads with the dashboard, soloUnpaired only when solo and unlinked.",
+      "tags": [
+        "store",
+        "state"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Store/HomeStore.swift:loadAll",
+      "type": "function",
+      "name": "loadAll",
+      "filePath": "Vayl/Features/Home/Store/HomeStore.swift",
+      "lineRange": [
+        176,
+        182
+      ],
+      "summary": "Async entry point that loads profile, desire status, deck progress, reflection state, and the deck in one pass on appear.",
+      "tags": [
+        "store",
+        "data-loading"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Store/HomeStore.swift:loadProfile",
+      "type": "function",
+      "name": "loadProfile",
+      "filePath": "Vayl/Features/Home/Store/HomeStore.swift",
+      "lineRange": [
+        198,
+        218
+      ],
+      "summary": "Reads the local UserProfile to resolve map completion and the derived DesireMapState.",
+      "tags": [
+        "store",
+        "data-loading"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Store/HomeStore.swift:loadReflectionState",
+      "type": "function",
+      "name": "loadReflectionState",
+      "filePath": "Vayl/Features/Home/Store/HomeStore.swift",
+      "lineRange": [
+        267,
+        303
+      ],
+      "summary": "Reads the most recent completed CardSession to derive the reflection card state (pendingYours when a finished session exists).",
+      "tags": [
+        "store",
+        "data-loading"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Vayl/Features/Home/Store/HomeStore.swift:loadDeck",
+      "type": "function",
+      "name": "loadDeck",
+      "filePath": "Vayl/Features/Home/Store/HomeStore.swift",
+      "lineRange": [
+        307,
+        322
+      ],
+      "summary": "Loads 'the-opener' deck via ContentLoader, publishing loading/error state for the dashboard.",
+      "tags": [
+        "store",
+        "data-loading"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Vayl/Features/Home/Components/DesireMapIndicator.swift",
+      "target": "class:Vayl/Features/Home/Components/DesireMapIndicator.swift:DesireMapIndicator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Components/GettingStartedEntryCard.swift",
+      "target": "class:Vayl/Features/Home/Components/GettingStartedEntryCard.swift:GettingStartedEntryCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Components/GravLiftView.swift",
+      "target": "class:Vayl/Features/Home/Components/GravLiftView.swift:GravLiftView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "target": "class:Vayl/Features/Home/Components/HomeWidgetShell.swift:HomeWidgetShell",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Components/HomeWidgetShell.swift",
+      "target": "class:Vayl/Features/Home/Components/HomeWidgetShell.swift:OrbLayer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Components/PartnerChip.swift",
+      "target": "class:Vayl/Features/Home/Components/PartnerChip.swift:PartnerChip",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Components/PartnerChip.swift",
+      "target": "file:Vayl/Design/Components/Effects/HolographicShimmer.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Components/PartnerChip.swift",
+      "target": "file:Vayl/Design/Components/Effects/LightModeShimmer.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Components/PickUpCard.swift",
+      "target": "class:Vayl/Features/Home/Components/PickUpCard.swift:PickUpCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Components/ReflectionBannerView.swift",
+      "target": "class:Vayl/Features/Home/Components/ReflectionBannerView.swift:ReflectionBannerView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Components/ReflectionCard.swift",
+      "target": "class:Vayl/Features/Home/Components/ReflectionCard.swift:ReflectionCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Components/ResearchTicker.swift",
+      "target": "class:Vayl/Features/Home/Components/ResearchTicker.swift:ResearchTicker",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Models/GettingStarted.swift",
+      "target": "class:Vayl/Features/Home/Models/GettingStarted.swift:GettingStarted",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Models/GettingStarted.swift",
+      "target": "function:Vayl/Features/Home/Models/GettingStarted.swift:resolve",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Models/GettingStarted.swift",
+      "target": "function:Vayl/Features/Home/Models/GettingStarted.swift:resolve",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Home/Models/HomeEventEngine.swift",
+      "target": "class:Vayl/Features/Home/Models/HomeEventEngine.swift:HomeEventEngine",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Models/HomeEventEngine.swift",
+      "target": "function:Vayl/Features/Home/Models/HomeEventEngine.swift:oneLiner",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Models/HomeEventEngine.swift",
+      "target": "function:Vayl/Features/Home/Models/HomeEventEngine.swift:oneLiner",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Home/Models/HomeModels.swift",
+      "target": "class:Vayl/Features/Home/Models/HomeModels.swift:HomeState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Models/HomeModels.swift",
+      "target": "class:Vayl/Features/Home/Models/HomeModels.swift:ReflectionCardState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Store/HomeStore.swift",
+      "target": "class:Vayl/Features/Home/Store/HomeStore.swift:HomeStore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Vayl/Features/Home/Store/HomeStore.swift",
+      "target": "file:Vayl/Core/Services/ContentLoader.swift",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Home/Store/HomeStore.swift",
+      "target": "file:Vayl/Core/Services/DesireSyncService.swift",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:Vayl/Features/Home/Store/HomeStore.swift",
+      "target": "file:Vayl/Features/Home/Models/HomeModels.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Vayl/Features/Home/Store/HomeStore.swift",
+      "target": "file:Vayl/Features/Home/Models/GettingStarted.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

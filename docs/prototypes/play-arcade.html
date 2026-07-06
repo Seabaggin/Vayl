@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Play · Arcade Mode-Dial</title>
+<style>
+  :root {
+    --void: #0a0810; --cardBg: #120f1a; --cardBg2: #15101e;
+    --cyan: #00c2ff; --purple: #6c3ae0; --magenta: #ff006a;
+    --label: rgba(160,125,205,0.45);
+    --t-display: rgba(255,255,255,0.92); --t-primary: rgba(255,255,255,0.88);
+    --t-secondary: rgba(255,255,255,0.55); --t-tertiary: rgba(255,255,255,0.30); --t-whisper: rgba(255,255,255,0.28);
+    /* ── DIAL tuner vars (driven by the debug panel) ── */
+    --domeW: 182px; --domeH: 154px; --domeTop: -72px; --domeRound: 100px;
+    --glyphScale: 1; --baseY: 51px; --symbolX: 0px; --symbolY: 0px; --wheelR: 52px; --offAngle: 62deg; --offScale: 0.74;
+    --glowSize: 120px; --glowY: 56px; --wheelRot: 0deg;
+    --divGap: 30px; --divLen: 40px; --swapSlide: 30px; --swapDur: 400ms;
+  }
+  /* register the wheel rotation so it interpolates (smooth rotate on swap) */
+  @property --wheelRot { syntax: '<angle>'; inherits: true; initial-value: 0deg; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #16161c; color: #e7e7f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  .wrap { display: flex; height: 100vh; }
+
+  /* ── Side panel ── */
+  .panel { width: 286px; flex-shrink: 0; padding: 26px 22px; background: #101016; border-right: 1px solid #1e1b2c; overflow-y: auto; }
+  .panel h1 { font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); margin: 0 0 4px; }
+  .panel h2 { font-size: 17px; font-weight: 600; color: var(--t-display); margin: 0 0 12px; }
+  .panel p  { font-size: 12.5px; line-height: 1.55; color: var(--t-secondary); }
+  .panel ul { padding-left: 16px; margin: 8px 0 16px; }
+  .panel li { font-size: 12px; line-height: 1.5; color: var(--t-secondary); margin-bottom: 6px; }
+  .panel li b { color: var(--t-primary); font-weight: 600; }
+  .panel .nav a { display: block; font-size: 12px; padding: 7px 10px; margin-bottom: 5px; color: var(--t-secondary); text-decoration: none; border: 1px solid #1e1b2c; border-radius: 8px; }
+  .panel .nav a.active { color: var(--t-display); border-color: rgba(108,58,224,0.5); }
+  .toggleRow { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
+  .toggleRow span { font-size: 12px; color: var(--t-secondary); }
+  .toggle { width: 42px; height: 24px; border-radius: 12px; cursor: pointer; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); position: relative; transition: background 0.25s ease; }
+  .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left 0.25s ease; }
+  .toggle.on { background: linear-gradient(90deg, var(--purple), var(--magenta)); box-shadow: 0 0 14px rgba(108,58,224,0.45); }
+  .toggle.on::after { left: 23px; }
+
+  .stage { flex: 1; display: flex; align-items: center; justify-content: center; background: radial-gradient(120% 80% at 50% 18%, #20202a 0%, #121217 60%); min-width: 0; }
+  .phone { position: relative; width: 390px; height: 844px; border-radius: 47px; overflow: hidden; background: var(--void); box-shadow: 0 30px 80px rgba(0,0,0,0.6); touch-action: none; user-select: none; }
+
+  /* ── Atmosphere — five-blob void (consistent w/ home-final) ── */
+  .atmo { position: absolute; inset: 0; opacity: 0.34; pointer-events: none; }
+  .atmo .drift { position: absolute; inset: 0; animation: drift 8s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: translate(0,0); } to { transform: translate(6px,-8px); } }
+  body.rm .atmo .drift { animation: none; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(54px); transform: translate(-50%,-50%); transition: background 0.6s ease; }
+  .b1 { left: 70px;  top: 250px; width: 460px; height: 380px; background: radial-gradient(closest-side, rgba(0,194,255,0.46), transparent 72%); }
+  .b2 { left: 330px; top: 300px; width: 420px; height: 350px; background: radial-gradient(closest-side, rgba(255,0,106,0.42), transparent 72%); }
+  .b3 { left: 195px; top: 560px; width: 340px; height: 320px; background: radial-gradient(closest-side, rgba(108,58,224,0.5), transparent 72%); }
+  .b4 { left: 300px; top: 720px; width: 360px; height: 300px; background: radial-gradient(closest-side, rgba(255,0,106,0.36), transparent 72%); }
+
+  .screen { position: absolute; inset: 0; overflow: hidden; }
+  .statusbar { position: relative; z-index: 10; pointer-events: none; display: flex; justify-content: space-between; align-items: center; padding: 16px 28px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.65); }
+  .statusbar .icons { letter-spacing: 2px; font-size: 11px; opacity: 0.7; }
+  .overline { font-size: 10px; font-weight: 700; letter-spacing: 0.17em; text-transform: uppercase; color: var(--label); }
+
+  /* ════ THE MODE-DIAL — arcade game switcher, pinned top-center ════ */
+  /* THE DOME — a large dial emerging from the TOP EDGE of the screen.
+     Only the bottom cap is visible; the divider runs up the middle, splitting
+     the two games. Tap a side or swipe to move between them. */
+  /* arch shape: square top (sides run straight up off-screen) + rounded bottom */
+  .dome { position: absolute; top: var(--domeTop); left: 50%; transform: translateX(-50%); width: var(--domeW); height: var(--domeH); border-radius: 0 0 var(--domeRound) var(--domeRound); z-index: 4; cursor: pointer;
+    background: conic-gradient(from -90deg, var(--cyan), var(--purple), var(--magenta), var(--cyan)); padding: 2px;
+    filter: drop-shadow(0 8px 24px rgba(108,58,224,0.28)); }
+  .dome.bump { animation: domeBump 0.5s ease; }
+  @keyframes domeBump { 30% { filter: drop-shadow(0 10px 34px rgba(108,58,224,0.6)); } }
+  .dome::after { content: ""; position: absolute; inset: 2px; border-radius: 0 0 var(--domeRound) var(--domeRound); background: radial-gradient(circle at 50% 64%, #15111f 0%, #0a0810 72%); }
+  .domeFoil { position: absolute; inset: 2px; border-radius: 0 0 var(--domeRound) var(--domeRound); overflow: hidden; opacity: 0.22; z-index: 1; pointer-events: none; }
+  /* glow sits at the active (bottom-center) slot; colour = the active game */
+  .activeGlow { position: absolute; left: calc(50% + var(--symbolX)); top: calc(var(--glowY) + var(--symbolY)); width: var(--glowSize); height: calc(var(--glowSize) * 0.78); transform: translate(-50%, -50%); border-radius: 50%; filter: blur(24px); z-index: 4; pointer-events: none; transition: background 0.45s ease; }
+  body[data-world="cards"] .activeGlow { background: radial-gradient(closest-side, rgba(0,194,255,0.55), transparent 70%); }
+  body[data-world="sim"]   .activeGlow { background: radial-gradient(closest-side, rgba(255,0,106,0.55), transparent 70%); }
+  /* ROTATING SYMBOL WHEEL — active game at bottom-center, the other swings off to
+     the side; swapping rotates the wheel to bring the new game to center. */
+  .dialWheel { position: absolute; left: 50%; top: calc(var(--baseY) - var(--wheelR)); width: 0; height: 0; z-index: 5;
+    transform: translateX(-50%) rotate(var(--wheelRot)); transition: transform 0.55s cubic-bezier(0.34, 1.2, 0.5, 1); pointer-events: none; }
+  body.rm .dialWheel { transition: transform 0.15s ease; }
+  .wglyph { position: absolute; left: 0; top: 0; transform-origin: 0 0; transition: opacity 0.4s ease; pointer-events: auto; cursor: pointer; }
+  .wglyph .gi { position: absolute; left: 0; top: 0; padding: 14px; transform: translate(-50%, -50%) scale(var(--glyphScale)); transition: transform 0.45s cubic-bezier(0.34, 1.2, 0.5, 1); }
+  /* placed on the wheel, each glyph counter-rotates to stay upright as the wheel turns */
+  .wglyph.cards { transform: translateY(var(--wheelR)) rotate(calc(-1 * var(--wheelRot))); }
+  .wglyph.sim   { transform: rotate(var(--offAngle)) translateY(var(--wheelR)) rotate(calc(-1 * var(--offAngle))) rotate(calc(-1 * var(--wheelRot))); }
+  /* the off (non-centered) game is dimmed AND scaled down — depth, not just dim */
+  body[data-world="cards"] .wglyph.sim   { opacity: 0.42; }
+  body[data-world="sim"]   .wglyph.cards { opacity: 0.42; }
+  /* OFF glyph: scaled down, parked at its wheel position */
+  body[data-world="cards"] .wglyph.sim .gi,
+  body[data-world="sim"]   .wglyph.cards .gi { transform: translate(-50%, -50%) scale(calc(var(--glyphScale) * var(--offScale))); }
+  /* ACTIVE glyph: full scale + the Symbol X/Y nudge — moves ONLY the selected symbol */
+  body[data-world="cards"] .wglyph.cards .gi,
+  body[data-world="sim"]   .wglyph.sim .gi { transform: translate(calc(-50% + var(--symbolX)), calc(-50% + var(--symbolY))) scale(var(--glyphScale)); }
+  /* arrival pop — the game lands in the centre slot with a little overshoot (keeps the nudge) */
+  @keyframes symPop { 0% { transform: translate(calc(-50% + var(--symbolX)), calc(-50% + var(--symbolY))) scale(var(--glyphScale)); } 58% { transform: translate(calc(-50% + var(--symbolX)), calc(-50% + var(--symbolY))) scale(calc(var(--glyphScale) * 1.2)); } 100% { transform: translate(calc(-50% + var(--symbolX)), calc(-50% + var(--symbolY))) scale(var(--glyphScale)); } }
+  .wglyph .gi.pop { animation: symPop 0.55s cubic-bezier(0.34, 1.4, 0.5, 1); }
+  /* the divider — a diagonal spoke on the wheel, sitting in the gap BETWEEN the two
+     symbols; rotates with the wheel so it stays between them on swap */
+  .domeDivider { position: absolute; left: 0; top: 0; width: 1.5px; height: var(--divLen); transform-origin: 0 0; z-index: 1; pointer-events: none;
+    transform: rotate(calc(var(--offAngle) / 2)) translateY(var(--divGap));   /* auto-bisector: always centred between the two symbols → symmetric in both states */
+    background: linear-gradient(180deg, transparent, rgba(0,194,255,0.45), rgba(108,58,224,0.6), rgba(255,0,106,0.45), transparent); }
+
+  .dialLabels { position: absolute; top: 158px; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 6; }
+  .mlabel { font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--t-whisper); cursor: pointer; transition: color 0.3s ease, font-size 0.3s ease, opacity 0.3s ease; opacity: 0.7; }
+  .mlabel.lit { font-size: 13px; opacity: 1; color: transparent; background: linear-gradient(95deg, var(--cyan), var(--purple), var(--magenta)); -webkit-background-clip: text; background-clip: text; }
+  .mlabel .lock { font-size: 9px; opacity: 0.7; margin-left: 3px; }
+  .dialLabels .dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.2); }
+
+  /* ════ WORLD BODY (swaps with the dial) ════ */
+  .body { position: absolute; top: 192px; left: 0; right: 0; bottom: 0; }
+  .world { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity var(--swapDur) ease, transform var(--swapDur) cubic-bezier(0.3, 0.9, 0.3, 1); }
+  body[data-world="cards"] .world.cards { opacity: 1; pointer-events: auto; }
+  body[data-world="sim"]   .world.sim   { opacity: 1; pointer-events: auto; }
+  /* the leaving/entering world slides the SAME direction the wheel rotates — one motion */
+  body[data-world="cards"] .world.sim   { transform: translateX(calc(-1 * var(--swapSlide))); }
+  body[data-world="sim"]   .world.cards { transform: translateX(var(--swapSlide)); }
+
+  /* ── CARDS world ── */
+  .cardsScroll { position: absolute; inset: 0; overflow-y: auto; padding: 0 18px 120px; scrollbar-width: none; }
+  .cardsScroll::-webkit-scrollbar { display: none; }
+
+  /* hero deck-object (Opal-style: one calm precious object, tap → inspect) */
+  .heroWrap { display: flex; flex-direction: column; align-items: center; padding-top: 6px; }
+  .heroLabel { margin-bottom: 14px; }
+  .deckObject {
+    position: relative; width: 224px; height: 196px; border-radius: 20px; cursor: pointer;
+    background: linear-gradient(150deg, #1b1530 0%, #140f22 45%, #0f0b18 100%);
+    border: 1px solid rgba(255,255,255,0.07);
+    box-shadow: 0 26px 60px rgba(0,0,0,0.55), 0 0 40px rgba(108,58,224,0.18), inset 0 1px 0 rgba(255,255,255,0.06);
+    overflow: hidden;
+    animation: floatDeck 4.5s ease-in-out infinite alternate; /* 2× ambientDrift */
+  }
+  @keyframes floatDeck { from { transform: translateY(0) rotate(-0.5deg); } to { transform: translateY(-8px) rotate(0.5deg); } }
+  body.rm .deckObject { animation: none; }
+  .deckObject:active { transform: scale(0.985); }
+  .deckObject .foil { position: absolute; inset: 0; opacity: 0.62; }
+  /* moving specular band — light lives in the hex grooves */
+  .deckObject .gloss { position: absolute; top: -40%; left: -30%; width: 50%; height: 180%; transform: rotate(18deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), rgba(0,194,255,0.10), transparent);
+    filter: blur(6px); animation: sweep 5s ease-in-out infinite; }
+  @keyframes sweep { 0%,100% { left: -40%; } 50% { left: 90%; } }
+  body.rm .deckObject .gloss { animation: none; opacity: 0.4; }
+  .deckObject .frame { position: absolute; inset: 9px; border-radius: 13px; border: 1px solid transparent;
+    background: linear-gradient(120deg, rgba(0,194,255,0.4), rgba(108,58,224,0.4), rgba(255,0,106,0.4)) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0.5; }
+  .deckObject .fl { position: absolute; font-size: 10px; color: rgba(255,255,255,0.18); }
+  .deckObject .fl.tl{top:14px;left:16px}.deckObject .fl.tr{top:14px;right:16px}.deckObject .fl.bl{bottom:14px;left:16px}.deckObject .fl.br{bottom:14px;right:16px}
+  .deckObject .emblem { position: absolute; top: 42px; left: 50%; transform: translateX(-50%); opacity: 0.85; }
+  /* embossed deck name */
+  .deckObject .dname { position: absolute; left: 0; right: 0; bottom: 46px; text-align: center; font-size: 21px; font-weight: 800; letter-spacing: 0.01em;
+    background: linear-gradient(95deg, var(--cyan), var(--purple), var(--magenta)); -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0.8px 0.9px 0 rgba(0,0,0,0.5); }
+  .deckObject .dmeta { position: absolute; left: 0; right: 0; bottom: 26px; text-align: center; font-size: 11px; color: var(--t-tertiary); }
+  .heroHint { margin-top: 12px; font-size: 11px; color: var(--t-whisper); }
+
+  /* category chips */
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 18px 0 4px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex-shrink: 0; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 16px; color: var(--t-secondary); background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); cursor: pointer; }
+  .chip.on { color: var(--t-display); background: rgba(108,58,224,0.16); border-color: rgba(108,58,224,0.5); }
+
+  .gridHead { display: flex; align-items: baseline; padding: 16px 2px 12px; }
+  .gridHead .swipe { margin-left: auto; font-size: 12px; color: var(--t-whisper); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  /* each tile is a FLAT builddeck deck-case: hue-tinted anodized metal + hex foil
+     + spectrum hairline frame + ✦ corners + embossed name. A shelf of sealed decks. */
+  .tile { position: relative; border-radius: 16px; min-height: 178px; padding: 15px; cursor: pointer; overflow: hidden;
+    display: flex; flex-direction: column;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 16px 36px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+    transition: transform 0.15s ease; }
+  .tile:active { transform: scale(0.975); }
+  .tile .foil { position: absolute; inset: 0; opacity: 0.42; pointer-events: none; }
+  .tile .gloss { position: absolute; top: -30%; left: -25%; width: 45%; height: 160%; transform: rotate(18deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent); filter: blur(5px); pointer-events: none; }
+  .tile .frame { position: absolute; inset: 8px; border-radius: 11px;
+    background: linear-gradient(120deg, rgba(0,194,255,0.4), rgba(108,58,224,0.4), rgba(255,0,106,0.4)) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0.42; pointer-events: none; }
+  .tile .fl { position: absolute; font-size: 8px; color: rgba(255,255,255,0.18); z-index: 2; }
+  .tile .fl.tl{top:12px;left:14px}.tile .fl.tr{top:12px;right:14px}.tile .fl.bl{bottom:12px;left:14px}.tile .fl.br{bottom:12px;right:14px}
+  .tile .newpill { position: absolute; top: 13px; right: 26px; font-size: 8px; font-weight: 700; letter-spacing: 0.12em; color: var(--cyan); border: 1px solid rgba(0,194,255,0.5); border-radius: 10px; padding: 3px 7px; z-index: 3; }
+  .tile .lockico { position: absolute; top: 12px; right: 28px; font-size: 12px; z-index: 3; }
+  .tile .tcontent { position: relative; z-index: 2; margin-top: auto; }
+  .tile .cat { font-size: 8.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label); margin-bottom: 5px; }
+  /* embossed deck name (case wordmark recipe: shadow down-right + highlight up-left) */
+  .tile .tname { font-size: 17px; font-weight: 800; color: rgba(255,255,255,0.92); line-height: 1.12;
+    text-shadow: 0.7px 0.8px 0 rgba(0,0,0,0.6), -0.6px -0.7px 0 rgba(255,255,255,0.10); }
+  .tile .tmeta { margin-top: 9px; display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--t-tertiary); }
+  .tile .tmeta .idot { width: 6px; height: 6px; border-radius: 50%; }
+  .tile.locked { opacity: 0.6; }
+
+  /* ── SIMULATOR world — Act-2 teaser, gated ── */
+  .sim { display: flex; flex-direction: column; align-items: center; padding: 10px 24px; }
+  .simPath { position: relative; width: 100%; height: 360px; margin-top: 6px; }
+  .simPath svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .simNode { position: absolute; width: 16px; height: 16px; border-radius: 50%; transform: translate(-50%,-50%); }
+  .simNode .c { position: absolute; inset: 4px; border-radius: 50%; background: var(--purple); box-shadow: 0 0 12px rgba(108,58,224,0.8); }
+  .simNode .h { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgba(108,58,224,0.4); animation: nodeB 2.4s ease-in-out infinite alternate; }
+  @keyframes nodeB { from { transform: scale(0.85); opacity: 0.5 } to { transform: scale(1.1); opacity: 1 } }
+  body.rm .simNode .h { animation: none; opacity: 0.7; }
+  .simLock { position: absolute; left: 50%; top: 52%; transform: translate(-50%,-50%); text-align: center; width: 260px;
+    background: rgba(13,10,20,0.72); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 20px 22px; }
+  .simLock .lk { font-size: 22px; margin-bottom: 8px; }
+  .simLock .lt { font-size: 17px; font-weight: 700; color: var(--t-display); margin-bottom: 6px; }
+  .simLock .ld { font-size: 12px; line-height: 1.5; color: var(--t-tertiary); }
+  .simLock .lp { margin-top: 12px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: transparent; background: linear-gradient(95deg, var(--cyan), var(--magenta)); -webkit-background-clip: text; background-clip: text; }
+
+  /* ── Tab bar ── */
+  .tabbar { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); width: 340px; height: 64px; border-radius: 32px; background: rgba(10,8,16,0.97); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.055); display: flex; align-items: center; justify-content: space-around; z-index: 40; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 60px; cursor: pointer; }
+  .tab svg { width: 21px; height: 21px; stroke: rgba(255,255,255,0.22); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .tab span { font-size: 10px; color: rgba(255,255,255,0.22); }
+  .tab .adot { width: 4px; height: 4px; border-radius: 50%; background: transparent; }
+  .tab.active svg { stroke: url(#tabGrad); }
+  .tab.active span { color: rgba(255,255,255,0.65); font-weight: 600; }
+  .tab.active .adot { background: linear-gradient(90deg, var(--cyan), var(--magenta)); box-shadow: 0 0 6px rgba(255,0,106,0.6); }
+
+  /* ── Inspect sheet ── */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 480px; z-index: 51; border-radius: 26px 26px 0 0; padding: 10px 24px 26px;
+    background: rgba(21,16,30,0.98); backdrop-filter: blur(40px); box-shadow: 0 -24px 70px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.07);
+    transform: translateY(105%); transition: transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94); }
+  .sheet::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; border-radius: 1px; background: linear-gradient(90deg, transparent 4%, var(--cyan) 26%, var(--purple) 54%, var(--magenta) 80%, transparent 96%); opacity: 0.6; }
+  .sheet .handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); margin: 4px auto 18px; cursor: pointer; }
+  .sheet .sCat { font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--label); }
+  .sheet .sName { font-size: 27px; font-weight: 800; color: var(--t-display); margin: 6px 0 10px; }
+  .sheet .sMeta { display: flex; gap: 18px; margin-bottom: 16px; }
+  .sheet .sMeta .m { font-size: 12px; color: var(--t-secondary); }
+  .sheet .sMeta .m b { display: block; font-size: 17px; font-weight: 700; color: var(--t-display); margin-bottom: 1px; }
+  .sheet .sMeta .idot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .sheet .sDesc { font-size: 13.5px; line-height: 1.55; color: var(--t-secondary); margin-bottom: 22px; }
+  .sheet .begin { height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+    font-size: 15px; font-weight: 700; color: #fff; background: linear-gradient(95deg, var(--purple), var(--magenta)); box-shadow: 0 10px 30px rgba(108,58,224,0.4); }
+  .sheet .begin:active { transform: scale(0.98); }
+  body.inspectOpen .scrim { opacity: 1; pointer-events: auto; }
+  body.inspectOpen .sheet { transform: translateY(0); }
+  body.rm .sheet { transition: opacity 0.15s ease, transform 0s; }
+
+  /* ── CEREMONY overlay — the reserved metallic case + crack (only on Begin) ── */
+  .ceremony { position: absolute; inset: 0; z-index: 60; background: radial-gradient(circle at 50% 42%, #14101e, #06040b 80%); opacity: 0; pointer-events: none; transition: opacity 0.4s ease; display: flex; align-items: center; justify-content: center; }
+  body.ceremonyOn .ceremony { opacity: 1; pointer-events: auto; }
+  .case { position: relative; width: 210px; height: 310px; border-radius: 16px;
+    background: linear-gradient(145deg, #241a3d, #160f26 50%, #0e0a18); border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 30px 70px rgba(0,0,0,0.7), 0 0 50px rgba(108,58,224,0.3);
+    overflow: hidden; transform: perspective(800px) rotateY(-16deg) rotateX(4deg); }
+  .case .foil { position: absolute; inset: 0; opacity: 0.55; }
+  .case .cname { position: absolute; left: 0; right: 0; bottom: 70px; text-align: center; font-size: 22px; font-weight: 800;
+    background: linear-gradient(95deg, var(--cyan), var(--purple), var(--magenta)); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0.8px 0.9px 0 rgba(0,0,0,0.5); }
+  .case .cracks { position: absolute; inset: 0; opacity: 0; }
+  .case .flood { position: absolute; inset: 0; background: radial-gradient(circle at 50% 55%, rgba(255,255,255,0.95), rgba(108,58,224,0.5) 35%, transparent 70%); opacity: 0; }
+  body.ceremonyOn .case { animation: caseRise 0.7s cubic-bezier(0.25,1.05,0.4,1); }
+  @keyframes caseRise { from { transform: perspective(800px) rotateY(-16deg) translateY(40px) scale(0.9); opacity: 0; } }
+  body.cracking .case .cracks { opacity: 1; animation: crackFlash 0.5s ease; }
+  @keyframes crackFlash { 0% { opacity: 0; } 40% { opacity: 1; } 100% { opacity: 1; } }
+  body.cracking .case .flood { animation: flood 0.9s ease-out 0.35s forwards; }
+  @keyframes flood { 0% { opacity: 0; transform: scale(0.4); } 60% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(1.6); } }
+  body.cracking .case { animation: caseShudder 0.5s ease; }
+  @keyframes caseShudder { 0%,100%{ transform: perspective(800px) rotateY(-16deg) } 25%{ transform: perspective(800px) rotateY(-16deg) translateX(-3px) } 75%{ transform: perspective(800px) rotateY(-16deg) translateX(3px) } }
+  .ceremony .ceremonyHint { position: absolute; bottom: 80px; left: 0; right: 0; text-align: center; font-size: 12px; color: var(--t-whisper); }
+
+  /* ── Debug tuner panel ── */
+  .dbgHead { font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); margin: 22px 0 10px; }
+  .dbgRow { margin-bottom: 9px; }
+  .dbgRow .lab { display: flex; justify-content: space-between; font-size: 11px; color: var(--t-secondary); margin-bottom: 3px; }
+  .dbgRow .lab b { color: var(--cyan); font-weight: 600; }
+  .dbgRow input[type=range] { width: 100%; height: 4px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.12); border-radius: 2px; outline: none; }
+  .dbgRow input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--magenta)); cursor: pointer; }
+  .dbgBtns { display: flex; gap: 8px; margin-top: 10px; }
+  .dbgBtn { flex: 1; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--t-primary); background: rgba(108,58,224,0.16); border: 1px solid rgba(108,58,224,0.5); cursor: pointer; }
+  .dbgBtn:hover { background: rgba(108,58,224,0.26); }
+
+  @media (max-width: 920px) { .panel { display: none; } }
+</style>
+</head>
+<body data-world="cards">
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="tabGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00c2ff"/><stop offset="55%" stop-color="#6c3ae0"/><stop offset="100%" stop-color="#ff006a"/></linearGradient>
+  <linearGradient id="specGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00c2ff"/><stop offset="52%" stop-color="#6c3ae0"/><stop offset="100%" stop-color="#ff006a"/></linearGradient>
+  <pattern id="hexFoil" width="22" height="25.4" patternUnits="userSpaceOnUse" patternTransform="scale(1)">
+    <path d="M11 0 L22 6.35 L22 19.05 L11 25.4 L0 19.05 L0 6.35 Z" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="0.6"/>
+    <path d="M11 0 L22 6.35 L22 19.05 L11 25.4 L0 19.05 L0 6.35 Z" fill="none" stroke="rgba(0,194,255,0.05)" stroke-width="0.6" transform="translate(0.5,0.5)"/>
+  </pattern>
+</defs></svg>
+
+<div class="wrap">
+  <aside class="panel">
+    <h1>Vayl · Play</h1>
+    <h2>Arcade Mode-Dial</h2>
+    <p>V1 ships the card game only. The dial keeps its arcade-dome aesthetic, but with a single symbol it doesn't switch to anything — room to drop a 2nd game into the dial later.</p>
+    <ul>
+      <li><b>The dome</b> — the arcade dial; the Cards symbol docks at center with its glow.</li>
+      <li><b>The deck</b> — the featured deck floats as one calm hex-foil object (Opal model). Tap it (or any grid deck) → <b>inspect</b>.</li>
+      <li><b>Begin</b> a deck → the metallic case + crack ceremony plays (reserved for opening, never the browse).</li>
+    </ul>
+    <div class="toggleRow"><div class="toggle" id="rmToggle"></div><span>Reduce Motion</span></div>
+
+    <div class="dbgHead">Debug · Dial</div>
+    <div id="dbg"></div>
+    <div class="dbgBtns">
+      <button class="dbgBtn" id="dbgReset">Reset</button>
+      <button class="dbgBtn" id="dbgCopy">Copy values</button>
+    </div>
+
+    <h1 style="margin-top:18px">Compare</h1>
+    <div class="nav">
+      <a href="/play-arcade.html" class="active">★ Play — Arcade Dial (this)</a>
+      <a href="/home-final.html">Home — converged</a>
+      <a href="/home-horizon-refine-lab.html">Home — Pulse/Lexicon refine</a>
+    </div>
+  </aside>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="atmo"><div class="drift">
+        <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
+      </div></div>
+
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="icons">▮▮▮ ▰</span></div>
+
+        <!-- ════ THE DIAL ════ -->
+        <!-- THE DOME — large arch emerging from the top edge -->
+        <div class="dome" id="dome">
+          <div class="domeFoil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFoil)"/></svg></div>
+          <div class="activeGlow"></div>
+        </div>
+        <!-- SYMBOL — single game (Cards), docked at the centre of the dome -->
+        <div class="dialWheel" id="dialWheel">
+          <div class="wglyph cards" data-m="cards"><div class="gi">
+            <svg width="44" height="40" viewBox="0 0 44 40">
+              <g fill="none" stroke="url(#specGrad)" stroke-width="2.2" stroke-linejoin="round">
+                <rect x="6" y="10" width="20" height="27" rx="3" transform="rotate(-16 16 23)" opacity="0.55"/>
+                <rect x="12" y="8" width="20" height="27" rx="3" opacity="0.85"/>
+                <rect x="18" y="10" width="20" height="27" rx="3" transform="rotate(16 28 23)" opacity="0.55"/>
+              </g>
+            </svg>
+          </div></div>
+        </div>
+        <div class="dialLabels">
+          <div class="mlabel lit">Cards</div>
+        </div>
+
+        <!-- ════ WORLD BODY ════ -->
+        <div class="body">
+
+          <!-- CARDS -->
+          <div class="world cards">
+            <div class="cardsScroll" id="cardsScroll">
+              <div class="heroWrap">
+                <div class="overline heroLabel">Your Deck · in progress</div>
+                <div class="deckObject" data-deck="opener">
+                  <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFoil)"/></svg></div>
+                  <div class="gloss"></div><div class="frame"></div>
+                  <span class="fl tl">✦</span><span class="fl tr">✦</span><span class="fl bl">✦</span><span class="fl br">✦</span>
+                  <div class="emblem">
+                    <svg width="40" height="36" viewBox="0 0 44 40"><g fill="none" stroke="url(#specGrad)" stroke-width="2" stroke-linejoin="round"><rect x="6" y="10" width="20" height="27" rx="3" transform="rotate(-16 16 23)" opacity="0.5"/><rect x="12" y="8" width="20" height="27" rx="3" opacity="0.8"/><rect x="18" y="10" width="20" height="27" rx="3" transform="rotate(16 28 23)" opacity="0.5"/></g></svg>
+                  </div>
+                  <div class="dname">The Opener</div>
+                  <div class="dmeta">Ember Floor · Medium · 10 cards</div>
+                </div>
+                <div class="heroHint">tap to inspect</div>
+              </div>
+
+              <div class="chips" id="chips">
+                <div class="chip on">All</div><div class="chip">Foundation</div><div class="chip">Core</div><div class="chip">NM</div><div class="chip">Identity</div><div class="chip">Advanced</div>
+              </div>
+
+              <div class="gridHead"><span class="overline">All decks · 8</span><span class="swipe">browse →</span></div>
+              <div class="grid" id="grid"></div>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg><span>Home</span><i class="adot"></i></div>
+        <div class="tab active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg><span>Play</span><i class="adot"></i></div>
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg><span>Map</span><i class="adot"></i></div>
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5Z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></svg><span>Learn</span><i class="adot"></i></div>
+      </div>
+
+      <!-- Inspect sheet -->
+      <div class="scrim" id="inspectScrim"></div>
+      <div class="sheet" id="inspectSheet">
+        <div class="handle" id="inspectHandle"></div>
+        <div class="sCat" id="sCat">Foundation</div>
+        <div class="sName" id="sName">The Opener</div>
+        <div class="sMeta">
+          <div class="m"><b id="sCount">10</b>cards</div>
+          <div class="m"><b id="sInt"><span class="idot" style="background:#6c3ae0"></span>Medium</b><span id="sIntName">Ember Floor</span></div>
+          <div class="m"><b id="sTime">~20m</b>together</div>
+        </div>
+        <div class="sDesc" id="sDesc">The first sitting. Easy questions that open the door — designed so the first card is never the hardest one.</div>
+        <div class="begin" id="beginBtn">Begin →</div>
+      </div>
+
+      <!-- Ceremony overlay (reserved for opening) -->
+      <div class="ceremony" id="ceremony">
+        <div class="case">
+          <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFoil)"/></svg></div>
+          <div class="cname" id="caseName">The Opener</div>
+          <svg class="cracks" viewBox="0 0 210 310" preserveAspectRatio="none">
+            <g stroke="url(#specGrad)" stroke-width="1.4" fill="none" filter="drop-shadow(0 0 4px rgba(108,58,224,0.9))">
+              <path d="M105 150 L88 110 L70 86 M88 110 L112 96"/>
+              <path d="M105 150 L122 196 L140 230 M122 196 L98 214"/>
+              <path d="M105 150 L60 158 M105 150 L156 144"/>
+            </g>
+          </svg>
+          <div class="flood"></div>
+        </div>
+        <div class="ceremonyHint" id="ceremonyHint">opening…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Reduce Motion ── */
+const rmToggle = document.getElementById('rmToggle');
+rmToggle.addEventListener('click', () => { rmToggle.classList.toggle('on'); document.body.classList.toggle('rm'); });
+
+/* ── THE DIAL — single game (Cards). Rotary dome aesthetic kept; nothing to switch to. ── */
+
+/* ── CARDS grid ── */
+const DECKS = [
+  { id:'jealousy', name:'Jealousy & Compersion', cat:'NM Specific', intName:'Nebula', int:'Deep', intColor:'#ff006a', cards:24, time:'~35m', state:'played',
+    desc:"The feelings nobody warns you about — envy, insecurity, and the surprising joy of compersion. For when the new thing stirs something old." },
+  { id:'desire', name:'Desire & Fantasy', cat:'Identity', intName:'Aurora Band', int:'Deep', intColor:'#8b5cf6', cards:18, time:'~30m', state:'new',
+    desc:"What you actually want, said out loud. Fantasies, curiosities, and the difference between a wish and a plan." },
+  { id:'boundaries', name:'Boundaries', cat:'Foundation', intName:'Ember Floor', int:'Medium', intColor:'#6c3ae0', cards:16, time:'~25m', state:'',
+    desc:"The lines that keep this safe — drawn together, on purpose, before they get tested." },
+  { id:'comm', name:'Communication', cat:'Relationship Core', intName:'Deep Ocean', int:'Easy', intColor:'#00c2ff', cards:20, time:'~30m', state:'',
+    desc:"How you talk when it's hard. Repair, timing, and the words that land instead of wound." },
+  { id:'check', name:'The Check-In', cat:'Foundation', intName:'Void', int:'Easy', intColor:'#3dd9f5', cards:12, time:'~15m', state:'',
+    desc:"A short, warm pulse-check. Where are we, really — this week, right now." },
+  { id:'audit', name:'The Audit', cat:'Advanced', intName:'Deep Space', int:'Sensitive', intColor:'#ff006a', cards:14, time:'~40m', state:'locked',
+    desc:"For the experienced. The unflinching questions you only ask when there's real trust to hold them." },
+];
+const grid = document.getElementById('grid');
+DECKS.forEach(d => {
+  const t = document.createElement('div');
+  t.className = 'tile' + (d.state === 'locked' ? ' locked' : '');
+  t.dataset.id = d.id;
+  // hue-tinted anodized metal base (flat builddeck deck), tinted by the deck's intensity color
+  t.style.background = `radial-gradient(130% 100% at 50% -12%, ${d.intColor}33, transparent 60%), linear-gradient(155deg, #1c1532, #140f22 52%, #0d0a16)`;
+  t.innerHTML = `
+    <div class="foil"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#hexFoil)"/></svg></div>
+    <div class="gloss"></div><div class="frame"></div>
+    <span class="fl tl">✦</span><span class="fl tr">✦</span><span class="fl bl">✦</span><span class="fl br">✦</span>
+    ${d.state === 'new' ? '<div class="newpill">NEW</div>' : ''}
+    ${d.state === 'locked' ? '<div class="lockico">🔒</div>' : ''}
+    <div class="tcontent">
+      <div class="cat">${d.cat}</div>
+      <div class="tname">${d.name}</div>
+      <div class="tmeta"><span class="idot" style="background:${d.intColor}"></span>${d.int} · ${d.cards} cards</div>
+    </div>`;
+  t.addEventListener('click', () => openInspect(d));
+  grid.appendChild(t);
+});
+
+/* chips (visual filter only in mockup) */
+const chips = [...document.querySelectorAll('.chip')];
+chips.forEach(c => c.addEventListener('click', () => { chips.forEach(x => x.classList.toggle('on', x === c)); }));
+
+/* ── Inspect sheet ── */
+const HERO = { id:'opener', name:'The Opener', cat:'Foundation', intName:'Ember Floor', int:'Medium', intColor:'#6c3ae0', cards:10, time:'~20m',
+  desc:"The first sitting. Easy questions that open the door — designed so the first card is never the hardest one." };
+function openInspect(d) {
+  document.getElementById('sCat').textContent = d.cat;
+  document.getElementById('sName').textContent = d.name;
+  document.getElementById('sCount').textContent = d.cards;
+  document.getElementById('sInt').innerHTML = `<span class="idot" style="background:${d.intColor}"></span>${d.int}`;
+  document.getElementById('sIntName').textContent = d.intName;
+  document.getElementById('sTime').textContent = d.time;
+  document.getElementById('sDesc').textContent = d.desc;
+  document.getElementById('caseName').textContent = d.name;
+  document.body.classList.add('inspectOpen');
+}
+document.querySelector('.deckObject').addEventListener('click', () => openInspect(HERO));
+document.getElementById('inspectScrim').addEventListener('click', () => document.body.classList.remove('inspectOpen'));
+document.getElementById('inspectHandle').addEventListener('click', () => document.body.classList.remove('inspectOpen'));
+
+/* ── Begin → the reserved ceremony ── */
+document.getElementById('beginBtn').addEventListener('click', () => {
+  document.body.classList.remove('inspectOpen');
+  setTimeout(() => {
+    document.body.classList.add('ceremonyOn');
+    const hint = document.getElementById('ceremonyHint');
+    hint.textContent = 'tap the seal to open';
+    let taps = 0;
+    const onTap = () => {
+      taps++;
+      if (taps >= 1) {
+        document.body.classList.add('cracking');
+        hint.textContent = '';
+        document.getElementById('ceremony').removeEventListener('click', onTap);
+        setTimeout(() => {  // ceremony resolves → (session would begin); reset for the demo
+          document.body.classList.remove('ceremonyOn', 'cracking');
+        }, 1700);
+      }
+    };
+    document.getElementById('ceremony').addEventListener('click', onTap);
+  }, 300);
+});
+
+/* ── DEBUG TUNER — live-adjust the dome, symbols, divider, spacing ── */
+const DIAL = [
+  { k:'domeWidth',   label:'Dome width',     min:120,  max:440, step:2,    val:182, u:'px',  css:'--domeW' },
+  { k:'domeHeight',  label:'Dome height',    min:100,  max:440, step:2,    val:154, u:'px',  css:'--domeH' },
+  { k:'domeRound',   label:'Bottom curve',   min:10,   max:300, step:2,    val:100, u:'px',  css:'--domeRound' },
+  { k:'domeTop',     label:'Emerge (top)',   min:-340, max:20,  step:2,    val:-72, u:'px',  css:'--domeTop' },
+  { k:'glyphScale',  label:'Symbol size',    min:0.5,  max:1.8, step:0.05, val:1,   u:'',    css:'--glyphScale' },
+  { k:'symbolX',     label:'Symbol X',       min:-90,  max:90,  step:1,    val:0,   u:'px',  css:'--symbolX' },
+  { k:'symbolY',     label:'Symbol Y',       min:-90,  max:90,  step:1,    val:0,   u:'px',  css:'--symbolY' },
+  { k:'wheelR',      label:'Swing radius',   min:20,   max:170, step:1,    val:52,  u:'px',  css:'--wheelR' },
+  { k:'glowSize',    label:'Glow size',      min:30,   max:220, step:2,    val:120, u:'px',  css:'--glowSize' },
+  { k:'glowY',       label:'Glow Y',         min:20,   max:220, step:1,    val:56,  u:'px',  css:'--glowY' },
+  { k:'labelsGap',   label:'Labels gap',     min:0,    max:90,  step:1,    val:18,  u:'px' },
+  { k:'bodyGap',     label:'Content gap',    min:0,    max:110, step:1,    val:38,  u:'px' },
+];
+const dstate = {};
+DIAL.forEach(d => dstate[d.k] = d.val);
+const dbgRoot = document.getElementById('dbg');
+const docRoot = document.documentElement;
+const fmt = d => dstate[d.k] + (d.u || '');
+
+function applyDial() {
+  DIAL.forEach(d => { if (d.css) docRoot.style.setProperty(d.css, dstate[d.k] + d.u); });
+  const bottom = dstate.domeTop + dstate.domeHeight;   // visible cap bottom (px from screen top)
+  const lt = bottom + dstate.labelsGap;
+  document.querySelector('.dialLabels').style.top = lt + 'px';
+  document.querySelector('.body').style.top = (lt + dstate.bodyGap) + 'px';
+}
+
+DIAL.forEach(d => {
+  const row = document.createElement('div');
+  row.className = 'dbgRow';
+  row.innerHTML = `<div class="lab"><span>${d.label}</span><b id="v_${d.k}">${fmt(d)}</b></div>
+    <input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${d.val}" id="s_${d.k}">`;
+  dbgRoot.appendChild(row);
+  row.querySelector('input').addEventListener('input', e => {
+    dstate[d.k] = parseFloat(e.target.value);
+    document.getElementById('v_' + d.k).textContent = fmt(d);
+    applyDial();
+  });
+});
+document.getElementById('dbgReset').addEventListener('click', () => {
+  DIAL.forEach(d => { dstate[d.k] = d.val; const s = document.getElementById('s_' + d.k); s.value = d.val; document.getElementById('v_' + d.k).textContent = fmt(d); });
+  applyDial();
+});
+document.getElementById('dbgCopy').addEventListener('click', () => {
+  const lines = DIAL.filter(d => d.css).map(d => `${d.css}: ${dstate[d.k]}${d.u};`);
+  lines.push(`/* dialLabels top = domeBottom + ${dstate.labelsGap}px · body top = +${dstate.bodyGap}px */`);
+  navigator.clipboard?.writeText(lines.join('\n'));
+  const b = document.getElementById('dbgCopy'); const o = b.textContent; b.textContent = 'Copied ✓'; setTimeout(() => b.textContent = o, 1200);
+});
+
+applyDial();
+</script>
+</body>
+</html>

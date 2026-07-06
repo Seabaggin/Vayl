@@ -2,15 +2,23 @@
 //  HomeDashboardView.swift
 //  Vayl
 //
+//  The Home screen — a calm, single-screen composition over the five-blob void.
+//  Faithful to docs/prototypes/home-final.html ("Final — converged"):
+//
+//    Header (gradient name + partner pill)
+//      → Module 1 · The Deck    — a glass card levitating on a pedestal of light
+//      → Module 2 · The Pulse   — a light instrument rail (minimal placeholder;
+//                                  the real Pulse work is a separate focused pass)
+//      → Module 3 · The Lexicon — centered daily typography (hold-to-keep, share)
+//
+//  Day-1 keeps the Getting Started entry card between the header and the deck
+//  (→ Path overlay, owned by HomeRouterView). The converged home retired the
+//  scrolling dashboard, the galaxy-morph background, GravLift, the Ticker, the
+//  PickUp card, and the Pulse/Prism/Constellation widget stack.
+//
 
 import SwiftUI
-
-private struct ConstellationOffsetKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
+import SwiftData
 
 struct HomeDashboardView: View {
 
@@ -28,6 +36,18 @@ struct HomeDashboardView: View {
     var recentEvents: [HomeEvent] = []
     var isSolo: Bool = false
     var showReflectionBanner: Bool = false
+    /// Server-overridden Lexicon content from HomeStore (nil → bundled baseline).
+    var lexiconRemotePool: LexiconRemotePool? = nil
+
+    // MARK: - Getting Started Activation
+    // Optional namespace so the existing #Previews still compile (Namespace.ID has no public
+    // initializer); the real call site (HomeRouterView) always supplies it.
+    var gettingStarted: GettingStarted = GettingStarted.resolve(
+        myMapComplete: false, isPaired: false, partnerMapComplete: false, revealDone: false
+    )
+    var pathNamespace: Namespace.ID? = nil
+    var pathOpen: Bool = false
+    var onOpenPath: (() -> Void)? = nil
 
     // MARK: - Callbacks
 
@@ -42,61 +62,72 @@ struct HomeDashboardView: View {
     var onInvitePartner: (() -> Void)? = nil
     var onPartnerTap: (() -> Void)? = nil
     var onNavigateToPlay: (() -> Void)? = nil
+    /// The Lexicon CTA route (→ Learn).
+    var onOpenLexicon: (() -> Void)? = nil
+    /// The Pulse rail tap (→ Map / Pulse history). Minimal for now.
+    var onPulseTap: (() -> Void)? = nil
+    /// The Pulse "Check in" affordance. Final form: presents the shared check-in
+    /// sheet in place over Home (Bryan's PulseWidget pass). Interim: routes to the
+    /// Pulse surface so it is never dead.
+    var onCheckIn: (() -> Void)? = nil
+    var onOpenSettings: (() -> Void)? = nil
 
-    // MARK: - Environment + State
+    // MARK: - State
 
-    @Environment(\.colorScheme) private var colorScheme
+    @State private var greetingVisible = false
+    @State private var heroVisible     = false
+    @State private var pulseVisible    = false
+    @State private var lexVisible      = false
 
-    @State private var greetingVisible   = false
-    @State private var sessionVisible    = false
-    @State private var desireMapVisible  = false
-    @State private var reflectionVisible = false
-    @State private var pickUpVisible     = false
-    @State private var pulseVisible      = false
-    @State private var prismVisible      = false
-    @State private var tickerVisible     = false
-    @State private var deckFocused: Bool    = false
-    @State private var breathPhase: CGFloat = 0
+    /// The deck's phase (floating → spread → lifted → carousel), reported by
+    /// CardCarousel. The room recedes once the deck is engaged.
+    @State private var deckPhase: CarouselPhase = .floating
 
-    // MARK: - Scroll Tracking
+    /// Tonight's hand (card ids, in add order), built by tapping cards in the carousel.
+    @State private var handIDs: [String] = []
 
-    @State private var scrollOffset: CGFloat = 0
-    @State private var didFireThresholdHaptic = false
-    @State private var constellationMorphProgress: CGFloat = 0
+    /// Bumped to reset the carousel back to floating after "Settle in".
+    @State private var deckReset = 0
 
-    private let greetingExitThreshold: CGFloat = 160
+    /// Presents the Pulse QRG. Owned here (not in HomePulseRail) so the sheet
+    /// covers the whole screen rather than the nested rail's bounds.
+    @State private var showPulseInfo = false
 
-    private var greetingExitProgress: CGFloat {
-        min(max(scrollOffset / greetingExitThreshold, 0), 1)
-    }
+    /// Presents the Pulse check-in in place over Home (no tab-yank). The shared
+    /// PulseStore the cover writes to is the same instance the rail reads.
+    @State private var showPulseCheckIn = false
+    @Environment(PulseStore.self) private var pulseStore
 
-    // MARK: - Debug
+    /// Tonight's hand, set when the carousel hands off via `onStartHand`. Non-nil
+    /// drives the protected session cover. DEBUG-only couch mode (spec rule 26):
+    /// release "Settle in" routes to Play instead.
+    @State private var sessionHand: [Card]? = nil
+
+    /// Joiner entry: "‹name› set up a session" banner + join cover.
+    @Environment(\.modelContext) private var modelContext
+    @Environment(AppState.self) private var appState
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var entryStore: SessionEntryStore?
+    @State private var joinerLaunch: SessionLaunch?
 
     #if DEBUG
     @State private var showDebugGrid = false
     #endif
 
-    // MARK: - Opacity Helpers
+    // MARK: - Derived
 
-    private func elementOpacity(visible: Bool, focusedFloor: CGFloat = 0.06) -> CGFloat {
-        let entranceAlpha: CGFloat = visible ? 1.0 : 0.0
-        let focusAlpha: CGFloat   = deckFocused ? focusedFloor : 1.0
-        return entranceAlpha * focusAlpha
+    /// When a desire-map nudge is live, it takes the bottom module slot in place
+    /// of the Lexicon (conversion beat outranks the daily word).
+    private var showDesireNudge: Bool {
+        gettingStarted.isComplete
+            && desireMapState != .hidden
+            && desireMapState != .fullyUnlocked
     }
 
-    private var greetingOpacity: CGFloat {
-        let entrance: CGFloat  = greetingVisible ? 1.0 : 0.0
-        let exitCurve: CGFloat = pow(1.0 - greetingExitProgress, 1.5)
-        let focus: CGFloat     = deckFocused ? 0.05 : 1.0
-        return entrance * exitCurve * focus
-    }
-
-    // MARK: - Deck Focus Animation
-
-    private var focusAnimation: Animation {
-        deckFocused
-            ? AppAnimation.enter
-            : AppAnimation.fast
+    /// The room recedes once the deck is taken past its floating/spread states
+    /// (matches CardCarousel's own screen dim).
+    private var deckEngaged: Bool {
+        deckPhase != .floating && deckPhase != .spread
     }
 
     // MARK: - Body
@@ -104,162 +135,274 @@ struct HomeDashboardView: View {
     var body: some View {
         GeometryReader { geo in
             let layout = AppLayout.from(geo)
+            // The hero owns the first screen; the collapsed Pulse and the Lexicon share the
+            // rest. All three are a plain stack the ScrollView lays out — the layout engine
+            // sizes them, we don't.
+            let heroIsolation = layout.screenHeight * 0.12
+            // The ScrollView's viewport height. This GeometryReader is laid out INSIDE the
+            // safe area (AppShell's tab-bar `.safeAreaInset` + the island), so `geo.size.height`
+            // is ALREADY the visible height between the island and the tab bar — the ScrollView
+            // fills exactly this. `geo.safeAreaInsets` still REPORTS the insets (62/114) as
+            // leftover metadata, but they've already been removed from `size.height`; subtracting
+            // them again shrank the fill target ~176pt below the real viewport, which is what
+            // floated the Lexicon above a fixed dead gap. The viewport IS screenHeight.
+            let safeContentH = layout.screenHeight
+            // Drops the pedestal light-strip to the hero card's lower edge so the deck
+            // reads as levitating on a beam of light. The card is 190pt tall with an
+            // 8pt top pad inside CardCarousel; the strip sits at its center, so ~155
+            // lands it on that bottom edge. Effect-surface alignment (not an AppSpacing
+            // candidate), tunable on device.
+            let pedestalDropY: CGFloat = 191
+
             ZStack(alignment: .top) {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .center, spacing: 0) {
+                // Same atmosphere as the OB canvas — keep the app's background
+                // language consistent (void floor + tri-colour bloom).
+                OnboardingAtmosphere(config: .stat)
+                    .ignoresSafeArea()
 
-                    Spacer(minLength: AppSpacing.xs)
+                ScrollView {
+                    VStack(spacing: 0) {
 
-                    greetingBlock
-                        .padding(.horizontal, AppSpacing.lg)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .scaleEffect(
-                            1.0 - (greetingExitProgress * 0.15),
-                            anchor: .bottomLeading
+                        greetingBlock
+                            .opacity(greetingVisible ? (deckEngaged ? 0.25 : 1) : 0)
+                            .blur(radius: deckEngaged ? 6 : 0)
+                            .offset(y: greetingVisible ? 0 : 10)
+                            .animation(AppAnimation.slow, value: greetingVisible)
+                            .animation(AppAnimation.enter, value: deckEngaged)
+
+                        if !gettingStarted.isComplete, let ns = pathNamespace {
+                            GettingStartedEntryCard(
+                                gettingStarted: gettingStarted,
+                                namespace: ns,
+                                isHidden: pathOpen,
+                                onTap: { onOpenPath?() }
+                            )
+                            .padding(.top, AppSpacing.md)
+                            .opacity(greetingVisible ? 1 : 0)
+                        }
+
+                        // Top void — the hero's approach.
+                        Color.clear.frame(height: layout.screenHeight * 0.04)
+
+                        // The deck — CardCarousel elevates IN PLACE (no cover): tap
+                        // the floating card and the deck spreads → lifts → carousel,
+                        // dimming the screen with its own backdrop. Tapping a card
+                        // adds it to tonight's hand.
+                        CardCarousel(
+                            cards: cards,
+                            onNavigateToPlay: onNavigateToPlay,
+                            onPhaseChange: { phase in
+                                deckPhase = phase
+                                // Dismiss / clicked-out → start tonight's hand over.
+                                // Idempotent: settleIn() already clears + bumps
+                                // deckReset (which re-fires .floating), and first
+                                // appear fires .floating with the hand already empty.
+                                if phase == .floating { handIDs = [] }
+                            },
+                            selecting: true,
+                            selectedIDs: Set(handIDs),
+                            onToggleSelect: { toggleHand($0) },
+                            dimOpacity: 0.15
                         )
-                        .opacity(greetingOpacity)
-                        .offset(
-                            y: (greetingVisible ? 0.0 : 12.0)
-                             + (scrollOffset > 0 ? scrollOffset * 0.3 : 0)
-                        )
-                        .blur(
-                            radius: (greetingExitProgress * 8.0)
-                                  + (deckFocused ? 20.0 : 0.0)
-                        )
-                        .allowsHitTesting(!deckFocused && greetingExitProgress < 0.5)
-                        .animation(AppAnimation.slow, value: greetingVisible)
-                        .animation(focusAnimation, value: deckFocused)
+                        // The pedestal of light — a spectrum strip at the card's lower
+                        // edge so the deck reads as levitating. Drawn as an OVERLAY (in
+                        // front): the card body is opaque, so a background strip would be
+                        // occluded by the card's lower edge. Strip only (CardCarousel
+                        // already supplies the bloom); fades out once the deck is engaged.
+                        .overlay(alignment: .top) {
+                            DeckPedestal(showBloom: false)
+                                .offset(y: pedestalDropY)
+                                .opacity(deckEngaged ? 0 : 1)
+                                .animation(AppAnimation.enter, value: deckEngaged)
+                        }
+                        .id(deckReset)
+                        .opacity(heroVisible ? 1 : 0)
+                        .animation(AppAnimation.spring, value: heroVisible)
+                        .zIndex(10)
 
-                    Color.clear
-                        .frame(height: max(0, 8 - (max(0, scrollOffset) * 0.3)))
+                        // Flexible hero-isolation void: the deck floats up top while the Pulse
+                        // + Lexicon settle at the bottom (it fills the collapsed screen's slack).
+                        // Collapses to its minimum when the graph expands and the view scrolls.
+                        Spacer(minLength: heroIsolation)
 
-                    CardChestContainer(
-                        cards: cards,
-                        cardsCompleted: cardsCompleted,
-                        onCardAction: onCardAction,
-                        onNavigateToPlay: onNavigateToPlay,
-                        onPhaseChange: { phase in
-                            let shouldFocus = (phase != .floating)
-                            if shouldFocus != deckFocused {
-                                if !shouldFocus {
-                                    Task {
-                                        try? await Task.sleep(for: .milliseconds(200))
-                                        deckFocused = false
-                                    }
-                                } else {
-                                    deckFocused = true
-                                }
-                            }
+                        // The Pulse — a secondary, ambient-hero signal. Tapping it opens
+                        // the full Pulse on the Map; the pill (re-)runs a check-in.
+                        pulseModule(
+                            // The column's real inner width. An ENFORCED ceiling (not
+                            // an exact width) so the long title scales-to-fit instead
+                            // of reporting its unscaled ideal and blowing the card past
+                            // the column (vertical ScrollViews let content overflow the
+                            // viewport, pinning leading → off the right edge).
+                            columnWidth: layout.screenWidth - AppSpacing.lg * 2
+                        )
+
+                        // Breathing gap between the Pulse and the Lexicon.
+                        Color.clear.frame(height: layout.screenHeight * 0.06)
+
+                        lexiconModule
+                    }
+                    .padding(.horizontal, AppSpacing.lg)
+                    // The header sits just below the system chrome. The ScrollView already
+                    // insets its content for the safe area, so we add only a small breathing
+                    // pad here — NOT topClearance, which would double the Dynamic Island inset.
+                    .padding(.top, AppSpacing.md)
+                    // Fill at least the visible area so the collapsed composition anchors the
+                    // Lexicon at the bottom (the flexible hero void takes the slack). When the
+                    // graph expands past one screen the content grows and the ScrollView scrolls.
+                    .frame(maxWidth: .infinity, minHeight: safeContentH, alignment: .top)
+                }
+                .scrollIndicators(.hidden)
+
+                // "Settle in" rides above the carousel's screen dim once a card is in
+                // tonight's hand, and carries the hand into the session.
+                if deckPhase == .carousel {
+                    deckChrome(layout: layout)
+                        .zIndex(100)
+                }
+
+                reflectionBanner
+
+                pendingSessionBanner
+
+                #if DEBUG
+                debugOverlay(layout: layout)
+                #endif
+            }
+            // Pin the screen ZStack to the true screen width. A child (deck backdrop /
+            // atmosphere) was inflating it past the screen, anchoring at the leading
+            // edge and pushing the centered content column ~13pt right (off the right
+            // edge). Clamping here re-centers every module on the physical screen.
+            .frame(width: layout.screenWidth, alignment: .center)
+            .onAppear { runEntranceAnimations() }
+            .blur(radius: pathOpen ? 9 : 0)
+            .animation(AppAnimation.spring, value: pathOpen)
+            .vaylCover(
+                isPresented: Binding(
+                    get: { sessionHand != nil },
+                    set: { if !$0 { sessionHand = nil } }
+                )
+            ) {
+                // DEBUG-only couch mode: sessionHand is only ever set in DEBUG
+                // builds (see settleIn()).
+                CardSessionContainerView(launch: SessionLaunch(
+                    hand: sessionHand ?? [], entry: .localDebug, role: .a, session: nil
+                ))
+            }
+            // Joiner path: partner opened a lobby → banner → this cover.
+            .vaylCover(isPresented: Binding(
+                get: { joinerLaunch != nil },
+                set: { if !$0 { joinerLaunch = nil } }
+            )) {
+                if let launch = joinerLaunch {
+                    CardSessionContainerView(launch: launch)
+                        .id(launch.id)
+                }
+            }
+            .onAppear {
+                if entryStore == nil {
+                    entryStore = SessionEntryStore(
+                        modelContainer: modelContext.container,
+                        appState: appState,
+                        partnerName: { [chip = partnerChipState] in
+                            if case .active(let name, _) = chip { return name }
+                            return nil
                         }
                     )
-                    .padding(.horizontal, AppSpacing.lg)
-                    .opacity(sessionVisible ? 1 : 0)
-                    .offset(y: sessionVisible ? 0 : 16)
-                    .animation(AppAnimation.slow, value: sessionVisible)
-                    .zIndex(10)
-
-                    if desireMapState != .hidden && desireMapState != .fullyUnlocked {
-                        Spacer(minLength: AppSpacing.xxl)
-                        DesireMapIndicator(
-                            state: desireMapState,
-                            onReveal: onDesireMapReveal,
-                            onUnlock: onDesireMapUnlock,
-                            onRemind: onRemindPartner
-                        )
-                        .padding(.horizontal, AppSpacing.lg)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .opacity(elementOpacity(visible: desireMapVisible))
-                        .offset(y: desireMapVisible ? 0 : 12)
-                        .blur(radius: deckFocused ? 20 : 0)
-                        .allowsHitTesting(!deckFocused)
-                        .animation(AppAnimation.slow, value: desireMapVisible)
-                        .animation(focusAnimation, value: deckFocused)
-                    }
-
-                    if reflectionCardState != .hidden {
-                        Spacer(minLength: AppSpacing.xxl)
-                        ReflectionCard(
-                            state: reflectionCardState,
-                            onMoreTap: onMoreTap,
-                            onDone: { pills, note in
-                                onReflectionDone?(pills, note, true)
-                            }
-                        )
-                        .padding(.horizontal, AppSpacing.lg)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .opacity(elementOpacity(visible: reflectionVisible))
-                        .offset(y: reflectionVisible ? 0 : 12)
-                        .blur(radius: deckFocused ? 20 : 0)
-                        .allowsHitTesting(!deckFocused)
-                        .animation(AppAnimation.slow, value: reflectionVisible)
-                        .animation(focusAnimation, value: deckFocused)
-                    }
-
-                    if !pickUpItems.isEmpty {
-                        Spacer(minLength: AppSpacing.xxl)
-                        PickUpCard(
-                            items: pickUpItems,
-                            onItemTap: onPickUpItemTap
-                        )
-                        .padding(.horizontal, AppSpacing.lg)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .opacity(elementOpacity(visible: pickUpVisible))
-                        .offset(y: pickUpVisible ? 0 : 8)
-                        .blur(radius: deckFocused ? 20 : 0)
-                        .allowsHitTesting(!deckFocused)
-                        .animation(AppAnimation.enter, value: pickUpVisible)
-                        .animation(focusAnimation, value: deckFocused)
-                    }
-
-                    GravLiftView(breathPhase: breathPhase)
-                        .padding(.horizontal, AppSpacing.lg)
-                        .frame(height: 32)
-                        .opacity(deckFocused ? 0.0 : 1.0)
-                        .animation(focusAnimation, value: deckFocused)
-
-                    Spacer(minLength: AppSpacing.xl)
-
-                    ambientZone
-
-                    Spacer(minLength: AppSpacing.xxl)
                 }
+                entryStore?.refresh()
             }
-            .scrollClipDisabled()
-            .onPreferenceChange(ConstellationOffsetKey.self) { minY in
-                let screenH   = layout.screenHeight
-                let fadeStart = screenH * 1.10
-                let fadeEnd   = screenH * 0.30
-                constellationMorphProgress = max(0, min(1, (fadeStart - minY) / (fadeStart - fadeEnd)))
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { entryStore?.refresh() }
             }
-            .onScrollGeometryChange(for: CGFloat.self) { geometry in
-                geometry.contentOffset.y
-            } action: { _, newOffset in
-                scrollOffset = max(0, newOffset)
-                if newOffset >= greetingExitThreshold && !didFireThresholdHaptic {
-                    didFireThresholdHaptic = true
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                } else if newOffset < greetingExitThreshold {
-                    didFireThresholdHaptic = false
-                }
+            .onChange(of: entryStore?.acceptedLaunch) { _, launch in
+                if let launch { joinerLaunch = launch; entryStore?.acceptedLaunch = nil }
             }
-            .background {
-                backgroundLayer.ignoresSafeArea()
+            // Pulse check-in — full-screen cover so PulseField gets real screen-derived
+            // geometry instead of a sheet's measured-content sizing (the bug that made it
+            // not land reliably). Not confirm-on-exit: a check-in is quick and low-stakes,
+            // not a protected two-device session.
+            .vaylCover(isPresented: $showPulseCheckIn, confirmOnExit: false) {
+                PulseCheckInView(store: pulseStore, onClose: { showPulseCheckIn = false })
             }
-            .simultaneousGesture(DragGesture(minimumDistance: 10))
-
-            reflectionBanner
-
-            #if DEBUG
-            debugOverlay(layout: layout)
-            #endif
-        }
-        .onAppear { runEntranceAnimations() }
+            // The Vayl sheet (custom OB chrome). Pass the real screen height so the
+            // half fraction is reliable — the overlay's own geometry here measures the
+            // tall scroll runway, which would resolve the fraction too large.
+            .vaylSheet(
+                isPresented: $showPulseInfo,
+                heightFraction: 0.75,
+                screenHeight: layout.screenHeight
+            ) {
+                PulseInfoSheet()
+            }
         }
     }
 
-    // MARK: - Body subviews
-    // Extracted from `body` so each is type-checked in isolation — the inline
-    // ZStack (scroll column + banner + debug overlay) was 348ms.
+    // MARK: - Pulse (the secondary hero — tap the rail to expand the graph)
+
+    private func pulseModule(columnWidth: CGFloat) -> some View {
+        HomePulseRail(
+            onTap: { onPulseTap?() },
+            onCheckIn: { showPulseCheckIn = true }
+        )
+        // Cap at the column's inner width so the long title scales-to-fit rather than
+        // forcing the card wider than the viewport (which a vertical ScrollView would
+        // then pin leading, running the right edge off-screen). maxWidth = ceiling, so
+        // it can only shrink to fit — never an exact width that could itself overflow.
+        .frame(maxWidth: columnWidth, alignment: .center)
+        .opacity(pulseVisible ? 1 : 0)
+        .animation(AppAnimation.slow, value: pulseVisible)
+        .blur(radius: deckEngaged ? 6 : 0)
+        .opacity(deckEngaged ? 0.25 : 1)
+        .allowsHitTesting(!deckEngaged)
+        .animation(AppAnimation.enter, value: deckEngaged)
+    }
+
+    // MARK: - Lexicon (the type layer, pushed down as the graph expands)
+
+    private var lexiconModule: some View {
+        VStack(spacing: 0) {
+            // DesireMapIndicator retired from the dashboard: the waiting state now lives in the
+            // partner pill, completion is the one-shot moment, and the reveal entry is the Getting
+            // Started step. (The indicator is kept on disk for the M5 unlock surface.)
+            HomeLexicon(remotePool: lexiconRemotePool, onOpen: onOpenLexicon)
+        }
+        .opacity(lexVisible ? 1 : 0)
+        .animation(AppAnimation.slow, value: lexVisible)
+        .blur(radius: deckEngaged ? 6 : 0)
+        .opacity(deckEngaged ? 0.25 : 1)
+        .allowsHitTesting(!deckEngaged)
+        .animation(AppAnimation.enter, value: deckEngaged)
+    }
+
+    /// You finished your map; your partner has not. Drives the partner-pill waiting indicator.
+    private var isWaitingOnPartner: Bool {
+        if case .youDone = desireMapState { return true }
+        return false
+    }
+
+    // MARK: - Greeting Block
+
+    private var greetingBlock: some View {
+        HStack(alignment: .center) {
+            // Home leads with the brand wordmark; the personal name now lives on the
+            // Map tab (Me / Us). Consistent treatment: gradient wordmark + period.
+            LivingText(
+                text: "VAYL.",
+                font: AppFonts.display(40, weight: .bold, relativeTo: .largeTitle),
+                animated: false
+            )
+            Spacer()
+            PartnerChip(
+                state: partnerChipState,
+                waiting: isWaitingOnPartner,
+                onInviteTap: onInvitePartner,
+                onPartnerTap: onPartnerTap
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Reflection Banner
 
     @ViewBuilder
     private var reflectionBanner: some View {
@@ -285,34 +428,151 @@ struct HomeDashboardView: View {
         }
     }
 
+    // MARK: - Pending Session Banner (joiner entry)
+
+    @ViewBuilder
+    private var pendingSessionBanner: some View {
+        if let pending = entryStore?.pendingSession {
+            VStack {
+                PendingSessionBanner(
+                    initiatorName: pending.initiatorName,
+                    deckTitle: pending.deckTitle,
+                    onJoin: { entryStore?.accept() },
+                    onDismiss: { entryStore?.dismissBanner() }
+                )
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.top, AppSpacing.sm)
+                Spacer()
+            }
+            .transition(.move(edge: .top).combined(with: .opacity))
+            .animation(AppAnimation.spring, value: entryStore?.pendingSession)
+            .zIndex(2)
+        }
+    }
+
+    // MARK: - Phase / Entrance
+
+    // MARK: - Deck (hand + settle in)
+
+    private var settleInBar: some View {
+        VaylButton(label: "Settle in  ·  \(handIDs.count)  →", isDisabled: false) {
+            settleIn()
+        }
+    }
+
+    private func toggleHand(_ card: Card) {
+        withAnimation(AppAnimation.spring) {
+            if let idx = handIDs.firstIndex(of: card.id) {
+                handIDs.remove(at: idx)
+            } else {
+                handIDs.append(card.id)
+            }
+        }
+    }
+
+    private func settleIn() {
+        let hand = handIDs.compactMap { id in cards.first { $0.id == id } }
+        guard !hand.isEmpty else { return }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        // Single-device couch mode survives only behind DEBUG (spec rule 26);
+        // release routes to Play, where the real two-device flow begins.
+        #if DEBUG
+        sessionHand = hand
+        #else
+        onNavigateToPlay?()
+        #endif
+        handIDs = []
+        deckReset += 1   // reset the carousel back to floating behind the session
+    }
+
+    /// The deck's chrome over the open carousel: the "tonight" corner deck (always
+    /// present while open) and the "Settle in" bar (once a card is in hand).
+    @ViewBuilder
+    private func deckChrome(layout: AppLayout) -> some View {
+        ZStack {
+            // Corner "tonight" deck — positioned EXPLICITLY in the top-right corner.
+            // (A Spacer/padding chain was rendering it off-screen.)
+            cornerDeck
+                .position(
+                    x: layout.screenWidth - 48,
+                    y: layout.safeAreaInsets.top + 24
+                )
+
+            if !handIDs.isEmpty {
+                VStack {
+                    Spacer()
+                    settleInBar
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.bottom, AppSpacing.xl + layout.homeIndicatorInset)
+                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .transition(.opacity)
+        .animation(AppAnimation.spring, value: handIDs.isEmpty)
+    }
+
+    /// Tonight's hand, as a small corner pile — an empty ghost card while the hand
+    /// is empty, filling (with a count) as cards are added.
+    private var cornerDeck: some View {
+        ZStack(alignment: .topTrailing) {
+            ForEach(0..<max(1, min(handIDs.count, 3)), id: \.self) { k in
+                RoundedRectangle(cornerRadius: AppRadius.cornerCard, style: .continuous)
+                    .fill(AppColors.cardBg)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppRadius.cornerCard)
+                            .strokeBorder(
+                                AppColors.spectrumBorder.opacity(handIDs.isEmpty ? 0.22 : 0.5),
+                                lineWidth: 0.7
+                            )
+                    )
+                    .frame(width: 42, height: 30)
+                    .rotationEffect(.degrees(Double(k - 1) * 6))
+            }
+        }
+        // Fixed bound so the explicit .position in deckChrome centers it cleanly;
+        // the count badge is an overlay INSIDE these bounds (no off-screen overflow).
+        .frame(width: 56, height: 40)
+        .overlay(alignment: .topTrailing) {
+            if !handIDs.isEmpty {
+                Text("\(handIDs.count)")
+                    .font(AppFonts.display(11, weight: .bold, relativeTo: .caption2))
+                    .foregroundStyle(AppColors.void)
+                    .frame(width: 18, height: 18)
+                    .background(Circle().fill(AppColors.spectrumBorder))
+                    .offset(y: -2)
+            }
+        }
+        .animation(AppAnimation.spring, value: handIDs.count)
+    }
+
+    private func runEntranceAnimations() {
+        withAnimation(AppAnimation.slow.delay(0.10))   { greetingVisible = true }
+        withAnimation(AppAnimation.spring.delay(0.30)) { heroVisible     = true }
+        withAnimation(AppAnimation.slow.delay(0.62))   { pulseVisible    = true }
+        withAnimation(AppAnimation.slow.delay(0.78))   { lexVisible      = true }
+    }
+
+    // MARK: - Computed
+
+    private var bannerSessionLabel: String {
+        if case .pendingYours(let label, _) = reflectionCardState { return label }
+        return "Last session"
+    }
+
+    private var bannerPartnerName: String? {
+        if case .active(let name, _) = partnerChipState { return name }
+        return nil
+    }
+
+    // MARK: - Debug
+
     #if DEBUG
     @ViewBuilder
     private func debugOverlay(layout: AppLayout) -> some View {
         if showDebugGrid {
             DebugGridOverlay()
-
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                Text("SCROLL MATH")
-                    .font(Font.custom("Switzer-Bold", size: 10, relativeTo: .caption2))
-                    .foregroundStyle(.yellow)
-                    .padding(.bottom, AppSpacing.xxs)
-                Text("offset:       \(scrollOffset, specifier: "%.1f")")
-                Text("exitProgress: \(greetingExitProgress, specifier: "%.3f")")
-                Text("greetingVis:  \(greetingVisible ? "TRUE" : "FALSE")")
-                Text("pulseVis:     \(pulseVisible ? "TRUE" : "FALSE")")
-                Text("deckFocused:  \(deckFocused ? "TRUE" : "FALSE")")
-                Text("breathPhase:  \(breathPhase, specifier: "%.3f")")
-            }
-            .font(Font.custom("Switzer-Medium", size: 11, relativeTo: .caption2))
-            .foregroundStyle(.white)
-            .padding(AppSpacing.sm)
-            .background(Color.black.opacity(0.75))
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
-            .overlay(RoundedRectangle(cornerRadius: AppRadius.sm).stroke(Color.white.opacity(0.1), lineWidth: 1))
-            .topClearance(layout)
-            .padding(.leading, AppSpacing.md)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .allowsHitTesting(false)
         }
 
         VStack {
@@ -328,246 +588,12 @@ struct HomeDashboardView: View {
                 }
                 .padding(.leading, AppSpacing.md)
                 .bottomContentInset(layout)
+
                 Spacer()
             }
         }
     }
     #endif
-
-    // MARK: - Section Divider
-
-    private func sectionDivider(label: String, colors: [Color]) -> some View {
-        HStack(spacing: AppSpacing.sm) {
-            RoundedRectangle(cornerRadius: 2, style: .continuous) // intentional micro-radius
-                .fill(LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom))
-                .frame(width: 2.5, height: 16)
-
-            Text(label)
-                .font(AppFonts.overline)
-                .tracking(2.5)
-                .foregroundStyle(
-                    colorScheme == .light
-                        ? AppColors.textTertiary
-                        : AppColors.textTertiary
-                )
-
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            (colorScheme == .light ? Color.black : Color.white).opacity(0.10),
-                            .clear
-                        ],
-                        startPoint: .leading,
-                        endPoint:   .trailing
-                    )
-                )
-                .frame(height: 1)
-        }
-        .padding(.horizontal, AppSpacing.md)
-    }
-
-    // MARK: - Pulse → Prism Thread
-
-    private var pulseToprismThread: some View {
-        GeometryReader { geo in
-            let threadWidth = geo.size.width * 0.20
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear,                       location: 0.00),
-                            .init(color: AppColors.accentPrimary.opacity(0.22), location: 0.20),
-                            .init(color: AppColors.accentPrimary.opacity(0.22), location: 0.80),
-                            .init(color: .clear,                       location: 1.00),
-                        ],
-                        startPoint: .leading,
-                        endPoint:   .trailing
-                    )
-                )
-                .frame(width: threadWidth, height: 1)
-                .frame(maxWidth: .infinity, alignment: .center)
-        }
-        .frame(height: 1)
-        .padding(.horizontal, AppSpacing.lg)
-    }
-
-    // MARK: - Ambient Zone
-
-    private var ambientZone: some View {
-        VStack(spacing: 0) {
-
-            Spacer(minLength: AppSpacing.md)
-
-            sectionDivider(label: "THE PULSE", colors: [AppColors.accentPrimary, AppColors.accentSecondary])
-                .opacity(elementOpacity(visible: pulseVisible))
-                .animation(AppAnimation.slow, value: pulseVisible)
-
-            Spacer(minLength: AppSpacing.sm)
-
-            HomeWidgetShell(
-                isLight:     colorScheme == .light,
-                accentColor: AppColors.accentPrimary,
-                rimVariant:  .pulse
-            ) {
-                ZStack {
-                    if colorScheme == .dark {
-                        OrbLayer(accentColor: AppColors.accentPrimary, height: 300, variant: .pulse)
-                    }
-                    PulseWidget(onOpenInMap: onNavigateToPlay)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, AppSpacing.md)
-            .opacity(pulseVisible ? 1.0 : 0.0)
-            .offset(y: pulseVisible ? 0 : 12)
-            .allowsHitTesting(!deckFocused)
-            .animation(AppAnimation.slow, value: pulseVisible)
-
-            Spacer(minLength: AppSpacing.lg)
-            pulseToprismThread
-            Spacer(minLength: AppSpacing.md)
-
-            sectionDivider(label: "THE PRISM", colors: [AppColors.accentSecondary, AppColors.accentTertiary])
-                .opacity(elementOpacity(visible: prismVisible))
-                .animation(AppAnimation.slow, value: prismVisible)
-
-            Spacer(minLength: AppSpacing.sm)
-
-            HomeWidgetShell(
-                isLight:     colorScheme == .light,
-                accentColor: AppColors.accentSecondary,
-                rimVariant:  .prism
-            ) {
-                ZStack {
-                    if colorScheme == .dark {
-                        OrbLayer(accentColor: AppColors.accentSecondary, height: 300, variant: .prism)
-                    }
-                    PrismView(breathPhase: breathPhase)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, AppSpacing.md)
-
-            Spacer(minLength: AppSpacing.lg)
-            pulseToprismThread
-            Spacer(minLength: AppSpacing.md)
-
-            sectionDivider(
-                label:  "THE CONSTELLATION",
-                colors: colorScheme == .dark
-                    ? [AppColors.accentPrimary, AppColors.accentSecondary]
-                    : [AppColors.accentSecondary, AppColors.accentTertiary]
-            )
-            .background(
-                GeometryReader { proxy in
-                    Color.clear.preference(
-                        key: ConstellationOffsetKey.self,
-                        value: proxy.frame(in: .global).minY
-                    )
-                }
-            )
-            .opacity(elementOpacity(visible: prismVisible))
-            .animation(AppAnimation.slow, value: prismVisible)
-
-            Spacer(minLength: AppSpacing.sm)
-
-            ConstellationView()
-                .padding(.horizontal, AppSpacing.md)
-                .opacity(elementOpacity(visible: prismVisible))
-                .offset(y: prismVisible ? 0 : 12)
-                .blur(radius: deckFocused ? 20 : 0)
-                .allowsHitTesting(!deckFocused)
-                .animation(AppAnimation.slow, value: prismVisible)
-                .animation(focusAnimation, value: deckFocused)
-        }
-    }
-
-    // MARK: - Greeting Block
-
-    private var greetingBlock: some View {
-        HStack(alignment: .center) {
-            if !displayName.isEmpty {
-                LivingText(
-                    text: "\(displayName).",
-                    font: AppFonts.display(40, weight: .bold, relativeTo: .largeTitle)
-                )
-            }
-            Spacer()
-            PartnerChip(
-                state: partnerChipState,
-                onInviteTap: onInvitePartner,
-                onPartnerTap: onPartnerTap
-            )
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    // MARK: - Computed
-
-    private var bannerSessionLabel: String {
-        if case .pendingYours(let label, _) = reflectionCardState { return label }
-        return "Last session"
-    }
-
-    private var bannerPartnerName: String? {
-        if case .active(let name, _) = partnerChipState { return name }
-        return nil
-    }
-
-    // MARK: - Background
-
-    private var backgroundLayer: some View {
-        ZStack {
-            if colorScheme == .light {
-                AppColors.pageBackground
-            } else {
-                AppColors.pageBackground
-            }
-
-            if colorScheme == .dark {
-                Ellipse()
-                    .fill(RadialGradient(
-                        colors: [
-                            AppColors.accentSecondary.opacity(0.18),
-                            AppColors.accentSecondary.opacity(0.08),
-                            Color.clear
-                        ],
-                        center:      .top,
-                        startRadius: 30,
-                        endRadius:   380
-                    ))
-                    .frame(width: 600, height: 400)
-                    .blur(radius: 80)
-            }
-
-            if colorScheme == .light {
-                AuroraGlowField()
-            } else {
-                HomeGlowField(morphProgress: constellationMorphProgress)
-            }
-        }
-    }
-
-    // MARK: - Entrance Animations
-
-    private func runEntranceAnimations() {
-        withAnimation(AppAnimation.slow.delay(0.10)) { greetingVisible   = true }
-        withAnimation(AppAnimation.slow.delay(0.25)) { sessionVisible    = true }
-        withAnimation(AppAnimation.slow.delay(0.38)) { desireMapVisible  = true }
-        withAnimation(AppAnimation.slow.delay(0.50)) { reflectionVisible = true }
-        withAnimation(AppAnimation.enter.delay(0.60)) { pickUpVisible     = true }
-        withAnimation(AppAnimation.slow.delay(0.65)) { pulseVisible      = true }
-        withAnimation(AppAnimation.slow.delay(0.80)) { prismVisible      = true }
-        withAnimation(AppAnimation.slow.delay(0.95)) { tickerVisible     = true }
-
-        Task {
-            try? await Task.sleep(for: .milliseconds(300))
-            withAnimation(.linear(duration: 8.0).repeatForever(autoreverses: false)) {
-                breathPhase = 1.0
-            }
-        }
-    }
 }
 
 // MARK: - Debug Grid Overlay
@@ -584,7 +610,6 @@ private struct DebugGridOverlay: View {
             ZStack(alignment: .topLeading) {
                 gridLines(width: width, height: height)
                 marginGuides(width: width)
-                legend
             }
             .frame(width: width, height: height, alignment: .topLeading)
         }
@@ -621,33 +646,11 @@ private struct DebugGridOverlay: View {
         Rectangle()
             .fill(Color.yellow.opacity(0.45))
             .frame(width: 1)
-            .offset(x: 20)
+            .offset(x: 24)
         Rectangle()
             .fill(Color.yellow.opacity(0.45))
             .frame(width: 1)
-            .offset(x: width - 20)
-        Rectangle()
-            .fill(Color.orange.opacity(0.35))
-            .frame(width: 1)
-            .offset(x: 24)
-        Rectangle()
-            .fill(Color.orange.opacity(0.35))
-            .frame(width: 1)
             .offset(x: width - 24)
-    }
-
-    private var legend: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xs) {
-            Label("center axis", systemImage: "circle.fill").foregroundStyle(Color(red: 1, green: 0, blue: 1))
-            Label("20pt margin", systemImage: "circle.fill").foregroundStyle(.yellow)
-            Label("24pt margin", systemImage: "circle.fill").foregroundStyle(.orange)
-            Label("8pt grid",    systemImage: "circle.fill").foregroundStyle(.cyan)
-        }
-        .font(Font.custom("Switzer-Medium", size: 9, relativeTo: .caption2))
-        .padding(AppSpacing.sm)
-        .background(.black.opacity(0.6))
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
-        .offset(x: 8, y: 8)
     }
 }
 #endif
@@ -664,71 +667,18 @@ extension ReflectionCardState: Equatable {
 }
 
 // MARK: - Previews
-
-#Preview("Dark — Day Zero, Solo") {
+// Routing verification: seeded with real opener cards (proper VaylCardFace) + the
+// AppState + model container the .vaylCover's CardSessionContainerView needs, so
+// the whole route is tappable in the canvas.
+#Preview("Dark — Deck → Session routing") {
     HomeDashboardView(
         displayName: "Jordan", partnerChipState: .none,
-        cards: [], desireMapState: .hidden,
+        cards: Card.openerSamples, desireMapState: .hidden,
         reflectionCardState: .hidden, pickUpItems: [],
-        stageIndex: 1, cardsCompleted: 0, recentEvents: [], isSolo: true
+        stageIndex: 1, cardsCompleted: 3, recentEvents: [], isSolo: false
     )
     .environment(PulseStore())
-    .preferredColorScheme(.dark)
-}
-
-#Preview("Dark — Day Zero, Invite Pending") {
-    HomeDashboardView(
-        displayName: "Jordan", partnerChipState: .invitePending,
-        cards: [], desireMapState: .youDone(partnerName: "Alex"),
-        reflectionCardState: .hidden, pickUpItems: [],
-        stageIndex: 1, cardsCompleted: 0, recentEvents: []
-    )
-    .environment(PulseStore())
-    .preferredColorScheme(.dark)
-}
-
-#Preview("Dark — Mid Deck, Both Map Ready") {
-    HomeDashboardView(
-        displayName: "Jordan", partnerChipState: .active(name: "Alex", initial: "A"),
-        cards: [], desireMapState: .bothReady,
-        reflectionCardState: .pendingYours(sessionLabel: "Stage 1 · Session 1", sessionDate: Date().addingTimeInterval(-172800)),
-        pickUpItems: [], stageIndex: 1, cardsCompleted: 5,
-        recentEvents: [.partnerCompletedDesireMap(partnerName: "Alex")]
-    )
-    .environment(PulseStore())
-    .preferredColorScheme(.dark)
-}
-
-#Preview("Dark — Reflection Banner") {
-    HomeDashboardView(
-        displayName: "Jordan", partnerChipState: .active(name: "Alex", initial: "A"),
-        cards: [], desireMapState: .hidden,
-        reflectionCardState: .hidden, pickUpItems: [],
-        stageIndex: 1, cardsCompleted: 3, recentEvents: [],
-        showReflectionBanner: true
-    )
-    .environment(PulseStore())
-    .preferredColorScheme(.dark)
-}
-
-#Preview("Light — Day Zero") {
-    HomeDashboardView(
-        displayName: "Jordan", partnerChipState: .none,
-        cards: [], desireMapState: .hidden,
-        reflectionCardState: .hidden, pickUpItems: [],
-        stageIndex: 1, cardsCompleted: 0, recentEvents: []
-    )
-    .environment(PulseStore())
-    .preferredColorScheme(.light)
-}
-
-#Preview("Dark — No Name") {
-    HomeDashboardView(
-        displayName: "", partnerChipState: .none,
-        cards: [], desireMapState: .hidden,
-        reflectionCardState: .hidden, pickUpItems: [],
-        stageIndex: 1, cardsCompleted: 0, recentEvents: [], isSolo: true
-    )
-    .environment(PulseStore())
+    .environment({ let state = AppState(); state.coupleId = UUID(); return state }())
+    .modelContainer(.previewContainer)
     .preferredColorScheme(.dark)
 }

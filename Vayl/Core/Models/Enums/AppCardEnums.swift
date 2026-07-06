@@ -175,6 +175,31 @@ enum GenderDynamic: String, CaseIterable, Codable {
         case .flexible: return "Flexible"
         }
     }
+
+    /// Spec §9 derivation. Inputs are the raw GenderPhase drum strings
+    /// ("Man" / "Woman" / "Trans Man" / "Trans Woman" / "Non-binary") or nil
+    /// when a partner declined the drum. Returns the composition to PROPOSE
+    /// (one-tap confirm at link completion), or nil when either answer is
+    /// missing or non-binary — the caller then defaults .flexible silently.
+    /// Trans men count as men and trans women as women for card-wording
+    /// purposes; this maps what each person SAID, it never infers anything.
+    /// Symmetric: proposal(a, b) == proposal(b, a).
+    static func proposal(myGender: String?, partnerGender: String?) -> GenderDynamic? {
+        func binaryAxis(_ raw: String?) -> Character? {
+            switch raw?.trimmingCharacters(in: .whitespaces).lowercased() {
+            case "man", "trans man":     return "m"
+            case "woman", "trans woman": return "w"
+            default:                     return nil   // Non-binary, declined, unknown
+            }
+        }
+        guard let mine = binaryAxis(myGender),
+              let theirs = binaryAxis(partnerGender) else { return nil }
+        switch (mine, theirs) {
+        case ("m", "m"): return .mm
+        case ("w", "w"): return .ff
+        default:         return .mf
+        }
+    }
 }
 
 /// Pre-card context beat type.
