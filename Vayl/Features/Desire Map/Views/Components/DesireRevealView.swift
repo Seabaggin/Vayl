@@ -171,35 +171,26 @@ struct DesireRevealView: View {
                     // Layout + hero placement live on the store (Blueprint C) — the view
                     // only renders what it's handed.
                     //
-                    // Beat2/3 pull the sky into a compact band to make room for the locked rows;
-                    // beat1 and the unlocked sky are full-bleed — the constellation IS the screen
-                    // (mockup 6/10). This used to be ONE `DesireConstellationView` instance whose
-                    // frame height animated between the two sizes — but every star's `.position()`
-                    // is a fraction of that same resolving frame (via the view's own internal
-                    // GeometryReader), so animating the frame meant animating every star's position
-                    // at once, reading as the sky shifting rather than settling in place, with
-                    // lines chasing wherever the stars landed. Two independently-sized instances,
-                    // cross-faded via `.transition(.opacity)` on an `if/else` (which swaps view
-                    // identity — the old branch is removed, the new one inserted), avoids this
-                    // entirely: each instance's frame never changes during its own lifetime, so its
-                    // stars never move. This is the same phase-swap pattern already used everywhere
-                    // else in this app (e.g. DesireMapView's `content` switch), not a new technique.
-                    Group {
-                        if store.beatPhase == .beat2 || store.beatPhase == .beat3 {
-                            constellationView
-                                .frame(maxWidth: .infinity, maxHeight: 220)
-                                .transition(.opacity)
-                        } else {
-                            constellationView
-                                .frame(maxWidth: .infinity, maxHeight: geo.size.height)
-                                .transition(.opacity)
-                        }
-                    }
-                    .padding(.vertical, AppSpacing.lg)
-                    .opacity(store.beatPhase != .idle ? 1 : 0)
-                    // Fix #3b: opacity reveal gated behind reduceMotionSafe; the per-star ignite + line
-                    // draw live inside DesireConstellationView (also Reduce-Motion aware).
-                    .animation(AppAnimation.desireStarIgnite.reduceMotionSafe, value: store.beatPhase)
+                    // ONE constant frame — half the screen's height — for the entire ceremony,
+                    // beat1 through revealed. Two earlier attempts tried to give beat1 a dramatic
+                    // full-bleed size and beat2/3 a smaller one (first by animating a single
+                    // instance's frame height, then by cross-fading between two differently-sized
+                    // instances); both still produced a visible jump or abrupt landing, because
+                    // every star's `.position()` is a fraction of whatever frame the constellation
+                    // resolves to, and the surrounding VStack's layout snapped to the new slot size
+                    // the moment the beat changed even when the star content tried to animate.
+                    // Removing the size change entirely removes the whole family of bugs: nothing
+                    // about the constellation's layout ever changes across beats, so its stars and
+                    // lines never move. `bottomSection` below it already fades its own content in
+                    // and out independently — it now simply has a stable amount of room reserved
+                    // below the constellation at all times, instead of needing it to shrink.
+                    constellationView
+                        .frame(maxWidth: .infinity, maxHeight: geo.size.height * 0.5)
+                        .padding(.vertical, AppSpacing.lg)
+                        .opacity(store.beatPhase != .idle ? 1 : 0)
+                        // Fix #3b: opacity reveal gated behind reduceMotionSafe; the per-star ignite + line
+                        // draw live inside DesireConstellationView (also Reduce-Motion aware).
+                        .animation(AppAnimation.desireStarIgnite.reduceMotionSafe, value: store.beatPhase)
 
                     // Bottom section: caption at beat1/revealed, locked rows at beat2/beat3
                     bottomSection
@@ -210,10 +201,8 @@ struct DesireRevealView: View {
         }
     }
 
-    /// The constellation, factored out so both the full-bleed and compact frame sizes in
-    /// `beatReveal` construct an identical instance — only the `.frame(...)` applied at each call
-    /// site differs. Kept as a plain (non-`@ViewBuilder`) property since it's always exactly one
-    /// view, not conditional content.
+    /// The constellation. Factored out of `beatReveal` for readability — it's still exactly one
+    /// call site now, but keeping it separate keeps `beatReveal`'s body scannable.
     private var constellationView: some View {
         DesireConstellationView(
             stars: store.placedStars,
