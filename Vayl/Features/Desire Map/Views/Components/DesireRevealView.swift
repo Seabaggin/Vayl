@@ -234,6 +234,7 @@ struct DesireRevealView: View {
         case .beat2, .beat3:
             // Locked teasers + count
             _LockedSection(
+                hero: store.heroMatch,
                 matches: store.lockedMatches,
                 isVisible: store.beatPhase.rawValue >= 2
             )
@@ -427,25 +428,35 @@ struct DesireRevealView: View {
 }
 
 // MARK: - Locked teasers section (beat2 + beat3)
-// Card-Weight-styled preview rows, staggered in at 80ms each. Only the first row shows the
-// lock glyph — blur alone communicates "locked" for the rest, so repeating the icon on every
-// row would just be noise.
+// The hero (the one match already revealed via the constellation) shows first, fully legible —
+// otherwise this list reads as "everything is locked," which contradicts the lit star above it.
+// Every other row stays blurred with NO lock icon at all: blur alone says "locked," so repeating
+// the icon on every row (or even just one) is redundant noise.
 
 private struct _LockedSection: View {
+    let hero: RevealMatch?
     let matches: [RevealMatch]
     let isVisible: Bool
 
     var body: some View {
         VStack(spacing: AppSpacing.xs) {
+            if let hero {
+                _LockedPreviewRow(itemName: hero.itemName, isRevealed: true)
+                    .opacity(isVisible ? 1 : 0)
+                    .offset(y: isVisible ? 0 : 22)
+                    .animation(AppAnimation.desireLockedRowEnter.reduceMotionSafe, value: isVisible)
+            }
+
             ForEach(Array(matches.prefix(4).enumerated()), id: \.element.id) { i, match in
-                _LockedPreviewRow(itemName: match.itemName, showsLock: i == 0)
+                _LockedPreviewRow(itemName: match.itemName, isRevealed: false)
                     .opacity(isVisible ? 1 : 0)
                     .offset(y: isVisible ? 0 : 22)
                     // Fix #5: tokenized locked-row stagger (was .easeOut 0.36 / 0.08 step),
-                    // reduceMotionSafe so it collapses to a fast opacity confirm.
+                    // reduceMotionSafe so it collapses to a fast opacity confirm. Offset by
+                    // one extra step so locked rows cascade in just after the hero row.
                     .animation(
                         AppAnimation.desireLockedRowEnter
-                            .delay(Double(i) * AppAnimation.desireBeatStaggerStep)
+                            .delay(Double(i + 1) * AppAnimation.desireBeatStaggerStep)
                             .reduceMotionSafe,
                         value: isVisible
                     )
@@ -480,12 +491,16 @@ private struct _LockedSection: View {
 }
 
 // MARK: - Locked preview row (Card Weight materials, no interaction)
-// Shares DesireAnswerPill's visual language — radius, top sheen, dim orb accent — without
-// being a tappable/selectable component; this is a static, non-interactive preview row.
+// Shares DesireAnswerPill's visual language — radius, top sheen, orb accent — without being a
+// tappable/selectable component. `isRevealed` is the ONLY thing that distinguishes the hero row
+// from a locked one: clear text + a lit magenta accent vs. blurred text + a dim white accent.
 
 private struct _LockedPreviewRow: View {
     let itemName: String
-    let showsLock: Bool
+    let isRevealed: Bool
+
+    private var accent: Color { isRevealed ? AppColors.spectrumMagenta : .white }
+    private var textColor: Color { isRevealed ? AppColors.textBright : Color.white.opacity(0.30) }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -496,15 +511,10 @@ private struct _LockedPreviewRow: View {
                 orb
                 Text(itemName)
                     .font(AppFonts.bodyText)
-                    .foregroundStyle(Color.white.opacity(0.30))
-                    .blur(radius: 5)
+                    .foregroundStyle(textColor)
+                    .blur(radius: isRevealed ? 0 : 5)
                     .lineLimit(1)
                 Spacer(minLength: 0)
-                if showsLock {
-                    Image(systemName: "lock.fill")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(Color.white.opacity(0.30))
-                }
             }
             .padding(.horizontal, AppSpacing.md)
         }
@@ -512,11 +522,11 @@ private struct _LockedPreviewRow: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
-                .fill(AppColors.whisperFill)
+                .fill(isRevealed ? AppColors.spectrumMagenta.opacity(0.08) : AppColors.whisperFill)
         )
         .overlay(
             RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
-                .stroke(AppColors.borderDefault, lineWidth: 1)
+                .stroke(isRevealed ? AppColors.spectrumMagenta.opacity(0.35) : AppColors.borderDefault, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
     }
@@ -524,14 +534,14 @@ private struct _LockedPreviewRow: View {
     private var orb: some View {
         ZStack {
             Circle()
-                .fill(.white)
+                .fill(accent)
                 .frame(width: 17, height: 17)
                 .blur(radius: 6)
-                .opacity(0.35)
+                .opacity(isRevealed ? 0.7 : 0.35)
             Circle()
                 .fill(.white)
                 .frame(width: 7, height: 7)
-                .opacity(0.5)
+                .opacity(isRevealed ? 1.0 : 0.5)
         }
         .frame(width: 17, height: 17)
     }
