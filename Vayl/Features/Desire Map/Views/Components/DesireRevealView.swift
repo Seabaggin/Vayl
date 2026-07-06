@@ -447,7 +447,7 @@ private struct _LockedSection: View {
                     .animation(AppAnimation.desireLockedRowEnter.reduceMotionSafe, value: isVisible)
             }
 
-            ForEach(Array(matches.prefix(4).enumerated()), id: \.element.id) { i, match in
+            ForEach(Array(matches.filter { $0.id != hero?.id }.prefix(4).enumerated()), id: \.element.id) { i, match in
                 _LockedPreviewRow(itemName: match.itemName, isRevealed: false)
                     .opacity(isVisible ? 1 : 0)
                     .offset(y: isVisible ? 0 : 22)
