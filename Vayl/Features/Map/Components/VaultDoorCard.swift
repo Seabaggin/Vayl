@@ -72,101 +72,111 @@ struct VaultDoorCard: View {
 
 // MARK: - VaultEmblem
 
-/// Six-spoke lattice emblem, ported from the mockup's vault-door SVG
-/// (docs/prototypes/map-dashboard-final.html, Us/magenta gradient variant).
-/// All geometry is proportional within a self-contained 100×100 coordinate
-/// space; the caller's `.frame(width:height:)` scales it — no fixed pixels.
+/// The vault-door lattice, ported LITERALLY (same coordinates, same element
+/// order, same gradients) from the mockup's SVG — Us/magenta variant, in
+/// docs/prototypes/map-dashboard-final.html (`#dvu`/`#dau`/`#dgu`/`#dbu`).
+/// Every coordinate below is copied straight from that SVG's 0–100 viewBox;
+/// `scale` is the only thing that adapts it to the caller's frame, so nothing
+/// here should be "improved" without also updating the mockup — this is meant
+/// to read as the same emblem, not a reinterpretation of it.
 private struct VaultEmblem: View {
 
-    private let spokeCount   = 6
-    private let ringInset:      CGFloat = 6     // in the 100x100 space
-    private let coreRadius:     CGFloat = 12    // in the 100x100 space
-    // FEEL: tune on device.
-    private let glowBlurRadius: CGFloat = 3
-
-    private var spectrumGradient: LinearGradient {
-        LinearGradient(
-            colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
+    /// The six spoke/bead terminal points, radius 45 from centre, 60° apart —
+    /// copied verbatim from the SVG's six `<line>`/`<circle>` endpoints rather
+    /// than re-derived from trig, so the geometry can't drift from the source.
+    private let spokeEnds: [CGPoint] = [
+        CGPoint(x: 95,   y: 50),
+        CGPoint(x: 72.5, y: 88.97),
+        CGPoint(x: 27.5, y: 88.97),
+        CGPoint(x: 5,    y: 50),
+        CGPoint(x: 27.5, y: 11.03),
+        CGPoint(x: 72.5, y: 11.03),
+    ]
 
     var body: some View {
         Canvas { context, size in
             let scale = min(size.width, size.height) / 100
-            let center = CGPoint(x: size.width / 2, y: size.height / 2)
-            let ringRadius = (50 - ringInset) * scale
+            func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x * scale, y: y * scale) }
+            func circle(_ c: CGPoint, _ r: CGFloat) -> Path {
+                Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2))
+            }
 
-            // Pass 1: glow (blurred, low opacity).
-            drawLattice(into: &context, center: center, ringRadius: ringRadius, scale: scale, glow: true)
-            // Pass 2: crisp (full opacity).
-            drawLattice(into: &context, center: center, ringRadius: ringRadius, scale: scale, glow: false)
-        }
-    }
-
-    private func drawLattice(
-        into context: inout GraphicsContext,
-        center: CGPoint,
-        ringRadius: CGFloat,
-        scale: CGFloat,
-        glow: Bool
-    ) {
-        var layer = context
-
-        if glow {
-            layer.addFilter(.blur(radius: glowBlurRadius * scale))
-            layer.opacity = 0.35
-        } else {
-            layer.opacity = 1.0
-        }
-
-        // Outer ring.
-        var ring = Path()
-        ring.addEllipse(in: CGRect(
-            x: center.x - ringRadius, y: center.y - ringRadius,
-            width: ringRadius * 2, height: ringRadius * 2
-        ))
-        layer.stroke(ring, with: .color(AppColors.spectrumPurple), lineWidth: (glow ? 3 : 1.4) * scale)
-
-        // Six spokes at 60° increments, from the core edge to the ring.
-        for i in 0..<spokeCount {
-            let angle = Angle(degrees: Double(i) * 360.0 / Double(spokeCount) - 90)
-            let inner = CGPoint(
-                x: center.x + cos(angle.radians) * coreRadius * scale,
-                y: center.y + sin(angle.radians) * coreRadius * scale
+            let center = p(50, 50)
+            // linearGradient#dvu: x1/y1=8,8 → x2/y2=92,92 — one diagonal spectrum
+            // stroke shared by the ring, spokes, beads, and core stroke.
+            let spectrum = GraphicsContext.Shading.linearGradient(
+                Gradient(colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta]),
+                startPoint: p(8, 8), endPoint: p(92, 92)
             )
-            let outer = CGPoint(
-                x: center.x + cos(angle.radians) * ringRadius,
-                y: center.y + sin(angle.radians) * ringRadius
-            )
-            var spoke = Path()
-            spoke.move(to: inner)
-            spoke.addLine(to: outer)
-            layer.stroke(spoke, with: .color(AppColors.spectrumCyan), lineWidth: (glow ? 2.5 : 1 ) * scale)
-        }
 
-        // Rotated-square core with a bright highlight.
-        let coreRect = CGRect(
-            x: center.x - coreRadius * scale, y: center.y - coreRadius * scale,
-            width: coreRadius * 2 * scale, height: coreRadius * 2 * scale
-        )
-        var core = Path()
-        core.addRect(coreRect)
-        let rotatedCore = core.applying(
-            CGAffineTransform(translationX: center.x, y: center.y)
-                .rotated(by: .pi / 4)
-                .translatedBy(x: -center.x, y: -center.y)
-        )
-        layer.fill(rotatedCore, with: .color(AppColors.spectrumMagenta.opacity(glow ? 0.4 : 0.85)))
-
-        if !glow {
-            var highlight = Path()
-            let hl = coreRadius * 0.4 * scale
-            highlight.addEllipse(in: CGRect(
-                x: center.x - hl, y: center.y - hl, width: hl * 2, height: hl * 2
+            // radialGradient#dau — the centre aura glow.
+            context.fill(circle(center, 15 * scale), with: .radialGradient(
+                Gradient(stops: [
+                    .init(color: Color(red: 1, green: 180 / 255, blue: 210 / 255, opacity: 0.7), location: 0),
+                    .init(color: Color(red: 1, green: 0,         blue: 106 / 255, opacity: 0.24), location: 0.6),
+                    .init(color: .clear, location: 1),
+                ]),
+                center: center, startRadius: 0, endRadius: 15 * scale
             ))
-            layer.fill(highlight, with: .color(.white.opacity(0.8)))
+
+            // Ring (r=32): blurred glow pass (width 5, opacity .45, filter#dbu
+            // stdDeviation 2.4) THEN a crisp pass (width 2) — only the ring gets
+            // this two-pass treatment in the mockup, nothing else does.
+            let ring = circle(center, 32 * scale)
+            var glowLayer = context
+            glowLayer.opacity = 0.45
+            glowLayer.addFilter(.blur(radius: 2.4 * scale))
+            glowLayer.stroke(ring, with: spectrum, lineWidth: 5 * scale)
+            context.stroke(ring, with: spectrum, lineWidth: 2 * scale)
+
+            // Six spokes, centre → each terminal point, round caps.
+            for end in spokeEnds {
+                var spoke = Path()
+                spoke.move(to: center)
+                spoke.addLine(to: p(end.x, end.y))
+                context.stroke(spoke, with: spectrum, style: StrokeStyle(lineWidth: 2.6 * scale, lineCap: .round))
+            }
+
+            // Terminal beads (r=3.4) at each spoke's outer end.
+            for end in spokeEnds {
+                context.fill(circle(p(end.x, end.y), 3.4 * scale), with: spectrum)
+            }
+
+            // Rotated core — rect(39,39,22,22) rx=3, rotated 45° about its own
+            // centre (50,50). radialGradient#dgu (cx 38%/cy 32% of the core box,
+            // r 80%) gives the glossy off-centre highlight; stroked with the
+            // same spectrum gradient, width 2.4.
+            var core = Path(roundedRect: CGRect(x: 39 * scale, y: 39 * scale, width: 22 * scale, height: 22 * scale),
+                             cornerRadius: 3 * scale)
+            core = core.applying(
+                CGAffineTransform(translationX: center.x, y: center.y)
+                    .rotated(by: .pi / 4)
+                    .translatedBy(x: -center.x, y: -center.y)
+            )
+            context.fill(core, with: .radialGradient(
+                Gradient(stops: [
+                    .init(color: .white.opacity(0.95), location: 0),
+                    .init(color: Color(red: 1, green: 140 / 255, blue: 180 / 255, opacity: 0.85), location: 0.28),
+                    .init(color: Color(red: 1, green: 0,         blue: 106 / 255, opacity: 0.55), location: 0.7),
+                    .init(color: Color(red: 40 / 255, green: 8 / 255, blue: 25 / 255, opacity: 0.92), location: 1),
+                ]),
+                // r="80%" on the core's own 22×22 bounding box (SVG objectBoundingBox
+                // default) resolves to 0.8 × 22 = 17.6 viewBox units, not a guessed value.
+                center: p(47.36, 46.04), startRadius: 0, endRadius: 17.6 * scale
+            ))
+            context.stroke(core, with: spectrum, lineWidth: 2.4 * scale)
+
+            // Diamond facet highlight (M50,40 L60,50 L50,60 L40,50 Z).
+            var facet = Path()
+            facet.move(to: p(50, 40))
+            facet.addLine(to: p(60, 50))
+            facet.addLine(to: p(50, 60))
+            facet.addLine(to: p(40, 50))
+            facet.closeSubpath()
+            context.fill(facet, with: .color(.white.opacity(0.12)))
+
+            // Sparkle dot.
+            context.fill(circle(p(45.5, 45.5), 1.6 * scale), with: .color(.white))
         }
     }
 }

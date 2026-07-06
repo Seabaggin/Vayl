@@ -160,6 +160,9 @@ struct MapView: View {
             await coupleContext.refreshIfNeeded()   // partner identity (no-op once loaded)
             store.load(appState: appState, context: modelContext)
             await vaultStore.loadDesire(appState: appState, context: modelContext)
+            // Eagerly loaded (not just on Agreements-segment open) so the vault
+            // door's stat line has a real count on first render.
+            await vaultStore.loadAgreements(appState: appState, context: modelContext)
             await store.loadPartnerPulse(appState: appState)
             store.enforceLensGate()
             playUsReveal()
@@ -281,6 +284,7 @@ struct MapView: View {
             stats:            store.usStats,
             align:            store.alignItems,
             lockedAlignCount: store.lockedAlignCount,
+            agreementsCount:  vaultStore.agreements.count,
             onOpenVault:      { showVault = true },
             onCheckIn:        { startCheckIn() },
             onOpenPulse:      { showPulseSheet = true },

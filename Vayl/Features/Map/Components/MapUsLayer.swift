@@ -20,6 +20,10 @@ struct MapUsLayer: View {
     let stats:             MapStore.UsStats
     let align:             [MapStore.AlignItem]
     let lockedAlignCount:  Int
+    /// The couple's active-agreement count, for the vault door's stat line
+    /// ("‹shared› shared · ‹agreements› agreements · ‹sessions› sessions" —
+    /// the mockup's door shows all three; this was the missing one).
+    var agreementsCount:   Int = 0
     var onOpenVault:       () -> Void
     var onCheckIn:         () -> Void
     var onOpenPulse:       (() -> Void)? = nil
@@ -73,7 +77,7 @@ struct MapUsLayer: View {
     private var vaultDoorCard: some View {
         VaultDoorCard(
             summary:  "Where you meet · Agreements · The record",
-            statLine: "\(align.filter(\.isMutual).count) shared · \(stats.sessionCount) sessions",
+            statLine: "\(align.filter(\.isMutual).count) shared · \(agreementsCount) agreement\(agreementsCount == 1 ? "" : "s") · \(stats.sessionCount) session\(stats.sessionCount == 1 ? "" : "s")",
             onOpen:   onOpenVault
         )
     }
