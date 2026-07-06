@@ -62,8 +62,20 @@ struct MapUsLayer: View {
                 checkInPill
                     .padding(.top, AppSpacing.xxs)
             }
+            vaultDoorCard
+                .padding(.top, AppSpacing.sm)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Vault door
+
+    private var vaultDoorCard: some View {
+        VaultDoorCard(
+            summary:  "Where you meet · Agreements · The record",
+            statLine: "\(align.filter(\.isMutual).count) shared · \(stats.sessionCount) sessions",
+            onOpen:   onOpenVault
+        )
     }
 
     // MARK: - Us Pulse card
