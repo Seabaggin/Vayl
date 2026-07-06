@@ -43,6 +43,8 @@ struct MapView: View {
     private let revealIgniteDelay: Double = 1.0
     // FEEL: tune on device
     private let revealLineDuration: Double = 2.0
+    // FEEL: tune on device
+    private let revealBlurRadius: CGFloat = 6
 
     private var shouldPlayReveal: Bool {
         store.hasUs && !store.usRevealSeen
@@ -237,7 +239,7 @@ struct MapView: View {
                         .opacity(isUs ? 1.0 : 0.45)
                         // Ceremony-only ignition pass: de-blur as the name lights up.
                         // No-op (blur 0) outside revealStage 1, so steady-state is untouched.
-                        .blur(radius: revealStage == 1 ? 6 : 0)
+                        .blur(radius: revealStage == 1 ? revealBlurRadius : 0)
                 }
                 .buttonStyle(.plain)
                 .transition(.opacity)   // fades in the first time the name loads
