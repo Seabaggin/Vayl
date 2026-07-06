@@ -60,8 +60,8 @@ struct DesireConstellationView: View {
                     telegraph(in: geo.size)
                 }
 
-                ForEach(Array(edges.enumerated()), id: \.offset) { _, edge in
-                    line(edge, in: geo.size)
+                ForEach(Array(edges.enumerated()), id: \.offset) { index, edge in
+                    line(edge, index: index, in: geo.size)
                 }
 
                 ForEach(Array(stars.enumerated()), id: \.element.id) { index, star in
@@ -110,19 +110,28 @@ struct DesireConstellationView: View {
     // MARK: - Lines
 
     @ViewBuilder
-    private func line(_ edge: ConstellationLayout.Edge, in size: CGSize) -> some View {
+    private func line(_ edge: ConstellationLayout.Edge, index: Int, in size: CGSize) -> some View {
         let drawn = lineDrawn(edge)
         let path = Path { path in
             path.move(to: scaled(stars[edge.a].point, size))
             path.addLine(to: scaled(stars[edge.b].point, size))
         }
         if mode == .teasers {
-            // Teaser-beat lines fade in already at full length. A trim/draw-on animation here
-            // reads as lines being traced across the screen and thrown on top of the stars —
-            // a plain opacity fade reads as a soft, ambient connection instead.
+            // Teaser-beat lines fade in already at full length (a trim/draw-on animation here
+            // reads as lines being traced across the screen and thrown on top of the stars).
+            // Staggered by the edge's own index in `edges` — ConstellationLayout.buildEdges
+            // grows its MST outward from the hero (nearest-neighbor-first), so that array order
+            // already radiates outward from the hero star. Without the stagger every line faded
+            // in at the exact same instant, reading as a single mechanical snap rather than the
+            // connection spreading outward.
             path
                 .stroke(Color.white.opacity(drawn ? lineOpacity : 0), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
-                .animation(AppAnimation.enter.reduceMotionSafe, value: drawn)
+                .animation(
+                    AppAnimation.enter
+                        .delay(Double(index) * AppAnimation.desireBeatStaggerStep)
+                        .reduceMotionSafe,
+                    value: drawn
+                )
         } else {
             path
                 .trim(from: 0, to: drawn ? 1 : 0)
