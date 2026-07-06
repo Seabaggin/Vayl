@@ -2,9 +2,11 @@
 //  AirlockView.swift
 //  Vayl
 //
-//  The airlock — ONE merged "Before we start" screen (not two steps): rules
-//  (first-timers only), a pure capacity mirror, an optional centering ritual,
-//  and the lock-in ring. The ring's mechanism is the REAL production one —
+//  The airlock — ONE merged "Before we start" screen (not two steps): a pure
+//  capacity mirror, an optional centering ritual, and the lock-in ring. The
+//  house rules are intentionally NOT here — six bullets took too much space
+//  once capacity + ritual + ring shared the screen (Bryan's call). The ring's
+//  mechanism is the REAL production one —
 //  each partner independently holds their own ring; readiness crosses devices
 //  via AirlockStore.partnerConsented. There is no shared release-timing match
 //  (that would need a realtime channel this app doesn't have yet); the copy
@@ -30,10 +32,6 @@ struct AirlockView: View {
     @State private var capacityStore = CoupleCapacityStore(service: SupabaseCoupleCapacityService())
     @State private var showHowItWorks = false
 
-    /// Repeat couples get the one-liner, not the six bullets (spec 4.5).
-    /// Store-owned: the view no longer reads persistence to make a flow decision.
-    private var isRepeatSession: Bool { store.isRepeatSession }
-
     private var yourTier: PulseCapacityColor {
         pulseStore.currentPosition.quadrant.capacityColor
     }
@@ -45,8 +43,6 @@ struct AirlockView: View {
 
                 eyebrowTitle
 
-                rules
-
                 CapacityMirror(
                     yourTier: yourTier,
                     partnerTier: capacityStore.partnerTier,
@@ -55,8 +51,15 @@ struct AirlockView: View {
                 )
                 .padding(.top, AppSpacing.lg)
 
-                RitualPills(selected: $selectedRitual)
+                Text("take a moment to arrive · optional")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .frame(maxWidth: .infinity)
+                    .multilineTextAlignment(.center)
                     .padding(.top, AppSpacing.md)
+
+                RitualPills(selected: $selectedRitual)
+                    .padding(.top, AppSpacing.xs)
 
                 ritualOrRing
                     .padding(.top, AppSpacing.xl)
@@ -110,47 +113,6 @@ struct AirlockView: View {
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(AppColors.textPrimary)
                 .padding(.top, AppSpacing.sm)
-        }
-    }
-
-    // MARK: - Rules
-
-    @ViewBuilder
-    private var rules: some View {
-        if isRepeatSession {
-            Text("You know the room. Settle in, then say you're ready.")
-                .font(AppFonts.bodyText)
-                .foregroundStyle(AppColors.textSecondary)
-                .padding(.top, AppSpacing.md)
-        } else {
-            Text("Read these out loud, together.")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textSecondary)
-                .padding(.top, AppSpacing.xs)
-
-            VStack(alignment: .leading, spacing: AppSpacing.md) {
-                bulletRow("Take your time. Silence is fine.")
-                bulletRow("Both of you answer, every card.")
-                bulletRow("Listen first. Say what you heard before your turn.")
-                bulletRow("No fixing, no judging, just get each other.")
-                bulletRow("What's said here stays here.")
-                bulletRow("You can always pass.")
-            }
-            .padding(.top, AppSpacing.lg)
-        }
-    }
-
-    private func bulletRow(_ text: String) -> some View {
-        // SpectrumBulletRow (mockup): 7pt spectrum dot + one line.
-        HStack(alignment: .top, spacing: AppSpacing.md) {
-            Circle()
-                .fill(AppColors.spectrumBorder)
-                .frame(width: 7, height: 7)
-                .padding(.top, AppSpacing.xs + AppSpacing.xxs)
-            Text(text)
-                .font(AppFonts.bodyText)
-                .foregroundStyle(AppColors.textBody)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -211,11 +173,11 @@ struct AirlockView: View {
             .padding(.top, AppSpacing.md)
 
             VStack(spacing: AppSpacing.xxs) {
-                Text(lockedIn ? "you're locked in" : "Hold to lock in.")
+                Text(ringPrimaryLine)
                     .font(AppFonts.bodyMedium)
                     .foregroundStyle(AppColors.textPrimary)
-                if !lockedIn {
-                    Text("\(store.partnerLabel) locks in on their phone too — you'll both need to be ready.")
+                if !ringSecondaryLine.isEmpty {
+                    Text(ringSecondaryLine)
                         .font(AppFonts.caption)
                         .foregroundStyle(AppColors.textSecondary)
                         .multilineTextAlignment(.center)
@@ -227,9 +189,15 @@ struct AirlockView: View {
             Button {
                 showHowItWorks = true
             } label: {
-                Text("how it works")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textAccent)
+                HStack(spacing: AppSpacing.xs) {
+                    Text("how it works")
+                    Text("i")
+                        .font(.system(size: 9, weight: .semibold, design: .serif).italic())
+                        .frame(width: 15, height: 15)
+                        .overlay(Circle().strokeBorder(AppColors.textAccent, lineWidth: 1))
+                }
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textAccent)
             }
             .buttonStyle(.plain)
             .padding(.top, AppSpacing.xs)
@@ -265,6 +233,27 @@ struct AirlockView: View {
         return lockedIn ? "waiting for \(store.partnerLabel)…" : ""
     }
 
+    /// Real presence, distinct from consent — has the partner arrived at all.
+    private var partnerHere: Bool { airlock?.partnerPresent ?? store.partnerPresent }
+    private var partnerConsented: Bool { airlock?.partnerConsented ?? false }
+
+    /// Terse primary line under the ring — mirrors the mockup's tiered copy
+    /// (a short state message), rewritten honestly for the real mechanism:
+    /// each partner independently holds, readiness crosses via consent.
+    private var ringPrimaryLine: String {
+        if partnerConsented && lockedIn { return "You're both in — here we go →" }
+        if lockedIn { return "You're locked in." }
+        if !partnerHere { return "Waiting for \(store.partnerLabel) to arrive…" }
+        return "Press and hold your ring."
+    }
+
+    private var ringSecondaryLine: String {
+        if partnerConsented && lockedIn { return "" }
+        if lockedIn { return "Waiting for \(store.partnerLabel)…" }
+        if !partnerHere { return "" }
+        return "\(store.partnerLabel) holds theirs, on their phone."
+    }
+
     private func presenceChip(_ name: String, ready: Bool, you: Bool) -> some View {
         HStack(spacing: AppSpacing.sm) {
             Circle()
@@ -295,16 +284,75 @@ struct AirlockView: View {
             Text("How it works")
                 .font(AppFonts.sectionHeading)
                 .foregroundStyle(AppColors.textPrimary)
-
-            Text("Hold your ring. \(store.partnerLabel) holds theirs, on their own phone. Once you're both locked in, the deck opens.")
-                .font(AppFonts.bodyText)
-                .foregroundStyle(AppColors.textBody)
-
-            Text("This is what proves you've both arrived, present and ready, before a single card turns.")
+            Text("Two phones, each holding their own ring.")
                 .font(AppFonts.caption)
                 .foregroundStyle(AppColors.textSecondary)
+
+            HStack(spacing: AppSpacing.xl) {
+                MiniLockDemo(label: "you")
+                Text("↔").font(.system(size: 20)).foregroundStyle(AppColors.textMuted)
+                MiniLockDemo(label: store.partnerLabel.lowercased())
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, AppSpacing.sm)
+
+            Text("Both hold and fill your own ring. Once you're **both** locked in, the deck opens.")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.bottom, AppSpacing.md)
+
+            Divider().overlay(AppColors.borderSubtle)
+
+            Text("why it's here")
+                .font(AppFonts.overline)
+                .tracking(1.4)
+                .textCase(.uppercase)
+                .foregroundStyle(AppColors.textSectionLabel)
+
+            Text("A session works best when you both actually arrive, present and choosing it on purpose. This can't be done alone, so it proves you're both here and ready before a single card turns.")
+                .font(AppFonts.bodyText)
+                .foregroundStyle(AppColors.textBody)
         }
         .padding(AppSpacing.lg)
+    }
+}
+
+/// A small ambient demo ring for the "how it works" sheet — loops filling on
+/// its own (not tied to real state) to show the shape of the gesture. Gated
+/// on Reduce Motion / Low Power like every ambient loop in the app.
+private struct MiniLockDemo: View {
+    let label: String
+
+    @State private var fill: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var spectrumArc: AngularGradient {
+        AngularGradient(
+            colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+            center: .center, startAngle: .degrees(-90), endAngle: .degrees(270)
+        )
+    }
+
+    var body: some View {
+        VStack(spacing: AppSpacing.xs) {
+            ZStack {
+                Circle().stroke(AppColors.borderSubtle, lineWidth: 4)
+                Circle()
+                    .trim(from: 0, to: fill)
+                    .stroke(spectrumArc, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+            .frame(width: 64, height: 64)
+            Text(label)
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
+        }
+        .onAppear {
+            guard !reduceMotion, !AppAnimation.lowPower else { fill = 0.7; return }
+            withAnimation(.easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true)) {
+                fill = 1
+            }
+        }
     }
 }
 
