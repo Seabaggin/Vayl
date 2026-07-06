@@ -182,23 +182,40 @@ struct PulseFullView: View {
 
     private var hasHistory: Bool { !myEntries.isEmpty }
 
-    private var myStale: Bool { pulse.isPositionStale }
-
-    private var partnerStale: Bool {
-        guard let last = partnerLastEntry else { return false }
-        return !Calendar.current.isDateInToday(last.date)
+    /// The UsOrbState computed ONCE per body render and threaded through to the
+    /// field entries and copy below — never re-derived (same idiom as
+    /// MapUsLayer.usOrbState / MapUsPulseCard, review note from Task 1).
+    private var usOrbState: UsOrbState {
+        UsOrbState.resolve(mine: myEntries, partner: partnerEntries)
     }
+
+    private var myHalfState: UsOrbState.HalfState {
+        if case .split(let mine, _) = usOrbState { return mine }
+        return .unwritten
+    }
+
+    private var partnerHalfState: UsOrbState.HalfState {
+        if case .split(_, let partner) = usOrbState { return partner }
+        return .unwritten
+    }
+
+    private var myStale: Bool { myHalfState == .quiet }
+
+    private var partnerStale: Bool { partnerHalfState == .quiet }
 
     private var distance: Double {
         guard let partner = partnerPosition else { return 0 }
         return myPosition.distance(to: partner)
     }
 
+    // Headline copy/thresholds mirror MapUsPulseCard.headline(mine:partner:) —
+    // both route through the SAME UsOrbState.allowsLiveComparison guard so the
+    // compact card and this detail view never disagree on staleness.
     private var headline: String {
         guard partnerPosition != nil else {
             return partnerName.isEmpty ? "Pulse · together" : "\(partnerName) hasn't checked in"
         }
-        guard !myStale, !partnerStale else { return "Comparing your last Pulses" }
+        guard usOrbState.allowsLiveComparison else { return "Comparing your last Pulses" }
         return distance > 0.45 ? "A wide day between you" : "Close today"
     }
 
