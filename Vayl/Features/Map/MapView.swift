@@ -230,6 +230,7 @@ struct MapView: View {
             lockedAlignCount: store.lockedAlignCount,
             onOpenVault:      { showVault = true },
             onCheckIn:        { startCheckIn() },
+            onOpenPulse:      { showPulseSheet = true },
             partnerPosition:  store.partnerPosition,
             partnerEntries:   store.partnerEntries,
             partnerName:      store.partnerName

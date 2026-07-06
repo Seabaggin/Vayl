@@ -22,6 +22,7 @@ struct MapUsLayer: View {
     let lockedAlignCount:  Int
     var onOpenVault:       () -> Void
     var onCheckIn:         () -> Void
+    var onOpenPulse:       (() -> Void)? = nil
     var partnerPosition:   PulsePosition?  = nil
     var partnerEntries:    [PulseEntry]    = []
     var partnerName:       String          = ""
@@ -38,47 +39,10 @@ struct MapUsLayer: View {
         partnerLastEntry?.space ?? PulseSpace.resolve(pos)
     }
 
-    private var distance: Double {
-        guard let partner = partnerPosition else { return 0 }
-        return myPosition.distance(to: partner)
-    }
-
-    // "A wide day between you" vs "Close today" — FEEL: tune threshold on device.
-    // Neither reading is claimed to be "today" unless both actually are.
-    private var headline: String {
-        guard partnerPosition != nil else {
-            return partnerName.isEmpty ? "Pulse · together" : "\(partnerName) hasn't checked in"
-        }
-        guard !myStale, !partnerStale else { return "Comparing your last Pulses" }
-        return distance > 0.45 ? "A wide day between you" : "Close today"
-    }
-
-    // Each person's freshness is named independently — a fresh reading gets present
-    // tense, a stale one gets "was last in … (N days ago)", so the comparison never
-    // implies both are today's unless both actually are.
-    private var descCopy: String {
-        guard let partner = partnerPosition else {
-            return partnerName.isEmpty
-                ? "Check in to see how you and your partner compare."
-                : "Their space fills in the moment they take a reading."
-        }
-        let pName = partnerName.isEmpty ? "Your partner" : partnerName
-
-        let myPhrase: String = {
-            guard myStale, let mine = pulse.entries.last else {
-                return "You're in the \(mySpace.displayName)"
-            }
-            return "You were last in the \(mySpace.displayName) (\(pulse.relativeDay(for: mine.date)))"
-        }()
-
-        let partnerPhrase: String = {
-            guard partnerStale, let last = partnerLastEntry else {
-                return "\(pName) is in the \(partnerSpace(partner).displayName)"
-            }
-            return "\(pName) was last in the \(partnerSpace(partner).displayName) (\(pulse.relativeDay(for: last.date)))"
-        }()
-
-        return "\(myPhrase); \(partnerPhrase)."
+    /// The UsOrbState computed ONCE per body render and threaded through to the
+    /// card and its helpers — never re-derived (review note from Task 1).
+    private var usOrbState: UsOrbState {
+        UsOrbState.resolve(mine: pulse.entries, partner: partnerEntries)
     }
 
     private var usGridPairs: [(date: Date, mine: PulseSpace, partner: PulseSpace?)] {
@@ -91,28 +55,13 @@ struct MapUsLayer: View {
     /// someone who's never logged anything.
     private var hasHistory: Bool { !pulse.entries.isEmpty }
 
-    /// Mirrors PulseStore.isPositionStale but scoped to this layer's own copy.
-    private var myStale: Bool { pulse.isPositionStale }
-
     private var partnerLastEntry: PulseEntry? { partnerEntries.last }
-
-    /// True when the partner has logged before, but not today. Independent of
-    /// `myStale` — the two people's freshness can differ.
-    private var partnerStale: Bool {
-        guard let last = partnerLastEntry else { return false }
-        return !Calendar.current.isDateInToday(last.date)
-    }
 
     // MARK: - Body
 
     var body: some View {
         VStack(alignment: .center, spacing: AppSpacing.xs) {
-            if hasHistory {
-                fieldBlock
-                copyBlock
-            } else {
-                emptyStateBlock
-            }
+            usPulseCard
             if pulse.canCheckInToday {
                 checkInPill
                     .padding(.top, AppSpacing.xxs)
@@ -125,147 +74,24 @@ struct MapUsLayer: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Empty state (never checked in)
+    // MARK: - Us Pulse card
 
-    private var emptyStateBlock: some View {
-        VStack(spacing: AppSpacing.xs) {
-            Image(systemName: "waveform.path.ecg")
-                .font(.system(size: 28))
-                .foregroundStyle(AppColors.textTertiary)
-            Text("No Pulse yet")
-                .font(AppFonts.cardTitle)
-                .foregroundStyle(AppColors.textPrimary)
-            Text("Check in to see how you and \(partnerName.isEmpty ? "your partner" : partnerName) compare.")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textSecondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, AppSpacing.lg)
-    }
-
-    // MARK: - Field block (fills available content width)
-
-    private var fieldBlock: some View {
-        // A clear square that fills the parent's width drives the field size.
-        // GeometryReader reads the actual rendered width so PulseField + the
-        // overlaid labels and capsule all share the same coordinate system.
-        Color.clear
-            .aspectRatio(1, contentMode: .fit)
-            .overlay {
-                GeometryReader { geo in
-                    let size = geo.size.width
-                    // Aura diameter as a ratio of the field, not a fixed pt — matches the
-                    // mockup's 44/248 ≈ 0.177 so orbs (and the capsule derived from them)
-                    // scale with the full-width field instead of reading small.
-                    let auraSize = size * 0.177
-                    ZStack {
-                        PulseField(
-                            entries: fieldEntries(auraSize: auraSize),
-                            size: size,
-                            showAxisLabels: true
-                        )
-
-                        if let partner = partnerPosition {
-                            PulseCapsule(
-                                myPosition:      myPosition,
-                                partnerPosition: partner,
-                                myColor:         mySpace.dotCoreStatic,
-                                partnerColor:    partnerSpace(partner).dotCoreStatic,
-                                fieldSize:       size,
-                                auraSize:        auraSize
-                            )
-                            auraLabel("You",
-                                      position: myPosition,
-                                      color:    mySpace.dotCoreStatic,
-                                      above:    true,
-                                      fieldSize: size)
-                            auraLabel(partnerName.isEmpty ? "Partner" : partnerName,
-                                      position: partner,
-                                      color:    partnerSpace(partner).dotCoreStatic,
-                                      above:    false,
-                                      fieldSize: size)
-                        } else if !partnerName.isEmpty {
-                            // Partner is paired but hasn't logged yet — echo the same cycling
-                            // four-space aura Home/Map-Me use for "no reading yet," tagged with
-                            // their name, so their half of the field reads as waiting, not broken.
-                            // Matches map-pulse-coldstart.html's "Us, partner not yet" card
-                            // (including its illustrative placement — there's no real reading to
-                            // place, this position is fixed, not derived from any data).
-                            let waitingPos = PulsePosition(energy: 0.30, openness: 0.30)
-                            let waitingPt  = CGPoint(x: waitingPos.openness * size, y: (1 - waitingPos.energy) * size)
-                            PulseCyclingAura(size: auraSize)
-                                .position(x: waitingPt.x, y: waitingPt.y)
-                            auraLabel("\(partnerName) · not yet",
-                                      position: waitingPos,
-                                      color:    AppColors.textTertiary,
-                                      above:    false,
-                                      fieldSize: size)
-                        }
-                    }
-                    .frame(width: size, height: size)
-                }
-            }
-    }
-
-    private func fieldEntries(auraSize: CGFloat) -> [PulseFieldEntry] {
-        var entries: [PulseFieldEntry] = [
-            PulseFieldEntry(
-                id:       "me",
-                position: myPosition,
-                auraSize: auraSize,
-                opacity:  myStale ? PulseFieldEntry.staleOpacity : 1.0,
-                space:    mySpace
-            )
-        ]
-        if let partner = partnerPosition {
-            entries.append(PulseFieldEntry(
-                id:       "partner",
-                position: partner,
-                auraSize: auraSize,
-                opacity:  partnerStale ? PulseFieldEntry.staleOpacity : 1.0,
-                space:    partnerSpace(partner)
-            ))
-        }
-        return entries
-    }
-
-    // Tag placed at 18% of fieldSize from the orb center — matches the mockup proportion.
-    private func auraLabel(
-        _ text:      String,
-        position:    PulsePosition,
-        color:       Color,
-        above:       Bool,
-        fieldSize:   CGFloat
-    ) -> some View {
-        let x  = position.openness * fieldSize
-        let y  = (1 - position.energy) * fieldSize
-        let dy = fieldSize * 0.18   // FEEL: tune vs the HTML mockup tag distance
-
-        return Text(text)
-            .font(.system(size: 9, weight: .bold))
-            .tracking(0.8)
-            .textCase(.uppercase)
-            .foregroundStyle(color)
-            .position(x: x, y: y + (above ? -dy : dy))
-    }
-
-    // MARK: - Copy block
-
-    private var copyBlock: some View {
-        VStack(spacing: AppSpacing.xxs) {
-            Text(headline)
-                .font(AppFonts.display(15, weight: .semibold, relativeTo: .subheadline))
-                .foregroundStyle(AppColors.textPrimary)
-                .multilineTextAlignment(.center)
-
-            Text(descCopy)
-                .font(AppFonts.body(11, weight: .regular, relativeTo: .footnote))
-                .foregroundStyle(AppColors.textSecondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity)
+    private var usPulseCard: some View {
+        let state = usOrbState
+        return MapUsPulseCard(
+            state:              state,
+            myAura:             mySpace.ramp(at: myPosition),
+            partnerAura:        partnerPosition.map { partnerSpace($0).ramp(at: $0) } ?? .neutral,
+            myLastEntry:        pulse.entries.last,
+            partnerLastEntry:   partnerLastEntry,
+            mySpaceName:        mySpace.displayName,
+            partnerSpaceName:   partnerPosition.map { partnerSpace($0).displayName } ?? "",
+            partnerName:        partnerName,
+            myPosition:         hasHistory ? myPosition : nil,
+            partnerPosition:    partnerPosition,
+            relativeDay:        pulse.relativeDay(for:),
+            onTap:              onOpenPulse
+        )
     }
 
     // MARK: - Check-in (the Us lens previously had no way to check in at all —
