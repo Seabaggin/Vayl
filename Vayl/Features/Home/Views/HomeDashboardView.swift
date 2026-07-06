@@ -20,13 +20,18 @@
 import SwiftUI
 import SwiftData
 
-/// Reports `PartnerChip`'s real rendered height up to `HomeDashboardView` so
-/// `PartnerChipExpand`'s popover offset can be derived rather than guessed —
-/// a hardcoded offset doesn't scale with the chip's growth at larger Dynamic
-/// Type sizes.
-private struct ChipHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+/// Reports `PartnerChip`'s real rendered frame, in the outer root ZStack's
+/// `"homeRoot"` named coordinate space, up to `HomeDashboardView` so
+/// `PartnerChipExpand` — now rendered as a sibling of the dismiss tap-catcher
+/// at the OUTER level, not nested inside `greetingBlock`'s local ZStack — can
+/// still be positioned as if anchored top-right of the chip. A hardcoded
+/// offset doesn't scale with the chip's growth at larger Dynamic Type sizes,
+/// and the chip's position also moves as the ScrollView scrolls, so this
+/// reports a real frame in a space that's meaningful at the outer level,
+/// not just a height local to `greetingBlock`.
+private struct ChipFrameKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
         value = nextValue()
     }
 }
@@ -99,11 +104,13 @@ struct HomeDashboardView: View {
     /// `onPartnerTap` as before.
     @State private var isChipExpanded = false
 
-    /// The partner chip's real rendered height, measured via `ChipHeightKey`
-    /// (`PartnerChip` grows taller than the eyeballed default at larger
-    /// Dynamic Type sizes). 44 is a sane fallback for the first frame only,
-    /// not a final value — `PartnerChipExpand`'s offset always reads this.
-    @State private var chipHeight: CGFloat = 44
+    /// The partner chip's real rendered frame in the outer `"homeRoot"` named
+    /// coordinate space, measured via `ChipFrameKey` (`PartnerChip` grows
+    /// taller than the eyeballed default at larger Dynamic Type sizes, and
+    /// its on-screen position moves as the ScrollView scrolls). `.zero` is a
+    /// sane fallback for the first frame only, not a final value —
+    /// `PartnerChipExpand`'s position always reads this.
+    @State private var chipFrame: CGRect = .zero
 
     /// The deck's phase (floating → spread → lifted → carousel), reported by
     /// CardCarousel. The room recedes once the deck is engaged.
@@ -182,6 +189,12 @@ struct HomeDashboardView: View {
             let pedestalDropY: CGFloat = 191
 
             ZStack(alignment: .top) {
+                // Named coordinate space so PartnerChip's frame (reported from
+                // deep inside greetingBlock → the ScrollView content) can be
+                // translated into a frame that's meaningful HERE, at the outer
+                // ZStack's own level — needed because PartnerChipExpand now
+                // renders as a sibling in this same outer ZStack instead of
+                // nested locally next to the chip.
                 // Same atmosphere as the OB canvas — keep the app's background
                 // language consistent (void floor + tri-colour bloom).
                 OnboardingAtmosphere(config: .stat)
@@ -282,11 +295,16 @@ struct HomeDashboardView: View {
 
                 // Outside-tap dismiss for the partner-chip popover. A full-screen,
                 // invisible tap-catcher: sits ABOVE the ScrollView content (so a tap
-                // doesn't fall through to a deck card underneath) but BELOW the chip
-                // itself, whose zIndex(1) — set in greetingBlock — always wins ties
-                // and keeps the chip/expand card's own buttons tappable. Only
-                // mounted while the popover is open, so it never intercepts normal
-                // Home interaction at rest.
+                // doesn't fall through to a deck card underneath) but BELOW
+                // `PartnerChipExpand` (rendered further below, in this SAME outer
+                // ZStack, at zIndex 2) so the popover's own tiles/buttons stay
+                // tappable while the catcher still eats every other tap on screen.
+                // zIndex only orders siblings within one container — this and the
+                // popover must live in the same ZStack for the ordering to mean
+                // anything, which is why the popover was moved out of the small
+                // local ZStack inside greetingBlock. Only mounted while the
+                // popover is open, so it never intercepts normal Home interaction
+                // at rest.
                 if isChipExpanded {
                     Color.clear
                         .contentShape(Rectangle())
@@ -294,7 +312,53 @@ struct HomeDashboardView: View {
                             withAnimation(AppAnimation.standard) { isChipExpanded = false }
                         }
                         .ignoresSafeArea()
-                        .zIndex(0.5)
+                        .zIndex(1)
+                }
+
+                // The partner-chip quick-view popover — rendered here, as a sibling
+                // of the dismiss tap-catcher above, in the OUTER root ZStack (NOT
+                // nested inside greetingBlock's local ZStack) so their relative
+                // zIndex genuinely determines paint/hit-test order. Positioned via
+                // `chipFrame`, measured in the `"homeRoot"` named coordinate space
+                // by PartnerChip's GeometryReader background inside greetingBlock,
+                // so it still visually anchors top-right of the chip even though
+                // the chip itself lives inside scrollable content.
+                if isChipExpanded, case .active = partnerChipState {
+                    PartnerChipExpand(
+                        state: partnerChipState,
+                        desireMapState: desireMapState,
+                        partnerPulsePosition: partnerPulsePosition,
+                        onDesireMapTap: {
+                            isChipExpanded = false
+                            onPartnerTap?() // existing Map-tab routing
+                        },
+                        onPulseTap: {
+                            isChipExpanded = false
+                            onPartnerTap?() // existing Map-tab routing
+                        },
+                        onManageTap: {
+                            isChipExpanded = false
+                            onPartnerTap?() // existing routing — a later task points this at Settings
+                        }
+                    )
+                    // Anchored to the chip's measured top-right corner (in
+                    // "homeRoot" space). A full-bleed frame pinned top-leading at
+                    // the origin, then offset by the chip's own top-right corner
+                    // plus a breathing gap below it — this positions the
+                    // popover's OWN top-trailing corner (its layout alignment
+                    // inside the oversized frame) at that point, without having
+                    // to guess the popover's rendered height the way a raw
+                    // `.position` (which centers on its own bounds) would require.
+                    .frame(
+                        maxWidth: .infinity, maxHeight: .infinity,
+                        alignment: .topTrailing
+                    )
+                    .offset(
+                        x: -(layout.screenWidth - chipFrame.maxX),
+                        y: chipFrame.maxY + AppSpacing.xs
+                    )
+                    .transition(.scale(scale: 0.8, anchor: .topTrailing).combined(with: .opacity))
+                    .zIndex(2)
                 }
 
                 // "Settle in" rides above the carousel's screen dim once a card is in
@@ -312,6 +376,8 @@ struct HomeDashboardView: View {
                 debugOverlay(layout: layout)
                 #endif
             }
+            .coordinateSpace(name: "homeRoot")
+            .onPreferenceChange(ChipFrameKey.self) { chipFrame = $0 }
             // Pin the screen ZStack to the true screen width. A child (deck backdrop /
             // atmosphere) was inflating it past the screen, anchoring at the leading
             // edge and pushing the centered content column ~13pt right (off the right
@@ -436,57 +502,40 @@ struct HomeDashboardView: View {
                 animated: false
             )
             Spacer()
-            ZStack(alignment: .topTrailing) {
-                PartnerChip(
-                    state: partnerChipState,
-                    waiting: isWaitingOnPartner,
-                    onInviteTap: onInvitePartner,
-                    onPartnerTap: {
-                        switch partnerChipState {
-                        case .active:
-                            withAnimation(AppAnimation.standard) { isChipExpanded.toggle() }
-                        default:
-                            // .invitePending / .nudge / .none route through the existing
-                            // onPartnerTap wiring today (Map tab). A later task replaces
-                            // this with the real pairing sheet — not this task's concern.
-                            onPartnerTap?()
-                        }
+            PartnerChip(
+                state: partnerChipState,
+                waiting: isWaitingOnPartner,
+                onInviteTap: onInvitePartner,
+                onPartnerTap: {
+                    switch partnerChipState {
+                    case .active:
+                        withAnimation(AppAnimation.standard) { isChipExpanded.toggle() }
+                    default:
+                        // .invitePending / .nudge / .none route through the existing
+                        // onPartnerTap wiring today (Map tab). A later task replaces
+                        // this with the real pairing sheet — not this task's concern.
+                        onPartnerTap?()
                     }
-                )
-                .background(
-                    GeometryReader { chipGeo in
-                        Color.clear
-                            .preference(key: ChipHeightKey.self, value: chipGeo.size.height)
-                    }
-                )
-
-                if isChipExpanded, case .active = partnerChipState {
-                    PartnerChipExpand(
-                        state: partnerChipState,
-                        desireMapState: desireMapState,
-                        partnerPulsePosition: partnerPulsePosition,
-                        onDesireMapTap: {
-                            isChipExpanded = false
-                            onPartnerTap?() // existing Map-tab routing
-                        },
-                        onPulseTap: {
-                            isChipExpanded = false
-                            onPartnerTap?() // existing Map-tab routing
-                        },
-                        onManageTap: {
-                            isChipExpanded = false
-                            onPartnerTap?() // existing routing — a later task points this at Settings
-                        }
-                    )
-                    // Derived from the chip's real measured height (not a
-                    // fixed guess) so larger Dynamic Type sizes, which grow
-                    // the chip taller, don't push the popover into overlap.
-                    .offset(y: chipHeight + AppSpacing.xs)
-                    .transition(.scale(scale: 0.8, anchor: .topTrailing).combined(with: .opacity))
-                    .zIndex(1)
                 }
-            }
-            .onPreferenceChange(ChipHeightKey.self) { chipHeight = $0 }
+            )
+            // Reports the chip's real rendered frame in the OUTER ZStack's
+            // "homeRoot" named coordinate space (not `.local`, which would
+            // only be meaningful within greetingBlock, and not `.global`,
+            // which would include window chrome above the safe area).
+            // PartnerChipExpand itself now renders as a sibling of the
+            // dismiss tap-catcher at that outer level (see body), so it
+            // needs the chip's position in that same space to visually
+            // anchor beneath it — the chip's position also isn't fixed,
+            // since greetingBlock scrolls with the rest of Home's content.
+            .background(
+                GeometryReader { chipGeo in
+                    Color.clear
+                        .preference(
+                            key: ChipFrameKey.self,
+                            value: chipGeo.frame(in: .named("homeRoot"))
+                        )
+                }
+            )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
