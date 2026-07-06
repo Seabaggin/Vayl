@@ -569,8 +569,9 @@ struct CardCarousel: View {
 
     // MARK: - Hand Selection Affordances
 
-    /// The active card's add hint — cyan "tap to add", hidden once picked (the
-    /// check badge takes over), matching the mockup's .vadd.
+    /// The active card's add hint — hidden once picked (the check badge takes
+    /// over), matching the mockup's .vadd. Uses the same lavender-purple as
+    /// other section headers/eyebrows, not the cyan accent (Bryan's call).
     @ViewBuilder
     private func selectHint(added: Bool) -> some View {
         if !added {
@@ -578,7 +579,7 @@ struct CardCarousel: View {
                 .font(AppFonts.buttonLabelSmall)
                 .tracking(1.2)
                 .textCase(.uppercase)
-                .foregroundStyle(AppColors.textAccent)
+                .foregroundStyle(AppColors.textSectionLabel)
         }
     }
 

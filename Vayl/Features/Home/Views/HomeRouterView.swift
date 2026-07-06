@@ -225,6 +225,7 @@ private struct HomeRouterInnerView: View {
                 displayName:         appState.displayName,
                 partnerChipState:    store.partnerChipState,
                 cards:               loadedDeck.orderedCards,
+                deckTitle:           loadedDeck.title,
                 desireMapState:      store.desireMapState,
                 partnerPulsePosition: store.partnerPulsePosition,
                 reflectionCardState: store.reflectionCardState,

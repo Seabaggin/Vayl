@@ -43,6 +43,8 @@ struct HomeDashboardView: View {
     var displayName: String = "Jordan"
     var partnerChipState: PartnerChipState = .none
     var cards: [Card] = []
+    /// The active deck's title, for the small header above the card. Empty hides the header.
+    var deckTitle: String = ""
     var desireMapState: DesireMapState = .hidden
     /// The partner's current Pulse position, for the chip's expand quick-view tile
     /// only (current position, not history — nil renders "Not sharing").
@@ -167,6 +169,11 @@ struct HomeDashboardView: View {
         deckPhase != .floating && deckPhase != .spread
     }
 
+    /// Half of CardCarousel's own card width (private `cardW = 300` there) — used
+    /// to anchor the cog/corner-deck chrome to the card's real edges rather than
+    /// an arbitrary screen inset. Keep in sync if CardCarousel's cardW changes.
+    private let cardHalfWidth: CGFloat = 150
+
     // MARK: - Body
 
     var body: some View {
@@ -230,6 +237,25 @@ struct HomeDashboardView: View {
 
                         // Top void — the hero's approach.
                         Color.clear.frame(height: layout.screenHeight * 0.04)
+
+                        // Deck header — plain (not LivingText: a functional label reading
+                        // the deck you're browsing shouldn't compete with the card for
+                        // attention; LivingText is reserved for hero moments like the
+                        // greeting name). Title + explored count, hidden if no title.
+                        if !deckTitle.isEmpty {
+                            VStack(spacing: AppSpacing.xxs) {
+                                Text(deckTitle)
+                                    .font(AppFonts.cardTitleCompact)
+                                    .foregroundStyle(AppColors.textPrimary)
+                                Text("\(cardsCompleted) / \(cards.count) explored")
+                                    .font(AppFonts.caption)
+                                    .foregroundStyle(AppColors.textTertiary)
+                            }
+                            .opacity(greetingVisible ? (deckEngaged ? 0.35 : 1) : 0)
+                            .blur(radius: deckEngaged ? 4 : 0)
+                            .animation(AppAnimation.enter, value: deckEngaged)
+                            .padding(.bottom, AppSpacing.sm)
+                        }
 
                         // The deck — CardCarousel elevates IN PLACE (no cover): tap
                         // the floating card and the deck spreads → lifts → carousel,
@@ -391,13 +417,21 @@ struct HomeDashboardView: View {
                 debugOverlay(layout: layout)
                 #endif
             }
-            .coordinateSpace(name: "homeRoot")
-            .onPreferenceChange(ChipFrameKey.self) { chipFrame = $0 }
             // Pin the screen ZStack to the true screen width. A child (deck backdrop /
             // atmosphere) was inflating it past the screen, anchoring at the leading
             // edge and pushing the centered content column ~13pt right (off the right
             // edge). Clamping here re-centers every module on the physical screen.
             .frame(width: layout.screenWidth, alignment: .center)
+            // MUST come AFTER the .frame(width:) clamp above, not before. This
+            // modifier wraps whatever view precedes it in the chain — declared
+            // before the clamp, it measured the ZStack's pre-clamp (inflated)
+            // geometry, so chipFrame (reported through this space) disagreed
+            // with layout.screenWidth (the corrected, post-clamp value used
+            // directly in the popover's offset math below), pushing the
+            // popover off-screen. Declaring it here measures the corrected
+            // geometry instead, so both sides of that math agree.
+            .coordinateSpace(name: "homeRoot")
+            .onPreferenceChange(ChipFrameKey.self) { chipFrame = $0 }
             .onAppear { runEntranceAnimations() }
             .blur(radius: pathOpen ? 9 : 0)
             .animation(AppAnimation.spring, value: pathOpen)
@@ -658,7 +692,10 @@ struct HomeDashboardView: View {
         ZStack {
             // Corner "tonight" deck — positioned EXPLICITLY in the top-right corner.
             // (A Spacer/padding chain was rendering it off-screen.)
-            // Corner "tonight" deck + label, top-right.
+            // Corner "tonight" deck + label, anchored above the card's own RIGHT edge
+            // (not a fixed screen inset) — CardCarousel's card is 300pt wide, centered.
+            // Anchoring to the card's real footprint (not the screen edge) is what
+            // makes these read as the card's own controls instead of floating loose.
             VStack(spacing: AppSpacing.xs) {
                 cornerDeck
                 Text("Tonight")
@@ -668,12 +705,12 @@ struct HomeDashboardView: View {
                     .foregroundStyle(AppColors.textTertiary)
             }
             .position(
-                x: layout.screenWidth - 48,
+                x: layout.screenWidth / 2 + cardHalfWidth,
                 y: layout.safeAreaInsets.top + 34
             )
 
-            // Settings cog + label — top-leading, opposite the corner deck. Opens the
-            // two-knob session-settings sheet (who reads / length & pace).
+            // Settings cog + label — anchored above the card's own LEFT edge, opposite
+            // the corner deck. Opens the two-knob session-settings sheet.
             VStack(spacing: AppSpacing.xs) {
                 settingsCog
                 Text("Setup")
@@ -683,7 +720,7 @@ struct HomeDashboardView: View {
                     .foregroundStyle(AppColors.textTertiary)
             }
             .position(
-                x: 24 + 22,
+                x: layout.screenWidth / 2 - cardHalfWidth,
                 y: layout.safeAreaInsets.top + 34
             )
 
