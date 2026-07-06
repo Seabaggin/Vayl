@@ -268,7 +268,8 @@ struct MapView: View {
         VStack(alignment: .leading, spacing: AppSpacing.xl) {
             MapPulseHero(
                 onCheckIn: { startCheckIn() },
-                onOpenHistory: { showPulseSheet = true }
+                onOpenHistory: { showPulseSheet = true },
+                isLinked: store.hasUs
             )
             MapRecord(sessions: store.sessions, shares: store.categoryShares)
         }

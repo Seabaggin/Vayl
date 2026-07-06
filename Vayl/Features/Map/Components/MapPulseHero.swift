@@ -16,6 +16,7 @@ struct MapPulseHero: View {
 
     var onCheckIn:    () -> Void
     var onOpenHistory: () -> Void
+    var isLinked: Bool = false
 
     @State private var showMap   = false
     @State private var isPressed = false
@@ -61,6 +62,13 @@ struct MapPulseHero: View {
                         Text(wl)
                             .font(AppFonts.caption)
                             .foregroundStyle(AppColors.spectrumCyan)
+                            .padding(.top, AppSpacing.xxs)
+                    }
+
+                    if isLinked {
+                        Text("Your read also appears in your shared orb")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textMuted)
                             .padding(.top, AppSpacing.xxs)
                     }
                 }
