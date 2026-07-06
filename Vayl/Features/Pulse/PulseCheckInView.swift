@@ -48,9 +48,10 @@ struct PulseCheckInView: View {
         GeometryReader { geo in
             let layout = AppLayout.from(geo)
             // The field owns the top of the screen, running nearly edge-to-edge (capped at a
-            // square by the screen width). 🎚️ FEEL: 0.42 of the height — tune 0.40–0.46 on
-            // device so the five pills always clear the bottom without the field shrinking.
-            let fieldSize = min(layout.screenWidth, geo.size.height * 0.42)
+            // square by the screen width). 🎚️ FEEL: 0.50 of the height (was 0.42) — the field
+            // read too small against its mockup on device; tune further from here so the five
+            // pills always clear the bottom without the field shrinking.
+            let fieldSize = min(layout.screenWidth, geo.size.height * 0.50)
             ZStack(alignment: .top) {
                 AppColors.void.ignoresSafeArea()
                 OnboardingAtmosphere(config: .stat, maskStart: atmosphereMaskStart)
