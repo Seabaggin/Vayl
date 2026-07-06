@@ -89,6 +89,13 @@ struct PulseField: View {
         // luminance-compensated so the four read as EQUAL presence (cyan bright → down, rose dusty
         // → up). 🎚️ FEEL: opacities were tuned for soft blobs; a filled box covers more area, so
         // nudge down if any quadrant reads too hot on device.
+        //
+        // .blendMode(.screen): without this the zones alpha-composite as flat opaque patches on
+        // top of OnboardingAtmosphere, reading as a separate layer stacked on the background
+        // instead of light sitting inside the same atmosphere. Screen blending is the established
+        // technique this codebase already uses for exactly this (VaylAppIcon, CardCarousel,
+        // LivingText, HolographicShimmer) — it makes the zone colour read as emissive glow that
+        // blends with whatever's behind it rather than a solid cutout.
         ZStack {
             zoneBox(AppColors.auraCoreMagenta, corner: .topLeading,     cx: 0.25, cy: 0.25, opacity: 0.20)  // Reactive
             zoneBox(AppColors.auraCoreCyan,    corner: .topTrailing,    cx: 0.75, cy: 0.25, opacity: 0.16)  // Expansive
@@ -96,6 +103,7 @@ struct PulseField: View {
             zoneBox(AppColors.auraCoreIndigo,  corner: .bottomTrailing, cx: 0.75, cy: 0.75, opacity: 0.23)  // Receptive
         }
         .frame(width: size, height: size)
+        .blendMode(.screen)
     }
 
     private func zoneBox(_ color: Color, corner: UnitPoint, cx: CGFloat, cy: CGFloat, opacity: Double) -> some View {
