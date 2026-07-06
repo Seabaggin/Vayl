@@ -66,14 +66,14 @@ struct PlayView: View {
 
             VStack(spacing: 0) {
                 if store.isEmpty {
-                    PlayMastheadView(onOpenSettings: { appState.settingsPresented = true })
+                    PlayMastheadView()
                         .padding(.horizontal, AppSpacing.lg)
                         .padding(.top, AppSpacing.xs)
                     PlayEmptyState(message: store.loadError) { store.retry() }
                 } else {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: AppSpacing.xl) {
-                            PlayMastheadView(onOpenSettings: { appState.settingsPresented = true })
+                            PlayMastheadView()
                                 .padding(.horizontal, AppSpacing.lg)
                                 .padding(.top, AppSpacing.xs)
                             PlayHeroView(store: store, collapse: collapse)
