@@ -33,6 +33,40 @@ struct MapView: View {
     // FEEL: tune on device
     private let lensTintRadius: CGFloat = 420
 
+    // MARK: - Us reveal ceremony (spec §2.4)
+
+    // 0 dormant · 1 name igniting · 2 flipped+line showing · 3 done
+    @State private var revealStage: Int = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // FEEL: tune on device
+    private let revealIgniteDelay: Double = 1.0
+    // FEEL: tune on device
+    private let revealLineDuration: Double = 2.0
+
+    private var shouldPlayReveal: Bool {
+        store.hasUs && !store.usRevealSeen
+    }
+
+    private func playUsReveal() {
+        guard shouldPlayReveal else { return }
+        store.markUsRevealSeen()   // mark FIRST — a mid-ceremony backgrounding must not replay it
+        if reduceMotion {
+            withAnimation(AppAnimation.enter) { store.layer = .us; revealStage = 2 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + revealLineDuration + 0.6) {
+                withAnimation(AppAnimation.exit) { revealStage = 3 }
+            }
+            return
+        }
+        withAnimation(AppAnimation.slow) { revealStage = 1 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + revealIgniteDelay) {
+            withAnimation(AppAnimation.spring) { store.layer = .us; revealStage = 2 }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + revealIgniteDelay + revealLineDuration) {
+            withAnimation(AppAnimation.exit) { revealStage = 3 }
+        }
+    }
+
     var body: some View {
         @Bindable var store = store
         GeometryReader { geo in
@@ -67,7 +101,10 @@ struct MapView: View {
                 }
                 .scrollIndicators(.hidden)
             }
-            .onChange(of: store.hasUs) { _, _ in store.enforceLensGate() }
+            .onChange(of: store.hasUs) { _, has in
+                store.enforceLensGate()
+                if has { playUsReveal() }
+            }
             // Pin the screen to the true width so an ignoresSafeArea child (the
             // atmosphere) cannot inflate the container and shove the column off-centre.
             .frame(width: layout.screenWidth, alignment: .center)
@@ -123,6 +160,7 @@ struct MapView: View {
             await vaultStore.loadDesire(appState: appState, context: modelContext)
             await store.loadPartnerPulse(appState: appState)
             store.enforceLensGate()
+            playUsReveal()
         }
     }
 
@@ -149,6 +187,12 @@ struct MapView: View {
                         .accessibilityLabel(store.layer == .us
                             ? "Shared lens: your partner sees this too"
                             : "Private lens: only you see this")
+                }
+                if revealStage == 2, store.hasUs {
+                    Text("\(store.partnerName) is here. Tap a name to change whose map you're reading.")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                        .transition(.opacity)
                 }
             }
             Spacer()
@@ -191,6 +235,9 @@ struct MapView: View {
                         // Dim the inactive partner name further so it reads clearly
                         // "off" (grey + reduced opacity), not just a grey colour.
                         .opacity(isUs ? 1.0 : 0.45)
+                        // Ceremony-only ignition pass: de-blur as the name lights up.
+                        // No-op (blur 0) outside revealStage 1, so steady-state is untouched.
+                        .blur(radius: revealStage == 1 ? 6 : 0)
                 }
                 .buttonStyle(.plain)
                 .transition(.opacity)   // fades in the first time the name loads
