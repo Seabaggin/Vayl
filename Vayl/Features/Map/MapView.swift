@@ -28,6 +28,11 @@ struct MapView: View {
     @State private var showPaywall = false
     @State private var vaultStore = VaultStore()
 
+    // FEEL: tune on device
+    private let lensTintOpacity: Double = 0.10
+    // FEEL: tune on device
+    private let lensTintRadius: CGFloat = 420
+
     var body: some View {
         @Bindable var store = store
         GeometryReader { geo in
@@ -38,6 +43,17 @@ struct MapView: View {
                 AppColors.void.ignoresSafeArea()
                 OnboardingAtmosphere(config: .stat)
                     .ignoresSafeArea()
+                RadialGradient(
+                    colors: [
+                        (store.layer == .us ? AppColors.spectrumMagenta : AppColors.spectrumPurple)
+                            .opacity(lensTintOpacity),
+                        .clear
+                    ],
+                    center: .top, startRadius: 0, endRadius: lensTintRadius
+                )
+                .ignoresSafeArea()
+                .animation(AppAnimation.slow, value: store.layer)
+                .allowsHitTesting(false)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: AppSpacing.lg) {
@@ -51,6 +67,7 @@ struct MapView: View {
                 }
                 .scrollIndicators(.hidden)
             }
+            .onChange(of: store.hasUs) { _, _ in store.enforceLensGate() }
             // Pin the screen to the true width so an ignoresSafeArea child (the
             // atmosphere) cannot inflate the container and shove the column off-centre.
             .frame(width: layout.screenWidth, alignment: .center)
@@ -102,6 +119,7 @@ struct MapView: View {
             store.load(appState: appState, context: modelContext)
             await vaultStore.loadDesire(appState: appState, context: modelContext)
             await store.loadPartnerPulse(appState: appState)
+            store.enforceLensGate()
         }
     }
 
@@ -117,6 +135,17 @@ struct MapView: View {
                     Text(store.subtitle)
                         .font(AppFonts.caption)
                         .foregroundStyle(AppColors.textTertiary)
+                }
+                if store.hasUs {
+                    Text(store.layer == .us ? "Shared · you both see this" : "Only you")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(store.layer == .us
+                            ? AppColors.spectrumMagenta.opacity(0.8)
+                            : AppColors.spectrumCyan.opacity(0.8))
+                        .transition(.opacity)
+                        .accessibilityLabel(store.layer == .us
+                            ? "Shared lens: your partner sees this too"
+                            : "Private lens: only you see this")
                 }
             }
             Spacer()
@@ -179,7 +208,7 @@ struct MapView: View {
     private var layerContent: some View {
         switch store.layer {
         case .me: meLayer
-        case .us: usLayer
+        case .us: store.hasUs ? AnyView(usLayer) : AnyView(meLayer)
         }
     }
 
