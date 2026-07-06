@@ -38,9 +38,11 @@ struct PulseCheckInView: View {
     @State private var unchartedDissolveT: Double = 0      // 0 = bilinear colour, 1 = full Sage Deep
     @State private var drifting:          Bool   = false  // orb wander begins after the dissolve
 
-    /// The trail-in mask starts ~6% earlier than the app-wide 52% default — see
-    /// OnboardingAtmosphere.maskStart. 🎚️ FEEL: confirm on device.
-    private let atmosphereMaskStart: CGFloat = 0.46
+    /// The trail-in mask starts well earlier than the app-wide 52% default — see
+    /// OnboardingAtmosphere.maskStart. Lowered from 0.46: against the field's now much more
+    /// vivid blob coverage, the void held that long read as a hard black band rather than a
+    /// smooth trail-in. 🎚️ FEEL: confirm on device, tune further from here.
+    private let atmosphereMaskStart: CGFloat = 0.30
 
     // MARK: - Body
 
