@@ -427,7 +427,9 @@ struct DesireRevealView: View {
 }
 
 // MARK: - Locked teasers section (beat2 + beat3)
-// Blurred item names + lock glyphs, staggered in at 80ms each, matching desire-reveal.html.
+// Card-Weight-styled preview rows, staggered in at 80ms each. Only the first row shows the
+// lock glyph — blur alone communicates "locked" for the rest, so repeating the icon on every
+// row would just be noise.
 
 private struct _LockedSection: View {
     let matches: [RevealMatch]
@@ -436,37 +438,17 @@ private struct _LockedSection: View {
     var body: some View {
         VStack(spacing: AppSpacing.xs) {
             ForEach(Array(matches.prefix(4).enumerated()), id: \.element.id) { i, match in
-                HStack(spacing: AppSpacing.md) {
-                    Text(match.itemName)
-                        .font(AppFonts.bodyText)
-                        .foregroundStyle(Color.white.opacity(0.30))
-                        .blur(radius: 5)
-                        .lineLimit(1)
-                    Spacer(minLength: 0)
-                    Image(systemName: "lock.fill")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(Color.white.opacity(0.30))
-                }
-                .padding(.horizontal, AppSpacing.md)
-                .frame(height: 46)
-                .background(
-                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .fill(AppColors.whisperFill)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .stroke(AppColors.borderDefault, lineWidth: 1)
-                )
-                .opacity(isVisible ? 1 : 0)
-                .offset(y: isVisible ? 0 : 22)
-                // Fix #5: tokenized locked-row stagger (was .easeOut 0.36 / 0.08 step),
-                // reduceMotionSafe so it collapses to a fast opacity confirm.
-                .animation(
-                    AppAnimation.desireLockedRowEnter
-                        .delay(Double(i) * AppAnimation.desireBeatStaggerStep)
-                        .reduceMotionSafe,
-                    value: isVisible
-                )
+                _LockedPreviewRow(itemName: match.itemName, showsLock: i == 0)
+                    .opacity(isVisible ? 1 : 0)
+                    .offset(y: isVisible ? 0 : 22)
+                    // Fix #5: tokenized locked-row stagger (was .easeOut 0.36 / 0.08 step),
+                    // reduceMotionSafe so it collapses to a fast opacity confirm.
+                    .animation(
+                        AppAnimation.desireLockedRowEnter
+                            .delay(Double(i) * AppAnimation.desireBeatStaggerStep)
+                            .reduceMotionSafe,
+                        value: isVisible
+                    )
             }
 
             // Count + spectrum hairline; delayed until all rows finish staggering in
@@ -494,6 +476,64 @@ private struct _LockedSection: View {
                 value: isVisible
             )
         }
+    }
+}
+
+// MARK: - Locked preview row (Card Weight materials, no interaction)
+// Shares DesireAnswerPill's visual language — radius, top sheen, dim orb accent — without
+// being a tappable/selectable component; this is a static, non-interactive preview row.
+
+private struct _LockedPreviewRow: View {
+    let itemName: String
+    let showsLock: Bool
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            LinearGradient(colors: [.white.opacity(0.05), .clear], startPoint: .top, endPoint: .bottom)
+                .frame(height: 14)
+
+            HStack(spacing: AppSpacing.md) {
+                orb
+                Text(itemName)
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(Color.white.opacity(0.30))
+                    .blur(radius: 5)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                if showsLock {
+                    Image(systemName: "lock.fill")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(Color.white.opacity(0.30))
+                }
+            }
+            .padding(.horizontal, AppSpacing.md)
+        }
+        .frame(height: 46)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                .fill(AppColors.whisperFill)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                .stroke(AppColors.borderDefault, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
+    }
+
+    private var orb: some View {
+        ZStack {
+            Circle()
+                .fill(.white)
+                .frame(width: 17, height: 17)
+                .blur(radius: 6)
+                .opacity(0.35)
+            Circle()
+                .fill(.white)
+                .frame(width: 7, height: 7)
+                .opacity(0.5)
+        }
+        .frame(width: 17, height: 17)
     }
 }
 
