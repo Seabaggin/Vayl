@@ -13,12 +13,16 @@ import SwiftUI
 struct HoldToLockInRing: View {
 
     let locked: Bool
+    /// Ring diameter. Defaults to the original 168pt; the merged Before-we-start
+    /// screen passes a larger size so the ring reads as the dominant element.
+    var ringSize: CGFloat = 168
+    /// Whether to show the center "✦" glyph. The merged screen wants an empty
+    /// center (the ring itself is the whole commit, no separate glyph needed).
+    var showsGlyph: Bool = true
     let onLockIn: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    // Rendering constants (geometry, like ScoreRing / the old sync ring).
-    private let ringSize: CGFloat = 168
     private let holdSeconds: Double = 3.0     // 🎚️ feel value
 
     @State private var fill: CGFloat = 0
@@ -31,15 +35,19 @@ struct HoldToLockInRing: View {
         )
     }
 
+    /// Stroke weights scale with ringSize (proportional to the original 168pt
+    /// baseline) so a larger ring reads as thicker, not just wider.
+    private var scale: CGFloat { ringSize / 168 }
+
     var body: some View {
         ZStack {
             Circle()
-                .stroke(AppColors.borderSubtle, lineWidth: 3)
+                .stroke(AppColors.borderSubtle, lineWidth: 3 * scale)
 
             // Glow pass ramps with the fill (two-pass stroke, house recipe).
             Circle()
                 .trim(from: 0, to: locked ? 1 : fill)
-                .stroke(spectrumArc, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                .stroke(spectrumArc, style: StrokeStyle(lineWidth: 8 * scale, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .blur(radius: 6)
                 .opacity(0.2 + 0.5 * Double(locked ? 1 : fill))
@@ -47,13 +55,15 @@ struct HoldToLockInRing: View {
             // Crisp pass.
             Circle()
                 .trim(from: 0, to: locked ? 1 : fill)
-                .stroke(spectrumArc, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                .stroke(spectrumArc, style: StrokeStyle(lineWidth: 3 * scale, lineCap: .round))
                 .rotationEffect(.degrees(-90))
 
-            Text("✦")
-                .font(AppFonts.displayHero)
-                .foregroundStyle(AppColors.spectrumText)
-                .scaleEffect(locked ? 1.0 : 0.85 + 0.15 * fill)
+            if showsGlyph {
+                Text("✦")
+                    .font(AppFonts.displayHero)
+                    .foregroundStyle(AppColors.spectrumText)
+                    .scaleEffect(locked ? 1.0 : 0.85 + 0.15 * fill)
+            }
         }
         .frame(width: ringSize, height: ringSize)
         .contentShape(Circle())

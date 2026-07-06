@@ -2,12 +2,13 @@
 //  AirlockView.swift
 //  Vayl
 //
-//  The airlock, two screens (cover-family 1A/1B):
-//    1A house rules: six spectrum bullets, read aloud together, one tap on
-//       "We're ready". Repeat sessions collapse to a one-line "settle in".
-//    1B bandwidth + lock-in: private 3-detent slider, 3-second press-and-hold
-//       lock-in, presence row. The gentler of the two readings becomes the
-//       session's depth ceiling; the raw reading is never shown to the partner.
+//  The airlock — ONE merged "Before we start" screen (not two steps): rules
+//  (first-timers only), a pure capacity mirror, an optional centering ritual,
+//  and the lock-in ring. The ring's mechanism is the REAL production one —
+//  each partner independently holds their own ring; readiness crosses devices
+//  via AirlockStore.partnerConsented. There is no shared release-timing match
+//  (that would need a realtime channel this app doesn't have yet); the copy
+//  below is honest to what actually happens.
 //
 //  Driven by AirlockStore (real presence/consent). airlock == nil is the
 //  DEBUG-only local path (mocked partner, unchanged store mock).
@@ -21,32 +22,61 @@ struct AirlockView: View {
     let airlock: AirlockStore?
 
     @Environment(\.vaylDismiss) private var vaylDismiss
+    @Environment(PulseStore.self) private var pulseStore
 
-    private enum Step { case rules, bandwidth }
-    @State private var step: Step = .rules
     @State private var lockedIn = false
     @State private var waitingPulse = false
+    @State private var selectedRitual: Ritual? = nil
+    @State private var capacityStore = CoupleCapacityStore(service: SupabaseCoupleCapacityService())
+    @State private var showHowItWorks = false
 
     /// Repeat couples get the one-liner, not the six bullets (spec 4.5).
     /// Store-owned: the view no longer reads persistence to make a flow decision.
     private var isRepeatSession: Bool { store.isRepeatSession }
 
+    private var yourTier: PulseCapacityColor {
+        pulseStore.currentPosition.quadrant.capacityColor
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
-            switch step {
-            case .rules:     rulesScreen
-            case .bandwidth: bandwidthScreen
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                header
+
+                eyebrowTitle
+
+                rules
+
+                CapacityMirror(
+                    yourTier: yourTier,
+                    partnerTier: capacityStore.partnerTier,
+                    partnerNotCheckedIn: capacityStore.partnerNotCheckedIn,
+                    partnerLabel: store.partnerLabel
+                )
+                .padding(.top, AppSpacing.lg)
+
+                RitualPills(selected: $selectedRitual)
+                    .padding(.top, AppSpacing.md)
+
+                ritualOrRing
+                    .padding(.top, AppSpacing.xl)
             }
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.top, AppSpacing.xxl)
+            .padding(.bottom, AppSpacing.xl)
         }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.top, AppSpacing.xxl)
-        .padding(.bottom, AppSpacing.xl)
-        .animation(AppAnimation.enter.reduceMotionSafe, value: step)
         .onAppear {
             if airlock == nil { store.armPresence() }   // DEBUG local mock only
         }
+        .task {
+            await capacityStore.load()
+        }
+        .vaylSheet(isPresented: $showHowItWorks, heightFraction: 0.4) {
+            howItWorksSheet
+        }
     }
+
+    // MARK: - Header
 
     private var header: some View {
         HStack {
@@ -66,9 +96,7 @@ struct AirlockView: View {
         }
     }
 
-    // MARK: - 1A · house rules
-
-    private var rulesScreen: some View {
+    private var eyebrowTitle: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: AppSpacing.sm) {
                 Text("✦").font(AppFonts.bodyMedium).foregroundStyle(AppColors.spectrumText)
@@ -82,46 +110,33 @@ struct AirlockView: View {
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(AppColors.textPrimary)
                 .padding(.top, AppSpacing.sm)
+        }
+    }
 
-            if isRepeatSession {
-                Text("You know the room. Settle in, then say you're ready.")
-                    .font(AppFonts.bodyText)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .padding(.top, AppSpacing.md)
-            } else {
-                Text("Read these out loud, together.")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .padding(.top, AppSpacing.xs)
+    // MARK: - Rules
 
-                VStack(alignment: .leading, spacing: AppSpacing.md) {
-                    bulletRow("Take your time. Silence is fine.")
-                    bulletRow("Both of you answer, every card.")
-                    bulletRow("Listen first. Say what you heard before your turn.")
-                    bulletRow("No fixing, no judging, just get each other.")
-                    bulletRow("What's said here stays here.")
-                    bulletRow("You can always pass.")
-                }
-                .padding(.top, AppSpacing.lg)
+    @ViewBuilder
+    private var rules: some View {
+        if isRepeatSession {
+            Text("You know the room. Settle in, then say you're ready.")
+                .font(AppFonts.bodyText)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.top, AppSpacing.md)
+        } else {
+            Text("Read these out loud, together.")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.top, AppSpacing.xs)
+
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
+                bulletRow("Take your time. Silence is fine.")
+                bulletRow("Both of you answer, every card.")
+                bulletRow("Listen first. Say what you heard before your turn.")
+                bulletRow("No fixing, no judging, just get each other.")
+                bulletRow("What's said here stays here.")
+                bulletRow("You can always pass.")
             }
-
-            Spacer(minLength: 0)
-
-            Button {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                withAnimation(AppAnimation.enter.reduceMotionSafe) { step = .bandwidth }
-            } label: {
-                Text("We're ready")
-                    .font(AppFonts.ctaLabel)
-                    .foregroundStyle(AppColors.textBody)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, AppSpacing.md)
-                    .background(
-                        RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                            .strokeBorder(AppColors.spectrumBorder, lineWidth: 1.2)
-                    )
-            }
-            .buttonStyle(.plain)
+            .padding(.top, AppSpacing.lg)
         }
     }
 
@@ -139,49 +154,87 @@ struct AirlockView: View {
         }
     }
 
-    // MARK: - 1B · bandwidth + lock-in
+    // MARK: - Ritual / Ring
 
-    private var bandwidthScreen: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: AppSpacing.sm) {
-                Text("✦").font(AppFonts.bodyMedium).foregroundStyle(AppColors.spectrumText)
-                Text("lock in")
-                    .font(AppFonts.overline).tracking(2).textCase(.uppercase)
-                    .foregroundStyle(AppColors.textTertiary)
-            }
-            .padding(.top, AppSpacing.lg)
+    @ViewBuilder
+    private var ritualOrRing: some View {
+        switch selectedRitual {
+        case .breathe:
+            BreathGuide { selectedRitual = nil }
+                .frame(maxWidth: .infinity)
+                .transition(.opacity)
 
-            Text("How much have you\ngot for each other?")
-                .font(AppFonts.screenTitle)
-                .foregroundStyle(AppColors.textPrimary)
-                .padding(.top, AppSpacing.sm)
+        case .goodThing:
+            goodThingPrompt
+                .transition(.opacity)
 
-            // TODO: replaced by BeforeWeStartView (pre-roll redesign Task 8)
-            EmptyView()
-                .padding(.top, AppSpacing.xl)
-
-            Spacer(minLength: 0)
-
-            VStack(spacing: AppSpacing.md) {
-                HoldToLockInRing(locked: lockedIn) {
-                    lockedIn = true
-                    if let airlock {
-                        let fraction = store.bandwidth.fraction
-                        Task { @MainActor in
-                            await airlock.commitBandwidth(fraction)
-                            await airlock.consent()
-                        }
-                    } else {
-                        store.confirmSynced()   // DEBUG local path, mock unchanged
-                    }
-                }
-                Text(lockedIn ? "you're locked in" : "press and hold to lock in")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-                presenceRow
-            }
-            .frame(maxWidth: .infinity)
+        case nil:
+            lockInRing
+                .transition(.opacity)
         }
+    }
+
+    private var goodThingPrompt: some View {
+        VStack(spacing: AppSpacing.lg) {
+            Text("✦")
+                .font(AppFonts.displayHero)
+                .foregroundStyle(AppColors.spectrumText)
+            Text("One thing you're grateful for about them, right now.")
+                .font(AppFonts.prompt)
+                .foregroundStyle(AppColors.textPrimary)
+                .multilineTextAlignment(.center)
+            Text("Say it out loud. Take turns. No rush.")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+            VaylButton(label: "we're ready", size: .compact) {
+                selectedRitual = nil
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, AppSpacing.lg)
+    }
+
+    private var lockInRing: some View {
+        VStack(spacing: AppSpacing.md) {
+            HoldToLockInRing(locked: lockedIn, ringSize: 224, showsGlyph: false) {
+                lockedIn = true
+                if let airlock {
+                    let fraction = store.bandwidth.fraction
+                    Task { @MainActor in
+                        await airlock.commitBandwidth(fraction)
+                        await airlock.consent()
+                    }
+                } else {
+                    store.confirmSynced()   // DEBUG local path, mock unchanged
+                }
+            }
+            .padding(.top, AppSpacing.md)
+
+            VStack(spacing: AppSpacing.xxs) {
+                Text(lockedIn ? "you're locked in" : "Hold to lock in.")
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(AppColors.textPrimary)
+                if !lockedIn {
+                    Text("\(store.partnerLabel) locks in on their phone too — you'll both need to be ready.")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+            }
+
+            presenceRow
+
+            Button {
+                showHowItWorks = true
+            } label: {
+                Text("how it works")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textAccent)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, AppSpacing.xs)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private var presenceRow: some View {
@@ -234,6 +287,25 @@ struct AirlockView: View {
         }
         .onAppear { waitingPulse = true }
     }
+
+    // MARK: - How it works
+
+    private var howItWorksSheet: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            Text("How it works")
+                .font(AppFonts.sectionHeading)
+                .foregroundStyle(AppColors.textPrimary)
+
+            Text("Hold your ring. \(store.partnerLabel) holds theirs, on their own phone. Once you're both locked in, the deck opens.")
+                .font(AppFonts.bodyText)
+                .foregroundStyle(AppColors.textBody)
+
+            Text("This is what proves you've both arrived, present and ready, before a single card turns.")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+        }
+        .padding(AppSpacing.lg)
+    }
 }
 
 // MARK: - Preview
@@ -247,5 +319,6 @@ struct AirlockView: View {
             appState: AppState()
         ), airlock: nil)
     }
+    .environment(PulseStore())
     .preferredColorScheme(.dark)
 }
