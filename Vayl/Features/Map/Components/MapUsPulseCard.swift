@@ -115,9 +115,9 @@ struct MapUsPulseCard: View {
 
     // MARK: - Headline (spec §3.3 headline guard)
 
-    // "A wide day between you" vs "Close today" — same copy + threshold as MapUsLayer's
-    // distance read (kept in sync deliberately; MapUsLayer's copy is the legacy source
-    // until that duplicate is retired in a later task). FEEL: tune threshold on device.
+    // Headline copy: kept intentionally simple; see UsOrbState.allowsLiveComparison
+    // for the guard that decides whether a live distance read is shown at all.
+    // FEEL: tune threshold on device.
     private func headline(mine: UsOrbState.HalfState, partner: UsOrbState.HalfState) -> String {
         if state.allowsLiveComparison,
            let my = myPosition, let their = partnerPosition {
