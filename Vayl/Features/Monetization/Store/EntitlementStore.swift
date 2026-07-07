@@ -99,9 +99,35 @@ final class EntitlementStore {
             guard let row = try await service.fetchTier(coupleId: coupleId) else { return }
             apply(tier: row.tier, founding: row.isFoundingMember, coupleId: coupleId)
             loadError = nil
+            await selfHealGrantIfNeeded(coupleId: coupleId)
         } catch {
             loadError = error.localizedDescription
             // Keep the last tier — do not downgrade a paid couple on a network blip.
+        }
+    }
+
+    /// Payer-portability self-heal (2026-07-07). Unlink DELETES the couple row,
+    /// which cascades the couple-scoped entitlements ledger rows — so when the
+    /// buyer re-pairs, the new couple resolves `free` even though this Apple ID
+    /// owns Core, and the partner stays locked until a manual Restore. Detect
+    /// exactly that state (local ownership, server says free, a couple exists)
+    /// and re-push the receipt once: grant-entitlement writes a fresh ledger
+    /// row for the NEW couple and recomputes its tier server-side.
+    private var isSelfHealing = false
+
+    private func selfHealGrantIfNeeded(coupleId: UUID) async {
+        guard localOwnsCore, tier == .free, !isSelfHealing else { return }
+        isSelfHealing = true
+        defer { isSelfHealing = false }
+        guard let (_, jws) = await storeKit.coreEntitlement() else { return }
+        do {
+            _ = try await service.grantCore(signedTransaction: jws)
+            if let row = try? await service.fetchTier(coupleId: coupleId) {
+                apply(tier: row.tier, founding: row.isFoundingMember, coupleId: coupleId)
+            }
+        } catch {
+            // Non-fatal: the next refresh retries; the buyer stays unlocked locally.
+            loadError = "You're unlocked. Syncing to your partner will retry."
         }
     }
 

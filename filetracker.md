@@ -47,7 +47,6 @@ Vayl/
 │   │   ├── DesireItem.swift             — SwiftData model; desire/compatibility item with categories and metadata.
 │   │   ├── DesireMatch.swift            — SwiftData model; represents desire/compatibility rating between partners.
 │   │   ├── DesireRating.swift           — SwiftData model; user's rating for a desire item in a category.
-│   │   ├── EntitlementRecord.swift      — SwiftData model; tracks feature entitlements and unlock status.
 │   │   ├── EventLogEntry.swift          — SwiftData model; logs app events for debugging and analytics.
 │   │   ├── LockInSession.swift          — SwiftData model; represents a locked-in session between partners.
 │   │   ├── MilestoneRecord.swift        — SwiftData model; tracks user milestones and achievements.

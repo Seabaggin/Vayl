@@ -101,6 +101,13 @@ final class CoupleContext {
 
     // MARK: - Hydration
 
+    /// The couple the entitlement tier was last server-resolved for. Keyed like
+    /// the partner-name cache so an unlink + re-pair triggers exactly one
+    /// re-resolve for the NEW couple (which runs EntitlementStore's
+    /// payer-portability self-heal — the buyer's receipt re-grants the fresh
+    /// couple without a manual Restore).
+    private var entitlementsResolvedForCoupleId: UUID?
+
     /// Fetches the partner's identity once per link. Safe to call on every
     /// appear — it no-ops when already loaded or unlinked (same load-once
     /// semantics the old MapStore fetch had, so the header toggle fades in
@@ -108,6 +115,10 @@ final class CoupleContext {
     func refreshIfNeeded() async {
         guard appState.linkState == .linked else { return }
         loadPairedSinceIfNeeded()
+        if let coupleId = appState.coupleId, entitlementsResolvedForCoupleId != coupleId {
+            entitlementsResolvedForCoupleId = coupleId
+            await entitlements.refresh()
+        }
         guard fetchedPartnerName == nil || fetchedForCoupleId != appState.coupleId else { return }
         do {
             if let identity = try await pairingService.fetchPartner(),
@@ -148,5 +159,6 @@ final class CoupleContext {
         fetchedForCoupleId = nil
         fetchedPairedSince = nil
         fetchedPairedSinceForCoupleId = nil
+        entitlementsResolvedForCoupleId = nil
     }
 }
