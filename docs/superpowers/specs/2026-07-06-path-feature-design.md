@@ -53,6 +53,18 @@ geometry is **not to be redrawn or approximated** — every implementation of th
 percentage-complete meter. Wayfinding is the trail itself (phase names, "at your own
 pace" copy); a completion score is the gamification the product principles ban.
 
+**A named tension, resolved on purpose, not by omission:** an experienced couple can
+mark several landmarks "already ours" in their first minutes on the trail, and the
+trail visually fills in as a result — the same *feeling* a progress bar produces,
+without the number. Adversarial review flagged this as worth acknowledging rather than
+leaving as a blind spot. The call: **this is accepted, not gated.** Rate-limiting how
+fast someone can mark a truthful self-report would itself be paternalistic — treating
+the user's own account of their relationship as suspect — which is a worse violation of
+the humility principle than the visual-fill tension it would be solving. The
+distinction that keeps this from being the banned pattern: it is never expressed as a
+fraction, a percent, or a count against a total. A dense trail reads as "you've lived a
+lot of this already," which is true; it never reads as "8/13."
+
 ### 2.1 Two readings of the same data
 
 - **Spatial (primary)** — the trail as described above.
@@ -93,6 +105,24 @@ closest existing precedent is the partner-invite pattern (§8), but a landmark-l
 confirmation is a different shape (per-node, not per-session) and should not be assumed
 identical without a design pass.
 
+**Lifecycle rules (added after adversarial review — these were previously undefined and
+would have been improvised badly at implementation time):**
+- **Decline reverts to Future, silently.** No message back to the proposer beyond the
+  pending state simply clearing — no "[partner] didn't confirm this one." A visible
+  decline-notice reads as pressure/guilt on a relationship claim, which the humility
+  principle rules out; a silent revert costs the proposer a closure loop, and that's the
+  correct trade here, not an oversight.
+- **No expiry, no reminder, no badge decay.** Stated explicitly so a future contributor
+  doesn't add a nudge mechanic to "help" this along — that would violate the
+  no-engagement-maximizing-mechanics principle. A pending confirmation waits exactly as
+  long as the couple takes, same as everything else on this trail.
+- **Conflicting simultaneous writes** (Partner A sets already-ours while Partner B sets
+  skip on the same landmark) do not silently last-write-wins. Any write that lands while
+  a pending-confirmation already exists on that landmark surfaces to **both** partners
+  rather than overwriting — consistent with "no unilateral progress claims" already
+  established for We did this.
+- **Unlink/deletion while a confirmation is pending**: see the new §3.4.
+
 ### 3.2 Skip is a real removal, with a recovery path
 
 Tapping Skip — not for us takes the landmark **off the default trail view**, not a
@@ -109,6 +139,28 @@ position (the trail's shape is stable; only membership toggles). A "+ Add your o
 landmark" entry point exists here but **has no design beyond the entry row** — free text
 vs. a phase picker vs. a lighter Mission-Brief-style form is unresolved; treat as
 post-launch unless prioritized.
+
+### 3.4 Unlink and account deletion
+
+The parent Map dashboard spec's unlink behavior (§2.3: partner name leaves, lens snaps
+to Me-only, reveal flag resets) is about identity/reveal state, not progress data — it
+was never extended to Path, and adversarial review flagged this as a real gap, not a
+minor one, since couple-scoped state that isn't explicitly re-keyed on unlink is a
+data-leak risk between relationships, not just a UX rough edge. Extending it:
+
+- **Per-couple landmark progress is couple-scoped and does not transfer.** If a couple
+  unlinks and either partner later re-pairs with someone new, the new pairing starts a
+  fresh trail — it never inherits the old couple's walked/already-ours/skipped state.
+- **A pending already-ours confirmation orphaned by unlink or account deletion
+  auto-resolves the same way a decline does** (§3.1) — reverts to Future, silently. This
+  is the same class of bug `PlayStore`'s existing self-heal (abandoning a stale lobby
+  the current user opened) already exists to prevent; a pending confirmation with no one
+  left to confirm it needs the same discipline, not a new pattern.
+- **Private per-user stance and note data (§5.1, §7 item 3) persists with the individual** —
+  it's Me-layer, owned by the person, not the couple, so it survives an unlink exactly
+  the way the rest of that person's account does. It is not carried into a future
+  pairing automatically (see §9's open item on the solo→paired transition, which is a
+  separate, deliberately undecided question from this one).
 
 ## 4. The path picker (selection + swap)
 
@@ -172,10 +224,20 @@ the emotional content, never replacing it.
   pattern (comparing two points, per the app's discovery-not-assessment rule), not new
   architecture.
 - **The conversation-prompt mechanic**: once both Active's landmark entry and Support's
-  journal entry exist for the same landmark, a compare-two-points prompt surfaces for
-  both — *"You both wrote about this — want to talk?"* with a snippet from each side and
-  a "start the conversation" action. This is what keeps Support from being a spectator
-  screen. **Mechanism: reuses §6's quick-session/discussion-card path** (a
+  journal entry exist for the same landmark, a compare-two-points prompt becomes
+  *available* for both. **Corrected after adversarial review**: the original wording
+  ("a snippet from each side" surfacing automatically) contradicted this same document's
+  own rule two sections earlier — §5.1 states private content is "never shown... unless
+  the user chooses to share it later." A journal entry is exactly that kind of private
+  content, and auto-surfacing a snippet across the Active/Support boundary without an
+  explicit share action is a sharper privacy move than the precedent this spec already
+  committed to. The corrected flow: **each partner sees only that they have an entry for
+  this landmark and that their partner does too** ("You both wrote about this"), with
+  **no snippet, no content preview** — tapping in prompts each person to explicitly
+  share their own entry (or not) before anything crosses the boundary, the same
+  consent-to-share gate §5.1 already establishes for private stances. This is what keeps
+  Support from being a spectator screen without quietly bypassing the app's own privacy
+  rule to do it. **Mechanism: reuses §6's quick-session/discussion-card path** (a
   landmark-tagged card, queued once both entries exist), not a bespoke chat UI.
 
 ## 6. Discussion cards — Path × Sessions
@@ -201,6 +263,16 @@ a **real Vayl session card**, reusing infrastructure that already exists:
   accumulate cards queued across multiple separate Path visits before anyone plays
   anything. A small new persisted structure (queued card ids per couple per deck) is
   required.
+- **Missing-card fallback, required, not optional.** Content authoring is unlikely to
+  reach 1:1 landmark-to-card coverage at launch (13 landmarks, card count unspecified).
+  "Add a discussion card" **must not silently no-op** when a landmark has no tagged
+  card — that's the failure mode most likely to ship by default if unaddressed, per
+  adversarial review. The entry point either hides itself entirely for an untagged
+  landmark (preferred — a user never discovers an affordance that does nothing) or, if
+  content coverage turns out patchy enough that hiding it reads as inconsistent
+  landmark-to-landmark, falls back to a generic (untagged) prompt from the same deck.
+  Decide which once real card-count/coverage is known; either is acceptable, silence is
+  not.
 
 ### 6.1 Quick play — the one-card exception
 
@@ -232,6 +304,21 @@ sitting. Quick play is a **named, bounded exception**, not a change to that floo
   partner-presence detection; a dedicated store avoids teaching a currently
   single-purpose state machine two modes. **Decide before implementation starts** —
   this affects the shape of both the store and its tests.
+- **Inherits the stale-lobby self-heal — required, not optional.** `PlayStore` already
+  abandons a lobby/airlock row the current user opened and walked away from, before
+  opening a fresh one (self-heal against bricking the one-open-session index). Quick
+  play is, by its own design, the *more* impulsive and lower-friction entry point — no
+  builder step, no detour through Play — which makes it plausibly **more** likely to be
+  tapped in a moment of curiosity and abandoned mid-flow, not less. Adversarial review
+  flagged that the spec cited the self-heal precedent without actually extending it to
+  this new entry point; it applies here identically, not by inference.
+- **Concurrent invites — one open pending session at a time.** If both partners tap
+  quick-play on two different landmark cards at the same moment, the second attempt is
+  blocked with a toast ("[Partner] just started a session — join theirs, or try again
+  after"), not silently overwritten and not left for the single-slot `pendingSession`
+  signal (§8) to arbitrarily pick one. This keeps the partner-pill invite's "one first
+  row" design in §8 honest — it was built assuming exactly one pending session can exist
+  at a time, and this rule is what makes that assumption true rather than accidental.
 
 ## 7. Data model (net-new)
 
@@ -290,13 +377,29 @@ Replaces `PendingSessionBanner` (and its two render sites, `HomeRouterView` and
 
 ## 9. Open items requiring a decision before implementation
 
-1. **Already-ours mutual-confirmation UI** (§3.1) — no design exists yet.
+1. **Already-ours mutual-confirmation UI** (§3.1) — the lifecycle rules are now decided
+   (decline/expiry/race-condition, §3.1); the actual confirm/decline screen itself still
+   has no design.
 2. **Add-your-own-landmark** (§3.3) — no design beyond the entry row; recommend
    deferring past launch unless prioritized.
 3. **`QuickSessionView`'s store** (§6.1) — reuse `AirlockStore` vs. a dedicated
    presence-only store.
 4. **Map dashboard widget** (§0) — deliberately excluded from this doc; Bryan is
    reconsidering the container.
+5. **Solo → paired transition — genuinely open, needs Bryan's call, not a default to
+   guess at.** If a solo/third user has set private stances on landmarks (§5.1), then
+   later pairs and switches to a symmetric couple path, does any of that private
+   pre-partner data ever surface — e.g., as a "your past private stance vs. your
+   partner's current one" comparison, which would actually be a legitimate use under the
+   discovery-not-assessment rule (comparing two points, not inferring anything) — or is
+   it fully discarded on the role switch? The data model (§7 item 3, stance/note, and
+   item 4, role) already makes either answer possible; the product behavior isn't
+   decided, and adversarial review flagged that leaving it open risks it getting built
+   accidentally (because the data happens to be there) rather than deliberately.
+6. **Missing-card fallback exact behavior** (§6) — hide-the-entry-point vs.
+   generic-card-fallback is named as the choice; which one depends on real content
+   coverage numbers not yet known, so pick once Swinging's card set is actually
+   authored, not before.
 
 ## 10. Explicitly rejected during design
 
