@@ -75,6 +75,32 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         await waitUntil("transition never resolved to session") { store.phase == .session }
     }
 
+    // MARK: - Context beat gating (banner header vs. interstitial overlay)
+
+    /// opener-01 has no beat, opener-02 is `.interstitial`, opener-05 is
+    /// `.banner` (see Card.openerSamples). Banner must NOT arm activeContextBeat
+    /// — it renders as a persistent ContextKickerView instead (SessionPlayerView),
+    /// not the one-shot pre-card overlay.
+    func test_contextBeat_armsForInterstitialOnly_notBanner() async throws {
+        let (store, _) = makeStore(cardCount: 5)
+        await crossAirlock(store)
+
+        XCTAssertEqual(store.currentCard?.id, "opener-01")
+        XCTAssertNil(store.activeContextBeat)
+
+        store.dealNext()   // → opener-02, interstitial
+        XCTAssertEqual(store.currentCard?.id, "opener-02")
+        XCTAssertEqual(store.activeContextBeat?.type, .interstitial)
+        XCTAssertEqual(store.activeContextBeat?.copy, store.currentCard?.contextBeatCopy)
+
+        store.dealNext()   // → opener-03, no beat
+        store.dealNext()   // → opener-04, no beat
+        store.dealNext()   // → opener-05, banner
+        XCTAssertEqual(store.currentCard?.id, "opener-05")
+        XCTAssertEqual(store.currentCard?.contextBeatType, .banner)
+        XCTAssertNil(store.activeContextBeat)
+    }
+
     // MARK: - Full playthrough (happy path + a pass + a saved reflection)
 
     func test_fullCouplePlaythrough_persistsSessionAndReflection() async throws {

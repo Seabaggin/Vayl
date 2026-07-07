@@ -504,11 +504,11 @@ final class CoupleSessionStore: Identifiable {
         guard let card = currentCard else { return }
 
         if card.hasContextBeat,
-           let type = card.contextBeatType,
+           card.contextBeatType == .interstitial,
            let copy = card.contextBeatCopy,
            !beatShownCardIds.contains(card.id) {
             beatShownCardIds.insert(card.id)
-            activeContextBeat = (type, copy)
+            activeContextBeat = (.interstitial, copy)
         }
 
         if card.isRevealMechanic {
