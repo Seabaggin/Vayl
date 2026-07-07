@@ -158,6 +158,21 @@ final class ContentLintTests: XCTestCase {
         }
     }
 
+    func test_noRevealMechanicCard_isTaggedAsABannerKicker() {
+        // hasContextKicker must exclude reveal mechanics (spec non-goal:
+        // whisper/unspoken/mirror/snapshot/whatIf get their own dedicated
+        // explanation screens instead — docs/superpowers/specs/2026-07-07-
+        // context-beat-header-design.md). This guards against a future
+        // content-authoring mistake tagging a reveal-mechanic card as
+        // context_beat_type: "banner", which would otherwise silently no-op.
+        for deck in decks {
+            for card in deck.cards where card.isRevealMechanic {
+                XCTAssertFalse(card.hasContextKicker,
+                               "\(deck.id)/\(card.id): reveal-mechanic card must never show the banner kicker")
+            }
+        }
+    }
+
     // MARK: - Gendered contract
 
     func test_genderedDecks_shipSymmetricMfAndFlexiblePairs() {

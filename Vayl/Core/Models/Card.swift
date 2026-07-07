@@ -45,7 +45,8 @@ struct Card: Codable, Identifiable {
         }
     }
 
-    /// Whether this card has a pre-card context beat.
+    /// Whether this card has a context beat of either type (banner: an
+    /// on-card header; interstitial: a pre-card overlay — see ContextBeatType).
     var hasContextBeat: Bool {
         contextBeatType != nil && contextBeatCopy != nil
     }
