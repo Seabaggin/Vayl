@@ -238,11 +238,18 @@ final class HomeStore {
         await loadProfile()
         await loadDesireStatus()
         await loadPartnerPulsePosition()
+        await refreshDeckState()
+        await loadLexiconContent()
+    }
+
+    /// The deck-facing slice of loadAll — cheap enough to re-run when a session
+    /// cover dismisses on Home or the app returns to foreground, so the hero
+    /// reflects tonight's play without a tab switch.
+    func refreshDeckState() async {
         resolveRecentDeck()
         await loadDeckProgress()
         await loadReflectionState()
         await loadDeck()
-        await loadLexiconContent()
     }
 
     // MARK: - Partner Pulse Load
@@ -279,8 +286,10 @@ final class HomeStore {
 
     // MARK: - Recent Deck
 
-    /// Picks the couple's most-recently-played deck (by lastPlayedAt, then firstOpenedAt).
-    /// Leaves `recentDeckId` at the opener default when there's no history.
+    /// Picks the couple's engaged deck via the SAME rule Play's hero uses
+    /// (FeaturedDeckRule) — the two surfaces must never hero different decks.
+    /// Entitlement-filtered: Home never serves a locked deck's cards, even
+    /// after a downgrade. Falls back to the opener when there's no history.
     private func resolveRecentDeck() {
         guard let coupleId = appState.coupleId else { return }
         let context = ModelContext(modelContainer)
@@ -288,13 +297,19 @@ final class HomeStore {
             let all = try context.fetch(FetchDescriptor<DeckProgress>(
                 predicate: #Predicate { $0.coupleId == coupleId }
             ))
-            let recent = all.max {
-                ($0.lastPlayedAt ?? $0.firstOpenedAt ?? .distantPast) <
-                ($1.lastPlayedAt ?? $1.firstOpenedAt ?? .distantPast)
-            }
-            if let recent, !recent.deckId.isEmpty, recent.lastPlayedAt != nil {
-                recentDeckId = recent.deckId
-                logger.info("HomeStore: recent deck = \(recent.deckId)")
+            let summaries = (try? DeckCatalogService().loadSummaries()) ?? []
+            let availableIDs = Set(
+                summaries.filter { !$0.isLocked || couple.canRevealAll }.map(\.id)
+            )
+            var profileFetch = FetchDescriptor<UserProfile>()
+            profileFetch.fetchLimit = 1
+            let openerID = (try? context.fetch(profileFetch).first)?
+                .openerDeckType.welcomeDeckId
+            if let engaged = FeaturedDeckRule.engagedDeckId(
+                progress: all, availableIDs: availableIDs, openerID: openerID
+            ) {
+                recentDeckId = engaged
+                logger.info("HomeStore: engaged deck = \(engaged)")
             }
         } catch {
             logger.error("HomeStore: recent deck resolve failed — \(error.localizedDescription)")

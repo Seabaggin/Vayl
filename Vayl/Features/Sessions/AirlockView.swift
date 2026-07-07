@@ -27,6 +27,7 @@ struct AirlockView: View {
     @Environment(PulseStore.self) private var pulseStore
 
     @State private var lockedIn = false
+    @State private var consentFailed = false
     @State private var waitingPulse = false
     @State private var selectedRitual: Ritual? = nil
     @State private var capacityStore = CoupleCapacityStore(service: SupabaseCoupleCapacityService())
@@ -160,11 +161,15 @@ struct AirlockView: View {
         VStack(spacing: AppSpacing.md) {
             HoldToLockInRing(locked: lockedIn, ringSize: 224, showsGlyph: false) {
                 lockedIn = true
+                consentFailed = false
                 if let airlock {
-                    let fraction = store.bandwidth.fraction
                     Task { @MainActor in
-                        await airlock.commitBandwidth(fraction)
-                        await airlock.consent()
+                        // Un-latch on a failed commit so the ring drains and the
+                        // user can hold again — never a full ring that never wrote.
+                        if await !airlock.consent() {
+                            lockedIn = false
+                            consentFailed = true
+                        }
                     }
                 } else {
                     store.confirmSynced()   // DEBUG local path, mock unchanged
@@ -192,7 +197,7 @@ struct AirlockView: View {
                 HStack(spacing: AppSpacing.xs) {
                     Text("how it works")
                     Text("i")
-                        .font(.system(size: 9, weight: .semibold, design: .serif).italic())
+                        .font(AppFonts.body(9, weight: .semibold, relativeTo: .caption2).italic())
                         .frame(width: 15, height: 15)
                         .overlay(Circle().strokeBorder(AppColors.textAccent, lineWidth: 1))
                 }
@@ -241,6 +246,7 @@ struct AirlockView: View {
     /// (a short state message), rewritten honestly for the real mechanism:
     /// each partner independently holds, readiness crosses via consent.
     private var ringPrimaryLine: String {
+        if consentFailed { return "That didn't reach the room. Hold again." }
         if partnerConsented && lockedIn { return "You're both in — here we go →" }
         if lockedIn { return "You're locked in." }
         if !partnerHere { return "Waiting for \(store.partnerLabel) to arrive…" }
@@ -290,7 +296,7 @@ struct AirlockView: View {
 
             HStack(spacing: AppSpacing.xl) {
                 MiniLockDemo(label: "you")
-                Text("↔").font(.system(size: 20)).foregroundStyle(AppColors.textMuted)
+                Text("↔").font(AppFonts.body(20, relativeTo: .title3)).foregroundStyle(AppColors.textMuted)
                 MiniLockDemo(label: store.partnerLabel.lowercased())
             }
             .frame(maxWidth: .infinity)

@@ -43,7 +43,8 @@ struct PlayView: View {
             if store == nil && injectedStore == nil {
                 store = PlayStore(modelContainer: modelContext.container,
                                   appState: appState,
-                                  entitlements: entitlements)
+                                  entitlements: entitlements,
+                                  coupleContext: coupleContext)
             }
             if entryStore == nil {
                 entryStore = SessionEntryStore(
@@ -80,7 +81,8 @@ struct PlayView: View {
                             DeckWallView(store: store, namespace: deckZoom)
                         }
                         .padding(.top, AppSpacing.sm)
-                        .padding(.bottom, AppSpacing.xxl * 2 + AppSpacing.lg)   // ~120pt tab-bar clearance
+                        // No bottom clearance here: AppShell's .safeAreaInset
+                        // tab bar reserves its own height for every tab.
                     }
                     .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
                         scrollY = y
@@ -94,6 +96,18 @@ struct PlayView: View {
                 DeckBeginCeremony(store: store)
                     .transition(.opacity)
                     .zIndex(10)
+            }
+
+            // Failed session open — the plan is kept; "Try again" re-runs it.
+            if let error = store.openError {
+                VStack {
+                    Spacer()
+                    openErrorBanner(store, message: error)
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.bottom, AppSpacing.lg)
+                }
+                .transition(.opacity)
+                .zIndex(25)
             }
 
             // Joiner banner — above the ceremony (20 > 10).
@@ -115,6 +129,7 @@ struct PlayView: View {
         }
         .animation(AppAnimation.enter, value: store.ceremonyDeckID)
         .animation(AppAnimation.spring, value: entryStore?.pendingSession)
+        .animation(AppAnimation.standard, value: store.openError)
         .onChange(of: entryStore?.acceptedLaunch) { _, launch in
             if let launch {
                 store.launch = launch          // reuses the session cover below
@@ -161,6 +176,42 @@ struct PlayView: View {
         }
     }
 
+    /// The failed-open banner: the built plan is retryable in place.
+    private func openErrorBanner(_ store: PlayStore, message: String) -> some View {
+        HStack(spacing: AppSpacing.md) {
+            Text(message)
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textBody)
+            Spacer(minLength: 0)
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                store.retryOpen()
+            } label: {
+                Text("Try again")
+                    .font(AppFonts.buttonLabelSmall)
+                    .foregroundStyle(AppColors.spectrumText)
+            }
+            .buttonStyle(.plain)
+            Button {
+                store.dismissOpenError()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.sm + AppSpacing.xxs)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                .fill(AppColors.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                        .strokeBorder(AppColors.borderDefault, lineWidth: 1)
+                )
+        )
+    }
 }
 
 #if DEBUG

@@ -34,7 +34,6 @@ private let logger = Logger(subsystem: "com.vayl.app", category: "AirlockStore")
 /// conformance; MockAirlockTransport (VaylTests) scripts the streams.
 protocol AirlockTransport: AnyObject {
     func fetchOpenSession(coupleId: UUID) async throws -> CuratedSessionDTO?
-    func setBandwidth(sessionId: UUID, role: SessionRole, value: Float) async throws
     func setConsent(sessionId: UUID, role: SessionRole, consented: Bool) async throws
     func setPresence(sessionId: UUID, role: SessionRole, present: Bool) async throws
     func flipToActiveIfBoth(sessionId: UUID) async throws -> Bool
@@ -69,10 +68,6 @@ final class LiveAirlockTransport: AirlockTransport {
 
     func fetchOpenSession(coupleId: UUID) async throws -> CuratedSessionDTO? {
         try await service.fetchOpenSession(coupleId: coupleId)
-    }
-
-    func setBandwidth(sessionId: UUID, role: SessionRole, value: Float) async throws {
-        try await service.setBandwidth(sessionId: sessionId, role: role, value: value)
     }
 
     func setConsent(sessionId: UUID, role: SessionRole, consented: Bool) async throws {
@@ -116,7 +111,6 @@ final class LiveAirlockTransport: AirlockTransport {
 enum AirlockState: Equatable {
     case waitingForPartner
     case bothPresent
-    case bandwidthSet
     case consented
     case activating
     case active(sessionId: UUID)
@@ -135,18 +129,9 @@ final class AirlockStore {
     /// Live transport mode. Flips to `.poll` on connect failure or presence timeout.
     private(set) var transport: Transport = .realtime
     private(set) var partnerPresent = false
-    private(set) var selfBandwidthCommitted = false
     private(set) var selfConsented = false
     private(set) var partnerConsented = false
     private(set) var session: CuratedSessionDTO?
-
-    /// min(a_bandwidth, b_bandwidth) once BOTH are on the row — the session's
-    /// depth ceiling (spec §4.3). Each device computes it independently and
-    /// deterministically; neither partner's raw reading is ever displayed.
-    var depthCeiling: Float? {
-        guard let a = session?.aBandwidth, let b = session?.bBandwidth else { return nil }
-        return min(a, b)
-    }
 
     enum Transport: String { case realtime, poll }
 
@@ -299,29 +284,21 @@ final class AirlockStore {
 
     // MARK: - UI actions (this device)
 
-    /// Bandwidth slider commit (Light/Open/Deep detent as a 0-1 Float).
-    /// Set privately; the raw reading is never shown to the partner.
-    func commitBandwidth(_ value: Float) async {
-        guard let sessionId = session?.id else { return }
-        do {
-            try await transportLayer.setBandwidth(sessionId: sessionId, role: role, value: value)
-            selfBandwidthCommitted = true
-            recomputeLadder()
-        } catch {
-            logger.warning("bandwidth push failed: \(error.localizedDescription)")
-        }
-    }
-
-    /// The 3-second lock-in press completes → this device consents.
-    func consent() async {
-        guard let sessionId = session?.id else { return }
+    /// The 3-second lock-in press completes → this device consents. Returns
+    /// whether the commit landed; the view un-latches its ring on false so the
+    /// user can hold again instead of waiting on a consent that never wrote.
+    @discardableResult
+    func consent() async -> Bool {
+        guard let sessionId = session?.id else { return false }
         do {
             try await transportLayer.setConsent(sessionId: sessionId, role: role, consented: true)
             selfConsented = true
             recomputeLadder()
             await tryFlipToActive()
+            return true
         } catch {
             logger.warning("consent push failed: \(error.localizedDescription)")
+            return false
         }
     }
 
@@ -336,8 +313,6 @@ final class AirlockStore {
         }
         if selfConsented {
             state = .consented
-        } else if selfBandwidthCommitted, partnerPresent {
-            state = .bandwidthSet
         } else if partnerPresent {
             state = .bothPresent
         } else {
@@ -346,14 +321,18 @@ final class AirlockStore {
     }
 
     /// Mirrors the row's partner-side facts + status into local state. Row
-    /// presence booleans are the backstop for a poll-mode partner.
+    /// presence booleans are the backstop for a poll-mode partner: in poll mode
+    /// the row IS the presence signal, so it clears as well as sets (in
+    /// realtime the stream owns clearing — the row only ever raises).
     private func applyRow(_ row: CuratedSessionDTO) {
         let partnerPresentInRow = (partnerRole == .a) ? row.aPresent : row.bPresent
-        if partnerPresentInRow { partnerPresent = true }
+        if transport == .poll {
+            partnerPresent = partnerPresentInRow
+        } else if partnerPresentInRow {
+            partnerPresent = true
+        }
         partnerConsented = (partnerRole == .a) ? row.aConsented : row.bConsented
         selfConsented = selfConsented || ((role == .a) ? row.aConsented : row.bConsented)
-        let myBandwidthInRow = (role == .a) ? row.aBandwidth : row.bBandwidth
-        if myBandwidthInRow != nil { selfBandwidthCommitted = true }
 
         if row.status == CuratedSessionStatus.active.rawValue {
             state = .active(sessionId: row.id)

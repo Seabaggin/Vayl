@@ -26,7 +26,6 @@ final class MockAirlockTransport: AirlockTransport {
     private(set) var flipCount = 0
     private(set) var presenceWrites: [(role: SessionRole, present: Bool)] = []
     private(set) var consentWrites: [SessionRole] = []
-    private(set) var bandwidthWrites: [(role: SessionRole, value: Float)] = []
     private(set) var heartbeatCount = 0
     /// Rows the poll loop hands back, consumed front-first; last repeats.
     var heartbeatRows: [CuratedSessionDTO] = []
@@ -38,11 +37,10 @@ final class MockAirlockTransport: AirlockTransport {
 
     func fetchOpenSession(coupleId: UUID) async throws -> CuratedSessionDTO? { openRow }
 
-    func setBandwidth(sessionId: UUID, role: SessionRole, value: Float) async throws {
-        bandwidthWrites.append((role, value))
-    }
+    var consentError: Error?
 
     func setConsent(sessionId: UUID, role: SessionRole, consented: Bool) async throws {
+        if let consentError { throw consentError }
         consentWrites.append(role)
     }
 
@@ -173,13 +171,9 @@ final class AirlockStoreTests: XCTestCase {
         mock.presenceContinuation?.yield(PresenceDelta(joinedIds: [UUID().uuidString], leftIds: []))
         await waitUntil("both present") { store.state == .bothPresent }
 
-        // I commit bandwidth.
-        await store.commitBandwidth(0.55)
-        XCTAssertEqual(store.state, .bandwidthSet)
-        XCTAssertEqual(mock.bandwidthWrites.first?.value, 0.55)
-
         // I lock in.
-        await store.consent()
+        let consented = await store.consent()
+        XCTAssertTrue(consented)
         XCTAssertEqual(store.state, .consented)
         XCTAssertEqual(mock.consentWrites, [.a])
 
@@ -187,19 +181,14 @@ final class AirlockStoreTests: XCTestCase {
         mock.rowsContinuation?.yield(makeRow(
             id: sessionId, coupleId: coupleId,
             aPresent: true, bPresent: true,
-            aBandwidth: 0.55, bBandwidth: 0.25,
             aConsented: true, bConsented: true
         ))
         await waitUntil("flip requested") { mock.flipCount == 1 }
-
-        // Depth ceiling = min of the two readings, computed locally.
-        XCTAssertEqual(store.depthCeiling, 0.25)
 
         // The row flips (server-authoritative) → both devices go active on the UPDATE.
         mock.rowsContinuation?.yield(makeRow(
             id: sessionId, coupleId: coupleId, status: .active,
             aPresent: true, bPresent: true,
-            aBandwidth: 0.55, bBandwidth: 0.25,
             aConsented: true, bConsented: true
         ))
         await waitUntil("active") { store.state == .active(sessionId: sessionId) }
@@ -272,6 +261,46 @@ final class AirlockStoreTests: XCTestCase {
         }
         XCTAssertEqual(mock.flipCount, 1)
         XCTAssertGreaterThanOrEqual(mock.heartbeatCount, 1)
+    }
+
+    func testPollModeClearsPartnerPresenceFromRow() async {
+        // Regression (2026-07-07 review): row presence was a one-way latch, so
+        // a partner leaving pre-active in poll mode never dropped the ladder.
+        let coupleId = UUID()
+        let sessionId = UUID()
+        let mock = MockAirlockTransport()
+        mock.openRow = makeRow(id: sessionId, coupleId: coupleId)
+        mock.connectError = MockAirlockTransport.MockError()
+        mock.heartbeatRows = [
+            makeRow(id: sessionId, coupleId: coupleId, aPresent: true, bPresent: true),
+            makeRow(id: sessionId, coupleId: coupleId, aPresent: true, bPresent: false)
+        ]
+        let store = makeStore(mock: mock, coupleId: coupleId, role: .a)
+
+        await store.start()
+        XCTAssertEqual(store.transport, .poll)
+        await waitUntil("poll sees partner") { store.partnerPresent }
+        await waitUntil("poll sees partner leave") { !store.partnerPresent }
+        XCTAssertEqual(store.state, .waitingForPartner)
+    }
+
+    func testConsentFailureReportsAndDoesNotAdvance() async {
+        // Regression (2026-07-07 review): a failed consent write left the view
+        // latched "locked in" forever. The store must report the failure.
+        let coupleId = UUID()
+        let mock = MockAirlockTransport()
+        mock.openRow = makeRow(coupleId: coupleId)
+        mock.consentError = MockAirlockTransport.MockError()
+        let store = makeStore(mock: mock, coupleId: coupleId, role: .a)
+
+        await store.start()
+        mock.presenceContinuation?.yield(PresenceDelta(joinedIds: [UUID().uuidString], leftIds: []))
+        await waitUntil("both present") { store.state == .bothPresent }
+
+        let consented = await store.consent()
+        XCTAssertFalse(consented)
+        XCTAssertFalse(store.selfConsented)
+        XCTAssertEqual(store.state, .bothPresent, "a failed consent must not climb the ladder")
     }
 
     func testPresenceSilenceTimeoutDropsToPoll() async {

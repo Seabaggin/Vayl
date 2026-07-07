@@ -219,7 +219,7 @@ struct SessionPlayerView: View {
     private var drawerRow: some View {
         let isYou = store.currentDrawer == .you
         return HStack(spacing: AppSpacing.sm) {
-            Text(isYou ? "B" : "A")
+            Text(store.drawingRoleLabel)
                 .font(AppFonts.display(12, weight: .semibold, relativeTo: .caption))
                 .foregroundStyle(AppColors.void)
                 .frame(width: 26, height: 26)
@@ -568,10 +568,10 @@ struct SessionPlayerView: View {
 
     private func nextPromptText() -> String {
         let next = store.index + 1
-        guard store.effectiveHand.indices.contains(next) else {
+        guard store.hand.indices.contains(next) else {
             return store.currentCard?.text ?? ""
         }
-        return store.effectiveHand[next].text
+        return store.hand[next].text
     }
 
     // MARK: - Idle dim

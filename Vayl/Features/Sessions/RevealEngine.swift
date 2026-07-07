@@ -89,6 +89,7 @@ final class RevealEngine {
 
     private var countdownTask: Task<Void, Never>?
     private var resendTask: Task<Void, Never>?
+    private var sealFlagTask: Task<Void, Never>?
 
     init(
         role: SessionRole,
@@ -141,15 +142,26 @@ final class RevealEngine {
     // MARK: - My side
 
     /// Seal my answer: freeze input, flag the row, broadcast the payload, keep
-    /// it locally. Idempotent — a second call is a no-op.
+    /// it locally. Idempotent — a second call is a no-op. The row write retries
+    /// each grace window until it lands or the card changes: a dropped flag
+    /// would otherwise deadlock BOTH devices at "waiting on them" forever.
     func seal(_ body: RevealEnvelope.Body) {
         guard let cardId, phase == .composing else { return }
         let envelope = RevealEnvelope(cardId: cardId, role: role, body: body)
         myEnvelope = envelope
         phase = .sealedMine
         transport?.sendEnvelope(envelope)
-        Task { @MainActor in
-            try? await self.transport?.setSealed(cardId: cardId)
+        sealFlagTask?.cancel()
+        sealFlagTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled, self.cardId == cardId {
+                do {
+                    try await self.transport?.setSealed(cardId: cardId)
+                    return
+                } catch {
+                    try? await Task.sleep(for: .seconds(self.resendGraceSeconds))
+                }
+            }
         }
         evaluateGate()
     }
@@ -309,5 +321,7 @@ final class RevealEngine {
         countdownTask = nil
         resendTask?.cancel()
         resendTask = nil
+        sealFlagTask?.cancel()
+        sealFlagTask = nil
     }
 }

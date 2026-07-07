@@ -78,9 +78,9 @@ final class EntitlementStore {
         coreProduct = try? await storeKit.loadCoreProduct()
         await refresh()
         if updatesTask == nil {
-            updatesTask = storeKit.observeTransactionUpdates { [weak self] _, jws, revoked in
+            updatesTask = storeKit.observeTransactionUpdates { [weak self] transaction, jws, revoked in
                 guard let self else { return }
-                await self.handleTransactionUpdate(jws: jws, revoked: revoked)
+                await self.handleTransactionUpdate(transaction: transaction, jws: jws, revoked: revoked)
             }
         }
     }
@@ -122,9 +122,12 @@ final class EntitlementStore {
         defer { isPurchasing = false }
         do {
             switch try await storeKit.purchase(product) {
-            case .success(_, let jws):
-                localOwnsCore = true                                   // buyer unlocks immediately
-                _ = try? await service.grantCore(signedTransaction: jws)   // server → partner unlocks too
+            case .success(let transaction, let jws):
+                localOwnsCore = true                       // buyer unlocks immediately
+                // Grant BEFORE finish: an unfinished transaction replays via
+                // Transaction.updates, so a failed grant retries on next launch
+                // instead of silently leaving the partner locked forever.
+                await grantThenFinish(transaction: transaction, jws: jws)
                 await refresh()
                 return isCore
             case .pending, .userCancelled:
@@ -139,6 +142,18 @@ final class EntitlementStore {
         }
     }
 
+    /// Push the couple grant; finish the transaction only once it lands.
+    private func grantThenFinish(transaction: Transaction, jws: String) async {
+        do {
+            _ = try await service.grantCore(signedTransaction: jws)   // server → partner unlocks too
+            await storeKit.finish(transaction)
+        } catch {
+            // Leave unfinished — StoreKit replays it into the updates listener,
+            // which re-attempts the grant. The buyer stays unlocked locally.
+            loadError = "You're unlocked. Syncing to your partner will retry."
+        }
+    }
+
     /// Explicit "Restore Purchases" (Apple requires a restore path for non-consumables). Re-syncs
     /// from the App Store; if Core is owned, re-grants the couple server-side and re-resolves.
     @discardableResult
@@ -149,7 +164,11 @@ final class EntitlementStore {
         do {
             if let (_, jws) = try await storeKit.restore() {
                 localOwnsCore = true
-                _ = try? await service.grantCore(signedTransaction: jws)
+                do {
+                    _ = try await service.grantCore(signedTransaction: jws)
+                } catch {
+                    loadError = "You're unlocked. Syncing to your partner will retry."
+                }
             }
             await refresh()
         } catch {
@@ -161,15 +180,17 @@ final class EntitlementStore {
     // MARK: - Background updates
 
     /// Handle a transaction arriving outside an explicit purchase (Ask-to-Buy, another device,
-    /// refund/revocation). Refund → drop the local fallback + re-resolve (couple-level downgrade
-    /// is server-driven via the refund webhook — a documented fast-follow).
-    private func handleTransactionUpdate(jws: String, revoked: Bool) async {
+    /// refund/revocation) — or a replay of one left unfinished by a failed grant. Refund →
+    /// drop the local fallback + re-resolve (couple-level downgrade is server-driven via the
+    /// refund webhook — a documented fast-follow).
+    private func handleTransactionUpdate(transaction: Transaction, jws: String, revoked: Bool) async {
         if revoked {
             localOwnsCore = false
+            await storeKit.finish(transaction)
             await refresh()
         } else {
             localOwnsCore = true
-            _ = try? await service.grantCore(signedTransaction: jws)
+            await grantThenFinish(transaction: transaction, jws: jws)
             await refresh()
         }
     }

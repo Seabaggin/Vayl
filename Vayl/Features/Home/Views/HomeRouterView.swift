@@ -251,6 +251,7 @@ private struct HomeRouterInnerView: View {
                         showPairingJoin = true
                     }
                 },
+                onSessionEnded:      { Task { await store.refreshDeckState() } },
                 onOpenLexicon:       { appState.selectedTab = .learn },
                 onPulseTap:          { appState.selectedTab = .map },
                 // Interim: route to the Pulse surface. Final: present the shared

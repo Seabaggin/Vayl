@@ -398,7 +398,6 @@ Vayl/
 │   │   │   ├── PlayEmptyState.swift            — Empty state when no decks available.
 │   │   │   ├── PlayHeroView.swift              — Hero section of Play tab.
 │   │   │   ├── PlayMastheadView.swift          — Masthead/header for Play tab.
-│   │   │   ├── RotaryDial.swift                — Rotary dial interaction component (archived pattern, kept for reference).
 │   │   │   └── ZoomablePanView.swift           — Zoomable and pannable view for deck exploration.
 │   │   ├── Models/
 │   │   │   ├── DeckStyle.swift                 — Style configuration for deck display.
@@ -431,8 +430,6 @@ Vayl/
 │   │       └── PulseStore.swift                — @Observable store; manages pulse/checkin state.
 │   │
 │   ├── Sessions/
-│   │   ├── Debug/
-│   │   │   └── PresenceDebugView.swift         — Debug view for presence/realtime state.
 │   │   ├── AirlockView.swift                   — Airlock/transition view for entering sessions.
 │   │   ├── CardSessionContainerView.swift      — Container for card session experience.
 │   │   ├── CoupleSessionStore.swift            — State management for couple sessions.
@@ -643,5 +640,5 @@ Me|Us toggle (NOT "Mirror"). Pulse hero + Vault. Single canonical glass card + r
 - **Tests**: Full test suite with 11 test files covering models, stores, and integration flows
 
 ### Deprecated/Reference Only
-- `RotaryDial.swift` — archived pattern, kept for historical reference; not used in V1
 - `TabContentWrapper.swift` — deprecated; AppShell now uses native tab bar; kept for reference
+- (`RotaryDial.swift` and `Sessions/Debug/PresenceDebugView.swift` deleted 2026-07-07 — dead code)

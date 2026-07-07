@@ -72,6 +72,11 @@ struct HoldToLockInRing: View {
                 .onChanged { _ in startHold() }
                 .onEnded { _ in endHold() }
         )
+        // The host un-latches on a failed commit (network) — drain the ring so
+        // the user can hold again, not stare at a full ring that never landed.
+        .onChange(of: locked) { _, isLocked in
+            if !isLocked { withAnimation(AppAnimation.standard) { fill = 0 } }
+        }
         .accessibilityLabel(locked ? "Locked in" : "Press and hold to lock in")
     }
 

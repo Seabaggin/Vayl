@@ -37,20 +37,6 @@ final class CoupleSessionStore: Identifiable {
     /// Who is drawing the current card.
     enum Drawer { case you, partner }
 
-    /// Pre-session bandwidth reading. The gentler of the two readings becomes
-    /// the session's depth ceiling; the raw reading is never shown to the partner.
-    enum Bandwidth: String, CaseIterable {
-        case light, open, deep
-        var label: String { rawValue }
-        var fraction: Float {
-            switch self {
-            case .light: return 0.25
-            case .open:  return 0.55
-            case .deep:  return 0.85
-            }
-        }
-    }
-
     let id = UUID()
     private(set) var phase: Phase = .airlock
 
@@ -70,10 +56,6 @@ final class CoupleSessionStore: Identifiable {
 
     // MARK: - Airlock state (DEBUG local mock path)
 
-    /// Your private bandwidth reading.
-    var bandwidth: Bandwidth = .open
-    /// Mock partner reading — DEBUG local path only.
-    private(set) var partnerBandwidth: Bandwidth = .light
     /// Mock presence — flips true shortly after the airlock appears (DEBUG local path).
     private(set) var partnerPresent: Bool = false
 
@@ -134,7 +116,6 @@ final class CoupleSessionStore: Identifiable {
         enqueueSync: (@MainActor (SessionRecordPayload) -> Void)? = nil
     ) {
         self.hand = launch.hand
-        self.effectiveHand = launch.hand
         self.entry = launch.entry
         self.sessionRole = launch.role
         self.remoteSessionId = launch.session?.id
@@ -202,37 +183,44 @@ final class CoupleSessionStore: Identifiable {
         // (no hardcoded placeholder names).
     }
 
-    // MARK: - Derived (reads the ceiling-trimmed hand)
+    // MARK: - Derived
 
     var currentCard: Card? {
-        effectiveHand.indices.contains(index) ? effectiveHand[index] : nil
+        hand.indices.contains(index) ? hand[index] : nil
     }
 
-    /// Drawer alternates; the partner (A) opens, matching the deck order.
-    var currentDrawer: Drawer { index % 2 == 0 ? .partner : .you }
+    /// Role owning the current draw: A opens (even indices), then it alternates.
+    /// Deterministic from the index, so both devices agree on whose card it is.
+    private var drawingRole: SessionRole { index % 2 == 0 ? .a : .b }
 
-    var isLastCard: Bool { index >= effectiveHand.count - 1 }
+    /// Whose draw this is, from THIS device's perspective (role-aware — the two
+    /// devices render mirrored labels/tints, never the same one).
+    var currentDrawer: Drawer { drawingRole == sessionRole ? .you : .partner }
+
+    /// The badge letter for the drawer row ("A" / "B"), shared by both devices.
+    var drawingRoleLabel: String { drawingRole == .a ? "A" : "B" }
+
+    /// Mirror cards: the subject alternates per card (deterministic from the
+    /// index, identical on both devices); the other partner guesses.
+    var mirrorSubjectIsMe: Bool { drawingRole == sessionRole }
+
+    var isLastCard: Bool { index >= hand.count - 1 }
 
     /// Cards still to come after the current one — drives the fanned deck.
-    var upcomingCount: Int { max(0, effectiveHand.count - index - 1) }
+    var upcomingCount: Int { max(0, hand.count - index - 1) }
 
     var discussedCount: Int { records.filter { $0.status == .discussed }.count }
     var skippedCount: Int { records.filter { $0.status == .skipped }.count }
 
     /// Position label for the in-session header ("Card 3 · 8").
-    var positionLabel: String { "\(index + 1) · \(effectiveHand.count)" }
+    var positionLabel: String { "\(index + 1) · \(hand.count)" }
 
-    /// Cover-family screen 7 stat line: cards / depth reached / duration.
+    /// Cover-family screen 7 stat line: cards / duration.
     var sessionStatLine: String {
         let cards = "\(discussedCount) \(discussedCount == 1 ? "card" : "cards")"
-        let depth = "reached \(depthLabel)"
         let minutes = max(1, Int(Date().timeIntervalSince(sessionStartedAt) / 60))
-        return "\(cards) · \(depth) · \(minutes) min"
+        return "\(cards) · \(minutes) min"
     }
-
-    /// Depth reached: the ceiling when live, else my own reading. Names the
-    /// band, never a number, never the partner's reading (spec 4.5).
-    private var depthLabel: String { (depthCeiling ?? bandwidth).label }
 
     // MARK: - Airlock actions (DEBUG local mock path)
 
@@ -246,8 +234,6 @@ final class CoupleSessionStore: Identifiable {
         }
     }
 
-    func setBandwidth(_ b: Bandwidth) { bandwidth = b }
-
     /// DEBUG local path: cross the airlock into the transition, then card 1.
     func confirmSynced() {
         guard phase == .airlock else { return }
@@ -257,6 +243,7 @@ final class CoupleSessionStore: Identifiable {
             if phase == .transition {
                 phase = .session
                 cardDidChange()      // Section 3: first card's beat/reveal setup
+                persistProgressCheckpoint()
             }
         }
     }
@@ -273,6 +260,7 @@ final class CoupleSessionStore: Identifiable {
                 phase = .session
                 cardDidChange()      // Section 3: first card's beat/reveal setup
                 startTimerIfLeader()
+                persistProgressCheckpoint()
             }
         }
     }
@@ -322,6 +310,7 @@ final class CoupleSessionStore: Identifiable {
         index += 1                                   // optimistic, both paths
         cardDidChange()                              // Section 3: beats / back / reveal per-card setup
         refreshTimer()
+        persistProgressCheckpoint()
         guard isLive, let realtime, let sid = remoteSessionId else { return }
         Task { @MainActor in
             do {
@@ -351,10 +340,6 @@ final class CoupleSessionStore: Identifiable {
     private(set) var timerStartedAtRaw: String?
     /// Highest row index applied; the forward-only guard.
     private var confirmedIndex = 0
-    /// Depth ceiling once both bandwidths are on the row.
-    private(set) var depthCeiling: Bandwidth?
-    /// The hand actually played tonight (ceiling-trimmed; == hand until then).
-    private(set) var effectiveHand: [Card]
     /// ONE engine serves all five reveal mechanics (Section 3). Built at init
     /// with a nil transport (pure-local path: compose/seal render, bothSealed
     /// never fires); startRemoteSync attaches the real wire adapter.
@@ -416,7 +401,7 @@ final class CoupleSessionStore: Identifiable {
         }
         let indexChanged: Bool
         if dto.currentIndex != index, dto.currentIndex >= confirmedIndex,
-           effectiveHand.indices.contains(dto.currentIndex) {
+           hand.indices.contains(dto.currentIndex) {
             index = dto.currentIndex
             indexChanged = true
         } else if dto.currentIndex < index, dto.currentIndex == confirmedIndex {
@@ -432,8 +417,8 @@ final class CoupleSessionStore: Identifiable {
         if indexChanged {
             startTimerIfLeader()
             cardDidChange()      // Section 3: beats / back / reveal per-card setup
+            persistProgressCheckpoint()
         }
-        recomputeCeiling(a: dto.aBandwidth, b: dto.bBandwidth)
         if dto.safeWordUsed, !safeWordUsed {
             safeWordUsed = true
             enterSafeClose()
@@ -449,25 +434,6 @@ final class CoupleSessionStore: Identifiable {
         revealEngine.applyRow(dto.revealState)
     }
 
-    /// Depth ceiling (spec 4.3): min of the two private readings. Light keeps
-    /// cards ≤ .split, Open ≤ .auroraBand, Deep everything. Closing ritual is
-    /// never trimmed. Both devices derive this from the same row columns, so
-    /// the trimmed hand (and therefore current_index) is identical on both.
-    private func recomputeCeiling(a: Float?, b: Float?) {
-        guard let a, let b, depthCeiling == nil else { return }
-        let minFraction = min(a, b)
-        let ceiling: Bandwidth = minFraction < 0.4 ? .light : (minFraction < 0.7 ? .open : .deep)
-        depthCeiling = ceiling
-        let maxIntensity: CardIntensity = {
-            switch ceiling {
-            case .light: return .split
-            case .open:  return .auroraBand
-            case .deep:  return .supernova
-            }
-        }()
-        effectiveHand = hand.filter { $0.type == .closingRitual || $0.intensity <= maxIntensity }
-    }
-
     /// Cover appeared with no live channel (app kill / relaunch): rebuild from
     /// the open row and resubscribe. Every UI state must be reconstructable
     /// from fetchOpenSession alone (spec section 5).
@@ -479,9 +445,8 @@ final class CoupleSessionStore: Identifiable {
         remoteSessionId = dto.id
         switch dto.status {
         case CuratedSessionStatus.active.rawValue, CuratedSessionStatus.paused.rawValue:
-            recomputeCeiling(a: dto.aBandwidth, b: dto.bBandwidth)
             confirmedIndex = dto.currentIndex
-            index = min(dto.currentIndex, max(0, effectiveHand.count - 1))
+            index = min(dto.currentIndex, max(0, hand.count - 1))
             timerStartedAtRaw = dto.timerStartedAt
             liveTimers = dto.perCardTimer
             isPaused = (dto.status == CuratedSessionStatus.paused.rawValue)
@@ -698,12 +663,9 @@ final class CoupleSessionStore: Identifiable {
 
     // MARK: - Persistence
 
-    /// Whether this couple has completed a session before — repeat couples get the
-    /// airlock one-liner, not the six bullets (spec 4.5). Store-owned so the view
-    /// never reads persistence to make a flow decision (audit Blueprint C).
-    var isRepeatSession: Bool {
-        UserDefaults.standard.bool(forKey: UserDefaultsKey.hasCompletedCoupleSession)
-    }
+    /// Whether tonight's sitting actually covered the whole hand. "End well"
+    /// mid-deck is a clean close, not a completion — the deck stays resumable.
+    private var reachedEndOfHand: Bool { records.count >= hand.count }
 
     /// Writes the completed CardSession + CardResults + DeckProgress (mirrors
     /// SessionStore) and moves to the close. The reflection is written later,
@@ -713,6 +675,30 @@ final class CoupleSessionStore: Identifiable {
         liveComplete()
         UserDefaults.standard.set(true, forKey: UserDefaultsKey.hasCompletedCoupleSession)
         phase = .close
+    }
+
+    /// Upsert this couple+deck's DeckProgress mid-play: where we are, when we
+    /// first opened it, when we last touched it. Runs on session start and on
+    /// every index move so an abandoned sitting is resumable from the builder.
+    private func persistProgressCheckpoint() {
+        guard let coupleId = appState.coupleId else { return }
+        let deckId = hand.first?.deckId ?? "unknown"
+        let context = ModelContext(modelContainer)
+        var fetch = FetchDescriptor<DeckProgress>(
+            predicate: #Predicate { $0.coupleId == coupleId && $0.deckId == deckId }
+        )
+        fetch.fetchLimit = 1
+        let progress: DeckProgress
+        if let existing = try? context.fetch(fetch).first {
+            progress = existing
+        } else {
+            progress = DeckProgress(coupleId: coupleId, deckId: deckId)
+            context.insert(progress)
+        }
+        if progress.firstOpenedAt == nil { progress.firstOpenedAt = Date() }
+        progress.lastPlayedAt = Date()
+        progress.currentCardIndex = index
+        try? context.saveWithLogging()
     }
 
     /// Marks this device gone + the session complete (no-op pure-local).
@@ -740,8 +726,6 @@ final class CoupleSessionStore: Identifiable {
             session.cardsDiscussed = discussedCount
             session.cardsSkipped = skippedCount
             session.cardsBookmarked = 0
-            session.lockInBandwidthA = partnerBandwidth.fraction
-            session.lockInBandwidthB = bandwidth.fraction
 
             var sessionFetch = FetchDescriptor<CardSession>(
                 predicate: #Predicate { $0.coupleId == coupleId && $0.deckId == deckId }
@@ -762,18 +746,26 @@ final class CoupleSessionStore: Identifiable {
                 context.insert(result)
             }
 
+            // A deck is COMPLETED only when the sitting covered the whole hand;
+            // "End well" mid-deck keeps it in progress, resumable at this index.
             var progressFetch = FetchDescriptor<DeckProgress>(
                 predicate: #Predicate { $0.coupleId == coupleId && $0.deckId == deckId }
             )
             progressFetch.fetchLimit = 1
-            if let progress = try context.fetch(progressFetch).first {
-                progress.completedAt = Date()
-                progress.lastPlayedAt = Date()
+            let progress: DeckProgress
+            if let existing = try context.fetch(progressFetch).first {
+                progress = existing
             } else {
-                let newProgress = DeckProgress(coupleId: coupleId, deckId: deckId)
-                newProgress.completedAt = Date()
-                newProgress.lastPlayedAt = Date()
-                context.insert(newProgress)
+                progress = DeckProgress(coupleId: coupleId, deckId: deckId)
+                context.insert(progress)
+            }
+            if progress.firstOpenedAt == nil { progress.firstOpenedAt = Date() }
+            progress.lastPlayedAt = Date()
+            if reachedEndOfHand {
+                progress.completedAt = Date()
+                progress.currentCardIndex = 0
+            } else {
+                progress.currentCardIndex = min(records.count, max(0, hand.count - 1))
             }
 
             try context.saveWithLogging()

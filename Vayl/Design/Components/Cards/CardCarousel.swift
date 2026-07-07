@@ -84,10 +84,7 @@ struct CardCarousel: View {
     @State private var flyGhostActive:     Bool    = false
     @State private var flyProgress:        CGFloat = 0
 
-    @Environment(\.colorScheme)               private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private var isLight: Bool { colorScheme == .light }
 
     private var activeCard: Card? {
         guard cards.indices.contains(activeIndex) else { return nil }
@@ -393,7 +390,7 @@ struct CardCarousel: View {
                 opacity:  (phase == .floating || phase == .carousel) ? 0
                     : isSpread ? spreadOpacities[i]
                     : gatheredOpacities[i],
-                isLight: isLight
+                isLight: false   // V1 is dark-only (no colorScheme reads in Views)
             )
             .zIndex(Double(i))
             .offset(y: (phase == .lifted || phase == .carousel) ? -15 : 0)
@@ -453,7 +450,7 @@ struct CardCarousel: View {
                 .frame(width: cardW, height: cardH)
 
             LinearGradient(
-                colors: [.clear, .white.opacity(isLight ? 0.4 : 0.12), .clear],
+                colors: [.clear, .white.opacity(0.12), .clear],
                 startPoint: .init(x: 0.2 - (progress * 1.5), y: 0),
                 endPoint:   .init(x: 0.8 - (progress * 1.5), y: 1)
             )
@@ -466,11 +463,11 @@ struct CardCarousel: View {
             RoundedRectangle(cornerRadius: AppRadius.obCard)
                 .fill(LinearGradient(
                     stops: [
-                        .init(color: .clear,                                 location: 0),
-                        .init(color: .white.opacity(isLight ? 0.14 : 0.08), location: 0.35),
-                        .init(color: .white.opacity(isLight ? 0.28 : 0.20), location: 0.50),
-                        .init(color: .white.opacity(isLight ? 0.14 : 0.08), location: 0.65),
-                        .init(color: .clear,                                 location: 1),
+                        .init(color: .clear,                location: 0),
+                        .init(color: .white.opacity(0.08), location: 0.35),
+                        .init(color: .white.opacity(0.20), location: 0.50),
+                        .init(color: .white.opacity(0.08), location: 0.65),
+                        .init(color: .clear,                location: 1),
                     ],
                     startPoint: .init(x: specularPhase * 1.4 - 0.4, y: 0),
                     endPoint:   .init(x: specularPhase * 1.4 - 0.1, y: 1)
@@ -484,7 +481,7 @@ struct CardCarousel: View {
             // Selected for tonight's hand — spectrum check badge.
             if selecting && selectedIDs.contains(cards[i].id) {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(AppFonts.body(11, weight: .bold, relativeTo: .caption2))
                     .foregroundStyle(AppColors.void)
                     .frame(width: 24, height: 24)
                     .background(Circle().fill(AppColors.spectrumBorder))
@@ -800,10 +797,3 @@ struct CardCarousel: View {
     .preferredColorScheme(.dark)
 }
 
-#Preview("Spread — light") {
-    ZStack {
-        AppColors.pageBackground.ignoresSafeArea()
-        CardCarousel(cards: Card.samples)
-    }
-    .preferredColorScheme(.light)
-}

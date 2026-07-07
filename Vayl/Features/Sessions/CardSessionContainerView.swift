@@ -61,6 +61,13 @@ struct CardSessionContainerView: View {
             await built.resumeIfNeeded()
         }
         .onDisappear {
+            // Leaving BEFORE the session went active means the handshake will
+            // never finish — abandon the row so the partner's device sees the
+            // end instead of a zombie lobby (a mid-session exit keeps the row
+            // open on purpose: that's the reconnect path).
+            if store?.phase == .airlock {
+                store?.abandonRemoteSession()
+            }
             airlock?.leave()
             store?.teardown()
         }
@@ -120,7 +127,7 @@ private struct CoupleSessionFlow: View {
                 switch airlock.state {
                 case .waitingForPartner, .failed:
                     SessionLobbyView(store: store, airlock: airlock).transition(.opacity)
-                case .bothPresent, .bandwidthSet, .consented, .activating:
+                case .bothPresent, .consented, .activating:
                     AirlockView(store: store, airlock: airlock).transition(.opacity)
                 case .active:
                     Color.clear.onAppear {

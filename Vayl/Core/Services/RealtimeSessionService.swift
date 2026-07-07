@@ -39,7 +39,6 @@ enum SessionRole: String, Codable, Sendable {
     case a
     case b
 
-    var bandwidthColumn: String { self == .a ? "a_bandwidth" : "b_bandwidth" }
     var consentColumn: String   { self == .a ? "a_consented" : "b_consented" }
     var presenceColumn: String  { self == .a ? "a_present" : "b_present" }
     /// The seal flag this role owns inside a reveal_state per-card object.
@@ -240,14 +239,6 @@ final class RealtimeSessionService {
     }
 
     // MARK: Airlock mutators (one column each)
-
-    func setBandwidth(sessionId: UUID, role: SessionRole, value: Float) async throws {
-        try await supabase
-            .from(SupabaseTable.curatedSessions)
-            .update([role.bandwidthColumn: value])
-            .eq("id", value: sessionId.uuidString)
-            .execute()
-    }
 
     func setConsent(sessionId: UUID, role: SessionRole, consented: Bool = true) async throws {
         try await supabase
