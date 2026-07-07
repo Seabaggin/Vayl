@@ -92,11 +92,12 @@ struct SessionPlayerView: View {
                 .transition(.opacity)
             }
 
-            // Pre-card context beat (Section 3) — banner floats over the dimmed
-            // card tap-through; interstitial holds until "got it".
+            // Pre-card context beat (Section 3, narrowed 2026-07-07) — the only
+            // remaining case is interstitial; it holds until "got it". Banner
+            // now renders as a persistent ContextKickerView on the card itself
+            // (see screenLayer).
             if let beat = store.activeContextBeat {
                 ContextBeatOverlayView(
-                    type: beat.type,
                     copy: beat.copy,
                     onDismiss: { store.dismissContextBeat() }
                 )
