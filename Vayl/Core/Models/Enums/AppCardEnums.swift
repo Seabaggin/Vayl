@@ -202,13 +202,14 @@ enum GenderDynamic: String, CaseIterable, Codable {
     }
 }
 
-/// Pre-card context beat type.
-/// Banner is brief and auto-dismisses.
-/// Interstitial is full screen and user-controlled.
-/// Both appear before the card arrives — never on it.
+/// Context beat type.
+/// Banner is a short (1-2 line) kicker shown persistently above the card
+/// while it's current (ContextKickerView) — it does NOT precede the card or
+/// auto-dismiss.
+/// Interstitial is full screen, appears BEFORE the card, user dismisses it.
 enum ContextBeatType: String, Codable {
-    case banner         // 1-2 lines, auto-dismiss 5 seconds, card dimmed behind
-    case interstitial   // full screen, user controls dismissal
+    case banner         // 1-2 lines, persistent header above the card (ContextKickerView)
+    case interstitial   // full screen, before the card, user controls dismissal
 }
 
 // ─────────────────────────────────────────────────────────────
