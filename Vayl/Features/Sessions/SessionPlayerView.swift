@@ -159,17 +159,17 @@ struct SessionPlayerView: View {
             .fill(
                 RadialGradient(
                     colors: [
-                        AppColors.spectrumPurple.opacity(0.28),  // core — matches VaylCardBack's atmosphere ceiling
-                        AppColors.spectrumCyan.opacity(0.14),
+                        AppColors.spectrumPurple.opacity(0.65),  // core — pushed well past VaylCardBack's atmosphere ceiling, this needs to actually read against void
+                        AppColors.spectrumCyan.opacity(0.40),
                         .clear,
                     ],
                     center: .center,
                     startRadius: 0,
-                    endRadius: 140   // rendering constant — half the glow's own width, not a token
+                    endRadius: 150   // rendering constant — half the glow's own width, not a token
                 )
             )
-            .frame(width: 260, height: 140)   // rendering constant — hugs the 5-card fan's rotated bounding box
-            .blur(radius: 30)
+            .frame(width: 300, height: 160)   // rendering constant — hugs the 5-card fan's rotated bounding box
+            .blur(radius: 24)
             .allowsHitTesting(false)
     }
 
