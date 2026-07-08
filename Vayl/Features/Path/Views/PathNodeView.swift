@@ -28,6 +28,22 @@ struct PathNodeView: View {
     @Bindable var store: PathStore
     let landmarkId: String
 
+    /// The presenting screen's true height, threaded down from the caller's own
+    /// `AppLayout` (PathTrailView / PathLedgerView, Tasks 11-12) — same
+    /// `screenHeight: layout.screenHeight` pattern MapView.swift and
+    /// SettingsView.swift already use when a `.vaylSheet` is nested under
+    /// content that doesn't itself expand to fill its offered height.
+    ///
+    /// PathNodeView is content dropped inside another sheet/card, not a screen
+    /// root, so its own root VStack sizes to its intrinsic content height
+    /// rather than the true screen height. Without this, `dateEditorSheet`'s
+    /// nested `.vaylSheet`'s internal GeometryReader would measure that small
+    /// intrinsic height instead (VaylPresentation.swift's `screenHeight` doc
+    /// comment), undersizing the graphical DatePicker. Optional and defaulted
+    /// so this view stays independently previewable/buildable before Tasks
+    /// 11-12 exist to supply the real value.
+    var screenHeight: CGFloat? = nil
+
     @State private var showOverflow = false
     @State private var showDatePicker = false
     @State private var pendingDidItDate = Date()
@@ -65,7 +81,7 @@ struct PathNodeView: View {
                 note
             }
             .padding(AppSpacing.lg)
-            .vaylSheet(isPresented: $showDatePicker, heightFraction: 0.62) {
+            .vaylSheet(isPresented: $showDatePicker, heightFraction: 0.62, screenHeight: screenHeight) {
                 dateEditorSheet
             }
         } else {
@@ -196,14 +212,26 @@ struct PathNodeView: View {
     /// privately (only the tapping partner sees anything); a second tap shares
     /// it onto the couple's map. Once shared, tapping again is a no-op here —
     /// there's no un-share action in this view.
+    ///
+    /// Gated to `state == .untouched`: the stage row is jumpable (spec §9), so a
+    /// landmark can reach Discussed/Planning/Did it without ever passing through
+    /// a shared Curious. PathStore only clears a private mark inside
+    /// `shareCurious(_:)` — nothing clears it when another stage is set directly
+    /// — so once the real state has moved past Curious, a stale private mark
+    /// must stop being read as live here, and tapping must stop being able to
+    /// regress the landmark back down to `.curious` via `shareCurious`.
     private var curiousTap: some View {
         let shared = state == .curious
-        let privateOnly = !shared && store.isPrivatelyMarkedCurious(landmarkId)
+        let privateOnly = state == .untouched && store.isPrivatelyMarkedCurious(landmarkId)
         let isOn = shared || privateOnly
         let color = AppColors.spectrumMagenta
 
         return Button {
-            guard !shared else { return }
+            // Only meaningful pre-Curious: `.untouched` covers both "shared
+            // already" (state is `.curious`, not `.untouched`, so a repeat tap
+            // no-ops) and "moved on to a later stage" (same no-op, instead of
+            // regressing the landmark back to Curious).
+            guard state == .untouched else { return }
             Task {
                 if privateOnly {
                     try? await store.shareCurious(landmarkId)
@@ -236,8 +264,16 @@ struct PathNodeView: View {
         .buttonStyle(PressableCardStyle())
     }
 
+    /// Guards against re-tapping a stage that's already active — `applyState`
+    /// fully overwrites the progress row on every call, so a stray re-tap on an
+    /// already-Discussed landmark would silently downgrade `discussedVia` from
+    /// `.session` back to `.manual`, destroying the provenance spec §5 wants
+    /// preserved. Same shape as `curiousTap`'s and `didItTap`'s own guards.
     private func stageTap(title: String, isOn: Bool, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            guard !isOn else { return }
+            action()
+        } label: {
             Text(title)
                 .font(AppFonts.buttonLabelSmall)
                 .frame(maxWidth: .infinity)
@@ -258,9 +294,16 @@ struct PathNodeView: View {
     /// Did it — the unified completion state (spec §2, §7). Same look regardless
     /// of how it was reached; carries the full spectrum, unlike the single-hue
     /// taps above, matching the trail's own `.didit` node treatment.
+    ///
+    /// Guarded against re-tap: `setDidIt` always stamps `date: Date()`, and
+    /// `applyState` overwrites the row wholesale, so a re-tap on an
+    /// already-Did-it landmark would silently reset a backdated `didItDate`
+    /// (spec §7) to today. Editing the date afterward is the `dateChip`'s job,
+    /// not this button's.
     private var didItTap: some View {
         let isOn = state == .didIt
         return Button {
+            guard !isOn else { return }
             Task { try? await store.setDidIt(landmarkId, date: Date()) }
         } label: {
             Text("Did it")
