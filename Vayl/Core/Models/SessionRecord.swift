@@ -53,7 +53,7 @@ final class SessionRecord {
     // MARK: - Completion Status
 
     /// true = user reached the final prompt normally.
-    /// false = user tapped the SafeWordButton to end early.
+    /// false = user ended the session early.
     var completedFully: Bool
 
     // MARK: - Relationships

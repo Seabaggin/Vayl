@@ -242,7 +242,7 @@ internal enum AppGlows {
     // Same constraints as AppColors.safetyAccent — never
     // use for decorative or ambient purposes.
     //
-    // Applied to: SafeWordButton, hard-stop confirmation UI
+    // Applied to: Vault safe-word agreement card, hard-stop confirmation UI
     // ─────────────────────────────────────────────
 
     enum safety {

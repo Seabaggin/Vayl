@@ -113,7 +113,6 @@ struct CuratedSessionDTO: Codable, Identifiable, Sendable {
     let bConsented: Bool
     let timerStartedAt: String?
     let revealState: [String: RevealCardState]
-    let safeWordUsed: Bool
     let createdAt: String
     let updatedAt: String
 
@@ -136,7 +135,6 @@ struct CuratedSessionDTO: Codable, Identifiable, Sendable {
         case bConsented = "b_consented"
         case timerStartedAt = "timer_started_at"
         case revealState = "reveal_state"
-        case safeWordUsed = "safe_word_used"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -305,24 +303,6 @@ final class RealtimeSessionService {
             .execute()
     }
 
-    /// The safe word: abandoned + safe_word_used in ONE write so both devices
-    /// see a single atomic exit signal.
-    func raiseSafeWord(sessionId: UUID) async throws {
-        struct SafeWordUpdate: Encodable {
-            let status: String
-            let safeWordUsed: Bool
-            enum CodingKeys: String, CodingKey {
-                case status
-                case safeWordUsed = "safe_word_used"
-            }
-        }
-        try await supabase
-            .from(SupabaseTable.curatedSessions)
-            .update(SafeWordUpdate(status: CuratedSessionStatus.abandoned.rawValue,
-                                   safeWordUsed: true))
-            .eq("id", value: sessionId.uuidString)
-            .execute()
-    }
 }
 
 // MARK: - SessionPresence

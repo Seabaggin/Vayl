@@ -7,7 +7,7 @@
 // phase machine:
 //
 //   lobby/airlock (AirlockStore) → transition → in-session player →
-//   close / safeClose → done
+//   close → done
 //
 // Reconnect: an already-active row skips the airlock and rebuilds the player
 // from the row (CoupleSessionStore.resumeIfNeeded). `launch.session == nil` is
@@ -144,8 +144,6 @@ private struct CoupleSessionFlow: View {
             SessionPlayerView(store: store).transition(.opacity)
         case .close:
             SessionCloseView(store: store).transition(.opacity)
-        case .safeClose:
-            SafeWordCloseView(store: store).transition(.opacity)
         case .done:
             doneBeat.transition(.opacity)
         }
@@ -180,18 +178,12 @@ private struct CoupleSessionFlow: View {
 
     private var doneBeat: some View {
         VStack(spacing: AppSpacing.sm) {
-            if store.safeWordUsed {
-                Text("closed, no questions")
-                    .font(AppFonts.sectionHeading)
-                    .foregroundStyle(AppColors.textPrimary)
-            } else {
-                Text("kept, just for you")
-                    .font(AppFonts.sectionHeading)
-                    .foregroundStyle(AppColors.textPrimary)
-                Text("it'll show up in your Map")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-            }
+            Text("kept, just for you")
+                .font(AppFonts.sectionHeading)
+                .foregroundStyle(AppColors.textPrimary)
+            Text("it'll show up in your Map")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

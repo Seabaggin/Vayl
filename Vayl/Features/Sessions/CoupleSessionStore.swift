@@ -3,7 +3,7 @@
 //  Vayl
 //
 //  Brain of the in-person couple card session (the .vaylCover flow):
-//  lobby/airlock → transition → in-session player → close (or safeClose) +
+//  lobby/airlock → transition → in-session player → close +
 //  reflection.
 //
 //  ONE store owns the whole cover because the phases share a single hand,
@@ -32,7 +32,7 @@ final class CoupleSessionStore: Identifiable {
 
     // MARK: - Flow
 
-    enum Phase { case airlock, transition, session, close, safeClose, done }
+    enum Phase { case airlock, transition, session, close, done }
 
     /// Who is drawing the current card.
     enum Drawer { case you, partner }
@@ -45,9 +45,8 @@ final class CoupleSessionStore: Identifiable {
     let entry: SessionLaunch.Entry
     private let sessionRole: SessionRole
     private(set) var remoteSessionId: UUID?
-    /// Safe word label + partner display name, resolved from the local Couple /
-    /// profile rows at init; wayfinding copy only.
-    private(set) var safeWordLabel: String = "red"
+    /// Partner display name, resolved from the local Couple / profile rows at
+    /// init; wayfinding copy only.
     private(set) var partnerLabel: String = "your partner"
     private(set) var deckTitle: String = "Tonight's deck"
     private(set) var localProfileId: UUID?
@@ -166,13 +165,6 @@ final class CoupleSessionStore: Identifiable {
         var profileFetch = FetchDescriptor<UserProfile>()
         profileFetch.fetchLimit = 1
         localProfileId = try? context.fetch(profileFetch).first?.id
-        if let coupleId = appState.coupleId {
-            var coupleFetch = FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
-            coupleFetch.fetchLimit = 1
-            if let couple = try? context.fetch(coupleFetch).first {
-                safeWordLabel = couple.sharedSafeWord
-            }
-        }
         // Deck title: resolve the pretty name from the catalog when possible.
         if let deckId = hand.first?.deckId,
            let title = (try? DeckCatalogService().loadSummaries())?
@@ -336,7 +328,6 @@ final class CoupleSessionStore: Identifiable {
     private(set) var partnerPresentLive = false
     private(set) var isPaused = false
     private(set) var partnerAway = false
-    private(set) var safeWordUsed = false
     private(set) var timerStartedAtRaw: String?
     /// Highest row index applied; the forward-only guard.
     private var confirmedIndex = 0
@@ -419,16 +410,11 @@ final class CoupleSessionStore: Identifiable {
             cardDidChange()      // Section 3: beats / back / reveal per-card setup
             persistProgressCheckpoint()
         }
-        if dto.safeWordUsed, !safeWordUsed {
-            safeWordUsed = true
-            enterSafeClose()
-        }
         isPaused = (dto.status == CuratedSessionStatus.paused.rawValue)
         if dto.status == CuratedSessionStatus.complete.rawValue, phase == .session {
             finishSession()                       // partner finished → follow to close
         }
-        if dto.status == CuratedSessionStatus.abandoned.rawValue,
-           !safeWordUsed, phase == .session {
+        if dto.status == CuratedSessionStatus.abandoned.rawValue, phase == .session {
             endEarly()                            // partner confirmed exit
         }
         revealEngine.applyRow(dto.revealState)
@@ -601,27 +587,6 @@ final class CoupleSessionStore: Identifiable {
         let status: CuratedSessionStatus = isPaused ? .paused : .active
         Task { @MainActor in try? await realtime.setStatus(sessionId: sid, status: status) }
     }
-
-    /// The safe word: an immediate, no-questions exit for BOTH devices.
-    /// abandoned + safe_word_used in one write; no reflection, no penalty
-    /// beyond cards already recorded.
-    func raiseSafeWord() {
-        safeWordUsed = true
-        if isLive, let realtime, let sid = remoteSessionId {
-            Task { @MainActor in try? await realtime.raiseSafeWord(sessionId: sid) }
-        }
-        enterSafeClose()
-    }
-
-    /// Both the local raise and the remote echo land here.
-    private func enterSafeClose() {
-        guard phase == .session || phase == .transition else { return }
-        timerTask?.cancel()
-        phase = .safeClose
-    }
-
-    /// Leaving the safe-word close: nothing else to save, just leave the cover.
-    func acknowledgeSafeClose() { phase = .done }
 
     // Presence loss (called from the coordinator's presence callback).
     private func partnerLost() {

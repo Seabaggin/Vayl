@@ -103,7 +103,6 @@ private func makeRow(
         bConsented: bConsented,
         timerStartedAt: nil,
         revealState: [:],
-        safeWordUsed: false,
         createdAt: "2026-07-01T00:00:00Z",
         updatedAt: "2026-07-01T00:00:00Z"
     )

@@ -342,77 +342,24 @@ struct SessionPlayerView: View {
     }
 
     private var leftStack: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Button {
-                wake()
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                showCare = true
-            } label: {
-                Image(systemName: "heart.circle")
-                    .font(AppFonts.sectionHeading)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .frame(width: 54, height: 54)
-                    .background(Circle().fill(AppColors.cardBackground))
-                    .overlay(Circle().strokeBorder(AppColors.borderDefault, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Take a beat — pause, care options, or end the session")
-
-            HStack(spacing: AppSpacing.sm) {
-                presenceDot(you: true)
-                Text("You")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-                presenceDot(you: false)
-                Text("Partner")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-            }
-            .padding(.horizontal, AppSpacing.md)
-            .padding(.vertical, AppSpacing.sm)
-            .background(
-                Capsule().fill(AppColors.cardBackground.opacity(0.6))
-                    .overlay(Capsule().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
-            )
-
-            // The safe word — discreet, always reachable, one tap is enough.
-            // No confirm alert: the whole point of a safe word is that saying
-            // it once works (SafeWordButton's alert pattern deliberately not reused).
-            Button {
-                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                store.raiseSafeWord()
-            } label: {
-                HStack(spacing: AppSpacing.xs) {
-                    Image(systemName: "hand.raised.fill")
-                        .font(.system(size: 10))
-                    Text("safe word: \(store.safeWordLabel)")
-                        .font(AppFonts.buttonLabelSmall)
-                        .textCase(.uppercase)
-                        .tracking(0.5)
-                }
-                .foregroundStyle(AppColors.safetyAccent)
-                .padding(.horizontal, AppSpacing.md)
-                .padding(.vertical, AppSpacing.sm)
-                .background(
-                    Capsule().fill(AppColors.safetyAccent.opacity(0.08))
-                        .overlay(Capsule().strokeBorder(
-                            AppColors.safetyAccent.opacity(0.25), lineWidth: 1))
-                )
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Safe word: \(store.safeWordLabel). Ends the session immediately for both of you.")
+        // Care, presence, and the safe word all live behind this one icon now —
+        // the care sheet below is "everything in one place." Safe word moves
+        // from an always-visible one-tap pill to a row in that sheet (still one
+        // tap once open, no confirm — see careSheet).
+        Button {
+            wake()
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showCare = true
+        } label: {
+            Image(systemName: "heart.circle")
+                .font(AppFonts.sectionHeading)
+                .foregroundStyle(AppColors.textSecondary)
+                .frame(width: 54, height: 54)
+                .background(Circle().fill(AppColors.cardBackground))
+                .overlay(Circle().strokeBorder(AppColors.borderDefault, lineWidth: 1))
         }
-    }
-
-    private func presenceDot(you: Bool) -> some View {
-        Circle()
-            .fill(LinearGradient(
-                colors: you
-                    ? [AppColors.spectrumCyan, AppColors.accentSecondary]
-                    : [AppColors.spectrumMagenta, AppColors.accentSecondary],
-                startPoint: .topLeading, endPoint: .bottomTrailing
-            ))
-            .frame(width: 7, height: 7)
+        .buttonStyle(.plain)
+        .accessibilityLabel("Take a beat — pause, care options, safe word, or end the session")
     }
 
     private var proceedButton: some View {
