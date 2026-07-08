@@ -113,6 +113,10 @@ struct CardCarousel: View {
                 borderRotation = 360.0
             }
 
+            // Runloop-tick defer so the entry animation commits before the idle float
+            // starts; kept on GCD deliberately — a Task hop can let SwiftUI coalesce
+            // the two into one transaction and drop the staged feel.
+            // swiftlint:disable:next no_dispatch_main
             DispatchQueue.main.async {
                 // Float loop — 3.2s intentional, slightly below ambientDrift (4.0s).
                 // Gives card a faster, more responsive idle breath.
@@ -315,6 +319,9 @@ struct CardCarousel: View {
             if !reduceMotion { triggerSpecularGlint() }
         }
 
+        // Runloop-tick defer so the drag-end settle lands in its own transaction;
+        // kept on GCD deliberately (see float-loop note above).
+        // swiftlint:disable:next no_dispatch_main
         DispatchQueue.main.async {
             withAnimation(AppAnimation.spring) {
                 isDragging = false
@@ -621,7 +628,8 @@ struct CardCarousel: View {
         flyGhostActive = true
         flyProgress = 0
         withAnimation(AppAnimation.cardPocket) { flyProgress = 1 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.55))
             flyGhostActive = false
             flyProgress = 0
         }
@@ -657,6 +665,10 @@ struct CardCarousel: View {
         // Offset the incoming card to where the old one sat, then settle it to center —
         // cancels the instant re-slot the activeIndex bump would otherwise cause.
         dragOffset += (cardW + 16)
+        // MUST stay a runloop-tick defer: the += above must commit in its own
+        // transaction so the =0 below animates as a settle. A Task hop risks SwiftUI
+        // merging both into one frame, killing the slide. Deliberately on GCD.
+        // swiftlint:disable:next no_dispatch_main
         DispatchQueue.main.async {
             withAnimation(AppAnimation.spring) {
                 dragOffset = 0
@@ -675,7 +687,8 @@ struct CardCarousel: View {
         withAnimation(.timingCurve(0.4, 0, 0.6, 1, duration: 0.75)) {
             specularPhase = 1.0
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.8))
             specularActive = false
             specularPhase  = 0
         }
@@ -704,16 +717,16 @@ struct CardCarousel: View {
             // Fan spread spring — intentional bouncy feel.
             : .spring(response: 0.6, dampingFraction: 0.7)
         withAnimation(fanAnim) { phase = .spread }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.45))
             // Card lift spring — intentional heavy raise.
             withAnimation(.spring(response: 0.85, dampingFraction: 0.82)) {
                 phase = .lifted
             }
             if !reduceMotion { triggerSpecularGlint() }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                withAnimation(AppAnimation.spring) {
-                    phase = .carousel
-                }
+            try? await Task.sleep(for: .seconds(0.35))
+            withAnimation(AppAnimation.spring) {
+                phase = .carousel
             }
         }
     }
@@ -735,7 +748,8 @@ struct CardCarousel: View {
             phase              = .spread
             verticalDragOffset = 0
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.5))
             withAnimation(reduceMotion
                 ? AppAnimation.fast
                 // Dismiss return spring — intentional deliberate settle.
@@ -747,7 +761,8 @@ struct CardCarousel: View {
                 floatOffset = 0
             }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.9))
             // Float loop restart — same 3.2s as onAppear, intentional.
             // Gated like the onAppear loops: under RM / Low Power the idle
             // float never ran, so don't restart it here either.

@@ -759,7 +759,8 @@ struct PrismView: View {
 
     private func drawSoloCard() {
         cardShimmer = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.45))
             withAnimation(AppAnimation.spring) {
                 cardDrawn   = true
                 cardShimmer = false

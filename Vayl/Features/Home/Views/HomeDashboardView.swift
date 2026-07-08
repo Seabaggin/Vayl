@@ -857,7 +857,8 @@ private struct SettingsCogButton: View {
             .onTapGesture {
                 isPressed = true
                 action()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.12))
                     isPressed = false
                 }
             }

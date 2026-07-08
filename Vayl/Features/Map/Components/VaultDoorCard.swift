@@ -33,7 +33,8 @@ struct VaultDoorCard: View {
                 return
             }
             withAnimation(AppAnimation.spring) { spinning = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + spinSettleDelay) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(spinSettleDelay))
                 onOpen()
                 spinning = false
             }

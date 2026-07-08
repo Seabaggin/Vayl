@@ -103,7 +103,8 @@ struct InfiniteCarousel<Item: Identifiable, Content: View, EmptyContent: View>: 
     }
 
     private func jump(to index: Int) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.45))
             var transaction = Transaction()
             transaction.disablesAnimations = true
             withTransaction(transaction) { selection = index }

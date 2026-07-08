@@ -60,7 +60,10 @@ struct MapUsPulseCard: View {
         .onTapGesture {
             isPressed = true
             onTap?()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { isPressed = false }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.1))
+                isPressed = false
+            }
         }
     }
 

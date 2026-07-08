@@ -61,16 +61,19 @@ struct MapView: View {
         store.markUsRevealSeen()   // mark FIRST — a mid-ceremony backgrounding must not replay it
         if reduceMotion {
             withAnimation(AppAnimation.enter) { store.layer = .us; revealStage = 2 }
-            DispatchQueue.main.asyncAfter(deadline: .now() + revealLineDuration + 0.6) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(revealLineDuration + 0.6))
                 withAnimation(AppAnimation.exit) { revealStage = 3 }
             }
             return
         }
         withAnimation(AppAnimation.slow) { revealStage = 1 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + revealIgniteDelay) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(revealIgniteDelay))
             withAnimation(AppAnimation.spring) { store.layer = .us; revealStage = 2 }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + revealIgniteDelay + revealLineDuration) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(revealIgniteDelay + revealLineDuration))
             withAnimation(AppAnimation.exit) { revealStage = 3 }
         }
     }

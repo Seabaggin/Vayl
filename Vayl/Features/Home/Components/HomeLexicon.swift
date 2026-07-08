@@ -39,7 +39,7 @@ struct HomeLexicon: View {
     @State private var index = 0          // 0...daily.count (last is the clone)
     @State private var dragX: CGFloat = 0
     @State private var paused = false
-    @State private var resumeItem: DispatchWorkItem?
+    @State private var resumeTask: Task<Void, Never>?
     @State private var kept = false
     @State private var shareImage: ShareImage?
     /// Each page's measured content height (keyed by index). Used to reserve the tallest so the
@@ -223,7 +223,7 @@ struct HomeLexicon: View {
         )
         .overlay(alignment: .bottom) { keptToast }
         .task { await autoLoop() }
-        .onDisappear { resumeItem?.cancel() }
+        .onDisappear { resumeTask?.cancel() }
     }
 
     // MARK: - Page (per-kind)
@@ -413,7 +413,8 @@ struct HomeLexicon: View {
     private func advance() {
         withAnimation(AppAnimation.slow) { index += 1 }
         if index >= daily.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + slideDuration) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(slideDuration))
                 var t = Transaction(); t.disablesAnimations = true
                 withTransaction(t) { index = 0 }
             }
@@ -446,14 +447,16 @@ struct HomeLexicon: View {
 
     private func pauseAuto() {
         paused = true
-        resumeItem?.cancel()
+        resumeTask?.cancel()
     }
 
     private func scheduleResume() {
-        resumeItem?.cancel()
-        let item = DispatchWorkItem { paused = false }
-        resumeItem = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + resumeDelay, execute: item)
+        resumeTask?.cancel()
+        resumeTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(resumeDelay))
+            guard !Task.isCancelled else { return }
+            paused = false
+        }
     }
 
     // MARK: - Actions
@@ -466,7 +469,8 @@ struct HomeLexicon: View {
     private func keep() {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         withAnimation(AppAnimation.enter) { kept = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.4))
             withAnimation(AppAnimation.exit) { kept = false }
         }
     }

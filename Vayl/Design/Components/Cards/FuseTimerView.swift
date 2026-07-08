@@ -60,7 +60,8 @@ struct FuseTimerView: View {
             }
         }
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(delay))
                 startDate = Date()
             }
         }
