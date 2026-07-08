@@ -15,7 +15,7 @@ struct ScreenshotProtectionModifier: ViewModifier {
                             .fill(.ultraThinMaterial)
                             .ignoresSafeArea()
                         VStack(spacing: AppSpacing.sm) {
-                            Image(AppIcons.eyeSlashScreen)
+                            Image(systemName: AppIcons.eyeSlashScreen)
                                 .font(.largeTitle)
                                 .foregroundStyle(AppColors.safetyAccent)
                             Text("Content Protected")

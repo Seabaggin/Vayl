@@ -361,7 +361,7 @@ struct PrismView: View {
                 HStack(spacing: AppSpacing.sm) {
                     Button { } label: {
                         HStack(spacing: AppSpacing.sm) {
-                            Image(AppIcons.mic)
+                            Image(systemName: AppIcons.mic)
                                 .font(Font.custom("Switzer-Regular", size: 12, relativeTo: .caption))
                             Text("Dictate")
                                 .font(AppFonts.body(12, weight: .medium, relativeTo: .caption))

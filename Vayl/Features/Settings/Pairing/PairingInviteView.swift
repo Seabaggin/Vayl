@@ -177,7 +177,7 @@ struct PairingInviteView: View {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
             } label: {
                 HStack(spacing: AppSpacing.sm) {    // was 8 → sm, exact
-                    Image(AppIcons.docOnDoc)         // was "doc.on.doc"
+                    Image(systemName: AppIcons.docOnDoc)         // was "doc.on.doc"
                         .font(
                             AppFonts.body(14, weight: .medium, relativeTo: .caption)  // was Font.custom("Switzer-Medium", 14, .caption) → AppFonts.body, exact
                         )                           // was .system(size: 14, weight: .medium)
@@ -221,7 +221,7 @@ struct PairingInviteView: View {
 
     private func linkedState(coupleId: UUID) -> some View {
         VStack(spacing: AppSpacing.lg) {            // was 24 → lg, exact
-            Image(AppIcons.checkmarkCircle)         // was "checkmark.circle.fill"
+            Image(systemName: AppIcons.checkmarkCircle)         // was "checkmark.circle.fill"
                 .font(
                     AppFonts.displayHero  // was Font.custom("ClashDisplay-Bold", 64, .largeTitle) → displayHero, exact
                 )                                   // was .system(size: 64)
@@ -256,7 +256,7 @@ struct PairingInviteView: View {
 
     private func errorState(message: String) -> some View {
         VStack(spacing: AppSpacing.lg) {            // was 24 → lg, exact
-            Image(AppIcons.exclamationTriangle)     // was "exclamationmark.triangle"
+            Image(systemName: AppIcons.exclamationTriangle)     // was "exclamationmark.triangle"
             // ⚠️ AppIcons.exclamationTriangle must be added to AppIcons before building
                 .font(
                     AppFonts.display(48, weight: .bold, relativeTo: .largeTitle)  // was Font.custom("ClashDisplay-Bold", 48, .largeTitle) → AppFonts.display, exact
@@ -290,7 +290,7 @@ struct PairingInviteView: View {
 
     private var expiredState: some View {
         VStack(spacing: AppSpacing.lg) {            // 24 — matches error/linked states
-            Image(AppIcons.exclamationTriangle)
+            Image(systemName: AppIcons.exclamationTriangle)
                 .font(
                     AppFonts.display(48, weight: .bold, relativeTo: .largeTitle)  // was Font.custom("ClashDisplay-Bold", 48, .largeTitle) → AppFonts.display, exact
                 )

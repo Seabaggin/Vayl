@@ -113,7 +113,11 @@ custom_rules:
 
   no_hardcoded_padding:
     name: "Hardcoded Padding Banned"
-    regex: "\\.padding\\s*\\([^)]*[0-9]+\\s*\\)"
+    # Only a bare numeric literal is banned: .padding(16) / .padding(.top, 60).
+    # Token arithmetic (AppSpacing.xs + 1) and proportional geometry (w * 0.02)
+    # are legitimate and must NOT match — hence anchoring the number to a full
+    # argument, not "any digit somewhere inside the parens".
+    regex: "\\.padding\\(\\s*(\\.[a-zA-Z]+\\s*,\\s*)?-?[0-9]+(\\.[0-9]+)?\\s*\\)"
     message: "Use AppSpacing tokens instead of raw numbers."
     severity: error
     excluded_match_kinds:

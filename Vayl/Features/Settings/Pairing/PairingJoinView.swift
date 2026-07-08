@@ -176,7 +176,7 @@ struct PairingJoinView: View {
 
     private func linkedState(coupleId: UUID) -> some View {
         VStack(spacing: AppSpacing.lg) {            // was 24 → lg, exact
-            Image(AppIcons.checkmarkCircle)         // was "checkmark.circle.fill"
+            Image(systemName: AppIcons.checkmarkCircle)         // was "checkmark.circle.fill"
                 .font(
                     AppFonts.displayHero  // was Font.custom("ClashDisplay-Bold", 64, .largeTitle) → displayHero, exact
                 )                                   // was .system(size: 64)
@@ -211,7 +211,7 @@ struct PairingJoinView: View {
 
     private func errorState(message: String) -> some View {
         VStack(spacing: AppSpacing.lg) {            // was 24 → lg, exact
-            Image(AppIcons.exclamationTriangle)     // was "exclamationmark.triangle"
+            Image(systemName: AppIcons.exclamationTriangle)     // was "exclamationmark.triangle"
             // ⚠️ confirm AppIcons.exclamationTriangle was added during PairingInviteView pass
                 .font(
                     AppFonts.display(48, weight: .bold, relativeTo: .largeTitle)  // was Font.custom("ClashDisplay-Bold", 48, .largeTitle) → AppFonts.display, exact
