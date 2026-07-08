@@ -1,7 +1,7 @@
 // HomeWidgetShell.swift
 // Open Lightly
 //
-// Unified card shell for PulseWidget and PrismView.
+// Unified card shell for the Home widget stack (PulseWidget; PrismView retired 2026-07-08).
 // Height is owned internally — callers never pass a size.
 // Ratio: width × 0.88 — Oura-scale, content-rich.
 // One place to change the ratio for both widgets.
