@@ -366,7 +366,7 @@ private struct MiniLockDemo: View {
 
 #Preview("Airlock — local stub") {
     ZStack {
-        SessionAtmosphere()
+        OnboardingAtmosphere(config: .stat)
         AirlockView(store: CoupleSessionStore(
             hand: Array(Card.samples.prefix(8)),
             modelContainer: .previewContainer,

@@ -382,7 +382,7 @@ private struct ReflectionSlider: View {
 
 #Preview("Session Close") {
     ZStack {
-        SessionAtmosphere()
+        OnboardingAtmosphere(config: .stat)
         SessionCloseView(store: {
             let s = CoupleSessionStore(
                 hand: Array(Card.samples.prefix(8)),

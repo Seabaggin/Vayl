@@ -553,7 +553,7 @@ struct SessionPlayerView: View {
 
 #Preview("Session Player") {
     ZStack {
-        SessionAtmosphere(turn: .partner)
+        OnboardingAtmosphere(config: .stat)
         SessionPlayerView(store: CoupleSessionStore(
             hand: Array(Card.samples.prefix(8)),
             modelContainer: .previewContainer,
