@@ -24,10 +24,17 @@ struct PathLedgerView: View {
                         row(for: landmark)
                             .contentShape(Rectangle())
                             .onTapGesture { onSelect(landmark.id) }
+                            .listRowBackground(Color.clear)
                     }
                 }
             }
         }
+        .listStyle(.plain)
+        // PathScreen (Task 12) puts this List on the same void+atmosphere
+        // background every screen root uses — SessionBuilderView.swift is
+        // this codebase's existing precedent for a List over that background,
+        // and it hides the same opaque system chrome the same way.
+        .scrollContentBackground(.hidden)
     }
 
     private func row(for landmark: PathLandmark) -> some View {

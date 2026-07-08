@@ -35,16 +35,31 @@ struct PathScreen: View {
             GeometryReader { geo in
                 let layout = AppLayout.from(geo)
 
-                VStack {
-                    switch mode {
-                    case .trail:
-                        PathTrailView(store: store)
-                    case .ledger:
-                        PathLedgerView(store: store) { selectedLandmarkId = $0 }
+                // Same floor + sky as every other tab/screen root (Design Token
+                // Contract's "every screen background" rule) — void first, then
+                // the OB atmosphere, matching MapView/SettingsView/LearnView's
+                // exact GeometryReader-outer/ZStack-inner ordering.
+                ZStack {
+                    AppColors.void.ignoresSafeArea()
+                    OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+
+                    VStack {
+                        switch mode {
+                        case .trail:
+                            PathTrailView(store: store)
+                        case .ledger:
+                            PathLedgerView(store: store) { selectedLandmarkId = $0 }
+                        }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .popover(isPresented: $showLegend) { PathLegendPopover() }
+                .popover(isPresented: $showLegend) {
+                    // Without this, SwiftUI's default compact-width adaptation
+                    // turns an anchored popover into a full sheet on iPhone —
+                    // the mockup (§02) shows a small floating panel, not a modal.
+                    PathLegendPopover()
+                        .presentationCompactAdaptation(.popover)
+                }
                 .confirmationDialog("Path", isPresented: $showOverflow) {
                     Button("Edit your path") { showEditPath = true }
                     Button("Path activity") { showActivity = true }
