@@ -126,6 +126,7 @@ struct PathLedgerView: View {
 #if DEBUG
 /// Reuses PathTrailView's preview harness scenario so the Ledger and Trail
 /// previews prove the same five-state/no-cascade story from two readings.
+@MainActor
 private struct PathLedgerPreviewHarness: View {
     private let store: PathStore
 

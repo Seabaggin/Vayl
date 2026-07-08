@@ -422,6 +422,7 @@ struct PathNodeView: View {
 // MARK: - Previews
 
 #if DEBUG
+@MainActor
 private struct PathNodePreviewHarness: View {
     private let store: PathStore
 
@@ -468,6 +469,7 @@ private struct PathNodePreviewHarness: View {
 
 /// Curious's own two-step privacy gate (spec §4, mockup §05), isolated so it's
 /// easy to check the "only you" dimmed state against the fully-shared one.
+@MainActor
 private struct PathNodeCuriousPreviewHarness: View {
     private let store: PathStore
 

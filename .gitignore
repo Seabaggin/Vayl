@@ -87,3 +87,5 @@ repomix-output.xml
 # ── Scratch / Screen Recordings (never commit to the app repo) ──
 *.mov
 *.mp4
+
+.sentryclirc

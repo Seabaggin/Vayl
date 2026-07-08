@@ -131,6 +131,7 @@ struct PathActivityLogView: View {
 // MARK: - Previews
 
 #if DEBUG
+@MainActor
 private struct PathActivityLogPreviewHarness: View {
     private let store: PathStore
 
@@ -170,6 +171,7 @@ private struct PathActivityLogPreviewHarness: View {
     PathActivityLogPreviewHarness()
 }
 
+@MainActor
 private struct PathActivityLogEmptyPreviewHarness: View {
     private let store: PathStore
 

@@ -1,4 +1,10 @@
 # .swiftlint.yml
+excluded:
+  - .worktrees
+  - .claude/worktrees
+  - .build
+  - .git
+
 opt_in_rules:
   - force_unwrapping # Uses the native, bulletproof Swift compiler check
 

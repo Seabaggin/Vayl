@@ -210,6 +210,7 @@ private struct PathTraveledShape: Shape {
 /// (b) Now is pure wayfinding, not a state — "The strip club" carries the
 ///     Now ring AND an independent Planning color at the same time, proving
 ///     "Now never encoded state on its own."
+@MainActor
 private struct PathTrailPreviewHarness: View {
     private let store: PathStore
 

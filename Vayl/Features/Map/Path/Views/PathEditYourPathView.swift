@@ -121,6 +121,7 @@ struct PathEditYourPathView: View {
 // MARK: - Previews
 
 #if DEBUG
+@MainActor
 private struct PathEditYourPathPreviewHarness: View {
     private let store: PathStore
 

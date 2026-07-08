@@ -54,6 +54,7 @@
 		AA00000WAAAA000000000001 /* EntitlementStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000WAAAA000000000002 /* EntitlementStoreTests.swift */; };
 		AA00000XAAAA000000000001 /* PulseStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000XAAAA000000000002 /* PulseStoreTests.swift */; };
 		AA00000YAAAA000000000001 /* SessionEntryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000YAAAA000000000002 /* SessionEntryStoreTests.swift */; };
+		EC2BBA430B5D473898E20D6A /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 7C3C13ECAFB04A2E962CB6BB /* Sentry */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -152,6 +153,7 @@
 				3D51D7502F5FBA71002488A7 /* Supabase in Frameworks */,
 				3D51D74B2F5FB8D7002488A7 /* Storage in Frameworks */,
 				3D51D7492F5FB8D7002488A7 /* Realtime in Frameworks */,
+				EC2BBA430B5D473898E20D6A /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,6 +260,7 @@
 				3D767EAE2F5D520D00F2D70F /* Sources */,
 				3D767EAF2F5D520D00F2D70F /* Frameworks */,
 				3D767EB02F5D520D00F2D70F /* Resources */,
+				48A82044D3984C4396D80B56 /* Upload Debug Symbols to Sentry */,
 			);
 			buildRules = (
 			);
@@ -274,6 +277,7 @@
 				3D51D74A2F5FB8D7002488A7 /* Storage */,
 				3D51D74F2F5FBA71002488A7 /* Supabase */,
 				3D82F2972FE618DE004AD1C7 /* Auth */,
+				7C3C13ECAFB04A2E962CB6BB /* Sentry */,
 			);
 			productName = "Open Lightly";
 			productReference = 3D767EB22F5D520D00F2D70F /* Vayl.app */;
@@ -353,6 +357,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				3D51D7412F5FB8D7002488A7 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				23A31AB9B7AB45EEA1042700 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3D767EB32F5D520D00F2D70F /* Products */;
@@ -418,6 +423,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "if test -d \"/opt/homebrew/bin/\"; then\n  PATH=\"/opt/homebrew/bin/:${PATH}\"\nfi\n\nexport PATH\n\nif which swiftlint > /dev/null; then\n  swiftlint\nelse\n  echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\ntouch \"${DERIVED_FILE_DIR}/swiftlint.timestamp\"\n";
+		};
+		48A82044D3984C4396D80B56 /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script is responsible for uploading debug symbols and source context for Sentry.\nif which sentry-cli >/dev/null; then\n  export SENTRY_ORG=bryan-jorden-fe\n  export SENTRY_PROJECT=vayl-ios\n  ERROR=$(sentry-cli debug-files upload --include-sources \"$DWARF_DSYM_FOLDER_PATH\" 2>&1 >/dev/null)\n  if [ ! $? -eq 0 ]; then\n    echo \"warning: sentry-cli - $ERROR\"\n  fi\nelse\n  echo \"warning: sentry-cli not installed, download from https://github.com/getsentry/sentry-cli/releases\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -553,6 +573,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				"SWIFT_ACTIVE_COMPILATION_CONDITIONS[arch=*]" = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -624,9 +645,10 @@
 				CODE_SIGN_ENTITLEMENTS = Vayl/Vayl.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 8KUPG54AQZ;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Vayl/Vayl.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -660,9 +682,10 @@
 				CODE_SIGN_ENTITLEMENTS = Vayl/Vayl.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 8KUPG54AQZ;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Vayl/Vayl.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -808,6 +831,16 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		23A31AB9B7AB45EEA1042700 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa/";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+			traits = (
+			);
+		};
 		3D51D7412F5FB8D7002488A7 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase/supabase-swift";
@@ -848,6 +881,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3D51D7412F5FB8D7002488A7 /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Auth;
+		};
+		7C3C13ECAFB04A2E962CB6BB /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 23A31AB9B7AB45EEA1042700 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
