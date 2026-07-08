@@ -251,6 +251,7 @@ enum CandleRenderer {
     // MARK: - Flame edges (verbatim port of leftEdge/rightEdge)
     // Returns the two flame silhouette curves + the computed tip.
     static func flameEdges(_ g: CandleGeo, S: CGFloat, intensity: CandleIntensity, t: Double)
+        // swiftlint:disable:next large_tuple
         -> (left: Path, right: Path, tipX: CGFloat, tipY: CGFloat,
             fH: CGFloat, fWL: CGFloat, fWR: CGFloat,
             slowSway: Double, midTurb: Double, fastFlick: Double) {

@@ -79,7 +79,7 @@ struct DesireMatchDetail: View {
                     }
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(_DetailPressStyle())
+                .buttonStyle(DetailPressStyle())
             }
         }
     }
@@ -120,7 +120,7 @@ struct DesireMatchDetail: View {
 
 // MARK: - Press style (file-local)
 
-struct _DetailPressStyle: ButtonStyle {
+struct DetailPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)

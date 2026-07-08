@@ -40,11 +40,19 @@ struct AgreementProposalRow: Decodable, Identifiable, Sendable {
 // MARK: - Write DTOs
 
 private struct AgreementProposalInsert: Encodable {
-    let couple_id: String
-    let proposed_by: String
+    let coupleId: String
+    let proposedBy: String
     let action: String
-    let target_agreement_id: String?
-    let proposed_text: String?
+    let targetAgreementId: String?
+    let proposedText: String?
+
+    enum CodingKeys: String, CodingKey {
+        case coupleId = "couple_id"
+        case proposedBy = "proposed_by"
+        case action
+        case targetAgreementId = "target_agreement_id"
+        case proposedText = "proposed_text"
+    }
 }
 
 private struct ProposalDecision: Encodable {
@@ -80,11 +88,11 @@ final class AgreementsService {
     func propose(coupleId: UUID, proposerId: UUID, action: String,
                  targetAgreementId: UUID?, text: String?) async throws {
         let row = AgreementProposalInsert(
-            couple_id: coupleId.uuidString,
-            proposed_by: proposerId.uuidString,
+            coupleId: coupleId.uuidString,
+            proposedBy: proposerId.uuidString,
             action: action,
-            target_agreement_id: targetAgreementId?.uuidString,
-            proposed_text: text
+            targetAgreementId: targetAgreementId?.uuidString,
+            proposedText: text
         )
         try await supabase.from("agreement_proposals").insert(row).execute()
     }

@@ -194,7 +194,7 @@ private struct _ExpandableMatchRow: View {
                 .contentShape(Rectangle())
                 .padding(.vertical, AppSpacing.sm)
             }
-            .buttonStyle(_DetailPressStyle())
+            .buttonStyle(DetailPressStyle())
 
             // Expanded body
             if isExpanded {
@@ -263,7 +263,7 @@ private struct _LockedMatchRow: View {
             .padding(.horizontal, AppSpacing.sm)
             .padding(.vertical, AppSpacing.sm)
         }
-        .buttonStyle(_DetailPressStyle())
+        .buttonStyle(DetailPressStyle())
         .background(
             RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                 .fill(AppColors.cardBg.opacity(0.20))

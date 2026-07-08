@@ -37,6 +37,7 @@ struct CaseTear: Identifiable, Equatable {
     let angleDeg: Double
 }
 
+// swiftlint:disable:next type_body_length
 struct MetallicCaseView: View {
 
     // MARK: - Tunables

@@ -241,9 +241,9 @@ final class VaultStore {
         loadLog(context: context)
 
         let payload = EventLogUpsert(
-            id: entry.id.uuidString, author_id: entry.authorId.uuidString,
-            couple_id: entry.coupleId?.uuidString,
-            occurred_on: EventLogService.dayFormatter.string(from: entry.occurredOn),
+            id: entry.id.uuidString, authorId: entry.authorId.uuidString,
+            coupleId: entry.coupleId?.uuidString,
+            occurredOn: EventLogService.dayFormatter.string(from: entry.occurredOn),
             title: entry.title, note: entry.note, mood: entry.mood,
             tags: entry.tags, who: entry.who, visibility: entry.visibility)
         Task { try? await eventLogService.push(payload) }

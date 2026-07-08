@@ -740,6 +740,7 @@ struct OnboardingProgressBar: View {
     // compute the correct Y launch origin (VQ-17) without capturing self.
 
     @ViewBuilder
+    // swiftlint:disable:next function_parameter_count
     private func bloomCanvas(
         elapsed:              CGFloat,
         bloomIntensity:       CGFloat,

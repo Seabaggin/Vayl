@@ -14,15 +14,28 @@ import Supabase
 
 struct EventLogUpsert: Encodable, Sendable {
     let id: String
-    let author_id: String
-    let couple_id: String?
-    let occurred_on: String      // yyyy-MM-dd
+    let authorId: String
+    let coupleId: String?
+    let occurredOn: String       // yyyy-MM-dd
     let title: String
     let note: String?
     let mood: String?
     let tags: [String]
     let who: String?
     let visibility: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case authorId = "author_id"
+        case coupleId = "couple_id"
+        case occurredOn = "occurred_on"
+        case title
+        case note
+        case mood
+        case tags
+        case who
+        case visibility
+    }
 }
 
 struct EventLogRow: Decodable, Identifiable, Sendable {
