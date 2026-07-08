@@ -46,6 +46,7 @@
 		AA00000OAAAA000000000001 /* CoupleContextPairedSinceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000OAAAA000000000002 /* CoupleContextPairedSinceTests.swift */; };
 		AA00000PAAAA000000000001 /* UsOrbStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000PAAAA000000000002 /* UsOrbStateTests.swift */; };
 		AA00000QAAAA000000000001 /* MapStoreLensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000QAAAA000000000002 /* MapStoreLensTests.swift */; };
+		AA00000RAAAA000000000001 /* PathLandmarkProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000RAAAA000000000002 /* PathLandmarkProgressTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -102,6 +103,7 @@
 		AA00000OAAAA000000000002 /* CoupleContextPairedSinceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoupleContextPairedSinceTests.swift; sourceTree = "<group>"; };
 		AA00000PAAAA000000000002 /* UsOrbStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsOrbStateTests.swift; sourceTree = "<group>"; };
 		AA00000QAAAA000000000002 /* MapStoreLensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapStoreLensTests.swift; sourceTree = "<group>"; };
+		AA00000RAAAA000000000002 /* PathLandmarkProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathLandmarkProgressTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -219,6 +221,7 @@
 				AA00000OAAAA000000000002 /* CoupleContextPairedSinceTests.swift */,
 				AA00000PAAAA000000000002 /* UsOrbStateTests.swift */,
 				AA00000QAAAA000000000002 /* MapStoreLensTests.swift */,
+				AA00000RAAAA000000000002 /* PathLandmarkProgressTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -435,6 +438,7 @@
 				AA00000OAAAA000000000001 /* CoupleContextPairedSinceTests.swift in Sources */,
 				AA00000PAAAA000000000001 /* UsOrbStateTests.swift in Sources */,
 				AA00000QAAAA000000000001 /* MapStoreLensTests.swift in Sources */,
+				AA00000RAAAA000000000001 /* PathLandmarkProgressTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
