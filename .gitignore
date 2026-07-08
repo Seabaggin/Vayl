@@ -2,6 +2,12 @@
 # .gitignore — Vayl
 # ============================================================
 
+# ── Design/planning docs (specs, plans, mockups, handoffs, audits) ──
+# Working artifacts from design sessions — not shipped app content.
+# Untracked 2026-07-07: app is ~85% done, most of this won't be
+# needed post-launch. Kept on disk, just no longer versioned.
+docs/
+
 # ── Script Output Files ──────────────────────────────────────
 *OUTPUT
 *OUTPUT_FILE
