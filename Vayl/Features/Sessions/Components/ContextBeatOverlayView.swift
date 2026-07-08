@@ -2,11 +2,13 @@
 //  ContextBeatOverlayView.swift
 //  Vayl
 //
-//  Full-screen pre-card context beat (spec §4.4, narrowed 2026-07-07 — the
-//  old `banner` case moved to ContextKickerView, a persistent header on the
-//  card itself). This view now only renders `interstitial`: full screen,
-//  appears BEFORE the card presents, user-dismissed. Presentation only; the
-//  store owns when a beat is active.
+//  Pre-card context beat (spec §4.4, narrowed 2026-07-07 — the old `banner`
+//  case moved to ContextKickerView, a persistent header on the card itself).
+//  This view now only renders `interstitial`: a dimmed scrim OVER the card
+//  already on screen (not a full-void screen swap — the card stays visible
+//  underneath, so dismissing reads as "reveal," not "navigate"), user-
+//  dismissed via "got it". Presentation only; the store owns when a beat
+//  is active.
 //
 
 import SwiftUI
@@ -18,7 +20,10 @@ struct ContextBeatOverlayView: View {
 
     var body: some View {
         ZStack {
-            AppColors.void.ignoresSafeArea()
+            AppColors.void.opacity(0.72).ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {}   // absorb taps — dismissal is "got it" only
+
             VStack(spacing: AppSpacing.xl) {
                 Text("worth knowing")
                     .font(AppFonts.overline)
@@ -32,7 +37,6 @@ struct ContextBeatOverlayView: View {
                     .lineSpacing(AppSpacing.xs)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, AppSpacing.xl)
 
                 Button {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -47,6 +51,16 @@ struct ContextBeatOverlayView: View {
                 }
                 .buttonStyle(.plain)
             }
+            .padding(AppSpacing.xl)
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                    .fill(AppColors.cardBackground)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                            .strokeBorder(AppColors.spectrumBorder.opacity(0.4), lineWidth: 1)
+                    )
+            )
+            .padding(.horizontal, AppSpacing.xl)
         }
         .transition(.opacity)
     }

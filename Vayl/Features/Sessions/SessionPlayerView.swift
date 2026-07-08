@@ -150,19 +150,14 @@ struct SessionPlayerView: View {
     }
 
     private var fanCard: some View {
-        RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
-            .fill(AppColors.cardBg)
-            .frame(width: 96, height: 66)
+        VaylCardFace()
             .overlay(
                 Text("VAYL")
                     .font(AppFonts.display(8, weight: .medium, relativeTo: .caption2))
                     .tracking(4)
                     .foregroundStyle(AppColors.spectrumText)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
-                    .strokeBorder(AppColors.spectrumBorder.opacity(0.5), lineWidth: 0.8)
-            )
+            .frame(width: 96, height: 66)
             .shadow(color: AppColors.shadowDeep, radius: 12, y: 6)
     }
 
@@ -262,10 +257,14 @@ struct SessionPlayerView: View {
         let showFront = fill >= 0.5
 
         return ZStack {
-            cardBackFace.opacity(showFront ? 0 : 1)
+            // Each face carries a compensating 180° pre-rotation for the side
+            // that's visible when the outer wrapper (below) is near that same
+            // angle — without it, whichever face is on screen renders mirrored.
+            cardBackFace
+                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                .opacity(showFront ? 0 : 1)
             cardFrontFace
                 .opacity(showFront ? 1 : 0)
-                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
         }
         .frame(width: 300, height: 212)
         .rotation3DEffect(flipAngle, axis: (x: 0, y: 1, z: 0), perspective: 0.4)
@@ -278,33 +277,16 @@ struct SessionPlayerView: View {
     }
 
     private var cardFrontFace: some View {
-        RoundedRectangle(cornerRadius: AppRadius.obCard, style: .continuous)
-            .fill(AppColors.cardBg)
-            .overlay(
-                Text(pendingPrompt)
-                    .font(AppFonts.prompt)
-                    .foregroundStyle(AppColors.textBody)
-                    .multilineTextAlignment(.center)
-                    .padding(AppSpacing.lg)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.obCard, style: .continuous)
-                    .strokeBorder(AppColors.spectrumBorder, lineWidth: 1.1)
-            )
+        VaylCardFace(question: pendingPrompt)
     }
 
     private var cardBackFace: some View {
-        RoundedRectangle(cornerRadius: AppRadius.obCard, style: .continuous)
-            .fill(AppColors.cardBg)
+        VaylCardFace()
             .overlay(
                 Text("VAYL")
                     .font(AppFonts.display(13, weight: .medium, relativeTo: .body))
                     .tracking(7)
                     .foregroundStyle(AppColors.spectrumText)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.obCard, style: .continuous)
-                    .strokeBorder(AppColors.spectrumBorder.opacity(0.6), lineWidth: 1.1)
             )
     }
 
@@ -366,7 +348,7 @@ struct SessionPlayerView: View {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 showCare = true
             } label: {
-                Image(systemName: "circle.hexagongrid")
+                Image(systemName: "heart.circle")
                     .font(AppFonts.sectionHeading)
                     .foregroundStyle(AppColors.textSecondary)
                     .frame(width: 54, height: 54)
@@ -374,6 +356,7 @@ struct SessionPlayerView: View {
                     .overlay(Circle().strokeBorder(AppColors.borderDefault, lineWidth: 1))
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Take a beat — pause, care options, or end the session")
 
             HStack(spacing: AppSpacing.sm) {
                 presenceDot(you: true)
@@ -399,18 +382,22 @@ struct SessionPlayerView: View {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                 store.raiseSafeWord()
             } label: {
-                Text(store.safeWordLabel)
-                    .font(AppFonts.buttonLabelSmall)
-                    .textCase(.uppercase)
-                    .tracking(1)
-                    .foregroundStyle(AppColors.safetyAccent)
-                    .padding(.horizontal, AppSpacing.md)
-                    .padding(.vertical, AppSpacing.sm)
-                    .background(
-                        Capsule().fill(AppColors.safetyAccent.opacity(0.08))
-                            .overlay(Capsule().strokeBorder(
-                                AppColors.safetyAccent.opacity(0.25), lineWidth: 1))
-                    )
+                HStack(spacing: AppSpacing.xs) {
+                    Image(systemName: "hand.raised.fill")
+                        .font(.system(size: 10))
+                    Text("safe word: \(store.safeWordLabel)")
+                        .font(AppFonts.buttonLabelSmall)
+                        .textCase(.uppercase)
+                        .tracking(0.5)
+                }
+                .foregroundStyle(AppColors.safetyAccent)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.sm)
+                .background(
+                    Capsule().fill(AppColors.safetyAccent.opacity(0.08))
+                        .overlay(Capsule().strokeBorder(
+                            AppColors.safetyAccent.opacity(0.25), lineWidth: 1))
+                )
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Safe word: \(store.safeWordLabel). Ends the session immediately for both of you.")
@@ -434,10 +421,7 @@ struct SessionPlayerView: View {
                 .fill(AppColors.spectrumBorder.opacity(0.32))
                 .frame(width: max(0, proceedWidth * fill))
             HStack(spacing: AppSpacing.sm) {
-                Text("✦")
-                    .font(AppFonts.display(13, weight: .medium, relativeTo: .caption))
-                    .foregroundStyle(AppColors.spectrumText)
-                Text(holding ? "keep holding…" : (store.isLastCard ? "hold to finish" : "hold to deal"))
+                Text(holding ? "keep holding…" : (store.isLastCard ? "hold to finish" : "hold to deal next"))
                     .font(AppFonts.buttonLabel)
                     .foregroundStyle(AppColors.textBody)
             }
@@ -458,7 +442,7 @@ struct SessionPlayerView: View {
         )
     }
 
-    private let proceedWidth: CGFloat = 168
+    private let proceedWidth: CGFloat = 176
 
     // MARK: - Care sheet (.vaylSheet)
 
