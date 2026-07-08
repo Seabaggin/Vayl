@@ -181,3 +181,8 @@ struct SignInView: View {
     SignInView(auth: AuthStore())
         .preferredColorScheme(.dark)
 }
+
+#Preview("Sign In — Light") {
+    SignInView(auth: AuthStore())
+        .preferredColorScheme(.light)
+}
