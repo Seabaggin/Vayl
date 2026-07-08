@@ -48,6 +48,7 @@
 		AA00000QAAAA000000000001 /* MapStoreLensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000QAAAA000000000002 /* MapStoreLensTests.swift */; };
 		AA00000RAAAA000000000001 /* PathLandmarkProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000RAAAA000000000002 /* PathLandmarkProgressTests.swift */; };
 		AA00000SAAAA000000000001 /* PathContentServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000SAAAA000000000002 /* PathContentServiceTests.swift */; };
+		AA00000TAAAA000000000001 /* PathStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000TAAAA000000000002 /* PathStoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,6 +107,7 @@
 		AA00000QAAAA000000000002 /* MapStoreLensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapStoreLensTests.swift; sourceTree = "<group>"; };
 		AA00000RAAAA000000000002 /* PathLandmarkProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathLandmarkProgressTests.swift; sourceTree = "<group>"; };
 		AA00000SAAAA000000000002 /* PathContentServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathContentServiceTests.swift; sourceTree = "<group>"; };
+		AA00000TAAAA000000000002 /* PathStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -225,6 +227,7 @@
 				AA00000QAAAA000000000002 /* MapStoreLensTests.swift */,
 				AA00000RAAAA000000000002 /* PathLandmarkProgressTests.swift */,
 				AA00000SAAAA000000000002 /* PathContentServiceTests.swift */,
+				AA00000TAAAA000000000002 /* PathStoreTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -443,6 +446,7 @@
 				AA00000QAAAA000000000001 /* MapStoreLensTests.swift in Sources */,
 				AA00000RAAAA000000000001 /* PathLandmarkProgressTests.swift in Sources */,
 				AA00000SAAAA000000000001 /* PathContentServiceTests.swift in Sources */,
+				AA00000TAAAA000000000001 /* PathStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
