@@ -125,6 +125,7 @@ struct SessionPlayerView: View {
         let show = min(5, store.upcomingCount)
         return VStack(spacing: AppSpacing.sm) {
             ZStack {
+                fanGlow
                 ForEach(0..<show, id: \.self) { i in
                     let t = CGFloat(i) - CGFloat(show - 1) / 2   // -2…2
                     fanCard
@@ -148,6 +149,28 @@ struct SessionPlayerView: View {
         }
         .frame(maxHeight: .infinity, alignment: .top)
         .padding(.top, AppSpacing.xl)
+    }
+
+    /// A soft glow sized and centered to the fan's own footprint — not a
+    /// stray circle placed nearby. Keeps the deck grounded against the
+    /// atmosphere's void zone instead of floating in true black.
+    private var fanGlow: some View {
+        Ellipse()
+            .fill(
+                RadialGradient(
+                    colors: [
+                        AppColors.spectrumPurple.opacity(0.28),  // core — matches VaylCardBack's atmosphere ceiling
+                        AppColors.spectrumCyan.opacity(0.14),
+                        .clear,
+                    ],
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: 140   // rendering constant — half the glow's own width, not a token
+                )
+            )
+            .frame(width: 260, height: 140)   // rendering constant — hugs the 5-card fan's rotated bounding box
+            .blur(radius: 30)
+            .allowsHitTesting(false)
     }
 
     private var fanCard: some View {
@@ -278,15 +301,16 @@ struct SessionPlayerView: View {
         .ignoresSafeArea()
     }
 
-    /// Colors `card.highlightWords` in the spectrum core color (solid, per the
-    /// spectrum-glow recipe — the word carries the accent, not a gradient on text).
+    /// Colors `card.highlightWords` in HighlightText's solid word color — the
+    /// word carries the accent, not a gradient on text (AttributedString runs
+    /// can't hold a moving/multi-stop gradient without breaking line flow).
     private func highlightedPrompt(_ card: Card) -> Text {
         guard !card.highlightWords.isEmpty else { return Text(card.text) }
         var attributed = AttributedString(card.text)
         for word in card.highlightWords {
             var cursor = attributed.startIndex
             while let range = attributed[cursor...].range(of: word) {
-                attributed[range].foregroundColor = AppColors.spectrumCyan
+                attributed[range].foregroundColor = HighlightText.wordColor
                 cursor = range.upperBound
             }
         }

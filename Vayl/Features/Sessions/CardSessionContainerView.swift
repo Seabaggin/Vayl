@@ -94,7 +94,11 @@ private struct CoupleSessionFlow: View {
             // The canonical OnboardingAtmosphere runs the whole cover now —
             // airlock through the live session (SessionAtmosphere's turn-
             // tinted blobs read too bright/busy against this screen family).
-            OnboardingAtmosphere(config: .stat)
+            // maskStart pulled up from the 0.52 default — the fan deck sits
+            // much higher on this screen than a typical OB screen's hero
+            // content, so the void needs to end sooner or the deck reads as
+            // floating in true black.
+            OnboardingAtmosphere(config: .stat, maskStart: 0.22)
 
             content
         }
