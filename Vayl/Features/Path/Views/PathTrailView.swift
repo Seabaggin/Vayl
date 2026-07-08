@@ -58,7 +58,7 @@ struct PathTrailView: View {
                             .position(point)
                         Text(landmark.title)
                             .font(AppFonts.sectionLabelSmall)
-                            .foregroundStyle(landmark.id == store.nowLandmarkId ? Color.white : AppColors.textPrimary)
+                            .foregroundStyle(landmark.id == store.nowLandmarkId ? AppColors.textBright : AppColors.textPrimary)
                             .position(x: point.x + 60, y: point.y - 8)
                     }
                 }
@@ -178,9 +178,14 @@ private struct PathTraveledShape: Shape {
 
 #if DEBUG
 /// Seeds the exact scenario path-node-state-redesign-suite.html §02 uses to
-/// prove no-cascading: "Lifestyle club" (landmark 7) reads Did it while
-/// "Flirt at a bar" (5) and "An NM mixer" (6), both earlier and smaller, sit
-/// at Curious and Untouched. Nothing cascades from the later, bigger mark.
+/// prove its two hardest rules:
+/// (a) no-cascading — "Lifestyle club" (landmark 7) reads Did it while
+///     "Flirt at a bar" (5) and "An NM mixer" (6), both earlier and smaller,
+///     sit at Curious and Untouched. Nothing cascades from the later, bigger
+///     mark.
+/// (b) Now is pure wayfinding, not a state — "The strip club" carries the
+///     Now ring AND an independent Planning color at the same time, proving
+///     "Now never encoded state on its own."
 private struct PathTrailPreviewHarness: View {
     private let store: PathStore
 
@@ -202,11 +207,13 @@ private struct PathTrailPreviewHarness: View {
             row("fantasy-talk", .didIt),
             row("watch-together", .didIt),
             row("virtual-hellos", .didIt),
-            // "strip-club" stays untouched — it's the earliest not-yet-Did-it
-            // landmark, so PathStore.nowLandmarkId anchors "Now" there.
+            // "strip-club" is Planning, not untouched — it's still the
+            // earliest not-yet-Did-it/skipped landmark, so it's ALSO where
+            // PathStore.nowLandmarkId anchors "Now" (proof b, above).
+            row("strip-club", .planning),
             row("flirt-bar", .curious),
             // "nm-mixer" stays untouched — smaller and later than
-            // lifestyle-club, proving the no-cascade rule below.
+            // lifestyle-club, proving the no-cascade rule below (proof a).
             row("lifestyle-club", .didIt),
             row("seen-as-couple", .discussed, discussedVia: .session),
             row("dinner-couple", .discussed, discussedVia: .manual)
