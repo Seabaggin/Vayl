@@ -192,6 +192,13 @@ final class CoupleSessionStore: Identifiable {
     /// The badge letter for the drawer row ("A" / "B"), shared by both devices.
     var drawingRoleLabel: String { drawingRole == .a ? "A" : "B" }
 
+    /// Unified partner connection signal for the in-session presence pill —
+    /// the live path (partnerPresentLive/partnerAway) when two-device, the
+    /// mock path (partnerPresent) in local DEBUG.
+    var partnerConnected: Bool {
+        isLive ? (partnerPresentLive && !partnerAway) : partnerPresent
+    }
+
     /// Mirror cards: the subject alternates per card (deterministic from the
     /// index, identical on both devices); the other partner guesses.
     var mirrorSubjectIsMe: Bool { drawingRole == sessionRole }

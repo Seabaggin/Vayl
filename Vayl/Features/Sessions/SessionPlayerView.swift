@@ -170,10 +170,7 @@ struct SessionPlayerView: View {
     // MARK: - Drawer ceremony + hero prompt
 
     private var screenLayer: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            drawerRow
-                .padding(.bottom, AppSpacing.lg)
-
+        Group {
             if let card = store.currentCard {
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     if card.hasContextKicker {
@@ -190,13 +187,12 @@ struct SessionPlayerView: View {
                         }
                     }
                 }
-                .frame(maxHeight: .infinity, alignment: .center)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, AppSpacing.xl)
         .padding(.bottom, 150)
-        .frame(maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxHeight: .infinity, alignment: .center)
     }
 
     /// Face router (Section 3): reveal mechanics get their reveal surface,
@@ -225,29 +221,6 @@ struct SessionPlayerView: View {
                 .fixedSize(horizontal: false, vertical: true)
         default:
             LocalCardFaceView(card: card)               // the nine local living cards
-        }
-    }
-
-    private var drawerRow: some View {
-        let isYou = store.currentDrawer == .you
-        return HStack(spacing: AppSpacing.sm) {
-            Text(store.drawingRoleLabel)
-                .font(AppFonts.display(12, weight: .semibold, relativeTo: .caption))
-                .foregroundStyle(AppColors.void)
-                .frame(width: 26, height: 26)
-                .background(
-                    Circle().fill(
-                        LinearGradient(
-                            colors: isYou
-                                ? [AppColors.spectrumMagenta, AppColors.accentSecondary]
-                                : [AppColors.spectrumCyan, AppColors.accentSecondary],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        )
-                    )
-                )
-            Text(isYou ? "Your draw, read it aloud" : "Partner's draw, read it aloud")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textSecondary)
         }
     }
 
@@ -342,24 +315,66 @@ struct SessionPlayerView: View {
     }
 
     private var leftStack: some View {
-        // Care, presence, and the safe word all live behind this one icon now —
-        // the care sheet below is "everything in one place." Safe word moves
-        // from an always-visible one-tap pill to a row in that sheet (still one
-        // tap once open, no confirm — see careSheet).
-        Button {
-            wake()
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            showCare = true
-        } label: {
-            Image(systemName: "heart.circle")
-                .font(AppFonts.sectionHeading)
-                .foregroundStyle(AppColors.textSecondary)
-                .frame(width: 54, height: 54)
-                .background(Circle().fill(AppColors.cardBackground))
-                .overlay(Circle().strokeBorder(AppColors.borderDefault, lineWidth: 1))
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            // Care lives behind this one icon — the care sheet below is
+            // "everything in one place" (pause/hug/skip/end well).
+            Button {
+                wake()
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                showCare = true
+            } label: {
+                Image(systemName: "heart.circle")
+                    .font(AppFonts.sectionHeading)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .frame(width: 54, height: 54)
+                    .background(Circle().fill(AppColors.cardBackground))
+                    .overlay(Circle().strokeBorder(AppColors.borderDefault, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Take a beat — pause, care options, or end the session")
+
+            turnAndPresencePill
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Take a beat — pause, care options, safe word, or end the session")
+    }
+
+    /// Replaces the old top-of-screen drawer row — whose draw it is and
+    /// whether the partner's device is connected, merged into one pill down
+    /// with the rest of the session chrome instead of floating alone up top.
+    private var turnAndPresencePill: some View {
+        let isYou = store.currentDrawer == .you
+        return HStack(spacing: AppSpacing.sm) {
+            Text(store.drawingRoleLabel)
+                .font(AppFonts.display(11, weight: .semibold, relativeTo: .caption2))
+                .foregroundStyle(AppColors.void)
+                .frame(width: 20, height: 20)
+                .background(
+                    Circle().fill(
+                        LinearGradient(
+                            colors: isYou
+                                ? [AppColors.spectrumMagenta, AppColors.accentSecondary]
+                                : [AppColors.spectrumCyan, AppColors.accentSecondary],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        )
+                    )
+                )
+            Text(isYou ? "your draw" : "partner's draw")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+            Circle()
+                .fill(store.partnerConnected ? AppColors.spectrumCyan : AppColors.textTertiary)
+                .frame(width: 6, height: 6)
+        }
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.sm)
+        .background(
+            Capsule().fill(AppColors.cardBackground.opacity(0.6))
+                .overlay(Capsule().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "\(isYou ? "Your draw" : "Partner's draw"). Partner is "
+            + (store.partnerConnected ? "connected." : "not connected.")
+        )
     }
 
     private var proceedButton: some View {
