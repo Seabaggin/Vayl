@@ -1103,6 +1103,17 @@ internal enum AppAnimation {
     static let deckFlipWave:  Animation = .easeInOut(duration: 0.32)   // per card
     static let deckFlipStagger: Double  = 0.085                        // seconds between flips
     static let deckCtaFade:   Animation = .easeOut(duration: 0.36)
+
+    /// Session player idle-dim — the room falls dark slowly (1.7s) but wakes fast (0.4s)
+    /// on any touch, so the couple never waits on the room to come back.
+    static let sessionIdleDimIn:  Animation = .easeInOut(duration: 1.7)
+    static let sessionIdleDimOut: Animation = .easeInOut(duration: 0.4)
+
+    /// Session player dive-commit — the dealt card blooms past scale 1 and fades as the
+    /// next prompt takes over. Matches SessionPlayerView.diveSeconds (0.82s); kept as a
+    /// separate token since the raw Double also drives the mid-dive Task.sleep timing.
+    static let sessionDiveIn:  Animation = .easeIn(duration: 0.82)
+    static let sessionDiveOut: Animation = .easeOut(duration: 0.82)
 }
 
 // MARK: — Ambient Motion Gate (Reduce Motion + Low Power Mode)

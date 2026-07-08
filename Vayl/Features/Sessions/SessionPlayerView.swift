@@ -51,6 +51,7 @@ struct SessionPlayerView: View {
 
             if diving || holding {
                 dealingCard
+                    .if(nextCardIsSensitive) { $0.screenshotProtected() }
             }
 
             if diving && !reduceMotion {
@@ -63,7 +64,7 @@ struct SessionPlayerView: View {
             Rectangle()
                 .fill(AppColors.void)
                 .opacity(dimmed ? 0.52 : 0)
-                .animation(.easeInOut(duration: dimmed ? 1.7 : 0.4), value: dimmed)
+                .animation(dimmed ? AppAnimation.sessionIdleDimIn : AppAnimation.sessionIdleDimOut, value: dimmed)
                 .allowsHitTesting(false)
                 .ignoresSafeArea()
 
@@ -100,7 +101,10 @@ struct SessionPlayerView: View {
             if let beat = store.activeContextBeat {
                 ContextBeatOverlayView(
                     copy: beat.copy,
-                    onDismiss: { store.dismissContextBeat() }
+                    onDismiss: {
+                        store.dismissContextBeat()
+                        wake()
+                    }
                 )
                 .zIndex(10)
             }
@@ -447,10 +451,6 @@ struct SessionPlayerView: View {
                 showCare = false
                 store.togglePause()
             }
-            careOption("🤍", "A 6-second hug") { showCare = false }
-            careOption("✦", "Say one thing you love") { showCare = false }
-            careOption("◦", "Just sit a minute") { showCare = false }
-
             Divider().background(AppColors.borderSubtle)
                 .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.sm)
@@ -529,12 +529,12 @@ struct SessionPlayerView: View {
     private func commitDeal() {
         UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
         // The dealingCard reads `diving` for its scale/opacity/offset — animate it.
-        withAnimation((reduceMotion ? AppAnimation.fast : .easeIn(duration: diveSeconds))) {
+        withAnimation((reduceMotion ? AppAnimation.fast : AppAnimation.sessionDiveIn)) {
             diving = true
         }
         if !reduceMotion {
             warpProgress = 0
-            withAnimation(.easeOut(duration: diveSeconds)) { warpProgress = 1 }
+            withAnimation(AppAnimation.sessionDiveOut) { warpProgress = 1 }
         }
         // Advance the model midway so the new prompt is ready as the card clears.
         Task { @MainActor in
@@ -555,13 +555,23 @@ struct SessionPlayerView: View {
         return store.hand[next].text
     }
 
+    /// `dealingCard` shows the upcoming card's face (via `pendingPrompt`), so its
+    /// screenshot protection must key off the next card, not the outgoing `currentCard`.
+    private var nextCardIsSensitive: Bool {
+        let next = store.index + 1
+        guard store.hand.indices.contains(next) else {
+            return store.currentCard?.isSensitive ?? false
+        }
+        return store.hand[next].isSensitive
+    }
+
     // MARK: - Idle dim
 
     private func scheduleIdle() {
         idleTask?.cancel()
         idleTask = Task { @MainActor in
             try? await Task.sleep(for: .seconds(3.6))
-            if !Task.isCancelled, !holding, !diving, !showCare {
+            if !Task.isCancelled, !holding, !diving, !showCare, store.activeContextBeat == nil {
                 dimmed = true
             }
         }
