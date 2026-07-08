@@ -76,6 +76,20 @@ final class PathStore {
         )
     }
 
+    func discussedVia(for landmarkId: String) -> DiscussedVia? {
+        progressByLandmark[landmarkId]?.discussedVia
+    }
+
+    func didItDate(for landmarkId: String) -> Date? {
+        progressByLandmark[landmarkId]?.didItDate
+    }
+
+    /// A landmark not `.skipped` — this is the default trail/ledger view.
+    /// Restoring in Edit your path (Task 15) is the only way back.
+    var visibleLandmarks: [PathLandmark] {
+        landmarks.filter { state(for: $0.id) != .skipped }
+    }
+
     func isPrivatelyMarkedCurious(_ landmarkId: String) -> Bool {
         privateMarkedLandmarkIds.contains(landmarkId)
     }
@@ -98,6 +112,65 @@ final class PathStore {
         try await transport.logActivity(
             coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
             actorId: profileId, kind: .curiousShared, detail: nil
+        )
+    }
+
+    func setDiscussed(_ landmarkId: String, via: DiscussedVia) async throws {
+        let updated = try await transport.setState(
+            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
+            state: .discussed, discussedVia: via, didItDate: nil, setBy: profileId
+        )
+        progressByLandmark[landmarkId] = updated
+        try await transport.logActivity(
+            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
+            actorId: profileId, kind: via == .session ? .discussedSession : .discussedManual, detail: nil
+        )
+    }
+
+    func setPlanning(_ landmarkId: String) async throws {
+        let updated = try await transport.setState(
+            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
+            state: .planning, discussedVia: nil, didItDate: nil, setBy: profileId
+        )
+        progressByLandmark[landmarkId] = updated
+        try await transport.logActivity(
+            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
+            actorId: profileId, kind: .planningSet, detail: nil
+        )
+    }
+
+    /// The date records when it was told to the app, never a claim about exact
+    /// real-world timing — always editable afterward (spec §7).
+    func editDidItDate(_ landmarkId: String, date: Date) async throws {
+        let updated = try await transport.editDidItDate(
+            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId, newDate: date, setBy: profileId
+        )
+        progressByLandmark[landmarkId] = updated
+        try await transport.logActivity(
+            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
+            actorId: profileId, kind: .didItDateChanged, detail: nil
+        )
+    }
+
+    func skip(_ landmarkId: String) async throws {
+        let updated = try await transport.setState(
+            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
+            state: .skipped, discussedVia: nil, didItDate: nil, setBy: profileId
+        )
+        progressByLandmark[landmarkId] = updated
+        try await transport.logActivity(
+            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
+            actorId: profileId, kind: .skipped, detail: nil
+        )
+    }
+
+    /// Restoring returns the landmark to `.untouched` — restoring is not the
+    /// same as "undo the last real state," it's a clean reset back onto the trail.
+    func restore(_ landmarkId: String) async throws {
+        progressByLandmark.removeValue(forKey: landmarkId)
+        try await transport.logActivity(
+            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
+            actorId: profileId, kind: .restored, detail: nil
         )
     }
 }

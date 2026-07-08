@@ -58,4 +58,53 @@ final class PathStoreTests: XCTestCase {
         try await store.markCuriousPrivately("soft-swap")
         XCTAssertTrue(transport.loggedKinds.isEmpty)
     }
+
+    func test_setDiscussedViaSession_recordsSource_andLogsCorrectKind() async throws {
+        let (store, transport) = makeStore()
+        try await store.load()
+        try await store.setDiscussed("seen-as-couple", via: .session)
+        XCTAssertEqual(store.state(for: "seen-as-couple"), .discussed)
+        XCTAssertEqual(store.discussedVia(for: "seen-as-couple"), .session)
+        XCTAssertEqual(transport.loggedKinds, [.discussedSession])
+    }
+
+    func test_setDiscussedManually_logsManualKind() async throws {
+        let (store, transport) = makeStore()
+        try await store.load()
+        try await store.setDiscussed("dinner-couple", via: .manual)
+        XCTAssertEqual(transport.loggedKinds, [.discussedManual])
+    }
+
+    func test_setPlanning_isAFlagWithNoContent() async throws {
+        let (store, transport) = makeStore()
+        try await store.load()
+        try await store.setPlanning("strip-club")
+        XCTAssertEqual(store.state(for: "strip-club"), .planning)
+        XCTAssertEqual(transport.loggedKinds, [.planningSet])
+    }
+
+    func test_editDidItDate_changesDateWithoutChangingState() async throws {
+        let (store, transport) = makeStore()
+        try await store.load()
+        let original = Date(timeIntervalSince1970: 1_700_000_000)
+        try await store.setDidIt("virtual-hellos", date: original)
+        let edited = Date(timeIntervalSince1970: 1_600_000_000)
+        try await store.editDidItDate("virtual-hellos", date: edited)
+        XCTAssertEqual(store.state(for: "virtual-hellos"), .didIt)
+        XCTAssertEqual(store.didItDate(for: "virtual-hellos"), edited)
+        XCTAssertEqual(transport.loggedKinds, [.didItSet, .didItDateChanged])
+    }
+
+    func test_skip_removesFromDefaultTrail_andRestoreBringsItBackAsUntouched() async throws {
+        let (store, transport) = makeStore()
+        try await store.load()
+        try await store.skip("nm-mixer")
+        XCTAssertEqual(store.state(for: "nm-mixer"), .skipped)
+        XCTAssertFalse(store.visibleLandmarks.contains { $0.id == "nm-mixer" })
+
+        try await store.restore("nm-mixer")
+        XCTAssertEqual(store.state(for: "nm-mixer"), .untouched)
+        XCTAssertTrue(store.visibleLandmarks.contains { $0.id == "nm-mixer" })
+        XCTAssertEqual(transport.loggedKinds, [.skipped, .restored])
+    }
 }
