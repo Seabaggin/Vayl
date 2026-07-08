@@ -383,7 +383,10 @@ final class VaylDirector: OnboardingStage {
         // experience + register + curiosity, never appMode.
         let register = SituationalRegister(rawValue: onboardingData.situationalRegister ?? "") ?? .flexible
         let stage    = onboardingData.nmStage
-        let richCuriosity = onboardingData.curiositySelections.count >= 4
+        // 3 of the 5 sort cards kept = rich (single aspirational round since
+        // 2026-07-04; was 4 of 10 across two rounds). Milestone keeps are heavy
+        // signals, so the bar is a majority, not the old 40% ratio.
+        let richCuriosity = onboardingData.curiositySelections.count >= 3
 
         switch (stage, register) {
         case (.experienced, .anxious):

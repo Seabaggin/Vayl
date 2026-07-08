@@ -32,7 +32,6 @@
 
 import Foundation
 import Supabase
-import Combine
 
 /// Value snapshot of a `DesireMapEntry`, taken on the main actor BEFORE any await so we
 /// never touch a SwiftData `@Model` across a suspension point. ALL weights sync (incl.
@@ -74,7 +73,7 @@ struct SupabaseDesireRating: Codable {
 // MARK: - Service
 
 @MainActor
-class DesireSyncService: ObservableObject {
+class DesireSyncService {
 
     /// Shared singleton — access with DesireSyncService.shared
     static let shared = DesireSyncService()

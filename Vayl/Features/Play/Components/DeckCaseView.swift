@@ -6,15 +6,18 @@
 //  (no .metal shader, no TimelineView, no per-frame work), so a whole grid of
 //  them stays cheap to scroll. Distilled from the mockup's `.dcase` recipe and
 //  the 3D `MetallicCaseView` foil look: a hue-tinted anodized base + a debossed
-//  honeycomb lattice (lit from the top) + a top catch-light + the 2-pass spectrum
-//  frame + the category emblem. Each deck's colorway (category spectrum slice +
-//  per-deck hue nudge) tints the metal + frame, so no two cases look identical.
+//  honeycomb lattice (lit from the top) + a top catch-light + the 2-pass
+//  spectrum frame. No category glyph anywhere (deck-circle-lock mockup ruling:
+//  the deck identifies itself by title and colorway, not an icon). Each deck's
+//  colorway (category spectrum slice + per-deck hue nudge) tints the metal +
+//  frame, so no two cases look identical.
 //
-//  Tiering (free vs Core, no coming-soon): every case renders at full vividness;
-//  Core-locked decks add a gold CORE tag, so the wall reads as an enticing "what
-//  Core unlocks" gallery, not a dimmed one. Title/meta sit underneath in
-//  `DeckCellView`. Tap → the real animated 3D `MetallicCaseView` (detail /
-//  ceremony) — this static view is the grid render only.
+//  Tiering (free vs Core, no coming-soon): locked cases drop the hex lattice
+//  (plain dormant metal) and carry one engraved word — LOCKED — debossed into
+//  the metal with the spectrum poured into the letterform. No badge, no icon,
+//  no dimming. Title/meta sit underneath in `DeckCellView`. Tap → the real
+//  animated 3D `MetallicCaseView` (detail / ceremony) — this static view is
+//  the grid render only.
 //
 
 import SwiftUI
@@ -46,25 +49,26 @@ struct DeckCaseView: View {
             ZStack {
                 metalBase(h)
 
-                HexFoil(unit: Self.hexUnit, columns: 6, tint: style.colorway.c0)
-                    .opacity(0.6)
-                    .mask(LinearGradient(stops: [
-                        .init(color: .white,              location: 0.0),
-                        .init(color: .white.opacity(0.42), location: 0.58),
-                        .init(color: .white.opacity(0.12), location: 1.0),
-                    ], startPoint: .topLeading, endPoint: .bottomTrailing))
+                // Locked cases sleep: plain dormant metal, no lattice. The
+                // engraving below is the whole locked signal.
+                if !locked {
+                    HexFoil(unit: Self.hexUnit, columns: 6, tint: style.colorway.c0)
+                        .opacity(0.6)
+                        .mask(LinearGradient(stops: [
+                            .init(color: .white,              location: 0.0),
+                            .init(color: .white.opacity(0.42), location: 0.58),
+                            .init(color: .white.opacity(0.12), location: 1.0),
+                        ], startPoint: .topLeading, endPoint: .bottomTrailing))
+                }
 
                 sheen
                 catchLight(w, h)
                 bevelVignette(w, h, inset)
                 spectrumFrame(inset: inset)
 
-                DeckGlyph(kind: style.glyph,
-                          lineWidth: max(1.5, w * 0.016))
-                    .frame(width: w * 0.34, height: w * 0.34)
-                    .shadow(color: AppColors.void.opacity(0.7), radius: 1, y: 1)
-
-                stateOverlay()
+                if locked {
+                    lockedEngraving(h)
+                }
             }
             .compositingGroup()
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.obCard, style: .continuous))
@@ -165,25 +169,26 @@ struct DeckCaseView: View {
         .allowsHitTesting(false)
     }
 
-    // MARK: - State overlays
+    // MARK: - Locked engraving
 
-    @ViewBuilder
-    private func stateOverlay() -> some View {
-        if locked {
-            tag("CORE", tint: AppColors.accentTertiary, fill: AppColors.accentTertiary.opacity(0.12))
-        }
-    }
-
-    /// A small top-center CORE pill.
-    private func tag(_ label: String, tint: Color, fill: Color) -> some View {
-        Text(label)
+    /// The word LOCKED, debossed into the metal with the app's spectrum poured
+    /// into the cut letterform (deck-circle-lock mockup, `engraved-spectrum`):
+    /// a dark shadow on the top edge (light blocked), a thin light catch on the
+    /// bottom edge (bounced light) — recessed foil, not a raised badge.
+    private func lockedEngraving(_ h: CGFloat) -> some View {
+        Text("LOCKED")
             .font(AppFonts.overline)
-            .foregroundStyle(tint)
-            .padding(.horizontal, AppSpacing.xs)
-            .padding(.vertical, AppSpacing.xxs)
-            .background(Capsule().fill(fill))
-            .overlay(Capsule().strokeBorder(tint.opacity(0.45), lineWidth: 1))
-            .padding(.top, AppSpacing.sm)
+            .tracking(3)
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+                    startPoint: .leading, endPoint: .trailing
+                )
+            )
+            .opacity(0.8)
+            .shadow(color: AppColors.void.opacity(0.55), radius: 0, y: -1)
+            .shadow(color: .white.opacity(0.10), radius: 0, y: 1)
+            .padding(.top, h * 0.08)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .allowsHitTesting(false)
     }

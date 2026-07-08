@@ -40,7 +40,9 @@ struct StarVeil: View {
             if reduceMotion || AppAnimation.lowPower {
                 Canvas { ctx, size in draw(&ctx, size: size, time: nil) }
             } else {
-                TimelineView(.animation) { tl in
+                // 15fps is plenty for a slow twinkle (same cap as the
+                // DesireMapView star field) — display rate was wasted work.
+                TimelineView(.periodic(from: .now, by: 1.0 / 15.0)) { tl in
                     Canvas { ctx, size in
                         draw(&ctx, size: size, time: tl.date.timeIntervalSinceReferenceDate)
                     }

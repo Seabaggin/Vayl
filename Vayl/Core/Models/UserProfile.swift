@@ -67,6 +67,10 @@ final class UserProfile {
     var isLinked: Bool
     var coupleId: UUID?
     var linkedAt: Date?                         // when pairing completed — never delete
+    var firstInviteSentAt: Date?                // when the FIRST invite code was generated for
+                                                 // this pairing attempt — drives the nudge
+                                                 // threshold, untouched by later regenerations.
+                                                 // Cleared on successful link.
 
     // MARK: - Desire Map
 
@@ -136,6 +140,7 @@ final class UserProfile {
         self.isLinked = false
         self.coupleId = nil
         self.linkedAt = nil
+        self.firstInviteSentAt = nil
         self.hasCompletedDesireMap = false
         self.flavor = flavor
         self.chosenTitle = chosenTitle

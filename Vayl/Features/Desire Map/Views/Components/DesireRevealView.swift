@@ -37,6 +37,7 @@ struct DesireRevealView: View {
             // ── Background ──────────────────────────────
             AppColors.void.ignoresSafeArea()
             OnboardingAtmosphere(config: .cardReveal).ignoresSafeArea()
+            DesireStarfield().ignoresSafeArea()
 
             // ── Content ─────────────────────────────────
             VStack(spacing: 0) {
@@ -140,60 +141,91 @@ struct DesireRevealView: View {
     // revealed: all matches lit, confident lines — post-unlock celebration
 
     private var beatReveal: some View {
-        ZStack {
-            // Tap-anywhere-to-advance background (nodes' own tap gestures take priority)
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    hapticTick += 1
-                    store.advanceBeat()
-                }
-
-            VStack(spacing: 0) {
-                // Beat progress dots (hidden when idle or fully revealed)
-                if store.beatPhase != .idle && store.beatPhase != .revealed {
-                    beatDots
-                        .padding(.top, AppSpacing.xs)
-                }
-
-                // Overline
-                Text(store.beatPhase == .revealed ? "Your shared sky" : "Where you meet")
-                    .font(AppFonts.overline)
-                    .foregroundStyle(AppColors.textTertiary)
-                    .tracking(1.5)
-                    .padding(.top, AppSpacing.md)
-                    .opacity(store.beatPhase != .idle ? 1 : 0)
-                    .animation(AppAnimation.desireStarIgnite.delay(0.10).reduceMotionSafe, value: store.beatPhase)
-
-                // Constellation
-                DesireConstellationView(
-                    stars: placedStars,
-                    edges: layout.edges,
-                    variant: ceremonyVariant,
-                    mode: constellationMode,
-                    onTap: { id in
+        GeometryReader { geo in
+            // `.top` alignment is load-bearing: without it a bare ZStack centers its VStack
+            // vertically, and `bottomSection` grows from a two-line caption (beat1) to the taller
+            // locked-rows list (beat2/3) — a taller centered stack pushes everything above it,
+            // including the whole constellation, upward. Anchoring to the top means bottomSection
+            // growing only ever extends downward; the constellation never has to move to make room.
+            ZStack(alignment: .top) {
+                // Tap-anywhere-to-advance background (nodes' own tap gestures take priority)
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture {
                         hapticTick += 1
-                        if let match = store.matches.first(where: { $0.id.uuidString == id }) {
-                            store.selectStar(match)
-                        }
+                        store.advanceBeat()
                     }
-                )
-                .frame(maxWidth: .infinity)
-                // beat2/3 pull the sky in to make room for the locked rows; beat1 and the
-                // unlocked sky are full-bleed — the constellation IS the screen (mockup 6/10).
-                .frame(maxHeight: (store.beatPhase == .beat2 || store.beatPhase == .beat3) ? 220 : .infinity)
-                .padding(.vertical, AppSpacing.lg)
-                .opacity(store.beatPhase != .idle ? 1 : 0)
-                // Fix #3b: opacity reveal gated behind reduceMotionSafe; the per-star ignite + line
-                // draw live inside DesireConstellationView (also Reduce-Motion aware).
-                .animation(AppAnimation.desireStarIgnite.reduceMotionSafe, value: store.beatPhase)
 
-                // Bottom section: caption at beat1/revealed, locked rows at beat2/beat3
-                bottomSection
-                    .animation(AppAnimation.enter.reduceMotionSafe, value: store.beatPhase)
+                VStack(spacing: 0) {
+                    // Beat progress dots (hidden when idle or fully revealed)
+                    if store.beatPhase != .idle && store.beatPhase != .revealed {
+                        beatDots
+                            .padding(.top, AppSpacing.xs)
+                    }
+
+                    // Overline
+                    Text(store.beatPhase == .revealed ? "Your shared sky" : "Where you meet")
+                        .font(AppFonts.overline)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .tracking(1.5)
+                        .padding(.top, AppSpacing.md)
+                        .opacity(store.beatPhase != .idle ? 1 : 0)
+                        .animation(AppAnimation.desireStarIgnite.delay(0.10).reduceMotionSafe, value: store.beatPhase)
+
+                    // Constellation
+                    // Layout + hero placement live on the store (Blueprint C) — the view
+                    // only renders what it's handed.
+                    //
+                    // ONE constant frame — sized to just past where ConstellationLayout actually
+                    // places stars (their y is confined to roughly the frame's own top half) — for
+                    // the entire ceremony, beat1 through revealed. Two earlier attempts tried to give
+                    // beat1 a dramatic full-bleed size and beat2/3 a smaller one (first by animating
+                    // a single instance's frame height, then by cross-fading between two differently
+                    // sized instances); both still produced a visible jump or abrupt landing, because
+                    // every star's `.position()` is a fraction of whatever frame the constellation
+                    // resolves to, and the surrounding VStack's layout snapped to the new slot size
+                    // the moment the beat changed even when the star content tried to animate.
+                    // Removing the size change entirely removes the whole family of bugs: nothing
+                    // about the constellation's layout ever changes across beats, so its stars and
+                    // lines never move. `bottomSection` below it already fades its own content in
+                    // and out independently — it now simply has a stable amount of room reserved
+                    // below the constellation at all times, instead of needing it to shrink. Sized to
+                    // 0.38 (not the full 0.5 the frame used before stars were confined to the upper
+                    // half) — small enough that the caption/locked-rows below don't sit behind a dead
+                    // gap of empty sky, but tall enough that halos/labels at high match counts have
+                    // room to breathe within the compressed upper-half band.
+                    constellationView
+                        .frame(maxWidth: .infinity, maxHeight: geo.size.height * 0.38)
+                        .padding(.vertical, AppSpacing.lg)
+                        .opacity(store.beatPhase != .idle ? 1 : 0)
+                        // Fix #3b: opacity reveal gated behind reduceMotionSafe; the per-star ignite + line
+                        // draw live inside DesireConstellationView (also Reduce-Motion aware).
+                        .animation(AppAnimation.desireStarIgnite.reduceMotionSafe, value: store.beatPhase)
+
+                    // Bottom section: caption at beat1/revealed, locked rows at beat2/beat3
+                    bottomSection
+                        .animation(AppAnimation.enter.reduceMotionSafe, value: store.beatPhase)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// The constellation. Factored out of `beatReveal` for readability — it's still exactly one
+    /// call site now, but keeping it separate keeps `beatReveal`'s body scannable.
+    private var constellationView: some View {
+        DesireConstellationView(
+            stars: store.placedStars,
+            edges: store.layout.edges,
+            variant: ceremonyVariant,
+            mode: constellationMode,
+            onTap: { id in
+                hapticTick += 1
+                if let match = store.matches.first(where: { $0.id.uuidString == id }) {
+                    store.selectStar(match)
+                }
+            }
+        )
     }
 
     @ViewBuilder
@@ -231,6 +263,7 @@ struct DesireRevealView: View {
         case .beat2, .beat3:
             // Locked teasers + count
             _LockedSection(
+                hero: store.heroMatch,
                 matches: store.lockedMatches,
                 isVisible: store.beatPhase.rawValue >= 2
             )
@@ -302,58 +335,12 @@ struct DesireRevealView: View {
         return CeremonyVariant.resolve(coupleId: appState.coupleId)
     }
 
-    /// The generated constellation (positions + MST edges) for the full match set, seeded by the
-    /// couple so the sky is theirs and stable across beats. Deterministic — recomputing is cheap.
-    private var layout: ConstellationLayout.Result {
-        let seed = appState.coupleId.map { ConstellationLayout.seed(for: $0) } ?? 0
-        return ConstellationLayout.generate(count: store.matches.count, seed: seed)
-    }
-
     /// What the constellation does at the current beat.
     private var constellationMode: DesireConstellationView.Mode {
         switch store.beatPhase {
         case .idle, .beat1:   return .intro
         case .beat2, .beat3:  return .teasers
         case .revealed:       return reduceMotion ? .resolved : .assemble
-        }
-    }
-
-    /// Matches placed onto the generated layout: the free-reveal (or first mutual) star takes the
-    /// central hero slot; the rest fill the remaining positions in order. Sizes scale with count
-    /// so many stars do not crowd. Indices align with `layout.points` / `layout.edges`.
-    private var placedStars: [DesireConstellationView.Star] {
-        let result = layout
-        guard !result.points.isEmpty, !store.matches.isEmpty else { return [] }
-
-        let hero = store.matches.first(where: { $0.isFreeReveal })
-            ?? store.matches.first(where: { $0.alignment == .mutual })
-            ?? store.matches.first
-        let others = store.matches.filter { $0.id != hero?.id }
-
-        var placed = [RevealMatch?](repeating: nil, count: result.points.count)
-        if result.heroIndex < placed.count { placed[result.heroIndex] = hero }
-        var oi = 0
-        for i in placed.indices where i != result.heroIndex {
-            if oi < others.count { placed[i] = others[oi]; oi += 1 }
-        }
-
-        let n = max(store.matches.count, 1)
-        let base = max(9.0, min(16.0, 16.0 * (4.0 / Double(n)).squareRoot()))
-        let heroSize = CGFloat(min(24.0, base * 1.5))
-
-        return placed.enumerated().compactMap { index, match in
-            guard let match else { return nil }
-            let isHero = index == result.heroIndex
-            return DesireConstellationView.Star(
-                id: match.id.uuidString,
-                point: result.points[index],
-                size: isHero ? heroSize : CGFloat(base),
-                label: match.itemName,
-                isHero: isHero,
-                isLocked: match.isLocked,
-                cadence: match.isLocked ? .locked : .free,
-                isAdjacent: match.alignment == .adjacent
-            )
         }
     }
 
@@ -470,46 +457,38 @@ struct DesireRevealView: View {
 }
 
 // MARK: - Locked teasers section (beat2 + beat3)
-// Blurred item names + lock glyphs, staggered in at 80ms each, matching desire-reveal.html.
+// The hero (the one match already revealed via the constellation) shows first, fully legible —
+// otherwise this list reads as "everything is locked," which contradicts the lit star above it.
+// Every other row stays blurred with NO lock icon at all: blur alone says "locked," so repeating
+// the icon on every row (or even just one) is redundant noise.
 
 private struct _LockedSection: View {
+    let hero: RevealMatch?
     let matches: [RevealMatch]
     let isVisible: Bool
 
     var body: some View {
         VStack(spacing: AppSpacing.xs) {
-            ForEach(Array(matches.prefix(4).enumerated()), id: \.element.id) { i, match in
-                HStack(spacing: AppSpacing.md) {
-                    Text(match.itemName)
-                        .font(AppFonts.bodyText)
-                        .foregroundStyle(Color.white.opacity(0.30))
-                        .blur(radius: 5)
-                        .lineLimit(1)
-                    Spacer(minLength: 0)
-                    Image(systemName: "lock.fill")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(Color.white.opacity(0.30))
-                }
-                .padding(.horizontal, AppSpacing.md)
-                .frame(height: 46)
-                .background(
-                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .fill(AppColors.whisperFill)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .stroke(AppColors.borderDefault, lineWidth: 1)
-                )
-                .opacity(isVisible ? 1 : 0)
-                .offset(y: isVisible ? 0 : 22)
-                // Fix #5: tokenized locked-row stagger (was .easeOut 0.36 / 0.08 step),
-                // reduceMotionSafe so it collapses to a fast opacity confirm.
-                .animation(
-                    AppAnimation.desireLockedRowEnter
-                        .delay(Double(i) * AppAnimation.desireBeatStaggerStep)
-                        .reduceMotionSafe,
-                    value: isVisible
-                )
+            if let hero {
+                _LockedPreviewRow(itemName: hero.itemName, isRevealed: true)
+                    .opacity(isVisible ? 1 : 0)
+                    .offset(y: isVisible ? 0 : 22)
+                    .animation(AppAnimation.desireLockedRowEnter.reduceMotionSafe, value: isVisible)
+            }
+
+            ForEach(Array(matches.filter { $0.id != hero?.id }.prefix(4).enumerated()), id: \.element.id) { i, match in
+                _LockedPreviewRow(itemName: match.itemName, isRevealed: false)
+                    .opacity(isVisible ? 1 : 0)
+                    .offset(y: isVisible ? 0 : 22)
+                    // Fix #5: tokenized locked-row stagger (was .easeOut 0.36 / 0.08 step),
+                    // reduceMotionSafe so it collapses to a fast opacity confirm. Offset by
+                    // one extra step so locked rows cascade in just after the hero row.
+                    .animation(
+                        AppAnimation.desireLockedRowEnter
+                            .delay(Double(i + 1) * AppAnimation.desireBeatStaggerStep)
+                            .reduceMotionSafe,
+                        value: isVisible
+                    )
             }
 
             // Count + spectrum hairline; delayed until all rows finish staggering in
@@ -537,6 +516,63 @@ private struct _LockedSection: View {
                 value: isVisible
             )
         }
+    }
+}
+
+// MARK: - Locked preview row (Card Weight materials, no interaction)
+// Shares DesireAnswerPill's visual language — radius, top sheen, orb accent — without being a
+// tappable/selectable component. `isRevealed` is the ONLY thing that distinguishes the hero row
+// from a locked one: clear text + a lit magenta accent vs. blurred text + a dim white accent.
+
+private struct _LockedPreviewRow: View {
+    let itemName: String
+    let isRevealed: Bool
+
+    private var accent: Color { isRevealed ? AppColors.spectrumMagenta : .white }
+    private var textColor: Color { isRevealed ? AppColors.textBright : Color.white.opacity(0.30) }
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            LinearGradient(colors: [.white.opacity(0.05), .clear], startPoint: .top, endPoint: .bottom)
+                .frame(height: 14)
+
+            HStack(spacing: AppSpacing.md) {
+                orb
+                Text(itemName)
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(textColor)
+                    .blur(radius: isRevealed ? 0 : 5)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, AppSpacing.md)
+        }
+        .frame(height: 46)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                .fill(isRevealed ? AppColors.spectrumMagenta.opacity(0.08) : AppColors.whisperFill)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                .stroke(isRevealed ? AppColors.spectrumMagenta.opacity(0.35) : AppColors.borderDefault, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
+    }
+
+    private var orb: some View {
+        ZStack {
+            Circle()
+                .fill(accent)
+                .frame(width: 17, height: 17)
+                .blur(radius: 6)
+                .opacity(isRevealed ? 0.7 : 0.35)
+            Circle()
+                .fill(.white)
+                .frame(width: 7, height: 7)
+                .opacity(isRevealed ? 1.0 : 0.5)
+        }
+        .frame(width: 17, height: 17)
     }
 }
 

@@ -6,7 +6,6 @@ import SwiftData
 // MARK: - Main view
 
 struct SettingsView: View {
-    var isTab: Bool = false
 
     @Environment(AppState.self)          private var appState
     @Environment(EntitlementStore.self)  private var entitlements
@@ -30,8 +29,6 @@ struct SettingsView: View {
     @State private var showComposition:   Bool = false
 
     // Sheet / dialog state
-    @State private var showInvite:          Bool = false
-    @State private var showJoin:            Bool = false
     @State private var showUnlink:          Bool = false
     @State private var showSignOutConfirm:  Bool = false
     @State private var showDeleteConfirm:   Bool = false
@@ -71,8 +68,8 @@ struct SettingsView: View {
                 Task { await store?.loadComposition() }
             }
             .onChange(of: store?.didLeaveAccount ?? false) { _, left in
-                // Route out of a pushed Settings; tab-mode root re-renders reactively.
-                if left, !isTab { dismiss() }
+                // Close the cover; the root re-routes reactively underneath.
+                if left { dismiss() }
             }
             .vaylSheet(isPresented: $showYou, heightFraction: 0.92, screenHeight: layout.screenHeight) {
                 if let store {
@@ -99,14 +96,6 @@ struct SettingsView: View {
                 if let store {
                     SettingsCompositionView(store: store, onClose: { showComposition = false })
                 }
-            }
-            .vaylSheet(isPresented: $showInvite, heightFraction: 0.92, screenHeight: layout.screenHeight) {
-                PairingInviteView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
-                    .environment(appState)
-            }
-            .vaylSheet(isPresented: $showJoin, heightFraction: 0.92, screenHeight: layout.screenHeight) {
-                PairingJoinView(store: PairingStore(modelContainer: modelContext.container, appState: appState))
-                    .environment(appState)
             }
             .confirmationDialog("Unlink partner?", isPresented: $showUnlink, titleVisibility: .visible) {
                 Button("Unlink", role: .destructive) {
@@ -156,19 +145,17 @@ struct SettingsView: View {
                     .tracking(2)
                     .foregroundStyle(AppColors.textSectionLabel)
                 Spacer()
-                if !isTab {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.textSecondary)
-                            .frame(width: 32, height: 32)
-                            .background(Circle().fill(AppColors.glassSurface))
-                    }
-                    .buttonStyle(PressableCardStyle())
-                    .accessibilityLabel("Close settings")
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                        .frame(width: 32, height: 32)
+                        .background(Circle().fill(AppColors.glassSurface))
                 }
+                .buttonStyle(PressableCardStyle())
+                .accessibilityLabel("Close settings")
             }
             .padding(.top, AppSpacing.md)
 
@@ -418,26 +405,14 @@ struct SettingsView: View {
                         .buttonStyle(PressableCardStyle())
                     }
                 } else {
-                    VStack(spacing: 0) {
-                        Button { showInvite = true } label: {
-                            SettingsNavRow(
-                                icon: "person.badge.plus",
-                                label: "Invite a partner",
-                                subtitle: "Share a code to link your apps"
-                            )
-                        }
-                        .buttonStyle(PressableCardStyle())
-
-                        Divider().overlay(AppColors.borderSubtle)
-
-                        Button { showJoin = true } label: {
-                            SettingsNavRow(
-                                icon: "link.badge.plus",
-                                label: "Enter a code"
-                            )
-                        }
-                        .buttonStyle(PressableCardStyle())
+                    Button { showPartner = true } label: {
+                        SettingsNavRow(
+                            icon: "person.badge.plus",
+                            label: "Invite a partner",
+                            subtitle: "Share a code or enter one to link your apps"
+                        )
                     }
+                    .buttonStyle(PressableCardStyle())
                 }
             }
         }

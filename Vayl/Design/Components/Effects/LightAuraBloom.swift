@@ -39,37 +39,38 @@ struct LightAuraBloom: View {
     }
 
     // ── animation state ───────────────────────────────────────────
-    @State private var phase: Double = 0
+    // Phase anchor: the timeline clock is measured from mount so the sway
+    // starts at t = 0 (same start pose the old Timer-driven phase gave).
+    @State private var mountDate = Date()
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    @ViewBuilder
     var body: some View {
-        guard bloomHeight > 0 else { return AnyView(EmptyView()) }
-        // Ambient gate — Reduce Motion / Low Power Mode render ONE static bloom
-        // frame: no TimelineView tick, no 60Hz Timer, no phase advance.
-        guard !reduceMotion, !AppAnimation.lowPower else {
-            return AnyView(
+        if bloomHeight <= 0 {
+            EmptyView()
+        } else if reduceMotion || AppAnimation.lowPower {
+            // Ambient gate — Reduce Motion / Low Power Mode render ONE static
+            // bloom frame: no TimelineView tick, no phase advance.
+            Canvas { ctx, size in
+                drawBloom(ctx: &ctx, size: size, t: 0)
+            }
+            .allowsHitTesting(false)
+        } else {
+            // One clock: the timeline drives t directly (the old code ran an
+            // uncapped TimelineView AND a 60Hz Timer mutating @State — two
+            // competing per-frame invalidation sources for one Canvas).
+            // 0.72/s matches the old advance rate (0.012 per 1/60s tick);
+            // sway frequencies are 1.2–2.0 rad/s, so a 30fps cap is invisible.
+            TimelineView(.animation(minimumInterval: 1 / 30)) { timeline in
                 Canvas { ctx, size in
-                    drawBloom(ctx: &ctx, size: size, t: 0)
-                }
-                .allowsHitTesting(false)
-            )
-        }
-        return AnyView(
-            TimelineView(.animation) { timeline in
-                Canvas { ctx, size in
-                    let t = phase
+                    let t = timeline.date.timeIntervalSince(mountDate) * 0.72
                     drawBloom(ctx: &ctx, size: size, t: t)
-                }
-                .onAppear { phase = 0 }
-                .onReceive(
-                    Timer.publish(every: 1/60, on: .main, in: .common).autoconnect()
-                ) { _ in
-                    phase += 0.012
                 }
             }
             .allowsHitTesting(false)
-        )
+            .onAppear { mountDate = Date() }
+        }
     }
 
     // ─────────────────────────────────────────────────────────────

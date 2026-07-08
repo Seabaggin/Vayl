@@ -65,9 +65,7 @@ struct DesireMapView: View {
         ZStack {
             AppColors.void.ignoresSafeArea()
             OnboardingAtmosphere(config: atmosphereConfig).ignoresSafeArea()
-            if raterPhase == .start {
-                starField.ignoresSafeArea()
-            }
+            DesireStarfield().ignoresSafeArea()
 
             content
 
@@ -81,12 +79,14 @@ struct DesireMapView: View {
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTick)
         .onAppear {
             store.load()
-            if let firstUnrated = store.items.firstIndex(where: { store.existingRating(for: $0.id) == nil }) {
+            // Resume + greeting decisions are store-owned (Blueprint C); the view
+            // just maps the destination onto its presentation phases.
+            if let firstUnrated = store.firstUnratedIndex {
                 index = firstUnrated
             }
             if !store.items.isEmpty, store.ratedCount > 0 {
-                raterPhase = store.ratedCount >= store.totalCount
-                    ? (partnerComplete ? .ready : .mirror)
+                raterPhase = store.isComplete
+                    ? postRatingPhase
                     : .rating
                 ratingVisible = true
             }
@@ -223,67 +223,6 @@ struct DesireMapView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    // MARK: - Star field (S2.1 background, 44 stars ~18 twinkling)
-
-    private static let _bgStars: [(Double, Double, Double, Double, Double)] = [
-        (0.08, 0.04, 1.2, 0.20, 0), (0.52, 0.03, 1.0, 0.14, 0), (0.75, 0.12, 0.7, 0.10, 0),
-        (0.42, 0.16, 0.8, 0.12, 0), (0.05, 0.28, 0.9, 0.18, 0), (0.35, 0.32, 0.7, 0.08, 0),
-        (0.80, 0.30, 1.2, 0.15, 0), (0.70, 0.35, 0.8, 0.10, 0), (0.60, 0.50, 0.9, 0.12, 0),
-        (0.32, 0.55, 1.3, 0.08, 0), (0.05, 0.58, 0.8, 0.07, 0), (0.45, 0.65, 1.0, 0.09, 0),
-        (0.15, 0.70, 0.7, 0.07, 0), (0.62, 0.78, 0.9, 0.07, 0), (0.38, 0.82, 1.2, 0.08, 0),
-        (0.10, 0.85, 0.6, 0.06, 0), (0.72, 0.88, 1.0, 0.07, 0), (0.50, 0.92, 0.8, 0.05, 0),
-        (0.30, 0.20, 0.9, 0.13, 0), (0.90, 0.14, 0.7, 0.09, 0), (0.18, 0.44, 0.8, 0.10, 0),
-        (0.85, 0.50, 0.7, 0.08, 0), (0.25, 0.62, 1.0, 0.08, 0), (0.68, 0.62, 0.8, 0.07, 0),
-        (0.95, 0.72, 0.6, 0.06, 0), (0.55, 0.88, 0.9, 0.06, 0),
-        (0.92, 0.07, 0.9, 0.20, 3.2), (0.28, 0.10, 1.5, 0.22, 4.8),
-        (0.18, 0.18, 1.1, 0.18, 3.8), (0.65, 0.08, 1.3, 0.20, 4.1),
-        (0.87, 0.21, 1.0, 0.16, 2.9), (0.55, 0.25, 1.4, 0.22, 4.5),
-        (0.12, 0.38, 1.0, 0.18, 3.6), (0.48, 0.42, 1.1, 0.16, 2.7),
-        (0.22, 0.45, 1.5, 0.20, 4.2), (0.90, 0.44, 0.8, 0.14, 3.4),
-        (0.78, 0.60, 1.0, 0.12, 4.7), (0.88, 0.72, 1.1, 0.10, 3.1),
-        (0.58, 0.15, 1.2, 0.18, 4.0), (0.40, 0.75, 1.3, 0.10, 2.8),
-        (0.96, 0.38, 0.9, 0.12, 3.9), (0.02, 0.52, 1.0, 0.10, 4.3),
-        (0.73, 0.48, 0.8, 0.12, 2.6), (0.14, 0.96, 1.1, 0.08, 3.7),
-    ]
-
-    private var starField: some View {
-        Group {
-            if reduceMotion || AppAnimation.lowPower {
-                // Reduce Motion: one static frame — no periodic twinkle loop. Twinkling stars
-                // (period > 0) hold at their base opacity; the sky reads fully without motion.
-                Canvas { ctx, size in
-                    for star in DesireMapView._bgStars {
-                        let (xr, yr, d, base, _) = star
-                        let x = size.width * xr
-                        let y = size.height * yr
-                        let r = d / 2
-                        ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: d, height: d)),
-                                 with: .color(.white.opacity(base)))
-                    }
-                }
-            } else {
-                TimelineView(.periodic(from: .now, by: 0.067)) { timeline in
-                    Canvas { ctx, size in
-                        let elapsed = timeline.date.timeIntervalSinceReferenceDate
-                            .truncatingRemainder(dividingBy: 1000)
-                        for (idx, star) in DesireMapView._bgStars.enumerated() {
-                            let (xr, yr, d, base, period) = star
-                            let opacity: Double = period > 0
-                                ? 0.2 + (sin((elapsed / period + Double(idx) * 0.37) * .pi * 2) * 0.5 + 0.5) * 0.6
-                                : base
-                            let x = size.width * xr
-                            let y = size.height * yr
-                            let r = d / 2
-                            ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: d, height: d)),
-                                     with: .color(.white.opacity(opacity)))
-                        }
-                    }
-                }
-            }
-        }
-        .allowsHitTesting(false)
-    }
-
     // MARK: - Bloom entrance
 
     private func beginTapped() {
@@ -319,19 +258,11 @@ struct DesireMapView: View {
         }
     }
 
-    private var positiveRatings: [DesireRatingValue] {
-        store.items.compactMap { item in
-            guard let r = store.existingRating(for: item.id),
-                  r == .excitedAboutIt || r == .openToIt else { return nil }
-            return r
-        }
-    }
-
     private func rater(item: DesireItem) -> some View {
         let answers = store.answers(for: item)
         return ZStack(alignment: .top) {
             // Stars only appear for excited + open answers (stars mark desire, not avoidance)
-            _StarAccum(ratings: positiveRatings, riseTrigger: starRiseTick)
+            _StarAccum(ratings: store.positiveRatings, riseTrigger: starRiseTick)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .allowsHitTesting(false)
 
@@ -386,11 +317,10 @@ struct DesireMapView: View {
                         ForEach(Array(answers.enumerated()), id: \.offset) { idx, label in
                             if idx < DesireRatingValue.allCases.count {
                                 let weight = DesireRatingValue.allCases[idx]
-                                _RaterPill(
+                                DesireAnswerPill(
                                     label: label,
                                     hint: pillHint(for: weight),
-                                    accent: accentColor(for: weight),
-                                    isBoundary: weight == .notForMe,
+                                    weight: weight,
                                     isSelected: store.existingRating(for: item.id) == weight
                                 ) { choose(weight, for: item) }
                             }
@@ -566,11 +496,20 @@ struct DesireMapView: View {
         }
     }
 
+    /// The store-owned second-finisher branch, mapped onto this view's phases.
+    /// Used by both the returning-user greeting (onAppear) and the charted exit.
+    private var postRatingPhase: RaterPhase {
+        switch store.postRatingDestination(partnerComplete: partnerComplete) {
+        case .ready:  return .ready
+        case .mirror: return .mirror
+        }
+    }
+
     /// Leaves the charted beat for its branch target. Shared by the timed auto-advance
     /// and the tap-to-skip path, so both land on the same destination.
     private func advancePastCharted() {
         withAnimation(AppAnimation.enter) {
-            raterPhase = partnerComplete ? .ready : .mirror
+            raterPhase = postRatingPhase
         }
     }
 
@@ -641,7 +580,7 @@ struct DesireMapView: View {
 
                 // Answer groups
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                    ForEach(Array(ratedItemsByGroup.enumerated()), id: \.element.0) { idx, pair in
+                    ForEach(Array(store.ratedItemsByGroup.enumerated()), id: \.element.0) { idx, pair in
                         _MirrorGroup(rating: pair.0, items: pair.1, index: idx)
                     }
                 }
@@ -693,14 +632,6 @@ struct DesireMapView: View {
         .buttonStyle(_RaterPressStyle())
     }
 
-    private var ratedItemsByGroup: [(DesireRatingValue, [DesireItem])] {
-        let rated = store.items.filter { store.existingRating(for: $0.id) != nil }
-        let grouped = Dictionary(grouping: rated) { store.existingRating(for: $0.id)! }
-        return DesireRatingValue.allCases.compactMap { rating in
-            guard let items = grouped[rating], !items.isEmpty else { return nil }
-            return (rating, items)
-        }
-    }
 
     // MARK: - Empty / error
 
@@ -746,15 +677,6 @@ struct DesireMapView: View {
         withAnimation(AppAnimation.desireDepthEnter.reduceMotionSafe) { index -= 1 }
     }
 
-    private func accentColor(for weight: DesireRatingValue) -> Color {
-        switch weight {
-        case .excitedAboutIt: return AppColors.spectrumCyan
-        case .openToIt:       return AppColors.spectrumPurple
-        case .probablyNot:    return AppColors.textTertiary
-        case .notForMe:       return AppColors.spectrumMagenta
-        }
-    }
-
     private func pillHint(for weight: DesireRatingValue) -> String {
         switch weight {
         case .excitedAboutIt: return "i want this"
@@ -772,66 +694,6 @@ private struct _RaterPressStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(AppAnimation.fast, value: configuration.isPressed)
-    }
-}
-
-// MARK: - Rater pill (S2.2, replaces RatingRow)
-
-private struct _RaterPill: View {
-    let label: String
-    let hint: String
-    let accent: Color
-    let isBoundary: Bool
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: AppSpacing.md) {
-                Circle()
-                    .fill(accent)
-                    .frame(width: 9, height: 9)
-
-                Text(label)
-                    .font(AppFonts.bodyMedium)
-                    .foregroundStyle(isSelected ? AppColors.textPrimary : AppColors.textSecondary)
-
-                Spacer(minLength: 0)
-
-                if isBoundary {
-                    Image(systemName: "lock.fill")
-                        .font(AppFonts.meta)
-                        .foregroundStyle(AppColors.textTertiary.opacity(0.45))
-                } else if !hint.isEmpty {
-                    Text(hint)
-                        .font(AppFonts.meta)
-                        .foregroundStyle(AppColors.textTertiary)
-                }
-            }
-            .padding(.horizontal, AppSpacing.md)
-            .frame(height: 54)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                    .fill(isSelected
-                        ? AnyShapeStyle(LinearGradient(
-                            colors: [AppColors.spectrumMagenta.opacity(0.14), AppColors.spectrumPurple.opacity(0.18)],
-                            startPoint: .leading, endPoint: .trailing
-                          ))
-                        : AnyShapeStyle(AppColors.whisperFill)
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                    .stroke(
-                        isSelected ? AppColors.spectrumPurple.opacity(0.80) : Color.white.opacity(0.10),
-                        lineWidth: isSelected ? 1.5 : 1
-                    )
-            )
-            .shadow(color: isSelected ? AppColors.spectrumPurple.opacity(0.28) : .clear, radius: 11)
-        }
-        .buttonStyle(_RaterPressStyle())
-        .animation(AppAnimation.fast, value: isSelected)
     }
 }
 

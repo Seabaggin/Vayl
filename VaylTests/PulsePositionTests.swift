@@ -9,16 +9,16 @@ final class PulsePositionTests: XCTestCase {
 
     func test_quadrants_byCorner() {
         XCTAssertEqual(PulsePosition(energy: 0.9, openness: 0.9).quadrant, .expansive)
-        XCTAssertEqual(PulsePosition(energy: 0.9, openness: 0.1).quadrant, .friction)
-        XCTAssertEqual(PulsePosition(energy: 0.1, openness: 0.9).quadrant, .sovereign)
+        XCTAssertEqual(PulsePosition(energy: 0.9, openness: 0.1).quadrant, .reactive)
+        XCTAssertEqual(PulsePosition(energy: 0.1, openness: 0.9).quadrant, .receptive)
         XCTAssertEqual(PulsePosition(energy: 0.1, openness: 0.1).quadrant, .protective)
     }
 
     func test_midlineTiesResolveTowardChargedOpen() {
         // >= 0.5 rule: midline ties go to charged/open side
         XCTAssertEqual(PulsePosition(energy: 0.5, openness: 0.5).quadrant, .expansive)
-        XCTAssertEqual(PulsePosition(energy: 0.5, openness: 0.4).quadrant, .friction)
-        XCTAssertEqual(PulsePosition(energy: 0.4, openness: 0.5).quadrant, .sovereign)
+        XCTAssertEqual(PulsePosition(energy: 0.5, openness: 0.4).quadrant, .reactive)
+        XCTAssertEqual(PulsePosition(energy: 0.4, openness: 0.5).quadrant, .receptive)
         XCTAssertEqual(PulsePosition(energy: 0.4, openness: 0.4).quadrant, .protective)
     }
 

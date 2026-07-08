@@ -138,6 +138,7 @@ enum VaylPrimitives {
     static let frostPill        = UIColor(red: 0.910, green: 0.875, blue: 0.945, alpha: 1)
     static let inkPill          = UIColor(red: 0.10,  green: 0.09,  blue: 0.16,  alpha: 1)
     static let frostPillSelected = UIColor(red: 0.958, green: 0.875, blue: 0.925, alpha: 1)
+    static let inkPillSelected   = UIColor(white: 1.0, alpha: 0.10)
     static let frostPillBottom  = UIColor(red: 0.880, green: 0.845, blue: 0.920, alpha: 1)
     static let inkPillBottom    = UIColor(red: 0.08,  green: 0.07,  blue: 0.13,  alpha: 1)
 

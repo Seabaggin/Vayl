@@ -18,8 +18,9 @@ struct MirrorRevealView: View {
     @FocusState private var focused: Bool
 
     private var engine: RevealEngine { store.revealEngine }
-    /// Role .a is the subject; .b is the mirror.
-    private var isSubject: Bool { store.sessionRoleForViews == .a }
+    /// The subject alternates per mirror card (store derives it from the card
+    /// index, so both devices agree); the other partner guesses.
+    private var isSubject: Bool { store.mirrorSubjectIsMe }
 
     var body: some View {
         RevealCardChrome(intensity: engine.phase == .revealed ? 0.8 : 0.5) {

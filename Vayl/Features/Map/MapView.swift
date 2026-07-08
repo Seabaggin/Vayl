@@ -18,6 +18,7 @@ struct MapView: View {
     @Environment(AppState.self) private var appState
     @Environment(PulseStore.self) private var pulse
     @Environment(EntitlementStore.self) private var entitlements
+    @Environment(CoupleContext.self) private var coupleContext
     @Environment(\.modelContext) private var modelContext
     @State private var store = MapStore()
 
@@ -26,6 +27,47 @@ struct MapView: View {
     @State private var showVault = false
     @State private var showPaywall = false
     @State private var vaultStore = VaultStore()
+
+    // FEEL: tune on device
+    private let lensTintOpacity: Double = 0.10
+    // FEEL: tune on device
+    private let lensTintRadius: CGFloat = 420
+
+    // MARK: - Us reveal ceremony (spec §2.4)
+
+    // 0 dormant · 1 name igniting · 2 flipped+line showing · 3 done
+    @State private var revealStage: Int = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // FEEL: tune on device
+    private let revealIgniteDelay: Double = 1.0
+    // FEEL: tune on device
+    private let revealLineDuration: Double = 2.0
+    // FEEL: tune on device
+    private let revealBlurRadius: CGFloat = 6
+
+    private var shouldPlayReveal: Bool {
+        store.hasUs && !store.usRevealSeen
+    }
+
+    private func playUsReveal() {
+        guard shouldPlayReveal else { return }
+        store.markUsRevealSeen()   // mark FIRST — a mid-ceremony backgrounding must not replay it
+        if reduceMotion {
+            withAnimation(AppAnimation.enter) { store.layer = .us; revealStage = 2 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + revealLineDuration + 0.6) {
+                withAnimation(AppAnimation.exit) { revealStage = 3 }
+            }
+            return
+        }
+        withAnimation(AppAnimation.slow) { revealStage = 1 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + revealIgniteDelay) {
+            withAnimation(AppAnimation.spring) { store.layer = .us; revealStage = 2 }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + revealIgniteDelay + revealLineDuration) {
+            withAnimation(AppAnimation.exit) { revealStage = 3 }
+        }
+    }
 
     var body: some View {
         @Bindable var store = store
@@ -37,6 +79,17 @@ struct MapView: View {
                 AppColors.void.ignoresSafeArea()
                 OnboardingAtmosphere(config: .stat)
                     .ignoresSafeArea()
+                RadialGradient(
+                    colors: [
+                        (store.layer == .us ? AppColors.spectrumMagenta : AppColors.spectrumPurple)
+                            .opacity(lensTintOpacity),
+                        .clear
+                    ],
+                    center: .top, startRadius: 0, endRadius: lensTintRadius
+                )
+                .ignoresSafeArea()
+                .animation(AppAnimation.slow, value: store.layer)
+                .allowsHitTesting(false)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: AppSpacing.lg) {
@@ -49,6 +102,10 @@ struct MapView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .scrollIndicators(.hidden)
+            }
+            .onChange(of: store.hasUs) { _, has in
+                store.enforceLensGate()
+                if has { playUsReveal() }
             }
             // Pin the screen to the true width so an ignoresSafeArea child (the
             // atmosphere) cannot inflate the container and shove the column off-centre.
@@ -70,8 +127,11 @@ struct MapView: View {
                 screenHeight: layout.screenHeight
             ) {
                 PulseFullView(
-                    entries: pulse.entries,
-                    onDismiss: { showPulseSheet = false }
+                    mapStore:        store,
+                    myEntries:       pulse.entries,
+                    partnerEntries:  store.partnerEntries,
+                    partnerName:     store.partnerName,
+                    onDismiss:       { showPulseSheet = false }
                 )
             }
             .vaylSheet(
@@ -88,15 +148,24 @@ struct MapView: View {
             ) {
                 PaywallSheet(entry: .reveal, onUnlocked: {
                     showPaywall = false
-                    Task { await vaultStore.loadDesire(appState: appState, context: modelContext, isCore: entitlements.isCore) }
+                    // canRevealAll flips via EntitlementStore the moment the purchase
+                    // applies — the reload just re-fetches rows under the new gate.
+                    Task { await vaultStore.loadDesire(appState: appState, context: modelContext) }
                 })
             }
         }
         .task {
-            store.load(appState: appState, context: modelContext, isCore: entitlements.isCore)
-            await vaultStore.loadDesire(appState: appState, context: modelContext, isCore: entitlements.isCore)
-            await store.loadPartner(appState: appState)
+            store.configure(couple: coupleContext)
+            vaultStore.configure(couple: coupleContext)
+            await coupleContext.refreshIfNeeded()   // partner identity (no-op once loaded)
+            store.load(appState: appState, context: modelContext)
+            await vaultStore.loadDesire(appState: appState, context: modelContext)
+            // Eagerly loaded (not just on Agreements-segment open) so the vault
+            // door's stat line has a real count on first render.
+            await vaultStore.loadAgreements(appState: appState, context: modelContext)
             await store.loadPartnerPulse(appState: appState)
+            store.enforceLensGate()
+            playUsReveal()
         }
     }
 
@@ -113,8 +182,26 @@ struct MapView: View {
                         .font(AppFonts.caption)
                         .foregroundStyle(AppColors.textTertiary)
                 }
+                if store.hasUs {
+                    Text(store.layer == .us ? "Shared · you both see this" : "Only you")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(store.layer == .us
+                            ? AppColors.spectrumMagenta.opacity(0.8)
+                            : AppColors.spectrumCyan.opacity(0.8))
+                        .transition(.opacity)
+                        .accessibilityLabel(store.layer == .us
+                            ? "Shared lens: your partner sees this too"
+                            : "Private lens: only you see this")
+                }
+                if revealStage == 2, store.hasUs {
+                    Text("\(store.partnerName) is here. Tap a name to change whose map you're reading.")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                        .transition(.opacity)
+                }
             }
             Spacer()
+            SettingsGearButton { appState.settingsPresented = true }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -153,6 +240,9 @@ struct MapView: View {
                         // Dim the inactive partner name further so it reads clearly
                         // "off" (grey + reduced opacity), not just a grey colour.
                         .opacity(isUs ? 1.0 : 0.45)
+                        // Ceremony-only ignition pass: de-blur as the name lights up.
+                        // No-op (blur 0) outside revealStage 1, so steady-state is untouched.
+                        .blur(radius: revealStage == 1 ? revealBlurRadius : 0)
                 }
                 .buttonStyle(.plain)
                 .transition(.opacity)   // fades in the first time the name loads
@@ -173,7 +263,7 @@ struct MapView: View {
     private var layerContent: some View {
         switch store.layer {
         case .me: meLayer
-        case .us: usLayer
+        case .us: if store.hasUs { usLayer } else { meLayer }
         }
     }
 
@@ -181,7 +271,8 @@ struct MapView: View {
         VStack(alignment: .leading, spacing: AppSpacing.xl) {
             MapPulseHero(
                 onCheckIn: { startCheckIn() },
-                onOpenHistory: { showPulseSheet = true }
+                onOpenHistory: { showPulseSheet = true },
+                isLinked: store.hasUs
             )
             MapRecord(sessions: store.sessions, shares: store.categoryShares)
         }
@@ -193,8 +284,10 @@ struct MapView: View {
             stats:            store.usStats,
             align:            store.alignItems,
             lockedAlignCount: store.lockedAlignCount,
+            agreementsCount:  vaultStore.agreements.count,
             onOpenVault:      { showVault = true },
             onCheckIn:        { startCheckIn() },
+            onOpenPulse:      { showPulseSheet = true },
             partnerPosition:  store.partnerPosition,
             partnerEntries:   store.partnerEntries,
             partnerName:      store.partnerName
@@ -213,10 +306,12 @@ struct MapView: View {
 
 #Preview("Map tab") {
     let state = { let s = AppState(); s.displayName = "Jordan"; return s }()
+    let entitlements = EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state)
     return MapView()
         .environment(state)
         .environment(PulseStore())
-        .environment(EntitlementStore(modelContainer: .previewContainerWithProfile, appState: state))
+        .environment(entitlements)
+        .environment(CoupleContext(appState: state, entitlements: entitlements, modelContainer: .previewContainerWithProfile))
         .modelContainer(.previewContainer)
         .preferredColorScheme(.dark)
 }

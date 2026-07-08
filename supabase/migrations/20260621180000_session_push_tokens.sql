@@ -1,11 +1,9 @@
 -- Seg 8 (push) — device token registry for couple session invites.
 -- STATUS: UNVERIFIED / NOT APPLIED. Review before running (CLI or MCP apply_migration).
 --
--- ⚠️ VERIFY before applying: this references the project's auth-id vs profile-id
--- convention (see the backend↔app reconciliation notes). If user_profiles.id is NOT
--- auth.uid(), the RLS predicates below must be rewritten to join through whatever
--- column maps a profile to auth.uid() (the same pattern the existing scoped policies
--- use). Do not apply until the predicate matches the established convention.
+-- user_id stores a user_profiles.id (a generated UUID), NOT auth.uid() — same
+-- convention as every other scoped table in this codebase. Policies join through
+-- user_profiles.auth_id = auth.uid() accordingly.
 
 create table if not exists public.device_tokens (
     token       text primary key,
@@ -20,17 +18,27 @@ create index if not exists device_tokens_user_id_idx
 
 alter table public.device_tokens enable row level security;
 
--- A user manages only their own tokens. (See VERIFY note re: auth.uid() mapping.)
+-- A user manages only their own tokens.
 create policy "device_tokens_owner_select" on public.device_tokens
-    for select using (auth.uid() = user_id);
+    for select using (
+        user_id in (select id from public.user_profiles where auth_id = auth.uid())
+    );
 
 create policy "device_tokens_owner_insert" on public.device_tokens
-    for insert with check (auth.uid() = user_id);
+    for insert with check (
+        user_id in (select id from public.user_profiles where auth_id = auth.uid())
+    );
 
 create policy "device_tokens_owner_update" on public.device_tokens
-    for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+    for update using (
+        user_id in (select id from public.user_profiles where auth_id = auth.uid())
+    ) with check (
+        user_id in (select id from public.user_profiles where auth_id = auth.uid())
+    );
 
 create policy "device_tokens_owner_delete" on public.device_tokens
-    for delete using (auth.uid() = user_id);
+    for delete using (
+        user_id in (select id from public.user_profiles where auth_id = auth.uid())
+    );
 
 -- Sending pushes is service-role only (the edge function), never a client.

@@ -45,9 +45,18 @@ struct Card: Codable, Identifiable {
         }
     }
 
-    /// Whether this card has a pre-card context beat.
+    /// Whether this card has a context beat of either type (banner: an
+    /// on-card header; interstitial: a pre-card overlay — see ContextBeatType).
     var hasContextBeat: Bool {
         contextBeatType != nil && contextBeatCopy != nil
+    }
+
+    /// Whether this card shows the persistent banner-context header
+    /// (docs/superpowers/specs/2026-07-07-context-beat-header-design.md).
+    /// Reveal mechanics get their own dedicated explanation screens instead —
+    /// explicitly excluded here.
+    var hasContextKicker: Bool {
+        contextBeatType == .banner && !isRevealMechanic
     }
 
     /// Whether this card has back copy.

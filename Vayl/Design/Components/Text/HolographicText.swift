@@ -194,7 +194,8 @@ struct HolographicText: View {
         guard !started else { return }
         started = true
 
-        guard !reduceMotion else {
+        // LPM contract (2026-07-04): manual mount guards check RM *and* Low Power.
+        guard !reduceMotion, !AppAnimation.lowPower else {
             shift = 0.3; glowHigh = true; flash = -0.5   // static, light at rest
             return
         }

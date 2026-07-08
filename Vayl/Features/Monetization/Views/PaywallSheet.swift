@@ -84,8 +84,16 @@ struct PaywallSheet: View {
             } message: {
                 Text("We couldn't find a purchase to restore on this Apple ID. If you've bought Vayl, make sure you're signed in with the same Apple ID you used to purchase.")
             }
-            .sheet(item: $legalDoc) { doc in
-                SafariView(url: doc.url)
+            .vaylSheet(
+                isPresented: Binding(
+                    get: { legalDoc != nil },
+                    set: { if !$0 { legalDoc = nil } }
+                ),
+                heightFraction: 0.92
+            ) {
+                if let doc = legalDoc {
+                    SafariView(url: doc.url)
+                }
             }
     }
 

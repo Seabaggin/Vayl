@@ -210,6 +210,7 @@ final class SettingsStore {
             profile.coupleId = nil
             profile.partnerGenderIdentity = nil
             profile.partnerPronouns = nil
+            profile.firstInviteSentAt = nil
             if let coupleId {
                 try? context.delete(model: Couple.self,
                                     where: #Predicate { $0.id == coupleId })
@@ -220,6 +221,9 @@ final class SettingsStore {
             }
             try? context.saveWithLogging()
         }
+
+        // Re-linking must earn the Us reveal ceremony again (Map spec §2.3).
+        MapStore.resetUsRevealGlobally()
 
         appState.unlink()   // clears coupleId + linkState → routing re-renders unlinked
         accountPhase = .idle

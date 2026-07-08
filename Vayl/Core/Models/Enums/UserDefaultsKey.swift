@@ -20,4 +20,7 @@ enum UserDefaultsKey {
     /// Set true when a couple completes their first card session — collapses the
     /// airlock's six house-rule bullets to the one-line "settle in" on repeats.
     static let hasCompletedCoupleSession = "vayl.hasCompletedCoupleSession"
+    /// The pending-session banner the user dismissed. Shared across the Home
+    /// and Play surfaces so one dismissal silences both.
+    static let dismissedPendingSessionId = "vayl.dismissedPendingSessionId"
 }

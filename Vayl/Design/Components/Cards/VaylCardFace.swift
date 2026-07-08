@@ -155,11 +155,6 @@ struct VaylCardFace: View {
                 activeKey:        activeKey,
                 carriageProgress: carriageProgress
             )
-        case .slotMachine:
-            SlotMachineCardFace(
-                cardWidth:  size.width,
-                cardHeight: size.height
-            )
         case .radioTuner(let sig, let phase, let left, let right):
             RadioTunerCardFace(
                 cardWidth:         size.width,
@@ -193,19 +188,6 @@ struct VaylCardFace: View {
             )
         case .candle(let intensity, let time):
             CandleCardFace(intensity: intensity, time: time)
-        case .compassOption(let label):
-            CompassOptionCardFace(
-                cardWidth:  size.width,
-                cardHeight: size.height,
-                label:      label
-            )
-        case .compassSlider(let value, let dragging):
-            CompassSliderCardFace(
-                cardWidth:  size.width,
-                cardHeight: size.height,
-                value:      value,
-                dragging:   dragging
-            )
         case .snapshot(let verb, let noun, let toneProgress, let sealProgress):
             SnapshotCardFace(
                 cardWidth:    size.width,

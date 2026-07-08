@@ -92,11 +92,12 @@ struct SessionPlayerView: View {
                 .transition(.opacity)
             }
 
-            // Pre-card context beat (Section 3) — banner floats over the dimmed
-            // card tap-through; interstitial holds until "got it".
+            // Pre-card context beat (Section 3, narrowed 2026-07-07) — the only
+            // remaining case is interstitial; it holds until "got it". Banner
+            // now renders as a persistent ContextKickerView on the card itself
+            // (see screenLayer).
             if let beat = store.activeContextBeat {
                 ContextBeatOverlayView(
-                    type: beat.type,
                     copy: beat.copy,
                     onDismiss: { store.dismissContextBeat() }
                 )
@@ -168,23 +169,33 @@ struct SessionPlayerView: View {
     // MARK: - Drawer ceremony + hero prompt
 
     private var screenLayer: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.lg) {
+        VStack(alignment: .leading, spacing: 0) {
             drawerRow
+                .padding(.bottom, AppSpacing.lg)
+
             if let card = store.currentCard {
-                cardFace(card)
-                if card.hasBackCopy, !card.isRevealMechanic {
-                    CardBackFlipView(
-                        backCopy: card.backCopy ?? "",
-                        showingBack: store.showingCardBack,
-                        onFlip: { store.flipCardBack() }
-                    )
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    if card.hasContextKicker {
+                        ContextKickerView(copy: card.contextBeatCopy ?? "")
+                    }
+                    VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                        cardFace(card)
+                        if card.hasBackCopy, !card.isRevealMechanic {
+                            CardBackFlipView(
+                                backCopy: card.backCopy ?? "",
+                                showingBack: store.showingCardBack,
+                                onFlip: { store.flipCardBack() }
+                            )
+                        }
+                    }
                 }
+                .frame(maxHeight: .infinity, alignment: .center)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, AppSpacing.xl)
         .padding(.bottom, 150)
-        .frame(maxHeight: .infinity, alignment: .center)
+        .frame(maxHeight: .infinity, alignment: .topLeading)
     }
 
     /// Face router (Section 3): reveal mechanics get their reveal surface,
@@ -219,7 +230,7 @@ struct SessionPlayerView: View {
     private var drawerRow: some View {
         let isYou = store.currentDrawer == .you
         return HStack(spacing: AppSpacing.sm) {
-            Text(isYou ? "B" : "A")
+            Text(store.drawingRoleLabel)
                 .font(AppFonts.display(12, weight: .semibold, relativeTo: .caption))
                 .foregroundStyle(AppColors.void)
                 .frame(width: 26, height: 26)
@@ -568,10 +579,10 @@ struct SessionPlayerView: View {
 
     private func nextPromptText() -> String {
         let next = store.index + 1
-        guard store.effectiveHand.indices.contains(next) else {
+        guard store.hand.indices.contains(next) else {
             return store.currentCard?.text ?? ""
         }
-        return store.effectiveHand[next].text
+        return store.hand[next].text
     }
 
     // MARK: - Idle dim

@@ -15,10 +15,9 @@
 
 import Supabase
 import Foundation
-import Combine
 
 @MainActor
-final class ProfileService: ObservableObject {
+final class ProfileService {
     
     private var supabase: SupabaseClient {
         SupabaseManager.shared.client

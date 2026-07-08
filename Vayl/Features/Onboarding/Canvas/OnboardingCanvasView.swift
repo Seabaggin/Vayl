@@ -29,10 +29,10 @@ struct OnboardingCanvasView: View {
         self._director = State(initialValue: director)
     }
 
-    /// True only inside the Xcode Preview canvas. SpriteKit's `SpriteView` fails to
-    /// composite there and blanks the whole preview to a gray backdrop, hiding the
-    /// void + atmosphere. It has nothing to render while walking phases anyway (no
-    /// card flights), so we skip mounting it in previews. No effect on device/sim.
+    /// True only inside the Xcode Preview canvas. The Preview host doesn't run a real
+    /// SpriteKit/Metal compositor, so the layer has nothing to gain by mounting there;
+    /// it has nothing to render while walking phases anyway (no card flights). See
+    /// TransparentSpriteView for the Simulator-specific compositing fix.
     private var isPreview: Bool {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     }
@@ -96,14 +96,16 @@ struct OnboardingCanvasView: View {
                 // default 60, matching the SwiftUI animations around them
                 // (CADisableMinimumFrameDurationOnPhone is set in Vayl.plist;
                 // non-ProMotion displays clamp to 60 automatically).
-                // Skipped in the Xcode Preview canvas — SpriteView blanks the whole
-                // preview to gray there (see `isPreview`). Rendered normally on device/sim.
+                // Skipped in the Xcode Preview canvas (see `isPreview`). Uses
+                // TransparentSpriteView, not SwiftUI's SpriteView — forces the SKView
+                // transparent at the UIKit level, fixing an opaque gray fallback fill
+                // that SpriteView's `.allowsTransparency` option doesn't reliably avoid
+                // in the Simulator's Metal backend.
                 if !isPreview {
                     let flightScene = director.cardFlightScene
-                    SpriteView(
-                        scene:   flightScene,
+                    TransparentSpriteView(
+                        scene: flightScene,
                         preferredFramesPerSecond: 120,
-                        options: [.allowsTransparency],
                         shouldRender: { flightScene.shouldRender(at: $0) }
                     )
                     .frame(width: size.width, height: size.height)

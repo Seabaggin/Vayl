@@ -48,6 +48,18 @@ final class PulseStore {
         todayEntry == nil && !entries.isEmpty
     }
 
+    /// True once the last entry has gone quiet — the SAME `UsOrbState.quietAfterDays`
+    /// (4-day) threshold the Us orb's ember state uses. This governs visual dimming
+    /// (opacity), while `isPositionStale` only softens copy. Without this split, a
+    /// 1-day-old reading rendered vividly in the Us orb (still "current") looked
+    /// dead/dimmed in the Me aura (already "stale" at not-today) — same data, two
+    /// thresholds, a visible mismatch between the two lenses on the same tab.
+    var isPositionQuiet: Bool {
+        guard let last = entries.last?.date else { return false }
+        let days = Calendar.current.dateComponents([.day], from: last, to: Date()).day ?? .max
+        return days >= UsOrbState.quietAfterDays
+    }
+
     /// Human copy for how stale a date is ("yesterday", "4 days ago"). Was
     /// MapPulseHero's own private `relativeDay` — promoted here so MapUsLayer can
     /// use the same phrasing for the partner's staleness, not just mine.

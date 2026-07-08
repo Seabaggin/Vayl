@@ -14,11 +14,13 @@ import SwiftData
 struct HomeRouterView: View {
 
     @Environment(AppState.self) private var appState
+    @Environment(CoupleContext.self) private var coupleContext
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         HomeRouterInnerView(
             appState: appState,
+            coupleContext: coupleContext,
             modelContainer: modelContext.container
         )
     }
@@ -53,8 +55,19 @@ private struct HomeRouterInnerView: View {
     @Namespace private var pathNamespace
     @State private var showPath = false
 
-    init(appState: AppState, modelContainer: ModelContainer) {
-        _store = State(initialValue: HomeStore(modelContainer: modelContainer, appState: appState))
+    // ── Pairing sheet presentation ───────────────────────────────────────
+    // Home is now a first-class entry point for pairing (previously routed to
+    // the Map tab). Mirrors the exact pattern in SettingsPartnerView: fresh
+    // PairingStore per presentation, appState injected via .environment.
+    @State private var showPairingInvite = false
+    @State private var showPairingJoin = false
+
+    init(appState: AppState, coupleContext: CoupleContext, modelContainer: ModelContainer) {
+        _store = State(initialValue: HomeStore(
+            modelContainer: modelContainer,
+            appState: appState,
+            couple: coupleContext
+        ))
     }
 
     // MARK: - Body
@@ -95,6 +108,18 @@ private struct HomeRouterInnerView: View {
             if let revealStore = activeReveal {
                 DesireRevealView(store: revealStore)
             }
+        }
+        .vaylSheet(isPresented: $showPairingInvite, heightFraction: 0.92) {
+            PairingInviteView(
+                store: PairingStore(modelContainer: modelContext.container, appState: appState)
+            )
+            .environment(appState)
+        }
+        .vaylSheet(isPresented: $showPairingJoin, heightFraction: 0.92) {
+            PairingJoinView(
+                store: PairingStore(modelContainer: modelContext.container, appState: appState)
+            )
+            .environment(appState)
         }
     }
 
@@ -200,7 +225,9 @@ private struct HomeRouterInnerView: View {
                 displayName:         appState.displayName,
                 partnerChipState:    store.partnerChipState,
                 cards:               loadedDeck.orderedCards,
+                deckTitle:           loadedDeck.title,
                 desireMapState:      store.desireMapState,
+                partnerPulsePosition: store.partnerPulsePosition,
                 reflectionCardState: store.reflectionCardState,
                 pickUpItems:         [],
                 stageIndex:          store.stageIndex,
@@ -215,14 +242,22 @@ private struct HomeRouterInnerView: View {
                 onCardAction:        { card, action in
                     handleCardAction(card: card, action: action, deck: loadedDeck, store: store)
                 },
-                onInvitePartner:     { appState.selectedTab = .map },
-                onPartnerTap:        { appState.selectedTab = .map },
+                onInvitePartner:     { showPairingInvite = true },
+                onPartnerTap:        {
+                    switch appState.linkState {
+                    case .linked:
+                        appState.settingsPresented = true
+                    default:
+                        showPairingJoin = true
+                    }
+                },
+                onSessionEnded:      { Task { await store.refreshDeckState() } },
                 onOpenLexicon:       { appState.selectedTab = .learn },
                 onPulseTap:          { appState.selectedTab = .map },
                 // Interim: route to the Pulse surface. Final: present the shared
                 // check-in sheet in place (Bryan's PulseWidget pass).
                 onCheckIn:           { appState.selectedTab = .map },
-                onOpenSettings:      { appState.selectedTab = .settings }
+                onOpenSettings:      { appState.settingsPresented = true }
             )
         }
     }
@@ -258,7 +293,7 @@ private struct HomeRouterInnerView: View {
                 appState: appState
             )
         case .invitePartner:
-            appState.selectedTab = .map     // pairing lives on the Map tab today (PairingSettingsView)
+            showPairingInvite = true
         case .seeReveal:
             presentReveal()                  // D4 reveal (stub) — full-screen "magic moment"
         case .profile:
@@ -275,23 +310,19 @@ private struct HomeRouterInnerView: View {
     /// host cannot transition at once, so the reveal waits for the rater's dismiss to settle.
     private static let raterToRevealHandoff: Double = 0.35
 
-    /// On rater close: refresh Home, then branch. If both maps are now complete and the reveal
-    /// has not been seen, hand straight off to the reveal (the second-finisher gift, or a first
-    /// finisher re-entering once their partner has finished). Otherwise, if the map JUST flipped
-    /// to complete (first finisher, partner still pending), play the one-shot completion beat.
-    /// The map is a moment, not a home state.
+    /// On rater close: the store refreshes and resolves the branch (reveal handoff /
+    /// one-shot completion beat / nothing — see HomeStore.raterDismissOutcome). This
+    /// view only presents the result.
     private func handleRaterDismiss() {
         Task {
-            let wasComplete = mapWasCompleteOnOpen
-            await store.loadAll()
-            guard store.myMapComplete == true else { return }
-            if store.partnerMapComplete, !store.revealDone {
+            switch await store.raterDismissOutcome(wasCompleteOnOpen: mapWasCompleteOnOpen) {
+            case .showReveal:
                 try? await Task.sleep(for: .seconds(Self.raterToRevealHandoff))
                 presentReveal()
-            } else if !wasComplete, store.isPaired {
-                // First finisher, paired: the one-shot map-charted moment. (Solo completion is
-                // the solo-funnel beat, deferred — no partner to "see where you align" with yet.)
+            case .celebrateCompletion:
                 store.celebrateMapCompletion()
+            case .none:
+                break
             }
         }
     }

@@ -1,4 +1,5 @@
 // Design/Components/Navigation/RacetrackTabBar.swift
+// Open Lightly
 
 import SwiftUI
 
@@ -9,183 +10,213 @@ struct RacetrackTabBar: View {
     @Binding var selection: AppTab
     @Environment(\.colorScheme) private var colorScheme
 
-    @State private var haloScale:   CGFloat = 0
-    @State private var haloOpacity: CGFloat = 0
-
     var body: some View {
         HStack(spacing: 0) {
             ForEach(AppTab.allCases, id: \.self) { tab in
-                OrbTabButton(
+                RacetrackTabPill(
                     tab:        tab,
                     isSelected: selection == tab
                 ) {
                     guard selection != tab else { return }
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     selection = tab
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 }
                 .frame(maxWidth: .infinity)
             }
         }
-        .frame(height: 48)
+        // Sliding selection pill — sits behind the icons.
+        // Uses .animation(_:value:) (implicit, not a withAnimation transaction).
+        .background {
+            GeometryReader { proxy in
+                let count: CGFloat = CGFloat(AppTab.allCases.count)
+                let tabW:  CGFloat = proxy.size.width / count
+                let idx:   CGFloat = CGFloat(AppTab.allCases.firstIndex(of: selection) ?? 0)
+                let pillW: CGFloat = AppSpacing.md * 2 + 26   // 58 pt
+                let pillH: CGFloat = AppSpacing.sm * 2 + 26   // 42 pt
+                Capsule()
+                    .fill(AppColors.glassFrostPillSelected)
+                    .frame(width: pillW, height: pillH)
+                    .offset(
+                        x: tabW * idx + (tabW - pillW) / 2,
+                        y: (proxy.size.height - pillH) / 2
+                    )
+                    .animation(AppAnimation.tabSwitch, value: selection)
+            }
+            .allowsHitTesting(false)
+        }
+        .padding(.vertical, AppSpacing.sm)
         .padding(.horizontal, AppSpacing.sm)
-        .background(orbLayer)
-        .background(barChrome)
-        .clipShape(Capsule())
-        .shadow(
-            color: AppColors.shadowDeep,
-            radius: 24, y: -4
-        )
-        .overlay { haloLayer }
+        .background(barBackground)
         .padding(.horizontal, AppSpacing.xl)
-        .onChange(of: selection) { _, _ in triggerHalo() }
     }
 
-    // MARK: - Orb (clipped by Capsule above — cannot bleed outside the bar)
-    // Sized to the button tap target (~slotW), not the full slot, so it reads as
-    // a deliberate halo rather than a diffuse bleed into neighbouring icons.
+    // MARK: - Bar background
 
-    private var orbLayer: some View {
-        GeometryReader { geo in
-            let count = CGFloat(AppTab.allCases.count)
-            let slotW = geo.size.width / count
-            let idx   = CGFloat(AppTab.allCases.firstIndex(of: selection) ?? 0)
-
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            AppColors.accentSecondary.opacity(0.60),
-                            AppColors.accentSecondary.opacity(0.22),
-                            .clear
-                        ],
-                        center:      .center,
-                        startRadius: 0,
-                        endRadius:   slotW * 0.48   // soft falloff — reads as halo, not bleed
-                    )
-                )
-                .frame(width: slotW * 1.5, height: geo.size.height * 2.2)
-                .blur(radius: 10)
-                .position(x: slotW * (idx + 0.5), y: geo.size.height / 2)
-                .animation(AppAnimation.orbSnap, value: selection)
-        }
-    }
-
-    // MARK: - Halo (outside the Capsule clip — can bloom beyond the pill edge)
-    // Positioned using the same slotW geometry as orbLayer so it always lands on the icon.
-    // blendMode(.screen) adds white + purple light additively on the dark pill chrome.
-
-    private var haloLayer: some View {
-        GeometryReader { geo in
-            let count = CGFloat(AppTab.allCases.count)
-            let slotW = geo.size.width / count
-            let idx   = CGFloat(AppTab.allCases.firstIndex(of: selection) ?? 0)
-
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            AppColors.textBody.opacity(0.50),
-                            AppColors.accentSecondary.opacity(0.28),
-                            .clear
-                        ],
-                        center:      .center,
-                        startRadius: 0,
-                        endRadius:   22
-                    )
-                )
-                .frame(width: 44, height: 44)
-                .scaleEffect(haloScale)
-                .opacity(haloOpacity)
-                .blendMode(.screen)
-                .allowsHitTesting(false)
-                .position(x: slotW * (idx + 0.5), y: geo.size.height / 2)
-        }
-        .allowsHitTesting(false)
-    }
-
-    private func triggerHalo() {
-        haloScale   = 0
-        haloOpacity = 0
-        // Delay matches the orb's ~peak overshoot (response: 0.40 → peak at ~0.18s),
-        // so the halo blooms as the orb is snapping back to its landing position.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-            withAnimation(AppAnimation.fast)    { haloOpacity = 1.0 }
-            withAnimation(AppAnimation.orbSnap) { haloScale   = 2.2 }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-                withAnimation(AppAnimation.standard) { haloOpacity = 0 }
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.44) {
-                haloScale = 0
-            }
-        }
-    }
-
-    // MARK: - Bar chrome
-
-    private var barChrome: some View {
+    private var barBackground: some View {
         ZStack {
+            // Base fill
             Capsule()
-                .fill(AppColors.modalBackground.opacity(0.97))
+                .fill(
+                    colorScheme == .light
+                        ? AnyShapeStyle(AppColors.glassFrostCard)
+                        : AnyShapeStyle(AppColors.modalBackground.opacity(0.97))
+                )
 
-            if colorScheme == .dark {
-                HolographicShimmer(duration: 6.0)
-                    .opacity(0.10)
-                    .clipShape(Capsule())
-                    .allowsHitTesting(false)
-            } else {
+            // Shimmer
+            if colorScheme == .light {
                 LightModeShimmer(duration: 6.0, usePillColors: true)
                     .opacity(0.15)
                     .clipShape(Capsule())
                     .allowsHitTesting(false)
+            } else {
+                HolographicShimmer(duration: 6.0)
+                    .opacity(0.10)
+                    .clipShape(Capsule())
+                    .allowsHitTesting(false)
             }
 
+            // Border on top of shimmer
             Capsule()
                 .strokeBorder(AppColors.borderSubtle, lineWidth: 1.5)
         }
+        .shadow(
+            color: colorScheme == .light
+                ? AppColors.shadowPurple
+                : AppColors.shadowDeep,
+            radius: 24,
+            y: -4
+        )
     }
 }
 
-// MARK: - OrbTabButton
+// MARK: - RacetrackTabPill
 
-private struct OrbTabButton: View {
+private struct RacetrackTabPill: View {
 
     let tab:        AppTab
     let isSelected: Bool
     let onTap:      () -> Void
 
-    @State private var isPressed = false
+    @State private var isPressed: Bool = false
+
+    @Environment(\.colorScheme) private var colorScheme
+    private var isLight: Bool { colorScheme == .light }
 
     var body: some View {
         Button(action: onTap) {
-            iconView.padding(AppSpacing.sm)
+            Image(systemName: tab.icon)
+                .font(Font.custom("Switzer-Regular", size: 24, relativeTo: .title3))
+                .frame(width: 26, height: 26)
+                .foregroundStyle(iconColor)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.sm)
+                .background(pillBackground)
+                .clipShape(Capsule())
+                .overlay(racetrackBorder)
         }
         .buttonStyle(.plain)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
-                .onChanged { _ in guard !isSelected else { return }; isPressed = true }
-                .onEnded   { _ in isPressed = false }
+                .onChanged { _ in
+                    guard !isSelected else { return }
+                    isPressed = true
+                }
+                .onEnded { _ in isPressed = false }
         )
-        .scaleEffect(isPressed ? 0.92 : 1.0)
-        .animation(AppAnimation.fast, value: isPressed)
         .accessibilityLabel(tab.label)
         .accessibilityHint(isSelected ? "Selected" : "Switch to \(tab.label)")
         .accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
     }
 
-    @ViewBuilder
-    private var iconView: some View {
-        if isSelected {
-            Image(systemName: tab.icon)
-                .font(Font.custom("Switzer-Regular", size: 22, relativeTo: .title3))
-                .frame(width: 22, height: 22)
-                .foregroundStyle(AppColors.textBody)
-                .shadow(color: AppColors.accentSecondary.opacity(0.80), radius: 8)
-        } else {
-            Image(systemName: tab.icon)
-                .font(Font.custom("Switzer-Regular", size: 22, relativeTo: .title3))
-                .frame(width: 22, height: 22)
-                .foregroundStyle(isPressed ? AppColors.textSecondary : AppColors.textTertiary)
+    // MARK: - Visual layers
+
+    private var iconColor: Color {
+        if isSelected { return isLight ? AppColors.textBody : .white }
+        if isPressed  { return isLight ? AppColors.textBody : AppColors.textSecondary }
+        return isLight ? AppColors.textBody.opacity(0.85) : AppColors.textPrimary
+    }
+
+    private var pillBackground: some View {
+        Capsule()
+            .fill(pillFill)
+            .animation(AppAnimation.fast, value: isPressed)
+    }
+
+    private var pillFill: Color {
+        if isPressed {
+            return isLight
+                ? AppColors.glassFrostPill
+                : Color(red: 0.086, green: 0.079, blue: 0.141)
         }
+        return .clear
+    }
+
+    private var racetrackBorder: some View {
+        TopAnchoredCapsule()
+            .trim(from: 0, to: 1)
+            .stroke(arcGradient, style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
+            .opacity(isSelected ? 1 : 0)
+            .animation(AppAnimation.fast, value: isSelected)
+            .shadow(
+                color: isLight
+                    ? AppColors.accentTertiary.opacity(0.55)
+                    : AppColors.accentPrimary.opacity(0.70),
+                radius: 4,
+                x: 0,
+                y: 0
+            )
+    }
+
+    private var arcGradient: AngularGradient {
+        AngularGradient(
+            colors: isLight
+                ? [
+                    AppColors.accentTertiary,
+                    AppColors.progressBarLeading,
+                    AppColors.safetyAccent,
+                    AppColors.accentTertiary
+                  ]
+                : [
+                    AppColors.accentPrimary,
+                    AppColors.accentSecondary,
+                    AppColors.accentTertiary,
+                    AppColors.accentTertiary,
+                    AppColors.accentPrimary
+                  ],
+            center: .center
+        )
+    }
+}
+
+// MARK: - TopAnchoredCapsule
+
+// Capsule whose path starts at top-center and sweeps clockwise.
+// This lets .trim(from:0, to:trimEnd) draw CW from 12 o'clock on any
+// aspect-ratio pill without rotationEffect distortion or multi-layer hacks.
+private struct TopAnchoredCapsule: Shape {
+    func path(in rect: CGRect) -> Path {
+        let r = min(rect.width, rect.height) / 2
+        var p = Path()
+        // 12 o'clock (top-center) → CW: right cap → bottom edge → left cap → close
+        p.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
+        p.addArc(
+            center: CGPoint(x: rect.maxX - r, y: rect.midY),
+            radius: r,
+            startAngle: .degrees(-90),
+            endAngle: .degrees(90),
+            clockwise: false
+        )
+        p.addLine(to: CGPoint(x: r, y: rect.maxY))
+        p.addArc(
+            center: CGPoint(x: r, y: rect.midY),
+            radius: r,
+            startAngle: .degrees(90),
+            endAngle: .degrees(270),
+            clockwise: false
+        )
+        p.closeSubpath()
+        return p
     }
 }
 

@@ -47,7 +47,7 @@ struct ContextCardFace: View {
 
                 Spacer(minLength: 0)
 
-                BookObject(live: isFront && !reduceMotion,
+                BookObject(live: isFront && !reduceMotion && !AppAnimation.lowPower,
                            confirmed: confirmed,
                            turnStart: turnStart, ribbonStart: ribbonStart)
                     .frame(maxWidth: .infinity)
@@ -112,10 +112,29 @@ private struct BookObject: View {
     private let dropDur: CGFloat = 0.95   // slow, ceremonious drape-in
     private let liftDur: CGFloat = 0.45
 
+    // The book's motion is episodic (page turn 0.6s, ribbon drape + damped
+    // pendulum tail < 3.0s). Once every effect has settled the clock pauses —
+    // the old always-on clock kept redrawing identical frames for as long as
+    // the card stayed front.
+    @State private var settled = false
+
+    /// Instant after which nothing on the canvas is still moving.
+    /// (Ribbon sway is zeroed at `re >= 3.0` in `draw`; the lift-out is shorter.)
+    private var settleDeadline: Date {
+        max(turnStart.addingTimeInterval(turnDur),
+            ribbonStart.addingTimeInterval(3.0))
+    }
+
     var body: some View {
         if live {
-            TimelineView(.animation) { tl in
+            TimelineView(.animation(minimumInterval: 1 / 30, paused: settled)) { tl in
                 Canvas { ctx, size in draw(&ctx, size: size, now: tl.date) }
+            }
+            .task(id: settleDeadline) {
+                settled = false
+                let wait = settleDeadline.timeIntervalSinceNow
+                if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+                settled = true
             }
         } else {
             Canvas { ctx, size in draw(&ctx, size: size, now: nil) }

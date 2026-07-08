@@ -58,29 +58,32 @@ final class DesireRevealStoreTests: XCTestCase {
         XCTAssertEqual(store.beatPhase, .beat1)
     }
 
-    func test_advanceBeat_walksBeat1ToPaywall() {
+    func test_advanceBeat_walksBeat1ToBeat2_thenRests() {
         let store = freeStore()
         store.startBeatSequence()
         XCTAssertEqual(store.beatPhase, .beat1)
 
         store.advanceBeat()
         XCTAssertEqual(store.beatPhase, .beat2)
-        XCTAssertFalse(store.showPaywall, "paywall does not rise until beat3")
+        XCTAssertFalse(store.showPaywall, "the paywall never auto-rises")
 
+        // A second tap-anywhere has nothing further to skip to — the ceremony rests at
+        // beat2 until the user taps a locked star (selectStar), never from a generic tap.
         store.advanceBeat()
-        XCTAssertEqual(store.beatPhase, .beat3)
-        XCTAssertTrue(store.showPaywall, "beat3 raises the paywall")
+        XCTAssertEqual(store.beatPhase, .beat2)
+        XCTAssertFalse(store.showPaywall)
     }
 
-    func test_advanceBeat_atBeat3ReopensPaywall() {
+    func test_selectStar_lockedReopensPaywallAfterClose() throws {
         let store = freeStore()
+        let locked = try XCTUnwrap(store.lockedMatches.first)
         store.startBeatSequence()
-        store.advanceBeat()   // beat2
-        store.advanceBeat()   // beat3 + paywall
+        store.advanceBeat()          // beat2
+        store.selectStar(locked)     // beat3 + paywall, via an explicit locked-star tap
         store.closePaywall()
         XCTAssertFalse(store.showPaywall)
 
-        store.advanceBeat()   // still beat3, re-raises the paywall
+        store.selectStar(locked)     // tapping the locked star again re-raises the paywall
         XCTAssertEqual(store.beatPhase, .beat3)
         XCTAssertTrue(store.showPaywall)
     }
@@ -93,11 +96,12 @@ final class DesireRevealStoreTests: XCTestCase {
 
     // MARK: - Unlock in place
 
-    func test_handleUnlockSuccess_jumpsToRevealedAndClosesPaywall() {
+    func test_handleUnlockSuccess_jumpsToRevealedAndClosesPaywall() throws {
         let store = freeStore()
+        let locked = try XCTUnwrap(store.lockedMatches.first)
         store.startBeatSequence()
-        store.advanceBeat()
-        store.advanceBeat()                 // beat3 + paywall open
+        store.advanceBeat()          // beat2
+        store.selectStar(locked)     // beat3 + paywall open, via a locked-star tap
         store.handleUnlockSuccess()
         XCTAssertEqual(store.beatPhase, .revealed)
         XCTAssertFalse(store.showPaywall)
@@ -164,11 +168,12 @@ final class DesireRevealStoreTests: XCTestCase {
         XCTAssertNil(store.selectedMatch)
     }
 
-    func test_closePaywallLeavesBeatUntouched() {
+    func test_closePaywallLeavesBeatUntouched() throws {
         let store = freeStore()
+        let locked = try XCTUnwrap(store.lockedMatches.first)
         store.startBeatSequence()
-        store.advanceBeat()
-        store.advanceBeat()           // beat3 + paywall
+        store.advanceBeat()          // beat2
+        store.selectStar(locked)     // beat3 + paywall
         store.closePaywall()
         XCTAssertFalse(store.showPaywall)
         XCTAssertEqual(store.beatPhase, .beat3, "closing the paywall does not rewind the ceremony")

@@ -2,12 +2,15 @@
 //  AirlockView.swift
 //  Vayl
 //
-//  The airlock, two screens (cover-family 1A/1B):
-//    1A house rules: six spectrum bullets, read aloud together, one tap on
-//       "We're ready". Repeat sessions collapse to a one-line "settle in".
-//    1B bandwidth + lock-in: private 3-detent slider, 3-second press-and-hold
-//       lock-in, presence row. The gentler of the two readings becomes the
-//       session's depth ceiling; the raw reading is never shown to the partner.
+//  The airlock — ONE merged "Before we start" screen (not two steps): a pure
+//  capacity mirror, an optional centering ritual, and the lock-in ring. The
+//  house rules are intentionally NOT here — six bullets took too much space
+//  once capacity + ritual + ring shared the screen (Bryan's call). The ring's
+//  mechanism is the REAL production one —
+//  each partner independently holds their own ring; readiness crosses devices
+//  via AirlockStore.partnerConsented. There is no shared release-timing match
+//  (that would need a realtime channel this app doesn't have yet); the copy
+//  below is honest to what actually happens.
 //
 //  Driven by AirlockStore (real presence/consent). airlock == nil is the
 //  DEBUG-only local path (mocked partner, unchanged store mock).
@@ -21,33 +24,63 @@ struct AirlockView: View {
     let airlock: AirlockStore?
 
     @Environment(\.vaylDismiss) private var vaylDismiss
+    @Environment(PulseStore.self) private var pulseStore
 
-    private enum Step { case rules, bandwidth }
-    @State private var step: Step = .rules
     @State private var lockedIn = false
+    @State private var consentFailed = false
     @State private var waitingPulse = false
+    @State private var selectedRitual: Ritual? = nil
+    @State private var capacityStore = CoupleCapacityStore(service: SupabaseCoupleCapacityService())
+    @State private var showHowItWorks = false
 
-    /// Repeat couples get the one-liner, not the six bullets (spec 4.5).
-    private var isRepeatSession: Bool {
-        UserDefaults.standard.bool(forKey: UserDefaultsKey.hasCompletedCoupleSession)
+    private var yourTier: PulseCapacityColor {
+        pulseStore.currentPosition.quadrant.capacityColor
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
-            switch step {
-            case .rules:     rulesScreen
-            case .bandwidth: bandwidthScreen
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                header
+
+                eyebrowTitle
+
+                CapacityMirror(
+                    yourTier: yourTier,
+                    partnerTier: capacityStore.partnerTier,
+                    partnerNotCheckedIn: capacityStore.partnerNotCheckedIn,
+                    partnerLabel: store.partnerLabel
+                )
+                .padding(.top, AppSpacing.lg)
+
+                Text("take a moment to arrive · optional")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .frame(maxWidth: .infinity)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, AppSpacing.md)
+
+                RitualPills(selected: $selectedRitual)
+                    .padding(.top, AppSpacing.xs)
+
+                ritualOrRing
+                    .padding(.top, AppSpacing.xl)
             }
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.top, AppSpacing.xxl)
+            .padding(.bottom, AppSpacing.xl)
         }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.top, AppSpacing.xxl)
-        .padding(.bottom, AppSpacing.xl)
-        .animation(AppAnimation.enter.reduceMotionSafe, value: step)
         .onAppear {
             if airlock == nil { store.armPresence() }   // DEBUG local mock only
         }
+        .task {
+            await capacityStore.load()
+        }
+        .vaylSheet(isPresented: $showHowItWorks, heightFraction: 0.4) {
+            howItWorksSheet
+        }
     }
+
+    // MARK: - Header
 
     private var header: some View {
         HStack {
@@ -67,9 +100,7 @@ struct AirlockView: View {
         }
     }
 
-    // MARK: - 1A · house rules
-
-    private var rulesScreen: some View {
+    private var eyebrowTitle: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: AppSpacing.sm) {
                 Text("✦").font(AppFonts.bodyMedium).foregroundStyle(AppColors.spectrumText)
@@ -83,107 +114,100 @@ struct AirlockView: View {
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(AppColors.textPrimary)
                 .padding(.top, AppSpacing.sm)
+        }
+    }
 
-            if isRepeatSession {
-                Text("You know the room. Settle in, then say you're ready.")
-                    .font(AppFonts.bodyText)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .padding(.top, AppSpacing.md)
-            } else {
-                Text("Read these out loud, together.")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .padding(.top, AppSpacing.xs)
+    // MARK: - Ritual / Ring
 
-                VStack(alignment: .leading, spacing: AppSpacing.md) {
-                    bulletRow("Take your time. Silence is fine.")
-                    bulletRow("Both of you answer, every card.")
-                    bulletRow("Listen first. Say what you heard before your turn.")
-                    bulletRow("No fixing, no judging, just get each other.")
-                    bulletRow("What's said here stays here.")
-                    bulletRow("You can always pass.")
+    @ViewBuilder
+    private var ritualOrRing: some View {
+        switch selectedRitual {
+        case .breathe:
+            BreathGuide { selectedRitual = nil }
+                .frame(maxWidth: .infinity)
+                .transition(.opacity)
+
+        case .goodThing:
+            goodThingPrompt
+                .transition(.opacity)
+
+        case nil:
+            lockInRing
+                .transition(.opacity)
+        }
+    }
+
+    private var goodThingPrompt: some View {
+        VStack(spacing: AppSpacing.lg) {
+            Text("✦")
+                .font(AppFonts.displayHero)
+                .foregroundStyle(AppColors.spectrumText)
+            Text("One thing you're grateful for about them, right now.")
+                .font(AppFonts.prompt)
+                .foregroundStyle(AppColors.textPrimary)
+                .multilineTextAlignment(.center)
+            Text("Say it out loud. Take turns. No rush.")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+            VaylButton(label: "we're ready", size: .compact) {
+                selectedRitual = nil
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, AppSpacing.lg)
+    }
+
+    private var lockInRing: some View {
+        VStack(spacing: AppSpacing.md) {
+            HoldToLockInRing(locked: lockedIn, ringSize: 224, showsGlyph: false) {
+                lockedIn = true
+                consentFailed = false
+                if let airlock {
+                    Task { @MainActor in
+                        // Un-latch on a failed commit so the ring drains and the
+                        // user can hold again — never a full ring that never wrote.
+                        if await !airlock.consent() {
+                            lockedIn = false
+                            consentFailed = true
+                        }
+                    }
+                } else {
+                    store.confirmSynced()   // DEBUG local path, mock unchanged
                 }
-                .padding(.top, AppSpacing.lg)
+            }
+            .padding(.top, AppSpacing.md)
+
+            VStack(spacing: AppSpacing.xxs) {
+                Text(ringPrimaryLine)
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(AppColors.textPrimary)
+                if !ringSecondaryLine.isEmpty {
+                    Text(ringSecondaryLine)
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
             }
 
-            Spacer(minLength: 0)
+            presenceRow
 
             Button {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                withAnimation(AppAnimation.enter.reduceMotionSafe) { step = .bandwidth }
+                showHowItWorks = true
             } label: {
-                Text("We're ready")
-                    .font(AppFonts.ctaLabel)
-                    .foregroundStyle(AppColors.textBody)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, AppSpacing.md)
-                    .background(
-                        RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                            .strokeBorder(AppColors.spectrumBorder, lineWidth: 1.2)
-                    )
+                HStack(spacing: AppSpacing.xs) {
+                    Text("how it works")
+                    Text("i")
+                        .font(AppFonts.body(9, weight: .semibold, relativeTo: .caption2).italic())
+                        .frame(width: 15, height: 15)
+                        .overlay(Circle().strokeBorder(AppColors.textAccent, lineWidth: 1))
+                }
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textAccent)
             }
             .buttonStyle(.plain)
+            .padding(.top, AppSpacing.xs)
         }
-    }
-
-    private func bulletRow(_ text: String) -> some View {
-        // SpectrumBulletRow (mockup): 7pt spectrum dot + one line.
-        HStack(alignment: .top, spacing: AppSpacing.md) {
-            Circle()
-                .fill(AppColors.spectrumBorder)
-                .frame(width: 7, height: 7)
-                .padding(.top, AppSpacing.xs + AppSpacing.xxs)
-            Text(text)
-                .font(AppFonts.bodyText)
-                .foregroundStyle(AppColors.textBody)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    // MARK: - 1B · bandwidth + lock-in
-
-    private var bandwidthScreen: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: AppSpacing.sm) {
-                Text("✦").font(AppFonts.bodyMedium).foregroundStyle(AppColors.spectrumText)
-                Text("lock in")
-                    .font(AppFonts.overline).tracking(2).textCase(.uppercase)
-                    .foregroundStyle(AppColors.textTertiary)
-            }
-            .padding(.top, AppSpacing.lg)
-
-            Text("How much have you\ngot for each other?")
-                .font(AppFonts.screenTitle)
-                .foregroundStyle(AppColors.textPrimary)
-                .padding(.top, AppSpacing.sm)
-
-            BandwidthSlider(selection: $store.bandwidth)
-                .padding(.top, AppSpacing.xl)
-                .disabled(lockedIn)
-                .opacity(lockedIn ? 0.6 : 1)
-
-            Spacer(minLength: 0)
-
-            VStack(spacing: AppSpacing.md) {
-                HoldToLockInRing(locked: lockedIn) {
-                    lockedIn = true
-                    if let airlock {
-                        let fraction = store.bandwidth.fraction
-                        Task { @MainActor in
-                            await airlock.commitBandwidth(fraction)
-                            await airlock.consent()
-                        }
-                    } else {
-                        store.confirmSynced()   // DEBUG local path, mock unchanged
-                    }
-                }
-                Text(lockedIn ? "you're locked in" : "press and hold to lock in")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-                presenceRow
-            }
-            .frame(maxWidth: .infinity)
-        }
+        .frame(maxWidth: .infinity)
     }
 
     private var presenceRow: some View {
@@ -214,6 +238,28 @@ struct AirlockView: View {
         return lockedIn ? "waiting for \(store.partnerLabel)…" : ""
     }
 
+    /// Real presence, distinct from consent — has the partner arrived at all.
+    private var partnerHere: Bool { airlock?.partnerPresent ?? store.partnerPresent }
+    private var partnerConsented: Bool { airlock?.partnerConsented ?? false }
+
+    /// Terse primary line under the ring — mirrors the mockup's tiered copy
+    /// (a short state message), rewritten honestly for the real mechanism:
+    /// each partner independently holds, readiness crosses via consent.
+    private var ringPrimaryLine: String {
+        if consentFailed { return "That didn't reach the room. Hold again." }
+        if partnerConsented && lockedIn { return "You're both in — here we go →" }
+        if lockedIn { return "You're locked in." }
+        if !partnerHere { return "Waiting for \(store.partnerLabel) to arrive…" }
+        return "Press and hold your ring."
+    }
+
+    private var ringSecondaryLine: String {
+        if partnerConsented && lockedIn { return "" }
+        if lockedIn { return "Waiting for \(store.partnerLabel)…" }
+        if !partnerHere { return "" }
+        return "\(store.partnerLabel) holds theirs, on their phone."
+    }
+
     private func presenceChip(_ name: String, ready: Bool, you: Bool) -> some View {
         HStack(spacing: AppSpacing.sm) {
             Circle()
@@ -236,6 +282,84 @@ struct AirlockView: View {
         }
         .onAppear { waitingPulse = true }
     }
+
+    // MARK: - How it works
+
+    private var howItWorksSheet: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            Text("How it works")
+                .font(AppFonts.sectionHeading)
+                .foregroundStyle(AppColors.textPrimary)
+            Text("Two phones, each holding their own ring.")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+
+            HStack(spacing: AppSpacing.xl) {
+                MiniLockDemo(label: "you")
+                Text("↔").font(AppFonts.body(20, relativeTo: .title3)).foregroundStyle(AppColors.textMuted)
+                MiniLockDemo(label: store.partnerLabel.lowercased())
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, AppSpacing.sm)
+
+            Text("Both hold and fill your own ring. Once you're **both** locked in, the deck opens.")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.bottom, AppSpacing.md)
+
+            Divider().overlay(AppColors.borderSubtle)
+
+            Text("why it's here")
+                .font(AppFonts.overline)
+                .tracking(1.4)
+                .textCase(.uppercase)
+                .foregroundStyle(AppColors.textSectionLabel)
+
+            Text("A session works best when you both actually arrive, present and choosing it on purpose. This can't be done alone, so it proves you're both here and ready before a single card turns.")
+                .font(AppFonts.bodyText)
+                .foregroundStyle(AppColors.textBody)
+        }
+        .padding(AppSpacing.lg)
+    }
+}
+
+/// A small ambient demo ring for the "how it works" sheet — loops filling on
+/// its own (not tied to real state) to show the shape of the gesture. Gated
+/// on Reduce Motion / Low Power like every ambient loop in the app.
+private struct MiniLockDemo: View {
+    let label: String
+
+    @State private var fill: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var spectrumArc: AngularGradient {
+        AngularGradient(
+            colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+            center: .center, startAngle: .degrees(-90), endAngle: .degrees(270)
+        )
+    }
+
+    var body: some View {
+        VStack(spacing: AppSpacing.xs) {
+            ZStack {
+                Circle().stroke(AppColors.borderSubtle, lineWidth: 4)
+                Circle()
+                    .trim(from: 0, to: fill)
+                    .stroke(spectrumArc, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+            .frame(width: 64, height: 64)
+            Text(label)
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
+        }
+        .onAppear {
+            guard !reduceMotion, !AppAnimation.lowPower else { fill = 0.7; return }
+            withAnimation(.easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true)) {
+                fill = 1
+            }
+        }
+    }
 }
 
 // MARK: - Preview
@@ -249,5 +373,6 @@ struct AirlockView: View {
             appState: AppState()
         ), airlock: nil)
     }
+    .environment(PulseStore())
     .preferredColorScheme(.dark)
 }

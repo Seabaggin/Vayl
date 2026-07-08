@@ -39,7 +39,10 @@ final class StoreKitService {
     // MARK: - Purchase
 
     /// Run Apple's purchase sheet. Returns a *verified* transaction + JWS on success.
-    /// Finishes the transaction (required, or StoreKit replays it forever).
+    /// Deliberately does NOT finish the transaction: the caller finishes it only
+    /// after the server grant is durable. An unfinished transaction replays via
+    /// `Transaction.updates` on the next launch — that replay IS the retry queue
+    /// that keeps a paid partner from staying locked when the grant call fails.
     func purchase(_ product: Product) async throws -> PurchaseOutcome {
         let result = try await product.purchase()
         switch result {
@@ -47,7 +50,6 @@ final class StoreKitService {
             let jws = verification.jwsRepresentation
             switch verification {
             case .verified(let transaction):
-                await transaction.finish()
                 return .success(transaction: transaction, jws: jws)
             case .unverified:
                 return .unverified
@@ -59,6 +61,11 @@ final class StoreKitService {
         @unknown default:
             return .userCancelled
         }
+    }
+
+    /// Mark a transaction done. Call ONLY after the couple grant landed server-side.
+    func finish(_ transaction: Transaction) async {
+        await transaction.finish()
     }
 
     // MARK: - Ownership / restore
@@ -91,8 +98,9 @@ final class StoreKitService {
     // MARK: - Background updates
 
     /// Long-running listener for transactions arriving outside an explicit purchase — Ask-to-Buy
-    /// approvals, purchases on another device, and refunds/revocations. Start once at launch.
-    /// `onChange` receives the verified Core transaction + JWS (or nil when it was revoked).
+    /// approvals, purchases on another device, refunds/revocations, AND replays of transactions
+    /// left unfinished because a server grant failed. The caller finishes each transaction after
+    /// it has handled it (post-grant) — finishing here would break the replay retry.
     func observeTransactionUpdates(
         onChange: @escaping @Sendable (_ transaction: Transaction, _ jws: String, _ revoked: Bool) async -> Void
     ) -> Task<Void, Never> {
@@ -100,7 +108,6 @@ final class StoreKitService {
             for await update in Transaction.updates {
                 if case .verified(let transaction) = update,
                    transaction.productID == Self.coreProductID {
-                    await transaction.finish()
                     await onChange(transaction, update.jwsRepresentation, transaction.revocationDate != nil)
                 }
             }

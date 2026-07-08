@@ -34,14 +34,16 @@ enum SchemaV1: VersionedSchema {
         DeckProgress.self,
         DesireMapEntry.self,
         DesireMapStatus.self,
-        EntitlementRecord.self,
-        ConnectionEntitlement.self,
+        // EntitlementRecord / ConnectionEntitlement removed 2026-07-07: never
+        // written or read (superseded by the server-side entitlements ledger +
+        // the Couple-row mirror). Zero rows ever existed, so no migration stage.
         LockInSession.self,
         AcknowledgementRecord.self,
         MilestoneRecord.self,
         SyncTask.self,
         SessionReflection.self,
-        EventLogEntry.self
+        EventLogEntry.self,
+        DeckUserState.self
     ]
 }
 

@@ -2,7 +2,8 @@
 //
 // The Me layer's Pulse section on the Map tab.
 //
-// Glance: aura hero (148pt) + Space name + sublabel + weather one-liner.
+// Glance: aura hero (AppLayout.mapMeAuraSize) + Space name + sublabel + weather one-liner.
+// Card pinned to AppLayout.mapPulseCardHeight — the shared Me/Us footprint (Map dashboard spec §1).
 // "tap to map →" opens a sheet with the full 2D field at the user's current position.
 //
 // Visual reference: docs/prototypes/map-pulse-final.html — "Me · the glance" phone.
@@ -15,6 +16,7 @@ struct MapPulseHero: View {
 
     var onCheckIn:    () -> Void
     var onOpenHistory: () -> Void
+    var isLinked: Bool = false
 
     @State private var showMap   = false
     @State private var isPressed = false
@@ -31,10 +33,21 @@ struct MapPulseHero: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     showMap = true
                 } label: {
-                    PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: 148)
+                    // .background, NOT a ZStack sibling — a ZStack sizes itself to
+                    // its largest child, and the glow's outer wash is ~2.6x the orb,
+                    // which was inflating this whole block's reported height and
+                    // pushing everything below it down. .background renders the
+                    // glow behind the aura without it participating in layout.
+                    PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: AppLayout.mapMeAuraSize)
+                        .background {
+                            MapHeroAmbientGlow(
+                                color:   currentSpace.ramp(at: currentPosition).glow,
+                                orbSize: AppLayout.mapMeAuraSize
+                            )
+                        }
                         .frame(maxWidth: .infinity)
                         .padding(.top, AppSpacing.lg)
-                        .opacity(isStale ? PulseFieldEntry.staleOpacity : 1.0)
+                        .opacity(isQuiet ? PulseFieldEntry.staleOpacity : 1.0)
                 }
                 .buttonStyle(.plain)
                 .scaleEffect(isPressed ? 0.96 : 1.0)
@@ -62,6 +75,13 @@ struct MapPulseHero: View {
                             .foregroundStyle(AppColors.spectrumCyan)
                             .padding(.top, AppSpacing.xxs)
                     }
+
+                    if isLinked {
+                        Text("Your read also appears in your shared orb")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textMuted)
+                            .padding(.top, AppSpacing.xxs)
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, AppSpacing.sm)
@@ -70,21 +90,23 @@ struct MapPulseHero: View {
                     checkInPill
                         .padding(.top, AppSpacing.md)
                 }
-
-                // History grid — last 30 logged check-ins, never "last 30 days".
-                if !meGridDays.isEmpty {
-                    PulseHistoryGrid(mode: .me(meGridDays))
-                        .padding(.top, AppSpacing.lg)
-                }
             } else {
                 emptyStateBlock
             }
         }
+        // NOTE: kept as minHeight, not a hard height. The history grid that used to
+        // live here (and justified the original minHeight) moved to PulseFullView,
+        // but the check-in pill is conditional (pulse.canCheckInToday) and its
+        // presence/absence still changes total content height enough that a hard
+        // height risks clipping the pill on some content combinations. Revisit once
+        // on-device sizing confirms a fixed height never clips.
+        .frame(minHeight: AppLayout.mapPulseCardHeight, alignment: .top)
         .vaylCover(isPresented: $showMap, confirmOnExit: false) {
             MapFieldSheet(
                 position:   currentPosition,
                 space:      currentSpace,
                 isStale:    isStale,
+                isQuiet:    isQuiet,
                 staleSince: pulse.entries.last.map { pulse.relativeDay(for: $0.date) }
             )
         }
@@ -101,15 +123,27 @@ struct MapPulseHero: View {
                 .foregroundStyle(AppColors.textSectionLabel)
             Spacer()
             if hasHistory {
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    showMap = true
-                } label: {
-                    Text("tap to map →")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textMuted)
+                HStack(spacing: AppSpacing.sm) {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        onOpenHistory()
+                    } label: {
+                        Text("History")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textMuted)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        showMap = true
+                    } label: {
+                        Text("tap to map →")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textMuted)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -121,7 +155,10 @@ struct MapPulseHero: View {
 
     private var emptyStateBlock: some View {
         VStack(spacing: 0) {
-            PulseCyclingAura(size: 148)
+            // No ambient glow here: the cycling ramp's colour is always shifting,
+            // and a static wash behind it would just look mismatched — the
+            // moving colour already carries "not yet answered" on its own.
+            PulseCyclingAura(size: AppLayout.mapMeAuraSize)
                 .frame(maxWidth: .infinity)
                 .padding(.top, AppSpacing.lg)
 
@@ -178,15 +215,17 @@ struct MapPulseHero: View {
     /// ("You're in an Expansive day") for someone who's logged nothing at all.
     private var hasHistory: Bool { !pulse.entries.isEmpty }
 
-    private var meGridDays: [(date: Date, space: PulseSpace)] {
-        PulseHistory.lastLoggedSpaces(pulse.entries)
-    }
-
     /// True when the position shown is your last known one, not today's — Map
     /// (unlike Home) shows the last entry regardless of age, so the sublabel/orb
     /// need to say so rather than read like a live "today" status. Single source
-    /// of truth lives on PulseStore now (was duplicated here).
+    /// of truth lives on PulseStore now (was duplicated here). Governs COPY only
+    /// ("As of 2 days ago") — see `isQuiet` for the separate opacity trigger.
     private var isStale: Bool { pulse.isPositionStale }
+
+    /// True once the reading has gone quiet (4+ days) — the same threshold the
+    /// Us orb dims on. Governs the aura's OPACITY, so a 1-3-day-old reading looks
+    /// equally vivid in Me and Us instead of Me dimming a day sooner than Us does.
+    private var isQuiet: Bool { pulse.isPositionQuiet }
 
     private var staleSublabel: String? {
         guard isStale, let last = pulse.entries.last else { return nil }
@@ -202,7 +241,10 @@ struct MapPulseHero: View {
 private struct MapFieldSheet: View {
     let position:   PulsePosition
     let space:      PulseSpace
+    /// Governs copy softening only ("Your last Pulse: … (2 days ago)").
     let isStale:    Bool
+    /// Governs the aura's opacity — the same 4-day threshold Us dims on.
+    let isQuiet:    Bool
     let staleSince: String?
 
     @Environment(\.vaylDismiss) private var dismiss
@@ -222,7 +264,7 @@ private struct MapFieldSheet: View {
                             entries: [PulseFieldEntry(
                                 position: space == .uncharted ? PulsePosition(energy: 0.5, openness: 0.5) : position,
                                 auraSize: 60,
-                                opacity:  isStale ? PulseFieldEntry.staleOpacity : 1.0,
+                                opacity:  isQuiet ? PulseFieldEntry.staleOpacity : 1.0,
                                 space:    space
                             )],
                             size: w,

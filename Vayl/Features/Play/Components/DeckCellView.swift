@@ -17,6 +17,10 @@ struct DeckCellView: View {
     var locked: Bool? = nil
     var index: Int = 0
     var namespace: Namespace.ID
+    /// True while THIS deck's detail overlay is open. The cell yields matched-
+    /// geometry sourcehood (and hides its case) so the detail's case is the one
+    /// live source — two simultaneous sources degrade the zoom to a crossfade.
+    var detailOpen: Bool = false
     var onTap: () -> Void
 
     @State private var appeared = false
@@ -26,7 +30,8 @@ struct DeckCellView: View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 DeckCaseView(summary: summary, style: style, lockedOverride: locked)
-                    .matchedGeometryEffect(id: summary.id, in: namespace, isSource: true)
+                    .matchedGeometryEffect(id: summary.id, in: namespace, isSource: !detailOpen)
+                    .opacity(detailOpen ? 0 : 1)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(summary.category.displayName)
                         .font(AppFonts.overline)

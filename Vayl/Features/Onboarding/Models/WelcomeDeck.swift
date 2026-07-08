@@ -5,6 +5,11 @@ import SwiftUI
 /// from `OpenerDeckType` (set by `VaylDirector.evaluateOpenerDeckType()` at the
 /// end of Curiosity). Card CONTENT is placeholder pending the content pass;
 /// name + purpose + colorway are real so the reveal feels personalised.
+///
+/// Each type now maps to a REAL catalog deck (`OpenerDeckType.welcomeDeckId`,
+/// stubs in Resources/Decks/opener-*.json) that Play features after OB. The
+/// content pass must keep this display copy and those decks in sync: name ==
+/// deck title (uppercased), purpose == deck subtitle, cards == the deck's cards.
 struct WelcomeDeck: Equatable {
     let name: String        // the genuine name reveal
     let purpose: String     // one line above the carousel

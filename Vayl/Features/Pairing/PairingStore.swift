@@ -77,6 +77,12 @@ final class PairingStore {
     /// Partner name for display, with a graceful fallback when it's unset.
     var partnerDisplayName: String { partnerName ?? "Your partner" }
 
+    /// When the FIRST invite code was generated for this pairing attempt (mirrors
+    /// `UserProfile.firstInviteSentAt`). Nil until an invite has been sent. Backs
+    /// the invite view's static "sent X ago" caption — read once on appear rather
+    /// than driving a live countdown.
+    private(set) var firstInviteSentAt: Date? = nil
+
     // MARK: - Dependencies
 
     private let modelContainer: ModelContainer
@@ -115,6 +121,7 @@ final class PairingStore {
         do {
             let (code, expiresAt) = try await pairingService.generateCode()
             codeExpiresAt = expiresAt
+            await recordFirstInviteSentIfNeeded()
             linkState = .waitingForPartner(code: code)
             logger.info("Invite generated — code: \(code)")
             await pollForPartner(code: code, deadline: expiresAt)
@@ -122,6 +129,31 @@ final class PairingStore {
             linkState = .error(error.localizedDescription)
             logger.error("Generate invite failed: \(error.localizedDescription)")
         }
+    }
+
+    /// Stamps `firstInviteSentAt` the first time an invite is generated for this
+    /// pairing attempt. Regenerating an expired code does NOT reset it — the
+    /// nudge threshold measures "how long you've been trying to pair," not the
+    /// lifetime of any single code.
+    ///
+    /// Internal (not private) so `@testable import Vayl` can call this method
+    /// directly in tests, rather than reimplementing its guard logic inline.
+    func recordFirstInviteSentIfNeeded() async {
+        let context = ModelContext(modelContainer)
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
+        guard profile.firstInviteSentAt == nil else { return }
+        profile.firstInviteSentAt = Date()
+        try? context.saveWithLogging()
+        firstInviteSentAt = profile.firstInviteSentAt
+    }
+
+    /// Reads `firstInviteSentAt` back from disk — call on invite-view appear so
+    /// re-entering a `.waitingForPartner` state (e.g. reopening the sheet) shows
+    /// the correct "sent X ago" caption even without regenerating a code.
+    func loadFirstInviteSentAt() async {
+        let context = ModelContext(modelContainer)
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
+        firstInviteSentAt = profile.firstInviteSentAt
     }
 
     // MARK: - Regenerate
@@ -332,6 +364,7 @@ final class PairingStore {
         profile.coupleId  = coupleId
         profile.isLinked  = true
         profile.linkedAt  = Date()
+        profile.firstInviteSentAt = nil
 
         do {
             try context.saveWithLogging()

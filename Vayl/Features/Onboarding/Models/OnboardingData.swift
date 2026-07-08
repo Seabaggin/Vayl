@@ -67,12 +67,11 @@ struct OnboardingData {
     var compassNotes: [String]     = []
 
     // ── CuriosityPhase ───────────────────────────────────────────────
-    // Round 1 — "What keeps coming up for you?"
-    var communicationGoals: [String] = []
-    // Round 2 — "What are you curious about?"
-    var learningGoals: [String] = []
-    // Combined pool of all curiosity selections across both rounds.
-    // evaluateOpenerDeckType() reads this directly.
+    // The kept cards from the single aspirational sort ("What are you curious
+    // to try?" / "What do you want more of?"). The old Round 1 feelings sort
+    // (communicationGoals) was CUT 2026-07-04: Context already carries the
+    // present-state signal, so the sort now collects direction only.
+    // evaluateOpenerDeckType() reads this directly; future consumer = Learn.
     var curiositySelections: [String] = []
 
     // ── Derived / assigned ───────────────────────────────────────────
@@ -90,11 +89,13 @@ struct OnboardingData {
     /// Wired as the commit gate in OnboardingStore.commit(data:): commit is blocked
     /// (returns false, sets lastCommitError = .incompleteData) when this is false.
     var isReadyToComplete: Bool {
+        // curiositySelections is NOT required: passing on every sort card is a
+        // valid outcome ("none of these yet"), and with a single 5-card round it
+        // is a reachable one — an empty pool must never strand the user at commit.
         switch appMode {
         case .together, .solo:
             return !displayName.trimmingCharacters(in: .whitespaces).isEmpty
                 && situationalRegister != nil
-                && !curiositySelections.isEmpty
         }
     }
 }

@@ -64,17 +64,41 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         }
     }
 
-    /// Drives the airlock the way a couple does: partner arrives (mock), each sets
-    /// bandwidth, both sync, the phones-down transition resolves into card 1.
-    private func crossAirlock(_ store: CoupleSessionStore,
-                              bandwidth: CoupleSessionStore.Bandwidth) async {
+    /// Drives the airlock the way a couple does: partner arrives (mock), both
+    /// lock in, the phones-down transition resolves into card 1.
+    private func crossAirlock(_ store: CoupleSessionStore) async {
         XCTAssertEqual(store.phase, .airlock)
         store.armPresence()
-        store.setBandwidth(bandwidth)
         await waitUntil("partner never arrived") { store.partnerPresent }
         store.confirmSynced()
         XCTAssertEqual(store.phase, .transition)
         await waitUntil("transition never resolved to session") { store.phase == .session }
+    }
+
+    // MARK: - Context beat gating (banner header vs. interstitial overlay)
+
+    /// opener-01 has no beat, opener-02 is `.interstitial`, opener-05 is
+    /// `.banner` (see Card.openerSamples). Banner must NOT arm activeContextBeat
+    /// — it renders as a persistent ContextKickerView instead (SessionPlayerView),
+    /// not the one-shot pre-card overlay.
+    func test_contextBeat_armsForInterstitialOnly_notBanner() async throws {
+        let (store, _) = makeStore(cardCount: 5)
+        await crossAirlock(store)
+
+        XCTAssertEqual(store.currentCard?.id, "opener-01")
+        XCTAssertNil(store.activeContextBeat)
+
+        store.dealNext()   // → opener-02, interstitial
+        XCTAssertEqual(store.currentCard?.id, "opener-02")
+        XCTAssertEqual(store.activeContextBeat?.type, .interstitial)
+        XCTAssertEqual(store.activeContextBeat?.copy, store.currentCard?.contextBeatCopy)
+
+        store.dealNext()   // → opener-03, no beat
+        store.dealNext()   // → opener-04, no beat
+        store.dealNext()   // → opener-05, banner
+        XCTAssertEqual(store.currentCard?.id, "opener-05")
+        XCTAssertEqual(store.currentCard?.contextBeatType, .banner)
+        XCTAssertNil(store.activeContextBeat)
     }
 
     // MARK: - Full playthrough (happy path + a pass + a saved reflection)
@@ -83,16 +107,19 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         var syncedPayloads: [SessionRecordPayload] = []
         let (store, container) = makeStore(cardCount: 4) { syncedPayloads.append($0) }
 
-        await crossAirlock(store, bandwidth: .deep)
+        await crossAirlock(store)
 
-        // The partner opens; the drawer alternates from index 0.
-        XCTAssertEqual(store.currentDrawer, .partner)
+        // Role A opens (even indices) — the DEBUG launch is role .a, so index 0
+        // is this device's draw, and the drawer alternates from there.
+        XCTAssertEqual(store.currentDrawer, .you)
+        XCTAssertEqual(store.drawingRoleLabel, "A")
         XCTAssertEqual(store.positionLabel, "1 · 4")
 
         // Pass the first card, then deal through the rest.
         store.pass()
         XCTAssertEqual(store.index, 1)
-        XCTAssertEqual(store.currentDrawer, .you)
+        XCTAssertEqual(store.currentDrawer, .partner)
+        XCTAssertEqual(store.drawingRoleLabel, "B")
 
         while store.phase == .session {
             store.dealNext()
@@ -112,12 +139,13 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         XCTAssertEqual(session.cardsSkipped, 1)            // the pass
         XCTAssertEqual(session.cardsDiscussed, 3)
         XCTAssertEqual(session.cardResults.count, 4)
-        XCTAssertEqual(session.lockInBandwidthB ?? -1,
-                       CoupleSessionStore.Bandwidth.deep.fraction, accuracy: 0.001)
 
         let progress = try ctx.fetch(FetchDescriptor<DeckProgress>())
         XCTAssertEqual(progress.count, 1)
         XCTAssertNotNil(progress.first?.completedAt)
+        XCTAssertEqual(progress.first?.currentCardIndex, 0)   // completion resets the resume point
+        XCTAssertNotNil(progress.first?.firstOpenedAt)
+        XCTAssertNotNil(progress.first?.lastPlayedAt)
 
         // The completed session is handed to the sync queue exactly once, with the
         // right tally (the real hook would push it to Supabase).
@@ -145,7 +173,7 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
 
     func test_skipReflection_sessionSavedButNoReflection() async throws {
         let (store, container) = makeStore(cardCount: 3)
-        await crossAirlock(store, bandwidth: .open)
+        await crossAirlock(store)
 
         while store.phase == .session { store.dealNext() }
         XCTAssertEqual(store.phase, .close)
@@ -162,7 +190,7 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
 
     func test_endEarlyMidSession_savesCleanClose() async throws {
         let (store, container) = makeStore(cardCount: 6)
-        await crossAirlock(store, bandwidth: .light)
+        await crossAirlock(store)
 
         // Deal two cards, then "end well" from the re-center sheet.
         store.dealNext()
@@ -177,5 +205,12 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         XCTAssertEqual(session.cardsAttempted, 3)
         XCTAssertEqual(session.cardsDiscussed, 2)
         XCTAssertEqual(session.cardsSkipped, 1)
+
+        // Ending early is a clean close, NOT a completion: the deck stays
+        // resumable at where the couple left off (2026-07-07 review, B5).
+        let progress = try XCTUnwrap(try ctx.fetch(FetchDescriptor<DeckProgress>()).first)
+        XCTAssertNil(progress.completedAt)
+        XCTAssertEqual(progress.currentCardIndex, 3)
+        XCTAssertNotNil(progress.lastPlayedAt)
     }
 }

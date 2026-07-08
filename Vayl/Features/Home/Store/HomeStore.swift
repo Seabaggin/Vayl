@@ -45,13 +45,29 @@ final class HomeStore {
     var partnerMapComplete: Bool = false
     var revealDone: Bool = false
     var postReflectionDone: Bool = false
-    var partnerName: String? = nil
     var reflectionStep: Int = 1
+
+    /// Partner identity — read from the couple-fact single source of truth.
+    /// (The old stored copy here had NO production writer — only a DEBUG seed —
+    /// so release builds rendered "your partner" everywhere. 2026-07-04 audit F1.)
+    var partnerName: String? { couple.partnerName }
 
     /// One-shot: set when the user just completed their Desire Map in the rater they closed.
     /// The dashboard plays a brief completion beat once, then clears it — the map is a moment,
     /// never a persistent home state.
     var showCompletionBeat: Bool = false
+
+    /// How long an invite can sit unclaimed before the chip shifts from quiet
+    /// "invite pending" to the warmer "nudge" tone. Matches the approved
+    /// tap-to-expand design (docs/superpowers/specs/2026-07-05-partner-chip-and-pairing-design.md).
+    private static let nudgeThreshold: TimeInterval = 3 * 24 * 60 * 60 // 3 days
+
+    private(set) var firstInviteSentAt: Date? = nil
+
+    /// Partner's current Pulse position, for the chip's quick-view tile only
+    /// (current position, not history — the 30-day grid stays exclusive to Map).
+    /// Nil if the partner hasn't logged, or has `share_pulse_with_partner` off.
+    private(set) var partnerPulsePosition: PulsePosition? = nil
 
     // MARK: - Deck Loading
 
@@ -89,21 +105,23 @@ final class HomeStore {
 
     private let modelContainer: ModelContainer
     private let appState: AppState
+    private let couple: CoupleContext
 
     // MARK: - Init
 
-    init(modelContainer: ModelContainer, appState: AppState) {
+    init(modelContainer: ModelContainer, appState: AppState, couple: CoupleContext) {
         self.modelContainer = modelContainer
         self.appState = appState
+        self.couple = couple
 
         #if DEBUG
         // Development quick-jump — skip to dashboard state.
-        // Production always starts at false.
+        // Production always starts at false. (Partner name is no longer seeded
+        // here — CoupleContext owns the one debug fallback.)
         self.myMapComplete = true
         self.partnerMapComplete = true
         self.revealDone = true
         self.postReflectionDone = true
-        self.partnerName = "Alex"
         #endif
     }
 
@@ -117,6 +135,11 @@ final class HomeStore {
         appState.appMode == .solo
     }
 
+    // Note: this reads Date() directly, which @Observable doesn't track — the
+    // UI won't re-render purely because wall-clock time crosses the threshold
+    // while the app sits idle in foreground. In practice Home re-renders often
+    // enough via other state changes that this is an accepted staleness window,
+    // not a bug.
     var partnerChipState: PartnerChipState {
         switch appState.linkState {
         case .linked:
@@ -125,7 +148,12 @@ final class HomeStore {
             }
             return .invitePending
         case .unlinked:
-            return isPaired ? .invitePending : .none
+            guard isPaired else { return .none }
+            if let sentAt = firstInviteSentAt,
+               Date().timeIntervalSince(sentAt) >= Self.nudgeThreshold {
+                return .nudge
+            }
+            return .invitePending
         }
     }
 
@@ -159,6 +187,28 @@ final class HomeStore {
         }
     }
 
+    // MARK: - Rater-dismiss outcome (audit Blueprint C — the fork lives HERE, testable)
+
+    /// What Home does after the Desire rater closes. One owner for the
+    /// reveal-vs-celebration-vs-nothing decision (the router previously ran this
+    /// branch itself, duplicating flow knowledge DesireMapView also derived).
+    enum RaterDismissOutcome {
+        case showReveal            // both maps done, reveal unseen → hand off to the reveal
+        case celebrateCompletion   // just finished, partner pending → one-shot charted beat
+        case none
+    }
+
+    /// Refreshes Home state, then resolves the post-rater branch.
+    /// `wasCompleteOnOpen`: whether the user's map was already complete when the
+    /// rater opened — distinguishes a fresh completion from a re-visit.
+    func raterDismissOutcome(wasCompleteOnOpen: Bool) async -> RaterDismissOutcome {
+        await loadAll()
+        guard myMapComplete else { return .none }
+        if partnerMapComplete, !revealDone { return .showReveal }
+        if !wasCompleteOnOpen, isPaired { return .celebrateCompletion }
+        return .none
+    }
+
     // MARK: - Actions
 
     func markPostReflectionDone() {
@@ -184,13 +234,41 @@ final class HomeStore {
     /// Loads all data the home screen depends on in one pass.
     /// Call once on appear from HomeRouterView.
     func loadAll() async {
+        await couple.refreshIfNeeded()   // partner identity (no-op once loaded)
         await loadProfile()
         await loadDesireStatus()
+        await loadPartnerPulsePosition()
+        await refreshDeckState()
+        await loadLexiconContent()
+    }
+
+    /// The deck-facing slice of loadAll — cheap enough to re-run when a session
+    /// cover dismisses on Home or the app returns to foreground, so the hero
+    /// reflects tonight's play without a tab switch.
+    func refreshDeckState() async {
         resolveRecentDeck()
         await loadDeckProgress()
         await loadReflectionState()
         await loadDeck()
-        await loadLexiconContent()
+    }
+
+    // MARK: - Partner Pulse Load
+
+    /// Reads the partner's current Pulse position via PulseSyncService directly —
+    /// Store-to-Store coupling across features (going through MapStore) is what
+    /// the architecture rules forbid; Store->Service is fine. Gating (couple
+    /// membership + the partner's own share_pulse_with_partner flag) is enforced
+    /// server-side by get_partner_pulse_positions(), never here.
+    func loadPartnerPulsePosition() async {
+        guard case .linked = appState.linkState else {
+            partnerPulsePosition = nil
+            return
+        }
+        guard let entries = await PulseSyncService.shared.fetchPartnerEntries() else {
+            partnerPulsePosition = nil
+            return
+        }
+        partnerPulsePosition = entries.last?.resolvedPosition
     }
 
     // MARK: - Lexicon Content Load
@@ -208,8 +286,10 @@ final class HomeStore {
 
     // MARK: - Recent Deck
 
-    /// Picks the couple's most-recently-played deck (by lastPlayedAt, then firstOpenedAt).
-    /// Leaves `recentDeckId` at the opener default when there's no history.
+    /// Picks the couple's engaged deck via the SAME rule Play's hero uses
+    /// (FeaturedDeckRule) — the two surfaces must never hero different decks.
+    /// Entitlement-filtered: Home never serves a locked deck's cards, even
+    /// after a downgrade. Falls back to the opener when there's no history.
     private func resolveRecentDeck() {
         guard let coupleId = appState.coupleId else { return }
         let context = ModelContext(modelContainer)
@@ -217,13 +297,19 @@ final class HomeStore {
             let all = try context.fetch(FetchDescriptor<DeckProgress>(
                 predicate: #Predicate { $0.coupleId == coupleId }
             ))
-            let recent = all.max {
-                ($0.lastPlayedAt ?? $0.firstOpenedAt ?? .distantPast) <
-                ($1.lastPlayedAt ?? $1.firstOpenedAt ?? .distantPast)
-            }
-            if let recent, !recent.deckId.isEmpty, recent.lastPlayedAt != nil {
-                recentDeckId = recent.deckId
-                logger.info("HomeStore: recent deck = \(recent.deckId)")
+            let summaries = (try? DeckCatalogService().loadSummaries()) ?? []
+            let availableIDs = Set(
+                summaries.filter { !$0.isLocked || couple.canRevealAll }.map(\.id)
+            )
+            var profileFetch = FetchDescriptor<UserProfile>()
+            profileFetch.fetchLimit = 1
+            let openerID = (try? context.fetch(profileFetch).first)?
+                .openerDeckType.welcomeDeckId
+            if let engaged = FeaturedDeckRule.engagedDeckId(
+                progress: all, availableIDs: availableIDs, openerID: openerID
+            ) {
+                recentDeckId = engaged
+                logger.info("HomeStore: engaged deck = \(engaged)")
             }
         } catch {
             logger.error("HomeStore: recent deck resolve failed — \(error.localizedDescription)")
@@ -250,10 +336,11 @@ final class HomeStore {
     /// before the server responds.
     private func resolvePostStatusDesireMapState(coupleId: UUID) {
         guard isPaired else { return }
-        let context = ModelContext(modelContainer)
-        let canReveal = (try? context.fetch(
-            FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
-        ).first)?.canRevealDesireMap ?? false
+        // THE gate rule (CoupleContext.canRevealAll = OR'd entitlement). The old
+        // read here used the local Couple.canRevealDesireMap mirror — the exact
+        // lagging rule MapStore/VaultStore already distrusted, so a just-purchased
+        // buyer saw Map/Vault unlocked while Home stayed on the pre-purchase branch.
+        let canReveal = couple.canRevealAll
 
         if !myMapComplete { desireMapState = .yourTurn; return }
         if canReveal { desireMapState = .fullyUnlocked; return }
@@ -265,7 +352,10 @@ final class HomeStore {
     // MARK: - Profile Load
 
     /// Reads UserProfile to resolve map completion and desire map state.
-    private func loadProfile() async {
+    /// Internal (not private) specifically so @testable import Vayl can call it
+    /// directly in tests without triggering loadAll()'s network-touching siblings
+    /// (loadLexiconContent() in particular has no offline guard).
+    func loadProfile() async {
         let context = ModelContext(modelContainer)
 
         do {
@@ -278,6 +368,7 @@ final class HomeStore {
             }
 
             myMapComplete = profile.hasCompletedDesireMap
+            firstInviteSentAt = profile.firstInviteSentAt
             desireMapState = resolveDesireMapState(from: profile)
 
             logger.info("HomeStore: profile loaded — mapComplete: \(profile.hasCompletedDesireMap)")

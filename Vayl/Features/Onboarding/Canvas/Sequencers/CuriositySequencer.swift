@@ -14,15 +14,12 @@ final class CuriositySequencer {
     // MARK: - State
     
     var pile: [CuriositySortCard] = []
-    var roundIndex: Int = 0
-    var keptRound1: [String] = []
-    var keptRound2: [String] = []
+    var kept: [String] = []
     var dragOffset: CGSize = .zero
     var flyingCard: CuriositySortCard? = nil
     var flyingOffset: CGSize = .zero
     var thresholdCrossed: Bool = false
     var dealTrigger: Bool = false
-    var roundTransitioning: Bool = false
     var demoActive: Bool = false
     var demoCommitTrigger: Bool = false
     var summaryVisible: Bool = false
@@ -46,18 +43,15 @@ final class CuriositySequencer {
         sequenceTask = nil
         
         pile = [
-            CuriositySortCard(id: "demo_keep", text: "This card fits you.", round: 1),
-            CuriositySortCard(id: "demo_pass", text: "This card... not so much.", round: 1),
+            CuriositySortCard(id: "demo_keep", text: "This card fits you.", round: 2),
+            CuriositySortCard(id: "demo_pass", text: "This card... not so much.", round: 2),
         ]
-        roundIndex         = 0
-        keptRound1         = []
-        keptRound2         = []
+        kept               = []
         dragOffset         = .zero
         flyingCard         = nil
         flyingOffset       = .zero
         thresholdCrossed   = false
         dealTrigger        = false
-        roundTransitioning = false
         demoActive         = true
         summaryVisible     = false
         summaryOffset      = .zero
@@ -103,12 +97,16 @@ final class CuriositySequencer {
             self.flyingCard = nil
             self.dragOffset = .zero
             if let stage = self.stage {
-                self.pile = self.buildCuriosityPile(round: 1, onboardingData: stage.onboardingData)
-                          + self.buildCuriosityPile(round: 2, onboardingData: stage.onboardingData)
+                self.pile = self.buildCuriosityPile(onboardingData: stage.onboardingData)
             }
             self.dealTrigger.toggle()
             try? await Task.sleep(for: .milliseconds(400))
-            self.stage?.projector.showDealerLineManual(DealerDictionary.curiosityRound1Headline)
+            // Stage-aware headline: curious users are sizing up first-times,
+            // in-it users are refining a lane they already enjoy.
+            let inIt = (self.stage?.onboardingData.nmStage ?? .curious) != .curious
+            let headline = inIt ? DealerDictionary.curiosityHeadlineInIt
+                                : DealerDictionary.curiosityHeadline
+            self.stage?.projector.showDealerLineManual(headline)
         }
     }
 
@@ -121,27 +119,19 @@ final class CuriositySequencer {
     }
 
     func commitCuriositySwipe(screenSize: CGSize) {
-        guard !pile.isEmpty, !roundTransitioning else { return }
+        guard !pile.isEmpty else { return }
         let topCard = pile[0]
         let isKeep  = dragOffset.width > 0
         let flingX: CGFloat = isKeep ? screenSize.width * 1.6 : -screenSize.width * 1.6
         let flingY: CGFloat = dragOffset.height * 0.5
 
-        if isKeep {
-            if topCard.round == 1 { keptRound1.append(topCard.id) }
-            else                  { keptRound2.append(topCard.id) }
-        }
+        if isKeep { kept.append(topCard.id) }
 
         advanceCuriosityTopCard(
             flingTo: CGSize(width: flingX, height: flingY),
             startingFrom: dragOffset
         )
         thresholdCrossed = false
-
-        if topCard.round == 1, pile.first?.round == 2 {
-            onCuriosityRoundBoundary()
-            return
-        }
 
         guard pile.isEmpty else { return }
         
@@ -229,32 +219,10 @@ final class CuriositySequencer {
         }
     }
 
-    private func onCuriosityRoundBoundary() {
-        guard !roundTransitioning else { return }
-        roundTransitioning = true
-        stage?.projector.hideDealerLine()
-
-        sequenceTask?.cancel()
-        sequenceTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(600))
-            self.roundIndex = 1
-            // Stage-aware: curious users are sizing up first-times, in-it users
-            // are refining a lane they already enjoy.
-            let inIt = (self.stage?.onboardingData.nmStage ?? .curious) != .curious
-            let line = inIt ? DealerDictionary.curiosityRound2HeadlineInIt
-                            : DealerDictionary.curiosityRound2Headline
-            self.stage?.projector.showDealerLineManual(line)
-            try? await Task.sleep(for: .milliseconds(AppDealerTyping.typeDuration(line) + 250))
-            self.roundTransitioning = false
-        }
-    }
-
     private func onCuriosityDeckExhausted(screenSize: CGSize) {
         guard let stage = stage else { return }
-        
-        stage.onboardingData.communicationGoals = keptRound1
-        stage.onboardingData.learningGoals = keptRound2
-        stage.onboardingData.curiositySelections = keptRound1 + keptRound2
+
+        stage.onboardingData.curiositySelections = kept
         stage.evaluateOpenerDeckType()
 
         stage.projector.hideDealerLine()
@@ -279,12 +247,14 @@ final class CuriositySequencer {
         }
     }
 
-    func buildCuriosityPile(round: Int, onboardingData: OnboardingData) -> [CuriositySortCard] {
-        // R1 = mode x register (feelings). R2 = mode + stage (curious = first-time
-        // acts, in-it = refine the lane). Deterministic, so the editor rebuilds it.
+    func buildCuriosityPile(onboardingData: OnboardingData) -> [CuriositySortCard] {
+        // One aspirational round (the old Round 2): mode + stage (curious =
+        // first-time acts, in-it = refine the lane). Round 1 (feelings) was cut
+        // 2026-07-04 — Context already carries the present-state signal.
+        // Deterministic, so the Confirmation editor rebuilds the same hand.
         let mode = onboardingData.appMode
         let register = SituationalRegister(rawValue: onboardingData.situationalRegister ?? "") ?? .flexible
         let stage = onboardingData.nmStage
-        return CuriosityDeck.cards(round: round, mode: mode, register: register, stage: stage)
+        return CuriosityDeck.cards(round: 2, mode: mode, register: register, stage: stage)
     }
 }

@@ -38,9 +38,11 @@ struct PulseCheckInView: View {
     @State private var unchartedDissolveT: Double = 0      // 0 = bilinear colour, 1 = full Sage Deep
     @State private var drifting:          Bool   = false  // orb wander begins after the dissolve
 
-    /// The trail-in mask starts ~6% earlier than the app-wide 52% default — see
-    /// OnboardingAtmosphere.maskStart. 🎚️ FEEL: confirm on device.
-    private let atmosphereMaskStart: CGFloat = 0.46
+    /// The trail-in mask starts well earlier than the app-wide 52% default — see
+    /// OnboardingAtmosphere.maskStart. Lowered from 0.46: against the field's now much more
+    /// vivid blob coverage, the void held that long read as a hard black band rather than a
+    /// smooth trail-in. 🎚️ FEEL: confirm on device, tune further from here.
+    private let atmosphereMaskStart: CGFloat = 0.30
 
     // MARK: - Body
 
@@ -48,9 +50,10 @@ struct PulseCheckInView: View {
         GeometryReader { geo in
             let layout = AppLayout.from(geo)
             // The field owns the top of the screen, running nearly edge-to-edge (capped at a
-            // square by the screen width). 🎚️ FEEL: 0.42 of the height — tune 0.40–0.46 on
-            // device so the five pills always clear the bottom without the field shrinking.
-            let fieldSize = min(layout.screenWidth, geo.size.height * 0.42)
+            // square by the screen width). 🎚️ FEEL: 0.50 of the height (was 0.42) — the field
+            // read too small against its mockup on device; tune further from here so the five
+            // pills always clear the bottom without the field shrinking.
+            let fieldSize = min(layout.screenWidth, geo.size.height * 0.50)
             ZStack(alignment: .top) {
                 AppColors.void.ignoresSafeArea()
                 OnboardingAtmosphere(config: .stat, maskStart: atmosphereMaskStart)
@@ -74,9 +77,12 @@ struct PulseCheckInView: View {
 
                 // Header chrome floats over the top edge of the field (per the mockup) — it
                 // reclaims the row the enlarged field now occupies, so the graph can breathe.
+                // Shrunk (back button 32->28, step dots 22/18->20/16) and pulled to the bare
+                // safe-area clearance (no extra padding) so it recedes into a slimmer strip
+                // instead of competing with the now-bigger field for vertical room.
                 headerChrome
                     .padding(.horizontal, AppSpacing.lg)
-                    .topClearance(layout, padding: AppSpacing.xs)
+                    .topClearance(layout, padding: 0)
             }
         }
     }
@@ -91,7 +97,7 @@ struct PulseCheckInView: View {
             Image(systemName: "chevron.left")
                 .font(AppFonts.buttonLabel)
                 .foregroundStyle(AppColors.textSecondary)
-                .frame(width: 32, height: 32)
+                .frame(width: 28, height: 28)
                 .background(Circle().fill(AppColors.cardBackground))
                 .overlay(Circle().strokeBorder(AppColors.borderDefault, lineWidth: 1))
         }
@@ -139,7 +145,7 @@ struct PulseCheckInView: View {
                 .font(AppFonts.buttonLabelSmall)
                 .fontWeight(isNow ? .bold : .medium)
                 .foregroundStyle(isFuture ? AppColors.textTertiary : AppColors.textPrimary)
-                .frame(width: isNow ? 22 : 18, height: isNow ? 22 : 18)
+                .frame(width: isNow ? 20 : 16, height: isNow ? 20 : 16)
                 .overlay(
                     Circle().strokeBorder(
                         isNow ? AppColors.textSectionLabel : Color.clear,

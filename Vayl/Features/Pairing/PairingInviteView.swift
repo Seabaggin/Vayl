@@ -47,11 +47,28 @@ struct PairingInviteView: View {
             .padding(.vertical, AppSpacing.xl)      // was 32 → xl, exact
         }
         .task {
+            await store.loadFirstInviteSentAt()
             await store.generateInvite()
         }
         .onDisappear {
             store.cancelPolling()
         }
+    }
+
+    // MARK: - Invite Sent Caption
+
+    /// Static, non-ticking replacement for the old live expiry countdown — softer
+    /// register, matches the app's "quiet room" feel rather than a dashboard timer.
+    /// `codeExpiresAt` still drives `codeExpired` underneath; only this display changed.
+    private var inviteSentCaption: String {
+        guard let sentAt = store.firstInviteSentAt else {
+            return "Share this code so your partner can link"
+        }
+        let days = Calendar.current.dateComponents([.day], from: sentAt, to: Date()).day ?? 0
+        if days >= 3 {
+            return "Your partner hasn't entered this code yet"
+        }
+        return "Sent \(sentAt.formatted(.relative(presentation: .named)))"
     }
 
     // MARK: - Content
@@ -134,18 +151,9 @@ struct PairingInviteView: View {
                 .opacity(breathe ? 1.0 : 0.55)
                 .ambientAnimation(AppAnimation.cardBreathe, value: breathe)
 
-                if let expiresAt = store.codeExpiresAt, expiresAt > Date() {
-                    HStack(spacing: AppSpacing.xxs) {   // 2pt — tight label/value pairing
-                        Text("Expires in")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.textTertiary)
-                        Text(timerInterval: Date()...expiresAt, countsDown: true)
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.textTertiary)
-                            .monospacedDigit()
-                    }
-                    .accessibilityElement(children: .combine)
-                }
+                Text(inviteSentCaption)
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
             }
             .onAppear { breathe = true }
         }

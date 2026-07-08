@@ -20,6 +20,28 @@
 import SwiftUI
 import SwiftData
 
+/// Reports `greetingBlock`'s own rendered height up to `HomeDashboardView`,
+/// so the partner-chip popover can sit just beneath the header without a
+/// hardcoded pixel guess (the chip/header row grows at larger Dynamic Type
+/// sizes). Deliberately just a height, measured locally within
+/// `greetingBlock`'s own `GeometryReader` — NOT a full frame translated
+/// through a named coordinate space across the ScrollView boundary. That
+/// cross-container x/y translation (via a `"homeRoot"` coordinate space) was
+/// the earlier approach and it was fragile in practice (two fix attempts,
+/// still wrong on-device) for exactly the reason `docs/prototypes/
+/// partner-chip-and-pairing.html` never bothers with it either: the popover
+/// reads as "a card that opens under the header," not something that must
+/// track the chip's exact rendered pixel — a simple static top-offset (this
+/// height + a fixed gap) plus trailing-edge alignment is enough, and SwiftUI's
+/// own `alignment: .topTrailing` + `.padding(.trailing:)` handles the x-axis
+/// robustly without any screen-width arithmetic to get wrong.
+private struct GreetingHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 struct HomeDashboardView: View {
 
     // MARK: - Injected Properties
@@ -27,7 +49,12 @@ struct HomeDashboardView: View {
     var displayName: String = "Jordan"
     var partnerChipState: PartnerChipState = .none
     var cards: [Card] = []
+    /// The active deck's title, for the small header above the card. Empty hides the header.
+    var deckTitle: String = ""
     var desireMapState: DesireMapState = .hidden
+    /// The partner's current Pulse position, for the chip's expand quick-view tile
+    /// only (current position, not history — nil renders "Not sharing").
+    var partnerPulsePosition: PulsePosition? = nil
     var reflectionCardState: ReflectionCardState = .hidden
     var pickUpItems: [PickUpItem] = []
     var stageIndex: Int = 1
@@ -62,6 +89,10 @@ struct HomeDashboardView: View {
     var onInvitePartner: (() -> Void)? = nil
     var onPartnerTap: (() -> Void)? = nil
     var onNavigateToPlay: (() -> Void)? = nil
+    /// Fired when a session cover presented from Home dismisses — the router
+    /// refreshes HomeStore's deck state so the hero reflects tonight's play
+    /// without needing a tab switch.
+    var onSessionEnded: (() -> Void)? = nil
     /// The Lexicon CTA route (→ Learn).
     var onOpenLexicon: (() -> Void)? = nil
     /// The Pulse rail tap (→ Map / Pulse history). Minimal for now.
@@ -78,6 +109,19 @@ struct HomeDashboardView: View {
     @State private var heroVisible     = false
     @State private var pulseVisible    = false
     @State private var lexVisible      = false
+
+    /// Whether the partner chip's quick-view popover (`PartnerChipExpand`) is
+    /// open. Only meaningful for `.active` — the chip's tap handler only
+    /// toggles this in that state; other states keep routing through
+    /// `onPartnerTap` as before.
+    @State private var isChipExpanded = false
+
+    /// `greetingBlock`'s own rendered height, measured via `GreetingHeightKey`
+    /// (the row grows taller than the eyeballed default at larger Dynamic Type
+    /// sizes). Used only to place the popover's static top offset just below
+    /// the header — see `GreetingHeightKey`'s doc comment for why this
+    /// replaced the earlier cross-container chip-frame tracking.
+    @State private var greetingHeight: CGFloat = 0
 
     /// The deck's phase (floating → spread → lifted → carousel), reported by
     /// CardCarousel. The room recedes once the deck is engaged.
@@ -98,6 +142,9 @@ struct HomeDashboardView: View {
     @State private var showPulseCheckIn = false
     @Environment(PulseStore.self) private var pulseStore
 
+    /// Presents the two-knob session-settings sheet from the chest cog.
+    @State private var showSessionSettingsSheet = false
+
     /// Tonight's hand, set when the carousel hands off via `onStartHand`. Non-nil
     /// drives the protected session cover. DEBUG-only couch mode (spec rule 26):
     /// release "Settle in" routes to Play instead.
@@ -106,6 +153,7 @@ struct HomeDashboardView: View {
     /// Joiner entry: "‹name› set up a session" banner + join cover.
     @Environment(\.modelContext) private var modelContext
     @Environment(AppState.self) private var appState
+    @Environment(CoupleContext.self) private var coupleContext
     @Environment(\.scenePhase) private var scenePhase
     @State private var entryStore: SessionEntryStore?
     @State private var joinerLaunch: SessionLaunch?
@@ -130,10 +178,16 @@ struct HomeDashboardView: View {
         deckPhase != .floating && deckPhase != .spread
     }
 
+    /// Half of CardCarousel's own card width (private `cardW = 300` there) — used
+    /// to anchor the cog/corner-deck chrome to the card's real edges rather than
+    /// an arbitrary screen inset. Keep in sync if CardCarousel's cardW changes.
+    private let cardHalfWidth: CGFloat = 150
+
     // MARK: - Body
 
     var body: some View {
-        GeometryReader { geo in
+        @Bindable var appState = appState
+        return GeometryReader { geo in
             let layout = AppLayout.from(geo)
             // The hero owns the first screen; the collapsed Pulse and the Lexicon share the
             // rest. All three are a plain stack the ScrollView lays out — the layout engine
@@ -155,6 +209,12 @@ struct HomeDashboardView: View {
             let pedestalDropY: CGFloat = 191
 
             ZStack(alignment: .top) {
+                // Named coordinate space so PartnerChip's frame (reported from
+                // deep inside greetingBlock → the ScrollView content) can be
+                // translated into a frame that's meaningful HERE, at the outer
+                // ZStack's own level — needed because PartnerChipExpand now
+                // renders as a sibling in this same outer ZStack instead of
+                // nested locally next to the chip.
                 // Same atmosphere as the OB canvas — keep the app's background
                 // language consistent (void floor + tri-colour bloom).
                 OnboardingAtmosphere(config: .stat)
@@ -178,11 +238,33 @@ struct HomeDashboardView: View {
                                 onTap: { onOpenPath?() }
                             )
                             .padding(.top, AppSpacing.md)
-                            .opacity(greetingVisible ? 1 : 0)
+                            // Recede with the rest of Home when the deck engages (matches greetingBlock).
+                            .opacity(greetingVisible ? (deckEngaged ? 0.25 : 1) : 0)
+                            .blur(radius: deckEngaged ? 6 : 0)
+                            .animation(AppAnimation.enter, value: deckEngaged)
                         }
 
                         // Top void — the hero's approach.
                         Color.clear.frame(height: layout.screenHeight * 0.04)
+
+                        // Deck header — appears only once the user has clicked into the
+                        // chest (deckEngaged); the floating card stays unlabeled. Plain
+                        // text, not LivingText: a functional label reading the deck you're
+                        // browsing shouldn't compete with the card for attention —
+                        // LivingText is reserved for hero moments like the greeting name.
+                        if !deckTitle.isEmpty && deckEngaged {
+                            VStack(spacing: AppSpacing.xxs) {
+                                Text(deckTitle)
+                                    .font(AppFonts.sectionHeading)
+                                    .foregroundStyle(AppColors.textPrimary)
+                                Text("\(cardsCompleted) / \(cards.count) explored")
+                                    .font(AppFonts.bodyMedium)
+                                    .foregroundStyle(AppColors.textTertiary)
+                            }
+                            .transition(.opacity)
+                            .animation(AppAnimation.enter, value: deckEngaged)
+                            .padding(.bottom, AppSpacing.sm)
+                        }
 
                         // The deck — CardCarousel elevates IN PLACE (no cover): tap
                         // the floating card and the deck spreads → lifts → carousel,
@@ -193,6 +275,8 @@ struct HomeDashboardView: View {
                             onNavigateToPlay: onNavigateToPlay,
                             onPhaseChange: { phase in
                                 deckPhase = phase
+                                // Mirror engagement to the shell so the tab bar recedes too.
+                                appState.deckEngaged = (phase != .floating && phase != .spread)
                                 // Dismiss / clicked-out → start tonight's hand over.
                                 // Idempotent: settleIn() already clears + bumps
                                 // deckReset (which re-fires .floating), and first
@@ -219,6 +303,12 @@ struct HomeDashboardView: View {
                         .opacity(heroVisible ? 1 : 0)
                         .animation(AppAnimation.spring, value: heroVisible)
                         .zIndex(10)
+                        // When the chest opens, settle the card toward vertical center so it
+                        // uses the lower space instead of staying crammed up top under the
+                        // SETUP / TONIGHT chrome. Proportional geometry, like the top-void and
+                        // heroIsolation above. Feel value: tune the fraction on device.
+                        .offset(y: deckEngaged ? layout.screenHeight * 0.12 : 0)
+                        .animation(AppAnimation.enter, value: deckEngaged)
 
                         // Flexible hero-isolation void: the deck floats up top while the Pulse
                         // + Lexicon settle at the bottom (it fills the collapsed screen's slack).
@@ -253,6 +343,79 @@ struct HomeDashboardView: View {
                 }
                 .scrollIndicators(.hidden)
 
+                // Outside-tap dismiss for the partner-chip popover. A full-screen,
+                // invisible tap-catcher: sits ABOVE the ScrollView content (so a tap
+                // doesn't fall through to a deck card underneath) but BELOW
+                // `PartnerChipExpand` (rendered further below, in this SAME outer
+                // ZStack, at zIndex 2) so the popover's own tiles/buttons stay
+                // tappable while the catcher still eats every other tap on screen.
+                // zIndex only orders siblings within one container — this and the
+                // popover must live in the same ZStack for the ordering to mean
+                // anything, which is why the popover was moved out of the small
+                // local ZStack inside greetingBlock. Only mounted while the
+                // popover is open, so it never intercepts normal Home interaction
+                // at rest.
+                if isChipExpanded {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation(AppAnimation.standard) { isChipExpanded = false }
+                        }
+                        .ignoresSafeArea()
+                        .zIndex(1)
+                }
+
+                // The partner-chip quick-view popover — rendered here, as a sibling
+                // of the dismiss tap-catcher above, in the OUTER root ZStack (NOT
+                // nested inside greetingBlock's local ZStack) so their relative
+                // zIndex genuinely determines paint/hit-test order.
+                //
+                // Positioned with a static top offset (header top padding +
+                // greetingBlock's measured height + a breathing gap) and
+                // trailing-edge alignment — matching docs/prototypes/
+                // partner-chip-and-pairing.html, which anchors the expand card
+                // with a plain `top / right` offset from the screen, not a
+                // measured chip position. The earlier approach translated the
+                // chip's exact frame through a `"homeRoot"` named coordinate
+                // space across the ScrollView boundary and needed screen-width
+                // arithmetic to convert it back into an offset — fragile in
+                // practice, wrong on-device twice. `alignment: .topTrailing`
+                // plus `.padding(.trailing:)` lets SwiftUI handle the x-axis
+                // directly; only the header's height needs measuring at all.
+                if isChipExpanded, case .active = partnerChipState {
+                    PartnerChipExpand(
+                        state: partnerChipState,
+                        desireMapState: desireMapState,
+                        partnerPulsePosition: partnerPulsePosition,
+                        onDesireMapTap: {
+                            isChipExpanded = false
+                            onPartnerTap?() // existing Map-tab routing
+                        },
+                        onPulseTap: {
+                            isChipExpanded = false
+                            onPartnerTap?() // existing Map-tab routing
+                        },
+                        onManageTap: {
+                            isChipExpanded = false
+                            onPartnerTap?() // existing routing — a later task points this at Settings
+                        }
+                    )
+                    .frame(
+                        maxWidth: .infinity, maxHeight: .infinity,
+                        alignment: .topTrailing
+                    )
+                    .padding(.top, AppSpacing.md + greetingHeight + AppSpacing.xs)
+                    .padding(.trailing, AppSpacing.lg)
+                    // Fade + a small downward nudge — no scale. Scaling the
+                    // whole card up from a fraction of its size read as the
+                    // small capsule-shaped pill above it warping/stretching
+                    // into a much larger rectangular card (felt in an
+                    // interactive HTML reference before landing here, per
+                    // the feel-first build protocol).
+                    .transition(.opacity.combined(with: .offset(y: -AppSpacing.xs)))
+                    .zIndex(2)
+                }
+
                 // "Settle in" rides above the carousel's screen dim once a card is in
                 // tonight's hand, and carries the hand into the session.
                 if deckPhase == .carousel {
@@ -273,6 +436,7 @@ struct HomeDashboardView: View {
             // edge and pushing the centered content column ~13pt right (off the right
             // edge). Clamping here re-centers every module on the physical screen.
             .frame(width: layout.screenWidth, alignment: .center)
+            .onPreferenceChange(GreetingHeightKey.self) { greetingHeight = $0 }
             .onAppear { runEntranceAnimations() }
             .blur(radius: pathOpen ? 9 : 0)
             .animation(AppAnimation.spring, value: pathOpen)
@@ -291,7 +455,7 @@ struct HomeDashboardView: View {
             // Joiner path: partner opened a lobby → banner → this cover.
             .vaylCover(isPresented: Binding(
                 get: { joinerLaunch != nil },
-                set: { if !$0 { joinerLaunch = nil } }
+                set: { if !$0 { joinerLaunch = nil; onSessionEnded?() } }
             )) {
                 if let launch = joinerLaunch {
                     CardSessionContainerView(launch: launch)
@@ -303,16 +467,19 @@ struct HomeDashboardView: View {
                     entryStore = SessionEntryStore(
                         modelContainer: modelContext.container,
                         appState: appState,
-                        partnerName: { [chip = partnerChipState] in
-                            if case .active(let name, _) = chip { return name }
-                            return nil
-                        }
+                        // Live read of the couple-fact source of truth (the old
+                        // closure captured the chip BY VALUE at store creation,
+                        // so a later-arriving partner name never reached it).
+                        partnerName: { [couple = coupleContext] in couple.partnerName }
                     )
                 }
                 entryStore?.refresh()
             }
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active { entryStore?.refresh() }
+                if phase == .active {
+                    entryStore?.refresh()
+                    onSessionEnded?()   // re-read deck state on foreground too
+                }
             }
             .onChange(of: entryStore?.acceptedLaunch) { _, launch in
                 if let launch { joinerLaunch = launch; entryStore?.acceptedLaunch = nil }
@@ -333,6 +500,19 @@ struct HomeDashboardView: View {
                 screenHeight: layout.screenHeight
             ) {
                 PulseInfoSheet()
+            }
+            .vaylSheet(
+                isPresented: $showSessionSettingsSheet,
+                heightFraction: 0.5,
+                screenHeight: layout.screenHeight
+            ) {
+                SessionSettingsSheet(
+                    reader: $appState.sessionSettings.reader,
+                    length: $appState.sessionSettings.length,
+                    partnerName: coupleContext.partnerName ?? "Partner"
+                ) {
+                    showSessionSettingsSheet = false
+                }
             }
         }
     }
@@ -396,10 +576,30 @@ struct HomeDashboardView: View {
                 state: partnerChipState,
                 waiting: isWaitingOnPartner,
                 onInviteTap: onInvitePartner,
-                onPartnerTap: onPartnerTap
+                onPartnerTap: {
+                    switch partnerChipState {
+                    case .active:
+                        withAnimation(AppAnimation.standard) { isChipExpanded.toggle() }
+                    default:
+                        // .invitePending / .nudge / .none route through the existing
+                        // onPartnerTap wiring today (Map tab). A later task replaces
+                        // this with the real pairing sheet — not this task's concern.
+                        onPartnerTap?()
+                    }
+                }
             )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Reports this row's own rendered height (a plain local measurement,
+        // no named coordinate space) so the popover in `body` can sit its
+        // static top offset just below the header. See `GreetingHeightKey`'s
+        // doc comment for why this replaced tracking the chip's cross-
+        // container frame.
+        .background(
+            GeometryReader { geo in
+                Color.clear.preference(key: GreetingHeightKey.self, value: geo.size.height)
+            }
+        )
     }
 
     // MARK: - Reflection Banner
@@ -492,18 +692,46 @@ struct HomeDashboardView: View {
         ZStack {
             // Corner "tonight" deck — positioned EXPLICITLY in the top-right corner.
             // (A Spacer/padding chain was rendering it off-screen.)
-            cornerDeck
-                .position(
-                    x: layout.screenWidth - 48,
-                    y: layout.safeAreaInsets.top + 24
-                )
+            // Corner "tonight" deck + label, anchored above the card's own RIGHT edge
+            // (not a fixed screen inset) — CardCarousel's card is 300pt wide, centered.
+            // Anchoring to the card's real footprint (not the screen edge) is what
+            // makes these read as the card's own controls instead of floating loose.
+            VStack(spacing: AppSpacing.xs) {
+                cornerDeck
+                Text("Tonight")
+                    .font(AppFonts.label)
+                    .tracking(1.4)
+                    .textCase(.uppercase)
+                    .foregroundStyle(AppColors.textTertiary)
+            }
+            .position(
+                x: layout.screenWidth / 2 + cardHalfWidth,
+                y: layout.safeAreaInsets.top + 34
+            )
+
+            // Settings cog + label — anchored above the card's own LEFT edge, opposite
+            // the corner deck. Opens the two-knob session-settings sheet.
+            VStack(spacing: AppSpacing.xs) {
+                settingsCog
+                Text("Setup")
+                    .font(AppFonts.label)
+                    .tracking(1.4)
+                    .textCase(.uppercase)
+                    .foregroundStyle(AppColors.textTertiary)
+            }
+            .position(
+                x: layout.screenWidth / 2 - cardHalfWidth,
+                y: layout.safeAreaInsets.top + 34
+            )
 
             if !handIDs.isEmpty {
                 VStack {
                     Spacer()
                     settleInBar
                         .padding(.horizontal, AppSpacing.lg)
-                        .padding(.bottom, AppSpacing.xl + layout.homeIndicatorInset)
+                        // Tab content adds NO hardware/bar clearance — AppShell's
+                        // .safeAreaInset reserves the bar + home indicator.
+                        .padding(.bottom, AppSpacing.xl)
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
@@ -545,6 +773,11 @@ struct HomeDashboardView: View {
             }
         }
         .animation(AppAnimation.spring, value: handIDs.count)
+    }
+
+    /// Chest settings cog — opens the two-knob session-settings sheet.
+    private var settingsCog: some View {
+        SettingsCogButton { showSessionSettingsSheet = true }
     }
 
     private func runEntranceAnimations() {
@@ -594,6 +827,37 @@ struct HomeDashboardView: View {
         }
     }
     #endif
+}
+
+// MARK: - Settings Cog Button
+
+/// Small circular glass button for the chest's top-leading corner. Opens the
+/// two-knob session-settings sheet. Owns its own press state (tap contract).
+private struct SettingsCogButton: View {
+    var action: () -> Void
+    @State private var isPressed = false
+
+    var body: some View {
+        Image(systemName: "gearshape")
+            .font(AppFonts.bodyMedium)
+            .foregroundStyle(AppColors.spectrumText)
+            .frame(width: 44, height: 44)
+            .background(
+                Circle().fill(AppColors.glassSurface)
+            )
+            .overlay(
+                Circle().strokeBorder(AppColors.borderDefault, lineWidth: 0.7)
+            )
+            .scaleEffect(isPressed ? 0.96 : 1.0)
+            .sensoryFeedback(.impact(weight: .light), trigger: isPressed)
+            .onTapGesture {
+                isPressed = true
+                action()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                    isPressed = false
+                }
+            }
+    }
 }
 
 // MARK: - Debug Grid Overlay
@@ -679,6 +943,14 @@ extension ReflectionCardState: Equatable {
     )
     .environment(PulseStore())
     .environment({ let state = AppState(); state.coupleId = UUID(); return state }())
+    .environment({
+        let state = AppState()
+        return CoupleContext(
+            appState: state,
+            entitlements: EntitlementStore(modelContainer: .previewContainer, appState: state),
+            modelContainer: .previewContainer
+        )
+    }())
     .modelContainer(.previewContainer)
     .preferredColorScheme(.dark)
 }

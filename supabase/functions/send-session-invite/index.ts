@@ -1,7 +1,8 @@
 // send-session-invite — Seg 8 (push) edge function.
 // STATUS: UNVERIFIED / NOT DEPLOYED. Skeleton only. The APNs send is stubbed.
 //
-// What works here: validates the caller, looks up the partner's device tokens.
+// What works here: validates the caller, confirms the recipient is actually the
+// caller's linked partner, looks up the partner's device tokens.
 // What is YOURS to finish (needs an Apple Developer account; cannot be done here):
 //   - Store APNs secrets as function secrets: APNS_KEY_ID, APNS_TEAM_ID,
 //     APNS_AUTH_KEY (.p8 contents), APNS_TOPIC (the app bundle id), APNS_HOST
@@ -38,6 +39,41 @@ Deno.serve(async (req: Request) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+  // User client validates the caller's identity from their JWT.
+  const userClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } },
+  );
+
+  const { data: { user }, error: userError } = await userClient.auth.getUser();
+  if (userError || !user) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  // ── Caller's profile + couple, and confirm recipientUserId IS that partner ──
+  const { data: me, error: meErr } = await supabase
+    .from("user_profiles")
+    .select("id, couple_id")
+    .eq("auth_id", user.id)
+    .single();
+  if (meErr || !me || !me.couple_id) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const { data: couple, error: coupleErr } = await supabase
+    .from("couples")
+    .select("user_a, user_b")
+    .eq("id", me.couple_id)
+    .single();
+  if (coupleErr || !couple) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const partnerProfileId = couple.user_a === me.id ? couple.user_b : couple.user_a;
+  if (!partnerProfileId || partnerProfileId !== recipientUserId) {
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   const { data: tokens, error } = await supabase
     .from("device_tokens")
