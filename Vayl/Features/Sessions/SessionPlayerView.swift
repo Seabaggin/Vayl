@@ -151,8 +151,19 @@ struct SessionPlayerView: View {
     }
 
     private var fanCard: some View {
-        VaylCardBack()
-            .frame(width: 96, height: 66)
+        // VaylCardBack's geometry (hex cell size, corner radius, border width)
+        // is fixed-point, tuned for its real session-card size — squeezing it
+        // straight into this small a frame distorts all of that (oversized
+        // corners, thick-looking border). Render it at true size, then scale
+        // the whole rendered card down uniformly so every proportion holds.
+        let nativeWidth = AppLayout.sessionCardWidth(in: 390)
+        let nativeHeight = AppLayout.sessionCardHeight(in: 390)
+        let fanWidth: CGFloat = 96
+        let scale = fanWidth / nativeWidth
+        return VaylCardBack()
+            .frame(width: nativeWidth, height: nativeHeight)
+            .scaleEffect(scale)
+            .frame(width: fanWidth, height: nativeHeight * scale)
             .shadow(color: AppColors.shadowDeep, radius: 12, y: 6)
     }
 
