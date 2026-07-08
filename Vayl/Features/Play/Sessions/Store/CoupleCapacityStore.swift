@@ -28,8 +28,11 @@ final class CoupleCapacityStore {
 
     private let service: CoupleCapacityService
 
-    init(service: CoupleCapacityService) {
-        self.service = service
+    /// `service` nil-resolves inside the MainActor-isolated body to the real
+    /// Supabase implementation — so Views can construct the store without
+    /// touching the Service layer; tests keep injecting their mock.
+    init(service: CoupleCapacityService? = nil) {
+        self.service = service ?? SupabaseCoupleCapacityService()
     }
 
     /// Loads the partner's capacity tier. Idempotent; safe to call on appear.

@@ -291,7 +291,7 @@ private let _previewMatches: [RevealMatch] = [
     ZStack(alignment: .bottom) {
         AppColors.void.ignoresSafeArea()
         OnboardingAtmosphere(config: .cardReveal).ignoresSafeArea()
-        Color.black.opacity(0.5).ignoresSafeArea()
+        AppColors.shadowDeep.ignoresSafeArea()
 
         DesireMapListSheet(
             matches: _previewMatches,

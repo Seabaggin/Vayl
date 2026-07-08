@@ -211,7 +211,10 @@ struct HolographicText: View {
             }
         } else {
             // One light-catch on appear, then rest.
-            withAnimation(.easeInOut(duration: 2.0)) { shift = 0.3; glowHigh = true }
+            withAnimation(.easeInOut(duration: AppAnimation.ambientPulse)) { shift = 0.3; glowHigh = true }
+            // AUDIT FLAG (2026-07-08): 0.9s easeInOut one-shot has no exact-value token in
+            // AppAnimation. Left as a raw literal rather than round to a nearby token
+            // (would silently change the rendered value) - needs a token minted for it.
             withAnimation(.easeInOut(duration: 0.9)) { flash = -0.5 }
         }
     }

@@ -87,7 +87,7 @@ private struct PathStepRow: View {
                     Rectangle()
                         .fill(rail)
                         .frame(width: 2)
-                        .padding(.top, 30)
+                        .padding(.top, AppSpacing.xl - 2)
                 }
                 node
             }
@@ -126,7 +126,7 @@ private struct PathStepRow: View {
         case .done:
             Circle().fill(AppColors.spectrumBorder)
                 .frame(width: 30, height: 30)
-                .overlay(Image(systemName: "checkmark").font(AppFonts.caption).foregroundColor(.white))
+                .overlay(Image(systemName: "checkmark").font(AppFonts.caption).foregroundColor(AppColors.textBody))
         case .active:
             Circle().fill(AppColors.cardBg)
                 .frame(width: 30, height: 30)

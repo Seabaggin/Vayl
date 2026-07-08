@@ -9,7 +9,7 @@ struct SettingsView: View {
 
     @Environment(AppState.self)          private var appState
     @Environment(EntitlementStore.self)  private var entitlements
-    @Environment(AuthService.self)       private var authService
+    @Environment(AuthStore.self)         private var auth
     @Environment(\.dismiss)             private var dismiss
     @Environment(\.modelContext)         private var modelContext
 
@@ -58,10 +58,12 @@ struct SettingsView: View {
             .frame(width: layout.screenWidth)
             .onAppear {
                 if store == nil {
+                    // Store composition — the service crosses from AuthStore into
+                    // SettingsStore's initializer here; the view itself never calls it.
                     store = SettingsStore(
                         modelContainer: modelContext.container,
                         appState: appState,
-                        authService: authService,
+                        authService: auth.service,
                         entitlements: entitlements
                     )
                 }
@@ -82,7 +84,9 @@ struct SettingsView: View {
                 }
             }
             .vaylSheet(isPresented: $showNotifications, heightFraction: 0.92, screenHeight: layout.screenHeight) {
-                SettingsNotificationsView(onClose: { showNotifications = false })
+                if let store {
+                    SettingsNotificationsView(store: store, onClose: { showNotifications = false })
+                }
             }
             .vaylSheet(isPresented: $showAppearance, heightFraction: 0.92, screenHeight: layout.screenHeight) {
                 SettingsAppearanceView(onClose: { showAppearance = false })
@@ -184,7 +188,7 @@ struct SettingsView: View {
                 )
             )
             .padding(.horizontal, AppSpacing.sm)
-            .padding(.vertical, 5)
+            .padding(.vertical, AppSpacing.xxs + 3)
             .background(
                 Capsule()
                     .fill(AppColors.spectrumPurple.opacity(0.10))
@@ -198,7 +202,7 @@ struct SettingsView: View {
             .tracking(1.5)
             .foregroundStyle(AppColors.textSecondary)
             .padding(.horizontal, AppSpacing.sm)
-            .padding(.vertical, 5)
+            .padding(.vertical, AppSpacing.xxs + 3)
             .background(
                 Capsule()
                     .fill(AppColors.glassSurface)
@@ -572,7 +576,7 @@ struct SettingsSubScreenShell<Content: View>: View {
         .preferredColorScheme(.dark)
         .environment(state)
         .environment(EntitlementStore(modelContainer: .previewContainer, appState: state))
-        .environment(AuthService())
+        .environment(AuthStore())
         .modelContainer(ModelContainer.previewContainer)
 }
 #endif

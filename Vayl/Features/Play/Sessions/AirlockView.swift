@@ -30,7 +30,7 @@ struct AirlockView: View {
     @State private var consentFailed = false
     @State private var waitingPulse = false
     @State private var selectedRitual: Ritual? = nil
-    @State private var capacityStore = CoupleCapacityStore(service: SupabaseCoupleCapacityService())
+    @State private var capacityStore = CoupleCapacityStore()
     @State private var showHowItWorks = false
 
     private var yourTier: PulseCapacityColor {

@@ -24,7 +24,7 @@ struct ResearchSection: View {
                             .foregroundStyle(AppColors.spectrumPurple)   // purple symbol (section is purple-only)
                         Text("Browse")
                             .font(AppFonts.buttonLabel)
-                            .foregroundStyle(Color.white)
+                            .foregroundStyle(AppColors.textBody)
                     }
                     .padding(.horizontal, AppSpacing.md)
                     .padding(.vertical, AppSpacing.sm)

@@ -118,7 +118,7 @@ struct PulseFullView: View {
             onDismiss?()
         } label: {
             Image(systemName: "xmark")
-                .font(.system(size: 13, weight: .medium))
+                .font(AppFonts.body(13, weight: .medium, relativeTo: .footnote))
                 .foregroundStyle(AppColors.textMuted)
                 .frame(width: 32, height: 32)
                 .background(AppColors.glassSurface)
@@ -148,7 +148,7 @@ struct PulseFullView: View {
     private var emptyMeState: some View {
         VStack(spacing: AppSpacing.xs) {
             Image(systemName: "waveform.path.ecg")
-                .font(.system(size: 28))
+                .font(AppFonts.body(28, weight: .regular, relativeTo: .title2))
                 .foregroundStyle(AppColors.textTertiary)
             Text("No Pulse yet")
                 .font(AppFonts.cardTitle)
@@ -267,7 +267,7 @@ struct PulseFullView: View {
     private var emptyUsState: some View {
         VStack(spacing: AppSpacing.xs) {
             Image(systemName: "waveform.path.ecg")
-                .font(.system(size: 28))
+                .font(AppFonts.body(28, weight: .regular, relativeTo: .title2))
                 .foregroundStyle(AppColors.textTertiary)
             Text("No Pulse yet")
                 .font(AppFonts.cardTitle)
@@ -365,7 +365,7 @@ struct PulseFullView: View {
         let dy = fieldSize * 0.18
 
         return Text(text)
-            .font(.system(size: 9, weight: .bold))
+            .font(AppFonts.microBadge)
             .tracking(0.8)
             .textCase(.uppercase)
             .foregroundStyle(color)

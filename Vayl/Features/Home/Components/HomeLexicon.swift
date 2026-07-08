@@ -177,9 +177,7 @@ struct HomeLexicon: View {
 
             pager
         }
-        .sheet(item: $shareImage) { wrapped in
-            ActivityView(items: [wrapped.image])
-        }
+        .vaylShareSheet(item: $shareImage) { [$0.image] }
     }
 
     private var pager: some View {
@@ -503,14 +501,6 @@ private struct PageHeightKey: PreferenceKey {
     }
 }
 
-private struct ActivityView: UIViewControllerRepresentable {
-    let items: [Any]
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
-}
-
 // MARK: - Foil collectible share card (9:16, VaylCardFace language)
 
 private struct LexiconShareCard: View {
@@ -544,6 +534,10 @@ private struct LexiconShareCard: View {
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
                     .minimumScaleFactor(0.5)
+                    // Color is already AppColors.spectrumPurple. No AppGlows preset matches
+                    // this exact radius/opacity pair (cardBreathe is radius 18 but opacity
+                    // 0.22, not 0.6) — left as a raw .shadow rather than round to a token
+                    // that would change the rendered glow.
                     .shadow(color: AppColors.spectrumPurple.opacity(0.6), radius: 18)
 
                 Text(detail)
@@ -564,13 +558,22 @@ private struct LexiconShareCard: View {
                         .foregroundStyle(AppColors.textSecondary)
                 }
             }
+            // 36pt sits between AppSpacing.xl (32) and .xxl (48) — no exact match,
+            // left as a raw literal rather than round to a token that would change
+            // the card's rendered layout.
             .padding(36)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             // ✦ corners + spectrum frame — the card language.
+            // 28pt sits between AppRadius.xl (24) and .sheet (57) — no exact match,
+            // left as a raw literal rather than round to a token that would change
+            // the card's rendered corner.
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .strokeBorder(AppColors.spectrumText, lineWidth: 1.5)
                 .opacity(0.9)
+                // 14pt sits between AppSpacing.sm (8) and .md (16) — no exact match,
+                // left as a raw literal rather than round to a token that would
+                // change the frame inset.
                 .padding(14)
         }
         .frame(width: 360, height: 640)

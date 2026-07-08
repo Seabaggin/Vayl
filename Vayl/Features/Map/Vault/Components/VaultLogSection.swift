@@ -49,7 +49,7 @@ struct VaultLogSection: View {
                         .foregroundStyle(AppColors.textBody)
                     Spacer()
                     Image(systemName: e.isShared ? "person.2.fill" : "lock.fill")
-                        .font(.system(size: 10, weight: .regular))
+                        .font(AppFonts.body(10, weight: .regular, relativeTo: .caption2))
                         .foregroundStyle(AppColors.textTertiary)
                 }
 

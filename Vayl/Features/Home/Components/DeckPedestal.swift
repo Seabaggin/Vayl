@@ -28,7 +28,7 @@ struct DeckPedestal: View {
     private var stripWidth: CGFloat { widened ? 320 : 238 }
 
     // mockup `#7a5cff` — the lilac mid-stop between cyan and magenta on the strip.
-    private let stripLilac = Color(hex: "7A5CFF")
+    private let stripLilac = AppColors.spectrumLilac
 
     var body: some View {
         ZStack {

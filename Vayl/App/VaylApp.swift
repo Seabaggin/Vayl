@@ -14,7 +14,7 @@ struct VaylApp: App {
     @State private var themeManager = ThemeManager()
     @State private var appState: AppState
     @State private var pulseStore = PulseStore()
-    @State private var authService = AuthService()
+    @State private var authStore = AuthStore()
     @State private var onboardingStore: OnboardingStore
     @State private var entitlementStore: EntitlementStore
     @State private var coupleContext: CoupleContext
@@ -56,7 +56,7 @@ struct VaylApp: App {
                 .preferredColorScheme(.dark)
                 .environment(themeManager)
                 .environment(appState)
-                .environment(authService)
+                .environment(authStore)
                 .environment(pulseStore)
                 .environment(onboardingStore)
                 .environment(entitlementStore)
@@ -66,7 +66,7 @@ struct VaylApp: App {
                     let debugSeedRan = await DebugCoupleSeedService(
                         modelContainer: ModelContainer.appContainer,
                         appState: appState,
-                        authService: authService
+                        authService: authStore.service
                     ).runIfRequested()
                     if debugSeedRan {
                         appState.hydrateOnboardingState(from: ModelContainer.appContainer)
@@ -74,13 +74,13 @@ struct VaylApp: App {
                         // Reconcile the onboarding gate against the durable truth (UserProfile)
                         // before anything routes — init only read the fast UserDefaults cache.
                         appState.hydrateOnboardingState(from: ModelContainer.appContainer)
-                        await authService.checkSession()
+                        await authStore.checkSession()
                     }
                     #else
                     // Reconcile the onboarding gate against the durable truth (UserProfile)
                     // before anything routes — init only read the fast UserDefaults cache.
                     appState.hydrateOnboardingState(from: ModelContainer.appContainer)
-                    await authService.checkSession()
+                    await authStore.checkSession()
                     #endif
                     // Resolve tier (server + local StoreKit) + load the product + start the
                     // purchase-updates listener, now the session is ready (RLS-scoped).
@@ -94,7 +94,7 @@ struct VaylApp: App {
                     
                     // Now that session is guaranteed to be checked, retry syncs safely.
                     let onboardingDone = appState.isOnboardingComplete
-                    if onboardingDone, let userId = authService.userId {
+                    if onboardingDone, let userId = authStore.userId {
                         await SyncManager.shared.retryPendingSyncs(userId: userId)
                     }
                 }

@@ -9,7 +9,7 @@ struct SignInView: View {
 
     // MARK: - Dependencies
 
-    var authService: AuthService
+    var auth: AuthStore
 
     @State private var legalDoc: LegalDoc?
 
@@ -57,11 +57,15 @@ struct SignInView: View {
 
                         // Sign in with Apple
                         Button {
-                            authService.signInWithApple()
+                            auth.signInWithApple()
                         } label: {
                             HStack(spacing: AppSpacing.sm) {
                                 Image(systemName: "applelogo")
-                                    .font(.body.weight(.semibold))
+                                    // SF Symbols render from their own glyph set regardless of font
+                                    // family — only size/weight/relativeTo affect the symbol, so
+                                    // reusing ctaLabel (same 17pt/semibold/.body as the adjacent
+                                    // label) matches the prior raw `.body.weight(.semibold)` exactly.
+                                    .font(AppFonts.ctaLabel)
                                 Text("Sign in with Apple")
                                     .font(AppFonts.ctaLabel)
                             }
@@ -75,19 +79,19 @@ struct SignInView: View {
                             )
                         }
                         .padding(.horizontal, AppSpacing.lg)
-                        .disabled(authService.isLoading)
-                        .opacity(authService.isLoading ? 0.55 : 1)
-                        .animation(AppAnimation.fast, value: authService.isLoading)
+                        .disabled(auth.isLoading)
+                        .opacity(auth.isLoading ? 0.55 : 1)
+                        .animation(AppAnimation.fast, value: auth.isLoading)
 
                         // Loading indicator
-                        if authService.isLoading {
+                        if auth.isLoading {
                             ProgressView()
                                 .tint(AppColors.accentPrimary)
                                 .transition(.opacity)
                         }
 
                         // Error state
-                        if let error = authService.error {
+                        if let error = auth.error {
                             Text(error)
                                 .font(AppFonts.caption)
                                 .foregroundStyle(AppColors.destructive)
@@ -111,8 +115,8 @@ struct SignInView: View {
                                 return .handled
                             })
                     }
-                    .animation(AppAnimation.standard, value: authService.isLoading)
-                    .animation(AppAnimation.standard, value: authService.error)
+                    .animation(AppAnimation.standard, value: auth.isLoading)
+                    .animation(AppAnimation.standard, value: auth.error)
 
                     Spacer()
                         .frame(height: AppSpacing.xl)
@@ -121,9 +125,7 @@ struct SignInView: View {
             }
         }
         .ignoresSafeArea()
-        .sheet(item: $legalDoc) { doc in
-            SafariView(url: doc.url)
-        }
+        .vaylSafariSheet(item: $legalDoc) { $0.url }
     }
 
     // MARK: - Atmosphere
@@ -176,11 +178,6 @@ struct SignInView: View {
 // MARK: - Preview
 
 #Preview("Sign In — Dark") {
-    SignInView(authService: AuthService())
+    SignInView(auth: AuthStore())
         .preferredColorScheme(.dark)
-}
-
-#Preview("Sign In — Light") {
-    SignInView(authService: AuthService())
-        .preferredColorScheme(.light)
 }

@@ -142,7 +142,7 @@ struct EventEntryEditor: View {
         } label: {
             Text("Save")
                 .font(AppFonts.buttonLabel)
-                .foregroundStyle(.white)
+                .foregroundStyle(AppColors.textBody)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, AppSpacing.md)
                 .background(Capsule().fill(AppColors.accentSecondary))

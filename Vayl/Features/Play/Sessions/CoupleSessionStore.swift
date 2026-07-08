@@ -127,7 +127,10 @@ final class CoupleSessionStore: Identifiable {
         self.sessionSettings = appState.sessionSettings
         self.presenceSeconds = presenceSeconds
         self.transitionSeconds = transitionSeconds
-        self.realtime = realtime
+        // A two-device launch resolves its own realtime service when the caller
+        // doesn't inject one — the container view no longer constructs Services
+        // (4-layer). A local/DEBUG launch (session == nil) stays realtime-free.
+        self.realtime = realtime ?? (launch.session != nil ? RealtimeSessionService() : nil)
         self.initiatorId = launch.session?.initiatorId
         self.deckCatalog = deckCatalog ?? DeckCatalogService()
         self.revealEngine = RevealEngine(role: launch.role, transport: nil)

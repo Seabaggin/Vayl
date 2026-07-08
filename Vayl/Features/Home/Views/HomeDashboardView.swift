@@ -813,7 +813,7 @@ struct HomeDashboardView: View {
             HStack {
                 Button { showDebugGrid.toggle() } label: {
                     Image(systemName: showDebugGrid ? "grid.circle.fill" : "grid.circle")
-                        .font(Font.custom("Switzer-Regular", size: 22, relativeTo: .title3))
+                        .font(AppFonts.body(22, weight: .regular, relativeTo: .title3))
                         .foregroundStyle(showDebugGrid ? Color.cyan : Color.white.opacity(0.4))
                         .padding(AppSpacing.sm)
                         .background(Color.black.opacity(0.4))

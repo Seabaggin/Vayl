@@ -267,7 +267,7 @@ struct DemoPhase: View {
         ZStack {
             Text(seq.verb.rawValue)
                 .font(AppFonts.display(sentenceSize, weight: .bold, relativeTo: .title))
-                .foregroundStyle(.white)
+                .foregroundStyle(AppColors.textBody)
                 .id(seq.verb)
                 .transition(.push(from: .bottom).combined(with: .opacity))
         }

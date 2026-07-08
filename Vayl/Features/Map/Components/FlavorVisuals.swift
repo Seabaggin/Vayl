@@ -59,12 +59,12 @@ struct FlavorChip: View {
     var body: some View {
         HStack(spacing: AppSpacing.xs) {
             Image(systemName: flavor.icon)
-                .font(.system(size: 11, weight: .semibold))
+                .font(AppFonts.body(11, weight: .semibold, relativeTo: .caption))
             Text(flavor.label.uppercased())
                 .font(AppFonts.overline)
                 .tracking(0.6)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(AppColors.textBody)
         .padding(.horizontal, AppSpacing.sm)
         .padding(.vertical, AppSpacing.xxs + 1)
         .background(Capsule().fill(flavor.color.opacity(0.22)))
@@ -80,7 +80,7 @@ struct DrawnTagChip: View {
     var body: some View {
         HStack(spacing: 3) {
             if tag.isShared {
-                Image(systemName: "sparkle").font(.system(size: 8))
+                Image(systemName: "sparkle").font(AppFonts.body(8, weight: .regular, relativeTo: .caption2))
             }
             Text(tag.name).font(AppFonts.caption)
         }

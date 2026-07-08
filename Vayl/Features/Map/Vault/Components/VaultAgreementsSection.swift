@@ -42,7 +42,7 @@ struct VaultAgreementsSection: View {
                     .foregroundStyle(AppColors.textPrimary)
                 Spacer()
                 Image(systemName: "lifepreserver")
-                    .font(.system(size: 18, weight: .regular))
+                    .font(AppFonts.body(18, weight: .regular, relativeTo: .body))
                     .foregroundStyle(AppColors.safetyAccent)
             }
             .padding(AppSpacing.md)
@@ -86,7 +86,7 @@ struct VaultAgreementsSection: View {
                     Button("Approve") { decide(p, approve: true) }
                         .buttonStyle(PressableCardStyle())
                         .font(AppFonts.buttonLabelSmall)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(AppColors.textBody)
                         .padding(.horizontal, AppSpacing.md)
                         .padding(.vertical, AppSpacing.xs + 1)
                         .background(Capsule().fill(AppColors.accentSecondary.opacity(0.85)))

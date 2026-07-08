@@ -69,7 +69,7 @@ struct RitualPills: View {
     private var goodThingGlyph: some View {
         ZStack {
             Image(systemName: "arrow.up")
-                .font(.system(size: 9, weight: .bold))
+                .font(AppFonts.microBadge)
                 .foregroundStyle(AppColors.spectrumMagenta)
                 .offset(x: 4, y: -1)
             Text("1")

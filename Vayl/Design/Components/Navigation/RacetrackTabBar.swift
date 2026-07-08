@@ -105,7 +105,7 @@ private struct RacetrackTabPill: View {
     var body: some View {
         Button(action: onTap) {
             Image(systemName: tab.icon)
-                .font(Font.custom("Switzer-Regular", size: 24, relativeTo: .title3))
+                .font(AppFonts.body(24, weight: .regular, relativeTo: .title3))
                 .frame(width: 26, height: 26)
                 .foregroundStyle(iconColor)
                 .padding(.horizontal, AppSpacing.md)

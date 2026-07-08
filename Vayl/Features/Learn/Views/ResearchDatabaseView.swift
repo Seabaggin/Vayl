@@ -126,7 +126,7 @@ struct ResearchDatabaseView: View {
                     .frame(width: 64, alignment: .leading)
             } else {
                 Image(systemName: f.type.sfSymbol)
-                    .font(.system(size: 20)).foregroundStyle(f.type.tint)
+                    .font(AppFonts.body(20, weight: .regular, relativeTo: .body)).foregroundStyle(f.type.tint)
                     .frame(width: 48, height: 48)
                     .background(RoundedRectangle(cornerRadius: AppRadius.md).fill(f.type.tint.opacity(0.08)))
             }

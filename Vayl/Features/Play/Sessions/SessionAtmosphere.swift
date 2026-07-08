@@ -103,7 +103,7 @@ struct SessionAtmosphere: View {
             .frame(width: W * 1.0, height: H * 0.42)
             .blur(radius: 80)
             .position(x: W * 0.5, y: H * 0.52)
-            .animation(.easeInOut(duration: 1.2), value: turn)
+            .animation(AppAnimation.sessionTurnTint, value: turn)
     }
 
     // MARK: - Breath cycle

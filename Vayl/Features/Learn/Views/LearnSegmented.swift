@@ -31,7 +31,7 @@ struct LearnSegmented<Value: Hashable>: View {
                     VStack(spacing: AppSpacing.xs) {
                         if let icon = item.icon {
                             Image(systemName: icon)
-                                .font(.system(size: 15, weight: .medium))
+                                .font(AppFonts.body(15, weight: .medium, relativeTo: .body))
                                 .foregroundStyle(on ? accent : AppColors.textSecondary)
                         }
                         Text(item.label)

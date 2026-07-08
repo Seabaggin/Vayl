@@ -1,10 +1,12 @@
 import SwiftUI
 
 // MARK: - Palette (spectrum; sanctioned candle exception to outline-only OB rule)
+// Verbatim-matches AppColors.spectrumCyan/Purple/Magenta (#00C2FF / #6C3AE0 / #FF006A) —
+// aliased rather than duplicated as raw literals.
 enum CandlePalette {
-    static let cyan    = Color(red: 0,     green: 0.761, blue: 1)
-    static let purple  = Color(red: 0.424, green: 0.227, blue: 0.878)
-    static let magenta = Color(red: 1,     green: 0,     blue: 0.416)
+    static let cyan    = AppColors.spectrumCyan
+    static let purple  = AppColors.spectrumPurple
+    static let magenta = AppColors.spectrumMagenta
 }
 
 // MARK: - Noise (verbatim port of mockup smoothNoise/fbm)

@@ -23,7 +23,7 @@ struct FounderLetterSheet<Content: View>: View {
                 .fill(AppColors.spectrumBorder)
                 .frame(width: 36, height: 5)
                 .opacity(0.6)
-                .padding(.top, 8)
+                .padding(.top, AppSpacing.sm)
 
             content()
 

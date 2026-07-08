@@ -297,7 +297,7 @@ private struct MapFieldSheet: View {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(AppFonts.body(13, weight: .medium, relativeTo: .footnote))
                         .foregroundStyle(AppColors.textMuted)
                         .frame(width: 32, height: 32)
                         .background(AppColors.glassSurface)

@@ -74,7 +74,7 @@ struct LearnView: View {
                         .foregroundStyle(AppColors.spectrumText)   // gradient symbol (in place of a gradient border)
                     Text("Resources")
                         .font(AppFonts.buttonLabel)
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(AppColors.textBody)
                 }
                 .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.sm)

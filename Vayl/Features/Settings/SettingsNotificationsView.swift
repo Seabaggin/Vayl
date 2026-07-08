@@ -1,9 +1,9 @@
 // Vayl/Features/Settings/SettingsNotificationsView.swift
 
 import SwiftUI
-import UserNotifications
 
 struct SettingsNotificationsView: View {
+    let store: SettingsStore
     var onClose: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
@@ -75,29 +75,12 @@ struct SettingsNotificationsView: View {
 
     private func requestPermission(onDenied: @escaping () -> Void) {
         Task {
-            let center = UNUserNotificationCenter.current()
-            let settings = await center.notificationSettings()
-            switch settings.authorizationStatus {
-            case .authorized, .provisional, .ephemeral:
-                break
-            case .denied:
+            let denied = await store.requestNotificationPermission()
+            if denied {
                 await MainActor.run {
                     onDenied()
                     showPermissionDeniedAlert = true
                 }
-            case .notDetermined:
-                // iOS 26: `.alert` authorization option is banned — request sound + badge
-                // only and set the banner presentation style in the notification delegate
-                // (same posture as PushService.requestAuthorizationAndRegister).
-                let granted = (try? await center.requestAuthorization(options: [.sound, .badge])) ?? false
-                if !granted {
-                    await MainActor.run {
-                        onDenied()
-                        showPermissionDeniedAlert = true
-                    }
-                }
-            @unknown default:
-                break
             }
         }
     }

@@ -225,11 +225,11 @@ struct SplitOrbView: View {
 
             // Diagonal seam hairline.
             HalfCircle(leading: true)
-                .stroke(.white.opacity(seamOpacity), lineWidth: seamWidth)
+                .stroke(AppColors.textBody.opacity(seamOpacity), lineWidth: seamWidth)
 
             // Rim.
             Circle()
-                .strokeBorder(.white.opacity(0.14), lineWidth: 1)
+                .strokeBorder(AppColors.textBody.opacity(0.14), lineWidth: 1)
         }
         .frame(width: size, height: size)
         .clipShape(Circle())

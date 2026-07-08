@@ -52,9 +52,9 @@ struct PartnerChip: View {
                     Image(systemName: AppIcons.personBadgePlus)
                         // .caption scales with Dynamic Type — correct for
                         // compact icon badges at this visual weight.
-                        .font(.caption)
+                        .font(AppFonts.body(12, weight: .regular, relativeTo: .caption))
                         .fontWeight(.medium)
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(AppColors.textBody)
                 }
             }
             .buttonStyle(.plain)
@@ -98,9 +98,9 @@ struct PartnerChip: View {
                     Image(systemName: AppIcons.personBadgeClock)
                         // .caption scales with Dynamic Type — correct for
                         // compact icon badges at this visual weight.
-                        .font(.caption)
+                        .font(AppFonts.body(12, weight: .regular, relativeTo: .caption))
                         .fontWeight(.medium)
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(AppColors.textBody)
                 }
             }
             .buttonStyle(.plain)
@@ -133,7 +133,7 @@ struct PartnerChip: View {
                     Image(systemName: AppIcons.chevronRight)
                         // .caption2 scales with Dynamic Type — correct for
                         // small directional indicators in compact chips.
-                        .font(.caption2)
+                        .font(AppFonts.body(11, weight: .regular, relativeTo: .caption2))
                         .fontWeight(.semibold)
                         .foregroundStyle(AppColors.textTertiary)
                 }
@@ -201,9 +201,9 @@ struct PartnerChip: View {
                     Image(systemName: AppIcons.personBadgeClock)
                         // .caption scales with Dynamic Type — correct for
                         // compact icon badges at this visual weight.
-                        .font(.caption)
+                        .font(AppFonts.body(12, weight: .regular, relativeTo: .caption))
                         .fontWeight(.medium)
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(AppColors.textBody)
                 }
             }
             .buttonStyle(.plain)

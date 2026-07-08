@@ -168,7 +168,7 @@ struct CardBackView: View {
             HStack {
                 Spacer()
                 Text("∞")
-                    .font(Font.custom("Switzer-Regular", size: 28, relativeTo: .title))
+                    .font(AppFonts.body(28, weight: .regular, relativeTo: .title))
                     .foregroundStyle(
                         isLight
                             ? AppColors.accentSecondary.opacity(0.08)

@@ -14,12 +14,18 @@
 //   .vaylSheet  = sheet + standard detents / grabber / modal background.
 //                 For previewing-something-you-return-from and discrete tasks.
 //
+//   .vaylSafariSheet / .vaylShareSheet = sanctioned exemptions for modals that
+//                 need a genuine UIKit presentation context (SFSafariViewController,
+//                 UIActivityViewController) the custom `.vaylSheet` overlay can't
+//                 host. Still routed through here, never a raw `.sheet` in a feature view.
+//
 // Protected content asks to leave by calling the `vaylDismiss` environment
 // closure. The cover intercepts it and shows the confirm dialog (Duolingo-lesson
 // logic) before actually dismissing. A plain `dismiss()` from inside the content
 // would bypass the guard — always call `vaylDismiss` instead.
 
 import SwiftUI
+import UIKit
 
 // MARK: - vaylDismiss Environment
 
@@ -252,5 +258,80 @@ extension View {
             showsGrabber: showsGrabber,
             sheetContent: content
         ))
+    }
+}
+
+// MARK: - Safari Sheet
+//
+// Sanctioned exemption: SFSafariViewController is system chrome — it needs its
+// own navigation bar and dismiss affordance, which the custom `.vaylSheet`
+// overlay can't host. This wrapper keeps that one exception in a single
+// place, so a raw `.sheet` never appears in a feature view.
+
+private struct VaylSafariSheetModifier<Item: Identifiable>: ViewModifier {
+
+    @Binding var item: Item?
+    let url: (Item) -> URL
+
+    func body(content: Content) -> some View {
+        content.sheet(item: $item) { value in
+            SafariView(url: url(value))
+        }
+    }
+}
+
+// MARK: - Share Sheet
+//
+// Sanctioned exemption: UIActivityViewController is system chrome; the
+// custom `.vaylSheet` overlay can't present it correctly. This wrapper keeps
+// that one exception in a single place, so a raw `.sheet` never appears in
+// a feature view.
+
+private struct VaylActivityView: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {
+        // UIActivityViewController is configured at init; nothing to update.
+    }
+}
+
+private struct VaylShareSheetModifier<Item: Identifiable>: ViewModifier {
+
+    @Binding var item: Item?
+    let items: (Item) -> [Any]
+
+    func body(content: Content) -> some View {
+        content.sheet(item: $item) { value in
+            VaylActivityView(items: items(value))
+        }
+    }
+}
+
+// MARK: - View API — System Chrome Exemptions
+
+extension View {
+
+    /// Presents `item` in a system Safari sheet (`SFSafariViewController`) — for
+    /// content that must render a live web page, e.g. the legal documents on
+    /// sign-in. See the "Safari Sheet" exemption note above.
+    func vaylSafariSheet<Item: Identifiable>(
+        item: Binding<Item?>,
+        url: @escaping (Item) -> URL
+    ) -> some View {
+        modifier(VaylSafariSheetModifier(item: item, url: url))
+    }
+
+    /// Presents `item` in the system share sheet (`UIActivityViewController`) —
+    /// for handing content off to the OS activity picker. See the "Share Sheet"
+    /// exemption note above.
+    func vaylShareSheet<Item: Identifiable>(
+        item: Binding<Item?>,
+        items: @escaping (Item) -> [Any]
+    ) -> some View {
+        modifier(VaylShareSheetModifier(item: item, items: items))
     }
 }

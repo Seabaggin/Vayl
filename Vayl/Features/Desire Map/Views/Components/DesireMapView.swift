@@ -810,11 +810,16 @@ private struct _ChartedLine: View {
             .onAppear {
                 Task {
                     try? await Task.sleep(for: .seconds(delay))
+                    // FLAG: no exact AppAnimation match for these two (0.45 ease-out, 0.35
+                    // ease-in-out) — every 0.45/0.35 token in AppAnimation.swift is scoped
+                    // "exclusive to Onboarding canvas / Splash / StatPhase, never elsewhere"
+                    // by its section banner. Left raw per no-mint-authority rule; needs a
+                    // Desire Map-scoped mint (or reuse sign-off) from the mint pass.
                     withAnimation(.easeOut(duration: 0.45)) { trimTo = 0.88; lineOp = 0.22 }
                     try? await Task.sleep(for: .seconds(0.45))
                     withAnimation(.easeInOut(duration: 0.35)) { trimTo = 0.52; lineOp = 0.12 }
                     try? await Task.sleep(for: .seconds(0.45))
-                    withAnimation(.easeOut(duration: 0.35)) { trimTo = 0; lineOp = 0 }
+                    withAnimation(AppAnimation.desireFinishFade) { trimTo = 0; lineOp = 0 }
                 }
             }
     }

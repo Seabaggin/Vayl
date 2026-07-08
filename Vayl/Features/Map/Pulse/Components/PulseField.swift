@@ -238,6 +238,9 @@ struct PulseField: View {
 
     private func axisText(_ label: String) -> some View {
         Text(label)
+            // 10pt bold system - distinct from AppFonts.microBadge (9pt); not part of
+            // that verbatim-repeat group (see mint-agent note), left as System per
+            // the same reasoning: swapping family would change the rendered value.
             .font(.system(size: 10, weight: .bold))
             .tracking(1.4)
             .textCase(.uppercase)
@@ -293,7 +296,7 @@ private struct BloomRing: View {
             // .ambientAnimation (not raw .animation) — the loop contract's modifier,
             // which also nil-outs the loop under Reduce Motion / Low Power Mode.
             .ambientAnimation(
-                .easeOut(duration: 1.6).repeatForever(autoreverses: false),
+                AppAnimation.pulseBloomRingLoop,
                 value: active
             )
     }

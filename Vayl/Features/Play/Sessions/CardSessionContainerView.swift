@@ -35,13 +35,12 @@ struct CardSessionContainerView: View {
         }
         .task {
             guard store == nil else { return }
-            let realtime: RealtimeSessionService? =
-                launch.session != nil ? RealtimeSessionService() : nil
+            // The store resolves its own realtime service from the launch —
+            // this view composes Stores only, never Services.
             let built = CoupleSessionStore(
                 launch: launch,
                 modelContainer: modelContext.container,
-                appState: appState,
-                realtime: realtime
+                appState: appState
             )
             store = built
             // Fresh lobby/airlock rows run the handshake; active/paused rows are

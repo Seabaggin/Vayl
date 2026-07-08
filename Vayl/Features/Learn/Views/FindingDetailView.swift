@@ -78,7 +78,7 @@ struct FindingDetailView: View {
 private struct BulletStyle: LabelStyle {
     func makeBody(configuration: Configuration) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.sm) {
-            Image(systemName: "circle.fill").font(.system(size: 4)).padding(.top, 7)
+            Image(systemName: "circle.fill").font(AppFonts.body(4, weight: .regular, relativeTo: .caption2)).padding(.top, 7)
             configuration.title
         }
     }

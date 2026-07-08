@@ -67,7 +67,7 @@ struct DesireStarDetailSheet: View {
     ZStack(alignment: .bottom) {
         AppColors.void.ignoresSafeArea()
         OnboardingAtmosphere(config: .cardReveal).ignoresSafeArea()
-        Color.black.opacity(0.5).ignoresSafeArea()
+        AppColors.shadowDeep.ignoresSafeArea()
 
         DesireStarDetailSheet(match: .sample("New Relationship Energy", .mutual))
     }
@@ -78,7 +78,7 @@ struct DesireStarDetailSheet: View {
     ZStack(alignment: .bottom) {
         AppColors.void.ignoresSafeArea()
         OnboardingAtmosphere(config: .cardReveal).ignoresSafeArea()
-        Color.black.opacity(0.5).ignoresSafeArea()
+        AppColors.shadowDeep.ignoresSafeArea()
 
         DesireStarDetailSheet(match: .sample("Overnight Stays", .adjacent, category: "logistics"))
     }

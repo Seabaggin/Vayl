@@ -116,7 +116,7 @@ struct CardCarousel: View {
             DispatchQueue.main.async {
                 // Float loop — 3.2s intentional, slightly below ambientDrift (4.0s).
                 // Gives card a faster, more responsive idle breath.
-                withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
+                withAnimation(AppAnimation.cardBreathe) {
                     floatOffset = -6
                 }
             }
@@ -346,9 +346,12 @@ struct CardCarousel: View {
                 .blur(radius: 60)
                 .scaleEffect(isDragging ? 1.15 : 1.0)
                 .opacity(phase == .floating ? bloomOpacity : (isDragging ? 1.0 : 0.6))
-                // Intentional low-damping aurora spring (0.4 / 0.6) —
-                // produces a bouncy atmospheric swell on drag.
-                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isDragging)
+                // FEEL CHANGE (2026-07-08 audit fix): was .spring(response: 0.4, dampingFraction: 0.6),
+                // which violated the dampingFraction >= 0.75 hard rule outside the OB canvas.
+                // Swapped to AppAnimation.spring (0.5 / 0.85), the documented tap-release staple.
+                // This changes the aurora swell's bounce character (less overshoot, slightly
+                // slower settle) - needs a device feel-confirmation pass.
+                .animation(AppAnimation.spring, value: isDragging)
                 .allowsHitTesting(false)
                 .animation(AppAnimation.slow, value: activeIndex)
 
@@ -747,7 +750,7 @@ struct CardCarousel: View {
             // Gated like the onAppear loops: under RM / Low Power the idle
             // float never ran, so don't restart it here either.
             guard !reduceMotion, !AppAnimation.lowPower else { return }
-            withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
+            withAnimation(AppAnimation.cardBreathe) {
                 floatOffset = -6
             }
         }

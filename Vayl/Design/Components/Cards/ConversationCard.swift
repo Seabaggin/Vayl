@@ -83,7 +83,7 @@ struct ConversationCard: View {
             .scaleEffect((pulsing && !reduceMotion && !AppAnimation.lowPower) ? 1.02 : 1.0)
             .animation(
                 (pulsing && !reduceMotion && !AppAnimation.lowPower)
-                    ? .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
+                    ? .easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true)
                     : .default,
                 value: pulsing
             )
@@ -263,6 +263,10 @@ struct ConversationCard: View {
                 duration: duration,
                 delay: 1.5,
                 onComplete: {
+                    // AUDIT FLAG (2026-07-08): easeIn(duration: 0.4) has no exact-value token.
+                    // AppAnimation.enter is 0.4s but ease-OUT, not ease-in, so it is not a
+                    // match - swapping curve would change the rendered feel. Left as a raw
+                    // literal pending a minted token.
                     withAnimation(.easeIn(duration: 0.4)) {
                         arrowVisible = true
                     }

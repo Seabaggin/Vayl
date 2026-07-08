@@ -6,8 +6,9 @@
 // magenta) is the only hard edge. Matches the OB glass-over-void direction the
 // tabs are moving toward.
 //
-// DEVICE-TUNE: `fillOpacity` is the glass-vs-atmosphere knob — lower lets more
-// atmosphere through, higher reads as a more solid card. Confirm on device.
+// DEVICE-TUNE: the fill is `AppColors.whisperFill` — the glass-vs-atmosphere
+// knob lives on that token now; lower lets more atmosphere through, higher
+// reads as a more solid card. Confirm on device.
 
 import SwiftUI
 
@@ -33,13 +34,12 @@ struct PressableCardStyle: ButtonStyle {
 private struct LearnCardStyle: ViewModifier {
     let accent: Color
     let cornerRadius: CGFloat
-    private let fillOpacity: Double = 0.04   // faint glass lift over the atmosphere
 
     func body(content: Content) -> some View {
         content
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(Color.white.opacity(fillOpacity))
+                    .fill(AppColors.whisperFill)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)

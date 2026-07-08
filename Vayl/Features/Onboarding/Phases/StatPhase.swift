@@ -266,7 +266,7 @@ struct StatPhase: View {
     private var emptyStateView: some View {
         VStack(spacing: AppSpacing.md) {
             Image(systemName: "chart.bar.xaxis")
-                .font(.system(size: 40)) // empty-state symbol — token pending AppLayout
+                .font(AppFonts.body(40, weight: .regular, relativeTo: .largeTitle)) // empty-state symbol — token pending AppLayout
                 .foregroundStyle(AppColors.textSecondary)
             Text("Stat unavailable")
                 .font(AppFonts.bodyMedium)
@@ -400,7 +400,7 @@ struct StatPhase: View {
                     HStack(alignment: .center, spacing: AppSpacing.xs) {
                         Text("some point in their lives.")
                         Image(systemName: AppIcons.infoCircle)
-                            .font(.system(size: 23.5, weight: .regular))   // FEEL-GATE
+                            .font(AppFonts.body(23.5, weight: .regular, relativeTo: .title3))   // FEEL-GATE
                             .foregroundStyle(AppColors.spectrumText)
                     }
                 }

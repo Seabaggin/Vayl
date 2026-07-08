@@ -48,12 +48,13 @@ final class SettingsStore {
     private let accountService: AccountService
     private let pairingService: PairingService
     private let syncManager: SyncManager
+    private let pushService: PushService
 
     // MARK: - Init
 
-    /// `accountService` / `pairingService` / `syncManager` nil resolve to instances
-    /// inside the MainActor-isolated body — a default argument would evaluate in a
-    /// nonisolated context and not compile.
+    /// `accountService` / `pairingService` / `syncManager` / `pushService` nil resolve
+    /// to instances inside the MainActor-isolated body — a default argument would
+    /// evaluate in a nonisolated context and not compile.
     init(
         modelContainer: ModelContainer,
         appState: AppState,
@@ -61,7 +62,8 @@ final class SettingsStore {
         entitlements: EntitlementStore,
         accountService: AccountService? = nil,
         pairingService: PairingService? = nil,
-        syncManager: SyncManager? = nil
+        syncManager: SyncManager? = nil,
+        pushService: PushService? = nil
     ) {
         self.modelContainer = modelContainer
         self.appState = appState
@@ -70,6 +72,7 @@ final class SettingsStore {
         self.accountService = accountService ?? AccountService()
         self.pairingService = pairingService ?? PairingService()
         self.syncManager = syncManager ?? .shared
+        self.pushService = pushService ?? .shared
     }
 
     // MARK: - Identity edit (name / pronouns / experience)
@@ -130,6 +133,16 @@ final class SettingsStore {
     /// Was called directly from SettingsPrivacyView (H-2 violation) — now routed here.
     func setShareCapacity(_ value: Bool) {
         Task { [syncManager] in await syncManager.pushSharePulse(value) }
+    }
+
+    // MARK: - Notifications (Settings > Notifications reminder toggles)
+
+    /// Checks/requests local notification permission for a reminder toggle. Returns
+    /// `true` when permission was denied (the caller should revert its toggle and
+    /// surface the "notifications are off" alert), `false` when authorized.
+    func requestNotificationPermission() async -> Bool {
+        let result = await pushService.requestNotificationPermission()
+        return result == .denied
     }
 
     // MARK: - Connection composition (spec §9 Settings row)

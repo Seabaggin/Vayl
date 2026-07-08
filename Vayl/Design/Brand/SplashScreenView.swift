@@ -619,7 +619,7 @@ struct SplashScreenView<Destination: View>: View {
         await lockLineGeometry()
         withAnimation(AppAnimation.splashLineAppear)                  { lineOpacity = 1 }
         withAnimation(AppAnimation.splashReveal)                      { revealProgress = 1.0 }
-        withAnimation(.easeInOut(duration: 0.30)) /* TODO: AppAnimation.splashBloomCreep — no token, spec gap */ { lineBloom = 0.58 }
+        withAnimation(AppAnimation.splashBloomCreep) { lineBloom = 0.58 }
 
         // ── IGNITION BLOOM ────────────────────────────────────────────────
         try? await sleep(ms: 600)
@@ -634,7 +634,7 @@ struct SplashScreenView<Destination: View>: View {
         // ── ZOOM ──────────────────────────────────────────────────────────
         try? await sleep(ms: 450)
         guard !Task.isCancelled else { return }
-        withAnimation(.easeOut(duration: 0.22)) /* TODO: AppAnimation token — textFade has no spec equivalent */ { textOpacity = 0 }
+        withAnimation(AppAnimation.splashTextFade) { textOpacity = 0 }
         withAnimation(AppAnimation.splashZoom)          { zoomScale = 3.5; lineBloom = 3.0; linePulse = 1.4 }
         withAnimation(AppAnimation.splashZoomAnticipate) { tearIntensity = 0.8 }
 
@@ -645,24 +645,24 @@ struct SplashScreenView<Destination: View>: View {
 
         // ── TEAR ──────────────────────────────────────────────────────────
         onTearBegan()
-        withAnimation(.easeIn(duration: 0.30)) /* TODO: AppAnimation token — destination reveal has no spec equivalent */ { destinationOpacity = 1.0 }
+        withAnimation(AppAnimation.splashDestinationReveal) { destinationOpacity = 1.0 }
         withAnimation(AppAnimation.splashTear)          { tearOffset = capturedTearDist; backgroundOpacity = 0 }
-        withAnimation(.easeOut(duration: 0.10)) /* TODO: AppAnimation token — tearIntensity spike has no spec equivalent */ { tearIntensity = 1.0 }
+        withAnimation(AppAnimation.splashTearIntensitySpike) { tearIntensity = 1.0 }
 
         // FIX 1: line vaporizes instantly the moment the seam opens.
         // The tearEdgeGlow on the parting panels immediately inherits the
         // visual energy — no zombie line floating in the void.
-        withAnimation(.easeOut(duration: 0.25)) /* TODO: AppAnimation token — line vaporize has no spec equivalent */ { lineOpacity = 0 }
+        withAnimation(AppAnimation.splashLineVaporize) { lineOpacity = 0 }
 
         try? await sleep(ms: 100)
         guard !Task.isCancelled else { return }
-        withAnimation(.easeIn(duration: 0.35)) /* TODO: AppAnimation token — tearIntensity decay has no spec equivalent */ { tearIntensity = 0 }
-        withAnimation(.linear(duration: 0.08)) /* TODO: AppAnimation.splashTearFade — no token, spec gap */              { lineBloom = 0; linePulse = 1.0 }
+        withAnimation(AppAnimation.splashTearIntensityDecay) { tearIntensity = 0 }
+        withAnimation(AppAnimation.splashTearFade)           { lineBloom = 0; linePulse = 1.0 }
 
         // Wait for panels to mostly clear before dismissing the overlay.
         try? await sleep(ms: 250)
         guard !Task.isCancelled else { return }
-        withAnimation(.easeOut(duration: 0.30)) /* TODO: AppAnimation.splashDismiss — no token, spec gap */ { splashOpacity = 0 }
+        withAnimation(AppAnimation.splashDismiss) { splashOpacity = 0 }
 
         // ── COMPLETE ──────────────────────────────────────────────────────
         try? await sleep(ms: 300)

@@ -36,6 +36,7 @@ enum VaylPrimitives {
     static let electricViolet = UIColor(hex: "#8B5CF6")
     static let spectrumBridge = UIColor(hex: "#8B6FD4") // mid-spectrum gradient bridge — cyan to magenta wordmark sweep
     static let periwinkle     = UIColor(hex: "#82A0E6") // soft cornflower blue — Pulse capsule halo (map-pulse-us.html .capsule glow)
+    static let lilac          = UIColor(hex: "#7A5CFF") // spectrum lilac mid-stop — DeckPedestal strip use only
 
     static let magenta        = UIColor(hex: "#FF006A")
     static let magentaLight   = UIColor(hex: "#FF4D94")
@@ -45,6 +46,26 @@ enum VaylPrimitives {
     static let rose           = UIColor(hex: "#C76A86")  // Protective/Empty tier core
     static let roseLight      = UIColor(hex: "#ECC0CE")  // Protective tier highlight
     static let roseDark       = UIColor(hex: "#8F4A60")  // Protective tier deep
+
+    // ── Flame / warm aura ramp — FlameAura + LightAuraBloom use only ──────
+    // Verbatim from the hardcoded Color(red:green:blue:) literals at each call site —
+    // not a general-purpose warm palette, do not reuse elsewhere.
+    static let flameHotPink       = UIColor(red: 1.0,  green: 0.15, blue: 0.55, alpha: 1) // FlameAura wisp base — hot pink
+    static let flameMagentaViolet = UIColor(red: 0.72, green: 0.10, blue: 0.90, alpha: 1) // FlameAura wisp base — lerp target
+    static let flameDeepPurple    = UIColor(red: 0.25, green: 0.02, blue: 0.55, alpha: 1) // FlameAura wisp tip
+    static let flameRoseCentre    = UIColor(red: 1.00, green: 0.40, blue: 0.60, alpha: 1) // LightAuraBloom centre blob
+    static let flamePeach         = UIColor(red: 1.00, green: 0.65, blue: 0.45, alpha: 1) // LightAuraBloom left blob
+    static let flameGold          = UIColor(red: 1.00, green: 0.80, blue: 0.30, alpha: 1) // LightAuraBloom right blob
+    static let flameLavender      = UIColor(red: 0.78, green: 0.60, blue: 1.00, alpha: 1) // LightAuraBloom far-left blob
+    static let flameBlush         = UIColor(red: 1.00, green: 0.55, blue: 0.75, alpha: 1) // LightAuraBloom far-right blob
+
+    // ── Vault rose glow ramp — VaultDoorCard's VaultEmblem use only ───────
+    // Verbatim from VaultDoorCard.swift's two radial gradients. Their shared mid-tone
+    // stop (red:1, green:0, blue:106/255) is NOT new — it is exactly VaylPrimitives.magenta,
+    // reuse that token at the call site instead of referencing one of these.
+    static let vaultRoseHighlight = UIColor(red: 1, green: 180 / 255, blue: 210 / 255, alpha: 1)    // centre aura glow, inner stop
+    static let vaultRoseCore      = UIColor(red: 1, green: 140 / 255, blue: 180 / 255, alpha: 1)    // core gradient, inner highlight
+    static let vaultRoseDeep      = UIColor(red: 40 / 255, green: 8 / 255, blue: 25 / 255, alpha: 1) // core gradient, outer edge
 
     // Neutral Space — Lavender Silver (both axes in the 0.475–0.525 border zone).
     static let lavenderSilverCore  = UIColor(hex: "#B0AECE")

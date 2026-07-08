@@ -35,7 +35,7 @@ struct AtmosphericGhostDeck: View {
                 .rotationEffect(.degrees(ghosts[0].rotation + (drifting ? 1.5 : 0)))
                 .opacity(colorScheme == .light ? 0.90 : ghosts[0].opacity)
                 .ambientAnimation(
-                    .easeInOut(duration: 8.0).repeatForever(autoreverses: true),
+                    .easeInOut(duration: AppAnimation.ghostDriftSlow).repeatForever(autoreverses: true),
                     value: drifting
                 )
 
@@ -49,7 +49,7 @@ struct AtmosphericGhostDeck: View {
                 .rotationEffect(.degrees(ghosts[1].rotation + (drifting ? -1.5 : 0)))
                 .opacity(colorScheme == .light ? 0.75 : ghosts[1].opacity)
                 .ambientAnimation(
-                    .easeInOut(duration: 9.5).repeatForever(autoreverses: true),
+                    .easeInOut(duration: AppAnimation.ghostDriftFast).repeatForever(autoreverses: true),
                     value: drifting
                 )
         }

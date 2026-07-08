@@ -65,6 +65,9 @@ struct VaylButton: View {
                 HolographicShimmer()
                     .clipShape(Capsule())
                     .opacity(shimmerOpacity)
+                    // AUDIT FLAG (2026-07-08): easeInOut(duration: 0.20) has no exact-value
+                    // token - existing 0.2s tokens (exit, desireDepthExit) are ease-IN, not
+                    // ease-in-out. Left as a raw literal pending a minted token.
                     .animation(.easeInOut(duration: 0.20), value: isPressed)
 
                 // Border effect
@@ -94,6 +97,8 @@ struct VaylButton: View {
                         .transition(.opacity.combined(with: .scale(scale: 0.8)))
                 }
             }
+            // AUDIT FLAG (2026-07-08): same untokenized 0.20s easeInOut as above - no exact
+            // match among existing 0.2s tokens (all ease-IN). Left raw pending a minted token.
             .animation(.easeInOut(duration: 0.20), value: isLoading)
             .frame(width: w, height: h)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -283,13 +288,13 @@ struct VaylButton: View {
             VaylButton(label: "Ready to begin?") {
                 print("tapped")
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, AppSpacing.lg)
 
             VaylButton(label: "Ready to begin?", isLoading: true) {}
-                .padding(.horizontal, 24)
+                .padding(.horizontal, AppSpacing.lg)
 
             VaylButton(label: "Ready to begin?", isDisabled: true) {}
-                .padding(.horizontal, 24)
+                .padding(.horizontal, AppSpacing.lg)
 
             VaylButton(label: "Continue", size: .compact) {
                 print("tapped")
@@ -298,7 +303,7 @@ struct VaylButton: View {
             VaylButton(label: "Maybe later", style: .secondary) {
                 print("tapped")
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, AppSpacing.lg)
         }
     }
     .preferredColorScheme(.dark)

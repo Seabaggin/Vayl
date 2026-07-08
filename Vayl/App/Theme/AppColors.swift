@@ -228,6 +228,10 @@ struct AppColors {
     /// Sits between cyan and magenta on the gradient arc — not a standalone accent.
     static let spectrumBridge  = Color(uiColor: VaylPrimitives.spectrumBridge)
 
+    /// Spectrum lilac mid-stop. #7A5CFF. DeckPedestal strip use only —
+    /// the lilac point on the strip's cyan-to-magenta sweep.
+    static let spectrumLilac   = Color(uiColor: VaylPrimitives.lilac)
+
     // ─────────────────────────────────────────────
     // MARK: Text — hierarchy
     //
@@ -738,6 +742,14 @@ struct AppColors {
     static let auraDeepNeutral  = Color(uiColor: VaylPrimitives.lavenderSilverDeep)
     static let auraGlowNeutral  = Color(uiColor: VaylPrimitives.lavenderSilverCore).opacity(0.22)
 
+    // Pre-answer ramp — plain silver-white, the orb's colour before the FIRST answer lands.
+    // Deliberately distinct from the Neutral SPACE's lavender-silver ramp above: no answer
+    // yet means no hue at all. Values preserved exactly from the check-in's original inline ramp.
+    static let auraLightStart = Color.white
+    static let auraCoreStart  = Color(white: 0.7)
+    static let auraDeepStart  = Color(white: 0.5)
+    static let auraGlowStart  = Color.white.opacity(0.3)
+
     // Uncharted Space ramp — Sage Deep. Fixed colour, does NOT blend; the orb dissolves to
     // this when the variance check fires (contradictory answers on both axes).
     static let auraCoreUncharted  = Color(uiColor: VaylPrimitives.sageDeepCore)
@@ -748,6 +760,48 @@ struct AppColors {
     /// Pulse "Us" capsule halo — soft periwinkle glow around the connector stroke.
     /// Mockup parity: map-pulse-us.html `.capsule` box-shadow rgba(130,160,230,.18).
     static let pulseCapsuleGlow = Color(uiColor: VaylPrimitives.periwinkle).opacity(0.18)
+
+    // ─────────────────────────────────────────────────────────────
+    // MARK: Flame / warm aura ramp — FlameAura + LightAuraBloom use only
+    //
+    // Verbatim from the hardcoded Color(red:green:blue:) literals in
+    // FlameAura.swift (wisp base/tip) and LightAuraBloom.swift (five blobs).
+    // Not a general-purpose warm palette — do not reuse elsewhere.
+    // ─────────────────────────────────────────────────────────────
+
+    /// FlameAura wisp base — hot pink. Lerped toward flameMagentaViolet by wisp seed.
+    static let flameHotPink       = Color(uiColor: VaylPrimitives.flameHotPink)
+    /// FlameAura wisp base — magenta-violet lerp target.
+    static let flameMagentaViolet = Color(uiColor: VaylPrimitives.flameMagentaViolet)
+    /// FlameAura wisp tip — deep purple.
+    static let flameDeepPurple    = Color(uiColor: VaylPrimitives.flameDeepPurple)
+    /// LightAuraBloom centre blob — rose.
+    static let flameRoseCentre    = Color(uiColor: VaylPrimitives.flameRoseCentre)
+    /// LightAuraBloom left blob — peach.
+    static let flamePeach         = Color(uiColor: VaylPrimitives.flamePeach)
+    /// LightAuraBloom right blob — gold. Distinct from AppColors.accentTertiary/safetyAccent gold.
+    static let flameGold          = Color(uiColor: VaylPrimitives.flameGold)
+    /// LightAuraBloom far-left blob — lavender.
+    static let flameLavender      = Color(uiColor: VaylPrimitives.flameLavender)
+    /// LightAuraBloom far-right blob — blush.
+    static let flameBlush         = Color(uiColor: VaylPrimitives.flameBlush)
+
+    // ─────────────────────────────────────────────────────────────
+    // MARK: Vault rose glow ramp — VaultDoorCard's VaultEmblem use only
+    //
+    // Verbatim from VaultDoorCard.swift's two radial gradients (centre aura glow +
+    // rotated core highlight). Apply .opacity() at the call site to match each
+    // gradient stop's original alpha — these tokens hold full-opacity base color only.
+    // The gradients' shared mid-tone stop is NOT here — it is exactly
+    // AppColors.spectrumMagenta, reuse that token instead.
+    // ─────────────────────────────────────────────────────────────
+
+    /// Centre aura glow, inner stop. Apply .opacity(0.7) to match the original.
+    static let vaultRoseHighlight = Color(uiColor: VaylPrimitives.vaultRoseHighlight)
+    /// Rotated core gradient, inner highlight stop. Apply .opacity(0.85) to match the original.
+    static let vaultRoseCore      = Color(uiColor: VaylPrimitives.vaultRoseCore)
+    /// Rotated core gradient, outer edge stop. Apply .opacity(0.92) to match the original.
+    static let vaultRoseDeep      = Color(uiColor: VaylPrimitives.vaultRoseDeep)
 }
 
 

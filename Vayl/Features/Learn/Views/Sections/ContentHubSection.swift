@@ -221,7 +221,7 @@ struct ContentHubSection: View {
         ZStack {
             accent.opacity(0.08)
             Image(systemName: icon)
-                .font(.system(size: 20))
+                .font(AppFonts.body(20, weight: .regular, relativeTo: .body))
                 .foregroundStyle(accent)
         }
     }

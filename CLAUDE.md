@@ -234,17 +234,33 @@ When in doubt, go slower and softer. Never guess a duration — pick a token.
 
 ---
 
-## V1 Launch Scope — Dark Mode Only
+## V1 Launch Scope — Dark Mode Only (Views), Token Infrastructure Ready
 
-**Light mode is deferred to post-launch.** The V1 codebase must contain zero light mode
-references, colors, or infrastructure. This includes:
-- No `@Environment(\.colorScheme)` checks in Views
-- No conditional light/dark color definitions in `AppColors` or token files
-- No `preferredColorScheme()` modifiers
-- No light mode assets or accent definitions
+**V1 ships dark-only.** Post-launch light-mode work is separate. The split is precise:
 
-The dark-only constraint simplifies V1 ship, keeps design coherent, and establishes
-intent for future: post-launch light-mode work is a separate, comprehensive pass.
+### Dark-Only Enforcement (V1 Views)
+Views must be dark-only, period. No mode-switching logic:
+- **Forbidden in Views:** `@Environment(\.colorScheme)` checks, `preferredColorScheme()` modifiers, conditional branches on `.dark` / `.light`
+- **Forbidden in Info.plist:** `UIUserInterfaceStyle = Light`, appearance overrides, light-mode accent definitions
+- **Forbidden assets:** app icons with light variants, image sets with both dark/light slices
+
+### Token Layer — Light-Mode Infrastructure REQUIRED
+Token files (`AppColors.swift`, etc.) **must** include light-mode color definitions even though V1 Views ignore them. Why: post-launch light-mode work only needs to wire up Views; the color palette is already there. This trades a small upfront cost (one round of token design) for dramatically cheaper post-launch implementation.
+
+Token example:
+```swift
+// AppColors.swift — both defined from day one, Views only use .dark variants in V1
+static let void = Color(light: Color(hex: "FFFFFF"), dark: Color(hex: "000000"))
+// Views: AppColors.void (reads .dark automatically in V1)
+// Post-launch: Views add mode check, both variants used
+```
+
+### Rationale
+- **Simplifies V1 ship:** no mode-switching logic, consistent dark aesthetic, faster review
+- **Enables fast post-launch:** the palette is done; implementation is just wiring Views to use both variants
+- **Honest architecture:** tokens are infrastructure; Views are behavior. Separate them clearly.
+
+The dark-only constraint keeps V1 coherent and ship-focused. The token infrastructure keeps post-launch cheap.
 
 ---
 

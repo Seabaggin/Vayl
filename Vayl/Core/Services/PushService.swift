@@ -55,6 +55,37 @@ final class PushService {
         }
     }
 
+    /// Result of a local (non-APNs) notification permission check, used by settings
+    /// toggles that only need foreground/local-notification authorization — not the
+    /// full push-invite opt-in of `requestAuthorizationAndRegister()`.
+    enum NotificationPermissionResult {
+        case authorized
+        case denied
+    }
+
+    /// Checks current notification authorization and requests it if not yet determined.
+    /// Does NOT call `UIApplication.shared.registerForRemoteNotifications()` — this is for
+    /// local-reminder toggles (e.g. Settings > Notifications), which need permission but
+    /// not APNs registration. Use `requestAuthorizationAndRegister()` for the push-invite flow.
+    ///
+    /// iOS 26 note: requests `.sound, .badge` only — `.alert` is a banned authorization
+    /// option; foreground presentation style is set separately in the notification delegate.
+    func requestNotificationPermission() async -> NotificationPermissionResult {
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        switch settings.authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            return .authorized
+        case .denied:
+            return .denied
+        case .notDetermined:
+            let granted = (try? await center.requestAuthorization(options: [.sound, .badge])) ?? false
+            return granted ? .authorized : .denied
+        @unknown default:
+            return .denied
+        }
+    }
+
     /// Forward the APNs token here from the app delegate's
     /// `didRegisterForRemoteNotificationsWithDeviceToken`. Upserts it to `device_tokens`.
     func handleDeviceToken(_ deviceToken: Data, userId: UUID) {

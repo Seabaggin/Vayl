@@ -171,6 +171,18 @@ internal enum AppAnimation {
     /// candle holds still for this long before the next, so the motion is occasional.
     static let candleBreathHold: Double = 3.0
 
+    /// 8.0s — Ultra-slow ambient drift for the furthest-back ghost card in
+    /// AtmosphericGhostDeck. Slower than ambientDrift (4.0s) — this pair of cards
+    /// is meant to read as barely-moving depth behind the real card.
+    /// Reduce motion: remove the animation entirely.
+    static let ghostDriftSlow: Double = 8.0
+
+    /// 9.5s — Ultra-slow ambient drift for the nearer ghost card in
+    /// AtmosphericGhostDeck. Slightly faster than ghostDriftSlow so the two
+    /// layers drift slightly out of phase with each other.
+    /// Reduce motion: remove the animation entirely.
+    static let ghostDriftFast: Double = 9.5
+
     // MARK: - Session pre-roll (feel-tuned on device)
 
     /// Two-device lock-in — hold-to-fill ramp, seconds. Frame-driven (like HoldToLockInRing),
@@ -332,6 +344,38 @@ internal enum AppAnimation {
     /// 1.056 = ~5.6% overshoot — enough to read as physical momentum, not noticeable as error.
     /// Used by the KeyframeAnimator driving panel translation. Not an Animation value.
     static let splashTearOvershoot: CGFloat = 1.056
+
+    // — Splash sequence gap-fillers (tokenized 2026-07-08 from runFullSequence's
+    //   inline TODO-flagged literals — values moved verbatim, no re-tuning). Same
+    //   splash-only scope and reduce-motion fallback as the rest of this section.
+
+    /// 0.30s ease-in-out — Line bloom creeping from its opening value up toward
+    /// the ignition hold level, right after the aperture opens and reveal begins.
+    static let splashBloomCreep: Animation = .easeInOut(duration: 0.30)
+
+    /// 0.22s ease-out — Splash headline/text opacity fading out ahead of the zoom.
+    static let splashTextFade: Animation = .easeOut(duration: 0.22)
+
+    /// 0.30s ease-in — Destination view opacity rising to 1 as the tear begins,
+    /// so the app underneath is fully revealed by the time panels separate.
+    static let splashDestinationReveal: Animation = .easeIn(duration: 0.30)
+
+    /// 0.10s ease-out — Tear intensity spiking to its peak the instant the seam opens.
+    static let splashTearIntensitySpike: Animation = .easeOut(duration: 0.10)
+
+    /// 0.25s ease-out — Spectrum line opacity vaporizing the moment the tear fires,
+    /// so no line lingers visible in the void once the panels start parting.
+    static let splashLineVaporize: Animation = .easeOut(duration: 0.25)
+
+    /// 0.35s ease-in — Tear intensity decaying back to 0 after its post-seam spike.
+    static let splashTearIntensityDecay: Animation = .easeIn(duration: 0.35)
+
+    /// 0.08s linear — Residual line bloom/pulse clearing to its resting values
+    /// just before the splash container fades out.
+    static let splashTearFade: Animation = .linear(duration: 0.08)
+
+    /// 0.30s ease-out — Splash container opacity fading to 0, the final dismiss.
+    static let splashDismiss: Animation = .easeOut(duration: 0.30)
 
     // MARK: — OB Card Physics
     // These tokens are exclusive to the Onboarding canvas. They must never appear
@@ -858,6 +902,12 @@ internal enum AppAnimation {
     /// term, not an Animation. 🎚️ FEEL: tune on device.
     static let pulseHistoryBorderCadence: Double = 4.5
 
+    /// 1.6s ease-out, non-autoreversing — PulseField's BloomRing loop: a ring stroke
+    /// fading and scaling outward from the landed orb, repeating from its start state
+    /// each cycle (not a breathe). Baked-in repeatForever, matching the cardBreathe /
+    /// flourishBreath pattern. Reduce motion: loop never starts (guarded at call site).
+    static let pulseBloomRingLoop: Animation = .easeOut(duration: 1.6).repeatForever(autoreverses: false)
+
     // MARK: — Tab Navigation
     // Tokens for the tab bar orb snap-and-halo and tab content gravity drift.
     // Both are reactive (user-initiated tap). Reduce motion: easeOut(0.15), suppress offsets at call site.
@@ -1108,6 +1158,12 @@ internal enum AppAnimation {
     /// on any touch, so the couple never waits on the room to come back.
     static let sessionIdleDimIn:  Animation = .easeInOut(duration: 1.7)
     static let sessionIdleDimOut: Animation = .easeInOut(duration: 0.4)
+
+    /// 1.2s ease-in-out — SessionAtmosphere's whose-turn tint crossfading in/out on
+    /// the ellipse wash beneath the card. Reactive (turn changes on user action),
+    /// not ambient — do not confuse with the numerically-identical `cinematic` (1.2s
+    /// easeOut) token, which is a different curve for a different use.
+    static let sessionTurnTint: Animation = .easeInOut(duration: 1.2)
 
     /// Session player dive-commit — the dealt card blooms past scale 1 and fades as the
     /// next prompt takes over. Matches SessionPlayerView.diveSeconds (0.82s); kept as a

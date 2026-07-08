@@ -215,7 +215,7 @@ struct DeckDetailView: View {
                         .fill(LinearGradient(colors: [AppColors.spectrumPurple, AppColors.spectrumMagenta],
                                              startPoint: .top, endPoint: .bottom))
                         .frame(width: 6, height: 6)
-                        .padding(.top, 5)
+                        .padding(.top, AppSpacing.xxs + 3)
                     Text(goal)
                         .font(AppFonts.caption)
                         .foregroundStyle(AppColors.textSecondary)

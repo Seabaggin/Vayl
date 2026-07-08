@@ -30,8 +30,8 @@ struct AppRootView: View {
 
     // MARK: - Environment
 
-    @Environment(AuthService.self) private var authService
-    @Environment(AppState.self)    private var appState
+    @Environment(AuthStore.self) private var auth
+    @Environment(AppState.self)  private var appState
     @Environment(\.scenePhase)     private var scenePhase
 
     // MARK: - State
@@ -73,22 +73,22 @@ struct AppRootView: View {
         } else if !appState.isOnboardingComplete {
             OnboardingCanvasWrapper()
                 .themedRoot()
-        } else if authService.isAuthenticated {
+        } else if auth.isAuthenticated {
             AppShell()
                 .themedRoot()
         } else {
-            SignInView(authService: authService)
+            SignInView(auth: auth)
                 .themedRoot()
         }
         #else
         if !appState.isOnboardingComplete {
             OnboardingCanvasWrapper()
                 .themedRoot()
-        } else if authService.isAuthenticated {
+        } else if auth.isAuthenticated {
             AppShell()
                 .themedRoot()
         } else {
-            SignInView(authService: authService)
+            SignInView(auth: auth)
                 .themedRoot()
         }
         #endif

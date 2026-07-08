@@ -15,7 +15,7 @@ struct ResourcesOverlayView: View {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
                 HStack(alignment: .top, spacing: AppSpacing.md) {
                     Image(systemName: "lifepreserver")
-                        .font(.system(size: 19)).foregroundStyle(AppColors.spectrumCyan)
+                        .font(AppFonts.body(19, weight: .regular, relativeTo: .body)).foregroundStyle(AppColors.spectrumCyan)
                     VStack(alignment: .leading, spacing: AppSpacing.xs) {
                         Text("Vayl isn't therapy")
                             .font(AppFonts.cardTitle).foregroundStyle(AppColors.textPrimary)

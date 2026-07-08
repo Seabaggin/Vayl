@@ -48,7 +48,8 @@ struct MapEmptyState: View {
     var body: some View {
         VStack(spacing: AppSpacing.sm) {
             Image(systemName: icon)
-                .font(.system(size: 26, weight: .light))
+                .font(AppFonts.body(26, weight: .regular, relativeTo: .title2))
+                .fontWeight(.light)
                 .foregroundStyle(AppColors.textTertiary)
             Text(headline)
                 .font(AppFonts.cardTitle)

@@ -44,9 +44,9 @@ import SwiftUI
     let summaries = (try? DeckCatalogService().loadSummaries()) ?? []
     return List(summaries) { s in
         VStack(alignment: .leading) {
-            Text(s.title).font(.headline)
+            Text(s.title).font(AppFonts.ctaLabel)
             Text("\(s.category.displayName) · \(s.intensity.displayName) · \(s.cardCount) cards\(s.isLocked ? " · Core" : "")")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(AppFonts.body(12, weight: .regular, relativeTo: .caption)).foregroundStyle(.secondary)
         }
     }
 }

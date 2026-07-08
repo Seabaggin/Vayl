@@ -286,7 +286,12 @@ struct PulseCheckInView: View {
     ///   • Mid-flow: a continuous bilinear blend of the current position.
     private var currentRamp: AuraColors {
         guard answers.contains(where: { $0 != nil }) else {
-            return AuraColors(light: .white, core: Color(white: 0.7), deep: Color(white: 0.5), glow: Color.white.opacity(0.3))
+            return AuraColors(
+                light: AppColors.auraLightStart,
+                core:  AppColors.auraCoreStart,
+                deep:  AppColors.auraDeepStart,
+                glow:  AppColors.auraGlowStart
+            )
         }
         if unchartedFired {
             return AuraColors.lerp(

@@ -116,7 +116,7 @@ struct AppShell: View {
         .environment(PulseStore())
         .environment(entitlements)
         .environment(CoupleContext(appState: state, entitlements: entitlements, modelContainer: .previewContainerWithProfile))
-        .environment(AuthService())
+        .environment(AuthStore())
         .preferredColorScheme(.dark)
         .modelContainer(.previewContainerWithProfile)
 }
@@ -132,7 +132,7 @@ struct AppShell: View {
         .environment(PulseStore())
         .environment(entitlements)
         .environment(CoupleContext(appState: state, entitlements: entitlements, modelContainer: .previewContainerWithProfile))
-        .environment(AuthService())
+        .environment(AuthStore())
         .preferredColorScheme(.dark)
         .modelContainer(.previewContainerWithProfile)
 }
@@ -148,7 +148,7 @@ struct AppShell: View {
         .environment(PulseStore())
         .environment(entitlements)
         .environment(CoupleContext(appState: state, entitlements: entitlements, modelContainer: .previewContainerWithProfile))
-        .environment(AuthService())
+        .environment(AuthStore())
         .preferredColorScheme(.dark)
         .modelContainer(.previewContainerWithProfile)
 }

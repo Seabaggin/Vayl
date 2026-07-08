@@ -100,14 +100,14 @@ struct PartnerChipExpand: View {
             } label: {
                 HStack(spacing: AppSpacing.sm) {
                     Image(systemName: AppIcons.gear)
-                        .font(.caption)
+                        .font(AppFonts.body(12, weight: .regular, relativeTo: .caption))
                         .foregroundStyle(AppColors.textSecondary)
                     Text("Manage pairing")
                         .font(AppFonts.bodyMedium)
                         .foregroundStyle(AppColors.textBody)
                     Spacer()
                     Image(systemName: AppIcons.chevronRight)
-                        .font(.caption2)
+                        .font(AppFonts.body(11, weight: .regular, relativeTo: .caption2))
                         .foregroundStyle(AppColors.textTertiary)
                 }
                 .padding(AppSpacing.md)
@@ -133,12 +133,12 @@ struct PartnerChipExpand: View {
         } label: {
             VStack(spacing: AppSpacing.xs) {
                 Text(label.uppercased())
-                    .font(.system(size: 9, weight: .bold))
+                    .font(AppFonts.microBadge)
                     .foregroundStyle(AppColors.textTertiary)
                 Image(systemName: icon)
                     .foregroundStyle(AppColors.spectrumPurple)
                 Text(text)
-                    .font(.caption)
+                    .font(AppFonts.body(12, weight: .regular, relativeTo: .caption))
                     .foregroundStyle(AppColors.textBody)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -158,7 +158,7 @@ struct PartnerChipExpand: View {
         } label: {
             VStack(spacing: AppSpacing.xs) {
                 Text("PULSE")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(AppFonts.microBadge)
                     .foregroundStyle(AppColors.textTertiary)
                 if let position = partnerPulsePosition {
                     Circle()
@@ -170,7 +170,7 @@ struct PartnerChipExpand: View {
                         .frame(width: 18, height: 18)
                 }
                 Text(pulseTileShortText)
-                    .font(.caption)
+                    .font(AppFonts.body(12, weight: .regular, relativeTo: .caption))
                     .foregroundStyle(AppColors.textBody)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)

@@ -210,6 +210,19 @@ struct AppFonts {
         body(10, weight: .regular, relativeTo: .caption2)
     }
 
+    /// Micro badge label — 9pt bold. Tokenizes a verbatim-repeated
+    /// `.font(.system(size: 9, weight: .bold))` literal found in RitualPills,
+    /// PartnerChipExpand (x2), and PulseFullView's compact status/count badges.
+    /// Deliberately System, not Switzer/ClashDisplay — the four call sites all
+    /// render System today, and this token exists to preserve that exact
+    /// rendered value while still removing the raw literal from the Views.
+    /// Do not use for anything that is not one of these compact micro-badges;
+    /// do not "upgrade" to body(9, ...) without a deliberate visual decision —
+    /// that would change the typeface, not just tokenize it.
+    static var microBadge: Font {
+        Font.system(size: 9, weight: .bold)
+    }
+
     // ─────────────────────────────────────────────
     // MARK: Founder letter — Menlo monospace
     //

@@ -112,8 +112,8 @@ private struct VaultEmblem: View {
             // radialGradient#dau — the centre aura glow.
             context.fill(circle(center, 15 * scale), with: .radialGradient(
                 Gradient(stops: [
-                    .init(color: Color(red: 1, green: 180 / 255, blue: 210 / 255, opacity: 0.7), location: 0),
-                    .init(color: Color(red: 1, green: 0,         blue: 106 / 255, opacity: 0.24), location: 0.6),
+                    .init(color: AppColors.vaultRoseHighlight.opacity(0.7), location: 0),
+                    .init(color: AppColors.spectrumMagenta.opacity(0.24), location: 0.6),
                     .init(color: .clear, location: 1),
                 ]),
                 center: center, startRadius: 0, endRadius: 15 * scale
@@ -156,9 +156,9 @@ private struct VaultEmblem: View {
             context.fill(core, with: .radialGradient(
                 Gradient(stops: [
                     .init(color: .white.opacity(0.95), location: 0),
-                    .init(color: Color(red: 1, green: 140 / 255, blue: 180 / 255, opacity: 0.85), location: 0.28),
-                    .init(color: Color(red: 1, green: 0,         blue: 106 / 255, opacity: 0.55), location: 0.7),
-                    .init(color: Color(red: 40 / 255, green: 8 / 255, blue: 25 / 255, opacity: 0.92), location: 1),
+                    .init(color: AppColors.vaultRoseCore.opacity(0.85), location: 0.28),
+                    .init(color: AppColors.spectrumMagenta.opacity(0.55), location: 0.7),
+                    .init(color: AppColors.vaultRoseDeep.opacity(0.92), location: 1),
                 ]),
                 // r="80%" on the core's own 22×22 bounding box (SVG objectBoundingBox
                 // default) resolves to 0.8 × 22 = 17.6 viewBox units, not a guessed value.

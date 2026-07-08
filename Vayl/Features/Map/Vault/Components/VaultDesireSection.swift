@@ -111,7 +111,7 @@ struct VaultDesireSection: View {
         } label: {
             HStack(spacing: AppSpacing.sm) {
                 Image(systemName: "diamond")
-                    .font(.system(size: 13, weight: .regular))
+                    .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
                     .foregroundStyle(AppColors.spectrumBridge)
                 Text(item.name)
                     .font(AppFonts.bodyMedium)
@@ -119,7 +119,7 @@ struct VaultDesireSection: View {
                 Spacer()
                 badge(item.isMutual)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .regular))
+                    .font(AppFonts.body(11, weight: .regular, relativeTo: .caption2))
                     .foregroundStyle(AppColors.textTertiary)
             }
             .padding(.horizontal, AppSpacing.md)
@@ -145,7 +145,7 @@ struct VaultDesireSection: View {
         Button(action: onUnlock) {
             HStack(spacing: AppSpacing.sm) {
                 Image(systemName: "lock")
-                    .font(.system(size: 13, weight: .regular))
+                    .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
                     .foregroundStyle(AppColors.textTertiary)
                 Text("\(lockedCount) more where you align")
                     .font(AppFonts.caption)
@@ -211,7 +211,7 @@ struct VaultDesireSection: View {
                 Button("Open it") { respond(c, open: true) }
                     .buttonStyle(PressableCardStyle())
                     .font(AppFonts.buttonLabelSmall)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AppColors.textBody)
                     .padding(.horizontal, AppSpacing.md)
                     .padding(.vertical, AppSpacing.xs + 1)
                     .background(Capsule().fill(AppColors.accentSecondary.opacity(0.85)))
@@ -227,7 +227,7 @@ struct VaultDesireSection: View {
         } label: {
             HStack(spacing: AppSpacing.sm) {
                 Image(systemName: "bubble.left.and.bubble.right.fill")
-                    .font(.system(size: 13))
+                    .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
                     .foregroundStyle(AppColors.spectrumCyan)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(c.itemName).font(AppFonts.bodyMedium).foregroundStyle(AppColors.textBody)
@@ -235,7 +235,7 @@ struct VaultDesireSection: View {
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .regular))
+                    .font(AppFonts.body(11, weight: .regular, relativeTo: .caption2))
                     .foregroundStyle(AppColors.textTertiary)
             }
             .padding(AppSpacing.md)
@@ -248,7 +248,7 @@ struct VaultDesireSection: View {
     private func waitingRow(_ c: VaultStore.ConsentVM) -> some View {
         HStack(spacing: AppSpacing.sm) {
             Image(systemName: "clock")
-                .font(.system(size: 13))
+                .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
                 .foregroundStyle(AppColors.textTertiary)
             VStack(alignment: .leading, spacing: 1) {
                 Text(c.itemName).font(AppFonts.bodyMedium).foregroundStyle(AppColors.textBody)
@@ -271,7 +271,7 @@ struct VaultDesireSection: View {
             Button("Ask") { ask(t.id) }
                 .buttonStyle(PressableCardStyle())
                 .font(AppFonts.buttonLabelSmall)
-                .foregroundStyle(.white)
+                .foregroundStyle(AppColors.textBody)
                 .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.xs + 1)
                 .background(Capsule().fill(AppColors.accentSecondary.opacity(0.85)))
