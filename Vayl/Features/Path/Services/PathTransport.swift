@@ -24,6 +24,10 @@ protocol PathTransport: AnyObject {
     func editDidItDate(
         coupleId: UUID, pathStyle: String, landmarkId: String, newDate: Date, setBy: UUID
     ) async throws -> PathLandmarkProgress
+    /// Deletes the progress row outright — `.untouched` is never persisted
+    /// (PathLandmarkProgress.swift), so restoring a landmark means the row
+    /// must go away, not merely be reinterpreted client-side.
+    func deleteProgress(coupleId: UUID, pathStyle: String, landmarkId: String) async throws
 
     func fetchPrivateMarks(profileId: UUID, pathStyle: String) async throws -> [PathPrivateMark]
     func addPrivateMark(profileId: UUID, coupleId: UUID?, pathStyle: String, landmarkId: String) async throws -> PathPrivateMark
@@ -72,6 +76,10 @@ final class MockPathTransport: PathTransport {
         progress[idx].didItDate = newDate
         progress[idx].updatedAt = Date()
         return progress[idx]
+    }
+
+    func deleteProgress(coupleId: UUID, pathStyle: String, landmarkId: String) async throws {
+        progress.removeAll { $0.coupleId == coupleId && $0.pathStyle == pathStyle && $0.landmarkId == landmarkId }
     }
 
     func fetchPrivateMarks(profileId: UUID, pathStyle: String) async throws -> [PathPrivateMark] {

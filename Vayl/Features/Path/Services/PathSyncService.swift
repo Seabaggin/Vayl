@@ -114,6 +114,16 @@ final class PathSyncService: PathTransport {
         return row.toModel
     }
 
+    func deleteProgress(coupleId: UUID, pathStyle: String, landmarkId: String) async throws {
+        _ = try await supabase
+            .from("path_landmark_progress")
+            .delete()
+            .eq("couple_id", value: coupleId.uuidString)
+            .eq("path_style", value: pathStyle)
+            .eq("landmark_id", value: landmarkId)
+            .execute()
+    }
+
     private struct PrivateMarkRow: Codable {
         let id: UUID
         let profileId: UUID

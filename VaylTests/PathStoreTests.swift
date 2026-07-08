@@ -106,5 +106,13 @@ final class PathStoreTests: XCTestCase {
         XCTAssertEqual(store.state(for: "nm-mixer"), .untouched)
         XCTAssertTrue(store.visibleLandmarks.contains { $0.id == "nm-mixer" })
         XCTAssertEqual(transport.loggedKinds, [.skipped, .restored])
+
+        // Restoring must clear the *remote* row too, not just the in-memory
+        // cache — `.untouched` is never persisted (PathLandmarkProgress.swift),
+        // so a stale `.skipped` row left behind would silently resurface on the
+        // next load() (relaunch, pull-to-refresh, partner's realtime update).
+        XCTAssertFalse(transport.progress.contains { $0.landmarkId == "nm-mixer" })
+        try await store.load()
+        XCTAssertEqual(store.state(for: "nm-mixer"), .untouched)
     }
 }

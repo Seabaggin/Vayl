@@ -64,16 +64,28 @@ final class PathStore {
         landmarks.first { state(for: $0.id) != .didIt && state(for: $0.id) != .skipped }?.id
     }
 
-    func setDidIt(_ landmarkId: String, date: Date) async throws {
+    /// Sets a landmark's shared state and logs the matching activity kind in
+    /// one round trip — the shared body behind setDidIt/setDiscussed/
+    /// setPlanning/skip, which differ only in which state+kind they pass.
+    @discardableResult
+    private func applyState(
+        _ landmarkId: String, state: PathLandmarkState, discussedVia: DiscussedVia? = nil,
+        didItDate: Date? = nil, kind: PathActivityKind
+    ) async throws -> PathLandmarkProgress {
         let updated = try await transport.setState(
             coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
-            state: .didIt, discussedVia: nil, didItDate: date, setBy: profileId
+            state: state, discussedVia: discussedVia, didItDate: didItDate, setBy: profileId
         )
         progressByLandmark[landmarkId] = updated
         try await transport.logActivity(
             coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
-            actorId: profileId, kind: .didItSet, detail: nil
+            actorId: profileId, kind: kind, detail: nil
         )
+        return updated
+    }
+
+    func setDidIt(_ landmarkId: String, date: Date) async throws {
+        try await applyState(landmarkId, state: .didIt, didItDate: date, kind: .didItSet)
     }
 
     func discussedVia(for landmarkId: String) -> DiscussedVia? {
@@ -85,7 +97,7 @@ final class PathStore {
     }
 
     /// A landmark not `.skipped` — this is the default trail/ledger view.
-    /// Restoring in Edit your path (Task 15) is the only way back.
+    /// Restoring in Edit your path (Task 13) is the only way back.
     var visibleLandmarks: [PathLandmark] {
         landmarks.filter { state(for: $0.id) != .skipped }
     }
@@ -102,41 +114,20 @@ final class PathStore {
     /// Sharing is a unilateral act by whoever holds the private mark — it is
     /// never contingent on the partner having marked anything (spec §4).
     func shareCurious(_ landmarkId: String) async throws {
-        let updated = try await transport.setState(
-            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
-            state: .curious, discussedVia: nil, didItDate: nil, setBy: profileId
-        )
-        progressByLandmark[landmarkId] = updated
+        try await applyState(landmarkId, state: .curious, kind: .curiousShared)
         try await transport.removePrivateMark(profileId: profileId, pathStyle: pathStyle, landmarkId: landmarkId)
         privateMarkedLandmarkIds.remove(landmarkId)
-        try await transport.logActivity(
-            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
-            actorId: profileId, kind: .curiousShared, detail: nil
-        )
     }
 
     func setDiscussed(_ landmarkId: String, via: DiscussedVia) async throws {
-        let updated = try await transport.setState(
-            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
-            state: .discussed, discussedVia: via, didItDate: nil, setBy: profileId
-        )
-        progressByLandmark[landmarkId] = updated
-        try await transport.logActivity(
-            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
-            actorId: profileId, kind: via == .session ? .discussedSession : .discussedManual, detail: nil
+        try await applyState(
+            landmarkId, state: .discussed, discussedVia: via,
+            kind: via == .session ? .discussedSession : .discussedManual
         )
     }
 
     func setPlanning(_ landmarkId: String) async throws {
-        let updated = try await transport.setState(
-            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
-            state: .planning, discussedVia: nil, didItDate: nil, setBy: profileId
-        )
-        progressByLandmark[landmarkId] = updated
-        try await transport.logActivity(
-            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
-            actorId: profileId, kind: .planningSet, detail: nil
-        )
+        try await applyState(landmarkId, state: .planning, kind: .planningSet)
     }
 
     /// The date records when it was told to the app, never a claim about exact
@@ -153,20 +144,17 @@ final class PathStore {
     }
 
     func skip(_ landmarkId: String) async throws {
-        let updated = try await transport.setState(
-            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
-            state: .skipped, discussedVia: nil, didItDate: nil, setBy: profileId
-        )
-        progressByLandmark[landmarkId] = updated
-        try await transport.logActivity(
-            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
-            actorId: profileId, kind: .skipped, detail: nil
-        )
+        try await applyState(landmarkId, state: .skipped, kind: .skipped)
     }
 
     /// Restoring returns the landmark to `.untouched` — restoring is not the
     /// same as "undo the last real state," it's a clean reset back onto the trail.
+    /// `.untouched` is never persisted (PathLandmarkProgress.swift), so this
+    /// deletes the remote row outright rather than merely clearing the local
+    /// cache — otherwise a later `load()` (relaunch, pull-to-refresh, partner's
+    /// realtime update) would resurrect the stale `.skipped` row.
     func restore(_ landmarkId: String) async throws {
+        try await transport.deleteProgress(coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId)
         progressByLandmark.removeValue(forKey: landmarkId)
         try await transport.logActivity(
             coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
