@@ -102,6 +102,9 @@ struct AppRootView: View {
                 SplashScreenView(
                     onComplete: { splashDone = true },
                     onTearBegan: {},
+                    // SplashScreenView stores a single type-erased destination handed off
+                    // once at launch (not a hot path), so AnyView is acceptable here.
+                    // swiftlint:disable:next no_anyview
                     destination: AnyView(postSplashDestination)
                 )
             } else {

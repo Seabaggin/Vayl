@@ -351,8 +351,9 @@ private struct PhaseOverlayView: View {
                                     } label: {
                                         Text(String(describing: phase))
                                             .font(.caption.weight(.bold))
+                                            // swiftlint:disable:next no_hardcoded_padding
                                             .padding(.horizontal, 14)
-                                            .padding(.vertical, 8)
+                                            .padding(.vertical, AppSpacing.sm)
                                             .background(
                                                 director.phase == phase
                                                     ? AppColors.accentPrimary
@@ -363,7 +364,8 @@ private struct PhaseOverlayView: View {
                                     }
                                 }
                             }
-                            .padding(.horizontal, 16)
+                            .padding(.horizontal, AppSpacing.md)
+                            // swiftlint:disable:next no_hardcoded_padding
                             .padding(.vertical, 10)
                         }
                         .background(.ultraThinMaterial)
@@ -381,10 +383,12 @@ private struct PhaseOverlayView: View {
                         } label: {
                             Image(systemName: menuVisible ? "hammer.fill" : "hammer")
                                 .foregroundColor(.white)
+                                // swiftlint:disable:next no_hardcoded_padding
                                 .padding(12)
                                 .background(Circle().fill(Color.black.opacity(0.6)))
                         }
-                        .padding(.trailing, 16)
+                        .padding(.trailing, AppSpacing.md)
+                        // swiftlint:disable:next no_hardcoded_padding
                         .padding(.top, 60)
                     }
                     Spacer()

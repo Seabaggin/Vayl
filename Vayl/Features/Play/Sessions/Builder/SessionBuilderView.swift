@@ -169,7 +169,7 @@ struct SessionBuilderView: View {
             .buttonStyle(.plain)
 
             if entry.isClosingRitual {
-                Image(systemName: "lock")
+                Image(systemName: AppIcons.lockOutline)
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
                     .accessibilityLabel("The closing ritual stays in the session")
@@ -178,7 +178,7 @@ struct SessionBuilderView: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     store.trim(entry.cardId)
                 } label: {
-                    Image(systemName: "minus.circle")
+                    Image(systemName: AppIcons.minusCircle)
                         .foregroundStyle(store.canTrim(entry.cardId)
                                          ? AppColors.textSecondary : AppColors.textTertiary)
                 }
@@ -204,7 +204,7 @@ struct SessionBuilderView: View {
                     store.restore(entry.cardId)
                 } label: {
                     HStack(spacing: AppSpacing.sm) {
-                        Image(systemName: "plus.circle")
+                        Image(systemName: AppIcons.plusCircle)
                             .foregroundStyle(AppColors.textTertiary)
                         Text(entry.text)
                             .font(AppFonts.caption)
@@ -282,7 +282,7 @@ struct SessionBuilderView: View {
 
     private var emptyState: some View {
         VStack(spacing: AppSpacing.sm) {
-            Image(systemName: "rectangle.on.rectangle.slash")
+            Image(systemName: AppIcons.rectangleOnRectangleSlash)
                 .font(AppFonts.displayHero)
                 .foregroundStyle(AppColors.textTertiary)
             Text("Nothing to shape")

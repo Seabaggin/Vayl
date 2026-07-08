@@ -842,7 +842,7 @@ private struct SettingsCogButton: View {
     @State private var isPressed = false
 
     var body: some View {
-        Image(systemName: "gearshape")
+        Image(systemName: AppIcons.gearOutline)
             .font(AppFonts.bodyMedium)
             .foregroundStyle(AppColors.spectrumText)
             .frame(width: 44, height: 44)

@@ -483,12 +483,13 @@ struct CardCarousel: View {
         .overlay(alignment: .topTrailing) {
             // Selected for tonight's hand — spectrum check badge.
             if selecting && selectedIDs.contains(cards[i].id) {
-                Image(systemName: "checkmark")
+                Image(systemName: AppIcons.checkmark)
                     .font(AppFonts.body(11, weight: .bold, relativeTo: .caption2))
                     .foregroundStyle(AppColors.void)
                     .frame(width: 24, height: 24)
                     .background(Circle().fill(AppColors.spectrumBorder))
                     .shadow(color: AppColors.accentSecondary.opacity(0.5), radius: 6)
+                    // swiftlint:disable:next no_hardcoded_padding
                     .padding(10)
                     .transition(.scale.combined(with: .opacity))
             }
@@ -512,8 +513,9 @@ struct CardCarousel: View {
             }
         }
         .padding(.top, AppSpacing.sm)
-        // .padding(.bottom, -8) — intentional negative bleed offset.
-        // Keeps the card visually anchored without a gap below. Not an AppSpacing candidate.
+        // Intentional negative bleed offset — keeps the card visually anchored without
+        // a gap below. Not an AppSpacing candidate.
+        // swiftlint:disable:next no_hardcoded_padding
         .padding(.bottom, -8)
         .offset(
             x: phase == .carousel ? visualX : 0,

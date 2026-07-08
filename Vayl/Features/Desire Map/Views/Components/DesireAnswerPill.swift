@@ -96,13 +96,13 @@ struct DesireAnswerPill: View {
     @ViewBuilder
     private var trailing: some View {
         if isPrivateAnswer {
-            Image(systemName: "lock.fill")
+            Image(systemName: AppIcons.lock)
                 .font(AppFonts.meta)
                 .foregroundStyle(AppColors.textTertiary.opacity(0.6))
         } else if isSelected {
             ZStack {
                 Circle().fill(accent).frame(width: 23, height: 23)
-                Image(systemName: "checkmark")
+                Image(systemName: AppIcons.checkmark)
                     .font(AppFonts.meta)
                     .foregroundStyle(onAccent)
             }

@@ -154,7 +154,7 @@ struct SettingsView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Image(systemName: "xmark")
+                    Image(systemName: AppIcons.close)
                         .font(AppFonts.caption)
                         .foregroundStyle(AppColors.textSecondary)
                         .frame(width: 32, height: 32)
@@ -219,7 +219,7 @@ struct SettingsView: View {
         SettingsSectionLabel(text: "Membership")
         if entitlements.isCore {
             HStack(spacing: AppSpacing.md) {
-                Image(systemName: "checkmark.circle.fill")
+                Image(systemName: AppIcons.checkmarkCircle)
                     .font(AppFonts.bodyMedium)
                     .foregroundStyle(AppColors.spectrumCyan)
                     .frame(width: 28, height: 28)
@@ -256,7 +256,7 @@ struct SettingsView: View {
             } label: {
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     HStack(spacing: AppSpacing.sm) {
-                        Image(systemName: "sparkles")
+                        Image(systemName: AppIcons.sparkles)
                             .font(AppFonts.caption)
                             .foregroundStyle(AppColors.spectrumPurple)
                             .accessibilityHidden(true)
@@ -327,7 +327,7 @@ struct SettingsView: View {
                 RoundedRectangle(cornerRadius: AppRadius.sm)
                     .fill(AppColors.glassSurface)
                     .overlay(
-                        Image(systemName: "person.fill")
+                        Image(systemName: AppIcons.personFill)
                             .font(AppFonts.bodyMedium)
                             .foregroundStyle(AppColors.textSecondary)
                             .accessibilityHidden(true)
@@ -355,7 +355,7 @@ struct SettingsView: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
+                Image(systemName: AppIcons.chevronRight)
                     .font(AppFonts.overline)
                     .foregroundStyle(AppColors.textTertiary)
                     .accessibilityHidden(true)
@@ -543,7 +543,7 @@ struct SettingsSubScreenShell<Content: View>: View {
                         onBack?()
                     } label: {
                         HStack(spacing: AppSpacing.xs) {
-                            Image(systemName: "chevron.left")
+                            Image(systemName: AppIcons.chevronLeft)
                                 .font(AppFonts.caption)
                             Text("Settings")
                                 .font(AppFonts.bodyMedium)

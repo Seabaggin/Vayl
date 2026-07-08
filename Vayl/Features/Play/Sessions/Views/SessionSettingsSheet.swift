@@ -106,7 +106,7 @@ struct SessionSettingsSheet: View {
                     .foregroundStyle(AppColors.textPrimary)
                 Spacer()
                 if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
+                    Image(systemName: AppIcons.checkmarkCircle)
                         .foregroundStyle(AppColors.spectrumCyan)
                         .accessibilityHidden(true)
                 }

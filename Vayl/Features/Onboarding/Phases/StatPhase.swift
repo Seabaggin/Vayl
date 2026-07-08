@@ -265,7 +265,7 @@ struct StatPhase: View {
 
     private var emptyStateView: some View {
         VStack(spacing: AppSpacing.md) {
-            Image(systemName: "chart.bar.xaxis")
+            Image(systemName: AppIcons.chartBarXaxis)
                 .font(AppFonts.body(40, weight: .regular, relativeTo: .largeTitle)) // empty-state symbol — token pending AppLayout
                 .foregroundStyle(AppColors.textSecondary)
             Text("Stat unavailable")

@@ -146,7 +146,7 @@ struct ContentHubSection: View {
                 if let platform = m.platform { platformBadge(platform) }
             }
             Spacer(minLength: 0)
-            Image(systemName: "chevron.right").foregroundStyle(AppColors.textTertiary)
+            Image(systemName: AppIcons.chevronRight).foregroundStyle(AppColors.textTertiary)
         }
         .padding(.vertical, AppSpacing.xs)
         .contentShape(Rectangle())
@@ -186,7 +186,7 @@ struct ContentHubSection: View {
                 platformBadge(v.platform)
             }
             Spacer(minLength: 0)
-            Image(systemName: "chevron.right").foregroundStyle(AppColors.textTertiary)
+            Image(systemName: AppIcons.chevronRight).foregroundStyle(AppColors.textTertiary)
         }
         .padding(.vertical, AppSpacing.xs)
         .contentShape(Rectangle())

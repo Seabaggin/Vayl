@@ -14,7 +14,7 @@ struct SettingsGearButton: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             action()
         } label: {
-            Image(systemName: "gearshape")
+            Image(systemName: AppIcons.gearOutline)
                 .font(AppFonts.caption)
                 .foregroundStyle(AppColors.textSecondary)
                 .frame(width: 32, height: 32)
@@ -108,7 +108,7 @@ struct SettingsNavRow: View {
             }
 
             if showChevron {
-                Image(systemName: "chevron.right")
+                Image(systemName: AppIcons.chevronRight)
                     .font(AppFonts.overline)
                     .foregroundStyle(AppColors.textTertiary)
                     .accessibilityHidden(true)

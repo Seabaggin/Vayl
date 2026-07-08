@@ -20,7 +20,7 @@ struct ResearchSection: View {
                 Spacer()
                 Button { onOpenDatabase() } label: {
                     HStack(spacing: AppSpacing.xs) {
-                        Image(systemName: "rectangle.stack")
+                        Image(systemName: AppIcons.rectangleStack)
                             .foregroundStyle(AppColors.spectrumPurple)   // purple symbol (section is purple-only)
                         Text("Browse")
                             .font(AppFonts.buttonLabel)
@@ -46,7 +46,7 @@ struct ResearchSection: View {
 
     private var emptyState: some View {
         VStack(spacing: AppSpacing.sm) {
-            Image(systemName: "text.magnifyingglass")
+            Image(systemName: AppIcons.textMagnifyingglass)
                 .font(AppFonts.body(26, weight: .regular, relativeTo: .title2))
                 .foregroundStyle(AppColors.textTertiary)
             Text("No research to show")

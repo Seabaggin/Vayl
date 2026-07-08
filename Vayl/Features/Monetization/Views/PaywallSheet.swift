@@ -239,7 +239,7 @@ struct PaywallSheet: View {
                 hapticTick += 1
                 withAnimation(AppAnimation.standard) { showDetails = true }
             } label: {
-                Image(systemName: "info.circle")
+                Image(systemName: AppIcons.infoCircle)
                     .font(AppFonts.body(19, weight: .regular, relativeTo: .body))
                     .foregroundStyle(AppColors.spectrumText)
             }
@@ -331,7 +331,7 @@ struct PaywallSheet: View {
 
     private var coversBoth: some View {
         HStack(spacing: AppSpacing.xs) {
-            Image(systemName: "person.2.fill")
+            Image(systemName: AppIcons.person2Fill)
                 .font(AppFonts.body(15, weight: .regular, relativeTo: .subheadline))
                 .foregroundStyle(AppColors.spectrumPurple)
             Text("covers both of you, your partner pays nothing")
@@ -370,7 +370,7 @@ struct PaywallSheet: View {
                 footerLink("Privacy", hint: "Opens the Privacy Policy", action: openPrivacy)
             }
             HStack(spacing: AppSpacing.xs) {
-                Image(systemName: "books.vertical")
+                Image(systemName: AppIcons.booksVertical)
                 Text("Grounded In Research")
             }
             .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))

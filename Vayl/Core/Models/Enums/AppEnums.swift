@@ -298,7 +298,7 @@ enum AppIcons {
 
     // ── System & settings ─────────────────────────────────────
     static let paintpalette       = "paintpalette.fill"
-    static let appleLogo          = "apple.logo"
+    static let appleLogo          = "applelogo"
     static let eyeSlashScreen     = "eye.slash.fill"
 
     // ── Status & feedback ─────────────────────────────────────
@@ -313,6 +313,45 @@ enum AppIcons {
     static let paperplane           = "paperplane.fill"
     static let squareAndArrowUp     = "square.and.arrow.up"
     static let arrowTriangle2Circle = "arrow.triangle.2.circlepath"
+    static let arrowUp               = "arrow.up"
+    static let arrowUpRight          = "arrow.up.right"
+
+    // ── Outline / non-fill variants ───────────────────────────
+    static let lockOutline          = "lock"
+    static let clockOutline         = "clock"
+    static let gearOutline          = "gearshape"
+    static let heartCircle          = "heart.circle"
+    static let heartTextSquareOutline = "heart.text.square"
+    static let booksVertical        = "books.vertical"
+    static let circleFill           = "circle.fill"
+
+    // ── Search & lists ────────────────────────────────────────
+    static let magnifyingglass      = "magnifyingglass"
+    static let textMagnifyingglass  = "text.magnifyingglass"
+    static let listBullet           = "list.bullet"
+    static let line3HorizontalDecrease = "line.3.horizontal.decrease"
+    static let ellipsis             = "ellipsis"
+
+    // ── Actions & status (extended) ───────────────────────────
+    static let plusCircle           = "plus.circle"
+    static let minusCircle          = "minus.circle"
+    static let questionmarkCircle   = "questionmark.circle"
+    static let key                  = "key"
+    static let lifepreserver        = "lifepreserver"
+    static let sparkle              = "sparkle"
+    static let diamond              = "diamond"
+
+    // ── People & content (extended) ───────────────────────────
+    static let personFill           = "person.fill"
+    static let person2Fill          = "person.2.fill"
+    static let moonFill             = "moon.fill"
+    static let bubbleLeftAndBubbleRightFill = "bubble.left.and.bubble.right.fill"
+
+    // ── Data & decks ──────────────────────────────────────────
+    static let chartBarXaxis        = "chart.bar.xaxis"
+    static let waveformPathEcg      = "waveform.path.ecg"
+    static let rectangleStack       = "rectangle.stack"
+    static let rectangleOnRectangleSlash = "rectangle.on.rectangle.slash"
 
     // ── Tab bar ───────────────────────────────────────────────
     // Tab icons live on AppTab — not duplicated here.

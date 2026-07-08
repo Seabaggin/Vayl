@@ -220,6 +220,9 @@ struct AppFonts {
     /// do not "upgrade" to body(9, ...) without a deliberate visual decision —
     /// that would change the typeface, not just tokenize it.
     static var microBadge: Font {
+        // Deliberate system-font token: 9pt sits below the custom face's usable range;
+        // this is the one sanctioned Font.system in the app, defined here at the source.
+        // swiftlint:disable:next no_font_system
         Font.system(size: 9, weight: .bold)
     }
 

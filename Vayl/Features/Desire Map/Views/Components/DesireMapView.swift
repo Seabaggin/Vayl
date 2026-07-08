@@ -206,7 +206,7 @@ struct DesireMapView: View {
                 HStack {
                     Spacer()
                     Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
-                        Image(systemName: "xmark")
+                        Image(systemName: AppIcons.close)
                             .font(AppFonts.caption)
                             .foregroundStyle(AppColors.textTertiary)
                             .frame(width: 36, height: 36)
@@ -346,7 +346,7 @@ struct DesireMapView: View {
     private var topBar: some View {
         HStack(spacing: AppSpacing.md) {
             Button { back() } label: {
-                Image(systemName: "chevron.left")
+                Image(systemName: AppIcons.chevronLeft)
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
                     .frame(width: 32, height: 32)
@@ -362,7 +362,7 @@ struct DesireMapView: View {
                 .foregroundStyle(AppColors.textTertiary)
 
             Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
-                Image(systemName: "xmark")
+                Image(systemName: AppIcons.close)
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
                     .frame(width: 32, height: 32)
@@ -536,7 +536,7 @@ struct DesireMapView: View {
             HStack {
                 Spacer()
                 Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
-                    Image(systemName: "xmark")
+                    Image(systemName: AppIcons.close)
                         .font(AppFonts.caption)
                         .foregroundStyle(AppColors.textTertiary)
                         .frame(width: 36, height: 36)
@@ -636,7 +636,7 @@ struct DesireMapView: View {
 
     private func emptyState(_ message: String) -> some View {
         VStack(spacing: AppSpacing.md) {
-            Image(systemName: "heart.text.square")
+            Image(systemName: AppIcons.heartTextSquareOutline)
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(AppColors.textTertiary)
             Text("Desire Map unavailable")

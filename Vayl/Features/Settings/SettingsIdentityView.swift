@@ -178,7 +178,7 @@ private struct IdentityEditSheet: View {
                             .foregroundStyle(AppColors.textPrimary)
                         Spacer()
                         if selectedStage == stage {
-                            Image(systemName: "checkmark.circle.fill")
+                            Image(systemName: AppIcons.checkmarkCircle)
                                 .foregroundStyle(AppColors.spectrumCyan)
                                 .accessibilityHidden(true)
                         }

@@ -133,7 +133,7 @@ struct PathNodeView: View {
         Button {
             showOverflow = true
         } label: {
-            Image(systemName: "ellipsis")
+            Image(systemName: AppIcons.ellipsis)
                 .font(AppFonts.buttonLabelSmall)
                 .foregroundStyle(AppColors.textSecondary)
                 .frame(width: 28, height: 28)

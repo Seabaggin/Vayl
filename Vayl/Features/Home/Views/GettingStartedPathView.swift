@@ -16,7 +16,7 @@ struct GettingStartedPathView: View {
                     .foregroundStyle(AppColors.spectrumText)
                 Spacer()
                 Button(action: onClose) {
-                    Image(systemName: "xmark")
+                    Image(systemName: AppIcons.close)
                         .font(AppFonts.caption)
                         .foregroundColor(AppColors.textTertiary)
                         .frame(width: 30, height: 30)
@@ -126,7 +126,7 @@ private struct PathStepRow: View {
         case .done:
             Circle().fill(AppColors.spectrumBorder)
                 .frame(width: 30, height: 30)
-                .overlay(Image(systemName: "checkmark").font(AppFonts.caption).foregroundColor(AppColors.textBody))
+                .overlay(Image(systemName: AppIcons.checkmark).font(AppFonts.caption).foregroundColor(AppColors.textBody))
         case .active:
             Circle().fill(AppColors.cardBg)
                 .frame(width: 30, height: 30)
@@ -139,7 +139,7 @@ private struct PathStepRow: View {
         case .locked:
             Circle().fill(AppColors.cardBg)
                 .frame(width: 30, height: 30)
-                .overlay(Image(systemName: "lock.fill").font(AppFonts.meta).foregroundColor(AppColors.textTertiary))
+                .overlay(Image(systemName: AppIcons.lock).font(AppFonts.meta).foregroundColor(AppColors.textTertiary))
         }
     }
 }

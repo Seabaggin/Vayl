@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+// Procedural card-face art: fixed hairline/stroke insets are geometry, not
+// layout spacing, so raw padding values are intentional here.
+// swiftlint:disable no_hardcoded_padding
+
 /// Solo controller card face — one upright controller centred on the card.
 /// Drawing logic lives in ControllerPainter. DualControllerCardFace reuses the same painter.
 struct ControllerCardFace: View {

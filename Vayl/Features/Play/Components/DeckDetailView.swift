@@ -107,7 +107,7 @@ struct DeckDetailView: View {
         Button {
             store.closeDetail()
         } label: {
-            Image(systemName: "xmark")
+            Image(systemName: AppIcons.close)
                 .font(AppFonts.body(13, weight: .semibold, relativeTo: .caption))
                 .foregroundStyle(AppColors.textPrimary)
                 .frame(width: 28, height: 28)

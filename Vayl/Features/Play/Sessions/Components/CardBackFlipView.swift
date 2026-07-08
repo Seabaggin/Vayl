@@ -32,7 +32,7 @@ struct CardBackFlipView: View {
             onFlip()
         } label: {
             HStack(spacing: AppSpacing.xs) {
-                Image(systemName: "arrow.triangle.2.circlepath")
+                Image(systemName: AppIcons.arrowTriangle2Circle)
                     .font(AppFonts.caption)
                 Text("turn the card over")
                     .font(AppFonts.buttonLabelSmall)

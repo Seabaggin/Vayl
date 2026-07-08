@@ -41,7 +41,7 @@ struct VaultAgreementsSection: View {
                     .font(AppFonts.display(20, weight: .bold, relativeTo: .title2))
                     .foregroundStyle(AppColors.textPrimary)
                 Spacer()
-                Image(systemName: "lifepreserver")
+                Image(systemName: AppIcons.lifepreserver)
                     .font(AppFonts.body(18, weight: .regular, relativeTo: .body))
                     .foregroundStyle(AppColors.safetyAccent)
             }
@@ -198,7 +198,7 @@ struct VaultAgreementsSection: View {
             } else {
                 Button { composingNew = true } label: {
                     HStack(spacing: AppSpacing.xs) {
-                        Image(systemName: "plus")
+                        Image(systemName: AppIcons.plus)
                         Text("Propose an agreement")
                     }
                     .font(AppFonts.buttonLabelSmall)

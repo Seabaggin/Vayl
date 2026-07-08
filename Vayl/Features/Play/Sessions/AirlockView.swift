@@ -85,7 +85,7 @@ struct AirlockView: View {
     private var header: some View {
         HStack {
             Button { vaylDismiss() } label: {
-                Image(systemName: "chevron.left")
+                Image(systemName: AppIcons.chevronLeft)
                     .font(AppFonts.buttonLabel)
                     .foregroundStyle(AppColors.textSecondary)
                     .frame(width: 32, height: 32)

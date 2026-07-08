@@ -21,7 +21,7 @@ struct SettingsAppearanceView: View {
                     RoundedRectangle(cornerRadius: AppRadius.sm)
                         .fill(AppColors.spectrumMagenta.opacity(0.10))
                         .overlay(
-                            Image(systemName: "moon.fill")
+                            Image(systemName: AppIcons.moonFill)
                                 .font(AppFonts.bodyMedium)
                                 .foregroundStyle(AppColors.spectrumMagenta)
                                 .accessibilityHidden(true)

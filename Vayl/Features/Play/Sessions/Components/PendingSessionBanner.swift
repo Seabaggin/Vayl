@@ -35,7 +35,7 @@ struct PendingSessionBanner: View {
             Spacer(minLength: 0)
 
             Button(action: onDismiss) {
-                Image(systemName: "xmark")
+                Image(systemName: AppIcons.close)
                     .font(AppFonts.buttonLabelSmall)
                     .foregroundStyle(AppColors.textTertiary)
                     .frame(width: 28, height: 28)

@@ -118,7 +118,7 @@ struct PulseFullView: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onDismiss?()
         } label: {
-            Image(systemName: "xmark")
+            Image(systemName: AppIcons.close)
                 .font(AppFonts.body(13, weight: .medium, relativeTo: .footnote))
                 .foregroundStyle(AppColors.textMuted)
                 .frame(width: 32, height: 32)
@@ -149,7 +149,7 @@ struct PulseFullView: View {
 
     private var emptyMeState: some View {
         VStack(spacing: AppSpacing.xs) {
-            Image(systemName: "waveform.path.ecg")
+            Image(systemName: AppIcons.waveformPathEcg)
                 .font(AppFonts.body(28, weight: .regular, relativeTo: .title2))
                 .foregroundStyle(AppColors.textTertiary)
             Text("No Pulse yet")
@@ -272,7 +272,7 @@ struct PulseFullView: View {
 
     private var emptyUsState: some View {
         VStack(spacing: AppSpacing.xs) {
-            Image(systemName: "waveform.path.ecg")
+            Image(systemName: AppIcons.waveformPathEcg)
                 .font(AppFonts.body(28, weight: .regular, relativeTo: .title2))
                 .foregroundStyle(AppColors.textTertiary)
             Text(mapStore.partnerPulseFetchFailed ? "Couldn't reach their Pulse" : "No Pulse yet")

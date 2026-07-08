@@ -26,7 +26,7 @@ struct QuizCarouselSection: View {
 
     private var emptyState: some View {
         VStack(spacing: AppSpacing.sm) {
-            Image(systemName: "questionmark.circle")
+            Image(systemName: AppIcons.questionmarkCircle)
                 .font(AppFonts.body(26, weight: .regular, relativeTo: .title2))
                 .foregroundStyle(AppColors.textTertiary)
             Text("No quizzes right now")
@@ -58,7 +58,7 @@ struct QuizCarouselSection: View {
             Spacer(minLength: 0)
             HStack(spacing: AppSpacing.xs) {
                 Text("Take the quiz")
-                Image(systemName: "arrow.right")
+                Image(systemName: AppIcons.arrowRight)
             }
             .font(AppFonts.buttonLabel)
             .foregroundStyle(AppColors.textPrimary)

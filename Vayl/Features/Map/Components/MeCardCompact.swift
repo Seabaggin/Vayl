@@ -51,7 +51,7 @@ struct MeCardCompact: View {
 
                 Spacer(minLength: 0)
 
-                Image(systemName: "chevron.right")
+                Image(systemName: AppIcons.chevronRight)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(AppColors.textTertiary)
             }

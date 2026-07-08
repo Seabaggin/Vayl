@@ -110,7 +110,7 @@ struct VaultDesireSection: View {
             store.openDiscussion(itemId: item.id, itemName: item.name, tier: tier)
         } label: {
             HStack(spacing: AppSpacing.sm) {
-                Image(systemName: "diamond")
+                Image(systemName: AppIcons.diamond)
                     .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
                     .foregroundStyle(AppColors.spectrumBridge)
                 Text(item.name)
@@ -118,7 +118,7 @@ struct VaultDesireSection: View {
                     .foregroundStyle(AppColors.textBody)
                 Spacer()
                 badge(item.isMutual)
-                Image(systemName: "chevron.right")
+                Image(systemName: AppIcons.chevronRight)
                     .font(AppFonts.body(11, weight: .regular, relativeTo: .caption2))
                     .foregroundStyle(AppColors.textTertiary)
             }
@@ -144,7 +144,7 @@ struct VaultDesireSection: View {
     private var lockedRow: some View {
         Button(action: onUnlock) {
             HStack(spacing: AppSpacing.sm) {
-                Image(systemName: "lock")
+                Image(systemName: AppIcons.lockOutline)
                     .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
                     .foregroundStyle(AppColors.textTertiary)
                 Text("\(lockedCount) more where you align")
@@ -226,7 +226,7 @@ struct VaultDesireSection: View {
             store.openDiscussion(itemId: c.itemId, itemName: c.itemName, tier: .consentOpened)
         } label: {
             HStack(spacing: AppSpacing.sm) {
-                Image(systemName: "bubble.left.and.bubble.right.fill")
+                Image(systemName: AppIcons.bubbleLeftAndBubbleRightFill)
                     .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
                     .foregroundStyle(AppColors.spectrumCyan)
                 VStack(alignment: .leading, spacing: 1) {
@@ -234,7 +234,7 @@ struct VaultDesireSection: View {
                     Text("Opened together").font(AppFonts.caption).foregroundStyle(AppColors.spectrumCyan)
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
+                Image(systemName: AppIcons.chevronRight)
                     .font(AppFonts.body(11, weight: .regular, relativeTo: .caption2))
                     .foregroundStyle(AppColors.textTertiary)
             }
@@ -247,7 +247,7 @@ struct VaultDesireSection: View {
 
     private func waitingRow(_ c: VaultStore.ConsentVM) -> some View {
         HStack(spacing: AppSpacing.sm) {
-            Image(systemName: "clock")
+            Image(systemName: AppIcons.clockOutline)
                 .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
                 .foregroundStyle(AppColors.textTertiary)
             VStack(alignment: .leading, spacing: 1) {

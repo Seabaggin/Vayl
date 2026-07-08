@@ -195,7 +195,7 @@ struct PlayView: View {
             Button {
                 store.dismissOpenError()
             } label: {
-                Image(systemName: "xmark")
+                Image(systemName: AppIcons.close)
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
             }

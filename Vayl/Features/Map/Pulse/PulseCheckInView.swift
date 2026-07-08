@@ -95,7 +95,7 @@ struct PulseCheckInView: View {
     /// leave early short of finishing all 5 questions.
     private var backButton: some View {
         Button { onClose() } label: {
-            Image(systemName: "chevron.left")
+            Image(systemName: AppIcons.chevronLeft)
                 .font(AppFonts.buttonLabel)
                 .foregroundStyle(AppColors.textSecondary)
                 .frame(width: 28, height: 28)

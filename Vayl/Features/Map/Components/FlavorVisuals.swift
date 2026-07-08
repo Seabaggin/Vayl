@@ -80,7 +80,7 @@ struct DrawnTagChip: View {
     var body: some View {
         HStack(spacing: 3) {
             if tag.isShared {
-                Image(systemName: "sparkle").font(AppFonts.body(8, weight: .regular, relativeTo: .caption2))
+                Image(systemName: AppIcons.sparkle).font(AppFonts.body(8, weight: .regular, relativeTo: .caption2))
             }
             Text(tag.name).font(AppFonts.caption)
         }

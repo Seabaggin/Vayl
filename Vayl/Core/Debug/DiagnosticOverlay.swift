@@ -79,8 +79,8 @@ struct CTAPositionMarker: View {
                     Text("\(label): y=\(Int(globalFrame.minY)) bottom=\(Int(globalFrame.maxY))")
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
                         .foregroundColor(color)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, AppSpacing.xs)
+                        .padding(.vertical, AppSpacing.xxs)
                         .background(Color.black.opacity(0.7))
                         .cornerRadius(3)
                 }
@@ -110,7 +110,7 @@ struct SafeAreaBands: View {
                         Text("safe top: \(Int(insets.top))pt  geo.h: \(Int(geo.size.height))")
                             .font(.system(size: 9, weight: .bold, design: .monospaced))
                             .foregroundColor(.green)
-                            .padding(.leading, 8),
+                            .padding(.leading, AppSpacing.sm),
                         alignment: .bottomLeading
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -124,7 +124,7 @@ struct SafeAreaBands: View {
                         Text("safe bottom: \(Int(insets.bottom))pt")
                             .font(.system(size: 9, weight: .bold, design: .monospaced))
                             .foregroundColor(.orange)
-                            .padding(.leading, 8),
+                            .padding(.leading, AppSpacing.sm),
                         alignment: .topLeading
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
@@ -157,7 +157,7 @@ struct MeasurePosition: ViewModifier {
                                 .font(.system(size: 8, design: .monospaced))
                         }
                         .foregroundColor(color)
-                        .padding(2)
+                        .padding(AppSpacing.xxs)
                         .background(Color.black.opacity(0.6))
                         .cornerRadius(3)
                     }

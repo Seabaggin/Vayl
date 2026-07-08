@@ -2,6 +2,10 @@
 
 import SwiftUI
 
+// Procedural card-face art: fixed hairline/stroke insets are geometry, not
+// layout spacing, so raw padding values are intentional here.
+// swiftlint:disable no_hardcoded_padding
+
 // MARK: - Deflection Mapping
 
 /// Per-layer rotation ratios for the gimbal stack. The needle leads the gesture,

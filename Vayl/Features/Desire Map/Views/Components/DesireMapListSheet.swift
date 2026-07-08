@@ -241,7 +241,7 @@ private struct _LockedMatchRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: AppSpacing.sm) {
-                Image(systemName: "lock.fill")
+                Image(systemName: AppIcons.lock)
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary.opacity(0.6))
 
@@ -255,7 +255,7 @@ private struct _LockedMatchRow: View {
                     .opacity(0.6)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                Image(systemName: "chevron.right")
+                Image(systemName: AppIcons.chevronRight)
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary.opacity(0.4))
             }

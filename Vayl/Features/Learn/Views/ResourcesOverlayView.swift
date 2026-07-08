@@ -14,7 +14,7 @@ struct ResourcesOverlayView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
                 HStack(alignment: .top, spacing: AppSpacing.md) {
-                    Image(systemName: "lifepreserver")
+                    Image(systemName: AppIcons.lifepreserver)
                         .font(AppFonts.body(19, weight: .regular, relativeTo: .body)).foregroundStyle(AppColors.spectrumCyan)
                     VStack(alignment: .leading, spacing: AppSpacing.xs) {
                         Text("Vayl isn't therapy")

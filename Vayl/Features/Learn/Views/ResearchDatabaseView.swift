@@ -41,7 +41,7 @@ struct ResearchDatabaseView: View {
     private var backButton: some View {
         Button { vaylDismiss(confirm: false) } label: {
             HStack(spacing: AppSpacing.xs) {
-                Image(systemName: "chevron.left")
+                Image(systemName: AppIcons.chevronLeft)
                 Text("Learn")
             }
             .font(AppFonts.buttonLabel)
@@ -64,7 +64,7 @@ struct ResearchDatabaseView: View {
 
     private var searchField: some View {
         HStack(spacing: AppSpacing.sm) {
-            Image(systemName: "magnifyingglass").foregroundStyle(AppColors.textSecondary)
+            Image(systemName: AppIcons.magnifyingglass).foregroundStyle(AppColors.textSecondary)
             Text("Search findings, authors…")
                 .font(AppFonts.bodyText)
                 .foregroundStyle(AppColors.textTertiary)
@@ -102,11 +102,11 @@ struct ResearchDatabaseView: View {
         HStack {
             HStack(spacing: AppSpacing.xs) {
                 Text("Newest").font(AppFonts.bodyMedium).foregroundStyle(AppColors.textBody)
-                Image(systemName: "chevron.down").font(AppFonts.caption).foregroundStyle(AppColors.textSecondary)
+                Image(systemName: AppIcons.chevronDown).font(AppFonts.caption).foregroundStyle(AppColors.textSecondary)
             }
             Spacer()
             HStack(spacing: AppSpacing.xs) {
-                Image(systemName: "line.3.horizontal.decrease")
+                Image(systemName: AppIcons.line3HorizontalDecrease)
                 Text("Filters")
             }
             .font(AppFonts.buttonLabel)

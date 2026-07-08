@@ -68,7 +68,7 @@ struct FindingDetailView: View {
                 Text(c.headline).font(AppFonts.bodyMedium).foregroundStyle(AppColors.textPrimary)
             }
             Spacer()
-            Image(systemName: "chevron.right").foregroundStyle(AppColors.textTertiary)
+            Image(systemName: AppIcons.chevronRight).foregroundStyle(AppColors.textTertiary)
         }
         .padding(AppSpacing.md)
         .background(RoundedRectangle(cornerRadius: AppRadius.lg).fill(AppColors.cardBackground))
@@ -78,7 +78,9 @@ struct FindingDetailView: View {
 private struct BulletStyle: LabelStyle {
     func makeBody(configuration: Configuration) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.sm) {
-            Image(systemName: "circle.fill").font(AppFonts.body(4, weight: .regular, relativeTo: .caption2)).padding(.top, 7)
+            // 7pt optically centers the bullet dot against the first text line; not a spacing token.
+            // swiftlint:disable:next no_hardcoded_padding
+            Image(systemName: AppIcons.circleFill).font(AppFonts.body(4, weight: .regular, relativeTo: .caption2)).padding(.top, 7)
             configuration.title
         }
     }

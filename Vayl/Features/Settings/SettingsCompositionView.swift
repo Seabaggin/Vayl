@@ -35,7 +35,7 @@ struct SettingsCompositionView: View {
                                     .foregroundStyle(AppColors.textPrimary)
                                 Spacer()
                                 if store.composition == option {
-                                    Image(systemName: "checkmark")
+                                    Image(systemName: AppIcons.checkmark)
                                         .font(AppFonts.bodyMedium)
                                         .foregroundStyle(AppColors.accentPrimary)
                                         .accessibilityHidden(true)

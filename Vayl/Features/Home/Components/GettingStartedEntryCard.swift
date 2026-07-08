@@ -22,7 +22,7 @@ struct GettingStartedEntryCard: View {
                         .foregroundColor(AppColors.textPrimary)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
+                Image(systemName: AppIcons.chevronRight)
                     .font(AppFonts.caption)
                     .foregroundColor(AppColors.textTertiary)
             }

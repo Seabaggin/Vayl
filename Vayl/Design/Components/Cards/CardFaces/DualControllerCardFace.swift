@@ -17,6 +17,10 @@
 
 import SwiftUI
 
+// Procedural card-face art: fixed hairline/stroke insets are geometry, not
+// layout spacing, so raw padding values are intentional here.
+// swiftlint:disable no_hardcoded_padding
+
 struct DualControllerCardFace: View {
 
     let cardWidth: CGFloat

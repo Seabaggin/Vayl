@@ -46,7 +46,7 @@ struct PathScreen: View {
                     VStack {
                         switch mode {
                         case .trail:
-                            PathTrailView(store: store)
+                            PathTrailView(store: store) { selectedLandmarkId = $0 }
                         case .ledger:
                             PathLedgerView(store: store) { selectedLandmarkId = $0 }
                         }
@@ -101,10 +101,10 @@ struct PathScreen: View {
                     // Mutually exclusive by construction (one `mode`, one
                     // branch) — toggling never shows both icons at once.
                     if mode == .trail {
-                        Button { showLegend = true } label: { Image(systemName: "key") }
+                        Button { showLegend = true } label: { Image(systemName: AppIcons.key) }
                             .accessibilityLabel("Legend")
                     } else {
-                        Button { showOverflow = true } label: { Image(systemName: "ellipsis") }
+                        Button { showOverflow = true } label: { Image(systemName: AppIcons.ellipsis) }
                             .accessibilityLabel("More options")
                     }
                 }
@@ -112,7 +112,7 @@ struct PathScreen: View {
                     Button {
                         mode = (mode == .trail) ? .ledger : .trail
                     } label: {
-                        Image(systemName: "list.bullet")
+                        Image(systemName: AppIcons.listBullet)
                     }
                     .accessibilityLabel(mode == .trail ? "Show ledger" : "Show trail")
                 }

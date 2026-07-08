@@ -57,7 +57,7 @@ struct LearnView: View {
 
     private var loadErrorNotice: some View {
         HStack(spacing: AppSpacing.sm) {
-            Image(systemName: "exclamationmark.triangle")
+            Image(systemName: AppIcons.exclamationTriangle)
                 .font(AppFonts.body(16, weight: .regular, relativeTo: .body))
                 .foregroundStyle(AppColors.textTertiary)
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
@@ -93,7 +93,7 @@ struct LearnView: View {
             Spacer()
             Button { showResources = true } label: {
                 HStack(spacing: AppSpacing.xs) {
-                    Image(systemName: "lifepreserver")
+                    Image(systemName: AppIcons.lifepreserver)
                         .foregroundStyle(AppColors.spectrumText)   // gradient symbol (in place of a gradient border)
                     Text("Resources")
                         .font(AppFonts.buttonLabel)

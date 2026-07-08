@@ -218,6 +218,9 @@ struct SessionPlayerView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, AppSpacing.xl)
+        // Large bottom reserve biases the prompt block above the pinned session
+        // controls; a layout offset, not an AppSpacing candidate.
+        // swiftlint:disable:next no_hardcoded_padding
         .padding(.bottom, 150)
         .frame(maxHeight: .infinity, alignment: .center)
     }
@@ -351,7 +354,7 @@ struct SessionPlayerView: View {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 showCare = true
             } label: {
-                Image(systemName: "heart.circle")
+                Image(systemName: AppIcons.heartCircle)
                     .font(AppFonts.sectionHeading)
                     .foregroundStyle(AppColors.textSecondary)
                     .frame(width: 54, height: 54)

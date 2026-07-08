@@ -296,7 +296,7 @@ private struct MapFieldSheet: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     dismiss()
                 } label: {
-                    Image(systemName: "xmark")
+                    Image(systemName: AppIcons.close)
                         .font(AppFonts.body(13, weight: .medium, relativeTo: .footnote))
                         .foregroundStyle(AppColors.textMuted)
                         .frame(width: 32, height: 32)

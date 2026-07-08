@@ -20,15 +20,28 @@
 //  club" reading Did it while "Flirt at a bar" / "An NM mixer" sit behind it
 //  visually possible without any special-casing here.
 //
-//  This view is presentation only, no tap handling — same "content dropped
-//  into whatever wraps it" posture as PathNodeView; wiring taps to open
-//  NodeView and the ☰/⚷/⋯ header contract belong to PathScreen (Task 12).
+//  Tapping a node opens that landmark's NodeView — the trail is the primary
+//  reading, so it is also a primary way in (mockup §04: NodeView is "the
+//  primary interaction now"). The presenting surface is still PathScreen's
+//  job; this view only forwards the tapped id up through `onSelect`, the same
+//  seam PathLedgerView already uses.
 //
 
 import SwiftUI
 
 struct PathTrailView: View {
     let store: PathStore
+    let onSelect: (String) -> Void
+
+    // The fixed 264×836 coordinate stage the node positions and bezier control
+    // points below are a literal port of (path-full-flow.html §02). Named here
+    // rather than re-typed as bare literals at each use site.
+    private static let stageWidth: CGFloat = 264
+    private static let stageHeight: CGFloat = 836
+    // A comfortable tap target centered on each (visually much smaller) node.
+    private static let nodeHitTarget: CGFloat = 44
+    private static let labelWidth: CGFloat = 100
+    private static let labelGap: CGFloat = 12
 
     /// Literal port of the node coordinates from path-full-flow.html §02's
     /// 264×836 stage — same 13 landmarks, same positions, never re-derived.
@@ -78,17 +91,41 @@ struct PathTrailView: View {
                 trailCurve
                 ForEach(store.visibleLandmarks) { landmark in
                     if let point = Self.nodePositions[landmark.id] {
-                        nodeView(for: landmark)
-                            .position(point)
-                        Text(landmark.title)
-                            .font(AppFonts.sectionLabelSmall)
-                            .foregroundStyle(landmark.id == store.nowLandmarkId ? AppColors.textBright : AppColors.textPrimary)
-                            .position(x: point.x + 60, y: point.y - 8)
+                        Button {
+                            onSelect(landmark.id)
+                        } label: {
+                            nodeView(for: landmark)
+                                .frame(width: Self.nodeHitTarget, height: Self.nodeHitTarget)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PressableCardStyle())
+                        .accessibilityLabel(landmark.title)
+                        .position(point)
+
+                        label(for: landmark, at: point)
                     }
                 }
             }
-            .frame(width: 264, height: 836)
+            .frame(width: Self.stageWidth, height: Self.stageHeight)
         }
+    }
+
+    /// Places a landmark's name on the open side of the winding trail: left-column
+    /// nodes get a left-aligned label to their right, right-column nodes get a
+    /// right-aligned label to their left. This is what keeps the right column from
+    /// clipping off the fixed-width stage — the old flat `x + 60` pushed every
+    /// right-column label (nodes at x≈187-199) past the 264-wide edge.
+    private func label(for landmark: PathLandmark, at point: CGPoint) -> some View {
+        let isRightColumn = point.x > Self.stageWidth / 2
+        let centerX = isRightColumn
+            ? point.x - Self.labelGap - Self.labelWidth / 2
+            : point.x + Self.labelGap + Self.labelWidth / 2
+        return Text(landmark.title)
+            .font(AppFonts.sectionLabelSmall)
+            .foregroundStyle(landmark.id == store.nowLandmarkId ? AppColors.textBright : AppColors.textPrimary)
+            .frame(width: Self.labelWidth, alignment: isRightColumn ? .trailing : .leading)
+            .multilineTextAlignment(isRightColumn ? .trailing : .leading)
+            .position(x: centerX, y: point.y - 8)
     }
 
     // MARK: - Trail curve — literal bezier port, never re-derived
@@ -251,7 +288,7 @@ private struct PathTrailPreviewHarness: View {
     }
 
     var body: some View {
-        PathTrailView(store: store)
+        PathTrailView(store: store, onSelect: { _ in })
             .background(AppColors.void.ignoresSafeArea())
             .task { await store.load() }
     }

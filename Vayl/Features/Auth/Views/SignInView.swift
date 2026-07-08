@@ -60,7 +60,7 @@ struct SignInView: View {
                             auth.signInWithApple()
                         } label: {
                             HStack(spacing: AppSpacing.sm) {
-                                Image(systemName: "applelogo")
+                                Image(systemName: AppIcons.appleLogo)
                                     // SF Symbols render from their own glyph set regardless of font
                                     // family — only size/weight/relativeTo affect the symbol, so
                                     // reusing ctaLabel (same 17pt/semibold/.body as the adjacent

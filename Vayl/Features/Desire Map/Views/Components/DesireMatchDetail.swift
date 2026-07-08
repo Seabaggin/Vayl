@@ -73,7 +73,7 @@ struct DesireMatchDetail: View {
                             .foregroundStyle(AppColors.textSecondary)
                             .lineLimit(1)
                         Spacer(minLength: 0)
-                        Image(systemName: "arrow.up.right")
+                        Image(systemName: AppIcons.arrowUpRight)
                             .font(AppFonts.caption)
                             .foregroundStyle(AppColors.textTertiary)
                     }

@@ -4,6 +4,7 @@ excluded:
   - .claude/worktrees
   - .build
   - .git
+  - Vayl/Core/Debug   # dev-only diagnostic tooling, not held to the design-token contract
 
 opt_in_rules:
   - force_unwrapping # Uses the native, bulletproof Swift compiler check

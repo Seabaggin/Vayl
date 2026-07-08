@@ -101,7 +101,7 @@ struct DesireRevealView: View {
                 hapticTick += 1
                 vaylDismiss(confirm: false)
             } label: {
-                Image(systemName: "xmark")
+                Image(systemName: AppIcons.close)
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
                     .frame(width: 36, height: 36)

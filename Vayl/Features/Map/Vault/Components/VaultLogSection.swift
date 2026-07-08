@@ -68,7 +68,7 @@ struct VaultLogSection: View {
                                 .font(AppFonts.overline)
                                 .foregroundStyle(AppColors.textSecondary)
                                 .padding(.horizontal, AppSpacing.sm)
-                                .padding(.vertical, 2)
+                                .padding(.vertical, AppSpacing.xxs)
                                 .background(Capsule().fill(AppColors.glassSurface))
                         }
                     }

@@ -561,6 +561,7 @@ private struct LexiconShareCard: View {
             // 36pt sits between AppSpacing.xl (32) and .xxl (48) — no exact match,
             // left as a raw literal rather than round to a token that would change
             // the card's rendered layout.
+            // swiftlint:disable:next no_hardcoded_padding
             .padding(36)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -574,6 +575,7 @@ private struct LexiconShareCard: View {
                 // 14pt sits between AppSpacing.sm (8) and .md (16) — no exact match,
                 // left as a raw literal rather than round to a token that would
                 // change the frame inset.
+                // swiftlint:disable:next no_hardcoded_padding
                 .padding(14)
         }
         .frame(width: 360, height: 640)

@@ -86,7 +86,7 @@ struct CredentialEditorSheet: View {
     private var snapshotEditor: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             HStack(spacing: AppSpacing.sm) {
-                Image(systemName: "lock.fill")
+                Image(systemName: AppIcons.lock)
                     .foregroundStyle(AppColors.spectrumBorder)
                 Text("Your baseline is sealed.")
                     .font(AppFonts.bodyMedium)

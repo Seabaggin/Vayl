@@ -285,17 +285,16 @@ struct ConversationCard: View {
         }
     }
 
+    @ViewBuilder
     private var frontQuestionText: some View {
         switch content {
         case .onboarding(let card):
-            return AnyView(highlightedQuestion(card: card))
+            highlightedQuestion(card: card)
         case .prompt(let text):
-            return AnyView(
-                Text(text)
-                    .font(AppFonts.cardTitle)
-                    .foregroundStyle(AppColors.textPrimary)
-                    .lineSpacing(6)
-            )
+            Text(text)
+                .font(AppFonts.cardTitle)
+                .foregroundStyle(AppColors.textPrimary)
+                .lineSpacing(6)
         }
     }
 
