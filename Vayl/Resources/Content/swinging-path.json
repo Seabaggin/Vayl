@@ -1,0 +1,25 @@
+{
+  "styleId": "swinging",
+  "phases": [
+    { "id": 1, "name": "Safe Harbor" },
+    { "id": 2, "name": "Proximal Energy" },
+    { "id": 3, "name": "Threshold" },
+    { "id": 4, "name": "Engagement" },
+    { "id": 5, "name": "Advanced" }
+  ],
+  "landmarks": [
+    { "id": "fantasy-talk", "phaseId": 1, "title": "Fantasy talk", "eventCopy": "Talk openly about fantasies you've each been curious about.", "goldenRule": null, "sortOrder": 1 },
+    { "id": "watch-together", "phaseId": 1, "title": "Watch together", "eventCopy": "Watch something with a charge to it, together, and talk about it after.", "goldenRule": null, "sortOrder": 2 },
+    { "id": "virtual-hellos", "phaseId": 1, "title": "Virtual hellos", "eventCopy": "Video-call with someone you're both curious about, together — low stakes, just seeing how it feels.", "goldenRule": null, "sortOrder": 3 },
+    { "id": "strip-club", "phaseId": 2, "title": "The strip club", "eventCopy": "Go to a strip club together. Start with no lap dance; if it feels right, a lap dance. You're learning what it's like to watch each other enjoy the room.", "goldenRule": "You leave together, and the night stays about the two of you.", "sortOrder": 4 },
+    { "id": "flirt-bar", "phaseId": 2, "title": "Flirt at a bar", "eventCopy": "Flirt with someone else, together, in a low-stakes public setting.", "goldenRule": "Nothing happens without checking in with each other first.", "sortOrder": 5 },
+    { "id": "nm-mixer", "phaseId": 3, "title": "An NM mixer", "eventCopy": "Attend a non-monogamy social event together, just to see who's out there.", "goldenRule": "You can leave at any point, no explanation needed.", "sortOrder": 6 },
+    { "id": "lifestyle-club", "phaseId": 3, "title": "Lifestyle club", "eventCopy": "Visit a lifestyle club together, as an evening out — no pressure to participate beyond watching and talking.", "goldenRule": "Watching only, unless you both explicitly agree otherwise in the moment.", "sortOrder": 7 },
+    { "id": "seen-as-couple", "phaseId": 3, "title": "Seen, as a couple", "eventCopy": "Let another couple see you two together — a dinner, a party, anywhere your dynamic is visible to people who know.", "goldenRule": null, "sortOrder": 8 },
+    { "id": "dinner-couple", "phaseId": 4, "title": "Dinner with a couple", "eventCopy": "Have dinner with another couple you're both interested in getting to know.", "goldenRule": null, "sortOrder": 9 },
+    { "id": "same-room", "phaseId": 4, "title": "Same room", "eventCopy": "Parallel play — in the same room as another couple, each pair with each other.", "goldenRule": "Check in with each other, not just once, throughout.", "sortOrder": 10 },
+    { "id": "soft-swap", "phaseId": 4, "title": "Soft swap", "eventCopy": "Everything but penetrative sex, with another couple, same room.", "goldenRule": "Any hard limit named beforehand stays a hard limit in the moment.", "sortOrder": 11 },
+    { "id": "full-swap", "phaseId": 5, "title": "Full swap", "eventCopy": "The full experience, with another couple, by mutual agreement.", "goldenRule": "The safe word ends the night for both couples immediately, no discussion needed.", "sortOrder": 12 },
+    { "id": "solo-night", "phaseId": 5, "title": "A solo night", "eventCopy": "One of you goes it alone — your paths split here, by design.", "goldenRule": null, "sortOrder": 13 }
+  ]
+}

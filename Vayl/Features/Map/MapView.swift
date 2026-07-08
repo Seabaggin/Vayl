@@ -28,6 +28,12 @@ struct MapView: View {
     @State private var showPaywall = false
     @State private var vaultStore = VaultStore()
 
+    // TEMPORARY (Task 15) — minimum wiring to reach PathScreen at all. The Map
+    // dashboard has no Path widget yet (spec §0 / Bryan's standing direction);
+    // replace this row when that widget is designed.
+    @State private var showPathScreen = false
+    @State private var pathStore: PathStore?
+
     // FEEL: tune on device
     private let lensTintOpacity: Double = 0.10
     // FEEL: tune on device
@@ -95,6 +101,15 @@ struct MapView: View {
                     VStack(alignment: .leading, spacing: AppSpacing.lg) {
                         masthead   // the name wordmark IS the Me/Us switch now
 
+                        // TEMPORARY (Task 15) — see field declarations above.
+                        Button("Open Path (temporary entry point)") {
+                            guard let coupleId = appState.coupleId,
+                                  let profileId = try? modelContext.fetch(FetchDescriptor<UserProfile>()).first?.id
+                            else { return }
+                            pathStore = PathStore(coupleId: coupleId, profileId: profileId, pathStyle: "swinging", transport: PathSyncService())
+                            showPathScreen = true
+                        }
+
                         layerContent
                     }
                     .padding(.horizontal, AppSpacing.lg)
@@ -114,6 +129,14 @@ struct MapView: View {
             // for why (PulseField needs real screen geometry, not a sheet's).
             .vaylCover(isPresented: $showCheckIn, confirmOnExit: false) {
                 PulseCheckInView(store: pulse, onClose: { showCheckIn = false })
+            }
+            // TEMPORARY (Task 15) — see field declarations above. `.vaylCover` per
+            // the parent Map dashboard spec's own note: Path is a territory-drilling
+            // mode, decided in the roadmap spec as a cover.
+            .vaylCover(isPresented: $showPathScreen, confirmOnExit: false) {
+                if let pathStore {
+                    PathScreen(store: pathStore)
+                }
             }
             .onChange(of: appState.vaultOpenPending) { _, pending in
                 if pending {
