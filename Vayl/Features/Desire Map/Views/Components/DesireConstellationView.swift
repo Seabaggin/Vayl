@@ -109,6 +109,13 @@ struct DesireConstellationView: View {
 
     // MARK: - Lines
 
+    // One view structure for every mode — no branch swap on `mode`. Earlier this switched between
+    // two structurally different views (a straight-line plain stroke for `.teasers`, a curved
+    // blurred stroke for everything else); swapping `if`/`else` branches when `mode` changed from
+    // `.intro` to `.teasers` meant SwiftUI couldn't interpolate across the swap, so the beat1→beat2
+    // transition — the one most visibly hit in practice — popped the lines in instantly instead of
+    // fading them. Keeping one view means `.animation(value: drawn)` always has a continuous
+    // property change to animate, at every mode transition, not just within a single mode's run.
     @ViewBuilder
     private func line(_ edge: ConstellationLayout.Edge, index: Int, in size: CGSize) -> some View {
         let drawn = lineDrawn(edge)
@@ -116,28 +123,38 @@ struct DesireConstellationView: View {
             path.move(to: scaled(stars[edge.a].point, size))
             path.addLine(to: scaled(stars[edge.b].point, size))
         }
-        if mode == .teasers {
-            // Teaser-beat lines fade in already at full length (a trim/draw-on animation here
-            // reads as lines being traced across the screen and thrown on top of the stars).
-            // Staggered by the edge's own index in `edges` — ConstellationLayout.buildEdges
-            // grows its MST outward from the hero (nearest-neighbor-first), so that array order
-            // already radiates outward from the hero star. Without the stagger every line faded
-            // in at the exact same instant, reading as a single mechanical snap rather than the
-            // connection spreading outward.
-            path
-                .stroke(Color.white.opacity(drawn ? lineOpacity : 0), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
-                .animation(
-                    AppAnimation.enter
-                        .delay(Double(index) * AppAnimation.desireBeatStaggerStep)
-                        .reduceMotionSafe,
-                    value: drawn
-                )
-        } else {
-            path
-                .trim(from: 0, to: drawn ? 1 : 0)
-                .stroke(Color.white.opacity(lineOpacity), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
-                .animation(AppAnimation.desireLineDraw.reduceMotionSafe, value: drawn)
+        path
+            .stroke(Color.white.opacity(drawn ? lineOpacity : 0), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
+            .animation(lineAnimation(index: index, edge: edge).reduceMotionSafe, value: drawn)
+    }
+
+    /// Per-mode fade timing. Teasers stagger by the edge's own index in `edges` —
+    /// ConstellationLayout.buildEdges grows its MST outward from the hero (nearest-neighbor-first),
+    /// so that array order already radiates outward from the hero star, reading as the connection
+    /// spreading outward rather than every line fading at once. Assemble uses a smaller, seeded
+    /// per-edge jitter instead, since its own ignition schedule already provides the spread.
+    private func lineAnimation(index: Int, edge: ConstellationLayout.Edge) -> Animation {
+        switch mode {
+        case .teasers:
+            // Was AppAnimation.enter (0.4s ease-out) — ease-out starts fast then decelerates,
+            // which read as an abrupt pop rather than a fade. desireLineCondense ramps in gently
+            // (ease-in-out) instead, matching the softer settle already used elsewhere on this
+            // screen.
+            return AppAnimation.desireLineCondense.delay(Double(index) * AppAnimation.desireBeatStaggerStep)
+        case .assemble:
+            return AppAnimation.desireLineCondense.delay(edgeJitter(edge) * AppAnimation.desireLineJitterSpan)
+        case .intro, .resolved:
+            return AppAnimation.desireLineCondense
         }
+    }
+
+    /// Deterministic 0...1 unit derived from the edge's endpoints, used to offset each line's
+    /// condense so simultaneous ignitions don't settle in mechanical lockstep.
+    private func edgeJitter(_ edge: ConstellationLayout.Edge) -> Double {
+        var hasher = Hasher()
+        hasher.combine(min(edge.a, edge.b))
+        hasher.combine(max(edge.a, edge.b))
+        return Double(hasher.finalize() & 0xFF) / 255.0
     }
 
     private func lineDrawn(_ edge: ConstellationLayout.Edge) -> Bool {
@@ -152,7 +169,7 @@ struct DesireConstellationView: View {
     /// Teaser-beat lines read as a hint of connection, not a confirmed one — dimmer than
     /// the confident weight used once the sky is actually lit (resolved / mid-assembly).
     private var lineOpacity: Double {
-        mode == .teasers ? 0.18 : 0.5
+        mode == .teasers ? 0.30 : 0.68
     }
 
     // MARK: - Telegraph

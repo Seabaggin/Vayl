@@ -142,7 +142,12 @@ struct DesireRevealView: View {
 
     private var beatReveal: some View {
         GeometryReader { geo in
-            ZStack {
+            // `.top` alignment is load-bearing: without it a bare ZStack centers its VStack
+            // vertically, and `bottomSection` grows from a two-line caption (beat1) to the taller
+            // locked-rows list (beat2/3) — a taller centered stack pushes everything above it,
+            // including the whole constellation, upward. Anchoring to the top means bottomSection
+            // growing only ever extends downward; the constellation never has to move to make room.
+            ZStack(alignment: .top) {
                 // Tap-anywhere-to-advance background (nodes' own tap gestures take priority)
                 Color.clear
                     .contentShape(Rectangle())
@@ -171,11 +176,12 @@ struct DesireRevealView: View {
                     // Layout + hero placement live on the store (Blueprint C) — the view
                     // only renders what it's handed.
                     //
-                    // ONE constant frame — half the screen's height — for the entire ceremony,
-                    // beat1 through revealed. Two earlier attempts tried to give beat1 a dramatic
-                    // full-bleed size and beat2/3 a smaller one (first by animating a single
-                    // instance's frame height, then by cross-fading between two differently-sized
-                    // instances); both still produced a visible jump or abrupt landing, because
+                    // ONE constant frame — sized to just past where ConstellationLayout actually
+                    // places stars (their y is confined to roughly the frame's own top half) — for
+                    // the entire ceremony, beat1 through revealed. Two earlier attempts tried to give
+                    // beat1 a dramatic full-bleed size and beat2/3 a smaller one (first by animating
+                    // a single instance's frame height, then by cross-fading between two differently
+                    // sized instances); both still produced a visible jump or abrupt landing, because
                     // every star's `.position()` is a fraction of whatever frame the constellation
                     // resolves to, and the surrounding VStack's layout snapped to the new slot size
                     // the moment the beat changed even when the star content tried to animate.
@@ -183,9 +189,13 @@ struct DesireRevealView: View {
                     // about the constellation's layout ever changes across beats, so its stars and
                     // lines never move. `bottomSection` below it already fades its own content in
                     // and out independently — it now simply has a stable amount of room reserved
-                    // below the constellation at all times, instead of needing it to shrink.
+                    // below the constellation at all times, instead of needing it to shrink. Sized to
+                    // 0.38 (not the full 0.5 the frame used before stars were confined to the upper
+                    // half) — small enough that the caption/locked-rows below don't sit behind a dead
+                    // gap of empty sky, but tall enough that halos/labels at high match counts have
+                    // room to breathe within the compressed upper-half band.
                     constellationView
-                        .frame(maxWidth: .infinity, maxHeight: geo.size.height * 0.5)
+                        .frame(maxWidth: .infinity, maxHeight: geo.size.height * 0.38)
                         .padding(.vertical, AppSpacing.lg)
                         .opacity(store.beatPhase != .idle ? 1 : 0)
                         // Fix #3b: opacity reveal gated behind reduceMotionSafe; the per-star ignite + line

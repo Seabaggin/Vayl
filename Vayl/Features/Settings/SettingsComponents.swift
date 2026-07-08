@@ -2,6 +2,30 @@
 
 import SwiftUI
 
+// MARK: - SettingsGearButton
+
+/// The masthead gear — the single settings entry, shared by every tab header.
+/// Callers set `appState.settingsPresented = true`; AppShell presents the cover.
+struct SettingsGearButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            action()
+        } label: {
+            Image(systemName: "gearshape")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(AppColors.glassSurface))
+                .overlay(Circle().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
+        }
+        .buttonStyle(PressableCardStyle())
+        .accessibilityLabel("Settings")
+    }
+}
+
 // MARK: - SettingsSectionLabel
 
 struct SettingsSectionLabel: View {

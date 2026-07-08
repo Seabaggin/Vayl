@@ -27,9 +27,13 @@ build/
 
 # ── Swift Package Manager ───────────────────────────────────
 .build/
+.build-claude/
 .swiftpm/
 Packages/
 Package.resolved
+
+# ── Agent tool scratch (not project source) ──────────────────
+.codex/
 
 # ── Xcode User Data ─────────────────────────────────────────
 # Per-developer settings — should not be shared.

@@ -46,18 +46,30 @@ enum ConstellationLayout {
         let rotation = rng.nextUnit() * 2 * .pi
         let squash = 0.84 + rng.nextUnit() * 0.26   // slight aspect variation per seed
 
+        // The constellation's own frame is fixed for the entire reveal ceremony (see
+        // DesireRevealView) — nothing about that frame ever resizes across beats. Confining the
+        // sky to roughly the frame's upper half, rather than spreading through its full height,
+        // means the figure never needs to shift or recentre once lines start drawing; it's already
+        // sitting where it will stay. `verticalReach` compresses the spiral's y spread (x keeps its
+        // full reach) before recentring higher and clamping near the top half.
+        let verticalReach = 0.62
         var points: [CGPoint] = []
         points.reserveCapacity(count)
         for i in 0..<count {
-            let r = sqrt((Double(i) + 0.5) / Double(count)) * 0.40
+            // A single star (i=0, count=1) would otherwise still get `sqrt(0.5)*0.40 ≈ 0.28` of
+            // radius from the `+0.5` phyllotaxis offset — meant to space the *first of many*
+            // points off-center, not to displace the *only* point there. With one star that reads
+            // as an arbitrary offset instead of a centered hero, and risks the halo drifting toward
+            // the frame's edge. Force it to the anchor with no radius.
+            let r = count == 1 ? 0 : sqrt((Double(i) + 0.5) / Double(count)) * 0.40
             let theta = Double(i) * goldenAngle + rotation
             let jx = (rng.nextUnit() - 0.5) * 0.05
             let jy = (rng.nextUnit() - 0.5) * 0.05
             let x = 0.5 + r * cos(theta) + jx
-            let y = 0.47 + r * sin(theta) * squash + jy
+            let y = 0.30 + r * sin(theta) * squash * verticalReach + jy
             points.append(CGPoint(
                 x: CGFloat(min(0.87, max(0.13, x))),
-                y: CGFloat(min(0.86, max(0.12, y)))
+                y: CGFloat(min(0.50, max(0.09, y)))
             ))
         }
 

@@ -17,8 +17,8 @@ struct PartnerChipExpand: View {
     var body: some View {
         Group {
             switch state {
-            case .active(let name, let initial):
-                activeContent(name: name, initial: initial)
+            case .active(let name, _):
+                activeContent(name: name)
             default:
                 EmptyView() // only .active renders content here — other states route elsewhere
             }
@@ -40,26 +40,42 @@ struct PartnerChipExpand: View {
     }
 
     @ViewBuilder
-    private func activeContent(name: String, initial: String) -> some View {
+    private func activeContent(name: String) -> some View {
         VStack(spacing: 0) {
-            HStack {
-                HStack(spacing: AppSpacing.sm) {
-                    PartnerAvatarView(initial: initial, size: 22)
-                    Text(name)
-                        // cardTitle (22pt) is sized for a screen-level card headline —
-                        // too large next to a 22pt avatar circle in a 224pt popover.
-                        // cardTitleCompact (16pt) is the token meant for exactly this:
-                        // dense rows / compact widget titles.
-                        .font(AppFonts.cardTitleCompact)
-                        .foregroundStyle(AppColors.textPrimary)
-                    Spacer()
-                }
-                .padding(.horizontal, AppSpacing.md)
-                .padding(.vertical, AppSpacing.sm)
-                // Same glass-capsule treatment as the at-rest PartnerChip's .active
-                // case, so the header reads as that pill continuing into the
-                // expanded card rather than a bare row on the card background.
-                .glassEffect(.regular, in: Capsule())
+            // Same glass-capsule treatment as the at-rest PartnerChip's .active
+            // case, so the header reads as that pill continuing into the
+            // expanded card rather than a bare row on the card background.
+            // Content is this HStack's own body (self); the glass Capsule is a
+            // .background, not glassEffect's own composited content (its
+            // vibrancy pass darkens/desaturates content that renders through
+            // it — same fix as PartnerChip.swift's .active case). Making the
+            // HStack self (not the bare Capsule) also matters for SIZING: a
+            // `Capsule().overlay{ HStack }` arrangement makes the capsule — a
+            // Shape with no content-driven size, which greedily fills any
+            // proposed height — the flexible element in this VStack.
+            // `HomeDashboardView` positions this popover inside a
+            // `.frame(maxWidth: .infinity, maxHeight: .infinity, ...)`
+            // wrapper, which proposes near-infinite height; the bare capsule
+            // soaked that up and stretched into a screen-tall stadium shape,
+            // shoving the tiles and "Manage pairing" row far down the screen.
+            // Content as self sizes off the actual name row instead.
+            HStack(spacing: AppSpacing.sm) {
+                Text(name)
+                    // cardTitleCompact (16pt) is the token meant for dense
+                    // rows / compact widget titles — matches the pill's scale.
+                    .font(AppFonts.cardTitleCompact)
+                    .foregroundStyle(AppColors.textBright)
+                Spacer()
+            }
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.vertical, AppSpacing.sm)
+            .background {
+                Capsule()
+                    .fill(.clear)
+                    .glassEffect(.regular, in: Capsule())
+                    .overlay(
+                        Capsule().strokeBorder(AppColors.spectrumBorder, lineWidth: 1.5)
+                    )
             }
             .padding(.horizontal, AppSpacing.md)
             .padding(.top, AppSpacing.md)
@@ -77,7 +93,7 @@ struct PartnerChipExpand: View {
             .padding(.horizontal, AppSpacing.md)
             .padding(.bottom, AppSpacing.sm)
 
-            Divider().overlay(AppColors.borderSubtle)
+            Divider().overlay(AppColors.spectrumText.opacity(0.35))
 
             Button {
                 onManageTap?()
@@ -100,6 +116,14 @@ struct PartnerChipExpand: View {
         }
         .frame(width: 224)
         .themedCard()
+        // The pill above carries a spectrum-gradient outline; this hairline
+        // + soft glow read as that same material continuing down into the
+        // card, rather than the card being a bare, disconnected surface.
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.lg)
+                .strokeBorder(AppColors.spectrumBorder, lineWidth: 1)
+        )
+        .spectrumBorderGlow(intensity: 0.4)
     }
 
     @ViewBuilder

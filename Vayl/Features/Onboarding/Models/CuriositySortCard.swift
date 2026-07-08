@@ -7,5 +7,5 @@ import Foundation
 struct CuriositySortCard: Identifiable, Equatable {
     let id:    String
     let text:  String
-    let round: Int     // 1 = communicationGoals round, 2 = learningGoals round
+    let round: Int     // CuriosityDeck round the card belongs to (OB deals round 2 only)
 }

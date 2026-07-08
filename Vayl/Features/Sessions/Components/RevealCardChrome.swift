@@ -4,7 +4,7 @@
 //
 //  The special-card treatment for reveal-mechanic cards (spec §4.4): an
 //  animated spectrum border + slow drifting sparks framing the reveal surface.
-//  Reuses VaylBorderEffect + .spectrumBorderGlow — no new primitives.
+//  Uses a rounded spectrum stroke + .spectrumBorderGlow — no new primitives.
 //  Reduce Motion: border holds steady, sparks are stilled.
 //
 
@@ -27,20 +27,10 @@ struct RevealCardChrome<Content: View>: View {
                     .fill(AppColors.cardBg)
             )
             .overlay(
-                GeometryReader { geo in
-                    VaylBorderEffect(
-                        width: geo.size.width,
-                        height: geo.size.height,
-                        cornerRadius: AppRadius.lg,
-                        progress: 1.0,
-                        glowIntensity: breathe ? intensity : intensity * 0.6,
-                        hairlineVisible: false
-                    )
+                revealBorder
                     .allowsHitTesting(false)
-                }
             )
             .overlay(sparkField.allowsHitTesting(false))
-            .spectrumBorderGlow(intensity: intensity * 0.5)
             .onAppear {
                 guard !reduceMotion else { return }
                 breathe = true
@@ -48,6 +38,18 @@ struct RevealCardChrome<Content: View>: View {
             .ambientAnimation(
                 .easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true),
                 value: breathe
+            )
+    }
+
+    private var revealBorder: some View {
+        let glow = breathe ? intensity : intensity * 0.6
+        return RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+            .strokeBorder(AppColors.spectrumBorder, lineWidth: AppGlows.spectrumBorder.strokeGlowing)
+            .spectrumBorderGlow(intensity: glow)
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                    .strokeBorder(AppColors.spectrumBorder, lineWidth: AppGlows.spectrumBorder.strokeActive)
+                    .opacity(glow)
             )
     }
 

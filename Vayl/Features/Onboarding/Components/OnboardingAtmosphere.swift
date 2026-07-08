@@ -169,11 +169,14 @@ private struct OBVoidBloom: View {
             // a constant tax under the whole OB (and Home). Rasterized, the
             // texture re-renders only while the bloom itself changes (the 1s
             // atmosphereShift config crossfade), then composites for free.
-            // opaque: the void base fills the bounds, so no alpha channel needed.
             // FEEL-GATE: blur now samples within screen bounds — verify the
             // left/right edge falloff on device (difference, if visible at all,
             // is a slightly dimmer strip inside the blur radius at the sides).
-            .drawingGroup(opaque: true)
+            // opaque: false — the alpha channel is required so that external
+            // .opacity() modifiers (e.g. the 0.68 in OnboardingCanvasView) composite
+            // correctly. opaque:true declared no alpha channel, which caused the
+            // compositor to drop the atmosphere when opacity < 1.0 was applied.
+            .drawingGroup(opaque: false)
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)

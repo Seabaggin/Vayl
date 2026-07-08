@@ -28,9 +28,12 @@ struct DeckBeginCeremony: View {
                 MetallicCaseView(theme: theme(deck),
                                  dissolveStart: skipsMotion ? .distantPast : dissolve)
                     .frame(width: 210, height: 310)
-                    .onTapGesture {
-                        if dissolve == .distantFuture { dissolve = .now }
-                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture { openDeck() }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Open deck")
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction { openDeck() }
 
                 if dissolve == .distantFuture && !skipsMotion {
                     Text("tap the seal to open")
@@ -59,5 +62,9 @@ struct DeckBeginCeremony: View {
 
     private func theme(_ d: DeckSummary) -> FoilDeckTheme {
         FoilDeckTheme(colorway: store.style(for: d).colorway, deckName: d.title.uppercased())
+    }
+
+    private func openDeck() {
+        if dissolve == .distantFuture { dissolve = .now }
     }
 }

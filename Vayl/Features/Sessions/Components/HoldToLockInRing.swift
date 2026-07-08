@@ -78,6 +78,9 @@ struct HoldToLockInRing: View {
             if !isLocked { withAnimation(AppAnimation.standard) { fill = 0 } }
         }
         .accessibilityLabel(locked ? "Locked in" : "Press and hold to lock in")
+        .accessibilityHint("Hold for three seconds. Activate to lock in.")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { activateAccessibilityLockIn() }
     }
 
     private func startHold() {
@@ -112,5 +115,11 @@ struct HoldToLockInRing: View {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         withAnimation(AppAnimation.standard) { fill = 1 }
         onLockIn()
+    }
+
+    private func activateAccessibilityLockIn() {
+        guard !locked else { return }
+        holding = false
+        complete()
     }
 }

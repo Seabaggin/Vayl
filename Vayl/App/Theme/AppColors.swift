@@ -473,7 +473,7 @@ struct AppColors {
     /// Selected pill fill. Lifts visibly over unselected state.
     static let glassFrostPillSelected = Color.dynamic(
         light: VaylPrimitives.frostPillSelected,
-        dark:  VaylPrimitives.inkSurface
+        dark:  VaylPrimitives.inkPillSelected
     )
 
     /// CTA button fill. Warm rose on Dawn, ink surface on Midnight.

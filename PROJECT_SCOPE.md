@@ -1,11 +1,20 @@
 # Vayl — V1 Master Project Scope
 
-> Single source of truth. Last updated June 2026 (2026-06-07).
+> Single source of truth. Last updated 2026-07-05, after a full codebase
+> re-audit (four parallel investigations across Home/Play/Map/Learn,
+> Desire Map/Pulse/Sessions, Onboarding/Pairing/Settings, and
+> Monetization). The previous version (2026-06-07) was badly stale —
+> Play, Map, and Learn were documented as stubs but are fully built;
+> StoreKit was documented as "not started" but is wired end to end;
+> the Desire Map reveal design in the old doc (mutual-waiting state,
+> 7-day escape hatch, nudge tool) was superseded by a simpler beat-ceremony
+> reveal and no longer exists in code.
+>
 > Codebase governs over this document when they conflict.
 > Update this document when the codebase changes intentionally.
 >
 > Note: the shorter `Vayl — V1 Scope.md` and any external copy of this file
-> are now stale relative to this version — re-sync them from here.
+> are stale relative to this version — re-sync them from here.
 
 ---
 
@@ -87,43 +96,52 @@ It never interprets them.
 Everyone who uses Vayl V1 passes through two states in sequence.
 There is no way to skip the first.
 
-### State 1 — Unlinked
+### State 1 — Unlinked (`soloUnpaired`)
 
 Completed onboarding. No partner linked yet.
 
 **Available in State 1:**
 - Desire Map — complete their own side privately
-- Solo prep deck — 5 cards, free, no purchase required
-  (intended to surface automatically for `partneredUndisclosed` context users)
 - Learn tab — full, no gate
 - Pulse — unlimited logging
-- Onboarding-derived content routing based on NMStage and context
+- Getting Started path on Home (deck sampling, first-session prep)
+- Onboarding-derived content routing based on `nmStage` and `relationshipContext`
 
 **Gated until partner links:**
-- Card sessions with a partner
-- Desire Map mutual reveal
-- Lock In
-- Full deck library
-- Play tab game mechanics
+- Card sessions with a partner (two-device lock-in)
+- Desire Map mutual reveal (beat ceremony requires both sides complete)
+- Full deck library beyond the forged opener
+- Play tab's featured/session flow in its linked form
 
-The solo prep deck exists to help someone work through the conversation
-they have not had yet. It is not a solo product — it is a bridge.
-Its purpose is to get the user to link a partner.
-
-### State 2 — Linked
+### State 2 — Linked (`dashboard`)
 
 Partner connected. Full V1 feature set active.
 
 All features unlock. Both partners operate on a shared couple record
 while maintaining individual profiles and private data.
 
+**Reality check on the state machine:** `HomeStore.resolveHomeState()`
+now effectively collapses to two live states — `.soloUnpaired` and
+`.dashboard`. The previously documented intermediate states
+(`.gated`, `.postReflection`, `.waiting`, `.matchReady`) are vestigial:
+per an explicit code comment, "Home ALWAYS leads with the card
+dashboard." Desire Map completion/reveal is now surfaced as an overlay
+step inside the Getting Started path and a `DesireMapState` enum
+(`.hidden` / `.yourTurn` / `.bothReady` / `.youDone` / `.freeRevealSeen`
+/ `.fullyUnlocked`) on the partner chip, not as a separate Home screen.
+
+**Tab locking is still not wired.** `HomeStore.isTabLocked(_:)` computes
+which tabs should be locked in State 1, but nothing in `AppShell` or
+`RacetrackTabBar` calls it — all four tabs are always freely tappable
+regardless of link state. This remains an open issue (see below).
+
 ---
 
 ## Onboarding
 
-### Status: Built — 10-phase canvas flow
+### Status: Built — 11-phase canvas flow (not 10)
 
-All 10 phases present and wired in sequence by `VaylDirector` over the
+All 11 phases present and wired in sequence by `VaylDirector` over the
 `OBPhase` enum (`Vayl/Core/Models/Enums/AppOBEnums.swift`). `appMode` and
 `isOnboardingComplete` are set on completion via
 `OnboardingStore.commit(data:)`, which calls `persist(data:)` (writes
@@ -135,42 +153,60 @@ onboarding independently before linking.
 
 ### Phase Sequence
 
-Onboarding is a single continuous dealer-table "canvas," not 9 discrete
+Onboarding is a single continuous dealer-table "canvas," not discrete
 screens. Data fields are defined on `OnboardingData.swift` and persisted to
 `UserProfile`.
 
 | # | Phase (`OBPhase`) | View | Data Collected |
 |---|---|---|---|
 | 1 | `stat` | OnboardingCanvas | None — normalisation, shame reduction |
-| 2 | `name` | `NamePhase` | `displayName`, `pronounsA` |
-| 3 | `modeSelect` | `ModeSelectPhase` | `appMode` (`.together` / `.solo`) |
-| 4 | `gender` | `GenderPhase` | `genderA` / `pronounsA` (+ `genderB` / `pronounsB` in together mode) — radio-tuner power-on + pronouns drum |
-| 5 | `experienceLevel` | `ExperienceLevelPhase` | `nmStage` (`.curious` / `.exploring` / `.experienced`) |
-| 6 | `context` | `ContextPhase` | `relationshipContext` + `situationalRegister` / `ageRange` / `relationshipTenure` (together) — 2×3 matrix carousel (see below) |
-| 7 | `curiosity` | `CuriosityPhase` | `communicationGoals`, `learningGoals` → `curiositySelections` |
-| 8 | `confirmation` | `ConfirmationPhase` + `CredentialEditorSheet` | Review / edit collected credentials — no new data (context + curiosity edit still stubbed) |
-| 9 | `buildDeck` | `BuildDeckPhase` | Auto-advance ~7.5s; derives `openerDeckType` |
-| 10 | `founderLetter` | `FounderLetterPhase` | Sets `onboardingCompletedAt`; commits via `OnboardingStore.commit(data:)` |
+| 2 | `demo` | Demo teach beat | None persisted directly — teaches the tap-lift→swipe-up gesture via a snapshot sentence ("I [need/want/desire] [noun]"), which triangulates `emotionalRegister` |
+| 3 | `name` | `NamePhase` | `displayName`, `pronounsA` |
+| 4 | `modeSelect` | `ModeSelectPhase` | `appMode` (`.together` / `.solo`) |
+| 5 | `gender` | `GenderPhase` | `genderA` / `pronounsA` (+ `genderB` / `pronounsB` in together mode) — radio-tuner power-on + pronouns drum |
+| 6 | `experienceLevel` | `ExperienceLevelPhase` | `nmStage` (`.curious` / `.exploring` / `.experienced`) |
+| 7 | `context` | `ContextPhase` | `relationshipContext` + `situationalRegister` / `ageRange` / `relationshipTenure` (together) — 2×3 matrix carousel (see below) |
+| 8 | `curiosity` | `CuriosityPhase` | `communicationGoals`, `learningGoals` → `curiositySelections` |
+| 9 | `confirmation` | `ConfirmationPhase` + `CredentialEditorSheet` | Review / edit collected credentials |
+| 10 | `buildDeck` | `BuildDeckPhase` | Runs the Living Case ceremony; derives `openerDeckType` |
+| 11 | `founderLetter` | `FounderLetterPhase` | Sets `onboardingCompletedAt`; commits via `OnboardingStore.commit(data:)` |
 
-**Changed from the earlier 9-screen plan:**
+`VaylDirector.advance(to:)` remains the sole phase-change entry point
+(debounced, hides the dealer line, 50ms hold, then dispatches to
+`handlePhaseEntry`) — the architecture rule ("director.advance() is the
+ONLY way to change OB phase") holds.
+
+**Changed from the earlier plan:**
+- **`demo` phase added** between `stat` and `name` — not present in
+  earlier documentation.
 - **Brand** (logo animation) — never built; cut.
 - **Card reveal** / `nmCardResponse` — old flow only; no longer collected.
-- **Ground rules** — moved out of onboarding. `groundRulesAcceptedAt` still
-  exists on `UserProfile` but is never written during OB (code comment:
-  "written from home screen flow"); `founderLetter` is the terminal phase.
+- **Ground rules** — moved out of onboarding entirely; `groundRulesAcceptedAt`
+  still exists on `UserProfile` but is never written during OB.
 - The old "Mode select" row conflated two things now split into separate
   phases: `modeSelect` (`appMode`) and `experienceLevel` (`nmStage`).
-- **Gender** is now a dedicated phase (absent from the old table).
+
+### The BuildDeck "Living Case" Ceremony — Built, not stubbed
+
+`BuildDeckCeremony.swift` (an `@Observable` state machine — tap count,
+erupt-start, held-breath, escalating stress tables) and `BuildDeckPhase.swift`
+(822 lines) together implement a real 7-beat sequence: melt-through-felt →
+table rim performs → case rises/dolly-zooms → dealer invitation/arms →
+3-tap negotiation (recognition/resistance/release) → held breath →
+lattice "flower peel" (centre-out) → fixed-stage reveal (name rise → fan
+bloom → flip wave → carousel) → founder-letter hand-off. It drives
+`MetallicCaseView.swift` (2200+ lines, plus dedicated Metal shader work),
+which is also reused in Play (`DeckDetailView`, `DeckCaseView`,
+`DeckBeginCeremony`) as the shared case-opening module. Mechanics are
+fully wired; feel/timing tuning against a real device is the remaining
+work, per the Build Protocol in `CLAUDE.md`.
 
 ### Context Screen — 2×3 Matrix (NOT 3 Options)
 
-The earlier 3-option model (`doingThisTogether` / `oneStepAhead` /
-`partneredHidden`) **no longer exists**. Context is now a 2×3 matrix keyed on
-**`AppMode` × `nmStage`** (6 cells), each surfacing ~4 concrete options plus an
-"undecided" fallback — 26 `RelationshipContext` cases in total. Defined in
-`ContextOption.swift` over the `RelationshipContext` enum (`AppEnums.swift`).
-Each option carries `id` (snake_case string), `context`, `accent`, copy, and a
-`derivedRegister` (`SituationalRegister`).
+The earlier 3-option model no longer exists. Context is a 2×3 matrix keyed
+on **`AppMode` × `nmStage`** (6 cells), each surfacing ~4 concrete options plus
+an "undecided" fallback — 26 `RelationshipContext` cases in total. Defined
+in `ContextOption.swift` over the `RelationshipContext` enum (`AppEnums.swift`).
 
 | Cell (AppMode × nmStage) | Representative `RelationshipContext` cases |
 |---|---|
@@ -181,14 +217,15 @@ Each option carries `id` (snake_case string), `context`, `accent`, copy, and a
 | Couple × Exploring | `coupleSolidifying`, `coupleReorienting`, `coupleParallelExploring`, `coupleExploringUndecided` |
 | Couple × Experienced | `coupleFreshIntentional`, `coupleSkillBuilding`, `coupleEvolving`, `coupleExperiencedUndecided` |
 
-`relationshipContext` is saved permanently on `UserProfile`. It is not
-discarded after onboarding — it informs content tone and routing throughout
-the user's history.
+`relationshipContext` is saved permanently on `UserProfile`. It informs
+content tone and routing throughout the user's history.
 
 ### NMStage
 
 Collected during onboarding for every user (in the `experienceLevel` phase).
-Persists on `UserProfile`. Drives content difficulty defaults and deck ordering.
+Persists on `UserProfile`. Drives content difficulty defaults, deck track
+filtering (Desire Map items key on `curious`/`established` tracks derived
+from this), and deck ordering.
 
 | Value | Meaning | Default Content |
 |---|---|---|
@@ -196,19 +233,12 @@ Persists on `UserProfile`. Drives content difficulty defaults and deck ordering.
 | `.exploring` | Some context, some conversations | Medium depth |
 | `.experienced` | Actively practicing | Advanced, skips basics |
 
-### Other Onboarding Fields (collected, previously undocumented)
+### Other Onboarding Fields
 
 Also collected during the flow and persisted on `UserProfile`:
 `situationalRegister`, `emotionalRegister`, `ageRange`, `relationshipTenure`,
 `agency`, `motivation`, `compassNotes`, `openerDeckType`, and an internal
 archetype routing tag.
-
-### Scoped Work
-
-- Push notification permission request must be added (entirely absent
-  from codebase)
-- Solo prep deck must surface automatically for the `partneredUndisclosed`
-  context (formerly `partneredHidden`) after onboarding completes
 
 ---
 
@@ -216,211 +246,179 @@ archetype routing tag.
 
 Home  |  Play  |  Map  |  Learn
 Custom `RacetrackTabBar`. Animated pill draws/reverses between tabs
-(0.35s per direction, 0.10s handoff overlap — verified). Haptic on
-selection (verified).
+(0.35s per direction, 0.10s handoff overlap). Haptic on selection.
 
-**Tab locking:** Play and Map should be inaccessible in State 1 (unlinked)
-and before Home reaches `.dashboard` state in State 2. The guard *logic*
-exists — `HomeStore.isTabLocked(_:)` — but is **not wired into the UI**:
-`AppShell` / `RacetrackTabBar` never call it, so all four tabs are always
-selectable. Wiring + visual locked state must be added before V1.
+**Tab locking is a known open issue, not a design intent.** `HomeStore.isTabLocked(_:)`
+exists and computes the correct answer, but no call site exists in
+`AppShell`/`RacetrackTabBar` — all four tabs are always selectable
+regardless of link state. All four tabs are, in practice, already fully
+built and independently useful in State 1, which somewhat lowers the
+urgency of this — but Play's session-initiation flow and Map's reveal
+content are meant to be gated and currently are not enforced at the tab
+level (only within their own Stores' entitlement checks).
 
 ---
 
 ## Tab 1 — Home
 
-### Status: Built
+### Status: Built — mature, production-grade
 
-Central daily dashboard. Scroll-driven greeting fades at scroll threshold.
+Central daily dashboard. Not a static screen — `HomeStore.loadAll()`
+(run in `.task`) pulls: couple identity refresh, `UserProfile` map
+completion, Desire Map status from the server, the partner's Pulse
+position, the most-recently-played deck, deck progress count, the most
+recent `CardSession` (drives a reflection-pending banner), that deck's
+cards, and server/bundled Lexicon content — then resolves `HomeState`
+(effectively `.soloUnpaired` vs `.dashboard`, see User States above).
 
-### Entry Routing (HomeRouterView + HomeStore)
+**Layout, top to bottom:**
+- Wordmark ("VAYL.") + `PartnerChip` (tap → `PartnerChipExpand` popover
+  for linked users, or routes to pairing invite/join sheets when
+  unlinked)
+- Getting Started path entry card (shown until the path is complete —
+  guides a new user through Desire Map input, first session, etc.)
+- Deck carousel / pedestal (`CardChestContainer`) — tap fans the deck
+  out (floating → spread → lifted → carousel), building "tonight's
+  hand"; tapping a card launches a session (`.vaylCover` in DEBUG,
+  routes to Play in release)
+- Pulse rail (`HomePulseRail`) — condensed Pulse position, taps out to
+  the fuller Map-tab Pulse hero
+- Lexicon module (`HomeLexicon`) — daily-5 "Today" motif cards from the
+  research corpus
 
-**State 1 — Unlinked:**
+**Overlays:** reflection-pending banner, pending-partner-session banner
+(via `SessionEntryStore`, which polls for a partner-initiated session
+someone can join), a one-shot completion beat, the Getting Started path
+detail overlay, and debug controls (DEBUG builds only).
 
-State-1 routing now resolves through `HomeState.soloUnpaired` (solo user,
-OB complete, no partner yet) rather than the retired 3 context IDs. The
-intended context-driven emphasis still holds:
-
-| Context group | Emphasis |
-|---|---|
-| `partneredUndisclosed` (curious, hasn't brought it up) | Solo prep deck prominent, partner invite CTA |
-| Ready-to-link contexts (e.g. `partneredSupportiveCurious`) | Partner invite CTA prominent, Desire Map available |
-| Couple contexts (`couple*`) | Partner invite CTA, Desire Map available |
-
-All unlinked users can access their Desire Map side, the solo prep deck
-(if applicable), Learn tab, and Pulse. Card sessions with a partner
-are not available until linked.
-
-**State 2 — Linked:**
-
-| State | Condition | Screen |
-|---|---|---|
-| `.soloUnpaired` | Solo user, OB complete, no partner yet | starter deck reachable, Desire Map gated |
-| `.gated` | Desire Map not started | `HomeGateView` |
-| `.postReflection` | Map complete, reflection pending | `PostMapReflectionView` |
-| `.waiting` | Reflection done, partner not complete | `HomeWaitingView` |
-| `.matchReady` | Both complete, reveal not triggered | `HomeMatchReadyView` |
-| `.dashboard` | Fully unlocked | `HomeDashboardView` |
-
-Resolution logic (`HomeStore.resolveHomeState()`, evaluated in order):
-if isSolo && unlinked    → .soloUnpaired   ← checked first
-guard myMapComplete      → .gated
-guard postReflectionDone → .postReflection
-guard partnerMapComplete → .waiting
-guard revealDone         → .matchReady
-→ .dashboard
-**Not yet reachable from real data:** `partnerMapComplete` is never updated
-from `DesireMapStatus` (TODO in `HomeStore`), so `.waiting` / `.matchReady`
-only occur via the debug overrides below.
-
-**Debug override risk:** `HomeStore.init()` hardcodes all completion flags
-to `true` in `#if DEBUG` (lines ~74–82). The full state progression is never
-exercised in debug builds. Remove before release testing.
-
-### Dashboard Widgets (State 2, top to bottom)
-
-**The Deck** — `CardChestContainer`
-Fanned card deck. Tap → gathered → lifted → carousel. Tapping a card
-in carousel triggers `onCardAction(.startSession)` → `HomeRouterView`
-creates `SessionStore` and presents `SessionView`.
-
-**The Pulse** — `PulseWidget`
-7-day graph. Inline check-in expansion (never a fullScreenCover).
-Backed by `PulseStore` (UserDefaults, migrating to SwiftData before V1).
-
-**Pick Up** — `PickUpCard`
-Content recommendation cards driven by `HomeEventEngine`.
-
-**Research Ticker** — `ResearchTicker`
-Auto-cycling research facts. Tap expands to full content in Learn tab.
+**Desire Map integration:** the rater and the reveal are both launched
+as `.vaylCover`s from Getting Started path steps, not as separate Home
+states. `raterDismissOutcome` decides whether reveal, a one-shot
+"MapChartedMoment" celebration, or nothing happens next.
 
 ---
 
 ## Tab 2 — Play
 
-### Status: Stub (`Text("Play")` only)
+### Status: Built — NOT a stub
 
-### V1 Scope
+Four real sections behind a masthead/hero/wall/detail structure.
 
-Full build required. Four sections:
+- **Masthead + Hero** (`PlayMastheadView`, `PlayHeroView`) — featured
+  deck hero, continuity-aware (fresh / in-progress / completed).
+  `PlayStore.load()` resolves the featured deck as: most-recent
+  in-progress deck (real `DeckProgress`), else the user's forged
+  opener until it's completed, else the first available deck. Loads
+  that deck's real cards for the hero carousel and fetches connection
+  composition (gender dynamic) for card filtering.
+- **Deck Wall** (`DeckWallView`) — category-clustered grid of all
+  available decks. Locked decks show lock state; tapping one routes to
+  `PaywallSheet` via `requestUnlock`.
+- **Deck Detail** (`DeckDetailView`) — zoom-in float detail overlay for
+  a tapped deck.
+- **Begin Ceremony → Session** — tapping a deck's "begin" runs
+  `DeckBeginCeremony` (shared `MetallicCaseView` open animation), then
+  `SessionBuilderView` (`.vaylSheet`) to shape tonight's plan, then
+  opens a realtime session row (`RealtimeSessionService`) and presents
+  `CardSessionContainerView` as a `.vaylCover` (lobby-first).
+- **Joiner banner** (`PendingSessionBanner`) — same
+  `SessionEntryStore` pattern as Home, for joining a partner-initiated
+  session.
 
-**Card Sessions** — Deck selection entry point. Current deck highlighted.
-All available decks browsable in a grid. Deck 2+ require Vayl Lifetime.
-
-**Pre-Flight** — 3-question diagnostic (event type, nervous system state,
-biggest fear) that generates a custom emotional preparation summary.
-
-**Games** — Interactive relationship games. Free tier: 1 unlock.
-Vayl Lifetime: all games.
-
-**Archive** — Searchable grid of all unlocked card categories and
-completed session history.
-
-State 1 users see a prompt to link a partner before Play unlocks.
+State 1 users can browse decks and preview content; initiating a
+two-device session requires a linked partner (enforced by the session
+builder/airlock flow, not by a tab-level gate).
 
 ---
 
 ## Tab 3 — Map
 
-### Status: Temporary harness (renders `PairingSettingsView` as P3 test)
+### Status: Built — NOT a temporary harness
 
-### V1 Scope
+Me / Us toggle, doubled up as the masthead name-toggle (no separate
+pill/chevron control).
 
-Full build required. Two-panel toggle.
+- **Masthead** — name/Us toggle + settings gear; resolves tenure stage
+  and subtitle.
+- **Me layer:**
+  - `MapPulseHero` — check-in entry + Pulse history access
+  - `MapRecord` — personal session history + category-share breakdown,
+    derived from real `CardSession` rows
+  - Me Card (`MeCardCompact` / `MeCardSheet`) — flavor/title/tags
+    derived from positive Desire Map ratings
+- **Us layer:**
+  - Couple stats — tenure, session count, weeks on Vayl
+  - Align/matches list + locked-count teaser, gated by
+    `CoupleContext.canRevealAll` (server-authoritative entitlement, not
+    the local Couple mirror)
+  - Partner's Pulse position + history
+  - Vault entry point (`VaultSheet` — desire section, agreements
+    section, log section, discussion cards)
+- **Sheets:** full Pulse history, Vault, Paywall (on Vault/reveal
+  unlock). Pulse check-in itself is a `.vaylCover`.
 
-**Couple View** (default for linked users)
-- Constellation showing the couple and all active connections
-- Add connection, view connection history
-- Partner linking and code entry
-
-**Network View** (unlocked by $7.99 additional connection)
-- Full connection constellation
-- Multi-connection management
-- Connection close flow with data sovereignty
-
-State 1 users see their own profile only and a partner linking prompt.
+State 1 users see their own Me layer and a partner-linking prompt in
+place of the Us layer's couple content.
 
 ---
 
 ## Tab 4 — Learn
 
-### Status: Stub (`Text("Learn")` only)
+### Status: Built — NOT a stub
 
-### V1 Scope
+Fully free — no paywall on any Learn content, in any state.
 
-Full build required. Fully free — no paywall on any Learn content.
-Available in all states including State 1.
+- **Header** — "Learn." wordmark + Resources button + settings gear
+- **Quiz carousel** (`QuizCarouselSection`) — flavor/orientation quiz
+  entries
+- **Research section** (`ResearchSection`) — opens `ResearchDatabaseView`
+  (`.vaylCover`, full corpus browse) or a single finding's detail
+  (`.vaylSheet`)
+- **Content hub** (`ContentHubSection`) — tabbed books / watch / listen
+  / voices directory
+- **Resources overlay** — sheet with CNM-affirming therapist directory,
+  peer support links, interview guide
 
-| Section | Contents |
-|---|---|
-| Dossiers | Long-form research-backed relationship concept guides. Research Ticker items deep-link here. |
-| Lexicon | NM-specific terminology, alphabetical |
-| Library | Curated external reading references |
-| Ground Crew | CNM-affirming therapist directory, peer support links, therapist interview guide |
-
-All four sections require content authoring before V1 ships.
-
----
-
-## Solo Prep Deck
-
-### Triggers
-
-Intended to surface automatically after onboarding completes for users with
-`partneredUndisclosed` context (formerly `partneredHidden`). Also accessible
-to other solo/curious "ready-to-link" contexts (e.g.
-`partneredSupportiveCurious`) who want to do solo preparation before their
-partner joins. (Auto-surface wiring is still scoped work — see below.)
-
-### Properties
-
-- 5 cards
-- Always free, no purchase required
-- Designed to help someone work through the conversation they have
-  not had with their partner yet
-- Cards are oriented toward self-clarification, not couple exercises
-
-### Lifecycle
-
-- Available in State 1 (unlinked)
-- When partner links, the deck archives — its results inform profile
-  routing but it does not disappear entirely
-- `nmCardResponse` and solo session data are saved permanently to
-  `UserProfile` — context is never discarded
-- In State 2, the deck is not surfaced as an active session but its
-  completion record is accessible in session history
-
-### Content Requirement
-
-5 cards must be authored before V1 ships. Deck ID: `solo-prep`.
+`LearnStore` loads bundled JSON instantly on init (quizzes, findings,
+lexicon terms, media quotes/items, voices, support resources), then
+async-refreshes findings/glossary/quotes from Supabase if reachable,
+overriding the bundled baseline. Deliberately has no routing state
+machine (unlike Home) — Learn has zero dependency on link state or
+entitlements.
 
 ---
 
 ## Card Sessions
 
+### Purpose
+
+A synchronized two-device experience: pick a deck, both partners
+complete a lock-in ritual, cards reveal in sync, the session closes with
+a reflection or a safe-word exit.
+
 ### Content Inventory
 
-| Deck | Cards | Tier | Status |
-|---|---|---|---|
-| `the-opener` — The Opener | 10 | Free (first sitting) then Deck 2 gate | Bundled JSON, real production content |
-| `solo-prep` — Solo Prep | 5 | Always free | ❌ Not authored — no JSON in bundle |
+`Vayl/Resources/Decks/deck-catalog.json` lists 16 decks. Older decks
+(`the-opener.json`, `jealousy.json`, etc.) carry real, finished 10–11
+card content. Four newer decks — `opener-opening.json`,
+`opener-return.json`, `opener-steady.json`, `opener-wider.json` — are
+**explicitly tagged `"stub"`** in their JSON, 6–7 cards each; they are
+placeholder replacements for the single old opener and still need real
+copy before shipping.
 
-Only `the-opener.json` is currently bundled; `Resources/Decks/deck-index.json`
-lists `["the-opener"]` alone. The solo prep deck, Deck 2, and Deck 3–N for
-couple sessions must still be authored — Deck 2 is required for the primary
-conversion moment.
+### Session Lifecycle (built)
 
-### Session Lifecycle
-
-1. `SessionStore` initialised with a `Deck` and `startIndex`
-2. `recordAndAdvance(status:)` records a `CardResult`, increments index
-3. `updateDeckProgress()` persists resume position to `DeckProgress`
-4. On last card: `saveSession()` writes `CardSession` + all `CardResult`
-   records and sets `DeckProgress.completedAt`
-
-Session entry points:
-- **Home** — tapping active card in carousel → `onCardAction(.startSession)`
-- **Play tab** — deck selection from grid
+1. `SessionBuilderStore` / `SessionBuilderView` — shape tonight's plan
+   (deck, card count/filter)
+2. `AirlockView` / `AirlockStore` + `HoldToLockInRing` — the two-device
+   lock-in: a real 3-second hold gesture per partner, calling
+   `store?.consent()` against Supabase before the session can start
+3. `CardSessionContainerView` — phase router for the live session
+4. `SessionPlayerView` / `RevealEngine` — card display and advance logic
+5. `SessionCloseView` / `SafeWordCloseView` — completion with
+   reflection, or an immediate safe-word exit
+6. `RealtimeSessionService` — real Supabase-backed session row +
+   Realtime presence/broadcast channels, not a stub
 
 ### Card Actions
 
@@ -430,281 +428,304 @@ Session entry points:
 | Not Ready | Secondary | Not ready for this topic yet |
 | Bookmark | Icon button | Save to revisit later |
 
-### Silent Failure — Must Fix Before V1
+### Test Coverage
 
-`SessionStore.saveSession()` logs a warning and returns if `coupleId` is nil.
-The entire session is lost with no user-visible error or notification (a log
-line is not a user surface). Must surface a user-visible error state before
-V1 ships.
+`CoupleSessionPlaythroughTests.swift`, `SessionBuilderStoreTests.swift`,
+`SessionSettingsTests.swift` (Swift), plus
+`supabase/tests/card_sessions_invariants.test.sql` — real, non-trivial
+assertions across the flow.
+
+### Remaining Work
+
+- Author real content for the four stub opener decks
+- Two-device hardware feel pass (Bryan, on real devices — never
+  simulator; timing/feel decisions are verified against a reference,
+  not guessed)
+- Solo prep deck (see below) still needs authoring
+
+---
+
+## Solo Prep Deck
+
+### Status: Not authored — no JSON in bundle
+
+Intended purpose unchanged from earlier scoping: a 5-card, always-free
+deck oriented toward self-clarification, meant to surface automatically
+for `partneredUndisclosed`-context users after onboarding, and to help
+someone work through the conversation they have not had with their
+partner yet. When a partner links, the deck's results inform profile
+routing but the deck itself is not discarded — its completion record
+stays accessible in session history.
+
+**Content requirement:** 5 cards must be authored and bundled as
+`solo-prep.json`; the automatic surface-on-`partneredUndisclosed` wiring
+also still needs to be built.
 
 ---
 
 ## Lock In
 
-### Status: Architecture-only
+### Status: Built as part of the session airlock, not a separate architecture-only model
 
-`LockInSession` `@Model` compiles and is in SchemaV1. No UI exists.
-Not wired into the session flow. `CardSession` already carries
-`lockInBandwidthA` / `lockInBandwidthB` fields for this, but they are never
-set by any code.
-
-Lock In is always free — never paywalled. Any feature that facilitates
-the conversation is free.
-
-### V1 Scope
-
-- Pre-session entry ritual UI
-- Bandwidth and nervous system check-in for both partners before a session
-- `LockInSession` written to DataStore on completion
-- Associated with the `CardSession` record that follows
+The pre-session lock-in ritual described in earlier scoping is now live
+inside the Card Session flow (`AirlockView`/`AirlockStore` +
+`HoldToLockInRing`, see Card Sessions above), not a dormant
+`LockInSession` model waiting for UI. Lock In is always free — never
+paywalled. Any feature that facilitates the conversation is free.
 
 ---
 
 ## Desire Map
 
-### Status: Input partially built, reveal not built
+### Status: Input and reveal both fully built; reveal design has changed from earlier scoping
 
-`DesireMapView` presents 4 categories × 3 items (12 items, placeholder
-content). Ratings save per-user. Partner data saves independently —
-correct for mutual independent completion.
+**Purpose:** each partner privately rates a shared list of desire items;
+a server-side match computation compares both sets, and a reveal screen
+shows the overlaps as a constellation, with a free/paid split on how much
+of the result set is visible.
 
-Available in State 1 (users complete their own side alone).
-Mutual reveal requires both partners to be linked and both sides complete.
+### Input Flow (built)
 
-**Not built:**
-- `DesireMapStatus` never written after completion
-- HomeState flags not updated on map completion (`partnerMapComplete` TODO)
-- Reveal flow does not exist (`HomeMatchReadyView` has a CTA stub only — no
-  reveal detail / match-list view)
-- Match calculation does not exist (deferred to Supabase Edge Function)
-- Paywall gate does not exist
+`DesireMapStore` loads `DesireItem`s from
+`Vayl/Resources/Content/desire_items.json` — **19 real, authored items**
+(not placeholders) across 6 categories: `structures`, `emotional`,
+`sexual`, `communication`, `health`, `logistics`. Each item is
+cohort-adaptive: filtered by `track` (`curious` / `established`,
+resolved from `nmStage`), with 4 weighted answer strings per track and
+couple-framed "meaning" copy for mutual/adjacent alignment. Ratings
+persist locally-first via SwiftData `DesireMapEntry`, then sync to
+Supabase (`desire_ratings` table) via `SyncManager` /
+`DesireSyncService`.
 
-**Architecture debt:**
-- `DesireMapStore.swift` exists but is **empty** (header comment only);
-  `DesireMapView` still reads/writes through `DataStore` directly (TODO).
-- `DesireMapEntry` `@Model` exists and is registered but **unused** — a second
-  persistence path parallel to the legacy `DataStore` ratings.
-- `DesireMapView` references `AppIcons.chevronDown`, which is **not yet
-  defined** in `AppIcons` (will not compile until added).
+On completion, `markProfileComplete()` sets
+`UserProfile.hasCompletedDesireMap = true` — this local flag, not the
+SwiftData `DesireMapStatus` model, is what `HomeStore.myMapComplete`
+actually reads. Available in State 1 (each partner completes their own
+side alone).
 
-### Content Requirement
+### Reveal Flow (built — replaces the old mutual-waiting design)
 
-Final 17 desire items must replace the current 12 placeholder items.
+`DesireRevealStore` fetches computed matches
+(`DesireSyncService.fetchMatches`, backed by a `compute-desire-matches`
+Supabase edge function), splits results into free vs. locked by
+entitlement, and drives a real 3-beat ceremony:
 
----
+1. **Beat 1** — the one free match reveals
+2. **Beat 2** — locked teasers stagger in, blurred
+3. **Beat 3** — paywall rises
 
-### Desire Map Reveal — State Machine (Option C, Final)
+Rendered as a star-map constellation (`DesireConstellationView` /
+`ConstellationLayout`). `HomeStore.resolveDesireMapState()` drives a
+`DesireMapState` enum (`.hidden` / `.yourTurn` / `.bothReady` /
+`.youDone` / `.freeRevealSeen` / `.fullyUnlocked`) surfaced on the
+partner chip, not as a dedicated Home screen.
 
-The most important UX flow in the product. These decisions are final.
-The mutual premise — reveal data belongs to both people — governs
-every branch.
+**What no longer exists (superseded, not merely unbuilt):** the earlier
+"Option C" design — a mutual-waiting state with a 7-day escape hatch and
+a partner nudge tool (pre-written share-sheet text) — has been replaced
+entirely by the simpler `youDone`/`bothReady` states plus the
+beat-ceremony reveal above. There is no nudge mechanic, no 7-day timer,
+and no explicit "waiting for partner" screen anywhere in current code.
+If that behavior is still wanted, it needs to be re-scoped as new work,
+not "finished" — do not assume the old design doc's mechanics still
+apply.
 
-**Why Option C:**
-Option A (paid sees all, free sees one) breaks the mutual premise.
-Option B (both see one until free upgrades) punishes a paying user for
-another person's financial decision.
-Option C — mutual waiting state with 7-day escape hatch — is correct.
+### Architecture Notes
 
----
-
-#### State Map: Person A (paid) + Person C (free) after Desire Map
-
-BOTH SEE IMMEDIATELY
-└── 1 confirmed mutual match (same match, same moment, both devices)PERSON A SEES
-├── "You have X more matches waiting."
-├── Clean waiting state — no locked-out language
-├── [Send Person C a nudge]
-│   └── Generates pre-written iMessage/WhatsApp text:
-│       "We did our Desire Map on Vayl and there's a match
-│        waiting for us. I can't see it until you unlock
-│        your account. [link]"
-└── No blur — Person A paid; their view is resolved pending CPERSON C SEES
-├── X matches blurred below the free reveal
-├── "You have X more mutual matches."
-├── "Own your experience — not just participate in it."
-├── $24.99 upgrade CTA
-└── Never "pay to unlock" — always "buy your own account"WHEN PERSON C UPGRADES
-├── Full reveal triggers simultaneously on both devices
-├── Designed moment — not a navigation transition
-├── Both people experience it together
-└── The wait made it more valuable, not less
----
-
-#### 7-Day Escape Hatch
-
-Without a deadline the waiting state collapses into Option B.
-Anticipation decays into resentment at approximately one week.
-
-**Why 7 days:** Connections often see each other once a week or less.
-48 hours punishes connection cadence. 7 days equals one full calendar
-cycle — at least one realistic opportunity to connect.
-
-Day 1–2   Natural anticipation. Person A sends organic nudge.
-Day 3–4   App sends one gentle reminder to Person C. Maximum one.
-Day 5–6   Person A can see the waiting state is aging.
-One final manual nudge available.
-Day 7     Resolution state surfaces to Person A.
-**Day 7 Resolution — Person A:**
-"It's been a week.Person C hasn't unlocked their account yet —
-and that's okay. Not every moment lands
-at the same time for both people.Your Desire Map responses are yours.
-[View my individual responses]The full reveal is still waiting if
-Person C decides to join.
-[Send one last nudge]Or start fresh with a different connection.
-[Add a connection]"
-**Why Person A receives individual responses, not match results:**
-Match results are mutual data. A match only exists because two people
-answered. Revealing matches unilaterally misrepresents what they are.
-Person A's individual ratings are entirely theirs and are returned.
-Mutual results require mutual consent. Match data stays in amber —
-not deleted — waiting indefinitely for Person C.
-
-**The nudge belongs to Person A, not Vayl:**
-Vayl provides the message text. Person A provides the relationship.
-
----
-
-#### Implementation Requirements
-
-1. Write `DesireMapStatus` on completion for both users
-2. Match calculation service comparing both partner ratings
-3. Reveal screen: first match visible, rest blurred, count displayed
-4. Person A waiting state: match count shown, no match content
-5. Nudge tool: share sheet with pre-written copy and deep link
-6. 7-day timer: Day 3–4 notification, Day 7 resolution state
-7. Simultaneous reveal signal on Person C upgrade (Supabase Realtime)
-8. "View my individual responses" path: own ratings only, no mutual data
+- The `DesireMapStatus` SwiftData `@Model` is dead scaffolding: modeled,
+  registered in `ModelContainer`, deleted on unlink, but **never
+  constructed or written anywhere in production code** — every write
+  site is inside preview-only example helpers. The real completion
+  source of truth is `UserProfile.hasCompletedDesireMap` (local) plus
+  the `desire_map_status` / `desire_matches` Postgres tables (remote,
+  read via `DesireSyncService`).
+- `DesireMapEntry` is the live SwiftData persistence path;
+  `DesireMapStore.swift` now reads/writes through it directly (the
+  earlier "empty store" architecture debt is resolved).
+- `notForUs` items never leave the device — enforced client-side, at
+  the edge function, and via RLS on `desire_matches`.
 
 ---
 
 ## Pulse
 
-### Status: Logging built, insights deferred
+### Status: Redesign built and live — old "7-day graph" description is dead code
 
-| Component | Status |
-|---|---|
-| `PulseStore` | Built — UserDefaults-backed, must migrate to SwiftData |
-| `PulseWidget` | Built — inline check-in, 7-day graph |
-| `PulseGraph` | Built — real data, Canvas rendering, breath animation |
-| Pulse Insights | Deferred — Act 2 |
+**Purpose:** a daily capacity/openness check-in, visualized as a 2D
+field rather than a line graph, with a couple-comparison "Us" view.
 
-Available in State 1 and State 2.
-Free tier: unlimited logging. Insights locked (lock state UI needed).
+Built (`Vayl/Features/Pulse/Components/`):
+- `PulseField` — 2-axis plot (`PulsePosition(energy:, openness:)`),
+  four quadrant zones, bloom-ring
+- `PulseAura` — "caustic aura" `Canvas`-based radial-gradient layered
+  effect (body/caustic/glass-sweep/rim layers), ported from an HTML
+  motion reference before being written into SwiftUI (per the Build
+  Protocol's "feel first" rule)
+- `PulseCapsule` — the "Us-capsule," a stadium shape connecting both
+  partners' positions
+- `PulseHistoryGrid` — 10-column grid of the last 30 check-ins (not
+  calendar days)
+- `UsOrbState` — real per-half state machine: `.wholeUnwritten` /
+  `.split(mine:partner:)`, a `quietAfterDays = 4` quiet window, and an
+  `allowsLiveComparison` headline guard
+
+All four are wired live into `MapPulseHero` and condensed into
+`HomePulseRail` on Home.
+
+`PulseStore` persists to UserDefaults as a local cache; a real
+`PulseSyncService` pushes/pulls from Supabase (`pulse_entries` table +
+`get_partner_pulse_positions` RPC), with `hydrateFromServer()` merging
+on launch — server is the source of truth, not UserDefaults alone.
+
+Available in State 1 and State 2. Free tier: unlimited logging.
+Pulse pattern insights remain deferred to Act 2.
+
+**Known dead stub:** `PulseFullView.swift` is explicitly marked "to be
+rebuilt" — likely the origin of the earlier "7-day graph" description.
+That code path is gutted and should not be referenced as current.
+
+---
+
+## Pairing / Partner Linking
+
+### Status: Server-side flow built; deep link is plan-only
+
+**Purpose:** connect two individually-onboarded profiles into one
+couple record.
+
+Built (`Vayl/Features/Pairing/`, `Vayl/Core/Services/PairingService.swift`):
+- **Generate invite** — `PairingStore.generateInvite()` inserts a
+  `pairing_codes` row via Supabase; state machine
+  `.idle → .generating → .waitingForPartner(code:)`
+- **Poll, expire, regenerate** — a Realtime channel watches
+  `user_profiles.couple_id`; on timeout the code expires
+  (`PairingError.expiredCode`) and can be regenerated
+- **Redeem** — `joinWithCode(_:)` → `claimCode(_:)` invokes the
+  `create-couple` Edge Function (server-authoritative)
+- **On link** — writes the local SwiftData profile, sets
+  `AppState.linkState = .linked`, calls `get-partner` to refresh, and
+  hits a `set_connection_composition` RPC for gender-composition
+  routing
+- **Home partner chip** (`PartnerChip.swift`) — states `.none` /
+  `.invitePending` / `.nudge` / `.active(name:)` / `.multipleActive`
+  (V1.1 stub). Tap opens `PartnerChipExpand` (inline popover per
+  presentation grammar — not a sheet/cover): shows Desire Map status +
+  Pulse position tiles + a "Manage pairing" row into
+  `PairingSettingsView`.
+
+**Entry mechanism today is manual code entry only.** No share-link
+redemption exists in shipped code — `docs/superpowers/plans/2026-07-05-pairing-deep-link-plan.md`
+is a full plan (Universal Links, Cloudflare Worker, AASA, `onOpenURL`,
+`ShareLink`) but zero corresponding Swift code exists yet.
 
 ---
 
 ## Settings
 
-### Status: Partially built
+### Status: Mostly built; three real remaining stubs
 
 | Setting | Status |
 |---|---|
-| Profile — name input | ✅ Built |
-| Partner pairing — code display, entry, Link Partner | ✅ Built |
+| Profile — name input (`SettingsIdentityView`) | ✅ Built |
+| Partner pairing — code display/entry, card wording, unlink | ✅ Built |
+| Privacy & safety | ✅ Built |
+| Notifications | ✅ Built (routes to sheet — verify against actual push-permission wiring, see Push Notifications below) |
 | Appearance — theme picker, haptic toggle | ✅ Built |
-| Privacy — screenshot protection toggle | ✅ Built (raw `@AppStorage` key; TODO migrate to `UserDefaultsKey` enum) |
-| Data — Export My Data | ✅ Built |
-| Danger Zone — Reset All Data | ✅ Built |
-| App info footer | ✅ Built |
-| Debug — Log Out & Reset Onboarding | ✅ Debug only |
-| Delete Account | ❌ Not built — required for App Store |
-| Restore Purchases | ❌ Not built — requires StoreKit first |
-
-**New in-flight infrastructure (untracked by earlier versions of this doc):**
-- `UserDefaultsKey.swift` (`Core/Models/Enums/`) — canonical enum for
-  UserDefaults string keys (currently houses `hasCompletedOnboarding`).
-- `CredentialEditorSheet.swift` (`Features/Onboarding/Phases/`) — edit
-  half-sheets for the `confirmation` phase (name / gender / mode / experience
-  working; context + curiosity edit stubbed).
+| Sign out | ✅ Built |
+| Delete Account | ✅ Built — real destructive copy, `deleteAccount()` wired to a live `delete-account` Edge Function |
+| Restore Purchases button | ❌ Stub — empty action, explicitly commented "Not wired in V1" |
+| Paywall upsell card tap | ❌ Stub — empty action, explicitly commented "Not wired in V1" |
+| Privacy Policy / Terms of Service / Support rows | ❌ Dead taps — empty `Button {}` closures, no destination |
 
 ---
 
-## Paywall Structure
+## Paywall / Monetization
+
+### Status: Built further than earlier documentation suggested — StoreKit 2 is live in code
+
+**Purpose:** one lifetime purchase per couple unlocks Deck 2+, the full
+Desire Map reveal, all games, Pulse insights, and the agreements vault;
+an additional per-connection purchase extends multi-person features.
+
+### Client (built)
+
+- `StoreKitService.swift` — genuine StoreKit 2: `Product.products(for:)`,
+  `product.purchase()`, verified-transaction finish, a live
+  `Transaction.updates` background listener, and `AppStore.sync()` for
+  restore. Product ID currently `com.vayl.core.lifetime`.
+- `EntitlementStore.swift` — `@Observable @MainActor`, resolves
+  `isCore` as server tier OR local StoreKit ownership; calls
+  `service.grantCore(signedTransaction:)` after a verified purchase so
+  the partner unlocks server-side too. Injected app-wide at
+  `VaylApp.swift` root and bootstrapped on launch; read by
+  `SettingsStore`, `HomeStore`, `MapStore`, `PlayStore`,
+  `DesireRevealStore`, `VaultStore`, `DeckDetailView`.
+- `PaywallSheet.swift` — real purchase/restore buttons wired through
+  `EntitlementStore`, correctly delegating (never touches StoreKit
+  directly, matching the View→Store layer rule).
+
+### Backend (built)
+
+- `supabase/migrations/20260617120000_monetization_entitlements.sql` —
+  service-role-only `entitlements` ledger (deny-all to clients via RLS),
+  `couples.access_tier` (`free`/`core`/`pro`), `core_unlocked_at`,
+  `is_founding_member`
+- `supabase/migrations/20260617130000_entitlement_payer_portable_resolution.sql` —
+  payer-portable tier resolution
+- Edge function `grant-entitlement` — verifies Apple StoreKit 2 JWS via
+  `SignedDataVerifier`, fail-closed behind an `APPLE_VERIFICATION_ENABLED`
+  flag until certs/bundle ID are configured server-side; also supports
+  an admin/support-secret grant path
+- Edge function `appstore-notifications` — App Store Server
+  Notifications webhook (refund/revocation handling)
+
+**Open question, not a build gap:** whether `APPLE_VERIFICATION_ENABLED`
+and the associated Apple root certs/bundle ID secrets are actually set
+in the deployed Supabase project. Until confirmed, the real
+Apple-receipt path fails closed and only the admin/support-secret path
+grants entitlements in production. Confirm via Supabase secrets before
+considering this fully live for real users.
 
 ### Tier Structure
 
 | Tier | Price | What It Covers |
 |---|---|---|
-| Free | $0 | Full onboarding, Desire Map input + 1 mutual match, solo prep deck (5 cards), Deck 1 full, Deck 2 after first sitting (unwrap ceremony), 1 game unlock, Lock In (always free), unlimited pulse logging, unlimited journaling, full Learn tab |
+| Free | $0 | Full onboarding, Desire Map input + 1 mutual match, Deck 1 full, Deck 2 after first sitting (unwrap ceremony), 1 game unlock, Lock In (always free), unlimited pulse logging, unlimited journaling, full Learn tab |
 | Vayl Lifetime | $24.99 | Full Desire Map reveal, all couple decks at launch + all future Act 1 decks forever, all games, pulse insights, agreements vault, roadmap, post-session reflection data |
 | Additional Connection | $7.99 | Infinite card sessions with that connection, multi-person decks (Network Session + Metamour Deck), shared Lock In, Desire Map input with that connection. Full reveal requires both parties to hold paid accounts. Retired when Vayl Pro launches. |
 
 **One purchase covers two partners.** The app belongs to the couple,
 not one person. One purchase, two full accounts, one couple.
 
-**All future Act 1 decks included forever.** This is a commitment.
-Act 1 purchasers never pay for Act 1 content again.
+**All future Act 1 decks included forever.** Act 1 purchasers never pay
+for Act 1 content again.
 
 ### Free Tier Rationale
 
-**Lock In is never paywalled.** Paywalling the session ritual means
-free users cannot properly start a session. Vayl charges for content
-and infrastructure, never for the act of connection itself.
-
-**Learn tab is fully free.** Information is less gatekept. A couple
-who finds something that names what they have been feeling earns
-trust before it earns money.
-
-**Solo prep deck is always free.** Its job is to get someone to link
-a partner. Paywalling the bridge defeats the purpose.
-
-**Unlimited pulse logging, insights locked.** Free users build a data
-asset they can only fully understand with the insight layer. They own
-the data. The tool to interpret it is premium.
-
-**1 match reveal, not 2.** The gap between "we saw one thing we agree
-on" and "we want to see everything" is the conversion driver.
-
-**Deck 2 unlocks after first sitting, not after completing Deck 1.**
-Gating Deck 2 behind completing Deck 1 could take weeks. The right
-conversion moment is after the first sitting completes.
-
----
+- **Lock In is never paywalled** — free users must be able to properly
+  start a session.
+- **Learn tab is fully free** — information earns trust before it earns
+  money.
+- **Unlimited pulse logging, insights locked** — free users build a
+  data asset; the insight layer to interpret it is premium.
+- **1 match reveal, not 2** — the gap between "we saw one thing we
+  agree on" and "we want to see everything" is the conversion driver.
+- **Deck 2 unlocks after first sitting, not after completing Deck 1** —
+  gating behind full Deck 1 completion could take weeks; the right
+  conversion moment is right after the first sitting.
 
 ### Primary Conversion Moments
 
-#### Moment 1 — The Deck 2 Unwrap
+**Moment 1 — The Deck 2 Unwrap.** Trigger: first couple sitting
+completes (2–3 cards discussed). Deck 2's unwrap ceremony (shared
+`MetallicCaseView`) becomes visible on Home; reaching for it opens the
+paywall sheet. Escape: "Not yet" — no guilt, no re-prompt.
 
-Trigger:   First couple sitting completes (2–3 cards discussed)
-What shows: Deck 2 unwrap visible on Home
-Gate:      Reach for Deck 2 → unwrap ceremony → paywall sheet
-Copy:      "You're ready for this one."
-"Unlock everything — $24.99, yours forever."
-Escape:    "Not yet" — no guilt, no re-prompt
-Desire before friction. Card faces are partially visible before the
-paywall sheet appears.
-
-#### Moment 2 — The Desire Map Full Reveal
-
-Trigger:   Both partners complete Desire Map independently
-What shows: 1 free match reveals simultaneously on both devices
-Ask:       Full picture blurred below the free reveal
-"You have X more mutual matches."
-"Unlock everything — $24.99, yours forever."
-The Desire Map is the primary conversion event. Any user who sees
-the free match has already invested in the product. The paywall lands
-at peak intent — the exact moment both people want more.
-
----
-
-### Person C Free Tier Experience
-
-THE INVITE
-└── Premium link: "Person A wants to sync with you on Vayl."ONBOARDING
-└── Frictionless — no paywalls on arrival
-└── Full onboarding experienceCARD SESSIONS
-├── Full participation — sees cards, inputs answers
-├── Cannot initiate sessions (requires paid account)
-└── Feels like a premium app, not a demoDESIRE MAP
-├── Fills out their side completely
-├── Sees 1 mutual match
-└── Remaining matches blurred
-"You have X more mutual matches.
-Upgrade to own your experience."THE UPGRADE SELL
-├── Autonomy — "Own your experience, not just participate in it"
-├── Their account survives any change in their relationship with Person A
-└── No financial discount — the trusted invite is the value
----
+**Moment 2 — The Desire Map Reveal.** Trigger: both partners complete
+Desire Map independently. Beat 1 of the reveal ceremony shows the one
+free match on both devices simultaneously; beats 2–3 tease the locked
+remainder and raise the paywall. This is the primary conversion event —
+the paywall lands at peak intent.
 
 ### Multi-Partner Pricing
 
@@ -718,42 +739,26 @@ No person is the owner. Everyone pays for their own account. The $7.99
 is paid by the person adding the connection — never imposed on the
 person being added.
 
----
-
 ### Multi-Person Decks (Unlocked by $7.99)
 
 **The Network Session** — three or more people, one card, everyone
-answers. Cards designed around dynamics that only exist with multiple
-connected people present.
+answers.
 
 **The Metamour Deck** — two people who share a partner but are not
-romantically connected to each other. The most underserved dynamic in
-NM. No existing app addresses this. Inherently shareable in NM
-communities.
-
----
+romantically connected to each other.
 
 ### The $7.99 Permanent Bill of Rights
 
-For users who purchase an additional connection in Act 1, these
-features are permanently theirs regardless of Vayl Pro launch:
-- Infinite card sessions with that specific connection
-- Multi-person decks for that specific configuration
-- Shared Lock In with that connection
-- Desire Map input with that connection
-
-Nothing from Act 1 ever moves behind Vayl Pro for users who
-purchased it. One-time purchase means one-time purchase. Forever.
-
----
+For users who purchase an additional connection in Act 1: infinite
+card sessions with that connection, multi-person decks for that
+configuration, shared Lock In, Desire Map input with that connection —
+all permanent, never moved behind Vayl Pro.
 
 ### Founding Member Benefit
 
 Vayl Lifetime purchasers receive the first full year of Vayl Pro free
-when Pro launches with Act 2. No timer. No conditions. After year one,
-standard monthly rate.
-
----
+when Pro launches with Act 2 (`is_founding_member` is already tracked
+server-side).
 
 ### North Star Principles
 
@@ -768,92 +773,61 @@ standard monthly rate.
 
 ## Data Sovereignty — Connection Close
 
-*Architecture scoped for V1 Map tab build.*
+*Architecture scoped for the Map tab build; UI status not re-verified
+in this pass — confirm against `MapStore`/pairing-close code before
+treating as fully built.*
 
 ### Three Data Categories
 
 | Category | Contents | Behavior at Close |
 |---|---|---|
-| Always Private | Individual Desire Map ratings, pulse logs, journal entries, solo prep deck results, Lock In individual responses | Never shared. Unchanged at close. |
+| Always Private | Individual Desire Map ratings, pulse logs, journal entries, Lock In individual responses | Never shared. Unchanged at close. |
 | Mutually Created | Desire Map match results, shared session history, agreements, shared Lock In records | Each person chooses independently |
 | Metadata | Session timestamps, deck completion records, connection duration | Stays with each person's history |
 
 ### Sovereignty Choice
 
 Each person independently chooses for mutually created data:
-[Archive it]   — saved privately, not visible day to day
-[Release it]   — removed from your experience
-[Keep it]      — stays in your timeline as is
+[Archive it] — saved privately, not visible day to day.
+[Release it] — removed from your experience.
+[Keep it] — stays in your timeline as is.
 Neither person's choice affects the other's.
 
 ### One-Sided Close Flow
 
-Person A closes connection
-└── Removed from Person A's view immediately
-└── Person A makes sovereignty choice
-└── Person C receives notification:
-"[Person A] has closed this connection on Vayl."
-└── Person C given their own sovereignty choice
-└── Shared data held in interim state until Person C responds
-No "are you sure?" confirmation. One moment of weight, then clean
-execution.
+Person A closes connection → removed from Person A's view immediately →
+Person A makes sovereignty choice → Person C receives notification
+("[Person A] has closed this connection on Vayl.") → Person C given
+their own sovereignty choice → shared data held in interim state until
+Person C responds. No "are you sure?" confirmation. One moment of
+weight, then clean execution.
 
 ---
 
 ## Push Notifications
 
-### Status: Completely unimplemented
+### Status: Not re-verified this pass — treat prior "completely unimplemented" claim as unconfirmed
 
-No `UNUserNotificationCenter` reference exists anywhere in the codebase.
+No audit this round searched specifically for `UNUserNotificationCenter`.
+Settings does have a "Notifications" row routing to a sheet (see
+Settings above), which suggests at least a permission-request surface
+may exist now. **Confirm directly before relying on either the old
+"completely unimplemented" claim or assuming it's done.**
 
-### V1 Required Notifications
+### V1 Required Notifications (unchanged intent)
 
 | Notification | Trigger | Recipient | Delivery |
 |---|---|---|---|
 | Partner completed Desire Map | Person C finishes map | Person A | Push |
-| Desire Map nudge (Day 1–2) | Person A taps nudge | Person C | Share sheet — Person A sends via iMessage/WhatsApp. Vayl provides copy. |
-| 7-day reminder | Day 3–4 of waiting state | Person C | Push — maximum once |
 | Session invite | Partner initiates session | Person C | Push |
+
+Note: the earlier "Desire Map nudge" and "7-day reminder" notifications
+are tied to the mutual-waiting/nudge design that no longer exists (see
+Desire Map above) — do not scope these without first deciding whether
+that mechanic is being reintroduced.
 
 Maximum one push notification per day per user. All notifications
 adjustable in Settings.
-
-### Scoped Work
-
-- `UNUserNotificationCenter` authorization during onboarding
-- Remote push entitlement in `Vayl.entitlements` — currently holds only
-  `applesignin` + `default-data-protection` (NSFileProtectionComplete); no
-  `aps-environment` key yet
-- Notification payloads for all four triggers above
-
----
-
-## Paywall Client Infrastructure
-
-### Status: Architecture-only, no client implementation
-
-| Component | Status |
-|---|---|
-| `EntitlementRecord` SwiftData model | ✅ Exists |
-| `ConnectionEntitlement` SwiftData model | ✅ Exists |
-| StoreKit import | ❌ Not present anywhere |
-| Product fetching | ❌ Not implemented |
-| Purchase flow | ❌ Not implemented |
-| Entitlement check on gated content | ❌ Not implemented |
-| Restore Purchases | ❌ Not implemented |
-| Paywall UI | ❌ No Paywall folder exists yet — must be created |
-
-### Scoped Work
-
-- Product IDs: `com.vayl.lifetime` ($24.99), `com.vayl.connection` ($7.99)
-  ⚠️ **Mismatch to reconcile:** `EntitlementRecord.swift` currently hardcodes
-  `com.vayl.core.lifetime`, not `com.vayl.lifetime`. Pick one canonical ID
-  before StoreKit wiring.
-- Purchase flow UI — paywall sheets at Deck 2 gate and Desire Map reveal
-- `EntitlementRecord` write on successful purchase
-- Server-side receipt validation
-- Entitlement checks before gated content is served
-- Restore Purchases in Settings
 
 ---
 
@@ -864,17 +838,13 @@ adjustable in Settings.
 | Profile sync | ✅ Implemented |
 | Onboarding flag sync | ✅ Implemented |
 | Retry on launch | ✅ Implemented |
-| Desire rating batch sync | ✅ Implemented |
-| Session record sync | ❌ Stub — DTOs only, no methods |
+| Desire rating batch sync | ✅ Implemented (`DesireSyncService.syncRatings`) |
+| Desire match computation | ✅ Implemented (`compute-desire-matches` edge function) |
+| Session record sync | ✅ Implemented (`RealtimeSessionService`, Realtime presence/broadcast) — earlier "stub" status is stale |
 | create-couple Edge Function | ✅ Called from `PairingService.claimCode()` |
-| DesireMapStatus sync | ❌ Not implemented |
-| Real-time partner completion signal | ❌ Not implemented |
-
-### Scoped Work
-
-- `SessionSyncService` full implementation
-- `DesireMapStatus` sync so completion propagates to partner's device
-- Supabase Realtime subscription for simultaneous Desire Map reveal
+| Pulse sync | ✅ Implemented (`PulseSyncService`, `pulse_entries` table + `get_partner_pulse_positions` RPC) |
+| Entitlement grant/verify | ✅ Implemented (`grant-entitlement`, `appstore-notifications` edge functions) |
+| Real-time partner completion signal | Present for sessions (Realtime channels); not separately verified for Desire Map completion this pass |
 
 ---
 
@@ -902,50 +872,31 @@ Data flows down. Actions bubble up.
 
 No hardcoded values anywhere in view files.
 
-### Banned Patterns
-
-Rule, then current compliance reality:
-
-- `UIScreen.main` — use `GeometryReader` + `AppLayout.from(geo)`.
-  ✅ **Compliant** — 0 uses (only referenced in comments).
-- `@Published` + `ObservableObject` — use `@Observable`.
-  ✅ **Compliant** — 0 uses; all stores use `@Observable`.
-- `DispatchQueue.main.async` — prefer `@MainActor` / `await MainActor.run`.
-  ⚠️ **~39 instances remain** (animation sequencing in `RacetrackTabBar` + OB
-  phases). Acceptable for V1; modernization candidate.
-- `try? context.save()` — use throwing saves with error propagation.
-  ❌ **7 instances in `DataStore.swift`** (legacy module); newer code uses
-  `saveWithLogging()`. See Open Issues.
-- Force unwrap `!` on anything that can realistically be nil.
-  ⚠️ ~10 instances; most safe (guaranteed-non-empty arrays, guarded nils), a
-  few worth auditing (`try! AttributedString(markdown:)` in `ConversationCard`,
-  slot lookup in `CardFlightEngine`).
-- Hardcoded colors, fonts, spacing, or animation values in view files.
-  ✅ Broadly compliant via the token system.
-
 ### SwiftData Rules
 
 - Explicit store URL: `Application Support/Vayl.store`
 - `NSFileProtectionComplete` entitlement set
-- `AppMigrationPlan` updated for any non-additive model change (currently
-  empty stages — pre-launch)
-- All saves throw and propagate errors — no silent failures (aspirational;
-  `DataStore.swift` still uses `try?` — see Open Issues)
+- `AppMigrationPlan` updated for any non-additive model change
+- All saves should throw and propagate errors — no silent failures
+  (aspirational; legacy `DataStore.swift` still uses `try?` in places —
+  see Open Issues)
 
-**SchemaV1 registered `@Model`s** (`App/ModelContainer.swift`, 14 total):
+**SchemaV1 registered `@Model`s** (`App/ModelContainer.swift`):
 `Couple`, `DesireMatch`, `UserProfile`, `CardSession`, `CardResult`,
-`SoloSession`, `DeckProgress`, `DesireMapEntry`, `DesireMapStatus`,
-`EntitlementRecord`, `ConnectionEntitlement`, `LockInSession`,
-`AcknowledgementRecord`, `MilestoneRecord`.
+`SoloSession`, `DeckProgress`, `DesireMapEntry`, `DesireMapStatus`
+(dead — see Desire Map section), `EntitlementRecord`,
+`ConnectionEntitlement`, `LockInSession`, `AcknowledgementRecord`,
+`MilestoneRecord`.
 
 ### Security Rules
 
 - Supabase credentials in `Config.xcconfig` only — never in source
 - `desire_map_entries` — RLS: only owner can read their own rows
 - `DesireMatch` computed by Edge Function only — never client-side
-- `notForUs` items never leave the device — three enforcement layers:
-  client (never included in payload), Edge Function (filtered before
-  writing to `desire_matches`), database (RLS on `desire_matches`)
+- `notForUs` items never leave the device — enforced client-side, at
+  the edge function, and via RLS on `desire_matches`
+- Entitlement writes are service-role-only; `access_tier` is never
+  client-settable
 
 ---
 
@@ -954,18 +905,19 @@ Rule, then current compliance reality:
 | Feature | Status | When |
 |---|---|---|
 | Solo NM management (independent solo exp) | Architecture routing present | Act 2/3 |
-| Vayl Pro subscription | `EntitlementRecord` has `expiresAt` + `isFoundingMember` (no subscription field yet — needs a new model in Act 2) | Act 2 |
-| Jealousy mapping | Not in codebase | Act 2 |
+| Vayl Pro subscription | `EntitlementRecord` has `expiresAt` + `isFoundingMember` (no subscription field yet) | Act 2 |
+| Jealousy mapping | Not in codebase (a `jealousy.json` deck exists but is a card deck, not a mapping feature) | Act 2 |
 | Agreements evolution timeline | Scoped, not built | Act 2 |
 | AI coach | Not in codebase | Act 3 |
-| Connection cards network management | Map tab stub | Act 2 |
+| Connection cards network management | Map tab shows single-couple view only; multi-connection network view not built | Act 2 |
 | Anonymous community feed | Not in codebase | Act 3 |
 | Annual retrospective | Not in codebase | Act 3 |
-| Pulse pattern insights | Logging built, insight layer absent | Act 2 |
-| Constellation carousel full view | Map tab stub | Act 2 |
+| Pulse pattern insights | Logging + full 2D field built, insight layer absent | Act 2 |
 | Post-conversation replay / communication coaching | Not in codebase | Act 2+ |
 | `SoloSession` SwiftData model | Registered, never instantiated | Act 2/3 |
-| Per-deck metallic case finishes | Foil-Open ceremony ships with one finish (Vayl spectrum metallic) for the OB starter deck; each unlocked deck should later get its own metallic multichrome derived from `Deck.intensity`. `MetallicCaseView` already takes a `finish` input — wire per-deck finishes when the deck library/unlock flow is built. | Act 2 |
+| Pairing deep link (Universal Links / share sheet) | Fully planned (`docs/superpowers/plans/2026-07-05-pairing-deep-link-plan.md`), zero code | Near-term, not yet started |
+| Desire Map mutual-waiting state / 7-day escape hatch / nudge tool | Superseded by the beat-ceremony reveal — would need re-scoping, not resumption | Re-evaluate |
+| Per-deck metallic case finishes | `MetallicCaseView` ships with one finish (Vayl spectrum metallic); per-deck multichrome finishes keyed on `Deck.intensity` not yet wired | Act 2 |
 
 ---
 
@@ -973,27 +925,16 @@ Rule, then current compliance reality:
 
 | Issue | Severity | Location | Fix Required |
 |---|---|---|---|
-| Silent session loss when `coupleId` is nil | HIGH | `SessionStore.saveSession()` | Throw error, surface to user |
-| 7× silent `try? context.save()` | HIGH | `DataStore.swift` lines 126, 189, 203, 218, 224, 232, 260 | Replace with throwing saves |
-| `deleteAllData()` partial deletion | CRITICAL | `DataStore.swift:260` | Throw on failure, warn user |
-| Debug overrides mask full state machine | HIGH | `HomeStore.init():74–82` | Remove before release testing |
-| `DesireMapStatus` never written | HIGH | `DesireMapView.swift` | Write completion flags on map save |
 | Tab locking logic exists but not wired to UI | MEDIUM | `HomeStore.isTabLocked()` defined; no call sites in `AppShell`/`RacetrackTabBar` | Wire guard + visual locked state |
-| Push notifications entirely absent | HIGH | Entire codebase | `UNUserNotificationCenter` + onboarding permission |
-| StoreKit entirely absent | HIGH | Entire codebase | Full purchase flow implementation |
-| `SessionSyncService` is a stub | MEDIUM | `SessionSyncService.swift` | Implement session record sync |
-| Real-time partner signal absent | HIGH | Sync layer | Required for simultaneous Desire Map reveal |
-| `PulseStore` on UserDefaults | MEDIUM | `PulseStore.swift` | Migrate to SwiftData |
-| Only 1 couple deck in bundle | HIGH | `Vayl/Resources/Decks/` | Author and bundle Deck 2+ |
-| Solo prep deck not authored | HIGH | Content | Author 5 cards, bundle as `solo-prep.json` |
-| Desire Map items are placeholders | HIGH | `DesireMapView.swift` | Replace with final 17 items |
-| Learn tab is a stub | HIGH | `LearnView.swift` | Full build + content authoring |
-| Play tab is a stub | HIGH | `PlayView.swift` | Full build |
-| Map tab is a test harness | HIGH | `MapView.swift` | Full build |
-| Delete Account missing | MEDIUM | `SettingsView.swift` | Required for App Store compliance |
-| Restore Purchases missing | MEDIUM | `SettingsView.swift` | Add after StoreKit is wired |
-| `partneredUndisclosed` (was `partneredHidden`) does not trigger solo prep deck | HIGH | Post-onboarding routing | Wire solo prep deck surface logic |
-| `DesireMapStore` empty; `DesireMapEntry` unused (parallel persistence) | MEDIUM | `DesireMapStore.swift`, `DesireMapView.swift` | Move data access into store; unify on one persistence path |
-| `AppIcons.chevronDown` referenced but undefined | HIGH | `DesireMapView.swift`, `AppIcons.swift` | Add token (blocks compile of Desire Map) |
-| `CredentialEditorSheet` context + curiosity edit stubbed | MEDIUM | `CredentialEditorSheet.swift` | Implement remaining two editors |
-| Product-ID mismatch (`com.vayl.core.lifetime` vs doc's `com.vayl.lifetime`) | MEDIUM | `EntitlementRecord.swift` | Pick canonical ID before StoreKit wiring |
+| Four opener decks are stub content | HIGH | `Vayl/Resources/Decks/opener-{opening,return,steady,wider}.json` | Author real card copy |
+| Solo prep deck not authored | HIGH | Content | Author 5 cards, bundle as `solo-prep.json`; wire auto-surface for `partneredUndisclosed` |
+| `DesireMapStatus` SwiftData model is dead scaffolding | LOW | `DesireRating.swift` | Either wire real writes or remove the unused model to reduce confusion |
+| Restore Purchases button not wired | MEDIUM | `SettingsView.swift` | Wire to `EntitlementStore.restore()` (StoreKit path already exists) |
+| Paywall upsell card tap not wired | MEDIUM | `SettingsView.swift` | Wire to `PaywallSheet` presentation |
+| Privacy Policy / Terms / Support rows are dead taps | MEDIUM | `SettingsView.swift` | Add real destinations (web link or in-app content) |
+| Apple receipt verification may not be enabled server-side | HIGH (blocks real purchases) | `grant-entitlement` edge function, `APPLE_VERIFICATION_ENABLED` flag | Confirm/set Apple certs + bundle ID secrets in deployed Supabase project |
+| Pairing deep link not implemented | MEDIUM | Entire codebase (plan exists, no code) | Implement per `docs/superpowers/plans/2026-07-05-pairing-deep-link-plan.md` |
+| Push notification status unverified | UNKNOWN | Entire codebase | Re-audit: confirm whether `UNUserNotificationCenter` exists and what it's wired to |
+| Data sovereignty / connection-close UI status unverified | UNKNOWN | Map tab / pairing close flow | Re-audit against current `MapStore`/pairing code |
+| Legacy `try? context.save()` silent-failure pattern | MEDIUM | `DataStore.swift` (legacy module) | Replace remaining instances with throwing saves; audit for any still-present silent session-loss path in `SessionStore` |
+| `PulseFullView` known dead stub | LOW | `Vayl/Features/Pulse/Views/PulseFullView.swift` | Rebuild against the new 2D-field Pulse components, or remove if superseded by `MapPulseHero` |

@@ -62,10 +62,26 @@ struct VaylApp: App {
                 .environment(entitlementStore)
                 .environment(coupleContext)
                 .task {
+                    #if DEBUG
+                    let debugSeedRan = await DebugCoupleSeedService(
+                        modelContainer: ModelContainer.appContainer,
+                        appState: appState,
+                        authService: authService
+                    ).runIfRequested()
+                    if debugSeedRan {
+                        appState.hydrateOnboardingState(from: ModelContainer.appContainer)
+                    } else {
+                        // Reconcile the onboarding gate against the durable truth (UserProfile)
+                        // before anything routes — init only read the fast UserDefaults cache.
+                        appState.hydrateOnboardingState(from: ModelContainer.appContainer)
+                        await authService.checkSession()
+                    }
+                    #else
                     // Reconcile the onboarding gate against the durable truth (UserProfile)
                     // before anything routes — init only read the fast UserDefaults cache.
                     appState.hydrateOnboardingState(from: ModelContainer.appContainer)
                     await authService.checkSession()
+                    #endif
                     // Resolve tier (server + local StoreKit) + load the product + start the
                     // purchase-updates listener, now the session is ready (RLS-scoped).
                     await entitlementStore.bootstrap()

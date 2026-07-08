@@ -682,10 +682,16 @@ internal enum AppAnimation {
     /// as the seeds arrive rather than before. Consumed as a `.delay`. Reduce motion: unused.
     static let desireStarMergeBloomDelay: Double = 0.18
 
-    /// 0.76s ease-out — Constellation lines drawing on at the reveal.
-    /// Applied to a trimFraction (0 → 1) on the confident-mode path in ConstellationField.
-    /// Reduce motion: lines appear at full opacity, no draw-on travel.
-    static let desireLineDraw: Animation = .easeOut(duration: 0.76)
+    /// 1.3s ease-in-out — A constellation line condensing into view at the reveal: opacity and
+    /// blur settle together, no directional trim/travel. Applied in DesireConstellationView's
+    /// `.assemble` / `.resolved` line rendering.
+    /// Reduce motion: lines appear at full opacity, already settled, no condense.
+    static let desireLineCondense: Animation = .easeInOut(duration: 1.3)
+
+    /// 0.22s — Max per-edge random delay added on top of desireLineCondense so lines forming at
+    /// the same instant don't condense in mechanical lockstep. Deterministic per edge (seeded from
+    /// its two star indices), not re-randomized on redraw.
+    static let desireLineJitterSpan: Double = 0.22
 
     /// 0.50s ease-out — Detail / full-map / paywall sheet rising from the bottom.
     /// Applied to the .move(edge: .bottom) transition inside the cover's sheet host.
@@ -856,15 +862,6 @@ internal enum AppAnimation {
     // Tokens for the tab bar orb snap-and-halo and tab content gravity drift.
     // Both are reactive (user-initiated tap). Reduce motion: easeOut(0.15), suppress offsets at call site.
 
-    /// Spring — Tab bar orb snapping to new selection. response: 0.40, dampingFraction: 0.62
-    /// overshoots ~15% past target then springs back, communicating physical momentum.
-    /// Also drives the halo burst scale at the landing icon.
-    /// Reduce motion: replace with AppAnimation.fast — orb jumps to position without travel.
-    /// DEPRECATED by the motion system: `orbGlide` replaces this (the overshoot read as
-    /// disconnected from the staple grammar — feel-rejected 2026-07-03). Delete this token
-    /// when RacetrackTabBar migrates (motion spec §7 step 2); do not adopt in new code.
-    static let orbSnap: Animation = .spring(response: 0.40, dampingFraction: 0.62)
-
     /// 0.25s ease-out — Tab content gravitational drift on tab switch.
     /// Incoming view drifts 14pt in from the direction of navigation, decelerating to rest.
     /// Outgoing view fades in place (no counter-drift — avoids direction-mismatch on removal).
@@ -923,9 +920,7 @@ internal enum AppAnimation {
 
     /// 0.38s glide — Tab bar orb drifting to the new selection: soft gather, long decelerating
     /// tail, ZERO overshoot — cubic (0.3, 0, 0.15, 1), the arrival-curve family, so the orb
-    /// speaks the same physics as the sheets and the depth handoff. Replaces orbSnap (the
-    /// spring overshoot was feel-rejected as disconnected). The halo burst re-times to this
-    /// glide's landing, not a spring peak.
+    /// speaks the same physics as the sheets and the depth handoff.
     /// Reduce motion: replace with AppAnimation.fast — orb jumps without travel.
     static let orbGlide: Animation = .timingCurve(0.3, 0, 0.15, 1, duration: 0.38)
 

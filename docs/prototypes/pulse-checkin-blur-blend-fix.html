@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Check-in field: blob coverage + blend fix</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=switzer@400,500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --void:    #0A0810;
+  --cyan:    #00C2FF;
+  --purple:  #6C3AE0;
+  --magenta: #FF006A;
+  --aura-cyan:    #00C2FF;
+  --aura-indigo:  #8B5CF6;
+  --aura-magenta: #FF006A;
+  --aura-rose:    #C76A86;
+  --t-primary:   rgba(232,232,240,.95);
+  --t-secondary: rgba(232,232,240,.65);
+  --t-tertiary:  rgba(232,232,240,.38);
+  --disp: "Clash Display", -apple-system, sans-serif;
+  --body: "Switzer", -apple-system, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #050308; font-family: var(--body); color: var(--t-primary); }
+body { padding: 40px 28px 90px; }
+
+.page-head { max-width: 900px; margin: 0 auto 36px; }
+.page-head h1 { font-family: var(--disp); font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+.page-head p { font-size: 13.5px; line-height: 1.6; color: var(--t-secondary); max-width: 680px; }
+.page-head .chip { display: inline-flex; font-size: 11.5px; color: var(--t-tertiary); background: rgba(108,58,224,.10); border: 1px solid rgba(108,58,224,.24); padding: 4px 10px; border-radius: 999px; margin: 8px 6px 0 0; }
+.page-head .chip b { color: var(--t-primary); }
+
+.row { display: flex; gap: 40px; flex-wrap: wrap; align-items: flex-start; }
+.col { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.cap { text-align: center; max-width: 300px; }
+.cap .t { font-family: var(--disp); font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.cap .d { font-size: 12px; color: var(--t-tertiary); line-height: 1.55; }
+
+.phone { position: relative; width: 300px; height: 610px; border-radius: 40px; overflow: hidden;
+  background: var(--void); box-shadow: 0 24px 60px rgba(0,0,0,.6), inset 0 0 0 1.4px rgba(255,255,255,.05); }
+.notch { position: absolute; top: 9px; left: 50%; transform: translateX(-50%); width: 76px; height: 21px; background: #000; border-radius: 13px; z-index: 30; }
+.home-ind { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 88px; height: 3.5px; border-radius: 3px; background: rgba(255,255,255,.2); z-index: 30; }
+.void { position: absolute; inset: 0; background: var(--void); }
+
+/* trail-in atmosphere behind the field, same as the real screen */
+.bloom { position: absolute; inset: 0; overflow: hidden; z-index: 1; }
+.bloom .p { position: absolute; width: 100%; height: 50%; left: 0; top: 30%; border-radius: 50%; background: var(--purple); opacity: .18; filter: blur(45px); }
+.bloom .c { position: absolute; width: 80%; height: 42%; left: -18%; top: 26%; border-radius: 50%; background: var(--cyan); opacity: .12; filter: blur(38px); }
+.bloom .m { position: absolute; width: 75%; height: 40%; right: -18%; top: 28%; border-radius: 50%; background: var(--magenta); opacity: .11; filter: blur(38px); }
+
+.content { position: absolute; inset: 0; z-index: 10; padding: 0 24px; }
+.head { display: flex; align-items: center; justify-content: space-between; padding-top: 40px; }
+.head .t { font-family: var(--disp); font-size: 16px; font-weight: 600; color: var(--t-primary); }
+.back { width: 28px; height: 28px; border-radius: 50%; background: #1A1825; border: 1px solid rgba(255,255,255,.10);
+  display: flex; align-items: center; justify-content: center; color: var(--t-secondary); font-size: 13px; }
+.steps { display: flex; align-items: center; gap: 7px; }
+.step { font-size: 10px; font-weight: 500; color: var(--t-primary); width: 16px; height: 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; }
+.step.future { color: var(--t-tertiary); }
+.step.now { width: 20px; height: 20px; font-weight: 700; border: 2px solid rgba(192,132,252,.55); box-shadow: 0 0 8px 1px rgba(192,132,252,.35); }
+
+.fieldWrap { margin-top: 20px; display: flex; justify-content: center; }
+.field { width: 226px; height: 226px; position: relative; }
+
+/* ── Current: hard-clipped quarter-rectangles, screen-blended color but NOT blurred ── */
+.zoneBoxCurrent { position: absolute; width: 50%; height: 50%; mix-blend-mode: screen; }
+.zoneBoxCurrent.reactive   { left: 0;  top: 0;  background: radial-gradient(circle at 0% 0%,   var(--aura-magenta) 0%, rgba(255,0,106,.12) 55%, transparent 75%); opacity: .95; }
+.zoneBoxCurrent.expansive  { left: 50%; top: 0;  background: radial-gradient(circle at 100% 0%, var(--aura-cyan)    0%, rgba(0,194,255,.10) 55%, transparent 75%); opacity: .95; }
+.zoneBoxCurrent.protective { left: 0;  top: 50%; background: radial-gradient(circle at 0% 100%, var(--aura-rose)    0%, rgba(199,106,134,.16) 55%, transparent 75%); opacity: .95; }
+.zoneBoxCurrent.receptive  { left: 50%; top: 50%; background: radial-gradient(circle at 100% 100%, var(--aura-indigo) 0%, rgba(139,92,246,.12) 55%, transparent 75%); opacity: .95; }
+
+.labelCurrent { position: absolute; font-family: var(--disp); font-weight: 700; letter-spacing: .01em; width: 92%; text-transform: uppercase; }
+.lc-reactive   { left: 0; top: 12%; text-align: left;  color: var(--aura-magenta); opacity: .34; }
+.lc-expansive  { left: 0; top: 26%; text-align: right; color: var(--aura-cyan);    opacity: .34; }
+.lc-protective { left: 0; top: 64%; text-align: left;  color: var(--aura-rose);    opacity: .17; }
+.lc-receptive  { left: 0; top: 78%; text-align: right; color: var(--aura-indigo);  opacity: .34; }
+
+/* ── Proposed: large soft circular blobs (ported from pulse-teach-landing.html's .zoneBlob),
+   generously overlapping so there's no deadzone, blurred so there's no hard edge — but each
+   still centred on its own quadrant corner so the four stay distinguishable, not one mush.
+   Wrapped as one group so the blur feathers the composited result, then screen-blended with
+   the atmosphere behind it. ── */
+.zoneGroup { position: absolute; inset: 0; filter: blur(11px); mix-blend-mode: screen; }
+.zoneBlob { position: absolute; width: 92%; height: 92%; border-radius: 50%; opacity: .9; }
+.zoneBlob.reactive   { left: -18%; top: -18%; background: radial-gradient(circle, var(--aura-magenta) 0%, rgba(255,0,106,.12) 45%, transparent 85%); }
+.zoneBlob.expansive  { left: 26%;  top: -18%; background: radial-gradient(circle, var(--aura-cyan)    0%, rgba(0,194,255,.08) 45%, transparent 85%); }
+.zoneBlob.protective { left: -18%; top: 26%;  background: radial-gradient(circle, var(--aura-rose)    0%, rgba(199,106,134,.16) 45%, transparent 85%); }
+.zoneBlob.receptive  { left: 26%;  top: 26%;  background: radial-gradient(circle, var(--aura-indigo)  0%, rgba(139,92,246,.12) 45%, transparent 85%); }
+
+.labelProposed { position: absolute; font-family: var(--disp); font-weight: 700; letter-spacing: .01em; width: 92%; text-transform: uppercase; mix-blend-mode: screen; }
+.lp-reactive   { left: 0; top: 12%; text-align: left;  color: var(--aura-magenta); opacity: .40; }
+.lp-expansive  { left: 0; top: 26%; text-align: right; color: var(--aura-cyan);    opacity: .40; }
+.lp-protective { left: 0; top: 64%; text-align: left;  color: var(--aura-rose);    opacity: .22; }
+.lp-receptive  { left: 0; top: 78%; text-align: right; color: var(--aura-indigo);  opacity: .40; }
+
+.orb { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; border-radius: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 35% 32%, #fff, #c9c9d4 46%, #8f8fa0 92%); box-shadow: 0 0 22px 6px rgba(255,255,255,.30); z-index: 5; }
+
+.qtext { font-family: var(--disp); font-size: 15px; font-weight: 500; color: var(--t-primary); text-align: center; margin-top: 22px; }
+.stack { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+.pill { height: 42px; border-radius: 999px; background: #1A1825; border: 1.5px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; justify-content: center; font-size: 13.5px; color: var(--t-primary); }
+
+.legend { max-width: 900px; margin: 44px auto 0; border-top: 1px solid rgba(255,255,255,.10); padding-top: 20px; }
+.legend h2 { font-family: var(--disp); font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+.legend p { font-size: 12px; color: var(--t-secondary); line-height: 1.6; max-width: 700px; }
+.legend code { color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Check-in field — blob coverage + blend fix</h1>
+  <p>Left is what's shipped right now (screen-blended color, but each quadrant is still a hard-clipped rectangle — the box outline and the centre cross-seam are visible). Right ports the blob technique from <code>pulse-teach-landing.html</code>: four large soft circles (92% of the field, offset toward each corner) that overlap enough to cover the whole field with no deadzone, blurred just enough to lose the hard edge without melting the four zones into one indistinct wash, then screen-blended with the atmosphere.</p>
+  <span class="chip"><b>Left</b> = current (post last fix)</span>
+  <span class="chip"><b>Right</b> = proposed (blob coverage, ref: pulse-teach-landing.html)</span>
+</div>
+
+<div class="row">
+  <div class="col">
+    <div class="phone">
+      <div class="void"></div>
+      <div class="bloom"><div class="p"></div><div class="c"></div><div class="m"></div></div>
+      <div class="notch"></div><div class="home-ind"></div>
+      <div class="content">
+        <div class="head">
+          <div class="back">‹</div>
+          <span class="t">Check in</span>
+          <div class="steps"><div class="step now">1</div><div class="step future">2</div><div class="step future">3</div><div class="step future">4</div><div class="step future">5</div></div>
+        </div>
+        <div class="fieldWrap">
+          <div class="field">
+            <div class="zoneBoxCurrent reactive"></div>
+            <div class="zoneBoxCurrent expansive"></div>
+            <div class="zoneBoxCurrent protective"></div>
+            <div class="zoneBoxCurrent receptive"></div>
+            <div class="labelCurrent lc-reactive">Reactive</div>
+            <div class="labelCurrent lc-expansive">Expansive</div>
+            <div class="labelCurrent lc-protective">Protective</div>
+            <div class="labelCurrent lc-receptive">Receptive</div>
+            <div class="orb"></div>
+          </div>
+        </div>
+        <div class="qtext">How is your nervous system right now?</div>
+        <div class="stack">
+          <div class="pill">Energized</div>
+          <div class="pill">Centered</div>
+          <div class="pill">Recharging</div>
+          <div class="pill">Overwhelmed</div>
+          <div class="pill">Exhausted</div>
+        </div>
+      </div>
+    </div>
+    <div class="cap"><div class="t">Current — hard edges</div><div class="d">Screen-blended color, but the rectangle clip + centre cross still read as a visible grid against the void.</div></div>
+  </div>
+
+  <div class="col">
+    <div class="phone">
+      <div class="void"></div>
+      <div class="bloom"><div class="p"></div><div class="c"></div><div class="m"></div></div>
+      <div class="notch"></div><div class="home-ind"></div>
+      <div class="content">
+        <div class="head">
+          <div class="back">‹</div>
+          <span class="t">Check in</span>
+          <div class="steps"><div class="step now">1</div><div class="step future">2</div><div class="step future">3</div><div class="step future">4</div><div class="step future">5</div></div>
+        </div>
+        <div class="fieldWrap">
+          <div class="field">
+            <div class="zoneGroup">
+              <div class="zoneBlob reactive"></div>
+              <div class="zoneBlob expansive"></div>
+              <div class="zoneBlob protective"></div>
+              <div class="zoneBlob receptive"></div>
+            </div>
+            <div class="labelProposed lp-reactive">Reactive</div>
+            <div class="labelProposed lp-expansive">Expansive</div>
+            <div class="labelProposed lp-protective">Protective</div>
+            <div class="labelProposed lp-receptive">Receptive</div>
+            <div class="orb"></div>
+          </div>
+        </div>
+        <div class="qtext">How is your nervous system right now?</div>
+        <div class="stack">
+          <div class="pill">Energized</div>
+          <div class="pill">Centered</div>
+          <div class="pill">Recharging</div>
+          <div class="pill">Overwhelmed</div>
+          <div class="pill">Exhausted</div>
+        </div>
+      </div>
+    </div>
+    <div class="cap"><div class="t">Proposed — blob coverage + label blend</div><div class="d">Full field coverage, no deadzones at the corners/centre, no hard box or cross-seam — but each color still reads as its own zone, not one blended mush. Labels blend the same way the zones do, so they read as glow, not stamped text.</div></div>
+  </div>
+</div>
+
+<div class="legend">
+  <h2>What maps to Swift</h2>
+  <p>
+    Replaces <code>zoneBox</code> (hard-clipped quarter-rectangle + corner-anchored RadialGradient) with a <code>zoneBlob</code> function: a circle sized <code>field.size * 0.92</code>, centred (not corner-anchored) at each quadrant's point, RadialGradient stops at 0% (full color) / 45% (half) / 85% (clear) — the exact recipe from <code>pulse-teach-landing.html</code>'s <code>.zoneBlob</code>. The four are wrapped in <code>.compositingGroup().blur(radius: size * 0.05).blendMode(.screen)</code> — flatten, then blur (≈11px at this mock's 226px field, scaling to ≈13pt at the real 264-330pt field), then blend with the atmosphere. <code>mix-blend-mode: screen</code> on each label ≈ <code>.blendMode(.screen)</code> added to <code>ghostLabel</code>'s <code>Text</code>. Zone colors/opacity values (0.20/0.16/0.32/0.23) are unchanged from the real code.
+  </p>
+</div>
+
+</body>
+</html>

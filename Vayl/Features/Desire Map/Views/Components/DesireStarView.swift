@@ -137,7 +137,7 @@ struct DesireStarView: View {
         .frame(width: haloSize, height: haloSize, alignment: .top)
         .onAppear { startEntrance() }
         .task(id: "\(state == .lit)-\(!reduceMotion)") {
-            guard !reduceMotion, state == .lit else { return }
+            guard !AppAnimation.ambientMotionDisabled, state == .lit else { return }
             await sparkleLoop()
         }
     }
@@ -317,7 +317,7 @@ struct DesireStarView: View {
             let factor = Double.random(in: 0.55...1.6)
             let wait = baseRate * factor
             try? await Task.sleep(for: .seconds(wait))
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, !AppAnimation.ambientMotionDisabled else { return }
             sparkleTrigger += 1
         }
     }

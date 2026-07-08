@@ -106,15 +106,24 @@ struct PartnerChip: View {
             .buttonStyle(.plain)
 
         // ── Active partner ─────────────────────────────────────
-        case .active(let name, let initial):
+        case .active(let name, _):
             Button {
                 onPartnerTap?()
             } label: {
+                // The real content is this view's own body (self); the glass
+                // material is a .background, not glassEffect's own `content:`
+                // closure — its vibrancy pass darkens/desaturates whatever it
+                // samples. Critically, this also fixes sizing: a `Capsule().
+                // overlay{ HStack }.fixedSize()` arrangement sizes the pill
+                // off the capsule SHAPE's own (contentless) ideal size —
+                // `.overlay` never lets its argument's content drive the
+                // base's size. Making the HStack self and the capsule its
+                // `.background` sizes the pill correctly, off the actual
+                // name/chevron content.
                 HStack(spacing: AppSpacing.sm) {
-                    PartnerAvatarView(initial: String(initial))
                     Text(name)
                         .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textSecondary)
+                        .foregroundStyle(AppColors.textBright)
 
                     if waiting {
                         VaylMark(ringCount: 1, glow: 0.55, showsCore: true)
@@ -130,8 +139,14 @@ struct PartnerChip: View {
                 }
                 .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.sm)
-                // iOS 26 Liquid Glass — the partner pill is a native floating control.
-                .glassEffect(.regular, in: Capsule())
+                .background {
+                    Capsule()
+                        .fill(.clear)
+                        .glassEffect(.regular, in: Capsule())
+                        .overlay(
+                            Capsule().strokeBorder(AppColors.spectrumBorder, lineWidth: 1.5)
+                        )
+                }
             }
             .buttonStyle(.plain)
 

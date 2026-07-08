@@ -2,11 +2,11 @@
 
 import SwiftUI
 
-/// OB Phase — CuriosityPhase (two-round card sort).
+/// OB Phase — CuriosityPhase (single-round card sort).
 ///
 /// Renders a pile of sort cards dealt from the dealer (bottom origin).
-/// The user sweeps left (discard) or right (keep) until the pile is empty.
-/// Round 1 → Round 2 → auto-advance on Round 2 exhaustion.
+/// The user sweeps left (discard) or right (keep) until the pile is empty,
+/// then the kept cards forge into the summary deck and auto-advance.
 ///
 /// Architecture contract:
 ///   • View renders pixels and forwards gestures only.
@@ -96,13 +96,12 @@ struct CuriosityPhase: View {
         ZStack {
 
             // ── Card pile ─────────────────────────────────────────────
-            // (No round label — one deck, one sort; the mid-deck question
-            // swap is the only punctuation.)
+            // (No round label — one deck, one sort.)
             pileView
 
         }
         // Trigger deal whenever the director toggles the deal flag
-        // (fires on entry for Round 1 and again on Round 2 transition).
+        // (demo hand on entry, then the real hand).
         .onChange(of: director.curiosity.dealTrigger) { _, _ in
             dealCards()
         }
@@ -246,11 +245,9 @@ struct CuriosityPhase: View {
             )
             .offset(x: offsetX, y: offsetY)
             // Only the top card receives touches; the gesture is attached to every card
-            // (constant structure) but gated off beneath, off during the demo, and
-            // off during the mid-deck pause while the second question types.
-            .allowsHitTesting(isTop 
-                              && !director.curiosity.demoActive
-                              && !director.curiosity.roundTransitioning)
+            // (constant structure) but gated off beneath and off during the demo.
+            .allowsHitTesting(isTop
+                              && !director.curiosity.demoActive)
             .gesture(curiosityDrag)
     }
 
@@ -399,16 +396,16 @@ struct CuriosityPhase: View {
 // MARK: - Preview
 
 #if DEBUG
-#Preview("Curiosity Pile — full deal (10)") {
+#Preview("Curiosity Pile — full deal (5)") {
     // Director lives inside a wrapper view so @State drives the lifecycle correctly.
     // Setting curiosityDealTrigger before the view appears doesn't fire onChange
     // (onChange only triggers on changes, not initial values), so we toggle it
-    // via onAppear instead. Loads the real 5+5 deck so the squared deck + cascade
-    // read at the true depth.
+    // via onAppear instead. Loads the real 5-card hand so the squared deck +
+    // cascade read at the true depth.
     struct PreviewWrapper: View {
         @State private var director: VaylDirector = {
             let d = VaylDirector()
-            d.curiosity.pile = d.curiosity.buildCuriosityPile(round: 1, onboardingData: d.onboardingData) + d.curiosity.buildCuriosityPile(round: 2, onboardingData: d.onboardingData)
+            d.curiosity.pile = d.curiosity.buildCuriosityPile(onboardingData: d.onboardingData)
             return d
         }()
 

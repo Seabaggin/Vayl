@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vayl — Map dashboard · two-pillar launch options</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@400,500,600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cyan:#00C2FF;--cyan-light:#7FE0FF;--cyan-deep:#0A8FD0;
+    --purple:#6C3AE0;--purple-light:#A78BFA;--bridge:#8B6FD4;--magenta:#FF006A;--magentaL:#FF4D94;--rose:#C76A86;
+    --void:#0a0810;
+    --t1:#E8E8F0;--t2:rgba(255,255,255,.65);--t3:rgba(255,255,255,.4);--hair:rgba(255,255,255,.09);--glass:rgba(255,255,255,.04);--border:rgba(255,255,255,.1);
+    --disp:"Clash Display",-apple-system,sans-serif;--body:"Switzer",-apple-system,sans-serif;--r-lg:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#131218;color:var(--t1);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  .spectrum{background:linear-gradient(90deg,var(--cyan),var(--bridge) 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:1180px;margin:0 auto;padding:48px 28px 90px}
+  .brand{font-family:var(--disp);font-size:13px;font-weight:600;letter-spacing:.34em;margin:0 0 8px}
+  h1{font-family:var(--disp);font-size:27px;font-weight:600;margin:0 0 8px}
+  .lede{font-size:13.5px;line-height:1.62;color:var(--t2);margin:0;max-width:900px}.lede b{color:var(--t1)}
+
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;justify-items:center;margin-top:38px}
+  @media(max-width:1000px){.three{grid-template-columns:1fr;max-width:340px;margin-left:auto;margin-right:auto}}
+  .cap{font-family:var(--disp);font-size:13px;font-weight:600;margin:0 0 4px;text-align:center;color:#fff}
+  .subcap{font-size:10.5px;line-height:1.5;color:var(--t2);text-align:center;margin:0 0 14px;max-width:290px}
+
+  .phone{position:relative;width:290px;max-width:100%;border-radius:38px;overflow:hidden;background:#040308;box-shadow:0 28px 72px rgba(0,0,0,.55),inset 0 0 0 1.4px rgba(255,255,255,.05);aspect-ratio:290/700}
+  .sky{position:absolute;inset:0;background:radial-gradient(120% 26% at 50% 1%,rgba(255,0,106,.14),transparent 60%),radial-gradient(90% 16% at 20% 4%,rgba(108,58,224,.14),transparent 70%),linear-gradient(var(--void),#08060f)}
+  .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:74px;height:19px;background:#000;border-radius:11px;z-index:30}
+  .home{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:82px;height:3.5px;border-radius:3px;background:rgba(255,255,255,.2);z-index:30}
+  .scr{position:absolute;inset:0;z-index:10;padding:40px 13px 13px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+
+  .mast{display:flex;align-items:flex-start;justify-content:space-between}
+  .mast .nm{font-family:var(--disp);font-size:18px;font-weight:700}
+  .mast .lit{background:linear-gradient(90deg,var(--cyan),var(--bridge) 50%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mast .gear{width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:12px;flex:none}
+  .sub{font-size:9.5px;color:var(--t3)}
+  .lens{font-size:9.5px;color:var(--magentaL);opacity:.85}
+
+  .eyebrow{font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+
+  /* ── PULSE hero (unchanged across all 3 — already built/approved) ── */
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+  .pulsehero{padding:2px 0 0}
+  .ptop{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .ptop .tap{font-size:8.5px;color:var(--t3)}
+  .splitorb-wrap{position:relative;display:flex;justify-content:center;margin:6px 0 12px}
+  .glow{position:absolute;width:210px;height:210px;border-radius:50%;background:radial-gradient(circle,rgba(150,110,220,.28) 0%,rgba(150,110,220,.10) 40%,transparent 72%);filter:blur(2px)}
+  .splitorb{position:relative;width:96px;height:96px;border-radius:50%;overflow:hidden;box-shadow:0 0 30px 7px rgba(150,120,200,.22);animation:breathe 5.4s ease-in-out infinite;flex:none;z-index:2}
+  .splitorb .halves{position:absolute;inset:0;background:linear-gradient(135deg,#00C2FF 0 49.4%,rgba(255,255,255,.22) 49.4% 50.6%,#C76A86 50.6% 100%)}
+  .splitorb .hl{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.5),transparent 34%)}
+  .splitorb .rim{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 1.5px 4px rgba(255,255,255,.42),inset 0 0 13px 1px rgba(255,255,255,.16)}
+  .pulsehero .st{font-family:var(--disp);font-size:17px;font-weight:600;color:#fff;text-align:center}
+  .pulsehero .rd{font-size:9.5px;color:var(--t2);text-align:center;margin-top:5px;line-height:1.5}
+  .pulsehero .rd .you{color:var(--cyan);font-weight:600}.pulsehero .rd .al{color:var(--rose);font-weight:600}
+
+  /* ── shared vault emblem svg sizing wrapper ── */
+  .emblem{margin:0 auto}
+  .emblem svg{width:100%;height:100%;display:block}
+
+  /* ═══ Option A — Two Heroes ═══ */
+  .a-vault{margin-top:6px}
+  .a-vault .ptop{margin-bottom:6px}
+  .a-glow{width:200px;height:200px;background:radial-gradient(circle,rgba(255,60,140,.26) 0%,rgba(255,60,140,.09) 40%,transparent 72%)}
+  .a-emblem{width:96px;height:96px}
+  .a-title{font-family:var(--disp);font-size:17px;font-weight:600;color:#fff;text-align:center;margin-top:2px}
+  .a-sum{font-size:9.5px;color:var(--t2);text-align:center;margin-top:5px}
+  .a-cta{font-size:10px;font-weight:600;color:var(--magentaL);text-align:center;margin-top:10px}
+
+  /* ═══ Option B — Glance + Door ═══ */
+  .b-glance{border-radius:14px;border:1px solid var(--hair);background:var(--glass);padding:11px 12px 12px;margin-top:2px}
+  .b-glance .eyebrow{color:var(--magentaL);margin-bottom:8px;display:block}
+  .b-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-top:1px solid var(--hair)}
+  .b-row:first-of-type{border-top:0;padding-top:0}
+  .b-ic{width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:10px;flex:none;margin-top:1px}
+  .b-row .tt{font-size:10.5px;color:#fff;line-height:1.4}
+  .b-row .mm{font-size:8.5px;color:var(--t3);margin-top:2px}
+  .b-door{display:flex;align-items:center;gap:10px;border-radius:14px;border:1px solid rgba(255,77,148,.2);background:radial-gradient(130% 90% at 50% 0%,rgba(108,58,224,.12),transparent 70%),var(--glass);padding:10px 12px;margin-top:9px}
+  .b-emblem{width:40px;height:40px;flex:none}
+  .b-door .dt{font-family:var(--disp);font-size:12px;font-weight:600;color:#fff}
+  .b-door .ds{font-size:8.5px;color:var(--t3);margin-top:2px}
+  .b-door .arr{margin-left:auto;color:var(--magentaL);font-size:12px}
+
+  /* ═══ Option C — One Continuous Flow ═══ */
+  .c-rule{display:flex;align-items:center;gap:8px;margin:8px 0 2px}
+  .c-rule .ln{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--hair) 30%,var(--hair) 70%,transparent)}
+  .c-rule .lb{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--t3)}
+  .c-row{display:flex;align-items:baseline;justify-content:space-between;padding:9px 2px;border-bottom:1px solid var(--hair)}
+  .c-row:last-of-type{border-bottom:0}
+  .c-row .tt{font-size:11px;color:#fff}
+  .c-row .mm{font-size:8.5px;color:var(--t3)}
+  .c-foot{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;padding-top:2px}
+  .c-foot .em{width:26px;height:26px}
+  .c-foot .lb{font-size:10px;font-weight:600;color:var(--magentaL)}
+
+  /* differentiation strip */
+  .diff{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:1120px;margin:44px auto 0}
+  @media(max-width:1000px){.diff{grid-template-columns:1fr}}
+  .dc{border-radius:14px;border:1px solid var(--hair);background:var(--glass);padding:16px 17px}
+  .dc h4{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 8px}
+  .dc p{font-size:11.5px;line-height:1.6;color:var(--t2);margin:0 0 8px}
+  .dc .tag{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--magentaL)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">VAYL</div>
+  <h1>Map dashboard — <span class="spectrum">two-pillar launch options</span></h1>
+  <p class="lede">Path deferred post-launch. Same masthead, same Pulse hero (already built, unchanged in all three) — the only question is how <b>Agreements + Journal</b> occupy the space Path leaves behind. Three different answers to "how much does the Vault show before you open it."</p>
+
+  <div class="three">
+
+    <!-- ═══════════ OPTION A ═══════════ -->
+    <div>
+      <div class="cap">A · Two Heroes</div>
+      <div class="subcap">The Vault is promoted to the exact same visual weight as Pulse — a second glowing centrepiece, not a small card underneath one.</div>
+      <div class="phone">
+        <div class="sky"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div class="nm"><span class="lit">Jordan &amp; Alex.</span></div><div class="gear">⚙</div></div>
+          <div class="sub">Just Curious · your map is just beginning</div>
+          <div class="lens">Shared · you both see this</div>
+
+          <div class="pulsehero">
+            <div class="ptop"><span class="eyebrow" style="color:var(--magentaL)">THE PULSE · TOGETHER</span><span class="tap">tap to open →</span></div>
+            <div class="splitorb-wrap"><div class="glow"></div><div class="splitorb"><div class="halves"></div><div class="hl"></div><div class="rim"></div></div></div>
+            <div class="st">Close today</div>
+            <div class="rd"><span class="you">You</span> in Expansive · <span class="al">Alex</span> in Expansive</div>
+          </div>
+
+          <div class="a-vault">
+            <div class="ptop"><span class="eyebrow" style="color:var(--magentaL)">THE VAULT · KEPT</span><span class="tap">tap to open →</span></div>
+            <div class="splitorb-wrap"><div class="glow a-glow"></div>
+              <div class="emblem a-emblem">
+                <svg viewBox="0 0 100 100">
+                  <defs>
+                    <linearGradient id="dvA" x1="8" y1="8" x2="92" y2="92"><stop offset="0" stop-color="#00C2FF"/><stop offset=".5" stop-color="#6C3AE0"/><stop offset="1" stop-color="#FF006A"/></linearGradient>
+                    <radialGradient id="daA"><stop offset="0" stop-color="rgba(255,180,210,.7)"/><stop offset="60%" stop-color="rgba(255,0,106,.24)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+                    <radialGradient id="dgA" cx="38%" cy="32%" r="80%"><stop offset="0" stop-color="rgba(255,255,255,.95)"/><stop offset="28%" stop-color="rgba(255,140,180,.85)"/><stop offset="70%" stop-color="rgba(255,0,106,.55)"/><stop offset="100%" stop-color="rgba(40,8,25,.92)"/></radialGradient>
+                  </defs>
+                  <circle cx="50" cy="50" r="15" fill="url(#daA)"/>
+                  <circle cx="50" cy="50" r="32" fill="none" stroke="url(#dvA)" stroke-width="2"/>
+                  <g stroke="url(#dvA)" stroke-width="2.6" stroke-linecap="round"><line x1="50" y1="50" x2="95" y2="50"/><line x1="50" y1="50" x2="72.5" y2="88.97"/><line x1="50" y1="50" x2="27.5" y2="88.97"/><line x1="50" y1="50" x2="5" y2="50"/><line x1="50" y1="50" x2="27.5" y2="11.03"/><line x1="50" y1="50" x2="72.5" y2="11.03"/></g>
+                  <g fill="url(#dvA)"><circle cx="95" cy="50" r="3.4"/><circle cx="72.5" cy="88.97" r="3.4"/><circle cx="27.5" cy="88.97" r="3.4"/><circle cx="5" cy="50" r="3.4"/><circle cx="27.5" cy="11.03" r="3.4"/><circle cx="72.5" cy="11.03" r="3.4"/></g>
+                  <rect x="39" y="39" width="22" height="22" rx="3" transform="rotate(45 50 50)" fill="url(#dgA)" stroke="url(#dvA)" stroke-width="2.4"/>
+                  <path d="M50,40 L60,50 L50,60 L40,50 Z" fill="rgba(255,255,255,.12)"/>
+                  <circle cx="45.5" cy="45.5" r="1.6" fill="#fff"/>
+                </svg>
+              </div>
+            </div>
+            <div class="a-title">Our Vault</div>
+            <div class="a-sum">Where you meet · Agreements · The record</div>
+            <div class="a-cta">Open your vault ›</div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ OPTION B ═══════════ -->
+    <div>
+      <div class="cap">B · Glance + Door</div>
+      <div class="subcap">The Vault stays a sealed door — but a live glance sits above it, so you see what's waiting before deciding to open it.</div>
+      <div class="phone">
+        <div class="sky"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div class="nm"><span class="lit">Jordan &amp; Alex.</span></div><div class="gear">⚙</div></div>
+          <div class="sub">Just Curious · your map is just beginning</div>
+          <div class="lens">Shared · you both see this</div>
+
+          <div class="pulsehero">
+            <div class="ptop"><span class="eyebrow" style="color:var(--magentaL)">THE PULSE · TOGETHER</span><span class="tap">tap to open →</span></div>
+            <div class="splitorb-wrap"><div class="glow"></div><div class="splitorb"><div class="halves"></div><div class="hl"></div><div class="rim"></div></div></div>
+            <div class="st">Close today</div>
+            <div class="rd"><span class="you">You</span> in Expansive · <span class="al">Alex</span> in Expansive</div>
+          </div>
+
+          <div class="b-glance">
+            <span class="eyebrow">TOGETHER · SINCE YOU LAST LOOKED</span>
+            <div class="b-row"><div class="b-ic">⬡</div><div><div class="tt">Alex proposed <b>"Always text if plans change"</b></div><div class="mm">New agreement · awaiting you</div></div></div>
+            <div class="b-row"><div class="b-ic">✎</div><div><div class="tt">Your last journal entry</div><div class="mm">2 days ago · private</div></div></div>
+          </div>
+
+          <div class="b-door">
+            <div class="emblem b-emblem">
+              <svg viewBox="0 0 100 100">
+                <defs>
+                  <linearGradient id="dvB" x1="8" y1="8" x2="92" y2="92"><stop offset="0" stop-color="#00C2FF"/><stop offset=".5" stop-color="#6C3AE0"/><stop offset="1" stop-color="#FF006A"/></linearGradient>
+                  <radialGradient id="dgB" cx="38%" cy="32%" r="80%"><stop offset="0" stop-color="rgba(255,255,255,.95)"/><stop offset="28%" stop-color="rgba(255,140,180,.85)"/><stop offset="70%" stop-color="rgba(255,0,106,.55)"/><stop offset="100%" stop-color="rgba(40,8,25,.92)"/></radialGradient>
+                </defs>
+                <circle cx="50" cy="50" r="32" fill="none" stroke="url(#dvB)" stroke-width="2.4"/>
+                <g stroke="url(#dvB)" stroke-width="3" stroke-linecap="round"><line x1="50" y1="50" x2="95" y2="50"/><line x1="50" y1="50" x2="72.5" y2="88.97"/><line x1="50" y1="50" x2="27.5" y2="88.97"/><line x1="50" y1="50" x2="5" y2="50"/><line x1="50" y1="50" x2="27.5" y2="11.03"/><line x1="50" y1="50" x2="72.5" y2="11.03"/></g>
+                <rect x="37" y="37" width="26" height="26" rx="4" transform="rotate(45 50 50)" fill="url(#dgB)" stroke="url(#dvB)" stroke-width="2.8"/>
+              </svg>
+            </div>
+            <div><div class="dt">Our Vault</div><div class="ds">7 shared · 12 sessions</div></div>
+            <div class="arr">›</div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ OPTION C ═══════════ -->
+    <div>
+      <div class="cap">C · One Continuous Flow</div>
+      <div class="subcap">No hard card boundaries. Pulse breathes at top, then the page reads on as one editorial page — agreements and journal as plain rows, the door as the closing line.</div>
+      <div class="phone">
+        <div class="sky"></div>
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="mast"><div class="nm"><span class="lit">Jordan &amp; Alex.</span></div><div class="gear">⚙</div></div>
+          <div class="sub">Just Curious · your map is just beginning</div>
+          <div class="lens">Shared · you both see this</div>
+
+          <div class="pulsehero">
+            <div class="ptop"><span class="eyebrow" style="color:var(--magentaL)">THE PULSE · TOGETHER</span><span class="tap">tap to open →</span></div>
+            <div class="splitorb-wrap"><div class="glow"></div><div class="splitorb"><div class="halves"></div><div class="hl"></div><div class="rim"></div></div></div>
+            <div class="st">Close today</div>
+            <div class="rd"><span class="you">You</span> in Expansive · <span class="al">Alex</span> in Expansive</div>
+          </div>
+
+          <div class="c-rule"><div class="ln"></div><div class="lb">Together</div><div class="ln"></div></div>
+
+          <div class="c-row"><div class="tt">"Always text if plans change"</div><div class="mm">awaiting you</div></div>
+          <div class="c-row"><div class="tt">Your last journal entry</div><div class="mm">2 days ago</div></div>
+          <div class="c-row"><div class="tt">7 shared · 12 sessions</div><div class="mm">the record</div></div>
+
+          <div class="c-foot">
+            <div class="emblem em">
+              <svg viewBox="0 0 100 100">
+                <defs><linearGradient id="dvC" x1="8" y1="8" x2="92" y2="92"><stop offset="0" stop-color="#00C2FF"/><stop offset=".5" stop-color="#6C3AE0"/><stop offset="1" stop-color="#FF006A"/></linearGradient></defs>
+                <circle cx="50" cy="50" r="32" fill="none" stroke="url(#dvC)" stroke-width="3"/>
+                <rect x="37" y="37" width="26" height="26" rx="4" transform="rotate(45 50 50)" fill="none" stroke="url(#dvC)" stroke-width="3"/>
+              </svg>
+            </div>
+            <div class="lb">Open the vault ›</div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- differentiation strip -->
+  <div class="diff">
+    <div class="dc">
+      <span class="tag">A · Two Heroes</span>
+      <h4>Symmetric weight</h4>
+      <p>Honest about the new feature set: with only two pillars, both deserve hero treatment. Reuses Pulse's exact glow/scale language for the Vault, so the screen doesn't read as "one big thing and one small thing bolted on."</p>
+      <p><b>Risk:</b> two big glowing spheres back to back may compete for the same kind of attention — needs a clear visual cue (colour, shape) that these are different kinds of things, not two Pulses.</p>
+    </div>
+    <div class="dc">
+      <span class="tag">B · Glance + Door</span>
+      <h4>Information first</h4>
+      <p>Surfaces the two new launch features (Agreements, Journal) as real, glanceable content — a proposed agreement or a recent entry is visible without opening anything, which makes Vault feel alive rather than a locked box you have no reason to check.</p>
+      <p><b>Risk:</b> most complex option — a glance card + a separate door is two components to build and keep in sync, and the glance needs real empty-state handling for new couples.</p>
+    </div>
+    <div class="dc">
+      <span class="tag">C · Continuous Flow</span>
+      <h4>Editorial, calm</h4>
+      <p>Least chrome, most "returnable home" feeling — no card borders competing with the Pulse hero, just one soft "Together" rule and plain rows. Cheapest to build (no new card component, mostly typography).</p>
+      <p><b>Risk:</b> plain rows may under-sell agreements/journal as "features" — closest to option A's opposite: everything reads as equally minor, when agreements are meant to feel important.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

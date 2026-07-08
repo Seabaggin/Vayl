@@ -12,12 +12,9 @@ struct PartnerAvatarView: View {
 
     var body: some View {
         Circle()
-            .fill(
-                LinearGradient(
-                    colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+            .fill(AppColors.cardBg)
+            .overlay(
+                Circle().strokeBorder(AppColors.spectrumBorder, lineWidth: 1.5)
             )
             .frame(width: size, height: size)
             .overlay(

@@ -1,5 +1,53 @@
 [
   {
+    "id": "opener-steady",
+    "title": "Steady",
+    "subtitle": "Start slow. Find your footing.",
+    "category": "foundationEntry",
+    "intensity": 1,
+    "card_count": 6,
+    "is_locked": false,
+    "required_entitlement": null,
+    "description": "Placeholder description.",
+    "goals": []
+  },
+  {
+    "id": "opener-opening",
+    "title": "Opening",
+    "subtitle": "Lean into the momentum.",
+    "category": "foundationEntry",
+    "intensity": 2,
+    "card_count": 6,
+    "is_locked": false,
+    "required_entitlement": null,
+    "description": "Placeholder description.",
+    "goals": []
+  },
+  {
+    "id": "opener-return",
+    "title": "Return",
+    "subtitle": "Revisit what you already know.",
+    "category": "foundationEntry",
+    "intensity": 2,
+    "card_count": 6,
+    "is_locked": false,
+    "required_entitlement": null,
+    "description": "Placeholder description.",
+    "goals": []
+  },
+  {
+    "id": "opener-wider",
+    "title": "Wider",
+    "subtitle": "Build on the ground you've covered.",
+    "category": "foundationEntry",
+    "intensity": 3,
+    "card_count": 6,
+    "is_locked": false,
+    "required_entitlement": null,
+    "description": "Placeholder description.",
+    "goals": []
+  },
+  {
     "id": "the-opener",
     "title": "The Opener",
     "subtitle": "Where are we, actually.",
@@ -7,7 +55,9 @@
     "intensity": 2,
     "card_count": 10,
     "is_locked": false,
-    "required_entitlement": null
+    "required_entitlement": null,
+    "description": "Placeholder description.",
+    "goals": []
   },
   {
     "id": "the-check-in",
@@ -17,7 +67,9 @@
     "intensity": 1,
     "card_count": 6,
     "is_locked": false,
-    "required_entitlement": null
+    "required_entitlement": null,
+    "description": "Placeholder description.",
+    "goals": []
   },
   {
     "id": "communication-intimacy",
@@ -27,7 +79,10 @@
     "intensity": 3,
     "card_count": 11,
     "is_locked": true,
-    "required_entitlement": "core"
+    "required_entitlement": "core",
+    "description": "Placeholder description.",
+    "when_to_use": "Placeholder timing context.",
+    "goals": []
   },
   {
     "id": "sex-and-pleasure",
@@ -37,7 +92,10 @@
     "intensity": 6,
     "card_count": 11,
     "is_locked": true,
-    "required_entitlement": "core"
+    "required_entitlement": "core",
+    "description": "Placeholder description.",
+    "when_to_use": "Placeholder timing context.",
+    "goals": []
   },
   {
     "id": "jealousy",
@@ -47,7 +105,10 @@
     "intensity": 5,
     "card_count": 11,
     "is_locked": true,
-    "required_entitlement": "core"
+    "required_entitlement": "core",
+    "description": "Placeholder description.",
+    "when_to_use": "Placeholder timing context.",
+    "goals": []
   },
   {
     "id": "flavors-discovery",
@@ -57,7 +118,10 @@
     "intensity": 3,
     "card_count": 10,
     "is_locked": true,
-    "required_entitlement": "core"
+    "required_entitlement": "core",
+    "description": "Placeholder description.",
+    "when_to_use": "Placeholder timing context.",
+    "goals": []
   },
   {
     "id": "swinging",
@@ -67,7 +131,10 @@
     "intensity": 5,
     "card_count": 11,
     "is_locked": true,
-    "required_entitlement": "core"
+    "required_entitlement": "core",
+    "description": "Placeholder description.",
+    "when_to_use": "Placeholder timing context.",
+    "goals": []
   },
   {
     "id": "before-tonight",
@@ -77,7 +144,10 @@
     "intensity": 4,
     "card_count": 10,
     "is_locked": true,
-    "required_entitlement": "core"
+    "required_entitlement": "core",
+    "description": "Placeholder description.",
+    "when_to_use": "Placeholder timing context.",
+    "goals": []
   },
   {
     "id": "after-last-night",
@@ -87,7 +157,10 @@
     "intensity": 4,
     "card_count": 11,
     "is_locked": true,
-    "required_entitlement": "core"
+    "required_entitlement": "core",
+    "description": "Placeholder description.",
+    "when_to_use": "Placeholder timing context.",
+    "goals": []
   },
   {
     "id": "the-first-time",
@@ -97,7 +170,10 @@
     "intensity": 4,
     "card_count": 10,
     "is_locked": true,
-    "required_entitlement": "core"
+    "required_entitlement": "core",
+    "description": "Placeholder description.",
+    "when_to_use": "Placeholder timing context.",
+    "goals": []
   },
   {
     "id": "when-it-gets-hard",
@@ -107,7 +183,10 @@
     "intensity": 7,
     "card_count": 11,
     "is_locked": true,
-    "required_entitlement": "core"
+    "required_entitlement": "core",
+    "description": "Placeholder description.",
+    "when_to_use": "Placeholder timing context.",
+    "goals": []
   },
   {
     "id": "appreciation",
@@ -117,6 +196,9 @@
     "intensity": 1,
     "card_count": 10,
     "is_locked": true,
-    "required_entitlement": "core"
+    "required_entitlement": "core",
+    "description": "Placeholder description.",
+    "when_to_use": "Placeholder timing context.",
+    "goals": []
   }
 ]
