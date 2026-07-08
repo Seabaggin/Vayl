@@ -53,8 +53,11 @@ struct HomeDashboardView: View {
     var deckTitle: String = ""
     var desireMapState: DesireMapState = .hidden
     /// The partner's current Pulse position, for the chip's expand quick-view tile
-    /// only (current position, not history — nil renders "Not sharing").
+    /// only (current position, not history — nil renders the confirmed-empty copy).
     var partnerPulsePosition: PulsePosition? = nil
+    /// True when the last partner-pulse fetch failed — the tile shows an honest
+    /// "couldn't check" instead of reading the failure as confirmed-empty.
+    var partnerPulseFetchFailed: Bool = false
     var reflectionCardState: ReflectionCardState = .hidden
     var pickUpItems: [PickUpItem] = []
     var stageIndex: Int = 1
@@ -387,6 +390,7 @@ struct HomeDashboardView: View {
                         state: partnerChipState,
                         desireMapState: desireMapState,
                         partnerPulsePosition: partnerPulsePosition,
+                        partnerPulseFetchFailed: partnerPulseFetchFailed,
                         onDesireMapTap: {
                             isChipExpanded = false
                             onPartnerTap?() // existing Map-tab routing

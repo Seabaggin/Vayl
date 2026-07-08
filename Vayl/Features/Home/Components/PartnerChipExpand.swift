@@ -10,6 +10,7 @@ struct PartnerChipExpand: View {
     let state: PartnerChipState
     let desireMapState: DesireMapState
     let partnerPulsePosition: PulsePosition?
+    var partnerPulseFetchFailed: Bool = false
     var onDesireMapTap: (() -> Void)? = nil
     var onPulseTap: (() -> Void)? = nil
     var onManageTap: (() -> Void)? = nil
@@ -33,7 +34,10 @@ struct PartnerChipExpand: View {
     /// the width constraint actually lives. "Not sharing" passes through
     /// unchanged since it matches neither pattern.
     private var pulseTileShortText: String {
-        let full = PartnerChipPulseCopy.tileText(for: partnerPulsePosition)
+        let full = PartnerChipPulseCopy.tileText(
+            for: partnerPulsePosition,
+            fetchFailed: partnerPulseFetchFailed
+        )
         return full
             .replacingOccurrences(of: "The ", with: "")
             .replacingOccurrences(of: " Space", with: "")

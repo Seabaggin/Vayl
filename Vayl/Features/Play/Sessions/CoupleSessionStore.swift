@@ -390,6 +390,17 @@ final class CoupleSessionStore: Identifiable {
         revealEngine.receiveResendRequest(cardId: cardId)
     }
 
+    /// Call when `scenePhase` returns to `.active` during an open session. The
+    /// OS drops the Realtime websocket on background, but leaves `coordinator`
+    /// itself intact — this re-subscribes the channel and re-tracks presence
+    /// via the coordinator's existing stop/start (both idempotent). No-op if
+    /// the session isn't live or isn't remote-synced.
+    func handleScenePhaseActive() {
+        guard isLive, let coordinator else { return }
+        coordinator.stop()
+        coordinator.start()
+    }
+
     func teardown() {
         coordinator?.stop()
         coordinator = nil

@@ -78,27 +78,62 @@ struct VaultSheet: View {
                 DiscussionCardView(card: card, onDismiss: { store.closeDiscussion() })
             }
         }
+        .screenshotProtected()
     }
 
     @ViewBuilder
     private var section: some View {
+        if let error = store.loadError {
+            VStack(spacing: AppSpacing.md) {
+                MapEmptyState(
+                    icon: "exclamationmark.triangle",
+                    headline: "Couldn't load this",
+                    message: error
+                )
+                Button("Try Again") {
+                    Task { await reloadCurrentSegment() }
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        } else if store.isLoading {
+            VStack(spacing: AppSpacing.sm) {
+                ProgressView()
+                    .tint(AppColors.accentPrimary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, AppSpacing.xl)
+        } else {
+            switch store.segment {
+            case .desire:
+                VaultDesireSection(
+                    summary: store.desire,
+                    align: store.align,
+                    lockedCount: store.lockedAlignCount,
+                    onUnlock: onUnlock,
+                    store: store
+                )
+            case .agreements:
+                VaultAgreementsSection(store: store)
+            case .log:
+                VaultLogSection(
+                    entries: store.logEntries,
+                    onAdd: { editingEntry = nil; logEditorOpen = true },
+                    onEdit: { editingEntry = $0; logEditorOpen = true }
+                )
+            }
+        }
+    }
+
+    private func reloadCurrentSegment() async {
         switch store.segment {
-        case .desire:
-            VaultDesireSection(
-                summary: store.desire,
-                align: store.align,
-                lockedCount: store.lockedAlignCount,
-                onUnlock: onUnlock,
-                store: store
-            )
         case .agreements:
-            VaultAgreementsSection(store: store)
+            await store.loadAgreements(appState: appState, context: modelContext)
         case .log:
-            VaultLogSection(
-                entries: store.logEntries,
-                onAdd: { editingEntry = nil; logEditorOpen = true },
-                onEdit: { editingEntry = $0; logEditorOpen = true }
-            )
+            store.loadLog(context: modelContext)
+            await store.syncLogDown(context: modelContext)
+        case .desire:
+            await store.loadDesire(appState: appState, context: modelContext)
+            await store.loadConsent(appState: appState, context: modelContext)
         }
     }
 }

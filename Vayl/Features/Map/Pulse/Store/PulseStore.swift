@@ -6,6 +6,21 @@
 import Foundation
 import Observation
 
+// MARK: - Sync seam (test injection)
+//
+// Minimal additive seam: PulseStore already took an injected `sync` instance,
+// but PulseSyncService is a concrete struct with no fake-able surface. This
+// protocol mirrors only the two methods PulseStore actually calls (not
+// fetchPartnerEntries, which PulseStore never touches). Signature synced to
+// PulseSyncService's tri-state fetch (PulseFetchOutcome: fetch-failure vs.
+// confirmed-empty).
+protocol PulseSyncing {
+    func pushEntry(_ entry: PulseEntry) async
+    func fetchOwnEntries() async -> PulseFetchOutcome
+}
+
+extension PulseSyncService: PulseSyncing {}
+
 @Observable
 @MainActor
 final class PulseStore {
@@ -93,14 +108,14 @@ final class PulseStore {
 
     private let key = "pulse.entries.v1"
 
-    private let sync: PulseSyncService
+    private let sync: PulseSyncing
 
     // MARK: - Init
 
     /// `sync` nil-resolves inside the MainActor-isolated body (a `= .shared`
     /// default argument would evaluate nonisolated — same pattern as SettingsStore).
-    init(sync: PulseSyncService? = nil) {
-        self.sync = sync ?? .shared
+    init(sync: PulseSyncing? = nil) {
+        self.sync = sync ?? PulseSyncService.shared
         load()
         #if DEBUG
         if entries.isEmpty {
@@ -141,7 +156,7 @@ final class PulseStore {
     /// again on every return to foreground (VaylApp's scenePhase handler), after auth is
     /// confirmed ready.
     func hydrateFromServer() async {
-        guard let serverEntries = await sync.fetchOwnEntries() else { return }
+        guard case .success(let serverEntries) = await sync.fetchOwnEntries() else { return }
         let cal = Calendar.current
         var merged = entries
         for serverEntry in serverEntries {

@@ -47,6 +47,7 @@ struct PulseFullView: View {
             }
             .padding(AppSpacing.lg)
         }
+        .screenshotProtected()
     }
 
     // MARK: - Interior header (close + smaller interior lens toggle)
@@ -126,6 +127,7 @@ struct PulseFullView: View {
                 .overlay(Circle().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Close")
     }
 
     // MARK: - Me body
@@ -213,6 +215,7 @@ struct PulseFullView: View {
     // compact card and this detail view never disagree on staleness.
     private var headline: String {
         guard partnerPosition != nil else {
+            if mapStore.partnerPulseFetchFailed { return "Couldn't reach their Pulse" }
             return partnerName.isEmpty ? "Pulse · together" : "\(partnerName) hasn't checked in"
         }
         guard usOrbState.allowsLiveComparison else { return "Comparing your last Pulses" }
@@ -221,6 +224,9 @@ struct PulseFullView: View {
 
     private var descCopy: String {
         guard let partner = partnerPosition else {
+            if mapStore.partnerPulseFetchFailed {
+                return "Couldn't reach your partner's data right now. It'll refresh when the connection is back."
+            }
             return partnerName.isEmpty
                 ? "Check in to see how you and your partner compare."
                 : "Their space fills in the moment they take a reading."
@@ -269,10 +275,12 @@ struct PulseFullView: View {
             Image(systemName: "waveform.path.ecg")
                 .font(AppFonts.body(28, weight: .regular, relativeTo: .title2))
                 .foregroundStyle(AppColors.textTertiary)
-            Text("No Pulse yet")
+            Text(mapStore.partnerPulseFetchFailed ? "Couldn't reach their Pulse" : "No Pulse yet")
                 .font(AppFonts.cardTitle)
                 .foregroundStyle(AppColors.textPrimary)
-            Text("Check in to see how you and \(partnerName.isEmpty ? "your partner" : partnerName) compare.")
+            Text(mapStore.partnerPulseFetchFailed
+                ? "Couldn't reach your partner's data right now. It'll refresh when the connection is back."
+                : "Check in to see how you and \(partnerName.isEmpty ? "your partner" : partnerName) compare.")
                 .font(AppFonts.caption)
                 .foregroundStyle(AppColors.textSecondary)
                 .multilineTextAlignment(.center)

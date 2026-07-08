@@ -480,7 +480,7 @@ private struct ModeFaceContent: View {
     private func startHoloShift() {
         guard !reduceMotion, !AppAnimation.lowPower else { return }
         withAnimation(
-            .easeInOut(duration: 2.6)
+            .easeInOut(duration: AppAnimation.ambientHoloShift)
             .repeatForever(autoreverses: true)
         ) {
             holoShift = 1.0

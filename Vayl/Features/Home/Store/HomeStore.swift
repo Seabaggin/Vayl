@@ -69,6 +69,12 @@ final class HomeStore {
     /// Nil if the partner hasn't logged, or has `share_pulse_with_partner` off.
     private(set) var partnerPulsePosition: PulsePosition? = nil
 
+    /// True when the last partner-pulse fetch failed outright (offline, server
+    /// error) — distinct from a nil position, which means confirmed no data
+    /// (sharing off or never logged). The chip copy uses this to avoid claiming
+    /// "Not sharing" when the truth is "couldn't reach it."
+    private(set) var partnerPulseFetchFailed: Bool = false
+
     // MARK: - Deck Loading
 
     var deck: Deck? = nil
@@ -281,13 +287,17 @@ final class HomeStore {
     func loadPartnerPulsePosition() async {
         guard case .linked = appState.linkState else {
             partnerPulsePosition = nil
+            partnerPulseFetchFailed = false
             return
         }
-        guard let entries = await pulseSync.fetchPartnerEntries() else {
-            partnerPulsePosition = nil
-            return
+        switch await pulseSync.fetchPartnerEntries() {
+        case .success(let entries):
+            partnerPulseFetchFailed = false
+            partnerPulsePosition = entries.last?.resolvedPosition
+        case .failure:
+            partnerPulseFetchFailed = true
+            logger.error("HomeStore: partner pulse fetch failed — keeping cached position")
         }
-        partnerPulsePosition = entries.last?.resolvedPosition
     }
 
     // MARK: - Lexicon Content Load
@@ -300,6 +310,8 @@ final class HomeStore {
         let q = await content.fetchQuotes()
         if f != nil || t != nil || q != nil {
             lexiconRemotePool = LexiconRemotePool(findings: f, terms: t, quotes: q)
+        } else {
+            logger.error("HomeStore: lexicon content fetch failed — keeping bundled baseline")
         }
     }
 
@@ -342,10 +354,22 @@ final class HomeStore {
     /// once our own map is done, so `bothComplete` equals the partner's completion at that point.
     private func loadDesireStatus() async {
         guard appState.appMode == .together, let coupleId = appState.coupleId else { return }
-        guard let status = try? await desireSync.fetchStatus(coupleId: coupleId) else { return }
+        let status: DesireMapStatusRow?
+        do {
+            status = try await desireSync.fetchStatus(coupleId: coupleId)
+        } catch {
+            logger.error("HomeStore: desire status fetch failed — \(error.localizedDescription)")
+            return
+        }
+        guard let status else { return }
         partnerMapComplete = status.bothComplete
-        let progress = try? await desireSync.fetchRevealProgress(coupleId: coupleId)
-        revealDone = progress?.hasSeenFree ?? false
+        do {
+            let progress = try await desireSync.fetchRevealProgress(coupleId: coupleId)
+            revealDone = progress?.hasSeenFree ?? false
+        } catch {
+            logger.error("HomeStore: reveal progress fetch failed — \(error.localizedDescription)")
+            revealDone = false
+        }
         resolvePostStatusDesireMapState(coupleId: coupleId)
     }
 

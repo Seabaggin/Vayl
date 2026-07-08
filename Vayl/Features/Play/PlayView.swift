@@ -200,6 +200,7 @@ struct PlayView: View {
                     .foregroundStyle(AppColors.textTertiary)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss error")
         }
         .padding(.horizontal, AppSpacing.md)
         .padding(.vertical, AppSpacing.sm + AppSpacing.xxs)

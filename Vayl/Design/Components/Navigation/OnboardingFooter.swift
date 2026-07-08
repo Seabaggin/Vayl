@@ -8,16 +8,12 @@ import SwiftUI
 struct OnboardingFooter: View {
     var text: String = "Your data is encrypted and always stays yours."
 
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
         Text(text)
             // .caption2 scales with Dynamic Type — correct for
             // legal/privacy footer copy at minimum legible size.
             .font(.caption2)
-            .foregroundColor(colorScheme == .light
-                ? AppColors.textTertiary
-                : AppColors.textHint)
+            .foregroundColor(AppColors.textHint)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
             .padding(.top, AppSpacing.md)

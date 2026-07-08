@@ -85,6 +85,7 @@ struct PulseCheckInView: View {
                     .topClearance(layout, padding: 0)
             }
         }
+        .screenshotProtected()
     }
 
     // MARK: - Back button

@@ -106,7 +106,7 @@ final class AppState {
             forKey: PersistenceKey.displayName.rawValue
         )
         #if DEBUG
-        if savedName == nil || savedName!.isEmpty {
+        if (savedName ?? "").isEmpty {
             UserDefaults.standard.set("Jordan", forKey: PersistenceKey.displayName.rawValue)
         }
         #endif

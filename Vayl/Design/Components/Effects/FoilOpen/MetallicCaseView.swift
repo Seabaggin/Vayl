@@ -310,7 +310,7 @@ struct MetallicCaseView: View {
                 if reduceMotion || flat || AppAnimation.lowPower {
                     foilLayer(size: size, t: 0, motion: false)
                 } else {
-                    TimelineView(.animation) { tl in
+                    TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { tl in
                         foilLayer(size: size, t: tl.date.timeIntervalSinceReferenceDate, motion: true)
                     }
                 }

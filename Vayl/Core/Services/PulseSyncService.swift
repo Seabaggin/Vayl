@@ -24,6 +24,16 @@
 import Foundation
 import Supabase
 
+/// Tri-state fetch outcome — lets a Store tell "the fetch failed, keep whatever
+/// you have" apart from "the fetch succeeded and came back with zero rows"
+/// (unpaired / sharing off / genuinely never logged). Optional collapsed both
+/// into `nil`; this restores the distinction at the boundary so a Store can
+/// signal a transient failure instead of quietly reading it as confirmed-empty.
+enum PulseFetchOutcome {
+    case success([PulseEntry])
+    case failure
+}
+
 struct PulseSyncService {
 
     static let shared = PulseSyncService()
@@ -175,33 +185,41 @@ struct PulseSyncService {
     }
 
     /// The caller's own full history, oldest first — used to hydrate the local
-    /// cache on launch (the "reinstall/new device" recovery path). nil on any
-    /// failure (offline, not signed in) — callers should treat nil as "keep
-    /// whatever's already local," never as "history is empty."
-    func fetchOwnEntries() async -> [PulseEntry]? {
-        guard let profile = await currentProfile() else { return nil }
-        let rows: [PulseEntryRow]? = try? await supabase
-            .from("pulse_entries")
-            .select()
-            .eq("profile_id", value: profile.id.uuidString)
-            .order("entry_date", ascending: true)
-            .execute()
-            .value
-        return rows?.map(\.toPulseEntry)
+    /// cache on launch (the "reinstall/new device" recovery path). `.failure` on
+    /// any failure (offline, not signed in) — callers should treat `.failure` as
+    /// "keep whatever's already local," never as "history is empty."
+    func fetchOwnEntries() async -> PulseFetchOutcome {
+        guard let profile = await currentProfile() else { return .failure }
+        do {
+            let rows: [PulseEntryRow] = try await supabase
+                .from("pulse_entries")
+                .select()
+                .eq("profile_id", value: profile.id.uuidString)
+                .order("entry_date", ascending: true)
+                .execute()
+                .value
+            return .success(rows.map(\.toPulseEntry))
+        } catch {
+            return .failure
+        }
     }
 
     /// The partner's history as bare positions (never the Q1-Q5 text answers),
-    /// oldest first — nil if not paired, not shared, or not yet logged (the
-    /// function returns zero rows in those cases, not an error). The returned
-    /// PulseEntry's text fields are empty placeholders; nothing renders them for a
-    /// partner entry (the Us layer only ever reads .resolvedPosition.quadrant).
-    func fetchPartnerEntries() async -> [PulseEntry]? {
-        let rows: [PartnerPositionRow]? = try? await supabase
-            .rpc("get_partner_pulse_positions")
-            .execute()
-            .value
-        return rows?
-            .sorted { $0.entryDate < $1.entryDate }
-            .map(\.toPulseEntry)
+    /// oldest first. `.success([])` covers not paired, not shared, or not yet
+    /// logged (the function returns zero rows in those cases, not an error) —
+    /// only a genuine RPC/network failure returns `.failure`, so callers can
+    /// finally tell "confirmed no data" apart from "couldn't reach it." The
+    /// returned PulseEntry's text fields are empty placeholders; nothing renders
+    /// them for a partner entry (the Us layer only ever reads .resolvedPosition.quadrant).
+    func fetchPartnerEntries() async -> PulseFetchOutcome {
+        do {
+            let rows: [PartnerPositionRow] = try await supabase
+                .rpc("get_partner_pulse_positions")
+                .execute()
+                .value
+            return .success(rows.sorted { $0.entryDate < $1.entryDate }.map(\.toPulseEntry))
+        } catch {
+            return .failure
+        }
     }
 }

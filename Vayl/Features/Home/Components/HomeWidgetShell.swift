@@ -79,7 +79,7 @@ struct OrbLayer: View {
             GeometryReader { geo in
                 let W: CGFloat = geo.size.width
                 let H: CGFloat = geo.size.height
-                TimelineView(.animation) { tl in
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { tl in
                     let t: Double = tl.date.timeIntervalSinceReferenceDate
                     ZStack {
                         primaryOrb(t: t, w: W, h: H)

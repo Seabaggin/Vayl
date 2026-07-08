@@ -26,11 +26,6 @@ struct PairingJoinView: View {
     @State private var codeInput: String = ""
     @FocusState private var isInputFocused: Bool
 
-    // MARK: - Environment
-
-    @Environment(\.colorScheme) private var colorScheme
-    private var isLight: Bool { colorScheme == .light }
-
     // MARK: - Computed
 
     private var canSubmit: Bool {
@@ -149,7 +144,7 @@ struct PairingJoinView: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
-                        .fill(isLight ? AppColors.cardBackground : AppColors.whisperFill)
+                        .fill(AppColors.whisperFill)
                         .overlay(
                             RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
                                 .strokeBorder(
@@ -173,8 +168,7 @@ struct PairingJoinView: View {
 
             Text("\(codeInput.count) / 6 characters")
                 .font(AppFonts.caption)
-                .foregroundStyle(isLight ? AppColors.textSecondary : AppColors.textTertiary)
-                // isLight ternary retained — these ARE different tokens, intentional distinction
+                .foregroundStyle(AppColors.textTertiary)
         }
     }
 
@@ -203,6 +197,7 @@ struct PairingJoinView: View {
             if let proposal = store.compositionProposal {
                 CompositionConfirmCard(
                     proposal: proposal,
+                    showsError: store.compositionError != nil,
                     onConfirm: { Task { await store.confirmComposition() } },
                     onKeepFlexible: { store.dismissComposition() }
                 )
@@ -250,8 +245,7 @@ struct PairingJoinView: View {
     private var footer: some View {
         Text("Your data is encrypted and always stays yours.")
             .font(AppFonts.caption)
-            .foregroundStyle(isLight ? AppColors.textSecondary : AppColors.textTertiary)
-            // isLight ternary retained — these ARE different tokens, intentional distinction
+            .foregroundStyle(AppColors.textTertiary)
             .multilineTextAlignment(.center)
     }
 
@@ -264,7 +258,7 @@ struct PairingJoinView: View {
 
             Ellipse()
                 .fill(RadialGradient(
-                    colors: [AppColors.accentSecondary.opacity(isLight ? 0.08 : 0.15), .clear],
+                    colors: [AppColors.accentSecondary.opacity(0.15), .clear],
                     center: .center,
                     startRadius: 0,
                     endRadius: 300

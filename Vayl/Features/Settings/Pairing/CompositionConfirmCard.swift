@@ -13,6 +13,7 @@ import SwiftUI
 struct CompositionConfirmCard: View {
 
     let proposal: GenderDynamic
+    let showsError: Bool
     let onConfirm: () -> Void
     let onKeepFlexible: () -> Void
 
@@ -46,6 +47,13 @@ struct CompositionConfirmCard: View {
                 onConfirm()
             }
             .frame(height: VaylButtonSize.fullWidth.height)
+
+            if showsError {
+                Text("That didn't save. Check your connection and tap again.")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.destructive)
+                    .multilineTextAlignment(.center)
+            }
 
             Button {
                 onKeepFlexible()
@@ -98,7 +106,7 @@ struct CompositionConfirmCard: View {
 #Preview {
     ZStack {
         AppColors.void.ignoresSafeArea()
-        CompositionConfirmCard(proposal: .mf, onConfirm: {}, onKeepFlexible: {})
+        CompositionConfirmCard(proposal: .mf, showsError: false, onConfirm: {}, onKeepFlexible: {})
             .padding(AppSpacing.lg)
     }
     .preferredColorScheme(.dark)

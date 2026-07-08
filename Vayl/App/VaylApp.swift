@@ -102,7 +102,7 @@ struct VaylApp: App {
                 // a check-in made offline that reconnects mid-session would otherwise
                 // wait for the next relaunch to reach the server (hydrateFromServer is
                 // bidirectional: pull-merge, then a bounded push-back of unsynced days).
-                // Safe pre-auth: fetchOwnEntries returns nil when signed out, which
+                // Safe pre-auth: fetchOwnEntries returns .failure when signed out, which
                 // hydrateFromServer treats as "leave local state alone."
                 .onChange(of: scenePhase) { _, newPhase in
                     guard newPhase == .active else { return }

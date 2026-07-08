@@ -15,6 +15,18 @@ import OSLog
 
 private let logger = Logger(subsystem: "com.vayl.app", category: "SessionEntryStore")
 
+// MARK: - Realtime seam (test injection)
+//
+// Minimal additive seam: SessionEntryStore only ever calls fetchOpenSession
+// on its injected RealtimeSessionService (a concrete, network-backed final
+// class with no fake-able surface). This protocol exposes just that one
+// method — same pattern as AirlockTransport/LiveAirlockTransport.
+protocol SessionEntryRealtime: AnyObject {
+    func fetchOpenSession(coupleId: UUID) async throws -> CuratedSessionDTO?
+}
+
+extension RealtimeSessionService: SessionEntryRealtime {}
+
 @Observable
 @MainActor
 final class SessionEntryStore {
@@ -33,7 +45,7 @@ final class SessionEntryStore {
 
     private let modelContainer: ModelContainer
     private let appState: AppState
-    private let realtime: RealtimeSessionService
+    private let realtime: SessionEntryRealtime
     private let catalog: DeckCatalogService
     /// Partner display name provider; nil-safe ("Your partner").
     private let partnerName: () -> String?
@@ -54,7 +66,7 @@ final class SessionEntryStore {
 
     init(modelContainer: ModelContainer,
          appState: AppState,
-         realtime: RealtimeSessionService? = nil,
+         realtime: SessionEntryRealtime? = nil,
          catalog: DeckCatalogService? = nil,
          partnerName: @escaping () -> String? = { nil }) {
         self.modelContainer = modelContainer

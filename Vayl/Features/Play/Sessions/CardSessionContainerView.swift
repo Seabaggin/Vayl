@@ -22,6 +22,7 @@ struct CardSessionContainerView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(AppState.self) private var appState
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var store: CoupleSessionStore?
     @State private var airlock: AirlockStore?
@@ -58,6 +59,9 @@ struct CardSessionContainerView: View {
                 Task { await a.start() }
             }
             await built.resumeIfNeeded()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { store?.handleScenePhaseActive() }
         }
         .onDisappear {
             // Leaving BEFORE the session went active means the handshake will

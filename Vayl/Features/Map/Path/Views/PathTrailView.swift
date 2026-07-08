@@ -49,6 +49,30 @@ struct PathTrailView: View {
     ]
 
     var body: some View {
+        Group {
+            if let error = store.loadError {
+                MapEmptyState(
+                    icon: "exclamationmark.triangle",
+                    headline: "Couldn't load your path",
+                    message: error
+                )
+            } else if store.isLoading && store.landmarks.isEmpty {
+                ProgressView()
+                    .tint(AppColors.accentPrimary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if store.visibleLandmarks.isEmpty {
+                MapEmptyState(
+                    icon: "map",
+                    headline: "No landmarks yet",
+                    message: "Your shared path will appear here once it's set up."
+                )
+            } else {
+                trail
+            }
+        }
+    }
+
+    private var trail: some View {
         ScrollView {
             ZStack(alignment: .topLeading) {
                 trailCurve
@@ -228,7 +252,7 @@ private struct PathTrailPreviewHarness: View {
     var body: some View {
         PathTrailView(store: store)
             .background(AppColors.void.ignoresSafeArea())
-            .task { try? await store.load() }
+            .task { await store.load() }
     }
 }
 

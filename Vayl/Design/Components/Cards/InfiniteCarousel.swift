@@ -16,11 +16,29 @@
 
 import SwiftUI
 
-struct InfiniteCarousel<Item: Identifiable, Content: View>: View {
+struct InfiniteCarousel<Item: Identifiable, Content: View, EmptyContent: View>: View {
     let items: [Item]
     var interval: TimeInterval = 5
     var height: CGFloat
     @ViewBuilder var content: (Item) -> Content
+    /// Shown when `items` is empty. Defaults to the original EmptyView (render
+    /// nothing) so existing call sites are untouched; sections that want a
+    /// visible empty state pass the contract icon+headline+sub-label here.
+    var emptyContent: () -> EmptyContent
+
+    init(
+        items: [Item],
+        interval: TimeInterval = 5,
+        height: CGFloat,
+        @ViewBuilder content: @escaping (Item) -> Content,
+        @ViewBuilder emptyContent: @escaping () -> EmptyContent
+    ) {
+        self.items = items
+        self.interval = interval
+        self.height = height
+        self.content = content
+        self.emptyContent = emptyContent
+    }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var selection: Int = 1
@@ -34,7 +52,7 @@ struct InfiniteCarousel<Item: Identifiable, Content: View>: View {
 
     var body: some View {
         if items.isEmpty {
-            EmptyView()
+            emptyContent()
         } else if items.count == 1 {
             content(items[0]).frame(height: height)
         } else {
@@ -99,5 +117,23 @@ struct InfiniteCarousel<Item: Identifiable, Content: View>: View {
             guard !Task.isCancelled else { break }
             withAnimation(AppAnimation.standard) { selection += 1 }
         }
+    }
+}
+
+extension InfiniteCarousel where EmptyContent == EmptyView {
+    /// Preserves the original behavior — an empty `items` renders nothing.
+    init(
+        items: [Item],
+        interval: TimeInterval = 5,
+        height: CGFloat,
+        @ViewBuilder content: @escaping (Item) -> Content
+    ) {
+        self.init(
+            items: items,
+            interval: interval,
+            height: height,
+            content: content,
+            emptyContent: { EmptyView() }
+        )
     }
 }

@@ -30,13 +30,32 @@ struct PathActivityLogView: View {
 
             VStack(spacing: 0) {
                 header
-                if store.activity.isEmpty {
+                if let error = store.loadError {
+                    MapEmptyState(
+                        icon: "exclamationmark.triangle",
+                        headline: "Couldn't load activity",
+                        message: error
+                    )
+                } else if store.isLoading && store.activity.isEmpty {
+                    loadingState
+                } else if store.activity.isEmpty {
                     emptyState
                 } else {
                     activityList
                 }
             }
         }
+    }
+
+    // MARK: - Loading state
+
+    private var loadingState: some View {
+        VStack(spacing: AppSpacing.sm) {
+            ProgressView()
+                .tint(AppColors.accentPrimary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppSpacing.xl)
     }
 
     // MARK: - Header
@@ -100,25 +119,12 @@ struct PathActivityLogView: View {
 
     // MARK: - Empty state
 
-    // Icon (AppColors.textTertiary) + headline (AppFonts.cardTitle) +
-    // sub-label (AppFonts.caption) — required on every data screen.
     private var emptyState: some View {
-        VStack(spacing: AppSpacing.sm) {
-            Image(systemName: "clock.arrow.circlepath")
-                .font(.system(size: 26, weight: .light))
-                .foregroundStyle(AppColors.textTertiary)
-            Text("No activity yet")
-                .font(AppFonts.cardTitle)
-                .foregroundStyle(AppColors.textSecondary)
-            Text("Changes to your shared map will show up here.")
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textTertiary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, AppSpacing.xl)
-        .padding(.horizontal, AppSpacing.lg)
+        MapEmptyState(
+            icon: "clock.arrow.circlepath",
+            headline: "No activity yet",
+            message: "Changes to your shared map will show up here."
+        )
     }
 }
 
@@ -156,7 +162,7 @@ private struct PathActivityLogPreviewHarness: View {
 
     var body: some View {
         PathActivityLogView(store: store)
-            .task { try? await store.load() }
+            .task { await store.load() }
     }
 }
 
@@ -174,7 +180,7 @@ private struct PathActivityLogEmptyPreviewHarness: View {
 
     var body: some View {
         PathActivityLogView(store: store)
-            .task { try? await store.load() }
+            .task { await store.load() }
     }
 }
 

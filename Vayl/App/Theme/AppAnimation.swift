@@ -158,6 +158,12 @@ internal enum AppAnimation {
     /// Reduce motion: remove the animation entirely — shimmer is purely decorative.
     static let ambientShimmer: Double = 1.2
 
+    /// 2.6s — Slow holographic sheen drift on a card face's motif bars
+    /// (VaylCardFace ModeFaceContent's holoShift loop). Slower than ambientPulse (2.0s)
+    /// so the specular travel reads as material light-play, not a pulse.
+    /// Reduce motion: remove the animation entirely. The static state must be visually complete.
+    static let ambientHoloShift: Double = 2.6
+
     /// 2.2s — Duration of one direction of a candle's breath (in OR out). Build the
     /// animation at the call site with `.easeInOut(duration: AppAnimation.candleBreathDuration)`
     /// and sleep the same span between toggles so each inhale/exhale fully completes.

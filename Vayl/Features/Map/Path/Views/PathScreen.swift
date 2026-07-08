@@ -102,8 +102,10 @@ struct PathScreen: View {
                     // branch) — toggling never shows both icons at once.
                     if mode == .trail {
                         Button { showLegend = true } label: { Image(systemName: "key") }
+                            .accessibilityLabel("Legend")
                     } else {
                         Button { showOverflow = true } label: { Image(systemName: "ellipsis") }
+                            .accessibilityLabel("More options")
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -112,9 +114,10 @@ struct PathScreen: View {
                     } label: {
                         Image(systemName: "list.bullet")
                     }
+                    .accessibilityLabel(mode == .trail ? "Show ledger" : "Show trail")
                 }
             }
         }
-        .task { try? await store.load() }
+        .task { await store.load() }
     }
 }

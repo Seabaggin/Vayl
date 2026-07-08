@@ -9,16 +9,13 @@ import SwiftUI
 struct GradientText: View {
     let text: String
     let font: Font
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Text(text)
             .font(font)
             .foregroundStyle(
                 LinearGradient(
-                    colors: colorScheme == .light
-                        ? [AppColors.safetyAccent, AppColors.accentTertiary]
-                        : [AppColors.accentPrimary, AppColors.accentSecondary],
+                    colors: [AppColors.accentPrimary, AppColors.accentSecondary],
                     startPoint: .leading,
                     endPoint: .trailing
                 )

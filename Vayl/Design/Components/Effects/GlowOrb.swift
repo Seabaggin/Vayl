@@ -10,12 +10,11 @@
 import SwiftUI
 
 struct GlowOrb: View {
-    @Environment(\.colorScheme) private var colorScheme
     let color: Color
     var size: CGFloat = 200
 
-    // Ambient glow opacity — emissive in dark, barely-there in light.
-    private var glowOpacity: Double { colorScheme == .dark ? 0.18 : 0.06 }
+    // Ambient glow opacity — emissive on dark.
+    private var glowOpacity: Double { 0.18 }
 
     var body: some View {
         Circle()

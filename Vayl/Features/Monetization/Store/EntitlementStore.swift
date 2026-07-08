@@ -16,6 +16,43 @@ import Foundation
 import SwiftData
 import StoreKit
 
+// MARK: - Service seams (test injection)
+//
+// Minimal additive seam: EntitlementStore already took injected concrete
+// service/storeKit instances (Monetization M1/M2), but the concrete types
+// made them un-fakeable in tests. These protocols mirror the concrete APIs
+// exactly (same signatures, same defaults) so production call sites and
+// behavior are unchanged; only the stored property types move from
+// concrete → protocol. Follows the AirlockTransport seam pattern.
+
+protocol EntitlementServicing: AnyObject {
+    func fetchTier(coupleId: UUID) async throws -> CoupleTierRow?
+    func grantCore(productId: String, signedTransaction: String) async throws -> GrantResponse
+}
+
+extension EntitlementServicing {
+    @discardableResult
+    func grantCore(signedTransaction: String) async throws -> GrantResponse {
+        try await grantCore(productId: "com.vayl.core.lifetime", signedTransaction: signedTransaction)
+    }
+}
+
+extension EntitlementService: EntitlementServicing {}
+
+protocol CoreStoreKitServicing: AnyObject {
+    func loadCoreProduct() async throws -> Product?
+    func purchase(_ product: Product) async throws -> StoreKitService.PurchaseOutcome
+    func finish(_ transaction: Transaction) async
+    func coreEntitlement() async -> (transaction: Transaction, jws: String)?
+    func ownsCore() async -> Bool
+    func restore() async throws -> (transaction: Transaction, jws: String)?
+    func observeTransactionUpdates(
+        onChange: @escaping @Sendable (_ transaction: Transaction, _ jws: String, _ revoked: Bool) async -> Void
+    ) -> Task<Void, Never>
+}
+
+extension StoreKitService: CoreStoreKitServicing {}
+
 @Observable
 @MainActor
 final class EntitlementStore {
@@ -51,15 +88,15 @@ final class EntitlementStore {
 
     private let modelContainer: ModelContainer
     private let appState: AppState
-    private let service: EntitlementService
-    private let storeKit: StoreKitService
+    private let service: EntitlementServicing
+    private let storeKit: CoreStoreKitServicing
     private var updatesTask: Task<Void, Never>?
 
     init(
         modelContainer: ModelContainer,
         appState: AppState,
-        service: EntitlementService? = nil,
-        storeKit: StoreKitService? = nil
+        service: EntitlementServicing? = nil,
+        storeKit: CoreStoreKitServicing? = nil
     ) {
         self.modelContainer = modelContainer
         self.appState = appState
@@ -242,7 +279,13 @@ final class EntitlementStore {
         if newTier != .free && couple.coreUnlockedAt == nil {
             couple.coreUnlockedAt = Date()
         }
-        try? couple.modelContext?.save()
+        do {
+            try couple.modelContext?.save()
+        } catch {
+            // Non-fatal: the in-memory tier is already correct; only the offline
+            // mirror is stale. The next apply() retries the save.
+            loadError = error.localizedDescription
+        }
     }
 
     private func localCouple(_ coupleId: UUID) -> Couple? {

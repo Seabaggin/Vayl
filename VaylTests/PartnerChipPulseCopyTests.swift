@@ -10,8 +10,12 @@ import XCTest
 @testable import Vayl
 
 final class PartnerChipPulseCopyTests: XCTestCase {
-    func testNilPositionShowsNotSharing() {
-        XCTAssertEqual(PartnerChipPulseCopy.tileText(for: nil), "Not sharing")
+    func testNilPositionShowsConfirmedEmptyCopy() {
+        XCTAssertEqual(PartnerChipPulseCopy.tileText(for: nil), "No Pulse to show")
+    }
+
+    func testNilPositionWithFetchFailureShowsFailureCopy() {
+        XCTAssertEqual(PartnerChipPulseCopy.tileText(for: nil, fetchFailed: true), "Couldn't check")
     }
 
     func testValidPositionShowsSpaceName() {

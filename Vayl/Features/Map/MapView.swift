@@ -97,26 +97,48 @@ struct MapView: View {
                 .animation(AppAnimation.slow, value: store.layer)
                 .allowsHitTesting(false)
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                        masthead   // the name wordmark IS the Me/Us switch now
-
-                        // TEMPORARY (Task 15) — see field declarations above.
-                        Button("Open Path (temporary entry point)") {
-                            guard let coupleId = appState.coupleId,
-                                  let profileId = try? modelContext.fetch(FetchDescriptor<UserProfile>()).first?.id
-                            else { return }
-                            pathStore = PathStore(coupleId: coupleId, profileId: profileId, pathStyle: "swinging", transport: PathSyncService())
-                            showPathScreen = true
-                        }
-
-                        layerContent
+                if store.isLoading && !store.hasLoadedOnce {
+                    VStack(spacing: AppSpacing.sm) {
+                        ProgressView()
+                            .tint(AppColors.accentPrimary)
+                        Text("Loading your map...")
+                            .font(AppFonts.bodyText)
+                            .foregroundStyle(AppColors.textSecondary)
                     }
-                    .padding(.horizontal, AppSpacing.lg)
-                    .padding(.top, AppSpacing.md)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else if let error = store.loadError {
+                    VStack(spacing: AppSpacing.md) {
+                        MapEmptyState(
+                            icon: "exclamationmark.triangle",
+                            headline: "Couldn't load your map",
+                            message: error
+                        )
+                        Button("Try Again") {
+                            Task { await loadEverything() }
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                            masthead   // the name wordmark IS the Me/Us switch now
+
+                            // TEMPORARY (Task 15) — see field declarations above.
+                            Button("Open Path (temporary entry point)") {
+                                guard let coupleId = appState.coupleId,
+                                      let profileId = try? modelContext.fetch(FetchDescriptor<UserProfile>()).first?.id
+                                else { return }
+                                pathStore = PathStore(coupleId: coupleId, profileId: profileId, pathStyle: "swinging", transport: PathSyncService())
+                                showPathScreen = true
+                            }
+
+                            layerContent
+                        }
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.top, AppSpacing.md)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .scrollIndicators(.hidden)
                 }
-                .scrollIndicators(.hidden)
             }
             .onChange(of: store.hasUs) { _, has in
                 store.enforceLensGate()
@@ -177,19 +199,23 @@ struct MapView: View {
                 })
             }
         }
-        .task {
-            store.configure(couple: coupleContext)
-            vaultStore.configure(couple: coupleContext)
-            await coupleContext.refreshIfNeeded()   // partner identity (no-op once loaded)
-            store.load(appState: appState, context: modelContext)
-            await vaultStore.loadDesire(appState: appState, context: modelContext)
-            // Eagerly loaded (not just on Agreements-segment open) so the vault
-            // door's stat line has a real count on first render.
-            await vaultStore.loadAgreements(appState: appState, context: modelContext)
-            await store.loadPartnerPulse(appState: appState)
-            store.enforceLensGate()
-            playUsReveal()
-        }
+        .task { await loadEverything() }
+    }
+
+    private func loadEverything() async {
+        store.markLoadStarted()
+        store.configure(couple: coupleContext)
+        vaultStore.configure(couple: coupleContext)
+        await coupleContext.refreshIfNeeded()   // partner identity (no-op once loaded)
+        store.load(appState: appState, context: modelContext)
+        await vaultStore.loadDesire(appState: appState, context: modelContext)
+        // Eagerly loaded (not just on Agreements-segment open) so the vault
+        // door's stat line has a real count on first render.
+        await vaultStore.loadAgreements(appState: appState, context: modelContext)
+        await store.loadPartnerPulse(appState: appState)
+        store.enforceLensGate()
+        playUsReveal()
+        store.markLoadFinished()
     }
 
     // MARK: - Masthead (Home grammar: personal name + sub-line + gear)

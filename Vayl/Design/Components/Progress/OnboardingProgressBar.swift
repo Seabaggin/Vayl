@@ -397,7 +397,6 @@ struct OnboardingProgressBar: View {
         UIAccessibility.isDarkerSystemColorsEnabled
     }
 
-    @Environment(\.colorScheme)      private var colorScheme
     @Environment(\.layoutDirection)  private var layoutDirection
 
     // ── Derived values ─────────────────────────────────────────────────────
@@ -408,13 +407,8 @@ struct OnboardingProgressBar: View {
 
     private var fillWidth: CGFloat { totalWidth * fillRatio }
 
-    // LIGHT-01 / VQ-09: Light track opacity raised 0.06 → 0.09.
-    //   At 0.06 the rail was at minimum legibility on cream.
-    //   0.09 is structural without being heavy.
     private var trackColor: Color {
-        colorScheme == .light
-        ? Color.black.opacity(0.09)   // VQ-09: was 0.06
-        : Color.white.opacity(trackOpacity)
+        Color.white.opacity(trackOpacity)
     }
 
     private var trackOpacity: CGFloat {
@@ -423,25 +417,14 @@ struct OnboardingProgressBar: View {
 
     private var isRTL: Bool { layoutDirection == .rightToLeft }
 
-    // LIGHT-02: Gradient selectors branch dark ↔ light before RTL mirror.
     private var staticFillGradient: LinearGradient {
-        if colorScheme == .light {
-            return isRTL
-            ? ProgressBarGradients.staticFillLightRTL
-            : ProgressBarGradients.staticFillLight
-        }
-        return isRTL
+        isRTL
         ? ProgressBarGradients.staticFillRTL
         : ProgressBarGradients.staticFill
     }
 
     private var finalFillGradient: LinearGradient {
-        if colorScheme == .light {
-            return isRTL
-            ? ProgressBarGradients.finalFillLightRTL
-            : ProgressBarGradients.finalFillLight
-        }
-        return isRTL
+        isRTL
         ? ProgressBarGradients.finalFillRTL
         : ProgressBarGradients.finalFill
     }
@@ -465,31 +448,29 @@ struct OnboardingProgressBar: View {
     // VQ-06: Core base opacity dark 0.50 → 0.38 — was competing with fill.
     // VQ-07: Atmo blur base light 4.5 → 3.5 — was spreading pink too far.
 
-    private var bloomAtmoOpacityBase:  CGFloat { colorScheme == .dark ? 0.18 : 0.10 }
-    private var bloomAtmoOpacityPulse: CGFloat { colorScheme == .dark ? 0.18 : 0.10 }
-    private var bloomMidOpacityBase:   CGFloat { colorScheme == .dark ? 0.28 : 0.13 }
-    private var bloomMidOpacityPulse:  CGFloat { colorScheme == .dark ? 0.22 : 0.11 }
-    private var bloomCoreOpacityBase:  CGFloat { colorScheme == .dark ? 0.38 : 0.22 }  // VQ-06: dark was 0.50
-    private var bloomCoreOpacityPulse: CGFloat { colorScheme == .dark ? 0.25 : 0.13 }
+    private var bloomAtmoOpacityBase:  CGFloat { 0.18 }
+    private var bloomAtmoOpacityPulse: CGFloat { 0.18 }
+    private var bloomMidOpacityBase:   CGFloat { 0.28 }
+    private var bloomMidOpacityPulse:  CGFloat { 0.22 }
+    private var bloomCoreOpacityBase:  CGFloat { 0.38 }  // VQ-06: dark was 0.50
+    private var bloomCoreOpacityPulse: CGFloat { 0.25 }
 
     // VQ-02: Spread multipliers tightened.
-    private var bloomAtmoSpreadBase:   CGFloat { colorScheme == .dark ? 2.8 : 1.8 }    // VQ-02: dark 3.5→2.8, light 2.2→1.8
-    private var bloomAtmoSpreadPulse:  CGFloat { colorScheme == .dark ? 1.4 : 0.8 }    // VQ-02: dark 2.0→1.4, light 1.1→0.8
-    private var bloomMidSpreadBase:    CGFloat { colorScheme == .dark ? 2.0 : 1.3 }
-    private var bloomMidSpreadPulse:   CGFloat { colorScheme == .dark ? 1.2 : 0.7 }
-    private var bloomCoreSpreadBase:   CGFloat { colorScheme == .dark ? 1.2 : 0.9 }
-    private var bloomCoreSpreadPulse:  CGFloat { colorScheme == .dark ? 1.0 : 0.6 }
+    private var bloomAtmoSpreadBase:   CGFloat { 2.8 }    // VQ-02: dark was 3.5
+    private var bloomAtmoSpreadPulse:  CGFloat { 1.4 }    // VQ-02: dark was 2.0
+    private var bloomMidSpreadBase:    CGFloat { 2.0 }
+    private var bloomMidSpreadPulse:   CGFloat { 1.2 }
+    private var bloomCoreSpreadBase:   CGFloat { 1.2 }
+    private var bloomCoreSpreadPulse:  CGFloat { 1.0 }
 
-    // VQ-07: Atmo blur base light 4.5 → 3.5.
-    private var bloomAtmoBlurBase:     CGFloat { colorScheme == .dark ? 6.0 : 3.5 }    // VQ-07: light was 4.5
-    private var bloomAtmoBlurPulse:    CGFloat { colorScheme == .dark ? 3.0 : 1.8 }
-    private var bloomMidBlurBase:      CGFloat { colorScheme == .dark ? 5.0 : 3.5 }
-    private var bloomMidBlurPulse:     CGFloat { colorScheme == .dark ? 3.0 : 1.8 }
-    private var bloomCoreBlurBase:     CGFloat { colorScheme == .dark ? 2.0 : 1.6 }
-    private var bloomCoreBlurPulse:    CGFloat { colorScheme == .dark ? 1.0 : 0.7 }
+    private var bloomAtmoBlurBase:     CGFloat { 6.0 }
+    private var bloomAtmoBlurPulse:    CGFloat { 3.0 }
+    private var bloomMidBlurBase:      CGFloat { 5.0 }
+    private var bloomMidBlurPulse:     CGFloat { 3.0 }
+    private var bloomCoreBlurBase:     CGFloat { 2.0 }
+    private var bloomCoreBlurPulse:    CGFloat { 1.0 }
 
-    // VQ-18: Light particle opacity scale raised 0.52 → 0.65.
-    private var particleOpacityScale:  CGFloat { colorScheme == .dark ? 1.0 : 0.65 }   // VQ-18: light was 0.52
+    private var particleOpacityScale:  CGFloat { 1.0 }
 
     // ── Accessibility ──────────────────────────────────────────────────────
 
@@ -629,7 +610,6 @@ struct OnboardingProgressBar: View {
                 elapsed:              elapsed,
                 bloomIntensity:       bloomIntensity,
                 breatheIntensity:     breatheIntensity,
-                colorScheme:          colorScheme,
                 barHeight:            barHeight,
                 atmoOpacityBase:      bloomAtmoOpacityBase,
                 atmoOpacityPulse:     bloomAtmoOpacityPulse,
@@ -703,12 +683,7 @@ struct OnboardingProgressBar: View {
             fillWidth: fillWidth
         )
         let outerOpacity = 0.10 + breatheIntensity * 0.18
-
-        // VQ-11: inner opacity slightly higher in light mode so the white
-        //        hotspot reads against the warm orange fill on cream.
-        let innerOpacity: CGFloat = colorScheme == .light
-            ? 0.32 + breatheIntensity * 0.36   // VQ-11: light (was no branch)
-            : 0.28 + breatheIntensity * 0.32   // original dark values
+        let innerOpacity: CGFloat = 0.28 + breatheIntensity * 0.32
 
         ZStack(alignment: .leading) {
 
@@ -769,7 +744,6 @@ struct OnboardingProgressBar: View {
         elapsed:              CGFloat,
         bloomIntensity:       CGFloat,
         breatheIntensity:     CGFloat,
-        colorScheme:          ColorScheme,
         barHeight:            CGFloat,
         atmoOpacityBase:      CGFloat,
         atmoOpacityPulse:     CGFloat,
@@ -800,8 +774,6 @@ struct OnboardingProgressBar: View {
             // VQ-17: bar top surface Y — particles launch from here, not centre.
             let barTopY   = barMidY - barHeight / 2
 
-            let isLight = colorScheme == .light
-
             // ── Layer 3: Outer atmosphere ──────────────────────────────────
             // VQ-02: spread values reduced (passed in via parameters).
             // VQ-03: leading stop now uses cyan (dark) / orangeDeep (light)
@@ -822,13 +794,7 @@ struct OnboardingProgressBar: View {
             atmoCtx.fill(
                 Path(roundedRect: atmoRect, cornerRadius: atmoSpread / 2),
                 with: .linearGradient(
-                    Gradient(colors: isLight ? [
-                        AppColors.progressBarTrailing.opacity(0.40),   // VQ-03: anchors left end
-                        AppColors.progressBarTrailing.opacity(0.55),
-                        AppColors.accentTertiary.opacity(0.50),        // VQ-04: was 0.80
-                        AppColors.progressBarTrailing.opacity(0.55),
-                        AppColors.progressBarTrailing.opacity(0.30)
-                    ] : [
+                    Gradient(colors: [
                         AppColors.accentPrimary.opacity(0.35),         // VQ-03: anchors cyan end
                         AppColors.accentSecondary.opacity(0.60),
                         AppColors.accentTertiary.opacity(0.70),        // VQ-04: was 0.80
@@ -857,13 +823,7 @@ struct OnboardingProgressBar: View {
             midCtx.fill(
                 Path(roundedRect: midRect, cornerRadius: midSpread / 2),
                 with: .linearGradient(
-                    Gradient(colors: isLight ? [
-                        AppColors.progressBarTrailing.opacity(0.18),
-                        AppColors.progressBarTrailing.opacity(0.50),
-                        AppColors.progressBarLeading.opacity(0.65),    // VQ-05: was 0.90
-                        AppColors.accentTertiary.opacity(0.60),
-                        AppColors.accentTertiary.opacity(0.30)
-                    ] : [
+                    Gradient(colors: [
                         AppColors.accentPrimary.opacity(0.18),
                         AppColors.accentPrimary.opacity(0.50),
                         AppColors.accentSecondary.opacity(0.90),
@@ -893,13 +853,7 @@ struct OnboardingProgressBar: View {
             coreCtx.fill(
                 Path(roundedRect: coreRect, cornerRadius: coreSpread / 2),
                 with: .linearGradient(
-                    Gradient(colors: isLight ? [
-                        AppColors.progressBarTrailing.opacity(0.25),
-                        AppColors.progressBarLeading.opacity(0.90),
-                        AppColors.progressBarLeading.opacity(0.80),
-                        AppColors.accentTertiary.opacity(0.90),
-                        AppColors.accentTertiary.opacity(0.65)
-                    ] : [
+                    Gradient(colors: [
                         AppColors.accentPrimary.opacity(0.25),
                         AppColors.accentPrimary.opacity(0.90),
                         AppColors.accentSecondary.opacity(0.80),
@@ -912,17 +866,8 @@ struct OnboardingProgressBar: View {
             )
 
             // ── Particles ──────────────────────────────────────────────────
-            // LIGHT-04: color arrays branched on isLight.
-            // VQ-18: particleOpacityScale handles overall light/dark scaling.
 
-            let particleDefs: [(Color, CGFloat, Double)] = isLight ? [
-                (AppColors.progressBarLeading,  0.08, 0.0),
-                (AppColors.progressBarTrailing, 0.42, 0.6),
-                (AppColors.accentTertiary,      0.72, 1.2),
-                (AppColors.progressBarLeading,  0.90, 0.3),
-                (AppColors.accentTertiary,      0.22, 0.95),
-                (AppColors.progressBarTrailing, 0.55, 0.65),
-            ] : [
+            let particleDefs: [(Color, CGFloat, Double)] = [
                 (AppColors.accentPrimary,   0.08, 0.0),
                 (AppColors.accentSecondary, 0.42, 0.6),
                 (AppColors.accentTertiary,  0.72, 1.2),
@@ -1058,8 +1003,6 @@ struct OnboardingProgressBar: View {
 // ─────────────────────────────────────────────────────────────────────────────
 
 private struct PreviewContent: View {
-
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         ZStack {

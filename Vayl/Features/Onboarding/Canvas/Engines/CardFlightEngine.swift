@@ -1,5 +1,11 @@
 import SwiftUI
 import SpriteKit
+import OSLog
+
+private let logger = Logger(
+    subsystem: "com.vayl.app",
+    category: "CardFlightEngine"
+)
 
 @MainActor
 final class CardFlightEngine {
@@ -90,7 +96,7 @@ final class CardFlightEngine {
         // main-thread rasterize (hits return instantly).
         await Task.yield()
         guard let cardImage = CardBackRaster.image(width: cardW, height: cardH, scale: scale) else {
-            print("[CardFlightEngine] dealSingleCard: VaylCardBack snapshot failed")
+            logger.error("dealSingleCard: VaylCardBack snapshot failed")
             return nil
         }
 

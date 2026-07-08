@@ -9,7 +9,6 @@
 import SwiftUI
 
 struct InteractiveField: View {
-    @Environment(\.colorScheme) private var colorScheme
     let placeholder: String
     let icon: String
     @Binding var text: String
@@ -24,16 +23,14 @@ struct InteractiveField: View {
         }
         .padding(.horizontal, AppSpacing.md)
         .padding(.vertical, AppSpacing.sm)
-        .background(
-            colorScheme == .dark ? AppColors.whisperFill : AppColors.cardBackground
-        )
+        .background(AppColors.whisperFill)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
         .overlay(
             RoundedRectangle(cornerRadius: AppRadius.md)
                 .stroke(AppColors.borderSubtle, lineWidth: 1.5)
         )
         .shadow(
-            color: colorScheme == .dark ? AppColors.accentPrimary.opacity(0.20) : .clear,
+            color: AppColors.accentPrimary.opacity(0.20),
             radius: 6
         )
     }

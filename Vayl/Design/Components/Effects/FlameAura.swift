@@ -11,7 +11,6 @@
 // Rendered entirely in Canvas so there are zero UIKit/CALayer allocations.
 
 import SwiftUI
-import Combine
 
 // ─────────────────────────────────────────────
 // MARK: Public view
@@ -23,11 +22,12 @@ struct FlameAura: View {
 
     // Appearance entrance
     @State private var appeared = false
-    // Master time driver
-    @State private var t: Double = 0
 
-    // Timer publisher — 60 fps
-    private let ticker = Timer.publish(every: 1/60, on: .main, in: .common).autoconnect()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // Wisps advance at 0.018 per 1/60s tick — 1.08 units/sec — matched here so the
+    // gated TimelineView reproduces the original per-frame ticker's rate exactly.
+    private static let tRate: Double = 1.08
 
     private var wispCount: Int {
         switch intensity {
@@ -54,10 +54,16 @@ struct FlameAura: View {
     }
 
     var body: some View {
-        Canvas { ctx, size in
-            guard wispCount > 0 else { return }
-            for i in 0..<wispCount {
-                drawWisp(ctx: &ctx, size: size, index: i, t: t)
+        Group {
+            // Ambient gate — under Reduce Motion / Low Power Mode the flame holds
+            // ONE static frame and the per-frame timer subscription is never
+            // created, so a backgrounded pill stops burning CPU entirely.
+            if reduceMotion || AppAnimation.lowPower {
+                wispCanvas(t: 0)
+            } else {
+                TimelineView(.animation) { timeline in
+                    wispCanvas(t: timeline.date.timeIntervalSinceReferenceDate * Self.tRate)
+                }
             }
         }
         .opacity(appeared ? masterOpacity : 0)
@@ -65,8 +71,16 @@ struct FlameAura: View {
             withAnimation(AppAnimation.enter) { appeared = true }
         }
         .onDisappear { appeared = false }
-        .onReceive(ticker) { _ in t += 0.018 }
         .allowsHitTesting(false)
+    }
+
+    private func wispCanvas(t: Double) -> some View {
+        Canvas { ctx, size in
+            guard wispCount > 0 else { return }
+            for i in 0..<wispCount {
+                drawWisp(ctx: &ctx, size: size, index: i, t: t)
+            }
+        }
     }
 
     // ─────────────────────────────────────────────

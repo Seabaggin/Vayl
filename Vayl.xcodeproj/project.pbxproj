@@ -49,6 +49,11 @@
 		AA00000RAAAA000000000001 /* PathLandmarkProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000RAAAA000000000002 /* PathLandmarkProgressTests.swift */; };
 		AA00000SAAAA000000000001 /* PathContentServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000SAAAA000000000002 /* PathContentServiceTests.swift */; };
 		AA00000TAAAA000000000001 /* PathStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000TAAAA000000000002 /* PathStoreTests.swift */; };
+		AA00000UAAAA000000000001 /* AuthStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000UAAAA000000000002 /* AuthStoreTests.swift */; };
+		AA00000VAAAA000000000001 /* CoupleSessionSafetyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000VAAAA000000000002 /* CoupleSessionSafetyTests.swift */; };
+		AA00000WAAAA000000000001 /* EntitlementStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000WAAAA000000000002 /* EntitlementStoreTests.swift */; };
+		AA00000XAAAA000000000001 /* PulseStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000XAAAA000000000002 /* PulseStoreTests.swift */; };
+		AA00000YAAAA000000000001 /* SessionEntryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000YAAAA000000000002 /* SessionEntryStoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,6 +113,11 @@
 		AA00000RAAAA000000000002 /* PathLandmarkProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathLandmarkProgressTests.swift; sourceTree = "<group>"; };
 		AA00000SAAAA000000000002 /* PathContentServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathContentServiceTests.swift; sourceTree = "<group>"; };
 		AA00000TAAAA000000000002 /* PathStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathStoreTests.swift; sourceTree = "<group>"; };
+		AA00000UAAAA000000000002 /* AuthStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthStoreTests.swift; sourceTree = "<group>"; };
+		AA00000VAAAA000000000002 /* CoupleSessionSafetyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoupleSessionSafetyTests.swift; sourceTree = "<group>"; };
+		AA00000WAAAA000000000002 /* EntitlementStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementStoreTests.swift; sourceTree = "<group>"; };
+		AA00000XAAAA000000000002 /* PulseStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseStoreTests.swift; sourceTree = "<group>"; };
+		AA00000YAAAA000000000002 /* SessionEntryStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionEntryStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -228,6 +238,11 @@
 				AA00000RAAAA000000000002 /* PathLandmarkProgressTests.swift */,
 				AA00000SAAAA000000000002 /* PathContentServiceTests.swift */,
 				AA00000TAAAA000000000002 /* PathStoreTests.swift */,
+				AA00000UAAAA000000000002 /* AuthStoreTests.swift */,
+				AA00000VAAAA000000000002 /* CoupleSessionSafetyTests.swift */,
+				AA00000WAAAA000000000002 /* EntitlementStoreTests.swift */,
+				AA00000XAAAA000000000002 /* PulseStoreTests.swift */,
+				AA00000YAAAA000000000002 /* SessionEntryStoreTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -447,6 +462,11 @@
 				AA00000RAAAA000000000001 /* PathLandmarkProgressTests.swift in Sources */,
 				AA00000SAAAA000000000001 /* PathContentServiceTests.swift in Sources */,
 				AA00000TAAAA000000000001 /* PathStoreTests.swift in Sources */,
+				AA00000UAAAA000000000001 /* AuthStoreTests.swift in Sources */,
+				AA00000VAAAA000000000001 /* CoupleSessionSafetyTests.swift in Sources */,
+				AA00000WAAAA000000000001 /* EntitlementStoreTests.swift in Sources */,
+				AA00000XAAAA000000000001 /* PulseStoreTests.swift in Sources */,
+				AA00000YAAAA000000000001 /* SessionEntryStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -611,7 +631,6 @@
 				INFOPLIST_FILE = Vayl/Vayl.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -648,7 +667,6 @@
 				INFOPLIST_FILE = Vayl/Vayl.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (

@@ -32,6 +32,7 @@ struct SettingsView: View {
     @State private var showUnlink:          Bool = false
     @State private var showSignOutConfirm:  Bool = false
     @State private var showDeleteConfirm:   Bool = false
+    @State private var legalDoc:            LegalDoc? = nil
 
     var body: some View {
         GeometryReader { geo in
@@ -136,6 +137,7 @@ struct SettingsView: View {
             } message: {
                 if case .error(let message) = store?.accountPhase { Text(message) }
             }
+            .vaylSafariSheet(item: $legalDoc) { $0.url }
         }
     }
 
@@ -488,14 +490,14 @@ struct SettingsView: View {
             SettingsSectionLabel(text: "About")
             SettingsCard {
                 VStack(spacing: 0) {
-                    Button {} label: {
+                    Button { legalDoc = .privacy } label: {
                         SettingsNavRow(icon: "hand.raised.fill", label: "Privacy policy")
                     }
                     .buttonStyle(PressableCardStyle())
 
                     Divider().overlay(AppColors.borderSubtle)
 
-                    Button {} label: {
+                    Button { legalDoc = .terms } label: {
                         SettingsNavRow(icon: "doc.text.fill", label: "Terms of service")
                     }
                     .buttonStyle(PressableCardStyle())

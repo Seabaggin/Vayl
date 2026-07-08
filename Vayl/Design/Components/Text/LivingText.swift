@@ -9,30 +9,17 @@ struct LivingText: View {
     /// Home greeting name). Defaults true to preserve every existing caller.
     var animated: Bool = true
 
-    @Environment(\.colorScheme) private var colorScheme
-
     // MARK: - Gradient Stops
     //
-    // Dark: clean three-stop directional gradient.
+    // Clean three-stop directional gradient.
     // accentPrimary left → accentSecondary mid → accentTertiary right.
-    //
-    // Light: directional warm sweep.
-    // accentTertiary left → progressBarLeading mid → progressBarTrailing right.
 
     private var gradientStops: [Color] {
-        if colorScheme == .light {
-            return [
-                AppColors.accentTertiary,
-                AppColors.progressBarLeading,
-                AppColors.progressBarTrailing,
-            ]
-        } else {
-            return [
-                AppColors.accentPrimary,
-                AppColors.accentSecondary,
-                AppColors.accentTertiary,
-            ]
-        }
+        [
+            AppColors.accentPrimary,
+            AppColors.accentSecondary,
+            AppColors.accentTertiary,
+        ]
     }
 
     // MARK: - Body
@@ -49,11 +36,9 @@ struct LivingText: View {
         .accessibilityLabel(text)
     }
 
-    // Static gradient — respects color scheme.
+    // Static gradient.
     private var staticText: some View {
-        let stops: [Color] = colorScheme == .light
-            ? [AppColors.accentTertiary, AppColors.progressBarLeading, AppColors.safetyAccent]
-            : [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary]
+        let stops: [Color] = [AppColors.accentPrimary, AppColors.accentSecondary, AppColors.accentTertiary]
         return Text(text)
             .font(font)
             .foregroundStyle(LinearGradient(colors: stops, startPoint: .leading, endPoint: .trailing))
@@ -65,10 +50,7 @@ struct LivingText: View {
         // 30fps cap: the breathing cycles are 4.3–5.0s; display-rate re-layout
         // of three Text layers (two blurred, screen-blended) is wasted work.
         TimelineView(.animation(minimumInterval: 1 / 30)) { timeline in
-            let f = Frame(
-                elapsed: timeline.date.timeIntervalSinceReferenceDate,
-                isLight: colorScheme == .light
-            )
+            let f = Frame(elapsed: timeline.date.timeIntervalSinceReferenceDate)
             let baseGradient = LinearGradient(colors: f.stops, startPoint: .leading, endPoint: .trailing)
 
             ZStack {
@@ -114,7 +96,7 @@ private struct Frame {
     let glowOpacity: Double
     let breathScale: CGFloat
 
-    init(elapsed: TimeInterval, isLight: Bool) {
+    init(elapsed: TimeInterval) {
         // Glow breath — 4.3s cycle. Drives all three bloom layers in unison.
         let glowCycle: Double  = 4.3
         let glowPhase: CGFloat = CGFloat(elapsed.truncatingRemainder(dividingBy: glowCycle) / glowCycle)
@@ -128,30 +110,18 @@ private struct Frame {
         // Spectrum stops at FULL opacity — the readable core must never fade.
         // The wash came from breathing each stop's alpha down to 0.70 here;
         // breathing now lives entirely in the glow layers (see animatedText).
-        self.stops = isLight
-            ? [
-                AppColors.accentTertiary,
-                AppColors.progressBarLeading,
-                AppColors.progressBarTrailing,
-              ]
-            : [
-                AppColors.accentPrimary,
-                AppColors.accentSecondary,
-                AppColors.accentTertiary,
-              ]
+        self.stops = [
+            AppColors.accentPrimary,
+            AppColors.accentSecondary,
+            AppColors.accentTertiary,
+        ]
 
-        self.glowOpacity = isLight
-            ? 0.20 + Double(intensity) * 0.22
-            : 0.28 + Double(intensity) * 0.30
+        self.glowOpacity = 0.28 + Double(intensity) * 0.30
 
-        self.glowBlur = isLight
-            ? 5.0 + intensity * 4.0
-            : 8.0 + intensity * 7.0
+        self.glowBlur = 8.0 + intensity * 7.0
 
         // Scale breath — 1.000 → 1.008, barely perceptible.
-        self.breathScale = isLight
-            ? 1.0 + scaleIntensity * 0.008
-            : 1.0 + scaleIntensity * 0.010
+        self.breathScale = 1.0 + scaleIntensity * 0.010
     }
 }
 

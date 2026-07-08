@@ -77,7 +77,7 @@ final class OnboardingStore {
             appState.markOnboardingComplete(profile, context: context) // single completion writer (truth+surface+cache)
             lastCommitError = nil
             didComplete = true
-            logger.info("Onboarding committed — displayName: \(data.displayName), appMode: \(data.appMode.rawValue)")
+            logger.info("Onboarding committed — appMode: \(data.appMode.rawValue)")
             return true
         } catch {
             lastCommitError = error

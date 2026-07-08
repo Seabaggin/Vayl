@@ -57,7 +57,7 @@ struct SessionLobbyView: View {
                 Circle()
                     .fill(AppColors.spectrumBorder)
                     .frame(width: 9, height: 9)
-                    .opacity(waitingPulse ? 1 : 0.35)
+                    .opacity(waitingPulse ? 0.75 : 0.4)
                     .ambientAnimation(
                         .easeInOut(duration: AppAnimation.ambientPulse / 1.5)
                             .repeatForever(autoreverses: true),

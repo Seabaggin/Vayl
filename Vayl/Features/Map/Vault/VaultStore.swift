@@ -35,6 +35,15 @@ final class VaultStore {
     private(set) var align: [MapStore.AlignItem] = []
     private(set) var lockedAlignCount: Int = 0
 
+    // MARK: - Load state
+    //
+    // One shared pair: VaultSheet's `.task(id: store.segment)` loads one
+    // segment at a time, serially, never concurrently, so a single
+    // isLoading/loadError pair unambiguously describes "the segment in flight."
+
+    private(set) var isLoading: Bool = false
+    private(set) var loadError: String? = nil
+
     /// Couple-fact source of truth, attached once from the hosting view's `.task`
     /// (@State store construction can't reach @Environment).
     private var couple: CoupleContext?
@@ -69,6 +78,7 @@ final class VaultStore {
     /// gated on `CoupleContext.canRevealAll` (the OR'd entitlement: server tier OR
     /// local StoreKit ownership). Idempotent; safe to re-run after a paywall unlock.
     func loadDesire(appState: AppState, context: ModelContext) async {
+        loadError = nil
         guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else {
             desire = DesireSummary()
             align = []
@@ -92,16 +102,25 @@ final class VaultStore {
         }
         desire = summary
 
-        var revealed: [MapStore.AlignItem] = []
-        var locked = 0
-        if let coupleId = appState.coupleId {
-            // THE gate rule — CoupleContext.canRevealAll (OR'd entitlement), never the
-            // local Couple mirror (which can lag a just-purchased buyer and under-reveal
-            // the Vault while the reveal shows unlocked).
-            let canReveal = couple?.canRevealAll ?? false
-            let rows = (try? await desireSync.fetchMatches(coupleId: coupleId)) ?? []
+        guard let coupleId = appState.coupleId else {
+            align = []
+            lockedAlignCount = 0
+            return
+        }
+
+        isLoading = true
+        defer { isLoading = false }
+
+        // THE gate rule — CoupleContext.canRevealAll (OR'd entitlement), never the
+        // local Couple mirror (which can lag a just-purchased buyer and under-reveal
+        // the Vault while the reveal shows unlocked).
+        let canReveal = couple?.canRevealAll ?? false
+        do {
+            let rows = try await desireSync.fetchMatches(coupleId: coupleId)
             let items = (try? ContentLoader.loadDesireItems()) ?? []
             let nameById = Dictionary(items.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+            var revealed: [MapStore.AlignItem] = []
+            var locked = 0
             for row in rows {
                 if canReveal || row.isFreeReveal {
                     revealed.append(MapStore.AlignItem(
@@ -113,9 +132,11 @@ final class VaultStore {
                     locked += 1
                 }
             }
+            align = revealed.sorted { $0.isMutual && !$1.isMutual }
+            lockedAlignCount = locked
+        } catch {
+            loadError = error.localizedDescription
         }
-        align = revealed.sorted { $0.isMutual && !$1.isMutual }
-        lockedAlignCount = locked
     }
 
     // MARK: - Agreements (Phase A: dual-lock, mutual approval to change)
@@ -143,12 +164,21 @@ final class VaultStore {
         ).first {
             safeWord = couple.sharedSafeWord
         }
-        let rows = (try? await agreementsService.fetchAgreements(coupleId: coupleId)) ?? []
-        let pending = (try? await agreementsService.fetchPendingProposals(coupleId: coupleId)) ?? []
-        agreements = rows.filter(\.isActive).map { AgreementVM(id: $0.id, text: $0.text) }
-        proposals = pending.map {
-            ProposalVM(id: $0.id, action: $0.action, proposedText: $0.proposedText,
-                       targetId: $0.targetAgreementId, mineToDecide: $0.proposedBy != me.id)
+
+        isLoading = true
+        loadError = nil
+        defer { isLoading = false }
+
+        do {
+            let rows = try await agreementsService.fetchAgreements(coupleId: coupleId)
+            let pending = try await agreementsService.fetchPendingProposals(coupleId: coupleId)
+            agreements = rows.filter(\.isActive).map { AgreementVM(id: $0.id, text: $0.text) }
+            proposals = pending.map {
+                ProposalVM(id: $0.id, action: $0.action, proposedText: $0.proposedText,
+                           targetId: $0.targetAgreementId, mineToDecide: $0.proposedBy != me.id)
+            }
+        } catch {
+            loadError = error.localizedDescription
         }
     }
 
@@ -230,28 +260,36 @@ final class VaultStore {
     /// Pulls remote entries (own + shared) and upserts them into local SwiftData, so a
     /// new device restores your entries and the partner's shared entries appear.
     func syncLogDown(context: ModelContext) async {
-        guard let rows = try? await eventLogService.pull() else { return }
-        for row in rows {
-            let rid = row.id
-            let existing = (try? context.fetch(
-                FetchDescriptor<EventLogEntry>(predicate: #Predicate { $0.id == rid })
-            ))?.first
-            let date = EventLogService.dayFormatter.date(from: row.occurredOn) ?? Date()
-            if let e = existing {
-                e.title = row.title; e.note = row.note; e.mood = row.mood
-                e.tags = row.tags; e.who = row.who; e.visibility = row.visibility
-                e.coupleId = row.coupleId; e.occurredOn = date
-            } else {
-                let e = EventLogEntry(authorId: row.authorId, coupleId: row.coupleId,
-                                      occurredOn: date, title: row.title, note: row.note,
-                                      mood: row.mood, tags: row.tags, who: row.who,
-                                      visibility: row.visibility)
-                e.id = rid
-                context.insert(e)
+        isLoading = true
+        loadError = nil
+        defer { isLoading = false }
+
+        do {
+            let rows = try await eventLogService.pull()
+            for row in rows {
+                let rid = row.id
+                let existing = (try? context.fetch(
+                    FetchDescriptor<EventLogEntry>(predicate: #Predicate { $0.id == rid })
+                ))?.first
+                let date = EventLogService.dayFormatter.date(from: row.occurredOn) ?? Date()
+                if let e = existing {
+                    e.title = row.title; e.note = row.note; e.mood = row.mood
+                    e.tags = row.tags; e.who = row.who; e.visibility = row.visibility
+                    e.coupleId = row.coupleId; e.occurredOn = date
+                } else {
+                    let e = EventLogEntry(authorId: row.authorId, coupleId: row.coupleId,
+                                          occurredOn: date, title: row.title, note: row.note,
+                                          mood: row.mood, tags: row.tags, who: row.who,
+                                          visibility: row.visibility)
+                    e.id = rid
+                    context.insert(e)
+                }
             }
+            try context.save()
+            loadLog(context: context)
+        } catch {
+            loadError = error.localizedDescription
         }
-        try? context.save()
-        loadLog(context: context)
     }
 
     // MARK: - Consent exchange (Phase C: open a conversation; a decline never discloses)
@@ -284,32 +322,40 @@ final class VaultStore {
         let items = (try? ContentLoader.loadDesireItems()) ?? []
         let nameById = Dictionary(items.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
 
-        let requests = (try? await consentService.fetchRequests(coupleId: coupleId)) ?? []
-        let declines = (try? await consentService.fetchMyDeclines(coupleId: coupleId)) ?? []
-        let declinedIds = Set(declines.map(\.itemId))
-        let requestedIds = Set(requests.map(\.itemId))
+        isLoading = true
+        loadError = nil
+        defer { isLoading = false }
 
-        let all = requests.map { r in
-            ConsentVM(id: r.id, itemId: r.itemId, itemName: nameById[r.itemId] ?? r.itemId,
-                      status: r.status, iAmAsker: r.askerId == me.id, discussionCardId: r.discussionCardId)
+        do {
+            let requests = try await consentService.fetchRequests(coupleId: coupleId)
+            let declines = try await consentService.fetchMyDeclines(coupleId: coupleId)
+            let declinedIds = Set(declines.map(\.itemId))
+            let requestedIds = Set(requests.map(\.itemId))
+
+            let all = requests.map { r in
+                ConsentVM(id: r.id, itemId: r.itemId, itemName: nameById[r.itemId] ?? r.itemId,
+                          status: r.status, iAmAsker: r.askerId == me.id, discussionCardId: r.discussionCardId)
+            }
+            openedConsent = all.filter { $0.status == "opened" }
+            myAsks = all.filter { $0.status == "pending" && $0.iAmAsker }
+            incoming = all.filter { $0.status == "pending" && !$0.iAmAsker && !declinedIds.contains($0.itemId) }
+
+            // Askable: my positive local items with no request yet (a short, calm list).
+            let userId = me.id
+            let entries = (try? context.fetch(
+                FetchDescriptor<DesireMapEntry>(predicate: #Predicate { $0.userId == userId })
+            )) ?? []
+            let positive = entries.filter { $0.rating == .excitedAboutIt || $0.rating == .openToIt }
+            askableTopics = Array(
+                positive
+                    .filter { !requestedIds.contains($0.itemId) }
+                    .map { ConsentTopic(id: $0.itemId, name: nameById[$0.itemId] ?? $0.itemId) }
+                    .sorted { $0.name < $1.name }
+                    .prefix(5)
+            )
+        } catch {
+            loadError = error.localizedDescription
         }
-        openedConsent = all.filter { $0.status == "opened" }
-        myAsks = all.filter { $0.status == "pending" && $0.iAmAsker }
-        incoming = all.filter { $0.status == "pending" && !$0.iAmAsker && !declinedIds.contains($0.itemId) }
-
-        // Askable: my positive local items with no request yet (a short, calm list).
-        let userId = me.id
-        let entries = (try? context.fetch(
-            FetchDescriptor<DesireMapEntry>(predicate: #Predicate { $0.userId == userId })
-        )) ?? []
-        let positive = entries.filter { $0.rating == .excitedAboutIt || $0.rating == .openToIt }
-        askableTopics = Array(
-            positive
-                .filter { !requestedIds.contains($0.itemId) }
-                .map { ConsentTopic(id: $0.itemId, name: nameById[$0.itemId] ?? $0.itemId) }
-                .sorted { $0.name < $1.name }
-                .prefix(5)
-        )
     }
 
     func askToOpen(itemId: String, appState: AppState, context: ModelContext) async {

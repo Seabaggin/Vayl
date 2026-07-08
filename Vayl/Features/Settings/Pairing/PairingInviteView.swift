@@ -26,11 +26,6 @@ struct PairingInviteView: View {
     /// Drives the ambient breathe on the waiting indicator. Toggled on appear.
     @State private var breathe = false
 
-    // MARK: - Environment
-
-    @Environment(\.colorScheme) private var colorScheme
-    private var isLight: Bool { colorScheme == .light }
-
     // MARK: - Body
 
     var body: some View {
@@ -146,7 +141,7 @@ struct PairingInviteView: View {
                 .padding(.horizontal, AppSpacing.lg)    // was 20 → lg (24), snap per handoff
                 .background(
                     RoundedRectangle(cornerRadius: AppRadius.md) // was 12 → md, exact
-                        .fill(isLight ? AppColors.cardBackground : AppColors.modalBackground)
+                        .fill(AppColors.modalBackground)
                 )
                 .opacity(breathe ? 1.0 : 0.55)
                 .ambientAnimation(AppAnimation.cardBreathe, value: breathe)
@@ -194,7 +189,7 @@ struct PairingInviteView: View {
                 .padding(.horizontal, AppSpacing.md) // was 16 → md, exact
                 .background(
                     RoundedRectangle(cornerRadius: AppRadius.sm) // was 8 → sm, exact
-                        .fill(isLight ? AppColors.cardBackground : AppColors.modalBackground)
+                        .fill(AppColors.modalBackground)
                 )
             }
             .accessibilityLabel("Copy pairing code")
@@ -204,7 +199,7 @@ struct PairingInviteView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
-                .fill(isLight ? AppColors.cardBackground : AppColors.whisperFill)
+                .fill(AppColors.whisperFill)
                 .overlay(
                     RoundedRectangle(cornerRadius: AppRadius.container) // was 20 → container, exact
                         .strokeBorder(
@@ -247,6 +242,7 @@ struct PairingInviteView: View {
             if let proposal = store.compositionProposal {
                 CompositionConfirmCard(
                     proposal: proposal,
+                    showsError: store.compositionError != nil,
                     onConfirm: { Task { await store.confirmComposition() } },
                     onKeepFlexible: { store.dismissComposition() }
                 )
@@ -327,8 +323,7 @@ struct PairingInviteView: View {
     private var footer: some View {
         Text("Your data is encrypted and always stays yours.")
             .font(AppFonts.caption)
-            .foregroundStyle(isLight ? AppColors.textSecondary : AppColors.textTertiary)
-            // isLight ternary retained — these ARE different tokens, intentional distinction
+            .foregroundStyle(AppColors.textTertiary)
             .multilineTextAlignment(.center)
     }
 
@@ -341,7 +336,7 @@ struct PairingInviteView: View {
 
             Ellipse()
                 .fill(RadialGradient(
-                    colors: [AppColors.accentPrimary.opacity(isLight ? 0.08 : 0.15), .clear],
+                    colors: [AppColors.accentPrimary.opacity(0.15), .clear],
                     center: .center,
                     startRadius: 0,
                     endRadius: 300

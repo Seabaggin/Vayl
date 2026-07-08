@@ -462,7 +462,7 @@ private struct PathNodePreviewHarness: View {
             .padding(AppSpacing.lg)
         }
         .background(AppColors.void.ignoresSafeArea())
-        .task { try? await store.load() }
+        .task { await store.load() }
     }
 }
 
@@ -498,7 +498,7 @@ private struct PathNodeCuriousPreviewHarness: View {
             .padding(AppSpacing.lg)
         }
         .background(AppColors.void.ignoresSafeArea())
-        .task { try? await store.load() }
+        .task { await store.load() }
     }
 }
 

@@ -112,6 +112,10 @@ final class PairingStore {
         self.linkState = initialState
     }
 
+    isolated deinit {
+        pollTask?.cancel()
+    }
+
     // MARK: - Generate Invite
 
     /// Person A — generates a pairing code and begins polling for partner.
@@ -128,7 +132,7 @@ final class PairingStore {
             codeExpiresAt = expiresAt
             await recordFirstInviteSentIfNeeded()
             linkState = .waitingForPartner(code: code)
-            logger.info("Invite generated — code: \(code)")
+            logger.info("Invite generated — expires \(expiresAt)")
             await pollForPartner(code: code, deadline: expiresAt)
         } catch {
             linkState = .error(error.localizedDescription)
@@ -205,23 +209,24 @@ final class PairingStore {
     /// Moves to .linked when partner claims the code.
     func pollForPartner(code: String, deadline: Date) async {
         pollTask?.cancel()
-        pollTask = Task {
+        pollTask = Task { [weak self] in
+            guard let self else { return }
             do {
-                let coupleId = try await pairingService.pollForClaim(code: code, deadline: deadline)
+                let coupleId = try await self.pairingService.pollForClaim(code: code, deadline: deadline)
                 guard !Task.isCancelled else { return }
-                try await persistLink(coupleId: coupleId)
-                linkState = .linked(coupleId: coupleId)
+                try await self.persistLink(coupleId: coupleId)
+                self.linkState = .linked(coupleId: coupleId)
                 logger.info("Partner joined — coupleId: \(coupleId)")
-                await refreshPartner()
+                await self.refreshPartner()
             } catch is CancellationError {
                 logger.info("Polling cancelled")
             } catch PairingError.expiredCode {
                 guard !Task.isCancelled else { return }
-                codeExpired = true
+                self.codeExpired = true
                 logger.info("Pairing code expired — prompting regenerate")
             } catch {
                 guard !Task.isCancelled else { return }
-                linkState = .error(error.localizedDescription)
+                self.linkState = .error(error.localizedDescription)
                 logger.error("Polling failed: \(error.localizedDescription)")
             }
         }
@@ -293,6 +298,11 @@ final class PairingStore {
     /// which is the DB default — no write needed.
     private(set) var compositionProposal: GenderDynamic? = nil
 
+    /// Set when `confirmComposition()` fails to write remotely. The proposal
+    /// stays set so the UI can offer a retry (tapping confirm again) rather
+    /// than silently discarding the user's choice. Cleared on the next attempt.
+    private(set) var compositionError: String? = nil
+
     /// Set once the user answers (either way) so a re-entered linked surface
     /// never re-asks. UserDefaults because it is per-device UI state, not data.
     private let proposalResolvedKey = "vayl.compositionProposalResolved"
@@ -320,6 +330,7 @@ final class PairingStore {
     func confirmComposition() async {
         guard case .linked(let coupleId) = linkState,
               let proposal = compositionProposal else { return }
+        compositionError = nil
         do {
             try await pairingService.setComposition(coupleId: coupleId, proposal)
             mirrorCompositionLocally(proposal, coupleId: coupleId)
@@ -327,10 +338,10 @@ final class PairingStore {
             UserDefaults.standard.set(true, forKey: proposalResolvedKey)
             logger.info("Composition confirmed: \(proposal.rawValue)")
         } catch {
-            // Non-fatal: the couple can set it anytime in Settings.
-            compositionProposal = nil
-            UserDefaults.standard.set(true, forKey: proposalResolvedKey)
-            logger.error("Composition write failed (Settings row remains): \(error.localizedDescription)")
+            // Keep the proposal set so the user can retry — proposalResolvedKey
+            // is NOT marked, since the write never actually landed.
+            compositionError = error.localizedDescription
+            logger.error("Composition write failed, proposal kept for retry: \(error.localizedDescription)")
         }
     }
 

@@ -132,6 +132,13 @@ final class MapStore {
     /// paired history grid. Empty for the same reasons partnerPosition can be nil.
     private(set) var partnerEntries: [PulseEntry] = []
 
+    /// True when the last `loadPartnerPulse` fetch failed outright (offline,
+    /// server error) — distinct from "confirmed no data" (unpaired / sharing
+    /// off / never logged, which is `partnerEntries.isEmpty` with this false).
+    /// Views use this to show an honest "couldn't reach it" message instead of
+    /// silently reading a transient failure as "your partner hasn't checked in."
+    private(set) var partnerPulseFetchFailed: Bool = false
+
     // MARK: - The Us layer
 
     struct UsStats {
@@ -152,6 +159,29 @@ final class MapStore {
     private(set) var alignItems: [AlignItem] = []
     private(set) var lockedAlignCount: Int = 0
 
+    // MARK: - Load state (mirrors HomeStore's isLoadingDeck/deckLoadError)
+
+    /// True only while the very first load is in flight — MapView gates its
+    /// top-level spinner on this, never on a later tab revisit with warm data.
+    private(set) var isLoading: Bool = false
+    private(set) var loadError: String? = nil
+    private(set) var hasLoadedOnce: Bool = false
+
+    /// Call before the first-load `.task` body runs. A no-op on any later
+    /// revisit (hasLoadedOnce already true), so warm data never re-shows a spinner.
+    func markLoadStarted() {
+        guard !hasLoadedOnce else { return }
+        isLoading = true
+        loadError = nil
+    }
+
+    /// A failed first load keeps `hasLoadedOnce` false, so a retry runs the
+    /// full first-load path (spinner and all) instead of pretending warm data.
+    func markLoadFinished() {
+        isLoading = false
+        if loadError == nil { hasLoadedOnce = true }
+    }
+
     // MARK: - Load
 
     /// Idempotent — safe to call on every appear. The desire-match gate reads
@@ -170,17 +200,24 @@ final class MapStore {
     /// grid's partner column (G4/G5). Unlike loadPartner (name, cached once after first
     /// success), this re-fetches on every call: the partner may check in again while this
     /// tab is open elsewhere in the app, and there's no cheap way to know without asking.
-    /// A nil result (offline / fetch failure) leaves whatever's already loaded untouched;
-    /// only an explicit "not paired" clears it.
+    /// A failed fetch (offline / server error) leaves whatever's already loaded
+    /// untouched and sets `partnerPulseFetchFailed`; only an explicit "not paired"
+    /// clears the cache outright.
     func loadPartnerPulse(appState: AppState) async {
         guard appState.linkState == .linked else {
             partnerPosition = nil
             partnerEntries = []
+            partnerPulseFetchFailed = false
             return
         }
-        guard let entries = await pulseSync.fetchPartnerEntries() else { return }
-        partnerEntries = entries
-        partnerPosition = entries.last?.resolvedPosition
+        switch await pulseSync.fetchPartnerEntries() {
+        case .success(let entries):
+            partnerPulseFetchFailed = false
+            partnerEntries = entries
+            partnerPosition = entries.last?.resolvedPosition
+        case .failure:
+            partnerPulseFetchFailed = true
+        }
     }
 
     private func loadMasthead(appState: AppState, context: ModelContext) {
@@ -308,7 +345,15 @@ final class MapStore {
     private func loadServerAlignData(appState: AppState, context: ModelContext) async {
         guard let coupleId = appState.coupleId else { return }
 
-        let matchRows = (try? await desireSync.fetchMatches(coupleId: coupleId)) ?? []
+        let matchRows: [DesireMatchRow]
+        do {
+            matchRows = try await desireSync.fetchMatches(coupleId: coupleId)
+        } catch {
+            // Only the first load surfaces this as a screen-level error — a failed
+            // background refresh on warm data keeps what's showing.
+            if !hasLoadedOnce { loadError = error.localizedDescription }
+            return
+        }
 
         // THE gate rule — CoupleContext.canRevealAll (OR'd entitlement), never the
         // local Couple.canRevealDesireMap mirror, which can lag a just-purchased buyer.

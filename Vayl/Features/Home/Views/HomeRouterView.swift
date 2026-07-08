@@ -228,6 +228,7 @@ private struct HomeRouterInnerView: View {
                 deckTitle:           loadedDeck.title,
                 desireMapState:      store.desireMapState,
                 partnerPulsePosition: store.partnerPulsePosition,
+                partnerPulseFetchFailed: store.partnerPulseFetchFailed,
                 reflectionCardState: store.reflectionCardState,
                 pickUpItems:         [],
                 stageIndex:          store.stageIndex,

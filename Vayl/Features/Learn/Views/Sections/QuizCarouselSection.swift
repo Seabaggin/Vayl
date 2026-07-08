@@ -18,8 +18,27 @@ struct QuizCarouselSection: View {
             InfiniteCarousel(items: quizzes, interval: 5, height: 288) { quiz in
                 Button { onSelect(quiz) } label: { quizCard(quiz) }
                     .buttonStyle(PressableCardStyle())
+            } emptyContent: {
+                emptyState
             }
         }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: AppSpacing.sm) {
+            Image(systemName: "questionmark.circle")
+                .font(AppFonts.body(26, weight: .regular, relativeTo: .title2))
+                .foregroundStyle(AppColors.textTertiary)
+            Text("No quizzes right now")
+                .font(AppFonts.cardTitle)
+                .foregroundStyle(AppColors.textSecondary)
+            Text("Quizzes will show up here when they're available.")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppSpacing.xl)
     }
 
     private func quizCard(_ quiz: LearnQuiz) -> some View {

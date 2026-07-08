@@ -17,6 +17,30 @@ struct PathLedgerView: View {
     let onSelect: (String) -> Void
 
     var body: some View {
+        Group {
+            if let error = store.loadError {
+                MapEmptyState(
+                    icon: "exclamationmark.triangle",
+                    headline: "Couldn't load your path",
+                    message: error
+                )
+            } else if store.isLoading && store.landmarks.isEmpty {
+                ProgressView()
+                    .tint(AppColors.accentPrimary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if store.visibleLandmarks.isEmpty {
+                MapEmptyState(
+                    icon: "list.bullet",
+                    headline: "No landmarks yet",
+                    message: "Your shared path will appear here once it's set up."
+                )
+            } else {
+                ledgerList
+            }
+        }
+    }
+
+    private var ledgerList: some View {
         List {
             ForEach(store.phases) { phase in
                 Section(phase.name) {
@@ -135,7 +159,7 @@ private struct PathLedgerPreviewHarness: View {
 
     var body: some View {
         PathLedgerView(store: store, onSelect: { _ in })
-            .task { try? await store.load() }
+            .task { await store.load() }
     }
 }
 

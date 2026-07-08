@@ -236,7 +236,7 @@ struct HolographicShimmer: View {
                     if reduceMotion || AppAnimation.lowPower {
                         shimmerFrame(t: phaseOffset, size: size)
                     } else {
-                        TimelineView(.animation) { tl in
+                        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { tl in
                             shimmerFrame(t: tl.date.timeIntervalSinceReferenceDate, size: size)
                         }
                     }

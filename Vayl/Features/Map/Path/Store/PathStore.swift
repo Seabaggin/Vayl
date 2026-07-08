@@ -22,6 +22,8 @@ final class PathStore {
     private(set) var progressByLandmark: [String: PathLandmarkProgress] = [:]
     private(set) var activity: [PathActivityEntry] = []
     private(set) var privateMarkedLandmarkIds: Set<String> = []
+    private(set) var isLoading: Bool = false
+    private(set) var loadError: String? = nil
 
     let coupleId: UUID
     let profileId: UUID
@@ -38,18 +40,28 @@ final class PathStore {
         self.content = content
     }
 
-    func load() async throws {
-        let styleContent = try content.loadStyle(pathStyle)
-        landmarks = styleContent.landmarks.sorted { $0.sortOrder < $1.sortOrder }
-        phases = styleContent.phases
+    func load() async {
+        guard !isLoading else { return }
+        isLoading = true
+        loadError = nil
 
-        let rows = try await transport.fetchProgress(coupleId: coupleId, pathStyle: pathStyle)
-        progressByLandmark = Dictionary(uniqueKeysWithValues: rows.map { ($0.landmarkId, $0) })
+        do {
+            let styleContent = try content.loadStyle(pathStyle)
+            landmarks = styleContent.landmarks.sorted { $0.sortOrder < $1.sortOrder }
+            phases = styleContent.phases
 
-        let marks = try await transport.fetchPrivateMarks(profileId: profileId, pathStyle: pathStyle)
-        privateMarkedLandmarkIds = Set(marks.map(\.landmarkId))
+            let rows = try await transport.fetchProgress(coupleId: coupleId, pathStyle: pathStyle)
+            progressByLandmark = Dictionary(uniqueKeysWithValues: rows.map { ($0.landmarkId, $0) })
 
-        activity = try await transport.fetchActivity(coupleId: coupleId, pathStyle: pathStyle)
+            let marks = try await transport.fetchPrivateMarks(profileId: profileId, pathStyle: pathStyle)
+            privateMarkedLandmarkIds = Set(marks.map(\.landmarkId))
+
+            activity = try await transport.fetchActivity(coupleId: coupleId, pathStyle: pathStyle)
+        } catch {
+            loadError = error.localizedDescription
+        }
+
+        isLoading = false
     }
 
     /// A landmark's state is `.untouched` unless a progress row exists for it —

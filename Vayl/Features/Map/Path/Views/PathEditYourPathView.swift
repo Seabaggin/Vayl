@@ -54,22 +54,41 @@ struct PathEditYourPathView: View {
 
     // MARK: - Landmark list
 
+    @ViewBuilder
     private var landmarkList: some View {
-        List {
-            ForEach(store.phases) { phase in
-                Section(phase.name) {
-                    ForEach(store.landmarks.filter { $0.phaseId == phase.id }) { landmark in
-                        row(for: landmark)
-                            .listRowBackground(Color.clear)
+        if let error = store.loadError {
+            MapEmptyState(
+                icon: "exclamationmark.triangle",
+                headline: "Couldn't load your path",
+                message: error
+            )
+        } else if store.isLoading && store.landmarks.isEmpty {
+            ProgressView()
+                .tint(AppColors.accentPrimary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if store.landmarks.isEmpty {
+            MapEmptyState(
+                icon: "list.bullet",
+                headline: "No landmarks yet",
+                message: "Your shared path will appear here once it's set up."
+            )
+        } else {
+            List {
+                ForEach(store.phases) { phase in
+                    Section(phase.name) {
+                        ForEach(store.landmarks.filter { $0.phaseId == phase.id }) { landmark in
+                            row(for: landmark)
+                                .listRowBackground(Color.clear)
+                        }
                     }
                 }
             }
+            .listStyle(.plain)
+            // Same treatment as PathLedgerView's List over this exact void +
+            // atmosphere background — hides the opaque system row/section chrome
+            // that would otherwise float a native gray list on top of the sheet.
+            .scrollContentBackground(.hidden)
         }
-        .listStyle(.plain)
-        // Same treatment as PathLedgerView's List over this exact void +
-        // atmosphere background — hides the opaque system row/section chrome
-        // that would otherwise float a native gray list on top of the sheet.
-        .scrollContentBackground(.hidden)
     }
 
     private func row(for landmark: PathLandmark) -> some View {
@@ -121,7 +140,7 @@ private struct PathEditYourPathPreviewHarness: View {
 
     var body: some View {
         PathEditYourPathView(store: store)
-            .task { try? await store.load() }
+            .task { await store.load() }
     }
 }
 

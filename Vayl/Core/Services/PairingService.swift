@@ -99,7 +99,7 @@ final class PairingService {
             .execute()
             .value
 
-        logger.info("Pairing code generated: \(row.code)")
+        logger.info("Pairing code generated, expires \(row.expiresAt)")
         return (row.code, row.expiresAt)
     }
 

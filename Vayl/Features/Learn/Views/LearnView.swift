@@ -23,6 +23,9 @@ struct LearnView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: AppSpacing.xl) {
                     header
+                    if store.loadError != nil {
+                        loadErrorNotice
+                    }
                     QuizCarouselSection(quizzes: store.quizzes)
                     ResearchSection(
                         findings: store.findings,
@@ -50,6 +53,26 @@ struct LearnView: View {
                 FindingDetailView(finding: f, store: store, onOpenFinding: { selectedFinding = $0 })
             }
         }
+    }
+
+    private var loadErrorNotice: some View {
+        HStack(spacing: AppSpacing.sm) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(AppFonts.body(16, weight: .regular, relativeTo: .body))
+                .foregroundStyle(AppColors.textTertiary)
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                Text("Some content didn't load")
+                    .font(AppFonts.bodyMedium)
+                    .foregroundStyle(AppColors.textPrimary)
+                Text("Part of Learn couldn't be read. Anything below is what loaded.")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(AppSpacing.md)
+        .vaylGlassCard()
     }
 
     private var detailBinding: Binding<Bool> {
