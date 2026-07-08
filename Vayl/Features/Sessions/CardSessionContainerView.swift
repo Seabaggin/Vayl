@@ -91,15 +91,10 @@ private struct CoupleSessionFlow: View {
 
     var body: some View {
         ZStack {
-            // Before-we-start (airlock) uses the canonical OnboardingAtmosphere
-            // instead of SessionAtmosphere — SessionAtmosphere's blobs read too
-            // bright for this screen (Bryan's call). The live session keeps
-            // SessionAtmosphere's turn-tinting untouched.
-            if store.phase == .airlock {
-                OnboardingAtmosphere(config: .stat)
-            } else {
-                SessionAtmosphere(turn: turn)
-            }
+            // The canonical OnboardingAtmosphere runs the whole cover now —
+            // airlock through the live session (SessionAtmosphere's turn-
+            // tinted blobs read too bright/busy against this screen family).
+            OnboardingAtmosphere(config: .stat)
 
             content
         }
@@ -112,11 +107,6 @@ private struct CoupleSessionFlow: View {
                 vaylDismiss(confirm: false)
             }
         }
-    }
-
-    private var turn: SessionAtmosphere.Turn {
-        guard store.phase == .session else { return .none }
-        return store.currentDrawer == .you ? .you : .partner
     }
 
     @ViewBuilder

@@ -7,12 +7,13 @@
 //
 //  Zones, top to bottom: the fanned deck (remaining cards, the deal source) →
 //  the drawer ceremony + hero prompt → intentional aurora ground → controls on
-//  a shared bottom baseline (care-mark + presence left, hold-to-deal right).
+//  a shared bottom baseline (care icon left — pause/hug/skip/end well, all in
+//  one sheet — hold-to-deal right).
 //
 //  Hold the proceed control and the next card pulls down out of the fan in
 //  proportion to the hold; release early to cancel; hold to commit and it dives
-//  away, revealing the next prompt. Whose turn is ambient — the room leans cyan
-//  for the partner, magenta for you (driven by SessionAtmosphere in the flow).
+//  away, revealing the next prompt. Background is the canonical
+//  OnboardingAtmosphere, shared with the rest of the cover.
 //
 //  Hold/dive durations are ported from the prototype as feel-gated starting
 //  values — tune on device, not blind.
@@ -150,13 +151,7 @@ struct SessionPlayerView: View {
     }
 
     private var fanCard: some View {
-        VaylCardFace()
-            .overlay(
-                Text("VAYL")
-                    .font(AppFonts.display(8, weight: .medium, relativeTo: .caption2))
-                    .tracking(4)
-                    .foregroundStyle(AppColors.spectrumText)
-            )
+        VaylCardBack()
             .frame(width: 96, height: 66)
             .shadow(color: AppColors.shadowDeep, radius: 12, y: 6)
     }
@@ -281,13 +276,7 @@ struct SessionPlayerView: View {
     }
 
     private var cardBackFace: some View {
-        VaylCardFace()
-            .overlay(
-                Text("VAYL")
-                    .font(AppFonts.display(13, weight: .medium, relativeTo: .body))
-                    .tracking(7)
-                    .foregroundStyle(AppColors.spectrumText)
-            )
+        VaylCardBack()
     }
 
     private var warpFlash: some View {
