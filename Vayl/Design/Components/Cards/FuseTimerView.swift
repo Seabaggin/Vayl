@@ -5,27 +5,26 @@
 //  Created by Bryan Jorden on 3/28/26.
 //
 
-
 import SwiftUI
 
 struct FuseTimerView: View {
 
-    let size:         CGSize
+    let size: CGSize
     let cornerRadius: CGFloat
-    let lineWidth:    CGFloat
-    let duration:     TimeInterval
-    let delay:        TimeInterval
-    let sparkColor:   Color        // NEW — defaults to AppColors.accentPrimary
-    let onComplete:   () -> Void
+    let lineWidth: CGFloat
+    let duration: TimeInterval
+    let delay: TimeInterval
+    let sparkColor: Color        // NEW — defaults to AppColors.accentPrimary
+    let onComplete: () -> Void
 
     init(
-        size:         CGSize,
+        size: CGSize,
         cornerRadius: CGFloat,
-        lineWidth:    CGFloat,
-        duration:     TimeInterval,
-        delay:        TimeInterval,
-        sparkColor:   Color = AppColors.accentPrimary,
-        onComplete:   @escaping () -> Void
+        lineWidth: CGFloat,
+        duration: TimeInterval,
+        delay: TimeInterval,
+        sparkColor: Color = AppColors.accentPrimary,
+        onComplete: @escaping () -> Void
     ) {
         self.size         = size
         self.cornerRadius = cornerRadius
@@ -36,9 +35,9 @@ struct FuseTimerView: View {
         self.onComplete   = onComplete
     }
 
-    @State private var startDate:  Date? = nil
-    @State private var progress:   Double = 0
-    @State private var completed:  Bool = false
+    @State private var startDate: Date?
+    @State private var progress: Double = 0
+    @State private var completed: Bool = false
 
     var body: some View {
         TimelineView(.animation(paused: completed)) { timeline in
@@ -46,7 +45,7 @@ struct FuseTimerView: View {
                 let rect = CGRect(
                     x: lineWidth / 2,
                     y: lineWidth / 2,
-                    width:  canvasSize.width  - lineWidth,
+                    width: canvasSize.width  - lineWidth,
                     height: canvasSize.height - lineWidth
                 )
                 let path = RoundedRectangle(cornerRadius: cornerRadius - lineWidth / 2)
@@ -91,10 +90,10 @@ struct FuseTimerView: View {
                 Gradient(colors: [
                     sparkColor.opacity(0.6),
                     sparkColor,
-                    sparkColor.opacity(0.6),
+                    sparkColor.opacity(0.6)
                 ]),
                 startPoint: .zero,
-                endPoint:   CGPoint(x: canvasSize.width, y: canvasSize.height)
+                endPoint: CGPoint(x: canvasSize.width, y: canvasSize.height)
             ),
             style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
         )

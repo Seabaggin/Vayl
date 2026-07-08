@@ -19,16 +19,16 @@ import SwiftUI
 
 struct DualControllerCardFace: View {
 
-    let cardWidth:          CGFloat
-    let cardHeight:         CGFloat
+    let cardWidth: CGFloat
+    let cardHeight: CGFloat
     var activeButtonsFront: Set<Int> = []
-    var activeButtonsBack:  Set<Int> = []
+    var activeButtonsBack: Set<Int> = []
 
     // Identical scale to ControllerCardFace — full-size controllers.
     private var s: CGFloat { (cardWidth * 0.82) / 800 }
 
     var body: some View {
-        Canvas { context, size in
+        Canvas { context, _ in
             let gap: CGFloat = 8
             let xOff = (cardWidth - 800 * s) / 2
 

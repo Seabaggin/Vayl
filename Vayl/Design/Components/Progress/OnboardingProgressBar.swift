@@ -104,7 +104,7 @@ enum AnimationMath {
 
     /// Wraps elapsed seconds into a normalised [0, 1) phase for one cycle.
     static func shimmerPhase(
-        elapsed:       CGFloat,
+        elapsed: CGFloat,
         cycleDuration: CGFloat
     ) -> CGFloat {
         guard cycleDuration > 0 else { return 0 }
@@ -126,7 +126,7 @@ enum AnimationMath {
     /// Shimmer hotspot X offset in points.
     /// Travels from −overshoot to fillWidth+overshoot across one cycle.
     static func shimmerXOffset(
-        phase:     CGFloat,
+        phase: CGFloat,
         fillWidth: CGFloat,
         overshoot: CGFloat = 30
     ) -> CGFloat {
@@ -150,10 +150,10 @@ enum AnimationMath {
 @Observable
 final class ProgressAnimationClock {
 
-    private(set) var startTime: Date? = nil
+    private(set) var startTime: Date?
 
     func activate() { startTime = Date() }
-    func reset()    { startTime = nil  }
+    func reset() { startTime = nil  }
 
     func elapsed(at date: Date) -> CGFloat {
         guard let start = startTime else { return 0 }
@@ -166,15 +166,15 @@ final class ProgressAnimationClock {
 // ─────────────────────────────────────────────────────────────────────────────
 
 private enum ProgressBarConstants {
-    static let defaultTotalWidth:    CGFloat = 120
-    static let defaultBarHeight:     CGFloat = 5
+    static let defaultTotalWidth: CGFloat = 120
+    static let defaultBarHeight: CGFloat = 5
     /// Extra canvas on each side so bloom can bleed past bar ends.
-    static let bloomBleed:           CGFloat = 12
+    static let bloomBleed: CGFloat = 12
     // VQ-01: raised from 2.4 → 3.0s. See change log.
-    static let defaultShimmerCycle:  Double  = 3.0
-    static let defaultFillDuration:  Double  = 0.35
+    static let defaultShimmerCycle: Double  = 3.0
+    static let defaultFillDuration: Double  = 0.35
     /// Frame-rate cap for the bloom TimelineView.
-    static let bloomFPS:             Double  = 30
+    static let bloomFPS: Double  = 30
     /// Max vertical bloom spread as a multiple of barHeight (HIG cap).
     static let maxBloomSpreadFactor: CGFloat = 7.0
 }
@@ -192,39 +192,39 @@ private enum ProgressBarGradients {
     // ── Fill ──────────────────────────────────────────────────────────────
     static let staticFill = LinearGradient(
         stops: [
-            .init(color: AppColors.accentPrimary,   location: 0.0),
+            .init(color: AppColors.accentPrimary, location: 0.0),
             .init(color: AppColors.accentSecondary, location: 1.0)
         ],
         startPoint: .leading,
-        endPoint:   .trailing
+        endPoint: .trailing
     )
     static let finalFill = LinearGradient(
         stops: [
-            .init(color: AppColors.accentPrimary,   location: 0.0),
+            .init(color: AppColors.accentPrimary, location: 0.0),
             .init(color: AppColors.accentSecondary, location: 0.5),
-            .init(color: AppColors.accentTertiary,  location: 1.0)
+            .init(color: AppColors.accentTertiary, location: 1.0)
         ],
         startPoint: .leading,
-        endPoint:   .trailing
+        endPoint: .trailing
     )
 
     // RTL mirrors — colour order preserved, direction flipped
     static let staticFillRTL = LinearGradient(
         stops: [
-            .init(color: AppColors.accentPrimary,   location: 0.0),
+            .init(color: AppColors.accentPrimary, location: 0.0),
             .init(color: AppColors.accentSecondary, location: 1.0)
         ],
         startPoint: .trailing,
-        endPoint:   .leading
+        endPoint: .leading
     )
     static let finalFillRTL = LinearGradient(
         stops: [
-            .init(color: AppColors.accentPrimary,   location: 0.0),
+            .init(color: AppColors.accentPrimary, location: 0.0),
             .init(color: AppColors.accentSecondary, location: 0.5),
-            .init(color: AppColors.accentTertiary,  location: 1.0)
+            .init(color: AppColors.accentTertiary, location: 1.0)
         ],
         startPoint: .trailing,
-        endPoint:   .leading
+        endPoint: .leading
     )
 
     // ── Light mode fill variants ───────────────────────────────────────────
@@ -234,36 +234,36 @@ private enum ProgressBarGradients {
     static let staticFillLight = LinearGradient(
         stops: [
             .init(color: AppColors.progressBarTrailing, location: 0.0),
-            .init(color: AppColors.progressBarLeading,  location: 1.0)
+            .init(color: AppColors.progressBarLeading, location: 1.0)
         ],
         startPoint: .leading,
-        endPoint:   .trailing
+        endPoint: .trailing
     )
     static let finalFillLight = LinearGradient(
         stops: [
-            .init(color: AppColors.progressBarTrailing,            location: 0.00),
-            .init(color: AppColors.progressBarLeading,             location: 0.65),  // VQ-08: was 0.50
-            .init(color: AppColors.accentTertiary.opacity(0.55),   location: 1.00)   // VQ-08: was 0.75
+            .init(color: AppColors.progressBarTrailing, location: 0.00),
+            .init(color: AppColors.progressBarLeading, location: 0.65),  // VQ-08: was 0.50
+            .init(color: AppColors.accentTertiary.opacity(0.55), location: 1.00)   // VQ-08: was 0.75
         ],
         startPoint: .leading,
-        endPoint:   .trailing
+        endPoint: .trailing
     )
     static let staticFillLightRTL = LinearGradient(
         stops: [
             .init(color: AppColors.progressBarTrailing, location: 0.0),
-            .init(color: AppColors.progressBarLeading,  location: 1.0)
+            .init(color: AppColors.progressBarLeading, location: 1.0)
         ],
         startPoint: .trailing,
-        endPoint:   .leading
+        endPoint: .leading
     )
     static let finalFillLightRTL = LinearGradient(
         stops: [
-            .init(color: AppColors.progressBarTrailing,            location: 0.00),
-            .init(color: AppColors.progressBarLeading,             location: 0.65),  // VQ-08: was 0.50
-            .init(color: AppColors.accentTertiary.opacity(0.55),   location: 1.00)   // VQ-08: was 0.75
+            .init(color: AppColors.progressBarTrailing, location: 0.00),
+            .init(color: AppColors.progressBarLeading, location: 0.65),  // VQ-08: was 0.50
+            .init(color: AppColors.accentTertiary.opacity(0.55), location: 1.00)   // VQ-08: was 0.75
         ],
         startPoint: .trailing,
-        endPoint:   .leading
+        endPoint: .leading
     )
 }
 
@@ -275,8 +275,8 @@ private enum ProgressBarStrings {
 
     static func stepLabel(
         description: String,
-        current:     Int,
-        total:       Int
+        current: Int,
+        total: Int
     ) -> String {
         String(
             format: NSLocalizedString(
@@ -345,32 +345,32 @@ struct OnboardingProgressBar: View {
 
     // ── Public props ───────────────────────────────────────────────────────
 
-    let currentStep:          Int
-    let totalSteps:           Int
-    var progressDescription:  String  = NSLocalizedString(
+    let currentStep: Int
+    let totalSteps: Int
+    var progressDescription: String  = NSLocalizedString(
         "progress.description.default",
         value: "Onboarding",
         comment: "Default VoiceOver description."
     )
     var showCompletionEffect: Bool    = false
-    var totalWidth:           CGFloat = ProgressBarConstants.defaultTotalWidth
-    var barHeight:            CGFloat = ProgressBarConstants.defaultBarHeight
-    var animationDuration:    Double  = ProgressBarConstants.defaultFillDuration
+    var totalWidth: CGFloat = ProgressBarConstants.defaultTotalWidth
+    var barHeight: CGFloat = ProgressBarConstants.defaultBarHeight
+    var animationDuration: Double  = ProgressBarConstants.defaultFillDuration
     var shimmerCycleDuration: Double  = ProgressBarConstants.defaultShimmerCycle
 
     // ── Backward-compatible convenience init ──────────────────────────────
     init(
-        currentStep:          Int,
-        totalSteps:           Int,
-        progressDescription:  String  = NSLocalizedString(
+        currentStep: Int,
+        totalSteps: Int,
+        progressDescription: String  = NSLocalizedString(
             "progress.description.default",
             value: "Onboarding",
             comment: "Default VoiceOver description."
         ),
         showCompletionEffect: Bool    = false,
-        totalWidth:           CGFloat = ProgressBarConstants.defaultTotalWidth,
-        barHeight:            CGFloat = ProgressBarConstants.defaultBarHeight,
-        animationDuration:    Double  = ProgressBarConstants.defaultFillDuration,
+        totalWidth: CGFloat = ProgressBarConstants.defaultTotalWidth,
+        barHeight: CGFloat = ProgressBarConstants.defaultBarHeight,
+        animationDuration: Double  = ProgressBarConstants.defaultFillDuration,
         shimmerCycleDuration: Double  = ProgressBarConstants.defaultShimmerCycle
     ) {
         self.currentStep          = currentStep
@@ -431,8 +431,8 @@ struct OnboardingProgressBar: View {
 
     // ── Bloom geometry ─────────────────────────────────────────────────────
 
-    private var bloomBleed:     CGFloat { ProgressBarConstants.bloomBleed }
-    private var canvasWidth:    CGFloat { totalWidth + bloomBleed * 2 }
+    private var bloomBleed: CGFloat { ProgressBarConstants.bloomBleed }
+    private var canvasWidth: CGFloat { totalWidth + bloomBleed * 2 }
     private var maxBloomHeight: CGFloat {
         barHeight * ProgressBarConstants.maxBloomSpreadFactor
     }
@@ -448,37 +448,37 @@ struct OnboardingProgressBar: View {
     // VQ-06: Core base opacity dark 0.50 → 0.38 — was competing with fill.
     // VQ-07: Atmo blur base light 4.5 → 3.5 — was spreading pink too far.
 
-    private var bloomAtmoOpacityBase:  CGFloat { 0.18 }
+    private var bloomAtmoOpacityBase: CGFloat { 0.18 }
     private var bloomAtmoOpacityPulse: CGFloat { 0.18 }
-    private var bloomMidOpacityBase:   CGFloat { 0.28 }
-    private var bloomMidOpacityPulse:  CGFloat { 0.22 }
-    private var bloomCoreOpacityBase:  CGFloat { 0.38 }  // VQ-06: dark was 0.50
+    private var bloomMidOpacityBase: CGFloat { 0.28 }
+    private var bloomMidOpacityPulse: CGFloat { 0.22 }
+    private var bloomCoreOpacityBase: CGFloat { 0.38 }  // VQ-06: dark was 0.50
     private var bloomCoreOpacityPulse: CGFloat { 0.25 }
 
     // VQ-02: Spread multipliers tightened.
-    private var bloomAtmoSpreadBase:   CGFloat { 2.8 }    // VQ-02: dark was 3.5
-    private var bloomAtmoSpreadPulse:  CGFloat { 1.4 }    // VQ-02: dark was 2.0
-    private var bloomMidSpreadBase:    CGFloat { 2.0 }
-    private var bloomMidSpreadPulse:   CGFloat { 1.2 }
-    private var bloomCoreSpreadBase:   CGFloat { 1.2 }
-    private var bloomCoreSpreadPulse:  CGFloat { 1.0 }
+    private var bloomAtmoSpreadBase: CGFloat { 2.8 }    // VQ-02: dark was 3.5
+    private var bloomAtmoSpreadPulse: CGFloat { 1.4 }    // VQ-02: dark was 2.0
+    private var bloomMidSpreadBase: CGFloat { 2.0 }
+    private var bloomMidSpreadPulse: CGFloat { 1.2 }
+    private var bloomCoreSpreadBase: CGFloat { 1.2 }
+    private var bloomCoreSpreadPulse: CGFloat { 1.0 }
 
-    private var bloomAtmoBlurBase:     CGFloat { 6.0 }
-    private var bloomAtmoBlurPulse:    CGFloat { 3.0 }
-    private var bloomMidBlurBase:      CGFloat { 5.0 }
-    private var bloomMidBlurPulse:     CGFloat { 3.0 }
-    private var bloomCoreBlurBase:     CGFloat { 2.0 }
-    private var bloomCoreBlurPulse:    CGFloat { 1.0 }
+    private var bloomAtmoBlurBase: CGFloat { 6.0 }
+    private var bloomAtmoBlurPulse: CGFloat { 3.0 }
+    private var bloomMidBlurBase: CGFloat { 5.0 }
+    private var bloomMidBlurPulse: CGFloat { 3.0 }
+    private var bloomCoreBlurBase: CGFloat { 2.0 }
+    private var bloomCoreBlurPulse: CGFloat { 1.0 }
 
-    private var particleOpacityScale:  CGFloat { 1.0 }
+    private var particleOpacityScale: CGFloat { 1.0 }
 
     // ── Accessibility ──────────────────────────────────────────────────────
 
     private var a11yLabel: String {
         ProgressBarStrings.stepLabel(
             description: progressDescription,
-            current:     currentStep,
-            total:       totalSteps
+            current: currentStep,
+            total: totalSteps
         )
     }
 
@@ -510,20 +510,20 @@ struct OnboardingProgressBar: View {
                 TimelineView(timelineSchedule) { tl in
                     let e  = clock.elapsed(at: tl.date)
                     let sp = AnimationMath.shimmerPhase(
-                        elapsed:       e,
+                        elapsed: e,
                         cycleDuration: CGFloat(shimmerCycleDuration)
                     )
                     let bi = AnimationMath.bloomIntensity(phase: sp)
                     let br = AnimationMath.breatheIntensity(phase: sp)
 
                     finalBar(
-                        elapsed:          e,
-                        shimmerPhase:     sp,
-                        bloomIntensity:   bi,
+                        elapsed: e,
+                        shimmerPhase: sp,
+                        bloomIntensity: bi,
                         breatheIntensity: br
                     )
                 }
-                .onAppear    { clock.activate() }
+                .onAppear { clock.activate() }
                 .onDisappear { clock.reset()    }
                 .onReceive(
                     NotificationCenter.default.publisher(
@@ -562,7 +562,7 @@ struct OnboardingProgressBar: View {
     private func postStepAnnouncement() {
         let msg = ProgressBarStrings.milestoneAnnouncement(
             current: currentStep,
-            total:   totalSteps
+            total: totalSteps
         )
         UIAccessibility.post(notification: .announcement, argument: msg)
     }
@@ -594,41 +594,41 @@ struct OnboardingProgressBar: View {
 
     @ViewBuilder
     private func finalBar(
-        elapsed:          CGFloat,
-        shimmerPhase:     CGFloat,
-        bloomIntensity:   CGFloat,
+        elapsed: CGFloat,
+        shimmerPhase: CGFloat,
+        bloomIntensity: CGFloat,
         breatheIntensity: CGFloat
     ) -> some View {
         barContent(
-            shimmerPhase:     shimmerPhase,
-            bloomIntensity:   bloomIntensity,
+            shimmerPhase: shimmerPhase,
+            bloomIntensity: bloomIntensity,
             breatheIntensity: breatheIntensity
         )
         .drawingGroup()
         .overlay(
             bloomCanvas(
-                elapsed:              elapsed,
-                bloomIntensity:       bloomIntensity,
-                breatheIntensity:     breatheIntensity,
-                barHeight:            barHeight,
-                atmoOpacityBase:      bloomAtmoOpacityBase,
-                atmoOpacityPulse:     bloomAtmoOpacityPulse,
-                midOpacityBase:       bloomMidOpacityBase,
-                midOpacityPulse:      bloomMidOpacityPulse,
-                coreOpacityBase:      bloomCoreOpacityBase,
-                coreOpacityPulse:     bloomCoreOpacityPulse,
-                atmoSpreadBase:       bloomAtmoSpreadBase,
-                atmoSpreadPulse:      bloomAtmoSpreadPulse,
-                midSpreadBase:        bloomMidSpreadBase,
-                midSpreadPulse:       bloomMidSpreadPulse,
-                coreSpreadBase:       bloomCoreSpreadBase,
-                coreSpreadPulse:      bloomCoreSpreadPulse,
-                atmoBlurBase:         bloomAtmoBlurBase,
-                atmoBlurPulse:        bloomAtmoBlurPulse,
-                midBlurBase:          bloomMidBlurBase,
-                midBlurPulse:         bloomMidBlurPulse,
-                coreBlurBase:         bloomCoreBlurBase,
-                coreBlurPulse:        bloomCoreBlurPulse,
+                elapsed: elapsed,
+                bloomIntensity: bloomIntensity,
+                breatheIntensity: breatheIntensity,
+                barHeight: barHeight,
+                atmoOpacityBase: bloomAtmoOpacityBase,
+                atmoOpacityPulse: bloomAtmoOpacityPulse,
+                midOpacityBase: bloomMidOpacityBase,
+                midOpacityPulse: bloomMidOpacityPulse,
+                coreOpacityBase: bloomCoreOpacityBase,
+                coreOpacityPulse: bloomCoreOpacityPulse,
+                atmoSpreadBase: bloomAtmoSpreadBase,
+                atmoSpreadPulse: bloomAtmoSpreadPulse,
+                midSpreadBase: bloomMidSpreadBase,
+                midSpreadPulse: bloomMidSpreadPulse,
+                coreSpreadBase: bloomCoreSpreadBase,
+                coreSpreadPulse: bloomCoreSpreadPulse,
+                atmoBlurBase: bloomAtmoBlurBase,
+                atmoBlurPulse: bloomAtmoBlurPulse,
+                midBlurBase: bloomMidBlurBase,
+                midBlurPulse: bloomMidBlurPulse,
+                coreBlurBase: bloomCoreBlurBase,
+                coreBlurPulse: bloomCoreBlurPulse,
                 particleOpacityScale: particleOpacityScale
             )
             .frame(width: canvasWidth, height: maxBloomHeight)
@@ -643,8 +643,8 @@ struct OnboardingProgressBar: View {
 
     @ViewBuilder
     private func barContent(
-        shimmerPhase:     CGFloat,
-        bloomIntensity:   CGFloat,
+        shimmerPhase: CGFloat,
+        bloomIntensity: CGFloat,
         breatheIntensity: CGFloat
     ) -> some View {
         ZStack(alignment: .leading) {
@@ -658,7 +658,7 @@ struct OnboardingProgressBar: View {
                 .frame(width: fillWidth, height: barHeight)
 
             shimmerOverlay(
-                shimmerPhase:     shimmerPhase,
+                shimmerPhase: shimmerPhase,
                 breatheIntensity: breatheIntensity
             )
         }
@@ -675,11 +675,11 @@ struct OnboardingProgressBar: View {
 
     @ViewBuilder
     private func shimmerOverlay(
-        shimmerPhase:     CGFloat,
+        shimmerPhase: CGFloat,
         breatheIntensity: CGFloat
     ) -> some View {
         let xPos         = AnimationMath.shimmerXOffset(
-            phase:     shimmerPhase,
+            phase: shimmerPhase,
             fillWidth: fillWidth
         )
         let outerOpacity = 0.10 + breatheIntensity * 0.18
@@ -696,7 +696,7 @@ struct OnboardingProgressBar: View {
                             .clear
                         ],
                         startPoint: .leading,
-                        endPoint:   .trailing
+                        endPoint: .trailing
                     )
                 )
                 .frame(width: 16, height: barHeight)
@@ -712,7 +712,7 @@ struct OnboardingProgressBar: View {
                             .clear
                         ],
                         startPoint: .leading,
-                        endPoint:   .trailing
+                        endPoint: .trailing
                     )
                 )
                 .frame(width: 10, height: barHeight)
@@ -742,28 +742,28 @@ struct OnboardingProgressBar: View {
     @ViewBuilder
     // swiftlint:disable:next function_parameter_count
     private func bloomCanvas(
-        elapsed:              CGFloat,
-        bloomIntensity:       CGFloat,
-        breatheIntensity:     CGFloat,
-        barHeight:            CGFloat,
-        atmoOpacityBase:      CGFloat,
-        atmoOpacityPulse:     CGFloat,
-        midOpacityBase:       CGFloat,
-        midOpacityPulse:      CGFloat,
-        coreOpacityBase:      CGFloat,
-        coreOpacityPulse:     CGFloat,
-        atmoSpreadBase:       CGFloat,
-        atmoSpreadPulse:      CGFloat,
-        midSpreadBase:        CGFloat,
-        midSpreadPulse:       CGFloat,
-        coreSpreadBase:       CGFloat,
-        coreSpreadPulse:      CGFloat,
-        atmoBlurBase:         CGFloat,
-        atmoBlurPulse:        CGFloat,
-        midBlurBase:          CGFloat,
-        midBlurPulse:         CGFloat,
-        coreBlurBase:         CGFloat,
-        coreBlurPulse:        CGFloat,
+        elapsed: CGFloat,
+        bloomIntensity: CGFloat,
+        breatheIntensity: CGFloat,
+        barHeight: CGFloat,
+        atmoOpacityBase: CGFloat,
+        atmoOpacityPulse: CGFloat,
+        midOpacityBase: CGFloat,
+        midOpacityPulse: CGFloat,
+        coreOpacityBase: CGFloat,
+        coreOpacityPulse: CGFloat,
+        atmoSpreadBase: CGFloat,
+        atmoSpreadPulse: CGFloat,
+        midSpreadBase: CGFloat,
+        midSpreadPulse: CGFloat,
+        coreSpreadBase: CGFloat,
+        coreSpreadPulse: CGFloat,
+        atmoBlurBase: CGFloat,
+        atmoBlurPulse: CGFloat,
+        midBlurBase: CGFloat,
+        midBlurPulse: CGFloat,
+        coreBlurBase: CGFloat,
+        coreBlurPulse: CGFloat,
         particleOpacityScale: CGFloat
     ) -> some View {
         Canvas { ctx, size in
@@ -787,9 +787,9 @@ struct OnboardingProgressBar: View {
             atmoCtx.addFilter(.blur(radius: atmoBlurBase + bloomIntensity * atmoBlurPulse))
             atmoCtx.opacity = atmoOpacity
             let atmoRect    = CGRect(
-                x:      barMinX - 2,
-                y:      barMidY - atmoSpread / 2 - 3,
-                width:  fillWidth + 4,
+                x: barMinX - 2,
+                y: barMidY - atmoSpread / 2 - 3,
+                width: fillWidth + 4,
                 height: atmoSpread
             )
             atmoCtx.fill(
@@ -803,7 +803,7 @@ struct OnboardingProgressBar: View {
                         AppColors.accentSecondary.opacity(0.30)
                     ]),
                     startPoint: CGPoint(x: atmoRect.minX, y: barMidY),
-                    endPoint:   CGPoint(x: atmoRect.maxX, y: barMidY)
+                    endPoint: CGPoint(x: atmoRect.maxX, y: barMidY)
                 )
             )
 
@@ -816,9 +816,9 @@ struct OnboardingProgressBar: View {
             midCtx.addFilter(.blur(radius: midBlurBase + bloomIntensity * midBlurPulse))
             midCtx.opacity = midOpacity
             let midRect    = CGRect(
-                x:      barMinX - 4,
-                y:      barMidY - midSpread / 2 - 2,
-                width:  fillWidth + 8,
+                x: barMinX - 4,
+                y: barMidY - midSpread / 2 - 2,
+                width: fillWidth + 8,
                 height: midSpread
             )
             midCtx.fill(
@@ -832,7 +832,7 @@ struct OnboardingProgressBar: View {
                         AppColors.accentTertiary.opacity(0.30)
                     ]),
                     startPoint: CGPoint(x: midRect.minX, y: barMidY),
-                    endPoint:   CGPoint(x: midRect.maxX, y: barMidY)
+                    endPoint: CGPoint(x: midRect.maxX, y: barMidY)
                 )
             )
 
@@ -846,9 +846,9 @@ struct OnboardingProgressBar: View {
             coreCtx.addFilter(.blur(radius: coreBlurBase + bloomIntensity * coreBlurPulse))
             coreCtx.opacity = coreOpacity
             let coreRect    = CGRect(
-                x:      barMinX - 3,
-                y:      barMidY - coreSpread / 2 - 1,
-                width:  fillWidth + 6,
+                x: barMinX - 3,
+                y: barMidY - coreSpread / 2 - 1,
+                width: fillWidth + 6,
                 height: coreSpread
             )
             coreCtx.fill(
@@ -862,23 +862,23 @@ struct OnboardingProgressBar: View {
                         AppColors.accentTertiary.opacity(0.65)
                     ]),
                     startPoint: CGPoint(x: coreRect.minX, y: barMidY),
-                    endPoint:   CGPoint(x: coreRect.maxX, y: barMidY)
+                    endPoint: CGPoint(x: coreRect.maxX, y: barMidY)
                 )
             )
 
             // ── Particles ──────────────────────────────────────────────────
 
             let particleDefs: [(Color, CGFloat, Double)] = [
-                (AppColors.accentPrimary,   0.08, 0.0),
+                (AppColors.accentPrimary, 0.08, 0.0),
                 (AppColors.accentSecondary, 0.42, 0.6),
-                (AppColors.accentTertiary,  0.72, 1.2),
-                (AppColors.accentPrimary,   0.90, 0.3),
-                (AppColors.accentTertiary,  0.22, 0.95),
-                (AppColors.accentSecondary, 0.55, 0.65),
+                (AppColors.accentTertiary, 0.72, 1.2),
+                (AppColors.accentPrimary, 0.90, 0.3),
+                (AppColors.accentTertiary, 0.22, 0.95),
+                (AppColors.accentSecondary, 0.55, 0.65)
             ]
 
             // VQ-18: particleOpacityScale passed in; 0.65 light, 1.0 dark.
-            let dotOpacityMultiplier:  CGFloat = 0.90 * particleOpacityScale
+            let dotOpacityMultiplier: CGFloat = 0.90 * particleOpacityScale
             let haloOpacityMultiplier: CGFloat = 0.53 * particleOpacityScale
 
             let cycleDuration = CGFloat(shimmerCycleDuration)
@@ -905,13 +905,13 @@ struct OnboardingProgressBar: View {
                 // VQ-12: rise height base 10 → 14pt, variation ±3 → ±5pt.
                 //        Range was 7–13pt (barely clears bloom halo at 4pt bar).
                 //        New range 9–19pt gives particles room to read distinctly.
-                let riseHeight:  CGFloat = 14 + sin(i * 1.3) * 5   // VQ-12: was 10 + sin(i×1.3)×3
+                let riseHeight: CGFloat = 14 + sin(i * 1.3) * 5   // VQ-12: was 10 + sin(i×1.3)×3
 
                 // VQ-13: easeExp base 2.0 → 2.2, variation ±0.5 → ±0.9.
                 //        New range [1.3, 3.1] vs old [1.5, 2.5].
                 //        Wider spread creates visible arc-vs-drift character
                 //        diversity — fast-arcing vs slow-drifting particles.
-                let easeExp:     CGFloat = 2.2 + cos(i * 0.9) * 0.9   // VQ-13: was 2.0 + cos(i×0.9)×0.5
+                let easeExp: CGFloat = 2.2 + cos(i * 0.9) * 0.9   // VQ-13: was 2.0 + cos(i×0.9)×0.5
 
                 // VQ-14: drift frequency 2.1 → 1.8 per index.
                 //        Previous spacing clustered two particles at similar
@@ -921,7 +921,7 @@ struct OnboardingProgressBar: View {
                 // VQ-15: wobble amplitude easeOut×2 → easeOut×3.5.
                 //        2pt max lateral movement was sub-perceptual on screen.
                 //        3.5pt is clearly readable as organic sway.
-                let wobbleFreq:  CGFloat = 2.5 + cos(i * 1.7) * 1.0
+                let wobbleFreq: CGFloat = 2.5 + cos(i * 1.7) * 1.0
 
                 let easeOut = 1.0 - pow(1.0 - phase, easeExp)
 
@@ -937,9 +937,9 @@ struct OnboardingProgressBar: View {
 
                 // Three concentric ellipses — never .radialGradient
                 let haloSizes: [(scale: Double, opacity: Double)] = [
-                    (1.0,  Double(pOpacity * haloOpacityMultiplier) * 0.36),
+                    (1.0, Double(pOpacity * haloOpacityMultiplier) * 0.36),
                     (0.60, Double(pOpacity * haloOpacityMultiplier) * 0.22),
-                    (0.32, Double(pOpacity * haloOpacityMultiplier) * 0.34),
+                    (0.32, Double(pOpacity * haloOpacityMultiplier) * 0.34)
                 ]
                 let glowRadius: CGFloat = 2.0
                 for halo in haloSizes {
@@ -961,7 +961,7 @@ struct OnboardingProgressBar: View {
                 dotCtx.fill(
                     Path(ellipseIn: CGRect(
                         x: xPos - 1, y: yPos - 1,
-                        width: 2,    height: 2
+                        width: 2, height: 2
                     )),
                     with: .color(color)
                 )
@@ -1023,41 +1023,41 @@ private struct PreviewContent: View {
                     edgeRow("Step 0 of 6  (empty bar)") {
                         OnboardingProgressBar(
                             currentStep: 0,
-                            totalSteps:  6
+                            totalSteps: 6
                         )
                     }
                     edgeRow("Step 6 of 6  (full, no bloom)") {
                         OnboardingProgressBar(
                             currentStep: 6,
-                            totalSteps:  6
+                            totalSteps: 6
                         )
                     }
                     edgeRow("Step 6 of 6  (full + bloom)") {
                         OnboardingProgressBar(
-                            currentStep:          6,
-                            totalSteps:           6,
+                            currentStep: 6,
+                            totalSteps: 6,
                             showCompletionEffect: true
                         )
                     }
                     edgeRow("Step 1 of 1  (single step + bloom)") {
                         OnboardingProgressBar(
-                            currentStep:          1,
-                            totalSteps:           1,
+                            currentStep: 1,
+                            totalSteps: 1,
                             showCompletionEffect: true
                         )
                     }
                     edgeRow("Narrow  (width: 60)") {
                         OnboardingProgressBar(
                             currentStep: 3,
-                            totalSteps:  6,
-                            totalWidth:  60
+                            totalSteps: 6,
+                            totalWidth: 60
                         )
                     }
                     edgeRow("Tall  (height: 8)") {
                         OnboardingProgressBar(
                             currentStep: 4,
-                            totalSteps:  6,
-                            barHeight:   8
+                            totalSteps: 6,
+                            barHeight: 8
                         )
                     }
                 }
@@ -1080,8 +1080,8 @@ private struct PreviewContent: View {
         VStack(spacing: AppSpacing.lg) {
             ForEach(1...total, id: \.self) { step in
                 OnboardingProgressBar(
-                    currentStep:          step,
-                    totalSteps:           total,
+                    currentStep: step,
+                    totalSteps: total,
                     showCompletionEffect: step == total
                 )
             }

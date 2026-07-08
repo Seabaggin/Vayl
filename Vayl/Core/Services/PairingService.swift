@@ -156,10 +156,10 @@ final class PairingService {
             table: "user_profiles",
             filter: .eq("auth_id", value: myAuthId.uuidString)
         )
-        
+
         try await channel.subscribeWithError()
         defer { Task { await self.supabase.removeChannel(channel) } }
-        
+
         // 1) Partner joined? (initial check before stream starts)
         let initialRows: [ProfileCoupleRow] = try await supabase
             .from("user_profiles")
@@ -167,7 +167,7 @@ final class PairingService {
             .eq("auth_id", value: myAuthId.uuidString)
             .execute()
             .value
-            
+
         if let coupleId = initialRows.first?.coupleId {
             logger.info("Linked (initial) — coupleId: \(coupleId)")
             return coupleId
@@ -190,7 +190,7 @@ final class PairingService {
                 }
                 throw CancellationError()
             }
-            
+
             group.addTask {
                 let timeToWait = deadline.timeIntervalSinceNow
                 if timeToWait > 0 {
@@ -199,7 +199,7 @@ final class PairingService {
                 logger.info("Pairing code expired (deadline reached)")
                 throw PairingError.expiredCode
             }
-            
+
             let result = try await group.next()!
             group.cancelAll()
             return result
@@ -235,7 +235,7 @@ final class PairingService {
         try await supabase
             .rpc("set_connection_composition", params: [
                 "p_couple_id": coupleId.uuidString,
-                "p_value": value.rawValue,
+                "p_value": value.rawValue
             ])
             .execute()
         logger.info("connection_composition set to \(value.rawValue)")

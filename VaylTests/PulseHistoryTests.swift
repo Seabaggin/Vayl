@@ -61,11 +61,11 @@ final class PulseHistoryTests: XCTestCase {
     func test_paired_quadrantUpdatesWhenPartnerHasNewerEntry() {
         let partner = [
             makeEntry(daysAgo: 10, energy: 0.1, openness: 0.1),   // .protective
-            makeEntry(daysAgo: 2,  energy: 0.9, openness: 0.9),   // .expansive
+            makeEntry(daysAgo: 2, energy: 0.9, openness: 0.9)   // .expansive
         ]
         let mine = [
             makeEntry(daysAgo: 8),   // between the two → partner is .protective
-            makeEntry(daysAgo: 1),   // after second → partner is .expansive
+            makeEntry(daysAgo: 1)   // after second → partner is .expansive
         ]
         let result = PulseHistory.pairedLastLoggedSpaces(mine: mine, partner: partner)
         XCTAssertEqual(result[0].partner, .protective)
@@ -94,20 +94,20 @@ final class PulseHistoryTests: XCTestCase {
     }
 
     private func makeEntry(
-        daysAgo:  Int,
-        energy:   Double = 0.5,
+        daysAgo: Int,
+        energy: Double = 0.5,
         openness: Double = 0.5
     ) -> PulseEntry {
         let date = Calendar.current.date(byAdding: .day, value: -daysAgo, to: Date()) ?? Date()
         return PulseEntry(
-            date:          date,
+            date: date,
             capacityScore: 2.5,
-            glowColor:     .indigo,
-            speed:         "x",
+            glowColor: .indigo,
+            speed: "x",
             nervousSystem: "x",
-            focus:         "x",
-            feeling:       "x",
-            position:      PulsePosition(energy: energy, openness: openness)
+            focus: "x",
+            feeling: "x",
+            position: PulsePosition(energy: energy, openness: openness)
         )
     }
 }

@@ -595,7 +595,7 @@ private struct _PressScaleStyle: ButtonStyle {
         .sample("New Relationship Energy", .mutual),
         .sample("Overnight Stays With Others", .adjacent, locked: true),
         .sample("Meeting Your Partner's Other Connections", .mutual, locked: true),
-        .sample("Time and Attention", .adjacent, locked: true),
+        .sample("Time and Attention", .adjacent, locked: true)
     ]))
     .environment(appState)
     .environment(EntitlementStore(modelContainer: .previewContainer, appState: appState))
@@ -609,7 +609,7 @@ private struct _PressScaleStyle: ButtonStyle {
         .sample("Overnight Stays", .adjacent),
         .sample("Meeting Partners", .mutual),
         .sample("Shared Space", .mutual),
-        .sample("Deep Conversations", .adjacent),
+        .sample("Deep Conversations", .adjacent)
     ]))
     .environment(appState)
     .environment(EntitlementStore(modelContainer: .previewContainer, appState: appState))

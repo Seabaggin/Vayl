@@ -26,7 +26,7 @@ struct PulseHistoryGrid: View {
     let mode: Mode
 
     /// Which cell (if any) is showing its date/space-name callout below the grid.
-    @State private var selectedIndex: Int? = nil
+    @State private var selectedIndex: Int?
     /// Off-screen pause: border dots only run their timeline while the grid is visible.
     @State private var isVisible: Bool = false
 
@@ -67,7 +67,7 @@ struct PulseHistoryGrid: View {
             }
         }
         .animation(AppAnimation.fast, value: selectedIndex)
-        .onAppear  { isVisible = true }
+        .onAppear { isVisible = true }
         .onDisappear { isVisible = false }
     }
 
@@ -125,9 +125,9 @@ struct PulseHistoryGrid: View {
 
 private struct AuraDot: View {
 
-    let space:   PulseSpace
-    var partner: PulseSpace? = nil
-    var index:   Int  = 0
+    let space: PulseSpace
+    var partner: PulseSpace?
+    var index: Int  = 0
     /// Whether this dot may run its border-lean timeline (false while the grid is off-screen).
     var animate: Bool = false
 
@@ -270,11 +270,11 @@ private struct SeamLine: Shape {
 
 private let previewMeSpaces: [PulseSpace] = [
     .expansive, .expansive, .receptive, .expansive, .expansive,
-    .receptive, .expansive, .neutral,   .reactive,  .expansive,
+    .receptive, .expansive, .neutral, .reactive, .expansive,
     .receptive, .expansive, .borderExpansiveReceptive, .receptive, .expansive,
     .expansive, .receptive, .expansive, .uncharted, .expansive,
     .expansive, .receptive, .expansive, .expansive, .receptive,
-    .expansive, .expansive, .protective, .expansive, .expansive,
+    .expansive, .expansive, .protective, .expansive, .expansive
 ]
 
 private let previewMeDays: [(date: Date, space: PulseSpace)] =
@@ -284,15 +284,15 @@ private let previewMeDays: [(date: Date, space: PulseSpace)] =
 
 private let previewUsSpacePairs: [(PulseSpace, PulseSpace?)] = [
     (.expansive, .receptive), (.expansive, .expansive), (.receptive, .receptive),
-    (.expansive, .protective),(.expansive, .expansive), (.receptive, .expansive),
-    (.expansive, .expansive), (.expansive, .receptive), (.reactive,  .protective),
+    (.expansive, .protective), (.expansive, .expansive), (.receptive, .expansive),
+    (.expansive, .expansive), (.expansive, .receptive), (.reactive, .protective),
     (.expansive, .expansive), (.receptive, .receptive), (.expansive, .receptive),
-    (.expansive, .expansive), (.receptive, .reactive),  (.expansive, .expansive),
+    (.expansive, .expansive), (.receptive, .reactive), (.expansive, .expansive),
     (.expansive, .receptive), (.receptive, .receptive), (.expansive, .expansive),
-    (.expansive, .protective),(.expansive, .expansive), (.expansive, .expansive),
+    (.expansive, .protective), (.expansive, .expansive), (.expansive, .expansive),
     (.receptive, .expansive), (.expansive, .expansive), (.expansive, .receptive),
     (.receptive, .receptive), (.expansive, .expansive), (.expansive, .protective),
-    (.expansive, .expansive), (.expansive, .expansive), (.expansive, .expansive),
+    (.expansive, .expansive), (.expansive, .expansive), (.expansive, .expansive)
 ]
 
 private let previewUsPairs: [(date: Date, mine: PulseSpace, partner: PulseSpace?)] =

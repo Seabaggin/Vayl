@@ -37,18 +37,18 @@ struct StatPhase: View {
     // safe area region and need no additional offset compensation.
     @Environment(\.realSafeArea) private var safeAreaInsets
 
-    @State private var holoShiftPhase:  CGFloat = -0.35
+    @State private var holoShiftPhase: CGFloat = -0.35
     @State private var holoFlashOffset: CGFloat =  2.5
     @State private var glowPulseHigh  = false
 
     // Arrival ignition — one-time light-catch fired as the numeral seats (~0.76s).
-    @State private var igniteGlow:   Double  = 0     // additive glow bloom, 0 at rest
+    @State private var igniteGlow: Double  = 0     // additive glow bloom, 0 at rest
     @State private var igniteSweepX: CGFloat = 2.5    // bright sweep parked off-screen right
     @State private var softHaptic = UIImpactFeedbackGenerator(style: .soft)
 
     // Ignition rendering constants — felt on device, not AppColors candidates.
     private let kGlowBloomBoost: Double  = 0.40   // additive peak → ~0.80 composite over resting 0.40
-    private let kLandScaleFrom:  CGFloat = 0.90   // hero scales up from 0.90 as it seats
+    private let kLandScaleFrom: CGFloat = 0.90   // hero scales up from 0.90 as it seats
 
     // Entrance cascade — fires in sequence via startAllAnimations()
     @State private var showStat      = false
@@ -59,7 +59,7 @@ struct StatPhase: View {
     @State private var citeOpen    = false
     @State private var hasAnimated = false
     @State private var hasAdvanced = false
-    @State private var statAlpha:  Double = 1.0
+    @State private var statAlpha: Double = 1.0
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -94,8 +94,8 @@ struct StatPhase: View {
                 Ellipse()
                     .fill(RadialGradient(stops: [
                         .init(color: AppColors.accentSecondary.opacity(kAtmosphereOuter), location: 0),
-                        .init(color: AppColors.accentSecondary.opacity(kAtmosphereMid),   location: 0.5),
-                        .init(color: .clear,                                              location: 1)
+                        .init(color: AppColors.accentSecondary.opacity(kAtmosphereMid), location: 0.5),
+                        .init(color: .clear, location: 1)
                     ], center: .center, startRadius: 0, endRadius: 240))
                     .frame(width: 380, height: 220) // decorative atmosphere constants — token pending AppLayout
                     .blur(radius: 90)
@@ -207,7 +207,7 @@ struct StatPhase: View {
     // Rendering constants for the OB atmospheric background ellipse.
     // The 0.08–0.12 range is the OB atmospheric opacity spec — felt, not seen.
     private let kAtmosphereOuter: CGFloat = 0.12
-    private let kAtmosphereMid:   CGFloat = 0.06
+    private let kAtmosphereMid: CGFloat = 0.06
 
     @ViewBuilder
     private func contentGroup(statFontSize: CGFloat) -> some View {
@@ -220,12 +220,12 @@ struct StatPhase: View {
 
             // ── Stat hero — the primary communicative element ─────────────
             StatNumberView(
-                holoShiftPhase:  holoShiftPhase,
+                holoShiftPhase: holoShiftPhase,
                 holoFlashOffset: holoFlashOffset,
-                glowPulseHigh:   glowPulseHigh,
-                igniteSweepX:    igniteSweepX,
-                igniteGlow:      igniteGlow,
-                fontSize:        statFontSize
+                glowPulseHigh: glowPulseHigh,
+                igniteSweepX: igniteSweepX,
+                igniteGlow: igniteGlow,
+                fontSize: statFontSize
             )
             .ambientAnimation(
                 .easeInOut(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: true),
@@ -298,10 +298,10 @@ struct StatPhase: View {
             showEthos       = true
             showCTA         = true
         } else {
-            withAnimation(AppAnimation.cinematicFade)      { showStat      = true }
-            withAnimation(AppAnimation.slow.delay(0.5))    { showStatLabel = true }
-            withAnimation(AppAnimation.slow.delay(1.0))    { showEthos     = true }
-            withAnimation(AppAnimation.spring.delay(1.4))  { showCTA       = true }
+            withAnimation(AppAnimation.cinematicFade) { showStat      = true }
+            withAnimation(AppAnimation.slow.delay(0.5)) { showStatLabel = true }
+            withAnimation(AppAnimation.slow.delay(1.0)) { showEthos     = true }
+            withAnimation(AppAnimation.spring.delay(1.4)) { showCTA       = true }
         }
     }
 
@@ -321,7 +321,7 @@ struct StatPhase: View {
             guard !reduceMotion else { return }  // skip the visual ignition under reduce motion
 
             withAnimation(AppAnimation.statIgnitionSweep) { igniteSweepX = -2.5 }
-            withAnimation(AppAnimation.statGlowBloomIn)   { igniteGlow   = kGlowBloomBoost }
+            withAnimation(AppAnimation.statGlowBloomIn) { igniteGlow   = kGlowBloomBoost }
             try? await Task.sleep(for: .seconds(AppAnimation.statGlowBloomHold))
             withAnimation(AppAnimation.statGlowBloomSettle) { igniteGlow = 0 }
         }
@@ -330,11 +330,11 @@ struct StatPhase: View {
     // MARK: - Stat Number (Holographic "1 in 5")
 
     private struct StatNumberView: View {
-        let holoShiftPhase:  CGFloat
+        let holoShiftPhase: CGFloat
         let holoFlashOffset: CGFloat
-        let glowPulseHigh:   Bool
-        let igniteSweepX:    CGFloat   // bright one-time sweep position (parked off-screen at rest)
-        let igniteGlow:      Double    // additive ignition bloom opacity (0 at rest)
+        let glowPulseHigh: Bool
+        let igniteSweepX: CGFloat   // bright one-time sweep position (parked off-screen at rest)
+        let igniteGlow: Double    // additive ignition bloom opacity (0 at rest)
 
         var fontSize: CGFloat = 140
 
@@ -355,15 +355,15 @@ struct StatPhase: View {
             // renders the pixels. Semantic label applied at the StatNumberView call site,
             // so internals stay accessibilityHidden inside the core.
             HolographicTextCore(
-                text:         txt,
-                font:         fnt,
-                tracking:     trk,
-                shift:        holoShiftPhase,
-                flash:        holoFlashOffset,
-                glowHigh:     glowPulseHigh,
-                igniteGlow:   igniteGlow,
+                text: txt,
+                font: fnt,
+                tracking: trk,
+                shift: holoShiftPhase,
+                flash: holoFlashOffset,
+                glowHigh: glowPulseHigh,
+                igniteGlow: igniteGlow,
                 igniteSweepX: igniteSweepX,
-                fixedSize:    true
+                fixedSize: true
             )
         }
     }
@@ -372,7 +372,6 @@ struct StatPhase: View {
 
     private struct CitationTapView: View {
         @Binding var citeOpen: Bool
-
 
         private struct CiteButtonStyle: ButtonStyle {
             func makeBody(configuration: Configuration) -> some View {
@@ -417,7 +416,7 @@ struct StatPhase: View {
             .accessibilityAddTraits(.isButton)
         }
     }
-    
+
     // MARK: - Citation Card (pop-out)
 
     private struct CitationCard: View {
@@ -486,10 +485,10 @@ struct StatPhase: View {
                     .foregroundStyle(LinearGradient(
                         colors: [
                             AppColors.ethosGradientLead,
-                            AppColors.ethosGradientTrail,
+                            AppColors.ethosGradientTrail
                         ],
                         startPoint: .topLeading,
-                        endPoint:   .bottomTrailing
+                        endPoint: .bottomTrailing
                     ))
             }
             .multilineTextAlignment(.center)
@@ -499,7 +498,7 @@ struct StatPhase: View {
             .accessibilityLabel("That's about as ordinary as owning a cat.")
         }
     }
-    
+
 }
 
 #Preview("Dark") {

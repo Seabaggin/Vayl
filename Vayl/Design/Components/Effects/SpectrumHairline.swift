@@ -17,7 +17,7 @@ struct SpectrumHairline: View {
                 .clear
             ],
             startPoint: .leading,
-            endPoint:   .trailing
+            endPoint: .trailing
         )
         .frame(height: 1.5)
         .frame(maxWidth: .infinity)
@@ -46,7 +46,7 @@ struct TaperedSpectrumHairline: View {
                         .clear
                     ],
                     startPoint: .leading,
-                    endPoint:   .trailing
+                    endPoint: .trailing
                 )
             )
             .frame(height: thickness)
@@ -69,15 +69,15 @@ private struct TaperedHairlineShape: Shape {
         // Upper arc: left tip → right tip
         path.move(to: CGPoint(x: taperEnd, y: h / 2))
         path.addCurve(
-            to:       CGPoint(x: w - taperEnd,      y: h / 2),
-            control1: CGPoint(x: taperEnd + cp,     y: 0),
+            to: CGPoint(x: w - taperEnd, y: h / 2),
+            control1: CGPoint(x: taperEnd + cp, y: 0),
             control2: CGPoint(x: w - taperEnd - cp, y: 0)
         )
         // Lower arc: right tip → left tip
         path.addCurve(
-            to:       CGPoint(x: taperEnd,          y: h / 2),
+            to: CGPoint(x: taperEnd, y: h / 2),
             control1: CGPoint(x: w - taperEnd - cp, y: h),
-            control2: CGPoint(x: taperEnd + cp,     y: h)
+            control2: CGPoint(x: taperEnd + cp, y: h)
         )
         path.closeSubpath()
         return path

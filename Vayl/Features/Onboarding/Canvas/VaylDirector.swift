@@ -9,10 +9,10 @@ final class VaylDirector: OnboardingStage {
 
     var phase: OBPhase = .stat
 
-    var tableCards:      [VaylCardModel] = []
+    var tableCards: [VaylCardModel] = []
     var cornerDeckCards: [VaylCardModel] = []
-    var inFlightCards:   [VaylCardModel] = []
-    var muckCards:       [VaylCardModel] = []
+    var inFlightCards: [VaylCardModel] = []
+    var muckCards: [VaylCardModel] = []
 
     var onboardingData: OnboardingData = OnboardingData()
     var openerDeckType: OpenerDeckType = .anxious
@@ -20,7 +20,7 @@ final class VaylDirector: OnboardingStage {
     /// Which credential the ConfirmationPhase is currently editing. Drives the
     /// edit half-sheet hosted at OnboardingCanvasWrapper (outside the canvas,
     /// which forbids .sheet). nil = no sheet open.
-    var editingCredential: OBCredential? = nil
+    var editingCredential: OBCredential?
 
     /// Drives the single-user couples-first greeting sheet, hosted OUTSIDE the canvas (the
     /// canvas forbids .sheet — same pattern as editingCredential). Set when the user confirms
@@ -28,7 +28,7 @@ final class VaylDirector: OnboardingStage {
     var showSingleGreeting: Bool = false
     @ObservationIgnored private var pendingSingleConclusion: (RelationshipContext, SituationalRegister)?
 
-    var tableFade:          Double = 0.0
+    var tableFade: Double = 0.0
     var dealPointIntensity: Double = 0.0
 
     // Lazy — deferred until first access so previews and unit tests that
@@ -36,7 +36,6 @@ final class VaylDirector: OnboardingStage {
     // @ObservationIgnored is safe because the scene object never changes;
     // only its contents mutate (handled internally by CardFlightScene itself).
     @ObservationIgnored lazy var cardFlightScene: CardFlightScene = CardFlightScene()
-
 
     // MARK: - Gender Phase  (extracted → GenderSequencer)
     //
@@ -58,11 +57,9 @@ final class VaylDirector: OnboardingStage {
     // DemoPhase reads `director.demo.*`; it calls commitDemoSnapshot / advance through here.
     @ObservationIgnored lazy var demo = DemoSequencer(director: self)
 
-
-
     var deckPulse: Bool = false
 
-    private var sequenceAttempt:   Int = 0
+    private var sequenceAttempt: Int = 0
 
     @ObservationIgnored lazy var cardFlightEngine: CardFlightEngine = CardFlightEngine(director: self)
 
@@ -86,7 +83,7 @@ final class VaylDirector: OnboardingStage {
         // entry — an outgoing phase's teardown (onDisappear fires ~300ms later,
         // mid cross-fade) must never be the thing that clears the canvas line,
         // or it wipes the incoming phase's copy.
-        
+
         projector.hideDealerLine()
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(50)) // advance debounce — double-fire guard only
@@ -225,7 +222,6 @@ final class VaylDirector: OnboardingStage {
         withAnimation(AppAnimation.tableRecede.reduceMotionSafe) { tableFade = 0.0 }
     }
 
-
     /// Called by ContextPhase once the cards have begun their exit. Writes the
     /// chosen relationship context + situational register, adds the `.context`
     /// credential to the corner deck, re-emerges the felt, projects a dealer line
@@ -347,8 +343,6 @@ final class VaylDirector: OnboardingStage {
         }
     }
 
-
-
     // MARK: - Card Flight Engine Forwarding
 
     @MainActor
@@ -361,15 +355,15 @@ final class VaylDirector: OnboardingStage {
     }
 
     func sailCard(
-        cardID:       String,
-        image:        UIImage,
-        from:         CGPoint,
-        to:           CGPoint,
-        sceneSize:    CGSize,
-        duration:     TimeInterval = 0.92,
+        cardID: String,
+        image: UIImage,
+        from: CGPoint,
+        to: CGPoint,
+        sceneSize: CGSize,
+        duration: TimeInterval = 0.92,
         initialAngle: CGFloat      = -0.24,
-        finalAngle:   CGFloat      = 0.0314,
-        zPosition:    CGFloat      = 0
+        finalAngle: CGFloat      = 0.0314,
+        zPosition: CGFloat      = 0
     ) async -> (CGPoint, CGFloat) {
         await cardFlightEngine.sailCard(
             cardID: cardID, image: image, from: from, to: to,
@@ -400,8 +394,5 @@ final class VaylDirector: OnboardingStage {
         }
         onboardingData.openerDeckType = openerDeckType
     }
-
-
-
 
 }

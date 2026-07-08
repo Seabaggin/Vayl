@@ -21,8 +21,8 @@ struct PulsePosition: Equatable, Codable {
         let charged = energy >= 0.5
         let open    = openness >= 0.5
         switch (charged, open) {
-        case (true,  true):  return .expansive
-        case (true,  false): return .reactive
+        case (true, true):  return .expansive
+        case (true, false): return .reactive
         case (false, true):  return .receptive
         case (false, false): return .protective
         }

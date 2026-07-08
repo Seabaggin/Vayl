@@ -19,22 +19,22 @@ extension LinearGradient {
     /// Uses `white.opacity(0)` for the transition stop after the primary band to avoid
     /// the black-fringe artifact that `.clear` (rgba 0,0,0,0) produces in gradient interpolation.
     static func glassSpecular(
-        primary:    CGFloat    = 0.30,   // HolographicTextCore.specPrimary
-        secondary:  CGFloat    = 0.18,   // HolographicTextCore.specSecondary
+        primary: CGFloat    = 0.30,   // HolographicTextCore.specPrimary
+        secondary: CGFloat    = 0.18,   // HolographicTextCore.specSecondary
         startPoint: UnitPoint  = .leading,
-        endPoint:   UnitPoint  = .trailing
+        endPoint: UnitPoint  = .trailing
     ) -> LinearGradient {
         LinearGradient(
             stops: [
-                .init(color: .clear,                    location: 0.30),
-                .init(color: .white.opacity(primary),   location: 0.38),
-                .init(color: .white.opacity(0),         location: 0.42),
-                .init(color: .clear,                    location: 0.50),
+                .init(color: .clear, location: 0.30),
+                .init(color: .white.opacity(primary), location: 0.38),
+                .init(color: .white.opacity(0), location: 0.42),
+                .init(color: .clear, location: 0.50),
                 .init(color: .white.opacity(secondary), location: 0.60),
-                .init(color: .clear,                    location: 0.65),
+                .init(color: .clear, location: 0.65)
             ],
             startPoint: startPoint,
-            endPoint:   endPoint
+            endPoint: endPoint
         )
     }
 }
@@ -43,10 +43,10 @@ extension LinearGradient {
 
 private struct GlassSpecularSweepModifier: ViewModifier {
 
-    let size:      CGFloat
-    var primary:   CGFloat = 0.30
+    let size: CGFloat
+    var primary: CGFloat = 0.30
     var secondary: CGFloat = 0.18
-    var duration:  Double  = AppAnimation.auraGlassSweep
+    var duration: Double  = AppAnimation.auraGlassSweep
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var active = false
@@ -73,10 +73,10 @@ private struct GlassSpecularSweepModifier: ViewModifier {
 
 extension View {
     func glassSpecularSweep(
-        size:      CGFloat,
-        primary:   CGFloat = 0.30,
+        size: CGFloat,
+        primary: CGFloat = 0.30,
         secondary: CGFloat = 0.18,
-        duration:  Double  = AppAnimation.auraGlassSweep
+        duration: Double  = AppAnimation.auraGlassSweep
     ) -> some View {
         modifier(GlassSpecularSweepModifier(
             size: size, primary: primary, secondary: secondary, duration: duration

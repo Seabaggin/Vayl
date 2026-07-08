@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 3/8/26.
 //
 
-
 import SwiftUI
 
 struct InteractiveField: View {

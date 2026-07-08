@@ -38,7 +38,7 @@ private struct HomeRouterInnerView: View {
     // Presented as a .vaylCover so the rater is a protected, immersive, unhurried
     // beat (interactive-dismiss disabled; exit is explicit via vaylDismiss).
     // Reachable for unpaired users too (head-start hook).
-    @State private var activeMap: DesireMapStore? = nil
+    @State private var activeMap: DesireMapStore?
 
     // Captured when the rater opens, so the dismiss handler can tell whether the user JUST
     // completed (false → true) and should see the one-shot completion beat.
@@ -46,7 +46,7 @@ private struct HomeRouterInnerView: View {
 
     // ── Desire-Map reveal presentation (D4) ──────────────────────────────
     // Full-screen "magic moment" — celebrates where the couple aligns (free/locked split).
-    @State private var activeReveal: DesireRevealStore? = nil
+    @State private var activeReveal: DesireRevealStore?
 
     // ── Getting Started "Path" overlay ───────────────────────────────────
     // The day-1 activation expands the dashboard entry card (matched geometry)
@@ -222,29 +222,29 @@ private struct HomeRouterInnerView: View {
 
         } else if let loadedDeck = store.deck {
             HomeDashboardView(
-                displayName:         appState.displayName,
-                partnerChipState:    store.partnerChipState,
-                cards:               loadedDeck.orderedCards,
-                deckTitle:           loadedDeck.title,
-                desireMapState:      store.desireMapState,
+                displayName: appState.displayName,
+                partnerChipState: store.partnerChipState,
+                cards: loadedDeck.orderedCards,
+                deckTitle: loadedDeck.title,
+                desireMapState: store.desireMapState,
                 partnerPulsePosition: store.partnerPulsePosition,
                 partnerPulseFetchFailed: store.partnerPulseFetchFailed,
                 reflectionCardState: store.reflectionCardState,
-                pickUpItems:         [],
-                stageIndex:          store.stageIndex,
-                cardsCompleted:      store.cardsCompleted,
-                recentEvents:        [],
-                isSolo:              store.isSolo,
-                lexiconRemotePool:   store.lexiconRemotePool,
-                gettingStarted:      store.gettingStarted,
-                pathNamespace:       pathNamespace,
-                pathOpen:            showPath,
-                onOpenPath:          { withAnimation(AppAnimation.spring) { showPath = true } },
-                onCardAction:        { card, action in
+                pickUpItems: [],
+                stageIndex: store.stageIndex,
+                cardsCompleted: store.cardsCompleted,
+                recentEvents: [],
+                isSolo: store.isSolo,
+                lexiconRemotePool: store.lexiconRemotePool,
+                gettingStarted: store.gettingStarted,
+                pathNamespace: pathNamespace,
+                pathOpen: showPath,
+                onOpenPath: { withAnimation(AppAnimation.spring) { showPath = true } },
+                onCardAction: { card, action in
                     handleCardAction(card: card, action: action, deck: loadedDeck, store: store)
                 },
-                onInvitePartner:     { showPairingInvite = true },
-                onPartnerTap:        {
+                onInvitePartner: { showPairingInvite = true },
+                onPartnerTap: {
                     switch appState.linkState {
                     case .linked:
                         appState.settingsPresented = true
@@ -252,13 +252,13 @@ private struct HomeRouterInnerView: View {
                         showPairingJoin = true
                     }
                 },
-                onSessionEnded:      { Task { await store.refreshDeckState() } },
-                onOpenLexicon:       { appState.selectedTab = .learn },
-                onPulseTap:          { appState.selectedTab = .map },
+                onSessionEnded: { Task { await store.refreshDeckState() } },
+                onOpenLexicon: { appState.selectedTab = .learn },
+                onPulseTap: { appState.selectedTab = .map },
                 // Interim: route to the Pulse surface. Final: present the shared
                 // check-in sheet in place (Bryan's PulseWidget pass).
-                onCheckIn:           { appState.selectedTab = .map },
-                onOpenSettings:      { appState.settingsPresented = true }
+                onCheckIn: { appState.selectedTab = .map },
+                onOpenSettings: { appState.settingsPresented = true }
             )
         }
     }
@@ -363,8 +363,8 @@ private struct HomeRouterInnerView: View {
             // Direct reveal entry for testing — the production link is the Getting Started
             // `.seeReveal` step, only reachable once BOTH partners finish. One button per variant
             // so all three telegraphs are feelable solo (production picks one by coupleId).
-            Button("Reveal · Gather ▶")      { presentSampleReveal(.gather) }
-            Button("Reveal · Sweep ▶")       { presentSampleReveal(.sweep) }
+            Button("Reveal · Gather ▶") { presentSampleReveal(.gather) }
+            Button("Reveal · Sweep ▶") { presentSampleReveal(.sweep) }
             Button("Reveal · Constellate ▶") { presentSampleReveal(.constellate) }
         }
         .font(AppFonts.overline)
@@ -383,7 +383,7 @@ private struct HomeRouterInnerView: View {
             .sample("Overnight Stays With Others", .adjacent, locked: true),
             .sample("Meeting Your Partner's Connections", .mutual, locked: true),
             .sample("Shared Space Agreements", .mutual, locked: true),
-            .sample("Deep Conversations Outside", .adjacent, locked: true),
+            .sample("Deep Conversations Outside", .adjacent, locked: true)
         ], entitlements: entitlements)
         reveal.debugVariantOverride = variant
         activeReveal = reveal

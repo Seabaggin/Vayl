@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 3/8/26.
 //
 
-
 import SwiftUI
 
 struct ScoreRing: View {
@@ -23,7 +22,7 @@ struct ScoreRing: View {
                 AppColors.spectrumCyan,
                 AppColors.spectrumPurple,
                 AppColors.spectrumMagenta,
-                AppColors.spectrumCyan,
+                AppColors.spectrumCyan
             ],
             center: .center
         )
@@ -73,4 +72,3 @@ struct ScoreRing: View {
         }
     }
 }
-

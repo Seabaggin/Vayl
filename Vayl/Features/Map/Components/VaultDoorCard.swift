@@ -12,18 +12,18 @@ import SwiftUI
 
 struct VaultDoorCard: View {
 
-    let summary:   String
-    let statLine:  String
-    var onOpen:    () -> Void
+    let summary: String
+    let statLine: String
+    var onOpen: () -> Void
 
     @State private var spinning = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // FEEL: tune on device — total spin+delay must stay under 0.5s (spec §4).
-    private let spinDegrees:      Double = 60
+    private let spinDegrees: Double = 60
     // FEEL: tied to AppAnimation.spring's response (0.5s) — sheet arrives once
     // the spin visually settles, not mid-flight.
-    private let spinSettleDelay:  Double = 0.5
+    private let spinSettleDelay: Double = 0.5
 
     var body: some View {
         Button {
@@ -85,12 +85,12 @@ private struct VaultEmblem: View {
     /// copied verbatim from the SVG's six `<line>`/`<circle>` endpoints rather
     /// than re-derived from trig, so the geometry can't drift from the source.
     private let spokeEnds: [CGPoint] = [
-        CGPoint(x: 95,   y: 50),
+        CGPoint(x: 95, y: 50),
         CGPoint(x: 72.5, y: 88.97),
         CGPoint(x: 27.5, y: 88.97),
-        CGPoint(x: 5,    y: 50),
+        CGPoint(x: 5, y: 50),
         CGPoint(x: 27.5, y: 11.03),
-        CGPoint(x: 72.5, y: 11.03),
+        CGPoint(x: 72.5, y: 11.03)
     ]
 
     var body: some View {
@@ -114,7 +114,7 @@ private struct VaultEmblem: View {
                 Gradient(stops: [
                     .init(color: AppColors.vaultRoseHighlight.opacity(0.7), location: 0),
                     .init(color: AppColors.spectrumMagenta.opacity(0.24), location: 0.6),
-                    .init(color: .clear, location: 1),
+                    .init(color: .clear, location: 1)
                 ]),
                 center: center, startRadius: 0, endRadius: 15 * scale
             ))
@@ -158,7 +158,7 @@ private struct VaultEmblem: View {
                     .init(color: .white.opacity(0.95), location: 0),
                     .init(color: AppColors.vaultRoseCore.opacity(0.85), location: 0.28),
                     .init(color: AppColors.spectrumMagenta.opacity(0.55), location: 0.7),
-                    .init(color: AppColors.vaultRoseDeep.opacity(0.92), location: 1),
+                    .init(color: AppColors.vaultRoseDeep.opacity(0.92), location: 1)
                 ]),
                 // r="80%" on the core's own 22×22 bounding box (SVG objectBoundingBox
                 // default) resolves to 0.8 × 22 = 17.6 viewBox units, not a guessed value.

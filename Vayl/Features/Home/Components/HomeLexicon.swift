@@ -29,9 +29,9 @@ struct HomeLexicon: View {
 
     /// Server-overridden content, injected from HomeStore via HomeDashboardView
     /// (nil → bundled baseline). The view never fetches content itself (H-2).
-    var remotePool: LexiconRemotePool? = nil
+    var remotePool: LexiconRemotePool?
     /// Tapping a page routes to its destination (the dossier / Learn).
-    var onOpen: (() -> Void)? = nil
+    var onOpen: (() -> Void)?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
@@ -53,9 +53,9 @@ struct HomeLexicon: View {
     }
 
     // Feel values (tunable on device).
-    private let interval:      TimeInterval = 12.0   // slow, ambient dwell (not a ticker)
-    private let resumeDelay:   TimeInterval = 12.0
-    private let pageHeight:    CGFloat      = 180     // FIRST-FRAME FALLBACK ONLY. Each page measures its own content
+    private let interval: TimeInterval = 12.0   // slow, ambient dwell (not a ticker)
+    private let resumeDelay: TimeInterval = 12.0
+    private let pageHeight: CGFloat      = 180     // FIRST-FRAME FALLBACK ONLY. Each page measures its own content
                                                      // height (PageHeightKey) and the pager animates to it, so this is
                                                      // used only for the one frame before measurement lands. It is NOT a
                                                      // gap dial: the Lexicon's rest position above the tab bar is owned by
@@ -83,11 +83,11 @@ struct HomeLexicon: View {
     private struct Item: Identifiable {
         let id = UUID()
         let category: LexCategory
-        let label:   String   // overline
+        let label: String   // overline
         let keyword: String   // the canonical stat/term (share foil hero)
-        let detail:  String   // claim / definition / meaning
-        var quote:   String?  // sentence only — the usage example
-        let act:     String
+        let detail: String   // claim / definition / meaning
+        var quote: String?  // sentence only — the usage example
+        let act: String
     }
 
     // Bundled is the instant baseline + offline fallback; the injected remotePool
@@ -96,8 +96,8 @@ struct HomeLexicon: View {
         guard let remotePool else { return Self.bundledPool }
         return Self.buildPool(
             remoteFindings: remotePool.findings,
-            remoteTerms:    remotePool.terms,
-            remoteQuotes:   remotePool.quotes
+            remoteTerms: remotePool.terms,
+            remoteQuotes: remotePool.quotes
         )
     }
 
@@ -123,9 +123,9 @@ struct HomeLexicon: View {
         let researchItems: [Item] = findings.map { f in
             Item(category: .research, label: "From the Research",
                  keyword: f.stat ?? f.headline,
-                 detail:  f.finding,
-                 quote:   nil,
-                 act:     "See the research")
+                 detail: f.finding,
+                 quote: nil,
+                 act: "See the research")
         }
         let termItems: [Item] = terms.map { t in
             switch t.kind {
@@ -216,7 +216,7 @@ struct HomeLexicon: View {
                     .init(color: .clear, location: 0.00),
                     .init(color: .black, location: 0.07),
                     .init(color: .black, location: 0.93),
-                    .init(color: .clear, location: 1.00),
+                    .init(color: .clear, location: 1.00)
                 ],
                 startPoint: .leading, endPoint: .trailing
             )
@@ -504,9 +504,9 @@ private struct PageHeightKey: PreferenceKey {
 // MARK: - Foil collectible share card (9:16, VaylCardFace language)
 
 private struct LexiconShareCard: View {
-    let label:   String
+    let label: String
     let keyword: String
-    let detail:  String
+    let detail: String
 
     var body: some View {
         ZStack {

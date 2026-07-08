@@ -46,8 +46,8 @@ struct SingleGreetingOverlay: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: AppSpacing.md) {
-                SpectrumBulletRow(text: "Your Desire Map",   phaseOffset: 0.00)
-                SpectrumBulletRow(text: "A solo deck",       phaseOffset: 0.22)
+                SpectrumBulletRow(text: "Your Desire Map", phaseOffset: 0.00)
+                SpectrumBulletRow(text: "A solo deck", phaseOffset: 0.22)
                 SpectrumBulletRow(text: "The Learn library", phaseOffset: 0.44)
             }
             .padding(.top, AppSpacing.xs)
@@ -86,7 +86,7 @@ struct SingleGreetingOverlay: View {
             .simultaneousGesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in pressed = true }
-                    .onEnded   { _ in pressed = false }
+                    .onEnded { _ in pressed = false }
             )
     }
 }

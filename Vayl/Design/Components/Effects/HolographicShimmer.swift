@@ -5,18 +5,18 @@ import SwiftUI
 // MARK: - Orb Model
 
 private struct ShimmerOrb {
-    let color:         Color
-    let alpha:         Double
-    let anchorX:       Double
-    let anchorY:       Double
-    let driftX:        Double
-    let driftY:        Double
+    let color: Color
+    let alpha: Double
+    let anchorX: Double
+    let anchorY: Double
+    let driftX: Double
+    let driftY: Double
     let widthMultiple: Double
-    let freqX:         Double
-    let freqY:         Double
-    let phaseX:        Double
-    let phaseY:        Double
-    let blurRadius:    CGFloat
+    let freqX: Double
+    let freqY: Double
+    let phaseX: Double
+    let phaseY: Double
+    let blurRadius: CGFloat
 
     func position(in size: CGSize, t: Double) -> CGPoint {
         let travelX = size.width  * driftX
@@ -37,7 +37,7 @@ private struct ShimmerOrb {
 
 private let shimmerOrbs: [ShimmerOrb] = [
     ShimmerOrb(
-        color: Color(.sRGB, red:   0/255, green: 160/255, blue: 220/255),
+        color: Color(.sRGB, red: 0/255, green: 160/255, blue: 220/255),
         alpha: 0.15,
         anchorX: 0.38, anchorY: 0.48,
         driftX: 0.46, driftY: 0.52,
@@ -47,7 +47,7 @@ private let shimmerOrbs: [ShimmerOrb] = [
         blurRadius: 30
     ),
     ShimmerOrb(
-        color: Color(.sRGB, red:  90/255, green:  60/255, blue: 180/255),
+        color: Color(.sRGB, red: 90/255, green: 60/255, blue: 180/255),
         alpha: 0.18,
         anchorX: 0.62, anchorY: 0.52,
         driftX: 0.46, driftY: 0.52,
@@ -57,7 +57,7 @@ private let shimmerOrbs: [ShimmerOrb] = [
         blurRadius: 28
     ),
     ShimmerOrb(
-        color: Color(.sRGB, red:  40/255, green:  80/255, blue: 200/255),
+        color: Color(.sRGB, red: 40/255, green: 80/255, blue: 200/255),
         alpha: 0.12,
         anchorX: 0.30, anchorY: 0.38,
         driftX: 0.46, driftY: 0.52,
@@ -67,7 +67,7 @@ private let shimmerOrbs: [ShimmerOrb] = [
         blurRadius: 26
     ),
     ShimmerOrb(
-        color: Color(.sRGB, red: 180/255, green:   0/255, blue:  90/255),
+        color: Color(.sRGB, red: 180/255, green: 0/255, blue: 90/255),
         alpha: 0.10,
         anchorX: 0.68, anchorY: 0.62,
         driftX: 0.46, driftY: 0.52,
@@ -77,7 +77,7 @@ private let shimmerOrbs: [ShimmerOrb] = [
         blurRadius: 34
     ),
     ShimmerOrb(
-        color: Color(.sRGB, red: 100/255, green:  20/255, blue: 200/255),
+        color: Color(.sRGB, red: 100/255, green: 20/255, blue: 200/255),
         alpha: 0.12,
         anchorX: 0.55, anchorY: 0.45,
         driftX: 0.46, driftY: 0.52,
@@ -85,7 +85,7 @@ private let shimmerOrbs: [ShimmerOrb] = [
         freqX: 0.74, freqY: 0.60,
         phaseX: 1.9, phaseY: 4.1,
         blurRadius: 24
-    ),
+    )
 ]
 
 // MARK: - Sweep Math
@@ -106,11 +106,11 @@ private func valueNoise1D(_ t: Double) -> Double {
 // MARK: - Grain Canvas
 
 private struct GrainCanvas: View {
-    let tileWidth:  CGFloat
+    let tileWidth: CGFloat
     let tileHeight: CGFloat
-    let frequency:  Float
-    let octaves:    Int
-    let xStretch:   Float
+    let frequency: Float
+    let octaves: Int
+    let xStretch: Float
 
     var body: some View {
         Canvas { ctx, size in
@@ -168,8 +168,8 @@ private struct GrainCanvas: View {
     }
 
     private func fbmNoise(x: Float, y: Float, octaves: Int) -> Float {
-        var val:  Float = 0
-        var amp:  Float = 0.5
+        var val: Float = 0
+        var amp: Float = 0.5
         var freq: Float = 1.0
         for _ in 0 ..< octaves {
             val  += amp * smoothNoise(SIMD2<Float>(x, y) * freq)
@@ -266,7 +266,7 @@ struct HolographicShimmer: View {
                                             .init(color: Color(.sRGB, red: 100/255, green: 227/255, blue: 255/255).opacity(0.18), location: 0.44),
                                             .init(color: Color(.sRGB, red: 145/255, green: 146/255, blue: 255/255).opacity(0.11), location: 0.50),
                                             .init(color: Color(.sRGB, red: 145/255, green: 146/255, blue: 255/255).opacity(0.03), location: 0.58),
-                                            .init(color: Color(.sRGB, red: 145/255, green: 146/255, blue: 255/255).opacity(0.00), location: 1.00),
+                                            .init(color: Color(.sRGB, red: 145/255, green: 146/255, blue: 255/255).opacity(0.00), location: 1.00)
                                         ],
                                         startPoint: .leading,
                                         endPoint: .trailing
@@ -300,8 +300,8 @@ struct HolographicShimmer: View {
                             // tracks the capsule boundary rather than bleeding past it.
                             EllipticalGradient(
                                 stops: [
-                                    .init(color: .clear,               location: 0.50),
-                                    .init(color: .black.opacity(0.30), location: 1.0),
+                                    .init(color: .clear, location: 0.50),
+                                    .init(color: .black.opacity(0.30), location: 1.0)
                                 ],
                                 center: .center
                             )

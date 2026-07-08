@@ -38,7 +38,7 @@ struct DesireStarView: View {
 
     var size: CGFloat
     var state: StarState = .lit
-    var label: String? = nil
+    var label: String?
     var cadence: Cadence = .free
     /// When true, the star plays the two-seed ignite entrance once on appear (your purple + their
     /// magenta converging into one bright star). Default false — renders lit immediately.
@@ -72,18 +72,18 @@ struct DesireStarView: View {
     // `size` here stays the caller-facing scale knob (glow = size * 3.2), but every layer
     // derives from the glow so the star reads as a spark in light, never a white disc.
 
-    private var glowSize: CGFloat  { size * 3.2 }
-    private var haloSize: CGFloat  { glowSize * 2.2 }
-    private var coreSize: CGFloat  { glowSize * 0.12 }
-    private var crossLen: CGFloat  { glowSize * 1.4 }
-    private var crossW: CGFloat    { 1.0 }
+    private var glowSize: CGFloat { size * 3.2 }
+    private var haloSize: CGFloat { glowSize * 2.2 }
+    private var coreSize: CGFloat { glowSize * 0.12 }
+    private var crossLen: CGFloat { glowSize * 1.4 }
+    private var crossW: CGFloat { 1.0 }
     private var sparkleSize: CGFloat { size * 2.2 }
-    private var ringSize: CGFloat  { glowSize * 0.92 }
+    private var ringSize: CGFloat { glowSize * 0.92 }
     private var labelWidth: CGFloat { max(haloSize, 120) }
 
-    private var glowOpacity: Double   { state == .lit ? 1.0 : 0.18 }
-    private var coreOpacity: Double   { state == .lit ? 1.0 : 0.28 }
-    private var crossOpacity: Double  { state == .lit ? 0.38 : 0.20 }
+    private var glowOpacity: Double { state == .lit ? 1.0 : 0.18 }
+    private var coreOpacity: Double { state == .lit ? 1.0 : 0.28 }
+    private var crossOpacity: Double { state == .lit ? 0.38 : 0.20 }
 
     // MARK: Body
 
@@ -93,8 +93,8 @@ struct DesireStarView: View {
                 // Two-seed entrance — a cool (you) and warm (them) point converging as the star
                 // ignites. Present only while the entrance plays; otherwise no seeds, instant bloom.
                 if playsEntrance {
-                    seedView(color: AppColors.spectrumPurple,  dx: -seedOffset)
-                    seedView(color: AppColors.spectrumMagenta, dx:  seedOffset)
+                    seedView(color: AppColors.spectrumPurple, dx: -seedOffset)
+                    seedView(color: AppColors.spectrumMagenta, dx: seedOffset)
                 }
 
                 ZStack {
@@ -147,7 +147,7 @@ struct DesireStarView: View {
     private var playsEntrance: Bool { ignites && state == .lit && !reduceMotion }
 
     private var seedDiameter: CGFloat { glowSize * 0.5 }
-    private var seedOffset: CGFloat   { glowSize * 0.45 }
+    private var seedOffset: CGFloat { glowSize * 0.45 }
     private var entranceStartScale: CGFloat { 0.2 }
     private var seedRestOpacity: Double { 0.6 }
 
@@ -191,8 +191,8 @@ struct DesireStarView: View {
                 RadialGradient(
                     gradient: Gradient(stops: [
                         .init(color: AppColors.spectrumMagenta.opacity(0.14), location: 0.0),
-                        .init(color: AppColors.spectrumPurple.opacity(0.07),  location: 0.54),
-                        .init(color: .clear,                                  location: 0.76)
+                        .init(color: AppColors.spectrumPurple.opacity(0.07), location: 0.54),
+                        .init(color: .clear, location: 0.76)
                     ]),
                     center: .center,
                     startRadius: 0,
@@ -208,10 +208,10 @@ struct DesireStarView: View {
             .fill(
                 RadialGradient(
                     gradient: Gradient(stops: [
-                        .init(color: Color.white.opacity(0.85),               location: 0.0),
+                        .init(color: Color.white.opacity(0.85), location: 0.0),
                         .init(color: AppColors.spectrumMagenta.opacity(0.42), location: 0.28),
-                        .init(color: AppColors.spectrumPurple.opacity(0.14),  location: 0.60),
-                        .init(color: .clear,                                  location: 0.80)
+                        .init(color: AppColors.spectrumPurple.opacity(0.14), location: 0.60),
+                        .init(color: .clear, location: 0.80)
                     ]),
                     center: .center,
                     startRadius: 0,
@@ -227,9 +227,9 @@ struct DesireStarView: View {
         Circle()
             .fill(Color.white)
             .frame(width: coreSize, height: coreSize)
-            .shadow(color: Color.white,                                   radius: 3)
-            .shadow(color: AppColors.spectrumMagenta.opacity(0.82),       radius: 7)
-            .shadow(color: AppColors.spectrumPurple.opacity(0.42),        radius: 15)
+            .shadow(color: Color.white, radius: 3)
+            .shadow(color: AppColors.spectrumMagenta.opacity(0.82), radius: 7)
+            .shadow(color: AppColors.spectrumPurple.opacity(0.42), radius: 15)
             .opacity(coreOpacity)
     }
 

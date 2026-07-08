@@ -53,18 +53,18 @@ struct PulseSyncService {
     }
 
     private struct PulseEntryRow: Codable {
-        let profileId:        UUID
-        let coupleId:         UUID?
-        let entryDate:        Date
+        let profileId: UUID
+        let coupleId: UUID?
+        let entryDate: Date
         let firstCompletedAt: Date
-        let energy:           Double
-        let openness:         Double
-        let capacityScore:    Double
-        let nervousSystem:    String
-        let focus:            String
-        let feeling:          String
-        let capacity:         String
-        let speed:            String
+        let energy: Double
+        let openness: Double
+        let capacityScore: Double
+        let nervousSystem: String
+        let focus: String
+        let feeling: String
+        let capacity: String
+        let speed: String
 
         enum CodingKeys: String, CodingKey {
             case profileId        = "profile_id"
@@ -81,16 +81,16 @@ struct PulseSyncService {
         var toPulseEntry: PulseEntry {
             let position = PulsePosition(energy: energy, openness: openness)
             return PulseEntry(
-                date:          entryDate,
+                date: entryDate,
                 capacityScore: capacityScore,
-                glowColor:     position.quadrant.capacityColor,
-                speed:         speed,
+                glowColor: position.quadrant.capacityColor,
+                speed: speed,
                 nervousSystem: nervousSystem,
-                focus:         focus,
-                feeling:       feeling,
-                capacity:      capacity,
-                position:      position,
-                createdAt:     firstCompletedAt
+                focus: focus,
+                feeling: feeling,
+                capacity: capacity,
+                position: position,
+                createdAt: firstCompletedAt
             )
         }
     }
@@ -99,10 +99,10 @@ struct PulseSyncService {
     /// text. `toPulseEntry` fills the Q1-Q5 fields with empty placeholders since
     /// nothing ever renders them for a partner-sourced entry.
     private struct PartnerPositionRow: Decodable {
-        let profileId:     UUID
-        let entryDate:     Date
-        let energy:        Double
-        let openness:      Double
+        let profileId: UUID
+        let entryDate: Date
+        let energy: Double
+        let openness: Double
         let capacityScore: Double
 
         enum CodingKeys: String, CodingKey {
@@ -115,15 +115,15 @@ struct PulseSyncService {
         var toPulseEntry: PulseEntry {
             let position = PulsePosition(energy: energy, openness: openness)
             return PulseEntry(
-                date:          entryDate,
+                date: entryDate,
                 capacityScore: capacityScore,
-                glowColor:     position.quadrant.capacityColor,
-                speed:         "",
+                glowColor: position.quadrant.capacityColor,
+                speed: "",
                 nervousSystem: "",
-                focus:         "",
-                feeling:       "",
-                capacity:      nil,
-                position:      position
+                focus: "",
+                feeling: "",
+                capacity: nil,
+                position: position
             )
         }
     }
@@ -165,18 +165,18 @@ struct PulseSyncService {
 
         let position = entry.resolvedPosition
         let row = PulseEntryRow(
-            profileId:        profile.id,
-            coupleId:         profile.coupleId,
-            entryDate:        entry.date,
+            profileId: profile.id,
+            coupleId: profile.coupleId,
+            entryDate: entry.date,
             firstCompletedAt: entry.resolvedCreatedAt,
-            energy:           position.energy,
-            openness:         position.openness,
-            capacityScore:    entry.capacityScore,
-            nervousSystem:    entry.nervousSystem,
-            focus:            entry.focus,
-            feeling:          entry.feeling,
-            capacity:         entry.capacity ?? "",
-            speed:            entry.speed
+            energy: position.energy,
+            openness: position.openness,
+            capacityScore: entry.capacityScore,
+            nervousSystem: entry.nervousSystem,
+            focus: entry.focus,
+            feeling: entry.feeling,
+            capacity: entry.capacity ?? "",
+            speed: entry.speed
         )
         _ = try? await supabase
             .from("pulse_entries")

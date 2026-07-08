@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 5/9/26.
 //
 
-
 //
 //  VaylCardRenderer.swift
 //  Vayl
@@ -24,7 +23,7 @@ import SwiftUI
 ///   flipProgress < 0.5  → show VaylCardBack,  scaleX positive
 ///   flipProgress >= 0.5 → show VaylCardFace,  scaleX mirrored (-1) to correct orientation
 struct VaylCardRenderer: View {
-    let card:       VaylCardModel
+    let card: VaylCardModel
     let screenSize: CGSize
 
     private var cardW: CGFloat { AppLayout.obCardWidth(in: screenSize.width) }
@@ -46,9 +45,9 @@ struct VaylCardRenderer: View {
         .scaleEffect(x: card.scaleX, y: card.scale)
         .rotationEffect(.degrees(card.rotation))
         .shadow(
-            color:  shadow.color,
+            color: shadow.color,
             radius: shadow.radius,
-            y:      shadow.y
+            y: shadow.y
         )
         .opacity(card.opacity)
         .position(card.position)

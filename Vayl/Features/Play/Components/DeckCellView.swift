@@ -14,7 +14,7 @@ struct DeckCellView: View {
     let summary: DeckSummary
     let style: DeckStyle
     /// Live lock state from the wall's store (nil = frozen catalog flag).
-    var locked: Bool? = nil
+    var locked: Bool?
     var index: Int = 0
     var namespace: Namespace.ID
     /// True while THIS deck's detail overlay is open. The cell yields matched-
@@ -56,8 +56,7 @@ struct DeckCellView: View {
         .scaleEffect(appeared ? 1 : 0.96)
         .opacity(appeared ? 1 : 0)
         .onAppear {
-            if reduceMotion { appeared = true }
-            else { withAnimation(AppAnimation.enter.delay(Double(index % 6) * 0.04)) { appeared = true } }
+            if reduceMotion { appeared = true } else { withAnimation(AppAnimation.enter.delay(Double(index % 6) * 0.04)) { appeared = true } }
         }
     }
 }

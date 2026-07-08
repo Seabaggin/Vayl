@@ -75,7 +75,7 @@ enum DeckGlyphKind: CaseIterable {
 struct DeckGlyph: View {
     let kind: DeckGlyphKind
     var lineWidth: CGFloat = 2
-    var tint: Color? = nil
+    var tint: Color?
 
     var body: some View {
         GeometryReader { geo in

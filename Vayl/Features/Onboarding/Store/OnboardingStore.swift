@@ -38,7 +38,7 @@ final class OnboardingStore {
     // MARK: - Public State
 
     private(set) var didComplete: Bool = false
-    private(set) var lastCommitError: Error? = nil
+    private(set) var lastCommitError: Error?
 
     // MARK: - Dependencies
 

@@ -11,12 +11,12 @@ import CoreGraphics
 /// add per-deal randomness within the zone, keeping each deal feeling organic
 /// while staying within the intended visual region.
 struct CardLandingSlot {
-    let id:          Int
-    let xFrac:       CGFloat
-    let yFrac:       CGFloat
-    let angleDeg:    Double
-    let jitterX:     CGFloat
-    let jitterY:     CGFloat
+    let id: Int
+    let xFrac: CGFloat
+    let yFrac: CGFloat
+    let angleDeg: Double
+    let jitterX: CGFloat
+    let jitterY: CGFloat
     let jitterAngle: Double
 
     struct Resolved {

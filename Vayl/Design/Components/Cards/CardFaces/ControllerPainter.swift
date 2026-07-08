@@ -22,28 +22,28 @@ enum ControllerPainter {
     static func bodyPath(s: CGFloat) -> Path {
         var body = Path()
         body.move(to: CGPoint(x: 250*s, y: 180*s))
-        body.addCurve(to:     CGPoint(x: 150*s, y: 250*s),
+        body.addCurve(to: CGPoint(x: 150*s, y: 250*s),
                       control1: CGPoint(x: 250*s, y: 180*s),
                       control2: CGPoint(x: 200*s, y: 180*s))
-        body.addCurve(to:     CGPoint(x: 120*s, y: 500*s),
+        body.addCurve(to: CGPoint(x: 120*s, y: 500*s),
                       control1: CGPoint(x: 100*s, y: 320*s),
                       control2: CGPoint(x: 100*s, y: 450*s))
-        body.addCurve(to:     CGPoint(x: 220*s, y: 500*s),
+        body.addCurve(to: CGPoint(x: 220*s, y: 500*s),
                       control1: CGPoint(x: 140*s, y: 550*s),
                       control2: CGPoint(x: 200*s, y: 550*s))
-        body.addCurve(to:     CGPoint(x: 400*s, y: 420*s),
+        body.addCurve(to: CGPoint(x: 400*s, y: 420*s),
                       control1: CGPoint(x: 250*s, y: 430*s),
                       control2: CGPoint(x: 320*s, y: 420*s))
-        body.addCurve(to:     CGPoint(x: 580*s, y: 500*s),
+        body.addCurve(to: CGPoint(x: 580*s, y: 500*s),
                       control1: CGPoint(x: 480*s, y: 420*s),
                       control2: CGPoint(x: 550*s, y: 430*s))
-        body.addCurve(to:     CGPoint(x: 680*s, y: 500*s),
+        body.addCurve(to: CGPoint(x: 680*s, y: 500*s),
                       control1: CGPoint(x: 600*s, y: 550*s),
                       control2: CGPoint(x: 660*s, y: 550*s))
-        body.addCurve(to:     CGPoint(x: 650*s, y: 250*s),
+        body.addCurve(to: CGPoint(x: 650*s, y: 250*s),
                       control1: CGPoint(x: 700*s, y: 450*s),
                       control2: CGPoint(x: 700*s, y: 320*s))
-        body.addCurve(to:     CGPoint(x: 550*s, y: 180*s),
+        body.addCurve(to: CGPoint(x: 550*s, y: 180*s),
                       control1: CGPoint(x: 600*s, y: 180*s),
                       control2: CGPoint(x: 550*s, y: 180*s))
         body.closeSubpath()
@@ -72,12 +72,12 @@ enum ControllerPainter {
         // This ensures correct colours regardless of any translate/rotate applied by the caller.
         let shading = GraphicsContext.Shading.linearGradient(
             Gradient(stops: [
-                .init(color: AppColors.spectrumCyan,    location: 0.00),
-                .init(color: AppColors.spectrumPurple,  location: 0.45),
-                .init(color: AppColors.spectrumMagenta, location: 1.00),
+                .init(color: AppColors.spectrumCyan, location: 0.00),
+                .init(color: AppColors.spectrumPurple, location: 0.45),
+                .init(color: AppColors.spectrumMagenta, location: 1.00)
             ]),
             startPoint: .zero,
-            endPoint:   CGPoint(x: 800 * s, y: 600 * s)
+            endPoint: CGPoint(x: 800 * s, y: 600 * s)
         )
 
         // ── Local helpers ────────────────────────────────────────────────
@@ -90,7 +90,7 @@ enum ControllerPainter {
         // ── Trigger paths ────────────────────────────────────────────────
 
         var trigL1 = Path()
-        trigL1.move(to:    CGPoint(x: 200*s, y: 185*s))
+        trigL1.move(to: CGPoint(x: 200*s, y: 185*s))
         trigL1.addCurve(to: CGPoint(x: 265*s, y: 175*s),
                         control1: CGPoint(x: 205*s, y: 160*s),
                         control2: CGPoint(x: 240*s, y: 160*s))
@@ -98,7 +98,7 @@ enum ControllerPainter {
         trigL1.closeSubpath()
 
         var trigL2 = Path()
-        trigL2.move(to:    CGPoint(x: 175*s, y: 220*s))
+        trigL2.move(to: CGPoint(x: 175*s, y: 220*s))
         trigL2.addCurve(to: CGPoint(x: 265*s, y: 185*s),
                         control1: CGPoint(x: 180*s, y: 180*s),
                         control2: CGPoint(x: 230*s, y: 170*s))
@@ -106,7 +106,7 @@ enum ControllerPainter {
         trigL2.closeSubpath()
 
         var trigR1 = Path()
-        trigR1.move(to:    CGPoint(x: 600*s, y: 185*s))
+        trigR1.move(to: CGPoint(x: 600*s, y: 185*s))
         trigR1.addCurve(to: CGPoint(x: 535*s, y: 175*s),
                         control1: CGPoint(x: 595*s, y: 160*s),
                         control2: CGPoint(x: 560*s, y: 160*s))
@@ -114,7 +114,7 @@ enum ControllerPainter {
         trigR1.closeSubpath()
 
         var trigR2 = Path()
-        trigR2.move(to:    CGPoint(x: 625*s, y: 220*s))
+        trigR2.move(to: CGPoint(x: 625*s, y: 220*s))
         trigR2.addCurve(to: CGPoint(x: 535*s, y: 185*s),
                         control1: CGPoint(x: 620*s, y: 180*s),
                         control2: CGPoint(x: 570*s, y: 170*s))
@@ -125,28 +125,28 @@ enum ControllerPainter {
 
         var body = Path()
         body.move(to: CGPoint(x: 250*s, y: 180*s))
-        body.addCurve(to:     CGPoint(x: 150*s, y: 250*s),
+        body.addCurve(to: CGPoint(x: 150*s, y: 250*s),
                       control1: CGPoint(x: 250*s, y: 180*s),
                       control2: CGPoint(x: 200*s, y: 180*s))
-        body.addCurve(to:     CGPoint(x: 120*s, y: 500*s),
+        body.addCurve(to: CGPoint(x: 120*s, y: 500*s),
                       control1: CGPoint(x: 100*s, y: 320*s),
                       control2: CGPoint(x: 100*s, y: 450*s))
-        body.addCurve(to:     CGPoint(x: 220*s, y: 500*s),
+        body.addCurve(to: CGPoint(x: 220*s, y: 500*s),
                       control1: CGPoint(x: 140*s, y: 550*s),
                       control2: CGPoint(x: 200*s, y: 550*s))
-        body.addCurve(to:     CGPoint(x: 400*s, y: 420*s),
+        body.addCurve(to: CGPoint(x: 400*s, y: 420*s),
                       control1: CGPoint(x: 250*s, y: 430*s),
                       control2: CGPoint(x: 320*s, y: 420*s))
-        body.addCurve(to:     CGPoint(x: 580*s, y: 500*s),
+        body.addCurve(to: CGPoint(x: 580*s, y: 500*s),
                       control1: CGPoint(x: 480*s, y: 420*s),
                       control2: CGPoint(x: 550*s, y: 430*s))
-        body.addCurve(to:     CGPoint(x: 680*s, y: 500*s),
+        body.addCurve(to: CGPoint(x: 680*s, y: 500*s),
                       control1: CGPoint(x: 600*s, y: 550*s),
                       control2: CGPoint(x: 660*s, y: 550*s))
-        body.addCurve(to:     CGPoint(x: 650*s, y: 250*s),
+        body.addCurve(to: CGPoint(x: 650*s, y: 250*s),
                       control1: CGPoint(x: 700*s, y: 450*s),
                       control2: CGPoint(x: 700*s, y: 320*s))
-        body.addCurve(to:     CGPoint(x: 550*s, y: 180*s),
+        body.addCurve(to: CGPoint(x: 550*s, y: 180*s),
                       control1: CGPoint(x: 600*s, y: 180*s),
                       control2: CGPoint(x: 550*s, y: 180*s))
         body.closeSubpath()
@@ -156,7 +156,7 @@ enum ControllerPainter {
             (565, 265), // index 0 — top
             (595, 295), // index 1 — right
             (565, 325), // index 2 — bottom
-            (535, 295), // index 3 — left
+            (535, 295) // index 3 — left
         ]
 
         // ── Thumbstick centres ────────────────────────────────────────────
@@ -174,7 +174,7 @@ enum ControllerPainter {
             ctx.stroke(trigL2, with: shading, style: glow)
             ctx.stroke(trigR1, with: shading, style: glow)
             ctx.stroke(trigR2, with: shading, style: glow)
-            ctx.stroke(body,   with: shading, style: glow)
+            ctx.stroke(body, with: shading, style: glow)
 
             for (cx, cy) in fbCenters {
                 ctx.stroke(ellipse(cx: cx, cy: cy, r: 14),
@@ -208,20 +208,20 @@ enum ControllerPainter {
 
         // Touchpad — opacity 0.68, strokeWidth 3.5
         var touchpad = Path()
-        touchpad.move(to:    CGPoint(x: 300*s, y: 170*s))
+        touchpad.move(to: CGPoint(x: 300*s, y: 170*s))
         touchpad.addLine(to: CGPoint(x: 500*s, y: 170*s))
-        touchpad.addCurve(to:     CGPoint(x: 510*s, y: 200*s),
+        touchpad.addCurve(to: CGPoint(x: 510*s, y: 200*s),
                           control1: CGPoint(x: 510*s, y: 170*s),
                           control2: CGPoint(x: 520*s, y: 180*s))
         touchpad.addLine(to: CGPoint(x: 480*s, y: 320*s))
-        touchpad.addCurve(to:     CGPoint(x: 400*s, y: 340*s),
+        touchpad.addCurve(to: CGPoint(x: 400*s, y: 340*s),
                           control1: CGPoint(x: 475*s, y: 330*s),
                           control2: CGPoint(x: 460*s, y: 340*s))
-        touchpad.addCurve(to:     CGPoint(x: 320*s, y: 320*s),
+        touchpad.addCurve(to: CGPoint(x: 320*s, y: 320*s),
                           control1: CGPoint(x: 340*s, y: 340*s),
                           control2: CGPoint(x: 325*s, y: 330*s))
         touchpad.addLine(to: CGPoint(x: 290*s, y: 200*s))
-        touchpad.addCurve(to:     CGPoint(x: 300*s, y: 170*s),
+        touchpad.addCurve(to: CGPoint(x: 300*s, y: 170*s),
                           control1: CGPoint(x: 280*s, y: 180*s),
                           control2: CGPoint(x: 290*s, y: 170*s))
         touchpad.closeSubpath()
@@ -233,12 +233,12 @@ enum ControllerPainter {
 
         // Side detail curves — opacity 0.30, strokeWidth 3
         var sideL = Path()
-        sideL.move(to:    CGPoint(x: 175*s, y: 320*s))
+        sideL.move(to: CGPoint(x: 175*s, y: 320*s))
         sideL.addCurve(to: CGPoint(x: 195*s, y: 530*s),
                        control1: CGPoint(x: 145*s, y: 380*s),
                        control2: CGPoint(x: 145*s, y: 480*s))
         var sideR = Path()
-        sideR.move(to:    CGPoint(x: 625*s, y: 320*s))
+        sideR.move(to: CGPoint(x: 625*s, y: 320*s))
         sideR.addCurve(to: CGPoint(x: 605*s, y: 530*s),
                        control1: CGPoint(x: 655*s, y: 380*s),
                        control2: CGPoint(x: 655*s, y: 480*s))
@@ -252,7 +252,7 @@ enum ControllerPainter {
         // D-pad — opacity 0.82, strokeWidth 4, miter join
         // Shifted +25y: centre at y=295, matching face-button group centre.
         var dpad = Path()
-        dpad.move(to:    CGPoint(x: 210*s, y: 285*s))
+        dpad.move(to: CGPoint(x: 210*s, y: 285*s))
         dpad.addLine(to: CGPoint(x: 210*s, y: 265*s))
         dpad.addLine(to: CGPoint(x: 230*s, y: 265*s))
         dpad.addLine(to: CGPoint(x: 230*s, y: 285*s))
@@ -275,11 +275,11 @@ enum ControllerPainter {
         context.drawLayer { ctx in
             let activeFill = GraphicsContext.Shading.linearGradient(
                 Gradient(stops: [
-                    .init(color: AppColors.spectrumCyan.opacity(0.35),   location: 0.0),
-                    .init(color: AppColors.spectrumPurple.opacity(0.25), location: 1.0),
+                    .init(color: AppColors.spectrumCyan.opacity(0.35), location: 0.0),
+                    .init(color: AppColors.spectrumPurple.opacity(0.25), location: 1.0)
                 ]),
                 startPoint: CGPoint(x: 565 * s, y: 265 * s),
-                endPoint:   CGPoint(x: 565 * s, y: 325 * s)
+                endPoint: CGPoint(x: 565 * s, y: 325 * s)
             )
             for (idx, (cx, cy)) in fbCenters.enumerated() {
                 let circle = ellipse(cx: cx, cy: cy, r: 14)

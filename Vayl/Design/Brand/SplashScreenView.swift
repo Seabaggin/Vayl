@@ -13,7 +13,7 @@ private struct LOriginKey: PreferenceKey {
 
 struct SplashScreenView<Destination: View>: View {
 
-    var onComplete:  () -> Void
+    var onComplete: () -> Void
     var onTearBegan: () -> Void
     var destination: Destination
 
@@ -34,27 +34,27 @@ struct SplashScreenView<Destination: View>: View {
 
     // MARK: - Animation state
 
-    @State private var revealProgress:     CGFloat = 0
-    @State private var lineOpacity:        CGFloat = 0
-    @State private var lineBloom:          CGFloat = 0
-    @State private var linePulse:          CGFloat = 1.0
-    @State private var textOpacity:        CGFloat = 1.0
-    @State private var zoomScale:          CGFloat = 1.0
-    @State private var tearOffset:         CGFloat = 0
-    @State private var tearIntensity:      CGFloat = 0
+    @State private var revealProgress: CGFloat = 0
+    @State private var lineOpacity: CGFloat = 0
+    @State private var lineBloom: CGFloat = 0
+    @State private var linePulse: CGFloat = 1.0
+    @State private var textOpacity: CGFloat = 1.0
+    @State private var zoomScale: CGFloat = 1.0
+    @State private var tearOffset: CGFloat = 0
+    @State private var tearIntensity: CGFloat = 0
     @State private var destinationOpacity: CGFloat = 0
-    @State private var splashOpacity:      CGFloat = 1
-    @State private var backgroundOpacity:  CGFloat = 1
-    @State private var animationTask:      Task<Void, Never>?
-    @State private var capturedLineY:      CGFloat = 0
-    @State private var capturedTearDist:   CGFloat = 0
+    @State private var splashOpacity: CGFloat = 1
+    @State private var backgroundOpacity: CGFloat = 1
+    @State private var animationTask: Task<Void, Never>?
+    @State private var capturedLineY: CGFloat = 0
+    @State private var capturedTearDist: CGFloat = 0
 
-    @State private var hasAnimated:    Bool    = false
+    @State private var hasAnimated: Bool    = false
 
-    @State private var wordmarkFrame:  CGRect  = .zero
-    @State private var lGlyphOriginX:  CGFloat = 0
+    @State private var wordmarkFrame: CGRect  = .zero
+    @State private var lGlyphOriginX: CGFloat = 0
 
-    @State private var capturedLineLeft:  CGFloat = 0
+    @State private var capturedLineLeft: CGFloat = 0
     @State private var capturedLineRight: CGFloat = 0
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -216,7 +216,7 @@ struct SplashScreenView<Destination: View>: View {
                 LinearGradient(
                     colors: [.black, .black.opacity(0)],
                     startPoint: .top,
-                    endPoint:   .bottom
+                    endPoint: .bottom
                 )
                 .frame(height: min(effectiveSeamFadeHeight, capturedLineY))
                 Color.clear
@@ -312,7 +312,7 @@ struct SplashScreenView<Destination: View>: View {
                 LinearGradient(
                     colors: [.black.opacity(0), .black],
                     startPoint: .top,
-                    endPoint:   .bottom
+                    endPoint: .bottom
                 )
                 .frame(height: effectiveSeamFadeHeight)
                 Color.black
@@ -324,7 +324,7 @@ struct SplashScreenView<Destination: View>: View {
     // MARK: - Wordmark reveal
 
     private func wordmarkReveal(isTop: Bool) -> some View {
-        let halfH:   CGFloat = isTop ? capturedLineY : (screenH - capturedLineY)
+        let halfH: CGFloat = isTop ? capturedLineY : (screenH - capturedLineY)
         let revealH: CGFloat = revealProgress * halfH
 
         return wordmarkText(isTop: isTop)
@@ -386,12 +386,12 @@ struct SplashScreenView<Destination: View>: View {
 
     private let bottomWordmarkGradient = LinearGradient(
         stops: [
-            .init(color: AppColors.spectrumCyan,    location: 0.0),
-            .init(color: AppColors.spectrumPurple,  location: 0.5),
-            .init(color: AppColors.spectrumMagenta, location: 1.0),
+            .init(color: AppColors.spectrumCyan, location: 0.0),
+            .init(color: AppColors.spectrumPurple, location: 0.5),
+            .init(color: AppColors.spectrumMagenta, location: 1.0)
         ],
         startPoint: .leading,
-        endPoint:   .trailing
+        endPoint: .trailing
     )
 
     // MARK: - Spectrum line
@@ -420,14 +420,14 @@ struct SplashScreenView<Destination: View>: View {
                 .fill(
                     LinearGradient(
                         stops: [
-                            .init(color: AppColors.spectrumCyan.opacity(0),       location: 0.00),
-                            .init(color: AppColors.spectrumCyan.opacity(0.14),    location: 0.20),
-                            .init(color: AppColors.spectrumPurple.opacity(0.24),  location: 0.50),
+                            .init(color: AppColors.spectrumCyan.opacity(0), location: 0.00),
+                            .init(color: AppColors.spectrumCyan.opacity(0.14), location: 0.20),
+                            .init(color: AppColors.spectrumPurple.opacity(0.24), location: 0.50),
                             .init(color: AppColors.spectrumMagenta.opacity(0.14), location: 0.80),
-                            .init(color: AppColors.spectrumMagenta.opacity(0),    location: 1.00),
+                            .init(color: AppColors.spectrumMagenta.opacity(0), location: 1.00)
                         ],
                         startPoint: .leading,
-                        endPoint:   .trailing
+                        endPoint: .trailing
                     )
                 )
                 .frame(width: width, height: 18)
@@ -440,14 +440,14 @@ struct SplashScreenView<Destination: View>: View {
                 .fill(
                     LinearGradient(
                         stops: [
-                            .init(color: AppColors.spectrumCyan.opacity(0),       location: 0.00),
-                            .init(color: AppColors.spectrumCyan.opacity(0.50),    location: 0.15),
-                            .init(color: AppColors.spectrumPurple.opacity(0.65),  location: 0.50),
+                            .init(color: AppColors.spectrumCyan.opacity(0), location: 0.00),
+                            .init(color: AppColors.spectrumCyan.opacity(0.50), location: 0.15),
+                            .init(color: AppColors.spectrumPurple.opacity(0.65), location: 0.50),
                             .init(color: AppColors.spectrumMagenta.opacity(0.50), location: 0.85),
-                            .init(color: AppColors.spectrumMagenta.opacity(0),    location: 1.00),
+                            .init(color: AppColors.spectrumMagenta.opacity(0), location: 1.00)
                         ],
                         startPoint: .leading,
-                        endPoint:   .trailing
+                        endPoint: .trailing
                     )
                 )
                 .frame(width: width * 0.94, height: 5)
@@ -465,10 +465,10 @@ struct SplashScreenView<Destination: View>: View {
                             .init(color: .clear, location: 0.04),
                             .init(color: .black, location: 0.10),
                             .init(color: .black, location: 0.90),
-                            .init(color: .clear, location: 0.96),
+                            .init(color: .clear, location: 0.96)
                         ],
                         startPoint: .leading,
-                        endPoint:   .trailing
+                        endPoint: .trailing
                     )
                 )
 
@@ -477,14 +477,14 @@ struct SplashScreenView<Destination: View>: View {
                 .fill(
                     LinearGradient(
                         stops: [
-                            .init(color: .white.opacity(0),    location: 0.00),
-                            .init(color: .white.opacity(0),    location: 0.15),
+                            .init(color: .white.opacity(0), location: 0.00),
+                            .init(color: .white.opacity(0), location: 0.15),
                             .init(color: .white.opacity(0.95), location: 0.50),
-                            .init(color: .white.opacity(0),    location: 0.85),
-                            .init(color: .white.opacity(0),    location: 1.00),
+                            .init(color: .white.opacity(0), location: 0.85),
+                            .init(color: .white.opacity(0), location: 1.00)
                         ],
                         startPoint: .leading,
-                        endPoint:   .trailing
+                        endPoint: .trailing
                     )
                 )
                 .frame(width: width, height: 1)
@@ -505,14 +505,14 @@ struct SplashScreenView<Destination: View>: View {
                 .fill(
                     LinearGradient(
                         stops: [
-                            .init(color: AppColors.spectrumCyan.opacity(0),       location: 0.00),
-                            .init(color: AppColors.spectrumCyan.opacity(0.12),    location: 0.20),
-                            .init(color: AppColors.spectrumPurple.opacity(0.22),  location: 0.50),
+                            .init(color: AppColors.spectrumCyan.opacity(0), location: 0.00),
+                            .init(color: AppColors.spectrumCyan.opacity(0.12), location: 0.20),
+                            .init(color: AppColors.spectrumPurple.opacity(0.22), location: 0.50),
                             .init(color: AppColors.spectrumMagenta.opacity(0.12), location: 0.80),
-                            .init(color: AppColors.spectrumMagenta.opacity(0),    location: 1.00),
+                            .init(color: AppColors.spectrumMagenta.opacity(0), location: 1.00)
                         ],
                         startPoint: .leading,
-                        endPoint:   .trailing
+                        endPoint: .trailing
                     )
                 )
                 .frame(width: screenW * 0.90, height: 52)
@@ -524,14 +524,14 @@ struct SplashScreenView<Destination: View>: View {
                 .fill(
                     LinearGradient(
                         stops: [
-                            .init(color: AppColors.spectrumCyan.opacity(0),       location: 0.00),
-                            .init(color: AppColors.spectrumCyan.opacity(0.45),    location: 0.15),
-                            .init(color: AppColors.spectrumPurple.opacity(0.60),  location: 0.50),
+                            .init(color: AppColors.spectrumCyan.opacity(0), location: 0.00),
+                            .init(color: AppColors.spectrumCyan.opacity(0.45), location: 0.15),
+                            .init(color: AppColors.spectrumPurple.opacity(0.60), location: 0.50),
                             .init(color: AppColors.spectrumMagenta.opacity(0.45), location: 0.85),
-                            .init(color: AppColors.spectrumMagenta.opacity(0),    location: 1.00),
+                            .init(color: AppColors.spectrumMagenta.opacity(0), location: 1.00)
                         ],
                         startPoint: .leading,
-                        endPoint:   .trailing
+                        endPoint: .trailing
                     )
                 )
                 .frame(width: screenW * 0.82, height: 14)
@@ -553,12 +553,12 @@ struct SplashScreenView<Destination: View>: View {
 
     private let spectrumGradient = LinearGradient(
         stops: [
-            .init(color: AppColors.spectrumCyan,    location: 0.0),
-            .init(color: AppColors.spectrumPurple,  location: 0.5),
-            .init(color: AppColors.spectrumMagenta, location: 1.0),
+            .init(color: AppColors.spectrumCyan, location: 0.0),
+            .init(color: AppColors.spectrumPurple, location: 0.5),
+            .init(color: AppColors.spectrumMagenta, location: 1.0)
         ],
         startPoint: .leading,
-        endPoint:   .trailing
+        endPoint: .trailing
     )
 
     // MARK: - Spectrum line geometry
@@ -617,8 +617,8 @@ struct SplashScreenView<Destination: View>: View {
 
         // ── APPEAR ───────────────────────────────────────────────────────
         await lockLineGeometry()
-        withAnimation(AppAnimation.splashLineAppear)                  { lineOpacity = 1 }
-        withAnimation(AppAnimation.splashReveal)                      { revealProgress = 1.0 }
+        withAnimation(AppAnimation.splashLineAppear) { lineOpacity = 1 }
+        withAnimation(AppAnimation.splashReveal) { revealProgress = 1.0 }
         withAnimation(AppAnimation.splashBloomCreep) { lineBloom = 0.58 }
 
         // ── IGNITION BLOOM ────────────────────────────────────────────────
@@ -635,7 +635,7 @@ struct SplashScreenView<Destination: View>: View {
         try? await sleep(ms: 450)
         guard !Task.isCancelled else { return }
         withAnimation(AppAnimation.splashTextFade) { textOpacity = 0 }
-        withAnimation(AppAnimation.splashZoom)          { zoomScale = 3.5; lineBloom = 3.0; linePulse = 1.4 }
+        withAnimation(AppAnimation.splashZoom) { zoomScale = 3.5; lineBloom = 3.0; linePulse = 1.4 }
         withAnimation(AppAnimation.splashZoomAnticipate) { tearIntensity = 0.8 }
 
         // 350 ms zoom — tear fires 50 ms early so zoom momentum transfers
@@ -646,7 +646,7 @@ struct SplashScreenView<Destination: View>: View {
         // ── TEAR ──────────────────────────────────────────────────────────
         onTearBegan()
         withAnimation(AppAnimation.splashDestinationReveal) { destinationOpacity = 1.0 }
-        withAnimation(AppAnimation.splashTear)          { tearOffset = capturedTearDist; backgroundOpacity = 0 }
+        withAnimation(AppAnimation.splashTear) { tearOffset = capturedTearDist; backgroundOpacity = 0 }
         withAnimation(AppAnimation.splashTearIntensitySpike) { tearIntensity = 1.0 }
 
         // FIX 1: line vaporizes instantly the moment the seam opens.
@@ -657,7 +657,7 @@ struct SplashScreenView<Destination: View>: View {
         try? await sleep(ms: 100)
         guard !Task.isCancelled else { return }
         withAnimation(AppAnimation.splashTearIntensityDecay) { tearIntensity = 0 }
-        withAnimation(AppAnimation.splashTearFade)           { lineBloom = 0; linePulse = 1.0 }
+        withAnimation(AppAnimation.splashTearFade) { lineBloom = 0; linePulse = 1.0 }
 
         // Wait for panels to mostly clear before dismissing the overlay.
         try? await sleep(ms: 250)
@@ -675,7 +675,7 @@ struct SplashScreenView<Destination: View>: View {
     @MainActor
     private func runReducedMotionSequence() async {
         let staticDisplayMs: Int = 800
-        let fadeDurationMs:  Int = 250
+        let fadeDurationMs: Int = 250
 
         await lockLineGeometry()
         lineOpacity    = 1
@@ -711,7 +711,7 @@ struct SplashScreenView<Destination: View>: View {
 
 #Preview("Splash — cold launch") {
     SplashScreenView(
-        onComplete:  {},
+        onComplete: {},
         onTearBegan: {},
         destination: Color.black
     )
@@ -720,7 +720,7 @@ struct SplashScreenView<Destination: View>: View {
 
 #Preview("Splash — reduced motion") {
     SplashScreenView(
-        onComplete:  {},
+        onComplete: {},
         onTearBegan: {},
         destination: Color.black
     )

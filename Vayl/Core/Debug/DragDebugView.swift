@@ -9,10 +9,10 @@
 import SwiftUI
 
 struct DragDebugView: View {
-    @State private var offset:     CGSize = .zero
+    @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
     @State private var dragActive: Bool   = false
-    @State private var eventLog:   [String] = []
+    @State private var eventLog: [String] = []
 
     var body: some View {
         ZStack {
@@ -29,12 +29,12 @@ struct DragDebugView: View {
                         .onChanged { v in
                             dragActive = true
                             offset = CGSize(
-                                width:  lastOffset.width  + v.translation.width,
+                                width: lastOffset.width  + v.translation.width,
                                 height: lastOffset.height + v.translation.height
                             )
                             log("onChange: \(Int(v.translation.width)), \(Int(v.translation.height))")
                         }
-                        .onEnded { v in
+                        .onEnded { _ in
                             dragActive = false
                             lastOffset = offset
                             log("onEnded ✓")

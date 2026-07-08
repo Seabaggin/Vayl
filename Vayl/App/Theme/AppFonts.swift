@@ -32,11 +32,11 @@ struct AppFonts {
     ) -> Font {
         switch weight {
         case .bold:
-            return Font.custom("ClashDisplay-Bold",     size: size, relativeTo: textStyle)
+            return Font.custom("ClashDisplay-Bold", size: size, relativeTo: textStyle)
         case .semibold:
             return Font.custom("ClashDisplay-Semibold", size: size, relativeTo: textStyle)
         case .medium:
-            return Font.custom("ClashDisplay-Medium",   size: size, relativeTo: textStyle)
+            return Font.custom("ClashDisplay-Medium", size: size, relativeTo: textStyle)
         default:
             assertionFailure(
                 "AppFonts.display: unsupported weight \(weight). " +
@@ -53,13 +53,13 @@ struct AppFonts {
     ) -> Font {
         switch weight {
         case .regular:
-            return Font.custom("Switzer-Regular",  size: size, relativeTo: textStyle)
+            return Font.custom("Switzer-Regular", size: size, relativeTo: textStyle)
         case .medium:
-            return Font.custom("Switzer-Medium",   size: size, relativeTo: textStyle)
+            return Font.custom("Switzer-Medium", size: size, relativeTo: textStyle)
         case .semibold:
             return Font.custom("Switzer-Semibold", size: size, relativeTo: textStyle)
         case .bold:
-            return Font.custom("Switzer-Bold",     size: size, relativeTo: textStyle)
+            return Font.custom("Switzer-Bold", size: size, relativeTo: textStyle)
         default:
             assertionFailure(
                 "AppFonts.body: unsupported weight \(weight). " +

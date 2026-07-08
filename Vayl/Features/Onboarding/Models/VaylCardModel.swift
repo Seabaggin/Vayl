@@ -33,7 +33,7 @@ final class VaylCardModel: Identifiable {
 
     /// The question or prompt on the card face.
     /// nil for cards that have no text content (e.g. corner deck representations).
-    var question: String? = nil
+    var question: String?
 
     /// Whether the card is currently showing its face.
     /// VaylDirector writes this. VaylCardRenderer reads it to choose
@@ -45,7 +45,7 @@ final class VaylCardModel: Identifiable {
     /// Written when the card is created. Used by CornerDeckView
     /// to verify all six credentials are collected.
     /// nil for quiz cards and cards with no credential association.
-    var credential: OBCredential? = nil
+    var credential: OBCredential?
 
     // MARK: - Physics State
     // VaylDirector writes only. VaylCardRenderer reads only.

@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 3/26/26.
 //
 
-
 // Design/Components/Effects/LightAuraBloom.swift
 // Open Lightly
 //
@@ -80,20 +79,20 @@ struct LightAuraBloom: View {
     private func drawBloom(ctx: inout GraphicsContext, size: CGSize, t: Double) {
         let blobs: [(offsetX: Double, color: Color, scale: Double, phaseShift: Double)] = [
             // rose centre
-            (offsetX:  0.00, color: Color(red: 1.00, green: 0.40, blue: 0.60),
+            (offsetX: 0.00, color: Color(red: 1.00, green: 0.40, blue: 0.60),
              scale: 1.00, phaseShift: 0.00),
             // peach left
             (offsetX: -0.18, color: Color(red: 1.00, green: 0.65, blue: 0.45),
              scale: 0.78, phaseShift: 0.90),
             // gold right
-            (offsetX:  0.20, color: Color(red: 1.00, green: 0.80, blue: 0.30),
+            (offsetX: 0.20, color: Color(red: 1.00, green: 0.80, blue: 0.30),
              scale: 0.70, phaseShift: 1.60),
             // lavender far-left
             (offsetX: -0.30, color: Color(red: 0.78, green: 0.60, blue: 1.00),
              scale: 0.60, phaseShift: 2.40),
             // blush far-right
-            (offsetX:  0.32, color: Color(red: 1.00, green: 0.55, blue: 0.75),
-             scale: 0.55, phaseShift: 3.10),
+            (offsetX: 0.32, color: Color(red: 1.00, green: 0.55, blue: 0.75),
+             scale: 0.55, phaseShift: 3.10)
         ]
 
         for blob in blobs {
@@ -118,7 +117,7 @@ struct LightAuraBloom: View {
             // soft radial gradient per blob
             let gradient = Gradient(stops: [
                 .init(color: blob.color.opacity(blobOpacity * pulse), location: 0.0),
-                .init(color: blob.color.opacity(0),                   location: 1.0),
+                .init(color: blob.color.opacity(0), location: 1.0)
             ])
 
             ctx.drawLayer { inner in

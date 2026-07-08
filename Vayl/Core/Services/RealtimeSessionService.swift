@@ -39,10 +39,10 @@ enum SessionRole: String, Codable, Sendable {
     case a
     case b
 
-    var consentColumn: String   { self == .a ? "a_consented" : "b_consented" }
-    var presenceColumn: String  { self == .a ? "a_present" : "b_present" }
+    var consentColumn: String { self == .a ? "a_consented" : "b_consented" }
+    var presenceColumn: String { self == .a ? "a_present" : "b_present" }
     /// The seal flag this role owns inside a reveal_state per-card object.
-    var sealedKey: String       { self == .a ? "a_sealed" : "b_sealed" }
+    var sealedKey: String { self == .a ? "a_sealed" : "b_sealed" }
 }
 
 // MARK: - Draft (value snapshot of a SessionPlan — keeps SwiftData off this layer)

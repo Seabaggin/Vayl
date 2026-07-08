@@ -29,25 +29,25 @@ struct AppColors {
     /// Root view background. One per screen, never nested.
     static let pageBackground = Color.dynamic(
         light: VaylPrimitives.warmCream,
-        dark:  VaylPrimitives.inkBase
+        dark: VaylPrimitives.inkBase
     )
 
     /// Content containers that sit directly on pageBackground.
     static let cardBackground = Color.dynamic(
         light: VaylPrimitives.pureWhite,
-        dark:  VaylPrimitives.inkCard
+        dark: VaylPrimitives.inkCard
     )
 
     /// Second-tier elevated cards that sit on cardBackground.
     static let cardBackgroundRaised = Color.dynamic(
         light: VaylPrimitives.roseWhite,
-        dark:  VaylPrimitives.inkCardRaised
+        dark: VaylPrimitives.inkCardRaised
     )
 
     /// Sheets, modals, overlays. Always sits above cardBackground.
     static let modalBackground = Color.dynamic(
         light: VaylPrimitives.pureWhite,
-        dark:  VaylPrimitives.inkSurface
+        dark: VaylPrimitives.inkSurface
     )
 
     /// Holographic shimmer pill base. HolographicShimmer use only.
@@ -62,13 +62,13 @@ struct AppColors {
     /// Input fields and inset wells. Recessed below pageBackground.
     static let inputBackground = Color.dynamic(
         light: VaylPrimitives.offWhite,
-        dark:  VaylPrimitives.inkRaised
+        dark: VaylPrimitives.inkRaised
     )
 
     /// Home widget base layers only. Between page and card elevation.
     static let widgetBackground = Color.dynamic(
         light: VaylPrimitives.warmCream,
-        dark:  VaylPrimitives.inkWidget
+        dark: VaylPrimitives.inkWidget
     )
 
     /// Constellation node core fill. Slightly lighter than pageBackground with a
@@ -76,7 +76,7 @@ struct AppColors {
     /// general surface token; use only in ConstellationView node circles.
     static let constellationNodeCore = Color.dynamic(
         light: VaylPrimitives.pureWhite,
-        dark:  VaylPrimitives.inkNodeCore
+        dark: VaylPrimitives.inkNodeCore
     )
 
     // ─────────────────────────────────────────────
@@ -91,14 +91,14 @@ struct AppColors {
     /// 10% transparency softens the hard start of the gradient sweep.
     static let ethosGradientLead = Color.dynamic(
         light: VaylPrimitives.magenta.withAlphaComponent(0.90),
-        dark:  VaylPrimitives.cyan.withAlphaComponent(0.90)
+        dark: VaylPrimitives.cyan.withAlphaComponent(0.90)
     )
 
     /// Ethos gradient trail stop. accentSecondary at softened presence.
     /// 20% drop from lead produces a gentle luminosity fade across the short phrase.
     static let ethosGradientTrail = Color.dynamic(
         light: VaylPrimitives.purple.withAlphaComponent(0.80),
-        dark:  VaylPrimitives.purple.withAlphaComponent(0.80)
+        dark: VaylPrimitives.purple.withAlphaComponent(0.80)
     )
 
     // ─────────────────────────────────────────────
@@ -140,7 +140,7 @@ struct AppColors {
     /// Light: placeholder mirrors dark until OB Dawn is designed.
     static let void = Color.dynamic(
         light: VaylPrimitives.inkVoid,
-        dark:  VaylPrimitives.inkVoid
+        dark: VaylPrimitives.inkVoid
     )
 
     /// OB card glass surface. Applied to VaylCardBack and VaylCardFace.
@@ -149,7 +149,7 @@ struct AppColors {
     /// Light: placeholder mirrors dark until OB Dawn is designed.
     static let cardBg = Color.dynamic(
         light: VaylPrimitives.inkCardOB,
-        dark:  VaylPrimitives.inkCardOB
+        dark: VaylPrimitives.inkCardOB
     )
 
     // ─────────────────────────────────────────────
@@ -166,43 +166,43 @@ struct AppColors {
     /// Felt fill gradient — center stop. TableSurfaceView use only.
     static let tableFeltCore = Color.dynamic(
         light: VaylPrimitives.tableFeltCore,
-        dark:  VaylPrimitives.tableFeltCore
+        dark: VaylPrimitives.tableFeltCore
     )
 
     /// Felt fill gradient — mid stop. TableSurfaceView use only.
     static let tableFeltMid = Color.dynamic(
         light: VaylPrimitives.tableFeltMid,
-        dark:  VaylPrimitives.tableFeltMid
+        dark: VaylPrimitives.tableFeltMid
     )
 
     /// Felt fill gradient — outer stop. TableSurfaceView use only.
     static let tableFeltOuter = Color.dynamic(
         light: VaylPrimitives.tableFeltOuter,
-        dark:  VaylPrimitives.tableFeltOuter
+        dark: VaylPrimitives.tableFeltOuter
     )
 
     /// Felt fill gradient — trailing edge stop. TableSurfaceView use only.
     static let tableFeltEdge = Color.dynamic(
         light: VaylPrimitives.tableFeltEdge,
-        dark:  VaylPrimitives.tableFeltEdge
+        dark: VaylPrimitives.tableFeltEdge
     )
 
     /// Topo contour line stroke. TableSurfaceView use only.
     static let tableTopoLine = Color.dynamic(
         light: VaylPrimitives.tableTopoLine,
-        dark:  VaylPrimitives.tableTopoLine
+        dark: VaylPrimitives.tableTopoLine
     )
 
     /// Compass star base color. TableSurfaceView use only.
     static let tableCompassStar = Color.dynamic(
         light: VaylPrimitives.tableCompassStar,
-        dark:  VaylPrimitives.tableCompassStar
+        dark: VaylPrimitives.tableCompassStar
     )
 
     /// Amber overhead lamp pool center stop. TableSurfaceView use only.
     static let tableAmberPool = Color.dynamic(
         light: VaylPrimitives.tableAmberPool,
-        dark:  VaylPrimitives.tableAmberPool
+        dark: VaylPrimitives.tableAmberPool
     )
 
     // ─────────────────────────────────────────────
@@ -241,57 +241,57 @@ struct AppColors {
     /// Headings, screen titles, display text.
     static let textPrimary = Color.dynamic(
         light: VaylPrimitives.wineDeep,
-        dark:  VaylPrimitives.inkText
+        dark: VaylPrimitives.inkText
     )
 
     /// Paragraph content, card text, descriptions.
     static let textBody = Color.dynamic(
         light: VaylPrimitives.wineMid,
-        dark:  VaylPrimitives.pureWhite
+        dark: VaylPrimitives.pureWhite
     )
 
     /// Labels, descriptions, supporting copy. 60% hierarchy.
     static let textSecondary = Color.dynamic(
         light: VaylPrimitives.wineMid.withAlphaComponent(0.60),
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.65)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.65)
     )
 
     /// Timestamps, metadata, counts. 38% hierarchy.
     /// Apply .italic() at usage site — italic is the semantic signal.
     static let textTertiary = Color.dynamic(
         light: VaylPrimitives.wineMid.withAlphaComponent(0.38),
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.38)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.38)
     )
 
     /// Placeholder text, pronoun hints, inline helper copy.
     static let textHint = Color.dynamic(
         light: VaylPrimitives.magentaDark.withAlphaComponent(0.50),
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.42)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.42)
     )
 
     /// Disabled states, ghost copy. Lowest visible hierarchy.
     static let textMuted = Color.dynamic(
         light: VaylPrimitives.wineMid.withAlphaComponent(0.22),
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.20)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.20)
     )
 
     /// Overline labels and status counts. Must survive a tinted
     /// ambient background — device-absolute, never tinted.
     static let textBright = Color.dynamic(
         light: VaylPrimitives.wineDeep,
-        dark:  UIColor(white: 0.90, alpha: 1)
+        dark: UIColor(white: 0.90, alpha: 1)
     )
 
     /// Tappable links and accent body text.
     static let textAccent = Color.dynamic(
         light: VaylPrimitives.magentaDark,
-        dark:  VaylPrimitives.cyan
+        dark: VaylPrimitives.cyan
     )
 
     /// Card overline and section labels with spectrum tint.
     static let textCardLabel = Color.dynamic(
         light: VaylPrimitives.purple.withAlphaComponent(0.70),
-        dark:  VaylPrimitives.cyan.withAlphaComponent(0.60)
+        dark: VaylPrimitives.cyan.withAlphaComponent(0.60)
     )
 
     /// Section headers and eyebrow labels — the lavender-purple from docs/prototypes/settings-v2.html.
@@ -299,7 +299,7 @@ struct AppColors {
     /// (which skews cyan in Midnight). Use for .sec-h style grouping labels in list screens.
     static let textSectionLabel = Color.dynamic(
         light: VaylPrimitives.purple.withAlphaComponent(0.65),
-        dark:  VaylPrimitives.purpleBright.withAlphaComponent(0.55)
+        dark: VaylPrimitives.purpleBright.withAlphaComponent(0.55)
     )
 
     // ─────────────────────────────────────────────
@@ -310,19 +310,19 @@ struct AppColors {
     /// Midnight: cyan (emissive). Dawn: magenta (refractive).
     static let accentPrimary = Color.dynamic(
         light: VaylPrimitives.magenta,
-        dark:  VaylPrimitives.cyan
+        dark: VaylPrimitives.cyan
     )
 
     /// Secondary accent. Decorative spectrum, orbit trails.
     static let accentSecondary = Color.dynamic(
         light: VaylPrimitives.purple,
-        dark:  VaylPrimitives.purple
+        dark: VaylPrimitives.purple
     )
 
     /// Tertiary accent. Badge fills, atmospheric tints.
     static let accentTertiary = Color.dynamic(
         light: VaylPrimitives.gold,
-        dark:  VaylPrimitives.magenta
+        dark: VaylPrimitives.magenta
     )
 
     // ─────────────────────────────────────────────
@@ -332,31 +332,31 @@ struct AppColors {
     /// Default card and surface border. Barely visible structural edge.
     static let borderSubtle = Color.dynamic(
         light: VaylPrimitives.pureBlack.withAlphaComponent(0.06),
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.06)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.06)
     )
 
     /// Hover and focus border. Slightly more present than subtle.
     static let borderDefault = Color.dynamic(
         light: VaylPrimitives.pureBlack.withAlphaComponent(0.10),
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.10)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.10)
     )
 
     /// Active, selected, or structural border.
     static let borderActive = Color.dynamic(
         light: VaylPrimitives.pureBlack.withAlphaComponent(0.15),
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.15)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.15)
     )
 
     /// Accent-tinted border. Focus rings on accent inputs.
     static let borderAccent = Color.dynamic(
         light: VaylPrimitives.magenta.withAlphaComponent(0.22),
-        dark:  VaylPrimitives.cyan.withAlphaComponent(0.20)
+        dark: VaylPrimitives.cyan.withAlphaComponent(0.20)
     )
 
     /// Purple-tinted structural border. Cards and fields in light mode.
     static let borderPurple = Color.dynamic(
         light: VaylPrimitives.purple.withAlphaComponent(0.14),
-        dark:  VaylPrimitives.purple.withAlphaComponent(0.14)
+        dark: VaylPrimitives.purple.withAlphaComponent(0.14)
     )
 
     // ─────────────────────────────────────────────
@@ -366,13 +366,13 @@ struct AppColors {
     /// Destructive actions, error states, irreversible confirmations.
     static let destructive = Color.dynamic(
         light: VaylPrimitives.destructiveRed,
-        dark:  VaylPrimitives.destructiveRed
+        dark: VaylPrimitives.destructiveRed
     )
 
     /// Success confirmations, completed states.
     static let success = Color.dynamic(
         light: VaylPrimitives.successGreen,
-        dark:  VaylPrimitives.successGreen
+        dark: VaylPrimitives.successGreen
     )
 
     // ─────────────────────────────────────────────
@@ -389,13 +389,13 @@ struct AppColors {
     /// Safety signal accent. Safe word, warnings, hard stops only.
     static let safetyAccent = Color.dynamic(
         light: VaylPrimitives.gold,
-        dark:  VaylPrimitives.gold
+        dark: VaylPrimitives.gold
     )
 
     /// Aurora atmospheric wash. ≤8% opacity enforced at call sites.
     static let safetyAtmosphere = Color.dynamic(
         light: VaylPrimitives.gold,
-        dark:  VaylPrimitives.gold
+        dark: VaylPrimitives.gold
     )
 
     // ─────────────────────────────────────────────
@@ -405,7 +405,7 @@ struct AppColors {
     /// Modal scrims and card drop shadows.
     static let shadowDeep = Color.dynamic(
         light: VaylPrimitives.pureBlack.withAlphaComponent(0.12),
-        dark:  VaylPrimitives.pureBlack.withAlphaComponent(0.50)
+        dark: VaylPrimitives.pureBlack.withAlphaComponent(0.50)
     )
 
     /// Full-screen backdrop dim behind an elevated/engaged surface (an open
@@ -414,25 +414,25 @@ struct AppColors {
     /// inside. Values sourced from CardCarousel's existing tuned dim.
     static let scrimHeavy = Color.dynamic(
         light: VaylPrimitives.pureBlack.withAlphaComponent(0.35),
-        dark:  VaylPrimitives.pureBlack.withAlphaComponent(0.75)
+        dark: VaylPrimitives.pureBlack.withAlphaComponent(0.75)
     )
 
     /// Dawn tinted shadow — magenta channel. Cards in light mode.
     static let shadowMagenta = Color.dynamic(
         light: VaylPrimitives.magenta.withAlphaComponent(0.18),
-        dark:  VaylPrimitives.magenta.withAlphaComponent(0.10)
+        dark: VaylPrimitives.magenta.withAlphaComponent(0.10)
     )
 
     /// Dawn tinted shadow — purple channel. Cards in light mode.
     static let shadowPurple = Color.dynamic(
         light: VaylPrimitives.purple.withAlphaComponent(0.12),
-        dark:  VaylPrimitives.purple.withAlphaComponent(0.08)
+        dark: VaylPrimitives.purple.withAlphaComponent(0.08)
     )
 
     /// Dawn tinted shadow — gold warmth layer. Lowest shadow channel.
     static let shadowGold = Color.dynamic(
         light: VaylPrimitives.gold.withAlphaComponent(0.07),
-        dark:  VaylPrimitives.gold.withAlphaComponent(0.04)
+        dark: VaylPrimitives.gold.withAlphaComponent(0.04)
     )
 
     // ─────────────────────────────────────────────
@@ -445,13 +445,13 @@ struct AppColors {
     /// Aurora blob — top right corner.
     static let auroraBlob1 = Color.dynamic(
         light: VaylPrimitives.magenta.withAlphaComponent(0.09),
-        dark:  VaylPrimitives.magenta.withAlphaComponent(0.09)
+        dark: VaylPrimitives.magenta.withAlphaComponent(0.09)
     )
 
     /// Aurora blob — bottom left corner.
     static let auroraBlob2 = Color.dynamic(
         light: VaylPrimitives.purple.withAlphaComponent(0.08),
-        dark:  VaylPrimitives.purple.withAlphaComponent(0.08)
+        dark: VaylPrimitives.purple.withAlphaComponent(0.08)
     )
 
     // ─────────────────────────────────────────────
@@ -465,25 +465,25 @@ struct AppColors {
     /// Frosted card fill. Warm near-white over aurora in Dawn.
     static let glassFrostCard = Color.dynamic(
         light: VaylPrimitives.frostCard,
-        dark:  VaylPrimitives.inkCard
+        dark: VaylPrimitives.inkCard
     )
 
     /// Unselected pill fill. Visible contrast against page background.
     static let glassFrostPill = Color.dynamic(
         light: VaylPrimitives.frostPill,
-        dark:  VaylPrimitives.inkPill
+        dark: VaylPrimitives.inkPill
     )
 
     /// Selected pill fill. Lifts visibly over unselected state.
     static let glassFrostPillSelected = Color.dynamic(
         light: VaylPrimitives.frostPillSelected,
-        dark:  VaylPrimitives.inkPillSelected
+        dark: VaylPrimitives.inkPillSelected
     )
 
     /// CTA button fill. Warm rose on Dawn, ink surface on Midnight.
     static let glassFrostCTA = Color.dynamic(
         light: VaylPrimitives.frostCTA,
-        dark:  VaylPrimitives.inkSurface
+        dark: VaylPrimitives.inkSurface
     )
 
     /// Translucent glass surface for cards that float on the void + atmosphere
@@ -493,7 +493,7 @@ struct AppColors {
     /// rgba(255,255,255,0.03) over the void.
     static let glassSurface = Color.dynamic(
         light: VaylPrimitives.frostCard,
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.03)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.03)
     )
 
     /// Barely-there tonal wash — a hint of surface without committing to a fill.
@@ -501,7 +501,7 @@ struct AppColors {
     /// on both appearances. For a subtle background tint on rows, pills, and tiles.
     static let whisperFill = Color.dynamic(
         light: VaylPrimitives.pureBlack.withAlphaComponent(0.03),
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.04)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.04)
     )
 
     // ─────────────────────────────────────────────
@@ -514,13 +514,13 @@ struct AppColors {
     /// Unselected pill interior gradient — bottom stop.
     static let pillSurfaceBottom = Color.dynamic(
         light: VaylPrimitives.frostPillBottom,
-        dark:  VaylPrimitives.inkPillBottom
+        dark: VaylPrimitives.inkPillBottom
     )
 
     /// Ambient lift shadow on every pill.
     static let pillGlow = Color.dynamic(
         light: VaylPrimitives.pureBlack.withAlphaComponent(0.04),
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.04)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.04)
     )
 
     // ─────────────────────────────────────────────
@@ -530,7 +530,7 @@ struct AppColors {
     /// Floating label color when a text field is focused.
     static let inputLabelFocused = Color.dynamic(
         light: VaylPrimitives.magentaDark,
-        dark:  VaylPrimitives.cyan
+        dark: VaylPrimitives.cyan
     )
 
     // ─────────────────────────────────────────────
@@ -540,19 +540,19 @@ struct AppColors {
     /// Magenta-tinted icon badge background.
     static let iconBadgeMagenta = Color.dynamic(
         light: VaylPrimitives.magenta.withAlphaComponent(0.18),
-        dark:  VaylPrimitives.magenta.withAlphaComponent(0.12)
+        dark: VaylPrimitives.magenta.withAlphaComponent(0.12)
     )
 
     /// Amber-tinted icon badge background.
     static let iconBadgeAmber = Color.dynamic(
         light: VaylPrimitives.orangeHot.withAlphaComponent(0.14),
-        dark:  VaylPrimitives.orangeHot.withAlphaComponent(0.10)
+        dark: VaylPrimitives.orangeHot.withAlphaComponent(0.10)
     )
 
     /// Gold-tinted icon badge background.
     static let iconBadgeGold = Color.dynamic(
         light: VaylPrimitives.gold.withAlphaComponent(0.14),
-        dark:  VaylPrimitives.gold.withAlphaComponent(0.10)
+        dark: VaylPrimitives.gold.withAlphaComponent(0.10)
     )
 
     // ─────────────────────────────────────────────
@@ -562,7 +562,7 @@ struct AppColors {
     /// Active toggle and switch fill.
     static let toggleActive = Color.dynamic(
         light: VaylPrimitives.magenta,
-        dark:  VaylPrimitives.cyan
+        dark: VaylPrimitives.cyan
     )
 
     // ─────────────────────────────────────────────
@@ -572,13 +572,13 @@ struct AppColors {
     /// Leading stop of onboarding progress bar fill.
     static let progressBarLeading = Color.dynamic(
         light: VaylPrimitives.orangeHot,
-        dark:  VaylPrimitives.cyan
+        dark: VaylPrimitives.cyan
     )
 
     /// Trailing stop of onboarding progress bar fill.
     static let progressBarTrailing = Color.dynamic(
         light: VaylPrimitives.orangeDeep,
-        dark:  VaylPrimitives.purple
+        dark: VaylPrimitives.purple
     )
 
     // ─────────────────────────────────────────────
@@ -603,15 +603,15 @@ struct AppColors {
 
     private static let gradientStop1 = Color.dynamic(
         light: VaylPrimitives.purple,
-        dark:  VaylPrimitives.cyan
+        dark: VaylPrimitives.cyan
     )
     private static let gradientStop2 = Color.dynamic(
         light: VaylPrimitives.magenta,
-        dark:  VaylPrimitives.purple
+        dark: VaylPrimitives.purple
     )
     private static let gradientStop3 = Color.dynamic(
         light: VaylPrimitives.gold,
-        dark:  VaylPrimitives.magenta
+        dark: VaylPrimitives.magenta
     )
 
     // ─────────────────────────────────────────────
@@ -645,7 +645,7 @@ struct AppColors {
         Color(uiColor: VaylPrimitives.magenta.withAlphaComponent(0.20)),
         Color(uiColor: VaylPrimitives.gold.withAlphaComponent(0.18)),
         Color(uiColor: VaylPrimitives.magenta.withAlphaComponent(0.18)),
-        Color(uiColor: VaylPrimitives.purple.withAlphaComponent(0.22)),
+        Color(uiColor: VaylPrimitives.purple.withAlphaComponent(0.22))
     ]
 
     // ─────────────────────────────────────────────
@@ -680,25 +680,25 @@ struct AppColors {
     /// Pulse tier 1 — Expansive. Highest capacity. Connected, adventurous.
     static let pulseTierExpansive = Color.dynamic(
         light: VaylPrimitives.magenta,
-        dark:  VaylPrimitives.cyan
+        dark: VaylPrimitives.cyan
     )
 
     /// Pulse tier 2 — Sovereign. Stable capacity. Grounded, secure.
     static let pulseTierSovereign = Color.dynamic(
         light: VaylPrimitives.purple,
-        dark:  VaylPrimitives.purple
+        dark: VaylPrimitives.purple
     )
 
     /// Pulse tier 3 — Friction. Reduced capacity. Anxious, defensive.
     static let pulseTierFriction = Color.dynamic(
         light: VaylPrimitives.magentaDark,
-        dark:  VaylPrimitives.magenta
+        dark: VaylPrimitives.magenta
     )
 
     /// Pulse tier 4 — Protective. Lowest capacity. Overwhelmed, needs space.
     static let pulseTierProtective = Color.dynamic(
         light: VaylPrimitives.wineFaint,
-        dark:  VaylPrimitives.magentaLight
+        dark: VaylPrimitives.magentaLight
     )
 
     /// Renamed vocabulary (2D circumplex): the Reactive Space is the old Friction tier,
@@ -803,7 +803,6 @@ struct AppColors {
     /// Rotated core gradient, outer edge stop. Apply .opacity(0.92) to match the original.
     static let vaultRoseDeep      = Color(uiColor: VaylPrimitives.vaultRoseDeep)
 }
-
 
 // MARK: - Color.dynamic
 

@@ -21,18 +21,18 @@ struct SettingsView: View {
     @State private var store: SettingsStore?
 
     // Sub-screen navigation
-    @State private var showYou:           Bool = false
-    @State private var showPrivacy:       Bool = false
+    @State private var showYou: Bool = false
+    @State private var showPrivacy: Bool = false
     @State private var showNotifications: Bool = false
-    @State private var showAppearance:    Bool = false
-    @State private var showPartner:       Bool = false
-    @State private var showComposition:   Bool = false
+    @State private var showAppearance: Bool = false
+    @State private var showPartner: Bool = false
+    @State private var showComposition: Bool = false
 
     // Sheet / dialog state
-    @State private var showUnlink:          Bool = false
-    @State private var showSignOutConfirm:  Bool = false
-    @State private var showDeleteConfirm:   Bool = false
-    @State private var legalDoc:            LegalDoc? = nil
+    @State private var showUnlink: Bool = false
+    @State private var showSignOutConfirm: Bool = false
+    @State private var showDeleteConfirm: Bool = false
+    @State private var legalDoc: LegalDoc?
 
     var body: some View {
         GeometryReader { geo in
@@ -529,7 +529,7 @@ struct SettingsView: View {
 
 struct SettingsSubScreenShell<Content: View>: View {
     let title: String
-    var onBack: (() -> Void)? = nil
+    var onBack: (() -> Void)?
     @ViewBuilder let content: Content
 
     var body: some View {

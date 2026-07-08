@@ -10,8 +10,8 @@ import SwiftUI
 /// Ratios locked against the approved HTML motion reference (compass-premium V3).
 private enum CompassDeflection {
     static let needleMaxDegrees: Double = 55.0
-    static let dialRatio:        Double = -0.5   // of needle angle
-    static let gimbalRatio:      Double =  0.4   // of needle angle
+    static let dialRatio: Double = -0.5   // of needle angle
+    static let gimbalRatio: Double =  0.4   // of needle angle
 }
 
 // MARK: - Geometry
@@ -28,27 +28,27 @@ private struct CompassGeometry {
     let radius: CGFloat   // outer gimbal reach — everything scales from this
 
     // ── Paths ────────────────────────────────────────────────────────────────
-    let gimbalRingPath:   Path   // outer ellipse — tilts with the drag
+    let gimbalRingPath: Path   // outer ellipse — tilts with the drag
     let gimbalPivotsPath: Path   // two pivot circles on the gimbal axis
-    let bowlOuterPath:    Path   // static bowl rings
-    let bowlInnerPath:    Path
-    let dialTicksPath:    Path   // 8 bearing ticks — counter-rotates
-    let needleNorthPath:  Path   // cyan dart
-    let needleSouthPath:  Path   // magenta dart
-    let hubPath:          Path   // static jeweled bearing
-    let hubDotRect:       CGRect
+    let bowlOuterPath: Path   // static bowl rings
+    let bowlInnerPath: Path
+    let dialTicksPath: Path   // 8 bearing ticks — counter-rotates
+    let needleNorthPath: Path   // cyan dart
+    let needleSouthPath: Path   // magenta dart
+    let hubPath: Path   // static jeweled bearing
+    let hubDotRect: CGRect
 
     // ── N marker (drawn as text on the dial layer) ───────────────────────────
     let northMarkPoint: CGPoint
-    let northMarkFont:  Font
+    let northMarkFont: Font
 
     // ── Shading ──────────────────────────────────────────────────────────────
     let shading: GraphicsContext.Shading
 
     // ── Stroke styles ────────────────────────────────────────────────────────
-    let glowStroke:  StrokeStyle
+    let glowStroke: StrokeStyle
     let crispStroke: StrokeStyle   // gimbal + bowl + hub
-    let tickStroke:  StrokeStyle   // dial ticks — thinner, dimmed
+    let tickStroke: StrokeStyle   // dial ticks — thinner, dimmed
     let needleStroke: StrokeStyle
 
     init(size: CGSize) {
@@ -81,11 +81,11 @@ private struct CompassGeometry {
 
         // ── Dial card — 8 bearing ticks every 45° ──────────────────────────
         dialTicksPath = Path { p in
-            let tickIn:  CGFloat = r * 0.55
+            let tickIn: CGFloat = r * 0.55
             let tickOut: CGFloat = r * 0.65
             for i in 0..<8 {
                 let a = CGFloat(i) * .pi / 4.0 - .pi / 2.0
-                p.move(to:    CGPoint(x: c.x + cos(a) * tickIn,  y: c.y + sin(a) * tickIn))
+                p.move(to: CGPoint(x: c.x + cos(a) * tickIn, y: c.y + sin(a) * tickIn))
                 p.addLine(to: CGPoint(x: c.x + cos(a) * tickOut, y: c.y + sin(a) * tickOut))
             }
         }
@@ -94,16 +94,16 @@ private struct CompassGeometry {
 
         // ── Needle — north dart leads, south dart counterweights ───────────
         needleNorthPath = Path { p in
-            p.move(to:    CGPoint(x: c.x,             y: c.y - r * 0.577))
+            p.move(to: CGPoint(x: c.x, y: c.y - r * 0.577))
             p.addLine(to: CGPoint(x: c.x + r * 0.077, y: c.y - r * 0.064))
-            p.addLine(to: CGPoint(x: c.x,             y: c.y + r * 0.026))
+            p.addLine(to: CGPoint(x: c.x, y: c.y + r * 0.026))
             p.addLine(to: CGPoint(x: c.x - r * 0.077, y: c.y - r * 0.064))
             p.closeSubpath()
         }
         needleSouthPath = Path { p in
-            p.move(to:    CGPoint(x: c.x,             y: c.y + r * 0.577))
+            p.move(to: CGPoint(x: c.x, y: c.y + r * 0.577))
             p.addLine(to: CGPoint(x: c.x + r * 0.077, y: c.y + r * 0.064))
-            p.addLine(to: CGPoint(x: c.x,             y: c.y - r * 0.026))
+            p.addLine(to: CGPoint(x: c.x, y: c.y - r * 0.026))
             p.addLine(to: CGPoint(x: c.x - r * 0.077, y: c.y + r * 0.064))
             p.closeSubpath()
         }
@@ -124,15 +124,15 @@ private struct CompassGeometry {
                 AppColors.spectrumMagenta
             ]),
             startPoint: CGPoint(x: c.x - r, y: c.y - r),
-            endPoint:   CGPoint(x: c.x + r, y: c.y + r)
+            endPoint: CGPoint(x: c.x + r, y: c.y + r)
         )
 
         // ── Stroke styles — thin watchmaker lines, glow pass bloomed ───────
         let lw = r * 0.025
         glowStroke   = StrokeStyle(lineWidth: lw * 2.6, lineCap: .round)
-        crispStroke  = StrokeStyle(lineWidth: lw,        lineCap: .round)
+        crispStroke  = StrokeStyle(lineWidth: lw, lineCap: .round)
         tickStroke   = StrokeStyle(lineWidth: lw * 0.65, lineCap: .round)
-        needleStroke = StrokeStyle(lineWidth: lw * 1.1,  lineCap: .round, lineJoin: .round)
+        needleStroke = StrokeStyle(lineWidth: lw * 1.1, lineCap: .round, lineJoin: .round)
     }
 }
 
@@ -164,9 +164,9 @@ private struct CompassGeometry {
 /// VaylCardFace shell.
 struct CompassCardFace: View {
 
-    let cardWidth:  CGFloat
+    let cardWidth: CGFloat
     let cardHeight: CGFloat
-    let topic:      String
+    let topic: String
     let deflection: Double   // −1 … 1
 
     /// Dead band around center where the readout stays neutral — keeps the
@@ -275,7 +275,7 @@ struct CompassCardFace: View {
             glowCtx.opacity = 0.26
             glowCtx.stroke(g.gimbalRingPath, with: g.shading, style: g.glowStroke)
 
-            context.stroke(g.gimbalRingPath,   with: g.shading, style: g.crispStroke)
+            context.stroke(g.gimbalRingPath, with: g.shading, style: g.crispStroke)
             context.stroke(g.gimbalPivotsPath, with: g.shading, style: g.crispStroke)
         }
     }
@@ -364,7 +364,7 @@ private struct HeadingRuler: View {
                     let baseY = size.height - 0.5
 
                     var baseline = Path()
-                    baseline.move(to:    CGPoint(x: 0,          y: baseY))
+                    baseline.move(to: CGPoint(x: 0, y: baseY))
                     baseline.addLine(to: CGPoint(x: size.width, y: baseY))
 
                     let shading = GraphicsContext.Shading.linearGradient(
@@ -374,7 +374,7 @@ private struct HeadingRuler: View {
                             AppColors.spectrumMagenta
                         ]),
                         startPoint: .zero,
-                        endPoint:   CGPoint(x: size.width, y: 0)
+                        endPoint: CGPoint(x: size.width, y: 0)
                     )
 
                     var baseCtx = context
@@ -386,7 +386,7 @@ private struct HeadingRuler: View {
                     for i in 0..<9 {
                         let x = size.width * (0.06 + CGFloat(i) * 0.11)
                         let depth: CGFloat = i == 4 ? 0.70 : (i % 2 == 0 ? 0.45 : 0.28)
-                        ticks.move(to:    CGPoint(x: x, y: baseY))
+                        ticks.move(to: CGPoint(x: x, y: baseY))
                         ticks.addLine(to: CGPoint(x: x, y: baseY - size.height * depth))
                     }
                     var tickCtx = context
@@ -412,7 +412,7 @@ private struct HeadingRuler: View {
 private struct RulerIndex: Shape {
     func path(in rect: CGRect) -> Path {
         Path { p in
-            p.move(to:    CGPoint(x: rect.minX, y: rect.minY))
+            p.move(to: CGPoint(x: rect.minX, y: rect.minY))
             p.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
             p.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
             p.closeSubpath()
@@ -432,9 +432,9 @@ private struct RulerIndex: Shape {
         AppColors.cardBg.ignoresSafeArea()
 
         CompassCardFace(
-            cardWidth:  w,
+            cardWidth: w,
             cardHeight: h,
-            topic:      "What I want — not what I've settled for",
+            topic: "What I want — not what I've settled for",
             deflection: 0
         )
         .frame(width: w, height: h)
@@ -456,9 +456,9 @@ private struct RulerIndex: Shape {
                     AppColors.cardBg
 
                     CompassCardFace(
-                        cardWidth:  w,
+                        cardWidth: w,
                         cardHeight: h,
-                        topic:      "I don't know what I actually want",
+                        topic: "I don't know what I actually want",
                         deflection: deflection
                     )
                 }

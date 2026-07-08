@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 5/1/26.
 //
 
-
 // App/Theme/AppElevation.swift
 
 import SwiftUI
@@ -155,18 +154,18 @@ internal enum AppElevation {
 
         /// Dawn mode — purple-tinted shadow matching the warm palette.
         static let dawnShadow = Shadow(
-            color:  AppColors.shadowPurple,
+            color: AppColors.shadowPurple,
             radius: 16,
-            x:      0,
-            y:      4
+            x: 0,
+            y: 4
         )
 
         /// Midnight mode — deep shadow with slightly more spread.
         static let midnightShadow = Shadow(
-            color:  AppColors.shadowDeep,
+            color: AppColors.shadowDeep,
             radius: 20,
-            x:      0,
-            y:      6
+            x: 0,
+            y: 6
         )
     }
 
@@ -194,16 +193,16 @@ internal enum AppElevation {
     /// - Parameter elevation: A Double in the range 0.0–1.0. Values outside
     ///   this range are not clamped — callers are responsible for correct input.
     struct CardShadow {
-        let color:  Color
+        let color: Color
         let radius: CGFloat
-        let y:      CGFloat
+        let y: CGFloat
     }
 
     static func cardShadow(elevation: Double) -> CardShadow {
         CardShadow(
-            color:  Color.black.opacity(lerp(0.50, 0.16, elevation)),
-            radius: lerp(8,  32, elevation),
-            y:      lerp(4,  20, elevation)
+            color: Color.black.opacity(lerp(0.50, 0.16, elevation)),
+            radius: lerp(8, 32, elevation),
+            y: lerp(4, 20, elevation)
         )
     }
 

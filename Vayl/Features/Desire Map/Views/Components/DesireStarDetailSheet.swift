@@ -17,7 +17,7 @@ struct DesireStarDetailSheet: View {
     /// Dismissal is scrim-tap (mockup screen 7 has no X). Kept for hosts that add
     /// their own affordance later (e.g. drag-to-dismiss).
     var onClose: () -> Void = {}
-    var onTalkTapped: (() -> Void)? = nil
+    var onTalkTapped: (() -> Void)?
 
     // Content-height when it fits; scrolls when it can't (large Dynamic Type).
     // vaylSheetChrome forces maxHeight:.infinity (shared, off-limits), so the chrome

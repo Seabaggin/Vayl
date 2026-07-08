@@ -5,15 +5,14 @@
 //  Created by Bryan Jorden on 3/28/26.
 //
 
-
 import SwiftUI
 
 struct AtmosphericGhostDeck: View {
 
     // Static offsets — the two ghost cards behind the main card
     private let ghosts: [(offset: CGSize, rotation: Double, opacity: Double)] = [
-        (CGSize(width: 8,  height: -10), -3.5, 0.75),
-        (CGSize(width: 16, height: -20), -7.0, 0.55),
+        (CGSize(width: 8, height: -10), -3.5, 0.75),
+        (CGSize(width: 16, height: -20), -7.0, 0.55)
     ]
 
     @Environment(\.colorScheme) private var colorScheme
@@ -66,14 +65,14 @@ struct AtmosphericGhostDeck: View {
                     colors: colorScheme == .light
                         ? [
                             Color(hex: "E8DFD0"),  // warm off-white, clear tan presence
-                            Color(hex: "DEDAD0"),  // deeper, closer to the cream background
+                            Color(hex: "DEDAD0")  // deeper, closer to the cream background
                           ]
                         : [
                             Color(red: 0.10, green: 0.09, blue: 0.23),  // deep indigo
-                            Color(red: 0.07, green: 0.06, blue: 0.18),  // darker indigo
+                            Color(red: 0.07, green: 0.06, blue: 0.18)  // darker indigo
                           ],
                     startPoint: .topLeading,
-                    endPoint:   .bottomTrailing
+                    endPoint: .bottomTrailing
                 )
             )
             .frame(width: cardSize.width, height: cardSize.height)

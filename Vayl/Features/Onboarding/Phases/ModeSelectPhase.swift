@@ -14,44 +14,44 @@ import SwiftUI
 
 struct ModeSelectPhase: View {
 
-    let director:   VaylDirector
+    let director: VaylDirector
     let screenSize: CGSize
 
     @State private var deal              = CardMirrorDealController()
-    @State private var speechTask:       Task<Void, Never>? = nil
-    @State private var questionTask:     Task<Void, Never>? = nil
-    @State private var liftTextTask:     Task<Void, Never>? = nil
-    @State private var liftedText:       String?       = nil
-    @State private var liftedSide:       MirrorCard?   = nil
-    @State private var hasDealt:         Bool         = false
-    @State private var liftHaptic:       Bool         = false
-    @State private var deselectHaptic:   Bool         = false
+    @State private var speechTask: Task<Void, Never>?
+    @State private var questionTask: Task<Void, Never>?
+    @State private var liftTextTask: Task<Void, Never>?
+    @State private var liftedText: String?
+    @State private var liftedSide: MirrorCard?
+    @State private var hasDealt: Bool         = false
+    @State private var liftHaptic: Bool         = false
+    @State private var deselectHaptic: Bool         = false
 
     // ── Question gate ────────────────────────────────────────────────
     // The cards answer "How are you exploring?" — they must not be
     // tappable until the dealer has finished asking it. questionShown latches
     // the line fire; questionAsked opens interaction at type-complete + 250ms.
-    @State private var questionShown:    Bool         = false
-    @State private var questionAsked:    Bool         = false
+    @State private var questionShown: Bool         = false
+    @State private var questionAsked: Bool         = false
 
     // ── Swipe-up hint — the lifted card tugs upward to cue the confirm gesture ──
     // ModeSelect is the first phase to reuse Name's "lift → swipe up" lesson, so it
     // needs the same cross-phase cue ExperienceLevel/Gender carry. See startSwipeHint.
-    @State private var hintOffset:       CGFloat            = 0
-    @State private var hintTask:         Task<Void, Never>? = nil
+    @State private var hintOffset: CGFloat            = 0
+    @State private var hintTask: Task<Void, Never>?
 
     // Live hand-off follow (Phase 4c): the lifted card tracks the finger as it's handed up
     // (shared HandBackFollow). View-local; the controller owns deal offsets, so this
     // resolves to .zero inside the pocket flight on confirm.
-    @State private var handBackDrag:         CGSize = .zero
-    @State private var handBackArmed:        Bool   = false
+    @State private var handBackDrag: CGSize = .zero
+    @State private var handBackArmed: Bool   = false
     @State private var handBackSelectionGen = UISelectionFeedbackGenerator()
 
     // ── Cheat code button animation ──────────────────────────────────
-    @State private var leftActiveButtons:      Set<Int> = []
-    @State private var rightActiveButtons:     Set<Int> = []
+    @State private var leftActiveButtons: Set<Int> = []
+    @State private var rightActiveButtons: Set<Int> = []
     @State private var rightBackActiveButtons: Set<Int> = []
-    @State private var cheatCodeTask:          Task<Void, Never>? = nil
+    @State private var cheatCodeTask: Task<Void, Never>?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -88,8 +88,8 @@ struct ModeSelectPhase: View {
         .frame(width: screenSize.width, height: screenSize.height)
         .sensoryFeedback(.selection, trigger: liftHaptic)
         .sensoryFeedback(.selection, trigger: deselectHaptic)
-        .sensoryFeedback(.success,   trigger: deal.confirmHapticTrigger)
-        .onAppear    { runEntrance() }
+        .sensoryFeedback(.success, trigger: deal.confirmHapticTrigger)
+        .onAppear { runEntrance() }
         .onDisappear {
             speechTask?.cancel()
             questionTask?.cancel()
@@ -162,7 +162,7 @@ struct ModeSelectPhase: View {
             ? .controller(activeButtons: leftActiveButtons)
             : .dualController(
                 activeButtonsFront: rightActiveButtons,
-                activeButtonsBack:  rightBackActiveButtons
+                activeButtonsBack: rightBackActiveButtons
               )
         let isLifted   = isCardLifted(side)
         let isRejected = isCardRejected(side)
@@ -184,7 +184,7 @@ struct ModeSelectPhase: View {
                 .allowsHitTesting(false)
                 .opacity(showFace && !showBack ? 0 : 1)
             VaylCardFace(
-                content:  content,
+                content: content,
                 onAction: { action in handleAction(action, from: side) }
             )
             .drawingGroup()
@@ -292,9 +292,9 @@ struct ModeSelectPhase: View {
             // Drift + tilt resolve INTO the pocket flight — no snap at the handoff.
             withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { handBackDrag = .zero }
             deal.confirm(
-                card:       side,
+                card: side,
                 screenSize: screenSize,
-                cardWidth:  cardWidth,
+                cardWidth: cardWidth,
                 onLanded: { confirmedCard in
                     // Confirmed card has visually arrived at the corner deck (~520ms after swipe).
                     // Credit the deck now — count updates as the card lands, not after.
@@ -304,7 +304,7 @@ struct ModeSelectPhase: View {
                     let mode: AppMode = confirmedCard == .left ? .solo : .together
                     director.onboardingData.appMode = mode
                 },
-                onConfirm: { confirmedCard in
+                onConfirm: { _ in
                     // Rejected card has fully exited (~940ms after swipe). Clean up UI and advance.
                     liftTextTask?.cancel()
                     withAnimation(AppAnimation.fast) { liftedText = nil; liftedSide = nil }
@@ -334,7 +334,7 @@ struct ModeSelectPhase: View {
                 let tableY = AppLayout.obTableCardCenterY(in: screenSize.height)
                 let restY  = tableY - screenSize.height / 2
                 deal.leftOffset  = CGSize(width: -(cardWidth * 0.38), height: restY)
-                deal.rightOffset = CGSize(width:  (cardWidth * 0.38), height: restY)
+                deal.rightOffset = CGSize(width: (cardWidth * 0.38), height: restY)
                 deal.leftAngle   = -3; deal.rightAngle = 3
                 deal.leftAlpha   = 1;  deal.rightAlpha = 1
                 deal.leftShowFace = true; deal.rightShowFace = true
@@ -447,7 +447,7 @@ struct ModeSelectPhase: View {
         [3],        // left
         [0, 2],     // top + bottom
         [1, 3],     // right + left
-        [],         // clear — brief dark moment before loop
+        []         // clear — brief dark moment before loop
     ]
 
     @MainActor

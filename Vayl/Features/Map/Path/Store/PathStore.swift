@@ -23,7 +23,7 @@ final class PathStore {
     private(set) var activity: [PathActivityEntry] = []
     private(set) var privateMarkedLandmarkIds: Set<String> = []
     private(set) var isLoading: Bool = false
-    private(set) var loadError: String? = nil
+    private(set) var loadError: String?
 
     let coupleId: UUID
     let profileId: UUID

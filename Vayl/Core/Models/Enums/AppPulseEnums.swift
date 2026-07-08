@@ -173,4 +173,3 @@ enum PulseWindow: String, CaseIterable, Identifiable {
 
     static let widgetDefault: PulseWindow = .twoWeeks
 }
-

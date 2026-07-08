@@ -3,7 +3,7 @@
 import SwiftUI
 
 struct SettingsAppearanceView: View {
-    var onClose: (() -> Void)? = nil
+    var onClose: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 

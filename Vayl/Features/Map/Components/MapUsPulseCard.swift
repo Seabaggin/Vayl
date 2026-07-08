@@ -18,20 +18,20 @@ import SwiftUI
 
 struct MapUsPulseCard: View {
 
-    let state:        UsOrbState
-    let myAura:        AuraColors
-    let partnerAura:    AuraColors
-    let myLastEntry:    PulseEntry?
+    let state: UsOrbState
+    let myAura: AuraColors
+    let partnerAura: AuraColors
+    let myLastEntry: PulseEntry?
     let partnerLastEntry: PulseEntry?
-    let mySpaceName:    String
+    let mySpaceName: String
     let partnerSpaceName: String
-    let partnerName:    String
+    let partnerName: String
     /// Both last positions, used only for the distance headline when
     /// `state.allowsLiveComparison` is true.
-    let myPosition:     PulsePosition?
+    let myPosition: PulsePosition?
     let partnerPosition: PulsePosition?
-    let relativeDay:    (Date) -> String
-    var onTap:          (() -> Void)? = nil
+    let relativeDay: (Date) -> String
+    var onTap: (() -> Void)?
 
     @State private var isPressed = false
 
@@ -92,9 +92,9 @@ struct MapUsPulseCard: View {
             PulseCyclingAura(size: AppLayout.mapMeAuraSize)
         case .split(let mine, let partner):
             SplitOrbView(
-                mine:    half(for: mine, aura: myAura),
+                mine: half(for: mine, aura: myAura),
                 partner: half(for: partner, aura: partnerAura),
-                size:    AppLayout.mapMeAuraSize
+                size: AppLayout.mapMeAuraSize
             )
         }
     }
@@ -203,15 +203,15 @@ struct SplitOrbView: View {
         }
     }
 
-    let mine:    Half
+    let mine: Half
     let partner: Half
-    var size:    CGFloat = 98
+    var size: CGFloat = 98
 
     // FEEL: desaturation applied to an ember (quiet) half, on top of the shared
     // staleOpacity floor. 0.4 mutes without fully greying out the space colour.
     private let embersSaturation: Double = 0.4
-    private let seamOpacity:      Double = 0.22
-    private let seamWidth:        CGFloat = 1.2
+    private let seamOpacity: Double = 0.22
+    private let seamWidth: CGFloat = 1.2
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathe = false

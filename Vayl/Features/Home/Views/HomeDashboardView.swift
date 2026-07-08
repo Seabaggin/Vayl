@@ -54,7 +54,7 @@ struct HomeDashboardView: View {
     var desireMapState: DesireMapState = .hidden
     /// The partner's current Pulse position, for the chip's expand quick-view tile
     /// only (current position, not history — nil renders the confirmed-empty copy).
-    var partnerPulsePosition: PulsePosition? = nil
+    var partnerPulsePosition: PulsePosition?
     /// True when the last partner-pulse fetch failed — the tile shows an honest
     /// "couldn't check" instead of reading the failure as confirmed-empty.
     var partnerPulseFetchFailed: Bool = false
@@ -62,12 +62,12 @@ struct HomeDashboardView: View {
     var pickUpItems: [PickUpItem] = []
     var stageIndex: Int = 1
     var cardsCompleted: Int = 0
-    var daysSinceLastSession: Int? = nil
+    var daysSinceLastSession: Int?
     var recentEvents: [HomeEvent] = []
     var isSolo: Bool = false
     var showReflectionBanner: Bool = false
     /// Server-overridden Lexicon content from HomeStore (nil → bundled baseline).
-    var lexiconRemotePool: LexiconRemotePool? = nil
+    var lexiconRemotePool: LexiconRemotePool?
 
     // MARK: - Getting Started Activation
     // Optional namespace so the existing #Previews still compile (Namespace.ID has no public
@@ -75,36 +75,36 @@ struct HomeDashboardView: View {
     var gettingStarted: GettingStarted = GettingStarted.resolve(
         myMapComplete: false, isPaired: false, partnerMapComplete: false, revealDone: false
     )
-    var pathNamespace: Namespace.ID? = nil
+    var pathNamespace: Namespace.ID?
     var pathOpen: Bool = false
-    var onOpenPath: (() -> Void)? = nil
+    var onOpenPath: (() -> Void)?
 
     // MARK: - Callbacks
 
-    var onRemindPartner: (() -> Void)? = nil
-    var onCardAction: ((Card, CardAction) -> Void)? = nil
-    var onDesireMapReveal: (() -> Void)? = nil
-    var onDesireMapUnlock: (() -> Void)? = nil
-    var onReflectionDone: (([String], String?, Bool) -> Void)? = nil
-    var onReflectionBannerDismiss: (() -> Void)? = nil
-    var onMoreTap: (() -> Void)? = nil
-    var onPickUpItemTap: ((PickUpItem) -> Void)? = nil
-    var onInvitePartner: (() -> Void)? = nil
-    var onPartnerTap: (() -> Void)? = nil
-    var onNavigateToPlay: (() -> Void)? = nil
+    var onRemindPartner: (() -> Void)?
+    var onCardAction: ((Card, CardAction) -> Void)?
+    var onDesireMapReveal: (() -> Void)?
+    var onDesireMapUnlock: (() -> Void)?
+    var onReflectionDone: (([String], String?, Bool) -> Void)?
+    var onReflectionBannerDismiss: (() -> Void)?
+    var onMoreTap: (() -> Void)?
+    var onPickUpItemTap: ((PickUpItem) -> Void)?
+    var onInvitePartner: (() -> Void)?
+    var onPartnerTap: (() -> Void)?
+    var onNavigateToPlay: (() -> Void)?
     /// Fired when a session cover presented from Home dismisses — the router
     /// refreshes HomeStore's deck state so the hero reflects tonight's play
     /// without needing a tab switch.
-    var onSessionEnded: (() -> Void)? = nil
+    var onSessionEnded: (() -> Void)?
     /// The Lexicon CTA route (→ Learn).
-    var onOpenLexicon: (() -> Void)? = nil
+    var onOpenLexicon: (() -> Void)?
     /// The Pulse rail tap (→ Map / Pulse history). Minimal for now.
-    var onPulseTap: (() -> Void)? = nil
+    var onPulseTap: (() -> Void)?
     /// The Pulse "Check in" affordance. Final form: presents the shared check-in
     /// sheet in place over Home (Bryan's PulseWidget pass). Interim: routes to the
     /// Pulse surface so it is never dead.
-    var onCheckIn: (() -> Void)? = nil
-    var onOpenSettings: (() -> Void)? = nil
+    var onCheckIn: (() -> Void)?
+    var onOpenSettings: (() -> Void)?
 
     // MARK: - State
 
@@ -151,7 +151,7 @@ struct HomeDashboardView: View {
     /// Tonight's hand, set when the carousel hands off via `onStartHand`. Non-nil
     /// drives the protected session cover. DEBUG-only couch mode (spec rule 26):
     /// release "Settle in" routes to Play instead.
-    @State private var sessionHand: [Card]? = nil
+    @State private var sessionHand: [Card]?
 
     /// Joiner entry: "‹name› set up a session" banner + join cover.
     @Environment(\.modelContext) private var modelContext
@@ -625,7 +625,7 @@ struct HomeDashboardView: View {
             .transition(
                 .asymmetric(
                     insertion: .move(edge: .top).combined(with: .opacity),
-                    removal:   .move(edge: .top).combined(with: .opacity)
+                    removal: .move(edge: .top).combined(with: .opacity)
                 )
             )
             .animation(AppAnimation.spring, value: showReflectionBanner)
@@ -785,10 +785,10 @@ struct HomeDashboardView: View {
     }
 
     private func runEntranceAnimations() {
-        withAnimation(AppAnimation.slow.delay(0.10))   { greetingVisible = true }
+        withAnimation(AppAnimation.slow.delay(0.10)) { greetingVisible = true }
         withAnimation(AppAnimation.spring.delay(0.30)) { heroVisible     = true }
-        withAnimation(AppAnimation.slow.delay(0.62))   { pulseVisible    = true }
-        withAnimation(AppAnimation.slow.delay(0.78))   { lexVisible      = true }
+        withAnimation(AppAnimation.slow.delay(0.62)) { pulseVisible    = true }
+        withAnimation(AppAnimation.slow.delay(0.78)) { lexVisible      = true }
     }
 
     // MARK: - Computed

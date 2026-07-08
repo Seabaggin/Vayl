@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 3/10/26.
 //
 
-
 //
 //  DesireSyncService.swift
 //  Open Lightly
@@ -199,7 +198,7 @@ class DesireSyncService {
         var row: [String: String] = [
             "user_id": profileId.uuidString,
             "couple_id": coupleId.uuidString,
-            "updated_at": now,
+            "updated_at": now
         ]
         row[full ? "full_reveal_seen_at" : "free_reveal_seen_at"] = now
         try await supabase

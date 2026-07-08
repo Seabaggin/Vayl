@@ -56,7 +56,7 @@ private struct VaylSheetChrome: ViewModifier {
 
     func body(content: Content) -> some View {
         let surface = UnevenRoundedRectangle(
-            topLeadingRadius:  AppRadius.sheet,
+            topLeadingRadius: AppRadius.sheet,
             topTrailingRadius: AppRadius.sheet,
             style: .continuous
         )
@@ -72,7 +72,7 @@ private struct VaylSheetChrome: ViewModifier {
                             LinearGradient(
                                 colors: [
                                     AppColors.spectrumPurple.opacity(purpleTint),
-                                    AppColors.spectrumPurple.opacity(purpleTint * 0.55),
+                                    AppColors.spectrumPurple.opacity(purpleTint * 0.55)
                                 ],
                                 startPoint: .top, endPoint: .bottom
                             )
@@ -98,12 +98,12 @@ private struct VaylSheetChrome: ViewModifier {
                     // gently instead of ending abruptly.
                     LinearGradient(
                         stops: [
-                            .init(color: .black,               location: 0.00),
-                            .init(color: .black,               location: 0.06),
+                            .init(color: .black, location: 0.00),
+                            .init(color: .black, location: 0.06),
                             .init(color: .black.opacity(0.65), location: 0.13),
                             .init(color: .black.opacity(0.28), location: 0.20),
                             .init(color: .black.opacity(0.10), location: 0.27),
-                            .init(color: .clear,               location: 0.36),
+                            .init(color: .clear, location: 0.36)
                         ],
                         startPoint: .top, endPoint: .bottom
                     )

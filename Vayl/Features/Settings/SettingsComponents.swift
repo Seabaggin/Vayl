@@ -69,8 +69,8 @@ struct SettingsSubSectionLabel: View {
 struct SettingsNavRow: View {
     let icon: String
     let label: String
-    var subtitle: String? = nil
-    var value: String? = nil
+    var subtitle: String?
+    var value: String?
     var labelColor: Color = AppColors.textPrimary
     var iconTint: Color = AppColors.textSecondary
     var iconBg: Color = AppColors.glassSurface
@@ -124,7 +124,7 @@ struct SettingsNavRow: View {
 struct SettingsToggleRow: View {
     let icon: String
     let label: String
-    var subtitle: String? = nil
+    var subtitle: String?
     var iconTint: Color = AppColors.textSecondary
     var iconBg: Color = AppColors.glassSurface
     @Binding var isOn: Bool

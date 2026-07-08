@@ -12,8 +12,8 @@ import SwiftUI
 ///   • `@Environment` (reduceMotion / displayScale) — handed to the sequencer at `start`.
 struct NamePhase: View {
 
-    let director:    VaylDirector
-    let screenSize:  CGSize
+    let director: VaylDirector
+    let screenSize: CGSize
     @Binding var tableRimBurst: Double
 
     @FocusState private var nameFieldFocused: Bool
@@ -108,7 +108,7 @@ struct NamePhase: View {
                 ringPath.addEllipse(in: CGRect(
                     x: cx - ringW / 2,
                     y: cy + cardHeight * 0.48 - ringH / 2,
-                    width:  ringW,
+                    width: ringW,
                     height: ringH
                 ))
                 context.stroke(
@@ -127,13 +127,13 @@ struct NamePhase: View {
                     Path(CGRect(origin: .zero, size: size)),
                     with: .radialGradient(
                         Gradient(stops: [
-                            .init(color: AppColors.spectrumPurple.opacity(burstAlpha),      location: 0),
+                            .init(color: AppColors.spectrumPurple.opacity(burstAlpha), location: 0),
                             .init(color: AppColors.spectrumCyan.opacity(burstAlpha * 0.45), location: 0.45),
-                            .init(color: AppColors.spectrumCyan.opacity(0),                 location: 1),
+                            .init(color: AppColors.spectrumCyan.opacity(0), location: 1)
                         ]),
-                        center:      CGPoint(x: cx, y: cy),
+                        center: CGPoint(x: cx, y: cy),
                         startRadius: 0,
-                        endRadius:   burstR
+                        endRadius: burstR
                     )
                 )
             }
@@ -152,7 +152,7 @@ struct NamePhase: View {
             VaylCardBack()
                 .opacity(seq.showFace ? 0 : 1)
             VaylCardFace(content: .typewriter(
-                activeKey:        seq.activeKeyIndex,
+                activeKey: seq.activeKeyIndex,
                 carriageProgress: seq.carriageProgress
             ))
             .opacity(seq.showFace ? 1 : 0)
@@ -223,10 +223,10 @@ struct NamePhase: View {
                                 AppColors.accentPrimary.opacity(0.6),
                                 AppColors.accentSecondary.opacity(0.9),
                                 AppColors.accentTertiary.opacity(0.8),
-                                AppColors.accentPrimary.opacity(0.6),
+                                AppColors.accentPrimary.opacity(0.6)
                             ],
                             startPoint: .leading,
-                            endPoint:   .trailing
+                            endPoint: .trailing
                         ))
                         .frame(height: 3)
                         .blur(radius: 4)
@@ -238,10 +238,10 @@ struct NamePhase: View {
                                 AppColors.accentPrimary.opacity(0.2),
                                 AppColors.accentSecondary.opacity(0.35),
                                 AppColors.accentTertiary.opacity(0.3),
-                                AppColors.accentPrimary.opacity(0.2),
+                                AppColors.accentPrimary.opacity(0.2)
                             ],
                             startPoint: .leading,
-                            endPoint:   .trailing
+                            endPoint: .trailing
                         ))
                         .frame(height: 8)
                         .blur(radius: 6)

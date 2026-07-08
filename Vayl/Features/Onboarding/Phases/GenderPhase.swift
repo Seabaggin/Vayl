@@ -22,7 +22,7 @@ import SwiftUI
 
 struct GenderPhase: View {
 
-    let director:   VaylDirector
+    let director: VaylDirector
     let screenSize: CGSize
     @Binding var tableRimBurst: Double
 
@@ -30,26 +30,26 @@ struct GenderPhase: View {
 
     // MARK: — Drum gesture state (view-local; synced to director via updateGenderDrum / settleGenderDrum)
 
-    @State private var drumBaseOffset:   CGFloat = 0   // settled strip offset; resets on picker appear
-    @State private var drumDragOffset:   CGFloat = 0   // live delta during current drag
-    @State private var confirmedTrigger:      Bool                    = false
-    @State private var liftHaptic:            Bool                    = false  // .selection on lift/lower, sibling parity
-    @State private var hintOffset:            CGFloat                 = 0    // live y-offset for the swipe-hint flick (negative = upward)
-    @State private var hintTask:              Task<Void, Never>?      = nil  // intermittent flick loop; cancelled on grab / re-scroll
-    @State private var declinePressed:        Bool                    = false  // press-scale for the shared decline bar
-    @State private var lastCenteredIndex:     Int                     = 0    // tracks previous item for selection haptic
-    @State private var drumHapticGen:         UISelectionFeedbackGenerator = UISelectionFeedbackGenerator()
+    @State private var drumBaseOffset: CGFloat = 0   // settled strip offset; resets on picker appear
+    @State private var drumDragOffset: CGFloat = 0   // live delta during current drag
+    @State private var confirmedTrigger: Bool                    = false
+    @State private var liftHaptic: Bool                    = false  // .selection on lift/lower, sibling parity
+    @State private var hintOffset: CGFloat                 = 0    // live y-offset for the swipe-hint flick (negative = upward)
+    @State private var hintTask: Task<Void, Never>?  // intermittent flick loop; cancelled on grab / re-scroll
+    @State private var declinePressed: Bool                    = false  // press-scale for the shared decline bar
+    @State private var lastCenteredIndex: Int                     = 0    // tracks previous item for selection haptic
+    @State private var drumHapticGen: UISelectionFeedbackGenerator = UISelectionFeedbackGenerator()
 
     // Pronouns drum state (mirrors gender drum)
-    @State private var pronounsBaseOffset:   CGFloat = 0
-    @State private var pronounsDragOffset:   CGFloat = 0
+    @State private var pronounsBaseOffset: CGFloat = 0
+    @State private var pronounsDragOffset: CGFloat = 0
     @State private var pronounsLastCentered: Int     = 0
-    @State private var pronounsHapticGen:    UISelectionFeedbackGenerator = UISelectionFeedbackGenerator()
+    @State private var pronounsHapticGen: UISelectionFeedbackGenerator = UISelectionFeedbackGenerator()
 
     // Live hand-off follow (Phase 4): the lifted card tracks the finger as it's handed up
     // (shared HandBackFollow — weighty, banded, can't fly off). View-local; the sequencer
     // owns cardOffset, so this resolves to .zero inside the pocket flight on confirm.
-    @State private var handBackDrag:  CGSize = .zero
+    @State private var handBackDrag: CGSize = .zero
     @State private var handBackArmed: Bool   = false   // past the commit threshold → selection tick
 
     // MARK: — Dimensions (derived, not stored)
@@ -88,7 +88,7 @@ struct GenderPhase: View {
         .sensoryFeedback(.success, trigger: confirmedTrigger)
         .sensoryFeedback(.selection, trigger: liftHaptic)
         .sensoryFeedback(.impact(weight: .medium), trigger: director.gender.lockThudTrigger)
-        .onAppear   { director.gender.startSequence(screenSize: screenSize, reduceMotion: reduceMotion) }
+        .onAppear { director.gender.startSequence(screenSize: screenSize, reduceMotion: reduceMotion) }
         .onDisappear { director.gender.cancelSequence() }
         .onChange(of: director.gender.shouldPocket) { _, pocket in
             // Card is flying to the corner deck (cardPocket ≈ 520ms). Credit the
@@ -147,18 +147,18 @@ struct GenderPhase: View {
                 Path(ellipseIn: CGRect(
                     x: center.x - bloomR,
                     y: center.y - bloomR,
-                    width:  bloomR * 2,
+                    width: bloomR * 2,
                     height: bloomR * 2
                 )),
                 with: .radialGradient(
                     Gradient(stops: [
-                        .init(color: AppColors.spectrumCyan.opacity(0.18 * opacity),   location: 0.0),
-                        .init(color: AppColors.spectrumPurple.opacity(0.12 * opacity),  location: 0.45),
-                        .init(color: .clear,                                             location: 1.0),
+                        .init(color: AppColors.spectrumCyan.opacity(0.18 * opacity), location: 0.0),
+                        .init(color: AppColors.spectrumPurple.opacity(0.12 * opacity), location: 0.45),
+                        .init(color: .clear, location: 1.0)
                     ]),
-                    center:      center,
+                    center: center,
                     startRadius: 0,
-                    endRadius:   bloomR
+                    endRadius: bloomR
                 )
             )
         }
@@ -205,19 +205,19 @@ struct GenderPhase: View {
             // hex/wordmark params preserve existing back behaviour at dissolution=1.0.
             VaylCardBack(
                 hexAngleOverride: CGFloat(director.gender.dissolutionHexAngle),
-                hexSpacingMul:    CGFloat(director.gender.dissolutionHexSpacing),
-                wordmarkOpacity:  director.gender.dissolutionMark
+                hexSpacingMul: CGFloat(director.gender.dissolutionHexSpacing),
+                wordmarkOpacity: director.gender.dissolutionMark
             )
             .opacity(density * sharp * (director.gender.cardFaceUp ? 0 : 1))
             VaylCardFace()
                 .overlay(
                     RadioTunerCardFace(
-                        cardWidth:         cardWidth,
-                        cardHeight:        cardHeight,
-                        signalStrength:    director.gender.signalStrength,
-                        scanPhase:         Double(drumBaseOffset + drumDragOffset
+                        cardWidth: cardWidth,
+                        cardHeight: cardHeight,
+                        signalStrength: director.gender.signalStrength,
+                        scanPhase: Double(drumBaseOffset + drumDragOffset
                                                 + pronounsBaseOffset + pronounsDragOffset),
-                        leftDialProgress:  director.gender.drumSettled
+                        leftDialProgress: director.gender.drumSettled
                             ? Double(director.gender.selectedIndex) / Double(max(1, director.gender.options.count - 1))
                             : 0,
                         rightDialProgress: director.gender.pronounsDrumSettled
@@ -275,7 +275,7 @@ struct GenderPhase: View {
                     handBackArmed = false
                     let dy  = value.translation.height
                     let pdy = value.predictedEndTranslation.height
-                    if (dy < -cardHeight * 0.14 || pdy < -cardHeight * 0.5), abs(value.translation.width) < 80 {
+                    if dy < -cardHeight * 0.14 || pdy < -cardHeight * 0.5, abs(value.translation.width) < 80 {
                         confirmedTrigger.toggle()   // triggers .sensoryFeedback(.success) in body
                         // Drift + tilt resolve INTO the pocket flight — no snap at the handoff.
                         withAnimation(AppAnimation.cardPocket.reduceMotionSafe) { handBackDrag = .zero }
@@ -298,7 +298,7 @@ struct GenderPhase: View {
 
     // Drum slot height. 3-item window keeps the picker short so it clears the
     // card base (card ≈ 263pt tall, centred at 52% screen — leaves ~280pt below).
-    private let drumItemH:   CGFloat = 48
+    private let drumItemH: CGFloat = 48
     private var drumWindowH: CGFloat { drumItemH * 3 }
 
     /// Height of the shared decline bar beneath the dials. FEEL-GATE.
@@ -307,7 +307,7 @@ struct GenderPhase: View {
     // Display strips prepend a "—" placeholder so each dial opens BLANK — the user must
     // tune to a real option (or tap the decline bar). Display index 0 = placeholder;
     // display index i maps to the canonical option i-1 (settle subtracts 1).
-    private var genderDisplay:  [String] { ["—"] + director.gender.options }
+    private var genderDisplay: [String] { ["—"] + director.gender.options }
     private var pronounsDisplay: [String] { ["—"] + director.gender.pronounsOptions }
 
     /// Strip offset that centres item 0 in the 3-item window.
@@ -365,26 +365,26 @@ struct GenderPhase: View {
                 VStack(spacing: AppSpacing.lg) {
                     HStack(spacing: AppSpacing.xl) {
                         drumPickerView(
-                            options:        genderDisplay,
-                            baseOffset:     $drumBaseOffset,
-                            dragOffset:     $drumDragOffset,
-                            lastCentered:   $lastCenteredIndex,
-                            hapticGen:      drumHapticGen,
-                            initialOffset:  drumInitialOffset,
-                            centeredIndex:  currentCenteredIndex,
-                            onUpdate:       { director.gender.updateDrum(offset: $0) },
-                            onSettle:       { director.gender.settleDrum(index: $0 - 1) }   // display → canonical
+                            options: genderDisplay,
+                            baseOffset: $drumBaseOffset,
+                            dragOffset: $drumDragOffset,
+                            lastCentered: $lastCenteredIndex,
+                            hapticGen: drumHapticGen,
+                            initialOffset: drumInitialOffset,
+                            centeredIndex: currentCenteredIndex,
+                            onUpdate: { director.gender.updateDrum(offset: $0) },
+                            onSettle: { director.gender.settleDrum(index: $0 - 1) }   // display → canonical
                         )
                         drumPickerView(
-                            options:        pronounsDisplay,
-                            baseOffset:     $pronounsBaseOffset,
-                            dragOffset:     $pronounsDragOffset,
-                            lastCentered:   $pronounsLastCentered,
-                            hapticGen:      pronounsHapticGen,
-                            initialOffset:  pronounsInitialOffset,
-                            centeredIndex:  pronounsCurrentCenteredIndex,
-                            onUpdate:       { director.gender.updatePronounsDrum(offset: $0) },
-                            onSettle:       { director.gender.settlePronounsDrum(index: $0 - 1) }
+                            options: pronounsDisplay,
+                            baseOffset: $pronounsBaseOffset,
+                            dragOffset: $pronounsDragOffset,
+                            lastCentered: $pronounsLastCentered,
+                            hapticGen: pronounsHapticGen,
+                            initialOffset: pronounsInitialOffset,
+                            centeredIndex: pronounsCurrentCenteredIndex,
+                            onUpdate: { director.gender.updatePronounsDrum(offset: $0) },
+                            onSettle: { director.gender.settlePronounsDrum(index: $0 - 1) }
                         )
                     }
                     declineBar
@@ -419,15 +419,15 @@ struct GenderPhase: View {
     /// The gesture lives on the container so the full frame area receives touches —
     /// the inner strip VStack does not have a gesture to avoid any conflict.
     private func drumPickerView(
-        options:       [String],
-        baseOffset:    Binding<CGFloat>,
-        dragOffset:    Binding<CGFloat>,
-        lastCentered:  Binding<Int>,
-        hapticGen:     UISelectionFeedbackGenerator,
+        options: [String],
+        baseOffset: Binding<CGFloat>,
+        dragOffset: Binding<CGFloat>,
+        lastCentered: Binding<Int>,
+        hapticGen: UISelectionFeedbackGenerator,
         initialOffset: CGFloat,
         centeredIndex: Int,
-        onUpdate:      @escaping (CGFloat) -> Void,
-        onSettle:      @escaping (Int) -> Void
+        onUpdate: @escaping (CGFloat) -> Void,
+        onSettle: @escaping (Int) -> Void
     ) -> some View {
         let currentBase = baseOffset.wrappedValue
         let currentDrag = dragOffset.wrappedValue
@@ -461,7 +461,7 @@ struct GenderPhase: View {
                         .init(color: .clear, location: 0.00),
                         .init(color: .black, location: 0.28),
                         .init(color: .black, location: 0.72),
-                        .init(color: .clear, location: 1.00),
+                        .init(color: .clear, location: 1.00)
                     ],
                     startPoint: .top, endPoint: .bottom
                 )
@@ -532,7 +532,7 @@ struct GenderPhase: View {
             .simultaneousGesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in declinePressed = true }
-                    .onEnded   { _ in declinePressed = false }
+                    .onEnded { _ in declinePressed = false }
             )
             .allowsHitTesting(!director.gender.cardLifted)
     }

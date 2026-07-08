@@ -21,23 +21,23 @@ enum DemoDictionary {
 
     private static let anxiousStems = [
         "safe", "honest", "clarit", "truth", "trust", "rule", "boundar",
-        "peace", "understand", "communicat", "secur", "stabil", "reassur",
+        "peace", "understand", "communicat", "secur", "stabil", "reassur"
     ]
     private static let excitedStems = [
         "freedom", "explor", "fun", "pleasur", "novel", "variet", "passion",
-        "thrill", "adventur", "sex", "kink", "more", "autonom", "independen",
+        "thrill", "adventur", "sex", "kink", "more", "autonom", "independen"
     ]
     private static let flexibleStems = [
         "connect", "growth", "align", "balanc", "love", "intima", "partner",
-        "depth", "shared", "communit", "famil",
+        "depth", "shared", "communit", "famil"
     ]
 
     /// Base category from the noun alone. `nil` when unmapped.
     private static func category(for noun: String) -> EmotionalRegister? {
         let n = noun.lowercased().trimmingCharacters(in: .whitespaces)
         guard !n.isEmpty else { return nil }
-        if anxiousStems.contains(where: n.contains)  { return .anxious }
-        if excitedStems.contains(where: n.contains)  { return .excited }
+        if anxiousStems.contains(where: n.contains) { return .anxious }
+        if excitedStems.contains(where: n.contains) { return .excited }
         if flexibleStems.contains(where: n.contains) { return .flexible }
         return nil
     }
@@ -51,7 +51,7 @@ enum DemoDictionary {
     static func register(verb: DemoVerb, noun: String) -> EmotionalRegister {
         guard let base = category(for: noun) else { return .flexible }
         switch (verb, base) {
-        case (.need,   .excited):  return .anxious
+        case (.need, .excited):  return .anxious
         case (.desire, .anxious):  return .flexible
         case (.desire, .flexible): return .excited
         default:                   return base

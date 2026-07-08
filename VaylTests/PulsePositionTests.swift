@@ -26,13 +26,13 @@ final class PulsePositionTests: XCTestCase {
 
     func test_clampsOutOfRange() {
         let p = PulsePosition(energy: 2, openness: -1)
-        XCTAssertEqual(p.energy,   1, accuracy: 0.0001)
+        XCTAssertEqual(p.energy, 1, accuracy: 0.0001)
         XCTAssertEqual(p.openness, 0, accuracy: 0.0001)
     }
 
     func test_clampsLowBound() {
         let p = PulsePosition(energy: -0.5, openness: -0.5)
-        XCTAssertEqual(p.energy,   0, accuracy: 0.0001)
+        XCTAssertEqual(p.energy, 0, accuracy: 0.0001)
         XCTAssertEqual(p.openness, 0, accuracy: 0.0001)
     }
 
@@ -58,8 +58,8 @@ final class PulsePositionTests: XCTestCase {
     // MARK: - Legacy capacity score
 
     func test_capacityScore_roundTrip() {
-        XCTAssertEqual(PulsePosition(energy: 1,   openness: 0.5).capacityScore, 4, accuracy: 0.0001)
-        XCTAssertEqual(PulsePosition(energy: 0,   openness: 0.5).capacityScore, 1, accuracy: 0.0001)
+        XCTAssertEqual(PulsePosition(energy: 1, openness: 0.5).capacityScore, 4, accuracy: 0.0001)
+        XCTAssertEqual(PulsePosition(energy: 0, openness: 0.5).capacityScore, 1, accuracy: 0.0001)
         XCTAssertEqual(PulsePosition(energy: 0.5, openness: 0.5).capacityScore, 2.5, accuracy: 0.0001)
     }
 
@@ -70,7 +70,7 @@ final class PulsePositionTests: XCTestCase {
             date: Date(), capacityScore: 4, glowColor: .cyan,
             speed: "x", nervousSystem: "x", focus: "x", feeling: "x", position: nil
         )
-        XCTAssertEqual(e.resolvedPosition.energy,   1,   accuracy: 0.0001)
+        XCTAssertEqual(e.resolvedPosition.energy, 1, accuracy: 0.0001)
         XCTAssertEqual(e.resolvedPosition.openness, 0.5, accuracy: 0.0001)
         // energy 1 (>= 0.5 = charged) + openness 0.5 (>= 0.5 = open) -> expansive
         XCTAssertEqual(e.quadrant, .expansive)

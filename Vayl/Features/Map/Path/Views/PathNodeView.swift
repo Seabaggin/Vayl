@@ -42,7 +42,7 @@ struct PathNodeView: View {
     /// comment), undersizing the graphical DatePicker. Optional and defaulted
     /// so this view stays independently previewable/buildable before Tasks
     /// 11-12 exist to supply the real value.
-    var screenHeight: CGFloat? = nil
+    var screenHeight: CGFloat?
 
     @State private var showOverflow = false
     @State private var showDatePicker = false
@@ -445,7 +445,7 @@ private struct PathNodePreviewHarness: View {
             PathLandmarkProgress(
                 id: UUID(), coupleId: coupleId, pathStyle: "swinging", landmarkId: "seen-as-couple",
                 state: .discussed, discussedVia: .session, didItDate: nil, setBy: profileId, updatedAt: now
-            ),
+            )
         ]
         store = PathStore(coupleId: coupleId, profileId: profileId, pathStyle: "swinging", transport: transport)
     }

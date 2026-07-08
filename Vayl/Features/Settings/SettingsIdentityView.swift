@@ -5,7 +5,7 @@ import SwiftData
 
 struct SettingsIdentityView: View {
     let store: SettingsStore
-    var onClose: (() -> Void)? = nil
+    var onClose: (() -> Void)?
 
     @Environment(AppState.self) private var appState
     @Environment(\.dismiss)     private var dismiss
@@ -13,7 +13,7 @@ struct SettingsIdentityView: View {
     @Query private var profiles: [UserProfile]
     private var profile: UserProfile? { profiles.first }
 
-    @State private var editField: IdentityField? = nil
+    @State private var editField: IdentityField?
 
     enum IdentityField: Hashable, Identifiable {
         case name, pronouns, experience

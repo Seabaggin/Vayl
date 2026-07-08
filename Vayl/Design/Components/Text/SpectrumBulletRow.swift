@@ -69,14 +69,14 @@ struct SpectrumBulletRow: View {
 
         return LinearGradient(
             stops: [
-                .init(color: .clear,                   location: 0.00),
+                .init(color: .clear, location: 0.00),
                 .init(color: Color.white.opacity(0.0), location: 0.40),
                 .init(color: Color.white.opacity(0.5), location: 0.50),
                 .init(color: Color.white.opacity(0.0), location: 0.60),
-                .init(color: .clear,                   location: 1.00),
+                .init(color: .clear, location: 1.00)
             ],
             startPoint: UnitPoint(x: -0.1, y: 1.0),
-            endPoint:   UnitPoint(x: 1.1, y: -0.25)
+            endPoint: UnitPoint(x: 1.1, y: -0.25)
         )
         .frame(width: 52)
         .offset(x: sweepX)
@@ -99,7 +99,7 @@ struct SpectrumBulletRow: View {
                 "Understand what you each want",
                 "Talk openly about sex, boundaries, and what-ifs",
                 "Open up at a pace you both set",
-                "Keep your agreements clear and honored",
+                "Keep your agreements clear and honored"
             ]
             ForEach(Array(lines.enumerated()), id: \.offset) { i, line in
                 SpectrumBulletRow(text: line, phaseOffset: Double(i) * 0.22)

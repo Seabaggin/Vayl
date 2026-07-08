@@ -14,7 +14,7 @@ struct MapPulseHero: View {
 
     @Environment(PulseStore.self) private var pulse
 
-    var onCheckIn:    () -> Void
+    var onCheckIn: () -> Void
     var onOpenHistory: () -> Void
     var isLinked: Bool = false
 
@@ -41,7 +41,7 @@ struct MapPulseHero: View {
                     PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: AppLayout.mapMeAuraSize)
                         .background {
                             MapHeroAmbientGlow(
-                                color:   currentSpace.ramp(at: currentPosition).glow,
+                                color: currentSpace.ramp(at: currentPosition).glow,
                                 orbSize: AppLayout.mapMeAuraSize
                             )
                         }
@@ -54,7 +54,7 @@ struct MapPulseHero: View {
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { _ in isPressed = true }
-                        .onEnded   { _ in isPressed = false }
+                        .onEnded { _ in isPressed = false }
                 )
 
                 // Space name + sublabel
@@ -103,10 +103,10 @@ struct MapPulseHero: View {
         .frame(minHeight: AppLayout.mapPulseCardHeight, alignment: .top)
         .vaylCover(isPresented: $showMap, confirmOnExit: false) {
             MapFieldSheet(
-                position:   currentPosition,
-                space:      currentSpace,
-                isStale:    isStale,
-                isQuiet:    isQuiet,
+                position: currentPosition,
+                space: currentSpace,
+                isStale: isStale,
+                isQuiet: isQuiet,
                 staleSince: pulse.entries.last.map { pulse.relativeDay(for: $0.date) }
             )
         }
@@ -239,12 +239,12 @@ struct MapPulseHero: View {
 /// the void atmosphere, copy reads below. Presented via .vaylCover so the system
 /// knows this is an immersive experience, not a sheet.
 private struct MapFieldSheet: View {
-    let position:   PulsePosition
-    let space:      PulseSpace
+    let position: PulsePosition
+    let space: PulseSpace
     /// Governs copy softening only ("Your last Pulse: … (2 days ago)").
-    let isStale:    Bool
+    let isStale: Bool
     /// Governs the aura's opacity — the same 4-day threshold Us dims on.
-    let isQuiet:    Bool
+    let isQuiet: Bool
     let staleSince: String?
 
     @Environment(\.vaylDismiss) private var dismiss
@@ -264,8 +264,8 @@ private struct MapFieldSheet: View {
                             entries: [PulseFieldEntry(
                                 position: space == .uncharted ? PulsePosition(energy: 0.5, openness: 0.5) : position,
                                 auraSize: 60,
-                                opacity:  isQuiet ? PulseFieldEntry.staleOpacity : 1.0,
-                                space:    space
+                                opacity: isQuiet ? PulseFieldEntry.staleOpacity : 1.0,
+                                space: space
                             )],
                             size: w,
                             showAxisLabels: true,

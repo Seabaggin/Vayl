@@ -34,15 +34,15 @@ final class PulseAnswersTests: XCTestCase {
 
     func test_energy_axis_range() {
         let low  = PulseAnswers.position(["Overwhelmed", "Balanced", "Content", nil, nil])
-        let high = PulseAnswers.position(["Energized",   "Balanced", "Content", nil, nil])
-        XCTAssertLessThan(low.energy,    0.5)
+        let high = PulseAnswers.position(["Energized", "Balanced", "Content", nil, nil])
+        XCTAssertLessThan(low.energy, 0.5)
         XCTAssertGreaterThan(high.energy, 0.5)
     }
 
     func test_openness_axis_range() {
-        let guarded = PulseAnswers.position(["Stable", "Deeply Inward", "Defensive",   nil, nil])
-        let open    = PulseAnswers.position(["Stable", "Reaching Out",  "Adventurous", nil, nil])
-        XCTAssertLessThan(guarded.openness,    0.5)
+        let guarded = PulseAnswers.position(["Stable", "Deeply Inward", "Defensive", nil, nil])
+        let open    = PulseAnswers.position(["Stable", "Reaching Out", "Adventurous", nil, nil])
+        XCTAssertLessThan(guarded.openness, 0.5)
         XCTAssertGreaterThan(open.openness, 0.5)
     }
 
@@ -50,7 +50,7 @@ final class PulseAnswersTests: XCTestCase {
 
     func test_unknownLabel_returnsNeutral() {
         let pos = PulseAnswers.position(["Unknown", "Unknown", "Unknown", nil, nil])
-        XCTAssertEqual(pos.energy,   0.5, accuracy: 0.001)
+        XCTAssertEqual(pos.energy, 0.5, accuracy: 0.001)
         XCTAssertEqual(pos.openness, 0.5, accuracy: 0.001)
     }
 

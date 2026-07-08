@@ -12,24 +12,24 @@ import SpriteKit
 /// controller then clears the discards + settles and the .done state drives advance(to:.context).
 struct ExperienceLevelPhase: View {
 
-    let director:   VaylDirector
+    let director: VaylDirector
     let screenSize: CGSize
 
     @State private var monte        = ThreeCardFanController()
-    @State private var liftedLevel: CandleIntensity? = nil
-    @State private var liftTextTask: Task<Void, Never>? = nil
-    @State private var entranceTask: Task<Void, Never>? = nil
+    @State private var liftedLevel: CandleIntensity?
+    @State private var liftTextTask: Task<Void, Never>?
+    @State private var entranceTask: Task<Void, Never>?
 
     // Swipe-up hint — the lifted card tugs upward intermittently to teach the
     // confirm gesture (the consistent cue across phases, mirroring GenderPhase).
-    @State private var hintOffset:  CGFloat            = 0
-    @State private var hintTask:    Task<Void, Never>? = nil
+    @State private var hintOffset: CGFloat            = 0
+    @State private var hintTask: Task<Void, Never>?
 
     // Live hand-off follow (Phase 4c): the lifted card tracks the finger as it's handed up
     // (shared HandBackFollow). View-local; the controller owns monte.offsets, so this
     // resolves to .zero inside the pocket flight on confirm.
-    @State private var handBackDrag:         CGSize = .zero
-    @State private var handBackArmed:        Bool   = false
+    @State private var handBackDrag: CGSize = .zero
+    @State private var handBackArmed: Bool   = false
     @State private var handBackSelectionGen = UISelectionFeedbackGenerator()
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -104,7 +104,7 @@ struct ExperienceLevelPhase: View {
             // ModeSelect flip. The tap/swipe handlers already guard on state
             // (questionAsked / .lifted), so an always-attached gesture is safe.
             VaylCardFace(
-                content:  .candle(intensity: monte.intensities[i],
+                content: .candle(intensity: monte.intensities[i],
                                   time: turned ? t : 0),
                 onAction: { handleCardAction($0, slot: i) }
             )
@@ -142,7 +142,7 @@ struct ExperienceLevelPhase: View {
             // rest of the phase. 120fps — flights render at ProMotion rate.
             let flightScene = monte.flightScene
             SpriteView(
-                scene:   flightScene,
+                scene: flightScene,
                 preferredFramesPerSecond: 120,
                 options: [.allowsTransparency],
                 shouldRender: { flightScene.shouldRender(at: $0) }

@@ -26,7 +26,7 @@ struct VaylCardCarousel<Content: View>: View {
     let physics: CarouselPhysics
 
     /// Logical index of the confirmed card, or nil. Owned by the consumer.
-    var confirmedIndex: Int? = nil
+    var confirmedIndex: Int?
 
     /// Extra vertical offset applied to the confirmed card (negative = up). Lets the
     /// consumer drive a looping "swipe up" tug affordance after a card is confirmed.
@@ -46,9 +46,9 @@ struct VaylCardCarousel<Content: View>: View {
 
     @ViewBuilder var content: (_ index: Int, _ isFront: Bool) -> Content
 
-    var onConfirm:   (Int) -> Void = { _ in }
+    var onConfirm: (Int) -> Void = { _ in }
     var onUnconfirm: () -> Void    = {}
-    var onExit:      () -> Void    = {}
+    var onExit: () -> Void    = {}
 
     // MARK: - Local state
 
@@ -116,8 +116,7 @@ struct VaylCardCarousel<Content: View>: View {
             }
         }
         .accessibilityAction(named: "Select") {
-            if confirmedIndex == physics.currentIndex { onUnconfirm() }
-            else { onConfirm(physics.currentIndex) }
+            if confirmedIndex == physics.currentIndex { onUnconfirm() } else { onConfirm(physics.currentIndex) }
         }
         .onChange(of: confirmedIndex) { _, newValue in
             if newValue != nil { startBreathing() } else { stopBreathing() }
@@ -161,17 +160,17 @@ struct VaylCardCarousel<Content: View>: View {
         // ── Select state — mirrors ExperienceLevel.lift ─────────────────────────
         // Hero raises + scales up; the rest fade back. Only while confirmed & not exiting.
         let lifting   = confirmedActive && !exiting
-        let liftY:     CGFloat = (lifting && isHero)  ? -cardSize.height * 0.18 : 0
+        let liftY: CGFloat = (lifting && isHero)  ? -cardSize.height * 0.18 : 0
         let liftScale: CGFloat = (lifting && isHero)  ? 1.10 : 1.0
-        let fadeBack:  Double  = (lifting && !isHero) ? 0.45 : 1.0
+        let fadeBack: Double  = (lifting && !isHero) ? 0.45 : 1.0
         let fadeScale: CGFloat = (lifting && !isHero) ? 0.88 : 1.0
 
         // ── Exit state — asymmetric 2-step ──────────────────────────────────────
         // Hero flies up & off (keyed on `exiting`); the rest quietly drift out of
         // focus (keyed on `defocusUnselected`, fired a beat later).
-        let heroExitY:     CGFloat = (exiting && isHero) ? -cardSize.height * 1.4 : 0
+        let heroExitY: CGFloat = (exiting && isHero) ? -cardSize.height * 1.4 : 0
         let heroExitScale: CGFloat = (exiting && isHero) ? 1.04 : 1.0
-        let defocusScale:  CGFloat = (defocusUnselected && !isHero) ? 0.80 : 1.0
+        let defocusScale: CGFloat = (defocusUnselected && !isHero) ? 0.80 : 1.0
         let exitOpacity: Double = {
             if exiting && isHero { return 0 }
             if defocusUnselected && !isHero { return 0 }
@@ -245,8 +244,7 @@ struct VaylCardCarousel<Content: View>: View {
 
                 // Tap — minimal movement.
                 if max(abs(dx), abs(dy)) < tapThreshold {
-                    if confirmedIndex == physics.currentIndex { onUnconfirm() }
-                    else { onConfirm(physics.currentIndex) }
+                    if confirmedIndex == physics.currentIndex { onUnconfirm() } else { onConfirm(physics.currentIndex) }
                     return
                 }
 
@@ -302,18 +300,18 @@ struct VaylCardCarousel<Content: View>: View {
 /// 75/230 ≈ 0.33, 16/230 ≈ 0.07). Unitless terms are size-independent.
 struct StackLayout: Equatable {
     var peekSpacingFraction: CGFloat = 0.33
-    var scaleFalloff:        CGFloat = 0.11
+    var scaleFalloff: CGFloat = 0.11
     /// 0.5 ⇒ opacity reaches 0 by `delta == 2`, so only 3 cards are ever visible
     /// (front + one peek each side). Prevents a short, looping set from looking
     /// like it has more options than it does.
-    var opacityFalloff:      Double  = 0.5
-    var yLiftFraction:       CGFloat = 0.07
-    var rotationPerCard:     Double  = 2.5
-    var leanPerCardPerVel:   Double  = 1.3
+    var opacityFalloff: Double  = 0.5
+    var yLiftFraction: CGFloat = 0.07
+    var rotationPerCard: Double  = 2.5
+    var leanPerCardPerVel: Double  = 1.3
     /// Depth-of-field: blur (points) added per card-distance from center. Off-center cards
     /// soften so the front reads as the focal plane (Strava-style rack focus). 0 disables.
     /// Kept small — only the immediate peek is visible (opacity hits 0 by delta 2). FEEL-GATE.
-    var blurPerCard:         CGFloat = 2.0
+    var blurPerCard: CGFloat = 2.0
 
     static let standard = StackLayout()
 }

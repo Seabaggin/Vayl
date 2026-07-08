@@ -13,8 +13,8 @@ import SwiftUI
 
 struct MapSectionHeader: View {
     let title: String
-    var linkLabel: String? = nil
-    var onLink: (() -> Void)? = nil
+    var linkLabel: String?
+    var onLink: (() -> Void)?
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {

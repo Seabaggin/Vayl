@@ -49,7 +49,7 @@ struct VaylApp: App {
             // Uncomment the following lines to add more data to your events
             // options.attachScreenshot = true // This adds a screenshot to the error events
             // options.attachViewHierarchy = true // This adds the view hierarchy to the error events
-            
+
             // Enable structured logging
             options.enableLogs = true
         }
@@ -120,7 +120,7 @@ struct VaylApp: App {
                     // Pull down any Pulse history the device doesn't have locally yet
                     // (reinstall / new device) — session is ready, so RLS-scoped reads work.
                     await pulseStore.hydrateFromServer()
-                    
+
                     // Now that session is guaranteed to be checked, retry syncs safely.
                     let onboardingDone = appState.isOnboardingComplete
                     if onboardingDone, let userId = authStore.userId {

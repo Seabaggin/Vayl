@@ -42,43 +42,43 @@ struct MetallicCaseView: View {
 
     // MARK: - Tunables
 
-    var depthFrac:      CGFloat = 0.30   // box depth as a fraction of face width (full-deck heft; ~0.26 thinner)
-    var tiltAmplitude:  Double  = 6      // float tilt amplitude (deg) — subtle
-    var floatSpeed:     Double  = 0.7
-    var perspective:    Double  = 600    // smaller = more convergence/foreshortening (photographic; 820 = flat/CAD)
-    var saturation:     Double  = 0.95   // richer base (the holo iridescence adds the electric pop)
-    var metalDarkness:  Double  = 0.52   // how dark the metal base sits (solid deep colour, not black)
-    var ambient:        Double  = 0.28   // floor brightness on faces away from light (low = box reads in 3D)
+    var depthFrac: CGFloat = 0.30   // box depth as a fraction of face width (full-deck heft; ~0.26 thinner)
+    var tiltAmplitude: Double  = 6      // float tilt amplitude (deg) — subtle
+    var floatSpeed: Double  = 0.7
+    var perspective: Double  = 600    // smaller = more convergence/foreshortening (photographic; 820 = flat/CAD)
+    var saturation: Double  = 0.95   // richer base (the holo iridescence adds the electric pop)
+    var metalDarkness: Double  = 0.52   // how dark the metal base sits (solid deep colour, not black)
+    var ambient: Double  = 0.28   // floor brightness on faces away from light (low = box reads in 3D)
     var frontLightAnchor: Double = 1.0   // hold the FRONT face's VALUE steady as the box tips flat→¾.
                                          // The hue is already anchored (caseGeometry.hueDeg) so the metal
                                          // never recolours on the rise — but its brightness wasn't, so the
                                          // hero face darkened 0.72→~0.41 and the eye read that as a hue
                                          // shift. 1 = fully steady · 0 = pure normal lighting (old behaviour).
-    var hueOffset:      Double  = 90     // pick the single metal colour (deg) — ≈ deep purple
-    var hueShift:       Double  = 1.4    // how much that one colour shifts as it tilts
-    var boxScale:       CGFloat = 0.70   // box size as fraction of the fitting square
+    var hueOffset: Double  = 90     // pick the single metal colour (deg) — ≈ deep purple
+    var hueShift: Double  = 1.4    // how much that one colour shifts as it tilts
+    var boxScale: CGFloat = 0.70   // box size as fraction of the fitting square
 
     // Foil surface — debossed hex lattice (hexFoilSurface). Light lives in the
     // carved structure: groove flanks ignite in the deck colorway as one
     // tilt-driven band sweeps the face. No noise, no time-driven animation.
     var cornerSoftness: Double  = 0.06   // rounding of the box SILHOUETTE — low = crisp/boxy deck case,
                                          // high = pillowy. ~0.04 very boxy · ~0.10 soft tuck-box (was 0.14, too round)
-    var flatScale:      CGFloat = 1.0    // footprint while FLAT on the felt — fills the frame, matching the deck that melted
+    var flatScale: CGFloat = 1.0    // footprint while FLAT on the felt — fills the frame, matching the deck that melted
     var latticeColumns: Double = 13      // hex columns across the face width
-    var grooveWidth:    Double = 0.10    // groove half-width in cell units
-    var bandSharpness:  Double = 10      // band specular exponent
-    var bandGain:       Double = 0.9     // band strength
-    var glintGain:      Double = 0.5     // per-cell glint strength
-    var bandTravel:     Double = 0.35    // band phase per degree of Y tilt
-    var grainGain:      Double = 0.15    // anodized micro-grain amplitude on the flats (0 = flat mockup)
-    var grainScale:     Double = 200     // grain frequency across the face width (higher = finer)
-    var fresnelGain:    Double = 0.12    // #2 grazing-edge rim brightening (panel border catches the room)
-    var envGain:        Double = 0.30    // #3 two-tone vertical environment the metal reflects (cool top → deep bottom)
-    var edgeCatchGain:  Double = 0.55    // #1 edge catch-light intensity on the silhouette + front panel (0 = off)
-    var edgeCatchTint:  Double = 0.25    // 0 = full cool blue-purple (colorway) · 1 = white. Hue of the catch-light.
-    var frameOpacity:   Double = 0.6     // spectrum-border colorway opacity (was 0.27 — muted by the metal effects)
-    var frameWidth:     Double = 1.3     // spectrum-border crisp line width
-    var frameGlow:      Double = 0.7     // spectrum-border glow-pass strength (0 = crisp line only)
+    var grooveWidth: Double = 0.10    // groove half-width in cell units
+    var bandSharpness: Double = 10      // band specular exponent
+    var bandGain: Double = 0.9     // band strength
+    var glintGain: Double = 0.5     // per-cell glint strength
+    var bandTravel: Double = 0.35    // band phase per degree of Y tilt
+    var grainGain: Double = 0.15    // anodized micro-grain amplitude on the flats (0 = flat mockup)
+    var grainScale: Double = 200     // grain frequency across the face width (higher = finer)
+    var fresnelGain: Double = 0.12    // #2 grazing-edge rim brightening (panel border catches the room)
+    var envGain: Double = 0.30    // #3 two-tone vertical environment the metal reflects (cool top → deep bottom)
+    var edgeCatchGain: Double = 0.55    // #1 edge catch-light intensity on the silhouette + front panel (0 = off)
+    var edgeCatchTint: Double = 0.25    // 0 = full cool blue-purple (colorway) · 1 = white. Hue of the catch-light.
+    var frameOpacity: Double = 0.6     // spectrum-border colorway opacity (was 0.27 — muted by the metal effects)
+    var frameWidth: Double = 1.3     // spectrum-border crisp line width
+    var frameGlow: Double = 0.7     // spectrum-border glow-pass strength (0 = crisp line only)
     var frameGlowRadius: Double = 4      // spectrum-border glow blur radius
     var theme: FoilDeckTheme   = .vayl
 
@@ -87,7 +87,7 @@ struct MetallicCaseView: View {
     // Date to drive the rise from that moment: FACE-ON flat on the felt (the
     // table's card grammar — matching the deck that melted) tipping back into
     // the floating ¾ box. Material stays asleep until latticeWakeStart.
-    var riseStart:    Date?  = nil
+    var riseStart: Date?
     var riseDuration: Double = 1.4
 
     /// When the hex lattice + band WAKE (ceremony: "start the hex animation
@@ -108,8 +108,8 @@ struct MetallicCaseView: View {
 
     // Un-knit timeline + wave shape (module tunables — tinker on device).
     var overloadSpan: Double = 0.45   // held breath: cracks flare, nothing moves
-    var unknitSpan:   Double = 1.25   // the wave front crossing the whole shell
-    var unknitBand:   Double = 3.2    // wave front thickness (lattice units) — cells actively departing
+    var unknitSpan: Double = 1.25   // the wave front crossing the whole shell
+    var unknitBand: Double = 3.2    // wave front thickness (lattice units) — cells actively departing
 
     // — Living Case ceremony (Beat 5 rework) —
 
@@ -163,13 +163,13 @@ struct MetallicCaseView: View {
     /// converted to face-local UV at tap time — the inverse-bilinear of the
     /// projected quad — and forwarded. The consumer routes them to its store;
     /// the module never owns crack state.
-    var onFaceTap: ((CGPoint) -> Void)? = nil
+    var onFaceTap: ((CGPoint) -> Void)?
 
     /// The KNOCK FROM INSIDE (pre-strike anticipation): each new date plays a
     /// brief seam glimmer — light trying a few hex grooves from within. The
     /// consumer pairs it with a physical twitch + soft haptic.
     var knockStart: Date = .distantFuture
-    var knockSeed:  UInt64 = 0
+    var knockSeed: UInt64 = 0
 
     /// CORE GLOW from within (Segment 2): the contained energy leaking through the
     /// hex groove network. 0 = sealed/dark; climbs as the deck strains toward the
@@ -221,7 +221,6 @@ struct MetallicCaseView: View {
         self.breathHoldStart = breathHoldStart
         self.wakeRings = wakeRings
     }
-
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -294,8 +293,8 @@ struct MetallicCaseView: View {
         let center = CGPoint(x: size.width / 2, y: size.height / 2)
 
         let corners3D: [SIMD3<Double>] = [
-            SIMD3(-hx, -hy,  hz), SIMD3( hx, -hy,  hz), SIMD3( hx,  hy,  hz), SIMD3(-hx,  hy,  hz),
-            SIMD3(-hx, -hy, -hz), SIMD3( hx, -hy, -hz), SIMD3( hx,  hy, -hz), SIMD3(-hx,  hy, -hz),
+            SIMD3(-hx, -hy, hz), SIMD3( hx, -hy, hz), SIMD3( hx, hy, hz), SIMD3(-hx, hy, hz),
+            SIMD3(-hx, -hy, -hz), SIMD3( hx, -hy, -hz), SIMD3( hx, hy, -hz), SIMD3(-hx, hy, -hz)
         ]
         let proj = corners3D.map { project(rotate($0, rx: rx, ry: ry), center: center) }
         return CaseGeometry(rx: rx, ry: ry, ryDeg: ryDeg, hueDeg: hueDeg, boxFit: fit,
@@ -398,8 +397,7 @@ struct MetallicCaseView: View {
             drawKnock(&ctx, geo: geo, t: t, motion: motion)
             drawTears(&ctx, geo: geo, overload: overload, t: t, motion: motion)
             eraseEruptionBreach(&ctx, geo: geo, t: t, motion: motion, flood: flood)
-            if peelMode { erasePeel(&ctx, geo: geo, flood: flood) }
-            else        { eraseUnknit(&ctx, geo: geo, flood: flood) }
+            if peelMode { erasePeel(&ctx, geo: geo, flood: flood) } else { eraseUnknit(&ctx, geo: geo, flood: flood) }
         }
             // Debossed hex foil — the band phase is driven by the FLOAT TILT, not
             // time, so the light only moves because the box moves (and Reduce
@@ -448,8 +446,7 @@ struct MetallicCaseView: View {
             // flower peel = three-pass spectrum petals (shadow, face, tear-edge).
             if flood > 0.001, flood < 0.999 {
                 Canvas { ctx, _ in
-                    if peelMode { drawFlowerPeel(&ctx, geo: geo, flood: flood) }
-                    else        { drawUnknitPieces(&ctx, geo: geo, flood: flood) }
+                    if peelMode { drawFlowerPeel(&ctx, geo: geo, flood: flood) } else { drawUnknitPieces(&ctx, geo: geo, flood: flood) }
                 }
             }
         }
@@ -474,8 +471,8 @@ struct MetallicCaseView: View {
 
         // 8 corners (front face = +z)
         let corners3D: [SIMD3<Double>] = [
-            SIMD3(-hx, -hy,  hz), SIMD3( hx, -hy,  hz), SIMD3( hx,  hy,  hz), SIMD3(-hx,  hy,  hz),
-            SIMD3(-hx, -hy, -hz), SIMD3( hx, -hy, -hz), SIMD3( hx,  hy, -hz), SIMD3(-hx,  hy, -hz),
+            SIMD3(-hx, -hy, hz), SIMD3( hx, -hy, hz), SIMD3( hx, hy, hz), SIMD3(-hx, hy, hz),
+            SIMD3(-hx, -hy, -hz), SIMD3( hx, -hy, -hz), SIMD3( hx, hy, -hz), SIMD3(-hx, hy, -hz)
         ]
 
         let proj = geo.proj
@@ -483,12 +480,12 @@ struct MetallicCaseView: View {
         // faces: corner indices, outward normal (one colour for all — they differ by lighting)
         struct Face { let idx: [Int]; let n: SIMD3<Double>; let isFront: Bool }
         let faces: [Face] = [
-            Face(idx: [0,1,2,3], n: SIMD3(0,0, 1), isFront: true),   // front
-            Face(idx: [1,5,6,2], n: SIMD3( 1,0,0), isFront: false),  // right
-            Face(idx: [4,0,3,7], n: SIMD3(-1,0,0), isFront: false),  // left
-            Face(idx: [4,5,1,0], n: SIMD3(0,-1,0), isFront: false),  // top
-            Face(idx: [3,2,6,7], n: SIMD3(0, 1,0), isFront: false),  // bottom
-            Face(idx: [5,4,7,6], n: SIMD3(0,0,-1), isFront: false),  // back
+            Face(idx: [0, 1, 2, 3], n: SIMD3(0, 0, 1), isFront: true),   // front
+            Face(idx: [1, 5, 6, 2], n: SIMD3( 1, 0, 0), isFront: false),  // right
+            Face(idx: [4, 0, 3, 7], n: SIMD3(-1, 0, 0), isFront: false),  // left
+            Face(idx: [4, 5, 1, 0], n: SIMD3(0, -1, 0), isFront: false),  // top
+            Face(idx: [3, 2, 6, 7], n: SIMD3(0, 1, 0), isFront: false),  // bottom
+            Face(idx: [5, 4, 7, 6], n: SIMD3(0, 0, -1), isFront: false)  // back
         ]
 
         // visible faces (rotated normal toward camera), painter-sorted back→front
@@ -546,10 +543,10 @@ struct MetallicCaseView: View {
             let rimShade = GraphicsContext.Shading.linearGradient(
                 Gradient(stops: [
                     .init(color: rimColor.opacity(edgeCatchGain), location: 0.0),
-                    .init(color: .clear,                          location: 1.0),
+                    .init(color: .clear, location: 1.0)
                 ]),
                 startPoint: CGPoint(x: cx, y: top),
-                endPoint:   CGPoint(x: cx, y: top + (bot - top) * 0.5))
+                endPoint: CGPoint(x: cx, y: top + (bot - top) * 0.5))
             var rim = ctx
             rim.blendMode = .plusLighter
             rim.stroke(roundedFacePath(convexHull(proj), softness: cornerSoftness),
@@ -604,9 +601,9 @@ struct MetallicCaseView: View {
         let lo    = lit * 0.88                                  // gentle edge falloff (no dark corners)
         return .linearGradient(
             Gradient(stops: [
-                .init(color: color(lo),  location: 0.0),
+                .init(color: color(lo), location: 0.0),
                 .init(color: color(lit), location: 0.5),
-                .init(color: color(lo),  location: 1.0),
+                .init(color: color(lo), location: 1.0)
             ]),
             startPoint: a, endPoint: c)
     }
@@ -634,9 +631,9 @@ struct MetallicCaseView: View {
                 unit.append(CGPoint(x: cx + rx * dcos(a), y: cy + ry * dsin(a)))
             }
         }
-        corner(x0 + rx, y0 + ry, .pi,       1.5 * .pi)   // TL
+        corner(x0 + rx, y0 + ry, .pi, 1.5 * .pi)   // TL
         corner(x1 - rx, y0 + ry, 1.5 * .pi, 2.0 * .pi)   // TR
-        corner(x1 - rx, y1 - ry, 0.0,       0.5 * .pi)   // BR
+        corner(x1 - rx, y1 - ry, 0.0, 0.5 * .pi)   // BR
         corner(x0 + rx, y1 - ry, 0.5 * .pi, .pi)         // BL
         var frame = Path()
         let mapped = unit.map { bilerp(quad, Double($0.x), Double($0.y)) }
@@ -650,10 +647,10 @@ struct MetallicCaseView: View {
             Gradient(stops: [
                 .init(color: theme.colorway.c0.opacity(frameOpacity), location: 0.0),
                 .init(color: theme.colorway.c1.opacity(frameOpacity), location: 0.5),
-                .init(color: theme.colorway.c2.opacity(frameOpacity), location: 1.0),
+                .init(color: theme.colorway.c2.opacity(frameOpacity), location: 1.0)
             ]),
             startPoint: bilerp(quad, x0, 0.5),
-            endPoint:   bilerp(quad, x1, 0.5))
+            endPoint: bilerp(quad, x1, 0.5))
         if frameGlow > 0 {
             var glow = ctx
             glow.blendMode = .plusLighter
@@ -699,10 +696,10 @@ struct MetallicCaseView: View {
                 Gradient(stops: [
                     .init(color: theme.colorway.c0, location: 0.0),
                     .init(color: theme.colorway.c1, location: 0.4),
-                    .init(color: theme.colorway.c2, location: 1.0),
+                    .init(color: theme.colorway.c2, location: 1.0)
                 ]),
                 startPoint: CGPoint(x: bounds.minX, y: anchor.y),
-                endPoint:   CGPoint(x: bounds.maxX, y: anchor.y)
+                endPoint: CGPoint(x: bounds.maxX, y: anchor.y)
             )
         )
     }
@@ -988,9 +985,9 @@ struct MetallicCaseView: View {
         rim.opacity = min(1.0, 0.8 + 0.4 * flash)
         rim.stroke(outer, with: .linearGradient(
             Gradient(stops: [
-                .init(color: .white,                         location: 0.0),
+                .init(color: .white, location: 0.0),
                 .init(color: theme.colorway.c1.opacity(0.6), location: 0.4),
-                .init(color: .clear,                         location: 0.62),
+                .init(color: .clear, location: 0.62)
             ]),
             startPoint: lightTL, endPoint: lightBR), lineWidth: 2.0)
     }
@@ -1028,10 +1025,10 @@ struct MetallicCaseView: View {
         g.opacity = 1 - drain
         g.fill(hull, with: .radialGradient(
             Gradient(stops: [
-                .init(color: .white.opacity(0.92),            location: 0.0),
+                .init(color: .white.opacity(0.92), location: 0.0),
                 .init(color: theme.colorway.c1.opacity(0.85), location: 0.4),
-                .init(color: theme.colorway.c2.opacity(0.7),  location: 0.8),
-                .init(color: theme.colorway.c0.opacity(0.6),  location: 1.0),
+                .init(color: theme.colorway.c2.opacity(0.7), location: 0.8),
+                .init(color: theme.colorway.c0.opacity(0.6), location: 1.0)
             ]),
             center: center, startRadius: 0, endRadius: r))
 
@@ -1150,8 +1147,8 @@ struct MetallicCaseView: View {
                              scale: Double) -> Path? {
         let R = Self.hexR
         let offs: [SIMD2<Double>] = [
-            SIMD2(0,  R), SIMD2(0.5,  R / 2), SIMD2(0.5, -R / 2),
-            SIMD2(0, -R), SIMD2(-0.5, -R / 2), SIMD2(-0.5, R / 2),
+            SIMD2(0, R), SIMD2(0.5, R / 2), SIMD2(0.5, -R / 2),
+            SIMD2(0, -R), SIMD2(-0.5, -R / 2), SIMD2(-0.5, R / 2)
         ]
         var pts: [CGPoint] = []
         for off in offs {
@@ -1768,10 +1765,10 @@ struct MetallicCaseView: View {
         g.fill(card, with: .linearGradient(
             Gradient(stops: [
                 .init(color: color(mix(ramp.at(0.5), SIMD3(0, 0, 0), 0.74)), location: 0.0),
-                .init(color: color(mix(ramp.at(0.5), SIMD3(0, 0, 0), 0.90)), location: 1.0),
+                .init(color: color(mix(ramp.at(0.5), SIMD3(0, 0, 0), 0.90)), location: 1.0)
             ]),
             startPoint: bilerp(quad, cxU, topV),
-            endPoint:   bilerp(quad, cxU, bottomV)))
+            endPoint: bilerp(quad, cxU, bottomV)))
 
         // inset hairline frame — the card back's grammar
         let inset = 0.022
@@ -1803,7 +1800,7 @@ struct MetallicCaseView: View {
         g.stroke(card, with: .linearGradient(
             Gradient(colors: [theme.colorway.c0, theme.colorway.c1, theme.colorway.c2]),
             startPoint: bilerp(quad, u0, topV),
-            endPoint:   bilerp(quad, u1, bottomV)),
+            endPoint: bilerp(quad, u1, bottomV)),
             lineWidth: 1.2)
 
         // contact shadow — the opening darkens the card where it passes the lip
@@ -1811,11 +1808,11 @@ struct MetallicCaseView: View {
         contact.clip(to: card)
         contact.fill(card, with: .linearGradient(
             Gradient(stops: [
-                .init(color: .clear,                   location: 0.0),
-                .init(color: Color.black.opacity(0.6), location: 1.0),
+                .init(color: .clear, location: 0.0),
+                .init(color: Color.black.opacity(0.6), location: 1.0)
             ]),
             startPoint: bilerp(quad, cxU, 0.5 - hV * 0.22),
-            endPoint:   bilerp(quad, cxU, 0.5 + hV * 0.10)))
+            endPoint: bilerp(quad, cxU, 0.5 + hV * 0.10)))
     }
 
     /// A rounded rect authored in face-UV, every point mapped through the TRUE
@@ -1835,9 +1832,9 @@ struct MetallicCaseView: View {
                 unit.append(CGPoint(x: cx + rU * dcos(a), y: cy + rV * dsin(a)))
             }
         }
-        corner(u0 + rU, v0 + rV, .pi,       1.5 * .pi)   // TL
+        corner(u0 + rU, v0 + rV, .pi, 1.5 * .pi)   // TL
         corner(u1 - rU, v0 + rV, 1.5 * .pi, 2.0 * .pi)   // TR
-        corner(u1 - rU, v1 - rV, 0.0,       0.5 * .pi)   // BR
+        corner(u1 - rU, v1 - rV, 0.0, 0.5 * .pi)   // BR
         corner(u0 + rU, v1 - rV, 0.5 * .pi, .pi)         // BL
         var path = Path()
         let span = max(0.0001, v1 - v0)
@@ -2040,8 +2037,8 @@ struct MetallicCaseView: View {
         let center = p - gv                      // owning cell center
         let R = Self.hexR
         let corners: [SIMD2<Double>] = [
-            SIMD2(0,  R), SIMD2(0.5,  R / 2), SIMD2(0.5, -R / 2),
-            SIMD2(0, -R), SIMD2(-0.5, -R / 2), SIMD2(-0.5, R / 2),
+            SIMD2(0, R), SIMD2(0.5, R / 2), SIMD2(0.5, -R / 2),
+            SIMD2(0, -R), SIMD2(-0.5, -R / 2), SIMD2(-0.5, R / 2)
         ]
         return corners
             .map { center + $0 }
@@ -2053,9 +2050,9 @@ struct MetallicCaseView: View {
     private func hexNeighbors(of v: SIMD2<Double>) -> [SIMD2<Double>] {
         let R = Self.hexR
         let dirs: [SIMD2<Double>] = [
-            SIMD2(0,  R), SIMD2(0, -R),
-            SIMD2( 0.5,  R / 2), SIMD2( 0.5, -R / 2),
-            SIMD2(-0.5,  R / 2), SIMD2(-0.5, -R / 2),
+            SIMD2(0, R), SIMD2(0, -R),
+            SIMD2( 0.5, R / 2), SIMD2( 0.5, -R / 2),
+            SIMD2(-0.5, R / 2), SIMD2(-0.5, -R / 2)
         ]
         return dirs.compactMap { d in
             let candidate = v + d

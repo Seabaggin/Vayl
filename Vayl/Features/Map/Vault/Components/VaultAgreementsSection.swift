@@ -19,7 +19,7 @@ struct VaultAgreementsSection: View {
 
     @State private var composingNew = false
     @State private var newText = ""
-    @State private var editingId: UUID? = nil
+    @State private var editingId: UUID?
     @State private var editText = ""
 
     var body: some View {

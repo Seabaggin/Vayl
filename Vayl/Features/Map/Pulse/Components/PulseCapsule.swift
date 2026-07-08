@@ -21,12 +21,12 @@ import SwiftUI
 
 struct PulseCapsule: View {
 
-    let myPosition:      PulsePosition
+    let myPosition: PulsePosition
     let partnerPosition: PulsePosition
-    let myColor:         Color
-    let partnerColor:    Color
-    let fieldSize:       CGFloat
-    var auraSize:        CGFloat = 44    // FEEL: must match the aura diameter in the field
+    let myColor: Color
+    let partnerColor: Color
+    let fieldSize: CGFloat
+    var auraSize: CGFloat = 44    // FEEL: must match the aura diameter in the field
 
     // MARK: - Geometry
 
@@ -45,11 +45,11 @@ struct PulseCapsule: View {
         let dist   = (dx * dx + dy * dy).squareRoot()
         let capH   = auraSize * 1.42                    // FEEL: clearance multiplier
         return (
-            midX:  (a.x + b.x) / 2,
-            midY:  (a.y + b.y) / 2,
-            width:  max(dist + capH, capH),             // collapses to ring when coincident
+            midX: (a.x + b.x) / 2,
+            midY: (a.y + b.y) / 2,
+            width: max(dist + capH, capH),             // collapses to ring when coincident
             height: capH,
-            angle:  .radians(atan2(dy, dx))
+            angle: .radians(atan2(dy, dx))
         )
     }
 
@@ -90,8 +90,8 @@ struct PulseCapsule: View {
             ZStack {
                 PulseField(
                     entries: [
-                        PulseFieldEntry(id: "me",      position: wideMy),
-                        PulseFieldEntry(id: "partner", position: widePrt),
+                        PulseFieldEntry(id: "me", position: wideMy),
+                        PulseFieldEntry(id: "partner", position: widePrt)
                     ],
                     size: fieldSize
                 )
@@ -107,8 +107,8 @@ struct PulseCapsule: View {
             ZStack {
                 PulseField(
                     entries: [
-                        PulseFieldEntry(id: "me",      position: samePos),
-                        PulseFieldEntry(id: "partner", position: PulsePosition(energy: 0.80, openness: 0.75)),
+                        PulseFieldEntry(id: "me", position: samePos),
+                        PulseFieldEntry(id: "partner", position: PulsePosition(energy: 0.80, openness: 0.75))
                     ],
                     size: fieldSize
                 )

@@ -17,10 +17,10 @@ struct PulseFullView: View {
     @Bindable var mapStore: MapStore
     @Environment(PulseStore.self) private var pulse
 
-    var myEntries:      [PulseEntry] = PulseEntry.previews
+    var myEntries: [PulseEntry] = PulseEntry.previews
     var partnerEntries: [PulseEntry] = []
-    var partnerName:    String       = ""
-    var onDismiss:      (() -> Void)? = nil
+    var partnerName: String       = ""
+    var onDismiss: (() -> Void)?
 
     // MARK: - Body
 
@@ -305,22 +305,22 @@ struct PulseFullView: View {
 
                         if let partner = partnerPosition {
                             PulseCapsule(
-                                myPosition:      myPosition,
+                                myPosition: myPosition,
                                 partnerPosition: partner,
-                                myColor:         mySpace.dotCoreStatic,
-                                partnerColor:    partnerSpace(partner).dotCoreStatic,
-                                fieldSize:       size,
-                                auraSize:        auraSize
+                                myColor: mySpace.dotCoreStatic,
+                                partnerColor: partnerSpace(partner).dotCoreStatic,
+                                fieldSize: size,
+                                auraSize: auraSize
                             )
                             auraLabel("You",
                                       position: myPosition,
-                                      color:    mySpace.dotCoreStatic,
-                                      above:    true,
+                                      color: mySpace.dotCoreStatic,
+                                      above: true,
                                       fieldSize: size)
                             auraLabel(partnerName.isEmpty ? "Partner" : partnerName,
                                       position: partner,
-                                      color:    partnerSpace(partner).dotCoreStatic,
-                                      above:    false,
+                                      color: partnerSpace(partner).dotCoreStatic,
+                                      above: false,
                                       fieldSize: size)
                         } else if !partnerName.isEmpty {
                             let waitingPos = PulsePosition(energy: 0.30, openness: 0.30)
@@ -329,8 +329,8 @@ struct PulseFullView: View {
                                 .position(x: waitingPt.x, y: waitingPt.y)
                             auraLabel("\(partnerName) · not yet",
                                       position: waitingPos,
-                                      color:    AppColors.textTertiary,
-                                      above:    false,
+                                      color: AppColors.textTertiary,
+                                      above: false,
                                       fieldSize: size)
                         }
                     }
@@ -342,31 +342,31 @@ struct PulseFullView: View {
     private func fieldEntries(auraSize: CGFloat) -> [PulseFieldEntry] {
         var entries: [PulseFieldEntry] = [
             PulseFieldEntry(
-                id:       "me",
+                id: "me",
                 position: myPosition,
                 auraSize: auraSize,
-                opacity:  myStale ? PulseFieldEntry.staleOpacity : 1.0,
-                space:    mySpace
+                opacity: myStale ? PulseFieldEntry.staleOpacity : 1.0,
+                space: mySpace
             )
         ]
         if let partner = partnerPosition {
             entries.append(PulseFieldEntry(
-                id:       "partner",
+                id: "partner",
                 position: partner,
                 auraSize: auraSize,
-                opacity:  partnerStale ? PulseFieldEntry.staleOpacity : 1.0,
-                space:    partnerSpace(partner)
+                opacity: partnerStale ? PulseFieldEntry.staleOpacity : 1.0,
+                space: partnerSpace(partner)
             ))
         }
         return entries
     }
 
     private func auraLabel(
-        _ text:      String,
-        position:    PulsePosition,
-        color:       Color,
-        above:       Bool,
-        fieldSize:   CGFloat
+        _ text: String,
+        position: PulsePosition,
+        color: Color,
+        above: Bool,
+        fieldSize: CGFloat
     ) -> some View {
         let x  = position.openness * fieldSize
         let y  = (1 - position.energy) * fieldSize
@@ -410,10 +410,10 @@ struct PulseFullView: View {
     let store = MapStore()
     store.layer = .us
     return PulseFullView(
-        mapStore:       store,
-        myEntries:      PulseEntry.previews,
+        mapStore: store,
+        myEntries: PulseEntry.previews,
         partnerEntries: PulseEntry.previews,
-        partnerName:    "Alex"
+        partnerName: "Alex"
     )
     .environment(PulseStore())
     .preferredColorScheme(.dark)

@@ -14,9 +14,9 @@ struct DesireMatchDetail: View {
 
     let match: RevealMatch
     /// Called when the user taps "Talk about this". Stub — stub action in S1.3.
-    var onTalkTapped: (() -> Void)? = nil
+    var onTalkTapped: (() -> Void)?
     /// Called when the user taps "Explore in Learn". Stub — stub action in S1.3.
-    var onLearnTapped: (() -> Void)? = nil
+    var onLearnTapped: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {

@@ -16,7 +16,6 @@ import SwiftUI
 // Phase overlays read director.phase — they never hold it.
 // ─────────────────────────────────────────────────────────────
 
-
 /// The complete sequence of phases in the Onboarding canvas.
 /// VaylDirector advances through these in order.
 /// No phase may be skipped — each has a gate condition.
@@ -142,7 +141,7 @@ internal enum AppDealerTyping {
     /// asking. Table must mirror charDelay above.
     static func typeDuration(_ text: String) -> Int {
         let base = 58.0
-        var prev: Character? = nil
+        var prev: Character?
         var total = 0.0
         for char in text {
             switch char {
@@ -161,17 +160,17 @@ internal enum AppDealerTyping {
 
     // MARK: — Hang times
 
-    static let hangLong:   Int = 600
+    static let hangLong: Int = 600
     static let hangMedium: Int = 500
-    static let hangShort:  Int = 400
+    static let hangShort: Int = 400
 
     // MARK: — Shuffle transition (lines 1→2, 2→3)
 
-    static let shuffleExitMs:  Int = 250
-    static let shuffleGapMs:   Int = 60
+    static let shuffleExitMs: Int = 250
+    static let shuffleGapMs: Int = 60
     static let shuffleEnterMs: Int = 200
 
-    static let shuffleExitAnim:  Animation = .timingCurve(0.4, 0, 0.6, 1, duration: 0.25)
+    static let shuffleExitAnim: Animation = .timingCurve(0.4, 0, 0.6, 1, duration: 0.25)
     static let shuffleEnterAnim: Animation = .timingCurve(0.2, 0.8, 0.3, 1, duration: 0.20)
 
     // MARK: — Float-away (lift-lesson prompt exit — gentler than the shuffle swap)
@@ -179,13 +178,13 @@ internal enum AppDealerTyping {
     /// Once the card is hovered, the "Tap the card" prompt drifts up and dissolves on a
     /// long ease-out so it floats away, rather than snapping out like the shuffle swap
     /// used between ordinary lines. Felt values — tune on device.
-    static let floatAwayAnim:  Animation = .easeOut(duration: 0.55)
-    static let floatAwayMs:    Int       = 550
+    static let floatAwayAnim: Animation = .easeOut(duration: 0.55)
+    static let floatAwayMs: Int       = 550
     static let floatAwayDrift: CGFloat   = -48
 
     // MARK: — Final fade (line 3 exit after card lands)
 
-    static let finalFadeMs:   Int       = 350
+    static let finalFadeMs: Int       = 350
     static let finalFadeAnim: Animation = .easeOut(duration: 0.35)
 
     // MARK: — Font

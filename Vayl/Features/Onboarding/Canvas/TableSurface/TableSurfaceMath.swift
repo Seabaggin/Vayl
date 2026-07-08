@@ -48,7 +48,7 @@ func fbm(_ x: CGFloat, _ y: CGFloat, _ octaves: Int) -> CGFloat {
 /// evaluation. Produces the characteristic curved, flowing distortion visible
 /// in the topo lines — straight vertical lines would read as digital.
 func domainWarp(_ x: CGFloat, _ y: CGFloat, _ warpStrength: CGFloat) -> CGFloat {
-    let wx = fbm(x,       y,       4)
+    let wx = fbm(x, y, 4)
     let wy = fbm(x + 3.8, y + 1.6, 4)
     return fbm(x + warpStrength * wx, y + warpStrength * wy, 4)
 }

@@ -67,7 +67,7 @@ extension View {
 struct VaylGlassCardModifier: ViewModifier {
     /// When set, tints the hairline with the accent (the identity / "lit" variant,
     /// e.g. the Me card's Flavor colour); omit for a neutral surface.
-    var accent: Color? = nil
+    var accent: Color?
     var radius: CGFloat = AppRadius.lg
 
     func body(content: Content) -> some View {
@@ -109,4 +109,3 @@ extension View {
         }
     }
 }
-

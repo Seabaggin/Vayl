@@ -16,8 +16,8 @@ import SwiftUI
 
 struct DemoPhase: View {
 
-    let director:    VaylDirector
-    let screenSize:  CGSize
+    let director: VaylDirector
+    let screenSize: CGSize
     @Binding var tableRimBurst: Double
 
     @FocusState private var nounFocused: Bool
@@ -119,9 +119,9 @@ struct DemoPhase: View {
                         Path(CGRect(origin: .zero, size: size)),
                         with: .radialGradient(
                             Gradient(stops: [
-                                .init(color: AppColors.spectrumPurple.opacity(a),       location: 0),
-                                .init(color: AppColors.spectrumCyan.opacity(a * 0.45),  location: 0.45),
-                                .init(color: AppColors.spectrumCyan.opacity(0),         location: 1),
+                                .init(color: AppColors.spectrumPurple.opacity(a), location: 0),
+                                .init(color: AppColors.spectrumCyan.opacity(a * 0.45), location: 0.45),
+                                .init(color: AppColors.spectrumCyan.opacity(0), location: 1)
                             ]),
                             center: CGPoint(x: cx, y: cy), startRadius: 0, endRadius: r
                         )
@@ -139,10 +139,10 @@ struct DemoPhase: View {
                         Path(CGRect(origin: .zero, size: size)),
                         with: .radialGradient(
                             Gradient(stops: [
-                                .init(color: Color.white.opacity(a * 0.5),               location: 0),
-                                .init(color: AppColors.spectrumPurple.opacity(a),        location: 0.18),
+                                .init(color: Color.white.opacity(a * 0.5), location: 0),
+                                .init(color: AppColors.spectrumPurple.opacity(a), location: 0.18),
                                 .init(color: AppColors.spectrumMagenta.opacity(a * 0.5), location: 0.5),
-                                .init(color: AppColors.spectrumCyan.opacity(0),          location: 1),
+                                .init(color: AppColors.spectrumCyan.opacity(0), location: 1)
                             ]),
                             center: CGPoint(x: cx, y: cy), startRadius: 0, endRadius: r
                         )

@@ -22,7 +22,7 @@ struct LiftHalo: View {
         LinearGradient(
             colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
             startPoint: .topLeading,
-            endPoint:   .bottomTrailing
+            endPoint: .bottomTrailing
         )
     }
 

@@ -18,12 +18,12 @@ enum CardAccent {
 }
 
 struct ContextOption: Identifiable {
-    let id:       String
-    let context:  RelationshipContext
-    let accent:   CardAccent
-    let title:    String
+    let id: String
+    let context: RelationshipContext
+    let accent: CardAccent
+    let title: String
     let subtitle: String
-    let detail:   String
+    let detail: String
 
     /// Derived from `context`. The behavioural contract — downstream keys on the register,
     /// never on the specific context. Curious cohorts carry the anxiety (the leap); the
@@ -77,7 +77,7 @@ extension ContextOption {
               detail: "Before anyone else is involved, understand your own desires and limits. Map what you actually want, on your own terms."),
         .init(id: "single_curious", context: .single, accent: .nova,
               title: "I'm single", subtitle: "Exploring on my own",
-              detail: "No relationship to navigate — just you and your curiosity. Start with the fundamentals, at your own pace."),
+              detail: "No relationship to navigate — just you and your curiosity. Start with the fundamentals, at your own pace.")
     ]
 
     // MARK: Solo · In it — why you're exploring alone, already practicing
@@ -93,7 +93,7 @@ extension ContextOption {
               detail: "No particular plan — just seeing what the app offers. A fine place to start; poke around and find what's useful."),
         .init(id: "single_in_it", context: .single, accent: .nova,
               title: "I'm single", subtitle: "Exploring on my own",
-              detail: "No relationship to navigate — just you and your own practice, at your own pace."),
+              detail: "No relationship to navigate — just you and your own practice, at your own pace.")
     ]
 
     // MARK: Couple · Curious — first-person, new to it (higher-stakes)
@@ -109,7 +109,7 @@ extension ContextOption {
               detail: "You opened the door. Say what you want without pressure — and leave your partner room to arrive at their own pace."),
         .init(id: "couple_figuring_out", context: .coupleFiguringOut, accent: .ember,
               title: "I'm still figuring out what I want", subtitle: "Open, but not sure yet",
-              detail: "You don't need it mapped out to begin. Start here and figure out what you want as you go."),
+              detail: "You don't need it mapped out to begin. Start here and figure out what you want as you go.")
     ]
 
     // MARK: Couple · In it — first-person, already in it (comfortable, lower-stakes)
@@ -125,6 +125,6 @@ extension ContextOption {
               detail: "Something's changed — a new connection, a boundary that isn't working, or a feeling that things are off. Time to recalibrate."),
         .init(id: "couple_keep_it_fun", context: .coupleKeepItFun, accent: .ember,
               title: "I want to keep it fun", subtitle: "Keeping the spark, no heavy agenda",
-              detail: "Things are good — you just don't want them running on autopilot. Stay playful and curious about your partner."),
+              detail: "Things are good — you just don't want them running on autopilot. Stay playful and curious about your partner.")
     ]
 }

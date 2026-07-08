@@ -8,7 +8,6 @@
 import Foundation
 import SwiftUI
 
-
 /// State of the Desire Map indicator on the home dashboard.
 /// Computed by HomeEventEngine. Never stored directly.
 enum DesireMapState {
@@ -48,8 +47,6 @@ extension DesireMapState: Equatable {
         }
     }
 }
-
-
 
 // ─────────────────────────────────────────────────────────────
 // MARK: - Desire Map
@@ -91,4 +88,3 @@ enum DesireMatchType: String, CaseIterable, Codable {
         }
     }
 }
-

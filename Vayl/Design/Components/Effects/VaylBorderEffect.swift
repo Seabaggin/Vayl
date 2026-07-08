@@ -11,8 +11,8 @@ import SwiftUI
 
 struct VaylBorderEffect: View {
 
-    let width:        CGFloat
-    let height:       CGFloat
+    let width: CGFloat
+    let height: CGFloat
     let cornerRadius: CGFloat
 
     /// 0.0 = hairline only (inactive), 1.0 = full border filled (active)
@@ -78,7 +78,7 @@ struct VaylBorderEffect: View {
                 AppColors.spectrumMagenta
             ],
             startPoint: .topLeading,
-            endPoint:   .bottomTrailing
+            endPoint: .bottomTrailing
         )
     }
 
@@ -94,9 +94,9 @@ struct VaylBorderEffect: View {
             // where isPressed was true but progress was still 0.0.
 
             HairlineView(
-                width:       width,
-                height:      height,
-                thickness:   AppGlows.spectrumBorder.hairlineHeight,
+                width: width,
+                height: height,
+                thickness: AppGlows.spectrumBorder.hairlineHeight,
                 strokeWidth: 1.5   // resting border stroke — hairline sits on this edge
             )
             .opacity(hairlineVisible ? AppGlows.spectrumBorder.hairlineOpacity : 0.0)
@@ -112,31 +112,31 @@ struct VaylBorderEffect: View {
             // at rest without introducing spectrum color.
             // The animated gradient fill strokes render on top at press.
             PillPath(
-                width:        width,
-                height:       height,
+                width: width,
+                height: height,
                 cornerRadius: cornerRadius,
-                inset:        0.75   // half of 1.5pt stroke
+                inset: 0.75   // half of 1.5pt stroke
             )
             .stroke(
                 AngularGradient(
                     stops: [
                         // Top centre — clear for hairline
-                        .init(color: .clear,                                                                   location: 0.00),
+                        .init(color: .clear, location: 0.00),
                         // Hold clear only as far as the hairline taper
-                        .init(color: .clear,                                                                   location: 0.20),
+                        .init(color: .clear, location: 0.20),
                         // Border fades in right at the taper end
-                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255).opacity(0.50),    location: 0.23),
-                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255),                  location: 0.26),
+                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255).opacity(0.50), location: 0.23),
+                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255), location: 0.26),
                         // Full opacity across the bottom
-                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255),                  location: 0.74),
+                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255), location: 0.74),
                         // Mirror — fades out as it rounds the left corner back up
-                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255).opacity(0.50),    location: 0.77),
-                        .init(color: .clear,                                                                   location: 0.80),
+                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255).opacity(0.50), location: 0.77),
+                        .init(color: .clear, location: 0.80),
                         // Hold clear back to top centre
-                        .init(color: .clear,                                                                   location: 1.00),
+                        .init(color: .clear, location: 1.00)
                     ],
                     center: .center,
-                    angle:  .degrees(-90)   // location 0.0 = 12 o'clock (top centre)
+                    angle: .degrees(-90)   // location 0.0 = 12 o'clock (top centre)
                 ),
                 style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
             )
@@ -170,10 +170,10 @@ struct VaylBorderEffect: View {
             ZStack {
                 // Right side halo
                 PillPath(
-                    width:        width,
-                    height:       height,
+                    width: width,
+                    height: height,
                     cornerRadius: cornerRadius,
-                    inset:        haloStrokeWidth / 2
+                    inset: haloStrokeWidth / 2
                 )
                 .trim(from: 0, to: progress / 2)
                 .stroke(
@@ -184,10 +184,10 @@ struct VaylBorderEffect: View {
 
                 // Left side halo
                 PillPath(
-                    width:        width,
-                    height:       height,
+                    width: width,
+                    height: height,
                     cornerRadius: cornerRadius,
-                    inset:        haloStrokeWidth / 2
+                    inset: haloStrokeWidth / 2
                 )
                 .trim(from: 1 - progress / 2, to: 1)
                 .stroke(
@@ -209,7 +209,7 @@ struct VaylBorderEffect: View {
                 }
                 .compositingGroup()
             )
-            .animation(AppAnimation.borderFill,   value: progress)
+            .animation(AppAnimation.borderFill, value: progress)
             .animation(AppAnimation.borderGlowIn, value: glowIntensity)
 
             // ── Crisp stroke — right side ─────────────────────────────
@@ -218,10 +218,10 @@ struct VaylBorderEffect: View {
             // The glow shadow emanates from the line itself.
 
             PillPath(
-                width:        width,
-                height:       height,
+                width: width,
+                height: height,
                 cornerRadius: cornerRadius,
-                inset:        strokeWidth / 2
+                inset: strokeWidth / 2
             )
             .trim(from: 0, to: progress / 2)
             .stroke(
@@ -230,16 +230,16 @@ struct VaylBorderEffect: View {
             )
             .opacity(0.92)
             .spectrumBorderGlow(intensity: glowIntensity)
-            .animation(AppAnimation.borderFill,   value: progress)
+            .animation(AppAnimation.borderFill, value: progress)
             .animation(AppAnimation.borderGlowIn, value: glowIntensity)
 
             // ── Crisp stroke — left side ──────────────────────────────
 
             PillPath(
-                width:        width,
-                height:       height,
+                width: width,
+                height: height,
                 cornerRadius: cornerRadius,
-                inset:        strokeWidth / 2
+                inset: strokeWidth / 2
             )
             .trim(from: 1 - progress / 2, to: 1)
             .stroke(
@@ -248,7 +248,7 @@ struct VaylBorderEffect: View {
             )
             .opacity(0.92)
             .spectrumBorderGlow(intensity: glowIntensity)
-            .animation(AppAnimation.borderFill,   value: progress)
+            .animation(AppAnimation.borderFill, value: progress)
             .animation(AppAnimation.borderGlowIn, value: glowIntensity)
         }
         .frame(width: width, height: height)
@@ -259,10 +259,10 @@ struct VaylBorderEffect: View {
 
 private struct PillPath: Shape {
 
-    let width:        CGFloat
-    let height:       CGFloat
+    let width: CGFloat
+    let height: CGFloat
     let cornerRadius: CGFloat
-    var inset:        CGFloat = 0
+    var inset: CGFloat = 0
 
     // pixelRound is no longer a stored closure.
     // Storing a (CGFloat) -> CGFloat closure prevents automatic Equatable
@@ -294,11 +294,11 @@ private struct PillPath: Shape {
 
         // Right cap — clockwise
         path.addArc(
-            center:     CGPoint(x: ox + w - r, y: oy + r),
-            radius:     r,
+            center: CGPoint(x: ox + w - r, y: oy + r),
+            radius: r,
             startAngle: .degrees(-90),
-            endAngle:   .degrees(90),
-            clockwise:  false
+            endAngle: .degrees(90),
+            clockwise: false
         )
 
         // Bottom edge — right to left
@@ -309,11 +309,11 @@ private struct PillPath: Shape {
 
         // Left cap — clockwise
         path.addArc(
-            center:     CGPoint(x: ox + r, y: oy + r),
-            radius:     r,
+            center: CGPoint(x: ox + r, y: oy + r),
+            radius: r,
             startAngle: .degrees(90),
-            endAngle:   .degrees(-90),
-            clockwise:  false
+            endAngle: .degrees(-90),
+            clockwise: false
         )
 
         // Top edge — left half back to top-center
@@ -330,9 +330,9 @@ private struct PillPath: Shape {
 
 private struct HairlineView: View {
 
-    let width:       CGFloat
-    let height:      CGFloat
-    let thickness:   CGFloat
+    let width: CGFloat
+    let height: CGFloat
+    let thickness: CGFloat
     let strokeWidth: CGFloat
 
     var body: some View {
@@ -347,7 +347,7 @@ private struct HairlineView: View {
                         .clear
                     ],
                     startPoint: .leading,
-                    endPoint:   .trailing
+                    endPoint: .trailing
                 )
             )
             .frame(width: width, height: thickness)
@@ -376,16 +376,16 @@ private struct TaperedHairlineShape: Shape {
         // Upper arc: left tip → right tip
         path.move(to: CGPoint(x: taperEnd, y: h / 2))
         path.addCurve(
-            to:       CGPoint(x: w - taperEnd,      y: h / 2),
-            control1: CGPoint(x: taperEnd + cp,     y: 0),
+            to: CGPoint(x: w - taperEnd, y: h / 2),
+            control1: CGPoint(x: taperEnd + cp, y: 0),
             control2: CGPoint(x: w - taperEnd - cp, y: 0)
         )
 
         // Lower arc: right tip → left tip
         path.addCurve(
-            to:       CGPoint(x: taperEnd,          y: h / 2),
+            to: CGPoint(x: taperEnd, y: h / 2),
             control1: CGPoint(x: w - taperEnd - cp, y: h),
-            control2: CGPoint(x: taperEnd + cp,     y: h)
+            control2: CGPoint(x: taperEnd + cp, y: h)
         )
 
         path.closeSubpath()
@@ -404,41 +404,41 @@ private struct TaperedHairlineShape: Shape {
 
             // Resting — hairline visible, no border
             VaylBorderEffect(
-                width:          320,
-                height:         56,
-                cornerRadius:   28,
-                progress:       0,
-                glowIntensity:  0,
+                width: 320,
+                height: 56,
+                cornerRadius: 28,
+                progress: 0,
+                glowIntensity: 0,
                 hairlineVisible: true
             )
 
             // Mid-fill — hairline hidden, border filling
             VaylBorderEffect(
-                width:          320,
-                height:         56,
-                cornerRadius:   28,
-                progress:       0.5,
-                glowIntensity:  0,
+                width: 320,
+                height: 56,
+                cornerRadius: 28,
+                progress: 0.5,
+                glowIntensity: 0,
                 hairlineVisible: false
             )
 
             // Full fill, no glow
             VaylBorderEffect(
-                width:          320,
-                height:         56,
-                cornerRadius:   28,
-                progress:       1,
-                glowIntensity:  0,
+                width: 320,
+                height: 56,
+                cornerRadius: 28,
+                progress: 1,
+                glowIntensity: 0,
                 hairlineVisible: false
             )
 
             // Full fill, full glow
             VaylBorderEffect(
-                width:          320,
-                height:         56,
-                cornerRadius:   28,
-                progress:       1,
-                glowIntensity:  1,
+                width: 320,
+                height: 56,
+                cornerRadius: 28,
+                progress: 1,
+                glowIntensity: 1,
                 hairlineVisible: false
             )
         }

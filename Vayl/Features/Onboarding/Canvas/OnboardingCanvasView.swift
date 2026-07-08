@@ -67,17 +67,17 @@ struct OnboardingCanvasView: View {
 
                 // ── Layer 3: Table surface ────────────────────────
                 TableSurfaceView(
-                    fade:               director.tableFade,
-                    rimBurst:           tableRimBurst,
-                    dissolutionWarp:    director.gender.dissolutionWarp,
+                    fade: director.tableFade,
+                    rimBurst: tableRimBurst,
+                    dissolutionWarp: director.gender.dissolutionWarp,
                     dissolutionFlowOut: director.gender.dissolutionFlowOut,
-                    forgeEnergy:        tableForgeEnergy
+                    forgeEnergy: tableForgeEnergy
                 )
                 .ignoresSafeArea()
 
                 // ── Layer 4: Deal point ───────────────────────────
                 DealPointView(
-                    intensity:  director.dealPointIntensity,
+                    intensity: director.dealPointIntensity,
                     screenSize: size
                 )
 
@@ -156,9 +156,9 @@ struct OnboardingCanvasView: View {
                     && director.phase != .confirmation
                     && director.phase != .buildDeck {
                     CornerDeckView(
-                        cards:      director.cornerDeckCards,
+                        cards: director.cornerDeckCards,
                         screenSize: size,
-                        deckPulse:  director.deckPulse
+                        deckPulse: director.deckPulse
                     )
                     .opacity(director.tableFade)
                     .transition(.opacity)
@@ -172,9 +172,7 @@ struct OnboardingCanvasView: View {
                     .ignoresSafeArea()
 
                 // ── Layer 10: Corner marks ────────────────────────
-            
 
-                
             }
             .frame(width: size.width, height: size.height)
             .ignoresSafeArea()
@@ -233,7 +231,7 @@ struct OnboardingCanvasWrapper: View {
 // reads as one space with z-depth, not a slideshow. Reduce Motion → pure opacity.
 
 private struct PhaseOverlayView: View {
-    let director:   VaylDirector
+    let director: VaylDirector
     let screenSize: CGSize
     @Binding var tableRimBurst: Double
     @Binding var tableForgeEnergy: Double

@@ -14,13 +14,13 @@ final class UsOrbStateTests: XCTestCase {
     private func entry(daysAgo: Int) -> PulseEntry {
         let date = Calendar.current.date(byAdding: .day, value: -daysAgo, to: now)!
         return PulseEntry(
-            date:          date,
+            date: date,
             capacityScore: 2.5,
-            glowColor:     .rose,
-            speed:         "Solitude",
+            glowColor: .rose,
+            speed: "Solitude",
             nervousSystem: "Centered",
-            focus:         "Present",
-            feeling:       "Content"
+            focus: "Present",
+            feeling: "Content"
         )
     }
 

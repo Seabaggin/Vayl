@@ -35,17 +35,17 @@ final class LearnStore {
     func refresh() async {
         if let f = await content.fetchFindings() { findings = f }
         if let t = await content.fetchGlossary() { lexiconTerms = t }
-        if let q = await content.fetchQuotes()   { mediaQuotes = q }
+        if let q = await content.fetchQuotes() { mediaQuotes = q }
     }
 
     func load() {
         do {
-            quizzes          = try ContentLoader.load(LearnQuiz.self,       from: "learn_quizzes")
+            quizzes          = try ContentLoader.load(LearnQuiz.self, from: "learn_quizzes")
             findings         = try ContentLoader.load(ResearchFinding.self, from: "research_findings")
-            lexiconTerms     = try ContentLoader.load(LexiconTerm.self,     from: "lexicon_terms")
-            mediaQuotes      = try ContentLoader.load(MediaQuote.self,      from: "media_quotes")
-            media            = try ContentLoader.load(LearnMediaItem.self,  from: "learn_media")
-            voices           = try ContentLoader.load(Voice.self,           from: "voices")
+            lexiconTerms     = try ContentLoader.load(LexiconTerm.self, from: "lexicon_terms")
+            mediaQuotes      = try ContentLoader.load(MediaQuote.self, from: "media_quotes")
+            media            = try ContentLoader.load(LearnMediaItem.self, from: "learn_media")
+            voices           = try ContentLoader.load(Voice.self, from: "voices")
             supportResources = try ContentLoader.load(SupportResource.self, from: "support_resources")
         } catch {
             loadError = error.localizedDescription

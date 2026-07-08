@@ -172,8 +172,7 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
                                         .onEnded { value in
                                             let past = value.translation.height > sheetHeight * dismissDistanceRatio
                                             let fling = value.predictedEndTranslation.height > flingProjection
-                                            if past || fling { dismiss() }
-                                            else { withAnimation(AppAnimation.arrive.reduceMotionSafe) { drag = 0 } }
+                                            if past || fling { dismiss() } else { withAnimation(AppAnimation.arrive.reduceMotionSafe) { drag = 0 } }
                                         }
                                 )
                         }

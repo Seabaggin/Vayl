@@ -11,9 +11,9 @@ struct PartnerChipExpand: View {
     let desireMapState: DesireMapState
     let partnerPulsePosition: PulsePosition?
     var partnerPulseFetchFailed: Bool = false
-    var onDesireMapTap: (() -> Void)? = nil
-    var onPulseTap: (() -> Void)? = nil
-    var onManageTap: (() -> Void)? = nil
+    var onDesireMapTap: (() -> Void)?
+    var onPulseTap: (() -> Void)?
+    var onManageTap: (() -> Void)?
 
     var body: some View {
         Group {

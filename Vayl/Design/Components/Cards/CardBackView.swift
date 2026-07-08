@@ -10,17 +10,17 @@
 import SwiftUI
 
 struct CardBackView: View {
-    let cardSize:            CGSize
-    let cornerRadius:        CGFloat
-    let selectedPill:        CardRevealPill?
-    let selectedScale:       CGFloat
+    let cardSize: CGSize
+    let cornerRadius: CGFloat
+    let selectedPill: CardRevealPill?
+    let selectedScale: CGFloat
     let selectedBorderWidth: CGFloat
-    let unselectedVisible:   Bool
-    let revealed:            Bool
-    let isLight:             Bool
-    let onSelect:            (CardRevealPill) -> Void
-    let questionVisible:     Bool
-    let pillsVisible:        Bool
+    let unselectedVisible: Bool
+    let revealed: Bool
+    let isLight: Bool
+    let onSelect: (CardRevealPill) -> Void
+    let questionVisible: Bool
+    let pillsVisible: Bool
 
     // ── Deck mode flag ───────────────────────────────────────────────────
     // Set to true by the deck-mode init. Suppresses all interactive
@@ -32,17 +32,17 @@ struct CardBackView: View {
     // Identical to the original — zero call-site changes required.
     // ─────────────────────────────────────────────────────────────────────
     init(
-        cardSize:            CGSize,
-        cornerRadius:        CGFloat,
-        selectedPill:        CardRevealPill?,
-        selectedScale:       CGFloat,
+        cardSize: CGSize,
+        cornerRadius: CGFloat,
+        selectedPill: CardRevealPill?,
+        selectedScale: CGFloat,
         selectedBorderWidth: CGFloat,
-        unselectedVisible:   Bool,
-        revealed:            Bool,
-        isLight:             Bool,
-        onSelect:            @escaping (CardRevealPill) -> Void,
-        questionVisible:     Bool,
-        pillsVisible:        Bool
+        unselectedVisible: Bool,
+        revealed: Bool,
+        isLight: Bool,
+        onSelect: @escaping (CardRevealPill) -> Void,
+        questionVisible: Bool,
+        pillsVisible: Bool
     ) {
         self.cardSize            = cardSize
         self.cornerRadius        = cornerRadius
@@ -75,12 +75,12 @@ struct CardBackView: View {
     // All pill / reveal / heading content is suppressed.
     // ─────────────────────────────────────────────────────────────────────
     init(
-        offsetX:  CGFloat = 0,
-        offsetY:  CGFloat = 0,
+        offsetX: CGFloat = 0,
+        offsetY: CGFloat = 0,
         rotation: Double  = 0,
-        scale:    CGFloat = 1.0,
-        opacity:  Double  = 1.0,
-        isLight:  Bool    = false
+        scale: CGFloat = 1.0,
+        opacity: Double  = 1.0,
+        isLight: Bool    = false
     ) {
         // Fixed deck geometry
         self.cardSize            = CGSize(width: 300, height: 190)
@@ -106,11 +106,11 @@ struct CardBackView: View {
 
     // Deck positioning — only populated by the deck-mode init.
     // Prefixed with _ to signal they are internal layout values.
-    private let _deckOffsetX:  CGFloat
-    private let _deckOffsetY:  CGFloat
+    private let _deckOffsetX: CGFloat
+    private let _deckOffsetY: CGFloat
     private let _deckRotation: Double
-    private let _deckScale:    CGFloat
-    private let _deckOpacity:  Double
+    private let _deckScale: CGFloat
+    private let _deckOpacity: Double
 
     // MARK: - Body
 
@@ -126,10 +126,10 @@ struct CardBackView: View {
                     RadialGradient(
                         colors: isLight
                             ? [AppColors.accentTertiary.opacity(0.06), Color.clear]
-                            : [AppColors.accentSecondary.opacity(0.15),  Color.clear],
-                        center:      UnitPoint(x: 0.7, y: 0.8),
+                            : [AppColors.accentSecondary.opacity(0.15), Color.clear],
+                        center: UnitPoint(x: 0.7, y: 0.8),
                         startRadius: 0,
-                        endRadius:   180
+                        endRadius: 180
                     )
                 )
 
@@ -209,7 +209,7 @@ struct CardBackView: View {
     }
 
     private var heading: some View {
-        let titleColor:    Color = isLight ? AppColors.textBody : AppColors.textPrimary
+        let titleColor: Color = isLight ? AppColors.textBody : AppColors.textPrimary
         let subtitleColor: Color = isLight ? AppColors.textBody.opacity(0.50) : AppColors.textSecondary
 
         return VStack(spacing: AppSpacing.xs) {
@@ -279,17 +279,17 @@ struct CardBackView: View {
             ? AnyShapeStyle(LinearGradient(
                 colors: [
                     Color(red: 1.00, green: 0.99, blue: 1.00),
-                    Color(red: 0.98, green: 0.97, blue: 0.99),
+                    Color(red: 0.98, green: 0.97, blue: 0.99)
                 ],
                 startPoint: .topLeading,
-                endPoint:   .bottomTrailing))
+                endPoint: .bottomTrailing))
             : AnyShapeStyle(LinearGradient(
                 colors: [
                     Color(red: 0.051, green: 0.043, blue: 0.122),
-                    Color(red: 0.031, green: 0.024, blue: 0.094),
+                    Color(red: 0.031, green: 0.024, blue: 0.094)
                 ],
                 startPoint: .topLeading,
-                endPoint:   .bottomTrailing))
+                endPoint: .bottomTrailing))
     }
 }
 
@@ -299,17 +299,17 @@ struct CardBackView: View {
     ZStack {
         AppColors.pageBackground.ignoresSafeArea()
         CardBackView(
-            cardSize:            CGSize(width: 340, height: 420),
-            cornerRadius:        20,
-            selectedPill:        nil,
-            selectedScale:       1.0,
+            cardSize: CGSize(width: 340, height: 420),
+            cornerRadius: 20,
+            selectedPill: nil,
+            selectedScale: 1.0,
             selectedBorderWidth: 1.5,
-            unselectedVisible:   true,
-            revealed:            true,
-            isLight:             false,
-            onSelect:            { _ in },
-            questionVisible:     true,
-            pillsVisible:        true
+            unselectedVisible: true,
+            revealed: true,
+            isLight: false,
+            onSelect: { _ in },
+            questionVisible: true,
+            pillsVisible: true
         )
     }
     .preferredColorScheme(.dark)
@@ -322,13 +322,13 @@ struct CardBackView: View {
             CardBackView(offsetX: -60, offsetY: 8,
                          rotation: -12, scale: 0.95, opacity: 0.70)
             CardBackView(offsetX: -30, offsetY: 4,
-                         rotation: -6,  scale: 0.97, opacity: 0.80)
-            CardBackView(offsetX:   0, offsetY: 0,
-                         rotation:  0,  scale: 0.98, opacity: 1.00)
-            CardBackView(offsetX:  30, offsetY: 4,
-                         rotation:  6,  scale: 0.97, opacity: 0.80)
-            CardBackView(offsetX:  60, offsetY: 8,
-                         rotation:  12, scale: 0.95, opacity: 0.70)
+                         rotation: -6, scale: 0.97, opacity: 0.80)
+            CardBackView(offsetX: 0, offsetY: 0,
+                         rotation: 0, scale: 0.98, opacity: 1.00)
+            CardBackView(offsetX: 30, offsetY: 4,
+                         rotation: 6, scale: 0.97, opacity: 0.80)
+            CardBackView(offsetX: 60, offsetY: 8,
+                         rotation: 12, scale: 0.95, opacity: 0.70)
         }
     }
     .preferredColorScheme(.dark)
@@ -340,11 +340,11 @@ struct CardBackView: View {
         ZStack {
             CardBackView(offsetY: 12, scale: 0.930,
                          opacity: 0.42, isLight: true)
-            CardBackView(offsetY:  8, scale: 0.960,
+            CardBackView(offsetY: 8, scale: 0.960,
                          opacity: 0.56, isLight: true)
-            CardBackView(offsetY:  5, scale: 0.975,
+            CardBackView(offsetY: 5, scale: 0.975,
                          opacity: 0.68, isLight: true)
-            CardBackView(offsetY:  2, scale: 0.985,
+            CardBackView(offsetY: 2, scale: 0.985,
                          opacity: 0.80, isLight: true)
         }
     }

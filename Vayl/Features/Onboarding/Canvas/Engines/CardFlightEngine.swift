@@ -10,7 +10,7 @@ private let logger = Logger(
 @MainActor
 final class CardFlightEngine {
     weak var director: VaylDirector?
-    
+
     // Slot pool — tracks which landing zones are still available this round.
     // Starts full; shrinks as cards are dealt; auto-resets when exhausted.
     private var availableSlotIDs: [Int] = AppLayout.obCardLandingSlots.map(\.id)
@@ -41,40 +41,40 @@ final class CardFlightEngine {
 
     /// Flies a single card via SpriteKit and returns its rested position and rotation.
     func sailCard(
-        cardID:       String,
-        image:        UIImage,
-        from:         CGPoint,
-        to:           CGPoint,
-        sceneSize:    CGSize,
-        duration:     TimeInterval = 0.92,
+        cardID: String,
+        image: UIImage,
+        from: CGPoint,
+        to: CGPoint,
+        sceneSize: CGSize,
+        duration: TimeInterval = 0.92,
         initialAngle: CGFloat      = -0.24,
-        finalAngle:   CGFloat      = 0.0314,
-        zPosition:    CGFloat      = 0
+        finalAngle: CGFloat      = 0.0314,
+        zPosition: CGFloat      = 0
     ) async -> (CGPoint, CGFloat) {
         guard let director = director else { return (to, finalAngle) }
-        
+
         if director.cardFlightScene.size == .zero || director.cardFlightScene.size != sceneSize {
             director.cardFlightScene.size = sceneSize
         }
 
         let skOrigin = CGPoint(x: from.x, y: sceneSize.height - from.y)
-        let skDest   = CGPoint(x: to.x,   y: sceneSize.height - to.y)
+        let skDest   = CGPoint(x: to.x, y: sceneSize.height - to.y)
 
         return await withCheckedContinuation { continuation in
-            director.cardFlightScene.onCardRested[cardID] = { [weak director] cbID, pos, rot in
+            director.cardFlightScene.onCardRested[cardID] = { [weak director] _, pos, rot in
                 guard let _ = director else { return }
                 let swiftUIPos = CGPoint(x: pos.x, y: sceneSize.height - pos.y)
                 continuation.resume(returning: (swiftUIPos, -rot * (180 / .pi)))
             }
             director.cardFlightScene.dealCard(
-                id:           cardID,
-                image:        image,
-                from:         skOrigin,
-                to:           skDest,
+                id: cardID,
+                image: image,
+                from: skOrigin,
+                to: skDest,
                 initialAngle: initialAngle,
-                finalAngle:   finalAngle,
-                zPosition:    zPosition,
-                duration:     duration
+                finalAngle: finalAngle,
+                zPosition: zPosition,
+                duration: duration
             )
         }
     }
@@ -87,7 +87,7 @@ final class CardFlightEngine {
         scale: CGFloat
     ) async -> (offset: CGSize, angle: Double, flightID: String)? {
         guard let director = director else { return nil }
-        
+
         let cardW = AppLayout.obTableCardWidth(in: screenSize.width)  * AppLayout.obTableCardCinematicScale
         let cardH = AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale
 
@@ -129,18 +129,18 @@ final class CardFlightEngine {
         let skFinalAngle   = CGFloat(-slot.angleDeg  * .pi / 180)
 
         let (restPos, restRot) = await sailCard(
-            cardID:       flightID,
-            image:        cardImage,
-            from:         origin,
-            to:           slot.position,
-            sceneSize:    screenSize,
-            duration:     0.45,
+            cardID: flightID,
+            image: cardImage,
+            from: origin,
+            to: slot.position,
+            sceneSize: screenSize,
+            duration: 0.45,
             initialAngle: skInitialAngle,
-            finalAngle:   skFinalAngle
+            finalAngle: skFinalAngle
         )
 
         let offset = CGSize(
-            width:  restPos.x - screenSize.width  / 2,
+            width: restPos.x - screenSize.width  / 2,
             height: restPos.y - screenSize.height / 2
         )
         return (offset, Double(restRot), flightID)

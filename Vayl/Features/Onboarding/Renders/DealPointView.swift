@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 5/9/26.
 //
 
-
 //
 //  DealPointView.swift
 //  Vayl
@@ -19,7 +18,7 @@ import SwiftUI
 /// Positioned at tableHorizonYFrac. Intensity driven by VaylDirector.
 /// This view never responds to gestures and never holds state.
 struct DealPointView: View {
-    let intensity:  Double
+    let intensity: Double
     let screenSize: CGSize
 
     var body: some View {
@@ -31,7 +30,7 @@ struct DealPointView: View {
         Circle()
             .fill(AppColors.spectrumPurple.opacity(0.40 * intensity))
             .frame(
-                width:  AppLayout.dealPointRadius * 2,
+                width: AppLayout.dealPointRadius * 2,
                 height: AppLayout.dealPointRadius * 2
             )
             .position(

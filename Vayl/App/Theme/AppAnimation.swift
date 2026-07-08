@@ -952,10 +952,10 @@ internal enum AppAnimation {
     /// Staple 1 scale amplitudes. Quiet pair obeys quietMaxScaleDelta; Loud pair is the OB
     /// phaseHandoff (promoted from OnboardingCanvasView literals — same values, now tokens).
     /// Loud duration = AppAnimation.slow (the OB step-transition token), unchanged.
-    static let depthQuietScaleIn:  CGFloat = 1.01
+    static let depthQuietScaleIn: CGFloat = 1.01
     static let depthQuietScaleOut: CGFloat = 0.985
-    static let depthLoudScaleIn:   CGFloat = 1.02
-    static let depthLoudScaleOut:  CGFloat = 0.97
+    static let depthLoudScaleIn: CGFloat = 1.02
+    static let depthLoudScaleOut: CGFloat = 0.97
 
     /// 0.50s ease-out — Staple 2, Quiet: a .vaylSheet rising, settling, and dismissing.
     /// One confident glide home, zero bounce. Device-feel-gated to easeOut/0.50 (Bryan's
@@ -1004,7 +1004,7 @@ internal enum AppAnimation {
     /// the border arcs never fill. Pair with .sensoryFeedback(.impact(.medium)) at the call
     /// site — the haptic is half the refusal.
     /// Reduce motion: no shiver; the haptic still fires (haptics are not motion).
-    static let refusalDuration:  Double  = 0.28
+    static let refusalDuration: Double  = 0.28
     static let refusalAmplitude: CGFloat = 3
 
     /// 0.10s — Commit dismissal: a task-completing sheet's exit launches this long after the
@@ -1018,7 +1018,7 @@ internal enum AppAnimation {
     /// scaling by more than this delta or travelling further than this is a violation; reach
     /// for a Loud token only inside the OB canvas or .vaylCover contents.
     static let quietMaxScaleDelta: Double  = 0.02
-    static let quietMaxTravel:     CGFloat = 16
+    static let quietMaxTravel: CGFloat = 16
 
     // MARK: — OB Ceremony Tokens (tokenized from raw call-site values, 2026-07-03)
     // Values moved VERBATIM from OB files during the motion-token migration — the token
@@ -1073,7 +1073,7 @@ internal enum AppAnimation {
     //   these tokens must NEVER appear outside BuildDeckPhase / the OB canvas.
 
     /// Spring pair — the stage JOLT on a case strike: hard kick in (0.12/0.5), settle (0.32/0.7).
-    static let strikeJolt:       Animation = .spring(response: 0.12, dampingFraction: 0.5)
+    static let strikeJolt: Animation = .spring(response: 0.12, dampingFraction: 0.5)
     static let strikeJoltSettle: Animation = .spring(response: 0.32, dampingFraction: 0.7)
 
     /// Spring — the case yawing back to rest after a directional strike recoil.
@@ -1085,7 +1085,7 @@ internal enum AppAnimation {
 
     /// Spring pair — the stage jolt on the SHATTER (third strike): heavier than a strike
     /// (0.18/0.6 in, 0.4/0.7 settle) — the climax lands harder than its wind-up.
-    static let shatterJolt:       Animation = .spring(response: 0.18, dampingFraction: 0.6)
+    static let shatterJolt: Animation = .spring(response: 0.18, dampingFraction: 0.6)
     static let shatterJoltSettle: Animation = .spring(response: 0.4, dampingFraction: 0.7)
 
     /// 0.5s ease-out — the white flash decaying after the case bursts.
@@ -1118,7 +1118,7 @@ internal enum AppAnimation {
     /// "the table works"). Raw Doubles per the ambient-duration convention: build at the
     /// call site with .easeInOut(duration:) + .repeatForever(autoreverses: true).
     /// Reduce motion: the oscillation never starts (steady mid glow, still lines).
-    static let forgeRimOscillation:  Double = 0.9
+    static let forgeRimOscillation: Double = 0.9
     static let forgeSwayOscillation: Double = 1.3
 
     // — Living Case tap ceremony (Beat 5 rework, 2026-07-04) + flower-peel reveal.
@@ -1135,7 +1135,7 @@ internal enum AppAnimation {
     /// A card back erupting through the lattice / the lattice resealing over it.
     /// The module's per-tap erupt/hold/seal spans (MetallicCaseView tunables) are
     /// timed against these two curves — re-tune both together.
-    static let cardErupt:  Animation = .easeOut(duration: 0.32)
+    static let cardErupt: Animation = .easeOut(duration: 0.32)
     static let cardReseal: Animation = .easeInOut(duration: 0.42)
 
     /// The flower peel — the case peeling away from the deck, centre cells first.
@@ -1152,17 +1152,17 @@ internal enum AppAnimation {
     /// Beat 6 reveal sequence — breath, name, fan, flip wave, CTA.
     /// The breath is the silence beat: the freed deck inhales/exhales once before
     /// any UI names it. Cutting it turns the ceremony into a UI transition.
-    static let deckBreathIn:  Animation = .easeInOut(duration: 0.68)
+    static let deckBreathIn: Animation = .easeInOut(duration: 0.68)
     static let deckBreathOut: Animation = .easeInOut(duration: 0.52)
-    static let deckNameRise:  Animation = .easeOut(duration: 0.58)
-    static let deckFanBloom:  Animation = .easeOut(duration: 0.70)
-    static let deckFlipWave:  Animation = .easeInOut(duration: 0.32)   // per card
+    static let deckNameRise: Animation = .easeOut(duration: 0.58)
+    static let deckFanBloom: Animation = .easeOut(duration: 0.70)
+    static let deckFlipWave: Animation = .easeInOut(duration: 0.32)   // per card
     static let deckFlipStagger: Double  = 0.085                        // seconds between flips
-    static let deckCtaFade:   Animation = .easeOut(duration: 0.36)
+    static let deckCtaFade: Animation = .easeOut(duration: 0.36)
 
     /// Session player idle-dim — the room falls dark slowly (1.7s) but wakes fast (0.4s)
     /// on any touch, so the couple never waits on the room to come back.
-    static let sessionIdleDimIn:  Animation = .easeInOut(duration: 1.7)
+    static let sessionIdleDimIn: Animation = .easeInOut(duration: 1.7)
     static let sessionIdleDimOut: Animation = .easeInOut(duration: 0.4)
 
     /// 1.2s ease-in-out — SessionAtmosphere's whose-turn tint crossfading in/out on
@@ -1174,7 +1174,7 @@ internal enum AppAnimation {
     /// Session player dive-commit — the dealt card blooms past scale 1 and fades as the
     /// next prompt takes over. Matches SessionPlayerView.diveSeconds (0.82s); kept as a
     /// separate token since the raw Double also drives the mid-dive Task.sleep timing.
-    static let sessionDiveIn:  Animation = .easeIn(duration: 0.82)
+    static let sessionDiveIn: Animation = .easeIn(duration: 0.82)
     static let sessionDiveOut: Animation = .easeOut(duration: 0.82)
 }
 

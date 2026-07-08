@@ -12,13 +12,13 @@ enum ThreeMonteState: Equatable {
 final class ThreeCardFanController {
     var state: ThreeMonteState = .idle
 
-    var offsets:    [CGSize] = [.zero, .zero, .zero]
-    var angles:     [Double] = [0, 0, 0]
-    var scales:     [Double] = [1, 1, 1]
-    var alphas:     [Double] = [1, 1, 1]
-    var showFace:   [Bool]   = [false, false, false]   // false = back, true = face — drives the 3D turn in the view
+    var offsets: [CGSize] = [.zero, .zero, .zero]
+    var angles: [Double] = [0, 0, 0]
+    var scales: [Double] = [1, 1, 1]
+    var alphas: [Double] = [1, 1, 1]
+    var showFace: [Bool]   = [false, false, false]   // false = back, true = face — drives the 3D turn in the view
     var elevations: [Double] = [0, 0, 0]
-    var zIndices:   [Double] = [0, 1, 2]   // monotonic rightward fan — each card laps the one to its left; rightmost on top
+    var zIndices: [Double] = [0, 1, 2]   // monotonic rightward fan — each card laps the one to its left; rightmost on top
     var confirmHapticTrigger = false
     var shuffleHapticTrigger = false
 
@@ -33,7 +33,7 @@ final class ThreeCardFanController {
     /// Slot index → intensity (ordered L→R).
     let intensities = CandleIntensity.ordered
 
-    private var pocketTask:   Task<Void, Never>?
+    private var pocketTask: Task<Void, Never>?
     private var sequenceTask: Task<Void, Never>?
 
     // MARK: - Place Fan Face Down
@@ -79,7 +79,7 @@ final class ThreeCardFanController {
                 return
             }
 
-            let destX:    CGFloat = screenSize.width / 2 + fan[slot].offset.width
+            let destX: CGFloat = screenSize.width / 2 + fan[slot].offset.width
             let destYAbs: CGFloat = restYAbs + fan[slot].offset.height
             let destSK            = CGPoint(x: destX, y: screenSize.height - destYAbs)
 
@@ -90,7 +90,7 @@ final class ThreeCardFanController {
             // opposite way from the SwiftUI VaylCardBack and the card visibly
             // snaps ~2× the fan angle at the sprite→SwiftUI handoff.
             let finalAngle: CGFloat = CGFloat(-fan[slot].angle * .pi / 180)
-            let zPos:       CGFloat = CGFloat(zIndices[slot])
+            let zPos: CGFloat = CGFloat(zIndices[slot])
 
             await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
                 var fired = false
@@ -98,14 +98,14 @@ final class ThreeCardFanController {
                     guard !fired else { return }; fired = true; cont.resume()
                 }
                 flightScene.dealCard(
-                    id:           "monte-\(slot)",
-                    image:        backImage,
-                    from:         dealerSK,
-                    to:           destSK,
+                    id: "monte-\(slot)",
+                    image: backImage,
+                    from: dealerSK,
+                    to: destSK,
                     initialAngle: -0.24,
-                    finalAngle:   finalAngle,
-                    zPosition:    zPos,
-                    duration:     0.45
+                    finalAngle: finalAngle,
+                    zPosition: zPos,
+                    duration: 0.45
                 )
             }
 

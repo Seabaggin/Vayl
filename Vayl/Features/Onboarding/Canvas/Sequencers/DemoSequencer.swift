@@ -18,12 +18,12 @@ enum DemoStage: Equatable {
 /// One spectrum mote shed from the sentence band at seal. Internal so DemoPhase's
 /// effects Canvas can render `director.demo.dissolveSeeds`.
 struct DemoDissolveSeed {
-    let ox, oy:  Double    // spawn offset from card center — across the sentence band
-    let vx, vy:  Double    // drift (rightward + upward bias, toward the corner deck)
-    let size:    Double
+    let ox, oy: Double    // spawn offset from card center — across the sentence band
+    let vx, vy: Double    // drift (rightward + upward bias, toward the corner deck)
+    let size: Double
     let opacity: Double
-    let color:   Color
-    let tw:      Double    // twinkle phase
+    let color: Color
+    let tw: Double    // twinkle phase
 }
 
 /// Owns the entire Demo phase orchestration: the two intro lines, deal → flip, the
@@ -50,7 +50,7 @@ final class DemoSequencer {
 
     // MARK: — Bridges to View-only state (set at start; relayed back by DemoPhase)
 
-    @ObservationIgnored private var screenSize:   CGSize  = .zero
+    @ObservationIgnored private var screenSize: CGSize  = .zero
     @ObservationIgnored private var reduceMotion: Bool    = false
     @ObservationIgnored private var displayScale: CGFloat = 2.0
 
@@ -62,38 +62,38 @@ final class DemoSequencer {
     @ObservationIgnored private let maxNounLength = 18   // a phrase, not a poem
 
     // MARK: — Tasks
-    @ObservationIgnored var sceneTask: Task<Void, Never>? = nil
+    @ObservationIgnored var sceneTask: Task<Void, Never>?
 
     // MARK: — Card animation (mirrors NameSequencer)
-    var stage:           DemoStage = .intro
-    var cardOffset:      CGSize    = .zero
-    var cardAngle:       Double    = 0
-    var cardAlpha:       Double    = 0
-    var flipScaleX:      Double    = 1.0
-    var showFace:        Bool      = false
-    var cardScale:       Double    = 1.0
-    var cardBlur:        Double    = 0
+    var stage: DemoStage = .intro
+    var cardOffset: CGSize    = .zero
+    var cardAngle: Double    = 0
+    var cardAlpha: Double    = 0
+    var flipScaleX: Double    = 1.0
+    var showFace: Bool      = false
+    var cardScale: Double    = 1.0
+    var cardBlur: Double    = 0
 
     // MARK: — Lift / compose
-    var cardLifted:      Bool      = false
-    var waitingForLift:  Bool      = false
-    var verb:            DemoVerb  = .want
-    var noun:            String    = ""
-    var nounPulse:       CGFloat   = 0
-    var borderPulse:     Bool      = false
-    var sentenceMelt:    Double    = 0   // 0 hidden → 1 "I want" settled onto the card
+    var cardLifted: Bool      = false
+    var waitingForLift: Bool      = false
+    var verb: DemoVerb  = .want
+    var noun: String    = ""
+    var nounPulse: CGFloat   = 0
+    var borderPulse: Bool      = false
+    var sentenceMelt: Double    = 0   // 0 hidden → 1 "I want" settled onto the card
 
     // MARK: — Seal
-    var waitingForSeal:   Bool   = false
-    var hasEngaged:       Bool   = false   // sticky: true once they've typed anything
-    var sealProgress:     Double = 0       // 0 composing → 1 fused
+    var waitingForSeal: Bool   = false
+    var hasEngaged: Bool   = false   // sticky: true once they've typed anything
+    var sealProgress: Double = 0       // 0 composing → 1 fused
     var dissolveProgress: Double = 0       // 0 → 1 particle burst
-    var dissolveSeeds:    [DemoDissolveSeed] = []
-    var sealBloom:        Double = 0       // 0 → 1 spectrum bloom flash at seal
+    var dissolveSeeds: [DemoDissolveSeed] = []
+    var sealBloom: Double = 0       // 0 → 1 spectrum bloom flash at seal
 
     // MARK: — Effects
     var impactRingProgress: Double = 0
-    var flipBurstProgress:  Double = 0
+    var flipBurstProgress: Double = 0
 
     @ObservationIgnored private var impactSoft   = UIImpactFeedbackGenerator(style: .soft)
     @ObservationIgnored private var impactHeavy  = UIImpactFeedbackGenerator(style: .heavy)
@@ -256,7 +256,7 @@ final class DemoSequencer {
     private func centerCard() async {
         // FEEL-GATE: Demo wants a slower, more deliberate glide than the shared cardCenter token.
         withAnimation(AppAnimation.demoCenterDeliberate) {
-            cardOffset = CGSize(width:  screenSize.width  * 0.50 - screenSize.width  / 2,
+            cardOffset = CGSize(width: screenSize.width  * 0.50 - screenSize.width  / 2,
                                 height: screenSize.height * 0.55 - screenSize.height / 2)
             cardAngle = 0
         }
@@ -381,7 +381,7 @@ final class DemoSequencer {
         let cornerY = AppLayout.cornerDeckTop + AppLayout.cornerDeckHeight / 2
         withAnimation(AppAnimation.cardPocket.reduceMotionSafe) {
             cardLifted = false
-            cardOffset = CGSize(width:  cornerX - screenSize.width  / 2,
+            cardOffset = CGSize(width: cornerX - screenSize.width  / 2,
                                 height: cornerY - screenSize.height / 2)
             cardScale  = AppLayout.cornerDeckWidth / cardWidth
         }
@@ -396,14 +396,14 @@ final class DemoSequencer {
         let w = Double(cardW), h = Double(cardH)
         return (0..<48).map { _ in
             DemoDissolveSeed(
-                ox:      Double.random(in: -w * 0.36 ... w * 0.36),    // across the words
-                oy:      Double.random(in: -h * 0.12 ... h * 0.12),
-                vx:      Double.random(in: -w * 0.18 ... w * 0.55),    // rightward bias → corner deck
-                vy:      Double.random(in: -h * 0.6  ... -h * 0.1),    // upward
-                size:    Double.random(in: 1.2 ... 4.2),
+                ox: Double.random(in: -w * 0.36 ... w * 0.36),    // across the words
+                oy: Double.random(in: -h * 0.12 ... h * 0.12),
+                vx: Double.random(in: -w * 0.18 ... w * 0.55),    // rightward bias → corner deck
+                vy: Double.random(in: -h * 0.6  ... -h * 0.1),    // upward
+                size: Double.random(in: 1.2 ... 4.2),
                 opacity: Double.random(in: 0.5 ... 0.95),
-                color:   palette[Int.random(in: 0..<palette.count)],
-                tw:      Double.random(in: 0 ..< (.pi * 2))
+                color: palette[Int.random(in: 0..<palette.count)],
+                tw: Double.random(in: 0 ..< (.pi * 2))
             )
         }
     }

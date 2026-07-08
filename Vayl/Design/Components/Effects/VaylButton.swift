@@ -35,7 +35,7 @@ struct VaylButton: View {
     // guarantee. pressDownTime drives the glow scheduling delay — any
     // imprecision here fires the glow at the wrong moment.
     @State private var pressDownTime: CFTimeInterval = 0
-    @State private var glowTask: Task<Void, Never>?  = nil
+    @State private var glowTask: Task<Void, Never>?
 
     // MARK: - Haptics
     // @State — UIImpactFeedbackGenerator is a reference type.
@@ -130,7 +130,7 @@ struct VaylButton: View {
                         // Previous values (w * 0.70, h * 2.0) covered ~70% of
                         // screen width and fired the action on large thumb drags.
                         let horizontalSlop: CGFloat = 20
-                        let verticalSlop:   CGFloat = 20
+                        let verticalSlop: CGFloat = 20
                         let inside =
                             abs(value.translation.width)  < (w / 2) + horizontalSlop
                          && abs(value.translation.height) < (h / 2) + verticalSlop
@@ -138,7 +138,7 @@ struct VaylButton: View {
                         inside ? onPressUp() : onPressCancel()
                     }
             )
-            .onChange(of: isLoading)  { _, loading  in if loading  { resetAnimationState() } }
+            .onChange(of: isLoading) { _, loading  in if loading { resetAnimationState() } }
             .onChange(of: isDisabled) { _, disabled in if disabled { resetAnimationState() } }
             .onAppear {
                 softHaptic.prepare()

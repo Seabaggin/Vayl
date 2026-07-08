@@ -41,7 +41,7 @@ struct DesireConstellationView: View {
     let edges: [ConstellationLayout.Edge]
     let variant: CeremonyVariant
     let mode: Mode
-    var onTap: ((String) -> Void)? = nil
+    var onTap: ((String) -> Void)?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var revealed: Set<Int> = []

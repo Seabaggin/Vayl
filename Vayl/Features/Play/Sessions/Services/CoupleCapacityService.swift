@@ -75,9 +75,9 @@ struct SupabaseCoupleCapacityService: CoupleCapacityService {
     }
 
     private struct CapacityRow: Decodable {
-        let profileId:     UUID
+        let profileId: UUID
         let capacityScore: Double
-        let updatedAt:     Date
+        let updatedAt: Date
         enum CodingKeys: String, CodingKey {
             case profileId     = "profile_id"
             case capacityScore = "capacity_score"

@@ -5,7 +5,7 @@ import UIKit
 // MARK: - ScreenshotProtectionModifier
 struct ScreenshotProtectionModifier: ViewModifier {
     @State private var isObscured = false
-    
+
     func body(content: Content) -> some View {
         content
             .overlay {
@@ -39,7 +39,7 @@ struct ScreenshotProtectionModifier: ViewModifier {
                 checkCaptureStatus()
             }
     }
-    
+
     private func checkCaptureStatus() {
         guard let windowScene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
@@ -49,7 +49,7 @@ struct ScreenshotProtectionModifier: ViewModifier {
                 .first else { return }
         isObscured = windowScene.screen.isCaptured
     }
-    
+
     private func flashObscure() {
         isObscured = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {

@@ -18,8 +18,8 @@ struct OnboardingData {
     // the typed noun are kept raw; the derived EmotionalRegister is written into
     // `emotionalRegister` below (reviving the cut CompassPhase Q3 signal). nil
     // until the user reaches and seals the demo card.
-    var demoVerb: String? = nil   // DemoVerb.rawValue
-    var demoNoun: String? = nil
+    var demoVerb: String?   // DemoVerb.rawValue
+    var demoNoun: String?
 
     // ── NamePhase ────────────────────────────────────────────────────
     var displayName: String = ""
@@ -29,10 +29,10 @@ struct OnboardingData {
     // nil means the user has not yet reached this phase.
     // genderA / pronounsA set during GenderPhase (single spin, all modes).
     // genderB / pronounsB remain nil here — populated via pairing flow.
-    var genderA:   String? = nil
-    var pronounsA: String? = nil
-    var genderB:   String? = nil   // nil for solo — partner self-provides via pairing
-    var pronounsB: String? = nil   // nil for solo — partner self-provides via pairing
+    var genderA: String?
+    var pronounsA: String?
+    var genderB: String?   // nil for solo — partner self-provides via pairing
+    var pronounsB: String?   // nil for solo — partner self-provides via pairing
 
     // ── ModeSelectPhase ──────────────────────────────────────────────
     // together: both partners talked, doing this as a couple
@@ -47,10 +47,10 @@ struct OnboardingData {
     // register derived from it. ContextPhase NEVER writes emotionalRegister —
     // that field belongs to CompassPhase Q3 exclusively.
     // nil means the user has not yet reached this phase.
-    var relationshipContext: String? = nil   // RelationshipContext.rawValue
-    var situationalRegister: String? = nil   // SituationalRegister.rawValue
-    var ageRange: AgeRange? = nil            // set in the relationalContext phase (later segment)
-    var relationshipTenure: RelationshipTenure? = nil  // together mode only; nil for solo
+    var relationshipContext: String?   // RelationshipContext.rawValue
+    var situationalRegister: String?   // SituationalRegister.rawValue
+    var ageRange: AgeRange?            // set in the relationalContext phase (later segment)
+    var relationshipTenure: RelationshipTenure?  // together mode only; nil for solo
 
     // ── CompassPhase (CUT from OB flow) ──────────────────────────────
     // CompassPhase was removed from onboarding: Context already infers register,
@@ -59,11 +59,11 @@ struct OnboardingData {
     // motivation is deferred to in-app behavior. ContextPhase is now the sole OB
     // calibration. These fields are RETAINED (likely reused by the DesireMap) but
     // are NOT written during onboarding. Do NOT re-add a Compass-style OB ask.
-    var agency: String?            = nil   // AgencySignal.rawValue
-    var motivation: String?        = nil   // MotivationShape.rawValue
+    var agency: String?   // AgencySignal.rawValue
+    var motivation: String?   // MotivationShape.rawValue
     // EmotionalRegister.rawValue. Formerly Compass Q3 (cut); now written by the
     // DemoPhase snapshot card via DemoDictionary.register(verb:noun:).
-    var emotionalRegister: String? = nil
+    var emotionalRegister: String?
     var compassNotes: [String]     = []
 
     // ── CuriosityPhase ───────────────────────────────────────────────
@@ -81,7 +81,7 @@ struct OnboardingData {
 
     // Set by OnboardingStore.commit() on successful UserProfile write.
     // nil until OB completes. Non-nil presence is the completion signal.
-    var onboardingCompletedAt: Date? = nil
+    var onboardingCompletedAt: Date?
 
     // ── Derived — never stored independently ─────────────────────────
 

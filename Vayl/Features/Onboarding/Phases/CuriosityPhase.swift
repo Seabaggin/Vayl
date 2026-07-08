@@ -18,14 +18,14 @@ import SwiftUI
 ///   • The departing card is rendered as a separate overlay so it leaves as itself.
 struct CuriosityPhase: View {
 
-    let director:   VaylDirector
+    let director: VaylDirector
     let screenSize: CGSize
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Drives the staggered deal animation. Flips true to animate cards in,
     /// resets to false before each new deal so cards return off-screen first.
-    @State private var allCardsDealt:       Bool = false
+    @State private var allCardsDealt: Bool = false
     /// Toggled on commit so .sensoryFeedback can fire .impact on each card exit.
     @State private var commitHapticTrigger: Bool = false
     /// Torque factor from where the finger grabbed the card: +1 top edge,
@@ -38,13 +38,13 @@ struct CuriosityPhase: View {
     // While the deck sits presented in the user's hand, it tugs upward on the
     // taught cadence — same cue as every lifted card in the OB.
     @State private var summaryHintOffset: CGFloat            = 0
-    @State private var summaryHintTask:   Task<Void, Never>? = nil
+    @State private var summaryHintTask: Task<Void, Never>?
 
     // Live hand-off follow (Phase 4): the presented deck tracks the finger as it's handed up
     // (shared HandBackFollow). View-local; the director owns curiositySummaryOffset, so this
     // resolves to .zero inside the pocket flight on handoff.
-    @State private var summaryDrag:         CGSize = .zero
-    @State private var summaryArmed:        Bool   = false
+    @State private var summaryDrag: CGSize = .zero
+    @State private var summaryArmed: Bool   = false
     @State private var summarySelectionGen = UISelectionFeedbackGenerator()
 
     // MARK: - Layout
@@ -54,7 +54,7 @@ struct CuriosityPhase: View {
     /// exactly at the commit point.
     private let commitThreshold: CGFloat = 95
 
-    private var cardWidth:  CGFloat { AppLayout.obTableCardWidth(in: screenSize.width) * AppLayout.obTableCardCinematicScale }
+    private var cardWidth: CGFloat { AppLayout.obTableCardWidth(in: screenSize.width) * AppLayout.obTableCardCinematicScale }
     private var cardHeight: CGFloat { AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale }
 
     // MARK: - Layout (continued)
@@ -72,20 +72,20 @@ struct CuriosityPhase: View {
 
     /// Visible thickness cap. Cards deeper than this share the deepest layer's
     /// offset, so a 10-card pile reads as a ~4-thick deck, never a sprawl.
-    private static let stackDepthCap:    Int     = 4
+    private static let stackDepthCap: Int     = 4
     /// Per-layer lateral step (one direction) — the deck's side bevel.
-    private static let stackStepX:       CGFloat = 1.2
+    private static let stackStepX: CGFloat = 1.2
     /// Per-layer vertical step (one direction) — the deck's bottom bevel.
-    private static let stackStepY:       CGFloat = 2.0
+    private static let stackStepY: CGFloat = 2.0
     /// Per-layer opacity falloff for the beneath cards, floored so the bevel
     /// reads as depth without turning murky.
     private static let stackOpacityStep: Double  = 0.045
-    private static let stackMinOpacity:  Double  = 0.85
+    private static let stackMinOpacity: Double  = 0.85
     /// Resting tilt of the squared deck. 0 = machine-flat; a whisper (≈0.4)
     /// reads as a hand-squared deck. Start flat.
-    private static let stackRestTilt:    Double  = 0.0
+    private static let stackRestTilt: Double  = 0.0
     /// Inter-card deal delay — a confident cascade, not a lazy rain (was 0.06).
-    private static let dealStagger:      Double  = 0.045
+    private static let dealStagger: Double  = 0.045
     /// Incoming tilt as each card flies off the dealer's deck; settles to the
     /// resting tilt on landing. 0 = straight drop.
     private static let dealIncomingTilt: Double  = -7.0
@@ -203,20 +203,20 @@ struct CuriosityPhase: View {
         // Resting squared deck: every card offset the SAME direction by a small
         // step, capped after `stackDepthCap` layers so a 10-card pile reads as a
         // tight ~4-thick deck (top card centered), not a sprawling alternating pile.
-        let layer:       CGFloat = CGFloat(min(depth, Self.stackDepthCap))
-        let restX:       CGFloat = layer * Self.stackStepX
-        let restY:       CGFloat = layer * Self.stackStepY
-        let restRotate:  Double  = Self.stackRestTilt
+        let layer: CGFloat = CGFloat(min(depth, Self.stackDepthCap))
+        let restX: CGFloat = layer * Self.stackStepX
+        let restY: CGFloat = layer * Self.stackStepY
+        let restRotate: Double  = Self.stackRestTilt
         let cardOpacity: Double  = max(Self.stackMinOpacity, 1.0 - Double(layer) * Self.stackOpacityStep)
         // Bottom cards arrive first so they end up under the later arrivals.
-        let dealDelay:   Double  = Double(pileCount - 1 - depth) * Self.dealStagger
+        let dealDelay: Double  = Double(pileCount - 1 - depth) * Self.dealStagger
 
         // Single confident deal: before landing, every card sits at ONE origin
         // (centered, above the table) and converges into the squared deck — a
         // dealt cascade, not 10 columns of rain. After landing, the top card
         // follows the finger; beneath cards hold the squared rest.
-        let offsetX:  CGFloat = allCardsDealt ? (isTop ? drag.width  : restX) : 0
-        let offsetY:  CGFloat = allCardsDealt ? (isTop ? drag.height : restY) : offScreenY
+        let offsetX: CGFloat = allCardsDealt ? (isTop ? drag.width  : restX) : 0
+        let offsetY: CGFloat = allCardsDealt ? (isTop ? drag.height : restY) : offScreenY
         // Incoming tilt settles to the resting tilt as the card lands (cards
         // flicked off the dealer's deck), then the top card tilts with the drag.
         let rotation: Double  = allCardsDealt
@@ -261,7 +261,7 @@ struct CuriosityPhase: View {
             // Needle pinned at full tilt in the throw direction — the card leaves
             // showing the verdict it was committed with.
             VaylCardFace(content: .curiosity(
-                category:   flying.text,
+                category: flying.text,
                 deflection: off.width >= 0 ? 1.0 : -1.0
             ))
                 .frame(width: cardWidth, height: cardHeight)

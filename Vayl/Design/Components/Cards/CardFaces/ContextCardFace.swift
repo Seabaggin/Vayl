@@ -26,15 +26,15 @@ import SwiftUI
 
 struct ContextCardFace: View {
 
-    let number:   String
-    let title:    String
+    let number: String
+    let title: String
     let subtitle: String
-    let detail:   String
-    var isFront:  Bool    = true
+    let detail: String
+    var isFront: Bool    = true
     var confirmed: Bool   = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var turnStart:   Date = .distantPast
+    @State private var turnStart: Date = .distantPast
     @State private var ribbonStart: Date = .distantPast
 
     var body: some View {
@@ -103,9 +103,9 @@ private func easeOutBack(_ t: CGFloat) -> CGFloat {
 /// state (no turn; ribbon present iff confirmed).
 private struct BookObject: View {
 
-    let live:        Bool
-    let confirmed:   Bool
-    let turnStart:   Date
+    let live: Bool
+    let confirmed: Bool
+    let turnStart: Date
     let ribbonStart: Date
 
     private let turnDur = 0.6
@@ -150,9 +150,9 @@ private struct BookObject: View {
 
         let shading = GraphicsContext.Shading.linearGradient(
             Gradient(stops: [
-                .init(color: AppColors.spectrumCyan,    location: 0.00),
-                .init(color: AppColors.spectrumPurple,  location: 0.50),
-                .init(color: AppColors.spectrumMagenta, location: 1.00),
+                .init(color: AppColors.spectrumCyan, location: 0.00),
+                .init(color: AppColors.spectrumPurple, location: 0.50),
+                .init(color: AppColors.spectrumMagenta, location: 1.00)
             ]),
             startPoint: .zero, endPoint: CGPoint(x: 160 * s, y: 110 * s))
 
@@ -209,7 +209,7 @@ private struct BookObject: View {
             line(20, 86, 76, 88),
             line(84, 40, 134, 40), line(84, 48, 134, 48), line(84, 56, 135, 56),
             line(84, 64, 135, 64), line(84, 72, 136, 72), line(84, 80, 137, 80),
-            line(84, 88, 138, 88),
+            line(84, 88, 138, 88)
         ]
 
         // ── Ribbon — drapes into the gutter (reveal 0→1 with overshoot) and the
@@ -247,7 +247,7 @@ private struct BookObject: View {
             let cTopX = (80 + fx)  / 2 + curl
             let cBotX = (80 + fbx) / 2 + curl
             flip.move(to: p(80, 30))
-            flip.addQuadCurve(to: p(fx, topY),  control: p(cTopX, topY - arc * 11))
+            flip.addQuadCurve(to: p(fx, topY), control: p(cTopX, topY - arc * 11))
             flip.addLine(to: p(fbx, botY))
             flip.addQuadCurve(to: p(80, 96), control: p(cBotX, botY + arc * 4.4))
             flip.closeSubpath()
@@ -263,7 +263,7 @@ private struct BookObject: View {
         context.drawLayer { ctx in
             ctx.addFilter(.blur(radius: 3 * s))
             ctx.opacity = 0.24
-            ctx.stroke(leftPage,  with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
+            ctx.stroke(leftPage, with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
             ctx.stroke(rightPage, with: shading, style: StrokeStyle(lineWidth: 6 * s, lineJoin: .round))
             if hasRibbon {
                 ctx.stroke(ribbonPath, with: shading, style: StrokeStyle(lineWidth: 5 * s, lineJoin: .round))
@@ -280,7 +280,7 @@ private struct BookObject: View {
         var spineCtx = context; spineCtx.opacity = 0.55
         spineCtx.stroke(spine, with: shading, style: thinStroke)
 
-        context.stroke(leftPage,  with: shading, style: pageStroke)
+        context.stroke(leftPage, with: shading, style: pageStroke)
         context.stroke(rightPage, with: shading, style: pageStroke)
 
         // Ribbon — bg-filled so it reads in front of the pages
@@ -305,15 +305,15 @@ private struct BookObject: View {
         AppColors.void.ignoresSafeArea()
         VaylCardFace(
             content: .context(
-                number:   "01",
-                title:    "I'm single",
+                number: "01",
+                title: "I'm single",
                 subtitle: "Dating and still figuring out who I am in NM",
-                detail:   "No relationship to navigate — just you and your curiosity."
+                detail: "No relationship to navigate — just you and your curiosity."
             ),
             confirmed: true
         )
         .frame(
-            width:  AppLayout.obCardWidth(in: 390),
+            width: AppLayout.obCardWidth(in: 390),
             height: AppLayout.obCardHeight(in: 390)
         )
     }

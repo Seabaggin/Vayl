@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 5/9/26.
 //
 
-
 //
 //  CornerDeckView.swift
 //  Vayl
@@ -26,27 +25,27 @@ import SwiftUI
 ///
 /// This view never responds to gestures and never holds state.
 struct CornerDeckView: View {
-    let cards:      [VaylCardModel]
+    let cards: [VaylCardModel]
     let screenSize: CGSize
-    let deckPulse:  Bool
+    let deckPulse: Bool
 
     // Stack offsets for up to 7 cards — index 0 is front card
     // Physics constants — not tokens. These are specific to the
     // corner deck stacking geometry.
     private let stackOffsets: [(x: CGFloat, y: CGFloat, rot: Double)] = [
-        ( 0,   0, 0.0),   // card 1 — front
-        (-1,  -3, -1.5),  // card 2
-        ( 1,  -5,  1.2),  // card 3
-        (-1,  -7, -0.8),  // card 4
-        ( 0,  -9,  0.5),  // card 5
+        ( 0, 0, 0.0),   // card 1 — front
+        (-1, -3, -1.5),  // card 2
+        ( 1, -5, 1.2),  // card 3
+        (-1, -7, -0.8),  // card 4
+        ( 0, -9, 0.5),  // card 5
         (-1, -11, -0.3),  // card 6
-        ( 1, -13,  0.9),  // card 7
+        ( 1, -13, 0.9)  // card 7
     ]
 
     var body: some View {
         ZStack {
             // Stack — render back to front
-            ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
+            ForEach(Array(cards.enumerated()), id: \.element.id) { index, _ in
                 let offsetIndex = min(index, stackOffsets.count - 1)
                 let offset      = stackOffsets[offsetIndex]
 
@@ -62,7 +61,7 @@ struct CornerDeckView: View {
                     .frame(width: refW, height: refH)
                     .scaleEffect(AppLayout.cornerDeckWidth / refW)
                     .frame(
-                        width:  AppLayout.cornerDeckWidth,
+                        width: AppLayout.cornerDeckWidth,
                         height: AppLayout.cornerDeckHeight
                     )
                     .rotationEffect(.degrees(offset.rot))

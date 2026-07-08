@@ -62,12 +62,12 @@ final class HomeStore {
     /// tap-to-expand design (docs/superpowers/specs/2026-07-05-partner-chip-and-pairing-design.md).
     private static let nudgeThreshold: TimeInterval = 3 * 24 * 60 * 60 // 3 days
 
-    private(set) var firstInviteSentAt: Date? = nil
+    private(set) var firstInviteSentAt: Date?
 
     /// Partner's current Pulse position, for the chip's quick-view tile only
     /// (current position, not history — the 30-day grid stays exclusive to Map).
     /// Nil if the partner hasn't logged, or has `share_pulse_with_partner` off.
-    private(set) var partnerPulsePosition: PulsePosition? = nil
+    private(set) var partnerPulsePosition: PulsePosition?
 
     /// True when the last partner-pulse fetch failed outright (offline, server
     /// error) — distinct from a nil position, which means confirmed no data
@@ -77,8 +77,8 @@ final class HomeStore {
 
     // MARK: - Deck Loading
 
-    var deck: Deck? = nil
-    var deckLoadError: String? = nil
+    var deck: Deck?
+    var deckLoadError: String?
     var isLoadingDeck: Bool = false
 
     /// The deck Home leads with — the couple's most-recently-played deck, resolved
@@ -105,7 +105,7 @@ final class HomeStore {
 
     /// Server-overridden daily-5 content, fetched once per Home load. Nil → HomeLexicon
     /// uses its bundled baseline. Owned here so the view never calls ContentService (H-2).
-    var lexiconRemotePool: LexiconRemotePool? = nil
+    var lexiconRemotePool: LexiconRemotePool?
 
     // MARK: - Dependencies
 
@@ -541,6 +541,6 @@ final class HomeStore {
 /// "no server override for this kind"; the view falls back to bundled JSON per kind.
 struct LexiconRemotePool {
     let findings: [ResearchFinding]?
-    let terms:    [LexiconTerm]?
-    let quotes:   [MediaQuote]?
+    let terms: [LexiconTerm]?
+    let quotes: [MediaQuote]?
 }

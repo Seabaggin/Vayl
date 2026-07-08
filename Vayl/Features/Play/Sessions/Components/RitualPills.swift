@@ -84,7 +84,7 @@ struct RitualPills: View {
 
 #Preview("Ritual Pills") {
     struct Wrapper: View {
-        @State private var selected: Ritual? = nil
+        @State private var selected: Ritual?
         var body: some View {
             ZStack {
                 AppColors.void.ignoresSafeArea()

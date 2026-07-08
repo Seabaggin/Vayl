@@ -33,7 +33,7 @@ struct VaylCardBack: View {
     /// Override the hex moiré rotation angle (degrees).
     /// `nil` = default behaviour (±8° portrait, ±6° landscape).
     /// During dissolution, GenderPhase passes `director.gender.dissolutionHexAngle` (0→8°).
-    var hexAngleOverride: CGFloat? = nil
+    var hexAngleOverride: CGFloat?
 
     /// Hex cell size multiplier. 1.0 = normal. >1.0 = sparser grid (topo-frequency phase).
     /// During dissolution, GenderPhase passes `director.gender.dissolutionHexSpacing` (2.2→1.0).
@@ -63,12 +63,12 @@ struct VaylCardBack: View {
                     .strokeBorder(
                         LinearGradient(
                             stops: [
-                                .init(color: AppColors.spectrumCyan.opacity(0.52),    location: 0.00),
-                                .init(color: AppColors.spectrumPurple.opacity(0.52),  location: 0.50),
-                                .init(color: AppColors.spectrumMagenta.opacity(0.52), location: 1.00),
+                                .init(color: AppColors.spectrumCyan.opacity(0.52), location: 0.00),
+                                .init(color: AppColors.spectrumPurple.opacity(0.52), location: 0.50),
+                                .init(color: AppColors.spectrumMagenta.opacity(0.52), location: 1.00)
                             ],
                             startPoint: .leading,
-                            endPoint:   .trailing
+                            endPoint: .trailing
                         ),
                         lineWidth: 1.1
                     )
@@ -106,12 +106,12 @@ private extension VaylCardBack {
             Path(rect),
             with: .radialGradient(
                 Gradient(stops: [
-                    .init(color: AppColors.spectrumCyan.opacity(0.09),    location: 0),
-                    .init(color: AppColors.spectrumCyan.opacity(0),        location: 1),
+                    .init(color: AppColors.spectrumCyan.opacity(0.09), location: 0),
+                    .init(color: AppColors.spectrumCyan.opacity(0), location: 1)
                 ]),
-                center:      CGPoint(x: W * 0.38, y: H * 0.36),
+                center: CGPoint(x: W * 0.38, y: H * 0.36),
                 startRadius: 0,
-                endRadius:   min(W, H) * 0.52
+                endRadius: min(W, H) * 0.52
             )
         )
 
@@ -122,11 +122,11 @@ private extension VaylCardBack {
             with: .radialGradient(
                 Gradient(stops: [
                     .init(color: AppColors.spectrumMagenta.opacity(0.09), location: 0),
-                    .init(color: AppColors.spectrumMagenta.opacity(0),    location: 1),
+                    .init(color: AppColors.spectrumMagenta.opacity(0), location: 1)
                 ]),
-                center:      CGPoint(x: W * 0.65, y: H * 0.66),
+                center: CGPoint(x: W * 0.65, y: H * 0.66),
                 startRadius: 0,
-                endRadius:   min(W, H) * 0.52
+                endRadius: min(W, H) * 0.52
             )
         )
 
@@ -138,11 +138,11 @@ private extension VaylCardBack {
             with: .radialGradient(
                 Gradient(stops: [
                     .init(color: AppColors.spectrumPurple.opacity(0.15), location: 0),
-                    .init(color: AppColors.spectrumPurple.opacity(0),    location: 1),
+                    .init(color: AppColors.spectrumPurple.opacity(0), location: 1)
                 ]),
-                center:      CGPoint(x: W * 0.50, y: H * 0.50),
+                center: CGPoint(x: W * 0.50, y: H * 0.50),
                 startRadius: 0,
-                endRadius:   min(W, H) * 0.48
+                endRadius: min(W, H) * 0.48
             )
         )
     }
@@ -161,9 +161,9 @@ private extension VaylCardBack {
         let tracking: CGFloat = 7
 
         let textBounds = CGRect(
-            x:      cx - fontSize * 3.2,
-            y:      cy - fontSize * 1.1,
-            width:  fontSize * 6.4,
+            x: cx - fontSize * 3.2,
+            y: cy - fontSize * 1.1,
+            width: fontSize * 6.4,
             height: fontSize * 1.4
         )
 
@@ -174,9 +174,9 @@ private extension VaylCardBack {
         }
 
         let spectrumGradient = Gradient(stops: [
-            .init(color: AppColors.spectrumCyan,    location: 0.00),
-            .init(color: AppColors.spectrumBridge,  location: 0.40),
-            .init(color: AppColors.spectrumMagenta, location: 1.00),
+            .init(color: AppColors.spectrumCyan, location: 0.00),
+            .init(color: AppColors.spectrumBridge, location: 0.40),
+            .init(color: AppColors.spectrumMagenta, location: 1.00)
         ])
 
         let wm = wordmarkOpacity // local alias — avoids repeated `self.` in closures
@@ -243,7 +243,7 @@ private extension VaylCardBack {
             with: .linearGradient(
                 spectrumGradient,
                 startPoint: CGPoint(x: textBounds.minX, y: cy),
-                endPoint:   CGPoint(x: textBounds.maxX, y: cy)
+                endPoint: CGPoint(x: textBounds.maxX, y: cy)
             )
         )
     }
@@ -275,10 +275,10 @@ private extension VaylCardBack {
                 // The full hex has 6 edges — we draw only 4 to avoid double-drawing
                 // shared edges which would double the stroke weight at intersections.
                 let pts: [CGPoint] = [
-                    CGPoint(x: x,         y: y + 1),
+                    CGPoint(x: x, y: y + 1),
                     CGPoint(x: x + 0.866, y: y + 0.5),
                     CGPoint(x: x + 0.866, y: y - 0.5),
-                    CGPoint(x: x,         y: y - 1),
+                    CGPoint(x: x, y: y - 1)
                 ]
 
                 for i in 0 ..< pts.count - 1 {
@@ -294,13 +294,13 @@ private extension VaylCardBack {
     /// Two calls with opposing rotation produce the moiré interference pattern.
     /// `hexSize` is pre-scaled by the caller — pass `15 * hexSpacingMul` for dissolution.
     func drawHexLayer(
-        context:  GraphicsContext,
-        W:        CGFloat,
-        H:        CGFloat,
-        degrees:  CGFloat,
-        color:    Color,
-        opacity:  CGFloat,
-        hexSize:  CGFloat = 15
+        context: GraphicsContext,
+        W: CGFloat,
+        H: CGFloat,
+        degrees: CGFloat,
+        color: Color,
+        opacity: CGFloat,
+        hexSize: CGFloat = 15
     ) {
         // Hex grid origin offsets — match the SVG ox=-40 oy=-60 values.
         // These ensure the grid tiles beyond the card boundary in all directions
@@ -354,10 +354,10 @@ private extension VaylCardBack {
         drawHexLayer(
             context: context,
             W: W, H: H,
-            degrees:  angle,
-            color:    AppColors.spectrumCyan,
-            opacity:  0.20,
-            hexSize:  hexSize
+            degrees: angle,
+            color: AppColors.spectrumCyan,
+            opacity: 0.20,
+            hexSize: hexSize
         )
 
         // Magenta grid — negative rotation creates the moiré interference.
@@ -366,7 +366,7 @@ private extension VaylCardBack {
             context: context,
             W: W, H: H,
             degrees: -angle,
-            color:   AppColors.spectrumMagenta,
+            color: AppColors.spectrumMagenta,
             opacity: 0.18,
             hexSize: hexSize
         )
@@ -379,18 +379,18 @@ private extension VaylCardBack {
 
     func drawInsetFrame(
         context: GraphicsContext,
-        size:    CGSize,
-        W:       CGFloat,
-        H:       CGFloat,
-        R:       CGFloat
+        size: CGSize,
+        W: CGFloat,
+        H: CGFloat,
+        R: CGFloat
     ) {
         // 9pt inset — matches SVG x="9" y="9". Keeps the inner frame
         // visually distinct from the outer hairline without crowding the wordmark.
         let inset: CGFloat = 9
         let innerRect = CGRect(
-            x:      inset,
-            y:      inset,
-            width:  W - inset * 2,
+            x: inset,
+            y: inset,
+            width: W - inset * 2,
             height: H - inset * 2
         )
         let innerR = R - 4
@@ -403,12 +403,12 @@ private extension VaylCardBack {
             framePath,
             with: .linearGradient(
                 Gradient(stops: [
-                    .init(color: AppColors.spectrumCyan.opacity(0.27),    location: 0.00),
-                    .init(color: AppColors.spectrumPurple.opacity(0.27),  location: 0.50),
-                    .init(color: AppColors.spectrumMagenta.opacity(0.27), location: 1.00),
+                    .init(color: AppColors.spectrumCyan.opacity(0.27), location: 0.00),
+                    .init(color: AppColors.spectrumPurple.opacity(0.27), location: 0.50),
+                    .init(color: AppColors.spectrumMagenta.opacity(0.27), location: 1.00)
                 ]),
                 startPoint: CGPoint(x: innerRect.minX, y: innerRect.midY),
-                endPoint:   CGPoint(x: innerRect.maxX, y: innerRect.midY)
+                endPoint: CGPoint(x: innerRect.maxX, y: innerRect.midY)
             ),
             lineWidth: 0.6
         )
@@ -420,7 +420,7 @@ private extension VaylCardBack {
         AppColors.void.ignoresSafeArea()
         VaylCardBack()
             .frame(
-                width:  AppLayout.obCardWidth(in: 390),
+                width: AppLayout.obCardWidth(in: 390),
                 height: AppLayout.obCardHeight(in: 390)
             )
     }
@@ -432,7 +432,7 @@ private extension VaylCardBack {
         AppColors.void.ignoresSafeArea()
         VaylCardBack()
             .frame(
-                width:  AppLayout.sessionCardWidth(in: 390),
+                width: AppLayout.sessionCardWidth(in: 390),
                 height: AppLayout.sessionCardHeight(in: 390)
             )
     }

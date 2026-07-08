@@ -17,7 +17,7 @@ import SwiftUI
 
 struct ContextPhase: View {
 
-    let director:   VaylDirector
+    let director: VaylDirector
     let screenSize: CGSize
 
     // MARK: - Card geometry
@@ -27,7 +27,7 @@ struct ContextPhase: View {
     private var cardSize: CGSize {
         let bump: CGFloat = 1.1   // FEEL-GATE — carousel card size; dial to taste
         return CGSize(
-            width:  AppLayout.obTableCardWidth(in: screenSize.width)  * AppLayout.obTableCardCinematicScale * bump,
+            width: AppLayout.obTableCardWidth(in: screenSize.width)  * AppLayout.obTableCardCinematicScale * bump,
             height: AppLayout.obTableCardHeight(in: screenSize.width) * AppLayout.obTableCardCinematicScale * bump
         )
     }
@@ -36,16 +36,16 @@ struct ContextPhase: View {
     private let appMode: AppMode
     private let options: [ContextOption]
 
-    @State private var physics:        CarouselPhysics
-    @State private var confirmedIndex: Int?    = nil
-    @State private var entered:        Bool    = false
-    @State private var exiting:        Bool    = false
-    @State private var defocusOthers:  Bool    = false
-    @State private var hintOffset:     CGFloat = 0
-    @State private var confirmTug:     CGFloat = 0
-    @State private var confirmPulse:   Bool    = false
-    @State private var tugTask:        Task<Void, Never>? = nil
-    @State private var hintTask:       Task<Void, Never>? = nil  // one-shot browse nudge; cancelled on confirm
+    @State private var physics: CarouselPhysics
+    @State private var confirmedIndex: Int?
+    @State private var entered: Bool    = false
+    @State private var exiting: Bool    = false
+    @State private var defocusOthers: Bool    = false
+    @State private var hintOffset: CGFloat = 0
+    @State private var confirmTug: CGFloat = 0
+    @State private var confirmPulse: Bool    = false
+    @State private var tugTask: Task<Void, Never>?
+    @State private var hintTask: Task<Void, Never>?  // one-shot browse nudge; cancelled on confirm
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -76,7 +76,7 @@ struct ContextPhase: View {
             colors: [
                 tint(for: options[physics.currentIndex].accent)
                     .opacity(confirmPulse ? 0.34 : 0.18),   // FEEL-GATE — accent glow strength (turned down)
-                Color.clear,
+                Color.clear
             ],
             center: .center,
             startRadius: 0,
@@ -105,8 +105,8 @@ struct ContextPhase: View {
             // its file and not referenceable here).
             OnboardingProgressBar(
                 currentStep: physics.currentIndex + 1,
-                totalSteps:  options.count,
-                totalWidth:  screenSize.width * 0.34
+                totalSteps: options.count,
+                totalWidth: screenSize.width * 0.34
             )
             .padding(.bottom, AppSpacing.xl)
             .opacity(entered && !exiting ? 1 : 0)
@@ -114,29 +114,29 @@ struct ContextPhase: View {
             .accessibilityHidden(true)
 
             VaylCardCarousel(
-                count:          options.count,
-                cardSize:       cardSize,
-                physics:        physics,
-                confirmedIndex:     confirmedIndex,
+                count: options.count,
+                cardSize: cardSize,
+                physics: physics,
+                confirmedIndex: confirmedIndex,
                 confirmedCardYHint: confirmTug,
-                exiting:            exiting,
-                defocusUnselected:  defocusOthers,
+                exiting: exiting,
+                defocusUnselected: defocusOthers,
                 content: { index, isFront in
                     let o = options[index]
                     VaylCardFace(
                         content: .context(
-                            number:   String(format: "%02d", index + 1),
-                            title:    o.title,
+                            number: String(format: "%02d", index + 1),
+                            title: o.title,
                             subtitle: o.subtitle,
-                            detail:   o.detail
+                            detail: o.detail
                         ),
-                        isFront:   isFront,
+                        isFront: isFront,
                         confirmed: confirmedIndex == index
                     )
                 },
-                onConfirm:   handleConfirm,
+                onConfirm: handleConfirm,
                 onUnconfirm: handleUnconfirm,
-                onExit:      handleExit
+                onExit: handleExit
             )
             .offset(x: hintOffset)
             .opacity(entered ? 1 : 0)                   // per-card exit handles fade-out
@@ -223,7 +223,6 @@ struct ContextPhase: View {
         let o = options[physics.currentIndex]
         return "\(o.title). \(o.subtitle). \(o.detail)"
     }
-
 
     // MARK: - Entrance (earned transition)
     // The felt carries over from ExperienceLevel. The dealer headline greets first;

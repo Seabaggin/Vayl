@@ -14,7 +14,7 @@ struct RacetrackTabBar: View {
         HStack(spacing: 0) {
             ForEach(AppTab.allCases, id: \.self) { tab in
                 RacetrackTabPill(
-                    tab:        tab,
+                    tab: tab,
                     isSelected: selection == tab
                 ) {
                     guard selection != tab else { return }
@@ -29,8 +29,8 @@ struct RacetrackTabBar: View {
         .background {
             GeometryReader { proxy in
                 let count: CGFloat = CGFloat(AppTab.allCases.count)
-                let tabW:  CGFloat = proxy.size.width / count
-                let idx:   CGFloat = CGFloat(AppTab.allCases.firstIndex(of: selection) ?? 0)
+                let tabW: CGFloat = proxy.size.width / count
+                let idx: CGFloat = CGFloat(AppTab.allCases.firstIndex(of: selection) ?? 0)
                 let pillW: CGFloat = AppSpacing.md * 2 + 26   // 58 pt
                 let pillH: CGFloat = AppSpacing.sm * 2 + 26   // 42 pt
                 Capsule()
@@ -93,9 +93,9 @@ struct RacetrackTabBar: View {
 
 private struct RacetrackTabPill: View {
 
-    let tab:        AppTab
+    let tab: AppTab
     let isSelected: Bool
-    let onTap:      () -> Void
+    let onTap: () -> Void
 
     @State private var isPressed: Bool = false
 
@@ -132,7 +132,7 @@ private struct RacetrackTabPill: View {
 
     private var iconColor: Color {
         if isSelected { return isLight ? AppColors.textBody : .white }
-        if isPressed  { return isLight ? AppColors.textBody : AppColors.textSecondary }
+        if isPressed { return isLight ? AppColors.textBody : AppColors.textSecondary }
         return isLight ? AppColors.textBody.opacity(0.85) : AppColors.textPrimary
     }
 

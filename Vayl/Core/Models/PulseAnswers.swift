@@ -25,10 +25,10 @@ import Foundation
 
 struct CheckInPill: Identifiable {
     let id             = UUID()
-    let label:         String
+    let label: String
     /// Raw 0–4 axis scores for this answer (before the question's axis weights are applied).
     /// For every question except Q3 the two are equal (the answer's left→right position).
-    let energyScore:   Double
+    let energyScore: Double
     let opennessScore: Double
 
     /// Symmetric answer (position value drives both axes equally).
@@ -49,10 +49,10 @@ struct CheckInPill: Identifiable {
 // MARK: - CheckInQuestion (pure model)
 
 struct CheckInQuestion {
-    let text:           String
-    let pills:          [CheckInPill]
+    let text: String
+    let pills: [CheckInPill]
     /// How strongly this question pushes each axis in the weighted sum.
-    let energyWeight:   Double
+    let energyWeight: Double
     let opennessWeight: Double
 }
 
@@ -73,11 +73,11 @@ enum PulseAnswers {
     static let nervousSystem = CheckInQuestion(
         text: "How is your nervous system right now?",
         pills: [
-            CheckInPill("Energized",   score: 4),
-            CheckInPill("Centered",    score: 3),
-            CheckInPill("Recharging",  score: 2),
+            CheckInPill("Energized", score: 4),
+            CheckInPill("Centered", score: 3),
+            CheckInPill("Recharging", score: 2),
             CheckInPill("Overwhelmed", score: 1),
-            CheckInPill("Exhausted",   score: 0),
+            CheckInPill("Exhausted", score: 0)
         ],
         energyWeight: 1.0, opennessWeight: 0.15
     )
@@ -87,10 +87,10 @@ enum PulseAnswers {
         text: "Where is your emotional energy leaning?",
         pills: [
             CheckInPill("Fully Outward", score: 4),
-            CheckInPill("Reaching Out",  score: 3),
-            CheckInPill("Present",       score: 2),
+            CheckInPill("Reaching Out", score: 3),
+            CheckInPill("Present", score: 2),
             CheckInPill("Needing Space", score: 1),
-            CheckInPill("Deeply Inward", score: 0),
+            CheckInPill("Deeply Inward", score: 0)
         ],
         energyWeight: 0.0, opennessWeight: 1.0
     )
@@ -101,10 +101,10 @@ enum PulseAnswers {
         text: "What's your vibe right now?",
         pills: [
             CheckInPill("Adventurous", energy: 4, openness: 4),
-            CheckInPill("Warm",        energy: 3, openness: 3),
-            CheckInPill("Content",     energy: 2, openness: 2),
-            CheckInPill("Anxious",     energy: 3, openness: 1),
-            CheckInPill("Sensitive",   energy: 1, openness: 1),
+            CheckInPill("Warm", energy: 3, openness: 3),
+            CheckInPill("Content", energy: 2, openness: 2),
+            CheckInPill("Anxious", energy: 3, openness: 1),
+            CheckInPill("Sensitive", energy: 1, openness: 1)
         ],
         energyWeight: 0.5, opennessWeight: 0.5
     )
@@ -114,10 +114,10 @@ enum PulseAnswers {
         text: "How much do you have to give right now?",
         pills: [
             CheckInPill("Overflowing", score: 4),
-            CheckInPill("Plenty",      score: 3),
+            CheckInPill("Plenty", score: 3),
             CheckInPill("Just Enough", score: 2),
             CheckInPill("Running Low", score: 1),
-            CheckInPill("Empty",       score: 0),
+            CheckInPill("Empty", score: 0)
         ],
         energyWeight: 0.8, opennessWeight: 0.15
     )
@@ -126,11 +126,11 @@ enum PulseAnswers {
     static let speed = CheckInQuestion(
         text: "What's the ideal speed for tonight?",
         pills: [
-            CheckInPill("Deep Dive",        score: 4),
-            CheckInPill("Playful",          score: 3),
+            CheckInPill("Deep Dive", score: 4),
+            CheckInPill("Playful", score: 3),
             CheckInPill("Light Connection", score: 2),
             CheckInPill("Quietly Together", score: 1),
-            CheckInPill("Solitude",         score: 0),
+            CheckInPill("Solitude", score: 0)
         ],
         energyWeight: 0.1, opennessWeight: 0.8
     )
@@ -140,7 +140,7 @@ enum PulseAnswers {
 
     // MARK: - Normalisers
 
-    private static let energyDivisor:   Double = 9.6    // = 4 × Σ(energy weights 2.4)
+    private static let energyDivisor: Double = 9.6    // = 4 × Σ(energy weights 2.4)
     private static let opennessDivisor: Double = 10.4   // = 4 × Σ(openness weights 2.6), so the axis reaches 1.0
 
     // MARK: - Position
@@ -159,7 +159,7 @@ enum PulseAnswers {
             rawOpenness += o * question.opennessWeight
         }
         return PulsePosition(
-            energy:   rawEnergy   / energyDivisor,
+            energy: rawEnergy   / energyDivisor,
             openness: rawOpenness / opennessDivisor
         )
     }
@@ -178,7 +178,7 @@ enum PulseAnswers {
             let q5  = answeredPill(answers, 4)?.opennessScore
         else { return false }
 
-        let energyContradicted   = axisContradicted(q1, q3.energyScore,   q4)
+        let energyContradicted   = axisContradicted(q1, q3.energyScore, q4)
         let opennessContradicted = axisContradicted(q2, q3.opennessScore, q5)
         return energyContradicted && opennessContradicted
     }

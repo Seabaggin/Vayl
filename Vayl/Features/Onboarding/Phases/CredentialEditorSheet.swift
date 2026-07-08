@@ -184,7 +184,7 @@ struct CredentialEditorSheet: View {
 
     private var contextEditor: some View {
         let options    = ContextOption.options(appMode: director.onboardingData.appMode,
-                                                stage:   director.onboardingData.nmStage)
+                                                stage: director.onboardingData.nmStage)
         let currentRaw = director.onboardingData.relationshipContext
         return ScrollView {
             VStack(spacing: AppSpacing.sm) {
@@ -349,8 +349,7 @@ struct CredentialEditorOverlay: View {
                                 DragGesture()
                                     .onChanged { v in drag = max(0, v.translation.height) }
                                     .onEnded { v in
-                                        if v.translation.height > 120 { close() }
-                                        else { withAnimation(AppAnimation.spring.reduceMotionSafe) { drag = 0 } }
+                                        if v.translation.height > 120 { close() } else { withAnimation(AppAnimation.spring.reduceMotionSafe) { drag = 0 } }
                                     }
                             )
                     }
@@ -366,4 +365,3 @@ struct CredentialEditorOverlay: View {
         }
     }
 }
-

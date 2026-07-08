@@ -165,7 +165,7 @@ struct SessionPlayerView: View {
                     colors: [
                         AppColors.spectrumPurple.opacity(0.65),  // core — pushed well past VaylCardBack's atmosphere ceiling, this needs to actually read against void
                         AppColors.spectrumCyan.opacity(0.40),
-                        .clear,
+                        .clear
                     ],
                     center: .center,
                     startRadius: 0,

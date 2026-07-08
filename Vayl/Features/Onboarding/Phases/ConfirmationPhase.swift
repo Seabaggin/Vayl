@@ -29,24 +29,24 @@ struct ConfirmationPhase: View {
 
     // ── Swipe-right confirm (the CuriosityPhase keep gesture, fan-wide) ──
     @State private var armed            = false           // fan settled — swipe live
-    @State private var fanDragX:        CGFloat = 0       // damped follow during the drag
+    @State private var fanDragX: CGFloat = 0       // damped follow during the drag
     @State private var thresholdCrossed = false           // → .selection tick (both ways)
     @State private var commitThunk      = false           // → .impact(.medium) on commit
-    @State private var nudgeX:          CGFloat = 0       // idle rightward cue
-    @State private var nudgeTask:       Task<Void, Never>? = nil
-    @State private var dealTickTask:    Task<Void, Never>? = nil   // landing-haptic loop
-    @State private var exitTask:        Task<Void, Never>? = nil   // collapse → advance
+    @State private var nudgeX: CGFloat = 0       // idle rightward cue
+    @State private var nudgeTask: Task<Void, Never>?
+    @State private var dealTickTask: Task<Void, Never>?   // landing-haptic loop
+    @State private var exitTask: Task<Void, Never>?   // collapse → advance
 
     private let credentials  = OBCredential.allCases   // name, gender, mode, experienceLevel, context, curiosity
 
     // Tuned reference values.
-    private let fanSpread:    Double = 0.56
-    private let dealStagger:  Double = 0.10            // FEEL-GATE: snappier deal (was 0.19)
-    private let dealArc:      Double = 13              // % of screen height — bézier sweep peak
-    private let dealLeadIn:   Double = 0.5             // FEEL-GATE: covers only the cross-fade, then deal (was breatheHold 1.4 of empty felt)
-    private let dealSpan:     Double = 1.2             // FEEL-GATE: stagger tail + spring settle (was 1.9)
-    private let exitStagger:  Double = 0.12   // per-card delay, leftmost first — the gather reads card by card
-    private let exitSpan:     Double = 2.0    // FEEL-GATE: stagger tail (0.6) + FULL confirmGather settle (resp 0.8) before the swap — was 1.6, which advanced ~0.3s while the last card was still springing, popping the otherwise-identical deck handoff
+    private let fanSpread: Double = 0.56
+    private let dealStagger: Double = 0.10            // FEEL-GATE: snappier deal (was 0.19)
+    private let dealArc: Double = 13              // % of screen height — bézier sweep peak
+    private let dealLeadIn: Double = 0.5             // FEEL-GATE: covers only the cross-fade, then deal (was breatheHold 1.4 of empty felt)
+    private let dealSpan: Double = 1.2             // FEEL-GATE: stagger tail + spring settle (was 1.9)
+    private let exitStagger: Double = 0.12   // per-card delay, leftmost first — the gather reads card by card
+    private let exitSpan: Double = 2.0    // FEEL-GATE: stagger tail (0.6) + FULL confirmGather settle (resp 0.8) before the swap — was 1.6, which advanced ~0.3s while the last card was still springing, popping the otherwise-identical deck handoff
     /// Same commit physics as CuriosityPhase — distance, or a committed flick.
     private let commitThreshold: CGFloat = 95
 
@@ -163,9 +163,9 @@ struct ConfirmationPhase: View {
             .opacity(opa)
             .position(pos)
             .modifier(CornerSweep(progress: shown ? 1 : 0,
-                                  corner:   corner,
-                                  target:   target.position,
-                                  control:  dealControl(corner: corner, target: target.position, size: size)))
+                                  corner: corner,
+                                  target: target.position,
+                                  control: dealControl(corner: corner, target: target.position, size: size)))
             .zIndex(Double(credentials.count - index))   // index 0 (leftmost) on top
             .animation(dealAnimation(index: index, count: credentials.count), value: dealt)
             .animation(exitMoveAnimation(index: index, count: credentials.count), value: exiting)
@@ -384,8 +384,8 @@ struct ConfirmationPhase: View {
 /// corner deck instead of travelling in a straight line.
 private struct CornerSweep: GeometryEffect {
     var progress: Double
-    let corner:  CGPoint
-    let target:  CGPoint
+    let corner: CGPoint
+    let target: CGPoint
     let control: CGPoint
 
     var animatableData: Double {

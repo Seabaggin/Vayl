@@ -33,16 +33,16 @@ extension View {
     /// Use on selected/active states only — never on static non-interactive surfaces.
     func pillBorder(
         cornerRadius: CGFloat = AppRadius.pill,
-        lineWidth:    CGFloat = 1.0,
-        glowRadius:   CGFloat = 5,
-        opacity:      Double  = 0.85
+        lineWidth: CGFloat = 1.0,
+        glowRadius: CGFloat = 5,
+        opacity: Double  = 0.85
     ) -> some View {
         modifier(PillBorderModifier(
-            gradient:     AppColors.spectrumBorder,
+            gradient: AppColors.spectrumBorder,
             cornerRadius: cornerRadius,
-            lineWidth:    lineWidth,
-            glowRadius:   glowRadius,
-            opacity:      opacity
+            lineWidth: lineWidth,
+            glowRadius: glowRadius,
+            opacity: opacity
         ))
     }
 
@@ -51,9 +51,9 @@ extension View {
     /// Use on selected selectable pills and LM card bordered surfaces only.
     func magentaGoldBorder(
         cornerRadius: CGFloat = AppRadius.pill,
-        lineWidth:    CGFloat = 1.0,
-        glowRadius:   CGFloat = 5,
-        opacity:      Double  = 0.60
+        lineWidth: CGFloat = 1.0,
+        glowRadius: CGFloat = 5,
+        opacity: Double  = 0.60
     ) -> some View {
         modifier(PillBorderModifier(
             gradient: LinearGradient(
@@ -62,15 +62,15 @@ extension View {
                     // progressBarLeading resolves to orangeHot in Dawn —
                     // the warm mid-stop the spec calls for.
                     AppColors.progressBarLeading,
-                    AppColors.safetyAccent,
+                    AppColors.safetyAccent
                 ],
                 startPoint: .topLeading,
-                endPoint:   .bottomTrailing
+                endPoint: .bottomTrailing
             ),
             cornerRadius: cornerRadius,
-            lineWidth:    lineWidth,
-            glowRadius:   glowRadius,
-            opacity:      opacity
+            lineWidth: lineWidth,
+            glowRadius: glowRadius,
+            opacity: opacity
         ))
     }
 }
@@ -81,11 +81,11 @@ extension View {
 /// Applies a crisp gradient stroke + a blurred glow duplicate at reduced opacity.
 private struct PillBorderModifier: ViewModifier {
 
-    let gradient:     LinearGradient
+    let gradient: LinearGradient
     let cornerRadius: CGFloat
-    let lineWidth:    CGFloat
-    let glowRadius:   CGFloat
-    let opacity:      Double
+    let lineWidth: CGFloat
+    let glowRadius: CGFloat
+    let opacity: Double
 
     func body(content: Content) -> some View {
         content

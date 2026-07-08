@@ -4,7 +4,6 @@
 //  Created by Bryan Jorden on 3/28/26.
 //
 
-
 import SwiftUI
 
 struct ConversationCard: View {
@@ -20,15 +19,15 @@ struct ConversationCard: View {
     @State private var isFlipped = false
     @State private var arrowVisible = false
     @State private var pulsing = false
-    @State private var selectedPill: CardRevealPill? = nil
+    @State private var selectedPill: CardRevealPill?
     @State private var showEncouragement = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: - Callbacks
 
-    var onPillSelected: ((CardRevealPill) -> Void)? = nil
-    var onContinue: (() -> Void)? = nil
+    var onPillSelected: ((CardRevealPill) -> Void)?
+    var onContinue: (() -> Void)?
 
     // MARK: - Layout
 
@@ -390,10 +389,10 @@ extension ConversationCard {
         highlightedPhrase: "(not even you)",
         backFace: .pills(CardRevealPill.allCases)
     )
-    
+
     ZStack {
         AppColors.pageBackground.ignoresSafeArea()
-        
+
         VStack {
             Spacer()
             ConversationCard(

@@ -1,0 +1,13 @@
+schemaVersion: 1
+enabledWorkflows:
+  - simulator
+debug: true
+sentryDisabled: false
+sessionDefaults:
+  projectPath: Vayl.xcodeproj
+  scheme: Vayl
+  simulatorName: iPhone 17 Pro Max
+  simulatorId: 6AAEDC6E-040E-4226-8139-04ACEE1DC5C2
+setupPreferences:
+  platforms:
+    - iOS

@@ -100,7 +100,7 @@ struct AppRootView: View {
         Group {
             if !splashDone {
                 SplashScreenView(
-                    onComplete:  { splashDone = true },
+                    onComplete: { splashDone = true },
                     onTearBegan: {},
                     destination: AnyView(postSplashDestination)
                 )

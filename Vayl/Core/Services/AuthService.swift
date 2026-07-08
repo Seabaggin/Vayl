@@ -39,7 +39,7 @@ final class AuthService: NSObject {
     func checkSession() async {
         do {
             let session = try await supabase.auth.session
-            
+
             // Add this check
             if session.isExpired {
                 try? await supabase.auth.signOut()
@@ -47,7 +47,7 @@ final class AuthService: NSObject {
                 self.userId = nil
                 return
             }
-            
+
             self.userId = session.user.id
             self.isAuthenticated = true
             await ensureRemoteProfile()

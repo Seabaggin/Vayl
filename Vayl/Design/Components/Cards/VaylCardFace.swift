@@ -28,27 +28,27 @@ import SwiftUI
 
 struct VaylCardFace: View {
 
-    var question:   String?                      = nil
-    var credential: OBCredential?                = nil
-    var content:    VaylCardContent?             = nil
-    var onAction:   ((VaylCardAction) -> Void)?  = nil
+    var question: String?
+    var credential: OBCredential?
+    var content: VaylCardContent?
+    var onAction: ((VaylCardAction) -> Void)?
 
     /// True when this card is the frontmost card in a browsable stack.
     /// Only consulted by content faces that reveal extra detail when frontmost
     /// (currently `.context`). Ignored by all other faces. Defaults true.
-    var isFront:    Bool                         = true
+    var isFront: Bool                         = true
 
     /// True when this card is the confirmed selection. Forwarded to `.context`
     /// so the bookmark ribbon drops in on confirm. Ignored by all other faces.
-    var confirmed:  Bool                         = false
+    var confirmed: Bool                         = false
 
     /// Deck identity tint (Play / session). nil = the canonical fixed look — Onboarding
     /// passes nothing and renders byte-identical to before.
-    var colorway:   FoilColorway?                = nil
+    var colorway: FoilColorway?
     /// Card weight 0…1 (from intensity) — drives the base-heat glow. Ignored when colorway is nil.
-    var heat:       Double                       = 0
+    var heat: Double                       = 0
     /// Faint category-glyph watermark — a path in a 44×40 box. nil = none.
-    var glyphPath:  Path?                         = nil
+    var glyphPath: Path?
 
     var body: some View {
         GeometryReader { geo in
@@ -120,8 +120,6 @@ struct VaylCardFace: View {
                     .opacity(0.52)
                     .padding(0.75)
 
-
-
             }
             .contentShape(RoundedRectangle(cornerRadius: radius))
             // Built-in tap/swipe-up gestures attach ONLY when the caller wants
@@ -129,9 +127,9 @@ struct VaylCardFace: View {
             // a carousel that owns its own browse gestures) the face is fully
             // inert and never swallows the parent's drag.
             .modifier(FaceGestures(
-                enabled:    onAction != nil,
+                enabled: onAction != nil,
                 cardHeight: geo.size.height,
-                onAction:   onAction
+                onAction: onAction
             ))
             .clipShape(RoundedRectangle(cornerRadius: radius))
         }
@@ -150,67 +148,67 @@ struct VaylCardFace: View {
         switch content {
         case .typewriter(let activeKey, let carriageProgress):
             TypewriterCardFace(
-                cardWidth:        size.width,
-                cardHeight:       size.height,
-                activeKey:        activeKey,
+                cardWidth: size.width,
+                cardHeight: size.height,
+                activeKey: activeKey,
                 carriageProgress: carriageProgress
             )
         case .radioTuner(let sig, let phase, let left, let right):
             RadioTunerCardFace(
-                cardWidth:         size.width,
-                cardHeight:        size.height,
-                signalStrength:    sig,
-                scanPhase:         phase,
-                leftDialProgress:  left,
+                cardWidth: size.width,
+                cardHeight: size.height,
+                signalStrength: sig,
+                scanPhase: phase,
+                leftDialProgress: left,
                 rightDialProgress: right
             )
         case .controller(let activeButtons):
             ControllerCardFace(
-                cardWidth:     size.width,
-                cardHeight:    size.height,
+                cardWidth: size.width,
+                cardHeight: size.height,
                 activeButtons: activeButtons
             )
         case .dualController(let front, let back):
             DualControllerCardFace(
-                cardWidth:          size.width,
-                cardHeight:         size.height,
+                cardWidth: size.width,
+                cardHeight: size.height,
                 activeButtonsFront: front,
-                activeButtonsBack:  back
+                activeButtonsBack: back
             )
         case .mode(let title, let subtitle, let motif):
             ModeFaceContent(
-                title:    title,
+                title: title,
                 subtitle: subtitle,
-                motif:    motif,
+                motif: motif,
                 cardSize: size,
-                lifted:   false,
+                lifted: false,
                 onAction: onAction
             )
         case .candle(let intensity, let time):
             CandleCardFace(intensity: intensity, time: time)
         case .snapshot(let verb, let noun, let toneProgress, let sealProgress):
             SnapshotCardFace(
-                cardWidth:    size.width,
-                cardHeight:   size.height,
-                verb:         verb,
-                noun:         noun,
+                cardWidth: size.width,
+                cardHeight: size.height,
+                verb: verb,
+                noun: noun,
                 toneProgress: toneProgress,
                 sealProgress: sealProgress
             )
         case .context(let number, let title, let subtitle, let detail):
             ContextCardFace(
-                number:    number,
-                title:     title,
-                subtitle:  subtitle,
-                detail:    detail,
-                isFront:   isFront,
+                number: number,
+                title: title,
+                subtitle: subtitle,
+                detail: detail,
+                isFront: isFront,
                 confirmed: confirmed
             )
         case .curiosity(let category, let deflection):
             CompassCardFace(
-                cardWidth:  size.width,
+                cardWidth: size.width,
                 cardHeight: size.height,
-                topic:      category,
+                topic: category,
                 deflection: deflection
             )
         default:
@@ -225,9 +223,9 @@ struct VaylCardFace: View {
 /// (`.swipedUp`) gestures. When `enabled` is false the face passes all touches
 /// straight through — used when a parent (e.g. a carousel) owns the gestures.
 private struct FaceGestures: ViewModifier {
-    let enabled:    Bool
+    let enabled: Bool
     let cardHeight: CGFloat
-    let onAction:   ((VaylCardAction) -> Void)?
+    let onAction: ((VaylCardAction) -> Void)?
 
     func body(content: Content) -> some View {
         if enabled {
@@ -263,10 +261,10 @@ private struct FaceGestures: ViewModifier {
 /// Opacity values ~20% lower — front is the still side.
 
 private struct FaceAtmosphere: View {
-    let size:      CGSize
+    let size: CGSize
     let shortSide: CGFloat
-    var colorway:  FoilColorway? = nil
-    var heat:      Double        = 0
+    var colorway: FoilColorway?
+    var heat: Double        = 0
 
     var body: some View {
         if let colorway {
@@ -334,14 +332,14 @@ private struct FaceAtmosphere: View {
 /// Play / session only; sits behind the question text.
 private struct CardHeatGlow: View {
     let colorway: FoilColorway
-    let heat:     Double
+    let heat: Double
 
     var body: some View {
         GeometryReader { geo in
             LinearGradient(
                 colors: [colorway.c2.opacity(0), colorway.c1.opacity(0.05 + heat * 0.20)],
                 startPoint: .top,
-                endPoint:   .bottom
+                endPoint: .bottom
             )
             .frame(height: geo.size.height * (0.22 + heat * 0.34))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
@@ -356,9 +354,9 @@ private struct CardHeatGlow: View {
 /// Faint category-glyph watermark behind the question. Takes a Path in a 44×40 box, so
 /// Design stays decoupled from Play's DeckGlyphKind, and tints it to the colorway.
 private struct GlyphWatermark: View {
-    let path:  Path
+    let path: Path
     let color: Color
-    let heat:  Double
+    let heat: Double
 
     var body: some View {
         GeometryReader { geo in
@@ -376,8 +374,6 @@ private struct GlyphWatermark: View {
     }
 }
 
-
-
 // MARK: - QuestionText
 
 /// Vertically centered between topPad and botPad zones.
@@ -388,7 +384,7 @@ private struct GlyphWatermark: View {
 
 private struct QuestionText: View {
     let question: String
-    let size:     CGSize
+    let size: CGSize
 
     private let topPad: CGFloat = AppSpacing.lg    // 24pt
     private let botPad: CGFloat = AppSpacing.lg    // 24pt
@@ -434,7 +430,7 @@ private struct CardHairline: View {
 
     var body: some View {
         Path { p in
-            p.move(to:    CGPoint(x: 14,              y: y))
+            p.move(to: CGPoint(x: 14, y: y))
             p.addLine(to: CGPoint(x: size.width - 14, y: y))
         }
         .stroke(AppColors.spectrumBorder, lineWidth: 1.2)
@@ -450,20 +446,20 @@ private struct CardHairline: View {
 /// Handles tap → .tapped and swipe-up → .swipedUp via onAction.
 
 private struct ModeFaceContent: View {
-    let title:    String
+    let title: String
     let subtitle: String
-    let motif:    ModeMotifStyle
+    let motif: ModeMotifStyle
     let cardSize: CGSize
-    let lifted:   Bool
+    let lifted: Bool
     let onAction: ((VaylCardAction) -> Void)?
 
     @State private var holoShift: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // Bar rendering constants — relative to card width.
-    private var barW:      CGFloat { cardSize.width  * 0.20 }
-    private var barH:      CGFloat { barW * 3.08 }
-    private var barGap:    CGFloat { cardSize.width  * 0.16 }
+    private var barW: CGFloat { cardSize.width  * 0.20 }
+    private var barH: CGFloat { barW * 3.08 }
+    private var barGap: CGFloat { cardSize.width  * 0.16 }
     private let barRadius: CGFloat = 3
 
     /// Single unified gradient for all bars regardless of motif.
@@ -473,7 +469,7 @@ private struct ModeFaceContent: View {
         [
             AppColors.spectrumMagenta,
             AppColors.spectrumPurple,
-            AppColors.spectrumCyan,
+            AppColors.spectrumCyan
         ]
     }
 
@@ -521,7 +517,7 @@ private struct ModeFaceContent: View {
                 ctx.fill(barPath, with: .linearGradient(
                     Gradient(colors: colors),
                     startPoint: CGPoint(x: bW / 2, y: 0),
-                    endPoint:   CGPoint(x: bW / 2, y: bH)
+                    endPoint: CGPoint(x: bW / 2, y: bH)
                 ))
             }
 
@@ -529,7 +525,7 @@ private struct ModeFaceContent: View {
             context.fill(barPath, with: .linearGradient(
                 Gradient(colors: colors),
                 startPoint: CGPoint(x: bW / 2, y: 0),
-                endPoint:   CGPoint(x: bW / 2, y: bH)
+                endPoint: CGPoint(x: bW / 2, y: bH)
             ))
 
             // ── 4. Glass gloss — NO drawLayer, NO clip ────────────────
@@ -541,10 +537,10 @@ private struct ModeFaceContent: View {
                     .init(color: .white.opacity(0.32), location: 0.028),
                     .init(color: .white.opacity(0.06), location: 0.070),
                     .init(color: .white.opacity(0.00), location: 0.110),
-                    .init(color: .white.opacity(0.00), location: 1.000),
+                    .init(color: .white.opacity(0.00), location: 1.000)
                 ]),
                 startPoint: CGPoint(x: bW / 2, y: 0),
-                endPoint:   CGPoint(x: bW / 2, y: bH)
+                endPoint: CGPoint(x: bW / 2, y: bH)
             ))
 
             // ── 5. Specular sweep — diagonal, animated by holoShift ──
@@ -553,14 +549,14 @@ private struct ModeFaceContent: View {
             let specX2 = CGPoint(x: shift * (bW * 2.5) + bW, y: bH)
             context.fill(barPath, with: .linearGradient(
                 Gradient(stops: [
-                    .init(color: .clear,                                location: 0.00),
-                    .init(color: .white.opacity(lift ? 0.42 : 0.10),   location: 0.32),
-                    .init(color: .white.opacity(lift ? 0.20 : 0.05),   location: 0.52),
-                    .init(color: .white.opacity(lift ? 0.06 : 0.01),   location: 0.72),
-                    .init(color: .clear,                                location: 1.00),
+                    .init(color: .clear, location: 0.00),
+                    .init(color: .white.opacity(lift ? 0.42 : 0.10), location: 0.32),
+                    .init(color: .white.opacity(lift ? 0.20 : 0.05), location: 0.52),
+                    .init(color: .white.opacity(lift ? 0.06 : 0.01), location: 0.72),
+                    .init(color: .clear, location: 1.00)
                 ]),
                 startPoint: specX1,
-                endPoint:   specX2
+                endPoint: specX2
             ))
 
             // ── 6. Top edge highlight — primary glass read ────────────
@@ -571,13 +567,13 @@ private struct ModeFaceContent: View {
                 topHighlight,
                 with: .linearGradient(
                     Gradient(stops: [
-                        .init(color: .white.opacity(0.0),                location: 0.00),
-                        .init(color: .white.opacity(lift ? 1.0 : 0.70),  location: 0.15),
-                        .init(color: .white.opacity(lift ? 1.0 : 0.70),  location: 0.85),
-                        .init(color: .white.opacity(0.0),                location: 1.00),
+                        .init(color: .white.opacity(0.0), location: 0.00),
+                        .init(color: .white.opacity(lift ? 1.0 : 0.70), location: 0.15),
+                        .init(color: .white.opacity(lift ? 1.0 : 0.70), location: 0.85),
+                        .init(color: .white.opacity(0.0), location: 1.00)
                     ]),
                     startPoint: CGPoint(x: 0, y: 0),
-                    endPoint:   CGPoint(x: bW, y: 0)
+                    endPoint: CGPoint(x: bW, y: 0)
                 )
             )
 
@@ -591,7 +587,7 @@ private struct ModeFaceContent: View {
                 with: .linearGradient(
                     Gradient(colors: colors),
                     startPoint: CGPoint(x: bW / 2, y: 0),
-                    endPoint:   CGPoint(x: bW / 2, y: bH)
+                    endPoint: CGPoint(x: bW / 2, y: bH)
                 ),
                 style: StrokeStyle(lineWidth: 1, lineCap: .round, lineJoin: .round)
             )
@@ -614,7 +610,7 @@ private struct ModeFaceContent: View {
                     .clear
                 ],
                 startPoint: .leading,
-                endPoint:   .trailing
+                endPoint: .trailing
             ))
             .opacity(lifted ? 0.70 : 0.22)
             .animation(AppAnimation.standard, value: lifted)
@@ -636,7 +632,7 @@ private struct ModeFaceContent: View {
                         .clear
                     ],
                     startPoint: .leading,
-                    endPoint:   .trailing
+                    endPoint: .trailing
                 ))
                 .opacity(lifted ? 0.55 : 0.10)
                 .animation(AppAnimation.standard, value: lifted)

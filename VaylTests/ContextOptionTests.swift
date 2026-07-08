@@ -51,7 +51,7 @@ final class ContextOptionTests: XCTestCase {
 
     func test_derivedRegister_anxiousContexts() {
         let anxious: [RelationshipContext] = [
-            .soloUndisclosed, .coupleNervous, .coupleInitiator, .coupleRecalibrating,
+            .soloUndisclosed, .coupleNervous, .coupleInitiator, .coupleRecalibrating
         ]
         for ctx in anxious {
             XCTAssertEqual(register(for: ctx), .anxious, "\(ctx) should be anxious")
@@ -60,7 +60,7 @@ final class ContextOptionTests: XCTestCase {
 
     func test_derivedRegister_excitedContexts() {
         let excited: [RelationshipContext] = [
-            .single, .soloIntentional, .coupleExcited, .coupleGoDeeper,
+            .single, .soloIntentional, .coupleExcited, .coupleGoDeeper
         ]
         for ctx in excited {
             XCTAssertEqual(register(for: ctx), .excited, "\(ctx) should be excited")
@@ -70,7 +70,7 @@ final class ContextOptionTests: XCTestCase {
     func test_derivedRegister_flexibleContexts() {
         let flexible: [RelationshipContext] = [
             .soloLearning, .soloSeekingClarity, .soloExpandKnowledge, .soloCheckingOut,
-            .coupleFiguringOut, .coupleGetBetter, .coupleKeepItFun,
+            .coupleFiguringOut, .coupleGetBetter, .coupleKeepItFun
         ]
         for ctx in flexible {
             XCTAssertEqual(register(for: ctx), .flexible, "\(ctx) should be flexible")

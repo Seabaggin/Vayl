@@ -7,8 +7,8 @@ struct PartnerChip: View {
     /// You finished your Desire Map and are waiting on your partner — surfaces a small aperture
     /// in the active pill (the desire-map waiting status, no dashboard card).
     var waiting: Bool = false
-    var onInviteTap:  (() -> Void)? = nil
-    var onPartnerTap: (() -> Void)? = nil
+    var onInviteTap: (() -> Void)?
+    var onPartnerTap: (() -> Void)?
 
     var body: some View {
         switch state {

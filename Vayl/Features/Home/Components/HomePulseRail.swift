@@ -21,8 +21,8 @@ import SwiftUI
 
 struct HomePulseRail: View {
 
-    var onTap:     (() -> Void)? = nil   // → Map Pulse
-    var onCheckIn: (() -> Void)? = nil   // → check-in
+    var onTap: (() -> Void)?   // → Map Pulse
+    var onCheckIn: (() -> Void)?   // → check-in
 
     /// Aura diameter. Matches Option A in the orb-size reference
     /// (docs/prototypes/home-pulse-widget-orb-size-options.html) — 84px orb in a ~320px card,
@@ -47,20 +47,20 @@ struct HomePulseRail: View {
                 card(
                     // Bilinear-coloured orb + six-space name, matching the check-in reveal and
                     // Map hero — a Neutral/Uncharted reading reads the same everywhere.
-                    orb:       PulseAura(ramp: space.ramp(at: position), size: orbSize, haloSpread: orbHaloSpread),
-                    hero:      space.displayName,
+                    orb: PulseAura(ramp: space.ramp(at: position), size: orbSize, haloSpread: orbHaloSpread),
+                    hero: space.displayName,
                     heroColor: AppColors.textPrimary,
-                    sub:       space.descriptors(at: position),
-                    subColor:  AppColors.textSecondary,
+                    sub: space.descriptors(at: position),
+                    subColor: AppColors.textSecondary,
                     timestamp: trendAndTimestamp(entry.date)
                 )
             } else {
                 card(
-                    orb:       PulseCyclingAura(size: orbSize, haloSpread: orbHaloSpread),
-                    hero:      "How's your capacity?",
+                    orb: PulseCyclingAura(size: orbSize, haloSpread: orbHaloSpread),
+                    hero: "How's your capacity?",
                     heroColor: AppColors.textPrimary,
-                    sub:       "A quick check-in",
-                    subColor:  AppColors.textTertiary,
+                    sub: "A quick check-in",
+                    subColor: AppColors.textTertiary,
                     timestamp: nil
                 )
             }
@@ -197,8 +197,8 @@ struct HomePulseRail: View {
 
     private func relativeTime(_ date: Date) -> String {
         let seconds = Int(-date.timeIntervalSinceNow)
-        if seconds < 60    { return "just now" }
-        if seconds < 3600  { return "\(seconds / 60)m ago" }
+        if seconds < 60 { return "just now" }
+        if seconds < 3600 { return "\(seconds / 60)m ago" }
         if seconds < 86400 { return "\(seconds / 3600)h ago" }
         return "yesterday"
     }

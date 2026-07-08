@@ -14,10 +14,10 @@ import SwiftUI
 
 struct SnapshotCardFace: View {
 
-    let cardWidth:    CGFloat
-    let cardHeight:   CGFloat
-    let verb:         DemoVerb
-    let noun:         String
+    let cardWidth: CGFloat
+    let cardHeight: CGFloat
+    let verb: DemoVerb
+    let noun: String
     let toneProgress: Double   // 0 cool (need) → 1 warm (desire)
     let sealProgress: Double   // 0 composing → 1 sealed
 

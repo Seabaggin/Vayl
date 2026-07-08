@@ -147,7 +147,7 @@ enum MotivationShape: String, CaseIterable, Codable {
     /// Couple-mode option order (top-left → bottom-right).
     static var coupleOptions: [MotivationShape] { [.connection, .selfClarity, .alignment, .selfDiscovery] }
     /// Solo-mode option order.
-    static var soloOptions:   [MotivationShape] { [.selfDiscovery, .readiness, .selfClarity, .openExploration] }
+    static var soloOptions: [MotivationShape] { [.selfDiscovery, .readiness, .selfClarity, .openExploration] }
 
     /// Option order for the given app mode.
     static func options(for mode: AppMode) -> [MotivationShape] {
@@ -213,8 +213,6 @@ enum ArchetypeTag: String, Codable {
     case builder
 }
 
-
-
 // ─────────────────────────────────────────────────────────────
 // MARK: - Home State
 // ─────────────────────────────────────────────────────────────
@@ -247,8 +245,6 @@ extension PartnerChipState: Equatable {
         }
     }
 }
-
-
 
 // ─────────────────────────────────────────────────────────────
 // MARK: - UI Constants

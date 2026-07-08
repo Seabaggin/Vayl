@@ -24,16 +24,16 @@ import SwiftUI
 ///   rightDialProgress — 0.0–1.0 across pronoun options (right dial)
 struct RadioTunerCardFace: View {
 
-    let cardWidth:  CGFloat
+    let cardWidth: CGFloat
     let cardHeight: CGFloat
 
-    var signalStrength:    Double = 0  // 0.0 = searching/static, 1.0 = signal locked
-    var scanPhase:         Double = 0  // shifts sine waves as user scrolls drums
-    var leftDialProgress:  Double = 0  // 0.0–1.0 across gender options
+    var signalStrength: Double = 0  // 0.0 = searching/static, 1.0 = signal locked
+    var scanPhase: Double = 0  // shifts sine waves as user scrolls drums
+    var leftDialProgress: Double = 0  // 0.0–1.0 across gender options
     var rightDialProgress: Double = 0  // 0.0–1.0 across pronoun options
 
     // Illustration spans 72% of card width; viewbox is 160 × 110 internal units.
-    private var illustrationWidth:  CGFloat { cardWidth * 0.72 }
+    private var illustrationWidth: CGFloat { cardWidth * 0.72 }
     private var illustrationHeight: CGFloat { illustrationWidth * (110.0 / 160.0) }
 
     var body: some View {
@@ -43,13 +43,13 @@ struct RadioTunerCardFace: View {
             // The closure below does ONLY drawing — keeping its body trivial to
             // type-check (was 2.1s as one monolithic closure).
             let g = RadioTunerGeometry(
-                size:              size,
-                illustrationWidth:  illustrationWidth,
+                size: size,
+                illustrationWidth: illustrationWidth,
                 illustrationHeight: illustrationHeight,
-                signalStrength:     signalStrength,
-                scanPhase:          scanPhase,
-                leftDialProgress:   leftDialProgress,
-                rightDialProgress:  rightDialProgress
+                signalStrength: signalStrength,
+                scanPhase: scanPhase,
+                leftDialProgress: leftDialProgress,
+                rightDialProgress: rightDialProgress
             )
 
             let s       = g.s
@@ -60,11 +60,11 @@ struct RadioTunerCardFace: View {
             context.drawLayer { ctx in
                 ctx.addFilter(.blur(radius: 3 * s))
                 ctx.opacity = g.glowOpacity
-                ctx.stroke(g.cabinetPath,   with: shading, style: StrokeStyle(lineWidth: 7 * s))
-                ctx.stroke(g.grillePath,    with: shading, style: StrokeStyle(lineWidth: 5 * s))
-                ctx.stroke(g.leftDialPath,  with: shading, style: StrokeStyle(lineWidth: 5 * s))
+                ctx.stroke(g.cabinetPath, with: shading, style: StrokeStyle(lineWidth: 7 * s))
+                ctx.stroke(g.grillePath, with: shading, style: StrokeStyle(lineWidth: 5 * s))
+                ctx.stroke(g.leftDialPath, with: shading, style: StrokeStyle(lineWidth: 5 * s))
                 ctx.stroke(g.rightDialPath, with: shading, style: StrokeStyle(lineWidth: 5 * s))
-                ctx.stroke(g.bandPath,      with: shading, style: StrokeStyle(lineWidth: 5 * s))
+                ctx.stroke(g.bandPath, with: shading, style: StrokeStyle(lineWidth: 5 * s))
             }
 
             // ── Band needle signal glow (signal > 0 only) ─────────────
@@ -145,29 +145,29 @@ private struct RadioTunerGeometry {
 
     let shading: GraphicsContext.Shading
 
-    let cabinetPath:    Path
-    let antennaPath:    Path
-    let grillePath:     Path
-    let sineWavePaths:  [Path]
-    let leftDialPath:   Path
-    let rightDialPath:  Path
+    let cabinetPath: Path
+    let antennaPath: Path
+    let grillePath: Path
+    let sineWavePaths: [Path]
+    let leftDialPath: Path
+    let rightDialPath: Path
     let leftNeedlePath: Path
-    let rightNeedlePath:Path
-    let leftDotPath:    Path
-    let rightDotPath:   Path
-    let bandPath:       Path
+    let rightNeedlePath: Path
+    let leftDotPath: Path
+    let rightDotPath: Path
+    let bandPath: Path
     let bandNeedlePath: Path
 
-    let cabinetStroke:  StrokeStyle
-    let grilleStroke:   StrokeStyle
+    let cabinetStroke: StrokeStyle
+    let grilleStroke: StrokeStyle
     let grilleLnStroke: StrokeStyle
-    let antennaStroke:  StrokeStyle
-    let dialStroke:     StrokeStyle
-    let needleStroke:   StrokeStyle
-    let bandStroke:     StrokeStyle
+    let antennaStroke: StrokeStyle
+    let dialStroke: StrokeStyle
+    let needleStroke: StrokeStyle
+    let bandStroke: StrokeStyle
 
-    let bandNeedleWidth:   CGFloat
-    let glowOpacity:       Double
+    let bandNeedleWidth: CGFloat
+    let glowOpacity: Double
     let bandNeedleOpacity: Double
 
     /// 240° sweep centred so 0% = bottom-left, 50% = top, 100% = bottom-right.
@@ -207,24 +207,24 @@ private struct RadioTunerGeometry {
 
         // ── Spectrum gradient — illustration-relative ─────────────
         let specGrad = Gradient(stops: [
-            .init(color: AppColors.spectrumCyan,    location: 0.00),
-            .init(color: AppColors.spectrumPurple,  location: 0.50),
-            .init(color: AppColors.spectrumMagenta, location: 1.00),
+            .init(color: AppColors.spectrumCyan, location: 0.00),
+            .init(color: AppColors.spectrumPurple, location: 0.50),
+            .init(color: AppColors.spectrumMagenta, location: 1.00)
         ])
         self.shading = GraphicsContext.Shading.linearGradient(
             specGrad,
-            startPoint: CGPoint(x: cabX,         y: cabY),
-            endPoint:   CGPoint(x: cabX + cabW,  y: cabY + cabH)
+            startPoint: CGPoint(x: cabX, y: cabY),
+            endPoint: CGPoint(x: cabX + cabW, y: cabY + cabH)
         )
 
         // ── Antenna ───────────────────────────────────────────────
         let antBaseX: CGFloat = cabX + cabW * 0.78
         let antBaseY: CGFloat = cabY
-        let antTipX:  CGFloat = antBaseX + 16 * s
-        let antTipY:  CGFloat = antBaseY - 26 * s
+        let antTipX: CGFloat = antBaseX + 16 * s
+        let antTipY: CGFloat = antBaseY - 26 * s
         var antennaPath = Path()
-        antennaPath.move(to:    CGPoint(x: antBaseX, y: antBaseY))
-        antennaPath.addLine(to: CGPoint(x: antTipX,  y: antTipY))
+        antennaPath.move(to: CGPoint(x: antBaseX, y: antBaseY))
+        antennaPath.addLine(to: CGPoint(x: antTipX, y: antTipY))
         self.antennaPath = antennaPath
 
         // ── Speaker grille ────────────────────────────────────────
@@ -238,14 +238,14 @@ private struct RadioTunerGeometry {
         ), cornerRadius: grilleR)
 
         // ── Sine waves — 3 lanes inside grille ────────────────────
-        let linePad:  CGFloat = 4 * s
-        let waveAmp:  CGFloat = grilleH * 0.055
-        let waveW:    CGFloat = grilleW - linePad * 2
+        let linePad: CGFloat = 4 * s
+        let waveAmp: CGFloat = grilleH * 0.055
+        let waveW: CGFloat = grilleW - linePad * 2
         let waveSteps: Int    = max(40, Int(waveW / s))
         let waveConfig: [(CGFloat, Double, Double)] = [
             (0.22, 1.8, 0.0),
             (0.50, 2.4, .pi * 0.6),
-            (0.78, 1.5, .pi * 1.3),
+            (0.78, 1.5, .pi * 1.3)
         ]
         var sineWavePaths: [Path] = []
         for (laneFrac, freq, phaseOff) in waveConfig {
@@ -256,17 +256,16 @@ private struct RadioTunerGeometry {
                 let x: CGFloat     = grilleX + linePad + CGFloat(t) * waveW
                 let angle: Double  = 2 * .pi * freq * t + scanPhase * 0.04 + phaseOff
                 let y: CGFloat     = laneY + waveAmp * CGFloat(sin(angle))
-                if step == 0 { path.move(to: CGPoint(x: x, y: y)) }
-                else         { path.addLine(to: CGPoint(x: x, y: y)) }
+                if step == 0 { path.move(to: CGPoint(x: x, y: y)) } else { path.addLine(to: CGPoint(x: x, y: y)) }
             }
             sineWavePaths.append(path)
         }
         self.sineWavePaths = sineWavePaths
 
         // ── Dials ──────────────────────────────────────────────────
-        let dialR:  CGFloat = 11 * s
+        let dialR: CGFloat = 11 * s
         let dialCY: CGFloat = grilleY + grilleH * 0.5
-        let leftDialCX:  CGFloat = cabX + cabW * 0.115
+        let leftDialCX: CGFloat = cabX + cabW * 0.115
         let rightDialCX: CGFloat = cabX + cabW * 0.885
 
         self.leftDialPath = Path(ellipseIn: CGRect(
@@ -279,14 +278,14 @@ private struct RadioTunerGeometry {
         ))
 
         // Dial needles — from centre to edge point
-        let leftNeedleEnd  = Self.needleEnd(cx: leftDialCX,  cy: dialCY, dialR: dialR, progress: leftDialProgress)
+        let leftNeedleEnd  = Self.needleEnd(cx: leftDialCX, cy: dialCY, dialR: dialR, progress: leftDialProgress)
         let rightNeedleEnd = Self.needleEnd(cx: rightDialCX, cy: dialCY, dialR: dialR, progress: rightDialProgress)
         var leftNeedlePath = Path()
-        leftNeedlePath.move(to:    CGPoint(x: leftDialCX, y: dialCY))
+        leftNeedlePath.move(to: CGPoint(x: leftDialCX, y: dialCY))
         leftNeedlePath.addLine(to: leftNeedleEnd)
         self.leftNeedlePath = leftNeedlePath
         var rightNeedlePath = Path()
-        rightNeedlePath.move(to:    CGPoint(x: rightDialCX, y: dialCY))
+        rightNeedlePath.move(to: CGPoint(x: rightDialCX, y: dialCY))
         rightNeedlePath.addLine(to: rightNeedleEnd)
         self.rightNeedlePath = rightNeedlePath
 
@@ -314,7 +313,7 @@ private struct RadioTunerGeometry {
         // ── Band needle — vertical marker tracking leftDialProgress ─
         let needleX: CGFloat = bandX + bandW * CGFloat(leftDialProgress)
         var bandNeedlePath = Path()
-        bandNeedlePath.move(to:    CGPoint(x: needleX, y: bandY - 2 * s))
+        bandNeedlePath.move(to: CGPoint(x: needleX, y: bandY - 2 * s))
         bandNeedlePath.addLine(to: CGPoint(x: needleX, y: bandY + bandH + 2 * s))
         self.bandNeedlePath = bandNeedlePath
 
@@ -345,14 +344,14 @@ private struct RadioTunerGeometry {
     ZStack {
         AppColors.void.ignoresSafeArea()
         RadioTunerCardFace(
-            cardWidth:  AppLayout.obCardWidth(in: 390),
+            cardWidth: AppLayout.obCardWidth(in: 390),
             cardHeight: AppLayout.obCardHeight(in: 390),
-            signalStrength:   0,
+            signalStrength: 0,
             leftDialProgress: 0.5,
             rightDialProgress: 0.2
         )
         .frame(
-            width:  AppLayout.obCardWidth(in: 390),
+            width: AppLayout.obCardWidth(in: 390),
             height: AppLayout.obCardHeight(in: 390)
         )
     }
@@ -363,14 +362,14 @@ private struct RadioTunerGeometry {
     ZStack {
         AppColors.void.ignoresSafeArea()
         RadioTunerCardFace(
-            cardWidth:  AppLayout.obCardWidth(in: 390),
+            cardWidth: AppLayout.obCardWidth(in: 390),
             cardHeight: AppLayout.obCardHeight(in: 390),
-            signalStrength:   1,
+            signalStrength: 1,
             leftDialProgress: 0.4,
             rightDialProgress: 0.6
         )
         .frame(
-            width:  AppLayout.obCardWidth(in: 390),
+            width: AppLayout.obCardWidth(in: 390),
             height: AppLayout.obCardHeight(in: 390)
         )
     }

@@ -28,18 +28,18 @@ struct DeckCaseView: View {
     /// Live lock state threaded in from the wall/detail (PlayStore.isLocked —
     /// catalog flag AND not Core). nil falls back to the frozen catalog flag
     /// (previews / storeless call sites only).
-    var lockedOverride: Bool? = nil
+    var lockedOverride: Bool?
 
     private var locked: Bool { lockedOverride ?? summary.isLocked }
 
     /// Pointy-top unit hexagon vertices (center → vertex), scaled by the cell radius.
     private static let hexUnit: [CGPoint] = [
-        CGPoint(x:  0.0000000, y: -1.0),
-        CGPoint(x:  0.8660254, y: -0.5),
-        CGPoint(x:  0.8660254, y:  0.5),
-        CGPoint(x:  0.0000000, y:  1.0),
-        CGPoint(x: -0.8660254, y:  0.5),
-        CGPoint(x: -0.8660254, y: -0.5),
+        CGPoint(x: 0.0000000, y: -1.0),
+        CGPoint(x: 0.8660254, y: -0.5),
+        CGPoint(x: 0.8660254, y: 0.5),
+        CGPoint(x: 0.0000000, y: 1.0),
+        CGPoint(x: -0.8660254, y: 0.5),
+        CGPoint(x: -0.8660254, y: -0.5)
     ]
 
     var body: some View {
@@ -55,9 +55,9 @@ struct DeckCaseView: View {
                     HexFoil(unit: Self.hexUnit, columns: 6, tint: style.colorway.c0)
                         .opacity(0.6)
                         .mask(LinearGradient(stops: [
-                            .init(color: .white,              location: 0.0),
+                            .init(color: .white, location: 0.0),
                             .init(color: .white.opacity(0.42), location: 0.58),
-                            .init(color: .white.opacity(0.12), location: 1.0),
+                            .init(color: .white.opacity(0.12), location: 1.0)
                         ], startPoint: .topLeading, endPoint: .bottomTrailing))
                 }
 
@@ -90,9 +90,9 @@ struct DeckCaseView: View {
         ZStack {
             LinearGradient(stops: [
                 .init(color: style.colorway.c1.opacity(0.20), location: 0.0),
-                .init(color: AppColors.cardBackgroundRaised,   location: 0.35),
-                .init(color: AppColors.cardBg,                 location: 0.72),
-                .init(color: AppColors.void,                   location: 1.0),
+                .init(color: AppColors.cardBackgroundRaised, location: 0.35),
+                .init(color: AppColors.cardBg, location: 0.72),
+                .init(color: AppColors.void, location: 1.0)
             ], startPoint: .topLeading, endPoint: .bottomTrailing)
 
             RadialGradient(colors: [style.colorway.c2.opacity(0.26), .clear],
@@ -117,11 +117,11 @@ struct DeckCaseView: View {
     private var sheen: some View {
         LinearGradient(
             stops: [
-                .init(color: .clear,               location: 0.30),
+                .init(color: .clear, location: 0.30),
                 .init(color: .white.opacity(0.05), location: 0.46),
                 .init(color: .white.opacity(0.10), location: 0.50),
                 .init(color: .white.opacity(0.05), location: 0.54),
-                .init(color: .clear,               location: 0.70),
+                .init(color: .clear, location: 0.70)
             ],
             startPoint: .topLeading, endPoint: .bottomTrailing
         )
@@ -138,7 +138,7 @@ struct DeckCaseView: View {
                 colors: [.clear, AppColors.void.opacity(0.45)],
                 center: .center,
                 startRadius: min(w, h) * 0.30,
-                endRadius:   max(w, h) * 0.72
+                endRadius: max(w, h) * 0.72
             )
             RoundedRectangle(cornerRadius: r, style: .continuous)
                 .stroke(

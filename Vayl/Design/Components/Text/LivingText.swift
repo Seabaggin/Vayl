@@ -18,7 +18,7 @@ struct LivingText: View {
         [
             AppColors.accentPrimary,
             AppColors.accentSecondary,
-            AppColors.accentTertiary,
+            AppColors.accentTertiary
         ]
     }
 
@@ -91,8 +91,8 @@ struct LivingText: View {
 /// explicitly-typed stored value resolved in `init`, so the type-checker handles
 /// each statement independently rather than as one giant closure.
 private struct Frame {
-    let stops:       [Color]
-    let glowBlur:    CGFloat
+    let stops: [Color]
+    let glowBlur: CGFloat
     let glowOpacity: Double
     let breathScale: CGFloat
 
@@ -113,7 +113,7 @@ private struct Frame {
         self.stops = [
             AppColors.accentPrimary,
             AppColors.accentSecondary,
-            AppColors.accentTertiary,
+            AppColors.accentTertiary
         ]
 
         self.glowOpacity = 0.28 + Double(intensity) * 0.30
@@ -171,7 +171,7 @@ private struct Frame {
                 colors: [
                     AppColors.accentTertiary.opacity(0.30),
                     AppColors.accentSecondary.opacity(0.15),
-                    Color.clear,
+                    Color.clear
                 ],
                 center: .top,
                 startRadius: 30,

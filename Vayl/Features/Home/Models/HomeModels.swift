@@ -5,7 +5,6 @@
 
 import SwiftUI
 
-
 // MARK: - Reflection Card State
 
 enum ReflectionCardState {

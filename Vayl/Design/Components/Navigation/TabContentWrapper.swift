@@ -48,13 +48,13 @@ struct TabContentWrapper<Content: View>: View {
             Rectangle().fill(Color.black)   // content above the fade: fully visible
             LinearGradient(
                 stops: [
-                    .init(color: .black,               location: 0.00),
+                    .init(color: .black, location: 0.00),
                     .init(color: .black.opacity(0.85), location: 0.35),
                     .init(color: .black.opacity(0.40), location: 0.70),
-                    .init(color: .clear,               location: 1.00),
+                    .init(color: .clear, location: 1.00)
                 ],
                 startPoint: .top,
-                endPoint:   .bottom
+                endPoint: .bottom
             )
             .frame(height: fadeHeight)
         }

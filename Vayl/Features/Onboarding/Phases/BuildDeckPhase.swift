@@ -34,7 +34,7 @@ import SwiftUI
 /// values here.
 struct BuildDeckPhase: View {
 
-    let director:   VaylDirector
+    let director: VaylDirector
     let screenSize: CGSize
     /// The table's spectrum rim — phases drive it (NamePhase/GenderPhase
     /// pattern). During the forge it oscillates: the TABLE is the performer.
@@ -45,91 +45,91 @@ struct BuildDeckPhase: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // sequence state
-    @State private var started:    Bool = false
+    @State private var started: Bool = false
     // Long-lived task handles — cancelled on disappear so the knock loop, the beat
     // sequences, and the spark-field retirement never outlive the phase.
-    @State private var sequenceTask:    Task<Void, Never>? = nil
-    @State private var knockTask:       Task<Void, Never>? = nil
-    @State private var sparksClearTask: Task<Void, Never>? = nil
-    @State private var deckShown:  Bool = true
-    @State private var deckMelt:   Double = 0       // 0 intact → 1 fully under the felt
-    @State private var meltDone:   Bool = false     // haptic trigger
-    @State private var caseShown:  Bool = false
+    @State private var sequenceTask: Task<Void, Never>?
+    @State private var knockTask: Task<Void, Never>?
+    @State private var sparksClearTask: Task<Void, Never>?
+    @State private var deckShown: Bool = true
+    @State private var deckMelt: Double = 0       // 0 intact → 1 fully under the felt
+    @State private var meltDone: Bool = false     // haptic trigger
+    @State private var caseShown: Bool = false
     @State private var caseOpacity: Double = 0      // dissolve-up reveal
     // .distantFuture = mounted lying FLAT, lifeless — the lift is assigned later.
     // (nil would mean "full float pose" and causes the double-rise bug.)
     @State private var caseRiseStart: Date? = .distantFuture
     @State private var latticeWake: Date = .distantFuture  // hex wakes AFTER the zoom
-    @State private var caseFloat:  Bool = false     // felt → float position
+    @State private var caseFloat: Bool = false     // felt → float position
 
     // Living Case tap ceremony (Beat 5) — state lives in director.ceremony
     // (tapCount / eruptStart / holdBreath); the view owns only the physical read.
-    @State private var caseArmed:    Bool = false   // invitation landed; taps live
+    @State private var caseArmed: Bool = false   // invitation landed; taps live
     @State private var caseDissolve: Date = .distantFuture  // third tap → flower peel
     // Segment 2 — the charged core: the deck's energy contained inside the shell.
-    @State private var coreEnergy:   Double = 0
+    @State private var coreEnergy: Double = 0
     // damped-oscillation shake — the case recoiling with MASS (per-frame task)
     @State private var shakeOffset: CGSize = .zero
-    @State private var shakeTask:   Task<Void, Never>? = nil
+    @State private var shakeTask: Task<Void, Never>?
     // directional micro-yaw — the knock twitch + a small kick riding each shake
-    @State private var kickDeg:  Double = 0
+    @State private var kickDeg: Double = 0
     @State private var kickAxis: (x: CGFloat, y: CGFloat) = (0, 1)
     // reseal haptics — the lattice closing over the card after taps 1–2
     @State private var resealCount: Int = 0
-    @State private var resealTask:  Task<Void, Never>? = nil
+    @State private var resealTask: Task<Void, Never>?
     // the held breath — the case brightens, nothing moves (third tap). The date
     // also feeds MetallicCaseView so the float drift damps to dead-still.
     @State private var holdBreathVisual: Bool = false
-    @State private var breathHoldStart:  Date = .distantFuture
-    @State private var peelStarted:      Bool = false   // .success haptic trigger
+    @State private var breathHoldStart: Date = .distantFuture
+    @State private var peelStarted: Bool = false   // .success haptic trigger
     // spectrum motes venting as the peel opens
     @State private var sparkBursts: [SparkBurst] = []
     // the knock from inside — anticipation while armed and untouched
     @State private var knockStart: Date = .distantFuture
-    @State private var knockSeed:  UInt64 = 0
+    @State private var knockSeed: UInt64 = 0
     @State private var knockCount: Int = 0
 
     // founder letter sheet-peek (Beat 7)
-    @State private var peekShown:     Bool = false
+    @State private var peekShown: Bool = false
     @State private var sheetExpanded: Bool = false
-    @State private var peekPressed:   Bool = false
-    @State private var sheetDrag:     CGFloat = 0
+    @State private var peekPressed: Bool = false
+    @State private var sheetDrag: CGFloat = 0
     private let peekHeight: CGFloat = 100   // shows the grabber + "A note from the founder" with presence
 
     // Beat 6 — the reveal sequence, on a FIXED STAGE anchored to floatCenter:
     // the case and the reveal occupy the same position, nothing reflows.
     // breath → name → fan → flip wave → carousel → CTA. User-paced exit.
-    @State private var revealTask:   Task<Void, Never>? = nil
+    @State private var revealTask: Task<Void, Never>?
     @State private var deckStanding: Bool = false           // fan cards mounted behind the shell
-    @State private var deckOpacity:  Double = 0             // uncovered through the opening centre
-    @State private var deckRise:     CGFloat = 8            // small settle-down as it's freed
-    @State private var glowPulse:    Double = 0             // released energy → the breath
-    @State private var nameShown:    Bool = false           // Beat 6b — named AFTER it stands alone
-    @State private var fanned:       Bool = false           // Beat 6c — the bloom
-    @State private var flipDegrees:  [Double] = Array(repeating: 180, count: 6)
-    @State private var faceUp:       [Bool]   = Array(repeating: false, count: 6)
-    @State private var flipIndex:    Int = -1               // .selection haptic trigger
-    @State private var inCarousel:   Bool = false           // Beat 6e
+    @State private var deckOpacity: Double = 0             // uncovered through the opening centre
+    @State private var deckRise: CGFloat = 8            // small settle-down as it's freed
+    @State private var glowPulse: Double = 0             // released energy → the breath
+    @State private var nameShown: Bool = false           // Beat 6b — named AFTER it stands alone
+    @State private var fanned: Bool = false           // Beat 6c — the bloom
+    @State private var flipDegrees: [Double] = Array(repeating: 180, count: 6)
+    @State private var faceUp: [Bool]   = Array(repeating: false, count: 6)
+    @State private var flipIndex: Int = -1               // .selection haptic trigger
+    @State private var inCarousel: Bool = false           // Beat 6e
     @State private var revealExiting: Bool = false          // the deck sinks on hand-off
-    @State private var ctaShown:     Bool = false           // "Take your deck"
+    @State private var ctaShown: Bool = false           // "Take your deck"
     @State private var revealPhysics = CarouselPhysics(count: WelcomeDeck.placeholderCards.count)
     private var welcomeDeck: WelcomeDeck { WelcomeDeck.of(director.openerDeckType) }
 
     // Mirrors ConfirmationPhase.cardWidth(in:) — the deck arrives at FAN-card
     // scale (the collapse never grows the cards). The size change to the hero
     // case happens as a camera zoom during the float, not object growth.
-    private var deckW:    CGFloat { min(screenSize.width * 0.32, 230) }
-    private var deckSize: CGSize  { CGSize(width: deckW, height: deckW * 1.5) }
+    private var deckW: CGFloat { min(screenSize.width * 0.32, 230) }
+    private var deckSize: CGSize { CGSize(width: deckW, height: deckW * 1.5) }
 
     /// Camera dolly-in during Beat 3c: the case scales up WHILE the felt
     /// recedes beneath it — object-up + background-away reads as the camera
     /// moving closer, never as the object inflating. Feel-tunable.
     private let floatZoom: CGFloat = 2.0
-    private var feltCenter:  CGPoint { CGPoint(x: screenSize.width / 2, y: AppLayout.obTableCardCenterY(in: screenSize.height)) }
+    private var feltCenter: CGPoint { CGPoint(x: screenSize.width / 2, y: AppLayout.obTableCardCenterY(in: screenSize.height)) }
     private var floatCenter: CGPoint { CGPoint(x: screenSize.width / 2, y: screenSize.height * 0.42) }
 
     // Beat 6c fan geometry — mockup values scaled to card width (mockup card 88pt).
-    private let fanAngles:      [Double]  = [-22, -13, -4, 4, 13, 22]
+    private let fanAngles: [Double]  = [-22, -13, -4, 4, 13, 22]
     private let fanOffsetFracs: [CGFloat] = [-0.91, -0.55, -0.18, 0.18, 0.55, 0.91]
 
     var body: some View {
@@ -233,15 +233,15 @@ struct BuildDeckPhase: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .sensoryFeedback(.impact(weight: .medium), trigger: meltDone)   // the deck goes under
-        .sensoryFeedback(.impact(weight: .heavy),  trigger: caseFloat)  // the case takes the air
+        .sensoryFeedback(.impact(weight: .heavy), trigger: caseFloat)  // the case takes the air
         .sensoryFeedback(.impact(weight: .light, intensity: 0.5), trigger: knockCount)
         // the three strikes — light 0.8, medium 0.9, heavy 1.0 (the negotiation arc)
         .sensoryFeedback(trigger: director.ceremony.tapCount) { old, new in
             guard new > old else { return nil }
             switch new {
-            case 1:  return .impact(weight: .light,  intensity: 0.8)
+            case 1:  return .impact(weight: .light, intensity: 0.8)
             case 2:  return .impact(weight: .medium, intensity: 0.9)
-            default: return .impact(weight: .heavy,  intensity: 1.0)
+            default: return .impact(weight: .heavy, intensity: 1.0)
             }
         }
         // the reseal — a softer confirmation as the lattice closes over the card
@@ -299,9 +299,9 @@ struct BuildDeckPhase: View {
             // the cards — stacked → fan → flip wave; crossfades to the carousel
             if inCarousel {
                 VaylCardCarousel(
-                    count:    WelcomeDeck.placeholderCards.count,
+                    count: WelcomeDeck.placeholderCards.count,
                     cardSize: deckSize,
-                    physics:  revealPhysics,
+                    physics: revealPhysics,
                     content: { index, isFront in
                         let c = WelcomeDeck.placeholderCards[index]
                         VaylCardFace(
@@ -429,9 +429,9 @@ struct BuildDeckPhase: View {
     private func runShake(_ tapIdx: Int, from uv: CGPoint) {
         shakeTask?.cancel()
         guard !reduceMotion else { return }
-        let amp:   [Double] = [5, 9, 14]
+        let amp: [Double] = [5, 9, 14]
         let decay: [Double] = [AppAnimation.caseShake1, AppAnimation.caseShake2, AppAnimation.caseShake3]
-        let freq:  [Double] = [3, 2.5, 2]
+        let freq: [Double] = [3, 2.5, 2]
         // away-from-the-finger direction; near-centre strikes fall back to lateral
         var dx = Double(0.5 - uv.x), dy = Double(0.5 - uv.y)
         let len = (dx * dx + dy * dy).squareRoot()
@@ -812,7 +812,7 @@ private struct MeltThroughFelt: ViewModifier {
                     stops: [
                         .init(color: .black, location: 0.00),
                         .init(color: .black, location: bandTop),
-                        .init(color: progress > 0.001 ? .clear : .black, location: 1.00),
+                        .init(color: progress > 0.001 ? .clear : .black, location: 1.00)
                     ],
                     startPoint: .top, endPoint: .bottom
                 )

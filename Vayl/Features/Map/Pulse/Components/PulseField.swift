@@ -22,10 +22,10 @@ struct PulseFieldEntry: Identifiable {
     var id: String = "primary"
     var position: PulsePosition
     var auraSize: CGFloat = 44
-    var isBloom:  Bool    = false
+    var isBloom: Bool    = false
     /// Overrides the position-derived ramp (e.g. the check-in's silver-to-start state).
     /// nil (default) = every existing caller is unaffected.
-    var rampOverride: AuraColors? = nil
+    var rampOverride: AuraColors?
     /// Dims a stale reading (e.g. a days-old position shown as "last known,"
     /// not "today"). 1.0 (default, no-op) = every existing caller unaffected.
     var opacity: Double = 1.0
@@ -33,7 +33,7 @@ struct PulseFieldEntry: Identifiable {
     /// The six-space classification for this reading. nil (default) = derive it from the
     /// position, so every existing caller is unaffected; the check-in passes an explicit
     /// value when the Uncharted variance check has fired (position alone can't recover it).
-    var space: PulseSpace? = nil
+    var space: PulseSpace?
 
     /// Uncharted: the orb wanders slowly instead of landing at a fixed coordinate. false
     /// (default, no-op) = every existing caller is unaffected.
@@ -54,12 +54,12 @@ struct PulseFieldEntry: Identifiable {
 
 struct PulseField: View {
 
-    var entries:         [PulseFieldEntry]
-    var size:            CGFloat = 200
-    var showAxisLabels:  Bool    = false   // High/Low/Guarded/Open rim labels
+    var entries: [PulseFieldEntry]
+    var size: CGFloat = 200
+    var showAxisLabels: Bool    = false   // High/Low/Guarded/Open rim labels
     /// Uncharted resolution: the field (zones, ghost labels, axis labels) fades to nothing,
     /// leaving the drifting orb alone on the void. The aura layer never fades. (spec §9)
-    var isUncharted:     Bool    = false
+    var isUncharted: Bool    = false
 
     var body: some View {
         ZStack {
@@ -101,9 +101,9 @@ struct PulseField: View {
         // as emissive light blending with whatever's behind it, not a flat opaque patch.
         ZStack {
             zoneBlob(AppColors.auraCoreMagenta, cx: 0.28, cy: 0.28, opacity: 0.20)  // Reactive
-            zoneBlob(AppColors.auraCoreCyan,    cx: 0.72, cy: 0.28, opacity: 0.16)  // Expansive
-            zoneBlob(AppColors.auraCoreRose,    cx: 0.28, cy: 0.72, opacity: 0.32)  // Protective
-            zoneBlob(AppColors.auraCoreIndigo,  cx: 0.72, cy: 0.72, opacity: 0.23)  // Receptive
+            zoneBlob(AppColors.auraCoreCyan, cx: 0.72, cy: 0.28, opacity: 0.16)  // Expansive
+            zoneBlob(AppColors.auraCoreRose, cx: 0.28, cy: 0.72, opacity: 0.32)  // Protective
+            zoneBlob(AppColors.auraCoreIndigo, cx: 0.72, cy: 0.72, opacity: 0.23)  // Receptive
         }
         .frame(width: size, height: size)
         .compositingGroup()
@@ -115,9 +115,9 @@ struct PulseField: View {
         let d = size * 0.92
         return RadialGradient(
             gradient: Gradient(stops: [
-                .init(color: color.opacity(opacity),       location: 0.0),
+                .init(color: color.opacity(opacity), location: 0.0),
                 .init(color: color.opacity(opacity * 0.5), location: 0.45),
-                .init(color: .clear,                       location: 0.85)
+                .init(color: .clear, location: 0.85)
             ]),
             center: .center,
             startRadius: 0,
@@ -134,10 +134,10 @@ struct PulseField: View {
         ZStack {
             // Left words ride higher, right words lower within each pair, so a big word and its
             // neighbour interlock at different heights instead of colliding at the centre line.
-            ghostLabel("Reactive",   AppColors.auraCoreMagenta, leading: true,  yFrac: 0.16, quadrant: .reactive)
-            ghostLabel("Expansive",  AppColors.auraCoreCyan,    leading: false, yFrac: 0.30, quadrant: .expansive)
-            ghostLabel("Protective", AppColors.auraCoreRose,    leading: true,  yFrac: 0.70, quadrant: .protective)
-            ghostLabel("Receptive",  AppColors.auraCoreIndigo,  leading: false, yFrac: 0.84, quadrant: .receptive)
+            ghostLabel("Reactive", AppColors.auraCoreMagenta, leading: true, yFrac: 0.16, quadrant: .reactive)
+            ghostLabel("Expansive", AppColors.auraCoreCyan, leading: false, yFrac: 0.30, quadrant: .expansive)
+            ghostLabel("Protective", AppColors.auraCoreRose, leading: true, yFrac: 0.70, quadrant: .protective)
+            ghostLabel("Receptive", AppColors.auraCoreIndigo, leading: false, yFrac: 0.84, quadrant: .receptive)
         }
         .frame(width: size, height: size)
         .allowsHitTesting(false)
@@ -171,7 +171,7 @@ struct PulseField: View {
                 ZStack {
                     if entry.isBloom {
                         BloomRing(color: entry.quadrant.capacityColor.auraCore,
-                                  size:  entry.auraSize)
+                                  size: entry.auraSize)
                     }
                     // Colour precedence: an explicit rampOverride wins (e.g. the check-in's
                     // silver-to-start state); otherwise the resolved space paints the orb —
@@ -207,10 +207,10 @@ struct PulseField: View {
 
     private var quadrantLabels: some View {
         ZStack {
-            quadrantText("Expansive",  .topTrailing,   AppColors.pulseTierExpansive.opacity(0.78))
-            quadrantText("Friction",   .topLeading,    AppColors.pulseTierFriction.opacity(0.65))
+            quadrantText("Expansive", .topTrailing, AppColors.pulseTierExpansive.opacity(0.78))
+            quadrantText("Friction", .topLeading, AppColors.pulseTierFriction.opacity(0.65))
             quadrantText("Protective", .bottomLeading, AppColors.pulseTierProtective.opacity(0.70))
-            quadrantText("Sovereign",  .bottomTrailing,AppColors.pulseTierSovereign.opacity(0.72))
+            quadrantText("Sovereign", .bottomTrailing, AppColors.pulseTierSovereign.opacity(0.72))
         }
         .allowsHitTesting(false)
     }
@@ -279,7 +279,7 @@ private struct UnchartedDrift: ViewModifier {
 
 private struct BloomRing: View {
     let color: Color
-    let size:  CGFloat
+    let size: CGFloat
 
     @State private var active = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -315,7 +315,7 @@ private struct BloomRing: View {
                     PulseFieldEntry(id: "a", position: PulsePosition(energy: 0.85, openness: 0.85)),
                     PulseFieldEntry(id: "b", position: PulsePosition(energy: 0.85, openness: 0.15)),
                     PulseFieldEntry(id: "c", position: PulsePosition(energy: 0.15, openness: 0.85)),
-                    PulseFieldEntry(id: "d", position: PulsePosition(energy: 0.15, openness: 0.15)),
+                    PulseFieldEntry(id: "d", position: PulsePosition(energy: 0.15, openness: 0.15))
                 ],
                 size: 260,
                 showAxisLabels: true

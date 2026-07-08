@@ -10,8 +10,8 @@ struct AppShell: View {
 
     @Environment(AppState.self) private var appState
 
-    @State private var selectedTab:        AppTab  = .home
-    @State private var contentTab:         AppTab  = .home
+    @State private var selectedTab: AppTab  = .home
+    @State private var contentTab: AppTab  = .home
     @State private var transitionDirection: CGFloat = 1
 
     var body: some View {
@@ -98,8 +98,8 @@ struct AppShell: View {
 
     private var driftTransition: AnyTransition {
         .asymmetric(
-            insertion: .opacity.combined(with: .offset(x:  14 * transitionDirection)),
-            removal:   .opacity.combined(with: .offset(x:  -8 * transitionDirection))
+            insertion: .opacity.combined(with: .offset(x: 14 * transitionDirection)),
+            removal: .opacity.combined(with: .offset(x: -8 * transitionDirection))
         )
     }
 }

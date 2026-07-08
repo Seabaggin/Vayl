@@ -27,12 +27,12 @@ struct HolographicTextCore: View {
     let text: String
     var font: Font
     var tracking: CGFloat = 0
-    var lineLimit: Int? = nil
+    var lineLimit: Int?
     var minScale: CGFloat = 0.6
 
     // Animation-driven inputs — owned by the consumer.
-    let shift:    CGFloat   // gradient drift phase
-    let flash:    CGFloat   // specular sweep position
+    let shift: CGFloat   // gradient drift phase
+    let flash: CGFloat   // specular sweep position
     let glowHigh: Bool      // glow breathe state (high/low)
 
     /// Multiplier on the colored glow bloom. 1.0 = StatPhase baseline (king); a
@@ -41,8 +41,8 @@ struct HolographicTextCore: View {
 
     // Optional StatPhase arrival-ignition layers. nil → layer omitted, so HolographicText
     // renders the unchanged [glow bloom, core, specular] stack.
-    var igniteGlow:   Double?  = nil   // additive bloom opacity, rendered between glow + core
-    var igniteSweepX: CGFloat? = nil   // bright one-time sweep, rendered above specular
+    var igniteGlow: Double?   // additive bloom opacity, rendered between glow + core
+    var igniteSweepX: CGFloat?   // bright one-time sweep, rendered above specular
 
     /// Lay the ZStack out at its ideal size (StatPhase's single-glyph numeral).
     var fixedSize: Bool = false
@@ -51,26 +51,26 @@ struct HolographicTextCore: View {
     // canonical look); every consumer matches it.
     private let glowHi: CGFloat = 0.40
     private let glowLo: CGFloat = 0.25
-    private let specPrimary:   CGFloat = 0.30
+    private let specPrimary: CGFloat = 0.30
     private let specSecondary: CGFloat = 0.18
-    private let glowBleed:     CGFloat = -6
+    private let glowBleed: CGFloat = -6
 
     private var stops: [Gradient.Stop] {
         [
-            .init(color: AppColors.accentPrimary,   location: 0.00),
+            .init(color: AppColors.accentPrimary, location: 0.00),
             .init(color: AppColors.accentSecondary, location: 0.25),
-            .init(color: AppColors.accentTertiary,  location: 0.50),
-            .init(color: AppColors.accentTertiary,  location: 0.65),
+            .init(color: AppColors.accentTertiary, location: 0.50),
+            .init(color: AppColors.accentTertiary, location: 0.65),
             .init(color: AppColors.accentSecondary, location: 0.80),
-            .init(color: AppColors.accentPrimary,   location: 1.00),
+            .init(color: AppColors.accentPrimary, location: 1.00)
         ]
     }
 
     private var gradient: LinearGradient {
         LinearGradient(
             stops: stops,
-            startPoint: UnitPoint(x: -shift,       y: -0.2),
-            endPoint:   UnitPoint(x: 2.0 - shift,  y:  1.2)
+            startPoint: UnitPoint(x: -shift, y: -0.2),
+            endPoint: UnitPoint(x: 2.0 - shift, y: 1.2)
         )
     }
 
@@ -113,10 +113,10 @@ struct HolographicTextCore: View {
             base.foregroundStyle(.clear)
                 .overlay {
                     LinearGradient.glassSpecular(
-                        primary:    specPrimary,
-                        secondary:  specSecondary,
-                        startPoint: UnitPoint(x: -0.1, y:  1.0),
-                        endPoint:   UnitPoint(x:  1.1, y: -0.25)
+                        primary: specPrimary,
+                        secondary: specSecondary,
+                        startPoint: UnitPoint(x: -0.1, y: 1.0),
+                        endPoint: UnitPoint(x: 1.1, y: -0.25)
                     )
                     .frame(width: 800)
                     .offset(x: flash * 320)
@@ -132,12 +132,12 @@ struct HolographicTextCore: View {
                     .overlay {
                         LinearGradient(
                             stops: [
-                                .init(color: .clear,                location: 0.42),
-                                .init(color: .white.opacity(0.95),  location: 0.50),
-                                .init(color: .clear,                location: 0.58),
+                                .init(color: .clear, location: 0.42),
+                                .init(color: .white.opacity(0.95), location: 0.50),
+                                .init(color: .clear, location: 0.58)
                             ],
-                            startPoint: UnitPoint(x: -0.1, y:  1.0),
-                            endPoint:   UnitPoint(x:  1.1, y: -0.25)
+                            startPoint: UnitPoint(x: -0.1, y: 1.0),
+                            endPoint: UnitPoint(x: 1.1, y: -0.25)
                         )
                         .frame(width: 700)
                         .offset(x: igniteSweepX * 320)
@@ -158,7 +158,7 @@ struct HolographicText: View {
     let text: String
     var font: Font
     var tracking: CGFloat = 0
-    var lineLimit: Int? = nil
+    var lineLimit: Int?
     var minScale: CGFloat = 0.6
     /// Multiplier on the colored glow bloom (1.0 = StatPhase baseline).
     var glowOpacity: CGFloat = 1.0
@@ -168,21 +168,21 @@ struct HolographicText: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var shift:   CGFloat = -0.35   // gradient drift phase
-    @State private var flash:   CGFloat =  2.5    // specular position (parked off right)
+    @State private var shift: CGFloat = -0.35   // gradient drift phase
+    @State private var flash: CGFloat =  2.5    // specular position (parked off right)
     @State private var glowHigh = false
     @State private var started  = false
 
     var body: some View {
         HolographicTextCore(
-            text:      text,
-            font:      font,
-            tracking:  tracking,
+            text: text,
+            font: font,
+            tracking: tracking,
             lineLimit: lineLimit,
-            minScale:  minScale,
-            shift:     shift,
-            flash:     flash,
-            glowHigh:  glowHigh,
+            minScale: minScale,
+            shift: shift,
+            flash: flash,
+            glowHigh: glowHigh,
             glowOpacity: glowOpacity
         )
         .accessibilityElement()

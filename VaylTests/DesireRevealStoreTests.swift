@@ -28,7 +28,7 @@ final class DesireRevealStoreTests: XCTestCase {
         let store = DesireRevealStore.previewStore(matches: [
             RevealMatch.sample("Slow mornings", .mutual, locked: false),
             RevealMatch.sample("New cities", .adjacent, locked: true),
-            RevealMatch.sample("Big talks", .mutual, locked: true),
+            RevealMatch.sample("Big talks", .mutual, locked: true)
         ])
         Self.retain(store)
         return store

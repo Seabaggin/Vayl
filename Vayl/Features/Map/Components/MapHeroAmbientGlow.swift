@@ -27,8 +27,8 @@ struct MapHeroAmbientGlow: View {
     // the first pass, so treat these as a first guess, not a final answer.
     private let outerDiameterMultiple: CGFloat = 2.6
     private let innerDiameterMultiple: CGFloat = 1.35
-    private let outerPeakOpacity:      Double  = 0.22
-    private let innerPeakOpacity:      Double  = 0.30
+    private let outerPeakOpacity: Double  = 0.22
+    private let innerPeakOpacity: Double  = 0.30
 
     var body: some View {
         ZStack {
@@ -50,7 +50,7 @@ struct MapHeroAmbientGlow: View {
                     gradient: Gradient(stops: [
                         .init(color: color.opacity(peak), location: 0.0),
                         .init(color: color.opacity(peak * 0.6), location: coreStop),
-                        .init(color: .clear, location: 1.0),
+                        .init(color: .clear, location: 1.0)
                     ]),
                     center: .center,
                     startRadius: 0,

@@ -90,7 +90,7 @@ struct CompositionConfirmCard: View {
                                     // 0.4 matches the active-state stroke the sibling
                                     // pairing surfaces use (PairingJoinView codeInputField).
                                     AppColors.accentPrimary.opacity(0.4),
-                                    AppColors.accentSecondary.opacity(0.4),
+                                    AppColors.accentSecondary.opacity(0.4)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing

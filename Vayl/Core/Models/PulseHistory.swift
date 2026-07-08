@@ -36,9 +36,9 @@ enum PulseHistory {
     /// NOTE: this is the carry-forward-per-your-entry model, not the spec's §7 36hr timezone
     /// window — that change needs a schema migration and is deferred.
     static func pairedLastLoggedSpaces(
-        mine:    [PulseEntry],
+        mine: [PulseEntry],
         partner: [PulseEntry],
-        count:   Int = 30
+        count: Int = 30
     ) -> [(date: Date, mine: PulseSpace, partner: PulseSpace?)] {
         let myLast = lastLogged(mine, count: count)
         let sortedPartner = partner.sorted { $0.date < $1.date }
@@ -46,8 +46,8 @@ enum PulseHistory {
         return myLast.map { myEntry in
             let partnerEntry = sortedPartner.last { $0.date <= myEntry.date }
             return (
-                date:    myEntry.date,
-                mine:    myEntry.space,
+                date: myEntry.date,
+                mine: myEntry.space,
                 partner: partnerEntry?.space
             )
         }

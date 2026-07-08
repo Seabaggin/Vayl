@@ -20,7 +20,7 @@ struct VaultSheet: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var logEditorOpen = false
-    @State private var editingEntry: EventLogEntry? = nil
+    @State private var editingEntry: EventLogEntry?
 
     var body: some View {
         ScrollView {
@@ -39,7 +39,7 @@ struct VaultSheet: View {
                     items: [
                         .init(.desire, "Desire Map"),
                         .init(.agreements, "Agreements"),
-                        .init(.log, "Log"),
+                        .init(.log, "Log")
                     ],
                     selection: $store.segment,
                     accent: AppColors.accentSecondary

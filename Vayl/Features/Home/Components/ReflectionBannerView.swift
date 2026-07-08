@@ -5,8 +5,8 @@ import SwiftUI
 struct ReflectionBannerView: View {
     let sessionLabel: String
     let partnerName: String?
-    var onDone: (([String], String?, Bool) -> Void)? = nil
-    var onDismiss: (() -> Void)? = nil
+    var onDone: (([String], String?, Bool) -> Void)?
+    var onDismiss: (() -> Void)?
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -226,8 +226,7 @@ struct ReflectionBannerView: View {
         let isSelected = selectedPills.contains(pill)
         return Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            if isSelected { selectedPills.remove(pill) }
-            else          { selectedPills.insert(pill) }
+            if isSelected { selectedPills.remove(pill) } else { selectedPills.insert(pill) }
         } label: {
             Text(pill)
                 .font(AppFonts.caption)

@@ -40,7 +40,7 @@ struct DeckPedestal: View {
                             stops: [
                                 .init(color: AppColors.spectrumPurple.opacity(0.50), location: 0.0),
                                 .init(color: AppColors.spectrumPurple.opacity(0.12), location: 0.62),
-                                .init(color: .clear,                                 location: 1.0),
+                                .init(color: .clear, location: 1.0)
                             ],
                             center: .center,
                             startRadius: 0,
@@ -59,11 +59,11 @@ struct DeckPedestal: View {
                 .fill(
                     LinearGradient(
                         stops: [
-                            .init(color: .clear,                            location: 0.00),
-                            .init(color: AppColors.spectrumCyan,            location: 0.18),
-                            .init(color: stripLilac,                        location: 0.50),
-                            .init(color: AppColors.spectrumMagenta,         location: 0.82),
-                            .init(color: .clear,                            location: 1.00),
+                            .init(color: .clear, location: 0.00),
+                            .init(color: AppColors.spectrumCyan, location: 0.18),
+                            .init(color: stripLilac, location: 0.50),
+                            .init(color: AppColors.spectrumMagenta, location: 0.82),
+                            .init(color: .clear, location: 1.00)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -71,7 +71,7 @@ struct DeckPedestal: View {
                 )
                 .frame(width: stripWidth, height: 2)
                 .shadow(color: AppColors.spectrumPurple.opacity(0.85), radius: 7)
-                .shadow(color: AppColors.spectrumCyan.opacity(0.60),   radius: 2)
+                .shadow(color: AppColors.spectrumCyan.opacity(0.60), radius: 2)
                 .animation(AppAnimation.spring, value: widened)
         }
         .frame(height: 86)

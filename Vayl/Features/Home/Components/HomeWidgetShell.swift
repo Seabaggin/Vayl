@@ -14,8 +14,8 @@ import SwiftUI
 enum RimVariant {
     case pulse, prism
     var baseOpacity: Double { switch self { case .pulse: return 0.62; case .prism: return 0.45 } }
-    var leadTaper:   Double { switch self { case .pulse: return 0.04; case .prism: return 0.10 } }
-    var trailTaper:  Double { switch self { case .pulse: return 0.04; case .prism: return 0.10 } }
+    var leadTaper: Double { switch self { case .pulse: return 0.04; case .prism: return 0.10 } }
+    var trailTaper: Double { switch self { case .pulse: return 0.04; case .prism: return 0.10 } }
 }
 
 // ═══════════════════════════════════════════
@@ -30,44 +30,44 @@ private let kWidgetHeightRatio: CGFloat = 0.88
 // ═══════════════════════════════════════════
 struct OrbLayer: View {
     let accentColor: Color
-    let height:      CGFloat
-    let variant:     RimVariant
+    let height: CGFloat
+    let variant: RimVariant
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private struct OrbSpec {
-        let color:       Color
-        let size:        CGSize
-        let anchor:      UnitPoint
-        let driftX:      Double
-        let driftY:      Double
+        let color: Color
+        let size: CGSize
+        let anchor: UnitPoint
+        let driftX: Double
+        let driftY: Double
         let phaseOffset: Double
-        let blur:        CGFloat
-        let opMin:       Double
-        let opMax:       Double
-        let speed:       Double
+        let blur: CGFloat
+        let opMin: Double
+        let opMax: Double
+        let speed: Double
     }
 
     private var orbs: [OrbSpec] {
         let orbB = OrbSpec(
-            color:       AppColors.accentSecondary,
-            size:        CGSize(width: 190, height: 155),
-            anchor:      UnitPoint(x: 0.72, y: 0.65),
-            driftX:      0.09, driftY: 0.09,
+            color: AppColors.accentSecondary,
+            size: CGSize(width: 190, height: 155),
+            anchor: UnitPoint(x: 0.72, y: 0.65),
+            driftX: 0.09, driftY: 0.09,
             phaseOffset: 1.0,
-            blur:        20,
-            opMin:       0.10, opMax: 0.28,
-            speed:       0.17
+            blur: 20,
+            opMin: 0.10, opMax: 0.28,
+            speed: 0.17
         )
         let orbC = OrbSpec(
-            color:       variant == .prism ? AppColors.accentPrimary : AppColors.accentSecondary,
-            size:        CGSize(width: 240, height: 120),
-            anchor:      UnitPoint(x: 0.50, y: 0.42),
-            driftX:      0.16, driftY: 0.07,
+            color: variant == .prism ? AppColors.accentPrimary : AppColors.accentSecondary,
+            size: CGSize(width: 240, height: 120),
+            anchor: UnitPoint(x: 0.50, y: 0.42),
+            driftX: 0.16, driftY: 0.07,
             phaseOffset: 2.4,
-            blur:        24,
-            opMin:       0.07, opMax: 0.20,
-            speed:       0.13
+            blur: 24,
+            opMin: 0.07, opMax: 0.20,
+            speed: 0.13
         )
         return [orbB, orbC]
     }
@@ -97,7 +97,7 @@ struct OrbLayer: View {
     /// Math is isolated here so the `body` result-builder stays trivial to type-check.
     @ViewBuilder
     private func primaryOrb(t: Double, w W: CGFloat, h H: CGFloat) -> some View {
-        let aSize:   CGSize    = variant == .pulse
+        let aSize: CGSize    = variant == .pulse
             ? CGSize(width: 220, height: 180)
             : CGSize(width: 200, height: 160)
         let aAnchor: UnitPoint = variant == .pulse
@@ -105,14 +105,14 @@ struct OrbLayer: View {
             : UnitPoint(x: 0.20, y: 0.25)
         let aDriftX: Double  = variant == .pulse ? 0.10 : 0.12
         let aDriftY: Double  = variant == .pulse ? 0.12 : 0.14
-        let aBlur:   CGFloat = variant == .pulse ? 18   : 20
-        let aOpMin:  Double  = variant == .pulse ? 0.14 : 0.12
-        let aOpMax:  Double  = variant == .pulse ? 0.35 : 0.32
+        let aBlur: CGFloat = variant == .pulse ? 18   : 20
+        let aOpMin: Double  = variant == .pulse ? 0.14 : 0.12
+        let aOpMax: Double  = variant == .pulse ? 0.35 : 0.32
 
         let axPhase: Double = t * 0.22
         let ayPhase: Double = t * 0.18 + 1.0
         let aBreath: Double = (sin(t * 0.45) + 1) / 2
-        let aOp:     Double = aOpMin + aBreath * (aOpMax - aOpMin)
+        let aOp: Double = aOpMin + aBreath * (aOpMax - aOpMin)
         let posX: CGFloat = W * CGFloat(Double(aAnchor.x) + sin(axPhase) * aDriftX)
         let posY: CGFloat = H * CGFloat(Double(aAnchor.y) + sin(ayPhase) * aDriftY)
 
@@ -120,13 +120,13 @@ struct OrbLayer: View {
             .fill(
                 RadialGradient(
                     stops: [
-                        .init(color: accentColor.opacity(aOp),       location: 0.00),
+                        .init(color: accentColor.opacity(aOp), location: 0.00),
                         .init(color: accentColor.opacity(aOp * 0.4), location: 0.55),
-                        .init(color: .clear,                          location: 1.00),
+                        .init(color: .clear, location: 1.00)
                     ],
-                    center:      .center,
+                    center: .center,
                     startRadius: 0,
-                    endRadius:   max(aSize.width, aSize.height) * 0.5
+                    endRadius: max(aSize.width, aSize.height) * 0.5
                 )
             )
             .frame(width: aSize.width, height: aSize.height)
@@ -137,10 +137,10 @@ struct OrbLayer: View {
     /// Drifting secondary orb driven by its `OrbSpec`. Isolated for type-check speed.
     @ViewBuilder
     private func secondaryOrb(spec: OrbSpec, index i: Int, t: Double, w W: CGFloat, h H: CGFloat) -> some View {
-        let p1:     Double = t * spec.speed + spec.phaseOffset
-        let p2:     Double = t * (spec.speed - 0.04) + spec.phaseOffset + 2.1
+        let p1: Double = t * spec.speed + spec.phaseOffset
+        let p2: Double = t * (spec.speed - 0.04) + spec.phaseOffset + 2.1
         let breath: Double = (sin(t * (0.38 - Double(i) * 0.07) + spec.phaseOffset) + 1) / 2
-        let op:     Double = spec.opMin + breath * (spec.opMax - spec.opMin)
+        let op: Double = spec.opMin + breath * (spec.opMax - spec.opMin)
         let posX: CGFloat = W * CGFloat(Double(spec.anchor.x) + sin(p1) * spec.driftX)
         let posY: CGFloat = H * CGFloat(Double(spec.anchor.y) + sin(p2) * spec.driftY)
 
@@ -148,13 +148,13 @@ struct OrbLayer: View {
             .fill(
                 RadialGradient(
                     stops: [
-                        .init(color: spec.color.opacity(op),       location: 0.00),
+                        .init(color: spec.color.opacity(op), location: 0.00),
                         .init(color: spec.color.opacity(op * 0.4), location: 0.55),
-                        .init(color: .clear,                        location: 1.00),
+                        .init(color: .clear, location: 1.00)
                     ],
-                    center:      .center,
+                    center: .center,
                     startRadius: 0,
-                    endRadius:   max(spec.size.width, spec.size.height) * 0.5
+                    endRadius: max(spec.size.width, spec.size.height) * 0.5
                 )
             )
             .frame(width: spec.size.width, height: spec.size.height)
@@ -171,9 +171,9 @@ struct OrbLayer: View {
 struct HomeWidgetShell<Content: View>: View {
 
     // height removed from public API
-    let isLight:     Bool
+    let isLight: Bool
     let accentColor: Color
-    let rimVariant:  RimVariant
+    let rimVariant: RimVariant
     @ViewBuilder let content: Content
 
     private let corner: CGFloat = 20
@@ -202,12 +202,12 @@ struct HomeWidgetShell<Content: View>: View {
             .shadow(
                 color: isLight ? AppColors.accentTertiary.opacity(0x14 / 255.0) : .black.opacity(0.48),
                 radius: isLight ? 14 : 18,
-                y:      isLight ?  8 : 10
+                y: isLight ?  8 : 10
             )
             .shadow(
                 color: isLight ? .black.opacity(0.08) : AppColors.accentSecondary.opacity(0x14 / 255.0),
                 radius: isLight ? 24 : 30,
-                y:      isLight ? 20 :  0
+                y: isLight ? 20 :  0
             )
             .shadow(
                 color: isLight ? AppColors.accentSecondary.opacity(0.20) : AppColors.accentPrimary.opacity(0.18),
@@ -238,7 +238,7 @@ struct HomeWidgetShell<Content: View>: View {
                 stops: [
                     .init(color: AppColors.widgetBackground.opacity(0.85), location: 0.00),
                     .init(color: AppColors.widgetBackground.opacity(0.45), location: 0.55),
-                    .init(color: AppColors.widgetBackground.opacity(0.00), location: 1.00),
+                    .init(color: AppColors.widgetBackground.opacity(0.00), location: 1.00)
                 ],
                 startPoint: .top, endPoint: .bottom
             )
@@ -249,7 +249,7 @@ struct HomeWidgetShell<Content: View>: View {
                 stops: [
                     .init(color: AppColors.widgetBackground.opacity(0.72), location: 0.00),
                     .init(color: AppColors.widgetBackground.opacity(0.35), location: 0.55),
-                    .init(color: AppColors.widgetBackground.opacity(0.00), location: 1.00),
+                    .init(color: AppColors.widgetBackground.opacity(0.00), location: 1.00)
                 ],
                 startPoint: .bottom, endPoint: .top
             )
@@ -260,7 +260,7 @@ struct HomeWidgetShell<Content: View>: View {
                 stops: [
                     .init(color: .white.opacity(0.10), location: 0.00),
                     .init(color: .white.opacity(0.04), location: 0.22),
-                    .init(color: .clear,               location: 0.50),
+                    .init(color: .clear, location: 0.50)
                 ],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
@@ -268,21 +268,21 @@ struct HomeWidgetShell<Content: View>: View {
             RadialGradient(
                 stops: [
                     .init(color: .white.opacity(0.05), location: 0.0),
-                    .init(color: .clear,               location: 1.0),
+                    .init(color: .clear, location: 1.0)
                 ],
-                center:      UnitPoint(x: 0.10, y: 0.08),
+                center: UnitPoint(x: 0.10, y: 0.08),
                 startRadius: 0,
-                endRadius:   120
+                endRadius: 120
             )
 
             LinearGradient(
                 stops: [
-                    .init(color: AppColors.accentPrimary.opacity(0.18),    location: 0.00),
-                    .init(color: AppColors.accentPrimary.opacity(0.10),    location: 0.20),
-                    .init(color: AppColors.accentSecondary.opacity(0.16),  location: 0.40),
+                    .init(color: AppColors.accentPrimary.opacity(0.18), location: 0.00),
+                    .init(color: AppColors.accentPrimary.opacity(0.10), location: 0.20),
+                    .init(color: AppColors.accentSecondary.opacity(0.16), location: 0.40),
                     .init(color: AppColors.accentTertiary.opacity(0.10), location: 0.60),
-                    .init(color: AppColors.accentSecondary.opacity(0.12),  location: 0.80),
-                    .init(color: AppColors.accentPrimary.opacity(0.08),    location: 1.00),
+                    .init(color: AppColors.accentSecondary.opacity(0.12), location: 0.80),
+                    .init(color: AppColors.accentPrimary.opacity(0.08), location: 1.00)
                 ],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
@@ -290,7 +290,7 @@ struct HomeWidgetShell<Content: View>: View {
             LinearGradient(
                 colors: [.clear, .black.opacity(0.32)],
                 startPoint: UnitPoint(x: 0.5, y: 0.65),
-                endPoint:   .bottom
+                endPoint: .bottom
             )
 
             ZStack {
@@ -298,7 +298,7 @@ struct HomeWidgetShell<Content: View>: View {
                     stops: [
                         .init(color: .white.opacity(0.12), location: 0.00),
                         .init(color: .white.opacity(0.04), location: 0.08),
-                        .init(color: .clear,               location: 0.20),
+                        .init(color: .clear, location: 0.20)
                     ],
                     startPoint: .top, endPoint: .bottom
                 )
@@ -306,21 +306,21 @@ struct HomeWidgetShell<Content: View>: View {
                     stops: [
                         .init(color: .black.opacity(0.18), location: 0.00),
                         .init(color: .black.opacity(0.06), location: 0.12),
-                        .init(color: .clear,               location: 0.25),
+                        .init(color: .clear, location: 0.25)
                     ],
                     startPoint: .bottom, endPoint: .top
                 )
                 LinearGradient(
                     stops: [
                         .init(color: .white.opacity(0.06), location: 0.00),
-                        .init(color: .clear,               location: 0.08),
+                        .init(color: .clear, location: 0.08)
                     ],
                     startPoint: .leading, endPoint: .trailing
                 )
                 LinearGradient(
                     stops: [
                         .init(color: .black.opacity(0.08), location: 0.00),
-                        .init(color: .clear,               location: 0.08),
+                        .init(color: .clear, location: 0.08)
                     ],
                     startPoint: .trailing, endPoint: .leading
                 )
@@ -336,14 +336,14 @@ struct HomeWidgetShell<Content: View>: View {
         ZStack {
             LinearGradient(
                 stops: [
-                    .init(color: AppColors.accentSecondary.opacity(0.60),  location: 0.00),
-                    .init(color: AppColors.accentSecondary.opacity(0.55),  location: 0.20),
+                    .init(color: AppColors.accentSecondary.opacity(0.60), location: 0.00),
+                    .init(color: AppColors.accentSecondary.opacity(0.55), location: 0.20),
                     .init(color: Color(red: 0.55, green: 0.11, blue: 0.64).opacity(0.50), location: 0.35),
                     .init(color: AppColors.accentTertiary.opacity(0.45), location: 0.50),
                     .init(color: AppColors.accentTertiary.opacity(0.40), location: 0.62),
                     .init(color: Color(red: 0.94, green: 0.30, blue: 0.22).opacity(0.42), location: 0.72),
-                    .init(color: AppColors.safetyAccent.opacity(0.40),    location: 0.85),
-                    .init(color: AppColors.safetyAccent.opacity(0.32),    location: 1.00),
+                    .init(color: AppColors.safetyAccent.opacity(0.40), location: 0.85),
+                    .init(color: AppColors.safetyAccent.opacity(0.32), location: 1.00)
                 ],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
@@ -355,7 +355,7 @@ struct HomeWidgetShell<Content: View>: View {
                     .init(color: .white.opacity(0.82), location: 0.00),
                     .init(color: .white.opacity(0.55), location: 0.08),
                     .init(color: .white.opacity(0.22), location: 0.18),
-                    .init(color: .white.opacity(0.00), location: 0.28),
+                    .init(color: .white.opacity(0.00), location: 0.28)
                 ],
                 startPoint: .top, endPoint: .bottom
             )
@@ -365,7 +365,7 @@ struct HomeWidgetShell<Content: View>: View {
                     .init(color: .white.opacity(0.65), location: 0.00),
                     .init(color: .white.opacity(0.28), location: 0.18),
                     .init(color: .white.opacity(0.08), location: 0.30),
-                    .init(color: .white.opacity(0.00), location: 0.40),
+                    .init(color: .white.opacity(0.00), location: 0.40)
                 ],
                 startPoint: .bottom, endPoint: .top
             )
@@ -374,7 +374,7 @@ struct HomeWidgetShell<Content: View>: View {
                 stops: [
                     .init(color: .white.opacity(0.01), location: 0.00),
                     .init(color: .white.opacity(0.18), location: 0.20),
-                    .init(color: .clear,               location: 0.48),
+                    .init(color: .clear, location: 0.48)
                 ],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
@@ -382,19 +382,19 @@ struct HomeWidgetShell<Content: View>: View {
             LinearGradient(
                 stops: [
                     .init(color: .white.opacity(0.22), location: 0.00),
-                    .init(color: .clear,               location: 0.32),
+                    .init(color: .clear, location: 0.32)
                 ],
                 startPoint: .bottomTrailing, endPoint: .topLeading
             )
 
             LinearGradient(
                 stops: [
-                    .init(color: AppColors.accentPrimary.opacity(0.15),  location: 0.00),
-                    .init(color: .clear,                           location: 0.26),
+                    .init(color: AppColors.accentPrimary.opacity(0.15), location: 0.00),
+                    .init(color: .clear, location: 0.26),
                     .init(color: AppColors.accentTertiary.opacity(0.12), location: 0.50),
-                    .init(color: .clear,                           location: 0.64),
-                    .init(color: AppColors.safetyAccent.opacity(0.10),    location: 0.88),
-                    .init(color: .clear,                           location: 1.00),
+                    .init(color: .clear, location: 0.64),
+                    .init(color: AppColors.safetyAccent.opacity(0.10), location: 0.88),
+                    .init(color: .clear, location: 1.00)
                 ],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
@@ -404,7 +404,7 @@ struct HomeWidgetShell<Content: View>: View {
                     stops: [
                         .init(color: .white.opacity(0.55), location: 0.00),
                         .init(color: .white.opacity(0.20), location: 0.06),
-                        .init(color: .clear,               location: 0.18),
+                        .init(color: .clear, location: 0.18)
                     ],
                     startPoint: .top, endPoint: .bottom
                 )
@@ -412,21 +412,21 @@ struct HomeWidgetShell<Content: View>: View {
                     stops: [
                         .init(color: .black.opacity(0.05), location: 0.00),
                         .init(color: .black.opacity(0.02), location: 0.10),
-                        .init(color: .clear,               location: 0.22),
+                        .init(color: .clear, location: 0.22)
                     ],
                     startPoint: .bottom, endPoint: .top
                 )
                 LinearGradient(
                     stops: [
                         .init(color: .white.opacity(0.35), location: 0.00),
-                        .init(color: .clear,               location: 0.06),
+                        .init(color: .clear, location: 0.06)
                     ],
                     startPoint: .leading, endPoint: .trailing
                 )
                 LinearGradient(
                     stops: [
                         .init(color: .black.opacity(0.04), location: 0.00),
-                        .init(color: .clear,               location: 0.06),
+                        .init(color: .clear, location: 0.06)
                     ],
                     startPoint: .trailing, endPoint: .leading
                 )
@@ -436,7 +436,7 @@ struct HomeWidgetShell<Content: View>: View {
             LinearGradient(
                 colors: [.clear, .black.opacity(0.04)],
                 startPoint: UnitPoint(x: 0.5, y: 0.72),
-                endPoint:   .bottom
+                endPoint: .bottom
             )
         }
     }
@@ -468,17 +468,17 @@ struct HomeWidgetShell<Content: View>: View {
         isLight
         ? LinearGradient(
             stops: [
-                .init(color: AppColors.accentPrimary.opacity(0x88 / 255.0),  location: 0.0),
+                .init(color: AppColors.accentPrimary.opacity(0x88 / 255.0), location: 0.0),
                 .init(color: AppColors.accentTertiary.opacity(0x72 / 255.0), location: 0.5),
-                .init(color: AppColors.safetyAccent.opacity(0x60 / 255.0),    location: 1.0),
+                .init(color: AppColors.safetyAccent.opacity(0x60 / 255.0), location: 1.0)
             ],
             startPoint: .topLeading, endPoint: .bottomTrailing
           )
         : LinearGradient(
             stops: [
-                .init(color: AppColors.accentPrimary.opacity(0x65 / 255.0),    location: 0.0),
-                .init(color: AppColors.accentSecondary.opacity(0x50 / 255.0),  location: 0.5),
-                .init(color: AppColors.accentTertiary.opacity(0x40 / 255.0), location: 1.0),
+                .init(color: AppColors.accentPrimary.opacity(0x65 / 255.0), location: 0.0),
+                .init(color: AppColors.accentSecondary.opacity(0x50 / 255.0), location: 0.5),
+                .init(color: AppColors.accentTertiary.opacity(0x40 / 255.0), location: 1.0)
             ],
             startPoint: .topLeading, endPoint: .bottomTrailing
           )
@@ -494,25 +494,25 @@ struct HomeWidgetShell<Content: View>: View {
         let light = isLight
 
         let darkStops: [Gradient.Stop] = [
-            .init(color: .clear,            location: 0.00),
-            .init(color: .clear,            location: taper),
-            .init(color: AppColors.accentPrimary,    location: taper + 0.02),
-            .init(color: AppColors.accentSecondary,  location: 0.32),
+            .init(color: .clear, location: 0.00),
+            .init(color: .clear, location: taper),
+            .init(color: AppColors.accentPrimary, location: taper + 0.02),
+            .init(color: AppColors.accentSecondary, location: 0.32),
             .init(color: AppColors.accentTertiary, location: 0.50),
-            .init(color: AppColors.accentSecondary,  location: 0.68),
-            .init(color: AppColors.accentPrimary,    location: trail - 0.02),
-            .init(color: .clear,            location: trail),
-            .init(color: .clear,            location: 1.00),
+            .init(color: AppColors.accentSecondary, location: 0.68),
+            .init(color: AppColors.accentPrimary, location: trail - 0.02),
+            .init(color: .clear, location: trail),
+            .init(color: .clear, location: 1.00)
         ]
 
         let lightStops: [Gradient.Stop] = [
-            .init(color: .clear,            location: 0.00),
-            .init(color: .clear,            location: taper),
-            .init(color: AppColors.accentSecondary,  location: taper + 0.04),
+            .init(color: .clear, location: 0.00),
+            .init(color: .clear, location: taper),
+            .init(color: AppColors.accentSecondary, location: taper + 0.04),
             .init(color: AppColors.accentTertiary, location: 0.50),
-            .init(color: AppColors.safetyAccent,    location: trail - 0.04),
-            .init(color: .clear,            location: trail),
-            .init(color: .clear,            location: 1.00),
+            .init(color: AppColors.safetyAccent, location: trail - 0.04),
+            .init(color: .clear, location: trail),
+            .init(color: .clear, location: 1.00)
         ]
 
         let stops = isLight ? lightStops : darkStops
@@ -522,7 +522,7 @@ struct HomeWidgetShell<Content: View>: View {
                 let grad = GraphicsContext.Shading.linearGradient(
                     Gradient(stops: stops),
                     startPoint: CGPoint(x: 0, y: 0),
-                    endPoint:   CGPoint(x: size.width, y: 0)
+                    endPoint: CGPoint(x: size.width, y: 0)
                 )
                 var pass = ctx
                 pass.opacity = op * (light ? 0.20 : 0.18)
@@ -535,7 +535,7 @@ struct HomeWidgetShell<Content: View>: View {
                 let grad = GraphicsContext.Shading.linearGradient(
                     Gradient(stops: stops),
                     startPoint: CGPoint(x: 0, y: 0),
-                    endPoint:   CGPoint(x: size.width, y: 0)
+                    endPoint: CGPoint(x: size.width, y: 0)
                 )
                 var pass = ctx
                 pass.opacity = op * (light ? 0.35 : 0.40)
@@ -548,7 +548,7 @@ struct HomeWidgetShell<Content: View>: View {
                 let grad = GraphicsContext.Shading.linearGradient(
                     Gradient(stops: stops),
                     startPoint: CGPoint(x: 0, y: 0),
-                    endPoint:   CGPoint(x: size.width, y: 0)
+                    endPoint: CGPoint(x: size.width, y: 0)
                 )
                 var pass = ctx
                 pass.opacity = op * (light ? 1.0 : 0.90)
@@ -569,9 +569,9 @@ struct HomeWidgetShell<Content: View>: View {
         Ellipse()
             .fill(RadialGradient(
                 stops: [
-                    .init(color: accentColor.opacity(0x30 / 255.0),      location: 0.00),
+                    .init(color: accentColor.opacity(0x30 / 255.0), location: 0.00),
                     .init(color: AppColors.accentSecondary.opacity(0x1C / 255.0), location: 0.55),
-                    .init(color: .clear,                                  location: 0.80),
+                    .init(color: .clear, location: 0.80)
                 ],
                 center: .center, startRadius: 0, endRadius: 80
             ))
@@ -593,15 +593,15 @@ struct HomeWidgetShell<Content: View>: View {
         ScrollView {
             VStack(spacing: AppSpacing.sm) {
                 HomeWidgetShell(
-                    isLight:     false,
+                    isLight: false,
                     accentColor: AppColors.accentPrimary,
-                    rimVariant:  .pulse
+                    rimVariant: .pulse
                 ) {
                     ZStack {
                         OrbLayer(
                             accentColor: AppColors.accentPrimary,
-                            height:      300,   // approx — orb positions are relative anyway
-                            variant:     .pulse
+                            height: 300,   // approx — orb positions are relative anyway
+                            variant: .pulse
                         )
                         VStack(alignment: .leading, spacing: AppSpacing.sm) {
                             Text("THE PULSE")
@@ -621,15 +621,15 @@ struct HomeWidgetShell<Content: View>: View {
                 }
 
                 HomeWidgetShell(
-                    isLight:     false,
+                    isLight: false,
                     accentColor: AppColors.accentSecondary,
-                    rimVariant:  .prism
+                    rimVariant: .prism
                 ) {
                     ZStack {
                         OrbLayer(
                             accentColor: AppColors.accentSecondary,
-                            height:      300,
-                            variant:     .prism
+                            height: 300,
+                            variant: .prism
                         )
                         VStack(alignment: .leading, spacing: AppSpacing.sm) {
                             Text("THE PRISM")
@@ -657,9 +657,9 @@ struct HomeWidgetShell<Content: View>: View {
         ScrollView {
             VStack(spacing: AppSpacing.sm) {
                 HomeWidgetShell(
-                    isLight:     true,
+                    isLight: true,
                     accentColor: AppColors.accentTertiary,
-                    rimVariant:  .pulse
+                    rimVariant: .pulse
                 ) {
                     VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         Text("THE PULSE")
@@ -678,9 +678,9 @@ struct HomeWidgetShell<Content: View>: View {
                 }
 
                 HomeWidgetShell(
-                    isLight:     true,
+                    isLight: true,
                     accentColor: AppColors.accentSecondary,
-                    rimVariant:  .prism
+                    rimVariant: .prism
                 ) {
                     VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         Text("THE PRISM")

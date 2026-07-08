@@ -45,7 +45,7 @@ struct PaywallSheet: View {
         "Understand what you each want",
         "Talk openly about sex, boundaries, and what-ifs",
         "Open up at a pace you both set",
-        "Keep your agreements clear and honored",
+        "Keep your agreements clear and honored"
     ]
 
     private let included = [
@@ -54,7 +54,7 @@ struct PaywallSheet: View {
         "All games",
         "Pulse insights",
         "Agreements vault and your shared Roadmap",
-        "Post-session reflections",
+        "Post-session reflections"
     ]
 
     /// StoreKit-localized price when available; falls back to the catalog price.
@@ -65,10 +65,10 @@ struct PaywallSheet: View {
     // Bloom-rendering constants (size / offset / intensity) for the paywall-only spectrum halo
     // behind the hook. NOT design tokens; same convention as VaylSheetChrome's purpleTint/darken.
     // Tune on device; they never leave this file.
-    private let bloomCoreSize:  CGFloat = 300   // purple core diameter
+    private let bloomCoreSize: CGFloat = 300   // purple core diameter
     private let bloomFlankSize: CGFloat = 210   // cyan / magenta flank diameter
-    private let bloomFlankDX:   CGFloat = 72    // horizontal spread of the flanks
-    private let bloomVOffset:   CGFloat = -52   // halo tracks the hook up after the top tightened (was -20)
+    private let bloomFlankDX: CGFloat = 72    // horizontal spread of the flanks
+    private let bloomVOffset: CGFloat = -52   // halo tracks the hook up after the top tightened (was -20)
     private let bloomIntensity: Double  = 1.0   // overall opacity over GlowOrb's own falloff
 
     // MARK: - Body
@@ -190,11 +190,11 @@ struct PaywallSheet: View {
     // Static (GlowOrb doesn't animate, so no Reduce Motion concern).
     private var headerBloom: some View {
         ZStack {
-            GlowOrb(color: AppColors.spectrumCyan,    size: bloomFlankSize)
+            GlowOrb(color: AppColors.spectrumCyan, size: bloomFlankSize)
                 .offset(x: -bloomFlankDX, y: bloomVOffset)
             GlowOrb(color: AppColors.spectrumMagenta, size: bloomFlankSize)
-                .offset(x:  bloomFlankDX, y: bloomVOffset)
-            GlowOrb(color: AppColors.spectrumPurple,  size: bloomCoreSize)   // dominant: drawn last, on top
+                .offset(x: bloomFlankDX, y: bloomVOffset)
+            GlowOrb(color: AppColors.spectrumPurple, size: bloomCoreSize)   // dominant: drawn last, on top
                 .offset(y: bloomVOffset)
         }
         .opacity(bloomIntensity)

@@ -17,19 +17,19 @@ struct MapUsLayer: View {
 
     @Environment(PulseStore.self) private var pulse
 
-    let stats:             MapStore.UsStats
-    let align:             [MapStore.AlignItem]
-    let lockedAlignCount:  Int
+    let stats: MapStore.UsStats
+    let align: [MapStore.AlignItem]
+    let lockedAlignCount: Int
     /// The couple's active-agreement count, for the vault door's stat line
     /// ("‹shared› shared · ‹agreements› agreements · ‹sessions› sessions" —
     /// the mockup's door shows all three; this was the missing one).
-    var agreementsCount:   Int = 0
-    var onOpenVault:       () -> Void
-    var onCheckIn:         () -> Void
-    var onOpenPulse:       (() -> Void)? = nil
-    var partnerPosition:   PulsePosition?  = nil
-    var partnerEntries:    [PulseEntry]    = []
-    var partnerName:       String          = ""
+    var agreementsCount: Int = 0
+    var onOpenVault: () -> Void
+    var onCheckIn: () -> Void
+    var onOpenPulse: (() -> Void)?
+    var partnerPosition: PulsePosition?
+    var partnerEntries: [PulseEntry]    = []
+    var partnerName: String          = ""
 
     // MARK: - Derived state
 
@@ -76,9 +76,9 @@ struct MapUsLayer: View {
 
     private var vaultDoorCard: some View {
         VaultDoorCard(
-            summary:  "Where you meet · Agreements · The record",
+            summary: "Where you meet · Agreements · The record",
             statLine: "\(align.filter(\.isMutual).count) shared · \(agreementsCount) agreement\(agreementsCount == 1 ? "" : "s") · \(stats.sessionCount) session\(stats.sessionCount == 1 ? "" : "s")",
-            onOpen:   onOpenVault
+            onOpen: onOpenVault
         )
     }
 
@@ -87,18 +87,18 @@ struct MapUsLayer: View {
     private var usPulseCard: some View {
         let state = usOrbState
         return MapUsPulseCard(
-            state:              state,
-            myAura:             mySpace.ramp(at: myPosition),
-            partnerAura:        partnerPosition.map { partnerSpace($0).ramp(at: $0) } ?? .neutral,
-            myLastEntry:        pulse.entries.last,
-            partnerLastEntry:   partnerLastEntry,
-            mySpaceName:        mySpace.displayName,
-            partnerSpaceName:   partnerPosition.map { partnerSpace($0).displayName } ?? "",
-            partnerName:        partnerName,
-            myPosition:         hasHistory ? myPosition : nil,
-            partnerPosition:    partnerPosition,
-            relativeDay:        pulse.relativeDay(for:),
-            onTap:              onOpenPulse
+            state: state,
+            myAura: mySpace.ramp(at: myPosition),
+            partnerAura: partnerPosition.map { partnerSpace($0).ramp(at: $0) } ?? .neutral,
+            myLastEntry: pulse.entries.last,
+            partnerLastEntry: partnerLastEntry,
+            mySpaceName: mySpace.displayName,
+            partnerSpaceName: partnerPosition.map { partnerSpace($0).displayName } ?? "",
+            partnerName: partnerName,
+            myPosition: hasHistory ? myPosition : nil,
+            partnerPosition: partnerPosition,
+            relativeDay: pulse.relativeDay(for:),
+            onTap: onOpenPulse
         )
     }
 
@@ -138,7 +138,7 @@ struct MapUsLayer: View {
                 align: [],
                 lockedAlignCount: 0,
                 onOpenVault: {},
-                onCheckIn:   {},
+                onCheckIn: {},
                 partnerPosition: PulsePosition(energy: 0.18, openness: 0.22),
                 partnerName: "Alex"
             )
@@ -162,7 +162,7 @@ struct MapUsLayer: View {
                 align: [],
                 lockedAlignCount: 0,
                 onOpenVault: {},
-                onCheckIn:   {},
+                onCheckIn: {},
                 partnerPosition: PulsePosition(energy: 0.78, openness: 0.72),
                 partnerName: "Alex"
             )

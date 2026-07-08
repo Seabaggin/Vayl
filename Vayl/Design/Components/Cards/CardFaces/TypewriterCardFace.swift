@@ -21,12 +21,12 @@ import SwiftUI
 /// VaylCardFace layer 2 atmosphere shows in the card margins.
 struct TypewriterCardFace: View {
 
-    let cardWidth:        CGFloat
-    let cardHeight:       CGFloat
-    let activeKey:        Int      // -1 = none, 0–14 = letter keys, 15 = space bar
+    let cardWidth: CGFloat
+    let cardHeight: CGFloat
+    let activeKey: Int      // -1 = none, 0–14 = letter keys, 15 = space bar
     let carriageProgress: CGFloat  // 0.0 (left) → 1.0 (right)
 
-    private var illustrationWidth:  CGFloat { cardWidth * 0.68 }
+    private var illustrationWidth: CGFloat { cardWidth * 0.68 }
     private var illustrationHeight: CGFloat { illustrationWidth * (130.0 / 160.0) }
 
     var body: some View {
@@ -45,14 +45,14 @@ struct TypewriterCardFace: View {
 
             // ── Spectrum gradient — illustration-relative ─────────────
             let specGrad = Gradient(stops: [
-                .init(color: AppColors.spectrumCyan,    location: 0.00),
-                .init(color: AppColors.spectrumPurple,  location: 0.50),
-                .init(color: AppColors.spectrumMagenta, location: 1.00),
+                .init(color: AppColors.spectrumCyan, location: 0.00),
+                .init(color: AppColors.spectrumPurple, location: 0.50),
+                .init(color: AppColors.spectrumMagenta, location: 1.00)
             ])
             let shading = GraphicsContext.Shading.linearGradient(
                 specGrad,
-                startPoint: CGPoint(x: 0,                y: 0),
-                endPoint:   CGPoint(x: illustrationWidth, y: illustrationHeight)
+                startPoint: CGPoint(x: 0, y: 0),
+                endPoint: CGPoint(x: illustrationWidth, y: illustrationHeight)
             )
 
             // ── Geometry — 160×130 viewbox, all values × s ────────────
@@ -97,7 +97,7 @@ struct TypewriterCardFace: View {
             // 3. Carriage tick — vertical line that travels across the platen
             let carriageX = (px + 10 * s) + (pw - 20 * s) * carriageProgress
             var carriagePath = Path()
-            carriagePath.move(to:    CGPoint(x: carriageX, y: py - 4 * s))
+            carriagePath.move(to: CGPoint(x: carriageX, y: py - 4 * s))
             carriagePath.addLine(to: CGPoint(x: carriageX, y: py + ph + 4 * s))
 
             // 4. Ribbon spools — flank platen ends, partially clipped at canvas edges
@@ -109,9 +109,9 @@ struct TypewriterCardFace: View {
             let sp2cy: CGFloat    =  24 * s
 
             let spool1Outer = Path(ellipseIn: CGRect(
-                x: sp1cx - spR,      y: sp1cy - spR,      width: spR * 2,      height: spR * 2))
+                x: sp1cx - spR, y: sp1cy - spR, width: spR * 2, height: spR * 2))
             let spool2Outer = Path(ellipseIn: CGRect(
-                x: sp2cx - spR,      y: sp2cy - spR,      width: spR * 2,      height: spR * 2))
+                x: sp2cx - spR, y: sp2cy - spR, width: spR * 2, height: spR * 2))
             let spool1Inner = Path(ellipseIn: CGRect(
                 x: sp1cx - spInnerR, y: sp1cy - spInnerR, width: spInnerR * 2, height: spInnerR * 2))
             let spool2Inner = Path(ellipseIn: CGRect(
@@ -125,7 +125,7 @@ struct TypewriterCardFace: View {
             // 6. Interior rail — structural divide, subordinate
             let railY = by + bh * 0.17
             var railPath = Path()
-            railPath.move(to:    CGPoint(x: bx + 10 * s,      y: railY))
+            railPath.move(to: CGPoint(x: bx + 10 * s, y: railY))
             railPath.addLine(to: CGPoint(x: bx + bw - 10 * s, y: railY))
 
             // 7. Carriage return lever — angled arm from body top-right, ball at tip.
@@ -135,7 +135,7 @@ struct TypewriterCardFace: View {
             let lx2: CGFloat = lx1 + 14 * s
             let ly2: CGFloat = ly1 -  9 * s
             var leverPath = Path()
-            leverPath.move(to:    CGPoint(x: lx1, y: ly1))
+            leverPath.move(to: CGPoint(x: lx1, y: ly1))
             leverPath.addLine(to: CGPoint(x: lx2, y: ly2))
             let leverBallR: CGFloat = 2.2 * s
             let leverBallPath = Path(ellipseIn: CGRect(
@@ -175,7 +175,7 @@ struct TypewriterCardFace: View {
             // Curves  (.round):  platen, carriage, spools, lever, paper
             // Straights (.square): body, rail, keys, space bar
             let paperStroke     = StrokeStyle(lineWidth: 0.7  * s, lineCap: .round)
-            let platenStroke    = StrokeStyle(lineWidth: 1.1  * s, lineCap: .round,  lineJoin: .round)
+            let platenStroke    = StrokeStyle(lineWidth: 1.1  * s, lineCap: .round, lineJoin: .round)
             let carriageStroke  = StrokeStyle(lineWidth: 2.0  * s, lineCap: .round)
             let spoolStroke     = StrokeStyle(lineWidth: 1.1  * s, lineCap: .round)
             let spoolInnerStyle = StrokeStyle(lineWidth: 0.55 * s, lineCap: .round)
@@ -191,8 +191,8 @@ struct TypewriterCardFace: View {
             context.drawLayer { ctx in
                 ctx.addFilter(.blur(radius: 3 * s))
                 ctx.opacity = 0.26
-                ctx.stroke(bodyPath,    with: shading, style: StrokeStyle(lineWidth: 7 * s))
-                ctx.stroke(platenPath,  with: shading, style: StrokeStyle(lineWidth: 5 * s))
+                ctx.stroke(bodyPath, with: shading, style: StrokeStyle(lineWidth: 7 * s))
+                ctx.stroke(platenPath, with: shading, style: StrokeStyle(lineWidth: 5 * s))
                 ctx.stroke(spool1Outer, with: shading, style: StrokeStyle(lineWidth: 5 * s))
                 ctx.stroke(spool2Outer, with: shading, style: StrokeStyle(lineWidth: 5 * s))
             }
@@ -227,7 +227,7 @@ struct TypewriterCardFace: View {
             railCtx.stroke(railPath, with: shading, style: railStroke)
 
             // 7. Carriage return lever — arm then ball
-            context.stroke(leverPath,     with: shading, style: leverStroke)
+            context.stroke(leverPath, with: shading, style: leverStroke)
             context.stroke(leverBallPath, with: shading, style: leverStroke)
 
             // 8. Keys
@@ -263,12 +263,12 @@ struct TypewriterCardFace: View {
         AppColors.void.ignoresSafeArea()
         VaylCardFace(
             content: .typewriter(
-                activeKey:        3,
+                activeKey: 3,
                 carriageProgress: 0.45
             )
         )
         .frame(
-            width:  AppLayout.obCardWidth(in: 390),
+            width: AppLayout.obCardWidth(in: 390),
             height: AppLayout.obCardHeight(in: 390)
         )
     }

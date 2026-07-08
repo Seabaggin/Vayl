@@ -5,9 +5,9 @@
 ////  Created by Bryan Jorden on 4/26/26.
 ////
 //
-//import SwiftUI
+// import SwiftUI
 //
-//func exportIcon() {
+// func exportIcon() {
 //    let sizes: [CGFloat] = [1024, 180, 120, 87, 80, 60, 58, 40, 29]
 //    for size in sizes {
 //        let renderer = ImageRenderer(content: VaylAppIcon(size: size))
@@ -19,9 +19,9 @@
 //            print("Saved: \(url)")
 //        }
 //    }
-//}
+// }
 //
-//struct AppIconExportView: View {
+// struct AppIconExportView: View {
 //    var body: some View {
 //        Text("Exporting...")
 //            .onAppear {
@@ -37,4 +37,4 @@
 //                }
 //            }
 //    }
-//}
+// }

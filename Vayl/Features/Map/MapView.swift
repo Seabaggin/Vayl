@@ -172,11 +172,11 @@ struct MapView: View {
                 screenHeight: layout.screenHeight
             ) {
                 PulseFullView(
-                    mapStore:        store,
-                    myEntries:       pulse.entries,
-                    partnerEntries:  store.partnerEntries,
-                    partnerName:     store.partnerName,
-                    onDismiss:       { showPulseSheet = false }
+                    mapStore: store,
+                    myEntries: pulse.entries,
+                    partnerEntries: store.partnerEntries,
+                    partnerName: store.partnerName,
+                    onDismiss: { showPulseSheet = false }
                 )
             }
             .vaylSheet(
@@ -305,7 +305,6 @@ struct MapView: View {
         .animation(AppAnimation.slow, value: store.partnerName)
     }
 
-
     // MARK: - Layers (empty scaffolds in Seg 0; filled in Segments 1-5)
 
     @ViewBuilder
@@ -330,16 +329,16 @@ struct MapView: View {
 
     private var usLayer: some View {
         MapUsLayer(
-            stats:            store.usStats,
-            align:            store.alignItems,
+            stats: store.usStats,
+            align: store.alignItems,
             lockedAlignCount: store.lockedAlignCount,
-            agreementsCount:  vaultStore.agreements.count,
-            onOpenVault:      { showVault = true },
-            onCheckIn:        { startCheckIn() },
-            onOpenPulse:      { showPulseSheet = true },
-            partnerPosition:  store.partnerPosition,
-            partnerEntries:   store.partnerEntries,
-            partnerName:      store.partnerName
+            agreementsCount: vaultStore.agreements.count,
+            onOpenVault: { showVault = true },
+            onCheckIn: { startCheckIn() },
+            onOpenPulse: { showPulseSheet = true },
+            partnerPosition: store.partnerPosition,
+            partnerEntries: store.partnerEntries,
+            partnerName: store.partnerName
         )
     }
 

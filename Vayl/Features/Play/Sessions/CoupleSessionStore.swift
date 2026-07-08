@@ -635,8 +635,7 @@ final class CoupleSessionStore: Identifiable {
     // MARK: - Close actions
 
     func toggleWord(_ word: String) {
-        if reflectionWords.contains(word) { reflectionWords.remove(word) }
-        else { reflectionWords.insert(word) }
+        if reflectionWords.contains(word) { reflectionWords.remove(word) } else { reflectionWords.insert(word) }
     }
 
     /// Save the private reflection against the just-saved session, then dismiss.

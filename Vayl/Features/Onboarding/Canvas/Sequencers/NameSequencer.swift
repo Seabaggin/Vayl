@@ -50,7 +50,7 @@ final class NameSequencer {
 
     // MARK: — Bridges to View-only state (set at start; relayed back by NamePhase)
 
-    @ObservationIgnored private var screenSize:   CGSize  = .zero
+    @ObservationIgnored private var screenSize: CGSize  = .zero
     @ObservationIgnored private var reduceMotion: Bool    = false
     @ObservationIgnored private var displayScale: CGFloat = 2.0
 
@@ -61,63 +61,63 @@ final class NameSequencer {
 
     // MARK: — Task handles
 
-    @ObservationIgnored var dealTask:         Task<Void, Never>? = nil
-    @ObservationIgnored var inputFocusTask:   Task<Void, Never>? = nil
-    @ObservationIgnored var keyAnimationTask: Task<Void, Never>? = nil
-    @ObservationIgnored var dealerTypingTask: Task<Void, Never>? = nil
-    @ObservationIgnored var liftTeachTask:    Task<Void, Never>? = nil
+    @ObservationIgnored var dealTask: Task<Void, Never>?
+    @ObservationIgnored var inputFocusTask: Task<Void, Never>?
+    @ObservationIgnored var keyAnimationTask: Task<Void, Never>?
+    @ObservationIgnored var dealerTypingTask: Task<Void, Never>?
+    @ObservationIgnored var liftTeachTask: Task<Void, Never>?
 
     // MARK: — Dealer typing
 
     var dealerDisplayed: String  = ""
-    var dealerAlpha:     Double  = 0.0
-    var dealerOffsetY:   CGFloat = 0.0
+    var dealerAlpha: Double  = 0.0
+    var dealerOffsetY: CGFloat = 0.0
 
     // MARK: — Card animation
 
-    var dealPhase:       CardDealPhase = .idle
-    var cardOffset:      CGSize        = .zero
-    var cardAngle:       Double        = 0
-    var cardAlpha:       Double        = 0
-    var flipScaleX:      Double        = 1.0
-    var showFace:        Bool          = false
-    var cardScale:       Double        = 1.0
+    var dealPhase: CardDealPhase = .idle
+    var cardOffset: CGSize        = .zero
+    var cardAngle: Double        = 0
+    var cardAlpha: Double        = 0
+    var flipScaleX: Double        = 1.0
+    var showFace: Bool          = false
+    var cardScale: Double        = 1.0
     var cardScreenAlpha: Double        = 1.0
 
     // MARK: — Effects
 
     var impactRingProgress: Double = 0
-    var flipBurstProgress:  Double = 0
+    var flipBurstProgress: Double = 0
 
     // MARK: — Typewriter
 
-    var activeKeyIndex:   Int     = -1
+    var activeKeyIndex: Int     = -1
     var carriageProgress: CGFloat = 0
 
     // MARK: — Name input
 
-    var name:    String = ""
+    var name: String = ""
     var uiAlpha: Double = 0
 
     var lineRevealProgress: CGFloat = 0
-    var hasSweptLine:       Bool    = false
-    var lineBounce:         CGFloat = 0
+    var hasSweptLine: Bool    = false
+    var lineBounce: CGFloat = 0
 
     // MARK: — Card return demo (post-name submission)
 
-    var waitingForCardReturn:  Bool    = false
-    var cardReturnHintOffset:  CGFloat = 0
-    var handBackDrag:          CGSize  = .zero
-    var handBackArmed:         Bool    = false
-    var waitingForCardLift:    Bool    = false
-    var cardLifted:            Bool    = false
+    var waitingForCardReturn: Bool    = false
+    var cardReturnHintOffset: CGFloat = 0
+    var handBackDrag: CGSize  = .zero
+    var handBackArmed: Bool    = false
+    var waitingForCardLift: Bool    = false
+    var cardLifted: Bool    = false
 
     // MARK: — Beat 3 greeting
 
-    var showGreeting:  Bool   = false
-    var greetingName:  String = ""
+    var showGreeting: Bool   = false
+    var greetingName: String = ""
     var greetingAlpha: Double = 0.0
-    var nameVisible:   Bool   = false
+    var nameVisible: Bool   = false
 
     @ObservationIgnored private var impactSoft   = UIImpactFeedbackGenerator(style: .soft)
     @ObservationIgnored private var impactMedium = UIImpactFeedbackGenerator(style: .medium)
@@ -235,7 +235,7 @@ final class NameSequencer {
     // MARK: — Typing engine
 
     private func typeDealerLine(_ text: String) async {
-        var prev: Character? = nil
+        var prev: Character?
         for char in text {
             guard !Task.isCancelled else { return }
             let delay = AppDealerTyping.charDelay(char, prev: prev)
@@ -338,7 +338,7 @@ final class NameSequencer {
     /// eases down to rest (a hair high + large + transparent → settled).
     private func setDownCard() async {
         let tableCenter = CGPoint(x: screenSize.width * 0.50, y: screenSize.height * 0.55)
-        let rest = CGSize(width:  tableCenter.x - screenSize.width  / 2,
+        let rest = CGSize(width: tableCenter.x - screenSize.width  / 2,
                           height: tableCenter.y - screenSize.height / 2)
         dealPhase = .resting
         cardAngle = 0
@@ -411,7 +411,7 @@ final class NameSequencer {
 
         withAnimation(AppAnimation.cardPocket) {
             cardOffset = CGSize(
-                width:  cornerX - screenSize.width  / 2,
+                width: cornerX - screenSize.width  / 2,
                 height: cornerY - screenSize.height / 2
             )
             cardScale = AppLayout.cornerDeckWidth / cardWidth

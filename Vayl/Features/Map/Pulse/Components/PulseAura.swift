@@ -70,7 +70,7 @@ struct PulseAura: View {
                             gradient: Gradient(stops: [
                                 .init(color: ramp.glow, location: 0.0),
                                 .init(color: ramp.glow, location: 0.34),  // solid core = box-shadow spread
-                                .init(color: .clear,    location: 1.0)     // soft falloff = the blur
+                                .init(color: .clear, location: 1.0)     // soft falloff = the blur
                             ]),
                             center: .center,
                             startRadius: 0,
@@ -187,9 +187,9 @@ struct PulseAura: View {
 /// between two ramps (for the cycling dormant aura).
 struct AuraColors {
     let light: Color
-    let core:  Color
-    let deep:  Color
-    let glow:  Color
+    let core: Color
+    let deep: Color
+    let glow: Color
 
     init(light: Color, core: Color, deep: Color, glow: Color) {
         self.light = light; self.core = core; self.deep = deep; self.glow = glow
@@ -202,9 +202,9 @@ struct AuraColors {
     static func lerp(_ a: AuraColors, _ b: AuraColors, _ t: Double) -> AuraColors {
         AuraColors(
             light: a.light.blended(with: b.light, t),
-            core:  a.core.blended(with: b.core,  t),
-            deep:  a.deep.blended(with: b.deep,  t),
-            glow:  a.glow.blended(with: b.glow,  t)
+            core: a.core.blended(with: b.core, t),
+            deep: a.deep.blended(with: b.deep, t),
+            glow: a.glow.blended(with: b.glow, t)
         )
     }
 
@@ -213,17 +213,17 @@ struct AuraColors {
     /// Neutral Space — Lavender Silver. Sits at field centre, colour is fixed (no bilinear).
     static let neutral = AuraColors(
         light: AppColors.auraLightNeutral,
-        core:  AppColors.auraCoreNeutral,
-        deep:  AppColors.auraDeepNeutral,
-        glow:  AppColors.auraGlowNeutral
+        core: AppColors.auraCoreNeutral,
+        deep: AppColors.auraDeepNeutral,
+        glow: AppColors.auraGlowNeutral
     )
 
     /// Uncharted Space — Sage Deep. The orb dissolves to this when the variance check fires.
     static let uncharted = AuraColors(
         light: AppColors.auraLightUncharted,
-        core:  AppColors.auraCoreUncharted,
-        deep:  AppColors.auraDeepUncharted,
-        glow:  AppColors.auraGlowUncharted
+        core: AppColors.auraCoreUncharted,
+        deep: AppColors.auraDeepUncharted,
+        glow: AppColors.auraGlowUncharted
     )
 
     // MARK: - Bilinear field blend
@@ -236,7 +236,7 @@ struct AuraColors {
         let receptive  = AuraColors(.indigo)   // bottom-right (low energy, open)
         let protective = AuraColors(.rose)     // bottom-left  (low energy, guarded)
 
-        let top    = lerp(reactive,   expansive, openness)
+        let top    = lerp(reactive, expansive, openness)
         let bottom = lerp(protective, receptive, openness)
         return lerp(bottom, top, energy)
     }
@@ -251,9 +251,9 @@ private extension Color {
         UIColor(self).getRed(&r1, green: &g1, blue: &b1, alpha: &a1)
         UIColor(other).getRed(&r2, green: &g2, blue: &b2, alpha: &a2)
         return Color(
-            red:     Double(r1 + (r2 - r1) * f),
-            green:   Double(g1 + (g2 - g1) * f),
-            blue:    Double(b1 + (b2 - b1) * f),
+            red: Double(r1 + (r2 - r1) * f),
+            green: Double(g1 + (g2 - g1) * f),
+            blue: Double(b1 + (b2 - b1) * f),
             opacity: Double(a1 + (a2 - a1) * f)
         )
     }
@@ -274,7 +274,7 @@ struct PulseCyclingAura: View {
 
     // Around the circumplex: Expansive → Sovereign → Protective → Friction → back.
     private let ramps: [AuraColors] = [
-        AuraColors(.cyan), AuraColors(.indigo), AuraColors(.rose), AuraColors(.magenta),
+        AuraColors(.cyan), AuraColors(.indigo), AuraColors(.rose), AuraColors(.magenta)
     ]
 
     var body: some View {

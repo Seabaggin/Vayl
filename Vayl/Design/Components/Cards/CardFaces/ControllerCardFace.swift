@@ -11,8 +11,8 @@ import SwiftUI
 /// Drawing logic lives in ControllerPainter. DualControllerCardFace reuses the same painter.
 struct ControllerCardFace: View {
 
-    let cardWidth:    CGFloat
-    let cardHeight:   CGFloat
+    let cardWidth: CGFloat
+    let cardHeight: CGFloat
     var activeButtons: Set<Int> = []
 
     // Scale factor — maps the 800-unit SVG coordinate space to card width.
@@ -25,7 +25,7 @@ struct ControllerCardFace: View {
     private var yOffset: CGFloat { (cardHeight - 600 * s) / 2 - 8 }
 
     var body: some View {
-        Canvas { context, size in
+        Canvas { context, _ in
             context.translateBy(x: xOffset, y: yOffset)
             ControllerPainter.draw(context, s: s, glowBlur: 5 * s,
                                    activeButtons: activeButtons)

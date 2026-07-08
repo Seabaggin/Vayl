@@ -35,20 +35,6 @@ final class CarouselPhysics {
         /// 0.70 gives a lively overshoot-and-settle without losing render-server smoothness.
         var dampingFraction: Double = 0.70
 
-        nonisolated init(
-            dragSensitivity: CGFloat = 133,
-            projection: Double = 0.16,
-            maxFlick: Int = 5,
-            response: Double = 0.35,
-            dampingFraction: Double = 0.70
-        ) {
-            self.dragSensitivity = dragSensitivity
-            self.projection = projection
-            self.maxFlick = maxFlick
-            self.response = response
-            self.dampingFraction = dampingFraction
-        }
-
         nonisolated static let standard = Config()
     }
 

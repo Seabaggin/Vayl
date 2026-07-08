@@ -79,7 +79,7 @@ internal enum AppGlows {
         /// Highest opacity, smallest radius.
         /// Gives the border stroke a sharp luminous edge.
         static let inner = GlowLayer(
-            color:  AppColors.spectrumCyan.opacity(0.90),
+            color: AppColors.spectrumCyan.opacity(0.90),
             radius: 3
         )
 
@@ -87,7 +87,7 @@ internal enum AppGlows {
         /// Bridges inner and outer — produces the chromatic
         /// spread that reads as refracted spectrum light.
         static let mid = GlowLayer(
-            color:  AppColors.spectrumPurple.opacity(0.65),
+            color: AppColors.spectrumPurple.opacity(0.65),
             radius: 8
         )
 
@@ -96,7 +96,7 @@ internal enum AppGlows {
         /// Gives the button an ambient emissive presence
         /// that extends visibly beyond the border itself.
         static let outer = GlowLayer(
-            color:  AppColors.spectrumMagenta.opacity(0.40),
+            color: AppColors.spectrumMagenta.opacity(0.40),
             radius: 16
         )
 
@@ -114,17 +114,17 @@ internal enum AppGlows {
 
         /// 1.2pt — Resting hairline in the inactive state.
         /// True hairline — present but quiet.
-        static let strokeResting:  CGFloat = 1.2
+        static let strokeResting: CGFloat = 1.2
 
         /// 1.8pt — Active fill stroke during arc draw-on.
         /// Marginally heavier than resting — the energy reads as
         /// luminosity from the glow, not physical stroke weight.
-        static let strokeActive:   CGFloat = 2.2
+        static let strokeActive: CGFloat = 2.2
 
         /// 2.0pt — Glowing stroke at full glow intensity.
         /// Minimal additional weight — the glow layer creates the
         /// perception of thickness. The stroke itself stays contained.
-        static let strokeGlowing:  CGFloat = 2.8
+        static let strokeGlowing: CGFloat = 2.8
 
         // ─── Hairline geometry ─────────────────────────────
         // The resting-state hairline is a separate visual element
@@ -176,7 +176,7 @@ internal enum AppGlows {
 
     enum cardBreathe {
 
-        static let color:  Color   = AppColors.spectrumPurple.opacity(0.22)
+        static let color: Color   = AppColors.spectrumPurple.opacity(0.22)
         static let radius: CGFloat = 18
     }
 
@@ -192,12 +192,12 @@ internal enum AppGlows {
     enum accentFocus {
 
         static let inner = GlowLayer(
-            color:  AppColors.accentPrimary.opacity(0.50),
+            color: AppColors.accentPrimary.opacity(0.50),
             radius: 3
         )
 
         static let outer = GlowLayer(
-            color:  AppColors.accentPrimary.opacity(0.18),
+            color: AppColors.accentPrimary.opacity(0.18),
             radius: 10
         )
 
@@ -221,14 +221,14 @@ internal enum AppGlows {
         /// Tight inner core — cyan channel.
         /// Hugs letterforms. Reads as text emitting light.
         static let inner = GlowLayer(
-            color:  AppColors.spectrumCyan.opacity(0.18),
+            color: AppColors.spectrumCyan.opacity(0.18),
             radius: 2
         )
 
         /// Soft outer falloff — purple channel.
         /// Feathers the glow edge without creating a halo box.
         static let outer = GlowLayer(
-            color:  AppColors.spectrumPurple.opacity(0.08),
+            color: AppColors.spectrumPurple.opacity(0.08),
             radius: 5
         )
 
@@ -248,12 +248,12 @@ internal enum AppGlows {
     enum safety {
 
         static let inner = GlowLayer(
-            color:  AppColors.safetyAccent.opacity(0.45),
+            color: AppColors.safetyAccent.opacity(0.45),
             radius: 4
         )
 
         static let outer = GlowLayer(
-            color:  AppColors.safetyAccent.opacity(0.20),
+            color: AppColors.safetyAccent.opacity(0.20),
             radius: 12
         )
 
@@ -326,29 +326,29 @@ extension View {
         let layers = AppGlows.spectrumBorder.layers
         return self
             .shadow(
-                color:  layers[0].color.opacity(intensity),
+                color: layers[0].color.opacity(intensity),
                 radius: layers[0].radius,
-                x:      layers[0].x,
-                y:      layers[0].y
+                x: layers[0].x,
+                y: layers[0].y
             )
             .shadow(
-                color:  layers[1].color.opacity(intensity),
+                color: layers[1].color.opacity(intensity),
                 radius: layers[1].radius,
-                x:      layers[1].x,
-                y:      layers[1].y
+                x: layers[1].x,
+                y: layers[1].y
             )
             .shadow(
-                color:  layers[2].color.opacity(intensity),
+                color: layers[2].color.opacity(intensity),
                 radius: layers[2].radius,
-                x:      layers[2].x,
-                y:      layers[2].y
+                x: layers[2].x,
+                y: layers[2].y
             )
     }
 
     /// Applies a corner deck receive glow.
     func cornerDeckGlow(visible: Bool) -> some View {
         self.shadow(
-            color:  visible
+            color: visible
                 ? AppGlows.cornerDeck.color
                 : .clear,
             radius: AppGlows.cornerDeck.radius,
@@ -362,16 +362,16 @@ extension View {
         let layers = AppGlows.accentFocus.layers
         return self
             .shadow(
-                color:  visible ? layers[0].color : .clear,
+                color: visible ? layers[0].color : .clear,
                 radius: layers[0].radius,
-                x:      layers[0].x,
-                y:      layers[0].y
+                x: layers[0].x,
+                y: layers[0].y
             )
             .shadow(
-                color:  visible ? layers[1].color : .clear,
+                color: visible ? layers[1].color : .clear,
                 radius: layers[1].radius,
-                x:      layers[1].x,
-                y:      layers[1].y
+                x: layers[1].x,
+                y: layers[1].y
             )
     }
 
@@ -380,16 +380,16 @@ extension View {
         let layers = AppGlows.safety.layers
         return self
             .shadow(
-                color:  visible ? layers[0].color : .clear,
+                color: visible ? layers[0].color : .clear,
                 radius: layers[0].radius,
-                x:      layers[0].x,
-                y:      layers[0].y
+                x: layers[0].x,
+                y: layers[0].y
             )
             .shadow(
-                color:  visible ? layers[1].color : .clear,
+                color: visible ? layers[1].color : .clear,
                 radius: layers[1].radius,
-                x:      layers[1].x,
-                y:      layers[1].y
+                x: layers[1].x,
+                y: layers[1].y
             )
     }
 
@@ -399,16 +399,16 @@ extension View {
         let layers = AppGlows.liftCopy.layers
         return self
             .shadow(
-                color:  layers[0].color,
+                color: layers[0].color,
                 radius: layers[0].radius,
-                x:      layers[0].x,
-                y:      layers[0].y
+                x: layers[0].x,
+                y: layers[0].y
             )
             .shadow(
-                color:  layers[1].color,
+                color: layers[1].color,
                 radius: layers[1].radius,
-                x:      layers[1].x,
-                y:      layers[1].y
+                x: layers[1].x,
+                y: layers[1].y
             )
     }
 }

@@ -83,7 +83,7 @@ struct CandleCardFace: View {
 
     /// Rest scale = the candle at full size; contracted scale = the bottom of an inhale.
     /// Kept small (~1.5%) so the breath reads as quiet life, not a pulse.
-    private static let restScale:       CGFloat = 1.0
+    private static let restScale: CGFloat = 1.0
     private static let contractedScale: CGFloat = 0.985
 
     @State private var contracted = false
@@ -138,12 +138,12 @@ enum CandleRenderer {
     static func spectrum(_ g: CandleGeo, topY: CGFloat, botY: CGFloat) -> GraphicsContext.Shading {
         .linearGradient(
             Gradient(stops: [
-                .init(color: CandlePalette.cyan,    location: 0),
-                .init(color: CandlePalette.purple,  location: 0.5),
-                .init(color: CandlePalette.magenta, location: 1),
+                .init(color: CandlePalette.cyan, location: 0),
+                .init(color: CandlePalette.purple, location: 0.5),
+                .init(color: CandlePalette.magenta, location: 1)
             ]),
             startPoint: CGPoint(x: g.cx, y: topY),
-            endPoint:   CGPoint(x: g.cx, y: botY))
+            endPoint: CGPoint(x: g.cx, y: botY))
     }
 
     // MARK: - Body paths
@@ -383,13 +383,13 @@ enum CandleRenderer {
     static func flameWarmShading(g: CandleGeo, tipY: CGFloat) -> GraphicsContext.Shading {
         GraphicsContext.Shading.linearGradient(
             Gradient(stops: [
-                .init(color: Color(red: 1,     green: 0.843, blue: 0.314), location: 0.0),
-                .init(color: CandlePalette.magenta,                         location: 0.3),
-                .init(color: CandlePalette.purple,                          location: 0.7),
-                .init(color: CandlePalette.cyan,                            location: 1.0),
+                .init(color: Color(red: 1, green: 0.843, blue: 0.314), location: 0.0),
+                .init(color: CandlePalette.magenta, location: 0.3),
+                .init(color: CandlePalette.purple, location: 0.7),
+                .init(color: CandlePalette.cyan, location: 1.0)
             ]),
             startPoint: CGPoint(x: g.cx, y: g.wickTip),
-            endPoint:   CGPoint(x: g.cx, y: tipY))
+            endPoint: CGPoint(x: g.cx, y: tipY))
     }
 
     /// Soft purple radial bloom behind the candle body (non-dim intensities).
@@ -401,7 +401,7 @@ enum CandleRenderer {
                 .init(color: Color(red: 0.424, green: 0.227, blue: 0.878,
                                    opacity: glowAlpha * 0.04), location: 0.6),
                 .init(color: Color(red: 0.424, green: 0.227, blue: 0.878,
-                                   opacity: 0),               location: 1.0),
+                                   opacity: 0), location: 1.0)
             ]),
             center: CGPoint(x: g.cx, y: g.bY),
             startRadius: 0,
@@ -460,7 +460,7 @@ enum CandleRenderer {
         ctx.drawLayer { layer in
             layer.addFilter(.blur(radius: CGFloat(cfg.dim ? 6 : 12) * S))
             layer.opacity = glowAlpha * (1 + midTurb * 0.14)
-            layer.stroke(flame.left,  with: flameShade,
+            layer.stroke(flame.left, with: flameShade,
                          style: StrokeStyle(lineWidth: CGFloat(cfg.dim ? 5 : 12) * S,
                                             lineCap: .round))
             layer.stroke(flame.right, with: flameShade,
@@ -501,23 +501,23 @@ enum CandleRenderer {
                     Gradient(stops: [
                         .init(color: Color(red: 0, green: 0.235, blue: 0.314, opacity: 0.22), location: 0.0),
                         .init(color: Color(red: 0.118, green: 0, blue: 0.235, opacity: 0.28), location: 0.5),
-                        .init(color: Color(red: 0.235, green: 0, blue: 0.118, opacity: 0.22), location: 1.0),
+                        .init(color: Color(red: 0.235, green: 0, blue: 0.118, opacity: 0.22), location: 1.0)
                     ]),
                     startPoint: CGPoint(x: g.cx, y: g.bY),
-                    endPoint:   CGPoint(x: g.cx, y: g.bBY))
+                    endPoint: CGPoint(x: g.cx, y: g.bBY))
                 layer.fill(Path(CGRect(x: g.bL - 2*S, y: g.bY, width: g.bW + 4*S, height: g.bH)),
                            with: baseFill)
                 // cylinder light (horizontal)
                 let cylLight = GraphicsContext.Shading.linearGradient(
                     Gradient(stops: [
-                        .init(color: Color(red: 0, green: 0, blue: 0, opacity: 0.15),           location: 0.00),
+                        .init(color: Color(red: 0, green: 0, blue: 0, opacity: 0.15), location: 0.00),
                         .init(color: Color(red: 0.392, green: 0.627, blue: 0.784, opacity: 0.18), location: 0.22),
                         .init(color: Color(red: 0.235, green: 0.314, blue: 0.549, opacity: 0.10), location: 0.42),
-                        .init(color: Color(red: 0.078, green: 0, blue: 0.157, opacity: 0.08),     location: 0.70),
-                        .init(color: Color(red: 0, green: 0, blue: 0, opacity: 0.28),             location: 1.00),
+                        .init(color: Color(red: 0.078, green: 0, blue: 0.157, opacity: 0.08), location: 0.70),
+                        .init(color: Color(red: 0, green: 0, blue: 0, opacity: 0.28), location: 1.00)
                     ]),
                     startPoint: CGPoint(x: g.bL, y: g.bY),
-                    endPoint:   CGPoint(x: g.bR, y: g.bY))
+                    endPoint: CGPoint(x: g.bR, y: g.bY))
                 layer.fill(Path(CGRect(x: g.bL - 2*S, y: g.bY, width: g.bW + 4*S, height: g.bH)),
                            with: cylLight)
                 // top-to-bottom gradient light
@@ -525,10 +525,10 @@ enum CandleRenderer {
                     Gradient(stops: [
                         .init(color: Color(red: 0.314, green: 0.471, blue: 0.627, opacity: 0.12), location: 0.00),
                         .init(color: Color(red: 0.157, green: 0.078, blue: 0.314, opacity: 0.06), location: 0.35),
-                        .init(color: Color(red: 0, green: 0, blue: 0, opacity: 0.10),             location: 1.00),
+                        .init(color: Color(red: 0, green: 0, blue: 0, opacity: 0.10), location: 1.00)
                     ]),
                     startPoint: CGPoint(x: g.cx, y: g.bY),
-                    endPoint:   CGPoint(x: g.cx, y: g.bBY))
+                    endPoint: CGPoint(x: g.cx, y: g.bBY))
                 layer.fill(Path(CGRect(x: g.bL - 2*S, y: g.bY, width: g.bW + 4*S, height: g.bH)),
                            with: topLight)
             }
@@ -640,12 +640,12 @@ enum CandleRenderer {
                     (g.bL + g.bW*0.08, g.bY + g.bH*0.18, g.bW*0.24, 0.26),
                     (g.bR - g.bW*0.32, g.bY + g.bH*0.32, g.bW*0.20, 0.20),
                     (g.bL + g.bW*0.06, g.bY + g.bH*0.50, g.bW*0.18, 0.18),
-                    (g.bR - g.bW*0.28, g.bY + g.bH*0.66, g.bW*0.15, 0.14),
+                    (g.bR - g.bW*0.28, g.bY + g.bH*0.66, g.bW*0.15, 0.14)
                 ]
             } else {
                 texLines = [
                     (g.bL + g.bW*0.10, g.bY + g.bH*0.28, g.bW*0.22, 0.14),
-                    (g.bR - g.bW*0.30, g.bY + g.bH*0.48, g.bW*0.18, 0.12),
+                    (g.bR - g.bW*0.30, g.bY + g.bH*0.48, g.bW*0.18, 0.12)
                 ]
             }
             for tl in texLines {
@@ -666,7 +666,7 @@ enum CandleRenderer {
         if intensity == .experienced {
             let sideRunDefs: [(x1: CGFloat, y1: CGFloat, cpx: CGFloat, cpy: CGFloat, x2: CGFloat, y2: CGFloat)] = [
                 (g.bL - g.bW*0.035, g.bY + g.bH*0.10, g.bL - g.bW*0.06, g.bY + g.bH*0.36, g.bL - g.bW*0.018, g.bY + g.bH*0.62),
-                (g.bR + g.bW*0.010, g.bY + g.bH*0.26, g.bR + g.bW*0.05, g.bY + g.bH*0.44, g.bR + g.bW*0.018, g.bY + g.bH*0.62),
+                (g.bR + g.bW*0.010, g.bY + g.bH*0.26, g.bR + g.bW*0.05, g.bY + g.bH*0.44, g.bR + g.bW*0.018, g.bY + g.bH*0.62)
             ]
             for sr in sideRunDefs {
                 var rp = Path()
@@ -714,7 +714,7 @@ enum CandleRenderer {
             let eg = GraphicsContext.Shading.radialGradient(
                 Gradient(stops: [
                     .init(color: CandlePalette.magenta, location: 0),
-                    .init(color: Color(red: 1, green: 0, blue: 0.416, opacity: 0), location: 1),
+                    .init(color: Color(red: 1, green: 0, blue: 0.416, opacity: 0), location: 1)
                 ]),
                 center: CGPoint(x: g.wickTipX, y: g.wickTip),
                 startRadius: 0,
@@ -731,10 +731,10 @@ enum CandleRenderer {
             let wkG = GraphicsContext.Shading.linearGradient(
                 Gradient(stops: [
                     .init(color: Color(red: 0.910, green: 0.894, blue: 0.871, opacity: 0.90), location: 0),
-                    .init(color: Color(red: 0.910, green: 0.894, blue: 0.871, opacity: 0.24), location: 1),
+                    .init(color: Color(red: 0.910, green: 0.894, blue: 0.871, opacity: 0.24), location: 1)
                 ]),
-                startPoint: CGPoint(x: g.cx,      y: g.wickBot),
-                endPoint:   CGPoint(x: g.wickTipX, y: g.wickTip))
+                startPoint: CGPoint(x: g.cx, y: g.wickBot),
+                endPoint: CGPoint(x: g.wickTipX, y: g.wickTip))
             var wp = Path()
             wp.move(to: CGPoint(x: g.cx, y: g.wickBot))
             wp.addQuadCurve(to: CGPoint(x: g.wickTipX, y: g.wickTip),
@@ -757,7 +757,7 @@ enum CandleRenderer {
         // ------------------------------------------------------------------
         ctx.drawLayer { layer in
             layer.opacity = baseAlpha
-            layer.stroke(flame.left,  with: flameShade,
+            layer.stroke(flame.left, with: flameShade,
                          style: StrokeStyle(lineWidth: 1.60 * S, lineCap: .round))
             layer.stroke(flame.right, with: flameShade,
                          style: StrokeStyle(lineWidth: 1.60 * S, lineCap: .round))
@@ -772,7 +772,7 @@ enum CandleRenderer {
                              wickTipX: g.wickTipX, wickTip: g.wickTip)
         ctx.drawLayer { layer in
             layer.opacity = baseAlpha * cfg.innerAlpha
-            layer.stroke(core.left,  with: flameWarmShade,
+            layer.stroke(core.left, with: flameWarmShade,
                          style: StrokeStyle(lineWidth: 1.05 * S, lineCap: .round))
             layer.stroke(core.right, with: flameWarmShade,
                          style: StrokeStyle(lineWidth: 1.05 * S, lineCap: .round))
@@ -786,8 +786,8 @@ enum CandleRenderer {
                 layer.opacity = baseAlpha * 0.70
                 let tg = GraphicsContext.Shading.radialGradient(
                     Gradient(stops: [
-                        .init(color: Color(red: 0.765, green: 0.933, blue: 1.0,  opacity: 0.95), location: 0),
-                        .init(color: Color(red: 0,     green: 0.761, blue: 1.0,  opacity: 0),    location: 1),
+                        .init(color: Color(red: 0.765, green: 0.933, blue: 1.0, opacity: 0.95), location: 0),
+                        .init(color: Color(red: 0, green: 0.761, blue: 1.0, opacity: 0), location: 1)
                     ]),
                     center: CGPoint(x: tipX, y: tipY),
                     startRadius: 0,
@@ -822,10 +822,10 @@ enum CandleRenderer {
             let termPulse = t * (2 * .pi / 2.5)
             struct DripDef { var x, y, len, lean, sc: CGFloat; var pulse: Double }
             let dripDefs: [DripDef] = [
-                DripDef(x: g.bL - g.bW*0.04, y: g.bY + 2*S,  len: g.bH*0.62, lean: -g.bW*0.035, sc: 1.25, pulse: termPulse),
-                DripDef(x: g.cx + g.bW*0.08, y: g.bY + 1*S,  len: g.bH*0.40, lean:  g.bW*0.040, sc: 1.06, pulse: 0),
-                DripDef(x: g.bR + g.bW*0.01, y: g.bY + 3*S,  len: g.bH*0.24, lean:  g.bW*0.025, sc: 0.84, pulse: 0),
-                DripDef(x: g.bL + g.bW*0.07, y: g.bY + 4*S,  len: g.bH*0.15, lean: -g.bW*0.018, sc: 0.62, pulse: 0),
+                DripDef(x: g.bL - g.bW*0.04, y: g.bY + 2*S, len: g.bH*0.62, lean: -g.bW*0.035, sc: 1.25, pulse: termPulse),
+                DripDef(x: g.cx + g.bW*0.08, y: g.bY + 1*S, len: g.bH*0.40, lean: g.bW*0.040, sc: 1.06, pulse: 0),
+                DripDef(x: g.bR + g.bW*0.01, y: g.bY + 3*S, len: g.bH*0.24, lean: g.bW*0.025, sc: 0.84, pulse: 0),
+                DripDef(x: g.bL + g.bW*0.07, y: g.bY + 4*S, len: g.bH*0.15, lean: -g.bW*0.018, sc: 0.62, pulse: 0)
             ]
             for dd in dripDefs {
                 let drip = buildDrip(g, S: S,
@@ -865,9 +865,9 @@ struct FlameCfg {
     let hasNotch: Bool
     static func of(_ i: CandleIntensity) -> FlameCfg {
         switch i {
-        case .curious:     return .init(baseH:0.20, baseW:0.36, crispAlpha:0.38, glowAlpha:0.07, swayAmp:0.58, swayFreq:0.26, flickerAmp:0.55, turbFreq:1.8, innerScale:0.32, innerAlpha:0.42, dim:true,  hasNotch:false)
-        case .exploring:   return .init(baseH:0.42, baseW:0.54, crispAlpha:0.94, glowAlpha:0.40, swayAmp:0.12, swayFreq:0.55, flickerAmp:0.07, turbFreq:2.1, innerScale:0.52, innerAlpha:0.80, dim:false, hasNotch:false)
-        case .experienced: return .init(baseH:0.42, baseW:0.54, crispAlpha:0.94, glowAlpha:0.40, swayAmp:0.14, swayFreq:0.55, flickerAmp:0.09, turbFreq:2.4, innerScale:0.52, innerAlpha:0.80, dim:false, hasNotch:true)
+        case .curious:     return .init(baseH: 0.20, baseW: 0.36, crispAlpha: 0.38, glowAlpha: 0.07, swayAmp: 0.58, swayFreq: 0.26, flickerAmp: 0.55, turbFreq: 1.8, innerScale: 0.32, innerAlpha: 0.42, dim: true, hasNotch: false)
+        case .exploring:   return .init(baseH: 0.42, baseW: 0.54, crispAlpha: 0.94, glowAlpha: 0.40, swayAmp: 0.12, swayFreq: 0.55, flickerAmp: 0.07, turbFreq: 2.1, innerScale: 0.52, innerAlpha: 0.80, dim: false, hasNotch: false)
+        case .experienced: return .init(baseH: 0.42, baseW: 0.54, crispAlpha: 0.94, glowAlpha: 0.40, swayAmp: 0.14, swayFreq: 0.55, flickerAmp: 0.09, turbFreq: 2.4, innerScale: 0.52, innerAlpha: 0.80, dim: false, hasNotch: true)
         }
     }
 }

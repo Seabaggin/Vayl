@@ -5,16 +5,16 @@ import SwiftData
 
 struct SettingsPartnerView: View {
     let store: SettingsStore
-    var onClose: (() -> Void)? = nil
+    var onClose: (() -> Void)?
 
     @Environment(AppState.self)        private var appState
     @Environment(CoupleContext.self)   private var coupleContext
     @Environment(\.modelContext)       private var modelContext
     @Environment(\.dismiss)            private var dismiss
 
-    @State private var showInvite:  Bool = false
-    @State private var showJoin:    Bool = false
-    @State private var showUnlink:  Bool = false
+    @State private var showInvite: Bool = false
+    @State private var showJoin: Bool = false
+    @State private var showUnlink: Bool = false
 
     var body: some View {
         SettingsSubScreenShell(title: "Partner", onBack: {

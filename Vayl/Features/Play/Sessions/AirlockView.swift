@@ -29,7 +29,7 @@ struct AirlockView: View {
     @State private var lockedIn = false
     @State private var consentFailed = false
     @State private var waitingPulse = false
-    @State private var selectedRitual: Ritual? = nil
+    @State private var selectedRitual: Ritual?
     @State private var capacityStore = CoupleCapacityStore()
     @State private var showHowItWorks = false
 

@@ -47,7 +47,7 @@ struct DesireMapView: View {
     @State private var chartedTitleVisible: Bool = false
 
     /// The charted-finish ceremony, held so a tap (skip) or disappear can cancel it.
-    @State private var chartedTask: Task<Void, Never>? = nil
+    @State private var chartedTask: Task<Void, Never>?
 
     // MARK: - Star-rise sync (S2.2)
     // Bumped on every answer commit so the accumulating sky animates the new star
@@ -405,10 +405,10 @@ struct DesireMapView: View {
                 // 6 nodes from the mockup (relative positions in 0-1 space)
                 let nodes: [(CGFloat, CGFloat)] = [
                     (0.50, 0.30), (0.26, 0.22), (0.72, 0.26),
-                    (0.34, 0.62), (0.68, 0.58), (0.48, 0.80),
+                    (0.34, 0.62), (0.68, 0.58), (0.48, 0.80)
                 ]
                 let connections: [(Int, Int, Double)] = [
-                    (0, 1, 0.0), (0, 2, 0.6), (0, 3, 1.2), (2, 4, 0.9), (3, 5, 1.6),
+                    (0, 1, 0.0), (0, 2, 0.6), (0, 3, 1.2), (2, 4, 0.9), (3, 5, 1.6)
                 ]
 
                 ZStack {
@@ -464,7 +464,7 @@ struct DesireMapView: View {
     // kept here as named Doubles because an Animation token can't report its own
     // duration to Task.sleep. The hold uses the raw-Double token directly.
     private static let chartedStarSettle: Double = 0.35   // desireFinishFade
-    private static let chartedLinesDraw:  Double = 0.80   // desireFinishFlair (line-draw wait)
+    private static let chartedLinesDraw: Double = 0.80   // desireFinishFlair (line-draw wait)
 
     private func runChartedSequence() {
         chartedTask?.cancel()
@@ -631,7 +631,6 @@ struct DesireMapView: View {
         }
         .buttonStyle(_RaterPressStyle())
     }
-
 
     // MARK: - Empty / error
 

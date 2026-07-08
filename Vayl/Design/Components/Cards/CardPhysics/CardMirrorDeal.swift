@@ -39,40 +39,40 @@ public final class CardMirrorDealController {
     public var state: MirrorDealState = .idle
 
     // ── Card transforms ────────────────────────────────────────────
-    public var leftOffset:  CGSize = .zero
+    public var leftOffset: CGSize = .zero
     public var rightOffset: CGSize = .zero
-    public var leftAngle:   Double = 0
-    public var rightAngle:  Double = 0
-    public var leftScale:   Double = 1.0
-    public var rightScale:  Double = 1.0
-    public var leftAlpha:   Double = 0
-    public var rightAlpha:  Double = 0
+    public var leftAngle: Double = 0
+    public var rightAngle: Double = 0
+    public var leftScale: Double = 1.0
+    public var rightScale: Double = 1.0
+    public var leftAlpha: Double = 0
+    public var rightAlpha: Double = 0
 
     // ── Deal flip state ────────────────────────────────────────────
-    public var leftFlipScaleX:  Double = 1.0
+    public var leftFlipScaleX: Double = 1.0
     public var rightFlipScaleX: Double = 1.0
-    public var leftShowFace:    Bool   = false
-    public var rightShowFace:   Bool   = false
+    public var leftShowFace: Bool   = false
+    public var rightShowFace: Bool   = false
 
     // ── Reject flip state ──────────────────────────────────────────
     public var rejectedFlipScaleX: Double = 1.0
-    public var rejectedShowBack:   Bool   = false
-    public var rejectedExitAlpha:  Double = 1.0
+    public var rejectedShowBack: Bool   = false
+    public var rejectedExitAlpha: Double = 1.0
 
     // ── Haptic triggers — observed by ModeSelectPhase .sensoryFeedback ─
     public var confirmHapticTrigger: Bool = false
 
     // ── Resting geometry — stored in deal(), read in lift()/switchLift() ─
-    private var restXL:          CGFloat = 0
-    private var restXR:          CGFloat = 0
-    private var restY:           CGFloat = 0
-    private var cardWidth:       CGFloat = 0   // kept for legacy refs
+    private var restXL: CGFloat = 0
+    private var restXR: CGFloat = 0
+    private var restY: CGFloat = 0
+    private var cardWidth: CGFloat = 0   // kept for legacy refs
     private var storedCardWidth: CGFloat = 0
-    private var liftTargetY:     CGFloat = 0
+    private var liftTargetY: CGFloat = 0
 
     // ── Tasks ──────────────────────────────────────────────────────
-    private var dealTask:    Task<Void, Never>? = nil
-    private var confirmTask: Task<Void, Never>? = nil
+    private var dealTask: Task<Void, Never>?
+    private var confirmTask: Task<Void, Never>?
 
     // MARK: — Deal
 
@@ -166,7 +166,7 @@ public final class CardMirrorDealController {
     /// @Observable property changes are correctly captured by SwiftUI.
     public func lift(card: MirrorCard) {
         guard state == .faceUp || state == .resting || {
-            if case .lifted(_) = state { return true }
+            if case .lifted = state { return true }
             return false
         }() else { return }
 
@@ -243,11 +243,11 @@ public final class CardMirrorDealController {
     /// `onLanded` is the right place to update the corner deck model and pulse.
     /// `onConfirm` is the right place to advance the phase.
     public func confirm(
-        card:       MirrorCard,
+        card: MirrorCard,
         screenSize: CGSize,
-        cardWidth:  CGFloat,
-        onLanded:   ((MirrorCard) -> Void)? = nil,
-        onConfirm:  @escaping (MirrorCard) -> Void
+        cardWidth: CGFloat,
+        onLanded: ((MirrorCard) -> Void)? = nil,
+        onConfirm: @escaping (MirrorCard) -> Void
     ) {
         guard case .lifted(let liftedCard) = state, liftedCard == card else { return }
         state = .confirming(card: card)

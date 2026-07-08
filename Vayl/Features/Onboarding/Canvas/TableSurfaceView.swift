@@ -68,9 +68,9 @@ struct TableSurfaceView: View {
         ZStack {
             TableBaseCanvas()
             TableTopoCanvas(
-                dissolutionWarp:    dissolutionWarp,
+                dissolutionWarp: dissolutionWarp,
                 dissolutionFlowOut: dissolutionFlowOut,
-                forgeEnergy:        forgeEnergy
+                forgeEnergy: forgeEnergy
             )
             TableRimCanvas(rimBurst: rimBurst)
         }
@@ -97,14 +97,14 @@ struct TableSurfaceView: View {
 /// The primary table geometry every layer derives from. All constants come from
 /// AppLayout tokens — nothing hardcoded inside any sub-layer function.
 private struct TableGeometry {
-    let W:      CGFloat
-    let H:      CGFloat
-    let TY:     CGFloat   // arc peak Y on screen
+    let W: CGFloat
+    let H: CGFloat
+    let TY: CGFloat   // arc peak Y on screen
     let tableR: CGFloat   // large radius — top cap only
-    let cx:     CGFloat   // horizontal center
-    let cy:     CGFloat   // circle center below screen
-    let dpX:    CGFloat   // deal point x — arc centerline
-    let dpY:    CGFloat   // deal point y — sits on arc
+    let cx: CGFloat   // horizontal center
+    let cy: CGFloat   // circle center below screen
+    let dpX: CGFloat   // deal point x — arc centerline
+    let dpY: CGFloat   // deal point y — sits on arc
 
     init(size: CGSize) {
         W      = size.width
@@ -133,18 +133,18 @@ private struct TableBaseCanvas: View {
 
     private func drawUpperAtmosphere(
         context: GraphicsContext,
-        size:    CGSize,
-        W:       CGFloat,
-        H:       CGFloat,
-        TY:      CGFloat
+        size: CGSize,
+        W: CGFloat,
+        H: CGFloat,
+        TY: CGFloat
     ) {
         let rect = CGRect(origin: .zero, size: size)
 
         struct Blob {
-            let cx:     CGFloat
-            let cy:     CGFloat
+            let cx: CGFloat
+            let cy: CGFloat
             let radius: CGFloat
-            let color:  Color
+            let color: Color
         }
 
         let blobs: [Blob] = [
@@ -171,7 +171,7 @@ private struct TableBaseCanvas: View {
             // Right magenta accent — mirrors cyan for chromatic balance.
             // 0.014 — slightly lower than cyan so cyan leads.
             Blob(cx: W * 0.90, cy: H * 0.35, radius: W * 0.34,
-                 color: AppColors.spectrumMagenta.opacity(0.014)),
+                 color: AppColors.spectrumMagenta.opacity(0.014))
         ]
 
         for blob in blobs {
@@ -179,12 +179,12 @@ private struct TableBaseCanvas: View {
                 Path(rect),
                 with: .radialGradient(
                     Gradient(stops: [
-                        .init(color: blob.color,            location: 0),
-                        .init(color: blob.color.opacity(0), location: 1),
+                        .init(color: blob.color, location: 0),
+                        .init(color: blob.color.opacity(0), location: 1)
                     ]),
-                    center:      CGPoint(x: blob.cx, y: blob.cy),
+                    center: CGPoint(x: blob.cx, y: blob.cy),
                     startRadius: 0,
-                    endRadius:   blob.radius
+                    endRadius: blob.radius
                 )
             )
         }
@@ -192,16 +192,16 @@ private struct TableBaseCanvas: View {
 
     private func drawFeltFill(
         context: GraphicsContext,
-        size:    CGSize,
-        cx:      CGFloat,
-        cy:      CGFloat,
-        tableR:  CGFloat
+        size: CGSize,
+        cx: CGFloat,
+        cy: CGFloat,
+        tableR: CGFloat
     ) {
         let gradient = Gradient(stops: [
-            .init(color: AppColors.tableFeltCore,  location: 0.00),
-            .init(color: AppColors.tableFeltMid,   location: 0.25),
+            .init(color: AppColors.tableFeltCore, location: 0.00),
+            .init(color: AppColors.tableFeltMid, location: 0.25),
             .init(color: AppColors.tableFeltOuter, location: 0.60),
-            .init(color: AppColors.tableFeltEdge,  location: 1.00),
+            .init(color: AppColors.tableFeltEdge, location: 1.00)
         ])
 
         var path = Path()
@@ -214,18 +214,18 @@ private struct TableBaseCanvas: View {
             path,
             with: .radialGradient(
                 gradient,
-                center:      CGPoint(x: cx, y: cy),
+                center: CGPoint(x: cx, y: cy),
                 startRadius: 0,
-                endRadius:   tableR
+                endRadius: tableR
             )
         )
     }
 
     private func drawVignette(
         context: GraphicsContext,
-        size:    CGSize,
-        W:       CGFloat,
-        H:       CGFloat
+        size: CGSize,
+        W: CGFloat,
+        H: CGFloat
     ) {
         let rect = CGRect(origin: .zero, size: size)
 
@@ -241,7 +241,7 @@ private struct TableBaseCanvas: View {
             CGPoint(x: 0, y: 0),
             CGPoint(x: W, y: 0),
             CGPoint(x: W, y: H),
-            CGPoint(x: 0, y: H),
+            CGPoint(x: 0, y: H)
         ]
 
         for corner in corners {
@@ -250,11 +250,11 @@ private struct TableBaseCanvas: View {
                 with: .radialGradient(
                     Gradient(stops: [
                         .init(color: AppColors.void.opacity(cornerOpacity), location: 0),
-                        .init(color: AppColors.void.opacity(0),             location: 1),
+                        .init(color: AppColors.void.opacity(0), location: 1)
                     ]),
-                    center:      corner,
+                    center: corner,
                     startRadius: 0,
-                    endRadius:   cornerRadius
+                    endRadius: cornerRadius
                 )
             )
         }
@@ -268,10 +268,10 @@ private struct TableBaseCanvas: View {
             with: .linearGradient(
                 Gradient(stops: [
                     .init(color: AppColors.void.opacity(0.45), location: 0.00),
-                    .init(color: AppColors.void.opacity(0),    location: 1.00),
+                    .init(color: AppColors.void.opacity(0), location: 1.00)
                 ]),
                 startPoint: CGPoint(x: W / 2, y: 0),
-                endPoint:   CGPoint(x: W / 2, y: H * 0.20)
+                endPoint: CGPoint(x: W / 2, y: H * 0.20)
             )
         )
     }
@@ -281,9 +281,9 @@ private struct TableBaseCanvas: View {
 
 private struct TableTopoCanvas: View, Animatable {
 
-    var dissolutionWarp:    Double
+    var dissolutionWarp: Double
     var dissolutionFlowOut: Double
-    var forgeEnergy:        Double
+    var forgeEnergy: Double
 
     // Without Animatable conformance a Canvas view receives only the FINAL
     // value of a withAnimation change — the dissolution and forge oscillation
@@ -331,16 +331,16 @@ private struct TableTopoCanvas: View, Animatable {
 
         // ── Card geometry for dissolution warp + flow-around ──────────────────
         // Derived entirely from AppLayout tokens — no raw geometry values.
-        let cardW:      CGFloat = AppLayout.obTableCardWidth(in: g.W) * AppLayout.obTableCardCinematicScale
-        let cardH:      CGFloat = cardW * 1.5   // 3:2 portrait ratio — matches obTableCardHeight derivation
-        let cardCX:     CGFloat = g.W * 0.50
-        let cardCY:     CGFloat = g.H * AppLayout.obGenderCardRestYFrac
+        let cardW: CGFloat = AppLayout.obTableCardWidth(in: g.W) * AppLayout.obTableCardCinematicScale
+        let cardH: CGFloat = cardW * 1.5   // 3:2 portrait ratio — matches obTableCardHeight derivation
+        let cardCX: CGFloat = g.W * 0.50
+        let cardCY: CGFloat = g.H * AppLayout.obGenderCardRestYFrac
         let cardRadius: CGFloat = AppRadius.obCard
 
         // Tuning constants — calibrated against the HTML prototype.
-        let warpPullStrength:    CGFloat = 0.55  // inward pull magnitude at influence edge
-        let flowInsidePush:      CGFloat = 0.92  // push-to-boundary strength inside card
-        let flowOutsideBend:     CGFloat = 0.70  // tangential bend strength outside card
+        let warpPullStrength: CGFloat = 0.55  // inward pull magnitude at influence edge
+        let flowInsidePush: CGFloat = 0.92  // push-to-boundary strength inside card
+        let flowOutsideBend: CGFloat = 0.70  // tangential bend strength outside card
         let flowInfluenceRadius: CGFloat = 0.38  // influence zone as fraction of cardW
 
         let netWarp = CGFloat(dissolutionWarp) * (1 - CGFloat(dissolutionFlowOut))
@@ -387,7 +387,7 @@ private struct TableTopoCanvas: View, Animatable {
                     if netFlow > 0.001 {
                         let sdf        = rrSDF(px: px, py: py,
                                                cx: cardCX, cy: cardCY,
-                                               w: cardW,   h: cardH, r: cardRadius)
+                                               w: cardW, h: cardH, r: cardRadius)
                         let influenceR = cardW * flowInfluenceRadius
 
                         if sdf < influenceR {
@@ -396,7 +396,7 @@ private struct TableTopoCanvas: View, Animatable {
                             let smoothP  = rawProx * rawProx * (3 - 2 * rawProx)
                             let bx = nearestOnRRx(px: px, py: py,
                                                   cx: cardCX, cy: cardCY,
-                                                  w: cardW,   h: cardH, r: cardRadius)
+                                                  w: cardW, h: cardH, r: cardRadius)
                             if sdf < 0 {
                                 // Inside card: push all the way to the boundary.
                                 px += (bx - px) * netFlow * smoothP * flowInsidePush
@@ -414,8 +414,7 @@ private struct TableTopoCanvas: View, Animatable {
                 let inside = distSq < tableRSqInner && py >= g.TY - 2
 
                 if inside {
-                    if !wasInside { path.move(to: CGPoint(x: px, y: py)) }
-                    else          { path.addLine(to: CGPoint(x: px, y: py)) }
+                    if !wasInside { path.move(to: CGPoint(x: px, y: py)) } else { path.addLine(to: CGPoint(x: px, y: py)) }
                 }
                 wasInside = inside
             }
@@ -437,8 +436,8 @@ private struct TableTopoCanvas: View, Animatable {
     /// Used by drawTopoLines to determine which flow-around force to apply.
     private func rrSDF(px: CGFloat, py: CGFloat,
                        cx: CGFloat, cy: CGFloat,
-                       w:  CGFloat, h:  CGFloat,
-                       r:  CGFloat) -> CGFloat {
+                       w: CGFloat, h: CGFloat,
+                       r: CGFloat) -> CGFloat {
         let qx = abs(px - cx) - w / 2 + r
         let qy = abs(py - cy) - h / 2 + r
         return sqrt(max(qx, 0) * max(qx, 0) + max(qy, 0) * max(qy, 0))
@@ -450,8 +449,8 @@ private struct TableTopoCanvas: View, Animatable {
     /// For outside points: returns the x of the nearest corner arc tangent point.
     private func nearestOnRRx(px: CGFloat, py: CGFloat,
                               cx: CGFloat, cy: CGFloat,
-                              w:  CGFloat, h:  CGFloat,
-                              r:  CGFloat) -> CGFloat {
+                              w: CGFloat, h: CGFloat,
+                              r: CGFloat) -> CGFloat {
         let hw = w / 2
         let hh = h / 2
         let dx = px - cx
@@ -509,9 +508,9 @@ private struct TableRimCanvas: View, Animatable {
     }
 
     private func drawCompassStar(
-        context:  GraphicsContext,
-        dpX:      CGFloat,
-        dpY:      CGFloat,
+        context: GraphicsContext,
+        dpX: CGFloat,
+        dpY: CGFloat,
         starSize: CGFloat
     ) {
         let center = CGPoint(x: dpX, y: dpY)
@@ -521,8 +520,8 @@ private struct TableRimCanvas: View, Animatable {
         // AppGlows.compassStarGlow.color is tuned to 0.07 opacity — whisper presence.
         let glowRadius   = starSize * AppGlows.compassStarGlow.radiusMultiplier
         let glowGradient = Gradient(stops: [
-            .init(color: AppGlows.compassStarGlow.color,            location: 0),
-            .init(color: AppGlows.compassStarGlow.color.opacity(0), location: 1),
+            .init(color: AppGlows.compassStarGlow.color, location: 0),
+            .init(color: AppGlows.compassStarGlow.color.opacity(0), location: 1)
         ])
 
         var glowPath = Path()
@@ -534,9 +533,9 @@ private struct TableRimCanvas: View, Animatable {
             glowPath,
             with: .radialGradient(
                 glowGradient,
-                center:      center,
+                center: center,
                 startRadius: 0,
-                endRadius:   glowRadius
+                endRadius: glowRadius
             )
         )
 
@@ -578,7 +577,7 @@ private struct TableRimCanvas: View, Animatable {
 
             // 0.46 — intercardinal length ratio. Rendering constant.
             // 0.072 / 0.048 — cardinal and intercardinal base widths. Rendering constants.
-            let length:   CGFloat = isCardinal ? starSize         : starSize * 0.46
+            let length: CGFloat = isCardinal ? starSize         : starSize * 0.46
             let halfBase: CGFloat = isCardinal ? starSize * 0.072 : starSize * 0.048
 
             let perpAngle = angle + (.pi / 2)
@@ -600,7 +599,7 @@ private struct TableRimCanvas: View, Animatable {
             // simulate overhead light catching the spike face.
             // 0.36 / 0.22 — shadow face opacities. Rendering constants —
             // simulate self-shadow on the opposite spike face.
-            let lightOpacity:  Double = isCardinal ? 0.62 : 0.40
+            let lightOpacity: Double = isCardinal ? 0.62 : 0.40
             let shadowOpacity: Double = isCardinal ? 0.36 : 0.22
 
             var lightFace = Path()
@@ -642,8 +641,7 @@ private struct TableRimCanvas: View, Animatable {
                 x: center.x + cos(a) * octRadius,
                 y: center.y + sin(a) * octRadius
             )
-            if i == 0 { octPath.move(to: point) }
-            else       { octPath.addLine(to: point) }
+            if i == 0 { octPath.move(to: point) } else { octPath.addLine(to: point) }
         }
         octPath.closeSubpath()
         context.fill(octPath,
@@ -652,10 +650,10 @@ private struct TableRimCanvas: View, Animatable {
 
     private func drawAmberPool(
         context: GraphicsContext,
-        size:    CGSize,
-        dpX:     CGFloat,
-        dpY:     CGFloat,
-        W:       CGFloat
+        size: CGSize,
+        dpX: CGFloat,
+        dpY: CGFloat,
+        W: CGFloat
     ) {
         // 35 — pool center vertical offset below deal point. Rendering constant —
         // pool sits on the near felt surface, not at the arc itself.
@@ -664,31 +662,31 @@ private struct TableRimCanvas: View, Animatable {
         let poolRadius = W * 0.42
 
         let gradient = Gradient(stops: [
-            .init(color: AppColors.tableAmberPool,            location: 0),
-            .init(color: AppColors.tableAmberPool.opacity(0), location: 1),
+            .init(color: AppColors.tableAmberPool, location: 0),
+            .init(color: AppColors.tableAmberPool.opacity(0), location: 1)
         ])
 
         context.fill(
             Path(CGRect(origin: .zero, size: size)),
             with: .radialGradient(
                 gradient,
-                center:      poolCenter,
+                center: poolCenter,
                 startRadius: 0,
-                endRadius:   poolRadius
+                endRadius: poolRadius
             )
         )
     }
 
     private func drawSpectrumRim(
-        context:  GraphicsContext,
-        size:     CGSize,
-        cx:       CGFloat,
-        cy:       CGFloat,
-        tableR:   CGFloat,
-        TY:       CGFloat,
-        W:        CGFloat,
-        dpX:      CGFloat,
-        dpY:      CGFloat,
+        context: GraphicsContext,
+        size: CGSize,
+        cx: CGFloat,
+        cy: CGFloat,
+        tableR: CGFloat,
+        TY: CGFloat,
+        W: CGFloat,
+        dpX: CGFloat,
+        dpY: CGFloat,
         rimBurst: Double
     ) {
         // ── Rim inner glow ─────────────────────────────────────────────────────
@@ -702,12 +700,12 @@ private struct TableRimCanvas: View, Animatable {
             with: .radialGradient(
                 Gradient(stops: [
                     .init(color: AppGlows.tableRimInnerGlow.color.opacity(0), location: 0),
-                    .init(color: AppGlows.tableRimInnerGlow.color,            location: peak),
-                    .init(color: AppGlows.tableRimInnerGlow.color.opacity(0), location: 1),
+                    .init(color: AppGlows.tableRimInnerGlow.color, location: peak),
+                    .init(color: AppGlows.tableRimInnerGlow.color.opacity(0), location: 1)
                 ]),
-                center:      CGPoint(x: cx, y: cy),
+                center: CGPoint(x: cx, y: cy),
                 startRadius: innerR,
-                endRadius:   outerR
+                endRadius: outerR
             )
         )
 
@@ -723,11 +721,11 @@ private struct TableRimCanvas: View, Animatable {
             with: .radialGradient(
                 Gradient(stops: [
                     .init(color: AppColors.tableCompassStar.opacity(0.03), location: 0),
-                    .init(color: AppColors.tableCompassStar.opacity(0),    location: 1),
+                    .init(color: AppColors.tableCompassStar.opacity(0), location: 1)
                 ]),
-                center:      CGPoint(x: dpX, y: dpY),
+                center: CGPoint(x: dpX, y: dpY),
                 startRadius: 0,
-                endRadius:   starEmitRadius
+                endRadius: starEmitRadius
             )
         )
 
@@ -745,14 +743,14 @@ private struct TableRimCanvas: View, Animatable {
 
         // 120 — segment count. Rendering constant — smooth taper at any screen size.
         let segmentCount = 120
-        let arcStart:    CGFloat = .pi
-        let arcEnd:      CGFloat = 2 * .pi
-        let arcMid:      CGFloat = 3 * .pi / 2
-        let arcSpan:     CGFloat = arcEnd - arcStart
+        let arcStart: CGFloat = .pi
+        let arcEnd: CGFloat = 2 * .pi
+        let arcMid: CGFloat = 3 * .pi / 2
+        let arcSpan: CGFloat = arcEnd - arcStart
 
         // Rendering constants — crisp stroke range.
-        let crispThin:   CGFloat = 0.9
-        let crispThick:  CGFloat = 2.7
+        let crispThin: CGFloat = 0.9
+        let crispThick: CGFloat = 2.7
         // 2.5 — base bloom multiplier. Rendering constant — bloom hugs crisp line exactly.
         let baseMultiplier: CGFloat = 2.5
         // rimBurst spikes to 1.0 on card impact, decays to 0.0.
@@ -762,15 +760,15 @@ private struct TableRimCanvas: View, Animatable {
 
         let bo = min(rimBurst * 2.5, 1.0)  // burst opacity additive, capped
         let rimGradient = Gradient(stops: [
-            .init(color: AppColors.spectrumCyan.opacity(0.28 + bo * 0.50),    location: 0.00),
-            .init(color: AppColors.spectrumCyan.opacity(0.55 + bo * 0.40),    location: 0.06),
-            .init(color: AppColors.spectrumCyan.opacity(0.70 + bo * 0.30),    location: 0.26),
-            .init(color: AppColors.spectrumPurple.opacity(0.88 + bo * 0.12),  location: 0.44),
-            .init(color: AppColors.spectrumPurple.opacity(0.94 + bo * 0.06),  location: 0.50),
-            .init(color: AppColors.spectrumPurple.opacity(0.88 + bo * 0.12),  location: 0.56),
+            .init(color: AppColors.spectrumCyan.opacity(0.28 + bo * 0.50), location: 0.00),
+            .init(color: AppColors.spectrumCyan.opacity(0.55 + bo * 0.40), location: 0.06),
+            .init(color: AppColors.spectrumCyan.opacity(0.70 + bo * 0.30), location: 0.26),
+            .init(color: AppColors.spectrumPurple.opacity(0.88 + bo * 0.12), location: 0.44),
+            .init(color: AppColors.spectrumPurple.opacity(0.94 + bo * 0.06), location: 0.50),
+            .init(color: AppColors.spectrumPurple.opacity(0.88 + bo * 0.12), location: 0.56),
             .init(color: AppColors.spectrumMagenta.opacity(0.70 + bo * 0.30), location: 0.74),
             .init(color: AppColors.spectrumMagenta.opacity(0.55 + bo * 0.40), location: 0.94),
-            .init(color: AppColors.spectrumMagenta.opacity(0.28 + bo * 0.50), location: 1.00),
+            .init(color: AppColors.spectrumMagenta.opacity(0.28 + bo * 0.50), location: 1.00)
         ])
 
         let gradStart = CGPoint(x: 0, y: TY)
@@ -795,11 +793,11 @@ private struct TableRimCanvas: View, Animatable {
 
             var segPath = Path()
             segPath.addArc(
-                center:     CGPoint(x: cx, y: cy),
-                radius:     tableR,
+                center: CGPoint(x: cx, y: cy),
+                radius: tableR,
                 startAngle: .radians(angle0),
-                endAngle:   .radians(angle1),
-                clockwise:  false
+                endAngle: .radians(angle1),
+                clockwise: false
             )
 
             // Base pass — composited at reduced opacity so it reads as a
@@ -810,7 +808,7 @@ private struct TableRimCanvas: View, Animatable {
                     segPath,
                     with: .linearGradient(rimGradient,
                                           startPoint: gradStart,
-                                          endPoint:   gradEnd),
+                                          endPoint: gradEnd),
                     lineWidth: baseWidth
                 )
             }
@@ -820,7 +818,7 @@ private struct TableRimCanvas: View, Animatable {
                 segPath,
                 with: .linearGradient(rimGradient,
                                       startPoint: gradStart,
-                                      endPoint:   gradEnd),
+                                      endPoint: gradEnd),
                 lineWidth: crispWidth
             )
         }

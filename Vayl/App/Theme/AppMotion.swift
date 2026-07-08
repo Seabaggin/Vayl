@@ -46,7 +46,7 @@ extension AnyTransition {
     /// Reduce Motion: pure opacity cross-fade — scale is motion.
     static func vaylDepth(_ register: VaylMotionRegister) -> AnyTransition {
         guard !UIAccessibility.isReduceMotionEnabled else { return .opacity }
-        let scaleIn:  CGFloat
+        let scaleIn: CGFloat
         let scaleOut: CGFloat
         switch register {
         case .loud:
@@ -58,7 +58,7 @@ extension AnyTransition {
         }
         return .asymmetric(
             insertion: .opacity.combined(with: .scale(scale: scaleIn)),
-            removal:   .opacity.combined(with: .scale(scale: scaleOut))
+            removal: .opacity.combined(with: .scale(scale: scaleOut))
         )
     }
 }

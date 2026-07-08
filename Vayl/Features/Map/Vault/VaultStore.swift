@@ -42,7 +42,7 @@ final class VaultStore {
     // isLoading/loadError pair unambiguously describes "the segment in flight."
 
     private(set) var isLoading: Bool = false
-    private(set) var loadError: String? = nil
+    private(set) var loadError: String?
 
     /// Couple-fact source of truth, attached once from the hosting view's `.task`
     /// (@State store construction can't reach @Environment).
@@ -370,7 +370,7 @@ final class VaultStore {
 
     // MARK: - Discussion card
 
-    private(set) var selectedDiscussionCard: CompanionCard? = nil
+    private(set) var selectedDiscussionCard: CompanionCard?
 
     /// Opens the discussion card for a desire item at the given tier.
     func openDiscussion(itemId: String, itemName: String, tier: CompanionCardTier) {

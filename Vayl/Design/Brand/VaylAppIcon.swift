@@ -25,11 +25,11 @@ struct VaylAppIcon: View {
 
     // ── Layout ───────────────────────────────────────────────────────────────────
     private var cornerRadius: CGFloat { size * 0.225 }
-    private var fontSize:     CGFloat { size * 0.26 }
-    private var cutY:         CGFloat { size * 0.50 }
+    private var fontSize: CGFloat { size * 0.26 }
+    private var cutY: CGFloat { size * 0.50 }
     private var embossOffset: CGFloat { max(1.2, size * 0.006) }
-    private var embossBlur:   CGFloat { embossOffset * 0.40 }
-    private var grainCount:   Int     { min(Int(size * size * 0.0020), 350) }
+    private var embossBlur: CGFloat { embossOffset * 0.40 }
+    private var grainCount: Int { min(Int(size * size * 0.0020), 350) }
 
     private var clashUIFont: UIFont {
         UIFont(name: "ClashDisplay-Bold", size: fontSize)
@@ -62,7 +62,7 @@ struct VaylAppIcon: View {
         let kY = GY - sidebearings(of: "Y", font: font).right - sidebearings(of: "L", font: font).left
 
         let attrStr = NSMutableAttributedString(string: "VAYL")
-        attrStr.addAttribute(.font, value: font,           range: NSRange(location: 0, length: 4))
+        attrStr.addAttribute(.font, value: font, range: NSRange(location: 0, length: 4))
         attrStr.addAttribute(.kern, value: kV as NSNumber, range: NSRange(location: 0, length: 1))
         attrStr.addAttribute(.kern, value: kA as NSNumber, range: NSRange(location: 1, length: 1))
         attrStr.addAttribute(.kern, value: kY as NSNumber, range: NSRange(location: 2, length: 1))
@@ -88,12 +88,12 @@ struct VaylAppIcon: View {
     private var spectrumGradient: LinearGradient {
         LinearGradient(
             stops: [
-                .init(color: AppColors.spectrumCyan,    location: 0.00),
-                .init(color: AppColors.spectrumPurple,  location: 0.50),
-                .init(color: AppColors.spectrumMagenta, location: 1.00),
+                .init(color: AppColors.spectrumCyan, location: 0.00),
+                .init(color: AppColors.spectrumPurple, location: 0.50),
+                .init(color: AppColors.spectrumMagenta, location: 1.00)
             ],
             startPoint: .leading,
-            endPoint:   .trailing
+            endPoint: .trailing
         )
     }
 
@@ -102,10 +102,10 @@ struct VaylAppIcon: View {
             stops: [
                 .init(color: .white.opacity(0.88), location: 0.00),
                 .init(color: .white.opacity(0.88), location: 0.96),
-                .init(color: .white.opacity(0),    location: 1.00),
+                .init(color: .white.opacity(0), location: 1.00)
             ],
             startPoint: .leading,
-            endPoint:   .trailing
+            endPoint: .trailing
         )
     }
 
@@ -115,10 +115,10 @@ struct VaylAppIcon: View {
                 .init(color: Color(red: 0.000, green: 0.647, blue: 0.843).opacity(0.97), location: 0.00),
                 .init(color: Color(red: 0.353, green: 0.157, blue: 0.765).opacity(0.97), location: 0.35),
                 .init(color: Color(red: 0.529, green: 0.098, blue: 0.659).opacity(0.97), location: 0.65),
-                .init(color: Color(red: 0.784, green: 0.000, blue: 0.345).opacity(0.97), location: 1.00),
+                .init(color: Color(red: 0.784, green: 0.000, blue: 0.345).opacity(0.97), location: 1.00)
             ],
             startPoint: .leading,
-            endPoint:   .trailing
+            endPoint: .trailing
         )
     }
 
@@ -153,12 +153,12 @@ struct VaylAppIcon: View {
             // Vignette
             RadialGradient(
                 gradient: Gradient(stops: [
-                    .init(color: .clear,                    location: 0.0),
-                    .init(color: Color.black.opacity(0.52), location: 1.0),
+                    .init(color: .clear, location: 0.0),
+                    .init(color: Color.black.opacity(0.52), location: 1.0)
                 ]),
-                center:      .center,
+                center: .center,
                 startRadius: size * 0.32,
-                endRadius:   size * 0.72
+                endRadius: size * 0.72
             )
             .frame(width: size, height: size)
 
@@ -169,10 +169,10 @@ struct VaylAppIcon: View {
                         colors: [
                             Color.white.opacity(0.15),
                             Color.white.opacity(0.04),
-                            Color.white.opacity(0.02),
+                            Color.white.opacity(0.02)
                         ],
                         startPoint: .topLeading,
-                        endPoint:   .bottomTrailing
+                        endPoint: .bottomTrailing
                     ),
                     lineWidth: max(1.0, size * 0.004)
                 )
@@ -192,73 +192,73 @@ struct VaylAppIcon: View {
                 stops: [
                     .init(color: Color(hex: "0A0E20"), location: 0.00),
                     .init(color: Color(hex: "060710"), location: 0.48),
-                    .init(color: Color(hex: "0A0614"), location: 1.00),
+                    .init(color: Color(hex: "0A0614"), location: 1.00)
                 ],
                 startPoint: .topLeading,
-                endPoint:   .bottomTrailing
+                endPoint: .bottomTrailing
             )
 
             RadialGradient(
                 colors: [
                     AppColors.spectrumCyan.opacity(0.22),
                     AppColors.spectrumCyan.opacity(0.07),
-                    AppColors.spectrumCyan.opacity(0.00),
+                    AppColors.spectrumCyan.opacity(0.00)
                 ],
-                center:      UnitPoint(x: 0.08, y: 0.10),
+                center: UnitPoint(x: 0.08, y: 0.10),
                 startRadius: 0,
-                endRadius:   size * 0.62
+                endRadius: size * 0.62
             )
 
             RadialGradient(
                 colors: [
                     AppColors.spectrumCyan.opacity(0.08),
-                    AppColors.spectrumCyan.opacity(0.00),
+                    AppColors.spectrumCyan.opacity(0.00)
                 ],
-                center:      UnitPoint(x: 0.92, y: 0.05),
+                center: UnitPoint(x: 0.92, y: 0.05),
                 startRadius: 0,
-                endRadius:   size * 0.45
+                endRadius: size * 0.45
             )
 
             RadialGradient(
                 colors: [
                     AppColors.spectrumPurple.opacity(0.22),
                     AppColors.spectrumPurple.opacity(0.08),
-                    AppColors.spectrumPurple.opacity(0.00),
+                    AppColors.spectrumPurple.opacity(0.00)
                 ],
-                center:      UnitPoint(x: 0.50, y: 0.48),
+                center: UnitPoint(x: 0.50, y: 0.48),
                 startRadius: 0,
-                endRadius:   size * 0.52
+                endRadius: size * 0.52
             )
 
             RadialGradient(
                 colors: [
                     AppColors.spectrumPurple.opacity(0.14),
-                    AppColors.spectrumPurple.opacity(0.00),
+                    AppColors.spectrumPurple.opacity(0.00)
                 ],
-                center:      UnitPoint(x: 0.78, y: 0.22),
+                center: UnitPoint(x: 0.78, y: 0.22),
                 startRadius: 0,
-                endRadius:   size * 0.38
+                endRadius: size * 0.38
             )
 
             RadialGradient(
                 colors: [
                     AppColors.spectrumMagenta.opacity(0.20),
                     AppColors.spectrumMagenta.opacity(0.07),
-                    AppColors.spectrumMagenta.opacity(0.00),
+                    AppColors.spectrumMagenta.opacity(0.00)
                 ],
-                center:      UnitPoint(x: 0.90, y: 0.88),
+                center: UnitPoint(x: 0.90, y: 0.88),
                 startRadius: 0,
-                endRadius:   size * 0.55
+                endRadius: size * 0.55
             )
 
             RadialGradient(
                 colors: [
                     AppColors.spectrumMagenta.opacity(0.08),
-                    AppColors.spectrumMagenta.opacity(0.00),
+                    AppColors.spectrumMagenta.opacity(0.00)
                 ],
-                center:      UnitPoint(x: 0.12, y: 0.92),
+                center: UnitPoint(x: 0.12, y: 0.92),
                 startRadius: 0,
-                endRadius:   size * 0.40
+                endRadius: size * 0.40
             )
 
             // Deep violet center bloom — no AppColors token.
@@ -266,11 +266,11 @@ struct VaylAppIcon: View {
             RadialGradient(
                 colors: [
                     Color(hex: "3A1070").opacity(0.28),
-                    Color(hex: "3A1070").opacity(0.00),
+                    Color(hex: "3A1070").opacity(0.00)
                 ],
-                center:      UnitPoint(x: 0.50, y: 0.52),
+                center: UnitPoint(x: 0.50, y: 0.52),
                 startRadius: 0,
-                endRadius:   size * 0.32
+                endRadius: size * 0.32
             )
         }
         .frame(width: size, height: size)
@@ -317,7 +317,7 @@ struct VaylAppIcon: View {
     private func spectrumLine() -> some View {
 
         let font = clashUIFont
-        let G:  CGFloat = fontSize * 0.025
+        let G: CGFloat = fontSize * 0.025
         let GY: CGFloat = fontSize * 0.215
 
         let kV = G  - sidebearings(of: "V", font: font).right - sidebearings(of: "A", font: font).left
@@ -326,7 +326,7 @@ struct VaylAppIcon: View {
 
         let attrString = NSMutableAttributedString(string: "VAYL")
         let fullRange  = NSRange(location: 0, length: 4)
-        attrString.addAttribute(.font,            value: font,          range: fullRange)
+        attrString.addAttribute(.font, value: font, range: fullRange)
         attrString.addAttribute(.foregroundColor, value: UIColor.white, range: fullRange)
         attrString.addAttribute(.kern, value: kV as NSNumber, range: NSRange(location: 0, length: 1))
         attrString.addAttribute(.kern, value: kA as NSNumber, range: NSRange(location: 1, length: 1))
@@ -363,17 +363,17 @@ struct VaylAppIcon: View {
         let slant  = bloomH / tan(vAngle)
 
         var trapezoid = Path()
-        trapezoid.move(to:    CGPoint(x: lineLeft  + slant, y: lineY - bloomH))
-        trapezoid.addLine(to: CGPoint(x: lineRight,         y: lineY - bloomH))
-        trapezoid.addLine(to: CGPoint(x: lineRight,         y: lineY + bloomH))
+        trapezoid.move(to: CGPoint(x: lineLeft  + slant, y: lineY - bloomH))
+        trapezoid.addLine(to: CGPoint(x: lineRight, y: lineY - bloomH))
+        trapezoid.addLine(to: CGPoint(x: lineRight, y: lineY + bloomH))
         trapezoid.addLine(to: CGPoint(x: lineLeft  - slant, y: lineY + bloomH))
         trapezoid.closeSubpath()
 
         let bloomClipRight = lineRight + size * 0.028
         var bloomTrapezoid = Path()
-        bloomTrapezoid.move(to:    CGPoint(x: lineLeft  + slant, y: lineY - bloomH))
-        bloomTrapezoid.addLine(to: CGPoint(x: bloomClipRight,    y: lineY - bloomH))
-        bloomTrapezoid.addLine(to: CGPoint(x: bloomClipRight,    y: lineY + bloomH))
+        bloomTrapezoid.move(to: CGPoint(x: lineLeft  + slant, y: lineY - bloomH))
+        bloomTrapezoid.addLine(to: CGPoint(x: bloomClipRight, y: lineY - bloomH))
+        bloomTrapezoid.addLine(to: CGPoint(x: bloomClipRight, y: lineY + bloomH))
         bloomTrapezoid.addLine(to: CGPoint(x: lineLeft  - slant, y: lineY + bloomH))
         bloomTrapezoid.closeSubpath()
 
@@ -387,17 +387,17 @@ struct VaylAppIcon: View {
             bloomCtx.drawLayer { layer in
                 layer.addFilter(.blur(radius: size * 0.018))
                 var p = Path()
-                p.move(to:    CGPoint(x: lineLeft,  y: lineY))
+                p.move(to: CGPoint(x: lineLeft, y: lineY))
                 p.addLine(to: CGPoint(x: lineRight, y: lineY))
                 layer.stroke(p,
                     with: .linearGradient(
                         Gradient(stops: [
-                            .init(color: AppColors.spectrumCyan.opacity(0.22),    location: 0.00),
-                            .init(color: AppColors.spectrumPurple.opacity(0.42),  location: 0.50),
-                            .init(color: AppColors.spectrumMagenta.opacity(0.22), location: 1.00),
+                            .init(color: AppColors.spectrumCyan.opacity(0.22), location: 0.00),
+                            .init(color: AppColors.spectrumPurple.opacity(0.42), location: 0.50),
+                            .init(color: AppColors.spectrumMagenta.opacity(0.22), location: 1.00)
                         ]),
-                        startPoint: CGPoint(x: lineLeft,  y: lineY),
-                        endPoint:   CGPoint(x: lineRight, y: lineY)
+                        startPoint: CGPoint(x: lineLeft, y: lineY),
+                        endPoint: CGPoint(x: lineRight, y: lineY)
                     ),
                     style: StrokeStyle(lineWidth: size * 0.0015, lineCap: .butt)
                 )
@@ -407,17 +407,17 @@ struct VaylAppIcon: View {
             bloomCtx.drawLayer { layer in
                 layer.addFilter(.blur(radius: size * 0.008))
                 var p = Path()
-                p.move(to:    CGPoint(x: lineLeft,  y: lineY))
+                p.move(to: CGPoint(x: lineLeft, y: lineY))
                 p.addLine(to: CGPoint(x: lineRight, y: lineY))
                 layer.stroke(p,
                     with: .linearGradient(
                         Gradient(stops: [
-                            .init(color: AppColors.spectrumCyan.opacity(0.30),    location: 0.00),
-                            .init(color: AppColors.spectrumPurple.opacity(0.50),  location: 0.50),
-                            .init(color: AppColors.spectrumMagenta.opacity(0.30), location: 1.00),
+                            .init(color: AppColors.spectrumCyan.opacity(0.30), location: 0.00),
+                            .init(color: AppColors.spectrumPurple.opacity(0.50), location: 0.50),
+                            .init(color: AppColors.spectrumMagenta.opacity(0.30), location: 1.00)
                         ]),
-                        startPoint: CGPoint(x: lineLeft,  y: lineY),
-                        endPoint:   CGPoint(x: lineRight, y: lineY)
+                        startPoint: CGPoint(x: lineLeft, y: lineY),
+                        endPoint: CGPoint(x: lineRight, y: lineY)
                     ),
                     style: StrokeStyle(lineWidth: size * 0.032, lineCap: .butt)
                 )
@@ -427,17 +427,17 @@ struct VaylAppIcon: View {
             bloomCtx.drawLayer { layer in
                 layer.addFilter(.blur(radius: size * 0.003))
                 var p = Path()
-                p.move(to:    CGPoint(x: lineLeft,  y: lineY))
+                p.move(to: CGPoint(x: lineLeft, y: lineY))
                 p.addLine(to: CGPoint(x: lineRight, y: lineY))
                 layer.stroke(p,
                     with: .linearGradient(
                         Gradient(stops: [
-                            .init(color: AppColors.spectrumCyan.opacity(0.40),    location: 0.00),
-                            .init(color: AppColors.spectrumPurple.opacity(0.58),  location: 0.50),
-                            .init(color: AppColors.spectrumMagenta.opacity(0.40), location: 1.00),
+                            .init(color: AppColors.spectrumCyan.opacity(0.40), location: 0.00),
+                            .init(color: AppColors.spectrumPurple.opacity(0.58), location: 0.50),
+                            .init(color: AppColors.spectrumMagenta.opacity(0.40), location: 1.00)
                         ]),
-                        startPoint: CGPoint(x: lineLeft,  y: lineY),
-                        endPoint:   CGPoint(x: lineRight, y: lineY)
+                        startPoint: CGPoint(x: lineLeft, y: lineY),
+                        endPoint: CGPoint(x: lineRight, y: lineY)
                     ),
                     style: StrokeStyle(lineWidth: size * 0.008, lineCap: .butt)
                 )
@@ -447,18 +447,18 @@ struct VaylAppIcon: View {
             var solidCtx = context
             solidCtx.clip(to: trapezoid)
             var solidPath = Path()
-            solidPath.move(to:    CGPoint(x: lineLeft,  y: lineY))
+            solidPath.move(to: CGPoint(x: lineLeft, y: lineY))
             solidPath.addLine(to: CGPoint(x: lineRight, y: lineY))
             solidCtx.stroke(solidPath,
                 with: .linearGradient(
                     Gradient(stops: [
-                        .init(color: AppColors.spectrumCyan,               location: 0.00),
-                        .init(color: AppColors.spectrumPurple,             location: 0.50),
-                        .init(color: AppColors.spectrumMagenta,            location: 0.92),
-                        .init(color: AppColors.spectrumMagenta.opacity(0), location: 1.00),
+                        .init(color: AppColors.spectrumCyan, location: 0.00),
+                        .init(color: AppColors.spectrumPurple, location: 0.50),
+                        .init(color: AppColors.spectrumMagenta, location: 0.92),
+                        .init(color: AppColors.spectrumMagenta.opacity(0), location: 1.00)
                     ]),
-                    startPoint: CGPoint(x: lineLeft,  y: lineY),
-                    endPoint:   CGPoint(x: lineRight, y: lineY)
+                    startPoint: CGPoint(x: lineLeft, y: lineY),
+                    endPoint: CGPoint(x: lineRight, y: lineY)
                 ),
                 style: StrokeStyle(lineWidth: max(1.5, size * 0.0034), lineCap: .butt)
             )
@@ -467,17 +467,17 @@ struct VaylAppIcon: View {
             var coreCtx = context
             coreCtx.clip(to: trapezoid)
             var corePath = Path()
-            corePath.move(to:    CGPoint(x: lineLeft,  y: lineY))
+            corePath.move(to: CGPoint(x: lineLeft, y: lineY))
             corePath.addLine(to: CGPoint(x: lineRight, y: lineY))
             coreCtx.stroke(corePath,
                 with: .linearGradient(
                     Gradient(stops: [
                         .init(color: .white.opacity(0.88), location: 0.00),
                         .init(color: .white.opacity(0.88), location: 0.92),
-                        .init(color: .white.opacity(0),    location: 1.00),
+                        .init(color: .white.opacity(0), location: 1.00)
                     ]),
-                    startPoint: CGPoint(x: lineLeft,  y: lineY),
-                    endPoint:   CGPoint(x: lineRight, y: lineY)
+                    startPoint: CGPoint(x: lineLeft, y: lineY),
+                    endPoint: CGPoint(x: lineRight, y: lineY)
                 ),
                 style: StrokeStyle(lineWidth: max(0.75, size * 0.001), lineCap: .butt)
             )
@@ -489,7 +489,7 @@ struct VaylAppIcon: View {
 
     private func wordRow(style: AnyShapeStyle) -> some View {
         let font = clashUIFont
-        let G:  CGFloat = fontSize * 0.025
+        let G: CGFloat = fontSize * 0.025
         let GY: CGFloat = fontSize * 0.215
 
         let kV = G  - sidebearings(of: "V", font: font).right - sidebearings(of: "A", font: font).left
@@ -517,7 +517,7 @@ struct VaylAppIcon: View {
         CTFontGetAdvancesForGlyphs(ctFont, .horizontal, &glyph, &advance, 1)
         var bbox = CGRect.zero
         CTFontGetBoundingRectsForGlyphs(ctFont, .horizontal, &glyph, &bbox, 1)
-        return (left:  max(0, bbox.minX),
+        return (left: max(0, bbox.minX),
                 right: max(0, advance.width - bbox.maxX))
     }
 
@@ -566,8 +566,8 @@ struct VaylAppIcon: View {
     func collectCrossingsStep(
         _ ptr: UnsafePointer<CGPathElement>,
         scanY: CGFloat,
-        cur:   inout CGPoint,
-        move:  inout CGPoint,
+        cur: inout CGPoint,
+        move: inout CGPoint,
         crossings: inout [CGFloat]
     ) {
         let el = ptr.pointee
@@ -610,20 +610,20 @@ private struct StarFieldView: View {
     let size: CGFloat
 
     private let stars: [StarSpec] = [
-        StarSpec(x: 0.168, y: 0.205, hRx: 22, vRy: 2.5,  dotR: 1.6, color: .white,                      opacity: 0.85),
-        StarSpec(x: 0.607, y: 0.168, hRx: 14, vRy: 2.0,  dotR: 1.2, color: AppColors.spectrumCyan,       opacity: 0.80),
-        StarSpec(x: 0.871, y: 0.135, hRx:  8, vRy: 1.3,  dotR: 1.0, color: .white,                      opacity: 0.70),
-        StarSpec(x: 0.379, y: 0.266, hRx:  5, vRy: 1.0,  dotR: 0.8, color: .white,                      opacity: 0.60),
-        StarSpec(x: 0.916, y: 0.359, hRx: 13, vRy: 2.0,  dotR: 1.2, color: AppColors.spectrumMagenta,    opacity: 0.75),
-        StarSpec(x: 0.080, y: 0.438, hRx:  7, vRy: 1.2,  dotR: 0.9, color: .white,                      opacity: 0.62),
-        StarSpec(x: 0.773, y: 0.291, hRx:  8, vRy: 1.3,  dotR: 1.0, color: AppColors.spectrumPurple,     opacity: 0.68),
-        StarSpec(x: 0.139, y: 0.740, hRx: 16, vRy: 2.2,  dotR: 1.4, color: .white,                      opacity: 0.72),
-        StarSpec(x: 0.559, y: 0.809, hRx:  5, vRy: 0.9,  dotR: 0.8, color: AppColors.spectrumCyan,       opacity: 0.58),
-        StarSpec(x: 0.848, y: 0.785, hRx:  8, vRy: 1.3,  dotR: 1.0, color: AppColors.spectrumMagenta,    opacity: 0.65),
-        StarSpec(x: 0.818, y: 0.236, hRx:  4, vRy: 0.8,  dotR: 0.7, color: .white,                      opacity: 0.55),
-        StarSpec(x: 0.900, y: 0.877, hRx:  7, vRy: 1.2,  dotR: 0.9, color: .white,                      opacity: 0.58),
-        StarSpec(x: 0.193, y: 0.842, hRx:  6, vRy: 1.0,  dotR: 0.8, color: AppColors.spectrumCyan,       opacity: 0.55),
-        StarSpec(x: 0.945, y: 0.623, hRx:  5, vRy: 0.9,  dotR: 0.7, color: .white,                      opacity: 0.52),
+        StarSpec(x: 0.168, y: 0.205, hRx: 22, vRy: 2.5, dotR: 1.6, color: .white, opacity: 0.85),
+        StarSpec(x: 0.607, y: 0.168, hRx: 14, vRy: 2.0, dotR: 1.2, color: AppColors.spectrumCyan, opacity: 0.80),
+        StarSpec(x: 0.871, y: 0.135, hRx: 8, vRy: 1.3, dotR: 1.0, color: .white, opacity: 0.70),
+        StarSpec(x: 0.379, y: 0.266, hRx: 5, vRy: 1.0, dotR: 0.8, color: .white, opacity: 0.60),
+        StarSpec(x: 0.916, y: 0.359, hRx: 13, vRy: 2.0, dotR: 1.2, color: AppColors.spectrumMagenta, opacity: 0.75),
+        StarSpec(x: 0.080, y: 0.438, hRx: 7, vRy: 1.2, dotR: 0.9, color: .white, opacity: 0.62),
+        StarSpec(x: 0.773, y: 0.291, hRx: 8, vRy: 1.3, dotR: 1.0, color: AppColors.spectrumPurple, opacity: 0.68),
+        StarSpec(x: 0.139, y: 0.740, hRx: 16, vRy: 2.2, dotR: 1.4, color: .white, opacity: 0.72),
+        StarSpec(x: 0.559, y: 0.809, hRx: 5, vRy: 0.9, dotR: 0.8, color: AppColors.spectrumCyan, opacity: 0.58),
+        StarSpec(x: 0.848, y: 0.785, hRx: 8, vRy: 1.3, dotR: 1.0, color: AppColors.spectrumMagenta, opacity: 0.65),
+        StarSpec(x: 0.818, y: 0.236, hRx: 4, vRy: 0.8, dotR: 0.7, color: .white, opacity: 0.55),
+        StarSpec(x: 0.900, y: 0.877, hRx: 7, vRy: 1.2, dotR: 0.9, color: .white, opacity: 0.58),
+        StarSpec(x: 0.193, y: 0.842, hRx: 6, vRy: 1.0, dotR: 0.8, color: AppColors.spectrumCyan, opacity: 0.55),
+        StarSpec(x: 0.945, y: 0.623, hRx: 5, vRy: 0.9, dotR: 0.7, color: .white, opacity: 0.52)
     ]
 
     var body: some View {
@@ -655,8 +655,8 @@ private struct StarFieldView: View {
                     x: cx - dotR, y: cy - dotR, width: dotR * 2, height: dotR * 2
                 ))
 
-                ctx.fill(hPath,   with: bloom)
-                ctx.fill(vPath,   with: bloomV)
+                ctx.fill(hPath, with: bloom)
+                ctx.fill(vPath, with: bloomV)
                 ctx.fill(dotPath, with: .color(s.color.opacity(Double(s.opacity) * 1.1)))
             }
         }

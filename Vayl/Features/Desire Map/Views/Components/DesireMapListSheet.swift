@@ -78,10 +78,10 @@ struct DesireMapListView: View {
     var onUnlockTapped: () -> Void = {}
     var onTalk: (RevealMatch) -> Void = { _ in }
 
-    @State private var expandedId: String? = nil
+    @State private var expandedId: String?
 
     private var unlockedMatches: [RevealMatch] { matches.filter { !$0.isLocked } }
-    private var lockedCount: Int  { matches.filter { $0.isLocked }.count }
+    private var lockedCount: Int { matches.filter { $0.isLocked }.count }
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.lg) {
@@ -284,7 +284,7 @@ private let _previewMatches: [RevealMatch] = [
     .sample("Overnight Stays", .adjacent),
     .sample("Meeting Partners", .mutual, locked: true),
     .sample("Shared Space Agreements", .adjacent, locked: true),
-    .sample("Time and Attention", .mutual, locked: true),
+    .sample("Time and Attention", .mutual, locked: true)
 ]
 
 #Preview("Partial reveal — sheet") {

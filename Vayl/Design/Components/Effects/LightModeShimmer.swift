@@ -28,7 +28,7 @@ struct LightModeShimmer: View {
             AppColors.accentTertiary.opacity(0.60),
             AppColors.safetyAccent.opacity(0.55),
             AppColors.pulseTierProtective.opacity(0.58),
-            AppColors.accentSecondary.opacity(0.55),
+            AppColors.accentSecondary.opacity(0.55)
         ]
     }
 
@@ -41,7 +41,7 @@ struct LightModeShimmer: View {
             AppColors.accentSecondary.opacity(0.25),
             AppColors.accentTertiary.opacity(0.28),
             AppColors.safetyAccent.opacity(0.22),
-            AppColors.pulseTierProtective.opacity(0.25),
+            AppColors.pulseTierProtective.opacity(0.25)
         ]
     }
 

@@ -20,7 +20,7 @@ struct SessionRecordPayload: Codable {
     let startedAt: Date
     let endedAt: Date?
     let cardsDiscussed: Int
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case coupleId = "couple_id"
@@ -40,12 +40,12 @@ final class SessionSyncService {
             logger.error("Failed to decode session payload")
             throw URLError(.cannotDecodeRawData)
         }
-        
+
         try await supabase
             .from("couple_session_records")
             .upsert(sessionData)
             .execute()
-            
+
         logger.info("Successfully synced session record: \(sessionData.id)")
     }
 }

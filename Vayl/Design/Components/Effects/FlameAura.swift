@@ -138,7 +138,7 @@ struct FlameAura: View {
         //   pass 2 — tight blur (bright core)
 
         let baseColor = lerpColor(
-            Color(red: 1.0,  green: 0.15, blue: 0.55),   // hot pink
+            Color(red: 1.0, green: 0.15, blue: 0.55),   // hot pink
             Color(red: 0.72, green: 0.10, blue: 0.90),   // magenta-violet
             fract(seed * 0.19)
         )
@@ -148,7 +148,7 @@ struct FlameAura: View {
             .init(color: baseColor.opacity(alpha * 0.90), location: 0.0),
             .init(color: baseColor.opacity(alpha * 0.55), location: 0.35),
             .init(color: tipColor.opacity(alpha  * 0.20), location: 0.78),
-            .init(color: tipColor.opacity(0),             location: 1.0),
+            .init(color: tipColor.opacity(0), location: 1.0)
         ])
 
         // Pass 1 — diffuse outer glow
@@ -159,7 +159,7 @@ struct FlameAura: View {
                 with: .linearGradient(
                     gradient,
                     startPoint: CGPoint(x: cx, y: bottomY),
-                    endPoint:   CGPoint(x: cx, y: topY)
+                    endPoint: CGPoint(x: cx, y: topY)
                 )
             )
         }
@@ -179,11 +179,11 @@ struct FlameAura: View {
                 with: .linearGradient(
                     Gradient(stops: [
                         .init(color: Color.white.opacity(alpha * 0.55), location: 0.0),
-                        .init(color: baseColor.opacity(alpha * 0.40),   location: 0.40),
-                        .init(color: tipColor.opacity(0),               location: 1.0),
+                        .init(color: baseColor.opacity(alpha * 0.40), location: 0.40),
+                        .init(color: tipColor.opacity(0), location: 1.0)
                     ]),
                     startPoint: CGPoint(x: cx, y: bottomY),
-                    endPoint:   CGPoint(x: cx, y: topY)
+                    endPoint: CGPoint(x: cx, y: topY)
                 )
             )
         }
@@ -211,13 +211,13 @@ struct FlameAura: View {
         // left side — bottom-left → top (tapers to point)
         p.move(to: CGPoint(x: cx - halfW, y: bottomY))
         p.addCurve(
-            to:      CGPoint(x: cx,        y: topY),
+            to: CGPoint(x: cx, y: topY),
             control1: CGPoint(x: cx - halfW * 0.7, y: ctrl1Y),
             control2: CGPoint(x: cx - halfW * 0.2, y: ctrl2Y)
         )
         // right side — top → bottom-right
         p.addCurve(
-            to:      CGPoint(x: cx + halfW, y: bottomY),
+            to: CGPoint(x: cx + halfW, y: bottomY),
             control1: CGPoint(x: cx + halfW * 0.2, y: ctrl2Y),
             control2: CGPoint(x: cx + halfW * 0.7, y: ctrl1Y)
         )
@@ -244,14 +244,14 @@ struct FlameAura: View {
         let t = max(0, min(1, t))
         // Resolve to UIColor for component access
         let ua = UIColor(a), ub = UIColor(b)
-        var (r1,g1,b1,a1): (CGFloat,CGFloat,CGFloat,CGFloat) = (0,0,0,0)
-        var (r2,g2,b2,a2): (CGFloat,CGFloat,CGFloat,CGFloat) = (0,0,0,0)
+        var (r1, g1, b1, a1): (CGFloat, CGFloat, CGFloat, CGFloat) = (0, 0, 0, 0)
+        var (r2, g2, b2, a2): (CGFloat, CGFloat, CGFloat, CGFloat) = (0, 0, 0, 0)
         ua.getRed(&r1, green: &g1, blue: &b1, alpha: &a1)
         ub.getRed(&r2, green: &g2, blue: &b2, alpha: &a2)
         return Color(
-            red:   Double(r1 + (r2-r1) * t),
+            red: Double(r1 + (r2-r1) * t),
             green: Double(g1 + (g2-g1) * t),
-            blue:  Double(b1 + (b2-b1) * t),
+            blue: Double(b1 + (b2-b1) * t),
             opacity: Double(a1 + (a2-a1) * t)
         )
     }

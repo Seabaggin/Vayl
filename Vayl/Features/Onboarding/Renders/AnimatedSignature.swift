@@ -25,9 +25,9 @@ struct AnimatedSignature: View {
 
     // Per-stroke trim progress (0 → 1). One state value per pen-stroke so each
     // animates independently and the gaps between them read as pen-lifts.
-    @State private var firstProgress:  CGFloat = 0
+    @State private var firstProgress: CGFloat = 0
     @State private var middleProgress: CGFloat = 0
-    @State private var lastProgress:   CGFloat = 0
+    @State private var lastProgress: CGFloat = 0
 
     // MARK: - Stroke styling
 
@@ -41,17 +41,17 @@ struct AnimatedSignature: View {
     // Durations are roughly proportional to each name's length so the pen keeps
     // a steady speed. The pen-lift gaps are the weight. Tune freely on device.
 
-    private let startDelay:     Double = 0.4
-    private let firstDuration:  Double = 1.5
+    private let startDelay: Double = 0.4
+    private let firstDuration: Double = 1.5
     private let middleDuration: Double = 0.55
-    private let lastDuration:   Double = 1.2
-    private let penLift:        Double = 0.22
+    private let lastDuration: Double = 1.2
+    private let penLift: Double = 0.22
 
     var body: some View {
         ZStack {
-            strokeView(.first,  progress: firstProgress)
+            strokeView(.first, progress: firstProgress)
             strokeView(.middle, progress: middleProgress)
-            strokeView(.last,   progress: lastProgress)
+            strokeView(.last, progress: lastProgress)
         }
         .onAppear(perform: play)
         .accessibilityLabel("Founder's signature")
@@ -104,7 +104,7 @@ struct AnimatedSignature: View {
 
 /// A single pen-stroke of the signature, aspect-fit and centred into its frame
 /// using the geometry's shared transform (so all three strokes stay aligned).
-fileprivate struct SignatureStroke: Shape {
+private struct SignatureStroke: Shape {
     let stroke: SignatureGeometry.Stroke
 
     func path(in rect: CGRect) -> Path {
@@ -120,12 +120,12 @@ fileprivate struct SignatureStroke: Shape {
 /// aspect-fit and centred against the *union* of all three bounding boxes. That
 /// keeps the strokes aligned to each other AND lets the full cyan→magenta
 /// spectrum read across the whole signature.
-fileprivate enum SignatureGeometry {
+private enum SignatureGeometry {
 
     enum Stroke: CaseIterable { case first, middle, last }
 
     /// Reference box the normalized path coordinates were drawn against.
-    private static let refWidth:  CGFloat = 250
+    private static let refWidth: CGFloat = 250
     private static let refHeight: CGFloat = 100
 
     // MARK: Typesetting (tunable)
@@ -149,8 +149,8 @@ fileprivate enum SignatureGeometry {
 
     private static func metrics(_ s: Stroke) -> Metrics {
         switch s {
-        case .first:  return Metrics(minX:  22.53, maxX:  61.29, minY: 7.60, maxY: 46.70, baseline: 39.74)
-        case .middle: return Metrics(minX:  77.16, maxX:  92.68, minY: 9.93, maxY: 35.12, baseline: 33.22)
+        case .first:  return Metrics(minX: 22.53, maxX: 61.29, minY: 7.60, maxY: 46.70, baseline: 39.74)
+        case .middle: return Metrics(minX: 77.16, maxX: 92.68, minY: 9.93, maxY: 35.12, baseline: 33.22)
         case .last:   return Metrics(minX: 107.40, maxX: 141.83, minY: 6.43, maxY: 34.36, baseline: 33.50)
         }
     }

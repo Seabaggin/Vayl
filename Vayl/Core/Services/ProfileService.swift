@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 3/9/26.
 //
 
-
 //
 //  ProfileService.swift
 //  Open Lightly
@@ -18,13 +17,13 @@ import Foundation
 
 @MainActor
 final class ProfileService {
-    
+
     private var supabase: SupabaseClient {
         SupabaseManager.shared.client
     }
-    
+
     // MARK: - Supabase Profile Struct
-    
+
     struct SupabaseProfile: Codable {
         let id: UUID?
         let authId: UUID
@@ -45,7 +44,7 @@ final class ProfileService {
         let partnerLabel: String?
         let hasCompletedOnboarding: Bool
         let hasCompletedAssessment: Bool
-        
+
         enum CodingKeys: String, CodingKey {
             case id
             case authId = "auth_id"
@@ -68,9 +67,9 @@ final class ProfileService {
             case hasCompletedAssessment = "has_completed_assessment"
         }
     }
-    
+
     // MARK: - Fetch or Create Profile
-    
+
     /// Fetches the user's profile from Supabase. If none exists, creates one.
     func fetchOrCreateProfile(authId: UUID) async throws -> SupabaseProfile {
         // Try to fetch existing profile
@@ -80,11 +79,11 @@ final class ProfileService {
             .eq("auth_id", value: authId.uuidString)
             .execute()
             .value
-        
+
         if let profile = existing.first {
             return profile
         }
-        
+
         // No profile exists — create one
         let newProfile = SupabaseProfile(
             id: nil,
@@ -107,7 +106,7 @@ final class ProfileService {
             hasCompletedOnboarding: false,
             hasCompletedAssessment: false
         )
-        
+
         let created: SupabaseProfile = try await supabase
             .from("user_profiles")
             .insert(newProfile)
@@ -115,10 +114,10 @@ final class ProfileService {
             .single()
             .execute()
             .value
-        
+
         return created
     }
-    
+
     // MARK: - Lookup Pairing Code
 
     /// Scoped response for pairing code lookup.
@@ -165,7 +164,7 @@ final class ProfileService {
         return previews.first
     }
     // MARK: - Mark Onboarding Complete (Batch 10)
-        
+
         /// Sets `has_completed_onboarding = true` in Supabase.
         ///
         /// Called by SyncManager AFTER the local SwiftData model has already
@@ -191,7 +190,7 @@ final class ProfileService {
                 .eq("id", value: profileId.uuidString)
                 .execute()
         }
-    
+
     // MARK: - Update Identity (P3 — partner-visible fields)
 
     /// Pushes the user's display identity (name + pronouns + gender) to their remote

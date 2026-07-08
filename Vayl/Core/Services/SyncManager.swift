@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 3/10/26.
 //
 
-
 //
 //  SyncManager.swift
 //  Open Lightly
@@ -275,11 +274,11 @@ class SyncManager {
                 logger.warning("⚠️ Retry failed for onboarding sync — will try again next launch")
             }
         }
-        
+
         // 2) Process durable SwiftData SyncTask queue
         await processTaskQueue()
     }
-    
+
     // =========================================================================
     // MARK: - Durable Background Queue (SyncTask)
     // =========================================================================
@@ -295,19 +294,19 @@ class SyncManager {
         } catch {
             logger.error("Failed to enqueue SyncTask (\(taskType), entity \(entityId)): \(error.localizedDescription)")
         }
-        
+
         // Trigger a process run in the background
         Task { await processTaskQueue() }
     }
-    
+
     /// Processes all pending SyncTasks in the local queue.
     private func processTaskQueue() async {
         let context = ModelContext(ModelContainer.appContainer)
         let descriptor = FetchDescriptor<SyncTask>(sortBy: [SortDescriptor(\.createdAt)])
-        
+
         guard let tasks = try? context.fetch(descriptor), !tasks.isEmpty else { return }
         logger.info("Processing \(tasks.count) pending SyncTasks")
-        
+
         for task in tasks {
             do {
                 switch task.taskType {
@@ -318,7 +317,7 @@ class SyncManager {
                 default:
                     logger.warning("Unknown taskType in queue: \(task.taskType)")
                 }
-                
+
                 // On success, remove from queue. If this save fails the delete is lost and the
                 // task re-processes next launch (duplicate push) — so surface the failure.
                 context.delete(task)

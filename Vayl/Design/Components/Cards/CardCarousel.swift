@@ -32,57 +32,57 @@ private let cardH: CGFloat = 190
 
 // 6-Card Converging Fan — hand-tuned offsets, not AppSpacing candidates.
 // These define the physical spread geometry of the fan animation.
-private let spreadOffsets:   [CGFloat] = [-180,  180, -120,  120,  -60,  60 ]
-private let spreadRotations: [Double]  = [ -18,   18,  -12,   12,   -6,   6 ]
-private let spreadYOffsets:  [CGFloat] = [  24,   24,   16,   16,    8,   8 ]
-private let spreadScales:    [CGFloat] = [0.78, 0.78, 0.84, 0.84, 0.90, 0.90]
+private let spreadOffsets: [CGFloat] = [-180, 180, -120, 120, -60, 60 ]
+private let spreadRotations: [Double]  = [ -18, 18, -12, 12, -6, 6 ]
+private let spreadYOffsets: [CGFloat] = [  24, 24, 16, 16, 8, 8 ]
+private let spreadScales: [CGFloat] = [0.78, 0.78, 0.84, 0.84, 0.90, 0.90]
 private let spreadOpacities: [Double]  = [0.25, 0.25, 0.50, 0.50, 0.75, 0.75]
 
 // 6-Card Gathered State
-private let gatheredYOffsets:  [CGFloat] = [15,   12,   9,    6,    4,    2  ]
+private let gatheredYOffsets: [CGFloat] = [15, 12, 9, 6, 4, 2  ]
 private let gatheredOpacities: [Double]  = [0.30, 0.45, 0.60, 0.75, 0.85, 0.95]
-private let gatheredScales:    [CGFloat] = [0.91, 0.93, 0.95, 0.96, 0.97, 0.98]
+private let gatheredScales: [CGFloat] = [0.91, 0.93, 0.95, 0.96, 0.97, 0.98]
 
 // MARK: - CardCarousel
 
 struct CardCarousel: View {
 
     var cards: [Card]
-    var onCardAction: ((Card, CardAction) -> Void)? = nil
-    var onNavigateToPlay: (() -> Void)? = nil
-    var onPhaseChange: ((CarouselPhase) -> Void)? = nil
+    var onCardAction: ((Card, CardAction) -> Void)?
+    var onNavigateToPlay: (() -> Void)?
+    var onPhaseChange: ((CarouselPhase) -> Void)?
 
     // Hand-selection mode — when `selecting`, tapping the active card toggles it
     // into tonight's hand (via onToggleSelect) instead of starting a session.
     // `selectedIDs` marks which cards are already in the hand.
     var selecting: Bool = false
     var selectedIDs: Set<String> = []
-    var onToggleSelect: ((Card) -> Void)? = nil
+    var onToggleSelect: ((Card) -> Void)?
 
     /// Backdrop dim opacity when engaged. nil keeps the default (light 0.35 / dark
     /// 0.75) — pass a softer value (e.g. Home) to fade the room rather than black it out.
-    var dimOpacity: Double? = nil
+    var dimOpacity: Double?
 
     /// Deck identity for Play / session cards — tints each face and adds the glyph
     /// watermark; per-card heat comes from the card's intensity. nil (Home's hand-builder,
     /// OB) keeps the canonical look.
-    var colorway:  FoilColorway? = nil
-    var glyphPath: Path?         = nil
+    var colorway: FoilColorway?
+    var glyphPath: Path?
 
-    @State private var phase:              CarouselPhase = .floating
-    @State private var activeIndex:        Int     = 0
-    @State private var dragOffset:         CGFloat = 0
+    @State private var phase: CarouselPhase = .floating
+    @State private var activeIndex: Int     = 0
+    @State private var dragOffset: CGFloat = 0
     @State private var verticalDragOffset: CGFloat = 0
-    @State private var isDragging:         Bool    = false
-    @State private var dragVelocity:       CGFloat = 0
+    @State private var isDragging: Bool    = false
+    @State private var dragVelocity: CGFloat = 0
     @State private var previousDragOffset: CGFloat = 0
-    @State private var specularPhase:      CGFloat = 0
-    @State private var specularActive:     Bool    = false
-    @State private var borderRotation:     Double  = 0.0
-    @State private var floatOffset:        CGFloat = 0
-    @State private var bloomOpacity:       Double  = 0.5
-    @State private var flyGhostActive:     Bool    = false
-    @State private var flyProgress:        CGFloat = 0
+    @State private var specularPhase: CGFloat = 0
+    @State private var specularActive: Bool    = false
+    @State private var borderRotation: Double  = 0.0
+    @State private var floatOffset: CGFloat = 0
+    @State private var bloomOpacity: Double  = 0.5
+    @State private var flyGhostActive: Bool    = false
+    @State private var flyProgress: CGFloat = 0
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -239,7 +239,7 @@ struct CardCarousel: View {
                 (phase == .carousel || phase == .lifted) && phase != .floating
                     ? DragGesture(minimumDistance: 5)
                         .onChanged { handleDragChanged($0) }
-                        .onEnded   { handleDragEnded($0) }
+                        .onEnded { handleDragEnded($0) }
                     : nil
             )
     }
@@ -386,11 +386,11 @@ struct CardCarousel: View {
         ForEach(0..<6, id: \.self) { i in
             let isSpread = phase == .spread
             CardBackView(
-                offsetX:  isSpread ? spreadOffsets[i]   : 0,
-                offsetY:  isSpread ? spreadYOffsets[i]  : gatheredYOffsets[i],
+                offsetX: isSpread ? spreadOffsets[i]   : 0,
+                offsetY: isSpread ? spreadYOffsets[i]  : gatheredYOffsets[i],
                 rotation: isSpread ? spreadRotations[i] : 0,
-                scale:    isSpread ? spreadScales[i]    : gatheredScales[i],
-                opacity:  (phase == .floating || phase == .carousel) ? 0
+                scale: isSpread ? spreadScales[i]    : gatheredScales[i],
+                opacity: (phase == .floating || phase == .carousel) ? 0
                     : isSpread ? spreadOpacities[i]
                     : gatheredOpacities[i],
                 isLight: false   // V1 is dark-only (no colorScheme reads in Views)
@@ -445,9 +445,9 @@ struct CardCarousel: View {
             // page-coloured rect with plain text; VaylCardFace brings back the
             // spectrum frame, hairlines, and atmosphere. Landscape frame (cardW × cardH).
             VaylCardFace(
-                question:  cards[i].text,
-                colorway:  colorway,
-                heat:      Double(cards[i].intensity.rawValue - 1) / 7.0,
+                question: cards[i].text,
+                colorway: colorway,
+                heat: Double(cards[i].intensity.rawValue - 1) / 7.0,
                 glyphPath: glyphPath
             )
                 .frame(width: cardW, height: cardH)
@@ -455,7 +455,7 @@ struct CardCarousel: View {
             LinearGradient(
                 colors: [.clear, .white.opacity(0.12), .clear],
                 startPoint: .init(x: 0.2 - (progress * 1.5), y: 0),
-                endPoint:   .init(x: 0.8 - (progress * 1.5), y: 1)
+                endPoint: .init(x: 0.8 - (progress * 1.5), y: 1)
             )
             .blendMode(.screen)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.obCard, style: .continuous))
@@ -466,14 +466,14 @@ struct CardCarousel: View {
             RoundedRectangle(cornerRadius: AppRadius.obCard)
                 .fill(LinearGradient(
                     stops: [
-                        .init(color: .clear,                location: 0),
+                        .init(color: .clear, location: 0),
                         .init(color: .white.opacity(0.08), location: 0.35),
                         .init(color: .white.opacity(0.20), location: 0.50),
                         .init(color: .white.opacity(0.08), location: 0.65),
-                        .init(color: .clear,                location: 1),
+                        .init(color: .clear, location: 1)
                     ],
                     startPoint: .init(x: specularPhase * 1.4 - 0.4, y: 0),
-                    endPoint:   .init(x: specularPhase * 1.4 - 0.1, y: 1)
+                    endPoint: .init(x: specularPhase * 1.4 - 0.1, y: 1)
                 ))
                 .blendMode(.screen)
                 .clipShape(RoundedRectangle(cornerRadius: AppRadius.obCard))
@@ -555,7 +555,7 @@ struct CardCarousel: View {
     }
 
     private func rotationAngle(clampedProgress: CGFloat) -> Angle {
-        if phase == .lifted && !reduceMotion   { return .degrees(-4) }
+        if phase == .lifted && !reduceMotion { return .degrees(-4) }
         if phase == .carousel && !reduceMotion { return .degrees(Double(clampedProgress * -25.0)) }
         return .degrees(0.001)
     }
@@ -799,4 +799,3 @@ struct CardCarousel: View {
     }
     .preferredColorScheme(.dark)
 }
-

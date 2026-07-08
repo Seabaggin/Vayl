@@ -132,7 +132,7 @@ final class DesireRevealStore: Identifiable {
     // MARK: - Interaction state (sheet hosts live inside the reveal cover)
 
     /// Set when the user taps a star — drives the detail sheet.
-    var selectedMatch: RevealMatch? = nil
+    var selectedMatch: RevealMatch?
     /// True while the full-map list sheet is open.
     var showFullMap: Bool = false
     /// True while the paywall sheet is open (tapped a locked star or the upgrade CTA).
@@ -140,7 +140,7 @@ final class DesireRevealStore: Identifiable {
 
     #if DEBUG
     /// Debug-only: force a specific ceremony variant. Production picks it by coupleId.
-    var debugVariantOverride: CeremonyVariant? = nil
+    var debugVariantOverride: CeremonyVariant?
     #endif
 
     // MARK: - Derived
@@ -159,9 +159,9 @@ final class DesireRevealStore: Identifiable {
     }
 
     var unlockedMatches: [RevealMatch] { matches.filter { !$0.isLocked } }
-    var lockedMatches:   [RevealMatch] { matches.filter { $0.isLocked } }
+    var lockedMatches: [RevealMatch] { matches.filter { $0.isLocked } }
     var lockedCount: Int { lockedMatches.count }
-    var totalCount:  Int { matches.count }
+    var totalCount: Int { matches.count }
 
     /// True once the couple is `core` — every match is shown, no unlock CTA.
     var isFullyUnlocked: Bool { entitlements.isCore }
@@ -388,7 +388,7 @@ struct RevealMatch: Identifiable, Equatable {
     var isFreeReveal: Bool = false
     /// Couple-framed reveal copy from desire_items.json (`DesireItem.meaning`), resolved for this
     /// match's alignment. Falls back to `celebration` when an item has no authored meaning yet.
-    var meaning: String? = nil
+    var meaning: String?
 
     /// Celebratory subtitle by alignment (mutual = wholehearted; adjacent = mostly aligned).
     /// Fallback for items without authored `meaning` copy.

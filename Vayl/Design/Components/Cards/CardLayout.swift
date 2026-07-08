@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 3/30/26.
 //
 
-
 //
 //  CardLayout.swift
 //  Open Lightly
@@ -26,8 +25,8 @@ enum CardLayout {
     // 313pt wide = screen width (393pt) - 80pt margin
     // 438pt tall = 313 × 1.40 (poker/bridge aspect ratio)
 
-    static let width:        CGFloat = 313
-    static let height:       CGFloat = 438
+    static let width: CGFloat = 313
+    static let height: CGFloat = 438
     static let cornerRadius: CGFloat = 20
 
     static let size = CGSize(width: width, height: height)

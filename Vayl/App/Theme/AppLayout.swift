@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 5/1/26.
 //
 
-
 //
 //  AppLayout.swift
 //  Vayl
@@ -115,11 +114,11 @@ struct AppLayout {
     static func from(_ geometry: GeometryProxy) -> AppLayout {
         let width = geometry.size.width
         return AppLayout(
-            screenWidth:    width,
-            screenHeight:   geometry.size.height,
+            screenWidth: width,
+            screenHeight: geometry.size.height,
             safeAreaInsets: geometry.safeAreaInsets,
-            isSmallDevice:  width <= 375,
-            isLargeDevice:  width >= 428
+            isSmallDevice: width <= 375,
+            isLargeDevice: width >= 428
         )
     }
 
@@ -256,8 +255,8 @@ struct AppLayout {
         let tilt = 17.0            // outer-card fan angle (deg) — steeper = more spread
         return [
             (CGSize(width: -dx, height: -rise), -tilt),
-            (CGSize(width:   0, height:     0),    0),
-            (CGSize(width:  dx, height: -rise),  tilt),
+            (CGSize(width: 0, height: 0), 0),
+            (CGSize(width: dx, height: -rise), tilt)
         ]
     }
 
@@ -285,7 +284,7 @@ struct AppLayout {
     // The top-right ✦ mark is replaced by the corner deck — never overlap them.
 
     /// 48pt — Width of the corner deck mini-card stack.
-    static let cornerDeckWidth:  CGFloat = 48
+    static let cornerDeckWidth: CGFloat = 48
 
     /// 72pt — Height of the corner deck mini-card stack.
     static let cornerDeckHeight: CGFloat = 72
@@ -293,10 +292,10 @@ struct AppLayout {
     /// 56pt — Distance from the top safe-area edge to the top of the corner deck.
     /// Sits just below the Dynamic Island with breathing room.
     /// Bump to 64 or 72 if it still reads too high on device.
-    static let cornerDeckTop:    CGFloat = 56
+    static let cornerDeckTop: CGFloat = 56
 
     /// 24pt — Distance from the right screen edge to the right of the corner deck.
-    static let cornerDeckRight:  CGFloat = 24
+    static let cornerDeckRight: CGFloat = 24
 
     // MARK: - OB Gender Card Rest Position
 
@@ -312,12 +311,12 @@ struct AppLayout {
 
     /// 22pt — Radius of the deal point glow ring.
     /// The center dot and outer haze scale from this value in DealPointView.
-    static let dealPointRadius:  CGFloat = 22
+    static let dealPointRadius: CGFloat = 22
 
     /// 0.32 — Vertical position of the deal point as a fraction of screen height.
     /// The deal point sits at the horizon where the felt meets the void.
     /// This fraction is shared with tableHorizonYFrac — they are the same anchor.
-    static let dealPointYFrac:   CGFloat = 0.32
+    static let dealPointYFrac: CGFloat = 0.32
 
     // MARK: - OB Table Geometry
 
@@ -357,7 +356,7 @@ struct AppLayout {
         CardLandingSlot(
             id: 0,
             xFrac: 0.50, yFrac: 0.535,
-            angleDeg:  1.8,
+            angleDeg: 1.8,
             jitterX: 12, jitterY: 8, jitterAngle: 1.0
         ),
 
@@ -374,7 +373,7 @@ struct AppLayout {
         CardLandingSlot(
             id: 2,
             xFrac: 0.52, yFrac: 0.74,
-            angleDeg:  13.0,
+            angleDeg: 13.0,
             jitterX: 14, jitterY: 10, jitterAngle: 2.0
         ),
 
@@ -392,7 +391,7 @@ struct AppLayout {
             xFrac: 0.24, yFrac: 0.70,
             angleDeg: -11.0,
             jitterX: 12, jitterY: 10, jitterAngle: 2.5
-        ),
+        )
     ]
 
     /// Returns the Y coordinate of the optical center of the felt table surface.

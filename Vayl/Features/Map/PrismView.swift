@@ -80,11 +80,11 @@ struct PrismView: View {
     // MARK: - State
     @Namespace private var pillNamespace
 
-    @State private var activeMode:  PrismMode = .journal
-    @State private var expanded:    Bool      = false
-    @State private var cursorOn:    Bool      = true
-    @State private var cursorTimer: Timer?    = nil
-    @State private var cardDrawn:   Bool      = false
+    @State private var activeMode: PrismMode = .journal
+    @State private var expanded: Bool      = false
+    @State private var cursorOn: Bool      = true
+    @State private var cursorTimer: Timer?
+    @State private var cardDrawn: Bool      = false
     @State private var cardShimmer: Bool      = false
     @State private var journalText: String    = ""
 
@@ -94,11 +94,11 @@ struct PrismView: View {
     // Hoisted color choices. Resolving these isLight ternaries once (as typed
     // computed properties) keeps the agreements/pill view bodies cheap to
     // type-check — inline they forced repeated Color + CGFloat/Double inference.
-    private var labelMutedColor:     Color { isLight ? AppColors.textTertiary : AppColors.textMuted }
+    private var labelMutedColor: Color { isLight ? AppColors.textTertiary : AppColors.textMuted }
     private var secondaryQuoteColor: Color { AppColors.textSecondary.opacity(0.65) }
-    private var cardFillColor:       Color { isLight ? Color.black.opacity(0.03) : Color.white.opacity(0.03) }
+    private var cardFillColor: Color { isLight ? Color.black.opacity(0.03) : Color.white.opacity(0.03) }
     private var pillBackgroundColor: Color { isLight ? Color.black.opacity(0.04) : Color.white.opacity(0.03) }
-    private var pillBorderColor:     Color { isLight ? Color.black.opacity(0.07) : AppColors.borderSubtle }
+    private var pillBorderColor: Color { isLight ? Color.black.opacity(0.07) : AppColors.borderSubtle }
 
     // MARK: - Body
     // Zero chrome — HomeWidgetShell owns surface, rim, border, shadows.
@@ -427,7 +427,7 @@ struct PrismView: View {
                                         AppColors.accentSecondary.opacity(0.07)
                                     ],
                                     startPoint: .topLeading,
-                                    endPoint:   .bottomTrailing
+                                    endPoint: .bottomTrailing
                                 )
                             )
                             .overlay(
@@ -507,7 +507,7 @@ struct PrismView: View {
                                     AppColors.accentSecondary.opacity(0.12)
                                 ],
                                 startPoint: .topLeading,
-                                endPoint:   .bottomTrailing
+                                endPoint: .bottomTrailing
                             )
                         )
                         .overlay(
@@ -587,8 +587,8 @@ struct PrismView: View {
     private var agreementsData: [(date: String, text: String)] {
         [
             (date: "Jun 12", text: "We check in before making plans that affect both of us."),
-            (date: "Jun 8",  text: "Sleepovers with new connections need 48 hours notice."),
-            (date: "May 28", text: "No phones during our first hour back together."),
+            (date: "Jun 8", text: "Sleepovers with new connections need 48 hours notice."),
+            (date: "May 28", text: "No phones during our first hour back together.")
         ]
     }
 
@@ -776,15 +776,15 @@ struct PrismView: View {
         AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             HomeWidgetShell(
-                isLight:     false,
+                isLight: false,
                 accentColor: AppColors.accentSecondary,
-                rimVariant:  .prism
+                rimVariant: .prism
             ) {
                 ZStack {
                     OrbLayer(
                         accentColor: AppColors.accentSecondary,
-                        height:      300,
-                        variant:     .prism
+                        height: 300,
+                        variant: .prism
                     )
                     PrismView(breathPhase: 0)
                 }
@@ -800,9 +800,9 @@ struct PrismView: View {
         AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             HomeWidgetShell(
-                isLight:     true,
+                isLight: true,
                 accentColor: AppColors.accentSecondary,
-                rimVariant:  .prism
+                rimVariant: .prism
             ) {
                 PrismView(breathPhase: 0)
             }
@@ -817,9 +817,9 @@ struct PrismView: View {
         AppColors.pageBackground.ignoresSafeArea()
         ScrollView {
             HomeWidgetShell(
-                isLight:     false,
+                isLight: false,
                 accentColor: AppColors.accentSecondary,
-                rimVariant:  .prism
+                rimVariant: .prism
             ) {
                 ZStack {
                     OrbLayer(accentColor: AppColors.accentSecondary, height: 300, variant: .prism)

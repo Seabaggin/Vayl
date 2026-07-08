@@ -29,16 +29,16 @@ final class TopoField: @unchecked Sendable {
     /// One sampled point of a topo line, before any animated displacement.
     /// `depthT` is cached because the forge sway and clipping both need it.
     struct Sample {
-        let x:      CGFloat
-        let y:      CGFloat
+        let x: CGFloat
+        let y: CGFloat
         let depthT: CGFloat
     }
 
     /// One contour line: static paint attributes + its base samples.
     struct Line {
-        let seed:   CGFloat
-        let alpha:  Double
-        let width:  CGFloat
+        let seed: CGFloat
+        let alpha: Double
+        let width: CGFloat
         let samples: [Sample]
     }
 
@@ -51,8 +51,8 @@ final class TopoField: @unchecked Sendable {
     }
 
     private let lock = NSLock()
-    private var cachedSize:  CGSize = .zero
-    private var cachedField: Field? = nil
+    private var cachedSize: CGSize = .zero
+    private var cachedField: Field?
 
     /// Returns the field for `size`, computing and caching it on first request.
     /// Geometry constants mirror TableSurfaceView exactly — the base samples are
@@ -137,8 +137,7 @@ final class TopoField: @unchecked Sendable {
                 let inside = distSq < tableRSqInner && py >= TY - 2
 
                 if inside {
-                    if !wasInside { restingPath.move(to: CGPoint(x: px, y: py)) }
-                    else          { restingPath.addLine(to: CGPoint(x: px, y: py)) }
+                    if !wasInside { restingPath.move(to: CGPoint(x: px, y: py)) } else { restingPath.addLine(to: CGPoint(x: px, y: py)) }
                 }
                 wasInside = inside
             }

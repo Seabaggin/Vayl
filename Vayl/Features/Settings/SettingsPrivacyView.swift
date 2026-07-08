@@ -4,7 +4,7 @@ import SwiftUI
 
 struct SettingsPrivacyView: View {
     let store: SettingsStore
-    var onClose: (() -> Void)? = nil
+    var onClose: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 

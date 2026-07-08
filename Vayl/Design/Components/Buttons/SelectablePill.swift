@@ -92,7 +92,7 @@ struct SelectablePill: View {
             pillContent
                 .modifier(PillShadowModifier(
                     isSelected: isSelected,
-                    intensity:  intensity
+                    intensity: intensity
                 ))
                 .background(alignment: .bottom) {
                     flameLayer
@@ -128,7 +128,7 @@ struct SelectablePill: View {
             }
             .clipShape(Capsule())
             .modifier(PillBorderModifier(
-                isSelected:      isSelected,
+                isSelected: isSelected,
                 darkBorderColor: borderColor,
                 darkBorderWidth: borderWidth
             ))
@@ -140,7 +140,7 @@ struct SelectablePill: View {
             GeometryReader { geo in
                 FlameAura(intensity: intensity)
                     .frame(
-                        width:  geo.size.width * 1.2,
+                        width: geo.size.width * 1.2,
                         height: flameFrameHeight
                     )
                     .position(
@@ -185,17 +185,17 @@ struct SelectablePill: View {
 // ─────────────────────────────────────────────
 
 private struct PillBorderModifier: ViewModifier {
-    let isSelected:         Bool
-    let darkBorderColor:    Color
-    let darkBorderWidth:    CGFloat
+    let isSelected: Bool
+    let darkBorderColor: Color
+    let darkBorderWidth: CGFloat
 
     func body(content: Content) -> some View {
         if isSelected {
             content.pillBorder(
                 cornerRadius: AppRadius.pill,
-                lineWidth:    darkBorderWidth,
-                glowRadius:   5,
-                opacity:      0.85
+                lineWidth: darkBorderWidth,
+                glowRadius: 5,
+                opacity: 0.85
             )
         } else {
             content.overlay(
@@ -211,18 +211,18 @@ private struct PillBorderModifier: ViewModifier {
 
 private struct PillShadowModifier: ViewModifier {
     let isSelected: Bool
-    let intensity:  SelectablePill.Intensity
+    let intensity: SelectablePill.Intensity
 
     func body(content: Content) -> some View {
         content
             .shadow(color: isSelected ? glowColor(AppColors.accentSecondary, 0.20, 0.25, 0.34) : .clear,
-                    radius: pick(6,  12, 14))
-            .shadow(color: isSelected ? glowColor(AppColors.accentPrimary,   0.0,  0.15, 0.30) : .clear,
-                    radius: pick(0,  16, 28))
-            .shadow(color: isSelected ? glowColor(AppColors.accentTertiary,  0.0,  0.08, 0.25) : .clear,
-                    radius: pick(0,  8,  45))
-            .shadow(color: isSelected ? glowColor(AppColors.accentTertiary,  0.0,  0.0,  0.12) : .clear,
-                    radius: pick(0,  0,  70))
+                    radius: pick(6, 12, 14))
+            .shadow(color: isSelected ? glowColor(AppColors.accentPrimary, 0.0, 0.15, 0.30) : .clear,
+                    radius: pick(0, 16, 28))
+            .shadow(color: isSelected ? glowColor(AppColors.accentTertiary, 0.0, 0.08, 0.25) : .clear,
+                    radius: pick(0, 8, 45))
+            .shadow(color: isSelected ? glowColor(AppColors.accentTertiary, 0.0, 0.0, 0.12) : .clear,
+                    radius: pick(0, 0, 70))
     }
 
     private func glowColor(_ base: Color, _ d: CGFloat, _ w: CGFloat, _ a: CGFloat) -> Color {
@@ -243,10 +243,10 @@ private struct PillShadowModifier: ViewModifier {
 
 #Preview("Dark") {
     VStack(spacing: AppSpacing.md) {
-        SelectablePill(label: "She/Her",   isSelected: true,  intensity: .alive) { }
-        SelectablePill(label: "He/Him",    isSelected: false, intensity: .warm)  { }
-        SelectablePill(label: "They/Them", isSelected: true,  intensity: .warm)  { }
-        SelectablePill(label: "Curious",   isSelected: true,  intensity: .dim)   { }
+        SelectablePill(label: "She/Her", isSelected: true, intensity: .alive) { }
+        SelectablePill(label: "He/Him", isSelected: false, intensity: .warm) { }
+        SelectablePill(label: "They/Them", isSelected: true, intensity: .warm) { }
+        SelectablePill(label: "Curious", isSelected: true, intensity: .dim) { }
     }
     .padding(AppSpacing.lg)
     .background(AppColors.pageBackground)
@@ -255,10 +255,10 @@ private struct PillShadowModifier: ViewModifier {
 
 #Preview("Light") {
     VStack(spacing: AppSpacing.md) {
-        SelectablePill(label: "She/Her",   isSelected: true,  intensity: .alive) { }
-        SelectablePill(label: "He/Him",    isSelected: false, intensity: .warm)  { }
-        SelectablePill(label: "They/Them", isSelected: true,  intensity: .warm)  { }
-        SelectablePill(label: "Curious",   isSelected: true,  intensity: .dim)   { }
+        SelectablePill(label: "She/Her", isSelected: true, intensity: .alive) { }
+        SelectablePill(label: "He/Him", isSelected: false, intensity: .warm) { }
+        SelectablePill(label: "They/Them", isSelected: true, intensity: .warm) { }
+        SelectablePill(label: "Curious", isSelected: true, intensity: .dim) { }
     }
     .padding(AppSpacing.lg)
     .background(AppColors.pageBackground)

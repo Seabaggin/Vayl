@@ -126,7 +126,7 @@ final class MapStore {
 
     /// The partner's current circumplex position — derived from their most recent
     /// `pulse_entries` row. nil when unpaired, not shared, or not yet logged.
-    private(set) var partnerPosition: PulsePosition? = nil
+    private(set) var partnerPosition: PulsePosition?
 
     /// The partner's full check-in history (oldest first) — feeds the Us layer's
     /// paired history grid. Empty for the same reasons partnerPosition can be nil.
@@ -143,8 +143,8 @@ final class MapStore {
 
     struct UsStats {
         var isLinked: Bool = false
-        var tenureStage: String? = nil
-        var tenureTime: String? = nil
+        var tenureStage: String?
+        var tenureTime: String?
         var weeksOnVayl: Int = 0
         var sessionCount: Int = 0
     }
@@ -164,7 +164,7 @@ final class MapStore {
     /// True only while the very first load is in flight — MapView gates its
     /// top-level spinner on this, never on a later tab revisit with warm data.
     private(set) var isLoading: Bool = false
-    private(set) var loadError: String? = nil
+    private(set) var loadError: String?
     private(set) var hasLoadedOnce: Bool = false
 
     /// Call before the first-load `.task` body runs. A no-op on any later

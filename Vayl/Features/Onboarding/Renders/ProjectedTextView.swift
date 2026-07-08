@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 5/9/26.
 //
 
-
 //
 //  ProjectedTextView.swift
 //  Vayl
@@ -28,7 +27,7 @@ import SwiftUI
 ///
 /// This view never responds to gestures and never holds state.
 struct ProjectedTextView: View {
-    let text:       String
+    let text: String
     let screenSize: CGSize
     /// Vertical anchor as a fraction of screen height. Defaults to the felt table
     /// horizon (where the projected dealer line lives). Callers that anchor the dealer
@@ -45,7 +44,7 @@ struct ProjectedTextView: View {
     @State private var revealedCount: Int = 0
     /// Drives the projection entrance — scaleY 0.94→1.0 over textProject as the line
     /// lands on the felt (the documented "project onto the surface" feel). RM: instant.
-    @State private var entered:       Bool = false
+    @State private var entered: Bool = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -98,7 +97,7 @@ struct ProjectedTextView: View {
     private func typeOn(_ target: String) async {
         guard !reduceMotion else { revealedCount = target.count; return }
         revealedCount = 0
-        var prev: Character? = nil
+        var prev: Character?
         for char in target {
             let delay = AppDealerTyping.charDelay(char, prev: prev)
             try? await Task.sleep(for: .milliseconds(Int(delay)))

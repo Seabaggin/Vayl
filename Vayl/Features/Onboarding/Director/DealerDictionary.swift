@@ -9,15 +9,15 @@
 import Foundation
 
 enum DealerDictionary {
-    
+
     // MARK: - Context Phase
-    
+
     static func contextHeadline(appMode: AppMode) -> String {
         appMode == .together
             ? "Where are you two starting from?"
             : "Where are you starting from?"
     }
-    
+
     static func contextResponse(for register: SituationalRegister) -> String {
         switch register {
         case .anxious:  return "I'll take this slow."
@@ -25,9 +25,9 @@ enum DealerDictionary {
         case .flexible: return "No need to force it."
         }
     }
-    
+
     // MARK: - Experience Level Phase
-    
+
     static func experienceLevelExitLine(intensity: CandleIntensity) -> String {
         switch intensity {
         case .curious:     return "You're new to the table. Best seat there is."
@@ -35,9 +35,9 @@ enum DealerDictionary {
         case .experienced: return "You know this game well. I'll help you play it sharper."
         }
     }
-    
+
     // MARK: - Curiosity Phase Demo
-    
+
     static let curiosityDemoKeepInstruction = "Swipe right if a card feels true for you."
     static let curiosityDemoPassInstruction = "Left if it doesn't."
     static let curiosityDemoIntroRealHand = "Now I'll deal you the real hand."

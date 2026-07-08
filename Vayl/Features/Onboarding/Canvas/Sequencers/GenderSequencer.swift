@@ -31,42 +31,42 @@ final class GenderSequencer {
 
     // MARK: - Card + dissolution state
 
-    var cardOffset:     CGSize = .zero
+    var cardOffset: CGSize = .zero
     var cardFlipScaleX: Double = 1.0
-    var cardFaceUp:     Bool   = false
-    var cardVisible:    Bool   = false
-    var cardSettled:    Bool   = false
+    var cardFaceUp: Bool   = false
+    var cardVisible: Bool   = false
+    var cardSettled: Bool   = false
     /// Lift transform — tap-to-lift → swipe-up, the grammar taught in NamePhase.
-    var cardLifted:     Bool   = false
-    var cardScale:      Double = 1.0
+    var cardLifted: Bool   = false
+    var cardScale: Double = 1.0
     /// Fades late in the pocket flight so the card visibly lands in the deck.
-    var cardAlpha:      Double = 1.0
+    var cardAlpha: Double = 1.0
 
     /// Primary driver for the dissolution / recrystallisation sequence.
     /// 0 = indistinguishable from felt. 1 = fully crystallised. All curves derive from this —
     /// one @Observable write per frame keeps SwiftUI invalidation minimal.
-    var dissolutionT:   Double = 0
+    var dissolutionT: Double = 0
 
-    var beatComplete:      Bool   = false
+    var beatComplete: Bool   = false
 
     /// Swipe-hint loop flag — true while the card is lifted; false on grab / lower / confirm.
-    var swipeHintActive:   Bool   = false
+    var swipeHintActive: Bool   = false
 
     /// Toggles when both drums sit settled on a choice — the "lined up" thud.
     /// GenderPhase observes via .sensoryFeedback.
-    var lockThudTrigger:   Bool   = false
+    var lockThudTrigger: Bool   = false
 
     // MARK: - Picker / drums
 
     var pickerVisible: Bool     = false
-    var options:       [String] = [
-        "Man", "Woman", "Trans Man", "Trans Woman", "Non-binary",
+    var options: [String] = [
+        "Man", "Woman", "Trans Man", "Trans Woman", "Non-binary"
     ]
-    var drumOffset:    CGFloat  = 0
+    var drumOffset: CGFloat  = 0
     /// -1 = no real selection yet (dial sits on the "—" placeholder). Blank-start:
     /// the user must tune each dial (or decline) before the card can be lifted.
     var selectedIndex: Int      = -1
-    var drumSettled:   Bool     = false
+    var drumSettled: Bool     = false
 
     /// Radio tuner signal state.
     var signalStrength: Double = 0
@@ -74,10 +74,10 @@ final class GenderSequencer {
     // Pronouns drum (mirrors the gender drum). Pure pronoun preferences — the
     // "prefer not to say" opt-out is now the shared decline bar under both drums
     // (GenderPhase), so it lives in one place instead of two inconsistent ones.
-    var pronounsOptions:       [String] = ["she/her", "he/him", "they/them", "ze/zir", "any pronouns"]
-    var pronounsDrumOffset:    CGFloat  = 0
+    var pronounsOptions: [String] = ["she/her", "he/him", "they/them", "ze/zir", "any pronouns"]
+    var pronounsDrumOffset: CGFloat  = 0
     var pronounsSelectedIndex: Int      = -1   // -1 = placeholder, no real selection yet
-    var pronounsDrumSettled:   Bool     = false
+    var pronounsDrumSettled: Bool     = false
 
     var bothSettled: Bool { drumSettled && pronounsDrumSettled }
 
@@ -95,25 +95,25 @@ final class GenderSequencer {
     var shouldPocket: Bool = false
 
     /// Pre-placed gender card. Set during the NamePhase greeting via `placeCardSilently`.
-    var pendingCard: VaylCardModel? = nil
+    var pendingCard: VaylCardModel?
 
     /// Task handle for the visual sequence. Not observed — internal bookkeeping only.
-    @ObservationIgnored var sequenceTask: Task<Void, Never>? = nil
+    @ObservationIgnored var sequenceTask: Task<Void, Never>?
 
     // MARK: - Dissolution computed curves
     // All eight derive from dissolutionT (0→1). eIO3 = ease-in-out cubic, eO5/eO7 = ease-out quint/sept.
 
-    var dissolutionPre:        Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0,    0.12)) }
-    var dissolutionWarp:       Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0.08, 0.20)) * 0.52 }
+    var dissolutionPre: Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0, 0.12)) }
+    var dissolutionWarp: Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0.08, 0.20)) * 0.52 }
     // Density window pulled forward (0.05 vs 0.18): visible matter must exist
     // within ~0.5s of entry — the old window left the first ~1.3s of the
     // sequence driving values nothing on screen could show.
-    var dissolutionDensity:    Double { CanvasEasing.eO5(CanvasEasing.nm(dissolutionT, 0.05, 0.40)) }
-    var dissolutionSharp:      Double { CanvasEasing.eO7(CanvasEasing.nm(dissolutionT, 0.42, 0.32)) }
-    var dissolutionHexAngle:   Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0.24, 0.42)) * 8.0 }
+    var dissolutionDensity: Double { CanvasEasing.eO5(CanvasEasing.nm(dissolutionT, 0.05, 0.40)) }
+    var dissolutionSharp: Double { CanvasEasing.eO7(CanvasEasing.nm(dissolutionT, 0.42, 0.32)) }
+    var dissolutionHexAngle: Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0.24, 0.42)) * 8.0 }
     var dissolutionHexSpacing: Double { 2.2 + (1.0 - 2.2) * CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0.24, 0.44)) }
-    var dissolutionFlowOut:    Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0.50, 0.30)) }
-    var dissolutionMark:       Double { CanvasEasing.eO7(CanvasEasing.nm(dissolutionT, 0.62, 0.26)) }
+    var dissolutionFlowOut: Double { CanvasEasing.eIO3(CanvasEasing.nm(dissolutionT, 0.50, 0.30)) }
+    var dissolutionMark: Double { CanvasEasing.eO7(CanvasEasing.nm(dissolutionT, 0.62, 0.26)) }
 
     // MARK: - Pre-place (called from NamePhase)
 
@@ -154,7 +154,7 @@ final class GenderSequencer {
         swipeHintActive    = false
         pickerVisible      = false
         options            = [
-            "Man", "Woman", "Trans Man", "Trans Woman", "Non-binary",
+            "Man", "Woman", "Trans Man", "Trans Woman", "Non-binary"
         ]
         drumOffset         = 0
         selectedIndex      = -1
@@ -400,7 +400,7 @@ final class GenderSequencer {
     func beginSwipeHint() { swipeHintActive = true }
 
     /// Stops the swipe-hint loop — called the instant the user grabs the card.
-    func endSwipeHint()   { swipeHintActive = false }
+    func endSwipeHint() { swipeHintActive = false }
 
     // MARK: - Confirm
 
@@ -428,7 +428,7 @@ final class GenderSequencer {
         let cornerY = AppLayout.cornerDeckTop + AppLayout.cornerDeckHeight / 2
         withAnimation(AppAnimation.cardPocket.reduceMotionSafe) {
             cardLifted = false
-            cardOffset = CGSize(width:  cornerX - screenSize.width  / 2,
+            cardOffset = CGSize(width: cornerX - screenSize.width  / 2,
                                 height: cornerY - screenSize.height / 2)
             cardScale  = AppLayout.cornerDeckWidth / cardWidth
         }

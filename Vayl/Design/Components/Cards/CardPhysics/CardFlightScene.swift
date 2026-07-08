@@ -52,14 +52,14 @@ final class CardFlightScene: SKScene {
     /// When the node rests, `onCardRested` is called with the id, position, and rotation,
     /// then the node stays until `clearCard(id:)` is called.
     func dealCard(
-        id:             String,
-        image:          UIImage,
-        from origin:    CGPoint,
+        id: String,
+        image: UIImage,
+        from origin: CGPoint,
         to destination: CGPoint,
-        initialAngle:   CGFloat      = -0.24,
-        finalAngle:     CGFloat      = 0.0314,
-        zPosition:      CGFloat      = 0,
-        duration:       TimeInterval = 0.55
+        initialAngle: CGFloat      = -0.24,
+        finalAngle: CGFloat      = 0.0314,
+        zPosition: CGFloat      = 0,
+        duration: TimeInterval = 0.55
     ) {
         cardNodes[id]?.removeFromParent()
         restedIDs.remove(id)
@@ -71,7 +71,7 @@ final class CardFlightScene: SKScene {
         addChild(node)
         cardNodes[id] = node
 
-        let sx = origin.x,      sy = origin.y
+        let sx = origin.x, sy = origin.y
         let dx = destination.x - sx, dy = destination.y - sy
         let da = finalAngle - initialAngle
 

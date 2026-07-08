@@ -7,56 +7,56 @@ import SwiftUI
 
 struct AtmosphereConfig: Equatable {
     var light: AtmosphereIntensity
-    var dark:  AtmosphereIntensity
+    var dark: AtmosphereIntensity
 
     static let stat = AtmosphereConfig(
         light: AtmosphereIntensity(top: 1.00, mid: 0.40, bottom: 1.15, global: 0.85),
-        dark:  AtmosphereIntensity(top: 1.00, mid: 0.50, bottom: 1.00, global: 0.70)
+        dark: AtmosphereIntensity(top: 1.00, mid: 0.50, bottom: 1.00, global: 0.70)
     )
 
     static let brand = AtmosphereConfig(
         light: AtmosphereIntensity(top: 1.00, mid: 0.35, bottom: 0.70, global: 0.78),
-        dark:  AtmosphereIntensity(top: 1.00, mid: 0.45, bottom: 0.80, global: 0.65)
+        dark: AtmosphereIntensity(top: 1.00, mid: 0.45, bottom: 0.80, global: 0.65)
     )
 
     static let name = AtmosphereConfig(
         light: AtmosphereIntensity(top: 1.00, mid: 0.10, bottom: 1.15, global: 0.60),
-        dark:  AtmosphereIntensity(top: 0.80, mid: 0.20, bottom: 0.90, global: 0.55)
+        dark: AtmosphereIntensity(top: 0.80, mid: 0.20, bottom: 0.90, global: 0.55)
     )
 
     static let modeSelect = AtmosphereConfig(
         light: AtmosphereIntensity(top: 0.10, mid: 0.30, bottom: 1.15, global: 0.70),
-        dark:  AtmosphereIntensity(top: 0.15, mid: 0.35, bottom: 1.00, global: 0.60)
+        dark: AtmosphereIntensity(top: 0.15, mid: 0.35, bottom: 1.00, global: 0.60)
     )
 
     static let contextSelect = AtmosphereConfig(
         light: AtmosphereIntensity(top: 0.40, mid: 0.20, bottom: 0.85, global: 0.50),
-        dark:  AtmosphereIntensity(top: 0.30, mid: 0.25, bottom: 0.75, global: 0.45)
+        dark: AtmosphereIntensity(top: 0.30, mid: 0.25, bottom: 0.75, global: 0.45)
     )
 
     static let curiosityPicker = AtmosphereConfig(
         light: AtmosphereIntensity(top: 0.30, mid: 0.10, bottom: 0.75, global: 0.40),
-        dark:  AtmosphereIntensity(top: 0.20, mid: 0.15, bottom: 0.65, global: 0.35)
+        dark: AtmosphereIntensity(top: 0.20, mid: 0.15, bottom: 0.65, global: 0.35)
     )
 
     static let buildingPath = AtmosphereConfig.curiosityPicker
 
     static let cardReveal = AtmosphereConfig(
         light: AtmosphereIntensity(top: 0.10, mid: 0.05, bottom: 0.40, global: 0.25),
-        dark:  AtmosphereIntensity(top: 0.08, mid: 0.08, bottom: 0.35, global: 0.22)
+        dark: AtmosphereIntensity(top: 0.08, mid: 0.08, bottom: 0.35, global: 0.22)
     )
 
     static let groundRules = AtmosphereConfig(
         light: AtmosphereIntensity(top: 0.15, mid: 0.20, bottom: 1.05, global: 0.50),
-        dark:  AtmosphereIntensity(top: 0.10, mid: 0.20, bottom: 0.90, global: 0.45)
+        dark: AtmosphereIntensity(top: 0.10, mid: 0.20, bottom: 0.90, global: 0.45)
     )
 }
 
 // MARK: - AtmosphereIntensity
 
 struct AtmosphereIntensity: Equatable {
-    var top:    Double
-    var mid:    Double
+    var top: Double
+    var mid: Double
     var bottom: Double
     var global: Double
 }
@@ -65,7 +65,7 @@ struct AtmosphereIntensity: Equatable {
 
 struct OnboardingAtmosphere: View {
 
-    var config:  AtmosphereConfig = .stat
+    var config: AtmosphereConfig = .stat
     var opacity: Double           = 1.0
     /// Where the void-only zone ends and the bloom starts fading in, as a fraction of
     /// screen height. 0.52 (default) matches every existing screen's "no colour above
@@ -98,8 +98,8 @@ private struct OBVoidBloom: View {
         CGFloat(0.28 + intensity.mid * 0.18)
     }
 
-    private var cyanOpacity:    Double { 0.20 * intensity.bottom * intensity.global }
-    private var purpleOpacity:  Double { 0.28 * intensity.bottom * intensity.global }
+    private var cyanOpacity: Double { 0.20 * intensity.bottom * intensity.global }
+    private var purpleOpacity: Double { 0.28 * intensity.bottom * intensity.global }
     private var magentaOpacity: Double { 0.18 * intensity.bottom * intensity.global }
 
     var body: some View {
@@ -119,7 +119,7 @@ private struct OBVoidBloom: View {
                     .blur(radius: 55)
                     .offset(
                         x: -W * 0.18,
-                        y:  H * (0.50 - bloomRise * 0.85)
+                        y: H * (0.50 - bloomRise * 0.85)
                     )
 
                 // ── Purple — center anchor ─────────────────────────
@@ -138,8 +138,8 @@ private struct OBVoidBloom: View {
                     .frame(width: W * 0.75, height: H * 0.40)
                     .blur(radius: 55)
                     .offset(
-                        x:  W * 0.18,
-                        y:  H * (0.50 - bloomRise * 0.80)
+                        x: W * 0.18,
+                        y: H * (0.50 - bloomRise * 0.80)
                     )
 
                 // ── Vertical mask ──────────────────────────────────
@@ -150,15 +150,15 @@ private struct OBVoidBloom: View {
                 // field's own trail-in) without changing anyone else's rendering.
                 LinearGradient(
                     stops: [
-                        .init(color: AppColors.void,              location: 0.00),
-                        .init(color: AppColors.void,              location: maskStart),
-                        .init(color: AppColors.void.opacity(0.94),location: maskStart + 0.08),
-                        .init(color: AppColors.void.opacity(0.70),location: maskStart + 0.18),
-                        .init(color: AppColors.void.opacity(0.25),location: maskStart + 0.32),
-                        .init(color: AppColors.void.opacity(0.02),location: 1.00),
+                        .init(color: AppColors.void, location: 0.00),
+                        .init(color: AppColors.void, location: maskStart),
+                        .init(color: AppColors.void.opacity(0.94), location: maskStart + 0.08),
+                        .init(color: AppColors.void.opacity(0.70), location: maskStart + 0.18),
+                        .init(color: AppColors.void.opacity(0.25), location: maskStart + 0.32),
+                        .init(color: AppColors.void.opacity(0.02), location: 1.00)
                     ],
                     startPoint: .top,
-                    endPoint:   .bottom
+                    endPoint: .bottom
                 )
                 .ignoresSafeArea()
                 .allowsHitTesting(false)

@@ -10,13 +10,13 @@ import SwiftUI
 @Observable
 @MainActor
 final class CuriositySequencer {
-    
+
     // MARK: - State
-    
+
     var pile: [CuriositySortCard] = []
     var kept: [String] = []
     var dragOffset: CGSize = .zero
-    var flyingCard: CuriositySortCard? = nil
+    var flyingCard: CuriositySortCard?
     var flyingOffset: CGSize = .zero
     var thresholdCrossed: Bool = false
     var dealTrigger: Bool = false
@@ -29,7 +29,7 @@ final class CuriositySequencer {
     var summaryPresented: Bool = false
 
     @ObservationIgnored private weak var stage: VaylDirector?
-    @ObservationIgnored var sequenceTask: Task<Void, Never>? = nil
+    @ObservationIgnored var sequenceTask: Task<Void, Never>?
     @ObservationIgnored private var flyingClearAttempt: Int = 0
 
     init(stage: VaylDirector) {
@@ -37,14 +37,14 @@ final class CuriositySequencer {
     }
 
     // MARK: - API
-    
+
     func runEntry() {
         sequenceTask?.cancel()
         sequenceTask = nil
-        
+
         pile = [
             CuriositySortCard(id: "demo_keep", text: "This card fits you.", round: 2),
-            CuriositySortCard(id: "demo_pass", text: "This card... not so much.", round: 2),
+            CuriositySortCard(id: "demo_pass", text: "This card... not so much.", round: 2)
         ]
         kept               = []
         dragOffset         = .zero
@@ -62,38 +62,38 @@ final class CuriositySequencer {
 
     func beginCuriosityDemo(screenWidth: CGFloat) {
         guard demoActive else { return }
-        
+
         sequenceTask?.cancel()
         sequenceTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(50))
             self.dealTrigger.toggle()
             try? await Task.sleep(for: .milliseconds(750))
-            
+
             let keepLine = DealerDictionary.curiosityDemoKeepInstruction
             self.stage?.projector.showDealerLineManual(keepLine)
             try? await Task.sleep(for: .milliseconds(AppDealerTyping.typeDuration(keepLine) + 450))
-            
+
             await self.demoSwipe(right: true, screenWidth: screenWidth)
-            
+
             self.stage?.projector.hideDealerLine()
             try? await Task.sleep(for: .milliseconds(350))
-            
+
             let passLine = DealerDictionary.curiosityDemoPassInstruction
             self.stage?.projector.showDealerLineManual(passLine)
             try? await Task.sleep(for: .milliseconds(AppDealerTyping.typeDuration(passLine) + 450))
-            
+
             await self.demoSwipe(right: false, screenWidth: screenWidth)
-            
+
             self.demoActive = false
             self.stage?.projector.hideDealerLine()
             try? await Task.sleep(for: .milliseconds(350))
-            
+
             let intro = DealerDictionary.curiosityDemoIntroRealHand
             self.stage?.projector.showDealerLineManual(intro)
             try? await Task.sleep(for: .milliseconds(AppDealerTyping.typeDuration(intro) + 500))
             self.stage?.projector.hideDealerLine()
             try? await Task.sleep(for: .milliseconds(300))
-            
+
             self.flyingCard = nil
             self.dragOffset = .zero
             if let stage = self.stage {
@@ -134,7 +134,7 @@ final class CuriositySequencer {
         thresholdCrossed = false
 
         guard pile.isEmpty else { return }
-        
+
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(260))
             self.onCuriosityDeckExhausted(screenSize: screenSize)
@@ -154,7 +154,7 @@ final class CuriositySequencer {
             let cardW = AppLayout.obTableCardWidth(in: screenSize.width) * AppLayout.obTableCardCinematicScale
             let cornerX = screenSize.width  - AppLayout.cornerDeckRight - AppLayout.cornerDeckWidth  / 2
             let cornerY = AppLayout.cornerDeckTop + AppLayout.cornerDeckHeight / 2
-            
+
             withAnimation(AppAnimation.cardPocket.reduceMotionSafe) {
                 self.summaryOffset = CGSize(width: cornerX - screenSize.width / 2,
                                             height: cornerY - screenSize.height / 2)
@@ -229,7 +229,7 @@ final class CuriositySequencer {
 
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(350))
-            
+
             self.summaryOffset = CGSize(
                 width: 0,
                 height: screenSize.height * 0.42 - screenSize.height / 2
@@ -237,7 +237,7 @@ final class CuriositySequencer {
             self.summaryScale = 0.82
             self.summaryAlpha = 0
             self.summaryVisible = true
-            
+
             withAnimation(AppAnimation.spring.reduceMotionSafe) {
                 self.summaryScale = 1.12
                 self.summaryAlpha = 1.0

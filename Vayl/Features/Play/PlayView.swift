@@ -24,7 +24,7 @@ struct PlayView: View {
     @Namespace private var deckZoom
 
     /// Inject a store for previews; nil in the app (built from the environment).
-    var injectedStore: PlayStore? = nil
+    var injectedStore: PlayStore?
 
     /// 0 = hero full at rest, 1 = collapsed. Mirrors Home's scroll-linked hero transform
     /// (same ~320pt range). Reduce Motion pins it to 0 (plain scroll, no collapse).

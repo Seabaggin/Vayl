@@ -5,7 +5,6 @@
 //  Created by Bryan Jorden on 4/28/26.
 //
 
-
 //
 //  PairingStore.swift
 //  Vayl
@@ -59,12 +58,11 @@ final class PairingStore {
 
     // MARK: - Public State
 
-
     var linkState: PairingLinkState = .idle
 
     /// When the active invite code expires (read back from the DB at generate
     /// time). Drives the waiting-state countdown. Nil until a code is generated.
-    private(set) var codeExpiresAt: Date? = nil
+    private(set) var codeExpiresAt: Date?
 
     /// True when the active code timed out before a partner joined. The invite
     /// view shows a "code expired — regenerate" prompt instead of the spinner.
@@ -72,7 +70,7 @@ final class PairingStore {
 
     /// The linked partner's display name (from `get-partner`). Nil until fetched
     /// or if the partner hasn't set one. Use `partnerDisplayName` for UI.
-    private(set) var partnerName: String? = nil
+    private(set) var partnerName: String?
 
     /// Partner name for display, with a graceful fallback when it's unset.
     var partnerDisplayName: String { partnerName ?? "Your partner" }
@@ -81,7 +79,7 @@ final class PairingStore {
     /// `UserProfile.firstInviteSentAt`). Nil until an invite has been sent. Backs
     /// the invite view's static "sent X ago" caption — read once on appear rather
     /// than driving a live countdown.
-    private(set) var firstInviteSentAt: Date? = nil
+    private(set) var firstInviteSentAt: Date?
 
     // MARK: - Dependencies
 
@@ -92,7 +90,7 @@ final class PairingStore {
 
     // MARK: - Private
 
-    private var pollTask: Task<Void, Never>? = nil
+    private var pollTask: Task<Void, Never>?
 
     // MARK: - Init
 
@@ -296,12 +294,12 @@ final class PairingStore {
     /// The composition to propose on the linked screen. Nil = nothing to
     /// propose (non-binary / declined / already resolved) → silent .flexible,
     /// which is the DB default — no write needed.
-    private(set) var compositionProposal: GenderDynamic? = nil
+    private(set) var compositionProposal: GenderDynamic?
 
     /// Set when `confirmComposition()` fails to write remotely. The proposal
     /// stays set so the UI can offer a retry (tapping confirm again) rather
     /// than silently discarding the user's choice. Cleared on the next attempt.
-    private(set) var compositionError: String? = nil
+    private(set) var compositionError: String?
 
     /// Set once the user answers (either way) so a re-entered linked surface
     /// never re-asks. UserDefaults because it is per-device UI state, not data.

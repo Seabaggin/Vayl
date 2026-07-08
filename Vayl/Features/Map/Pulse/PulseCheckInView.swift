@@ -24,19 +24,19 @@ import SwiftUI
 
 struct PulseCheckInView: View {
 
-    let store:   PulseStore
+    let store: PulseStore
     var onClose: () -> Void
 
     // Q1-Q5 answers. Index matches PulseAnswers.all.
-    @State private var answers:   [String?] = Array(repeating: nil, count: 5)
-    @State private var currentQ:  Int       = 0
-    @State private var revealed:  Bool      = false   // reveal panel shown (space named)
+    @State private var answers: [String?] = Array(repeating: nil, count: 5)
+    @State private var currentQ: Int       = 0
+    @State private var revealed: Bool      = false   // reveal panel shown (space named)
     @State private var advancing: Bool      = false   // debounces rapid taps
 
     // Uncharted resolution state.
-    @State private var unchartedFired:    Bool   = false  // variance check passed on final answer
+    @State private var unchartedFired: Bool   = false  // variance check passed on final answer
     @State private var unchartedDissolveT: Double = 0      // 0 = bilinear colour, 1 = full Sage Deep
-    @State private var drifting:          Bool   = false  // orb wander begins after the dissolve
+    @State private var drifting: Bool   = false  // orb wander begins after the dissolve
 
     /// The trail-in mask starts well earlier than the app-wide 52% default — see
     /// OnboardingAtmosphere.maskStart. Lowered from 0.46: against the field's now much more
@@ -169,12 +169,12 @@ struct PulseCheckInView: View {
                 PulseFieldEntry(
                     // Uncharted has no fixed coordinate — the orb glides to centre and drifts
                     // there on the emptied void, rather than sitting at its raw answer position.
-                    position:     unchartedFired ? PulsePosition(energy: 0.5, openness: 0.5) : currentPosition,
-                    auraSize:     size * 0.24,   // 🎚️ FEEL: orb ≈ 24% of field (mockup proportion)
-                    isBloom:      revealed && !unchartedFired,
+                    position: unchartedFired ? PulsePosition(energy: 0.5, openness: 0.5) : currentPosition,
+                    auraSize: size * 0.24,   // 🎚️ FEEL: orb ≈ 24% of field (mockup proportion)
+                    isBloom: revealed && !unchartedFired,
                     rampOverride: currentRamp,
-                    space:        revealed ? currentSpace : nil,
-                    isDrifting:   drifting
+                    space: revealed ? currentSpace : nil,
+                    isDrifting: drifting
                 )
             ],
             size: size,
@@ -200,10 +200,10 @@ struct PulseCheckInView: View {
                 VStack(spacing: AppSpacing.xs) {
                     ForEach(q.pills) { pill in
                         SelectablePill(
-                            label:      pill.label,
+                            label: pill.label,
                             isSelected: answers[currentQ] == pill.label,
-                            intensity:  .warm,
-                            showFlame:  false
+                            intensity: .warm,
+                            showFlame: false
                         ) {
                             selectPill(pill.label, qIndex: currentQ)
                         }
@@ -213,8 +213,8 @@ struct PulseCheckInView: View {
             .padding(.top, AppSpacing.lg)
             .id(currentQ)
             .transition(.asymmetric(
-                insertion:  .opacity.combined(with: .offset(x: 0, y: 6)),
-                removal:    .opacity.combined(with: .offset(x: 0, y: -6))
+                insertion: .opacity.combined(with: .offset(x: 0, y: 6)),
+                removal: .opacity.combined(with: .offset(x: 0, y: -6))
             ))
         }
     }
@@ -251,9 +251,9 @@ struct PulseCheckInView: View {
                             .stroke(
                                 LinearGradient(
                                     stops: [
-                                        .init(color: AppColors.accentPrimary,   location: 0),
+                                        .init(color: AppColors.accentPrimary, location: 0),
                                         .init(color: AppColors.accentSecondary, location: 0.5),
-                                        .init(color: AppColors.accentTertiary,  location: 1),
+                                        .init(color: AppColors.accentTertiary, location: 1)
                                     ],
                                     startPoint: .leading,
                                     endPoint: .trailing
@@ -289,9 +289,9 @@ struct PulseCheckInView: View {
         guard answers.contains(where: { $0 != nil }) else {
             return AuraColors(
                 light: AppColors.auraLightStart,
-                core:  AppColors.auraCoreStart,
-                deep:  AppColors.auraDeepStart,
-                glow:  AppColors.auraGlowStart
+                core: AppColors.auraCoreStart,
+                deep: AppColors.auraDeepStart,
+                glow: AppColors.auraGlowStart
             )
         }
         if unchartedFired {
@@ -393,15 +393,15 @@ struct PulseCheckInView: View {
         let pos = PulseAnswers.position(answers)
 
         let entry = PulseEntry(
-            date:          Date(),
+            date: Date(),
             capacityScore: pos.capacityScore,
-            glowColor:     pos.quadrant.capacityColor,
-            speed:         speed,
+            glowColor: pos.quadrant.capacityColor,
+            speed: speed,
             nervousSystem: nervousSystem,
-            focus:         focus,
-            feeling:       feeling,
-            capacity:      capacity,
-            position:      pos
+            focus: focus,
+            feeling: feeling,
+            capacity: capacity,
+            position: pos
         )
         store.add(entry)
         onClose()
