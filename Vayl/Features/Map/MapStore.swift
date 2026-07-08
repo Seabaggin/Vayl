@@ -41,8 +41,22 @@ final class MapStore {
     /// Single source for the key — SettingsStore's unlink reset uses the same statics.
     static let usRevealKey = "map.usRevealSeen"
 
-    init(defaults: UserDefaults = .standard) {
+    private let pulseSync: PulseSyncService
+    private let desireSync: DesireSyncService
+    private let deckCatalog: DeckCatalogService
+
+    /// Service params nil-resolve inside the MainActor-isolated body (a `= .shared`
+    /// default argument would evaluate nonisolated — same pattern as SettingsStore).
+    init(
+        defaults: UserDefaults = .standard,
+        pulseSync: PulseSyncService? = nil,
+        desireSync: DesireSyncService? = nil,
+        deckCatalog: DeckCatalogService? = nil
+    ) {
         self.defaults = defaults
+        self.pulseSync = pulseSync ?? .shared
+        self.desireSync = desireSync ?? .shared
+        self.deckCatalog = deckCatalog ?? DeckCatalogService()
     }
 
     var usRevealSeen: Bool { defaults.bool(forKey: Self.usRevealKey) }
@@ -164,7 +178,7 @@ final class MapStore {
             partnerEntries = []
             return
         }
-        guard let entries = await PulseSyncService.shared.fetchPartnerEntries() else { return }
+        guard let entries = await pulseSync.fetchPartnerEntries() else { return }
         partnerEntries = entries
         partnerPosition = entries.last?.resolvedPosition
     }
@@ -184,7 +198,7 @@ final class MapStore {
         }
 
         // Deck content is bundle JSON (not network); safe to load in the store.
-        let summaries = (try? DeckCatalogService().loadSummaries()) ?? []
+        let summaries = (try? deckCatalog.loadSummaries()) ?? []
         let byId = Dictionary(summaries.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
 
         var fetch = FetchDescriptor<CardSession>(
@@ -294,7 +308,7 @@ final class MapStore {
     private func loadServerAlignData(appState: AppState, context: ModelContext) async {
         guard let coupleId = appState.coupleId else { return }
 
-        let matchRows = (try? await DesireSyncService.shared.fetchMatches(coupleId: coupleId)) ?? []
+        let matchRows = (try? await desireSync.fetchMatches(coupleId: coupleId)) ?? []
 
         // THE gate rule — CoupleContext.canRevealAll (OR'd entitlement), never the
         // local Couple.canRevealDesireMap mirror, which can lag a just-purchased buyer.

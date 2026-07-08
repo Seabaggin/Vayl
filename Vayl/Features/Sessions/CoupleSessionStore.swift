@@ -102,6 +102,7 @@ final class CoupleSessionStore: Identifiable {
 
     private let realtime: RealtimeSessionService?
     private let initiatorId: UUID?
+    private let deckCatalog: DeckCatalogService
 
     // MARK: - Init
 
@@ -112,7 +113,8 @@ final class CoupleSessionStore: Identifiable {
         realtime: RealtimeSessionService? = nil,
         presenceSeconds: Double = 1.4,
         transitionSeconds: Double = 2.5,          // 🎚️ spec 4.5: ~2.5s held beat
-        enqueueSync: (@MainActor (SessionRecordPayload) -> Void)? = nil
+        enqueueSync: (@MainActor (SessionRecordPayload) -> Void)? = nil,
+        deckCatalog: DeckCatalogService? = nil
     ) {
         self.hand = launch.hand
         self.entry = launch.entry
@@ -127,6 +129,7 @@ final class CoupleSessionStore: Identifiable {
         self.transitionSeconds = transitionSeconds
         self.realtime = realtime
         self.initiatorId = launch.session?.initiatorId
+        self.deckCatalog = deckCatalog ?? DeckCatalogService()
         self.revealEngine = RevealEngine(role: launch.role, transport: nil)
         self.enqueueSync = enqueueSync ?? { payload in
             guard let data = try? JSONEncoder().encode(payload) else { return }
@@ -167,7 +170,7 @@ final class CoupleSessionStore: Identifiable {
         localProfileId = try? context.fetch(profileFetch).first?.id
         // Deck title: resolve the pretty name from the catalog when possible.
         if let deckId = hand.first?.deckId,
-           let title = (try? DeckCatalogService().loadSummaries())?
+           let title = (try? deckCatalog.loadSummaries())?
                .first(where: { $0.id == deckId })?.title {
             deckTitle = title
         }

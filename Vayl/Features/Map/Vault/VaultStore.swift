@@ -44,6 +44,27 @@ final class VaultStore {
         self.couple = couple
     }
 
+    // MARK: - Dependencies
+
+    private let desireSync: DesireSyncService
+    private let agreementsService: AgreementsService
+    private let consentService: ConsentService
+    private let companionCardStore: CompanionCardStore
+
+    /// Params nil-resolve inside the MainActor-isolated body (a `= .shared` default
+    /// argument would evaluate nonisolated — same pattern as SettingsStore).
+    init(
+        desireSync: DesireSyncService? = nil,
+        agreementsService: AgreementsService? = nil,
+        consentService: ConsentService? = nil,
+        companionCards: CompanionCardStore? = nil
+    ) {
+        self.desireSync = desireSync ?? .shared
+        self.agreementsService = agreementsService ?? AgreementsService()
+        self.consentService = consentService ?? ConsentService()
+        self.companionCardStore = companionCards ?? CompanionCardStore()
+    }
+
     /// Builds the Desire Map summary from the user's local ratings + server matches,
     /// gated on `CoupleContext.canRevealAll` (the OR'd entitlement: server tier OR
     /// local StoreKit ownership). Idempotent; safe to re-run after a paywall unlock.
@@ -78,7 +99,7 @@ final class VaultStore {
             // local Couple mirror (which can lag a just-purchased buyer and under-reveal
             // the Vault while the reveal shows unlocked).
             let canReveal = couple?.canRevealAll ?? false
-            let rows = (try? await DesireSyncService.shared.fetchMatches(coupleId: coupleId)) ?? []
+            let rows = (try? await desireSync.fetchMatches(coupleId: coupleId)) ?? []
             let items = (try? ContentLoader.loadDesireItems()) ?? []
             let nameById = Dictionary(items.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
             for row in rows {
@@ -112,7 +133,6 @@ final class VaultStore {
     private(set) var safeWord: String = "red"
     private(set) var agreements: [AgreementVM] = []
     private(set) var proposals: [ProposalVM] = []
-    private let agreementsService = AgreementsService()
 
     /// Loads the shared safe word + active agreements + pending proposals.
     func loadAgreements(appState: AppState, context: ModelContext) async {
@@ -254,7 +274,6 @@ final class VaultStore {
     private(set) var incoming: [ConsentVM] = []    // partner asked me, pending, not yet declined by me
     private(set) var openedConsent: [ConsentVM] = []
     private(set) var askableTopics: [ConsentTopic] = []
-    private let consentService = ConsentService()
 
     func loadConsent(appState: AppState, context: ModelContext) async {
         guard let coupleId = appState.coupleId,
@@ -305,7 +324,6 @@ final class VaultStore {
 
     // MARK: - Discussion card
 
-    private let companionCardStore = CompanionCardStore()
     private(set) var selectedDiscussionCard: CompanionCard? = nil
 
     /// Opens the discussion card for a desire item at the given tier.

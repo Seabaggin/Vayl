@@ -88,6 +88,7 @@ final class PairingStore {
     private let modelContainer: ModelContainer
     private let appState: AppState
     private let pairingService: PairingService
+    private let syncManager: SyncManager
 
     // MARK: - Private
 
@@ -95,15 +96,19 @@ final class PairingStore {
 
     // MARK: - Init
 
+    /// `pairingService` / `syncManager` nil-resolve inside the MainActor-isolated body
+    /// (a `= .shared` default argument would evaluate nonisolated and not compile).
     init(
         modelContainer: ModelContainer,
         appState: AppState,
         pairingService: PairingService? = nil,
+        syncManager: SyncManager? = nil,
         initialState: PairingLinkState = .idle
     ) {
         self.modelContainer = modelContainer
         self.appState = appState
         self.pairingService = pairingService ?? PairingService()
+        self.syncManager = syncManager ?? .shared
         self.linkState = initialState
     }
 
@@ -250,7 +255,7 @@ final class PairingStore {
     private func syncIdentityToRemote() async {
         let context = ModelContext(modelContainer)
         guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
-        await SyncManager.shared.pushDisplayIdentity(localProfile: profile)
+        await syncManager.pushDisplayIdentity(localProfile: profile)
     }
 
     // MARK: - Partner Identity

@@ -93,9 +93,14 @@ final class PulseStore {
 
     private let key = "pulse.entries.v1"
 
+    private let sync: PulseSyncService
+
     // MARK: - Init
 
-    init() {
+    /// `sync` nil-resolves inside the MainActor-isolated body (a `= .shared`
+    /// default argument would evaluate nonisolated — same pattern as SettingsStore).
+    init(sync: PulseSyncService? = nil) {
+        self.sync = sync ?? .shared
         load()
         #if DEBUG
         if entries.isEmpty {
@@ -124,7 +129,7 @@ final class PulseStore {
         // Push the full entry to Supabase (fire-and-forget; local save above is already
         // the source of truth for this session). `pulse_entries` RLS gates partner
         // visibility on the existing share_pulse_with_partner consent flag.
-        Task { await PulseSyncService.shared.pushEntry(entry) }
+        Task { await sync.pushEntry(entry) }
     }
 
     /// Pulls the caller's full history down from `pulse_entries` and merges it into the
@@ -136,7 +141,7 @@ final class PulseStore {
     /// again on every return to foreground (VaylApp's scenePhase handler), after auth is
     /// confirmed ready.
     func hydrateFromServer() async {
-        guard let serverEntries = await PulseSyncService.shared.fetchOwnEntries() else { return }
+        guard let serverEntries = await sync.fetchOwnEntries() else { return }
         let cal = Calendar.current
         var merged = entries
         for serverEntry in serverEntries {
@@ -163,7 +168,7 @@ final class PulseStore {
         let serverDays = Set(serverEntries.map { cal.startOfDay(for: $0.date) })
         let unsynced = entries.filter { $0.date >= cutoff && !serverDays.contains(cal.startOfDay(for: $0.date)) }
         for entry in unsynced {
-            await PulseSyncService.shared.pushEntry(entry)
+            await sync.pushEntry(entry)
         }
     }
 

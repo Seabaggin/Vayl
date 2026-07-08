@@ -47,19 +47,21 @@ final class SettingsStore {
     private let entitlements: EntitlementStore
     private let accountService: AccountService
     private let pairingService: PairingService
+    private let syncManager: SyncManager
 
     // MARK: - Init
 
-    /// `accountService` / `pairingService` nil resolve to fresh instances inside the
-    /// MainActor-isolated body — a default argument would evaluate in a nonisolated
-    /// context and not compile.
+    /// `accountService` / `pairingService` / `syncManager` nil resolve to instances
+    /// inside the MainActor-isolated body — a default argument would evaluate in a
+    /// nonisolated context and not compile.
     init(
         modelContainer: ModelContainer,
         appState: AppState,
         authService: AuthService,
         entitlements: EntitlementStore,
         accountService: AccountService? = nil,
-        pairingService: PairingService? = nil
+        pairingService: PairingService? = nil,
+        syncManager: SyncManager? = nil
     ) {
         self.modelContainer = modelContainer
         self.appState = appState
@@ -67,6 +69,7 @@ final class SettingsStore {
         self.entitlements = entitlements
         self.accountService = accountService ?? AccountService()
         self.pairingService = pairingService ?? PairingService()
+        self.syncManager = syncManager ?? .shared
     }
 
     // MARK: - Identity edit (name / pronouns / experience)
@@ -110,12 +113,12 @@ final class SettingsStore {
         // Remote push (partner-visible fields). Best-effort — SyncManager logs failures.
         // The fetch context must outlive the push: `profile` is bound to it, and a
         // deallocated context would leave the model unreadable mid-push.
-        Task {
+        Task { [syncManager] in
             switch field {
             case .name, .pronouns:
-                await SyncManager.shared.pushDisplayIdentity(localProfile: profile)
+                await syncManager.pushDisplayIdentity(localProfile: profile)
             case .experience:
-                await SyncManager.shared.pushNMStage(stage.rawValue)
+                await syncManager.pushNMStage(stage.rawValue)
             }
             withExtendedLifetime(context) {}
         }
@@ -126,7 +129,7 @@ final class SettingsStore {
     /// Pushes the "share capacity with partner" preference to remote `user_profiles`.
     /// Was called directly from SettingsPrivacyView (H-2 violation) — now routed here.
     func setShareCapacity(_ value: Bool) {
-        Task { await SyncManager.shared.pushSharePulse(value) }
+        Task { [syncManager] in await syncManager.pushSharePulse(value) }
     }
 
     // MARK: - Connection composition (spec §9 Settings row)

@@ -20,7 +20,12 @@ final class LearnStore {
     private(set) var supportResources: [SupportResource] = []
     private(set) var loadError: String?
 
-    init() {
+    private let content: ContentService
+
+    /// `content` nil-resolves inside the MainActor-isolated body (a `= .shared`
+    /// default argument would evaluate nonisolated — same pattern as SettingsStore).
+    init(content: ContentService? = nil) {
+        self.content = content ?? .shared
         load()                          // instant bundled baseline
         Task { await refresh() }        // then override from Supabase when reachable
     }
@@ -28,9 +33,9 @@ final class LearnStore {
     /// Pulls server-driven content (findings + glossary), overriding the bundled
     /// baseline only when the fetch succeeds. Safe to call repeatedly.
     func refresh() async {
-        if let f = await ContentService.shared.fetchFindings() { findings = f }
-        if let t = await ContentService.shared.fetchGlossary() { lexiconTerms = t }
-        if let q = await ContentService.shared.fetchQuotes()   { mediaQuotes = q }
+        if let f = await content.fetchFindings() { findings = f }
+        if let t = await content.fetchGlossary() { lexiconTerms = t }
+        if let q = await content.fetchQuotes()   { mediaQuotes = q }
     }
 
     func load() {

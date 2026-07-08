@@ -106,13 +106,32 @@ final class HomeStore {
     private let modelContainer: ModelContainer
     private let appState: AppState
     private let couple: CoupleContext
+    private let pulseSync: PulseSyncService
+    private let content: ContentService
+    private let desireSync: DesireSyncService
+    private let deckCatalog: DeckCatalogService
 
     // MARK: - Init
 
-    init(modelContainer: ModelContainer, appState: AppState, couple: CoupleContext) {
+    /// Service params nil-resolve inside the MainActor-isolated body — a `= .shared`
+    /// default argument would evaluate in a nonisolated context and not compile
+    /// (same pattern as SettingsStore).
+    init(
+        modelContainer: ModelContainer,
+        appState: AppState,
+        couple: CoupleContext,
+        pulseSync: PulseSyncService? = nil,
+        content: ContentService? = nil,
+        desireSync: DesireSyncService? = nil,
+        deckCatalog: DeckCatalogService? = nil
+    ) {
         self.modelContainer = modelContainer
         self.appState = appState
         self.couple = couple
+        self.pulseSync = pulseSync ?? .shared
+        self.content = content ?? .shared
+        self.desireSync = desireSync ?? .shared
+        self.deckCatalog = deckCatalog ?? DeckCatalogService()
 
         #if DEBUG
         // Development quick-jump — skip to dashboard state.
@@ -264,7 +283,7 @@ final class HomeStore {
             partnerPulsePosition = nil
             return
         }
-        guard let entries = await PulseSyncService.shared.fetchPartnerEntries() else {
+        guard let entries = await pulseSync.fetchPartnerEntries() else {
             partnerPulsePosition = nil
             return
         }
@@ -276,9 +295,9 @@ final class HomeStore {
     /// Fetches server-driven daily-5 content. Best-effort — leaves lexiconRemotePool nil on
     /// any failure so HomeLexicon keeps its bundled baseline.
     private func loadLexiconContent() async {
-        let f = await ContentService.shared.fetchFindings()
-        let t = await ContentService.shared.fetchGlossary()
-        let q = await ContentService.shared.fetchQuotes()
+        let f = await content.fetchFindings()
+        let t = await content.fetchGlossary()
+        let q = await content.fetchQuotes()
         if f != nil || t != nil || q != nil {
             lexiconRemotePool = LexiconRemotePool(findings: f, terms: t, quotes: q)
         }
@@ -297,7 +316,7 @@ final class HomeStore {
             let all = try context.fetch(FetchDescriptor<DeckProgress>(
                 predicate: #Predicate { $0.coupleId == coupleId }
             ))
-            let summaries = (try? DeckCatalogService().loadSummaries()) ?? []
+            let summaries = (try? deckCatalog.loadSummaries()) ?? []
             let availableIDs = Set(
                 summaries.filter { !$0.isLocked || couple.canRevealAll }.map(\.id)
             )
@@ -323,9 +342,9 @@ final class HomeStore {
     /// once our own map is done, so `bothComplete` equals the partner's completion at that point.
     private func loadDesireStatus() async {
         guard appState.appMode == .together, let coupleId = appState.coupleId else { return }
-        guard let status = try? await DesireSyncService.shared.fetchStatus(coupleId: coupleId) else { return }
+        guard let status = try? await desireSync.fetchStatus(coupleId: coupleId) else { return }
         partnerMapComplete = status.bothComplete
-        let progress = try? await DesireSyncService.shared.fetchRevealProgress(coupleId: coupleId)
+        let progress = try? await desireSync.fetchRevealProgress(coupleId: coupleId)
         revealDone = progress?.hasSeenFree ?? false
         resolvePostStatusDesireMapState(coupleId: coupleId)
     }
