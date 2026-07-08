@@ -75,4 +75,29 @@ final class PathStore {
             actorId: profileId, kind: .didItSet, detail: nil
         )
     }
+
+    func isPrivatelyMarkedCurious(_ landmarkId: String) -> Bool {
+        privateMarkedLandmarkIds.contains(landmarkId)
+    }
+
+    func markCuriousPrivately(_ landmarkId: String) async throws {
+        _ = try await transport.addPrivateMark(profileId: profileId, coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId)
+        privateMarkedLandmarkIds.insert(landmarkId)
+    }
+
+    /// Sharing is a unilateral act by whoever holds the private mark — it is
+    /// never contingent on the partner having marked anything (spec §4).
+    func shareCurious(_ landmarkId: String) async throws {
+        let updated = try await transport.setState(
+            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
+            state: .curious, discussedVia: nil, didItDate: nil, setBy: profileId
+        )
+        progressByLandmark[landmarkId] = updated
+        try await transport.removePrivateMark(profileId: profileId, pathStyle: pathStyle, landmarkId: landmarkId)
+        privateMarkedLandmarkIds.remove(landmarkId)
+        try await transport.logActivity(
+            coupleId: coupleId, pathStyle: pathStyle, landmarkId: landmarkId,
+            actorId: profileId, kind: .curiousShared, detail: nil
+        )
+    }
 }

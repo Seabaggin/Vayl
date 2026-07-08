@@ -32,4 +32,30 @@ final class PathStoreTests: XCTestCase {
         XCTAssertEqual(store.state(for: "flirt-bar"), .untouched)
         XCTAssertEqual(store.state(for: "nm-mixer"), .untouched)
     }
+
+    func test_markCuriousPrivately_doesNotAppearInSharedProgress() async throws {
+        // Spec §4: private until explicitly shared.
+        let (store, transport) = makeStore()
+        try await store.load()
+        try await store.markCuriousPrivately("soft-swap")
+        XCTAssertTrue(store.isPrivatelyMarkedCurious("soft-swap"))
+        XCTAssertEqual(store.state(for: "soft-swap"), .untouched)
+        XCTAssertTrue(transport.progress.isEmpty)
+    }
+
+    func test_shareCurious_movesFromPrivateToSharedState_andLogsActivity() async throws {
+        let (store, transport) = makeStore()
+        try await store.load()
+        try await store.markCuriousPrivately("soft-swap")
+        try await store.shareCurious("soft-swap")
+        XCTAssertEqual(store.state(for: "soft-swap"), .curious)
+        XCTAssertEqual(transport.loggedKinds, [.curiousShared])
+    }
+
+    func test_privateCuriousMark_neverAppearsInActivityLog() async throws {
+        let (store, transport) = makeStore()
+        try await store.load()
+        try await store.markCuriousPrivately("soft-swap")
+        XCTAssertTrue(transport.loggedKinds.isEmpty)
+    }
 }
