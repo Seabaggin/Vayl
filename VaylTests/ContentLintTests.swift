@@ -21,7 +21,11 @@ final class ContentLintTests: XCTestCase {
     // MARK: - Fixture
 
     /// The canonical launch slate, in catalog order (spec section 7.1).
+    /// The four `opener-*` variants (steady/opening/return/wider) are short
+    /// (6-card) register-tailored alternates to `the-opener`, landed in
+    /// deck-catalog.json alongside it — see docs/roadmap segment C1.
     private static let launchDeckIds: [String] = [
+        "opener-steady", "opener-opening", "opener-return", "opener-wider",
         "the-opener", "the-check-in",
         "communication-intimacy", "sex-and-pleasure",
         "jealousy", "flavors-discovery", "swinging",
@@ -29,7 +33,10 @@ final class ContentLintTests: XCTestCase {
         "when-it-gets-hard", "appreciation"
     ]
 
-    private static let freeDeckIds: Set<String> = ["the-opener", "the-check-in"]
+    private static let freeDeckIds: Set<String> = [
+        "the-opener", "the-check-in",
+        "opener-steady", "opener-opening", "opener-return", "opener-wider"
+    ]
 
     /// Decks whose gendered slots ship the mf + flexible variant pair.
     private static let genderedDeckIds: Set<String> = [
@@ -49,13 +56,21 @@ final class ContentLintTests: XCTestCase {
     /// in test_closingRituals / test_livingCardCounts, never skipped silently.
     private static let canonicalCeremonyDeckId = "the-opener"
 
+    /// Short (5-6 card) ritual-style decks — sized differently from the
+    /// standard 10-11 card discussion decks, so they're exempted from the
+    /// standard count/living-card ranges below.
+    private static let shortRitualDeckIds: Set<String> = [
+        "the-check-in", "opener-steady", "opener-opening", "opener-return", "opener-wider"
+    ]
+
     /// schemaVersion pin: 2 = existing id touched by the re-cut,
     /// 1 = net-new id introduced by it. Any content edit must bump these.
     private static let expectedSchemaVersions: [String: Int] = [
         "the-opener": 2, "the-check-in": 2, "before-tonight": 2,
         "communication-intimacy": 1, "sex-and-pleasure": 1, "jealousy": 1,
         "flavors-discovery": 1, "swinging": 1, "after-last-night": 1,
-        "the-first-time": 1, "when-it-gets-hard": 1, "appreciation": 1
+        "the-first-time": 1, "when-it-gets-hard": 1, "appreciation": 1,
+        "opener-steady": 2, "opener-opening": 2, "opener-return": 2, "opener-wider": 2
     ]
 
     private var decks: [Deck] = []
@@ -98,10 +113,10 @@ final class ContentLintTests: XCTestCase {
     // MARK: - Deck structure
 
     func test_everyDeck_parses_andCountsAreInRange() {
-        XCTAssertEqual(decks.count, 12)
+        XCTAssertEqual(decks.count, 16)
         for deck in decks {
             let playable = deck.cards(for: .mf).count
-            let range = deck.id == "the-check-in" ? 5...6 : 10...11
+            let range = Self.shortRitualDeckIds.contains(deck.id) ? 5...6 : 10...11
             XCTAssertTrue(range.contains(playable),
                           "\(deck.id): \(playable) playable cards, expected \(range)")
             // The mf and flexible hands are the same size (variant pairs are symmetric).
@@ -129,9 +144,10 @@ final class ContentLintTests: XCTestCase {
     }
 
     func test_everyDeck_livingCardCountIsThreeToFour() {
-        // Exempt: the-check-in (5-6 card ritual deck by design) and the
-        // canonical Opener (9 discussion + 1 whisper, feel-approved as shipped).
-        let exempt: Set<String> = ["the-check-in", Self.canonicalCeremonyDeckId]
+        // Exempt: the-check-in + the four opener-* variants (5-6 card ritual
+        // decks by design, 1 living card each) and the canonical Opener
+        // (9 discussion + 1 whisper, feel-approved as shipped).
+        let exempt = Self.shortRitualDeckIds.union([Self.canonicalCeremonyDeckId])
         for deck in decks where !exempt.contains(deck.id) {
             let living = deck.cards(for: .mf).filter(\.isLivingCard).count
             XCTAssertTrue((3...4).contains(living),
