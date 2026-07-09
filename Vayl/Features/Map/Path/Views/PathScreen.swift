@@ -20,6 +20,9 @@ import SwiftUI
 
 struct PathScreen: View {
     @Bindable var store: PathStore
+    /// Partner display name for the activity log's who-did-what lines; empty
+    /// falls back to "Your partner" (see PathActivityLogView).
+    var partnerName: String = ""
     @Environment(\.vaylDismiss) private var vaylDismiss
 
     private enum Mode { case trail, ledger }
@@ -41,7 +44,7 @@ struct PathScreen: View {
                 // exact GeometryReader-outer/ZStack-inner ordering.
                 ZStack {
                     AppColors.void.ignoresSafeArea()
-                    OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+                    PathAtmosphere()
 
                     VStack {
                         switch mode {
@@ -88,7 +91,7 @@ struct PathScreen: View {
                     PathEditYourPathView(store: store)
                 }
                 .vaylSheet(isPresented: $showActivity, screenHeight: layout.screenHeight) {
-                    PathActivityLogView(store: store)
+                    PathActivityLogView(store: store, partnerName: partnerName)
                 }
             }
             .toolbar {
@@ -119,5 +122,37 @@ struct PathScreen: View {
             }
         }
         .task { await store.load() }
+    }
+}
+
+/// The Path's own atmospheric field — a soft purple glow anchored at the top,
+/// over void, matching the node-state-redesign mockup's `.sky` (a top-center
+/// radial the standard bottom-bloom `OnboardingAtmosphere` doesn't provide). A
+/// deliberate, Path-only deviation from the "content sits on void" background,
+/// approved for the spatial trail so it reads as a charted night sky. Backgrounds
+/// bleed (`.ignoresSafeArea`); static, so no ambient-motion gating is needed.
+struct PathAtmosphere: View {
+    // mockup `.sky` = rgba(108,58,224,.24) radial at 50% 0% — spectrumPurple ≈ that hue.
+    private let glowOpacity = 0.22
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                AppColors.void
+                // Wide, short ellipse pulled up so its heart sits at the top edge,
+                // mirroring the mockup's `120% 26% at 50% 0%` radial.
+                Ellipse()
+                    .fill(AppColors.spectrumPurple.opacity(glowOpacity))
+                    .frame(width: geo.size.width * 1.25, height: geo.size.height * 0.42)
+                    .blur(radius: 60)
+                    .offset(y: -geo.size.height * 0.18)
+            }
+            // Rasterize the blur once (same reason OBVoidBloom does): keep the
+            // large-radius blur off the per-frame GPU path while the trail scrolls
+            // and the Now beacon breathes on top.
+            .drawingGroup(opaque: false)
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
     }
 }

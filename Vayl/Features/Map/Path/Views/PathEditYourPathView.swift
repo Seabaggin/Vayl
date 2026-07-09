@@ -26,7 +26,7 @@ struct PathEditYourPathView: View {
     var body: some View {
         ZStack {
             AppColors.void.ignoresSafeArea()
-            OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+            PathAtmosphere()
 
             VStack(spacing: 0) {
                 header

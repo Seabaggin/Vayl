@@ -146,7 +146,7 @@ struct PathNodeView: View {
                         .stroke(AppColors.borderSubtle, lineWidth: 1)
                 )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableCardStyle())
         .accessibilityLabel("Manage this step")
         .confirmationDialog(
             "Manage this step",
@@ -338,7 +338,7 @@ struct PathNodeView: View {
             }
             .font(AppFonts.buttonLabelSmall)
             .foregroundStyle(AppColors.spectrumCyan)
-            .buttonStyle(.plain)
+            .buttonStyle(PressableCardStyle())
         }
         .padding(.horizontal, AppSpacing.sm)
         .padding(.vertical, AppSpacing.xxs)

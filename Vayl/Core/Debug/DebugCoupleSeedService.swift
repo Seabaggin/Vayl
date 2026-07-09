@@ -19,6 +19,7 @@ struct DebugCoupleSeedConfig {
     let role: DebugCoupleSeedRole
     let pairCode: String
     let freshAuth: Bool
+    let resetSessions: Bool
     let email: String
     let password: String
     let allowSignUp: Bool
@@ -32,6 +33,7 @@ struct DebugCoupleSeedConfig {
         }
         let code = value(after: "-vaylDebugPairCode", in: arguments) ?? "VAYL42"
         let freshAuth = arguments.contains("-vaylDebugFreshAuth")
+        let resetSessions = arguments.contains("-vaylDebugResetSessions")
         let normalizedCode = code.uppercased()
         let defaultEmail = "vayl-debug-\(normalizedCode.lowercased())-\(role.rawValue)@debug.vayl.local"
         let email = value(after: "-vaylDebugSeedEmail", in: arguments) ?? defaultEmail
@@ -41,6 +43,7 @@ struct DebugCoupleSeedConfig {
             role: role,
             pairCode: normalizedCode,
             freshAuth: freshAuth,
+            resetSessions: resetSessions,
             email: email,
             password: password,
             allowSignUp: allowSignUp
@@ -159,6 +162,9 @@ final class DebugCoupleSeedService {
 
         let remoteCouple = try await fetchRemoteCouple(coupleId: coupleId)
         try mirrorLink(coupleId: coupleId, remoteCouple: remoteCouple, localProfileId: profileId)
+        if config.resetSessions {
+            try await RealtimeSessionService().debugAbandonOpenSessions(coupleId: coupleId)
+        }
         debugSeedLogger.info("Debug couple seed complete: \(coupleId.uuidString, privacy: .public)")
     }
 

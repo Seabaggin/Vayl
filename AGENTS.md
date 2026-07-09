@@ -272,3 +272,4 @@ intent for future: post-launch light-mode work is a separate, comprehensive pass
 - [ ] Presentation via .vaylCover / .vaylSheet, never raw .fullScreenCover / .sheet
 - [ ] Card Session is a .vaylCover (protected, confirm-on-exit), never a sheet
 - [ ] Right-size every feature; none that assumes Vayl is the center of the user's life
+- If using XcodeBuildMCP, use the installed XcodeBuildMCP skill before calling XcodeBuildMCP tools.

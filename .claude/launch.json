@@ -19,6 +19,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["docs/prototypes/server.js"],
       "port": 7333
+    },
+    {
+      "name": "rig-preview",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4599", "--directory", "/private/tmp/claude-501/-Users-bryanjorden-Documents-School-Code-Vayl/ffedbcf0-fde4-4238-bfa7-c551db1bfeb9/scratchpad"],
+      "port": 4599
     }
   ]
 }

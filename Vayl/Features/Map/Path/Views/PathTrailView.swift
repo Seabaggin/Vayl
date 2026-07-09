@@ -33,6 +33,11 @@ struct PathTrailView: View {
     let store: PathStore
     let onSelect: (String) -> Void
 
+    /// Drives the "Now" beacon's slow breathing glow. Toggled true onAppear; the
+    /// `.ambientAnimation` gate disables the loop under Reduce Motion / Low Power,
+    /// where it simply resolves to the steady bright state instead.
+    @State private var nowBreathe = false
+
     // The fixed 264×836 coordinate stage the node positions and bezier control
     // points below are a literal port of (path-full-flow.html §02). Named here
     // rather than re-typed as bare literals at each use site.
@@ -42,6 +47,21 @@ struct PathTrailView: View {
     private static let nodeHitTarget: CGFloat = 44
     private static let labelWidth: CGFloat = 100
     private static let labelGap: CGFloat = 12
+
+    /// Opacities ported straight from the node-state redesign mockup's node
+    /// specs (path-node-state-redesign-suite.html §01), named here so the trail
+    /// carries no bare opacity literals.
+    private enum Opacity {
+        static let curiousFill = 0.12
+        static let discussedFill = 0.16
+        static let aheadStroke = 0.32
+        static let forkStroke = 0.30
+        static let traveledGlow = 0.60
+        static let privateMarkBorder = 0.45
+        static let beaconGlowLow = 0.30
+        static let beaconGlowHigh = 0.70
+        static let didItInnerHighlight = 0.22
+    }
 
     /// Literal port of the node coordinates from path-full-flow.html §02's
     /// 264×836 stage — same 13 landmarks, same positions, never re-derived.
@@ -86,46 +106,63 @@ struct PathTrailView: View {
     }
 
     private var trail: some View {
-        ScrollView {
-            ZStack(alignment: .topLeading) {
-                trailCurve
-                ForEach(store.visibleLandmarks) { landmark in
-                    if let point = Self.nodePositions[landmark.id] {
-                        Button {
-                            onSelect(landmark.id)
-                        } label: {
-                            nodeView(for: landmark)
-                                .frame(width: Self.nodeHitTarget, height: Self.nodeHitTarget)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(PressableCardStyle())
-                        .accessibilityLabel(landmark.title)
-                        .position(point)
+        // The node positions and bezier curve are a literal port of a fixed
+        // 264-wide SVG stage. Rather than pin the trail to 264pt (which left it
+        // a narrow column with dead space either side on any real device), scale
+        // that design space up to the available width so it fills the screen the
+        // way the mockup's 264-in-270 phone does. Node glyphs and label text stay
+        // unscaled (crisp, tappable); only positions and the curve scale.
+        GeometryReader { geo in
+            let scale = geo.size.width / Self.stageWidth
 
-                        label(for: landmark, at: point)
+            ScrollView {
+                ZStack(alignment: .topLeading) {
+                    trailCurve
+                        .frame(width: Self.stageWidth, height: Self.stageHeight)
+                        .scaleEffect(scale, anchor: .topLeading)
+
+                    ForEach(store.visibleLandmarks) { landmark in
+                        if let point = Self.nodePositions[landmark.id] {
+                            Button {
+                                onSelect(landmark.id)
+                            } label: {
+                                nodeView(for: landmark)
+                                    .frame(width: Self.nodeHitTarget, height: Self.nodeHitTarget)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(PressableCardStyle())
+                            .accessibilityLabel(landmark.title)
+                            .position(x: point.x * scale, y: point.y * scale)
+
+                            label(for: landmark, at: point, scale: scale)
+                        }
                     }
                 }
+                .frame(width: geo.size.width, height: Self.stageHeight * scale, alignment: .topLeading)
             }
-            .frame(width: Self.stageWidth, height: Self.stageHeight)
+            .frame(maxWidth: .infinity)
         }
     }
 
     /// Places a landmark's name on the open side of the winding trail: left-column
     /// nodes get a left-aligned label to their right, right-column nodes get a
     /// right-aligned label to their left. This is what keeps the right column from
-    /// clipping off the fixed-width stage — the old flat `x + 60` pushed every
-    /// right-column label (nodes at x≈187-199) past the 264-wide edge.
-    private func label(for landmark: PathLandmark, at point: CGPoint) -> some View {
+    /// clipping off the stage edge — the old flat `x + 60` pushed every
+    /// right-column label (nodes at x≈187-199) past it. `scale` maps the fixed
+    /// 264-space anchor into the scaled-to-width layout; the label's own text
+    /// stays unscaled.
+    private func label(for landmark: PathLandmark, at point: CGPoint, scale: CGFloat) -> some View {
         let isRightColumn = point.x > Self.stageWidth / 2
+        let anchorX = point.x * scale
         let centerX = isRightColumn
-            ? point.x - Self.labelGap - Self.labelWidth / 2
-            : point.x + Self.labelGap + Self.labelWidth / 2
+            ? anchorX - Self.labelGap - Self.labelWidth / 2
+            : anchorX + Self.labelGap + Self.labelWidth / 2
         return Text(landmark.title)
             .font(AppFonts.sectionLabelSmall)
             .foregroundStyle(landmark.id == store.nowLandmarkId ? AppColors.textBright : AppColors.textPrimary)
             .frame(width: Self.labelWidth, alignment: isRightColumn ? .trailing : .leading)
             .multilineTextAlignment(isRightColumn ? .trailing : .leading)
-            .position(x: centerX, y: point.y - 8)
+            .position(x: centerX, y: point.y * scale - 8)
     }
 
     // MARK: - Trail curve — literal bezier port, never re-derived
@@ -139,12 +176,12 @@ struct PathTrailView: View {
     private var trailCurve: some View {
         ZStack {
             PathAheadShape()
-                .stroke(AppColors.spectrumPurple.opacity(0.32), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [1, 7]))
+                .stroke(AppColors.spectrumPurple.opacity(Opacity.aheadStroke), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [1, 7]))
             PathForkShape()
-                .stroke(AppColors.spectrumPurple.opacity(0.3), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [1, 7]))
+                .stroke(AppColors.spectrumPurple.opacity(Opacity.forkStroke), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [1, 7]))
             PathTraveledShape()
                 .stroke(AppColors.spectrumBorder, style: StrokeStyle(lineWidth: 7, lineCap: .round))
-                .opacity(0.6)
+                .opacity(Opacity.traveledGlow)
                 .blur(radius: 4)
             PathTraveledShape()
                 .stroke(AppColors.spectrumBorder, style: StrokeStyle(lineWidth: 2.4, lineCap: .round))
@@ -160,26 +197,86 @@ struct PathTrailView: View {
         Group {
             switch state {
             case .untouched:
-                Circle().stroke(AppColors.borderSubtle, lineWidth: 2).frame(width: 10, height: 10)
+                // On the marking partner's own device only, a landmark they've
+                // privately marked Curious (but not yet shared) shows a small
+                // magenta corner dot over the plain Untouched node — quiet, never
+                // a full trail state (mockup §05). The partner's trail has no such
+                // mark, since `privateMarkedLandmarkIds` is this profile's alone.
+                let privateCurious = store.isPrivatelyMarkedCurious(landmark.id)
+                Circle()
+                    .stroke(
+                        privateCurious ? AppColors.spectrumMagenta.opacity(Opacity.privateMarkBorder) : AppColors.borderSubtle,
+                        lineWidth: 2
+                    )
+                    .frame(width: 10, height: 10)
+                    .overlay(alignment: .topTrailing) {
+                        if privateCurious {
+                            Circle()
+                                .fill(AppColors.spectrumMagenta)
+                                .frame(width: 5, height: 5)
+                                .offset(x: 2, y: -2)
+                        }
+                    }
             case .curious:
                 Circle().stroke(AppColors.spectrumMagenta, lineWidth: 1.5).frame(width: 12, height: 12)
-                    .background(Circle().fill(AppColors.spectrumMagenta.opacity(0.12)))
+                    .background(Circle().fill(AppColors.spectrumMagenta.opacity(Opacity.curiousFill)))
             case .discussed:
+                // Provenance mark (mockup §01): a structured ▤-style inner rect for
+                // a real session, a simple filled dot for a manual "we talked" tap.
+                // The Ledger spells it out in words too.
+                let via = store.discussedVia(for: landmark.id)
                 Circle().stroke(AppColors.spectrumPurple, lineWidth: 1.5).frame(width: 13, height: 13)
-                    .background(Circle().fill(AppColors.spectrumPurple.opacity(0.16)))
+                    .background(Circle().fill(AppColors.spectrumPurple.opacity(Opacity.discussedFill)))
+                    .overlay {
+                        if via == .session {
+                            RoundedRectangle(cornerRadius: 1, style: .continuous)
+                                .stroke(AppColors.spectrumPurple, lineWidth: 1)
+                                .frame(width: 6, height: 4)
+                        } else {
+                            Circle().fill(AppColors.spectrumPurple).frame(width: 4, height: 4)
+                        }
+                    }
             case .planning:
                 Circle().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
                     .foregroundStyle(AppColors.spectrumCyan)
                     .frame(width: 13, height: 13)
             case .didIt:
+                // Unified completion look plus the mockup's soft inner highlight
+                // (§01: an inset white core at low opacity over the spectrum fill).
                 Circle()
                     .fill(AppColors.spectrumBorder)
                     .frame(width: 14, height: 14)
+                    .overlay(
+                        Circle()
+                            .fill(Color.white.opacity(Opacity.didItInnerHighlight))
+                            .frame(width: 8, height: 8)
+                    )
             case .skipped:
                 EmptyView() // never rendered — skipped landmarks are excluded via visibleLandmarks
             }
         }
-        .overlay(isNow ? Circle().stroke(AppColors.spectrumCyan, lineWidth: 2).frame(width: 22, height: 22) : nil)
+        .overlay(isNow ? nowBeacon : nil)
+    }
+
+    /// The wayfinding anchor (spec §8) — the brightest, steadiest mark on the
+    /// trail, laid over whatever state node sits at "Now" (Now never encodes a
+    /// state of its own). A crisp cyan ring for the anchor plus a screen-blend
+    /// blurred cyan glow whose opacity breathes 0.3→0.7 — the glow breathes, not
+    /// the core (spectrum glow recipe), and never a full 0→1 (animation contract).
+    private var nowBeacon: some View {
+        ZStack {
+            Circle()
+                .stroke(AppColors.spectrumCyan, lineWidth: 3)
+                .frame(width: 26, height: 26)
+                .blur(radius: 5)
+                .blendMode(.screen)
+                .opacity(nowBreathe ? Opacity.beaconGlowHigh : Opacity.beaconGlowLow)
+                .ambientAnimation(AppAnimation.cardBreathe, value: nowBreathe)
+            Circle()
+                .stroke(AppColors.spectrumCyan, lineWidth: 2)
+                .frame(width: 24, height: 24)
+        }
+        .onAppear { nowBreathe = true }
     }
 }
 
@@ -288,9 +385,14 @@ private struct PathTrailPreviewHarness: View {
     }
 
     var body: some View {
-        PathTrailView(store: store, onSelect: { _ in })
-            .background(AppColors.void.ignoresSafeArea())
-            .task { await store.load() }
+        // Match PathScreen's real background so the preview isn't misleadingly
+        // all-black — void + the same OB atmosphere every screen root layers.
+        ZStack {
+            AppColors.void.ignoresSafeArea()
+            PathAtmosphere()
+            PathTrailView(store: store, onSelect: { _ in })
+        }
+        .task { await store.load() }
     }
 }
 

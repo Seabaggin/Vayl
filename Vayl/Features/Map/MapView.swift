@@ -160,7 +160,7 @@ struct MapView: View {
             // mode, decided in the roadmap spec as a cover.
             .vaylCover(isPresented: $showPathScreen, confirmOnExit: false) {
                 if let pathStore {
-                    PathScreen(store: pathStore)
+                    PathScreen(store: pathStore, partnerName: store.partnerName)
                 }
             }
             .onChange(of: appState.vaultOpenPending) { _, pending in

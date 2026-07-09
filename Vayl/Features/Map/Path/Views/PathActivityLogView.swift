@@ -23,10 +23,16 @@ import SwiftUI
 struct PathActivityLogView: View {
     let store: PathStore
 
+    /// The partner's display name, threaded down from MapStore via PathScreen.
+    /// Empty when it isn't reliably known (the partnerName field has no solid
+    /// prod writer yet), in which case entries by the partner read "Your partner"
+    /// rather than fabricating a name.
+    var partnerName: String = ""
+
     var body: some View {
         ZStack {
             AppColors.void.ignoresSafeArea()
-            OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+            PathAtmosphere()
 
             VStack(spacing: 0) {
                 header
@@ -102,18 +108,27 @@ struct PathActivityLogView: View {
         .padding(.vertical, AppSpacing.xs)
     }
 
+    /// "You" for this profile's own entries, else the partner's name (or the
+    /// honest "Your partner" fallback). Restores the mockup's who-did-what
+    /// attribution (§07) without depending on a name we can't always resolve.
+    private func actorName(for id: UUID) -> String {
+        if id == store.profileId { return "You" }
+        return partnerName.isEmpty ? "Your partner" : partnerName
+    }
+
     /// Plain-language, per spec §10 — never a raw enum name in the UI.
     private func description(for entry: PathActivityEntry) -> String {
+        let who = actorName(for: entry.actorId)
         let landmark = store.landmarks.first { $0.id == entry.landmarkId }?.title ?? entry.landmarkId
         switch entry.kind {
-        case .curiousShared: return "Shared \(landmark) as Curious"
-        case .discussedSession: return "Marked \(landmark) Discussed · via session"
-        case .discussedManual: return "Marked \(landmark) Discussed · noted"
-        case .planningSet: return "Marked \(landmark) Planning"
-        case .didItSet: return "Marked \(landmark) Did it"
-        case .didItDateChanged: return "Changed the date on \(landmark)"
-        case .skipped: return "Skipped \(landmark)"
-        case .restored: return "Restored \(landmark)"
+        case .curiousShared: return "\(who) shared \(landmark) as Curious"
+        case .discussedSession: return "\(who) marked \(landmark) Discussed · via session"
+        case .discussedManual: return "\(who) marked \(landmark) Discussed · noted"
+        case .planningSet: return "\(who) marked \(landmark) Planning"
+        case .didItSet: return "\(who) marked \(landmark) Did it"
+        case .didItDateChanged: return "\(who) changed the date on \(landmark)"
+        case .skipped: return "\(who) skipped \(landmark)"
+        case .restored: return "\(who) restored \(landmark)"
         }
     }
 
@@ -162,7 +177,7 @@ private struct PathActivityLogPreviewHarness: View {
     }
 
     var body: some View {
-        PathActivityLogView(store: store)
+        PathActivityLogView(store: store, partnerName: "Alex")
             .task { await store.load() }
     }
 }

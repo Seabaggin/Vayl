@@ -262,6 +262,20 @@ final class RealtimeSessionService {
             .execute()
     }
 
+    #if DEBUG
+    /// Simulator harness cleanup for repeated two-device runs. Production code
+    /// should preserve active/paused sessions for reconnect instead of clearing
+    /// them.
+    func debugAbandonOpenSessions(coupleId: UUID) async throws {
+        try await supabase
+            .from(SupabaseTable.curatedSessions)
+            .update(["status": CuratedSessionStatus.abandoned.rawValue])
+            .eq("couple_id", value: coupleId.uuidString)
+            .in("status", values: CuratedSessionStatus.openStatuses)
+            .execute()
+    }
+    #endif
+
     // MARK: Advance (server-authoritative, conditional — prevents double-advance)
 
     /// Advances only if `current_index` still equals `expectedIndex`.

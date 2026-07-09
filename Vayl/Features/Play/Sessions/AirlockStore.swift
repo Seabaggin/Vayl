@@ -280,6 +280,8 @@ final class AirlockStore {
             logger.warning("no presence signal within \(self.presenceTimeout)s — dropping to poll")
             await self.dropToPoll()
         }
+
+        await debugAutoConsentIfRequested()
     }
 
     // MARK: - UI actions (this device)
@@ -405,6 +407,23 @@ final class AirlockStore {
     func forcePollMode() async {
         timeoutTask?.cancel(); timeoutTask = nil
         await dropToPoll()
+    }
+
+    #if DEBUG
+    /// Simulator harness hook: launch both devices with
+    /// `-vaylDebugAutoAirlock` to bypass the press-and-hold gesture while still
+    /// exercising the real backend presence, consent, and active-flip path.
+    private var debugAutoAirlockEnabled: Bool {
+        CommandLine.arguments.contains("-vaylDebugAutoAirlock")
+    }
+    #endif
+
+    private func debugAutoConsentIfRequested() async {
+        #if DEBUG
+        guard debugAutoAirlockEnabled else { return }
+        logger.info("Debug auto-airlock enabled — committing local consent")
+        _ = await consent()
+        #endif
     }
 
     // MARK: - Teardown

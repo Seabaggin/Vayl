@@ -1,6 +1,11 @@
 schemaVersion: 1
 enabledWorkflows:
   - simulator
+  - ui-automation
+  - simulator-management
+  - debugging
+  - device
+  - project-discovery
 debug: true
 sentryDisabled: false
 sessionDefaults:
