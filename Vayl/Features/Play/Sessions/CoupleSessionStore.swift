@@ -452,13 +452,26 @@ final class CoupleSessionStore: Identifiable {
             guard let self, let realtime = self.realtime, let coupleId = self.appState.coupleId else { return }
             while !Task.isCancelled {
                 do {
-                    if let dto = try await realtime.heartbeatOpenSession(coupleId: coupleId, role: self.sessionRole) {
-                        if dto.id == self.remoteSessionId {
-                            self.applyRemoteRow(dto)
-                            let partnerPresentInRow = (self.sessionRole == .a) ? dto.bPresent : dto.aPresent
-                            self.partnerPresentLive = partnerPresentInRow
-                            if partnerPresentInRow { self.partnerReturned() } else { self.partnerLost() }
+                    let open = try await realtime.heartbeatOpenSession(coupleId: coupleId, role: self.sessionRole)
+                    if let dto = open, dto.id == self.remoteSessionId {
+                        self.applyRemoteRow(dto)
+                        let partnerPresentInRow = (self.sessionRole == .a) ? dto.bPresent : dto.aPresent
+                        self.partnerPresentLive = partnerPresentInRow
+                        if partnerPresentInRow { self.partnerReturned() } else { self.partnerLost() }
+                    } else if let sid = self.remoteSessionId {
+                        // Our row is no longer "open": fetchOpenSession filters to
+                        // openStatuses, so a partner-driven complete/abandoned reads
+                        // back as nil (or a different newer row). Re-fetch OUR row
+                        // by id with no status filter and mirror the terminal truth.
+                        if let row = try await realtime.fetchSession(id: sid) {
+                            self.applyRemoteRow(row)   // routes complete/abandoned
+                        } else if self.phase == .session {
+                            // A SUCCESSFUL by-id fetch with no row = the session is
+                            // gone; treat as abandoned. A thrown error never lands
+                            // here — that is just a failed tick, retried below.
+                            self.endEarly()
                         }
+                        if self.phase != .session { break }   // terminal applied — stop polling
                     }
                 } catch {
                     logger.warning("session poll tick failed: \(error.localizedDescription)")

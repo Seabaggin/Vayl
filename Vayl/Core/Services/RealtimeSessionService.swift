@@ -222,6 +222,22 @@ final class RealtimeSessionService {
         return rows.first
     }
 
+    /// Fetches one session by primary key, NO status filter — terminal rows
+    /// (complete/abandoned) return too. The in-session poll fallback uses this
+    /// to learn that the partner ended the session while realtime was down
+    /// (fetchOpenSession filters to openStatuses, so a terminal row reads nil).
+    func fetchSession(id: UUID) async throws -> CuratedSessionDTO? {
+        let rows: [CuratedSessionDTO] = try await supabase
+            .from(SupabaseTable.curatedSessions)
+            .select()
+            .eq("id", value: id.uuidString)
+            .limit(1)
+            .execute()
+            .value
+
+        return rows.first
+    }
+
     /// Convenience: the couple id this profile belongs to, if any.
     /// (Used by the debug harness to resolve a manually-seeded test couple.)
     func fetchCoupleId(forProfileId profileId: UUID) async throws -> UUID? {
