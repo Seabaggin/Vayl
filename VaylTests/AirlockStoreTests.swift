@@ -29,6 +29,13 @@ final class MockAirlockTransport: AirlockTransport {
     private(set) var heartbeatCount = 0
     /// Rows the poll loop hands back, consumed front-first; last repeats.
     var heartbeatRows: [CuratedSessionDTO] = []
+    /// When true, heartbeatOpenSession returns nil regardless of heartbeatRows
+    /// — simulates the row having fallen out of openStatuses (dead session).
+    var heartbeatReturnsNil = false
+    /// What fetchSession(id:) returns — the poll path's "is it really dead"
+    /// check when heartbeatOpenSession comes back nil.
+    var fetchSessionResult: CuratedSessionDTO?
+    private(set) var fetchSessionCount = 0
 
     private(set) var presenceContinuation: AsyncStream<PresenceDelta>.Continuation?
     private(set) var rowsContinuation: AsyncStream<CuratedSessionDTO>.Continuation?
@@ -55,8 +62,14 @@ final class MockAirlockTransport: AirlockTransport {
 
     func heartbeatOpenSession(coupleId: UUID, role: SessionRole) async throws -> CuratedSessionDTO? {
         heartbeatCount += 1
+        if heartbeatReturnsNil { return nil }
         guard !heartbeatRows.isEmpty else { return openRow }
         return heartbeatRows.count > 1 ? heartbeatRows.removeFirst() : heartbeatRows[0]
+    }
+
+    func fetchSession(id: UUID) async throws -> CuratedSessionDTO? {
+        fetchSessionCount += 1
+        return fetchSessionResult
     }
 
     func connect(coupleId: UUID, profileId: UUID, sessionId: UUID) async throws -> AirlockStreams {
@@ -281,6 +294,63 @@ final class AirlockStoreTests: XCTestCase {
         await waitUntil("poll sees partner") { store.partnerPresent }
         await waitUntil("poll sees partner leave") { !store.partnerPresent }
         XCTAssertEqual(store.state, .waitingForPartner)
+    }
+
+    // MARK: Ended (Fix A — a dead session announces itself)
+
+    func testAbandonedRowEndsSessionAndStaysSticky() async {
+        let coupleId = UUID()
+        let sessionId = UUID()
+        let mock = MockAirlockTransport()
+        mock.openRow = makeRow(id: sessionId, coupleId: coupleId)
+        let store = makeStore(mock: mock, coupleId: coupleId)
+
+        await store.start()
+        XCTAssertEqual(store.state, .waitingForPartner)
+
+        mock.rowsContinuation?.yield(makeRow(id: sessionId, coupleId: coupleId, status: .abandoned))
+        await waitUntil("ended") { store.state == .ended }
+
+        // A later presence join must not regress the sticky ended state.
+        mock.presenceContinuation?.yield(PresenceDelta(joinedIds: [UUID().uuidString], leftIds: []))
+        try? await Task.sleep(for: .milliseconds(50))
+        XCTAssertEqual(store.state, .ended, "ended must be sticky like activating/active/failed")
+    }
+
+    func testPollDetectsDeadSessionViaFetchSessionAndStops() async {
+        let coupleId = UUID()
+        let sessionId = UUID()
+        let mock = MockAirlockTransport()
+        mock.openRow = makeRow(id: sessionId, coupleId: coupleId)
+        mock.connectError = MockAirlockTransport.MockError()
+        // Once in poll mode, the row has fallen out of openStatuses.
+        mock.heartbeatReturnsNil = true
+        mock.fetchSessionResult = makeRow(id: sessionId, coupleId: coupleId, status: .abandoned)
+        let store = makeStore(mock: mock, coupleId: coupleId)
+
+        await store.start()
+        XCTAssertEqual(store.transport, .poll)
+        await waitUntil("poll notices the dead session") { store.state == .ended }
+        XCTAssertGreaterThanOrEqual(mock.fetchSessionCount, 1)
+
+        // The loop must actually stop — no further heartbeats after ended.
+        let countAtEnded = mock.heartbeatCount
+        try? await Task.sleep(for: .milliseconds(60))
+        XCTAssertEqual(mock.heartbeatCount, countAtEnded, "poll loop must break once ended")
+    }
+
+    func testPollTreatsMissingRowAsEnded() async {
+        let coupleId = UUID()
+        let sessionId = UUID()
+        let mock = MockAirlockTransport()
+        mock.openRow = makeRow(id: sessionId, coupleId: coupleId)
+        mock.connectError = MockAirlockTransport.MockError()
+        mock.heartbeatReturnsNil = true
+        mock.fetchSessionResult = nil   // row genuinely gone
+        let store = makeStore(mock: mock, coupleId: coupleId)
+
+        await store.start()
+        await waitUntil("missing row reads as ended") { store.state == .ended }
     }
 
     func testConsentFailureReportsAndDoesNotAdvance() async {

@@ -38,6 +38,10 @@ protocol AirlockTransport: AnyObject {
     func setPresence(sessionId: UUID, role: SessionRole, present: Bool) async throws
     func flipToActiveIfBoth(sessionId: UUID) async throws -> Bool
     func heartbeatOpenSession(coupleId: UUID, role: SessionRole) async throws -> CuratedSessionDTO?
+    /// Fetches one row by id, NO status filter — a terminal (abandoned/complete)
+    /// row still returns. The poll path uses this to notice a dead session when
+    /// heartbeatOpenSession comes back nil (the row fell out of openStatuses).
+    func fetchSession(id: UUID) async throws -> CuratedSessionDTO?
     /// Subscribes the channel and returns the live streams. Throws on
     /// subscribe failure (the store falls back to polling).
     func connect(coupleId: UUID, profileId: UUID, sessionId: UUID) async throws -> AirlockStreams
@@ -86,6 +90,10 @@ final class LiveAirlockTransport: AirlockTransport {
         try await service.heartbeatOpenSession(coupleId: coupleId, role: role)
     }
 
+    func fetchSession(id: UUID) async throws -> CuratedSessionDTO? {
+        try await service.fetchSession(id: id)
+    }
+
     func connect(coupleId: UUID, profileId: UUID, sessionId: UUID) async throws -> AirlockStreams {
         let channel = service.sessionChannel(coupleId: coupleId, userId: profileId)
         self.channel = channel
@@ -115,6 +123,10 @@ enum AirlockState: Equatable {
     case activating
     case active(sessionId: UUID)
     case failed(reason: String)
+    /// The row died before going active (abandoned/complete via realtime, or
+    /// terminal/missing via poll). Sticky, like activating/active/failed — the
+    /// container swaps to a calm "this session ended" screen and stops polling.
+    case ended
 }
 
 // MARK: - AirlockStore
@@ -310,7 +322,7 @@ final class AirlockStore {
     /// failed are sticky and never regress from here.
     private func recomputeLadder() {
         switch state {
-        case .activating, .active, .failed: return
+        case .activating, .active, .failed, .ended: return
         default: break
         }
         if selfConsented {
@@ -338,6 +350,9 @@ final class AirlockStore {
 
         if row.status == CuratedSessionStatus.active.rawValue {
             state = .active(sessionId: row.id)
+        } else if row.status == CuratedSessionStatus.abandoned.rawValue
+                    || row.status == CuratedSessionStatus.complete.rawValue {
+            state = .ended
         } else {
             recomputeLadder()
         }
@@ -351,6 +366,7 @@ final class AirlockStore {
     private func tryFlipToActive() async {
         if case .active = state { return }
         if case .failed = state { return }
+        if case .ended = state { return }
         guard let sessionId = session?.id else { return }
         guard partnerPresent, selfConsented, partnerConsented, !didRequestFlip else { return }
         didRequestFlip = true
@@ -394,6 +410,19 @@ final class AirlockStore {
                         self.applyRow(row)
                         await self.tryFlipToActive()
                         if case .active = self.state { break }
+                        if case .ended = self.state { break }
+                    } else if let sessionId = self.session?.id {
+                        // heartbeatOpenSession filters to openStatuses, so nil
+                        // here means either the row went terminal or vanished
+                        // — either way the session is dead, not merely absent.
+                        let stillThere = try await self.transportLayer.fetchSession(id: sessionId)
+                        if stillThere == nil
+                            || stillThere?.status == CuratedSessionStatus.abandoned.rawValue
+                            || stillThere?.status == CuratedSessionStatus.complete.rawValue {
+                            logger.info("poll: session ended (terminal or missing)")
+                            self.state = .ended
+                            break
+                        }
                     }
                 } catch {
                     logger.warning("poll tick failed: \(error.localizedDescription)")
@@ -407,6 +436,30 @@ final class AirlockStore {
     func forcePollMode() async {
         timeoutTask?.cancel(); timeoutTask = nil
         await dropToPoll()
+    }
+
+    // MARK: - Scene phase recovery
+
+    /// iOS drops the realtime websocket on background, and the one-shot
+    /// presence timeout has long since fired by the time we return — so simply
+    /// waiting never recovers. Called when the container sees `scenePhase`
+    /// return to `.active` while still in the airlock: tears down whatever
+    /// tasks/transport are live and re-runs `start()` from scratch. A no-op
+    /// once the handshake reached a sticky state (activating/active/failed/
+    /// ended) — there is nothing left to recover. Does NOT touch
+    /// `selfConsented`: our own commit already landed on the row.
+    func handleScenePhaseActive() async {
+        switch state {
+        case .activating, .active, .failed, .ended: return
+        default: break
+        }
+        presenceTask?.cancel(); presenceTask = nil
+        rowsTask?.cancel(); rowsTask = nil
+        timeoutTask?.cancel(); timeoutTask = nil
+        pollTask?.cancel(); pollTask = nil
+        await transportLayer.disconnect()
+        sawAnySignal = false
+        await start()
     }
 
     #if DEBUG

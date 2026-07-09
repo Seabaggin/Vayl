@@ -61,14 +61,24 @@ struct CardSessionContainerView: View {
             await built.resumeIfNeeded()
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { store?.handleScenePhaseActive() }
+            if phase == .active {
+                store?.handleScenePhaseActive()
+                // The realtime websocket drops in background; the airlock's
+                // one-shot presence timeout has already fired by the time we
+                // come back, so it needs its own recovery (Fix B).
+                if store?.phase == .airlock, let airlock {
+                    Task { await airlock.handleScenePhaseActive() }
+                }
+            }
         }
         .onDisappear {
             // Leaving BEFORE the session went active means the handshake will
             // never finish — abandon the row so the partner's device sees the
             // end instead of a zombie lobby (a mid-session exit keeps the row
-            // open on purpose: that's the reconnect path).
-            if store?.phase == .airlock {
+            // open on purpose: that's the reconnect path). Skip this when the
+            // row is already terminal (airlock state .ended) — re-abandoning
+            // an already-dead row is a no-op write we don't need.
+            if store?.phase == .airlock, airlock?.state != .ended {
                 store?.abandonRemoteSession()
             }
             airlock?.leave()
@@ -91,6 +101,7 @@ private struct CoupleSessionFlow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var transitionBreathe = false
+    @State private var endedOkayPressed = false
 
     var body: some View {
         ZStack {
@@ -131,6 +142,8 @@ private struct CoupleSessionFlow: View {
                         airlock.leave()                   // hand the channel to the coordinator
                         store.airlockDidActivate()
                     }
+                case .ended:
+                    endedBeat.transition(.opacity)
                 }
             } else {
                 AirlockView(store: store, airlock: nil).transition(.opacity)   // DEBUG local
@@ -169,6 +182,48 @@ private struct CoupleSessionFlow: View {
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { transitionBreathe = true }
+    }
+
+    // MARK: - Ended beat (the row died before going active)
+
+    private var endedBeat: some View {
+        VStack(spacing: AppSpacing.lg) {
+            Spacer()
+            VStack(spacing: AppSpacing.sm) {
+                Text("Looks like this session ended")
+                    .font(AppFonts.screenTitle)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .multilineTextAlignment(.center)
+                Text("You can set up a new one anytime.")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            Spacer()
+            Text("Okay")
+                .font(AppFonts.buttonLabel)
+                .foregroundStyle(AppColors.textPrimary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.md)
+                .background(
+                    RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                        .strokeBorder(AppColors.borderDefault, lineWidth: 1)
+                )
+                .scaleEffect(endedOkayPressed ? 0.96 : 1.0)
+                .sensoryFeedback(.impact(weight: .light), trigger: endedOkayPressed)
+                .onTapGesture {
+                    endedOkayPressed = true
+                    vaylDismiss(confirm: false)
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .seconds(0.12))
+                        endedOkayPressed = false
+                    }
+                }
+                .accessibilityLabel("Okay, dismiss ended session")
+        }
+        .padding(.horizontal, AppSpacing.lg)
+        .padding(.bottom, AppSpacing.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Done beat
