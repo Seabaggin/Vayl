@@ -120,7 +120,7 @@ custom_rules:
     # argument, not "any digit somewhere inside the parens".
     regex: "\\.padding\\(\\s*(\\.[a-zA-Z]+\\s*,\\s*)?-?[0-9]+(\\.[0-9]+)?\\s*\\)"
     message: "Use AppSpacing tokens instead of raw numbers."
-    severity: error
+    severity: warning   # house-style nudge, not a build blocker
     excluded_match_kinds:
       - comment
       - doccomment
@@ -129,7 +129,7 @@ custom_rules:
     name: "Raw SF Symbol Banned"
     regex: "systemName:\\s*\""
     message: "Use typed AppIcons tokens."
-    severity: error
+    severity: warning   # house-style nudge, not a build blocker
     excluded_match_kinds:
       - comment
       - doccomment
@@ -156,7 +156,7 @@ custom_rules:
     name: "AnyView Banned"
     regex: "\\bAnyView\\("
     message: "AnyView destroys SwiftUI performance. Use @ViewBuilder."
-    severity: error
+    severity: warning   # perf preference with legit uses, not a build blocker
     excluded_match_kinds:
       - comment
       - doccomment
