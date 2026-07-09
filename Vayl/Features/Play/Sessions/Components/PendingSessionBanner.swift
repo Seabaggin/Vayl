@@ -77,6 +77,7 @@ struct ResumeSessionBanner: View {
     let onEnd: () -> Void
 
     @State private var isPressed = false
+    @State private var isEndPressed = false
     @State private var showEndConfirm = false
 
     var body: some View {
@@ -109,6 +110,7 @@ struct ResumeSessionBanner: View {
             .accessibilityLabel("Resume session")
 
             Button {
+                isEndPressed = true
                 showEndConfirm = true
             } label: {
                 Text("End it")
@@ -116,6 +118,8 @@ struct ResumeSessionBanner: View {
                     .foregroundStyle(AppColors.textTertiary)
             }
             .buttonStyle(.plain)
+            .scaleEffect(isEndPressed ? 0.96 : 1.0)
+            .sensoryFeedback(.impact(weight: .light), trigger: isEndPressed)
             .accessibilityLabel("End it")
         }
         .padding(AppSpacing.md)
@@ -136,6 +140,9 @@ struct ResumeSessionBanner: View {
         ) {
             Button("End it", role: .destructive) { onEnd() }
             Button("Keep it", role: .cancel) {}
+        }
+        .onChange(of: showEndConfirm) { _, isShowing in
+            if !isShowing { isEndPressed = false }
         }
     }
 }
