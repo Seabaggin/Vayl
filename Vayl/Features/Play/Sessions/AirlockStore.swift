@@ -226,10 +226,22 @@ final class AirlockStore {
     // MARK: - Entry
 
     /// The row is opened by the Builder/Lobby BEFORE the airlock (spec §5
-    /// lifecycle) — the airlock only ever fetches. No open row = failed.
+    /// lifecycle) — the airlock only ever fetches. No open row = failed on a
+    /// true first entry; on a restart (we already knew a session id) it means
+    /// the row went terminal while we were away → ended, not failed.
     func start() async {
         do {
             guard let row = try await transportLayer.fetchOpenSession(coupleId: coupleId) else {
+                if let knownId = session?.id {
+                    let row = try? await transportLayer.fetchSession(id: knownId)
+                    if row == nil
+                        || row?.status == CuratedSessionStatus.abandoned.rawValue
+                        || row?.status == CuratedSessionStatus.complete.rawValue {
+                        logger.info("start: known session went terminal or missing — ended")
+                        state = .ended
+                        return
+                    }
+                }
                 state = .failed(reason: "No open session for this couple.")
                 return
             }

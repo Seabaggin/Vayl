@@ -339,6 +339,28 @@ final class AirlockStoreTests: XCTestCase {
         XCTAssertEqual(mock.heartbeatCount, countAtEnded, "poll loop must break once ended")
     }
 
+    func testRestartWithTerminalRowEndsInsteadOfFailing() async {
+        // Scene-phase restart: the first run knew a session id; while we were
+        // backgrounded the row went terminal, so fetchOpenSession now reads
+        // nil. That is "the session ended", not a failed-lobby.
+        let coupleId = UUID()
+        let sessionId = UUID()
+        let mock = MockAirlockTransport()
+        mock.openRow = makeRow(id: sessionId, coupleId: coupleId)
+        let store = makeStore(mock: mock, coupleId: coupleId)
+
+        await store.start()
+        XCTAssertEqual(store.state, .waitingForPartner)
+
+        // The row goes terminal while backgrounded.
+        mock.openRow = nil
+        mock.fetchSessionResult = makeRow(id: sessionId, coupleId: coupleId, status: .abandoned)
+
+        await store.handleScenePhaseActive()
+        XCTAssertEqual(store.state, .ended, "a known session gone terminal must read ended, not failed")
+        XCTAssertGreaterThanOrEqual(mock.fetchSessionCount, 1)
+    }
+
     func testPollTreatsMissingRowAsEnded() async {
         let coupleId = UUID()
         let sessionId = UUID()
