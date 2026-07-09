@@ -54,6 +54,7 @@
 		AA00000WAAAA000000000001 /* EntitlementStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000WAAAA000000000002 /* EntitlementStoreTests.swift */; };
 		AA00000XAAAA000000000001 /* PulseStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000XAAAA000000000002 /* PulseStoreTests.swift */; };
 		AA00000YAAAA000000000001 /* SessionEntryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000YAAAA000000000002 /* SessionEntryStoreTests.swift */; };
+		AA00000ZAAAA000000000001 /* SyncRoundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000ZAAAA000000000002 /* SyncRoundTests.swift */; };
 		EC2BBA430B5D473898E20D6A /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 7C3C13ECAFB04A2E962CB6BB /* Sentry */; };
 /* End PBXBuildFile section */
 
@@ -119,6 +120,7 @@
 		AA00000WAAAA000000000002 /* EntitlementStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementStoreTests.swift; sourceTree = "<group>"; };
 		AA00000XAAAA000000000002 /* PulseStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseStoreTests.swift; sourceTree = "<group>"; };
 		AA00000YAAAA000000000002 /* SessionEntryStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionEntryStoreTests.swift; sourceTree = "<group>"; };
+		AA00000ZAAAA000000000002 /* SyncRoundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncRoundTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -245,6 +247,7 @@
 				AA00000WAAAA000000000002 /* EntitlementStoreTests.swift */,
 				AA00000XAAAA000000000002 /* PulseStoreTests.swift */,
 				AA00000YAAAA000000000002 /* SessionEntryStoreTests.swift */,
+				AA00000ZAAAA000000000002 /* SyncRoundTests.swift */,
 			);
 			path = VaylTests;
 			sourceTree = "<group>";
@@ -487,6 +490,7 @@
 				AA00000WAAAA000000000001 /* EntitlementStoreTests.swift in Sources */,
 				AA00000XAAAA000000000001 /* PulseStoreTests.swift in Sources */,
 				AA00000YAAAA000000000001 /* SessionEntryStoreTests.swift in Sources */,
+				AA00000ZAAAA000000000001 /* SyncRoundTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
