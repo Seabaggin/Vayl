@@ -344,6 +344,24 @@ final class CoupleSessionStore: Identifiable {
     private(set) var timerStartedAtRaw: String?
     /// Highest row index applied; the forward-only guard.
     private var confirmedIndex = 0
+
+    // MARK: - Poll fallback (mirrors AirlockStore's self-healing — spec 2026-07-09 §1.5)
+
+    /// Live transport mode. Flips to `.poll` on subscribe failure or a dead
+    /// initial window (no signal within the watchdog); flips back to
+    /// `.realtime` the moment a real stream signal arrives while polling.
+    private(set) var transport: Transport = .realtime
+    enum Transport: String { case realtime, poll }
+    /// 🎚️ Poll heartbeat interval in seconds — matches AirlockStore's fallback cadence.
+    private let sessionPollInterval: TimeInterval = 2.5
+    /// 🎚️ Seconds with no row/presence signal after (re)subscribe before assuming
+    /// the channel is dead. Covers only the initial window, never ongoing
+    /// mid-session silence (silence is normal between advances).
+    private let sessionWatchdogTimeout: TimeInterval = 10
+    private var pollTask: Task<Void, Never>?
+    private var watchdogTask: Task<Void, Never>?
+    /// Any row or presence signal proves the pipe is live; clears the watchdog.
+    private var sawAnySignalSinceSubscribe = false
     /// ONE engine serves all five reveal mechanics (Section 3). Built at init
     /// with a nil transport (pure-local path: compose/seal render, bothSealed
     /// never fires); startRemoteSync attaches the real wire adapter.
@@ -359,9 +377,13 @@ final class CoupleSessionStore: Identifiable {
             service: realtime, coupleId: coupleId, userId: userId, sessionId: sid
         )
         self.coordinator = coordinator
-        coordinator.onRowUpdate = { [weak self] dto in self?.applyRemoteRow(dto) }
+        coordinator.onRowUpdate = { [weak self] dto in
+            self?.registerLiveSignal()
+            self?.applyRemoteRow(dto)
+        }
         coordinator.onPresence = { [weak self] present in
             guard let self, let me = self.localProfileId else { return }
+            self.registerLiveSignal()
             let partnerHere = present.contains { $0 != me.uuidString }
             self.partnerPresentLive = partnerHere
             partnerHere ? self.partnerReturned() : self.partnerLost()
@@ -371,6 +393,10 @@ final class CoupleSessionStore: Identifiable {
         }
         coordinator.onResendRequest = { [weak self] cardId in
             self?.receiveRevealResendRequest(cardId: cardId)
+        }
+        coordinator.onSubscribeFailed = { [weak self] reason in
+            logger.warning("session channel subscribe failed, dropping to poll: \(reason)")
+            self?.startPollFallback()
         }
         let adapter = RevealTransportAdapter(
             realtime: realtime,
@@ -382,6 +408,64 @@ final class CoupleSessionStore: Identifiable {
         revealEngine.attachTransport(adapter)
         coordinator.start()
         isLive = true
+        armWatchdog()
+    }
+
+    /// A real row/presence callback fired — the pipe is alive. Cancels the
+    /// watchdog's countdown and, if we'd already dropped to poll, recovers
+    /// back to realtime (the coordinator reconnected on its own).
+    private func registerLiveSignal() {
+        sawAnySignalSinceSubscribe = true
+        if transport == .poll {
+            logger.info("realtime signal received while polling — recovering to realtime")
+            pollTask?.cancel()
+            pollTask = nil
+            transport = .realtime
+        }
+    }
+
+    /// No row/presence signal within the watchdog window after (re)subscribe:
+    /// assume the channel is dead and start the poll fallback. Only ever fires
+    /// for the initial post-subscribe window — ongoing mid-session silence
+    /// (nobody advancing) is expected and never trips this.
+    private func armWatchdog() {
+        watchdogTask?.cancel()
+        sawAnySignalSinceSubscribe = false
+        watchdogTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(for: .seconds(self.sessionWatchdogTimeout))
+            guard !Task.isCancelled, !self.sawAnySignalSinceSubscribe, self.transport == .realtime else { return }
+            logger.warning("no session signal within \(self.sessionWatchdogTimeout)s — dropping to poll")
+            self.startPollFallback()
+        }
+    }
+
+    /// Every sessionPollInterval seconds: heartbeat (writes our presence +
+    /// re-reads the row) and mirror the result in, exactly like AirlockStore's
+    /// poll loop. The row is server-authoritative and fully reconstructable
+    /// (spec §5), so this is a complete substitute for the dead stream.
+    private func startPollFallback() {
+        guard transport != .poll else { return }
+        transport = .poll
+        pollTask?.cancel()
+        pollTask = Task { @MainActor [weak self] in
+            guard let self, let realtime = self.realtime, let coupleId = self.appState.coupleId else { return }
+            while !Task.isCancelled {
+                do {
+                    if let dto = try await realtime.heartbeatOpenSession(coupleId: coupleId, role: self.sessionRole) {
+                        if dto.id == self.remoteSessionId {
+                            self.applyRemoteRow(dto)
+                            let partnerPresentInRow = (self.sessionRole == .a) ? dto.bPresent : dto.aPresent
+                            self.partnerPresentLive = partnerPresentInRow
+                            if partnerPresentInRow { self.partnerReturned() } else { self.partnerLost() }
+                        }
+                    }
+                } catch {
+                    logger.warning("session poll tick failed: \(error.localizedDescription)")
+                }
+                try? await Task.sleep(for: .seconds(self.sessionPollInterval))
+            }
+        }
     }
 
     /// The partner asked for a re-send: the engine answers by re-broadcasting
@@ -397,8 +481,12 @@ final class CoupleSessionStore: Identifiable {
     /// the session isn't live or isn't remote-synced.
     func handleScenePhaseActive() {
         guard isLive, let coordinator else { return }
+        pollTask?.cancel()
+        pollTask = nil
+        transport = .realtime
         coordinator.stop()
         coordinator.start()
+        armWatchdog()
     }
 
     func teardown() {
@@ -407,6 +495,10 @@ final class CoupleSessionStore: Identifiable {
         revealEngine.teardown()
         graceTask?.cancel()
         timerTask?.cancel()
+        pollTask?.cancel()
+        pollTask = nil
+        watchdogTask?.cancel()
+        watchdogTask = nil
     }
 
     /// Mirror the authoritative row. Index only ever moves forward.
