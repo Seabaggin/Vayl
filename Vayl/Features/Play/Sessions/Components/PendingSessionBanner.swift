@@ -64,6 +64,82 @@ struct PendingSessionBanner: View {
     }
 }
 
+/// "Pick your session back up." Same visual language as the invite banner, but
+/// no dismiss-X — the only exits are Resume (tap body) or End it (confirmed).
+/// A user who wants the row gone must end it; there is no way to bury it and
+/// still leave the couple's DB row open.
+struct ResumeSessionBanner: View {
+
+    let deckTitle: String
+    let cardPosition: Int
+    let cardCount: Int
+    let onResume: () -> Void
+    let onEnd: () -> Void
+
+    @State private var isPressed = false
+    @State private var showEndConfirm = false
+
+    var body: some View {
+        HStack(spacing: AppSpacing.md) {
+            HStack(spacing: AppSpacing.md) {
+                Circle()
+                    .fill(AppColors.spectrumBorder)
+                    .frame(width: 8, height: 8)
+
+                VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                    Text("Pick your session back up")
+                        .font(AppFonts.bodyMedium)
+                        .foregroundStyle(AppColors.textBody)
+                    Text("\(deckTitle) · card \(cardPosition) of \(cardCount)")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { onResume() }
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in isPressed = true }
+                    .onEnded { _ in isPressed = false }
+            )
+            .accessibilityElement(children: .ignore)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityLabel("Resume session")
+
+            Button {
+                showEndConfirm = true
+            } label: {
+                Text("End it")
+                    .font(AppFonts.buttonLabelSmall)
+                    .foregroundStyle(AppColors.textTertiary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("End it")
+        }
+        .padding(AppSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
+                .fill(AppColors.cardBg)
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
+                        .strokeBorder(AppColors.spectrumBorder.opacity(0.5), lineWidth: 1)
+                )
+        )
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .sensoryFeedback(.impact(weight: .light), trigger: isPressed)
+        .confirmationDialog(
+            "End this session?",
+            isPresented: $showEndConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("End it", role: .destructive) { onEnd() }
+            Button("Keep it", role: .cancel) {}
+        }
+    }
+}
+
 #Preview("Pending session banner") {
     ZStack {
         AppColors.void.ignoresSafeArea()
@@ -72,6 +148,21 @@ struct PendingSessionBanner: View {
             deckTitle: "The Opener",
             onJoin: {},
             onDismiss: {}
+        )
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Resume session banner") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        ResumeSessionBanner(
+            deckTitle: "The Opener",
+            cardPosition: 3,
+            cardCount: 8,
+            onResume: {},
+            onEnd: {}
         )
         .padding(AppSpacing.lg)
     }

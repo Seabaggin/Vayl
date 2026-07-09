@@ -25,11 +25,17 @@ private final class FakeSessionEntryRealtime: SessionEntryRealtime {
     var openRow: CuratedSessionDTO?
     var fetchError: Error?
     private(set) var fetchCount = 0
+    private(set) var setStatusCalls: [(id: UUID, status: CuratedSessionStatus)] = []
 
     func fetchOpenSession(coupleId: UUID) async throws -> CuratedSessionDTO? {
         fetchCount += 1
         if let fetchError { throw fetchError }
         return openRow
+    }
+
+    func setStatus(sessionId: UUID, status: CuratedSessionStatus) async throws {
+        setStatusCalls.append((sessionId, status))
+        if openRow?.id == sessionId { openRow = nil }
     }
 }
 
@@ -42,7 +48,9 @@ private func makeRow(
     deckId: String = "the-opener",
     status: CuratedSessionStatus = .lobby,
     cardIds: [String] = ["opener-01", "opener-02"],
-    createdAt: Date = Date()
+    currentIndex: Int = 0,
+    createdAt: Date = Date(),
+    updatedAt: Date? = nil
 ) -> CuratedSessionDTO {
     let iso = ISO8601DateFormatter()
     return CuratedSessionDTO(
@@ -55,7 +63,7 @@ private func makeRow(
         perCardTimer: [:],
         globalTimerSeconds: nil,
         status: status.rawValue,
-        currentIndex: 0,
+        currentIndex: currentIndex,
         aPresent: false,
         bPresent: false,
         aBandwidth: nil,
@@ -65,7 +73,7 @@ private func makeRow(
         timerStartedAt: nil,
         revealState: [:],
         createdAt: iso.string(from: createdAt),
-        updatedAt: iso.string(from: createdAt)
+        updatedAt: iso.string(from: updatedAt ?? createdAt)
     )
 }
 
@@ -173,17 +181,52 @@ final class SessionEntryStoreTests: XCTestCase {
         XCTAssertNil(store.pendingSession, "a self-initiated row is never a banner — I already know about it")
     }
 
-    func test_refresh_ignoresActiveRows_reconnectIsTheCoversJob() async {
+    // MARK: refresh() — resumable (active/paused) rows
+
+    func test_refresh_activeRow_isResumable_evenForTheInitiator() async {
+        let (container, appState, myProfileId, coupleId) = makeContext()
+        let realtime = FakeSessionEntryRealtime()
+        realtime.openRow = makeRow(
+            coupleId: coupleId, initiatorId: myProfileId, status: .active,
+            cardIds: ["opener-01", "opener-02", "opener-03"], currentIndex: 1
+        )
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+
+        store.refresh()
+        await waitUntil("pendingSession never set") { store.pendingSession != nil }
+
+        XCTAssertEqual(store.pendingSession?.kind, .resume, "an active row is resumable regardless of who initiated it")
+        XCTAssertEqual(store.pendingSession?.cardPosition, 2)
+        XCTAssertEqual(store.pendingSession?.cardCount, 3)
+    }
+
+    func test_refresh_pausedRow_isResumable() async {
         let (container, appState, _, coupleId) = makeContext()
         let realtime = FakeSessionEntryRealtime()
-        realtime.openRow = makeRow(coupleId: coupleId, initiatorId: UUID(), status: .active)
+        realtime.openRow = makeRow(coupleId: coupleId, initiatorId: UUID(), status: .paused)
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+
+        store.refresh()
+        await waitUntil("pendingSession never set") { store.pendingSession != nil }
+
+        XCTAssertEqual(store.pendingSession?.kind, .resume)
+    }
+
+    func test_refresh_staleActiveRow_isAutoAbandoned_andNotSurfaced() async {
+        let (container, appState, _, coupleId) = makeContext()
+        let realtime = FakeSessionEntryRealtime()
+        let old = Date().addingTimeInterval(-13 * 3600)   // > 12h pendingMaxAgeHours
+        let row = makeRow(coupleId: coupleId, initiatorId: UUID(), status: .active, updatedAt: old)
+        realtime.openRow = row
         let store = makeStore(container: container, appState: appState, realtime: realtime)
 
         store.refresh()
         await waitUntil("fetch never completed") { realtime.fetchCount > 0 }
-        try? await Task.sleep(for: .milliseconds(30))
+        await waitUntil("setStatus never called", timeout: 2) { !realtime.setStatusCalls.isEmpty }
 
-        XCTAssertNil(store.pendingSession, "active/paused rows are CoupleSessionStore.resumeIfNeeded's job, not a banner")
+        XCTAssertNil(store.pendingSession, "a stale open row is auto-abandoned, never surfaced")
+        XCTAssertEqual(realtime.setStatusCalls.first?.id, row.id)
+        XCTAssertEqual(realtime.setStatusCalls.first?.status, .abandoned)
     }
 
     func test_refresh_ignoresStaleRows_olderThanMaxAge() async {
@@ -252,5 +295,70 @@ final class SessionEntryStoreTests: XCTestCase {
 
         store.accept()
         XCTAssertNil(store.acceptedLaunch)
+    }
+
+    // MARK: resume()
+
+    func test_resume_buildsLaunch_fromAnActiveRow() async {
+        let (container, appState, myProfileId, coupleId) = makeContext()
+        let realtime = FakeSessionEntryRealtime()
+        realtime.openRow = makeRow(
+            coupleId: coupleId, initiatorId: myProfileId, status: .active,
+            cardIds: ["opener-01", "opener-02"]
+        )
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+
+        store.refresh()
+        await waitUntil("pendingSession never set") { store.pendingSession?.kind == .resume }
+
+        store.resume()
+        await waitUntil("acceptedLaunch never set") { store.acceptedLaunch != nil }
+
+        let launch = store.acceptedLaunch!
+        XCTAssertEqual(launch.entry, .initiator, "I initiated this row myself")
+        XCTAssertEqual(launch.role, .a)
+        XCTAssertEqual(launch.hand.map(\.id), ["opener-01", "opener-02"])
+        XCTAssertNil(store.pendingSession)
+    }
+
+    func test_resume_revalidatesAgainstServer_rowGoneClearsPending_noLaunch() async {
+        let (container, appState, _, coupleId) = makeContext()
+        let realtime = FakeSessionEntryRealtime()
+        realtime.openRow = makeRow(coupleId: coupleId, initiatorId: UUID(), status: .paused)
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+
+        store.refresh()
+        await waitUntil("pendingSession never set") { store.pendingSession?.kind == .resume }
+
+        // The row vanished server-side between refresh and the resume tap
+        // (e.g. the other partner ended it from their device).
+        realtime.openRow = nil
+
+        store.resume()
+        await waitUntil("fetch never re-ran") { realtime.fetchCount > 1 }
+        try? await Task.sleep(for: .milliseconds(30))
+
+        XCTAssertNil(store.acceptedLaunch, "a vanished row must never produce a launch")
+        XCTAssertNil(store.pendingSession, "the dead banner is cleared")
+    }
+
+    // MARK: endResumable()
+
+    func test_endResumable_setsAbandoned_andClearsPending() async {
+        let (container, appState, _, coupleId) = makeContext()
+        let realtime = FakeSessionEntryRealtime()
+        let row = makeRow(coupleId: coupleId, initiatorId: UUID(), status: .active)
+        realtime.openRow = row
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+
+        store.refresh()
+        await waitUntil("pendingSession never set") { store.pendingSession?.kind == .resume }
+
+        store.endResumable()
+        XCTAssertNil(store.pendingSession)
+
+        await waitUntil("setStatus never called") { !realtime.setStatusCalls.isEmpty }
+        XCTAssertEqual(realtime.setStatusCalls.first?.id, row.id)
+        XCTAssertEqual(realtime.setStatusCalls.first?.status, .abandoned)
     }
 }

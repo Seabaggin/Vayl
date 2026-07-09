@@ -23,6 +23,7 @@ private let logger = Logger(subsystem: "com.vayl.app", category: "SessionEntrySt
 // method — same pattern as AirlockTransport/LiveAirlockTransport.
 protocol SessionEntryRealtime: AnyObject {
     func fetchOpenSession(coupleId: UUID) async throws -> CuratedSessionDTO?
+    func setStatus(sessionId: UUID, status: CuratedSessionStatus) async throws
 }
 
 extension RealtimeSessionService: SessionEntryRealtime {}
@@ -31,10 +32,15 @@ extension RealtimeSessionService: SessionEntryRealtime {}
 @MainActor
 final class SessionEntryStore {
 
+    enum Kind: Equatable { case invite, resume }
+
     struct Pending: Identifiable, Equatable {
         let id: UUID
+        let kind: Kind
         let initiatorName: String
         let deckTitle: String
+        let cardPosition: Int      // 1-based "card N of M" — invite kind ignores this
+        let cardCount: Int
         let dto: CuratedSessionDTO
         static func == (l: Pending, r: Pending) -> Bool { l.id == r.id }
     }
@@ -81,15 +87,41 @@ final class SessionEntryStore {
         guard let coupleId = appState.coupleId else { pendingSession = nil; return }
         Task { @MainActor in
             do {
-                guard let dto = try await realtime.fetchOpenSession(coupleId: coupleId),
-                      isJoinablePending(dto)
-                else { pendingSession = nil; return }
+                guard let dto = try await realtime.fetchOpenSession(coupleId: coupleId) else {
+                    pendingSession = nil
+                    return
+                }
+                if isStale(dto) {
+                    // Walked away from and never came back — reclaim the row so
+                    // the couple isn't blocked from starting anything new.
+                    try? await realtime.setStatus(sessionId: dto.id, status: .abandoned)
+                    pendingSession = nil
+                    return
+                }
+                if isResumableRow(dto) {
+                    let title = (try? catalog.loadSummaries())?
+                        .first { $0.id == dto.deckId }?.title ?? dto.deckId
+                    pendingSession = Pending(
+                        id: dto.id,
+                        kind: .resume,
+                        initiatorName: partnerName() ?? "Your partner",
+                        deckTitle: title,
+                        cardPosition: dto.currentIndex + 1,
+                        cardCount: dto.cardIds.count,
+                        dto: dto
+                    )
+                    return
+                }
+                guard isJoinablePending(dto) else { pendingSession = nil; return }
                 let title = (try? catalog.loadSummaries())?
                     .first { $0.id == dto.deckId }?.title ?? dto.deckId
                 pendingSession = Pending(
                     id: dto.id,
+                    kind: .invite,
                     initiatorName: partnerName() ?? "Your partner",
                     deckTitle: title,
+                    cardPosition: dto.currentIndex + 1,
+                    cardCount: dto.cardIds.count,
                     dto: dto
                 )
             } catch {
@@ -107,12 +139,23 @@ final class SessionEntryStore {
               dto.initiatorId != localProfileId(),
               dto.id != dismissedSessionId
         else { return false }
-        if let created = Self.isoFractional.date(from: dto.createdAt)
-                ?? Self.isoPlain.date(from: dto.createdAt),
-           Date().timeIntervalSince(created) > pendingMaxAgeHours * 3600 {
-            return false
-        }
         return true
+    }
+
+    /// An interrupted session (active/paused) is resumable by EITHER partner —
+    /// no initiator check, unlike the invite path.
+    private func isResumableRow(_ dto: CuratedSessionDTO) -> Bool {
+        dto.status == CuratedSessionStatus.active.rawValue
+            || dto.status == CuratedSessionStatus.paused.rawValue
+    }
+
+    /// Age basis: updatedAt (last touch) for active/paused rows, createdAt
+    /// (freshness of the invite itself) for lobby/airlock rows.
+    private func isStale(_ dto: CuratedSessionDTO) -> Bool {
+        let basis = isResumableRow(dto) ? dto.updatedAt : dto.createdAt
+        guard let date = Self.isoFractional.date(from: basis) ?? Self.isoPlain.date(from: basis)
+        else { return false }
+        return Date().timeIntervalSince(date) > pendingMaxAgeHours * 3600
     }
 
     private static let isoFractional: ISO8601DateFormatter = {
@@ -126,7 +169,9 @@ final class SessionEntryStore {
     /// session the initiator has since cancelled; entering a dead lobby would
     /// strand the joiner at "waiting" forever.
     func accept() {
-        guard let pending = pendingSession, let coupleId = appState.coupleId else { return }
+        guard let pending = pendingSession, pending.kind == .invite,
+              let coupleId = appState.coupleId
+        else { return }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         Task { @MainActor in
             guard let dto = try? await realtime.fetchOpenSession(coupleId: coupleId),
@@ -143,6 +188,47 @@ final class SessionEntryStore {
                 hand: hand, entry: .joiner, role: role(for: myId), session: dto
             )
             pendingSession = nil
+        }
+    }
+
+    /// Resume an interrupted session. Mirrors accept(): revalidate against the
+    /// server first (the row may have been ended from the other device between
+    /// refresh and this tap), rebuild the hand, then let the existing
+    /// acceptedLaunch → cover wiring take over. CoupleSessionStore.resumeIfNeeded
+    /// picks the airlock-skip logic up from there — not touched here.
+    func resume() {
+        guard let pending = pendingSession, pending.kind == .resume,
+              let coupleId = appState.coupleId
+        else { return }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Task { @MainActor in
+            guard let dto = try? await realtime.fetchOpenSession(coupleId: coupleId),
+                  dto.id == pending.id,
+                  isResumableRow(dto)
+            else {
+                pendingSession = nil       // gone — drop the dead banner
+                return
+            }
+            guard let deck = try? catalog.loadDeck(id: dto.deckId) else { return }
+            let hand = dto.cardIds.compactMap { id in deck.orderedCards.first { $0.id == id } }
+            guard !hand.isEmpty, let myId = localProfileId() else { return }
+            acceptedLaunch = SessionLaunch(
+                hand: hand,
+                entry: dto.initiatorId == myId ? .initiator : .joiner,
+                role: role(for: myId),
+                session: dto
+            )
+            pendingSession = nil
+        }
+    }
+
+    /// End an interrupted session outright — clears the DB row so the
+    /// one-open-session-per-couple constraint doesn't block a fresh start.
+    func endResumable() {
+        guard let pending = pendingSession, pending.kind == .resume else { return }
+        pendingSession = nil
+        Task { @MainActor in
+            try? await realtime.setStatus(sessionId: pending.id, status: .abandoned)
         }
     }
 

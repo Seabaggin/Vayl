@@ -638,12 +638,24 @@ struct HomeDashboardView: View {
     private var pendingSessionBanner: some View {
         if let pending = entryStore?.pendingSession {
             VStack {
-                PendingSessionBanner(
-                    initiatorName: pending.initiatorName,
-                    deckTitle: pending.deckTitle,
-                    onJoin: { entryStore?.accept() },
-                    onDismiss: { entryStore?.dismissBanner() }
-                )
+                Group {
+                    if pending.kind == .resume {
+                        ResumeSessionBanner(
+                            deckTitle: pending.deckTitle,
+                            cardPosition: pending.cardPosition,
+                            cardCount: pending.cardCount,
+                            onResume: { entryStore?.resume() },
+                            onEnd: { entryStore?.endResumable() }
+                        )
+                    } else {
+                        PendingSessionBanner(
+                            initiatorName: pending.initiatorName,
+                            deckTitle: pending.deckTitle,
+                            onJoin: { entryStore?.accept() },
+                            onDismiss: { entryStore?.dismissBanner() }
+                        )
+                    }
+                }
                 .padding(.horizontal, AppSpacing.sm)
                 .padding(.top, AppSpacing.sm)
                 Spacer()
