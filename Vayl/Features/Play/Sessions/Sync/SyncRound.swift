@@ -17,7 +17,7 @@ enum SyncRelease: Equatable {
 }
 
 /// The judged outcome of a round, from THIS device's point of view.
-enum SyncVerdict: Equatable {
+enum SyncVerdict: Hashable {
     case inSync
     case soClose(gapDegrees: Double)
     case farApart(gapDegrees: Double)
