@@ -21,6 +21,7 @@
 
 import XCTest
 import SwiftData
+import Supabase
 @testable import Vayl
 
 @MainActor
@@ -147,8 +148,11 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         XCTAssertNotNil(progress.first?.firstOpenedAt)
         XCTAssertNotNil(progress.first?.lastPlayedAt)
 
-        // The completed session is handed to the sync queue exactly once, with the
-        // right tally (the real hook would push it to Supabase).
+        // The completed session is handed to the sync queue exactly once. On this
+        // pure-local (DEBUG) launch remoteSessionId is nil, so the payload falls
+        // back to the local session id — the two-device case (payload keyed by
+        // the shared remote id instead) is covered by
+        // test_twoDeviceLaunch_syncPayloadKeyedByRemoteSessionId below.
         XCTAssertEqual(syncedPayloads.count, 1)
         XCTAssertEqual(syncedPayloads.first?.cardsDiscussed, 3)
         XCTAssertEqual(syncedPayloads.first?.id, sessionId)
@@ -167,6 +171,74 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         XCTAssertEqual(reflection.cardSessionId, sessionId)
         XCTAssertEqual(Set(reflection.words), ["close", "honest"])
         XCTAssertEqual(reflection.note, "stayed with it")   // trimmed on save
+    }
+
+    // MARK: - Two-device: sync payload keyed by the shared remote session id
+
+    /// A fake RealtimeSessionService: never actually reached (armPresence /
+    /// confirmSynced are the DEBUG-airlock helpers and don't touch `realtime`),
+    /// it only exists so the store's two-device init path has something to hold.
+    private func fakeRealtimeService() -> RealtimeSessionService {
+        let url = URL(string: "https://example.invalid")!
+        return RealtimeSessionService(supabase: SupabaseClient(supabaseURL: url, supabaseKey: "test-key"))
+    }
+
+    /// Fix A regression coverage: a two-device launch (session != nil) must key
+    /// the sync payload by the SHARED remote session id, not the local per-device
+    /// UUID — otherwise each device uploads its own row and a two-device session
+    /// produces two remote records instead of one upserted row.
+    func test_twoDeviceLaunch_syncPayloadKeyedByRemoteSessionId() async throws {
+        let remoteId = UUID()
+        let hand = Array(Card.openerSamples.prefix(3))
+        let dto = CuratedSessionDTO(
+            id: remoteId,
+            coupleId: UUID(),
+            initiatorId: UUID(),
+            deckId: hand.first?.deckId ?? "unknown",
+            deckVariant: nil,
+            cardIds: hand.map(\.id),
+            perCardTimer: [:],
+            globalTimerSeconds: nil,
+            status: CuratedSessionStatus.active.rawValue,
+            currentIndex: 0,
+            aPresent: true,
+            bPresent: true,
+            aBandwidth: nil,
+            bBandwidth: nil,
+            aConsented: true,
+            bConsented: true,
+            timerStartedAt: nil,
+            revealState: [:],
+            createdAt: ISO8601DateFormatter().string(from: Date()),
+            updatedAt: ISO8601DateFormatter().string(from: Date())
+        )
+        let launch = SessionLaunch(hand: hand, entry: .initiator, role: .a, session: dto)
+
+        let container = ModelContainer.previewContainer
+        let appState = AppState()
+        appState.coupleId = dto.coupleId
+        var syncedPayloads: [SessionRecordPayload] = []
+        let store = CoupleSessionStore(
+            launch: launch,
+            modelContainer: container,
+            appState: appState,
+            realtime: fakeRealtimeService(),
+            presenceSeconds: 0.01,
+            transitionSeconds: 0.01,
+            enqueueSync: { syncedPayloads.append($0) }
+        )
+
+        XCTAssertEqual(store.remoteSessionId, remoteId)
+
+        await crossAirlock(store)
+        while store.phase == .session { store.dealNext() }
+        XCTAssertEqual(store.phase, .close)
+
+        let savedId = try XCTUnwrap(store.savedSessionId)
+        XCTAssertNotEqual(savedId, remoteId, "local SwiftData id should stay the per-device UUID")
+
+        XCTAssertEqual(syncedPayloads.count, 1)
+        XCTAssertEqual(syncedPayloads.first?.id, remoteId, "sync payload must be keyed by the shared remote session id")
     }
 
     // MARK: - Branch: skip the reflection

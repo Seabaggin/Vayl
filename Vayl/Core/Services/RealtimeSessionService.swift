@@ -262,6 +262,20 @@ final class RealtimeSessionService {
             .execute()
     }
 
+    /// Flips the row to `complete` ONLY if it is still in an open status.
+    /// Conditional on the server so a device finishing "because the partner
+    /// abandoned" (applyRemoteRow -> endEarly -> finishSession -> liveComplete)
+    /// cannot stomp an already-abandoned row back to complete. Mirrors
+    /// `advance(sessionId:expectedIndex:)` / `flipToActiveIfBoth(sessionId:)`.
+    func completeIfOpen(sessionId: UUID) async throws {
+        try await supabase
+            .from(SupabaseTable.curatedSessions)
+            .update(["status": CuratedSessionStatus.complete.rawValue])
+            .eq("id", value: sessionId.uuidString)
+            .in("status", values: CuratedSessionStatus.openStatuses)
+            .execute()
+    }
+
     #if DEBUG
     /// Simulator harness cleanup for repeated two-device runs. Production code
     /// should preserve active/paused sessions for reconnect instead of clearing

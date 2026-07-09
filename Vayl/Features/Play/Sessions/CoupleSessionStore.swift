@@ -690,12 +690,14 @@ final class CoupleSessionStore: Identifiable {
     }
 
     /// Marks this device gone + the session complete (no-op pure-local).
+    /// Uses `completeIfOpen` (not `setStatus`) so a device finishing because
+    /// the partner abandoned never stomps an `abandoned` row back to complete.
     private func liveComplete() {
         guard realtime != nil, let sid = remoteSessionId else { return }
         let role = sessionRole
         Task { @MainActor in
             try? await self.realtime?.setPresence(sessionId: sid, role: role, present: false)
-            try? await self.realtime?.setStatus(sessionId: sid, status: .complete)
+            try? await self.realtime?.completeIfOpen(sessionId: sid)
         }
     }
 
@@ -760,8 +762,12 @@ final class CoupleSessionStore: Identifiable {
             savedSessionId = session.id
             logger.info("couple session saved — \(self.records.count) cards, deck \(deckId)")
 
+            // Two devices in the same session must upsert the SAME remote row —
+            // key the payload by the shared curated_sessions id, falling back to
+            // the local UUID only on the pure-local DEBUG path (remoteSessionId
+            // == nil). Local SwiftData keeps using session.id everywhere else.
             enqueueSync(SessionRecordPayload(
-                id: session.id,
+                id: remoteSessionId ?? session.id,
                 coupleId: coupleId,
                 startedAt: session.startedAt,
                 endedAt: session.completedAt,
