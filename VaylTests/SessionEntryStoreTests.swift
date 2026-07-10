@@ -541,6 +541,35 @@ final class PlayStoreOpenConflictTests: XCTestCase {
 
     // MARK: resumeConflict()
 
+    func test_resumeConflict_rowStillActive_buildsLaunchFromConflictRow() async {
+        let (container, appState, _, coupleId) = makeContext()
+        let realtime = FakePlaySessionOpening()
+        // Partner-initiated active row, mid-way through a different hand than
+        // the plan the user just built — Resume must launch THIS row's hand.
+        let conflictRow = makeRow(
+            coupleId: coupleId, initiatorId: UUID(), status: .active,
+            cardIds: ["opener-03", "opener-01"], currentIndex: 1
+        )
+        realtime.openRow = conflictRow
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+        let deck = loadOpenerDeck()
+
+        store.builderDeck = deck   // builderDidFinish guards on the builder being open
+        store.builderDidFinish(makePlan(deck: deck))
+        await waitUntil("conflictSession never set") { store.conflictSession != nil }
+
+        store.resumeConflict()
+        await waitUntil("launch never set") { store.launch != nil }
+
+        XCTAssertEqual(store.launch?.session?.id, conflictRow.id)
+        XCTAssertEqual(store.launch?.hand.map(\.id), ["opener-03", "opener-01"],
+                       "Resume launches the conflict row's hand, not the just-built plan")
+        XCTAssertEqual(store.launch?.entry, .joiner, "the other partner initiated this row")
+        XCTAssertEqual(store.launch?.role, .a)
+        XCTAssertEqual(realtime.openSessionCalls, 0, "resuming never inserts a new row")
+        XCTAssertNil(store.conflictSession)
+    }
+
     func test_resumeConflict_revalidation_rowVanished_clearsConflict_thenProceedsWithPendingOpen() async {
         let (container, appState, myId, coupleId) = makeContext()
         let realtime = FakePlaySessionOpening()
