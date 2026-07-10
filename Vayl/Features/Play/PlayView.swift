@@ -230,14 +230,13 @@ struct PlayView: View {
                 .foregroundStyle(AppColors.textBody)
             Spacer(minLength: 0)
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 store.retryOpen()
             } label: {
                 Text("Try again")
                     .font(AppFonts.buttonLabelSmall)
                     .foregroundStyle(AppColors.spectrumText)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableCardStyle())
             Button {
                 store.dismissOpenError()
             } label: {
@@ -245,7 +244,7 @@ struct PlayView: View {
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableCardStyle())
             .accessibilityLabel("Dismiss error")
         }
         .padding(.horizontal, AppSpacing.md)

@@ -40,7 +40,7 @@ struct PendingSessionBanner: View {
                     .foregroundStyle(AppColors.textTertiary)
                     .frame(width: 28, height: 28)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableCardStyle())
             .accessibilityLabel("Dismiss")
         }
         .padding(AppSpacing.md)

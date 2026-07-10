@@ -28,7 +28,7 @@ struct SessionErrorBanner: View {
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableCardStyle())
             .accessibilityLabel("Dismiss error")
         }
         .padding(.horizontal, AppSpacing.md)
