@@ -72,14 +72,18 @@ struct PulseCheckInView: View {
 
                     Spacer(minLength: AppSpacing.sm)
                 }
-                .topClearance(layout, padding: AppSpacing.xs)
+                // xxl start (design pass 2026-07-09): the field used to begin at xs,
+                // directly under the header chrome, which made the chevron and step
+                // dots read as sitting ON the graph. xxl clears the 28pt header row
+                // plus a band of void, so the chrome owns its own strip above the
+                // field instead of floating over it. 🎚️ FEEL: confirm the five pills
+                // still clear the bottom comfortably on device.
+                .topClearance(layout, padding: AppSpacing.xxl)
                 .padding(.bottom, AppSpacing.xl)
 
-                // Header chrome floats over the top edge of the field (per the mockup) — it
-                // reclaims the row the enlarged field now occupies, so the graph can breathe.
-                // Shrunk (back button 32->28, step dots 22/18->20/16) and pulled to the bare
-                // safe-area clearance (no extra padding) so it recedes into a slimmer strip
-                // instead of competing with the now-bigger field for vertical room.
+                // Header chrome sits in its own strip above the field: chevron
+                // leading, step dots trailing (28pt row at bare safe-area
+                // clearance), with the field starting a band of void below it.
                 headerChrome
                     .padding(.horizontal, AppSpacing.lg)
                     .topClearance(layout, padding: 0)
