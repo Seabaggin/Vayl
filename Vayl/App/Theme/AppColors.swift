@@ -252,17 +252,19 @@ struct AppColors {
         dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.65)
     )
 
-    /// Timestamps, metadata, counts. 38% hierarchy.
+    /// Timestamps, metadata, counts. 50% hierarchy.
     /// Apply .italic() at usage site — italic is the semantic signal.
+    /// Dark alpha lifted 0.38 → 0.50 (WCAG AA on void: 3.49:1 → ~4.6:1) — 2026-07-10 design-review P0.
     static let textTertiary = Color.dynamic(
-        light: VaylPrimitives.wineMid.withAlphaComponent(0.38),
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.38)
+        light: VaylPrimitives.wineMid.withAlphaComponent(0.50),
+        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.50)
     )
 
     /// Placeholder text, pronoun hints, inline helper copy.
+    /// Dark alpha lifted 0.42 → 0.60 (WCAG AA on void: 4.04:1 → ~5.9:1) — 2026-07-10 design-review P0.
     static let textHint = Color.dynamic(
-        light: VaylPrimitives.magentaDark.withAlphaComponent(0.50),
-        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.42)
+        light: VaylPrimitives.magentaDark.withAlphaComponent(0.60),
+        dark:  VaylPrimitives.pureWhite.withAlphaComponent(0.60)
     )
 
     /// Disabled states, ghost copy. Lowest visible hierarchy.
@@ -285,9 +287,10 @@ struct AppColors {
     )
 
     /// Card overline and section labels with spectrum tint.
+    /// Dark alpha lifted 0.60 → 0.75 (WCAG at 11pt overline: 3.96:1 → ~4.9:1) — 2026-07-10 design-review P0.
     static let textCardLabel = Color.dynamic(
         light: VaylPrimitives.purple.withAlphaComponent(0.70),
-        dark:  VaylPrimitives.cyan.withAlphaComponent(0.60)
+        dark:  VaylPrimitives.cyan.withAlphaComponent(0.75)
     )
 
     /// Section headers and eyebrow labels — the lavender-purple from docs/prototypes/settings-v2.html.
@@ -295,7 +298,7 @@ struct AppColors {
     /// (which skews cyan in Midnight). Use for .sec-h style grouping labels in list screens.
     static let textSectionLabel = Color.dynamic(
         light: VaylPrimitives.purple.withAlphaComponent(0.65),
-        dark:  VaylPrimitives.purpleBright.withAlphaComponent(0.55)
+        dark:  VaylPrimitives.purpleBright.withAlphaComponent(0.85)  // lifted 0.55 → 0.85 (2.95:1 → ~4.6:1) — 2026-07-10 design-review P0
     )
 
     // ─────────────────────────────────────────────

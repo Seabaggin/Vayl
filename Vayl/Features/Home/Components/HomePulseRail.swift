@@ -199,8 +199,9 @@ struct HomePulseRail: View {
         let seconds = Int(-date.timeIntervalSinceNow)
         if seconds < 60    { return "just now" }
         if seconds < 3600  { return "\(seconds / 60)m ago" }
-        if seconds < 86400 { return "\(seconds / 3600)h ago" }
-        return "yesterday"
+        if seconds < 86400  { return "\(seconds / 3600)h ago" }
+        if seconds < 172800 { return "yesterday" }
+        return "\(seconds / 86400) days ago"   // was "yesterday" for ANY age ≥ 24h — faked recency (2026-07-10 design-review P0)
     }
 }
 

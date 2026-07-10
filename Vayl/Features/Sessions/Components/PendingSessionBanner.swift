@@ -53,7 +53,7 @@ struct PendingSessionBanner: View {
                 )
         )
         .scaleEffect(isPressed ? 0.98 : 1.0)
-        .sensoryFeedback(.impact(weight: .light), trigger: isPressed)
+        .sensoryFeedback(.impact(weight: .light), trigger: isPressed) { _, pressed in pressed }   // press-only; was firing on press AND release (2026-07-10 design-review P1)
         .contentShape(Rectangle())
         .onTapGesture { onJoin() }
         .simultaneousGesture(

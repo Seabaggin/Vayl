@@ -17,7 +17,7 @@ struct PulseFullView: View {
     @Bindable var mapStore: MapStore
     @Environment(PulseStore.self) private var pulse
 
-    var myEntries:      [PulseEntry] = PulseEntry.previews
+    var myEntries:      [PulseEntry] = []   // was PulseEntry.previews — a caller omitting this shipped fake history (2026-07-10 design-review P0)
     var partnerEntries: [PulseEntry] = []
     var partnerName:    String       = ""
     var onDismiss:      (() -> Void)? = nil
