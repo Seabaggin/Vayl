@@ -865,29 +865,22 @@ struct HomeDashboardView: View {
 /// two-knob session-settings sheet. Owns its own press state (tap contract).
 private struct SettingsCogButton: View {
     var action: () -> Void
-    @State private var isPressed = false
 
     var body: some View {
-        Image(systemName: AppIcons.gearOutline)
-            .font(AppFonts.bodyMedium)
-            .foregroundStyle(AppColors.spectrumText)
-            .frame(width: 44, height: 44)
-            .background(
-                Circle().fill(AppColors.glassSurface)
-            )
-            .overlay(
-                Circle().strokeBorder(AppColors.borderDefault, lineWidth: 0.7)
-            )
-            .scaleEffect(isPressed ? 0.96 : 1.0)
-            .sensoryFeedback(.impact(weight: .light), trigger: isPressed)
-            .onTapGesture {
-                isPressed = true
-                action()
-                Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(0.12))
-                    isPressed = false
-                }
-            }
+        Button(action: action) {
+            Image(systemName: AppIcons.gearOutline)
+                .font(AppFonts.bodyMedium)
+                .foregroundStyle(AppColors.spectrumText)
+                .frame(width: 44, height: 44)
+                .background(
+                    Circle().fill(AppColors.glassSurface)
+                )
+                .overlay(
+                    Circle().strokeBorder(AppColors.borderDefault, lineWidth: 0.7)
+                )
+        }
+        .buttonStyle(PressableCardStyle())
+        .accessibilityLabel("Settings")
     }
 }
 

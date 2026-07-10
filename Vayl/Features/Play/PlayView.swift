@@ -248,7 +248,7 @@ struct PlayView: View {
             .accessibilityLabel("Dismiss error")
         }
         .padding(.horizontal, AppSpacing.md)
-        .padding(.vertical, AppSpacing.sm + AppSpacing.xxs)
+        .padding(.vertical, AppSpacing.sm2)
         .background(
             RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                 .fill(AppColors.cardBackground)

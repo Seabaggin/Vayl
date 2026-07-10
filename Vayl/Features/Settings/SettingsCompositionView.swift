@@ -29,7 +29,7 @@ struct SettingsCompositionView: View {
                         Button {
                             Task { await store.setComposition(option) }
                         } label: {
-                            HStack(spacing: AppSpacing.sm + AppSpacing.xs) {
+                            HStack(spacing: AppSpacing.md2) {
                                 Text(option.settingsLabel)
                                     .font(AppFonts.bodyMedium)
                                     .foregroundStyle(AppColors.textPrimary)
@@ -42,7 +42,7 @@ struct SettingsCompositionView: View {
                                 }
                             }
                             .contentShape(Rectangle())
-                            .padding(.vertical, AppSpacing.sm + AppSpacing.xs)
+                            .padding(.vertical, AppSpacing.md2)
                         }
                         .buttonStyle(PressableCardStyle())
                         .sensoryFeedback(.impact(weight: .light), trigger: store.composition)

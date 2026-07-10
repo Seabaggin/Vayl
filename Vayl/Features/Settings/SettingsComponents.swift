@@ -56,7 +56,7 @@ struct SettingsSubSectionLabel: View {
             .font(AppFonts.overline)
             .tracking(1.5)
             .foregroundStyle(AppColors.textMuted)
-            .padding(.top, isFirst ? AppSpacing.xxs : AppSpacing.sm + AppSpacing.xs)
+            .padding(.top, isFirst ? AppSpacing.xxs : AppSpacing.md2)
             .padding(.bottom, AppSpacing.xxs)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -77,7 +77,7 @@ struct SettingsNavRow: View {
     var showChevron: Bool = true
 
     var body: some View {
-        HStack(spacing: AppSpacing.sm + AppSpacing.xs) {
+        HStack(spacing: AppSpacing.md2) {
             RoundedRectangle(cornerRadius: AppRadius.sm)
                 .fill(iconBg)
                 .overlay(
@@ -115,7 +115,7 @@ struct SettingsNavRow: View {
             }
         }
         .contentShape(Rectangle())
-        .padding(.vertical, AppSpacing.sm + AppSpacing.xs)
+        .padding(.vertical, AppSpacing.md2)
     }
 }
 
@@ -130,7 +130,7 @@ struct SettingsToggleRow: View {
     @Binding var isOn: Bool
 
     var body: some View {
-        HStack(spacing: AppSpacing.sm + AppSpacing.xs) {
+        HStack(spacing: AppSpacing.md2) {
             RoundedRectangle(cornerRadius: AppRadius.sm)
                 .fill(iconBg)
                 .overlay(
@@ -158,6 +158,6 @@ struct SettingsToggleRow: View {
                 .labelsHidden()
                 .tint(AppColors.accentPrimary)
         }
-        .padding(.vertical, AppSpacing.sm + AppSpacing.xs)
+        .padding(.vertical, AppSpacing.md2)
     }
 }
