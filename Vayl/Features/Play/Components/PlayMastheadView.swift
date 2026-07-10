@@ -17,7 +17,7 @@ struct PlayMastheadView: View {
         // Consistent header treatment across tabs: gradient wordmark + period
         // (no underline bar). "Cards" stays — future-proof for more game types.
         Text("Cards.")
-            .font(AppFonts.display(40, weight: .bold, relativeTo: .largeTitle))
+            .font(AppFonts.tabMasthead)
             .foregroundStyle(AppColors.spectrumText)
             .frame(maxWidth: .infinity, alignment: .leading)
     }

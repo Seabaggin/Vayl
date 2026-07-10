@@ -563,7 +563,7 @@ struct HomeDashboardView: View {
             // Map tab (Me / Us). Consistent treatment: gradient wordmark + period.
             LivingText(
                 text: "VAYL.",
-                font: AppFonts.display(40, weight: .bold, relativeTo: .largeTitle),
+                font: AppFonts.tabMasthead,
                 animated: false
             )
             Spacer()

@@ -302,7 +302,7 @@ struct MapView: View {
                 .accessibilityAddTraits(isUs ? [.isButton, .isSelected] : .isButton)
             }
         }
-        .font(AppFonts.display(40, weight: .bold, relativeTo: .largeTitle))
+        .font(AppFonts.tabMasthead)
         // Animate only the partner-name LOAD (""→name) so it fades in once; the
         // Me/Us colour/period changes are animated separately by the button taps.
         .animation(AppAnimation.slow, value: store.partnerName)

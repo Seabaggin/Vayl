@@ -84,7 +84,7 @@ struct LearnView: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text("Learn.")
-                    .font(AppFonts.heroTitle)
+                    .font(AppFonts.tabMasthead)
                     .foregroundStyle(AppColors.spectrumText)
                 Text("Build your frame before you need it")
                     .font(AppFonts.caption)
