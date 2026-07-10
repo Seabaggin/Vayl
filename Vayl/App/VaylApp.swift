@@ -29,32 +29,7 @@ struct VaylApp: App {
     // main-actor (SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor), so constructing these
     // @MainActor stores here is safe.
     init() {
-        SentrySDK.start { options in
-            options.dsn = "https://74388eccb3916eb3fac30d46744b3c0f@o4511702079897600.ingest.us.sentry.io/4511702082781184"
-
-            // Adds IP for users.
-            // For more information, visit: https://docs.sentry.io/platforms/apple/data-management/data-collected/
-            options.sendDefaultPii = true
-
-            // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
-            // We recommend adjusting this value in production.
-            options.tracesSampleRate = 1.0
-
-            // Configure profiling. Visit https://docs.sentry.io/platforms/apple/profiling/ to learn more.
-            options.configureProfiling = {
-                $0.sessionSampleRate = 1.0 // We recommend adjusting this value in production.
-                $0.lifecycle = .trace
-            }
-
-            // Uncomment the following lines to add more data to your events
-            // options.attachScreenshot = true // This adds a screenshot to the error events
-            // options.attachViewHierarchy = true // This adds the view hierarchy to the error events
-
-            // Enable structured logging
-            options.enableLogs = true
-        }
-        // Remove the next line after confirming that your Sentry integration is working.
-        SentrySDK.capture(message: "This app uses Sentry! :)")
+        Self.startSentryIfNeeded()
 
         let appState = AppState()
         _appState = State(initialValue: appState)
@@ -75,6 +50,40 @@ struct VaylApp: App {
             entitlements: entitlementStore,
             modelContainer: ModelContainer.appContainer
         ))
+    }
+
+    // MARK: - Sentry (production-focused)
+    //
+    // Vayl uses Sentry for real production crash / hang / performance signal.
+    // Local dev builds stay OUT of Sentry by default: debugging (breakpoints,
+    // slow simulator launches) reads as an "app hang" to Sentry's monitor and
+    // would pollute the production project with false positives (that is what
+    // generated the "App Hang" email). To exercise Sentry from a dev build, set
+    // the `VAYL_SENTRY_TEST=1` environment variable in the Run scheme — it then
+    // reports under the separate `debug` environment, never `production`.
+
+    private static func startSentryIfNeeded() {
+        #if DEBUG
+        guard ProcessInfo.processInfo.environment["VAYL_SENTRY_TEST"] == "1" else { return }
+        let environmentName = "debug"
+        let sampleRate = 1.0            // full capture while explicitly testing
+        #else
+        let environmentName = "production"
+        let sampleRate = 0.2            // sane production sampling (quota + runtime overhead)
+        #endif
+
+        SentrySDK.start { options in
+            options.dsn = "https://74388eccb3916eb3fac30d46744b3c0f@o4511702079897600.ingest.us.sentry.io/4511702082781184"
+            options.environment = environmentName
+            // Privacy: Vayl is privacy-first — never attach user IPs / PII by default.
+            options.sendDefaultPii = false
+            options.tracesSampleRate = NSNumber(value: sampleRate)
+            options.configureProfiling = {
+                $0.sessionSampleRate = Float(sampleRate)
+                $0.lifecycle = .trace
+            }
+            options.enableLogs = true
+        }
     }
 
     // MARK: - Body
