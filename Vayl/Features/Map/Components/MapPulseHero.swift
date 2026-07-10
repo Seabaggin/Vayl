@@ -4,7 +4,7 @@
 //
 // Glance: aura hero (AppLayout.mapMeAuraSize) + Space name + sublabel + weather one-liner.
 // Card pinned to AppLayout.mapPulseCardHeight — the shared Me/Us footprint (Map dashboard spec §1).
-// "tap to map →" opens a sheet with the full 2D field at the user's current position.
+// "tap to open →" opens a cover with the full 2D field at the user's current position.
 //
 // Visual reference: docs/prototypes/map-pulse-final.html — "Me · the glance" phone.
 
@@ -19,7 +19,15 @@ struct MapPulseHero: View {
     var isLinked: Bool = false
 
     @State private var showMap   = false
+    @State private var showInfo  = false
     @State private var isPressed = false
+
+    // Per-control press states for the header affordances + pill (tap contract:
+    // every tappable element carries press scale + haptic + action).
+    @State private var aboutPressed   = false
+    @State private var historyPressed = false
+    @State private var mapPressed     = false
+    @State private var pillPressed    = false
 
     // MARK: - Body
 
@@ -101,6 +109,11 @@ struct MapPulseHero: View {
         // height risks clipping the pill on some content combinations. Revisit once
         // on-device sizing confirms a fixed height never clips.
         .frame(minHeight: AppLayout.mapPulseCardHeight, alignment: .top)
+        // No AppLayout in scope here, so the screenHeight-less overload sizes off
+        // the presenting context (same pattern as ReflectionBannerView/LearnView).
+        .vaylSheet(isPresented: $showInfo, heightFraction: 0.85) {
+            PulseInfoSheet()
+        }
         .vaylCover(isPresented: $showMap, confirmOnExit: false) {
             MapFieldSheet(
                 position: currentPosition,
@@ -122,8 +135,26 @@ struct MapPulseHero: View {
                 .tracking(1.5)
                 .foregroundStyle(AppColors.textSectionLabel)
             Spacer()
-            if hasHistory {
-                HStack(spacing: AppSpacing.sm) {
+            HStack(spacing: AppSpacing.sm) {
+                // "About" shows in BOTH states: first-run users (empty state)
+                // need a way to learn what the Pulse is before checking in.
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    showInfo = true
+                } label: {
+                    Text("About")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textMuted)
+                }
+                .buttonStyle(.plain)
+                .scaleEffect(aboutPressed ? 0.96 : 1.0)
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { _ in aboutPressed = true }
+                        .onEnded { _ in aboutPressed = false }
+                )
+
+                if hasHistory {
                     Button {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         onOpenHistory()
@@ -133,16 +164,28 @@ struct MapPulseHero: View {
                             .foregroundStyle(AppColors.textMuted)
                     }
                     .buttonStyle(.plain)
+                    .scaleEffect(historyPressed ? 0.96 : 1.0)
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { _ in historyPressed = true }
+                            .onEnded { _ in historyPressed = false }
+                    )
 
                     Button {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         showMap = true
                     } label: {
-                        Text("tap to map →")
+                        Text("tap to open →")
                             .font(AppFonts.caption)
                             .foregroundStyle(AppColors.textMuted)
                     }
                     .buttonStyle(.plain)
+                    .scaleEffect(mapPressed ? 0.96 : 1.0)
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { _ in mapPressed = true }
+                            .onEnded { _ in mapPressed = false }
+                    )
                 }
             }
         }
@@ -166,9 +209,15 @@ struct MapPulseHero: View {
                 Text("How's your capacity?")
                     .font(AppFonts.screenTitle)
                     .foregroundStyle(AppColors.textPrimary)
-                Text("A quick check-in")
+                // Honest empty state: if hydrate failed, this isn't a first run,
+                // it's an unreachable history, so say so instead of pretending.
+                Text(pulse.lastHydrateFailed
+                     ? "Couldn't reach your history right now. It'll restore when the connection is back."
+                     : "A quick check-in")
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity)
             .padding(.top, AppSpacing.sm)
@@ -197,6 +246,12 @@ struct MapPulseHero: View {
                 )
         }
         .buttonStyle(.plain)
+        .scaleEffect(pillPressed ? 0.96 : 1.0)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in pillPressed = true }
+                .onEnded { _ in pillPressed = false }
+        )
         .accessibilityLabel(pulse.todayEntry == nil ? "Check in" : "Edit today's check-in")
     }
 
@@ -335,7 +390,7 @@ private struct MapFieldSheet: View {
         case .expansive:  return "High energy and open. A good day to connect and explore."
         case .reactive:   return "High energy, turned inward. Things feel charged right now."
         case .receptive:  return "Grounded and open, moving at your own pace."
-        case .protective: return "Low energy and guarded. You need space right now."
+        case .protective: return "Low energy and guarded. Be kind to yourself today."
         case .neutral:    return "Balanced across both axes. Steady and calm right now."
         case .uncharted:  return "Your answers pull in different directions today. Fluid, still finding shape."
         default:          return space.descriptors(at: position)   // border state

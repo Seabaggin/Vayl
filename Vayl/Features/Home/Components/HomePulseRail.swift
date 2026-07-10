@@ -37,6 +37,11 @@ struct HomePulseRail: View {
 
     @Environment(PulseStore.self) private var pulse
 
+    // Press states (tap contract: every tappable element carries press scale +
+    // haptic + action): one for the card's tap surface, one for the pill.
+    @State private var cardPressed = false
+    @State private var pillPressed = false
+
     // MARK: - Body
 
     var body: some View {
@@ -151,6 +156,12 @@ struct HomePulseRail: View {
             .padding(.horizontal, AppSpacing.md)
         }
         .contentShape(RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous))
+        .scaleEffect(cardPressed ? 0.96 : 1.0)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in cardPressed = true }
+                .onEnded { _ in cardPressed = false }
+        )
         .onTapGesture {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onTap?()
@@ -178,6 +189,12 @@ struct HomePulseRail: View {
                 )
         }
         .buttonStyle(.plain)
+        .scaleEffect(pillPressed ? 0.96 : 1.0)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in pillPressed = true }
+                .onEnded { _ in pillPressed = false }
+        )
         .accessibilityLabel(pulse.todayEntry == nil ? "Check in" : "Edit today's check-in")
     }
 
@@ -201,19 +218,6 @@ struct HomePulseRail: View {
         if seconds < 3600 { return "\(seconds / 60)m ago" }
         if seconds < 86400 { return "\(seconds / 3600)h ago" }
         return "yesterday"
-    }
-}
-
-// MARK: - PulseInfoSheet
-
-struct PulseInfoSheet: View {
-    var body: some View {
-        ZStack {
-            AppColors.void.ignoresSafeArea()
-            Text("About the Pulse")
-                .font(AppFonts.screenTitle)
-                .foregroundStyle(AppColors.textMuted)
-        }
     }
 }
 

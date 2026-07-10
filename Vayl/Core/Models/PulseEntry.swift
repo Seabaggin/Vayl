@@ -18,7 +18,7 @@ struct PulseEntry: Identifiable, Codable {
     var id: UUID               = UUID()
     var date: Date
     var capacityScore: Double              // kept for back-compat decode; prefer resolvedPosition.capacityScore
-    var glowColor: PulseCapacityColor  // derived from Q1-3 position (pos.quadrant.capacityColor), NOT a Q4 answer
+    var glowColor: PulseCapacityColor  // derived from the full-answer position (pos.quadrant.capacityColor), NOT read straight off a single answer
     var speed: String              // Q5 answer label
 
     // Q1-Q3 answers
@@ -40,10 +40,20 @@ struct PulseEntry: Identifiable, Codable {
     /// since anything old enough to lack this field is definitely past the window).
     var createdAt: Date?
 
+    /// When this entry was LAST written (stamped by PulseStore.add() on every save,
+    /// including same-day re-edits, unlike `createdAt` which is carried forward).
+    /// Drives the newest-wins merge in hydrateFromServer(). Optional so existing
+    /// UserDefaults data persisted before this field still decodes.
+    var updatedAt: Date?
+
     /// How long a day's entry can still be redone after its first completion.
     static let editWindow: TimeInterval = 2 * 60 * 60
 
     var resolvedCreatedAt: Date { createdAt ?? date }
+
+    /// Effective last-write time: `updatedAt`, falling back to `resolvedCreatedAt`
+    /// for entries persisted before the field existed.
+    var resolvedUpdatedAt: Date { updatedAt ?? resolvedCreatedAt }
 
     /// Whether this entry can still be redone (re-checked-in) today. A completed
     /// check-in is a sealed snapshot of that moment, not an open diary entry — once

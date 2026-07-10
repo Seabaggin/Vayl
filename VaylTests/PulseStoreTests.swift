@@ -4,18 +4,20 @@
 //
 //  PulseStore against a fake PulseSyncing seam (added alongside this suite —
 //  see PulseStore.swift's "Sync seam" section). Covers construction, check-in
-//  submission (add()'s same-day replace + createdAt-carry-forward), and
-//  hydrateFromServer()'s merge — NOT PulseAnswers' quadrant math, which
-//  PulseAnswersTests / PulsePositionTests already cover.
+//  submission (add()'s same-day replace + createdAt-carry-forward + updatedAt
+//  stamping), hydrateFromServer()'s newest-wins-per-day merge and push-back,
+//  and the lastHydrateFailed reinstall signal — NOT PulseAnswers' quadrant
+//  math, which PulseAnswersTests / PulsePositionTests already cover.
 //
 //  NOTE: PulseSyncing mirrors only the two methods PulseStore calls
 //  (pushEntry, fetchOwnEntries), using the tri-state PulseFetchOutcome
 //  (fetch-failure vs. confirmed-empty) that landed 2026-07-08.
 //
-//  DEBUG seeding caveat: PulseStore's init seeds PulseEntry.previews (13
-//  entries, days 13..1 ago — never today) when the local cache is empty, and
-//  tests build in DEBUG. So these tests never assert absolute entry counts,
-//  only relative/day-scoped facts that hold with or without the seed.
+//  DEBUG seeding caveat, now retired in practice: PulseStore's init seeds
+//  PulseEntry.previews only under Xcode previews (XCODE_RUNNING_FOR_PREVIEWS,
+//  the D4 fix: an unguarded seed was pushing fake entries to prod). Tests
+//  don't run as previews, so stores here genuinely start empty; the older
+//  tests still avoid absolute entry counts by style, not necessity.
 //
 //  Isolation: PulseStore reads/writes the real `UserDefaults.standard` under
 //  a fixed key (no injectable defaults suite), so setUp/tearDown clear that
@@ -90,7 +92,8 @@ final class PulseStoreTests: XCTestCase {
         nervousSystem: String = "Balanced",
         focus: String = "Reaching Out",
         feeling: String = "Content",
-        createdAt: Date? = nil
+        createdAt: Date? = nil,
+        updatedAt: Date? = nil
     ) -> PulseEntry {
         PulseEntry(
             date: day,
@@ -100,19 +103,20 @@ final class PulseStoreTests: XCTestCase {
             nervousSystem: nervousSystem,
             focus: focus,
             feeling: feeling,
-            createdAt: createdAt
+            createdAt: createdAt,
+            updatedAt: updatedAt
         )
     }
 
     // MARK: Construction
 
     func test_init_withEmptyServerAndNoLocalCache_startsEmptyOutsideDebugSeeding() {
-        // DEBUG builds seed PulseEntry.previews when entries.isEmpty (see init).
-        // That's an intentional dev convenience, not app behavior to assert on;
-        // this test only confirms construction doesn't crash and produces a
-        // valid dead-center resting position when there's truly nothing.
+        // Preview seeding is gated on XCODE_RUNNING_FOR_PREVIEWS (D4), which is
+        // never set in a test run, so a fresh store with no cache truly starts
+        // empty and rests at the dead-center position.
         let fake = FakePulseSyncing()
         let store = makeStore(sync: fake)
+        XCTAssertTrue(store.entries.isEmpty, "no preview seed outside Xcode previews")
         XCTAssertNotNil(store.currentPosition)
         XCTAssertEqual(store.canCheckInToday, true)
     }
@@ -177,7 +181,7 @@ final class PulseStoreTests: XCTestCase {
         XCTAssertEqual(dates, dates.sorted(), "entries must stay date-ascending after out-of-order adds")
     }
 
-    // MARK: hydrateFromServer() — merge, server wins per day
+    // MARK: hydrateFromServer(), merge basics
 
     func test_hydrateFromServer_onFetchFailure_leavesLocalEntriesUntouched() async {
         let fake = FakePulseSyncing()
@@ -190,18 +194,54 @@ final class PulseStoreTests: XCTestCase {
 
         XCTAssertEqual(store.entries.count, before, "a failed fetch means keep local, never treat as empty")
         XCTAssertNotNil(store.todayEntry, "today's local check-in must survive a failed hydrate")
+        XCTAssertFalse(
+            store.lastHydrateFailed,
+            "a failed refresh over EXISTING local data is not the reinstall-restore failure the flag reports"
+        )
     }
 
-    func test_hydrateFromServer_serverEntryForSameDay_winsOverLocal() async {
+    // MARK: hydrateFromServer(), newest wins per day (resolvedUpdatedAt)
+
+    func test_hydrateFromServer_serverEntryNewerThanLocal_winsOverLocal() async {
         let fake = FakePulseSyncing()
         let store = makeStore(sync: fake)
         let today = Date()
-        store.add(makeEntry(day: today, feeling: "Content"))
+        store.add(makeEntry(day: today, feeling: "Content"))   // stamps updatedAt = now
 
-        fake.serverEntries = [makeEntry(day: today, feeling: "Defensive", createdAt: today)]
+        // The server row was written strictly after the local stamp, so it wins.
+        fake.serverEntries = [makeEntry(
+            day: today, feeling: "Defensive",
+            createdAt: today, updatedAt: today.addingTimeInterval(60)
+        )]
         await store.hydrateFromServer()
 
-        XCTAssertEqual(store.todayEntry?.feeling, "Defensive", "server's same-day row replaces the local one")
+        XCTAssertEqual(store.todayEntry?.feeling, "Defensive", "the newer server row replaces the local one")
+    }
+
+    func test_hydrateFromServer_localEntryNewerThanServer_survivesAndIsPushedBack() async {
+        let fake = FakePulseSyncing()
+        let store = makeStore(sync: fake)
+        let today = Date()
+        store.add(makeEntry(day: today, feeling: "Content"))   // stamps updatedAt = now
+
+        // Let add()'s fire-and-forget push land first so the push-back below is countable.
+        await waitUntil("add() pushes the new entry to sync") { !fake.pushedEntries.isEmpty }
+        let pushesBefore = fake.pushedEntries.count
+
+        // The server holds a STALE copy of the same day (e.g. the row the re-edit's
+        // own push raced against): local must win and be re-uploaded.
+        fake.serverEntries = [makeEntry(
+            day: today, feeling: "Defensive",
+            createdAt: today.addingTimeInterval(-3600), updatedAt: today.addingTimeInterval(-3600)
+        )]
+        await store.hydrateFromServer()
+
+        XCTAssertEqual(store.todayEntry?.feeling, "Content", "the newer local row survives the merge")
+        XCTAssertGreaterThan(
+            fake.pushedEntries.count, pushesBefore,
+            "a local day that won the merge is pushed back so the server catches up"
+        )
+        XCTAssertEqual(fake.pushedEntries.last?.feeling, "Content", "the push-back carries the winning local copy")
     }
 
     func test_hydrateFromServer_addsServerDaysMissingLocally() async {
@@ -220,5 +260,67 @@ final class PulseStoreTests: XCTestCase {
             "a server day missing locally is merged in"
         )
         XCTAssertNotNil(store.todayEntry, "today's local entry survives the merge (server didn't have it)")
+    }
+
+    // MARK: add(), updatedAt stamping
+
+    func test_add_stampsUpdatedAtOnEverySave() {
+        let fake = FakePulseSyncing()
+        let store = makeStore(sync: fake)
+        let before = Date()
+
+        store.add(makeEntry(day: Date()))
+
+        let stamped = store.todayEntry?.updatedAt
+        XCTAssertNotNil(stamped, "add() must stamp updatedAt (the newest-wins merge key)")
+        XCTAssertGreaterThanOrEqual(stamped ?? .distantPast, before, "the stamp is the save moment, not a carried-over value")
+    }
+
+    func test_add_sameDayRedo_advancesUpdatedAtUnlikeCreatedAt() async {
+        // createdAt is carried forward (edit-window contract); updatedAt must NOT
+        // be, or a re-edit could never beat the server's copy of its own first save.
+        let fake = FakePulseSyncing()
+        let store = makeStore(sync: fake)
+        let today = Date()
+
+        store.add(makeEntry(day: today, feeling: "Content"))
+        let firstStamp = store.todayEntry?.updatedAt ?? .distantPast
+        try? await Task.sleep(for: .milliseconds(20))
+        store.add(makeEntry(day: today, feeling: "Defensive"))
+
+        XCTAssertGreaterThan(
+            store.todayEntry?.updatedAt ?? .distantPast, firstStamp,
+            "a same-day redo gets a fresh updatedAt stamp"
+        )
+    }
+
+    // MARK: lastHydrateFailed (reinstall-restore failure signal)
+
+    func test_hydrateFromServer_failureWithEmptyLocalCache_setsLastHydrateFailed() async {
+        let fake = FakePulseSyncing()
+        fake.serverEntries = nil   // .failure
+        let store = makeStore(sync: fake)
+        XCTAssertTrue(store.entries.isEmpty, "precondition: the reinstall shape is an empty local cache")
+        XCTAssertFalse(store.lastHydrateFailed, "flag starts clear")
+
+        await store.hydrateFromServer()
+
+        XCTAssertTrue(
+            store.lastHydrateFailed,
+            "empty cache + failed fetch is the one case views must not present as a blank slate"
+        )
+    }
+
+    func test_hydrateFromServer_success_clearsLastHydrateFailed() async {
+        let fake = FakePulseSyncing()
+        fake.serverEntries = nil   // .failure first
+        let store = makeStore(sync: fake)
+        await store.hydrateFromServer()
+        XCTAssertTrue(store.lastHydrateFailed, "precondition: the first hydrate failed while empty")
+
+        fake.serverEntries = []    // .success, genuinely no history
+        await store.hydrateFromServer()
+
+        XCTAssertFalse(store.lastHydrateFailed, "any successful fetch clears the flag, even a confirmed-empty one")
     }
 }

@@ -56,7 +56,13 @@ struct PulseSyncService {
         let profileId: UUID
         let coupleId: UUID?
         let entryDate: Date
+        /// The LOCAL calendar day this entry belongs to (yyyy-MM-dd, stamped from the
+        /// device's Calendar). The upsert conflict key: a local day can straddle two
+        /// UTC days, so keying on a UTC truncation of entryDate rejected legitimate
+        /// same-local-day replaces near midnight.
+        let entryDay: String
         let firstCompletedAt: Date
+        let updatedAt: Date
         let energy: Double
         let openness: Double
         let capacityScore: Double
@@ -70,7 +76,9 @@ struct PulseSyncService {
             case profileId        = "profile_id"
             case coupleId         = "couple_id"
             case entryDate        = "entry_date"
+            case entryDay         = "entry_day"
             case firstCompletedAt = "first_completed_at"
+            case updatedAt        = "updated_at"
             case energy
             case openness
             case capacityScore = "capacity_score"
@@ -90,10 +98,23 @@ struct PulseSyncService {
                 feeling: feeling,
                 capacity: capacity,
                 position: position,
-                createdAt: firstCompletedAt
+                createdAt: firstCompletedAt,
+                updatedAt: updatedAt
             )
         }
     }
+
+    /// Formats the device-local calendar day for `entry_day` (the upsert key).
+    /// POSIX locale so the pattern is literal; timezone from Calendar.current so
+    /// "the day" matches PulseStore's own same-day semantics.
+    private static let localDayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar.current
+        formatter.timeZone = Calendar.current.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
 
     /// What `get_partner_pulse_positions()` returns — position + score only, no
     /// text. `toPulseEntry` fills the Q1-Q5 fields with empty placeholders since
@@ -141,34 +162,25 @@ struct PulseSyncService {
     // MARK: - Full entry history
 
     /// Pushes one check-in as a full row, replacing any existing row for the SAME
-    /// local calendar day (mirrors PulseStore.add()'s own day-level replace — a
-    /// second check-in on the same day overwrites, it doesn't accumulate). Delete-
-    /// then-insert rather than a DB-level upsert: "same day" is a local-timezone
-    /// concept (Calendar.current), which doesn't map cleanly onto a timestamptz
-    /// unique constraint. Fire-and-forget from the check-in; local save is already
-    /// the source of truth for THIS session, this just keeps the server in sync.
+    /// local calendar day (mirrors PulseStore.add()'s own day-level replace: a
+    /// second check-in on the same day overwrites, it doesn't accumulate). One
+    /// atomic upsert keyed on (profile_id, entry_day), where entry_day is the
+    /// device-local calendar day stamped by the client. The old delete-then-insert
+    /// collided with the UTC-day unique index whenever the local day straddled two
+    /// UTC days, silently dropping that day's sync. Fire-and-forget from the
+    /// check-in; local save is already the source of truth for THIS session, this
+    /// just keeps the server in sync.
     func pushEntry(_ entry: PulseEntry) async {
         guard let profile = await currentProfile() else { return }
-
-        let cal = Calendar.current
-        let dayStart = cal.startOfDay(for: entry.date)
-        guard let dayEnd = cal.date(byAdding: .day, value: 1, to: dayStart) else { return }
-        let iso = ISO8601DateFormatter()
-
-        _ = try? await supabase
-            .from("pulse_entries")
-            .delete()
-            .eq("profile_id", value: profile.id.uuidString)
-            .gte("entry_date", value: iso.string(from: dayStart))
-            .lt("entry_date", value: iso.string(from: dayEnd))
-            .execute()
 
         let position = entry.resolvedPosition
         let row = PulseEntryRow(
             profileId: profile.id,
             coupleId: profile.coupleId,
             entryDate: entry.date,
+            entryDay: Self.localDayFormatter.string(from: entry.date),
             firstCompletedAt: entry.resolvedCreatedAt,
+            updatedAt: entry.resolvedUpdatedAt,
             energy: position.energy,
             openness: position.openness,
             capacityScore: entry.capacityScore,
@@ -180,7 +192,7 @@ struct PulseSyncService {
         )
         _ = try? await supabase
             .from("pulse_entries")
-            .insert(row)
+            .upsert(row, onConflict: "profile_id,entry_day")
             .execute()
     }
 

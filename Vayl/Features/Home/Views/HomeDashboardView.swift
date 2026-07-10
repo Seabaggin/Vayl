@@ -136,10 +136,6 @@ struct HomeDashboardView: View {
     /// Bumped to reset the carousel back to floating after "Settle in".
     @State private var deckReset = 0
 
-    /// Presents the Pulse QRG. Owned here (not in HomePulseRail) so the sheet
-    /// covers the whole screen rather than the nested rail's bounds.
-    @State private var showPulseInfo = false
-
     /// Presents the Pulse check-in in place over Home (no tab-yank). The shared
     /// PulseStore the cover writes to is the same instance the rail reads.
     @State private var showPulseCheckIn = false
@@ -500,13 +496,6 @@ struct HomeDashboardView: View {
             // The Vayl sheet (custom OB chrome). Pass the real screen height so the
             // half fraction is reliable — the overlay's own geometry here measures the
             // tall scroll runway, which would resolve the fraction too large.
-            .vaylSheet(
-                isPresented: $showPulseInfo,
-                heightFraction: 0.75,
-                screenHeight: layout.screenHeight
-            ) {
-                PulseInfoSheet()
-            }
             .vaylSheet(
                 isPresented: $showSessionSettingsSheet,
                 heightFraction: 0.5,

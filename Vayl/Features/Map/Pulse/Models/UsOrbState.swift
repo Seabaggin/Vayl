@@ -27,7 +27,17 @@ enum UsOrbState: Equatable {
 
     static func halfState(entries: [PulseEntry], now: Date = Date()) -> HalfState {
         guard let last = entries.last?.date else { return .unwritten }
-        let days = Calendar.current.dateComponents([.day], from: last, to: now).day ?? .max
+        // Normalize BOTH ends to startOfDay so this counts calendar days, the same
+        // way PulseStore.relativeDay does. Raw timestamps counted elapsed 24h blocks
+        // instead, so the orb and the staleness copy could disagree near the 4-day
+        // boundary (an evening entry viewed 4 calendar days later in the morning
+        // read as only 3 elapsed blocks: copy said "4 days ago", orb stayed solid).
+        let cal = Calendar.current
+        let days = cal.dateComponents(
+            [.day],
+            from: cal.startOfDay(for: last),
+            to: cal.startOfDay(for: now)
+        ).day ?? .max
         return days < quietAfterDays ? .current : .quiet
     }
 

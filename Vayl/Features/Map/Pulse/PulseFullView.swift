@@ -17,7 +17,7 @@ struct PulseFullView: View {
     @Bindable var mapStore: MapStore
     @Environment(PulseStore.self) private var pulse
 
-    var myEntries: [PulseEntry] = PulseEntry.previews
+    var myEntries: [PulseEntry] = []
     var partnerEntries: [PulseEntry] = []
     var partnerName: String       = ""
     var onDismiss: (() -> Void)?
@@ -155,7 +155,9 @@ struct PulseFullView: View {
             Text("No Pulse yet")
                 .font(AppFonts.cardTitle)
                 .foregroundStyle(AppColors.textPrimary)
-            Text("Check in to start building your history.")
+            Text(pulse.lastHydrateFailed
+                ? "Couldn't reach your history right now. It'll restore when the connection is back."
+                : "Check in to start building your history.")
                 .font(AppFonts.caption)
                 .foregroundStyle(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
@@ -216,7 +218,8 @@ struct PulseFullView: View {
     private var headline: String {
         guard partnerPosition != nil else {
             if mapStore.partnerPulseFetchFailed { return "Couldn't reach their Pulse" }
-            return partnerName.isEmpty ? "Pulse · together" : "\(partnerName) hasn't checked in"
+            // Orb-describing, never behavior-tracking (pre-TestFlight D6).
+            return "The shared read is still forming"
         }
         guard usOrbState.allowsLiveComparison else { return "Comparing your last Pulses" }
         return distance > 0.45 ? "A wide day between you" : "Close today"

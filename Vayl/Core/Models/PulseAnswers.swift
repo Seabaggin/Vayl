@@ -122,9 +122,9 @@ enum PulseAnswers {
         energyWeight: 0.8, opennessWeight: 0.15
     )
 
-    /// Q5 — ideal speed tonight. Weights: energy 0.2, openness 0.8.
+    /// Q5 — ideal speed right now. Weights: energy 0.2, openness 0.8.
     static let speed = CheckInQuestion(
-        text: "What's the ideal speed for tonight?",
+        text: "What's the ideal speed right now?",
         pills: [
             CheckInPill("Deep Dive", score: 4),
             CheckInPill("Playful", score: 3),

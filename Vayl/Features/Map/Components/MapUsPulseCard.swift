@@ -21,6 +21,8 @@ struct MapUsPulseCard: View {
     let state: UsOrbState
     let myAura: AuraColors
     let partnerAura: AuraColors
+    /// Unused since the dated quiet call-out was removed (pre-TestFlight D6).
+    /// Retained for call-site stability; MapUsLayer still passes both.
     let myLastEntry: PulseEntry?
     let partnerLastEntry: PulseEntry?
     let mySpaceName: String
@@ -30,6 +32,9 @@ struct MapUsPulseCard: View {
     /// `state.allowsLiveComparison` is true.
     let myPosition: PulsePosition?
     let partnerPosition: PulsePosition?
+    /// Unused since the dated quiet call-out was removed (pre-TestFlight D6,
+    /// humility: the ember dimming carries "quiet" visually). Retained for
+    /// call-site stability; MapUsLayer still passes it.
     let relativeDay: (Date) -> String
     var onTap: (() -> Void)?
 
@@ -48,8 +53,7 @@ struct MapUsPulseCard: View {
                 .padding(.top, AppSpacing.sm)
         }
         // minHeight, not a hard height — matches MapPulseHero's own reasoning
-        // (spec §1's shared footprint is the common case, not a hard guarantee;
-        // the quiet-acknowledgment line can push a genuinely fuller card taller).
+        // (spec §1's shared footprint is the common case, not a hard guarantee).
         .frame(minHeight: AppLayout.mapPulseCardHeight, alignment: .top)
         .frame(maxWidth: .infinity, alignment: .leading)
         // NO card chrome — MapPulseHero (Me) has none either. This is a hero
@@ -73,8 +77,9 @@ struct MapUsPulseCard: View {
         HStack {
             Text("THE PULSE · TOGETHER")
                 .font(AppFonts.overline)
-                .tracking(1.0)
-                .foregroundStyle(AppColors.spectrumMagenta)
+                .textCase(.uppercase)
+                .tracking(1.5)
+                .foregroundStyle(AppColors.textSectionLabel)
             Spacer()
             Text("tap to open →")
                 .font(AppFonts.caption)
@@ -135,14 +140,6 @@ struct MapUsPulseCard: View {
                     .multilineTextAlignment(.center)
 
                 namesRead(mine: mine, partner: partner)
-
-                if partner == .quiet, let last = partnerLastEntry {
-                    Text("\(displayName) hasn't checked in since \(relativeDay(last.date))")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textTertiary)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, AppSpacing.xxs)
-                }
             }
         }
     }
@@ -159,7 +156,8 @@ struct MapUsPulseCard: View {
             return distance > 0.45 ? "A wide day between you" : "Close today"
         }
         if partner == .unwritten {
-            return "\(displayName) hasn't checked in yet"
+            // Orb-describing, never behavior-tracking (pre-TestFlight D6).
+            return "The shared read is still forming"
         }
         return "Your last reads, side by side"
     }

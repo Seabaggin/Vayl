@@ -29,6 +29,14 @@ final class PulseStore {
 
     private(set) var entries: [PulseEntry] = []
 
+    /// True only when a hydrate fetch failed WHILE the local cache was empty: a
+    /// reinstall/new device whose history restore couldn't reach the server. Views
+    /// use it to swap the first-run empty-state copy ("start your first check-in")
+    /// for honest "couldn't reach your history" copy, so an unreachable history never
+    /// masquerades as a blank slate. Cleared by any successful hydrate; never set
+    /// when local entries exist (a failed refresh over real data isn't first-run).
+    private(set) var lastHydrateFailed: Bool = false
+
     /// Today's entry, if any — the single source of truth for "have I checked in
     /// today" (was duplicated as a local `Calendar.current.isDateInToday` filter in
     /// both HomePulseRail and MapPulseHero).
@@ -118,7 +126,11 @@ final class PulseStore {
         self.sync = sync ?? PulseSyncService.shared
         load()
         #if DEBUG
-        if entries.isEmpty {
+        // Xcode PREVIEWS only, never a debug device/simulator run: add() pushes to
+        // the real backend via pushEntry, so an unguarded seed was shipping 13 fake
+        // entries straight into prod for any signed-in debug session.
+        if entries.isEmpty,
+           ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
             PulseEntry.previews.forEach { add($0) }
         }
         #endif
@@ -137,6 +149,9 @@ final class PulseStore {
         } else if entry.createdAt == nil {
             entry.createdAt = entry.date
         }
+        // Stamp the last-write time on EVERY save (unlike createdAt, which is
+        // carried forward): this is what the newest-wins hydrate merge compares.
+        entry.updatedAt = Date()
         entries.removeAll { cal.isDate($0.date, inSameDayAs: entry.date) }
         entries.append(entry)
         entries.sort { $0.date < $1.date }
@@ -149,17 +164,34 @@ final class PulseStore {
 
     /// Pulls the caller's full history down from `pulse_entries` and merges it into the
     /// local cache — the reinstall/new-device recovery path (a fresh install has an empty
-    /// local cache but a populated server history). Server entries win per calendar day
-    /// (they're the synced source of truth); any local entry for a day the server doesn't
-    /// have yet (e.g. logged offline, not synced) is left alone rather than dropped, then
-    /// pushed back up in the bounded reconciliation pass below. Called at cold launch and
-    /// again on every return to foreground (VaylApp's scenePhase handler), after auth is
-    /// confirmed ready.
+    /// local cache but a populated server history). NEWEST WINS per calendar day: when
+    /// both sides have a row for the same day, the one with the later resolvedUpdatedAt
+    /// survives (a same-day re-edit on this device must not be clobbered by the stale
+    /// server copy its push raced against, and vice versa). Any local entry for a day the
+    /// server doesn't have yet (e.g. logged offline, not synced) is left alone rather
+    /// than dropped; both cases are pushed back up in the bounded reconciliation pass
+    /// below. Called at cold launch and again on every return to foreground (VaylApp's
+    /// scenePhase handler), after auth is confirmed ready.
     func hydrateFromServer() async {
-        guard case .success(let serverEntries) = await sync.fetchOwnEntries() else { return }
+        guard case .success(let serverEntries) = await sync.fetchOwnEntries() else {
+            // Only a reinstall whose restore failed counts (see lastHydrateFailed's
+            // doc): a failed refresh over existing local data isn't a first-run lie.
+            if entries.isEmpty { lastHydrateFailed = true }
+            return
+        }
+        lastHydrateFailed = false
+
         let cal = Calendar.current
         var merged = entries
+        // Days where the LOCAL copy beat the server row on resolvedUpdatedAt: the
+        // server copy is stale for these, so the push-back pass below re-uploads them.
+        var localWonDays: Set<Date> = []
         for serverEntry in serverEntries {
+            if let local = merged.first(where: { cal.isDate($0.date, inSameDayAs: serverEntry.date) }),
+               local.resolvedUpdatedAt > serverEntry.resolvedUpdatedAt {
+                localWonDays.insert(cal.startOfDay(for: local.date))
+                continue
+            }
             merged.removeAll { cal.isDate($0.date, inSameDayAs: serverEntry.date) }
             merged.append(serverEntry)
         }
@@ -167,21 +199,24 @@ final class PulseStore {
         entries = merged
         save()
 
-        // Push back any RECENT local day the server doesn't have yet — a check-in
-        // made offline (or whose push silently failed) would otherwise never reach
-        // the server, since add()'s push is fire-and-forget and only fires once, at
-        // creation. Bounded to the last 7 days on purpose, for two reasons: (1) a
-        // connectivity-caused sync gap should surface well within a week of normal
-        // app use, so there's no real recovery value in reaching further back; and
-        // (2) reaching further back risks re-pushing a genuinely old, pre-unlink
-        // entry after a user re-pairs with a NEW partner — pushEntry stamps
-        // couple_id from the CURRENT profile at push time, so an unbounded
-        // reach-back could silently attach an old, prior-relationship entry to a
-        // new partner's couple_id. A 7-day cap keeps this a narrow connectivity
-        // fix, not a history-resurrection path. 🎚️ the exact window is tunable.
+        // Push back any RECENT local day the server lacks OR where the local copy won
+        // the merge above — a check-in made offline (or whose push silently failed)
+        // would otherwise never reach the server, since add()'s push is fire-and-forget
+        // and only fires once, at creation. Bounded to the last 7 days on purpose, for
+        // two reasons: (1) a connectivity-caused sync gap should surface well within a
+        // week of normal app use, so there's no real recovery value in reaching further
+        // back; and (2) reaching further back risks re-pushing a genuinely old,
+        // pre-unlink entry after a user re-pairs with a NEW partner — pushEntry stamps
+        // couple_id from the CURRENT profile at push time, so an unbounded reach-back
+        // could silently attach an old, prior-relationship entry to a new partner's
+        // couple_id. A 7-day cap keeps this a narrow connectivity fix, not a
+        // history-resurrection path. 🎚️ the exact window is tunable.
         let cutoff = cal.date(byAdding: .day, value: -7, to: Date()) ?? Date()
         let serverDays = Set(serverEntries.map { cal.startOfDay(for: $0.date) })
-        let unsynced = entries.filter { $0.date >= cutoff && !serverDays.contains(cal.startOfDay(for: $0.date)) }
+        let unsynced = entries.filter {
+            let day = cal.startOfDay(for: $0.date)
+            return $0.date >= cutoff && (!serverDays.contains(day) || localWonDays.contains(day))
+        }
         for entry in unsynced {
             await sync.pushEntry(entry)
         }

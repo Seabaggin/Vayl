@@ -32,7 +32,7 @@ struct PulseHistoryGrid: View {
 
     // MARK: - Layout
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 5), count: 10)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: AppSpacing.xs), count: 10)
 
     var body: some View {
         // Hoisted once per render — `cells` re-derives from `mode` on every read, and
@@ -48,7 +48,7 @@ struct PulseHistoryGrid: View {
             // named / Neutral / Uncharted dots never re-render (no whole-grid flicker). Border
             // dots read the same absolute wall-clock, so they stay phase-coherent without a
             // shared parent driver (offset only by index).
-            LazyVGrid(columns: columns, spacing: 5) {
+            LazyVGrid(columns: columns, spacing: AppSpacing.xs) {
                 ForEach(cells.indices, id: \.self) { i in
                     AuraDot(space: cells[i].mine, partner: cells[i].partner, index: i, animate: isVisible)
                         .contentShape(Rectangle())
@@ -56,6 +56,12 @@ struct PulseHistoryGrid: View {
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             selectedIndex = (selectedIndex == i) ? nil : i
                         }
+                        // Colour-only meaning needs a text fallback for VoiceOver:
+                        // same date + space wording as the tap callout below.
+                        .accessibilityElement()
+                        .accessibilityLabel(accessibilityLabel(for: cells[i]))
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityHint("Shows this check-in's details")
                 }
             }
 
@@ -102,6 +108,18 @@ struct PulseHistoryGrid: View {
         }
     }
 
+    /// VoiceOver fallback for a colour-only cell — the same date + space wording
+    /// as `calloutText`, without the visual separators.
+    private func accessibilityLabel(for cell: (date: Date, mine: PulseSpace, partner: PulseSpace?)) -> String {
+        let dateText = Self.dateFormatter.string(from: cell.date)
+        var text = "\(dateText), \(cell.mine.displayName)"
+        if case .us(_, let name) = mode, let partner = cell.partner {
+            let displayName = name.isEmpty ? "partner" : name
+            text += ", \(displayName): \(partner.displayName)"
+        }
+        return text
+    }
+
     private static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "EEE, MMM d"
@@ -110,13 +128,16 @@ struct PulseHistoryGrid: View {
 
     // MARK: - Label
 
+    // Counts the actual cells so 4 entries never claim "30" (pre-TestFlight D12).
     private var label: String {
+        let count = cells.count
+        let base = count == 1 ? "Your first check-in" : "Your last \(count) check-ins"
         switch mode {
         case .me:
-            return "Your last 30 check-ins"
+            return base
         case .us(_, let name):
             let displayName = name.isEmpty ? "partner" : name
-            return "Your last 30 check-ins · you / \(displayName)"
+            return "\(base) · you / \(displayName)"
         }
     }
 }
