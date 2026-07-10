@@ -96,8 +96,10 @@ struct SessionPlayerView: View {
 
             // Whole-session budget check — a soft "still with it?" room, styled
             // like the pause overlay. Never a hard cut: both buttons are always
-            // tappable, and a row echo clearing the budget dismisses it.
-            if store.budgetCheckPresented {
+            // tappable, and a row echo clearing the budget dismisses it. A
+            // paused room wins — the check hides while paused (it returns on
+            // resume) so the two overlays never stack.
+            if store.budgetCheckPresented && !store.isPaused {
                 ZStack {
                     Rectangle().fill(AppColors.void).opacity(0.72).ignoresSafeArea()
                     VStack(spacing: AppSpacing.lg) {

@@ -289,6 +289,12 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         store.evaluateSessionBudget(now: Date().addingTimeInterval(60))
         XCTAssertFalse(store.budgetCheckPresented)
 
+        // A paused room is never interrupted, even past budget.
+        store.togglePause()
+        store.evaluateSessionBudget(now: Date().addingTimeInterval(121))
+        XCTAssertFalse(store.budgetCheckPresented, "the check never fires over a paused room")
+        store.togglePause()
+
         // Past budget: the soft check fires.
         store.evaluateSessionBudget(now: Date().addingTimeInterval(121))
         XCTAssertTrue(store.budgetCheckPresented)

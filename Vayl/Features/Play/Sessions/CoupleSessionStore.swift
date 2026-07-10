@@ -749,10 +749,12 @@ final class CoupleSessionStore: Identifiable {
     }
 
     /// One budget tick: fire the soft check when elapsed >= budget mid-session.
-    /// A cleared budget (nil) never re-fires. Internal (not private) so tests
+    /// A cleared budget (nil) never re-fires, and a paused room is never
+    /// interrupted (the check fires on a later tick after resume instead —
+    /// two stacked overlays would fight). Internal (not private) so tests
     /// can drive the threshold logic with an injected `now`.
     func evaluateSessionBudget(now: Date = Date()) {
-        guard phase == .session, !budgetCheckPresented,
+        guard phase == .session, !budgetCheckPresented, !isPaused,
               let budget = liveGlobalTimerSeconds, budget > 0,
               let anchor = budgetAnchor,
               now.timeIntervalSince(anchor) >= Double(budget) else { return }
