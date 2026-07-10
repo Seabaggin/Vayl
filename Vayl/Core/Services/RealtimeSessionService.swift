@@ -174,6 +174,10 @@ private struct NewCuratedSession: Encodable {
 /// No UI knowledge, no state ownership. async/await only — errors rethrown.
 final class RealtimeSessionService {
 
+    /// Cached wire formatter for timestamp writes — the heartbeat stamps every
+    /// few seconds, so no per-call ISO8601DateFormatter allocations.
+    static let isoWire = ISO8601DateFormatter()
+
     private let supabase: SupabaseClient
 
     init(supabase: SupabaseClient = SupabaseManager.shared.client) {
@@ -727,7 +731,7 @@ extension RealtimeSessionService {
     func touchLastSeen(sessionId: UUID, role: SessionRole) async throws {
         try await supabase
             .from(SupabaseTable.curatedSessions)
-            .update([role.lastSeenColumn: ISO8601DateFormatter().string(from: Date())])
+            .update([role.lastSeenColumn: Self.isoWire.string(from: Date())])
             .eq("id", value: sessionId.uuidString)
             .execute()
     }

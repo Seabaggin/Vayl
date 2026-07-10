@@ -224,6 +224,61 @@ final class CoupleSessionSafetyTests: XCTestCase {
         XCTAssertTrue(store.partnerHeartbeatFresh)
     }
 
+    // MARK: Heartbeat row echoes must not churn the per-card timer
+
+    /// A curated_sessions row fixture whose timer inputs the test controls;
+    /// re-applying the SAME row simulates a heartbeat-only echo.
+    private func makeRow(
+        cardIds: [String],
+        perCardTimer: [String: Int],
+        timerStartedAt: String?
+    ) -> CuratedSessionDTO {
+        CuratedSessionDTO(
+            id: UUID(),
+            coupleId: UUID(),
+            initiatorId: UUID(),
+            deckId: "the-opener",
+            deckVariant: nil,
+            cardIds: cardIds,
+            perCardTimer: perCardTimer,
+            globalTimerSeconds: nil,
+            status: CuratedSessionStatus.active.rawValue,
+            currentIndex: 0,
+            aPresent: true,
+            bPresent: true,
+            aBandwidth: nil,
+            bBandwidth: nil,
+            aConsented: true,
+            bConsented: true,
+            timerStartedAt: timerStartedAt,
+            revealState: [:],
+            createdAt: "2026-07-01T00:00:00Z",
+            updatedAt: "2026-07-01T00:00:00Z"
+        )
+    }
+
+    func test_applyRemoteRow_identicalTimerInputs_doesNotResetElapsedTimer() async {
+        // Regression: heartbeat UPDATEs echo the row every ~4s; applyRemoteRow
+        // used to refreshTimer() unconditionally, cancelling the countdown and
+        // momentarily flipping timerElapsed back to false — re-firing the
+        // elapsed haptic + UI flicker on an already-elapsed timed card.
+        let store = makeStore()
+        await crossAirlock(store)
+        guard let cardId = store.currentCard?.id else { return XCTFail("no current card") }
+
+        // First echo: a 5s timer anchored 60s ago — already elapsed.
+        let anchor = Self.iso.string(from: Date().addingTimeInterval(-60))
+        let row = makeRow(cardIds: [cardId], perCardTimer: [cardId: 5], timerStartedAt: anchor)
+        store.applyRemoteRow(row)
+        await waitUntil("timer never reached elapsed") { store.timerElapsed }
+
+        // Heartbeat echo: identical timer inputs. The elapsed state must hold
+        // SYNCHRONOUSLY — the old code reset it to false here and only flipped
+        // it back after the rebuilt task's first async tick.
+        store.applyRemoteRow(row)
+        XCTAssertTrue(store.timerElapsed, "an unchanged row echo must not reset the elapsed timer")
+    }
+
     func test_heartbeat_doesNotAffectLocalDebugPill() async {
         // The pure-local path (isLive == false) keeps its mock presence pill;
         // a stale heartbeat must not bleed into it.

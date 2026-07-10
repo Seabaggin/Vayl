@@ -649,9 +649,16 @@ final class CoupleSessionStore: Identifiable {
         } else {
             indexChanged = false
         }
+        // Rebuild the countdown ONLY when a timer input actually changed. Row
+        // echoes now arrive every few seconds (the liveness heartbeat UPDATEs),
+        // and an unconditional refreshTimer() cancelled/rebuilt the task on
+        // every echo — momentarily resetting timerElapsed and re-firing the
+        // elapsed haptic + UI flicker on an already-elapsed card every ~4s.
+        let timerInputsChanged =
+            dto.timerStartedAt != timerStartedAtRaw || dto.perCardTimer != liveTimers
         timerStartedAtRaw = dto.timerStartedAt
         liveTimers = dto.perCardTimer
-        refreshTimer()
+        if timerInputsChanged || indexChanged { refreshTimer() }
         // Whole-session budget mirrors live from every echo; nil = no budget /
         // cleared by either phone's "We're still here" — dismiss any open check.
         liveGlobalTimerSeconds = dto.globalTimerSeconds
