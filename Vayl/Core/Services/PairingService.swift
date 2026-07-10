@@ -200,6 +200,8 @@ final class PairingService {
                 throw PairingError.expiredCode
             }
 
+            // The group always has a pending child at this await.
+            // swiftlint:disable:next force_unwrapping
             let result = try await group.next()!
             group.cancelAll()
             return result
@@ -254,6 +256,8 @@ final class PairingService {
     /// Excludes ambiguous characters: 0, O, 1, I, L.
     private func makeCode() -> String {
         let chars: [Character] = Array("ABCDEFGHJKMNPQRSTUVWXYZ2345679")
+        // Constant non-empty character set.
+        // swiftlint:disable:next force_unwrapping
         return String((0..<6).map { _ in chars.randomElement()! })
     }
 }

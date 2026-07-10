@@ -346,6 +346,8 @@ struct HalfCircle: Shape {
     .preferredColorScheme(.dark)
 }
 
+// Preview-only sample data (PulseEntry.previews is always populated).
+// swiftlint:disable force_unwrapping
 #Preview("Split · current/current") {
     let mine    = PulseEntry.previews.last!
     let partner = PulseEntry.previews[PulseEntry.previews.count - 2]

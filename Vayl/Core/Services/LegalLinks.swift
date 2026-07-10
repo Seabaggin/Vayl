@@ -18,10 +18,14 @@ enum LegalLinks {
 
     /// Terms of Service. PLACEHOLDER → Apple's standard Licensed Application EULA
     /// (a real, shippable Terms stand-in). Replace with Vayl's hosted Terms.
+    // Compile-time-constant literal URL — never nil.
+    // swiftlint:disable:next force_unwrapping
     static let terms = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
 
     /// Privacy Policy. PLACEHOLDER → Apple's public privacy policy (renders cleanly).
     /// Replace with Vayl's hosted Privacy Policy + set it in App Store Connect.
+    // Compile-time-constant literal URL — never nil.
+    // swiftlint:disable:next force_unwrapping
     static let privacy = URL(string: "https://www.apple.com/legal/privacy/")!
 }
 

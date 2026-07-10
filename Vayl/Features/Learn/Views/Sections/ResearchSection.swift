@@ -97,7 +97,11 @@ struct ResearchSection: View {
 }
 
 #Preview {
+    // Seed research data literal.
+    // swiftlint:disable:next line_length
     let a = ResearchFinding(id: "haupert", type: .prevalence, stat: "1 in 5", headline: "1 in 5", finding: "Roughly 1 in 5 Americans has engaged in CNM.", bullets: [], limitation: "", citation: "Haupert et al. (2017).", author: "Haupert et al.", year: 2017, topics: [], connected: [])
+    // Seed research data literal.
+    // swiftlint:disable:next line_length
     let b = ResearchFinding(id: "conley", type: .myth, stat: nil, headline: "Monogamy myths", finding: "Monogamy isn't inherently safer for STI risk — CNM couples test and talk more.", bullets: [], limitation: "", citation: "Conley et al. (2013).", author: "Conley et al.", year: 2013, topics: [], connected: [])
     return ZStack {
         AppColors.pageBackground.ignoresSafeArea()

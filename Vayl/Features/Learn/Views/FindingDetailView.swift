@@ -87,6 +87,8 @@ private struct BulletStyle: LabelStyle {
 }
 
 #Preview {
+    // Seed research data literal.
+    // swiftlint:disable:next line_length
     let f = ResearchFinding(id: "haupert", type: .prevalence, stat: "1 in 5", headline: "1 in 5", finding: "Roughly 1 in 5 Americans has engaged in CNM.", bullets: ["Evenly distributed.", "Consistent across studies."], limitation: "Lifetime counts only.", citation: "Haupert et al. (2017).", author: "Haupert et al.", year: 2017, topics: [], connected: [])
     return FindingDetailView(finding: f, store: LearnStore())
 }

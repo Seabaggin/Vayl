@@ -122,6 +122,8 @@ extension Card {
             canSkip: false,
             register: .flexible,
             contextBeatType: .interstitial,
+            // Long card body copy string.
+            // swiftlint:disable:next line_length
             contextBeatCopy: "Something worth knowing before you go further:\n\nA boundary is a limit you set for yourself, not a rule you can set for someone else.\n\n\"I won't sleep with anyone without a condom\" is a boundary. It's yours. Your partner is still free to make their own choice. Now you both know where you actually stand.",
             backCopy: "If either of you answered no to the second question, you just found your starting point.\n\nWhat specific boundary has felt ignored? Name it out loud before the next card.",
             isGenderedCard: false,
@@ -185,6 +187,8 @@ extension Card {
         Card(
             id: "opener-06",
             deckId: "the-opener",
+            // Long card body copy string.
+            // swiftlint:disable:next line_length
             text: "In most NM spaces men find the dating landscape harder to navigate than expected.\n\nFewer matches. More skepticism. A quiet question that can creep in...\n\nAm I enough?\n\nHow do you each sit with that reality? What does it bring up for you? What does it make you want to do for each other?",
             highlightWords: ["Am I enough?"],
             type: .prompt,
@@ -203,6 +207,8 @@ extension Card {
         Card(
             id: "opener-07",
             deckId: "the-opener",
+            // Long card body copy string.
+            // swiftlint:disable:next line_length
             text: "Women in NM often find themselves with more access than they anticipated.\n\nThat can feel electric but it can also complicate things. Enjoying all of this newness will require balance.\n\nHow do you both intend to find it? What feels exciting? What feels scary?",
             highlightWords: ["balance", "electric"],
             type: .prompt,

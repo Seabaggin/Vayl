@@ -198,7 +198,7 @@ struct ModeSelectPhase: View {
                 .onChanged { _ in
                     // Don't mash the cheat code while lifted — that's the hand-off drag.
                     guard canInteract(side), !isCardLifted(side) else { return }
-                    if cheatCodeTask == nil || cheatCodeTask!.isCancelled {
+                    if cheatCodeTask?.isCancelled ?? true {
                         startCheatCode(for: side)
                     }
                 }

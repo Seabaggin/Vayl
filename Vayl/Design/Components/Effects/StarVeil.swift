@@ -54,7 +54,7 @@ struct StarVeil: View {
 
     private func draw(_ ctx: inout GraphicsContext, size: CGSize, time: Double?) {
         for s in stars {
-            let twinkle: Double = time == nil ? 0.6 : (sin(time! * s.speed + s.phase) + 1) / 2
+            let twinkle: Double = time.map { (sin($0 * s.speed + s.phase) + 1) / 2 } ?? 0.6
             let opacity = maxOpacity * (0.25 + 0.75 * twinkle) * min(1, s.r / 1.4)
             let d = s.r
             let rect = CGRect(x: s.x * size.width - d / 2, y: s.y * size.height - d / 2, width: d, height: d)

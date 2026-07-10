@@ -151,6 +151,8 @@ private struct GrainCanvas: View {
             }
         }
 
+        // CoreGraphics pixel pipeline: inputs are valid by construction, nil is unreachable.
+        // swiftlint:disable force_unwrapping
         let cfData   = CFDataCreate(nil, pixels, pixels.count)!
         let provider = CGDataProvider(data: cfData)!
         let cgImage  = CGImage(
@@ -163,6 +165,7 @@ private struct GrainCanvas: View {
             decode: nil, shouldInterpolate: false,
             intent: .defaultIntent
         )!
+        // swiftlint:enable force_unwrapping
 
         return Image(cgImage, scale: 1, label: Text(""))
     }

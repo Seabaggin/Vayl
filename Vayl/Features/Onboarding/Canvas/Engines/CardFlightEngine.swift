@@ -27,9 +27,12 @@ final class CardFlightEngine {
         if availableSlotIDs.isEmpty {
             availableSlotIDs = AppLayout.obCardLandingSlots.map(\.id)
         }
+        // Landing slots are a fixed non-empty catalog; index + lookup always resolve.
+        // swiftlint:disable force_unwrapping
         let pickIndex  = availableSlotIDs.indices.randomElement()!
         let slotID     = availableSlotIDs.remove(at: pickIndex)
         let slot       = AppLayout.obCardLandingSlots.first(where: { $0.id == slotID })!
+        // swiftlint:enable force_unwrapping
         return slot.resolve(in: screenSize)
     }
 

@@ -171,7 +171,7 @@ struct ContextPhase: View {
                     .id("subtitle-\(physics.currentIndex)")
                     .transition(.opacity)
 
-                Text(confirmedIndex != nil ? options[confirmedIndex!].detail : " ")
+                Text(confirmedIndex.map { options[$0].detail } ?? " ")
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
                     .multilineTextAlignment(.center)

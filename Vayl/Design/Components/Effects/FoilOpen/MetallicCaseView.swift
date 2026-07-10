@@ -1936,6 +1936,8 @@ struct MetallicCaseView: View {
             var next = options.max(by: {
                 align($0 - current, dir) + Double.random(in: 0...0.3, using: &rng)
               < align($1 - current, dir) + Double.random(in: 0...0.3, using: &rng)
+            // options is a fixed non-empty set.
+            // swiftlint:disable:next force_unwrapping
             })!
             if Double.random(in: 0...1, using: &rng) < 0.3 {
                 let heading = next - current
@@ -2042,6 +2044,8 @@ struct MetallicCaseView: View {
         ]
         return corners
             .map { center + $0 }
+            // corners is a fixed non-empty array.
+            // swiftlint:disable:next force_unwrapping
             .min(by: { dist2($0, p) < dist2($1, p) })!
     }
 

@@ -549,6 +549,8 @@ struct VaylAppIcon: View {
         guard let cgPath = CTFontCreatePathForGlyph(ctFont, glyph, nil) else { return nil }
         let crossings = collectCrossings(from: cgPath, scanY: scanY)
         guard !crossings.isEmpty else { return nil }
+        // crossings is non-empty (guarded on the line above).
+        // swiftlint:disable:next force_unwrapping
         return (left: crossings.min()!, right: crossings.max()!)
     }
 
