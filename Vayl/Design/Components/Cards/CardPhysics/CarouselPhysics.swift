@@ -23,7 +23,10 @@ final class CarouselPhysics {
     // MARK: - Config
 
     /// All tunable feel constants. Defaults are the demo's "halfway" preset.
-    struct Config: Equatable, Sendable {
+    /// `nonisolated` so this pure Sendable value type opts out of the enclosing
+    /// @MainActor isolation — otherwise its memberwise init is MainActor-isolated
+    /// and `nonisolated static let standard` can't call it.
+    nonisolated struct Config: Equatable, Sendable {
         /// Points of horizontal drag required to advance one full card.
         var dragSensitivity: CGFloat = 133
         /// Seconds of release velocity projected forward to choose the target card.

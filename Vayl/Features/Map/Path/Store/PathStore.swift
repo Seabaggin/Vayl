@@ -32,12 +32,15 @@ final class PathStore {
     private let transport: PathTransport
     private let content: PathContentService
 
-    init(coupleId: UUID, profileId: UUID, pathStyle: String, transport: PathTransport, content: PathContentService = PathContentService()) {
+    /// `content` nil-resolves inside this MainActor-isolated body — a
+    /// `= PathContentService()` default argument would evaluate in a nonisolated
+    /// context and warn (same pattern as CoupleSessionStore / SettingsStore).
+    init(coupleId: UUID, profileId: UUID, pathStyle: String, transport: PathTransport, content: PathContentService? = nil) {
         self.coupleId = coupleId
         self.profileId = profileId
         self.pathStyle = pathStyle
         self.transport = transport
-        self.content = content
+        self.content = content ?? PathContentService()
     }
 
     func load() async {
