@@ -587,6 +587,8 @@ private struct _LockedPreviewRow: View {
                 .stroke(isRevealed ? AppColors.spectrumMagenta.opacity(0.35) : AppColors.borderDefault, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(isRevealed ? title : "Locked desire")
     }
 
     private var orb: some View {

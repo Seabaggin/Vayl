@@ -488,6 +488,14 @@ struct SessionPlayerView: View {
                 .onChanged { _ in startHold() }
                 .onEnded { _ in endHold() }
         )
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel(store.isLastCard ? "Hold to finish" : "Hold to deal the next card")
+        .accessibilityHint(store.isLastCard ? "Activate to finish the session." : "Activate to deal the next card.")
+        .accessibilityAction {
+            guard !diving, !store.isPaused, store.currentCard != nil, store.revealSatisfied else { return }
+            pendingPrompt = nextPromptText()
+            commitDeal()
+        }
     }
 
     private let proceedWidth: CGFloat = 176

@@ -77,6 +77,10 @@ struct DesireConstellationView: View {
                         .position(x: star.point.x * geo.size.width,
                                   y: star.point.y * geo.size.height)
                         .onTapGesture { onTap?(star.id) }
+                        .accessibilityElement()
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityLabel(star.isLocked ? "Locked desire" : (star.label ?? "Desire"))
+                        .accessibilityAction { onTap?(star.id) }
                     }
                 }
             }
