@@ -39,6 +39,14 @@ Swift. Never guess at a timing value — always feel it first.
 A segment is not complete until it has run on device and the human has confirmed the feel.
 Build succeeds is not done. Feel is correct is done.
 
+**Both forms of runtime verification are allowed:** Claude may drive the simulator directly
+via XcodeBuildMCP (build, install, launch, tap, screenshot, snapshot_ui) when the task calls
+for it — e.g. scripted end-to-end flows, multi-simulator scenarios, or a runbook that says so.
+Bryan also runs the app himself on simulator/device for feel passes. Neither replaces the
+other: a Claude-driven sim run verifies behavior/wiring; Bryan's pass verifies feel. When
+running sims directly, still report findings honestly (screenshots, logs, anomalies) rather
+than asserting a visual/feel verdict from automation alone.
+
 ---
 
 ## Product Principles (Non-Negotiable)
