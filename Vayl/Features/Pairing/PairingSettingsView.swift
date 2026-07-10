@@ -150,7 +150,7 @@ struct PairingSettingsView: View {
                 icon: AppIcons.link,                // was "link"
                 // ⚠️ AppIcons.link must be added to AppIcons before building
                 title: "Enter a partner's code",
-                subtitle: "Your partner has a code — enter it here to link your accounts.",
+                subtitle: "Your partner has a code. Enter it here to link your accounts.",
                 action: { showJoinView = true }
             )
         }

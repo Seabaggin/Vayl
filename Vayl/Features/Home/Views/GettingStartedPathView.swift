@@ -47,7 +47,7 @@ struct GettingStartedPathView: View {
             }
             .padding(.top, AppSpacing.lg)
 
-            Text("🔒 Private to you — only what you both share is ever revealed")
+            Text("🔒 Private to you: only what you both share is ever revealed")
                 .font(AppFonts.meta)
                 .foregroundColor(AppColors.textMuted)
                 .multilineTextAlignment(.center)

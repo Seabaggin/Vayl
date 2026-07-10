@@ -330,7 +330,7 @@ struct DesireMapView: View {
                 }
 
                 // Privacy footer
-                Text("Private — only your mutual matches are ever revealed.")
+                Text("Private: only your mutual matches are ever revealed.")
                     .font(AppFonts.meta)
                     .foregroundStyle(AppColors.textTertiary)
                     .multilineTextAlignment(.center)

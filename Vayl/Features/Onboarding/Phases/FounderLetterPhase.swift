@@ -110,7 +110,7 @@ struct FounderLetterPhase: View {
             }
 
             if director.commitFailed {
-                Text("Couldn't save — pull down to retry.")
+                Text("Couldn't save. Pull down to retry.")
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.destructive)
             }

@@ -160,7 +160,7 @@ enum MotivationShape: String, CaseIterable, Codable {
         case (.connection, _):            return "Understanding my partner better"
         case (.alignment, _):             return "Finding a pace that works for both of us"
         case (.readiness, _):             return "Finding the words to bring this up"
-        case (.openExploration, _):       return "Just exploring — no agenda yet"
+        case (.openExploration, _):       return "Just exploring, no agenda yet"
         case (.selfClarity, .together):   return "Feeling more confident in myself"
         case (.selfClarity, _):           return "Feeling more confident about all of this"
         case (.selfDiscovery, .together): return "Figuring out what I actually want"

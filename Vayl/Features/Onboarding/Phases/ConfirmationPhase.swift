@@ -79,7 +79,7 @@ struct ConfirmationPhase: View {
             exitTask?.cancel()
         }
         .accessibilityLabel("Confirmation phase")
-        .accessibilityAction(named: "Confirm — this is me") { startExit() }
+        .accessibilityAction(named: "Confirm: this is me") { startExit() }
     }
 
     // MARK: - Fan swipe (the keep gesture, asked of the whole hand)
@@ -225,7 +225,7 @@ struct ConfirmationPhase: View {
         // instead of auto-hiding while the fan keeps twitching silently. This is
         // the only swipe-RIGHT in the OB (every prior confirm was swipe-up), so
         // its worded cue must not time out. Hidden on commit (startExit).
-        director.projector.showDealerLineManual("If that's you — swipe right.")
+        director.projector.showDealerLineManual("If that's you, swipe right.")
         startNudge(amplitude: size.width * 0.055)
     }
 

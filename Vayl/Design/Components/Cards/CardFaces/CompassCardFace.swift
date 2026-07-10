@@ -250,7 +250,7 @@ struct CompassCardFace: View {
     private var bearingText: String {
         guard !isNeutral else { return "BRG 000°" }
         let degrees = String(format: "BRG %03d°", Int(abs(needleDegrees).rounded()))
-        return clamped > 0 ? degrees + " E — KEEP" : degrees + " W — PASS"
+        return clamped > 0 ? degrees + " E · KEEP" : degrees + " W · PASS"
     }
 
     /// Cyan toward keep, magenta toward pass — matches the needle's darts.

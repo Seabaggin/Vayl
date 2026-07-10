@@ -94,11 +94,11 @@ struct PulseHistoryGrid: View {
         let dateText = Self.dateFormatter.string(from: cell.date)
         switch mode {
         case .me:
-            return "\(dateText) — \(cell.mine.displayName)"
+            return "\(dateText), \(cell.mine.displayName)"
         case .us(_, let name):
-            guard let partner = cell.partner else { return "\(dateText) — \(cell.mine.displayName)" }
+            guard let partner = cell.partner else { return "\(dateText), \(cell.mine.displayName)" }
             let displayName = name.isEmpty ? "partner" : name
-            return "\(dateText) — you: \(cell.mine.displayName) · \(displayName): \(partner.displayName)"
+            return "\(dateText), you: \(cell.mine.displayName) · \(displayName): \(partner.displayName)"
         }
     }
 

@@ -19,7 +19,7 @@ struct ResourcesOverlayView: View {
                     VStack(alignment: .leading, spacing: AppSpacing.xs) {
                         Text("Vayl isn't therapy")
                             .font(AppFonts.cardTitle).foregroundStyle(AppColors.textPrimary)
-                        Text("And it isn't trying to be. Think of us as the lifeguard at the edge of the pool — not to keep you from the deep end, but to throw you a line if you ever need one.")
+                        Text("And it isn't trying to be. Think of us as the lifeguard at the edge of the pool: not to keep you from the deep end, but to throw you a line if you ever need one.")
                             .font(AppFonts.caption).foregroundStyle(AppColors.textSecondary)
                     }
                 }

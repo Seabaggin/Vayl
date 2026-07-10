@@ -33,13 +33,13 @@ struct SingleGreetingOverlay: View {
                 .foregroundStyle(AppColors.spectrumText)
                 .tracking(2)
 
-            Text("Vayl gets the most out of two people right now — more for solo journeys is on the way.")
+            Text("Vayl gets the most out of two people right now. More for solo journeys is on the way.")
                 .font(AppFonts.bodyText)
                 .foregroundStyle(AppColors.textBody)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("But you're not locked out — these are yours today:")
+            Text("But you're not locked out. These are yours today:")
                 .font(AppFonts.bodyMedium)
                 .foregroundStyle(AppColors.textPrimary)
                 .multilineTextAlignment(.center)

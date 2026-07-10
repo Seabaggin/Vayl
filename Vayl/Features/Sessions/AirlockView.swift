@@ -247,7 +247,7 @@ struct AirlockView: View {
     /// each partner independently holds, readiness crosses via consent.
     private var ringPrimaryLine: String {
         if consentFailed { return "That didn't reach the room. Hold again." }
-        if partnerConsented && lockedIn { return "You're both in — here we go →" }
+        if partnerConsented && lockedIn { return "You're both in. Here we go →" }
         if lockedIn { return "You're locked in." }
         if !partnerHere { return "Waiting for \(store.partnerLabel) to arrive…" }
         return "Press and hold your ring."

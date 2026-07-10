@@ -92,7 +92,7 @@ struct QuizCarouselSection: View {
     ZStack {
         AppColors.pageBackground.ignoresSafeArea()
         QuizCarouselSection(quizzes: [
-            LearnQuiz(id: "flavor", kind: "flavor", title: "What's Your Flavor of NM?", subtitle: "Where you actually land — not where you think you should.", questionCount: 12),
+            LearnQuiz(id: "flavor", kind: "flavor", title: "What's Your Flavor of NM?", subtitle: "Where you actually land, not where you think you should.", questionCount: 12),
             LearnQuiz(id: "boundary", kind: "boundary", title: "Where Are Your Lines?", subtitle: "Boundaries as a spectrum, not a checklist.", questionCount: 12)
         ])
         .padding()

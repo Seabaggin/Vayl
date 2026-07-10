@@ -396,7 +396,7 @@ struct ModeSelectPhase: View {
             try? await Task.sleep(for: .milliseconds(120))
             guard !Task.isCancelled else { return }
             let text = side == .left
-                ? "Starting on my own — for now."
+                ? "Starting on my own, for now."
                 : "We're doing this together."
             withAnimation(AppAnimation.standard) {
                 liftedText = text

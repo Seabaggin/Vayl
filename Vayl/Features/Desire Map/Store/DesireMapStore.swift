@@ -84,7 +84,7 @@ final class DesireMapStore: Identifiable {
     private func resolveProfile() {
         let context = ModelContext(modelContainer)
         guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else {
-            loadError = "No profile found — finish onboarding first."
+            loadError = "No profile found. Finish onboarding first."
             return
         }
         userId = profile.id
