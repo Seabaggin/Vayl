@@ -220,6 +220,8 @@ struct SessionCloseView: View {
                             .fill(AppColors.spectrumBorder)
                     )
             }
+            // TODO(haptics): Save is a commit-weight action; bump to .medium
+            // once VaylPressableStyle gains a weight parameter.
             .buttonStyle(.vaylPressable(scale: 0.98))
         }
         .padding(.horizontal, AppSpacing.lg)

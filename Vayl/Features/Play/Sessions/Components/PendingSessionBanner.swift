@@ -50,6 +50,8 @@ struct PendingSessionBanner: View {
             )
             .contentShape(Rectangle())
         }
+        // TODO(haptics): Join is a commit-weight action; bump to .medium once
+        // VaylPressableStyle gains a weight parameter.
         .buttonStyle(.vaylPressable(scale: 0.98))
         .accessibilityLabel("\(initiatorName) set up a session. \(deckTitle). Join")
         .overlay(alignment: .trailing) {
@@ -59,7 +61,7 @@ struct PendingSessionBanner: View {
                     .foregroundStyle(AppColors.textTertiary)
                     .frame(width: 28, height: 28)
             }
-            .buttonStyle(PressableCardStyle())
+            .buttonStyle(.vaylPressable)
             .accessibilityLabel("Dismiss")
             .padding(.trailing, AppSpacing.md)
         }
@@ -101,6 +103,8 @@ struct ResumeSessionBanner: View {
                 }
                 .contentShape(Rectangle())
             }
+            // TODO(haptics): Resume is a commit-weight action; bump to .medium
+            // once VaylPressableStyle gains a weight parameter.
             .buttonStyle(.vaylPressable(scale: 0.98))
             .accessibilityLabel("Resume session")
 
