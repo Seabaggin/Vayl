@@ -110,7 +110,7 @@ struct SessionAtmosphere: View {
 
     private func startBreath() {
         guard !reduceMotion, !AppAnimation.lowPower else { return }
-        withAnimation(.linear(duration: AppAnimation.ambientDrift * 2.5).repeatForever(autoreverses: false)) {
+        withAnimation(.linear(duration: AppAnimation.sessionBreathDrift).repeatForever(autoreverses: false)) {
             phase = 1.0
         }
     }

@@ -35,7 +35,7 @@ struct ResearchSection: View {
                 .buttonStyle(PressableCardStyle())
             }
 
-            InfiniteCarousel(items: findings, interval: 5.5, height: 212) { finding in
+            InfiniteCarousel(items: findings, interval: AppAnimation.ambientDwell, height: 212) { finding in
                 Button { onOpenFinding(finding) } label: { findingCard(finding) }
                     .buttonStyle(PressableCardStyle())
             } emptyContent: {

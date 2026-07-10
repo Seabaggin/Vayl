@@ -231,6 +231,20 @@ When in doubt, go slower and softer. Never guess a duration — pick a token.
 - Ambient animations disabled entirely under Reduce Motion — remove the loop, not just slow it
 - Ambient animations also disabled under **Low Power Mode** (added 2026-07-04): `.ambientAnimation()` gates it automatically; manual mount/start guards must check `reduceMotion || AppAnimation.lowPower` (or `AppAnimation.ambientMotionDisabled`). Reactive animations and one-shot effects are never LPM-gated — user feedback always plays
 - Continuous `TimelineView(.animation)` surfaces need a frame-rate cap matched to their motion (`minimumInterval:`) — a colour drift or slow wander never needs display rate
+- **No arithmetic on animation tokens.** `AppAnimation.ambientPulse / 1.5` (a 1.33s loop) is banned — it hides the real tempo and slips under the 2s floor. If you need a different duration, it is a new named token, not a division. (Grep guard: `AppAnimation\.\w+ *[*/]` should return only unit conversions and within-one-animation keyframe subdivisions.)
+
+### Breathing tempo — two speeds, no third
+- **Living surfaces** (auras, a heart, a real presence) breathe at `auraBreathe` (5.4s).
+- **Inert chrome** (a waiting dot, a status pulse) pulses at `ambientPulse` (2s).
+- There is no third ambient tempo. If a loop wants one, it is wrong — pick living or inert.
+
+### Haptic scale — weight maps to consequence
+`light` = select / navigate · `medium` = commit · `rigid` = two-device seal (airlock, sync lock-in) · `heavy` = safe-word only · `success` = terminal (a thing finished). Never reach past the consequence: a tab tap is `light`, not `medium`.
+
+### Spectrum discipline — the full gradient is earned
+- Full cyan→purple→magenta gradient only on **strokes**, **display text**, or a **hero element ≥24pt**. Below that it muddies — use a single accent.
+- Links / tappable accent body text → `AppColors.textAccent`, never the gradient.
+- Directional meaning: **cyan = Me / private**, **magenta = Us / shared**. Don't cross the wires.
 
 ---
 

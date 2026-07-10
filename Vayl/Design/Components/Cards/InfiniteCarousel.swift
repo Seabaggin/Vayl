@@ -18,7 +18,7 @@ import SwiftUI
 
 struct InfiniteCarousel<Item: Identifiable, Content: View, EmptyContent: View>: View {
     let items: [Item]
-    var interval: TimeInterval = 5
+    var interval: TimeInterval = AppAnimation.ambientDwell
     var height: CGFloat
     @ViewBuilder var content: (Item) -> Content
     /// Shown when `items` is empty. Defaults to the original EmptyView (render
@@ -28,7 +28,7 @@ struct InfiniteCarousel<Item: Identifiable, Content: View, EmptyContent: View>: 
 
     init(
         items: [Item],
-        interval: TimeInterval = 5,
+        interval: TimeInterval = AppAnimation.ambientDwell,
         height: CGFloat,
         @ViewBuilder content: @escaping (Item) -> Content,
         @ViewBuilder emptyContent: @escaping () -> EmptyContent
@@ -125,7 +125,7 @@ extension InfiniteCarousel where EmptyContent == EmptyView {
     /// Preserves the original behavior — an empty `items` renders nothing.
     init(
         items: [Item],
-        interval: TimeInterval = 5,
+        interval: TimeInterval = AppAnimation.ambientDwell,
         height: CGFloat,
         @ViewBuilder content: @escaping (Item) -> Content
     ) {

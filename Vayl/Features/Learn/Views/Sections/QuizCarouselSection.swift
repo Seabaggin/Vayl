@@ -15,7 +15,7 @@ struct QuizCarouselSection: View {
                 .font(AppFonts.display(16, weight: .semibold, relativeTo: .title3))
                 .foregroundStyle(AppColors.spectrumCyan)
 
-            InfiniteCarousel(items: quizzes, interval: 5, height: 288) { quiz in
+            InfiniteCarousel(items: quizzes, interval: AppAnimation.ambientDwell, height: 288) { quiz in
                 Button { onSelect(quiz) } label: { quizCard(quiz) }
                     .buttonStyle(PressableCardStyle())
             } emptyContent: {

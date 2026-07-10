@@ -59,7 +59,7 @@ struct SessionLobbyView: View {
                     .frame(width: 9, height: 9)
                     .opacity(waitingPulse ? 0.75 : 0.4)
                     .ambientAnimation(
-                        .easeInOut(duration: AppAnimation.ambientPulse / 1.5)
+                        .easeInOut(duration: AppAnimation.ambientPulse)
                             .repeatForever(autoreverses: true),
                         value: waitingPulse
                     )

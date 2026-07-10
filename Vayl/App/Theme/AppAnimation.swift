@@ -222,6 +222,10 @@ internal enum AppAnimation {
     /// `recedeOpacity` via the `.vaylRecede(_:)` modifier.
     static let recedeBlur: CGFloat = 6
 
+    /// SessionAtmosphere's slow background breath — one full linear drift, seconds.
+    /// A named token so the loop tempo isn't derived by arithmetic on ambientDrift.
+    static let sessionBreathDrift: Double = 10
+
     // MARK: — Border Effect
         // Used by VaylBorderEffect. Applied to the spectrum stroke fill and glow pop
         // on VaylButton, SelectablePill, sheets, and any bordered surface.

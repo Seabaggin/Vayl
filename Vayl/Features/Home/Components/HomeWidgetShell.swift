@@ -73,7 +73,7 @@ struct OrbLayer: View {
     }
 
     var body: some View {
-        if reduceMotion {
+        if reduceMotion || AppAnimation.lowPower {
             EmptyView()
         } else {
             GeometryReader { geo in

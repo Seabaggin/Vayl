@@ -352,7 +352,7 @@ struct AirlockView: View {
                 .overlay(Circle().strokeBorder(AppColors.textTertiary, lineWidth: ready ? 0 : 1.3))
                 .opacity(ready ? 1 : (waitingPulse ? 1 : 0.35))
                 .ambientAnimation(
-                    .easeInOut(duration: AppAnimation.ambientPulse / 1.5).repeatForever(autoreverses: true),
+                    .easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true),
                     value: waitingPulse
                 )
             Text(name)
