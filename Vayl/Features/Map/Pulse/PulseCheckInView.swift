@@ -50,10 +50,11 @@ struct PulseCheckInView: View {
         GeometryReader { geo in
             let layout = AppLayout.from(geo)
             // The field owns the top of the screen, running nearly edge-to-edge (capped at a
-            // square by the screen width). 🎚️ FEEL: 0.50 of the height (was 0.42) — the field
-            // read too small against its mockup on device; tune further from here so the five
-            // pills always clear the bottom without the field shrinking.
-            let fieldSize = min(layout.screenWidth, geo.size.height * 0.50)
+            // square by the screen width). 🎚️ FEEL: 0.46 of the height (0.42 → 0.50 → 0.46):
+            // 0.42 read too small on device, but at 0.50 the column overflowed the screen
+            // and pushed the pills onto the home indicator once the header got its own
+            // strip. 0.46 buys the bottom back; tune from here.
+            let fieldSize = min(layout.screenWidth, geo.size.height * 0.46)
             ZStack(alignment: .top) {
                 AppColors.void.ignoresSafeArea()
                 OnboardingAtmosphere(config: .stat, maskStart: atmosphereMaskStart)
@@ -72,21 +73,23 @@ struct PulseCheckInView: View {
 
                     Spacer(minLength: AppSpacing.sm)
                 }
-                // xxl start (design pass 2026-07-09): the field used to begin at xs,
-                // directly under the header chrome, which made the chevron and step
-                // dots read as sitting ON the graph. xxl clears the 28pt header row
+                // Plain padding, NOT .topClearance (design pass 2026-07-09): this
+                // cover's content is already laid out inside the safe area, so
+                // .topClearance was adding safeAreaInsets.top a second time and
+                // sinking the whole column ~59pt. xxl clears the 28pt header row
                 // plus a band of void, so the chrome owns its own strip above the
-                // field instead of floating over it. 🎚️ FEEL: confirm the five pills
-                // still clear the bottom comfortably on device.
-                .topClearance(layout, padding: AppSpacing.xxl)
+                // field instead of floating over it. 🎚️ FEEL: confirm the pills
+                // clear the bottom comfortably on device.
+                .padding(.top, AppSpacing.xxl)
                 .padding(.bottom, AppSpacing.xl)
 
-                // Header chrome sits in its own strip above the field: chevron
-                // leading, step dots trailing (28pt row at bare safe-area
-                // clearance), with the field starting a band of void below it.
+                // Header chrome in its own strip above the field: chevron leading,
+                // step dots trailing. xs off the safe-area top (which the layout
+                // already respects — see the double-inset note above), so the row
+                // hugs the Dynamic Island instead of drifting a full inset below it.
                 headerChrome
                     .padding(.horizontal, AppSpacing.lg)
-                    .topClearance(layout, padding: 0)
+                    .padding(.top, AppSpacing.xs)
             }
         }
         .screenshotProtected()
@@ -193,8 +196,11 @@ struct PulseCheckInView: View {
         if currentQ < PulseAnswers.all.count {
             let q = PulseAnswers.all[currentQ]
             VStack(spacing: AppSpacing.md) {
+                // cardTitle, not prompt (design pass 2026-07-09): with the header
+                // title gone, each question IS the title of its moment; 17pt prompt
+                // read as body copy against the field's huge ghost labels.
                 Text(q.text)
-                    .font(AppFonts.prompt)
+                    .font(AppFonts.cardTitle)
                     .foregroundStyle(AppColors.textPrimary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
