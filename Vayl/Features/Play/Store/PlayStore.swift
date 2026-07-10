@@ -14,6 +14,19 @@ enum DeckContinuity: Equatable {
     case completed
 }
 
+// MARK: - Realtime seam (test injection)
+//
+// Minimal additive seam: PlayStore only ever calls these three methods on its
+// injected RealtimeSessionService. Same pattern as SessionEntryRealtime /
+// AirlockTransport — a small protocol so tests can fake the network.
+protocol PlaySessionOpening: AnyObject {
+    func openSession(coupleId: UUID, initiatorId: UUID, draft: CuratedSessionDraft) async throws -> CuratedSessionDTO
+    func fetchOpenSession(coupleId: UUID) async throws -> CuratedSessionDTO?
+    func setStatus(sessionId: UUID, status: CuratedSessionStatus) async throws
+}
+
+extension RealtimeSessionService: PlaySessionOpening {}
+
 @Observable
 @MainActor
 final class PlayStore {
@@ -44,6 +57,20 @@ final class PlayStore {
     /// The (deck, plan) of a failed session open, kept so "Try again" can
     /// re-run it without the user rebuilding blind.
     private var failedOpen: (deck: Deck, plan: SessionPlan)?
+    /// An existing active/paused row that blocks a NEW session from opening
+    /// (the DB's one-open-per-couple index would reject the insert). The
+    /// (deck, plan) the user just built is retained so "Start fresh" can
+    /// re-run it once the conflict row is abandoned.
+    private(set) var conflictSession: CuratedSessionDTO?
+    private var conflictPending: (deck: Deck, plan: SessionPlan)?
+    /// The conflict row's deck title, resolved for the confirmation dialog
+    /// (catalog lookup, falls back to the raw deckId — same pattern as
+    /// SessionEntryStore's pendingSession.deckTitle).
+    var conflictDeckTitle: String? {
+        guard let conflictSession else { return nil }
+        return (try? catalog.loadSummaries())?.first { $0.id == conflictSession.deckId }?.title
+            ?? conflictSession.deckId
+    }
     /// One open at a time — a slow network must not allow a second ceremony
     /// or a duplicate lobby row.
     private(set) var isOpeningSession = false
@@ -56,7 +83,7 @@ final class PlayStore {
     private let modelContainer: ModelContainer
     private let appState: AppState
     private let entitlements: EntitlementStore          // M3: the single Core gate
-    private let realtime: RealtimeSessionService        // opens the lobby row
+    private let realtime: PlaySessionOpening             // opens the lobby row
     private let pairing: PairingService                 // couple composition read (spec §9)
     private let coupleContext: CoupleContext            // partner identity (single source of truth)
 
@@ -65,7 +92,7 @@ final class PlayStore {
          entitlements: EntitlementStore,
          coupleContext: CoupleContext,
          catalog: DeckCatalogService? = nil,
-         realtime: RealtimeSessionService? = nil,
+         realtime: PlaySessionOpening? = nil,
          pairing: PairingService? = nil) {
         self.modelContainer = modelContainer
         self.appState = appState
@@ -295,11 +322,21 @@ final class PlayStore {
                 // away from would violate the one-open-session index and brick
                 // every future open. Abandon it first; a partner-initiated
                 // fresh row surfaces as the pending banner instead.
-                if let stale = try? await realtime.fetchOpenSession(coupleId: coupleId),
-                   stale.status == CuratedSessionStatus.lobby.rawValue
-                    || stale.status == CuratedSessionStatus.airlock.rawValue,
-                   stale.initiatorId == myId {
-                    try? await realtime.setStatus(sessionId: stale.id, status: .abandoned)
+                if let existing = try? await realtime.fetchOpenSession(coupleId: coupleId) {
+                    if existing.status == CuratedSessionStatus.lobby.rawValue
+                        || existing.status == CuratedSessionStatus.airlock.rawValue,
+                       existing.initiatorId == myId {
+                        try? await realtime.setStatus(sessionId: existing.id, status: .abandoned)
+                    } else if existing.status == CuratedSessionStatus.active.rawValue
+                                || existing.status == CuratedSessionStatus.paused.rawValue {
+                        // A genuinely unfinished couple session — inserting a new
+                        // row would violate the one-open-per-couple index and
+                        // dead-end on a generic error the user can never fix by
+                        // retrying. Surface the conflict instead of attempting.
+                        conflictSession = existing
+                        conflictPending = (deck, plan)
+                        return
+                    }
                 }
                 let dto = try await realtime.openSession(
                     coupleId: coupleId, initiatorId: myId, draft: draft
@@ -312,6 +349,65 @@ final class PlayStore {
                 openError = "Couldn't start the session. Try again."
             }
         }
+    }
+
+    // MARK: - Open-session conflict (spec §1.1: never dead-end on an existing row)
+
+    /// "Resume" on the conflict dialog. Mirrors SessionEntryStore.resume():
+    /// revalidate against the server first (the row may have ended between
+    /// the conflict surfacing and this tap), rebuild the hand, then hand off
+    /// to the existing launch → cover wiring (CoupleSessionStore.resumeIfNeeded
+    /// picks the airlock-skip logic up from there).
+    func resumeConflict() {
+        guard let conflict = conflictSession, let coupleId = appState.coupleId else { return }
+        Task { @MainActor in
+            guard let dto = try? await realtime.fetchOpenSession(coupleId: coupleId),
+                  dto.id == conflict.id,
+                  dto.status == CuratedSessionStatus.active.rawValue
+                    || dto.status == CuratedSessionStatus.paused.rawValue,
+                  let deck = try? catalog.loadDeck(id: dto.deckId),
+                  let myId = localProfileId()
+            else {
+                // The row resolved itself (partner ended it) — clear the
+                // conflict and let the pending open the user actually asked
+                // for proceed, rather than stranding them on a dead dialog.
+                conflictSession = nil
+                if let pending = conflictPending {
+                    conflictPending = nil
+                    openSession(deck: pending.deck, plan: pending.plan)
+                }
+                return
+            }
+            let hand = dto.cardIds.compactMap { id in deck.orderedCards.first { $0.id == id } }
+            conflictSession = nil
+            conflictPending = nil
+            guard !hand.isEmpty else { return }
+            launch = SessionLaunch(
+                hand: hand,
+                entry: dto.initiatorId == myId ? .initiator : .joiner,
+                role: role(for: myId), session: dto
+            )
+        }
+    }
+
+    /// "Start fresh" on the conflict dialog: abandon the blocking row, then
+    /// re-run the retained plan. If the insert still fails (a race), the
+    /// existing openError/retryOpen banner remains the fallback.
+    func startFreshFromConflict() {
+        guard let conflict = conflictSession, let pending = conflictPending else { return }
+        conflictSession = nil
+        conflictPending = nil
+        Task { @MainActor in
+            try? await realtime.setStatus(sessionId: conflict.id, status: .abandoned)
+            openSession(deck: pending.deck, plan: pending.plan)
+        }
+    }
+
+    /// "Cancel" on the conflict dialog: drop the conflict and the retained
+    /// plan, no error shown — the user simply didn't want either option.
+    func cancelConflict() {
+        conflictSession = nil
+        conflictPending = nil
     }
 
     func endSession() { launch = nil }

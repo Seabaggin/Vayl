@@ -362,3 +362,211 @@ final class SessionEntryStoreTests: XCTestCase {
         XCTAssertEqual(realtime.setStatusCalls.first?.status, .abandoned)
     }
 }
+
+// MARK: - PlayStoreOpenConflictTests
+//
+// Colocated here (not a new file) because VaylTests is a manually-wired
+// PBXGroup — see this file's header comment. Covers PlayStore's "starting a
+// new session while an existing active/paused row is unfinished must never
+// dead-end" fix (spec 2026-07-09 §1.1): the conflict is detected instead of
+// attempting an insert that would violate the one-open-per-couple index, and
+// the three dialog resolutions (resume / start fresh / cancel) each do the
+// right thing. Uses a fake PlaySessionOpening — same seam pattern as
+// FakeSessionEntryRealtime above.
+
+@MainActor
+private final class FakePlaySessionOpening: PlaySessionOpening {
+    var openRow: CuratedSessionDTO?
+    var openSessionResult: Result<CuratedSessionDTO, Error> = .failure(URLError(.badServerResponse))
+    private(set) var openSessionCalls = 0
+    private(set) var setStatusCalls: [(id: UUID, status: CuratedSessionStatus)] = []
+
+    func openSession(coupleId: UUID, initiatorId: UUID, draft: CuratedSessionDraft) async throws -> CuratedSessionDTO {
+        openSessionCalls += 1
+        switch openSessionResult {
+        case .success(let dto): return dto
+        case .failure(let error): throw error
+        }
+    }
+
+    func fetchOpenSession(coupleId: UUID) async throws -> CuratedSessionDTO? {
+        openRow
+    }
+
+    func setStatus(sessionId: UUID, status: CuratedSessionStatus) async throws {
+        setStatusCalls.append((sessionId, status))
+        if openRow?.id == sessionId {
+            if status == .abandoned { openRow = nil }
+        }
+    }
+}
+
+@MainActor
+final class PlayStoreOpenConflictTests: XCTestCase {
+
+    private static var retained: [AnyObject] = []
+    private static func retain(_ objects: AnyObject...) { retained.append(contentsOf: objects) }
+
+    /// A fresh in-memory container with a local profile A paired to a random
+    /// partner B, plus an AppState pointed at that couple (same fixture shape
+    /// as SessionEntryStoreTests.makeContext()).
+    private func makeContext() -> (container: ModelContainer, appState: AppState, myProfileId: UUID, coupleId: UUID) {
+        let container = ModelContainer.previewContainer
+        let context = ModelContext(container)
+        let profile = UserProfile(displayName: "Me")
+        context.insert(profile)
+        let couple = Couple(partnerAId: profile.id, partnerBId: UUID())
+        context.insert(couple)
+        try? context.save()
+
+        let appState = AppState()
+        appState.coupleId = couple.id
+        return (container, appState, profile.id, couple.id)
+    }
+
+    private func makeStore(
+        container: ModelContainer,
+        appState: AppState,
+        realtime: FakePlaySessionOpening
+    ) -> PlayStore {
+        let entitlements = EntitlementStore(modelContainer: container, appState: appState)
+        let store = PlayStore(
+            modelContainer: container,
+            appState: appState,
+            entitlements: entitlements,
+            coupleContext: CoupleContext(appState: appState, entitlements: entitlements, modelContainer: container),
+            realtime: realtime
+        )
+        Self.retain(store, realtime, appState, entitlements)
+        return store
+    }
+
+    private func waitUntil(
+        _ message: String,
+        timeout: TimeInterval = 3,
+        _ condition: () -> Bool
+    ) async {
+        let start = Date()
+        while !condition() {
+            if Date().timeIntervalSince(start) > timeout {
+                XCTFail("Timed out waiting: \(message)")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    /// A minimal SessionPlan built from the-opener's real cards — mirrors how
+    /// SessionBuilderView would hand PlayStore a plan.
+    private func makePlan(deck: Deck) -> SessionPlan {
+        SessionPlan(
+            deckId: deck.id,
+            cardIds: Array(deck.orderedCards.prefix(2).map(\.id)),
+            perCardTimerSeconds: nil,
+            globalTimerSeconds: nil,
+            deckVariant: nil
+        )
+    }
+
+    private func loadOpenerDeck() -> Deck {
+        try! DeckCatalogService().loadDeck(id: "the-opener")
+    }
+
+    // MARK: open() detects the conflict, never attempts the insert
+
+    func test_openSession_withActiveRowPresent_setsConflict_noInsertAttempted_noOpenError() async {
+        let (container, appState, _, coupleId) = makeContext()
+        let realtime = FakePlaySessionOpening()
+        let conflictRow = makeRow(coupleId: coupleId, initiatorId: UUID(), status: .active)
+        realtime.openRow = conflictRow
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+        let deck = loadOpenerDeck()
+
+        store.builderDeck = deck   // builderDidFinish guards on the builder being open
+        store.builderDidFinish(makePlan(deck: deck))
+
+        await waitUntil("conflictSession never set") { store.conflictSession != nil }
+
+        XCTAssertEqual(store.conflictSession?.id, conflictRow.id)
+        XCTAssertEqual(realtime.openSessionCalls, 0, "an active/paused row must block the insert entirely")
+        XCTAssertNil(store.openError)
+        XCTAssertNil(store.launch)
+    }
+
+    func test_openSession_withPausedRowPresent_setsConflict() async {
+        let (container, appState, _, coupleId) = makeContext()
+        let realtime = FakePlaySessionOpening()
+        realtime.openRow = makeRow(coupleId: coupleId, initiatorId: UUID(), status: .paused)
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+        let deck = loadOpenerDeck()
+
+        store.builderDeck = deck   // builderDidFinish guards on the builder being open
+        store.builderDidFinish(makePlan(deck: deck))
+
+        await waitUntil("conflictSession never set") { store.conflictSession != nil }
+        XCTAssertEqual(realtime.openSessionCalls, 0)
+    }
+
+    // MARK: startFreshFromConflict()
+
+    func test_startFreshFromConflict_abandonsConflictRow_thenOpensWithRetainedPlan() async {
+        let (container, appState, myId, coupleId) = makeContext()
+        let realtime = FakePlaySessionOpening()
+        let conflictRow = makeRow(coupleId: coupleId, initiatorId: UUID(), status: .active)
+        realtime.openRow = conflictRow
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+        let deck = loadOpenerDeck()
+        let plan = makePlan(deck: deck)
+
+        store.builderDeck = deck   // builderDidFinish guards on the builder being open
+        store.builderDidFinish(plan)
+        await waitUntil("conflictSession never set") { store.conflictSession != nil }
+
+        // Once the conflict row is abandoned, the retry insert should succeed.
+        let freshRow = makeRow(coupleId: coupleId, initiatorId: myId, status: .lobby,
+                                cardIds: plan.cardIds)
+        realtime.openSessionResult = .success(freshRow)
+
+        store.startFreshFromConflict()
+
+        await waitUntil("launch never set") { store.launch != nil }
+
+        XCTAssertEqual(realtime.setStatusCalls.first?.id, conflictRow.id)
+        XCTAssertEqual(realtime.setStatusCalls.first?.status, .abandoned,
+                       "the blocking row must be abandoned before retrying the open")
+        XCTAssertEqual(realtime.openSessionCalls, 1)
+        XCTAssertNil(store.conflictSession)
+        XCTAssertEqual(store.launch?.hand.map(\.id), plan.cardIds)
+    }
+
+    // MARK: resumeConflict()
+
+    func test_resumeConflict_revalidation_rowVanished_clearsConflict_thenProceedsWithPendingOpen() async {
+        let (container, appState, myId, coupleId) = makeContext()
+        let realtime = FakePlaySessionOpening()
+        let conflictRow = makeRow(coupleId: coupleId, initiatorId: UUID(), status: .active)
+        realtime.openRow = conflictRow
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+        let deck = loadOpenerDeck()
+        let plan = makePlan(deck: deck)
+
+        store.builderDeck = deck   // builderDidFinish guards on the builder being open
+        store.builderDidFinish(plan)
+        await waitUntil("conflictSession never set") { store.conflictSession != nil }
+
+        // The row resolved itself between the conflict surfacing and the tap
+        // (e.g. the partner ended it from their device).
+        realtime.openRow = nil
+        let freshRow = makeRow(coupleId: coupleId, initiatorId: myId, status: .lobby,
+                                cardIds: plan.cardIds)
+        realtime.openSessionResult = .success(freshRow)
+
+        store.resumeConflict()
+
+        await waitUntil("launch never set") { store.launch != nil }
+
+        XCTAssertNil(store.conflictSession, "a vanished row clears the conflict rather than resuming a dead one")
+        XCTAssertEqual(realtime.openSessionCalls, 1, "the originally-pending open proceeds once the conflict resolved itself")
+        XCTAssertEqual(store.launch?.hand.map(\.id), plan.cardIds)
+    }
+}

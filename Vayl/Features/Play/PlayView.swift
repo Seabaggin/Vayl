@@ -186,6 +186,22 @@ struct PlayView: View {
                 onUnlocked: { store.dismissPaywall() }
             )
         }
+        // A new session can't dead-end on an existing unfinished one (spec
+        // §1.1) — this dialog is the resolution, not a raw insert failure.
+        .confirmationDialog(
+            "Finish what you started?",
+            isPresented: Binding(
+                get: { store.conflictSession != nil },
+                set: { if !$0 { store.cancelConflict() } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Resume") { store.resumeConflict() }
+            Button("Start fresh", role: .destructive) { store.startFreshFromConflict() }
+            Button("Cancel", role: .cancel) { store.cancelConflict() }
+        } message: {
+            Text("You two are mid-way through \(store.conflictDeckTitle ?? "your last session").")
+        }
     }
 
     /// The failed-open banner: the built plan is retryable in place.
