@@ -45,14 +45,19 @@ protocol AirlockTransport: AnyObject {
     /// Subscribes the channel and returns the live streams. Throws on
     /// subscribe failure (the store falls back to polling).
     func connect(coupleId: UUID, profileId: UUID, sessionId: UUID) async throws -> AirlockStreams
+    /// Broadcasts one sync-round signal on the connected channel. Best-effort —
+    /// loss is guarded by the sync coordinator's round timeout.
+    func sendSyncSignal(_ signal: SyncSignal) async throws
     func disconnect() async
 }
 
-/// The two live streams the airlock consumes. (Reveal broadcasts are the
+/// The live streams the airlock consumes. (Reveal broadcasts are the
 /// player's concern — SessionSyncCoordinator, Section 2 — not the airlock's.)
 struct AirlockStreams {
     let presence: AsyncStream<PresenceDelta>
     let rows: AsyncStream<CuratedSessionDTO>
+    /// Partner sync-round signals (arm/go/release/cancel), sender-tagged.
+    let sync: AsyncStream<SyncSignal>
 }
 
 // MARK: - LiveAirlockTransport (production conformance)
@@ -100,10 +105,18 @@ final class LiveAirlockTransport: AirlockTransport {
         // Listeners BEFORE subscribe.
         let presence = service.presenceChanges(on: channel)
         let rows = service.rowUpdates(on: channel, sessionId: sessionId)
+        let sync = service.syncSignals(on: channel)
         try await channel.subscribeWithError()
         // Track AFTER subscribe.
         try await service.trackPresence(on: channel, userId: profileId)
-        return AirlockStreams(presence: presence, rows: rows)
+        return AirlockStreams(presence: presence, rows: rows, sync: sync)
+    }
+
+    struct NotConnectedError: Error {}
+
+    func sendSyncSignal(_ signal: SyncSignal) async throws {
+        guard let channel else { throw NotConnectedError() }
+        try await service.sendSyncSignal(signal, on: channel)
     }
 
     func disconnect() async {
@@ -144,6 +157,10 @@ final class AirlockStore {
     private(set) var selfConsented = false
     private(set) var partnerConsented = false
     private(set) var session: CuratedSessionDTO?
+    /// The two-person sync lock-in round brain. Created once the realtime
+    /// transport is connected; nil in poll mode (broadcasts need the channel),
+    /// in which case AirlockView falls back to the per-device HoldToLockInRing.
+    private(set) var sync: SyncLockInCoordinator?
 
     enum Transport: String { case realtime, poll }
 
@@ -162,11 +179,14 @@ final class AirlockStore {
     private let presenceTimeout: TimeInterval
     /// 🎚️ Poll heartbeat interval in seconds (default 2).
     private let pollInterval: TimeInterval
+    /// Sync lock-in feel tunables handed to the coordinator (default .standard).
+    private let syncConfig: SyncConfig
 
     // MARK: - Private lifecycle
 
     private var presenceTask: Task<Void, Never>?
     private var rowsTask: Task<Void, Never>?
+    private var syncTask: Task<Void, Never>?
     private var timeoutTask: Task<Void, Never>?
     private var pollTask: Task<Void, Never>?
     /// Any presence OR row signal proves the pipe is live and cancels the timeout.
@@ -183,7 +203,8 @@ final class AirlockStore {
         role: SessionRole,
         transport: AirlockTransport? = nil,
         presenceTimeout: TimeInterval = 10,
-        pollInterval: TimeInterval = 2
+        pollInterval: TimeInterval = 2,
+        syncConfig: SyncConfig = .standard
     ) {
         self.coupleId = coupleId
         self.myProfileId = myProfileId
@@ -192,6 +213,7 @@ final class AirlockStore {
         self.transportLayer = transport ?? LiveAirlockTransport()
         self.presenceTimeout = presenceTimeout
         self.pollInterval = pollInterval
+        self.syncConfig = syncConfig
     }
 
     /// Resolves this device's role from the LOCAL Couple (profile-id keyed).
@@ -281,6 +303,27 @@ final class AirlockStore {
                 if delta.leftIds.contains(where: { $0 != mine }) { self.partnerPresent = false }
                 self.recomputeLadder()
                 await self.tryFlipToActive()
+            }
+        }
+
+        // Sync lock-in: the coordinator exists only while the channel is live
+        // (broadcasts need it). Poll mode falls back to HoldToLockInRing.
+        let coordinator = SyncLockInCoordinator(
+            config: syncConfig,
+            role: role,
+            send: { [transportLayer] signal in
+                try await transportLayer.sendSyncSignal(signal)
+            },
+            requestConsent: { [weak self] in
+                await self?.consent() ?? false
+            }
+        )
+        sync = coordinator
+
+        // Sync stream: partner arm/go/release/cancel signals into the round brain.
+        syncTask = Task { [weak self] in
+            for await signal in streams.sync {
+                self?.sync?.handle(signal)
             }
         }
 
@@ -401,8 +444,17 @@ final class AirlockStore {
     private func dropToPoll() async {
         presenceTask?.cancel(); presenceTask = nil
         rowsTask?.cancel(); rowsTask = nil
+        teardownSync()
         await transportLayer.disconnect()
         startPollFallback()
+    }
+
+    /// The sync round cannot run without the live channel — drop the
+    /// coordinator so AirlockView falls back to the per-device hold ring.
+    private func teardownSync() {
+        syncTask?.cancel(); syncTask = nil
+        sync?.teardown()
+        sync = nil
     }
 
     /// Every pollInterval seconds: presence heartbeat + row re-read + ladder +
@@ -469,6 +521,7 @@ final class AirlockStore {
         rowsTask?.cancel(); rowsTask = nil
         timeoutTask?.cancel(); timeoutTask = nil
         pollTask?.cancel(); pollTask = nil
+        teardownSync()
         await transportLayer.disconnect()
         sawAnySignal = false
         await start()
@@ -499,6 +552,7 @@ final class AirlockStore {
         rowsTask?.cancel(); rowsTask = nil
         timeoutTask?.cancel(); timeoutTask = nil
         pollTask?.cancel(); pollTask = nil
+        teardownSync()
         let transportLayer = self.transportLayer
         let role = self.role
         let sessionId = session?.id

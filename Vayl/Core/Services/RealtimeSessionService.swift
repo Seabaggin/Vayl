@@ -509,11 +509,114 @@ extension RealtimeSessionService {
     }
 }
 
+// MARK: - Sync lock-in broadcast (ephemeral, never persisted)
+// The airlock's two-person synchronized release rides Broadcast only — same
+// class as reveal payloads (spec 2026-07-08 airlock-sync-lockin). Every payload
+// carries the SENDER role so a device can ignore its own echoes.
+
+/// One sync-round signal on the wire, tagged with the sender's role.
+enum SyncSignal: Equatable, Sendable {
+    case arm(SessionRole)
+    case go(SessionRole)
+    case release(role: SessionRole, angle: Double)   // degrees; ≥360 = overshoot
+    case cancel(SessionRole)
+
+    var senderRole: SessionRole {
+        switch self {
+        case .arm(let r), .go(let r), .cancel(let r): return r
+        case .release(let r, _): return r
+        }
+    }
+}
+
+struct SyncArmPayload: Codable, Sendable { let role: SessionRole }
+struct SyncGoPayload: Codable, Sendable { let role: SessionRole }
+struct SyncReleasePayload: Codable, Sendable {
+    let role: SessionRole
+    let angle: Double
+}
+struct SyncCancelPayload: Codable, Sendable { let role: SessionRole }
+
+extension RealtimeSessionService {
+
+    /// Sends one sync-round signal. Best-effort — loss is guarded by the
+    /// coordinator's round timeout (an inconclusive retry, never a hard fail).
+    func sendSyncSignal(_ signal: SyncSignal, on channel: RealtimeChannelV2) async throws {
+        switch signal {
+        case .arm(let role):
+            try await channel.broadcast(event: BroadcastEvent.syncArm, message: SyncArmPayload(role: role))
+        case .go(let role):
+            try await channel.broadcast(event: BroadcastEvent.syncGo, message: SyncGoPayload(role: role))
+        case .release(let role, let angle):
+            try await channel.broadcast(event: BroadcastEvent.syncRelease,
+                                        message: SyncReleasePayload(role: role, angle: angle))
+        case .cancel(let role):
+            try await channel.broadcast(event: BroadcastEvent.syncCancel, message: SyncCancelPayload(role: role))
+        }
+    }
+
+    /// All sync-round signals arriving on the channel, merged into one stream.
+    /// Register BEFORE subscribing (same ordering rule as every other stream).
+    /// A payload that fails to decode is logged and skipped — the round timeout
+    /// treats the silence as an inconclusive retry.
+    func syncSignals(on channel: RealtimeChannelV2) -> AsyncStream<SyncSignal> {
+        let arms = channel.broadcastStream(event: BroadcastEvent.syncArm)
+        let gos = channel.broadcastStream(event: BroadcastEvent.syncGo)
+        let releases = channel.broadcastStream(event: BroadcastEvent.syncRelease)
+        let cancels = channel.broadcastStream(event: BroadcastEvent.syncCancel)
+
+        return AsyncStream { continuation in
+            // Four sibling tasks, one per event — same shape as the reveal
+            // streams (Task inherits this method's isolation, so decode + log
+            // stay on the right executor). The stream outlives any one event.
+            let armTask = Task {
+                for await message in arms {
+                    guard let p = try? message["payload"]?.decode(as: SyncArmPayload.self) else {
+                        logger.warning("sync_arm broadcast did not decode — ignored"); continue
+                    }
+                    continuation.yield(.arm(p.role))
+                }
+            }
+            let goTask = Task {
+                for await message in gos {
+                    guard let p = try? message["payload"]?.decode(as: SyncGoPayload.self) else {
+                        logger.warning("sync_go broadcast did not decode — ignored"); continue
+                    }
+                    continuation.yield(.go(p.role))
+                }
+            }
+            let releaseTask = Task {
+                for await message in releases {
+                    guard let p = try? message["payload"]?.decode(as: SyncReleasePayload.self) else {
+                        logger.warning("sync_release broadcast did not decode — ignored"); continue
+                    }
+                    continuation.yield(.release(role: p.role, angle: p.angle))
+                }
+            }
+            let cancelTask = Task {
+                for await message in cancels {
+                    guard let p = try? message["payload"]?.decode(as: SyncCancelPayload.self) else {
+                        logger.warning("sync_cancel broadcast did not decode — ignored"); continue
+                    }
+                    continuation.yield(.cancel(p.role))
+                }
+            }
+            continuation.onTermination = { _ in
+                armTask.cancel(); goTask.cancel(); releaseTask.cancel(); cancelTask.cancel()
+            }
+        }
+    }
+}
+
 // MARK: - Broadcast wire types
 
 private enum BroadcastEvent {
     static let reveal = "reveal"
     static let resend = "reveal_resend"
+    static let syncArm = "sync_arm"
+    static let syncGo = "sync_go"
+    static let syncRelease = "sync_release"
+    static let syncCancel = "sync_cancel"
 }
 
 struct ResendRequest: Codable, Sendable {

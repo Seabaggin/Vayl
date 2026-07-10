@@ -5,12 +5,15 @@
 //  The airlock — ONE merged "Before we start" screen (not two steps): a pure
 //  capacity mirror, an optional centering ritual, and the lock-in ring. The
 //  house rules are intentionally NOT here — six bullets took too much space
-//  once capacity + ritual + ring shared the screen (Bryan's call). The ring's
-//  mechanism is the REAL production one —
-//  each partner independently holds their own ring; readiness crosses devices
-//  via AirlockStore.partnerConsented. There is no shared release-timing match
-//  (that would need a realtime channel this app doesn't have yet); the copy
-//  below is honest to what actually happens.
+//  once capacity + ritual + ring shared the screen (Bryan's call).
+//
+//  The lock-in is the two-person SYNC round (spec 2026-07-08): both partners
+//  press-and-hold to arm, a shared 3-2-1 fires, both rings sweep blind, and
+//  both must let go within tolerance of each other. Driven by airlock.sync
+//  (SyncLockInCoordinator) over the realtime channel. When the channel is down
+//  (poll fallback) or in the DEBUG local path, the view falls back to the
+//  per-device HoldToLockInRing — kept in the tree deliberately as the explicit
+//  fallback if the two-device proof fails.
 //
 //  Driven by AirlockStore (real presence/consent). airlock == nil is the
 //  DEBUG-only local path (mocked partner, unchanged store mock).
@@ -157,7 +160,71 @@ struct AirlockView: View {
         .padding(.horizontal, AppSpacing.lg)
     }
 
+    /// The production gesture is the two-person sync round (airlock.sync).
+    /// HoldToLockInRing remains the explicit fallback: DEBUG local path
+    /// (airlock == nil) and poll mode (sync == nil — no channel, no broadcasts).
+    @ViewBuilder
     private var lockInRing: some View {
+        if let airlock, let sync = airlock.sync {
+            syncLockIn(sync: sync, airlock: airlock)
+        } else {
+            holdToLockIn
+        }
+    }
+
+    // MARK: Sync lock-in (two-person round)
+
+    private func syncLockIn(sync: SyncLockInCoordinator, airlock: AirlockStore) -> some View {
+        VStack(spacing: AppSpacing.md) {
+            SyncLockInRing(
+                config: sync.config,
+                phase: sync.phase,
+                ringSize: 224,
+                onArm: {
+                    // Arming is only meaningful when the partner is here.
+                    guard airlock.partnerPresent else { return }
+                    sync.arm()
+                },
+                onRelease: { sync.release(fraction: $0) },
+                onDisarm: { sync.disarm() }
+            )
+            .padding(.top, AppSpacing.md)
+
+            if !airlock.partnerPresent {
+                Text("Waiting for \(store.partnerLabel) to arrive…")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            presenceRow
+
+            // The ultimate backstop — the gesture is never a wall. Each device
+            // that taps consents itself; both consented + present → the
+            // existing server-authoritative flip.
+            if sync.backstopAvailable {
+                Button {
+                    Task { _ = await airlock.consent() }
+                } label: {
+                    Text("enter together anyway")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                        .underline()
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Enter together anyway")
+                .accessibilityHint("Skips the synchronized release and marks you ready to begin.")
+                .padding(.top, AppSpacing.xs)
+            }
+
+            howItWorksButton
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: Hold-to-lock-in (fallback)
+
+    private var holdToLockIn: some View {
         VStack(spacing: AppSpacing.md) {
             HoldToLockInRing(locked: lockedIn, ringSize: 224, showsGlyph: false) {
                 lockedIn = true
@@ -191,28 +258,39 @@ struct AirlockView: View {
 
             presenceRow
 
-            Button {
-                showHowItWorks = true
-            } label: {
-                HStack(spacing: AppSpacing.xs) {
-                    Text("how it works")
-                    Text("i")
-                        .font(AppFonts.body(9, weight: .semibold, relativeTo: .caption2).italic())
-                        .frame(width: 15, height: 15)
-                        .overlay(Circle().strokeBorder(AppColors.textAccent, lineWidth: 1))
-                }
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textAccent)
-            }
-            .buttonStyle(.plain)
-            .padding(.top, AppSpacing.xs)
+            howItWorksButton
         }
         .frame(maxWidth: .infinity)
     }
 
+    private var howItWorksButton: some View {
+        Button {
+            showHowItWorks = true
+        } label: {
+            HStack(spacing: AppSpacing.xs) {
+                Text("how it works")
+                Text("i")
+                    .font(AppFonts.body(9, weight: .semibold, relativeTo: .caption2).italic())
+                    .frame(width: 15, height: 15)
+                    .overlay(Circle().strokeBorder(AppColors.textAccent, lineWidth: 1))
+            }
+            .font(AppFonts.caption)
+            .foregroundStyle(AppColors.textAccent)
+        }
+        .buttonStyle(.plain)
+        .padding(.top, AppSpacing.xs)
+    }
+
+    /// "You" reads ready once THIS device's commit landed: the hold path
+    /// latches lockedIn; the sync path writes consent on a passed round.
+    private var selfReady: Bool {
+        if airlock?.sync != nil { return airlock?.selfConsented ?? false }
+        return lockedIn
+    }
+
     private var presenceRow: some View {
         HStack(spacing: AppSpacing.md) {
-            presenceChip("You", ready: lockedIn, you: true)
+            presenceChip("You", ready: selfReady, you: true)
             Text(partnerStatusLine)
                 .font(AppFonts.overline)
                 .foregroundStyle(AppColors.textTertiary)
@@ -235,7 +313,7 @@ struct AirlockView: View {
 
     private var partnerStatusLine: String {
         if airlock?.partnerConsented == true { return "both in" }
-        return lockedIn ? "waiting for \(store.partnerLabel)…" : ""
+        return selfReady ? "waiting for \(store.partnerLabel)…" : ""
     }
 
     /// Real presence, distinct from consent — has the partner arrived at all.
@@ -302,7 +380,7 @@ struct AirlockView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, AppSpacing.sm)
 
-            Text("Both hold and fill your own ring. Once you're **both** locked in, the deck opens.")
+            Text("Press and hold together. When the count ends, let go at the **same moment** — land close enough together and the deck opens.")
                 .font(AppFonts.caption)
                 .foregroundStyle(AppColors.textSecondary)
                 .padding(.bottom, AppSpacing.md)

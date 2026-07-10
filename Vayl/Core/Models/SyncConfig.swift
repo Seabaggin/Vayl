@@ -8,13 +8,16 @@
 
 import Foundation
 
-struct SyncConfig: Equatable {
+nonisolated struct SyncConfig: Equatable, Sendable {
     var floorDegrees: Double = 120        // 🎚️ release below this = too early
     var toleranceDegrees: Double = 18     // 🎚️ max circular gap to pass (≈±175ms @3.5s)
     var sweepSeconds: Double = 3.5        // 🎚️ time for a full 0→360° sweep
     var easingStepDegrees: Double = 6     // 🎚️ tolerance added per consecutive miss
     var easingCapDegrees: Double = 48     // 🎚️ silent-easing ceiling
     var backstopAfterMisses: Int = 4      // 🎚️ misses before "enter together anyway"
+    var countdownStepSeconds: Double = 0.8       // 🎚️ per-beat cadence of the shared 3-2-1
+    var roundTimeoutMarginSeconds: Double = 1.5  // 🎚️ grace past sweep end before an inconclusive reset
+    var resultHoldSeconds: Double = 2.5          // 🎚️ how long a miss verdict shows before draining to idle
 
     static let standard = SyncConfig()
 

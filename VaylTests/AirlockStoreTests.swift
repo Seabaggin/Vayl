@@ -39,6 +39,11 @@ final class MockAirlockTransport: AirlockTransport {
 
     private(set) var presenceContinuation: AsyncStream<PresenceDelta>.Continuation?
     private(set) var rowsContinuation: AsyncStream<CuratedSessionDTO>.Continuation?
+    /// Scripts the PARTNER's sync-round signals into the store.
+    private(set) var syncContinuation: AsyncStream<SyncSignal>.Continuation?
+    /// Everything THIS device broadcast for the sync round.
+    private(set) var syncSends: [SyncSignal] = []
+    var syncSendError: Error?
 
     struct MockError: Error {}
 
@@ -76,14 +81,22 @@ final class MockAirlockTransport: AirlockTransport {
         if let connectError { throw connectError }
         let (presence, presenceCont) = AsyncStream<PresenceDelta>.makeStream()
         let (rows, rowsCont) = AsyncStream<CuratedSessionDTO>.makeStream()
+        let (sync, syncCont) = AsyncStream<SyncSignal>.makeStream()
         presenceContinuation = presenceCont
         rowsContinuation = rowsCont
-        return AirlockStreams(presence: presence, rows: rows)
+        syncContinuation = syncCont
+        return AirlockStreams(presence: presence, rows: rows, sync: sync)
+    }
+
+    func sendSyncSignal(_ signal: SyncSignal) async throws {
+        if let syncSendError { throw syncSendError }
+        syncSends.append(signal)
     }
 
     func disconnect() async {
         presenceContinuation?.finish()
         rowsContinuation?.finish()
+        syncContinuation?.finish()
     }
 }
 
@@ -450,5 +463,242 @@ final class AirlockStoreTests: XCTestCase {
         if let storeA { Self.retain(storeA) }
         if let storeB { Self.retain(storeB) }
         Self.retain(mockA, mockB)
+    }
+}
+
+// MARK: - Sync lock-in round (Segments 3–5, spec 2026-07-08)
+// Scripts MockAirlockTransport through full sync rounds: both-arm → go →
+// releases → verdict → consent; misses + easing; the round timeout; the
+// backstop; partner cancel. Colocated here because VaylTests is a manual
+// PBXGroup (new files need pbxproj wiring).
+
+@MainActor
+final class AirlockSyncRoundTests: XCTestCase {
+
+    private static var retained: [AnyObject] = []
+    private static func retain(_ objects: AnyObject...) { retained.append(contentsOf: objects) }
+
+    /// Fast feel numbers so rounds resolve in milliseconds. Geometry values
+    /// (floor/tolerance) stay at .standard — the classifier maths must match prod.
+    private func fastConfig(
+        backstopAfterMisses: Int = 4,
+        countdownStep: Double = 0.01,
+        sweep: Double = 0.25,
+        timeoutMargin: Double = 0.1
+    ) -> SyncConfig {
+        var config = SyncConfig.standard
+        config.countdownStepSeconds = countdownStep
+        config.sweepSeconds = sweep
+        config.roundTimeoutMarginSeconds = timeoutMargin
+        config.resultHoldSeconds = 60   // keep verdicts assertable, no auto-drain
+        config.backstopAfterMisses = backstopAfterMisses
+        return config
+    }
+
+    private func waitUntil(_ message: String,
+                           timeout: TimeInterval = 4,
+                           _ condition: () -> Bool) async {
+        let start = Date()
+        while !condition() {
+            if Date().timeIntervalSince(start) > timeout {
+                XCTFail("Timed out waiting: \(message)")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+    }
+
+    /// Store started over a connected mock — sync coordinator exists.
+    private func makeStartedStore(
+        mock: MockAirlockTransport,
+        config: SyncConfig
+    ) async -> AirlockStore {
+        let coupleId = UUID()
+        mock.openRow = makeRow(coupleId: coupleId)
+        let store = AirlockStore(
+            coupleId: coupleId,
+            myProfileId: UUID(),
+            role: .a,
+            transport: mock,
+            presenceTimeout: 60,
+            pollInterval: 0.02,
+            syncConfig: config
+        )
+        Self.retain(store, mock)
+        await store.start()
+        XCTAssertNotNil(store.sync, "coordinator must exist once the transport is connected")
+        return store
+    }
+
+    /// Drives one round to the sweeping phase: local arm + partner arm → go →
+    /// 3-2-1 → sweeping. Role .a leads, so `go` must appear in syncSends.
+    private func reachSweep(_ sync: SyncLockInCoordinator, mock: MockAirlockTransport) async {
+        sync.arm()
+        XCTAssertEqual(sync.phase, .arming)
+        await waitUntil("arm broadcast") { mock.syncSends.contains(.arm(.a)) }
+        mock.syncContinuation?.yield(.arm(.b))
+        await waitUntil("leader broadcasts go") { mock.syncSends.contains(.go(.a)) }
+        await waitUntil("sweeping") {
+            if case .sweeping = sync.phase { return true } else { return false }
+        }
+    }
+
+    // (a) Both arm → go → both valid releases within tolerance → inSync → consent.
+    func testInSyncRoundWritesConsent() async {
+        let mock = MockAirlockTransport()
+        let store = await makeStartedStore(mock: mock, config: fastConfig())
+        guard let sync = store.sync else { return }
+
+        await reachSweep(sync, mock: mock)
+        sync.release(fraction: 0.5)   // 180° — past the 120° floor
+        await waitUntil("release broadcast") {
+            mock.syncSends.contains { if case .release(role: .a, angle: 180) = $0 { return true } else { return false } }
+        }
+        mock.syncContinuation?.yield(.release(role: .b, angle: 190))   // gap 10° ≤ 18°
+
+        await waitUntil("in sync") { sync.phase == .result(.inSync) }
+        await waitUntil("consent written") { mock.consentWrites == [.a] }
+        XCTAssertEqual(sync.misses, 0)
+        XCTAssertFalse(sync.backstopAvailable)
+        XCTAssertTrue(store.selfConsented)
+    }
+
+    // (b) Releases outside tolerance → miss verdict, misses increments, NO consent.
+    func testMissOutsideToleranceCountsAndDoesNotConsent() async {
+        let mock = MockAirlockTransport()
+        let store = await makeStartedStore(mock: mock, config: fastConfig())
+        guard let sync = store.sync else { return }
+
+        await reachSweep(sync, mock: mock)
+        sync.release(fraction: 130.0 / 360.0)                          // 130°
+        mock.syncContinuation?.yield(.release(role: .b, angle: 300))   // gap 170° — far apart
+
+        await waitUntil("miss recorded") { sync.misses == 1 }
+        // Case-match, not exact Double equality (the fraction→angle round trip
+        // can carry float error).
+        guard case .result(.farApart) = sync.phase else {
+            return XCTFail("expected a farApart verdict, got \(sync.phase)")
+        }
+        XCTAssertTrue(mock.consentWrites.isEmpty, "a miss must never write consent")
+        XCTAssertFalse(sync.backstopAvailable)
+        // Silent easing: the next round's tolerance widens by one step.
+        XCTAssertEqual(sync.config.tolerance(afterMisses: sync.misses),
+                       sync.config.toleranceDegrees + sync.config.easingStepDegrees)
+    }
+
+    // (c) Partner release never arrives → round timeout → gentle reset, miss counted.
+    func testPartnerReleaseTimeoutIsInconclusiveMiss() async {
+        let mock = MockAirlockTransport()
+        let config = fastConfig(sweep: 0.05, timeoutMargin: 0.05)
+        let store = await makeStartedStore(mock: mock, config: config)
+        guard let sync = store.sync else { return }
+
+        await reachSweep(sync, mock: mock)
+        sync.release(fraction: 0.5)
+        // Partner's release is lost — the timeout must treat the round as an
+        // inconclusive retry with the neutral "once more?" copy.
+        await waitUntil("timeout miss") { sync.misses == 1 }
+        XCTAssertEqual(sync.phase, .result(.soClose(gapDegrees: 0)))
+        XCTAssertTrue(mock.consentWrites.isEmpty)
+    }
+
+    // (d) Misses reach the backstop → backstopAvailable.
+    func testBackstopAppearsAfterConfiguredMisses() async {
+        let mock = MockAirlockTransport()
+        let config = fastConfig(backstopAfterMisses: 2, sweep: 0.05, timeoutMargin: 0.05)
+        let store = await makeStartedStore(mock: mock, config: config)
+        guard let sync = store.sync else { return }
+
+        for round in 1...2 {
+            // Timeout misses are the shortest scriptable path to N misses.
+            await reachSweep(sync, mock: mock)
+            sync.release(fraction: 0.5)
+            await waitUntil("miss \(round)") { sync.misses == round }
+            // Drain back to idle for the next round (the prod path is the
+            // resultHold auto-drain; the partner cancel is equivalent). Wait
+            // for the reset to land before arming again.
+            if round < 2 {
+                mock.syncContinuation?.yield(.cancel(.b))
+                await waitUntil("idle before round \(round + 1)") { sync.phase == .idle }
+            }
+        }
+        XCTAssertTrue(sync.backstopAvailable, "backstop must appear after N consecutive misses")
+        XCTAssertTrue(mock.consentWrites.isEmpty, "the backstop only ever flags — consent stays a user tap")
+    }
+
+    // (e) Partner cancel mid-countdown → both reset to idle.
+    func testPartnerCancelDuringCountdownResetsToIdle() async {
+        let mock = MockAirlockTransport()
+        // Slow countdown so the cancel demonstrably lands mid-3-2-1.
+        let config = fastConfig(countdownStep: 0.3)
+        let store = await makeStartedStore(mock: mock, config: config)
+        guard let sync = store.sync else { return }
+
+        sync.arm()
+        mock.syncContinuation?.yield(.arm(.b))
+        await waitUntil("countdown running") {
+            if case .countdown = sync.phase { return true } else { return false }
+        }
+        mock.syncContinuation?.yield(.cancel(.b))
+        await waitUntil("idle after partner cancel") { sync.phase == .idle }
+        XCTAssertEqual(sync.misses, 0, "a cancel is not a miss")
+        XCTAssertTrue(mock.consentWrites.isEmpty)
+    }
+
+    // Local disarm during arming broadcasts cancel and resets.
+    func testLocalDisarmBroadcastsCancel() async {
+        let mock = MockAirlockTransport()
+        let store = await makeStartedStore(mock: mock, config: fastConfig())
+        guard let sync = store.sync else { return }
+
+        sync.arm()
+        XCTAssertEqual(sync.phase, .arming)
+        sync.disarm()
+        XCTAssertEqual(sync.phase, .idle)
+        await waitUntil("cancel broadcast") { mock.syncSends.contains(.cancel(.a)) }
+    }
+
+    // Own echoes are ignored: our own arm coming back must not read as the partner.
+    func testOwnEchoIsIgnored() async {
+        let mock = MockAirlockTransport()
+        let store = await makeStartedStore(mock: mock, config: fastConfig())
+        guard let sync = store.sync else { return }
+
+        sync.arm()
+        mock.syncContinuation?.yield(.arm(.a))   // own echo
+        try? await Task.sleep(for: .milliseconds(50))
+        XCTAssertEqual(sync.phase, .arming, "an own echo must never start the round")
+        XCTAssertFalse(mock.syncSends.contains(.go(.a)))
+    }
+
+    // Success + consent write failure → round resets so the couple can go again.
+    func testConsentFailureAfterSyncResetsRound() async {
+        let mock = MockAirlockTransport()
+        mock.consentError = MockAirlockTransport.MockError()
+        let store = await makeStartedStore(mock: mock, config: fastConfig())
+        guard let sync = store.sync else { return }
+
+        await reachSweep(sync, mock: mock)
+        sync.release(fraction: 0.5)
+        mock.syncContinuation?.yield(.release(role: .b, angle: 185))
+        await waitUntil("round resets on failed consent") { sync.phase == .idle }
+        XCTAssertFalse(store.selfConsented)
+    }
+
+    // Poll fallback: no channel → no coordinator (view falls back to HoldToLockInRing).
+    func testPollModeHasNoSyncCoordinator() async {
+        let coupleId = UUID()
+        let mock = MockAirlockTransport()
+        mock.openRow = makeRow(coupleId: coupleId)
+        mock.connectError = MockAirlockTransport.MockError()
+        let store = AirlockStore(
+            coupleId: coupleId, myProfileId: UUID(), role: .a,
+            transport: mock, presenceTimeout: 60, pollInterval: 0.02,
+            syncConfig: fastConfig()
+        )
+        Self.retain(store, mock)
+        await store.start()
+        XCTAssertEqual(store.transport, .poll)
+        XCTAssertNil(store.sync, "poll mode has no broadcasts — no sync round")
     }
 }
