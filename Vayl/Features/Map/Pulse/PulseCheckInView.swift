@@ -108,17 +108,16 @@ struct PulseCheckInView: View {
 
     // MARK: - Header
 
-    /// One overlaid row (mockup img2): back chevron leading, "Check in" centred, steps trailing.
+    /// Back chevron leading, steps trailing, deliberately NOTHING in the middle
+    /// (design pass 2026-07-09): the centred "Check in" title restated the pill the
+    /// user just tapped and fought the field's ghost labels for the top of the
+    /// screen. Each question is the title of its moment; the empty middle gives
+    /// the two anchored ends their separation for free.
     private var headerChrome: some View {
-        ZStack {
-            Text("Check in")
-                .font(AppFonts.cardTitleCompact)
-                .foregroundStyle(AppColors.textPrimary)
-            HStack(spacing: AppSpacing.sm) {
-                backButton
-                Spacer()
-                stepRow
-            }
+        HStack(spacing: AppSpacing.sm) {
+            backButton
+            Spacer()
+            stepRow
         }
     }
 
