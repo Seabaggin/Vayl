@@ -306,6 +306,77 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         XCTAssertFalse(store.budgetCheckPresented, "a cleared budget never re-fires")
     }
 
+    // MARK: - Close-screen stats derive from the SHARED row (created_at + confirmed index)
+
+    /// Two-device close stats must agree across devices: minutes come from the
+    /// row's created_at (not this device's store-construction time), and the
+    /// "cards deep" count floors at the row's confirmed index so a relaunched
+    /// device with empty local records never shows 0.
+    func test_closeStats_deriveFromSharedRow() async throws {
+        let remoteId = UUID()
+        let hand = Array(Card.openerSamples.prefix(5))
+        let createdAt = Self.rowTimestamp(secondsAgo: 200)   // > 3 minutes ago
+        let coupleId = UUID()
+        func row(currentIndex: Int) -> CuratedSessionDTO {
+            CuratedSessionDTO(
+                id: remoteId,
+                coupleId: coupleId,
+                initiatorId: UUID(),
+                deckId: hand.first?.deckId ?? "unknown",
+                deckVariant: nil,
+                cardIds: hand.map(\.id),
+                perCardTimer: [:],
+                globalTimerSeconds: nil,
+                status: CuratedSessionStatus.active.rawValue,
+                currentIndex: currentIndex,
+                aPresent: true,
+                bPresent: true,
+                aBandwidth: nil,
+                bBandwidth: nil,
+                aConsented: true,
+                bConsented: true,
+                timerStartedAt: nil,
+                revealState: [:],
+                createdAt: createdAt,
+                updatedAt: createdAt
+            )
+        }
+        let dto = row(currentIndex: 0)
+        let launch = SessionLaunch(hand: hand, entry: .joiner, role: .b, session: dto)
+        let appState = AppState()
+        appState.coupleId = dto.coupleId
+        let store = CoupleSessionStore(
+            launch: launch,
+            modelContainer: ModelContainer.previewContainer,
+            appState: appState,
+            realtime: fakeRealtimeService(),
+            presenceSeconds: 0.01,
+            transitionSeconds: 0.01,
+            enqueueSync: { _ in }
+        )
+
+        // (a) Minutes derive from the row's created_at, not the local Date()
+        // captured at store construction (which would read "1 min" here).
+        XCTAssertTrue(store.sessionStatLine.hasSuffix("3 min"),
+                      "expected minutes from row created_at, got \(store.sessionStatLine)")
+
+        // (b) Cards deep floors at the shared confirmed index when local
+        // records are empty (the relaunched-joiner case).
+        XCTAssertEqual(store.closeCardsDeep, 0)
+        store.applyRemoteRow(row(currentIndex: 3))
+        XCTAssertTrue(store.records.isEmpty, "this device recorded nothing locally")
+        XCTAssertEqual(store.discussedCount, 0)
+        XCTAssertEqual(store.closeCardsDeep, 3, "close count must floor at the row's confirmed index")
+        XCTAssertTrue(store.sessionStatLine.hasPrefix("3 cards"),
+                      "the stat line must agree with the close headline, got \(store.sessionStatLine)")
+    }
+
+    private static func rowTimestamp(secondsAgo: TimeInterval) -> String {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f.string(from: Date().addingTimeInterval(-secondsAgo))
+    }
+
     // MARK: - Branch: skip the reflection
 
     func test_skipReflection_sessionSavedButNoReflection() async throws {

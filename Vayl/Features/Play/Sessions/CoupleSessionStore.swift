@@ -52,6 +52,10 @@ final class CoupleSessionStore: Identifiable {
     private(set) var localProfileId: UUID?
     private let perCardTimerSeconds: [String: Int]
     private let sessionStartedAt = Date()
+    /// Shared session start — the row's created_at, so both devices show the
+    /// same elapsed time on the close screen. nil on the pure-local path
+    /// (falls back to the local sessionStartedAt).
+    private var sharedStartedAt: Date?
 
     // MARK: - Airlock state (DEBUG local mock path)
 
@@ -146,6 +150,7 @@ final class CoupleSessionStore: Identifiable {
             )
         }
         resolveLocalContext()
+        applySharedStart(launch.session?.createdAt)
     }
 
     /// Compatibility path for the DEBUG local flow, previews, and the existing
@@ -220,14 +225,33 @@ final class CoupleSessionStore: Identifiable {
     var discussedCount: Int { records.filter { $0.status == .discussed }.count }
     var skippedCount: Int { records.filter { $0.status == .skipped }.count }
 
+    /// Close-screen "cards deep" — the local discussed count floored at the
+    /// shared row progress, so a device that relaunched mid-session (empty
+    /// local records) still shows how far the couple actually got. Accepted
+    /// tradeoff: after a relaunch this can count skipped cards too.
+    var closeCardsDeep: Int { max(discussedCount, confirmedIndex) }
+
     /// Position label for the in-session header ("Card 3 · 8").
     var positionLabel: String { "\(index + 1) · \(hand.count)" }
 
-    /// Cover-family screen 7 stat line: cards / duration.
+    /// Cover-family screen 7 stat line: cards / duration. Uses the same floored
+    /// card count as the close headline and the shared row start when available,
+    /// so both devices agree on both numbers.
     var sessionStatLine: String {
-        let cards = "\(discussedCount) \(discussedCount == 1 ? "card" : "cards")"
-        let minutes = max(1, Int(Date().timeIntervalSince(sessionStartedAt) / 60))
+        let count = closeCardsDeep
+        let cards = "\(count) \(count == 1 ? "card" : "cards")"
+        let start = sharedStartedAt ?? sessionStartedAt
+        let minutes = max(1, Int(Date().timeIntervalSince(start) / 60))
         return "\(cards) · \(minutes) min"
+    }
+
+    /// Anchors the shared start to the row's created_at (first writer wins —
+    /// the row is created once, so every source agrees).
+    private func applySharedStart(_ raw: String?) {
+        guard sharedStartedAt == nil, let raw,
+              let date = Self.isoFractional.date(from: raw) ?? Self.isoPlain.date(from: raw)
+        else { return }
+        sharedStartedAt = date
     }
 
     // MARK: - Airlock actions (DEBUG local mock path)
@@ -522,7 +546,9 @@ final class CoupleSessionStore: Identifiable {
     }
 
     /// Mirror the authoritative row. Index only ever moves forward.
-    private func applyRemoteRow(_ dto: CuratedSessionDTO) {
+    /// Internal (not private) so tests can drive the row mirror directly.
+    func applyRemoteRow(_ dto: CuratedSessionDTO) {
+        applySharedStart(dto.createdAt)
         if dto.currentIndex > confirmedIndex {
             confirmedIndex = dto.currentIndex
         }
@@ -571,6 +597,7 @@ final class CoupleSessionStore: Identifiable {
         remoteSessionId = dto.id
         switch dto.status {
         case CuratedSessionStatus.active.rawValue, CuratedSessionStatus.paused.rawValue:
+            applySharedStart(dto.createdAt)
             confirmedIndex = dto.currentIndex
             index = min(dto.currentIndex, max(0, hand.count - 1))
             timerStartedAtRaw = dto.timerStartedAt

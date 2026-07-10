@@ -66,7 +66,7 @@ struct SessionCloseView: View {
             }
             .padding(.bottom, AppSpacing.lg)
 
-            Text("You went \(store.discussedCount) \(store.discussedCount == 1 ? "card" : "cards")\ndeep together.")
+            Text("You went \(store.closeCardsDeep) \(store.closeCardsDeep == 1 ? "card" : "cards")\ndeep together.")
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(AppColors.textPrimary)
 
