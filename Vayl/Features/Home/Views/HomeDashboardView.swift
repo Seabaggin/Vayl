@@ -792,7 +792,7 @@ struct HomeDashboardView: View {
                     .font(AppFonts.display(11, weight: .bold, relativeTo: .caption2))
                     .foregroundStyle(AppColors.void)
                     .frame(width: 18, height: 18)
-                    .background(Circle().fill(AppColors.spectrumBorder))
+                    .background(Circle().fill(AppColors.accentPrimary))
                     .offset(y: -2)
             }
         }

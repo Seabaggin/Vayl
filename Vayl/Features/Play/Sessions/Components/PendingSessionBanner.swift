@@ -20,7 +20,7 @@ struct PendingSessionBanner: View {
     var body: some View {
         HStack(spacing: AppSpacing.md) {
             Circle()
-                .fill(AppColors.spectrumBorder)
+                .fill(AppColors.accentPrimary)
                 .frame(width: 8, height: 8)
 
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
@@ -84,7 +84,7 @@ struct ResumeSessionBanner: View {
         HStack(spacing: AppSpacing.md) {
             HStack(spacing: AppSpacing.md) {
                 Circle()
-                    .fill(AppColors.spectrumBorder)
+                    .fill(AppColors.accentPrimary)
                     .frame(width: 8, height: 8)
 
                 VStack(alignment: .leading, spacing: AppSpacing.xxs) {

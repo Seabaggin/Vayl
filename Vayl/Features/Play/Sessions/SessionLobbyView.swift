@@ -55,7 +55,7 @@ struct SessionLobbyView: View {
 
             HStack(spacing: AppSpacing.md) {
                 Circle()
-                    .fill(AppColors.spectrumBorder)
+                    .fill(AppColors.accentPrimary)
                     .frame(width: 9, height: 9)
                     .opacity(waitingPulse ? 0.75 : 0.4)
                     .ambientAnimation(

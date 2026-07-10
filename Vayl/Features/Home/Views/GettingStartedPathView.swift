@@ -124,7 +124,7 @@ private struct PathStepRow: View {
     @ViewBuilder private var node: some View {
         switch step.state {
         case .done:
-            Circle().fill(AppColors.spectrumBorder)
+            Circle().fill(AppColors.accentPrimary)
                 .frame(width: 30, height: 30)
                 .overlay(Image(systemName: AppIcons.checkmark).font(AppFonts.caption).foregroundColor(AppColors.textBody))
         case .active:

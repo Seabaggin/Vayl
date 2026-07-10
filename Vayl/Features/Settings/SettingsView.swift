@@ -167,13 +167,7 @@ struct SettingsView: View {
 
             Text(appState.displayName.isEmpty ? "Settings." : "\(appState.displayName).")
                 .font(AppFonts.screenTitle)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
+                .foregroundStyle(AppColors.spectrumText)
                 .padding(.top, AppSpacing.xs)
                 .padding(.bottom, AppSpacing.sm)
         }
@@ -183,12 +177,7 @@ struct SettingsView: View {
         Text(text)
             .font(AppFonts.overline)
             .tracking(1.5)
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-                    startPoint: .leading, endPoint: .trailing
-                )
-            )
+            .foregroundStyle(AppColors.spectrumText)
             .padding(.horizontal, AppSpacing.sm)
             .padding(.vertical, AppSpacing.xxs + 3)
             .background(

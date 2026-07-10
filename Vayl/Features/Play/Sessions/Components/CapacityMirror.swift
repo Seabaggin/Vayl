@@ -40,7 +40,7 @@ struct CapacityMirror: View {
 
     private var connector: some View {
         Capsule()
-            .fill(AppColors.spectrumBorder)
+            .fill(AppColors.accentPrimary)
             .frame(width: AppSpacing.xl, height: 2)
             .opacity(0.6)
     }

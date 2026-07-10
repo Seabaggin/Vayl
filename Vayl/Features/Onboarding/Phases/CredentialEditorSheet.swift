@@ -42,7 +42,7 @@ struct CredentialEditorSheet: View {
 
     private var grabHandle: some View {
         Capsule()
-            .fill(AppColors.spectrumBorder)
+            .fill(AppColors.borderDefault)
             .frame(width: 40, height: 4)
             .opacity(0.6)
             .frame(maxWidth: .infinity)
@@ -330,7 +330,7 @@ struct CredentialEditorOverlay: View {
             ZStack(alignment: .bottom) {
                 // Whisper scrim — a touch of focus without darkening the lifted
                 // fan above. Tap to dismiss.
-                Color.black.opacity(0.1)
+                AppColors.scrimWhisper
                     .ignoresSafeArea()
                     .onTapGesture { close() }
                     .transition(.opacity)

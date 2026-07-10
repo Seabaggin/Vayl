@@ -158,7 +158,7 @@ struct StatPhase: View {
                 // ── Citation pop-out — dims everything behind, tap to dismiss ──
                 if citeOpen {
                     ZStack {
-                        Color.black.opacity(0.62)
+                        AppColors.scrimHeavy
                             .ignoresSafeArea()
                             .contentShape(Rectangle())
                             .onTapGesture {
