@@ -68,3 +68,17 @@ struct DeckBeginCeremony: View {
         if dissolve == .distantFuture { dissolve = .now }
     }
 }
+
+#if DEBUG
+// "the-opener" is a free deck, so beginCeremony sets ceremonyDeckID directly
+// (a locked id would route to the paywall instead and leave the preview blank).
+#Preview("Begin ceremony") {
+    let store = PlayStore.preview
+    store.beginCeremony("the-opener")
+    return ZStack {
+        AppColors.void.ignoresSafeArea()
+        DeckBeginCeremony(store: store)
+    }
+    .preferredColorScheme(.dark)
+}
+#endif

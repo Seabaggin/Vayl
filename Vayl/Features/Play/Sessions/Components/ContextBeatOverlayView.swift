@@ -65,3 +65,16 @@ struct ContextBeatOverlayView: View {
         .transition(.opacity)
     }
 }
+
+// MARK: - Preview
+
+#Preview("Context beat — interstitial") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        ContextBeatOverlayView(
+            copy: "Take this one slowly. There's no right answer here — the point is hearing each other, not landing it.",
+            onDismiss: {}
+        )
+    }
+    .preferredColorScheme(.dark)
+}

@@ -168,3 +168,53 @@ struct WhisperRevealView: View {
         )
     }
 }
+
+#Preview("Composing") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        WhisperRevealView(
+            store: {
+                let store = CoupleSessionStore(
+                    hand: Array(Card.samples.prefix(8)),
+                    modelContainer: .previewContainer,
+                    appState: AppState()
+                )
+                store.revealEngine.beginCard("preview-whisper")
+                return store
+            }(),
+            isWhatIf: false,
+            recomposing: false
+        )
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Revealed") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        WhisperRevealView(
+            store: {
+                let store = CoupleSessionStore(
+                    hand: Array(Card.samples.prefix(8)),
+                    modelContainer: .previewContainer,
+                    appState: AppState()
+                )
+                let engine = store.revealEngine
+                engine.beginCard("preview-whisper")
+                engine.seal(.text("I want us to travel somewhere neither of us has been"))
+                engine.applyRowFlags(mySealed: true, partnerSealed: true, revealed: true)
+                engine.receive(RevealEnvelope(
+                    cardId: "preview-whisper",
+                    role: .b,
+                    body: .text("More slow mornings together, less rushing out the door")
+                ))
+                return store
+            }(),
+            isWhatIf: false,
+            recomposing: false
+        )
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}

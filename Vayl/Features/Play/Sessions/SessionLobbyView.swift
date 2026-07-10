@@ -130,3 +130,47 @@ struct SessionLobbyView: View {
         }
     }
 }
+
+// MARK: - Preview
+
+#Preview("Lobby — initiator waiting") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        OnboardingAtmosphere(config: .stat)
+        SessionLobbyView(
+            store: CoupleSessionStore(
+                launch: SessionLaunch(
+                    hand: Array(Card.samples.prefix(8)),
+                    entry: .initiator,
+                    role: .a,
+                    session: nil
+                ),
+                modelContainer: .previewContainer,
+                appState: AppState()
+            ),
+            airlock: AirlockStore(coupleId: UUID(), myProfileId: UUID(), role: .a)
+        )
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Lobby — joiner in the room") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        OnboardingAtmosphere(config: .stat)
+        SessionLobbyView(
+            store: CoupleSessionStore(
+                launch: SessionLaunch(
+                    hand: Array(Card.samples.prefix(8)),
+                    entry: .joiner,
+                    role: .b,
+                    session: nil
+                ),
+                modelContainer: .previewContainer,
+                appState: AppState()
+            ),
+            airlock: AirlockStore(coupleId: UUID(), myProfileId: UUID(), role: .b)
+        )
+    }
+    .preferredColorScheme(.dark)
+}

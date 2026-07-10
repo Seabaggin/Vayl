@@ -127,3 +127,24 @@ struct SessionSettingsSheet: View {
         .buttonStyle(PressableCardStyle())
     }
 }
+
+// MARK: - Preview
+
+#Preview("Session Settings") {
+    struct Wrapper: View {
+        @State private var reader: SessionSettings.Reader = .you
+        @State private var length: SessionSettings.Length = .full
+        var body: some View {
+            ZStack {
+                AppColors.void.ignoresSafeArea()
+                SessionSettingsSheet(
+                    reader: $reader,
+                    length: $length,
+                    partnerName: "Alex",
+                    onDone: {}
+                )
+            }
+        }
+    }
+    return Wrapper().preferredColorScheme(.dark)
+}

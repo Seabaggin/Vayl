@@ -152,3 +152,53 @@ struct LocalCardFaceView: View {
         }
     }
 }
+
+#Preview("Dare") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        LocalCardFaceView(card: Card(
+            id: "preview-dare",
+            deckId: "the-opener",
+            text: "Hold eye contact for thirty seconds. No talking. No looking away.",
+            highlightWords: ["eye contact"],
+            type: .dare,
+            intensity: .supernova,
+            whoStarts: .both,
+            isSensitive: false,
+            canSkip: true,
+            register: .excited,
+            contextBeatType: nil,
+            contextBeatCopy: nil,
+            backCopy: nil,
+            isGenderedCard: false,
+            genderedFor: nil,
+            sortOrder: 1
+        ))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Pause") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        LocalCardFaceView(card: Card(
+            id: "preview-pause",
+            deckId: "the-opener",
+            text: "",
+            highlightWords: [],
+            type: .pause,
+            intensity: .deepOcean,
+            whoStarts: .both,
+            isSensitive: false,
+            canSkip: false,
+            register: .flexible,
+            contextBeatType: nil,
+            contextBeatCopy: nil,
+            backCopy: nil,
+            isGenderedCard: false,
+            genderedFor: nil,
+            sortOrder: 1
+        ))
+    }
+    .preferredColorScheme(.dark)
+}

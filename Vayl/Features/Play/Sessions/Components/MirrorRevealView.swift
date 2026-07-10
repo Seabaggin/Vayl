@@ -143,3 +143,51 @@ struct MirrorRevealView: View {
         )
     }
 }
+
+#Preview("Composing (subject)") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        MirrorRevealView(
+            store: {
+                let store = CoupleSessionStore(
+                    hand: Array(Card.samples.prefix(8)),
+                    modelContainer: .previewContainer,
+                    appState: AppState()
+                )
+                store.revealEngine.beginCard("preview-mirror")
+                return store
+            }(),
+            recomposing: false
+        )
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Revealed gap") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        MirrorRevealView(
+            store: {
+                let store = CoupleSessionStore(
+                    hand: Array(Card.samples.prefix(8)),
+                    modelContainer: .previewContainer,
+                    appState: AppState()
+                )
+                let engine = store.revealEngine
+                engine.beginCard("preview-mirror")
+                engine.seal(.text("A quiet weekend away, just the two of us"))
+                engine.applyRowFlags(mySealed: true, partnerSealed: true, revealed: true)
+                engine.receive(RevealEnvelope(
+                    cardId: "preview-mirror",
+                    role: .b,
+                    body: .text("Probably a big trip somewhere far away")
+                ))
+                return store
+            }(),
+            recomposing: false
+        )
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}

@@ -60,3 +60,43 @@ struct DeckCellView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Cell — unlocked") {
+    @Previewable @Namespace var ns
+    let samples = (try? DeckCatalogService().loadSummaries()) ?? []
+    return ZStack {
+        AppColors.void.ignoresSafeArea()
+        LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: AppSpacing.lg) {
+            ForEach(Array(samples.prefix(2).enumerated()), id: \.element.id) { index, summary in
+                DeckCellView(summary: summary,
+                             style: DeckStyle.make(for: summary),
+                             locked: false,
+                             index: index,
+                             namespace: ns) {}
+            }
+        }
+        .padding()
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Cell — locked") {
+    @Previewable @Namespace var ns
+    let samples = (try? DeckCatalogService().loadSummaries()) ?? []
+    return ZStack {
+        AppColors.void.ignoresSafeArea()
+        LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: AppSpacing.lg) {
+            ForEach(Array(samples.prefix(2).enumerated()), id: \.element.id) { index, summary in
+                DeckCellView(summary: summary,
+                             style: DeckStyle.make(for: summary),
+                             locked: true,
+                             index: index,
+                             namespace: ns) {}
+            }
+        }
+        .padding()
+    }
+    .preferredColorScheme(.dark)
+}
+#endif

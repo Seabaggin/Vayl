@@ -128,3 +128,51 @@ struct UnspokenSliderView: View {
         }
     }
 }
+
+#Preview("Composing") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        UnspokenSliderView(
+            store: {
+                let store = CoupleSessionStore(
+                    hand: Array(Card.samples.prefix(8)),
+                    modelContainer: .previewContainer,
+                    appState: AppState()
+                )
+                store.revealEngine.beginCard("preview-unspoken")
+                return store
+            }(),
+            recomposing: false
+        )
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Revealed") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        UnspokenSliderView(
+            store: {
+                let store = CoupleSessionStore(
+                    hand: Array(Card.samples.prefix(8)),
+                    modelContainer: .previewContainer,
+                    appState: AppState()
+                )
+                let engine = store.revealEngine
+                engine.beginCard("preview-unspoken")
+                engine.seal(.position(0.72))
+                engine.applyRowFlags(mySealed: true, partnerSealed: true, revealed: true)
+                engine.receive(RevealEnvelope(
+                    cardId: "preview-unspoken",
+                    role: .b,
+                    body: .position(0.31)
+                ))
+                return store
+            }(),
+            recomposing: false
+        )
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}

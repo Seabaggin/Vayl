@@ -396,3 +396,20 @@ private struct HomeRouterInnerView: View {
     }
     #endif
 }
+
+#if DEBUG
+// Same environment recipe as the MapView / PlayView previews: one AppState shared
+// by every store, in-memory container, no live services touched at init (loadAll's
+// remote fetches fail silently in the canvas; the deck loads from the bundle).
+#Preview("Home router") {
+    let state = { let s = AppState(); s.displayName = "Jordan"; return s }()
+    let entitlements = EntitlementStore(modelContainer: .previewContainer, appState: state)
+    return HomeRouterView()
+        .environment(state)
+        .environment(PulseStore())
+        .environment(entitlements)
+        .environment(CoupleContext(appState: state, entitlements: entitlements, modelContainer: .previewContainer))
+        .modelContainer(.previewContainer)
+        .preferredColorScheme(.dark)
+}
+#endif

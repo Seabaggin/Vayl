@@ -73,3 +73,31 @@ struct RevealCardChrome<Content: View>: View {
         }
     }
 }
+
+#Preview("Composing intensity") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        RevealCardChrome(intensity: 0.3) {
+            Text("private until you both seal")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
+                .frame(maxWidth: .infinity)
+        }
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Countdown intensity") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        RevealCardChrome(intensity: 1.0) {
+            Text("3")
+                .font(AppFonts.displayHero)
+                .foregroundStyle(AppColors.spectrumText)
+                .frame(maxWidth: .infinity)
+        }
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}

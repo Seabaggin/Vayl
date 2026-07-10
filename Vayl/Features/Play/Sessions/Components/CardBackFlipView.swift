@@ -70,3 +70,28 @@ struct CardBackFlipView: View {
                             removal: .opacity))
     }
 }
+
+#Preview("Flip affordance") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        CardBackFlipView(
+            backCopy: Card.samples[1].backCopy ?? "",
+            showingBack: false,
+            onFlip: {}
+        )
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Back face") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        CardBackFlipView(
+            backCopy: Card.samples[1].backCopy ?? "",
+            showingBack: true,
+            onFlip: {}
+        )
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}

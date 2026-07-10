@@ -123,3 +123,21 @@ struct HoldToLockInRing: View {
         complete()
     }
 }
+
+// MARK: - Preview
+
+#Preview("Hold to lock in — idle") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        HoldToLockInRing(locked: false, onLockIn: {})
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Hold to lock in — locked") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        HoldToLockInRing(locked: true, showsGlyph: true, onLockIn: {})
+    }
+    .preferredColorScheme(.dark)
+}

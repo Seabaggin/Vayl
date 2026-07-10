@@ -306,3 +306,29 @@ struct SessionBuilderView: View {
         .padding(AppSpacing.xl)
     }
 }
+
+// MARK: - Preview
+
+#Preview("Session Builder") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        SessionBuilderView(
+            deck: .previewWithCards,
+            onConfirm: { _ in },
+            onCancel: {}
+        )
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Session Builder — empty deck") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        SessionBuilderView(
+            deck: .preview,
+            onConfirm: { _ in },
+            onCancel: {}
+        )
+    }
+    .preferredColorScheme(.dark)
+}

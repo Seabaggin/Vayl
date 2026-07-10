@@ -120,3 +120,51 @@ struct SnapshotRevealView: View {
             .lineLimit(1)
     }
 }
+
+#Preview("Composing") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        SnapshotRevealView(
+            store: {
+                let store = CoupleSessionStore(
+                    hand: Array(Card.samples.prefix(8)),
+                    modelContainer: .previewContainer,
+                    appState: AppState()
+                )
+                store.revealEngine.beginCard("preview-snapshot")
+                return store
+            }(),
+            recomposing: false
+        )
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Landed words") {
+    ZStack {
+        AppColors.void.ignoresSafeArea()
+        SnapshotRevealView(
+            store: {
+                let store = CoupleSessionStore(
+                    hand: Array(Card.samples.prefix(8)),
+                    modelContainer: .previewContainer,
+                    appState: AppState()
+                )
+                let engine = store.revealEngine
+                engine.beginCard("preview-snapshot")
+                engine.seal(.word("electric"))
+                engine.applyRowFlags(mySealed: true, partnerSealed: true, revealed: true)
+                engine.receive(RevealEnvelope(
+                    cardId: "preview-snapshot",
+                    role: .b,
+                    body: .word("steady")
+                ))
+                return store
+            }(),
+            recomposing: false
+        )
+        .padding(AppSpacing.lg)
+    }
+    .preferredColorScheme(.dark)
+}
