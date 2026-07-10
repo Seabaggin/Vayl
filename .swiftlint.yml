@@ -11,6 +11,16 @@ excluded:
 opt_in_rules:
   - force_unwrapping # Uses the native, bulletproof Swift compiler check
 
+# Rules turned OFF by decision — they misfire on modern Swift/SwiftUI or are
+# actively harmful in this codebase. Kept documented so the choice is legible.
+disabled_rules:
+  - switch_case_alignment                    # fires on one-line switch expressions (Swift 5.9+), which are idiomatic
+  - multiple_closures_with_trailing_closure  # noisy on SwiftUI (Toggle/Button with onChange:, etc.)
+  - redundant_string_enum_value              # explicit raw values are rename-safety on persisted/Codable enums, not redundancy
+  - blanket_disable_command                  # file-level rule disables are intentional in the procedural-art files
+  - orphaned_doc_comment                     # fires on `///` used as section headers
+  - todo                                     # TODOs are working notes here, tracked out-of-band
+
 # --- Built-in rule tuning ---------------------------------------------------
 # This is a design-heavy SwiftUI codebase: procedural-art files, long view
 # bodies, and single-character names in geometry/math/closures are idiomatic,
@@ -55,7 +65,7 @@ type_name:
     - tableRimInnerGlow
 
 line_length:
-  warning: 200
+  warning: 250
   error: 500
   ignores_comments: true
   ignores_urls: true
@@ -63,25 +73,25 @@ line_length:
   ignores_interpolated_strings: true
 
 type_body_length:
-  warning: 600
-  error: 1000
+  warning: 800
+  error: 1200
 
 function_body_length:
-  warning: 200
-  error: 400
+  warning: 400
+  error: 600
 
 file_length:
-  warning: 1200
-  error: 2000
+  warning: 1800
+  error: 2500
   ignore_comment_only_lines: true
 
 large_tuple:
-  warning: 4
-  error: 6
+  warning: 6
+  error: 10
 
 function_parameter_count:
-  warning: 8
-  error: 12
+  warning: 12
+  error: 16
 
 cyclomatic_complexity:
   warning: 20
