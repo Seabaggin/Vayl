@@ -718,23 +718,22 @@ final class CoupleSessionStore: Identifiable {
     }
 
     // Presence loss (called from the coordinator's presence callback).
+    // One healthy phone is enough to finish a session: the lock-in already
+    // established mutual consent, so a device dropping never pauses the
+    // session. partnerAway is still tracked (presence pill, reveal notice).
     private func partnerLost() {
         guard isLive, phase == .session, graceTask == nil else { return }
         graceTask = Task { @MainActor in
             try? await Task.sleep(for: .seconds(15))
             guard !Task.isCancelled, !partnerPresentLive else { return }
             partnerAway = true
-            if !isPaused { togglePause() }
         }
     }
 
     private func partnerReturned() {
         graceTask?.cancel()
         graceTask = nil
-        if partnerAway {
-            partnerAway = false
-            if isPaused { togglePause() }   // their return resumes
-        }
+        partnerAway = false
     }
 
     // MARK: - Close actions

@@ -68,27 +68,27 @@ struct SessionPlayerView: View {
                 .allowsHitTesting(false)
                 .ignoresSafeArea()
 
-            // Pause / partner-away — a held room, above the idle dim.
+            // Pause — a held room, above the idle dim. One healthy phone is
+            // enough to finish a session, so presence loss never pauses;
+            // this only ever reflects a manual pause, and it is never a
+            // trap — resume and the care affordance stay reachable.
             if store.isPaused {
                 ZStack {
                     Rectangle().fill(AppColors.void).opacity(0.72).ignoresSafeArea()
-                    VStack(spacing: AppSpacing.md) {
-                        Text(store.partnerAway
-                             ? "waiting for \(store.partnerLabel)…"
-                             : "paused")
+                    VStack(spacing: AppSpacing.lg) {
+                        Text("paused")
                             .font(AppFonts.sectionHeading)
                             .foregroundStyle(AppColors.textPrimary)
-                        if !store.partnerAway {
-                            Button {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                store.togglePause()
-                            } label: {
-                                Text("resume")
-                                    .font(AppFonts.buttonLabel)
-                                    .foregroundStyle(AppColors.spectrumText)
-                            }
-                            .buttonStyle(.plain)
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            store.togglePause()
+                        } label: {
+                            Text("resume")
+                                .font(AppFonts.buttonLabel)
+                                .foregroundStyle(AppColors.spectrumText)
                         }
+                        .buttonStyle(.plain)
+                        careIconButton
                     }
                 }
                 .transition(.opacity)
@@ -205,6 +205,11 @@ struct SessionPlayerView: View {
                     }
                     VStack(alignment: .leading, spacing: AppSpacing.lg) {
                         cardFace(card)
+                        if card.isRevealMechanic, !store.partnerConnected {
+                            Text("this one needs both phones · theirs can jump back in anytime")
+                                .font(AppFonts.caption)
+                                .foregroundStyle(AppColors.textSecondary)
+                        }
                         if card.hasBackCopy, !card.isRevealMechanic {
                             CardBackFlipView(
                                 backCopy: card.backCopy ?? "",
@@ -349,23 +354,30 @@ struct SessionPlayerView: View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             // Care lives behind this one icon — the care sheet below is
             // "everything in one place" (pause/hug/skip/end well).
-            Button {
-                wake()
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                showCare = true
-            } label: {
-                Image(systemName: AppIcons.heartCircle)
-                    .font(AppFonts.sectionHeading)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .frame(width: 54, height: 54)
-                    .background(Circle().fill(AppColors.cardBackground))
-                    .overlay(Circle().strokeBorder(AppColors.borderDefault, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Take a beat — pause, care options, or end the session")
+            careIconButton
 
             turnAndPresencePill
         }
+    }
+
+    /// The care-icon affordance (opens the care sheet: pause/hug/skip/end
+    /// well). Shared by the left control stack and the pause overlay — the
+    /// overlay is never a trap, so care must stay reachable while paused too.
+    private var careIconButton: some View {
+        Button {
+            wake()
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showCare = true
+        } label: {
+            Image(systemName: AppIcons.heartCircle)
+                .font(AppFonts.sectionHeading)
+                .foregroundStyle(AppColors.textSecondary)
+                .frame(width: 54, height: 54)
+                .background(Circle().fill(AppColors.cardBackground))
+                .overlay(Circle().strokeBorder(AppColors.borderDefault, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Take a beat — pause, care options, or end the session")
     }
 
     /// Replaces the old top-of-screen drawer row — whose draw it is and
