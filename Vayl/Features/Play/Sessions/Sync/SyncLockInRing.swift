@@ -108,9 +108,19 @@ struct SyncLockInRing: View {
             centerContent
         }
         .frame(width: ringSize, height: ringSize)
-        .scaleEffect(pressing ? 0.97 : (isSuccess ? 1.04 : 1.0))
-        .animation(AppAnimation.spring, value: pressing)
-        .animation(AppAnimation.standard, value: isSuccess)
+        // ONE animation on ONE derived value — pressing and isSuccess can flip
+        // in the same beat (release lands .inSync), and two .animation
+        // modifiers competing over the same scaleEffect is a named jitter
+        // cause (Animation Feel Contract). Spring for the user-initiated
+        // press, standard ease for the success bloom.
+        .scaleEffect(ringScale)
+        .animation(pressing ? AppAnimation.spring : AppAnimation.standard, value: ringScale)
+    }
+
+    /// Single source of truth for the ring's scale across press + success.
+    private var ringScale: CGFloat {
+        if pressing { return 0.97 }
+        return isSuccess ? 1.04 : 1.0
     }
 
     @ViewBuilder
