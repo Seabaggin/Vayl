@@ -149,7 +149,10 @@ struct PlayView: View {
                     .padding(.top, AppSpacing.sm)
                     Spacer()
                 }
-                .transition(.move(edge: .top).combined(with: .opacity))
+                .transition(.asymmetric(
+                    insertion: .move(edge: .top).combined(with: .opacity),
+                    removal: .opacity
+                ))
                 .zIndex(20)
             }
         }

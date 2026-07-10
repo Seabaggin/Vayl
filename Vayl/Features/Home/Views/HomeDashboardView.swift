@@ -651,7 +651,10 @@ struct HomeDashboardView: View {
                 .padding(.top, AppSpacing.sm)
                 Spacer()
             }
-            .transition(.move(edge: .top).combined(with: .opacity))
+            .transition(.asymmetric(
+                insertion: .move(edge: .top).combined(with: .opacity),
+                removal: .opacity
+            ))
             .animation(AppAnimation.spring, value: entryStore?.pendingSession)
             .zIndex(2)
         }
@@ -757,7 +760,10 @@ struct HomeDashboardView: View {
                         // .safeAreaInset reserves the bar + home indicator.
                         .padding(.bottom, AppSpacing.xl)
                 }
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .move(edge: .bottom)),
+                    removal: .opacity
+                ))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
