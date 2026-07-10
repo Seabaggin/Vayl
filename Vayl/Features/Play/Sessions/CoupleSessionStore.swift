@@ -210,7 +210,7 @@ final class CoupleSessionStore: Identifiable {
     /// the live path (partnerPresentLive/partnerAway) when two-device, the
     /// mock path (partnerPresent) in local DEBUG.
     var partnerConnected: Bool {
-        isLive ? (partnerPresentLive && !partnerAway) : partnerPresent
+        isLive ? (partnerPresentLive && !partnerAway && partnerHeartbeatFresh) : partnerPresent
     }
 
     /// Mirror cards: the subject alternates per card (deterministic from the
@@ -389,6 +389,32 @@ final class CoupleSessionStore: Identifiable {
     private let sessionWatchdogTimeout: TimeInterval = 10
     private var pollTask: Task<Void, Never>?
     private var watchdogTask: Task<Void, Never>?
+
+    // MARK: - Liveness heartbeat (fast partner-disconnect detection)
+    // Channel presence alone takes 30s+ to notice a hard-killed partner app
+    // (the server only emits the leave after the Phoenix socket heartbeat
+    // times out). So while live, each device stamps its own last_seen column
+    // every heartbeatWriteInterval and POLLS the partner's every
+    // heartbeatReadInterval — polling, never realtime row-UPDATEs, because
+    // row-UPDATE pushes to a foregrounded joiner are unreliable here (known
+    // gotcha). Freshness window > write interval x2 tolerates a slow tick.
+
+    /// 🎚️ Seconds between this device's own last_seen stamps.
+    private static let heartbeatWriteInterval: TimeInterval = 4
+    /// 🎚️ Seconds between reads of the partner's last_seen.
+    private static let heartbeatReadInterval: TimeInterval = 5
+    /// 🎚️ A partner heartbeat older than this means "not connected".
+    static let heartbeatFreshWindow: TimeInterval = 10
+
+    /// Partner's most recent heartbeat, parsed. nil = never seen one this
+    /// session — the pill then trusts presence alone (session start: presence
+    /// already handles join, and null must not read as "not connected").
+    private(set) var partnerLastSeenAt: Date?
+    /// Heartbeat verdict folded into partnerConnected. true when the partner's
+    /// heartbeat is within the freshness window OR was never seen.
+    private(set) var partnerHeartbeatFresh = true
+    private var heartbeatWriteTask: Task<Void, Never>?
+    private var heartbeatReadTask: Task<Void, Never>?
     /// Any row or presence signal proves the pipe is live; clears the watchdog.
     private var sawAnySignalSinceSubscribe = false
     /// ONE engine serves all five reveal mechanics (Section 3). Built at init
@@ -438,6 +464,64 @@ final class CoupleSessionStore: Identifiable {
         coordinator.start()
         isLive = true
         armWatchdog()
+        startHeartbeat()
+    }
+
+    /// Starts both heartbeat loops (own stamp out, partner read back). Runs on
+    /// BOTH transports — the write side is what the partner's poll reads, and
+    /// the read side is our only reliable view of the partner (realtime
+    /// row-UPDATE delivery is unreliable; see the gotcha note above).
+    /// Loops end themselves once the phase leaves the live flow.
+    private func startHeartbeat() {
+        guard heartbeatWriteTask == nil, let realtime, let sid = remoteSessionId else { return }
+        let role = sessionRole
+        heartbeatWriteTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self, self.phase == .session || self.phase == .transition else { return }
+                try? await realtime.touchLastSeen(sessionId: sid, role: role)
+                try? await Task.sleep(for: .seconds(Self.heartbeatWriteInterval))
+            }
+        }
+        heartbeatReadTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self, self.phase == .session || self.phase == .transition else { return }
+                if let raw = try? await realtime.fetchPartnerLastSeen(sessionId: sid, myRole: role) {
+                    self.registerPartnerHeartbeat(raw: raw)
+                }
+                // Re-evaluate every tick even when the fetch failed or brought
+                // nothing new — staleness alone must flip the pill.
+                self.evaluatePartnerHeartbeat()
+                try? await Task.sleep(for: .seconds(Self.heartbeatReadInterval))
+            }
+        }
+    }
+
+    private func stopHeartbeat() {
+        heartbeatWriteTask?.cancel()
+        heartbeatWriteTask = nil
+        heartbeatReadTask?.cancel()
+        heartbeatReadTask = nil
+    }
+
+    /// Parses and records a partner heartbeat timestamp. Internal (not private)
+    /// so tests can drive the freshness computation directly.
+    func registerPartnerHeartbeat(raw: String?) {
+        guard let raw,
+              let date = Self.isoFractional.date(from: raw) ?? Self.isoPlain.date(from: raw)
+        else { return }
+        // Forward-only: a lagging read can never regress a newer heartbeat.
+        if let current = partnerLastSeenAt, date <= current { return }
+        partnerLastSeenAt = date
+    }
+
+    /// One freshness tick: never-seen trusts presence alone (fresh); otherwise
+    /// fresh = within the window. Internal so tests can inject `now`.
+    func evaluatePartnerHeartbeat(now: Date = Date()) {
+        guard let seen = partnerLastSeenAt else {
+            partnerHeartbeatFresh = true
+            return
+        }
+        partnerHeartbeatFresh = now.timeIntervalSince(seen) <= Self.heartbeatFreshWindow
     }
 
     /// A real row/presence callback fired — the pipe is alive. Cancels the
@@ -543,6 +627,7 @@ final class CoupleSessionStore: Identifiable {
         pollTask = nil
         watchdogTask?.cancel()
         watchdogTask = nil
+        stopHeartbeat()
     }
 
     /// Mirror the authoritative row. Index only ever moves forward.

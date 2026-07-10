@@ -41,6 +41,10 @@ enum SessionRole: String, Codable, Sendable {
 
     var consentColumn: String { self == .a ? "a_consented" : "b_consented" }
     var presenceColumn: String { self == .a ? "a_present" : "b_present" }
+    /// Liveness heartbeat column this role stamps (~every 4s while live).
+    var lastSeenColumn: String { self == .a ? "a_last_seen" : "b_last_seen" }
+    /// The OTHER role's heartbeat column — what this device polls for liveness.
+    var partnerLastSeenColumn: String { self == .a ? "b_last_seen" : "a_last_seen" }
     /// The seal flag this role owns inside a reveal_state per-card object.
     var sealedKey: String { self == .a ? "a_sealed" : "b_sealed" }
 }
@@ -717,6 +721,41 @@ extension RealtimeSessionService {
     /// Called on a timer by AirlockStore when realtime is unavailable.
     /// Modeled on PairingService.pollForClaim's re-fetch-per-tick shape but
     /// stateless — the loop lives in the Store. (From plan 08, verified.)
+    /// Stamps this role's liveness heartbeat (last_seen = now). One tiny UPDATE;
+    /// called every few seconds by the store's heartbeat loop while a session
+    /// is live, on BOTH transports (realtime and poll).
+    func touchLastSeen(sessionId: UUID, role: SessionRole) async throws {
+        try await supabase
+            .from(SupabaseTable.curatedSessions)
+            .update([role.lastSeenColumn: ISO8601DateFormatter().string(from: Date())])
+            .eq("id", value: sessionId.uuidString)
+            .execute()
+    }
+
+    /// Reads the PARTNER's liveness heartbeat for one session. Lightweight
+    /// single-column select — the survivor polls this because realtime
+    /// row-UPDATE pushes are unreliable in this codebase (known gotcha).
+    /// Returns the raw timestamptz string (nil = the partner never heartbeated).
+    func fetchPartnerLastSeen(sessionId: UUID, myRole: SessionRole) async throws -> String? {
+        struct LastSeenRow: Decodable {
+            let aLastSeen: String?
+            let bLastSeen: String?
+            enum CodingKeys: String, CodingKey {
+                case aLastSeen = "a_last_seen"
+                case bLastSeen = "b_last_seen"
+            }
+        }
+        let rows: [LastSeenRow] = try await supabase
+            .from(SupabaseTable.curatedSessions)
+            .select("a_last_seen,b_last_seen")
+            .eq("id", value: sessionId.uuidString)
+            .limit(1)
+            .execute()
+            .value
+        guard let row = rows.first else { return nil }
+        return myRole == .a ? row.bLastSeen : row.aLastSeen
+    }
+
     func heartbeatOpenSession(coupleId: UUID, role: SessionRole) async throws -> CuratedSessionDTO? {
         if let open = try await fetchOpenSession(coupleId: coupleId) {
             try await setPresence(sessionId: open.id, role: role, present: true)

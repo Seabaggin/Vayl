@@ -153,4 +153,86 @@ final class CoupleSessionSafetyTests: XCTestCase {
         XCTAssertNil(store.timerRemaining)
         XCTAssertEqual(store.phase, .session, "keepGoing never advances or ends the session")
     }
+
+    // MARK: Partner liveness heartbeat — freshness computation
+    // registerPartnerHeartbeat / evaluatePartnerHeartbeat are the pure core of
+    // the fast-disconnect path (last_seen columns). The wire loops themselves
+    // need a live RealtimeSessionService (same seam limitation as partnerLost,
+    // documented in the header), so these tests drive the computation directly.
+
+    private static let iso: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
+    func test_heartbeat_neverSeen_staysFresh_fallsBackToPresence() async {
+        // Before the first partner heartbeat ever arrives, last_seen is null
+        // — the pill must trust presence alone, never read null as "gone".
+        let store = makeStore()
+        XCTAssertNil(store.partnerLastSeenAt)
+        store.evaluatePartnerHeartbeat(now: Date())
+        XCTAssertTrue(store.partnerHeartbeatFresh)
+    }
+
+    func test_heartbeat_fresh_readsConnected() async {
+        let store = makeStore()
+        let now = Date()
+        store.registerPartnerHeartbeat(raw: Self.iso.string(from: now))
+        store.evaluatePartnerHeartbeat(now: now.addingTimeInterval(5))
+        XCTAssertTrue(store.partnerHeartbeatFresh, "5s-old heartbeat is inside the 10s window")
+    }
+
+    func test_heartbeat_stale_flipsNotConnected() async {
+        let store = makeStore()
+        let now = Date()
+        store.registerPartnerHeartbeat(raw: Self.iso.string(from: now))
+        store.evaluatePartnerHeartbeat(
+            now: now.addingTimeInterval(CoupleSessionStore.heartbeatFreshWindow + 1)
+        )
+        XCTAssertFalse(store.partnerHeartbeatFresh, "a heartbeat past the window means the partner is gone")
+    }
+
+    func test_heartbeat_freshAfterStale_recovers() async {
+        let store = makeStore()
+        let now = Date()
+        store.registerPartnerHeartbeat(raw: Self.iso.string(from: now))
+        store.evaluatePartnerHeartbeat(now: now.addingTimeInterval(20))
+        XCTAssertFalse(store.partnerHeartbeatFresh)
+
+        // Partner comes back: a newer stamp flips the pill back.
+        store.registerPartnerHeartbeat(raw: Self.iso.string(from: now.addingTimeInterval(19)))
+        store.evaluatePartnerHeartbeat(now: now.addingTimeInterval(20))
+        XCTAssertTrue(store.partnerHeartbeatFresh)
+    }
+
+    func test_heartbeat_laggingRead_neverRegresses() async {
+        let store = makeStore()
+        let now = Date()
+        store.registerPartnerHeartbeat(raw: Self.iso.string(from: now))
+        // A stale poll result arriving late must not roll the stamp backwards.
+        store.registerPartnerHeartbeat(raw: Self.iso.string(from: now.addingTimeInterval(-30)))
+        XCTAssertEqual(store.partnerLastSeenAt.map { Self.iso.string(from: $0) }, Self.iso.string(from: now))
+    }
+
+    func test_heartbeat_unparseableOrNil_isIgnored() async {
+        let store = makeStore()
+        store.registerPartnerHeartbeat(raw: nil)
+        store.registerPartnerHeartbeat(raw: "not-a-timestamp")
+        XCTAssertNil(store.partnerLastSeenAt)
+        store.evaluatePartnerHeartbeat(now: Date())
+        XCTAssertTrue(store.partnerHeartbeatFresh)
+    }
+
+    func test_heartbeat_doesNotAffectLocalDebugPill() async {
+        // The pure-local path (isLive == false) keeps its mock presence pill;
+        // a stale heartbeat must not bleed into it.
+        let store = makeStore()
+        await crossAirlock(store)
+        let now = Date()
+        store.registerPartnerHeartbeat(raw: Self.iso.string(from: now))
+        store.evaluatePartnerHeartbeat(now: now.addingTimeInterval(60))
+        XCTAssertFalse(store.partnerHeartbeatFresh)
+        XCTAssertTrue(store.partnerConnected, "local DEBUG pill reads the mock partnerPresent, not the heartbeat")
+    }
 }
