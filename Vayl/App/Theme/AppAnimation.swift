@@ -206,6 +206,22 @@ internal enum AppAnimation {
     /// Number of inhale/exhale cycles before the breath resolves to "there you are".
     static let breatheCycles: Int = 3
 
+    // MARK: - Ambient dwell + deck recede
+
+    /// Auto-advance dwell for ambient carousels (Learn quiz/research rails,
+    /// InfiniteCarousel default) — seconds a slide holds before it drifts on.
+    /// Long enough to read, not so long it feels stalled. Gate the loop that
+    /// drives it with `ambientMotionDisabled` like any ambient motion.
+    static let ambientDwell: TimeInterval = 12
+
+    /// How far a backgrounded surface recedes when a deck/card is engaged in
+    /// front of it — the resting opacity of the pushed-back layer.
+    static let recedeOpacity: Double = 0.25
+
+    /// The blur radius applied to that receded layer, in points. Pairs with
+    /// `recedeOpacity` via the `.vaylRecede(_:)` modifier.
+    static let recedeBlur: CGFloat = 6
+
     // MARK: — Border Effect
         // Used by VaylBorderEffect. Applied to the spectrum stroke fill and glow pop
         // on VaylButton, SelectablePill, sheets, and any bordered surface.

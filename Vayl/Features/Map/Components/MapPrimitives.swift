@@ -37,34 +37,11 @@ struct MapSectionHeader: View {
 
 // MARK: - Empty / forming state
 //
-// Icon + headline + sub-label per the CLAUDE.md empty-state spec. Every Map data
-// block routes its empty/forming case through this, so they all read alike.
+// Now the shared `VaylEmptyState` (Design/Components/VaylEmptyState.swift). The
+// Map alias is kept so every Map data block's existing `MapEmptyState(...)` call
+// site stays put while the component lives app-wide.
 
-struct MapEmptyState: View {
-    let icon: String
-    let headline: String
-    let message: String
-
-    var body: some View {
-        VStack(spacing: AppSpacing.sm) {
-            Image(systemName: icon)
-                .font(AppFonts.body(26, weight: .regular, relativeTo: .title2))
-                .fontWeight(.light)
-                .foregroundStyle(AppColors.textTertiary)
-            Text(headline)
-                .font(AppFonts.cardTitle)
-                .foregroundStyle(AppColors.textSecondary)
-            Text(message)
-                .font(AppFonts.caption)
-                .foregroundStyle(AppColors.textTertiary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, AppSpacing.xl)
-        .padding(.horizontal, AppSpacing.lg)
-    }
-}
+typealias MapEmptyState = VaylEmptyState
 
 // MARK: - Deck category colour (Map-local)
 //

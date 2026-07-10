@@ -78,6 +78,13 @@ struct AppFonts {
         display(42, weight: .bold, relativeTo: .largeTitle)
     }
 
+    /// Tab masthead wordmark — the hand-built tab titles (Home / Cards / Map / Learn).
+    /// One per tab, top-of-screen. Replaces the ad-hoc display(40) and Learn's drifted
+    /// display(42) so every masthead renders at one size.
+    static var tabMasthead: Font {
+        display(40, weight: .bold, relativeTo: .largeTitle)
+    }
+
     /// Oversized display numeral or word. One element per screen maximum.
     static var displayHero: Font {
         display(64, weight: .bold, relativeTo: .largeTitle)
@@ -98,6 +105,12 @@ struct AppFonts {
 
     /// One per screen. Top of content area, primary screen identifier.
     static var screenTitle: Font {
+        display(24, weight: .semibold, relativeTo: .title)
+    }
+
+    /// Sheet title — the headline at the top of a `.vaylSheet`. Same metrics as
+    /// screenTitle, named for the sheet-title rule so the intent reads at the call site.
+    static var sheetTitle: Font {
         display(24, weight: .semibold, relativeTo: .title)
     }
 
@@ -255,5 +268,25 @@ struct AppFonts {
                 print("  \(name)")
             }
         }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// MARK: - Overline (tracked, uppercased)
+//
+// SwiftUI `Font` cannot carry tracking or case, so the section-divider
+// overline is a View modifier, not a Font token. It bakes in the uppercase
+// transform + 2pt tracking so source strings stay sentence-case (never
+// pre-uppercased string literals in Views).
+// ─────────────────────────────────────────────────────────────
+
+extension View {
+    /// The canonical section-overline treatment: `AppFonts.overline`, uppercased,
+    /// 2pt tracking. Keep the string in sentence case at the call site.
+    func overlineTracked() -> some View {
+        self
+            .font(AppFonts.overline)
+            .textCase(.uppercase)
+            .tracking(2)
     }
 }

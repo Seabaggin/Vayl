@@ -417,6 +417,14 @@ struct AppColors {
         dark: VaylPrimitives.pureBlack.withAlphaComponent(0.75)
     )
 
+    /// The lightest scrim — a hint of separation behind a small floating element
+    /// (a greeting sheet, an inline editor) without dimming the scene. Replaces
+    /// the ad-hoc `Color.black.opacity(0.10)` washes in the feature layer.
+    static let scrimWhisper = Color.dynamic(
+        light: VaylPrimitives.pureBlack.withAlphaComponent(0.06),
+        dark: VaylPrimitives.pureBlack.withAlphaComponent(0.10)
+    )
+
     /// Dawn tinted shadow — magenta channel. Cards in light mode.
     static let shadowMagenta = Color.dynamic(
         light: VaylPrimitives.magenta.withAlphaComponent(0.18),

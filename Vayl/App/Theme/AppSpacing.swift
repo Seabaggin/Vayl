@@ -30,6 +30,16 @@ internal enum AppSpacing {
     /// Never use as a screen-edge margin or between independent sections.
     static let sm: CGFloat = 8
 
+    /// 10pt — The half-step between sm (8) and md (16), skewed tight.
+    /// Use where `sm` reads cramped but `md` opens too far — a chip's vertical
+    /// padding, a snug inline gap. Prefer sm/md; reach for sm2 only when both miss.
+    static let sm2: CGFloat = 10
+
+    /// 12pt — The missing structural half-step between sm (8) and md (16).
+    /// Retires the `sm + xs` / `sm2 + xs` arithmetic scattered through the Views:
+    /// use for a gap that wants more air than sm but less than a full md.
+    static let md2: CGFloat = 12
+
     /// 16pt — Default structural gap and card-edge padding.
     /// Use as the standard horizontal padding inside cards, the gap between form fields,
     /// and the vertical spacing between related content groups within a section.

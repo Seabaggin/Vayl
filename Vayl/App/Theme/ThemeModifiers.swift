@@ -24,6 +24,30 @@ extension View {
     }
 }
 
+// MARK: - Deck recede
+
+/// Pushes a background layer back when a deck/card is engaged in front of it:
+/// dims to `AppAnimation.recedeOpacity` and blurs by `AppAnimation.recedeBlur`.
+/// One modifier so every "something opened, everything behind it steps back"
+/// moment reads identically. Transition uses the standard reactive curve.
+struct VaylRecedeModifier: ViewModifier {
+    let engaged: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .blur(radius: engaged ? AppAnimation.recedeBlur : 0)
+            .opacity(engaged ? AppAnimation.recedeOpacity : 1)
+            .animation(AppAnimation.standard, value: engaged)
+    }
+}
+
+extension View {
+    /// Recede this layer behind an engaged deck/card. See `VaylRecedeModifier`.
+    func vaylRecede(_ engaged: Bool) -> some View {
+        modifier(VaylRecedeModifier(engaged: engaged))
+    }
+}
+
 // MARK: - Card Modifier
 
 struct ThemedCardModifier: ViewModifier {
