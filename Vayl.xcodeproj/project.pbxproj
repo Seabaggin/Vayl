@@ -38,7 +38,6 @@
 		AA00000HAAAA000000000001 /* PairingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000HAAAA000000000002 /* PairingStoreTests.swift */; };
 		AA00000IAAAA000000000001 /* Sessions/CoupleCapacityStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000IAAAA000000000002 /* Sessions/CoupleCapacityStoreTests.swift */; };
 		AA00000JAAAA000000000001 /* Sessions/SessionSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000JAAAA000000000002 /* Sessions/SessionSettingsTests.swift */; };
-		AA00000KAAAA000000000001 /* Sessions/SyncMatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000KAAAA000000000002 /* Sessions/SyncMatchTests.swift */; };
 		AA00000LAAAA000000000001 /* HomeStorePartnerChipStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000LAAAA000000000002 /* HomeStorePartnerChipStateTests.swift */; };
 		AA00000MAAAA000000000001 /* PartnerChipDesireMapCopyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000MAAAA000000000002 /* PartnerChipDesireMapCopyTests.swift */; };
 		AA00000NAAAA000000000001 /* PartnerChipPulseCopyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000NAAAA000000000002 /* PartnerChipPulseCopyTests.swift */; };
@@ -104,7 +103,6 @@
 		AA00000HAAAA000000000002 /* PairingStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingStoreTests.swift; sourceTree = "<group>"; };
 		AA00000IAAAA000000000002 /* Sessions/CoupleCapacityStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sessions/CoupleCapacityStoreTests.swift; sourceTree = "<group>"; };
 		AA00000JAAAA000000000002 /* Sessions/SessionSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sessions/SessionSettingsTests.swift; sourceTree = "<group>"; };
-		AA00000KAAAA000000000002 /* Sessions/SyncMatchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sessions/SyncMatchTests.swift; sourceTree = "<group>"; };
 		AA00000LAAAA000000000002 /* HomeStorePartnerChipStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeStorePartnerChipStateTests.swift; sourceTree = "<group>"; };
 		AA00000MAAAA000000000002 /* PartnerChipDesireMapCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnerChipDesireMapCopyTests.swift; sourceTree = "<group>"; };
 		AA00000NAAAA000000000002 /* PartnerChipPulseCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnerChipPulseCopyTests.swift; sourceTree = "<group>"; };
@@ -231,7 +229,6 @@
 				AA00000HAAAA000000000002 /* PairingStoreTests.swift */,
 				AA00000IAAAA000000000002 /* Sessions/CoupleCapacityStoreTests.swift */,
 				AA00000JAAAA000000000002 /* Sessions/SessionSettingsTests.swift */,
-				AA00000KAAAA000000000002 /* Sessions/SyncMatchTests.swift */,
 				AA00000LAAAA000000000002 /* HomeStorePartnerChipStateTests.swift */,
 				AA00000MAAAA000000000002 /* PartnerChipDesireMapCopyTests.swift */,
 				AA00000NAAAA000000000002 /* PartnerChipPulseCopyTests.swift */,
@@ -474,7 +471,6 @@
 				AA00000HAAAA000000000001 /* PairingStoreTests.swift in Sources */,
 				AA00000IAAAA000000000001 /* Sessions/CoupleCapacityStoreTests.swift in Sources */,
 				AA00000JAAAA000000000001 /* Sessions/SessionSettingsTests.swift in Sources */,
-				AA00000KAAAA000000000001 /* Sessions/SyncMatchTests.swift in Sources */,
 				AA00000LAAAA000000000001 /* HomeStorePartnerChipStateTests.swift in Sources */,
 				AA00000MAAAA000000000001 /* PartnerChipDesireMapCopyTests.swift in Sources */,
 				AA00000NAAAA000000000001 /* PartnerChipPulseCopyTests.swift in Sources */,
