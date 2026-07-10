@@ -453,6 +453,7 @@ struct CardCarousel: View {
             // spectrum frame, hairlines, and atmosphere. Landscape frame (cardW × cardH).
             VaylCardFace(
                 question: cards[i].text,
+                highlightWords: cards[i].highlightWords,
                 colorway: colorway,
                 heat: Double(cards[i].intensity.rawValue - 1) / 7.0,
                 glyphPath: glyphPath

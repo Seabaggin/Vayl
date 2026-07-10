@@ -33,6 +33,9 @@ import SwiftUI
 struct VaylCardFace: View {
 
     var question: String?
+    /// Words within `question` to render in the spectrum gradient — see
+    /// `HighlightText.highlighted`. Empty = plain question text (default).
+    var highlightWords: [String]              = []
     var credential: OBCredential?
     var content: VaylCardContent?
     var onAction: ((VaylCardAction) -> Void)?
@@ -102,7 +105,7 @@ struct VaylCardFace: View {
 
                 // ── 5 · Question text ──────────────────────────────
                 if let question {
-                    QuestionText(question: question, size: size)
+                    QuestionText(question: question, size: size, highlightWords: highlightWords)
                         .transition(.opacity.combined(with: .offset(y: 6)))
                 }
 
@@ -389,6 +392,7 @@ private struct GlyphWatermark: View {
 private struct QuestionText: View {
     let question: String
     let size: CGSize
+    var highlightWords: [String] = []
 
     private let topPad: CGFloat = AppSpacing.lg    // 24pt
     private let botPad: CGFloat = AppSpacing.lg    // 24pt
@@ -399,10 +403,14 @@ private struct QuestionText: View {
 
             Spacer()
 
-            Text(question)
-                .font(AppFonts.prompt)
+            HighlightText.highlighted(
+                question,
+                words: highlightWords,
+                baseFont: AppFonts.prompt,
+                highlightFont: AppFonts.promptHighlight,
+                baseColor: AppColors.textBody
+            )
                 .multilineTextAlignment(.center)
-                .foregroundStyle(AppColors.textBody)
                 .lineSpacing(AppSpacing.sm)
                 .padding(.horizontal, AppSpacing.lg)
 

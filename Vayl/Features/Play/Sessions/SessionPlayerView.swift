@@ -293,8 +293,6 @@ struct SessionPlayerView: View {
             SnapshotRevealView(store: store, recomposing: store.revealRecomposing)
         case .prompt, .reflect:
             highlightedPrompt(card)
-                .font(AppFonts.display(26, weight: .medium, relativeTo: .title))
-                .foregroundStyle(AppColors.textPrimary)
                 .lineSpacing(AppSpacing.xs)
                 .fixedSize(horizontal: false, vertical: true)
         default:
@@ -356,20 +354,17 @@ struct SessionPlayerView: View {
         .ignoresSafeArea()
     }
 
-    /// Colors `card.highlightWords` in HighlightText's solid word color — the
-    /// word carries the accent, not a gradient on text (AttributedString runs
-    /// can't hold a moving/multi-stop gradient without breaking line flow).
+    /// Renders `card.text` with `card.highlightWords` in the spectrum gradient
+    /// (ClashDisplay-Semibold) and the rest in the base display weight — see
+    /// `HighlightText.highlighted`.
     private func highlightedPrompt(_ card: Card) -> Text {
-        guard !card.highlightWords.isEmpty else { return Text(card.text) }
-        var attributed = AttributedString(card.text)
-        for word in card.highlightWords {
-            var cursor = attributed.startIndex
-            while let range = attributed[cursor...].range(of: word) {
-                attributed[range].foregroundColor = HighlightText.wordColor
-                cursor = range.upperBound
-            }
-        }
-        return Text(attributed)
+        HighlightText.highlighted(
+            card.text,
+            words: card.highlightWords,
+            baseFont: AppFonts.display(26, weight: .medium, relativeTo: .title),
+            highlightFont: AppFonts.display(26, weight: .semibold, relativeTo: .title),
+            baseColor: AppColors.textPrimary
+        )
     }
 
     // MARK: - Controls (shared bottom baseline)
