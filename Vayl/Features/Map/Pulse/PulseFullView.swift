@@ -114,20 +114,7 @@ struct PulseFullView: View {
     }
 
     private var closeButton: some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            onDismiss?()
-        } label: {
-            Image(systemName: AppIcons.close)
-                .font(AppFonts.body(13, weight: .medium, relativeTo: .footnote))
-                .foregroundStyle(AppColors.textMuted)
-                .frame(width: 32, height: 32)
-                .background(AppColors.glassSurface)
-                .clipShape(Circle())
-                .overlay(Circle().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Close")
+        VaylCloseButton { onDismiss?() }
     }
 
     // MARK: - Me body

@@ -347,19 +347,7 @@ private struct MapFieldSheet: View {
                 }
 
                 // Dismiss — top-leading, below Dynamic Island
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    dismiss()
-                } label: {
-                    Image(systemName: AppIcons.close)
-                        .font(AppFonts.body(13, weight: .medium, relativeTo: .footnote))
-                        .foregroundStyle(AppColors.textMuted)
-                        .frame(width: 32, height: 32)
-                        .background(AppColors.glassSurface)
-                        .clipShape(Circle())
-                        .overlay(Circle().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
-                }
-                .buttonStyle(.plain)
+                VaylCloseButton { dismiss() }
                 .padding(.top, layout.safeAreaInsets.top + AppSpacing.sm)
                 .padding(.leading, AppSpacing.lg)
                 .frame(maxWidth: .infinity, alignment: .leading)

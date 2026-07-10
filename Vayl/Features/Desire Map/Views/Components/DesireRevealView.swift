@@ -114,18 +114,7 @@ struct DesireRevealView: View {
 
     private var topBar: some View {
         HStack {
-            Button {
-                hapticTick += 1
-                vaylDismiss(confirm: false)
-            } label: {
-                Image(systemName: AppIcons.close)
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textTertiary)
-                    .frame(width: 36, height: 36)
-                    .background(Circle().fill(AppColors.cardBg.opacity(0.55)))
-                    .overlay(Circle().stroke(AppColors.borderSubtle, lineWidth: 1))
-            }
-            .buttonStyle(_PressScaleStyle())
+            VaylCloseButton { vaylDismiss(confirm: false) }
 
             Spacer()
 

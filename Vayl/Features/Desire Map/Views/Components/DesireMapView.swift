@@ -224,15 +224,7 @@ struct DesireMapView: View {
             VStack {
                 HStack {
                     Spacer()
-                    Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
-                        Image(systemName: AppIcons.close)
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.textTertiary)
-                            .frame(width: 36, height: 36)
-                            .background(Circle().fill(AppColors.cardBg.opacity(0.55)))
-                            .overlay(Circle().stroke(AppColors.borderSubtle, lineWidth: 1))
-                    }
-                    .buttonStyle(_RaterPressStyle())
+                    VaylCloseButton { vaylDismiss(confirm: false) }
                 }
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.top, AppSpacing.sm)
@@ -380,13 +372,7 @@ struct DesireMapView: View {
                 .font(AppFonts.caption)
                 .foregroundStyle(AppColors.textTertiary)
 
-            Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
-                Image(systemName: AppIcons.close)
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textTertiary)
-                    .frame(width: 32, height: 32)
-            }
-            .buttonStyle(_RaterPressStyle())
+            VaylCloseButton { vaylDismiss(confirm: false) }
         }
     }
 
@@ -554,15 +540,7 @@ struct DesireMapView: View {
             // exit — the readyBar only appears for the second-finisher (.ready), not here.
             HStack {
                 Spacer()
-                Button { hapticTick += 1; vaylDismiss(confirm: false) } label: {
-                    Image(systemName: AppIcons.close)
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textTertiary)
-                        .frame(width: 36, height: 36)
-                        .background(Circle().fill(AppColors.cardBg.opacity(0.55)))
-                        .overlay(Circle().stroke(AppColors.borderSubtle, lineWidth: 1))
-                }
-                .buttonStyle(_RaterPressStyle())
+                VaylCloseButton { vaylDismiss(confirm: false) }
             }
             .padding(.horizontal, AppSpacing.lg)
             .padding(.top, AppSpacing.sm)

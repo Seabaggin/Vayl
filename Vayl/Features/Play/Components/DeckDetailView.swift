@@ -104,17 +104,7 @@ struct DeckDetailView: View {
     // MARK: - Close
 
     private var closeButton: some View {
-        Button {
-            store.closeDetail()
-        } label: {
-            Image(systemName: AppIcons.close)
-                .font(AppFonts.body(13, weight: .semibold, relativeTo: .caption))
-                .foregroundStyle(AppColors.textPrimary)
-                .frame(width: 28, height: 28)
-                .background(Circle().fill(AppColors.glassFrostPill))
-                .overlay(Circle().strokeBorder(AppColors.borderDefault, lineWidth: 1))
-        }
-        .buttonStyle(PressableStyle())
+        VaylCloseButton { store.closeDetail() }
     }
 
     // MARK: - Top row

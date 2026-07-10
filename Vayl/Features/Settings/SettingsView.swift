@@ -151,17 +151,9 @@ struct SettingsView: View {
                     .tracking(2)
                     .foregroundStyle(AppColors.textSectionLabel)
                 Spacer()
-                Button {
+                VaylCloseButton(accessibilityLabel: "Close settings") {
                     dismiss()
-                } label: {
-                    Image(systemName: AppIcons.close)
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textSecondary)
-                        .frame(width: 32, height: 32)
-                        .background(Circle().fill(AppColors.glassSurface))
                 }
-                .buttonStyle(PressableCardStyle())
-                .accessibilityLabel("Close settings")
             }
             .padding(.top, AppSpacing.md)
 
