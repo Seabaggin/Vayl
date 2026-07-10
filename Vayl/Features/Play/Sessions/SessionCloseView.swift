@@ -137,7 +137,6 @@ struct SessionCloseView: View {
 
             FlowChips(words: displayWords,
                       selected: store.reflectionWords) { word in
-                UISelectionFeedbackGenerator().selectionChanged()
                 store.toggleWord(word)
             }
 
@@ -188,7 +187,7 @@ struct SessionCloseView: View {
                     .font(AppFonts.bodyMedium)
                     .foregroundStyle(AppColors.textSecondary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.vaylPressable(scale: 0.96))
             }
         }
     }
@@ -205,7 +204,7 @@ struct SessionCloseView: View {
                     .padding(.vertical, AppSpacing.md)
                     .padding(.horizontal, AppSpacing.md)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.vaylPressable(scale: 0.96))
 
             Button {
                 store.saveReflection()
@@ -221,7 +220,7 @@ struct SessionCloseView: View {
                             .fill(AppColors.spectrumBorder)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.vaylPressable(scale: 0.98))
         }
         .padding(.horizontal, AppSpacing.lg)
         .padding(.top, AppSpacing.sm)
@@ -241,18 +240,24 @@ private struct FlowChips: View {
         FlexibleWrap(spacing: AppSpacing.sm, lineSpacing: AppSpacing.sm) {
             ForEach(words, id: \.self) { word in
                 let on = selected.contains(word)
-                Text(word)
-                    .font(AppFonts.caption)
-                    .foregroundStyle(on ? AppColors.void : AppColors.textBody)
-                    .padding(.horizontal, AppSpacing.md)
-                    .padding(.vertical, AppSpacing.sm)
-                    .background(
-                        Capsule().fill(on ? AnyShapeStyle(AppColors.spectrumBorder)
-                                          : AnyShapeStyle(AppColors.inputBackground))
-                    )
-                    .overlay(Capsule().strokeBorder(AppColors.borderDefault, lineWidth: on ? 0 : 1))
-                    .contentShape(Capsule())
-                    .onTapGesture { onTap(word) }
+                Button {
+                    onTap(word)
+                } label: {
+                    Text(word)
+                        .font(AppFonts.caption)
+                        .foregroundStyle(on ? AppColors.void : AppColors.textBody)
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.vertical, AppSpacing.sm)
+                        .background(
+                            Capsule().fill(on ? AnyShapeStyle(AppColors.spectrumBorder)
+                                              : AnyShapeStyle(AppColors.inputBackground))
+                        )
+                        .overlay(Capsule().strokeBorder(AppColors.borderDefault, lineWidth: on ? 0 : 1))
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.vaylPressable(scale: 0.96))
+                .accessibilityLabel(word)
+                .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
     }
@@ -375,6 +380,30 @@ private struct ReflectionSlider: View {
             .textCase(.uppercase)
             .foregroundStyle(AppColors.textTertiary)
         }
+        // The drag-only track is invisible to VoiceOver; expose the whole
+        // group as one adjustable element (swipe up/down to nudge the value).
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityValue(accessibilityValueText)
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: value = min(1, value + adjustStep)
+            case .decrement: value = max(0, value - adjustStep)
+            @unknown default: break
+            }
+        }
+    }
+
+    /// VoiceOver adjustment step: ten stops across the track.
+    private var adjustStep: Double { 0.1 }
+
+    private var accessibilityValueText: String {
+        if balanced {
+            if value < 0.35 { return ends.0 }
+            if value > 0.65 { return ends.2 }
+            return ends.1 ?? "\(Int(value * 100)) percent"
+        }
+        return "\(Int(value * 100)) percent"
     }
 }
 

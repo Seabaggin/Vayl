@@ -146,6 +146,14 @@ struct VaylButton: View {
         }
         .frame(maxWidth: size.width == nil ? .infinity : size.width)
         .frame(height: size.height)
+        // The press choreography lives on a DragGesture, so this view never
+        // reads as a button to assistive tech (or UI automation) on its own.
+        // Expose real button semantics without touching the visual/gesture
+        // layer: VoiceOver sees and activates a plain Button.
+        .accessibilityRepresentation {
+            Button(label, action: action)
+                .disabled(isDisabled || isLoading)
+        }
     }
 
     // MARK: - Derived Values

@@ -15,25 +15,44 @@ struct PendingSessionBanner: View {
     let onJoin: () -> Void
     let onDismiss: () -> Void
 
-    @State private var isPressed = false
-
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
-            Circle()
-                .fill(AppColors.accentPrimary)
-                .frame(width: 8, height: 8)
+        Button(action: onJoin) {
+            HStack(spacing: AppSpacing.md) {
+                Circle()
+                    .fill(AppColors.accentPrimary)
+                    .frame(width: 8, height: 8)
 
-            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                Text("\(initiatorName) set up a session")
-                    .font(AppFonts.bodyMedium)
-                    .foregroundStyle(AppColors.textBody)
-                Text("\(deckTitle) · tap to join")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textSecondary)
+                VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                    Text("\(initiatorName) set up a session")
+                        .font(AppFonts.bodyMedium)
+                        .foregroundStyle(AppColors.textBody)
+                    Text("\(deckTitle) · tap to join")
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+
+                Spacer(minLength: 0)
+
+                // Reserve the dismiss button's footprint inside the label so
+                // the layout matches; the live button sits in the overlay
+                // (a Button nested inside a Button label never receives taps).
+                Color.clear
+                    .frame(width: 28, height: 28)
             }
-
-            Spacer(minLength: 0)
-
+            .padding(AppSpacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
+                    .fill(AppColors.cardBg)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
+                            .strokeBorder(AppColors.spectrumBorder.opacity(0.5), lineWidth: 1)
+                    )
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.vaylPressable(scale: 0.98))
+        .accessibilityLabel("\(initiatorName) set up a session. \(deckTitle). Join")
+        .overlay(alignment: .trailing) {
             Button(action: onDismiss) {
                 Image(systemName: AppIcons.close)
                     .font(AppFonts.buttonLabelSmall)
@@ -42,25 +61,8 @@ struct PendingSessionBanner: View {
             }
             .buttonStyle(PressableCardStyle())
             .accessibilityLabel("Dismiss")
+            .padding(.trailing, AppSpacing.md)
         }
-        .padding(AppSpacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
-                .fill(AppColors.cardBg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
-                        .strokeBorder(AppColors.spectrumBorder.opacity(0.5), lineWidth: 1)
-                )
-        )
-        .scaleEffect(isPressed ? 0.98 : 1.0)
-        .sensoryFeedback(.impact(weight: .light), trigger: isPressed) { _, pressed in pressed }
-        .contentShape(Rectangle())
-        .onTapGesture { onJoin() }
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in isPressed = true }
-                .onEnded { _ in isPressed = false }
-        )
     }
 }
 
@@ -76,50 +78,40 @@ struct ResumeSessionBanner: View {
     let onResume: () -> Void
     let onEnd: () -> Void
 
-    @State private var isPressed = false
-    @State private var isEndPressed = false
     @State private var showEndConfirm = false
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
-            HStack(spacing: AppSpacing.md) {
-                Circle()
-                    .fill(AppColors.accentPrimary)
-                    .frame(width: 8, height: 8)
+            Button(action: onResume) {
+                HStack(spacing: AppSpacing.md) {
+                    Circle()
+                        .fill(AppColors.accentPrimary)
+                        .frame(width: 8, height: 8)
 
-                VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                    Text("Pick your session back up")
-                        .font(AppFonts.bodyMedium)
-                        .foregroundStyle(AppColors.textBody)
-                    Text("\(deckTitle) · card \(cardPosition) of \(cardCount)")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textSecondary)
+                    VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                        Text("Pick your session back up")
+                            .font(AppFonts.bodyMedium)
+                            .foregroundStyle(AppColors.textBody)
+                        Text("\(deckTitle) · card \(cardPosition) of \(cardCount)")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textSecondary)
+                    }
+
+                    Spacer(minLength: 0)
                 }
-
-                Spacer(minLength: 0)
+                .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
-            .onTapGesture { onResume() }
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in isPressed = true }
-                    .onEnded { _ in isPressed = false }
-            )
-            .accessibilityElement(children: .ignore)
-            .accessibilityAddTraits(.isButton)
+            .buttonStyle(.vaylPressable(scale: 0.98))
             .accessibilityLabel("Resume session")
 
             Button {
-                isEndPressed = true
                 showEndConfirm = true
             } label: {
                 Text("End it")
                     .font(AppFonts.buttonLabelSmall)
                     .foregroundStyle(AppColors.textTertiary)
             }
-            .buttonStyle(.plain)
-            .scaleEffect(isEndPressed ? 0.96 : 1.0)
-            .sensoryFeedback(.impact(weight: .light), trigger: isEndPressed) { _, pressed in pressed }
+            .buttonStyle(.vaylPressable(scale: 0.96))
             .accessibilityLabel("End it")
         }
         .padding(AppSpacing.md)
@@ -131,8 +123,6 @@ struct ResumeSessionBanner: View {
                         .strokeBorder(AppColors.spectrumBorder.opacity(0.5), lineWidth: 1)
                 )
         )
-        .scaleEffect(isPressed ? 0.98 : 1.0)
-        .sensoryFeedback(.impact(weight: .light), trigger: isPressed) { _, pressed in pressed }
         .confirmationDialog(
             "End this session?",
             isPresented: $showEndConfirm,
@@ -140,9 +130,6 @@ struct ResumeSessionBanner: View {
         ) {
             Button("End it", role: .destructive) { onEnd() }
             Button("Keep it", role: .cancel) {}
-        }
-        .onChange(of: showEndConfirm) { _, isShowing in
-            if !isShowing { isEndPressed = false }
         }
     }
 }
