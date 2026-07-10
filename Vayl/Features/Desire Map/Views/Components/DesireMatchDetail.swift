@@ -28,8 +28,10 @@ struct DesireMatchDetail: View {
                     .tracking(1.0)
             }
 
-            // Item name
-            Text(match.itemName)
+            // Item name. Detail surfaces only ever receive UNLOCKED matches (locked taps
+            // route to the paywall), so the name is always present; `??` satisfies the
+            // optional the locked-stub reshape introduced (review 2026-07-09 §1.2).
+            Text(match.itemName ?? "")
                 .font(AppFonts.sectionHeading)
                 .foregroundStyle(AppColors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -68,7 +70,7 @@ struct DesireMatchDetail: View {
                 } label: {
                     HStack(spacing: AppSpacing.sm) {
                         // Fix #6: interpolate the item name to match the mockup ("Explore "X" in Learn").
-                        Text("Explore \u{201C}\(match.itemName)\u{201D} in Learn")
+                        Text("Explore \u{201C}\(match.itemName ?? "this")\u{201D} in Learn")
                             .font(AppFonts.bodyText)
                             .foregroundStyle(AppColors.textSecondary)
                             .lineLimit(1)

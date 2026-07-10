@@ -85,6 +85,10 @@ final class HomeStore {
     /// from DeckProgress.lastPlayedAt. Falls back to the opener for a fresh couple.
     private var recentDeckId: String = "the-opener"
 
+    /// Once-per-launch guard for the reinstall/second-device ratings hydration in loadAll()
+    /// — the server read only needs to happen on the first Home load of a session.
+    private var didAttemptHydration = false
+
     // MARK: - Dashboard Data
 
     /// Cards completed in the active deck — derived from DeckProgress.
@@ -261,6 +265,14 @@ final class HomeStore {
     func loadAll() async {
         await couple.refreshIfNeeded()   // partner identity (no-op once loaded)
         await loadProfile()
+        // Reinstall / second-device hydration (review 2026-07-09 §1.3): a locally-empty map
+        // with server rows behind it rebuilds from the caller's own desire_ratings. Once per
+        // launch — a genuinely fresh user just makes one cheap empty read.
+        if !myMapComplete, !didAttemptHydration {
+            didAttemptHydration = true
+            await SyncManager.shared.hydrateDesireRatings(modelContainer: modelContainer)
+            await loadProfile()   // re-derive myMapComplete from the (possibly healed) profile
+        }
         await loadDesireStatus()
         await loadPartnerPulsePosition()
         await refreshDeckState()
@@ -354,13 +366,31 @@ final class HomeStore {
     /// once our own map is done, so `bothComplete` equals the partner's completion at that point.
     private func loadDesireStatus() async {
         guard appState.appMode == .together, let coupleId = appState.coupleId else { return }
-        let status: DesireMapStatusRow?
+        var status: DesireMapStatusRow?
         do {
             status = try await desireSync.fetchStatus(coupleId: coupleId)
         } catch {
             logger.error("HomeStore: desire status fetch failed — \(error.localizedDescription)")
             return
         }
+
+        // Self-heal (review 2026-07-09, decision #2): local truth says my map is complete
+        // but the server row is missing or not both-complete — the couple may have been
+        // stranded by a pre-pairing completion or a compute that never fired. Re-run the
+        // full sync path (idempotent server-side), throttled to once an hour so a normal
+        // "partner just hasn't finished" wait doesn't hammer the edge fn. NOTE: status ==
+        // nil deliberately reaches this branch (the old early guard skipped exactly the
+        // stranded no-row case).
+        if myMapComplete, status?.bothComplete != true, selfHealThrottleAllows() {
+            FunnelEventService.shared.log(.computeSelfHeal, coupleId: coupleId, detail: "home self-heal")
+            stampSelfHealThrottle()
+            await SyncManager.shared.resyncDesireMapIfComplete(modelContainer: modelContainer)
+            // One refetch so the UI reflects any fix; a refetch failure keeps the first read.
+            if let healed = try? await desireSync.fetchStatus(coupleId: coupleId) {
+                status = healed
+            }
+        }
+
         guard let status else { return }
         partnerMapComplete = status.bothComplete
         do {
@@ -370,14 +400,39 @@ final class HomeStore {
             logger.error("HomeStore: reveal progress fetch failed — \(error.localizedDescription)")
             revealDone = false
         }
-        resolvePostStatusDesireMapState(coupleId: coupleId)
+        await resolvePostStatusDesireMapState(coupleId: coupleId)
+    }
+
+    /// One re-read of the desire status/reveal slice — the rater's mirror screen calls this
+    /// (via HomeRouterView's onMirrorAppeared closure) so `partnerMapComplete` can go live
+    /// while the mirror is open (review 2026-07-09, decision #5).
+    func refreshDesireStatus() async {
+        await loadDesireStatus()
+    }
+
+    // MARK: - Self-heal throttle
+
+    /// Minimum gap between Home self-heal fires. UserDefaults (not in-memory) so repeated
+    /// cold launches of a permanently-broken state can't spam the edge fn either.
+    private static let selfHealThrottleKey = "desireResyncLastAt"
+    private static let selfHealMinInterval: TimeInterval = 60 * 60
+
+    private func selfHealThrottleAllows() -> Bool {
+        guard let last = UserDefaults.standard.object(forKey: Self.selfHealThrottleKey) as? Date else {
+            return true
+        }
+        return Date().timeIntervalSince(last) >= Self.selfHealMinInterval
+    }
+
+    private func stampSelfHealThrottle() {
+        UserDefaults.standard.set(Date(), forKey: Self.selfHealThrottleKey)
     }
 
     /// Refines desireMapState after server status is known (partner completion + reveal progress).
     /// Called at the end of loadDesireStatus, after revealDone and partnerMapComplete are set.
     /// The initial state from loadProfile/resolveDesireMapState is still useful as a fast-path
     /// before the server responds.
-    private func resolvePostStatusDesireMapState(coupleId: UUID) {
+    private func resolvePostStatusDesireMapState(coupleId: UUID) async {
         guard isPaired else { return }
         // THE gate rule (CoupleContext.canRevealAll = OR'd entitlement). The old
         // read here used the local Couple.canRevealDesireMap mirror — the exact
@@ -387,7 +442,15 @@ final class HomeStore {
 
         if !myMapComplete { desireMapState = .yourTurn; return }
         if canReveal { desireMapState = .fullyUnlocked; return }
-        if revealDone { desireMapState = .freeRevealSeen(matchCount: 0); return }
+        if revealDone {
+            // Real match count (punch list #13; was a hardcoded 0). The entitlement-checked
+            // RPC returns the free match plus opaque locked stubs for a free couple — count
+            // ALL rows, stubs included: the chip copy speaks to how many matches exist, not
+            // how many are visible. Best-effort: a failed read shows 0, same as before.
+            let count = (try? await desireSync.fetchMatches(coupleId: coupleId))?.count ?? 0
+            desireMapState = .freeRevealSeen(matchCount: count)
+            return
+        }
         if partnerMapComplete { desireMapState = .bothReady; return }
         desireMapState = .youDone(partnerName: partnerName ?? "your partner")
     }

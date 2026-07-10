@@ -185,6 +185,129 @@ class SyncManager {
         }
     }
 
+    // =========================================================================
+    // MARK: - Desire Map Hydration (reinstall / second device — review 2026-07-09 §1.3)
+    // =========================================================================
+
+    /// How the server copy of one rating merges against the local `DesireMapEntry`.
+    /// Extracted as a pure decision so the merge rule is unit-testable without a network
+    /// seam on the singleton. Rule (review addendum, "Hydration merge rule"): per-item
+    /// latest `completedAt` wins — NOT only-when-empty, and never a delete (local answers
+    /// may be ahead of a failed sync).
+    enum RatingMergeDecision: Equatable {
+        case insert       // no local entry — adopt the server row
+        case overwrite    // server row is strictly newer — take it
+        case keepLocal    // local is same-or-newer — leave it alone
+    }
+
+    static func ratingMergeDecision(localCompletedAt: Date?, serverCreatedAt: Date) -> RatingMergeDecision {
+        guard let localCompletedAt else { return .insert }
+        return serverCreatedAt > localCompletedAt ? .overwrite : .keepLocal
+    }
+
+    /// Track-coverage completion rule, extracted pure so it's unit-testable: the map counts
+    /// as complete only when EVERY track item has a rating (extra/unknown rated ids don't
+    /// help, an empty track never completes).
+    static func coversTrack(ratedItemIds: Set<String>, trackItems: [DesireItem]) -> Bool {
+        !trackItems.isEmpty && trackItems.allSatisfy { ratedItemIds.contains($0.id) }
+    }
+
+    /// Parses a `desire_ratings.created_at` timestamp. Postgres emits fractional seconds;
+    /// older rows uploaded from the device (plain ISO8601DateFormatter) may not carry them,
+    /// so try fractional first, then plain.
+    static func parseRatingTimestamp(_ raw: String) -> Date? {
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = fractional.date(from: raw) { return date }
+        let plain = ISO8601DateFormatter()
+        plain.formatOptions = [.withInternetDateTime]
+        return plain.date(from: raw)
+    }
+
+    /// Rebuilds local `DesireMapEntry` rows from the caller's own server ratings — the
+    /// reinstall / second-device restore path (review 2026-07-09 §1.3). Best-effort and
+    /// silent: any failure just leaves local state as-is (the rater still works from zero).
+    ///
+    /// Merge is per-item latest-wins and NEVER deletes local entries. After merging, if the
+    /// curious track is fully covered, the profile's `hasCompletedDesireMap` is derived true
+    /// (track coverage is the same completion rule DesireMapStore uses).
+    func hydrateDesireRatings(modelContainer: ModelContainer) async {
+        let context = ModelContext(modelContainer)
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
+        let userId = profile.id
+
+        guard let rows = try? await DesireSyncService.shared.fetchOwnRatings(), !rows.isEmpty else {
+            return
+        }
+
+        // Snapshot local entries once; index by itemId for the per-item merge.
+        // (Fresh fetch AFTER the await — the pre-await context is fine to reuse on the
+        // main actor, but the entries must be looked up per server row anyway.)
+        let descriptor = FetchDescriptor<DesireMapEntry>(
+            predicate: #Predicate { $0.userId == userId }
+        )
+        let localEntries = (try? context.fetch(descriptor)) ?? []
+        var byItemId = Dictionary(localEntries.map { ($0.itemId, $0) },
+                                  uniquingKeysWith: { first, _ in first })
+
+        var merged = 0
+        for row in rows {
+            // Unknown rating strings (future content drift) are skipped, never guessed.
+            guard let rating = DesireRatingValue(rawValue: row.rating),
+                  let serverDate = Self.parseRatingTimestamp(row.createdAt) else { continue }
+
+            switch Self.ratingMergeDecision(
+                localCompletedAt: byItemId[row.desireItemId]?.completedAt,
+                serverCreatedAt: serverDate
+            ) {
+            case .insert:
+                let entry = DesireMapEntry(userId: userId, itemId: row.desireItemId, rating: rating)
+                entry.completedAt = serverDate
+                context.insert(entry)
+                byItemId[row.desireItemId] = entry
+                merged += 1
+            case .overwrite:
+                byItemId[row.desireItemId]?.rating = rating
+                byItemId[row.desireItemId]?.completedAt = serverDate
+                merged += 1
+            case .keepLocal:
+                break
+            }
+        }
+
+        // Derive completion from track coverage (same rule as the rater): every curious-track
+        // item rated → the map is complete, even though it was finished on another device.
+        if !profile.hasCompletedDesireMap,
+           let items = try? ContentLoader.loadDesireItems().filter({ $0.appears(in: "curious") }),
+           Self.coversTrack(ratedItemIds: Set(byItemId.keys), trackItems: items) {
+            profile.hasCompletedDesireMap = true
+        }
+
+        try? context.save()
+        logger.info("✅ Desire ratings hydrated from server (\(rows.count) rows, \(merged) applied)")
+    }
+
+    /// Re-runs the full desire-map sync when the local map is already complete — the
+    /// pairing-completion / Home self-heal trigger (review 2026-07-09, decision #2).
+    /// `syncDesireMap` marks this side complete server-side and computes matches when both
+    /// partners are done; the edge fn is idempotent, so re-firing on an already-healthy
+    /// couple is harmless.
+    func resyncDesireMapIfComplete(modelContainer: ModelContainer) async {
+        let context = ModelContext(modelContainer)
+        guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first,
+              profile.hasCompletedDesireMap else { return }
+        let userId = profile.id
+        let nmStage = profile.nmStage.rawValue
+
+        let descriptor = FetchDescriptor<DesireMapEntry>(
+            predicate: #Predicate { $0.userId == userId }
+        )
+        guard let entries = try? context.fetch(descriptor), !entries.isEmpty else { return }
+        let snapshot = entries.map(PendingDesireRating.init)
+
+        await syncDesireMap(ratings: snapshot, nmStage: nmStage)
+    }
+
     // MARK: - Sync Errors
 
     enum SyncError: LocalizedError {

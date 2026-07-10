@@ -164,6 +164,7 @@ final class EntitlementStore {
             }
         } catch {
             // Non-fatal: the next refresh retries; the buyer stays unlocked locally.
+            FunnelEventService.shared.log(.grantRetried, coupleId: coupleId, detail: error.localizedDescription)
             loadError = "You're unlocked. Syncing to your partner will retry."
         }
     }
@@ -183,9 +184,16 @@ final class EntitlementStore {
         }
         isPurchasing = true
         defer { isPurchasing = false }
+        // Observability layer 1 (review 2026-07-09 §1.6): funnel joints only.
+        // Payload rule: detail carries error strings, NEVER desire item ids or match names.
+        FunnelEventService.shared.log(.purchaseStarted, coupleId: appState.coupleId)
+        // Clear any stale status so post-purchase loadError reflects THIS attempt only
+        // (the paywall reads it back as its purchase status line).
+        loadError = nil
         do {
             switch try await storeKit.purchase(product) {
             case .success(let transaction, let jws):
+                FunnelEventService.shared.log(.purchaseSucceeded, coupleId: appState.coupleId)
                 localOwnsCore = true                       // buyer unlocks immediately
                 // Grant BEFORE finish: an unfinished transaction replays via
                 // Transaction.updates, so a failed grant retries on next launch
@@ -193,13 +201,23 @@ final class EntitlementStore {
                 await grantThenFinish(transaction: transaction, jws: jws)
                 await refresh()
                 return isCore
-            case .pending, .userCancelled:
+            case .userCancelled:
+                // A cancel is not a failure — no funnel event (review 2026-07-09 §1.6).
+                return false
+            case .pending:
+                // Ask-to-Buy / SCA (review addendum 2026-07-09): the approved transaction
+                // arrives later via Transaction.updates and unlocks on its own — tell the
+                // user what is happening instead of failing silently.
+                FunnelEventService.shared.log(.purchasePending, coupleId: appState.coupleId)
+                loadError = "Purchase pending approval. It will unlock automatically once it's approved."
                 return false
             case .unverified:
+                FunnelEventService.shared.log(.purchaseFailed, coupleId: appState.coupleId, detail: "unverified")
                 loadError = "That purchase couldn't be verified."
                 return false
             }
         } catch {
+            FunnelEventService.shared.log(.purchaseFailed, coupleId: appState.coupleId, detail: error.localizedDescription)
             loadError = error.localizedDescription
             return false
         }
@@ -213,6 +231,7 @@ final class EntitlementStore {
         } catch {
             // Leave unfinished — StoreKit replays it into the updates listener,
             // which re-attempts the grant. The buyer stays unlocked locally.
+            FunnelEventService.shared.log(.grantRetried, coupleId: appState.coupleId, detail: error.localizedDescription)
             loadError = "You're unlocked. Syncing to your partner will retry."
         }
     }
@@ -227,9 +246,13 @@ final class EntitlementStore {
         do {
             if let (_, jws) = try await storeKit.restore() {
                 localOwnsCore = true
+                // Observability layer 1 (review 2026-07-09 §1.6): a restore that yields
+                // ownership counts as a purchase success on the funnel.
+                FunnelEventService.shared.log(.purchaseSucceeded, coupleId: appState.coupleId, detail: "restore")
                 do {
                     _ = try await service.grantCore(signedTransaction: jws)
                 } catch {
+                    FunnelEventService.shared.log(.grantRetried, coupleId: appState.coupleId, detail: error.localizedDescription)
                     loadError = "You're unlocked. Syncing to your partner will retry."
                 }
             }

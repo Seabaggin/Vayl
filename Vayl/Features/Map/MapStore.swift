@@ -184,9 +184,9 @@ final class MapStore {
 
     // MARK: - Load
 
-    /// Idempotent — safe to call on every appear. The desire-match gate reads
-    /// `CoupleContext.canRevealAll` (the OR'd entitlement), never the lagging
-    /// local Couple mirror.
+    /// Idempotent — safe to call on every appear. The desire-match reveal gate is
+    /// server-enforced (2026-07-09 launch hardening): locked matches arrive as
+    /// identity-less stubs, so no client-side entitlement check runs here.
     func load(appState: AppState, context: ModelContext) {
         loadMasthead(appState: appState, context: context)
         loadRecord(coupleId: appState.coupleId, context: context)
@@ -355,35 +355,36 @@ final class MapStore {
             return
         }
 
-        // THE gate rule — CoupleContext.canRevealAll (OR'd entitlement), never the
-        // local Couple.canRevealDesireMap mirror, which can lag a just-purchased buyer.
-        let canReveal = couple?.canRevealAll ?? false
-
-        // Build the Us align list using the server-authoritative gate rule.
+        // THE gate rule moved server-side (2026-07-09 launch hardening, review §1.2):
+        // a row carries its item id only if this couple may see it. Locked rows arrive
+        // as identity-less stubs — no client-side per-row entitlement check remains.
         let items = (try? ContentLoader.loadDesireItems()) ?? []
         let nameById = Dictionary(items.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
         var revealed: [AlignItem] = []
         var locked = 0
         for row in matchRows {
-            if canReveal || row.isFreeReveal {
+            if row.isLockedStub {
+                locked += 1
+            } else if let itemId = row.desireItemId, let name = nameById[itemId] {
+                // Content-drift guard (review addendum 2026-07-09): an id missing from
+                // the bundle is skipped entirely — never render a raw id slug.
                 revealed.append(AlignItem(
-                    id: row.desireItemId,
-                    name: nameById[row.desireItemId] ?? row.desireItemId,
+                    id: itemId,
+                    name: name,
                     isMutual: row.matchType == .mutual
                 ))
-            } else {
-                locked += 1
             }
         }
         alignItems = revealed.sorted { $0.isMutual && !$1.isMutual }
         lockedAlignCount = locked
 
         // Update meCard tags: mutual shared items glow once server data arrives.
+        // Server-visible rows only (a locked stub has no id to match against).
         if let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first {
             let sharedIds = Set(
                 matchRows
-                    .filter { (canReveal || $0.isFreeReveal) && $0.matchType == .mutual }
-                    .map(\.desireItemId)
+                    .filter { $0.matchType == .mutual }
+                    .compactMap(\.desireItemId)
             )
             // Capture the UUID into a local let so the #Predicate macro can see a plain value.
             let profileId = profile.id

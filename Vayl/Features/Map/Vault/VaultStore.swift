@@ -74,9 +74,10 @@ final class VaultStore {
         self.companionCardStore = companionCards ?? CompanionCardStore()
     }
 
-    /// Builds the Desire Map summary from the user's local ratings + server matches,
-    /// gated on `CoupleContext.canRevealAll` (the OR'd entitlement: server tier OR
-    /// local StoreKit ownership). Idempotent; safe to re-run after a paywall unlock.
+    /// Builds the Desire Map summary from the user's local ratings + server matches.
+    /// The reveal gate is server-enforced (2026-07-09 launch hardening): locked
+    /// matches arrive as identity-less stubs. Idempotent; safe to re-run after a
+    /// paywall unlock (the server then returns full rows).
     func loadDesire(appState: AppState, context: ModelContext) async {
         loadError = nil
         guard let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first else {
@@ -111,10 +112,9 @@ final class VaultStore {
         isLoading = true
         defer { isLoading = false }
 
-        // THE gate rule — CoupleContext.canRevealAll (OR'd entitlement), never the
-        // local Couple mirror (which can lag a just-purchased buyer and under-reveal
-        // the Vault while the reveal shows unlocked).
-        let canReveal = couple?.canRevealAll ?? false
+        // THE gate rule moved server-side (2026-07-09 launch hardening, review §1.2):
+        // a row carries its item id only if this couple may see it. Locked rows arrive
+        // as identity-less stubs — no client-side per-row entitlement check remains.
         do {
             let rows = try await desireSync.fetchMatches(coupleId: coupleId)
             let items = (try? ContentLoader.loadDesireItems()) ?? []
@@ -122,14 +122,16 @@ final class VaultStore {
             var revealed: [MapStore.AlignItem] = []
             var locked = 0
             for row in rows {
-                if canReveal || row.isFreeReveal {
+                if row.isLockedStub {
+                    locked += 1
+                } else if let itemId = row.desireItemId, let name = nameById[itemId] {
+                    // Content-drift guard (review addendum 2026-07-09): an id missing
+                    // from the bundle is skipped entirely — never render a raw id slug.
                     revealed.append(MapStore.AlignItem(
-                        id: row.desireItemId,
-                        name: nameById[row.desireItemId] ?? row.desireItemId,
+                        id: itemId,
+                        name: name,
                         isMutual: row.matchType == .mutual
                     ))
-                } else {
-                    locked += 1
                 }
             }
             align = revealed.sorted { $0.isMutual && !$1.isMutual }

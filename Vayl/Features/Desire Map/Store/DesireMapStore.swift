@@ -6,9 +6,9 @@
 //  Owns rater state, resolves the cohort TRACK from the local profile, and upserts
 //  one DesireMapEntry per (userId, itemId). Local-only in D1 — no Service/sync calls.
 //
-//  TRACK resolution (D1, local): UserProfile.nmStage → "curious" | "established".
-//  The couple-level rule (either partner curious → both get the Curious set) needs the
-//  partner's nmStage and lands at compare time (D3/D4); this resolves the local user only.
+//  TRACK resolution: constant "curious" for V1 (one-curious-superset decision, 2026-06-25,
+//  re-ratified 2026-07-09 review) — the server edge fn matches on the same constant track.
+//  The "established" copy variant ships in V1.1.
 //
 
 import Foundation
@@ -29,7 +29,8 @@ final class DesireMapStore: Identifiable {
     /// itemId → chosen weight. Mirrors the persisted DesireMapEntry rows.
     private(set) var ratings: [String: DesireRatingValue] = [:]
 
-    /// "curious" | "established" — drives which answer copy the View shows.
+    /// Which answer copy the View shows. Constant "curious" in V1 (one-superset decision);
+    /// "established" returns as a copy variant in V1.1.
     private(set) var track: String = "curious"
 
     /// Set when there is no local profile / load failed; the View shows an empty state.
@@ -89,7 +90,12 @@ final class DesireMapStore: Identifiable {
         }
         userId = profile.id
         nmStageRaw = profile.nmStage.rawValue
-        track = (profile.nmStage == .curious) ? "curious" : "established"
+        // V1 one-curious-superset decision (2026-06-25, re-ratified in the 2026-07-09
+        // pre-TestFlight review): EVERY user rates the "curious" superset regardless of
+        // nmStage — the server edge fn matches on the same constant track, so a stage-split
+        // here would desync client items from server matching. The "established" answer
+        // copy ships in V1.1. nmStage itself still syncs (see triggerSync) for the fn.
+        track = "curious"
     }
 
     private func loadItems() {

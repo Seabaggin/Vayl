@@ -390,5 +390,16 @@ final class PairingStore {
         appState.linkState = .linked
         appState.coupleId = coupleId
         logger.info("Link persisted — coupleId: \(coupleId)")
+
+        // Pairing-completion compute trigger (review 2026-07-09, decision #2): couples who
+        // finished the map BEFORE pairing were stranded — their completion-time compute hit
+        // the edge fn as "unpaired" and nothing ever re-triggered it. Now that the couple
+        // exists, re-fire the full sync path (marks this side complete server-side; computes
+        // matches when both are done; idempotent). Fire-and-forget — pairing never waits on it.
+        if profile.hasCompletedDesireMap {
+            let container = modelContainer
+            let manager = syncManager   // the injected instance (tests can stub it)
+            Task { await manager.resyncDesireMapIfComplete(modelContainer: container) }
+        }
     }
 }

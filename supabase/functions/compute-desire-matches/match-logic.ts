@@ -46,9 +46,53 @@ export function computeMatches(
   return rows
 }
 
-/// Index of the single free reveal: prefer the first mutual, else the first match.
+/// Index of the single free reveal. PINNING RULE (review 2026-07-09): once a couple has a
+/// free reveal, recomputes keep it on the SAME item as long as that item still matches —
+/// otherwise a re-rate would move the hero star the couple already saw (and let a free
+/// couple enumerate the map by flipping answers). Only when the pinned item no longer
+/// qualifies does selection fall back to: first mutual, else the first match.
 /// Returns -1 for an empty set (nothing to flag).
-export function freeRevealIndex(rows: { alignment_level: string }[]): number {
+export function freeRevealIndex(
+  rows: { alignment_level: string; desire_item_id?: string }[],
+  pinnedItemId?: string | null,
+): number {
   if (rows.length === 0) return -1
+  if (pinnedItemId) {
+    const pinned = rows.findIndex((r) => r.desire_item_id === pinnedItemId)
+    if (pinned >= 0) return pinned
+  }
   return Math.max(0, rows.findIndex((r) => r.alignment_level === "mutual"))
+}
+
+/// Locked-stub category per item (review 2026-07-09, server-enforced paywall).
+/// The value stored on a match row and shown for LOCKED stubs pre-purchase. Categories
+/// with fewer than 3 items on the V1 (curious) track are collapsed to null — the viewer
+/// rated every item and knows the list, so a 1-item category ("sexual", "health") would
+/// identify the item and reopen the enumeration hole the paywall closes.
+/// Source of truth mirrors Vayl/Resources/Content/desire_items.json — regenerate on
+/// content changes (see docs/handoffs/2026-07-09-desire-map-pretestflight-review.md).
+export const STUB_CATEGORIES: Record<string, string | null> = {
+  opening: "structures",
+  recalibrating: null,          // established-only (not on the V1 track)
+  swinging: "structures",
+  trips_apart: "structures",
+  polyamory: "structures",
+  hierarchy: "structures",
+  emotional_connections: "emotional",
+  nre: "emotional",
+  partner_falling_in_love: "emotional",
+  jealousy: "emotional",
+  group_sexual: null,           // sole "sexual" item — category would identify it
+  intimate_details: "communication",
+  safer_sex: null,              // sole "health" item — category would identify it
+  overnight_stays: "logistics",
+  time_attention: "logistics",
+  finances: "logistics",
+  reconnection: "emotional",
+  metamours: "communication",
+  social_disclosure: "communication",
+}
+
+export function stubCategory(itemId: string): string | null {
+  return STUB_CATEGORIES[itemId] ?? null
 }

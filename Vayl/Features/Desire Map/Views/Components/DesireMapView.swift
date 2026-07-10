@@ -19,7 +19,14 @@ struct DesireMapView: View {
     /// Display name for the partner — shown in charted + mirror copy.
     var partnerName: String = "your partner"
     /// True when the partner has also completed their map. Drives the ready bar in mirror.
+    /// Passed live from HomeStore (@Observable) so a partner finishing WHILE the mirror is
+    /// open re-renders here (review 2026-07-09, decision #5).
     var partnerComplete: Bool = false
+    /// One-shot status refetch fired when the mirror appears, so a partner who finished
+    /// while this device was away is noticed without waiting for the next Home load
+    /// (review 2026-07-09, decision #5). Owned by the router — the view never calls a
+    /// Service itself.
+    var onMirrorAppeared: (() async -> Void)?
 
     @Environment(\.vaylDismiss) private var vaylDismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -96,6 +103,14 @@ struct DesireMapView: View {
             withAnimation(AppAnimation.desireFinishFade) { raterPhase = .charted }
             runChartedSequence()
         }
+        .onChange(of: partnerComplete) { _, done in
+            // Live upgrade: the partner finished while the mirror is open — materialize the
+            // ready bar in place (review 2026-07-09, decision #5). Only the mirror phase
+            // upgrades; every other phase already routes via postRatingPhase.
+            if done, raterPhase == .mirror {
+                withAnimation(AppAnimation.enter) { raterPhase = .ready }
+            }
+        }
         .onDisappear {
             // Don't let the charted ceremony outlive the view.
             chartedTask?.cancel()
@@ -141,6 +156,10 @@ struct DesireMapView: View {
             case .mirror, .ready:
                 mirrorScreen
                     .transition(.opacity)
+                    // One-shot on mirror entry (shared branch, so a mirror → ready upgrade
+                    // doesn't refire it): refetch the couple status so a partner who finished
+                    // while we were away flips partnerComplete → the ready bar, live.
+                    .task { await onMirrorAppeared?() }
             }
         }
     }

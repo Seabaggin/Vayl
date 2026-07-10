@@ -6,15 +6,16 @@
 // BOTH partners' raw desire_ratings (RLS is own-profile only) and write desire_matches +
 // desire_map_status (no client write policy on either). Flow:
 //   1. Mark the caller's side complete in desire_map_status.
-//   2. Resolve the couple's track from both partners' nm_stage (either Curious → Curious; else Established).
+//   2. Track is the V1 "curious" superset for everyone (see the track comment below).
 //   3. If BOTH partners are complete, compute positive matches over items they BOTH rated,
 //      EXCLUDING any item where either said notForMe (boundary → obscured from the partner),
-//      write desire_matches (recomputed fresh), and flag exactly one is_free_reveal.
+//      write desire_matches (recomputed fresh, free reveal PINNED across recomputes), and
+//      flag exactly one is_free_reveal with its locked-stub category denormalized.
 //   isFreeReveal is server-authoritative — never client-set, or the paywall is bypassed.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import { computeMatches, freeRevealIndex } from "./match-logic.ts"
+import { computeMatches, freeRevealIndex, stubCategory } from "./match-logic.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,16 +67,14 @@ serve(async (req) => {
     if (coupleErr || !couple) return json({ error: "Couple not found" }, 404)
 
     const callerIsA = couple.user_a === me.id
-    const partnerProfileId = callerIsA ? couple.user_b : couple.user_a
 
-    // ── Resolve the couple track from both nm_stage ───────────────────
-    const { data: partnerProfile } = await serviceClient
-      .from("user_profiles")
-      .select("nm_stage")
-      .eq("id", partnerProfileId)
-      .maybeSingle()
-    const stages = [me.nm_stage, partnerProfile?.nm_stage]
-    const track = stages.includes("curious") || stages.includes(null) ? "curious" : "established"
+    // ── Couple track ──────────────────────────────────────────────────
+    // V1 ships ONE curious-superset track for everyone (decision 2026-06-25, re-ratified in
+    // the 2026-07-09 review): the client rater shows the curious set regardless of nm_stage,
+    // so matching must too — the old either-curious rule let an established/established
+    // couple land on a 12-item track the rater never actually used, silently shrinking the
+    // both-rated intersection. Stage-based resolution returns with the V1.1 established copy.
+    const track = "curious"
 
     // ── Mark the caller complete in desire_map_status (preserve partner's flag) ──
     const { data: existingStatus } = await serviceClient
@@ -116,19 +115,32 @@ serve(async (req) => {
       else if (r.user_id === couple.user_b) byB[r.desire_item_id] = r.rating
     }
 
+    // The currently-pinned free reveal, read BEFORE the recompute wipes the table —
+    // freeRevealIndex keeps it on the same item while it still matches (pinning rule).
+    const { data: prevFree } = await serviceClient
+      .from("desire_matches")
+      .select("desire_item_id")
+      .eq("couple_id", couple.id)
+      .eq("is_free_reveal", true)
+      .maybeSingle()
+
     // Pure computation (see match-logic.ts): positive matches over items BOTH rated,
-    // notForMe excluded, alignment-only output.
-    const rows: Record<string, unknown>[] = computeMatches(byA, byB).map((m) => ({
+    // notForMe excluded, alignment-only output. `category` is the LOCKED-STUB category
+    // (small categories pre-collapsed to null) — safe to hand to un-entitled clients.
+    const computed = computeMatches(byA, byB)
+    const rows: Record<string, unknown>[] = computed.map((m) => ({
       couple_id: couple.id,
       desire_item_id: m.desire_item_id,
       alignment_level: m.alignment_level,  // mutual / adjacent — the shareable signal
       bridge_card_id: null,                // companion-card stub — populated later
       is_free_reveal: false,
+      category: stubCategory(m.desire_item_id),
       created_at: now,
     }))
 
-    // Exactly one free reveal — prefer a mutual, else the first adjacent.
-    const freeIdx = freeRevealIndex(rows)
+    // Exactly one free reveal — the pinned item while it still matches, else prefer a
+    // mutual, else the first adjacent.
+    const freeIdx = freeRevealIndex(computed, prevFree?.desire_item_id ?? null)
     if (freeIdx >= 0) rows[freeIdx].is_free_reveal = true
 
     // Recompute fresh: clear prior matches for this couple, then insert.

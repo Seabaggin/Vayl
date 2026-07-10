@@ -38,6 +38,10 @@ struct PaywallSheet: View {
     @State private var purchasing  = false
     @State private var hapticTick  = 0
     @State private var restoring   = false
+    /// Store-surfaced outcome of the last purchase attempt (EntitlementStore.loadError) —
+    /// e.g. the Ask-to-Buy "pending approval" state (review addendum 2026-07-09). The store
+    /// clears loadError at the start of each attempt, so this never shows a stale error.
+    @State private var purchaseStatus: String?
     @State private var showRestoreFailedAlert = false
     @State private var legalDoc: LegalDoc?
 
@@ -130,6 +134,10 @@ struct PaywallSheet: View {
                 priceRow.padding(.top, AppSpacing.lg)           // price leads the decision zone — more air = more weight
                 cta.padding(.top, AppSpacing.md)                // price + CTA read as one unit
                 coversBoth.padding(.top, AppSpacing.sm)         // badge hugs the button it reassures
+                if let purchaseStatus {
+                    purchaseStatusLine(purchaseStatus)
+                        .padding(.top, AppSpacing.sm)
+                }
             }
             .padding(.horizontal, AppSpacing.xl)
             .padding(.top, AppSpacing.md)                       // tightened top (was xxl); bloom tracks via bloomVOffset
@@ -403,11 +411,30 @@ struct PaywallSheet: View {
     private func purchase() {
         guard !purchasing else { return }
         purchasing = true
+        purchaseStatus = nil
         Task {
             let ok = await entitlements.purchase()
             purchasing = false
-            if ok { onUnlocked() }
+            if ok {
+                onUnlocked()
+            } else {
+                // Surface the store's outcome (pending-approval / verification / StoreKit
+                // error). A user cancel leaves loadError nil, so nothing is shown for it.
+                purchaseStatus = entitlements.loadError
+            }
         }
+    }
+
+    /// Status line under the CTA for a purchase that ended without unlocking —
+    /// most importantly the Ask-to-Buy `.pending` state (review addendum 2026-07-09).
+    private func purchaseStatusLine(_ text: String) -> some View {
+        Text(text)
+            .font(AppFonts.body(14, weight: .regular, relativeTo: .footnote))
+            .foregroundStyle(AppColors.textSecondary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .accessibilityLabel(text)
     }
 
     // MARK: - Legal / restore actions

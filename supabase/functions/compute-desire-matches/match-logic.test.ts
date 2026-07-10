@@ -18,6 +18,7 @@ import {
   computeMatches,
   freeRevealIndex,
   matchType,
+  stubCategory,
 } from "./match-logic.ts"
 
 // ── matchType: the positive-match rule ───────────────────────────────
@@ -106,6 +107,48 @@ Deno.test("freeRevealIndex — falls back to the first row when there is no mutu
 
 Deno.test("freeRevealIndex — empty set flags nothing", () => {
   assertEquals(freeRevealIndex([]), -1)
+})
+
+// ── freeRevealIndex: pinning (review 2026-07-09) ─────────────────────
+
+Deno.test("freeRevealIndex — a pinned item that still matches keeps the flag", () => {
+  const rows = [
+    { desire_item_id: "a", alignment_level: "adjacent" },
+    { desire_item_id: "b", alignment_level: "mutual" },
+    { desire_item_id: "c", alignment_level: "adjacent" },
+  ]
+  // Without pinning this would pick index 1 (first mutual); the pin holds it on c.
+  assertEquals(freeRevealIndex(rows, "c"), 2)
+})
+
+Deno.test("freeRevealIndex — a pinned item that no longer matches falls back to first mutual", () => {
+  const rows = [
+    { desire_item_id: "a", alignment_level: "adjacent" },
+    { desire_item_id: "b", alignment_level: "mutual" },
+  ]
+  assertEquals(freeRevealIndex(rows, "gone"), 1)
+})
+
+Deno.test("freeRevealIndex — null/undefined pin behaves like no pin", () => {
+  const rows = [
+    { desire_item_id: "a", alignment_level: "adjacent" },
+    { desire_item_id: "b", alignment_level: "mutual" },
+  ]
+  assertEquals(freeRevealIndex(rows, null), 1)
+  assertEquals(freeRevealIndex(rows), 1)
+})
+
+// ── stubCategory: locked-stub safety ─────────────────────────────────
+
+Deno.test("stubCategory — sole-item categories collapse to null (would identify the item)", () => {
+  assertEquals(stubCategory("group_sexual"), null)  // only "sexual" item on the track
+  assertEquals(stubCategory("safer_sex"), null)     // only "health" item on the track
+})
+
+Deno.test("stubCategory — well-populated categories pass through; unknown ids are null", () => {
+  assertEquals(stubCategory("nre"), "emotional")
+  assertEquals(stubCategory("polyamory"), "structures")
+  assertEquals(stubCategory("not_a_real_item"), null)
 })
 
 Deno.test("freeRevealIndex — selects exactly one across a realistic set", () => {

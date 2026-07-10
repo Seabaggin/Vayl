@@ -66,6 +66,24 @@ final class DesireMapStoreTests: XCTestCase {
         XCTAssertFalse(store.isComplete)
     }
 
+    func test_load_trackIsCuriousRegardlessOfNMStage() {
+        // V1 one-curious-superset decision (2026-06-25, re-ratified 2026-07-09 review):
+        // the track never derives from nmStage — an experienced user still rates the
+        // curious superset, matching the server edge fn's constant track.
+        let container = ModelContainer.previewContainer
+        let context = ModelContext(container)
+        context.insert(UserProfile(displayName: "Sam", nmStage: .experienced))
+        try? context.save()
+
+        let appState = AppState()
+        let store = DesireMapStore(modelContainer: container, appState: appState) { _, _ in }
+        store.load()
+        Self.retain(store, appState)
+
+        XCTAssertEqual(store.track, "curious")
+        XCTAssertGreaterThan(store.items.count, 0)
+    }
+
     // MARK: - Rate (upsert)
 
     func test_rate_persistsAndReflectsInState() throws {
@@ -136,6 +154,70 @@ final class DesireMapStoreTests: XCTestCase {
         let item = try XCTUnwrap(store.items.first)
         // Every rateable item ships four answers (one per DesireRatingValue) on its track.
         XCTAssertEqual(store.answers(for: item).count, DesireRatingValue.allCases.count)
+    }
+
+    // MARK: - Hydration merge rule (SyncManager pure helpers — review 2026-07-09 §1.3)
+    // The network side of hydrateDesireRatings has no injectable seam (singleton service),
+    // so the decision logic is extracted pure on SyncManager and contract-tested here.
+
+    func test_hydrationMerge_insertsWhenNoLocalEntry() {
+        XCTAssertEqual(
+            SyncManager.ratingMergeDecision(localCompletedAt: nil, serverCreatedAt: Date()),
+            .insert
+        )
+    }
+
+    func test_hydrationMerge_serverNewerWins() {
+        let local = Date(timeIntervalSince1970: 1_000)
+        let server = Date(timeIntervalSince1970: 2_000)
+        XCTAssertEqual(
+            SyncManager.ratingMergeDecision(localCompletedAt: local, serverCreatedAt: server),
+            .overwrite
+        )
+    }
+
+    func test_hydrationMerge_localSameOrNewerKept_neverDeleted() {
+        let newer = Date(timeIntervalSince1970: 2_000)
+        let older = Date(timeIntervalSince1970: 1_000)
+        // Local ahead of a failed sync → keep local. Equal timestamps → keep local too
+        // (overwrite is strictly-newer only). There is deliberately NO delete outcome —
+        // hydration may only add or update.
+        XCTAssertEqual(
+            SyncManager.ratingMergeDecision(localCompletedAt: newer, serverCreatedAt: older),
+            .keepLocal
+        )
+        XCTAssertEqual(
+            SyncManager.ratingMergeDecision(localCompletedAt: newer, serverCreatedAt: newer),
+            .keepLocal
+        )
+    }
+
+    func test_hydrationTimestamp_parsesFractionalAndPlainISO8601() {
+        // Postgres emits fractional seconds; device-uploaded rows may be plain.
+        XCTAssertNotNil(SyncManager.parseRatingTimestamp("2026-07-09T12:34:56.789Z"))
+        XCTAssertNotNil(SyncManager.parseRatingTimestamp("2026-07-09T12:34:56Z"))
+        XCTAssertNil(SyncManager.parseRatingTimestamp("not-a-date"))
+        // Ordering survives the parse (latest-wins depends on it).
+        let earlier = SyncManager.parseRatingTimestamp("2026-07-09T12:00:00Z")!
+        let later = SyncManager.parseRatingTimestamp("2026-07-09T12:00:00.500Z")!
+        XCTAssertLessThan(earlier, later)
+    }
+
+    func test_hydrationCompletion_derivedOnlyFromFullTrackCoverage() throws {
+        let items = try ContentLoader.loadDesireItems().filter { $0.appears(in: "curious") }
+        XCTAssertFalse(items.isEmpty)
+
+        let allIds = Set(items.map(\.id))
+        XCTAssertTrue(SyncManager.coversTrack(ratedItemIds: allIds, trackItems: items))
+
+        // One missing item → not complete.
+        var partial = allIds
+        partial.remove(items[0].id)
+        XCTAssertFalse(SyncManager.coversTrack(ratedItemIds: partial, trackItems: items))
+
+        // Unknown/extra ids never substitute for coverage; empty track never completes.
+        XCTAssertFalse(SyncManager.coversTrack(ratedItemIds: ["ghost-item"], trackItems: items))
+        XCTAssertFalse(SyncManager.coversTrack(ratedItemIds: allIds, trackItems: []))
     }
 
     // MARK: - CompanionCard content loader

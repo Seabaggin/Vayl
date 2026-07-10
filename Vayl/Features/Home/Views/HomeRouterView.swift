@@ -94,7 +94,13 @@ private struct HomeRouterInnerView: View {
                 DesireMapView(
                     store: mapStore,
                     partnerName: store.partnerName ?? "your partner",
-                    partnerComplete: store.partnerMapComplete
+                    // Live: @Observable re-evaluates this when HomeStore's value changes,
+                    // so the mirror's ready bar can materialize mid-session (review
+                    // 2026-07-09, decision #5).
+                    partnerComplete: store.partnerMapComplete,
+                    // One-shot status refetch when the mirror appears — the store refetches
+                    // through its Service; the view only surfaces the moment.
+                    onMirrorAppeared: { await store.refreshDesireStatus() }
                 )
             }
         }

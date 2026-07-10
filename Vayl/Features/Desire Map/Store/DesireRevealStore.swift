@@ -3,15 +3,14 @@
 //  Vayl
 //
 //  Store for D4 — the Desire-Map reveal (the "magic moment"). Reads the couple's computed
-//  matches (alignment only — NEVER raw partner answers) and resolves the free/locked split.
+//  matches (alignment only — NEVER raw partner answers) and renders the free/locked split
+//  the SERVER already decided.
 //
-//  4-Layer arch: View → Store → Service. Reads `DesireSyncService.fetchMatches` (client-safe:
-//  id, item, alignment, is_free_reveal — no partner values/gap). The free/locked gate is the
-//  conversion mechanic (D4 shows it; M5 wires the actual purchase).
-//
-//  STUB STATUS (2026-06-17): structure + data wiring complete; FEEL/styling is Bryan's pass.
-//  The "request a hidden conversation" idea moved to the Vault consent flow
-//  (VaultStore.askToOpen + VaultDesireSection), so it no longer lives here.
+//  4-Layer arch: View → Store → Service. Reads `DesireSyncService.fetchMatches`, which goes
+//  through the entitlement-checked RPC (launch hardening, review 2026-07-09 §1.2): Core
+//  couples get full rows; free couples get the free match full plus opaque locked stubs
+//  (nil item id / alignment, stub category only). The client never re-derives lock state
+//  from entitlements — a row is locked iff the server withheld its identity.
 //
 
 import Foundation
@@ -30,8 +29,16 @@ final class DesireRevealStore: Identifiable {
     enum Phase: Equatable {
         case loading
         case ready
-        case empty            // both complete but no positive matches — graceful, not an error
+        case empty(EmptyReason)   // graceful, not an error — the reason picks honest copy
         case failed(String)
+    }
+
+    /// Why the reveal has nothing to show (review 2026-07-09 §1.4). Three different truths
+    /// that used to share one lying copy line ("when you both finish…"):
+    enum EmptyReason: Equatable {
+        case unpaired            // no couple yet — never mention a partner
+        case waitingForPartner   // at least one side hasn't finished
+        case noMatches           // both finished, compute ran (self-heal included): a true zero
     }
 
     // MARK: - Beat phase (3-beat reveal ceremony)
@@ -45,7 +52,8 @@ final class DesireRevealStore: Identifiable {
     // (selectStar) or the Full Map/upgrade CTA. beat3 itself is reached the same way; there
     // is no timer past beat2, unlike the earlier auto-advancing version of this ceremony.
     //
-    // Already-Core couples skip beats 2-3 and land directly in revealed.
+    // Couples whose rows arrive with nothing locked (Core, or a lone free match) skip
+    // beats 2-3 and land directly in revealed.
     // Tap-to-advance (advanceBeat) skips the beat1 hold immediately.
 
     enum BeatPhase: Int, Equatable {
@@ -60,11 +68,16 @@ final class DesireRevealStore: Identifiable {
 
     private(set) var phase: Phase = .loading
 
-    /// All matches, each resolved to a display name + alignment + locked flag.
-    /// Free couple: the one `is_free_reveal` is unlocked, the rest locked. Core: all unlocked.
+    /// All matches as the server chose to show them: unlocked rows carry a real name,
+    /// locked stubs carry only an (optional) category teaser. Lock state is server truth.
     private(set) var matches: [RevealMatch] = [] {
         didSet { rebuildConstellation() }
     }
+
+    /// True between "the purchase succeeded" and "the server confirmed Core rows"
+    /// (review 2026-07-09 §1.2: unlock truth = server tier). The view shows the
+    /// "Payment received" interim state while this is set.
+    private(set) var unlockPending: Bool = false
 
     // MARK: - Constellation (audit Blueprint C — the hero rule lives HERE, testable)
 
@@ -113,7 +126,7 @@ final class DesireRevealStore: Identifiable {
                 id: match.id.uuidString,
                 point: result.points[index],
                 size: isHero ? heroSize : CGFloat(base),
-                label: match.itemName,
+                label: match.itemName,   // nil for locked stubs — the star stays anonymous
                 isHero: isHero,
                 isLocked: match.isLocked,
                 cadence: match.isLocked ? .locked : .free,
@@ -128,6 +141,43 @@ final class DesireRevealStore: Identifiable {
     /// The pending auto-advance timer (held weakly inside; tracked here so a new sequence
     /// or an unlock can cancel a stale one). Never strongly retains the store.
     @ObservationIgnored private var autoAdvanceTask: Task<Void, Never>?
+
+    // MARK: - Seen-stamp guards (review 2026-07-09 addendum)
+    //
+    // Stamps must reflect ACTUAL viewing — they gate future first-time-only ceremonies
+    // (First Light / assemble). Stamping in load() would let a crash or back-out during
+    // loading permanently skip the ceremony, so the stamps fire only when the user
+    // reaches the corresponding beat. The flags dedupe repeat stamps within one session.
+
+    @ObservationIgnored private var stampedFree = false
+    @ObservationIgnored private var stampedFull = false
+
+    /// One-shot guard so the unlock retry loop's repeated load() calls don't emit a
+    /// spurious reveal_opened per attempt (payload rule aside, the funnel would lie).
+    @ObservationIgnored private var loggedRevealOpened = false
+
+    /// The user actually saw the free reveal (beat2, or any full viewing).
+    private func stampFreeSeen() {
+        guard !stampedFree, let coupleId = appState.coupleId else { return }
+        stampedFree = true
+        Task { try? await service.markRevealSeen(coupleId: coupleId, full: false) }
+    }
+
+    /// The user actually saw the full sky (.revealed). Seeing full implies seeing free.
+    private func stampFullSeen() {
+        stampFreeSeen()
+        guard !stampedFull, let coupleId = appState.coupleId else { return }
+        stampedFull = true
+        Task { try? await service.markRevealSeen(coupleId: coupleId, full: true) }
+    }
+
+    /// beat1 → beat2, from either the tap or the timer: the free reveal has now truly
+    /// been seen, so this is where the free stamp (and the funnel joint) lives.
+    private func enterBeat2() {
+        beatPhase = .beat2
+        stampFreeSeen()
+        FunnelEventService.shared.log(.beat2Reached, coupleId: appState.coupleId)
+    }
 
     // MARK: - Interaction state (sheet hosts live inside the reveal cover)
 
@@ -163,9 +213,6 @@ final class DesireRevealStore: Identifiable {
     var lockedCount: Int { lockedMatches.count }
     var totalCount: Int { matches.count }
 
-    /// True once the couple is `core` — every match is shown, no unlock CTA.
-    var isFullyUnlocked: Bool { entitlements.isCore }
-
     // MARK: - Dependencies
 
     private let appState: AppState
@@ -186,22 +233,19 @@ final class DesireRevealStore: Identifiable {
     // MARK: - Beat sequence
 
     /// Kick off the reveal ceremony. No-op if a sequence is already running.
-    /// Already-Core couples skip straight to .revealed (no conversion moment needed).
     ///
-    /// Edge case (fix #2): a free couple whose ONLY match is the free one (lockedCount == 0)
-    /// has nothing to gate. Auto-advancing them to beat3 would float a paywall over an empty
-    /// locked section. Treat them like already-Core: land on the lit end-state, no ask, no gap.
+    /// The skip rule is server truth (review 2026-07-09 §1.2): if no row arrived locked
+    /// — a Core couple, or a free couple whose ONLY match is the free one — there is
+    /// nothing to gate, so land straight on the lit end-state, no ask, no gap. The store
+    /// never consults entitlements here; the rows already encode the decision.
     /// (matches / lockedCount are populated by load() before .ready, which gates this call.)
     func startBeatSequence() {
         guard beatPhase == .idle else { return }
-        if isFullyUnlocked || lockedCount == 0 {
+        if lockedCount == 0 {
             beatPhase = .revealed
-            // Landing straight on the lit sky (already-Core, or a lone free match) is a full
-            // viewing, so stamp full-seen: full_reveal_seen_at should reflect reality, mirroring
-            // the post-purchase path (handleUnlockSuccess). load() already stamped free-seen.
-            if let coupleId = appState.coupleId {
-                Task { try? await service.markRevealSeen(coupleId: coupleId, full: true) }
-            }
+            // Landing straight on the lit sky is a full viewing — stamp it as one
+            // (the addendum rule: stamps reflect actual viewing, at the beat, not at load).
+            stampFullSeen()
         } else {
             beatPhase = .beat1
             scheduleAutoAdvance()
@@ -217,7 +261,7 @@ final class DesireRevealStore: Identifiable {
     func advanceBeat() {
         autoAdvanceTask?.cancel()   // a tap supersedes the current auto-timer; the user drives from here
         if beatPhase == .beat1 {
-            beatPhase = .beat2
+            enterBeat2()
         }
     }
 
@@ -234,43 +278,95 @@ final class DesireRevealStore: Identifiable {
         autoAdvanceTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(hold))
             guard let self, beatPhase == .beat1 else { return }
-            beatPhase = .beat2
+            enterBeat2()
         }
     }
 
     // MARK: - Load
 
-    /// Fetch the couple's matches and resolve the free/locked split. No-op (empty) when unpaired.
+    /// Fetch the couple's matches as the server chose to show them. Empty results branch
+    /// three ways (review 2026-07-09 §1.4): unpaired, waiting on a partner, or — after the
+    /// one-shot compute self-heal (§1.1) — a true zero.
     func load() async {
-        guard let coupleId = appState.coupleId else { phase = .empty; return }
+        guard let coupleId = appState.coupleId else { phase = .empty(.unpaired); return }
         phase = .loading
         do {
             let names = try itemNameMap()
             let categories = try itemCategoryMap()
             let meanings = try itemMeaningMap()
+
             let rows = try await service.fetchMatches(coupleId: coupleId)
-            let core = entitlements.isCore
-            matches = rows.map { row in
-                RevealMatch(
-                    id: row.id,
-                    itemName: names[row.desireItemId] ?? row.desireItemId,
-                    itemCategory: categories[row.desireItemId],
-                    alignment: row.matchType,                       // mutual / adjacent
-                    isLocked: !core && !row.isFreeReveal,           // free couple locks all but the free one
-                    bridgeCardId: row.bridgeCardId,
-                    isFreeReveal: row.isFreeReveal,                 // the server-set hero star
-                    meaning: row.matchType.flatMap { meanings[row.desireItemId]?[$0.rawValue] }
-                )
+            var mapped = mapRows(rows, names: names, categories: categories, meanings: meanings)
+
+            if mapped.isEmpty {
+                // Empty self-heal (§1.1): zero rows despite both maps complete means the
+                // compute never fired (or drifted) — invoke it ONCE and refetch. Anything
+                // else empty means someone hasn't finished yet.
+                let status = try? await service.fetchStatus(coupleId: coupleId)
+                guard status?.bothComplete == true else {
+                    matches = []
+                    phase = .empty(.waitingForPartner)
+                    return
+                }
+                FunnelEventService.shared.log(.computeSelfHeal, coupleId: coupleId)
+                _ = try? await service.computeMatches()
+                let healedRows = (try? await service.fetchMatches(coupleId: coupleId)) ?? []
+                mapped = mapRows(healedRows, names: names, categories: categories, meanings: meanings)
+                if mapped.isEmpty {
+                    matches = []
+                    phase = .empty(.noMatches)
+                    return
+                }
             }
-            phase = matches.isEmpty ? .empty : .ready
-            if !matches.isEmpty {
-                // Always stamp free-seen. This closes the latent edge where a Core couple
-                // opening the reveal stamped only full: true, leaving free_reveal_seen_at null
-                // and HomeStore.revealDone (= hasSeenFree) permanently false.
-                Task { try? await service.markRevealSeen(coupleId: coupleId, full: false) }
+
+            matches = mapped
+            phase = .ready
+            // Seen-stamps intentionally NOT written here (addendum rule) — they fire at
+            // the beats. This is only the funnel joint, deduped across the unlock retries.
+            if !loggedRevealOpened {
+                loggedRevealOpened = true
+                FunnelEventService.shared.log(.revealOpened, coupleId: coupleId)
             }
         } catch {
             phase = .failed(error.localizedDescription)
+        }
+    }
+
+    /// Server rows → view models. Two guards:
+    /// • Locked stubs (nil item id) become anonymous locked matches — the identity never
+    ///   reached the client, only the (optional) teaser category.
+    /// • Content-drift guard (addendum): an unlocked row whose item id isn't in the local
+    ///   corpus is SKIPPED — never render a raw id slug in display type.
+    private func mapRows(
+        _ rows: [DesireMatchRow],
+        names: [String: String],
+        categories: [String: String],
+        meanings: [String: [String: String]]
+    ) -> [RevealMatch] {
+        rows.compactMap { row in
+            if row.isLockedStub {
+                return RevealMatch(
+                    id: row.id,
+                    itemName: nil,
+                    itemCategory: row.category,
+                    alignment: nil,
+                    isLocked: true,
+                    bridgeCardId: nil,
+                    isFreeReveal: false,
+                    meaning: nil
+                )
+            }
+            guard let itemId = row.desireItemId, let name = names[itemId] else { return nil }
+            return RevealMatch(
+                id: row.id,
+                itemName: name,
+                itemCategory: categories[itemId],
+                alignment: row.matchType,                       // mutual / adjacent
+                isLocked: false,                                // the server sent it named → it's visible
+                bridgeCardId: row.bridgeCardId,
+                isFreeReveal: row.isFreeReveal,                 // the server-set hero star
+                meaning: row.matchType.flatMap { meanings[itemId]?[$0.rawValue] }
+            )
         }
     }
 
@@ -286,27 +382,6 @@ final class DesireRevealStore: Identifiable {
         try ContentLoader.loadDesireItems().reduce(into: [:]) { $0[$1.id] = $1.meaning }
     }
 
-    // MARK: - Actions (stubbed — see file header)
-
-    /// Unlock all matches for BOTH partners — runs the Core purchase (M2). On success the
-    /// entitlement resolves Core (server + local StoreKit), so re-loading flips the locked teasers
-    /// open. M5 (the dedicated paywall surface) can replace this entry with a richer sheet.
-    func unlockAll() {
-        Task {
-            guard await entitlements.purchase() else { return }
-            #if DEBUG
-            if appState.coupleId == nil {
-                matches = matches.map { RevealMatch(id: $0.id, itemName: $0.itemName, itemCategory: $0.itemCategory, alignment: $0.alignment, isLocked: false, bridgeCardId: $0.bridgeCardId, isFreeReveal: $0.isFreeReveal, meaning: $0.meaning) }
-                beatPhase = .revealed
-                return
-            }
-            #endif
-            await load()
-            guard let coupleId = appState.coupleId else { return }
-            Task { try? await service.markRevealSeen(coupleId: coupleId, full: true) }
-        }
-    }
-
     // MARK: - Sheet interaction
 
     /// Tap a star: unlocked → open detail sheet; locked → open paywall. A locked tap is the only
@@ -316,6 +391,7 @@ final class DesireRevealStore: Identifiable {
             autoAdvanceTask?.cancel()
             if beatPhase == .beat2 { beatPhase = .beat3 }
             showPaywall = true
+            FunnelEventService.shared.log(.paywallOpened, coupleId: appState.coupleId)
         } else {
             selectedMatch = match
         }
@@ -332,29 +408,52 @@ final class DesireRevealStore: Identifiable {
         showFullMap = false
     }
 
-    /// Dismiss the paywall sheet only.
+    /// Dismiss the paywall sheet only. Closing it rewinds beat3 → beat2 (review punch #13):
+    /// beat3 means "paywall open", so a dismissed paywall must not strand the ceremony there.
     func closePaywall() {
         showPaywall = false
+        if beatPhase == .beat3 { beatPhase = .beat2 }
     }
 
     /// Called by `PaywallSheet.onUnlocked` after the purchase has already succeeded.
-    /// Closes the paywall, transitions to .revealed, and reloads — at this point
-    /// `entitlements.isCore` is already true, so `load()` resolves all matches as unlocked,
-    /// lighting the constellation in place. Also stamps `full: true` seen.
+    ///
+    /// Unlock truth = SERVER tier (review 2026-07-09 §1.2 / decision #7): the ceremony
+    /// transitions to .revealed only when a reload returns fully-unlocked rows. Until then
+    /// `unlockPending` drives the "Payment received" interim state. The grant can lag the
+    /// charge, so retry up to 3 times (refreshing entitlements between attempts). If all
+    /// fail, unlockPending stays set — the next load / self-heal resolves it, and the grant
+    /// itself auto-retries via Transaction.updates.
     func handleUnlockSuccess() {
         autoAdvanceTask?.cancel()
         showPaywall = false
-        beatPhase = .revealed
-        Task {
-            #if DEBUG
-            if appState.coupleId == nil {
-                matches = matches.map { RevealMatch(id: $0.id, itemName: $0.itemName, itemCategory: $0.itemCategory, alignment: $0.alignment, isLocked: false, bridgeCardId: $0.bridgeCardId, isFreeReveal: $0.isFreeReveal, meaning: $0.meaning) }
-                return
+        unlockPending = true
+        #if DEBUG
+        // Unpaired preview seam: no server to confirm against — flip everything open.
+        if appState.coupleId == nil {
+            matches = matches.map { RevealMatch(id: $0.id, itemName: $0.itemName, itemCategory: $0.itemCategory, alignment: $0.alignment, isLocked: false, bridgeCardId: $0.bridgeCardId, isFreeReveal: $0.isFreeReveal, meaning: $0.meaning) }
+            beatPhase = .revealed
+            unlockPending = false
+            return
+        }
+        #endif
+        // [weak self]: same executor rule as scheduleAutoAdvance — this loop sleeps for
+        // seconds and must not keep the store alive past the reveal cover.
+        Task { [weak self] in
+            for attempt in 1...3 {
+                guard let self else { return }
+                await self.load()
+                if !self.matches.isEmpty && self.lockedCount == 0 {
+                    // Server confirmed Core: real named rows arrived for every match.
+                    self.beatPhase = .revealed
+                    self.unlockPending = false
+                    self.stampFullSeen()
+                    FunnelEventService.shared.log(.unlockRendered, coupleId: self.appState.coupleId)
+                    return
+                }
+                FunnelEventService.shared.log(.grantRetried, coupleId: self.appState.coupleId, detail: "attempt \(attempt)")
+                await self.entitlements.refresh()
+                try? await Task.sleep(for: .seconds(2))
             }
-            #endif
-            await load()
-            guard let coupleId = appState.coupleId else { return }
-            Task { try? await service.markRevealSeen(coupleId: coupleId, full: true) }
         }
     }
 
@@ -375,11 +474,12 @@ final class DesireRevealStore: Identifiable {
 
 // MARK: - RevealMatch (view model)
 
-/// One match as the reveal renders it — display name + alignment + locked flag.
-/// Carries NO raw answers or gap (the read path never has them).
+/// One match as the reveal renders it. Carries NO raw answers or gap (the read path never
+/// has them). `itemName == nil` means a LOCKED STUB — the server withheld the identity
+/// (free couple, non-free match); only the optional teaser category arrived.
 struct RevealMatch: Identifiable, Equatable {
     let id: UUID
-    let itemName: String
+    let itemName: String?               // nil = locked stub (identity never left the server)
     let itemCategory: String?           // e.g. "emotional", "sexual", "communication"
     let alignment: DesireMatchType?     // mutual ("Mutual") / adjacent ("Worth Exploring")
     let isLocked: Bool
@@ -389,6 +489,13 @@ struct RevealMatch: Identifiable, Equatable {
     /// Couple-framed reveal copy from desire_items.json (`DesireItem.meaning`), resolved for this
     /// match's alignment. Falls back to `celebration` when an item has no authored meaning yet.
     var meaning: String?
+
+    /// The locked-row teaser line ("A shared desire · EMOTIONAL"). Honest about what the
+    /// client actually knows: a category at most, never a blurred fake of a real name.
+    var teaserTitle: String {
+        if let itemCategory { return "A shared desire · \(itemCategory.uppercased())" }
+        return "A shared desire"
+    }
 
     /// Celebratory subtitle by alignment (mutual = wholehearted; adjacent = mostly aligned).
     /// Fallback for items without authored `meaning` copy.
@@ -400,7 +507,8 @@ struct RevealMatch: Identifiable, Equatable {
         }
     }
 
-    /// The line the detail views show: authored meaning when available, else the generic celebration.
+    /// The line the detail views show: authored meaning when available, else the generic
+    /// celebration. Only unlocked matches (real names) ever reach the detail surfaces.
     var displayMeaning: String { meaning ?? celebration }
 
     #if DEBUG

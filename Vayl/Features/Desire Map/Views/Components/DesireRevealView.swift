@@ -82,12 +82,29 @@ struct DesireRevealView: View {
                 title: "Couldn't load your matches",
                 message: msg
             )
-        case .empty:
-            emptyState(
-                icon: "sparkles",
-                title: "No shared matches yet",
-                message: "When you and your partner both finish your maps, what you share appears here."
-            )
+        case .empty(let reason):
+            // Three honest empties (review 2026-07-09 §1.4) — never a verdict about the
+            // couple, and the unpaired variant never references a partner who isn't there.
+            switch reason {
+            case .unpaired:
+                emptyState(
+                    icon: "sparkles",
+                    title: "Where you meet lives here",
+                    message: "Pair with your partner, then finish both maps to see what you share."
+                )
+            case .waitingForPartner:
+                emptyState(
+                    icon: "sparkles",
+                    title: "No shared matches yet",
+                    message: "When you've both finished your maps, what you share appears here."
+                )
+            case .noMatches:
+                emptyState(
+                    icon: "sparkles",
+                    title: "No mutual matches this round",
+                    message: "That's real information too, and it's a starting point, not a verdict. Everything you each said is still yours, privately."
+                )
+            }
         case .ready:
             beatReveal
         }
@@ -230,6 +247,27 @@ struct DesireRevealView: View {
 
     @ViewBuilder
     private var bottomSection: some View {
+        if store.unlockPending {
+            // Charge landed, grant still resolving server-side (review §1.2: unlock truth =
+            // server tier). Quiet interim state; the ceremony plays when real rows arrive.
+            VStack(spacing: AppSpacing.sm) {
+                ProgressView()
+                    .tint(AppColors.textTertiary)
+                Text("Payment received. Lighting your sky…")
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal, AppSpacing.xxl)
+            .padding(.bottom, AppSpacing.xxl)
+            .transition(.opacity)
+        } else {
+            beatBottomSection
+        }
+    }
+
+    @ViewBuilder
+    private var beatBottomSection: some View {
         switch store.beatPhase {
         case .idle:
             EmptyView()
@@ -459,8 +497,9 @@ struct DesireRevealView: View {
 // MARK: - Locked teasers section (beat2 + beat3)
 // The hero (the one match already revealed via the constellation) shows first, fully legible —
 // otherwise this list reads as "everything is locked," which contradicts the lit star above it.
-// Every other row stays blurred with NO lock icon at all: blur alone says "locked," so repeating
-// the icon on every row (or even just one) is redundant noise.
+// Locked rows carry NO real name anymore (server-enforced paywall, review 2026-07-09 §1.2):
+// they render the honest category teaser ("A shared desire · EMOTIONAL") as plain text — a
+// blur would fake a secret the client doesn't hold, and blurred Text leaked to VoiceOver.
 
 private struct _LockedSection: View {
     let hero: RevealMatch?
@@ -470,14 +509,15 @@ private struct _LockedSection: View {
     var body: some View {
         VStack(spacing: AppSpacing.xs) {
             if let hero {
-                _LockedPreviewRow(itemName: hero.itemName, isRevealed: true)
+                _LockedPreviewRow(title: hero.itemName ?? hero.teaserTitle, isRevealed: true)
                     .opacity(isVisible ? 1 : 0)
                     .offset(y: isVisible ? 0 : 22)
                     .animation(AppAnimation.desireLockedRowEnter.reduceMotionSafe, value: isVisible)
             }
 
             ForEach(Array(matches.filter { $0.id != hero?.id }.prefix(4).enumerated()), id: \.element.id) { i, match in
-                _LockedPreviewRow(itemName: match.itemName, isRevealed: false)
+                _LockedPreviewRow(title: match.teaserTitle, isRevealed: false)
+                    .accessibilityLabel("Hidden match")
                     .opacity(isVisible ? 1 : 0)
                     .offset(y: isVisible ? 0 : 22)
                     // Fix #5: tokenized locked-row stagger (was .easeOut 0.36 / 0.08 step),
@@ -521,11 +561,12 @@ private struct _LockedSection: View {
 
 // MARK: - Locked preview row (Card Weight materials, no interaction)
 // Shares DesireAnswerPill's visual language — radius, top sheen, orb accent — without being a
-// tappable/selectable component. `isRevealed` is the ONLY thing that distinguishes the hero row
-// from a locked one: clear text + a lit magenta accent vs. blurred text + a dim white accent.
+// tappable/selectable component. `isRevealed` distinguishes the hero row (real name, bright
+// text, lit magenta accent) from a locked one (plain category teaser, dim text + accent).
+// No blur: locked rows only ever hold the teaser string, and nothing about it is secret.
 
 private struct _LockedPreviewRow: View {
-    let itemName: String
+    let title: String
     let isRevealed: Bool
 
     private var accent: Color { isRevealed ? AppColors.spectrumMagenta : .white }
@@ -538,10 +579,9 @@ private struct _LockedPreviewRow: View {
 
             HStack(spacing: AppSpacing.md) {
                 orb
-                Text(itemName)
+                Text(title)
                     .font(AppFonts.bodyText)
                     .foregroundStyle(textColor)
-                    .blur(radius: isRevealed ? 0 : 5)
                     .lineLimit(1)
                 Spacer(minLength: 0)
             }
@@ -589,13 +629,19 @@ private struct _PressScaleStyle: ButtonStyle {
 // MARK: - Previews
 
 #if DEBUG
-#Preview("Free reveal — 1 lit + 3 locked") {
+/// A server-shaped locked stub: no name, category teaser only.
+private func _stub(_ category: String?) -> RevealMatch {
+    RevealMatch(id: UUID(), itemName: nil, itemCategory: category, alignment: nil,
+                isLocked: true, bridgeCardId: nil)
+}
+
+#Preview("Free reveal — 1 lit + 3 locked stubs") {
     let appState = AppState()
     DesireRevealView(store: .previewStore(matches: [
-        .sample("New Relationship Energy", .mutual),
-        .sample("Overnight Stays With Others", .adjacent, locked: true),
-        .sample("Meeting Your Partner's Other Connections", .mutual, locked: true),
-        .sample("Time and Attention", .adjacent, locked: true)
+        .sample("New Relationship Energy", .mutual, free: true),
+        _stub("logistics"),
+        _stub("emotional"),
+        _stub(nil)
     ]))
     .environment(appState)
     .environment(EntitlementStore(modelContainer: .previewContainer, appState: appState))
@@ -616,9 +662,25 @@ private struct _PressScaleStyle: ButtonStyle {
     .preferredColorScheme(.dark)
 }
 
-#Preview("Empty") {
+#Preview("Empty — unpaired") {
     let appState = AppState()
-    DesireRevealView(store: .previewStore(matches: [], phase: .empty))
+    DesireRevealView(store: .previewStore(matches: [], phase: .empty(.unpaired)))
+        .environment(appState)
+        .environment(EntitlementStore(modelContainer: .previewContainer, appState: appState))
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Empty — waiting for partner") {
+    let appState = AppState()
+    DesireRevealView(store: .previewStore(matches: [], phase: .empty(.waitingForPartner)))
+        .environment(appState)
+        .environment(EntitlementStore(modelContainer: .previewContainer, appState: appState))
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Empty — true zero") {
+    let appState = AppState()
+    DesireRevealView(store: .previewStore(matches: [], phase: .empty(.noMatches)))
         .environment(appState)
         .environment(EntitlementStore(modelContainer: .previewContainer, appState: appState))
         .preferredColorScheme(.dark)

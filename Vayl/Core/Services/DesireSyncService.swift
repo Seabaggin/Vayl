@@ -150,13 +150,27 @@ class DesireSyncService {
 
     // MARK: - Read back (D-read)
 
-    /// Reads the couple's computed matches. Selects ONLY client-safe columns — never
-    /// `partner_a/b_value` (the partner's raw answer is never shown). RLS scopes to the couple.
+    /// Reads the couple's computed matches through the entitlement-checked RPC
+    /// (`get_couple_desire_matches`, launch hardening 2026-07-09). The SERVER decides what
+    /// this couple may see: Core → full rows; free → the free match full + opaque locked
+    /// stubs (nil item/alignment, stub `category` only). Direct SELECT on desire_matches is
+    /// revoked — this is the only client read path. Raw partner answers never leave the DB.
     func fetchMatches(coupleId: UUID) async throws -> [DesireMatchRow] {
         try await supabase
-            .from("desire_matches")
-            .select("id, desire_item_id, alignment_level, is_free_reveal, bridge_card_id")
-            .eq("couple_id", value: coupleId.uuidString)
+            .rpc("get_couple_desire_matches", params: ["p_couple_id": coupleId.uuidString])
+            .execute()
+            .value
+    }
+
+    /// Reads the CALLER's own ratings back (own-row RLS) — the reinstall/second-device
+    /// hydration path (review 2026-07-09 §1.3). Never returns anyone else's rows.
+    func fetchOwnRatings() async throws -> [OwnDesireRatingRow] {
+        let authId = try await supabase.auth.session.user.id
+        let profileId = try await profileService.ensureProfileExists(authId: authId)
+        return try await supabase
+            .from("desire_ratings")
+            .select("desire_item_id, rating, created_at")
+            .eq("user_id", value: profileId.uuidString)
             .execute()
             .value
     }
@@ -209,12 +223,16 @@ class DesireSyncService {
 }
 
 /// One computed match, client-safe — NO partner raw values (the edge fn stores them null).
+/// LOCKED STUBS (free couple, non-free match): the server nulls `desireItemId`,
+/// `alignmentLevel`, and `bridgeCardId`; only `isFreeReveal=false` and the pre-collapsed
+/// stub `category` arrive. The item's identity never reaches an un-entitled client.
 struct DesireMatchRow: Decodable, Identifiable, Sendable {
     let id: UUID
-    let desireItemId: String
-    let alignmentLevel: String     // "mutual" | "adjacent"
+    let desireItemId: String?      // nil = locked stub
+    let alignmentLevel: String?    // "mutual" | "adjacent"; nil = locked stub
     let isFreeReveal: Bool
     let bridgeCardId: String?
+    let category: String?          // locked-stub teaser category (small categories nil)
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -222,9 +240,26 @@ struct DesireMatchRow: Decodable, Identifiable, Sendable {
         case alignmentLevel = "alignment_level"
         case isFreeReveal = "is_free_reveal"
         case bridgeCardId = "bridge_card_id"
+        case category
     }
 
-    var matchType: DesireMatchType? { DesireMatchType(rawValue: alignmentLevel) }
+    var matchType: DesireMatchType? { alignmentLevel.flatMap(DesireMatchType.init(rawValue:)) }
+    /// A row whose identity the server withheld (free couple, not the free reveal).
+    var isLockedStub: Bool { desireItemId == nil }
+}
+
+/// One of the caller's OWN ratings, read back for hydration. `createdAt` mirrors the
+/// device `completedAt` at upload time — the merge rule is per-item latest-wins.
+struct OwnDesireRatingRow: Decodable, Sendable {
+    let desireItemId: String
+    let rating: String
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case desireItemId = "desire_item_id"
+        case rating
+        case createdAt = "created_at"
+    }
 }
 
 /// The couple's completion + reveal state, client-safe.

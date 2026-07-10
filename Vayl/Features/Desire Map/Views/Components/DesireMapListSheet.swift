@@ -182,7 +182,9 @@ private struct _ExpandableMatchRow: View {
             } label: {
                 HStack(spacing: AppSpacing.sm) {
                     alignmentDot
-                    Text(match.itemName)
+                    // Unlocked rows always arrive named (the store's content-drift guard
+                    // drops nameless unlocked rows); the fallback only satisfies the optional.
+                    Text(match.itemName ?? "")
                         .font(AppFonts.bodyText)
                         .foregroundStyle(AppColors.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -245,14 +247,13 @@ private struct _LockedMatchRow: View {
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary.opacity(0.6))
 
-                // Fix #6: render the REAL item name, blurred + dimmed, so it reads as a
-                // blurred real label (mockup) rather than placeholder dots.
-                Text(match.itemName)
+                // Server-enforced paywall (review 2026-07-09 §1.2): locked rows carry no
+                // real name — render the honest category teaser as PLAIN text. A blur
+                // would fake a secret the client doesn't hold (and leaked to VoiceOver).
+                Text(match.teaserTitle)
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textTertiary)
-                    .blur(radius: 5)
                     .lineLimit(1)
-                    .opacity(0.6)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Image(systemName: AppIcons.chevronRight)
@@ -264,6 +265,7 @@ private struct _LockedMatchRow: View {
             .padding(.vertical, AppSpacing.sm)
         }
         .buttonStyle(DetailPressStyle())
+        .accessibilityLabel("Hidden match")
         .background(
             RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                 .fill(AppColors.cardBg.opacity(0.20))
@@ -279,12 +281,13 @@ private struct _LockedMatchRow: View {
 // MARK: - Preview
 
 #if DEBUG
+/// Locked rows mirror the server shape: no name, teaser category only.
 private let _previewMatches: [RevealMatch] = [
     .sample("New Relationship Energy", .mutual),
     .sample("Overnight Stays", .adjacent),
-    .sample("Meeting Partners", .mutual, locked: true),
-    .sample("Shared Space Agreements", .adjacent, locked: true),
-    .sample("Time and Attention", .mutual, locked: true)
+    RevealMatch(id: UUID(), itemName: nil, itemCategory: "sexual", alignment: nil, isLocked: true, bridgeCardId: nil),
+    RevealMatch(id: UUID(), itemName: nil, itemCategory: "logistics", alignment: nil, isLocked: true, bridgeCardId: nil),
+    RevealMatch(id: UUID(), itemName: nil, itemCategory: nil, alignment: nil, isLocked: true, bridgeCardId: nil)
 ]
 
 #Preview("Partial reveal — sheet") {
@@ -306,10 +309,14 @@ private let _previewMatches: [RevealMatch] = [
     ZStack {
         AppColors.void.ignoresSafeArea()
         DesireMapListView(
-            matches: _previewMatches.map {
-                RevealMatch(id: $0.id, itemName: $0.itemName, itemCategory: $0.itemCategory,
-                            alignment: $0.alignment, isLocked: false, bridgeCardId: nil)
-            },
+            // Post-unlock the server names every row — stubs never appear here.
+            matches: [
+                .sample("New Relationship Energy", .mutual),
+                .sample("Overnight Stays", .adjacent),
+                .sample("Meeting Partners", .mutual),
+                .sample("Shared Space Agreements", .adjacent),
+                .sample("Time and Attention", .mutual)
+            ],
             priceText: nil
         )
         .padding(AppSpacing.lg)
