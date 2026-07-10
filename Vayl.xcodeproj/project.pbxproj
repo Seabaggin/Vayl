@@ -13,7 +13,6 @@
 		3D51D7492F5FB8D7002488A7 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D7482F5FB8D7002488A7 /* Realtime */; };
 		3D51D74B2F5FB8D7002488A7 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D74A2F5FB8D7002488A7 /* Storage */; };
 		3D51D7502F5FBA71002488A7 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D74F2F5FBA71002488A7 /* Supabase */; };
-		3D58E6DD2F6227E800210EB6 /* Vayl.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 3D58E6DC2F6227E800210EB6 /* Vayl.xcconfig */; };
 		3D767EFA2F5D562900F2D70F /* RULES.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EF92F5D562100F2D70F /* RULES.md */; };
 		3D767EFC2F5D565700F2D70F /* PROJECT_SCOPE.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */; };
 		3D807B942F8DC74B0021F080 /* .aider.conf.yml in Resources */ = {isa = PBXBuildFile; fileRef = 3D807B932F8DC7450021F080 /* .aider.conf.yml */; };
@@ -334,7 +333,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2630;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					3D767EB12F5D520D00F2D70F = {
 						CreatedOnToolsVersion = 26.3;
@@ -381,7 +380,6 @@
 			files = (
 				3D767EFC2F5D565700F2D70F /* PROJECT_SCOPE.md in Resources */,
 				3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */,
-				3D58E6DD2F6227E800210EB6 /* Vayl.xcconfig in Resources */,
 				3D767EFA2F5D562900F2D70F /* RULES.md in Resources */,
 				3DBFFC432FF2053D00CA8FF0 /* vayl-context-dump.sh in Resources */,
 				3D807B942F8DC74B0021F080 /* .aider.conf.yml in Resources */,
@@ -429,6 +427,7 @@
 		};
 		48A82044D3984C4396D80B56 /* Upload Debug Symbols to Sentry */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -440,7 +439,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# This script is responsible for uploading debug symbols and source context for Sentry.\nif which sentry-cli >/dev/null; then\n  export SENTRY_ORG=bryan-jorden-fe\n  export SENTRY_PROJECT=vayl-ios\n  ERROR=$(sentry-cli debug-files upload --include-sources \"$DWARF_DSYM_FOLDER_PATH\" 2>&1 >/dev/null)\n  if [ ! $? -eq 0 ]; then\n    echo \"warning: sentry-cli - $ERROR\"\n  fi\nelse\n  echo \"warning: sentry-cli not installed, download from https://github.com/getsentry/sentry-cli/releases\"\nfi\n";
+			shellScript = "# This script is responsible for uploading debug symbols and source context for Sentry.\n# Skip in Debug: dSYMs are only produced for Release/Archive, so there is nothing to upload locally.\nif [ \"$CONFIGURATION\" = \"Debug\" ]; then echo \"note: Sentry dSYM upload skipped for Debug build\"; exit 0; fi\nif which sentry-cli >/dev/null; then\n  export SENTRY_ORG=bryan-jorden-fe\n  export SENTRY_PROJECT=vayl-ios\n  ERROR=$(sentry-cli debug-files upload --include-sources \"$DWARF_DSYM_FOLDER_PATH\" 2>&1 >/dev/null)\n  if [ ! $? -eq 0 ]; then\n    echo \"warning: sentry-cli - $ERROR\"\n  fi\nelse\n  echo \"warning: sentry-cli not installed, download from https://github.com/getsentry/sentry-cli/releases\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -576,6 +575,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				"SWIFT_ACTIVE_COMPILATION_CONDITIONS[arch=*]" = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -634,6 +634,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
