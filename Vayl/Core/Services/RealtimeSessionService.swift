@@ -310,11 +310,15 @@ final class RealtimeSessionService {
 
     /// Advances only if `current_index` still equals `expectedIndex`.
     /// Returns true if this call moved the pointer, false if the partner already did.
+    /// The same atomic write nulls `timer_started_at` so the NEW card starts
+    /// with an empty anchor — either device then re-stamps it via
+    /// `markTimerStartedIfEmpty` (first writer wins).
     @discardableResult
     func advance(sessionId: UUID, expectedIndex: Int) async throws -> Bool {
         let updated: [CuratedSessionDTO] = try await supabase
             .from(SupabaseTable.curatedSessions)
-            .update(["current_index": expectedIndex + 1])
+            .update(["current_index": AnyJSON.integer(expectedIndex + 1),
+                     "timer_started_at": .null])
             .eq("id", value: sessionId.uuidString)
             .eq("current_index", value: expectedIndex)
             .select()
@@ -326,12 +330,27 @@ final class RealtimeSessionService {
 
     // MARK: Timer + safety row ops (Section 2 scope; streams live in the extensions below)
 
-    /// Stamps timer_started_at = now. Written by the role-a device when a timed
-    /// card presents; the echoed UPDATE anchors both countdowns.
-    func markTimerStarted(sessionId: UUID) async throws {
+    /// Stamps timer_started_at = now, but ONLY where it is still NULL and the
+    /// row is still on `expectedIndex` (a slow phone can never stamp a
+    /// previous card). Either device calls it when a timed card presents —
+    /// first writer wins; the echoed UPDATE anchors both countdowns.
+    func markTimerStartedIfEmpty(sessionId: UUID, expectedIndex: Int) async throws {
         try await supabase
             .from(SupabaseTable.curatedSessions)
             .update(["timer_started_at": ISO8601DateFormatter().string(from: Date())])
+            .eq("id", value: sessionId.uuidString)
+            .eq("current_index", value: expectedIndex)
+            .is("timer_started_at", value: nil)
+            .execute()
+    }
+
+    /// Sets (or clears, with nil) the whole-session budget for BOTH devices.
+    /// "We're still here" on the budget check writes nil — the echoed row
+    /// dismisses the check on the partner's phone and it never re-fires.
+    func setGlobalTimer(sessionId: UUID, seconds: Int?) async throws {
+        try await supabase
+            .from(SupabaseTable.curatedSessions)
+            .update(["global_timer_seconds": seconds.map(AnyJSON.integer) ?? .null])
             .eq("id", value: sessionId.uuidString)
             .execute()
     }

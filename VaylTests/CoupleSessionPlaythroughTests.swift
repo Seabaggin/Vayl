@@ -241,6 +241,65 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         XCTAssertEqual(syncedPayloads.first?.id, remoteId, "sync payload must be keyed by the shared remote session id")
     }
 
+    // MARK: - Whole-session budget: threshold, still-here, never re-fires
+
+    /// The budget check fires once elapsed crosses the planned budget, and
+    /// "We're still here" clears it for the rest of the session (spec §1.7).
+    func test_sessionBudget_firesAtThreshold_stillHereClearsForGood() async throws {
+        let remoteId = UUID()
+        let hand = Array(Card.openerSamples.prefix(3))
+        let dto = CuratedSessionDTO(
+            id: remoteId,
+            coupleId: UUID(),
+            initiatorId: UUID(),
+            deckId: hand.first?.deckId ?? "unknown",
+            deckVariant: nil,
+            cardIds: hand.map(\.id),
+            perCardTimer: [:],
+            globalTimerSeconds: 120,          // a 2-minute planned budget
+            status: CuratedSessionStatus.active.rawValue,
+            currentIndex: 0,
+            aPresent: true,
+            bPresent: true,
+            aBandwidth: nil,
+            bBandwidth: nil,
+            aConsented: true,
+            bConsented: true,
+            timerStartedAt: nil,
+            revealState: [:],
+            createdAt: ISO8601DateFormatter().string(from: Date()),
+            updatedAt: ISO8601DateFormatter().string(from: Date())
+        )
+        let launch = SessionLaunch(hand: hand, entry: .initiator, role: .a, session: dto)
+        let appState = AppState()
+        appState.coupleId = dto.coupleId
+        let store = CoupleSessionStore(
+            launch: launch,
+            modelContainer: ModelContainer.previewContainer,
+            appState: appState,
+            realtime: fakeRealtimeService(),
+            presenceSeconds: 0.01,
+            transitionSeconds: 0.01,
+            enqueueSync: { _ in }
+        )
+        await crossAirlock(store)
+        XCTAssertEqual(store.budgetMinutes, 2)
+
+        // Under budget: silent.
+        store.evaluateSessionBudget(now: Date().addingTimeInterval(60))
+        XCTAssertFalse(store.budgetCheckPresented)
+
+        // Past budget: the soft check fires.
+        store.evaluateSessionBudget(now: Date().addingTimeInterval(121))
+        XCTAssertTrue(store.budgetCheckPresented)
+
+        // "We're still here" clears the budget and it never asks again.
+        store.budgetStillHere()
+        XCTAssertFalse(store.budgetCheckPresented)
+        store.evaluateSessionBudget(now: Date().addingTimeInterval(600))
+        XCTAssertFalse(store.budgetCheckPresented, "a cleared budget never re-fires")
+    }
+
     // MARK: - Branch: skip the reflection
 
     func test_skipReflection_sessionSavedButNoReflection() async throws {

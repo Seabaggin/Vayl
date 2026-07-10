@@ -94,6 +94,46 @@ struct SessionPlayerView: View {
                 .transition(.opacity)
             }
 
+            // Whole-session budget check — a soft "still with it?" room, styled
+            // like the pause overlay. Never a hard cut: both buttons are always
+            // tappable, and a row echo clearing the budget dismisses it.
+            if store.budgetCheckPresented {
+                ZStack {
+                    Rectangle().fill(AppColors.void).opacity(0.72).ignoresSafeArea()
+                    VStack(spacing: AppSpacing.lg) {
+                        Text("Still in it?")
+                            .font(AppFonts.sectionHeading)
+                            .foregroundStyle(AppColors.textPrimary)
+                        Text("You planned about \(store.budgetMinutes) minutes. No rush.")
+                            .font(AppFonts.caption)
+                            .foregroundStyle(AppColors.textTertiary)
+                            .multilineTextAlignment(.center)
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            store.budgetStillHere()
+                        } label: {
+                            Text("We're still here")
+                                .font(AppFonts.buttonLabel)
+                                .foregroundStyle(AppColors.spectrumText)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("We're still here, keep the session going")
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            store.endEarly()
+                        } label: {
+                            Text("Wrap up")
+                                .font(AppFonts.buttonLabel)
+                                .foregroundStyle(AppColors.textBody)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Wrap up, end the session cleanly")
+                    }
+                    .padding(.horizontal, AppSpacing.lg)
+                }
+                .transition(.opacity)
+            }
+
             // Pre-card context beat (Section 3, narrowed 2026-07-07) — the only
             // remaining case is interstitial; it holds until "got it". Banner
             // now renders as a persistent ContextKickerView on the card itself
@@ -110,6 +150,7 @@ struct SessionPlayerView: View {
             }
         }
         .animation(reduceMotion ? AppAnimation.fast : AppAnimation.standard, value: store.isPaused)
+        .animation(reduceMotion ? AppAnimation.fast : AppAnimation.standard, value: store.budgetCheckPresented)
         .contentShape(Rectangle())
         .onTapGesture { wake() }
         .onAppear {

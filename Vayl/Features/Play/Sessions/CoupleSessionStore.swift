@@ -113,6 +113,7 @@ final class CoupleSessionStore: Identifiable {
         realtime: RealtimeSessionService? = nil,
         presenceSeconds: Double = 1.4,
         transitionSeconds: Double = 2.5,          // 🎚️ spec 4.5: ~2.5s held beat
+        budgetCheckSeconds: Double = 15,          // 🎚️ budget re-check cadence (minutes-granularity budget)
         enqueueSync: (@MainActor (SessionRecordPayload) -> Void)? = nil,
         deckCatalog: DeckCatalogService? = nil
     ) {
@@ -127,6 +128,8 @@ final class CoupleSessionStore: Identifiable {
         self.sessionSettings = appState.sessionSettings
         self.presenceSeconds = presenceSeconds
         self.transitionSeconds = transitionSeconds
+        self.budgetCheckSeconds = budgetCheckSeconds
+        self.liveGlobalTimerSeconds = launch.session?.globalTimerSeconds
         // A two-device launch resolves its own realtime service when the caller
         // doesn't inject one — the container view no longer constructs Services
         // (4-layer). A local/DEBUG launch (session == nil) stays realtime-free.
@@ -248,6 +251,7 @@ final class CoupleSessionStore: Identifiable {
             if phase == .transition {
                 phase = .session
                 cardDidChange()      // Section 3: first card's beat/reveal setup
+                startSessionBudgetWatch()
                 persistProgressCheckpoint()
             }
         }
@@ -264,7 +268,8 @@ final class CoupleSessionStore: Identifiable {
             if phase == .transition {
                 phase = .session
                 cardDidChange()      // Section 3: first card's beat/reveal setup
-                startTimerIfLeader()
+                startTimerIfNeeded()
+                startSessionBudgetWatch()
                 persistProgressCheckpoint()
             }
         }
@@ -320,7 +325,7 @@ final class CoupleSessionStore: Identifiable {
         Task { @MainActor in
             do {
                 _ = try await realtime.advance(sessionId: sid, expectedIndex: expected)
-                self.startTimerIfLeader()
+                self.startTimerIfNeeded()
             } catch {
                 // Network failure: roll the optimistic bump back; the next echo
                 // or reconnect resolves the truth. Index never regresses below
@@ -508,6 +513,8 @@ final class CoupleSessionStore: Identifiable {
         revealEngine.teardown()
         graceTask?.cancel()
         timerTask?.cancel()
+        budgetTask?.cancel()
+        budgetTask = nil
         pollTask?.cancel()
         pollTask = nil
         watchdogTask?.cancel()
@@ -534,8 +541,12 @@ final class CoupleSessionStore: Identifiable {
         timerStartedAtRaw = dto.timerStartedAt
         liveTimers = dto.perCardTimer
         refreshTimer()
+        // Whole-session budget mirrors live from every echo; nil = no budget /
+        // cleared by either phone's "We're still here" — dismiss any open check.
+        liveGlobalTimerSeconds = dto.globalTimerSeconds
+        if dto.globalTimerSeconds == nil { budgetCheckPresented = false }
         if indexChanged {
-            startTimerIfLeader()
+            startTimerIfNeeded()
             cardDidChange()      // Section 3: beats / back / reveal per-card setup
             persistProgressCheckpoint()
         }
@@ -564,11 +575,15 @@ final class CoupleSessionStore: Identifiable {
             index = min(dto.currentIndex, max(0, hand.count - 1))
             timerStartedAtRaw = dto.timerStartedAt
             liveTimers = dto.perCardTimer
+            liveGlobalTimerSeconds = dto.globalTimerSeconds
             isPaused = (dto.status == CuratedSessionStatus.paused.rawValue)
             if phase == .airlock { phase = .session }
             startRemoteSync()
             refreshTimer()
             cardDidChange()
+            startTimerIfNeeded()
+            // Re-anchor at resume time — generous by design (no persisted anchor).
+            startSessionBudgetWatch()
             restoreReveal(flags: currentCard.flatMap { dto.revealState[$0.id] })
         default:
             break   // lobby/airlock: AirlockStore owns those states
@@ -686,12 +701,74 @@ final class CoupleSessionStore: Identifiable {
         }
     }
 
-    /// Role-a stamps the anchor when a timed card presents (deterministic single
-    /// writer; the echoed UPDATE starts both countdowns together).
-    func startTimerIfLeader() {
-        guard isLive, sessionRole == .a, let realtime, let sid = remoteSessionId,
+    /// EITHER device stamps the anchor when a timed card presents — the write
+    /// is conditional server-side (only where timer_started_at IS NULL and
+    /// current_index still matches), so first writer wins and a slow phone can
+    /// never stamp a previous card. The echoed UPDATE starts both countdowns
+    /// together, so timed cards keep a timer even when one phone is offline.
+    func startTimerIfNeeded() {
+        guard isLive, let realtime, let sid = remoteSessionId,
               currentCardLimit != nil else { return }
-        Task { @MainActor in try? await realtime.markTimerStarted(sessionId: sid) }
+        let expected = index
+        Task { @MainActor in
+            try? await realtime.markTimerStartedIfEmpty(sessionId: sid, expectedIndex: expected)
+        }
+    }
+
+    // MARK: - Whole-session budget (invisible; a soft "Still in it?" check, never a hard cut)
+
+    /// The session budget in seconds, mirrored live from row echoes.
+    /// nil = no budget / cleared ("We're still here" on either phone).
+    private(set) var liveGlobalTimerSeconds: Int?
+    /// True while the soft check overlay is up. Cleared by "We're still here"
+    /// (local + row echo on the partner's phone) or by wrap-up ending the session.
+    private(set) var budgetCheckPresented = false
+    /// Local anchor: captured when THIS phone's phase enters .session (and
+    /// re-captured on resume-after-kill — generous by design). Minutes-level
+    /// budget tolerates the sub-second skew between the two phones' flips.
+    private(set) var budgetAnchor: Date?
+    /// 🎚️ Re-check cadence; injectable via init for tests.
+    private let budgetCheckSeconds: Double
+    private var budgetTask: Task<Void, Never>?
+
+    /// Budget minutes for the check's subline copy.
+    var budgetMinutes: Int { max(1, (liveGlobalTimerSeconds ?? 0) / 60) }
+
+    /// Anchors the budget at .session entry and starts the invisible watch
+    /// (a Task that sleeps and re-evaluates, mirroring the per-card timer).
+    private func startSessionBudgetWatch() {
+        budgetAnchor = Date()
+        budgetTask?.cancel()
+        budgetTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                self.evaluateSessionBudget()
+                try? await Task.sleep(for: .seconds(self.budgetCheckSeconds))
+            }
+        }
+    }
+
+    /// One budget tick: fire the soft check when elapsed >= budget mid-session.
+    /// A cleared budget (nil) never re-fires. Internal (not private) so tests
+    /// can drive the threshold logic with an injected `now`.
+    func evaluateSessionBudget(now: Date = Date()) {
+        guard phase == .session, !budgetCheckPresented,
+              let budget = liveGlobalTimerSeconds, budget > 0,
+              let anchor = budgetAnchor,
+              now.timeIntervalSince(anchor) >= Double(budget) else { return }
+        budgetCheckPresented = true
+    }
+
+    /// "We're still here": clears the budget for BOTH phones via the row —
+    /// the echo (nil) dismisses the check on the partner's phone too and the
+    /// check never asks again this session.
+    func budgetStillHere() {
+        budgetCheckPresented = false
+        liveGlobalTimerSeconds = nil
+        guard isLive, let realtime, let sid = remoteSessionId else { return }
+        Task { @MainActor in
+            try? await realtime.setGlobalTimer(sessionId: sid, seconds: nil)
+        }
     }
 
     /// "keep going": null this card's timer for BOTH via the row (spec 4.3).
