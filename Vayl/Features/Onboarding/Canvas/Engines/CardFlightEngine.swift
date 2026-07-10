@@ -62,7 +62,7 @@ final class CardFlightEngine {
 
         return await withCheckedContinuation { continuation in
             director.cardFlightScene.onCardRested[cardID] = { [weak director] _, pos, rot in
-                guard let _ = director else { return }
+                guard director != nil else { return }
                 let swiftUIPos = CGPoint(x: pos.x, y: sceneSize.height - pos.y)
                 continuation.resume(returning: (swiftUIPos, -rot * (180 / .pi)))
             }

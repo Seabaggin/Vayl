@@ -386,7 +386,7 @@ final class CoupleSessionStore: Identifiable {
             self.registerLiveSignal()
             let partnerHere = present.contains { $0 != me.uuidString }
             self.partnerPresentLive = partnerHere
-            partnerHere ? self.partnerReturned() : self.partnerLost()
+            if partnerHere { self.partnerReturned() } else { self.partnerLost() }
         }
         coordinator.onReveal = { [weak self] envelope in
             self?.revealEngine.applyBroadcast(envelope)

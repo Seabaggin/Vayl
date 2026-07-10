@@ -45,7 +45,7 @@ struct FlameAura: View {
         }
     }
 
-    private var masterOpacity: Double {
+    private var overallOpacity: Double {
         switch intensity {
         case .dim:   return 0
         case .warm:  return 0.82
@@ -66,7 +66,7 @@ struct FlameAura: View {
                 }
             }
         }
-        .opacity(appeared ? masterOpacity : 0)
+        .opacity(appeared ? overallOpacity : 0)
         .onAppear {
             withAnimation(AppAnimation.enter) { appeared = true }
         }

@@ -135,7 +135,7 @@ struct VaylButton: View {
                             abs(value.translation.width)  < (w / 2) + horizontalSlop
                          && abs(value.translation.height) < (h / 2) + verticalSlop
 
-                        inside ? onPressUp() : onPressCancel()
+                        if inside { onPressUp() } else { onPressCancel() }
                     }
             )
             .onChange(of: isLoading) { _, loading  in if loading { resetAnimationState() } }

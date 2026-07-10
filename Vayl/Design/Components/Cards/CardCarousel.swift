@@ -336,7 +336,7 @@ struct CardCarousel: View {
 
     @ViewBuilder
     private var auroraBloom: some View {
-        if let _ = activeCard {
+        if activeCard != nil {
             Ellipse()
                 .fill(RadialGradient(
                     colors: [
