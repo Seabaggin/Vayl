@@ -312,7 +312,13 @@ final class PlayStore {
             #endif
             return
         }
-        let hand = plan.cardIds.compactMap { id in deck.orderedCards.first { $0.id == id } }
+        guard let hand = SessionLaunch.buildHand(cardIds: plan.cardIds, deck: deck) else {
+            // Low risk here (the plan came straight from this device's local
+            // deck), but validate anyway for symmetry with the joiner paths
+            // (spec 2026-07-09 §1.8) — never launch a shortened hand.
+            openError = SessionEntryStore.joinErrorMessage
+            return
+        }
         let draft = plan.draft
         isOpeningSession = true
         Task { @MainActor in
@@ -378,10 +384,14 @@ final class PlayStore {
                 }
                 return
             }
-            let hand = dto.cardIds.compactMap { id in deck.orderedCards.first { $0.id == id } }
+            guard let hand = SessionLaunch.buildHand(cardIds: dto.cardIds, deck: deck) else {
+                openError = SessionEntryStore.joinErrorMessage
+                conflictSession = nil
+                conflictPending = nil
+                return
+            }
             conflictSession = nil
             conflictPending = nil
-            guard !hand.isEmpty else { return }
             launch = SessionLaunch(
                 hand: hand,
                 entry: dto.initiatorId == myId ? .initiator : .joiner,

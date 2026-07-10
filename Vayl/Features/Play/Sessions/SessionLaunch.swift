@@ -19,3 +19,24 @@ struct SessionLaunch: Identifiable, Equatable {
     let session: CuratedSessionDTO?
     static func == (l: SessionLaunch, r: SessionLaunch) -> Bool { l.id == r.id }
 }
+
+extension SessionLaunch {
+    /// Strict hand build (spec 2026-07-09 §1.8): every id in `cardIds` must
+    /// resolve to a real card in the locally loaded deck, or the whole launch
+    /// fails. An app-version mismatch between the two phones (a card id
+    /// missing from one side's bundled deck) must never silently SHORTEN the
+    /// hand — that would desync "card N" between the two devices, which is
+    /// worse than refusing to launch. Shared by SessionEntryStore.accept(),
+    /// .resume(), and PlayStore.openSession()/.resumeConflict() so the rule
+    /// lives in exactly one place.
+    static func buildHand(cardIds: [String], deck: Deck) -> [Card]? {
+        guard !cardIds.isEmpty else { return nil }
+        var hand: [Card] = []
+        hand.reserveCapacity(cardIds.count)
+        for id in cardIds {
+            guard let card = deck.orderedCards.first(where: { $0.id == id }) else { return nil }
+            hand.append(card)
+        }
+        return hand
+    }
+}

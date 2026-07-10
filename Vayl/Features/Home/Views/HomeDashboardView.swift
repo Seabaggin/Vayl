@@ -431,6 +431,8 @@ struct HomeDashboardView: View {
 
                 pendingSessionBanner
 
+                joinErrorBanner
+
                 #if DEBUG
                 debugOverlay(layout: layout)
                 #endif
@@ -663,6 +665,23 @@ struct HomeDashboardView: View {
             .transition(.move(edge: .top).combined(with: .opacity))
             .animation(AppAnimation.spring, value: entryStore?.pendingSession)
             .zIndex(2)
+        }
+    }
+
+    // MARK: - Join/resume error banner (spec 2026-07-09 §1.8: fail loud, never silent)
+
+    @ViewBuilder
+    private var joinErrorBanner: some View {
+        if let joinError = entryStore?.joinError {
+            VStack {
+                Spacer()
+                SessionErrorBanner(message: joinError) { entryStore?.clearJoinError() }
+                    .padding(.horizontal, AppSpacing.lg)
+                    .padding(.bottom, AppSpacing.lg)
+            }
+            .transition(.opacity)
+            .animation(AppAnimation.standard, value: entryStore?.joinError)
+            .zIndex(3)
         }
     }
 

@@ -48,6 +48,11 @@ final class SessionEntryStore {
     private(set) var pendingSession: Pending?
     /// Set on accept; the host view presents the cover with it, then clears it.
     var acceptedLaunch: SessionLaunch?
+    /// Loud failure surface (spec 2026-07-09 §1.8): set when accept()/resume()
+    /// fails to load the deck or build a valid hand — never when the row
+    /// simply vanished server-side (that path silently clears the banner, by
+    /// design). Cleared on the next successful refresh/accept/resume.
+    private(set) var joinError: String?
 
     private let modelContainer: ModelContainer
     private let appState: AppState
@@ -87,6 +92,7 @@ final class SessionEntryStore {
         guard let coupleId = appState.coupleId else { pendingSession = nil; return }
         Task { @MainActor in
             do {
+                joinError = nil
                 guard let dto = try await realtime.fetchOpenSession(coupleId: coupleId) else {
                     pendingSession = nil
                     return
@@ -181,9 +187,19 @@ final class SessionEntryStore {
                 pendingSession = nil       // gone — drop the dead banner
                 return
             }
-            guard let deck = try? catalog.loadDeck(id: dto.deckId) else { return }
-            let hand = dto.cardIds.compactMap { id in deck.orderedCards.first { $0.id == id } }
-            guard !hand.isEmpty, let myId = localProfileId() else { return }
+            guard let deck = try? catalog.loadDeck(id: dto.deckId) else {
+                joinError = Self.joinErrorMessage
+                pendingSession = nil       // don't leave a banner that would fail identically
+                return
+            }
+            guard let hand = SessionLaunch.buildHand(cardIds: dto.cardIds, deck: deck),
+                  let myId = localProfileId()
+            else {
+                joinError = Self.joinErrorMessage
+                pendingSession = nil
+                return
+            }
+            joinError = nil
             acceptedLaunch = SessionLaunch(
                 hand: hand, entry: .joiner, role: role(for: myId), session: dto
             )
@@ -209,9 +225,19 @@ final class SessionEntryStore {
                 pendingSession = nil       // gone — drop the dead banner
                 return
             }
-            guard let deck = try? catalog.loadDeck(id: dto.deckId) else { return }
-            let hand = dto.cardIds.compactMap { id in deck.orderedCards.first { $0.id == id } }
-            guard !hand.isEmpty, let myId = localProfileId() else { return }
+            guard let deck = try? catalog.loadDeck(id: dto.deckId) else {
+                joinError = Self.joinErrorMessage
+                pendingSession = nil       // don't leave a banner that would fail identically
+                return
+            }
+            guard let hand = SessionLaunch.buildHand(cardIds: dto.cardIds, deck: deck),
+                  let myId = localProfileId()
+            else {
+                joinError = Self.joinErrorMessage
+                pendingSession = nil
+                return
+            }
+            joinError = nil
             acceptedLaunch = SessionLaunch(
                 hand: hand,
                 entry: dto.initiatorId == myId ? .initiator : .joiner,
@@ -236,6 +262,12 @@ final class SessionEntryStore {
         dismissedSessionId = pendingSession?.id
         pendingSession = nil
     }
+
+    func clearJoinError() { joinError = nil }
+
+    /// Exact copy (Bryan-approved, no em dashes) — shared with PlayStore's
+    /// openError for the same failure class (spec 2026-07-09 §1.8).
+    static let joinErrorMessage = "Couldn't open that session. Make sure you're both on the latest version, then try again."
 
     private func localProfileId() -> UUID? {
         let context = ModelContext(modelContainer)

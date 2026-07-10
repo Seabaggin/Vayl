@@ -287,6 +287,26 @@ final class SessionEntryStoreTests: XCTestCase {
         XCTAssertNil(store.pendingSession, "accept() clears the banner once the launch is built")
     }
 
+    func test_accept_withMissingCardId_setsJoinError_clearsPending_noLaunch() async {
+        let (container, appState, _, coupleId) = makeContext()
+        let realtime = FakeSessionEntryRealtime()
+        realtime.openRow = makeRow(
+            coupleId: coupleId, initiatorId: UUID(), status: .lobby,
+            cardIds: ["opener-01", "does-not-exist", "opener-03"]
+        )
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+
+        store.refresh()
+        await waitUntil("pendingSession never set") { store.pendingSession != nil }
+
+        store.accept()
+        await waitUntil("joinError never set") { store.joinError != nil }
+
+        XCTAssertNil(store.acceptedLaunch, "a missing card id must never shorten the hand into a launch")
+        XCTAssertNil(store.pendingSession, "the dead banner must be cleared, not left to fail identically again")
+        XCTAssertEqual(store.joinError, "Couldn't open that session. Make sure you're both on the latest version, then try again.")
+    }
+
     func test_accept_withNoPendingSession_isANoOp() {
         let container = ModelContainer.previewContainer
         let appState = AppState()
@@ -340,6 +360,25 @@ final class SessionEntryStoreTests: XCTestCase {
 
         XCTAssertNil(store.acceptedLaunch, "a vanished row must never produce a launch")
         XCTAssertNil(store.pendingSession, "the dead banner is cleared")
+    }
+
+    func test_resume_withMissingCardId_setsJoinError_clearsPending_noLaunch() async {
+        let (container, appState, myProfileId, coupleId) = makeContext()
+        let realtime = FakeSessionEntryRealtime()
+        realtime.openRow = makeRow(
+            coupleId: coupleId, initiatorId: myProfileId, status: .active,
+            cardIds: ["opener-01", "does-not-exist"]
+        )
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+
+        store.refresh()
+        await waitUntil("pendingSession never set") { store.pendingSession?.kind == .resume }
+
+        store.resume()
+        await waitUntil("joinError never set") { store.joinError != nil }
+
+        XCTAssertNil(store.acceptedLaunch, "a missing card id must never shorten the hand into a launch")
+        XCTAssertNil(store.pendingSession)
     }
 
     // MARK: endResumable()
@@ -597,5 +636,28 @@ final class PlayStoreOpenConflictTests: XCTestCase {
         XCTAssertNil(store.conflictSession, "a vanished row clears the conflict rather than resuming a dead one")
         XCTAssertEqual(realtime.openSessionCalls, 1, "the originally-pending open proceeds once the conflict resolved itself")
         XCTAssertEqual(store.launch?.hand.map(\.id), plan.cardIds)
+    }
+
+    func test_resumeConflict_withMissingCardId_setsOpenError_noLaunch() async {
+        let (container, appState, _, coupleId) = makeContext()
+        let realtime = FakePlaySessionOpening()
+        let conflictRow = makeRow(
+            coupleId: coupleId, initiatorId: UUID(), status: .active,
+            cardIds: ["opener-01", "does-not-exist"]
+        )
+        realtime.openRow = conflictRow
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+        let deck = loadOpenerDeck()
+
+        store.builderDeck = deck   // builderDidFinish guards on the builder being open
+        store.builderDidFinish(makePlan(deck: deck))
+        await waitUntil("conflictSession never set") { store.conflictSession != nil }
+
+        store.resumeConflict()
+        await waitUntil("openError never set") { store.openError != nil }
+
+        XCTAssertNil(store.launch, "a missing card id must never shorten the hand into a launch")
+        XCTAssertNil(store.conflictSession)
+        XCTAssertEqual(realtime.openSessionCalls, 0, "resuming never inserts a new row")
     }
 }

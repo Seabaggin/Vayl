@@ -110,6 +110,20 @@ struct PlayView: View {
                 .zIndex(25)
             }
 
+            // Joiner/resume validation failure (spec 2026-07-09 §1.8): the
+            // banner already cleared itself, so surface this loud rather than
+            // silently doing nothing.
+            if let joinError = entryStore?.joinError {
+                VStack {
+                    Spacer()
+                    SessionErrorBanner(message: joinError) { entryStore?.clearJoinError() }
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.bottom, AppSpacing.lg)
+                }
+                .transition(.opacity)
+                .zIndex(25)
+            }
+
             // Joiner / resume banner — above the ceremony (20 > 10).
             if let pending = entryStore?.pendingSession {
                 VStack {
@@ -142,6 +156,7 @@ struct PlayView: View {
         .animation(AppAnimation.enter, value: store.ceremonyDeckID)
         .animation(AppAnimation.spring, value: entryStore?.pendingSession)
         .animation(AppAnimation.standard, value: store.openError)
+        .animation(AppAnimation.standard, value: entryStore?.joinError)
         .onChange(of: entryStore?.acceptedLaunch) { _, launch in
             if let launch {
                 store.launch = launch          // reuses the session cover below
