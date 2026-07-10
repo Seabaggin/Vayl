@@ -4,8 +4,8 @@
 //
 //  "About the Pulse" — a short, calm explainer presented as a .vaylSheet
 //  (pre-TestFlight review D11). Content-only: the presenting `.vaylSheet`
-//  supplies chrome + grabber (same discipline as SessionSettingsSheet /
-//  MeCardSheet). Descriptive, never assessive: it explains the map and the
+//  supplies chrome + grabber (same discipline as SessionSettingsSheet).
+//  Descriptive, never assessive: it explains the map and the
 //  privacy promise, and says nothing about the person reading it.
 //
 
