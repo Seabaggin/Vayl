@@ -53,7 +53,7 @@ struct PendingSessionBanner: View {
                 )
         )
         .scaleEffect(isPressed ? 0.98 : 1.0)
-        .sensoryFeedback(.impact(weight: .light), trigger: isPressed)
+        .sensoryFeedback(.impact(weight: .light), trigger: isPressed) { _, pressed in pressed }
         .contentShape(Rectangle())
         .onTapGesture { onJoin() }
         .simultaneousGesture(
@@ -119,7 +119,7 @@ struct ResumeSessionBanner: View {
             }
             .buttonStyle(.plain)
             .scaleEffect(isEndPressed ? 0.96 : 1.0)
-            .sensoryFeedback(.impact(weight: .light), trigger: isEndPressed)
+            .sensoryFeedback(.impact(weight: .light), trigger: isEndPressed) { _, pressed in pressed }
             .accessibilityLabel("End it")
         }
         .padding(AppSpacing.md)
@@ -132,7 +132,7 @@ struct ResumeSessionBanner: View {
                 )
         )
         .scaleEffect(isPressed ? 0.98 : 1.0)
-        .sensoryFeedback(.impact(weight: .light), trigger: isPressed)
+        .sensoryFeedback(.impact(weight: .light), trigger: isPressed) { _, pressed in pressed }
         .confirmationDialog(
             "End this session?",
             isPresented: $showEndConfirm,

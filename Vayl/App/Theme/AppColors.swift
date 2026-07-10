@@ -260,13 +260,13 @@ struct AppColors {
     /// Apply .italic() at usage site — italic is the semantic signal.
     static let textTertiary = Color.dynamic(
         light: VaylPrimitives.wineMid.withAlphaComponent(0.38),
-        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.38)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.50)
     )
 
     /// Placeholder text, pronoun hints, inline helper copy.
     static let textHint = Color.dynamic(
         light: VaylPrimitives.magentaDark.withAlphaComponent(0.50),
-        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.42)
+        dark: VaylPrimitives.pureWhite.withAlphaComponent(0.60)
     )
 
     /// Disabled states, ghost copy. Lowest visible hierarchy.
@@ -291,7 +291,7 @@ struct AppColors {
     /// Card overline and section labels with spectrum tint.
     static let textCardLabel = Color.dynamic(
         light: VaylPrimitives.purple.withAlphaComponent(0.70),
-        dark: VaylPrimitives.cyan.withAlphaComponent(0.60)
+        dark: VaylPrimitives.cyan.withAlphaComponent(0.75)
     )
 
     /// Section headers and eyebrow labels — the lavender-purple from docs/prototypes/settings-v2.html.
@@ -299,7 +299,7 @@ struct AppColors {
     /// (which skews cyan in Midnight). Use for .sec-h style grouping labels in list screens.
     static let textSectionLabel = Color.dynamic(
         light: VaylPrimitives.purple.withAlphaComponent(0.65),
-        dark: VaylPrimitives.purpleBright.withAlphaComponent(0.55)
+        dark: VaylPrimitives.purpleBright.withAlphaComponent(0.85)
     )
 
     // ─────────────────────────────────────────────

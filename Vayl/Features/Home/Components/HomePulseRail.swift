@@ -217,7 +217,8 @@ struct HomePulseRail: View {
         if seconds < 60 { return "just now" }
         if seconds < 3600 { return "\(seconds / 60)m ago" }
         if seconds < 86400 { return "\(seconds / 3600)h ago" }
-        return "yesterday"
+        let days = seconds / 86400
+        return "\(days) day\(days == 1 ? "" : "s") ago"
     }
 }
 
