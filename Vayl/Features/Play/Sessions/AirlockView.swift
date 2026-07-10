@@ -199,10 +199,11 @@ struct AirlockView: View {
 
             presenceRow
 
-            // The ultimate backstop — the gesture is never a wall. Each device
-            // that taps consents itself; both consented + present → the
+            // The ultimate backstop — the gesture is never a wall. Shown on the
+            // local miss grind OR asymmetric consent (partner already in). Each
+            // device that taps consents itself; both consented + present → the
             // existing server-authoritative flip.
-            if sync.backstopAvailable {
+            if airlock.syncBackstopAvailable {
                 Button {
                     Task { _ = await airlock.consent() }
                 } label: {
@@ -380,7 +381,7 @@ struct AirlockView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, AppSpacing.sm)
 
-            Text("Press and hold together. When the count ends, let go at the **same moment** — land close enough together and the deck opens.")
+            Text("Press and hold together. When the count ends, let go at the **same moment**. Land close enough together and the deck opens.")
                 .font(AppFonts.caption)
                 .foregroundStyle(AppColors.textSecondary)
                 .padding(.bottom, AppSpacing.md)

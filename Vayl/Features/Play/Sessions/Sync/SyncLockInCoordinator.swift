@@ -47,6 +47,10 @@ final class SyncLockInCoordinator {
     private let send: (SyncSignal) async throws -> Void
     /// AirlockStore.consent() — returns whether the commit landed.
     private let requestConsent: () async -> Bool
+    /// Whether the session already flipped to active (AirlockStore.state).
+    /// Gates the success-latch drain: a passed round whose flip never lands
+    /// (partner missed on THEIR phone) must not latch this device forever.
+    private let isSessionActive: () -> Bool
 
     // MARK: - Round state
 
@@ -62,12 +66,14 @@ final class SyncLockInCoordinator {
         config: SyncConfig = .standard,
         role: SessionRole,
         send: @escaping (SyncSignal) async throws -> Void,
-        requestConsent: @escaping () async -> Bool
+        requestConsent: @escaping () async -> Bool,
+        isSessionActive: @escaping () -> Bool
     ) {
         self.config = config
         self.role = role
         self.send = send
         self.requestConsent = requestConsent
+        self.isSessionActive = isSessionActive
     }
 
     // MARK: - Local gestures (from SyncLockInRing via AirlockView)
@@ -189,6 +195,7 @@ final class SyncLockInCoordinator {
             misses = 0
             backstopAvailable = false
             phase = .result(.inSync)
+            scheduleSuccessDrain()
             Task { [weak self] in
                 guard let self else { return }
                 // Consent write failure keeps the existing un-latch semantics:
@@ -219,6 +226,25 @@ final class SyncLockInCoordinator {
             try? await Task.sleep(for: .seconds(self.config.resultHoldSeconds))
             guard !Task.isCancelled else { return }
             self.resetRound()
+        }
+    }
+
+    /// Half-consented deadlock guard: per-device miss counters can drift on
+    /// one-way broadcast loss, so the SAME two angles can judge .inSync here
+    /// and a miss on the partner's phone. If the flip has not landed by
+    /// resultHoldSeconds, drain the success latch back to idle so both phones
+    /// can re-arm together. Our consent is already written and stays written;
+    /// a later passing round calling consent() again is an idempotent no-op.
+    private func scheduleSuccessDrain() {
+        resultResetTask?.cancel()
+        resultResetTask = Task { [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(for: .seconds(self.config.resultHoldSeconds))
+            guard !Task.isCancelled, !self.isSessionActive() else { return }
+            if case .result(.inSync) = self.phase {
+                logger.info("sync passed but the flip never landed — draining to idle for another round")
+                self.resetRound()
+            }
         }
     }
 

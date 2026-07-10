@@ -484,13 +484,14 @@ final class AirlockSyncRoundTests: XCTestCase {
         backstopAfterMisses: Int = 4,
         countdownStep: Double = 0.01,
         sweep: Double = 0.25,
-        timeoutMargin: Double = 0.1
+        timeoutMargin: Double = 0.1,
+        resultHold: Double = 60   // default: keep verdicts assertable, no auto-drain
     ) -> SyncConfig {
         var config = SyncConfig.standard
         config.countdownStepSeconds = countdownStep
         config.sweepSeconds = sweep
         config.roundTimeoutMarginSeconds = timeoutMargin
-        config.resultHoldSeconds = 60   // keep verdicts assertable, no auto-drain
+        config.resultHoldSeconds = resultHold
         config.backstopAfterMisses = backstopAfterMisses
         return config
     }
@@ -511,14 +512,15 @@ final class AirlockSyncRoundTests: XCTestCase {
     /// Store started over a connected mock — sync coordinator exists.
     private func makeStartedStore(
         mock: MockAirlockTransport,
-        config: SyncConfig
+        config: SyncConfig,
+        role: SessionRole = .a
     ) async -> AirlockStore {
         let coupleId = UUID()
         mock.openRow = makeRow(coupleId: coupleId)
         let store = AirlockStore(
             coupleId: coupleId,
             myProfileId: UUID(),
-            role: .a,
+            role: role,
             transport: mock,
             presenceTimeout: 60,
             pollInterval: 0.02,
@@ -700,5 +702,80 @@ final class AirlockSyncRoundTests: XCTestCase {
         await store.start()
         XCTAssertEqual(store.transport, .poll)
         XCTAssertNil(store.sync, "poll mode has no broadcasts — no sync round")
+    }
+
+    // (f) Half-consented deadlock guard, leader orientation: A judges .inSync
+    // (consent written) while B missed. A's success latch must drain back to
+    // idle after resultHold so a NEW round can reach go for both.
+    func testLeaderSuccessLatchDrainsAndReArms() async {
+        let mock = MockAirlockTransport()
+        let store = await makeStartedStore(mock: mock, config: fastConfig(resultHold: 0.05))
+        guard let sync = store.sync else { return }
+
+        await reachSweep(sync, mock: mock)
+        sync.release(fraction: 0.5)
+        mock.syncContinuation?.yield(.release(role: .b, angle: 185))
+        await waitUntil("in sync") { sync.phase == .result(.inSync) }
+        await waitUntil("consent written") { mock.consentWrites == [.a] }
+        // Partner missed on THEIR phone (miss-counter drift) — no flip lands,
+        // so the latch must drain instead of holding .result(.inSync) forever.
+        await waitUntil("success latch drains") { sync.phase == .idle }
+        XCTAssertTrue(store.selfConsented, "the written consent stays written")
+
+        // A fresh round must reach go again (the deadlock is gone).
+        await reachSweep(sync, mock: mock)
+        let goCount = mock.syncSends.filter { $0 == .go(.a) }.count
+        XCTAssertEqual(goCount, 2, "the leader must broadcast go for the new round")
+    }
+
+    // (f) Same guard, follower orientation: B latches success while A missed.
+    // B must drain to idle and be able to join A's next round.
+    func testFollowerSuccessLatchDrainsAndRejoins() async {
+        let mock = MockAirlockTransport()
+        let store = await makeStartedStore(mock: mock, config: fastConfig(resultHold: 0.05), role: .b)
+        guard let sync = store.sync else { return }
+
+        // Follower flow: arm, partner (.a) arms, leader's go arrives.
+        sync.arm()
+        mock.syncContinuation?.yield(.arm(.a))
+        try? await Task.sleep(for: .milliseconds(30))
+        XCTAssertFalse(mock.syncSends.contains(.go(.b)), "the follower never leads")
+        mock.syncContinuation?.yield(.go(.a))
+        await waitUntil("sweeping") {
+            if case .sweeping = sync.phase { return true } else { return false }
+        }
+        sync.release(fraction: 0.5)
+        mock.syncContinuation?.yield(.release(role: .a, angle: 185))
+        await waitUntil("in sync") { sync.phase == .result(.inSync) }
+        await waitUntil("consent written") { mock.consentWrites == [.b] }
+        await waitUntil("success latch drains") { sync.phase == .idle }
+
+        // B can join A's next round: arm again, go arrives, sweep starts.
+        sync.arm()
+        mock.syncContinuation?.yield(.arm(.a))
+        mock.syncContinuation?.yield(.go(.a))
+        await waitUntil("sweeping again") {
+            if case .sweeping = sync.phase { return true } else { return false }
+        }
+    }
+
+    // (g) Asymmetric consent: the partner is already in (row fact) while this
+    // device is not — the backstop must surface without grinding local misses.
+    func testBackstopSurfacesOnAsymmetricConsent() async {
+        let mock = MockAirlockTransport()
+        let store = await makeStartedStore(mock: mock, config: fastConfig())
+        guard let sync = store.sync else { return }
+
+        XCTAssertFalse(store.syncBackstopAvailable)
+        // The partner's consent lands on the row (they passed a round we lost).
+        mock.rowsContinuation?.yield(makeRow(
+            id: store.session?.id ?? UUID(), coupleId: store.coupleId,
+            aPresent: true, bPresent: true, bConsented: true
+        ))
+        await waitUntil("partner consent mirrored") { store.partnerConsented }
+        XCTAssertTrue(store.syncBackstopAvailable,
+                      "partner in + self not in must surface the backstop")
+        XCTAssertFalse(sync.backstopAvailable, "no local misses were needed")
+        XCTAssertFalse(store.selfConsented)
     }
 }

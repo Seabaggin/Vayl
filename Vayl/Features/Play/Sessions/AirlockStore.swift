@@ -162,6 +162,15 @@ final class AirlockStore {
     /// in which case AirlockView falls back to the per-device HoldToLockInRing.
     private(set) var sync: SyncLockInCoordinator?
 
+    /// AirlockView's backstop visibility: the coordinator's local miss grind,
+    /// OR asymmetric consent ("they're in and I can't get in" must never
+    /// require grinding N local misses first). Only meaningful while the sync
+    /// round exists — the fallback hold ring consents directly.
+    var syncBackstopAvailable: Bool {
+        guard let sync else { return false }
+        return sync.backstopAvailable || (partnerConsented && !selfConsented)
+    }
+
     enum Transport: String { case realtime, poll }
 
     // MARK: - Identity
@@ -316,6 +325,15 @@ final class AirlockStore {
             },
             requestConsent: { [weak self] in
                 await self?.consent() ?? false
+            },
+            isSessionActive: { [weak self] in
+                // activating counts too: the flip is already requested (both
+                // consented), so draining the success latch would only flash
+                // an idle ring during the row echo.
+                switch self?.state {
+                case .active, .activating: return true
+                default: return false
+                }
             }
         )
         sync = coordinator
