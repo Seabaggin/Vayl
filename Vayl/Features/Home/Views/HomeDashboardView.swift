@@ -62,6 +62,9 @@ struct HomeDashboardView: View {
     var daysSinceLastSession: Int? = nil
     var recentEvents: [HomeEvent] = []
     var isSolo: Bool = false
+    /// True when authenticated from a cached session but offline (returning user, no
+    /// connection). Drives the quiet, dismissible offline banner. Non-blocking.
+    var isOffline: Bool = false
     var showReflectionBanner: Bool = false
     /// Server-overridden Lexicon content from HomeStore (nil → bundled baseline).
     var lexiconRemotePool: LexiconRemotePool? = nil
@@ -136,6 +139,10 @@ struct HomeDashboardView: View {
     /// Presents the Pulse QRG. Owned here (not in HomePulseRail) so the sheet
     /// covers the whole screen rather than the nested rail's bounds.
     @State private var showPulseInfo = false
+
+    /// User-dismissed the offline banner this offline episode. Reset when connectivity
+    /// returns (isOffline flips false), so a later offline episode surfaces it again.
+    @State private var offlineBannerDismissed = false
 
     /// Presents the Pulse check-in in place over Home (no tab-yank). The shared
     /// PulseStore the cover writes to is the same instance the rail reads.
@@ -427,6 +434,8 @@ struct HomeDashboardView: View {
 
                 pendingSessionBanner
 
+                offlineBanner
+
                 #if DEBUG
                 debugOverlay(layout: layout)
                 #endif
@@ -438,6 +447,11 @@ struct HomeDashboardView: View {
             .frame(width: layout.screenWidth, alignment: .center)
             .onPreferenceChange(GreetingHeightKey.self) { greetingHeight = $0 }
             .onAppear { runEntranceAnimations() }
+            // Reset the per-episode dismissal when connectivity returns, so a later
+            // offline episode surfaces the banner again.
+            .onChange(of: isOffline) { _, nowOffline in
+                if !nowOffline { offlineBannerDismissed = false }
+            }
             .blur(radius: pathOpen ? 9 : 0)
             .animation(AppAnimation.spring, value: pathOpen)
             .vaylCover(
@@ -625,6 +639,27 @@ struct HomeDashboardView: View {
                 )
             )
             .animation(AppAnimation.spring, value: showReflectionBanner)
+        }
+    }
+
+    // MARK: - Offline Banner
+
+    @ViewBuilder
+    private var offlineBanner: some View {
+        if isOffline && !offlineBannerDismissed {
+            VStack {
+                OfflineBanner(
+                    onDismiss: {
+                        withAnimation(AppAnimation.spring) { offlineBannerDismissed = true }
+                    }
+                )
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.top, AppSpacing.sm)
+                Spacer()
+            }
+            .transition(.move(edge: .top).combined(with: .opacity))
+            .animation(AppAnimation.spring, value: isOffline)
+            .zIndex(1)
         }
     }
 

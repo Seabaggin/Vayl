@@ -30,6 +30,7 @@ private struct HomeRouterInnerView: View {
 
     @Environment(AppState.self) private var appState
     @Environment(EntitlementStore.self) private var entitlements
+    @Environment(AuthService.self) private var authService
     @Environment(\.modelContext) private var modelContext
 
     @State private var store: HomeStore
@@ -234,6 +235,7 @@ private struct HomeRouterInnerView: View {
                 cardsCompleted:      store.cardsCompleted,
                 recentEvents:        [],
                 isSolo:              store.isSolo,
+                isOffline:           authService.isOffline,
                 lexiconRemotePool:   store.lexiconRemotePool,
                 gettingStarted:      store.gettingStarted,
                 pathNamespace:       pathNamespace,

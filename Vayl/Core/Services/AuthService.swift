@@ -9,6 +9,23 @@ import Foundation
 import Observation
 import Supabase
 
+// MARK: - Session Failure Outcome
+
+/// How a failed session check should be handled. A returning signed-in user who
+/// cold-launches offline must NOT be bounced to SignIn: `supabase.auth.session`
+/// refreshes an expired access token over the network, and that refresh throws a raw
+/// `URLError` on a transport failure (a revoked/invalid grant comes back as an
+/// `AuthError` instead). So a network failure with a stored session is recoverable;
+/// everything else means sign out. Top-level and `nonisolated` (the module defaults
+/// to `@MainActor` isolation) so the pure classifier and its `Equatable` conformance
+/// stay usable from a nonisolated test context.
+nonisolated enum SessionFailureOutcome: Equatable {
+    /// Keep the user in, flag offline, retry the refresh later.
+    case retryOffline
+    /// Clear local auth and route to SignIn (revoked/invalid grant, or nothing cached).
+    case signOut
+}
+
 // MARK: - AuthService
 
 @Observable
@@ -24,9 +41,15 @@ final class AuthService: NSObject {
     var isLoading = false
     var error: String?
 
+    /// True when we're authenticated from a cached session but couldn't reach the
+    /// network to refresh it (returning user, cold-launched offline). Drives the
+    /// non-blocking Home offline banner. Cleared the moment a refresh succeeds.
+    var isOffline = false
+
     // MARK: - Private
 
     private var currentNonce: String?
+    private var isObservingAuthState = false
 
     private var supabase: SupabaseClient {
         SupabaseManager.shared.client
@@ -34,27 +57,103 @@ final class AuthService: NSObject {
 
     // MARK: - Session Check
 
+    /// Classifies a thrown session-check error. Pure — no I/O, no actor state — so it
+    /// is unit-tested directly. Only a transport failure (`URLError`) with a stored
+    /// session to fall back on is recoverable offline; auth failures (`AuthError`,
+    /// surfaced as any non-`URLError`) and "no stored session" both sign out.
+    nonisolated static func classifyFailure(
+        _ error: Error,
+        hasStoredSession: Bool
+    ) -> SessionFailureOutcome {
+        guard hasStoredSession else { return .signOut }
+        return (error is URLError) ? .retryOffline : .signOut
+    }
+
     /// Call once on app launch from VaylApp or AppShell.
     /// Resolves the real auth state from Supabase — no simulator shortcuts.
+    ///
+    /// `supabase.auth.session` refreshes an expired access token over the network, so a
+    /// returning user who cold-launches offline lands in the catch block. We must NOT
+    /// sign that user out: `classifyFailure` keeps them in (offline) when the failure is
+    /// a transport error and a cached session exists, and only signs out on a genuine
+    /// auth failure (revoked/invalid grant) or when nothing is cached.
     func checkSession() async {
         do {
             let session = try await supabase.auth.session
-            
-            // Add this check
+
+            // `.session` already refreshed an expired token above, so this is defensive.
             if session.isExpired {
                 try? await supabase.auth.signOut()
                 self.isAuthenticated = false
                 self.userId = nil
+                self.isOffline = false
                 return
             }
-            
+
             self.userId = session.user.id
             self.isAuthenticated = true
+            self.isOffline = false
             await ensureRemoteProfile()
         } catch {
-            self.isAuthenticated = false
-            self.userId = nil
+            // A stored (possibly expired) session survives a failed refresh — read it
+            // WITHOUT the network via `currentSession`.
+            let cached = supabase.auth.currentSession
+            switch AuthService.classifyFailure(error, hasStoredSession: cached != nil) {
+            case .retryOffline:
+                // Network failure with a cached session: stay in, show offline, and let
+                // `retrySessionIfOffline` / the auth-state observer recover us later.
+                self.userId = cached?.user.id
+                self.isAuthenticated = true
+                self.isOffline = true
+            case .signOut:
+                self.isAuthenticated = false
+                self.userId = nil
+                self.isOffline = false
+            }
         }
+    }
+
+    /// Re-attempts the session refresh, but only if we're currently authenticated-offline.
+    /// Called on return to foreground (VaylApp scene phase). A success clears `isOffline`.
+    func retrySessionIfOffline() async {
+        guard isOffline else { return }
+        await checkSession()
+    }
+
+    /// Observes Supabase auth-state changes for the app's lifetime so that when
+    /// connectivity returns WHILE the app is foregrounded, the SDK's background
+    /// auto-refresh (which fires `.tokenRefreshed`) clears the offline state without a
+    /// scene-phase change. Idempotent — safe to call more than once. Start once at launch.
+    func startObservingAuthState() {
+        guard !isObservingAuthState else { return }
+        isObservingAuthState = true
+        Task { [weak self] in
+            for await (event, session) in SupabaseManager.shared.client.auth.authStateChanges {
+                guard let self else { return }
+                switch event {
+                case .signedIn, .tokenRefreshed:
+                    guard let session else { continue }
+                    self.userId = session.user.id
+                    self.isAuthenticated = true
+                    self.isOffline = false
+                case .signedOut:
+                    self.isAuthenticated = false
+                    self.userId = nil
+                    self.isOffline = false
+                default:
+                    break
+                }
+            }
+        }
+    }
+
+    /// Maps a sign-in error to user-facing copy. A transport failure (`URLError`) during
+    /// the token exchange gets calm, actionable copy (the Sign In button IS the retry);
+    /// anything else falls back to the underlying description. Pure — unit-tested.
+    nonisolated static func signInErrorMessage(_ error: Error) -> String {
+        (error is URLError)
+            ? "Couldn't connect. Check your connection and try again."
+            : error.localizedDescription
     }
 
     // MARK: - Sign In With Apple
@@ -169,7 +268,7 @@ extension AuthService: ASAuthorizationControllerDelegate {
                 self.isLoading = false
                 await ensureRemoteProfile()
             } catch {
-                self.error = error.localizedDescription
+                self.error = AuthService.signInErrorMessage(error)
                 self.isLoading = false
             }
         }
@@ -180,7 +279,7 @@ extension AuthService: ASAuthorizationControllerDelegate {
         didCompleteWithError error: Error
     ) {
         Task { @MainActor in
-            self.error = error.localizedDescription
+            self.error = AuthService.signInErrorMessage(error)
             self.isLoading = false
         }
     }

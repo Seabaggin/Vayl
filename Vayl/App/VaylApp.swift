@@ -62,6 +62,10 @@ struct VaylApp: App {
                 .environment(entitlementStore)
                 .environment(coupleContext)
                 .task {
+                    // Keep auth state live for the app's lifetime: when connectivity
+                    // returns while foregrounded, the SDK's auto-refresh clears any
+                    // offline flag without waiting for a scene-phase change.
+                    authService.startObservingAuthState()
                     #if DEBUG
                     let debugSeedRan = await DebugCoupleSeedService(
                         modelContainer: ModelContainer.appContainer,
@@ -107,6 +111,9 @@ struct VaylApp: App {
                 .onChange(of: scenePhase) { _, newPhase in
                     guard newPhase == .active else { return }
                     Task { await pulseStore.hydrateFromServer() }
+                    // If we entered the app authenticated-but-offline, a return to
+                    // foreground is a natural moment to re-attempt the session refresh.
+                    Task { await authService.retrySessionIfOffline() }
                 }
                 .modelContainer(ModelContainer.appContainer)
         }
