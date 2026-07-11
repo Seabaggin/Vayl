@@ -93,19 +93,19 @@ final class LockInSession {
 
     // MARK: - Preview Helpers
 
-    static let example = LockInSession(
+    @MainActor static let example = LockInSession(
         cardSessionId: UUID(),
         bandwidthA: 0.8,
         bandwidthB: 0.7
     )
 
-    static let gapExample = LockInSession(
+    @MainActor static let gapExample = LockInSession(
         cardSessionId: UUID(),
         bandwidthA: 0.9,
         bandwidthB: 0.3
     )
 
-    static let lowExample = LockInSession(
+    @MainActor static let lowExample = LockInSession(
         cardSessionId: UUID(),
         bandwidthA: 0.2,
         bandwidthB: 0.3

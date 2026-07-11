@@ -5,7 +5,7 @@ import Foundation
 /// A capacity reading as a point in the circumplex.
 /// Axes are normalised 0...1: energy 0 = low, 1 = high; openness 0 = guarded, 1 = open.
 /// Midline (0.5) ties resolve toward high/open (>= rule).
-struct PulsePosition: Equatable, Codable {
+nonisolated struct PulsePosition: Equatable, Codable {
     var energy: Double      // 0...1 (vertical; 0 = low, 1 = high)
     var openness: Double    // 0...1 (horizontal; 0 = guarded, 1 = open)
 

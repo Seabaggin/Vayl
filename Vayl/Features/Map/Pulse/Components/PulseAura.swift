@@ -340,3 +340,50 @@ struct PulseCyclingAura: View {
     }
     .preferredColorScheme(.dark)
 }
+
+// MARK: - PulseSpace Colour Resolution
+// PulseSpace (Core/Models/PulseSpace.swift) is a pure semantic model — no Color, no SwiftUI
+// dependency. This extension resolves its cases to actual aura colours, living here (View
+// layer) alongside AuraColors rather than in the Model, per the architecture contract.
+
+extension PulseSpace {
+
+    /// Flat solid core for a history-grid dot (no position needed). Border states use their
+    /// primary (first) bordering quadrant when shown statically — e.g. in a partner split dot
+    /// or under Reduce Motion.
+    var dotCoreStatic: Color {
+        switch self {
+        case .neutral:   return AppColors.auraCoreNeutral
+        case .uncharted: return AppColors.auraCoreUncharted
+        default:
+            if let q = namedQuadrant { return q.capacityColor.auraCore }
+            return borderingQuadrants?.0.capacityColor.auraCore ?? AppColors.auraCoreNeutral
+        }
+    }
+
+    /// The two colours a border-state dot crossfades between (nil for non-border spaces).
+    var borderCores: (Color, Color)? {
+        guard let (a, b) = borderingQuadrants else { return nil }
+        return (a.capacityColor.auraCore, b.capacityColor.auraCore)
+    }
+
+    /// The aura ramp for this space. Named + border states blend continuously across the
+    /// field (bilinear); Neutral and Uncharted are fixed ramps that do NOT blend.
+    func ramp(at position: PulsePosition) -> AuraColors {
+        switch self {
+        case .neutral:   return .neutral
+        case .uncharted: return .uncharted
+        default:         return AuraColors.bilinear(energy: position.energy, openness: position.openness)
+        }
+    }
+
+    /// Flat core colour for a history-grid dot. Named + border states round to their nearest
+    /// quadrant tier; Neutral and Uncharted use their own fixed cores.
+    func dotCore(at position: PulsePosition) -> Color {
+        switch self {
+        case .neutral:   return AppColors.auraCoreNeutral
+        case .uncharted: return AppColors.auraCoreUncharted
+        default:         return position.quadrant.capacityColor.auraCore
+        }
+    }
+}

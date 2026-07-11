@@ -23,7 +23,7 @@ import Foundation
 
 // MARK: - CheckInPill (pure model)
 
-struct CheckInPill: Identifiable {
+nonisolated struct CheckInPill: Identifiable {
     let id             = UUID()
     let label: String
     /// Raw 0–4 axis scores for this answer (before the question's axis weights are applied).
@@ -48,7 +48,7 @@ struct CheckInPill: Identifiable {
 
 // MARK: - CheckInQuestion (pure model)
 
-struct CheckInQuestion {
+nonisolated struct CheckInQuestion {
     let text: String
     let pills: [CheckInPill]
     /// How strongly this question pushes each axis in the weighted sum.
@@ -60,7 +60,7 @@ struct CheckInQuestion {
 
 /// Static namespace for the five check-in questions, the weighted position mapping, and the
 /// Uncharted variance check.
-enum PulseAnswers {
+nonisolated enum PulseAnswers {
 
     /// Score used for a question that hasn't been answered yet — neutral midpoint, so the
     /// orb sits near centre until answers pull it.

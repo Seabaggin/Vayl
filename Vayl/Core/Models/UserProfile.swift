@@ -164,7 +164,7 @@ final class UserProfile {
 
     // MARK: - Preview Helpers
 
-    static let example = UserProfile(
+    @MainActor static let example = UserProfile(
         displayName: "Jordan",
         genderIdentity: "non-binary",
         pronouns: ["they/them"],
@@ -174,7 +174,7 @@ final class UserProfile {
         ageRange: nil
     )
 
-    static let soloExample = UserProfile(
+    @MainActor static let soloExample = UserProfile(
         displayName: "Riley",
         genderIdentity: "woman",
         pronouns: ["she/her"],
@@ -184,7 +184,7 @@ final class UserProfile {
         ageRange: nil
     )
 
-    static let linkedExample: UserProfile = {
+    @MainActor static let linkedExample: UserProfile = {
         let p = UserProfile(
             displayName: "Alex",
             genderIdentity: "man",

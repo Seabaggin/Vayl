@@ -18,9 +18,9 @@ import SwiftData
 // Uncomment each line the moment its file compiles.
 
 enum SchemaV1: VersionedSchema {
-    static var versionIdentifier = Schema.Version(1, 0, 0)
+    nonisolated(unsafe) static var versionIdentifier = Schema.Version(1, 0, 0)
 
-    static var models: [any PersistentModel.Type] = [
+    nonisolated(unsafe) static var models: [any PersistentModel.Type] = [
 
         // ── Existing — kept, will be extended not replaced ──────────────
         Couple.self,
@@ -54,8 +54,8 @@ enum SchemaV1: VersionedSchema {
 // updating this first.
 
 enum AppMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] = [SchemaV1.self]
-    static var stages: [MigrationStage] = []
+    nonisolated(unsafe) static var schemas: [any VersionedSchema.Type] = [SchemaV1.self]
+    nonisolated(unsafe) static var stages: [MigrationStage] = []
 }
 
 // MARK: - ModelContainer

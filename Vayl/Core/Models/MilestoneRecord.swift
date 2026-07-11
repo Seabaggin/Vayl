@@ -73,28 +73,28 @@ final class MilestoneRecord {
 
     // MARK: - Preview Helpers
 
-    static let example = MilestoneRecord(
+    @MainActor static let example = MilestoneRecord(
         userId: UUID(),
         milestone: .completedFirstCard
     )
 
-    static let groundRulesExample = MilestoneRecord(
+    @MainActor static let groundRulesExample = MilestoneRecord(
         userId: UUID(),
         milestone: .acknowledgedGroundRules
     )
 
-    static let researchOrbsExample = MilestoneRecord(
+    @MainActor static let researchOrbsExample = MilestoneRecord(
         userId: UUID(),
         milestone: .readThreeResearchOrbs,
         beaconItemsRead: ["beacon-001", "beacon-002", "beacon-003"]
     )
 
-    static let linkedPartnerExample = MilestoneRecord(
+    @MainActor static let linkedPartnerExample = MilestoneRecord(
         userId: UUID(),
         milestone: .linkedPartner
     )
 
-    static let soloDeckExample = MilestoneRecord(
+    @MainActor static let soloDeckExample = MilestoneRecord(
         userId: UUID(),
         milestone: .completedSoloDeck
     )

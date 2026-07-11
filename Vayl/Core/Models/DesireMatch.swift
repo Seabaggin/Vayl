@@ -54,13 +54,13 @@ final class DesireMatch {
 
     // MARK: - Preview Helpers
 
-    static let example = DesireMatch(
+    @MainActor static let example = DesireMatch(
         coupleId: UUID(),
         itemId: "desire-001",
         matchType: .mutual
     )
 
-    static let freeRevealExample: DesireMatch = {
+    @MainActor static let freeRevealExample: DesireMatch = {
         let m = DesireMatch(
             coupleId: UUID(),
             itemId: "desire-002",

@@ -13,7 +13,7 @@ import CoreGraphics
 /// Every padding, gap, and spacing value in the codebase must reference one of these.
 /// Hardcoded numeric values in `.padding()`, `.spacing()`, or `.offset()` are a violation.
 /// Nothing in this file may be referenced from VaylPrimitives — spacing has no primitive tier.
-internal enum AppSpacing {
+nonisolated internal enum AppSpacing {
 
     /// 2pt — Micro-adjustments only.
     /// Use for drag handle gaps, dot separators, and sub-pixel optical corrections.

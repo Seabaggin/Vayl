@@ -75,7 +75,7 @@ final class AcknowledgementRecord {
 
     // MARK: - Preview Helpers
 
-    static let example = AcknowledgementRecord(
+    @MainActor static let example = AcknowledgementRecord(
         userId: UUID(),
         cardsAcknowledged: [
             "facilitate-not-diagnose",

@@ -61,7 +61,7 @@ enum PulseCapacityColor: String, Codable, CaseIterable {
 /// Note: `reactive`/`receptive` were formerly named `friction`/`sovereign` — the case
 /// identifiers are never persisted (quadrant is derived from PulsePosition), so the
 /// rename is display-and-vocabulary only.
-enum PulseQuadrant: String, CaseIterable, Codable {
+nonisolated enum PulseQuadrant: String, CaseIterable, Codable {
     case expansive   // high energy + open    (top-right)
     case reactive    // high energy + guarded (top-left)
     case receptive   // low energy  + open    (bottom-right)

@@ -92,9 +92,9 @@ final class DesireMapStatus {
 
     // MARK: - Preview Helpers
 
-    static let example = DesireMapStatus(coupleId: UUID())
+    @MainActor static let example = DesireMapStatus(coupleId: UUID())
 
-    static let waitingExample: DesireMapStatus = {
+    @MainActor static let waitingExample: DesireMapStatus = {
         let s = DesireMapStatus(coupleId: UUID())
         s.partnerAComplete = true
         s.partnerACompletedAt = Date()
@@ -102,7 +102,7 @@ final class DesireMapStatus {
         return s
     }()
 
-    static let bothCompleteExample: DesireMapStatus = {
+    @MainActor static let bothCompleteExample: DesireMapStatus = {
         let s = DesireMapStatus(coupleId: UUID())
         s.partnerAComplete = true
         s.partnerBComplete = true

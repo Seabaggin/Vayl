@@ -64,7 +64,7 @@ final class SessionReflection {
 
     // MARK: - Preview Helper
 
-    static let example = SessionReflection(
+    @MainActor static let example = SessionReflection(
         cardSessionId: UUID(),
         words: ["close", "honest"],
         carriedBalance: 0.5,

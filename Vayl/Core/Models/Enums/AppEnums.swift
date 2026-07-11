@@ -36,7 +36,7 @@ enum NMStage: String, CaseIterable, Codable {
 
     /// Default card difficulty for this stage.
     /// Drives deck recommendations and content sequencing.
-    var defaultDifficulty: CardIntensity {
+    nonisolated var defaultDifficulty: CardIntensity {
         switch self {
         case .curious:    return .deepOcean
         case .exploring:  return .split

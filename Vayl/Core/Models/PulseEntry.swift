@@ -124,7 +124,7 @@ extension PulseEntry {
 // MARK: - Date Extension
 
 extension Date {
-    static func daysAgo(_ days: Int) -> Date {
+    nonisolated static func daysAgo(_ days: Int) -> Date {
         Calendar.current.date(
             byAdding: .day,
             value: -days,

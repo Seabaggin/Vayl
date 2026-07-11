@@ -12,10 +12,12 @@
 //   4. Named quadrant — from the coordinates.
 //
 // This is a pure model: no state, no UI, no dependency on a Store.
+// Colour resolution (dotCoreStatic, borderCores, ramp, dotCore) lives in
+// PulseAura.swift alongside AuraColors — Models expose semantics only.
 
-import SwiftUI
+import Foundation
 
-enum PulseSpace: Equatable {
+nonisolated enum PulseSpace: Equatable {
     case expansive
     case reactive
     case receptive
@@ -152,46 +154,4 @@ enum PulseSpace: Equatable {
         }
     }
 
-    // MARK: - Colour
-
-    /// Flat solid core for a history-grid dot (no position needed). Border states use their
-    /// primary (first) bordering quadrant when shown statically — e.g. in a partner split dot
-    /// or under Reduce Motion.
-    var dotCoreStatic: Color {
-        switch self {
-        case .neutral:   return AppColors.auraCoreNeutral
-        case .uncharted: return AppColors.auraCoreUncharted
-        default:
-            if let q = namedQuadrant { return q.capacityColor.auraCore }
-            return borderingQuadrants?.0.capacityColor.auraCore ?? AppColors.auraCoreNeutral
-        }
-    }
-
-    /// The two colours a border-state dot crossfades between (nil for non-border spaces).
-    var borderCores: (Color, Color)? {
-        guard let (a, b) = borderingQuadrants else { return nil }
-        return (a.capacityColor.auraCore, b.capacityColor.auraCore)
-    }
-
-    // MARK: - Colour (position-based)
-
-    /// The aura ramp for this space. Named + border states blend continuously across the
-    /// field (bilinear); Neutral and Uncharted are fixed ramps that do NOT blend.
-    func ramp(at position: PulsePosition) -> AuraColors {
-        switch self {
-        case .neutral:   return .neutral
-        case .uncharted: return .uncharted
-        default:         return AuraColors.bilinear(energy: position.energy, openness: position.openness)
-        }
-    }
-
-    /// Flat core colour for a history-grid dot. Named + border states round to their nearest
-    /// quadrant tier; Neutral and Uncharted use their own fixed cores.
-    func dotCore(at position: PulsePosition) -> Color {
-        switch self {
-        case .neutral:   return AppColors.auraCoreNeutral
-        case .uncharted: return AppColors.auraCoreUncharted
-        default:         return position.quadrant.capacityColor.auraCore
-        }
-    }
 }

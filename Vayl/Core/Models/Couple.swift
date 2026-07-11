@@ -98,7 +98,7 @@ final class Couple {
 
     // MARK: - Preview Helpers
 
-    static let example = Couple(
+    @MainActor static let example = Couple(
         partnerAId: UUID(),
         partnerBId: UUID()
     )
