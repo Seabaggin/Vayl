@@ -42,6 +42,13 @@ final class SyncLockInCoordinator {
     let config: SyncConfig
     let role: SessionRole
 
+    /// Solo bypass — no live partner on the channel (DEBUG-local, or a genuine
+    /// channel-down/poll session). The round runs against a phantom partner who
+    /// mirrors this device, so a valid press-hold-release passes on its own. This
+    /// is how the single ring degrades gracefully when there is no one to sync
+    /// with; the two-device path (solo == false) is completely unchanged.
+    let solo: Bool
+
     // MARK: - Injected seams
 
     private let send: (SyncSignal) async throws -> Void
@@ -65,12 +72,14 @@ final class SyncLockInCoordinator {
     init(
         config: SyncConfig = .standard,
         role: SessionRole,
+        solo: Bool = false,
         send: @escaping (SyncSignal) async throws -> Void,
         requestConsent: @escaping () async -> Bool,
         isSessionActive: @escaping () -> Bool
     ) {
         self.config = config
         self.role = role
+        self.solo = solo
         self.send = send
         self.requestConsent = requestConsent
         self.isSessionActive = isSessionActive
@@ -84,6 +93,12 @@ final class SyncLockInCoordinator {
         guard case .idle = phase else { return }
         resultResetTask?.cancel(); resultResetTask = nil
         phase = .arming
+        if solo {
+            // No partner to wait on — the phantom is always armed; start at once.
+            partnerArmed = true
+            startRoundIfArming()
+            return
+        }
         broadcast(.arm(role))
         maybeGo()
     }
@@ -93,6 +108,14 @@ final class SyncLockInCoordinator {
     func release(fraction: Double) {
         guard case .sweeping = phase, myRelease == nil else { return }
         myRelease = currentRound.classify(elapsedFraction: fraction)
+        if solo {
+            // The phantom partner releases exactly with you: a valid release
+            // judges .inSync and passes; an early/overshoot release still misses
+            // and gently retries, so the hold gesture keeps its meaning.
+            partnerRelease = myRelease
+            judgeIfReady()
+            return
+        }
         broadcast(.release(role: role, angle: fraction * 360))
         judgeIfReady()
     }

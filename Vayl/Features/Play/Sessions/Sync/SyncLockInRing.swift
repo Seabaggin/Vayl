@@ -33,7 +33,7 @@ struct SyncLockInRing: View {
 
     let config: SyncConfig
     let phase: SyncRingPhase
-    var ringSize: CGFloat = 224
+    var ringSize: CGFloat = AppLayout.lockInRingSize
     let onArm: () -> Void
     let onRelease: (Double) -> Void   // elapsed fraction of the sweep
     let onDisarm: () -> Void          // let go before the sweep started
@@ -45,13 +45,12 @@ struct SyncLockInRing: View {
     /// Guards against double-firing onRelease (auto-overshoot vs finger lift).
     @State private var didReport = false
 
-    private var scale: CGFloat { ringSize / 224 }
+    private var scale: CGFloat { ringSize / AppLayout.lockInRingSize }
 
-    private var spectrumArc: AngularGradient {
-        AngularGradient(
+    private var spectrumStroke: LinearGradient {
+        LinearGradient(
             colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-            center: .center, startAngle: .degrees(-90), endAngle: .degrees(270)
-        )
+            startPoint: .bottomLeading, endPoint: .topTrailing)
     }
 
     private var isSuccess: Bool {
@@ -94,7 +93,7 @@ struct SyncLockInRing: View {
             // Glow pass ramps with the fill (two-pass house recipe).
             Circle()
                 .trim(from: 0, to: displayFill)
-                .stroke(spectrumArc, style: StrokeStyle(lineWidth: 8 * scale, lineCap: .round))
+                .stroke(spectrumStroke, style: StrokeStyle(lineWidth: 8 * scale, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .blur(radius: 6)
                 .opacity(0.2 + 0.5 * Double(displayFill))
@@ -102,7 +101,7 @@ struct SyncLockInRing: View {
             // Crisp pass.
             Circle()
                 .trim(from: 0, to: displayFill)
-                .stroke(spectrumArc, style: StrokeStyle(lineWidth: 3 * scale, lineCap: .round))
+                .stroke(spectrumStroke, style: StrokeStyle(lineWidth: 3 * scale, lineCap: .round))
                 .rotationEffect(.degrees(-90))
 
             centerContent
@@ -155,7 +154,7 @@ struct SyncLockInRing: View {
 
     private var captionText: String {
         switch phase {
-        case .idle:      return "Press and hold together."
+        case .idle:      return "Press and hold your ring."
         case .arming:    return "Holding. Waiting for your partner."
         case .countdown: return "Get ready."
         case .sweeping:  return "Let go together."

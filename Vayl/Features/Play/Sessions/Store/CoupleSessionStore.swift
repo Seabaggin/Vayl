@@ -49,6 +49,12 @@ final class CoupleSessionStore: Identifiable {
     /// init; wayfinding copy only.
     private(set) var partnerLabel: String = "your partner"
     private(set) var deckTitle: String = "Tonight's deck"
+    /// The catalog's one-line deck tagline (e.g. "Start slow. Find your
+    /// footing."). Reused as the pre-session beat's dealer-copy line —
+    /// wired here rather than in the view because a View may not call
+    /// DeckCatalogService directly. There is no dedicated "dealer intro
+    /// line" content field yet; this is the closest existing warm line.
+    private(set) var deckSubtitle: String?
     private(set) var localProfileId: UUID?
     private let perCardTimerSeconds: [String: Int]
     private let sessionStartedAt = Date()
@@ -82,13 +88,24 @@ final class CoupleSessionStore: Identifiable {
 
     var reflectionWords: Set<String> = []
     /// "who carried it" — 0 = you, 0.5 = even, 1 = partner.
+    ///
+    /// The close's slider UI was retired in the V6 reflection redesign (words +
+    /// note only). The persisted field stays on SessionReflection so the Map's
+    /// trend derivation keeps its schema, but with no control feeding it these
+    /// hold a neutral centre — a reflection contributes no carried/heard signal
+    /// rather than a phantom one.
     var carriedBalance: Double = 0.5
-    /// "did you feel heard" — 0 = not really, 1 = fully.
-    var feltHeard: Double = 0.72
+    /// "did you feel heard" — 0 = not really, 1 = fully. Neutral centre (see above).
+    var feltHeard: Double = 0.5
     var reflectionNote: String = ""
 
     /// Set when the CardSession persists on entering close — links the reflection.
     private(set) var savedSessionId: UUID?
+
+    /// True once a real sitting reached the close (a CardSession was written).
+    /// A bail on the very first card leaves it false, so the cover leaves
+    /// quietly with no "kept" beat and nothing logged to the Map.
+    private(set) var sessionLogged = false
 
     // MARK: - Dependencies
 
@@ -179,11 +196,13 @@ final class CoupleSessionStore: Identifiable {
         var profileFetch = FetchDescriptor<UserProfile>()
         profileFetch.fetchLimit = 1
         localProfileId = try? context.fetch(profileFetch).first?.id
-        // Deck title: resolve the pretty name from the catalog when possible.
+        // Deck title + tagline: resolve the pretty name/subtitle from the
+        // catalog when possible.
         if let deckId = hand.first?.deckId,
-           let title = (try? deckCatalog.loadSummaries())?
-               .first(where: { $0.id == deckId })?.title {
-            deckTitle = title
+           let summary = (try? deckCatalog.loadSummaries())?
+               .first(where: { $0.id == deckId }) {
+            deckTitle = summary.title
+            deckSubtitle = summary.subtitle
         }
         // Partner label stays the honest generic when no name is resolvable
         // (no hardcoded placeholder names).
@@ -240,9 +259,16 @@ final class CoupleSessionStore: Identifiable {
     var sessionStatLine: String {
         let count = closeCardsDeep
         let cards = "\(count) \(count == 1 ? "card" : "cards")"
+        return "\(cards) · \(sessionDurationLabel)"
+    }
+
+    /// Close-screen duration meta — minutes only. The close headline already
+    /// owns the card count ("N cards deep"), so its sub-line carries time, not
+    /// a repeat of the same number.
+    var sessionDurationLabel: String {
         let start = sharedStartedAt ?? sessionStartedAt
         let minutes = max(1, Int(Date().timeIntervalSince(start) / 60))
-        return "\(cards) · \(minutes) min"
+        return "\(minutes) min"
     }
 
     /// Anchors the shared start to the row's created_at (first writer wins —
@@ -266,37 +292,38 @@ final class CoupleSessionStore: Identifiable {
         }
     }
 
-    /// DEBUG local path: cross the airlock into the transition, then card 1.
+    /// DEBUG local path: cross the airlock into the transition. The
+    /// pre-session beat (SessionDealIntroView) now owns the held beat and
+    /// calls `introDidFinish()` when it lands the first card — see below.
     func confirmSynced() {
         guard phase == .airlock else { return }
         phase = .transition
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(transitionSeconds))
-            if phase == .transition {
-                phase = .session
-                cardDidChange()      // Section 3: first card's beat/reveal setup
-                startSessionBudgetWatch()
-                persistProgressCheckpoint()
-            }
-        }
     }
 
-    /// AirlockStore reported active — cross into the held transition beat,
-    /// start the remote mirror, then land on card 1.
+    /// AirlockStore reported active — cross into the held transition beat and
+    /// start the remote mirror. The pre-session beat drives the rest of the
+    /// hand-off via `introDidFinish()`.
     func airlockDidActivate() {
         guard phase == .airlock else { return }
         phase = .transition
         startRemoteSync()
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(transitionSeconds))
-            if phase == .transition {
-                phase = .session
-                cardDidChange()      // Section 3: first card's beat/reveal setup
-                startTimerIfNeeded()
-                startSessionBudgetWatch()
-                persistProgressCheckpoint()
-            }
-        }
+    }
+
+    /// SessionDealIntroView's `onComplete` — the pre-session beat has landed
+    /// the first card as reading text, so this is where `.session` actually
+    /// begins. Reproduces the union of what the old timer tail did on either
+    /// path: `cardDidChange`/budget-watch/checkpoint applied on both the
+    /// DEBUG-local and real paths identically, and `startTimerIfNeeded` is
+    /// safe to call unconditionally because it internally guards on `isLive`
+    /// (a no-op on the DEBUG-local path) — so one unified call covers both,
+    /// no branching needed here.
+    func introDidFinish() {
+        guard phase == .transition else { return }
+        phase = .session
+        cardDidChange()      // Section 3: first card's beat/reveal setup
+        startTimerIfNeeded()
+        startSessionBudgetWatch()
+        persistProgressCheckpoint()
     }
 
     /// Lobby cancel: mark the row abandoned so the partner's device sees the
@@ -324,8 +351,25 @@ final class CoupleSessionStore: Identifiable {
 
     /// "End well" from the re-center sheet — a clean dual exit mid-session.
     func endEarly() {
+        // Wrapping up on the very first card, with nothing recorded yet, is a
+        // bail rather than a sitting: don't write a CardSession and skip the
+        // close entirely. `index == 0` (not just an empty record set) keeps a
+        // resumed session — which rebuilds `index` from the row while local
+        // records start empty — on the normal logged-close path.
+        if records.isEmpty && index == 0 {
+            endWithoutLogging()
+            return
+        }
         recordCurrent(.skipped)
         finishSession()
+    }
+
+    /// The no-engagement bail: leave the cover without logging a session or
+    /// showing the close. Marks the row abandoned so the partner's device
+    /// follows to its own quiet exit (its `endEarly` hits this same guard).
+    private func endWithoutLogging() {
+        abandonRemoteSession()
+        phase = .done   // sessionLogged stays false → container dismisses, no beat
     }
 
     private func recordCurrent(_ status: CardStatus) {
@@ -904,7 +948,7 @@ final class CoupleSessionStore: Identifiable {
         Task { @MainActor in try? await realtime.setPerCardTimer(sessionId: sid, timers: timers) }
     }
 
-    // MARK: - Safety (pause / safe word / presence grace)
+    // MARK: - Safety (pause / presence grace)
 
     private var graceTask: Task<Void, Never>?
 
@@ -940,14 +984,28 @@ final class CoupleSessionStore: Identifiable {
         if reflectionWords.contains(word) { reflectionWords.remove(word) } else { reflectionWords.insert(word) }
     }
 
+    /// True when the user marked at least one word or wrote a note — the only
+    /// case worth writing a SessionReflection row for, and the signal the close
+    /// sheet reads to guard a stray dismiss against discarding entered content.
+    var reflectionHasContent: Bool {
+        !reflectionWords.isEmpty
+            || !reflectionNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     /// Save the private reflection against the just-saved session, then dismiss.
+    /// An empty reflection (no words, no note) writes nothing — Save on a blank
+    /// field is the same clean close as Skip, not an empty row on the Map.
     func saveReflection() {
-        persistReflection()
+        if reflectionHasContent { persistReflection() }
         phase = .done
     }
 
-    /// Decline the reflection — the session itself is already saved.
+    /// Decline the reflection — the session itself is already saved. A skip is
+    /// an honest close, not a delete: if the user marked words or wrote a note
+    /// before choosing to skip, keep them. Only a truly empty reflection is let
+    /// go silently.
     func skipReflection() {
+        if reflectionHasContent { persistReflection() }
         phase = .done
     }
 
@@ -964,6 +1022,7 @@ final class CoupleSessionStore: Identifiable {
         persistSession()
         liveComplete()
         UserDefaults.standard.set(true, forKey: UserDefaultsKey.hasCompletedCoupleSession)
+        sessionLogged = true
         phase = .close
     }
 

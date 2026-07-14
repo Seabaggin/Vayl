@@ -98,10 +98,11 @@ private struct CoupleSessionFlow: View {
     let airlock: AirlockStore?
 
     @Environment(\.vaylDismiss) private var vaylDismiss
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var transitionBreathe = false
     @State private var endedOkayPressed = false
+    /// Flips when a logged sitting reaches the close, firing the one terminal
+    /// success haptic on the "kept" beat. A first-card bail never sets it.
+    @State private var keptTrigger = false
 
     var body: some View {
         ZStack {
@@ -117,11 +118,17 @@ private struct CoupleSessionFlow: View {
             content
         }
         .animation(AppAnimation.slow.reduceMotionSafe, value: store.phase)
+        .sensoryFeedback(.success, trigger: keptTrigger)
         .onChange(of: store.phase) { _, phase in
             guard phase == .done else { return }
-            // A beat on "kept", then leave the cover at a natural end.
+            // A logged sitting holds a beat on "kept" before leaving. A
+            // first-card bail logged nothing, so it just leaves — no beat, no
+            // success haptic, and no "it'll show up in your Map" promise to break.
             Task { @MainActor in
-                try? await Task.sleep(for: .seconds(1.1))
+                if store.sessionLogged {
+                    keptTrigger.toggle()   // the one terminal success haptic
+                    try? await Task.sleep(for: .seconds(1.1))
+                }
                 vaylDismiss(confirm: false)
             }
         }
@@ -134,7 +141,7 @@ private struct CoupleSessionFlow: View {
             if let airlock {
                 switch airlock.state {
                 case .waitingForPartner, .failed:
-                    SessionLobbyView(store: store, airlock: airlock).transition(.opacity)
+                    SessionSettingsView(store: store, airlock: airlock).transition(.opacity)
                 case .bothPresent, .consented, .activating:
                     AirlockView(store: store, airlock: airlock).transition(.opacity)
                 case .active:
@@ -149,39 +156,35 @@ private struct CoupleSessionFlow: View {
                 AirlockView(store: store, airlock: nil).transition(.opacity)   // DEBUG local
             }
         case .transition:
-            transitionBeat.transition(.opacity)
+            SessionDealIntroView(
+                dealerCopy: dealerCopy,
+                firstPrompt: store.currentCard?.text ?? store.hand.first?.text ?? "",
+                onComplete: { store.introDidFinish() }
+            )
+            .transition(.opacity)
         case .session:
             SessionPlayerView(store: store).transition(.opacity)
         case .close:
             SessionCloseView(store: store).transition(.opacity)
         case .done:
-            doneBeat.transition(.opacity)
+            // Only a logged sitting earns the "kept" beat; a first-card bail
+            // shows nothing and the cover dismisses immediately.
+            if store.sessionLogged {
+                doneBeat.transition(.opacity)
+            } else {
+                Color.clear
+            }
         }
     }
 
-    // MARK: - Transition (a held breath, together)
+    // MARK: - Pre-session beat dealer copy
 
-    private var transitionBeat: some View {
-        VStack(spacing: AppSpacing.lg) {
-            Spacer()
-            Text("look at each other.")
-                .font(AppFonts.sectionHeading)
-                .foregroundStyle(AppColors.textPrimary)
-            Text("✦")
-                .font(AppFonts.displayHero)
-                .foregroundStyle(AppColors.spectrumText)
-                .scaleEffect(transitionBreathe && !reduceMotion ? 1.08 : 1.0)
-                .opacity(transitionBreathe && !reduceMotion ? 1.0 : 0.7)
-                .ambientAnimation(
-                    .easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true),
-                    value: transitionBreathe
-                )
-                .padding(.top, AppSpacing.xl)
-            Spacer()
-        }
-        .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear { transitionBreathe = true }
+    /// The pre-session beat's spoken line. No dedicated deck-authored "dealer
+    /// intro line" content field exists yet (flagged as a future content
+    /// task) — the catalog's one-line deck tagline reads warm enough to
+    /// stand in, with a generic fallback for a hand with no resolvable deck.
+    private var dealerCopy: String {
+        store.deckSubtitle ?? "tonight, the two of you open up."
     }
 
     // MARK: - Ended beat (the row died before going active)

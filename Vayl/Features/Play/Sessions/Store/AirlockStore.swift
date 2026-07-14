@@ -159,7 +159,8 @@ final class AirlockStore {
     private(set) var session: CuratedSessionDTO?
     /// The two-person sync lock-in round brain. Created once the realtime
     /// transport is connected; nil in poll mode (broadcasts need the channel),
-    /// in which case AirlockView falls back to the per-device HoldToLockInRing.
+    /// in which case AirlockView solo-drives the same SyncLockInRing with a
+    /// phantom-partner coordinator (HoldToLockInRing was retired 2026-07-12).
     private(set) var sync: SyncLockInCoordinator?
 
     /// AirlockView's backstop visibility: the coordinator's local miss grind,
@@ -316,7 +317,7 @@ final class AirlockStore {
         }
 
         // Sync lock-in: the coordinator exists only while the channel is live
-        // (broadcasts need it). Poll mode falls back to HoldToLockInRing.
+        // (broadcasts need it). Poll mode solo-drives the same ring in AirlockView.
         let coordinator = SyncLockInCoordinator(
             config: syncConfig,
             role: role,

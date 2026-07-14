@@ -377,7 +377,7 @@ struct SessionPlayerView: View {
                 Spacer()
                 // Reveal cards must reveal before advancing (the ceremony is
                 // the card). Only the proceed control is gated — the care mark
-                // and the safe word stay reachable, always.
+                // stays reachable, always.
                 proceedButton
                     .allowsHitTesting(store.revealSatisfied)
                     .opacity(store.revealSatisfied ? 1 : 0.35)
