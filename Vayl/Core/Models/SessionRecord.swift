@@ -9,7 +9,7 @@ import Foundation
 import SwiftData
 
 // MARK: - SessionRecord
-// Represents a single completed (or safe-worded) play session.
+// Represents a single completed (or ended-early) play session.
 // One row is created each time the user finishes or exits SessionView.
 // Stored via SwiftData — persists across app launches.
 

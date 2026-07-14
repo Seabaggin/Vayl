@@ -42,6 +42,14 @@ final class AppState {
 
     // MARK: - Routing
 
+    /// True once cold-launch routing has been decided — i.e. the onboarding gate
+    /// is reconciled and `checkSession()` has resolved (success OR failure), so we
+    /// know which screen to show. The splash's reveal gates on this: it holds
+    /// (breathing) until this flips, then blooms — so the app is never revealed
+    /// mid-decision and a returning user never sees a SignIn→Home flash.
+    /// Set once by VaylApp's launch task; never reset (a resume is not a cold launch).
+    var isRoutingSettled: Bool = false
+
     /// Whether this user has linked a partner.
     /// Drives content visibility and home state rendering.
     var linkState: LinkState {

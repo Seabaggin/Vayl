@@ -64,14 +64,12 @@ final class DebugCoupleSeedService {
         let id: UUID
         let userA: UUID?
         let userB: UUID?
-        let sharedSafeWord: String?
         let connectionComposition: String?
 
         enum CodingKeys: String, CodingKey {
             case id
             case userA = "user_a"
             case userB = "user_b"
-            case sharedSafeWord = "shared_safe_word"
             case connectionComposition = "connection_composition"
         }
     }
@@ -307,7 +305,7 @@ final class DebugCoupleSeedService {
     private func fetchRemoteCouple(coupleId: UUID) async throws -> RemoteCoupleRow {
         try await supabase
             .from("couples")
-            .select("id,user_a,user_b,shared_safe_word,connection_composition")
+            .select("id,user_a,user_b,connection_composition")
             .eq("id", value: coupleId.uuidString)
             .single()
             .execute()
@@ -348,7 +346,6 @@ final class DebugCoupleSeedService {
         couple.id = coupleId
         couple.partnerAId = partnerA
         couple.partnerBId = partnerB
-        couple.sharedSafeWord = remoteCouple.sharedSafeWord ?? "red"
         if let raw = remoteCouple.connectionComposition,
            let composition = GenderDynamic(rawValue: raw) {
             couple.connectionComposition = composition

@@ -55,7 +55,7 @@ final class DataStore {
     ///   - durationSeconds: Total session length in seconds
     ///   - reactions: Array of tuples — each has the prompt text, category, and reaction string
     ///   - partnerName: Optional partner display name (nil for solo)
-    ///   - completedFully: false if the user safe-worded out early
+    ///   - completedFully: false if the user ended the session early
     func saveSession(
         category: String,
         difficulty: String,

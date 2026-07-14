@@ -307,6 +307,7 @@ enum AppIcons {
     static let gridCircleFill     = "grid.circle.fill"
     static let infoCircle         = "info.circle"
     static let link               = "link"
+    static let wifiSlash          = "wifi.slash"
 
     // ── Pairing & sharing ──────────────────────────────
     static let gear                 = "gearshape.fill"

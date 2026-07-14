@@ -31,7 +31,6 @@ final class Couple {
 
     // MARK: - Shared Config
 
-    var sharedSafeWord: String          // default "red" — only shared config
     var relationshipTenure: RelationshipTenure?  // set by first together-mode partner during OB
 
     // MARK: - Connection Composition
@@ -80,7 +79,6 @@ final class Couple {
         self.partnerBId = partnerBId
         self.createdAt = Date()
         self.connectionType = connectionType
-        self.sharedSafeWord = "red"
         self.relationshipTenure = relationshipTenure
         self.connectionComposition = connectionComposition
         self.entitlementTier = .free
