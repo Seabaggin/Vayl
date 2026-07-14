@@ -45,11 +45,11 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 0) {
                         settingsHeader
                         youSection
+                        membershipCard
                         partnerSection
                         appSection
                         accountSection
                         aboutSection
-                        membershipCard
                         versionLabel
                     }
                     .padding(.horizontal, AppSpacing.lg)
@@ -161,36 +161,8 @@ struct SettingsView: View {
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(AppColors.spectrumText)
                 .padding(.top, AppSpacing.xs)
-                .padding(.bottom, AppSpacing.sm)
+                .padding(.bottom, AppSpacing.md)
         }
-    }
-
-    private func spectrumBadge(_ text: String) -> some View {
-        Text(text)
-            .font(AppFonts.overline)
-            .tracking(1.5)
-            .foregroundStyle(AppColors.spectrumText)
-            .padding(.horizontal, AppSpacing.sm)
-            .padding(.vertical, AppSpacing.xxs + 3)
-            .background(
-                Capsule()
-                    .fill(AppColors.spectrumPurple.opacity(0.10))
-                    .overlay(Capsule().strokeBorder(AppColors.spectrumPurple.opacity(0.32), lineWidth: 1))
-            )
-    }
-
-    private func plainBadge(_ text: String) -> some View {
-        Text(text)
-            .font(AppFonts.overline)
-            .tracking(1.5)
-            .foregroundStyle(AppColors.textSecondary)
-            .padding(.horizontal, AppSpacing.sm)
-            .padding(.vertical, AppSpacing.xxs + 3)
-            .background(
-                Capsule()
-                    .fill(AppColors.glassSurface)
-                    .overlay(Capsule().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
-            )
     }
 
     // MARK: - Membership
@@ -203,7 +175,7 @@ struct SettingsView: View {
                 Image(systemName: AppIcons.checkmarkCircle)
                     .font(AppFonts.bodyMedium)
                     .foregroundStyle(AppColors.spectrumCyan)
-                    .frame(width: 28, height: 28)
+                    .frame(width: 32, height: 32)
                     .background(
                         RoundedRectangle(cornerRadius: AppRadius.sm)
                             .fill(AppColors.spectrumCyan.opacity(0.12))
@@ -220,11 +192,16 @@ struct SettingsView: View {
                         .foregroundStyle(AppColors.textTertiary)
                 }
                 Spacer()
-                Button("Restore") {
-                    // Not wired in V1
+                Button {
+                    // TODO: wire StoreKit restore-purchases
+                } label: {
+                    Text("Restore")
+                        .font(AppFonts.caption.bold())
+                        .foregroundStyle(AppColors.spectrumCyan)
+                        .padding(.leading, AppSpacing.md)
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
                 }
-                .font(AppFonts.caption.bold())
-                .foregroundStyle(AppColors.spectrumCyan)
                 .buttonStyle(PressableCardStyle())
             }
             .padding(AppSpacing.md)
@@ -233,7 +210,9 @@ struct SettingsView: View {
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
         } else {
             Button {
-                // Not wired in V1 — open paywall
+                // TODO: present the paywall (PaywallSheet). This card is the Settings
+                // paywall entry point and is intentionally styled to stand out, but is
+                // not yet linked to monetization.
             } label: {
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     HStack(spacing: AppSpacing.sm) {
@@ -261,16 +240,16 @@ struct SettingsView: View {
                 RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
                     .fill(LinearGradient(
                         colors: [
-                            AppColors.spectrumCyan.opacity(0.09),
-                            AppColors.spectrumPurple.opacity(0.12),
-                            AppColors.spectrumMagenta.opacity(0.09)
+                            AppColors.spectrumCyan.opacity(0.06),
+                            AppColors.spectrumPurple.opacity(0.08),
+                            AppColors.spectrumMagenta.opacity(0.06)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ))
             )
             .vaylGlassCard(radius: AppRadius.container)
-            .overlay(alignment: .top) { premiumHairline }
+            .overlay(alignment: .top) { spectrumTopLine }
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
         }
     }
@@ -287,17 +266,6 @@ struct SettingsView: View {
             startPoint: .leading, endPoint: .trailing
         )
         .frame(height: 1)
-    }
-
-    private var premiumHairline: some View {
-        let gradient = LinearGradient(
-            colors: [.clear, AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta, .clear],
-            startPoint: .leading, endPoint: .trailing
-        )
-        return ZStack(alignment: .top) {
-            gradient.frame(height: 8).blur(radius: 5).opacity(0.55)
-            gradient.frame(height: 1)
-        }
     }
 
     // MARK: - You
@@ -485,7 +453,9 @@ struct SettingsView: View {
 
                     Divider().overlay(AppColors.borderSubtle)
 
-                    Button {} label: {
+                    Button {
+                        // TODO: wire Support (contact / help destination)
+                    } label: {
                         SettingsNavRow(icon: "questionmark.circle.fill", label: "Support")
                     }
                     .buttonStyle(PressableCardStyle())

@@ -17,13 +17,13 @@ struct PaywallSheet: View {
     enum Entry: Equatable {
         case reveal
         case settings
-        case playDeck(name: String)
+        case playDeck
 
         var hook: String {
             switch self {
-            case .reveal:             return "Reveal Your Map"
-            case .settings:           return "Yours, together"
-            case .playDeck(let name): return "Unlock \(name)"
+            case .reveal:   return "Reveal Your Map"        // after the reveal, and the Map-tab Desire Map door
+            case .settings: return "Unlock Vayl"            // neutral, ownership — the Settings door
+            case .playDeck: return "Unlock All Decks"       // one purchase unlocks every deck, not just this one
             }
         }
     }
@@ -31,6 +31,15 @@ struct PaywallSheet: View {
     let entry: Entry
     /// Called when the purchase succeeds (Core unlocked).
     var onUnlocked: () -> Void = {}
+    /// Called when the user declines ("Not now"). Each door passes the dismissal that
+    /// returns the user to what they had: the reveal rewinds to the free map, the
+    /// sheet doors close. When nil, no off-ramp control is shown.
+    var onClose: (() -> Void)?
+    /// Who owns the frame. `false` (default): the paywall self-frames + draws its own grab
+    /// handle, for the bespoke reveal ceremony host that provides no chrome (matching its
+    /// sibling sheets). `true`: the presenter (`.vaylSheet`, at the Map/Play doors) owns the
+    /// frame + grabber + drag, so the paywall supplies content only — never double-framed.
+    var hostProvidesChrome: Bool = false
 
     @Environment(EntitlementStore.self) private var entitlements
 
@@ -61,19 +70,23 @@ struct PaywallSheet: View {
         "Post-session reflections"
     ]
 
-    /// StoreKit-localized price when available; falls back to the catalog price.
-    private var priceText: String { entitlements.corePriceText ?? "$24.99" }
+    /// StoreKit-localized price. Nil until the product loads (bootstrap runs at launch).
+    /// Never assert a hardcoded number here — a stale literal could diverge from the live
+    /// App Store price. When nil, the price shows "Loading price…" and the CTA is disabled.
+    private var priceReady: Bool { entitlements.corePriceText != nil }
 
-    // MARK: - Header bloom tuning
+    // MARK: - Effect tuning (bloom + glow divider)
     //
-    // Bloom-rendering constants (size / offset / intensity) for the paywall-only spectrum halo
-    // behind the hook. NOT design tokens; same convention as VaylSheetChrome's purpleTint/darken.
-    // Tune on device; they never leave this file.
+    // Effect-rendering constants for the paywall-only spectrum halo behind the hook and the
+    // glow under the divider. NOT design tokens; same convention as VaylSheetChrome's
+    // purpleTint/darken. Tune on device; they never leave this file.
     private let bloomCoreSize: CGFloat = 300   // purple core diameter
     private let bloomFlankSize: CGFloat = 210   // cyan / magenta flank diameter
     private let bloomFlankDX: CGFloat = 72    // horizontal spread of the flanks
     private let bloomVOffset: CGFloat = -52   // halo tracks the hook up after the top tightened (was -20)
     private let bloomIntensity: Double  = 1.0   // overall opacity over GlowOrb's own falloff
+    private let dividerGlowBlur: CGFloat = 6    // soft bloom under the crisp spectrum divider
+    private let dividerGlowOpacity: Double = 0.9
 
     // MARK: - Body
 
@@ -107,17 +120,23 @@ struct PaywallSheet: View {
     // so the chrome wraps BOTH candidates: with .fixedSize it hugs content; inside the ScrollView
     // it fills the screen and the content scrolls (the CTA + footer stay reachable).
     @ViewBuilder private var sizedSheet: some View {
-        ViewThatFits(in: .vertical) {
-            sheetStack
-                // Ceremonial exception: the paywall keeps the full spectrum top border.
-                // It is a conversion moment, not a workhorse — the hero treatment is the
-                // point here (same logic as reserving the foil for StatPhase).
-                .vaylSheetChrome(signature: .full)
-                // .fixedSize(vertical) overrides the chrome's maxHeight:.infinity so the sheet hugs
-                // content; horizontal:false keeps full-bleed width (no GeometryReader, no width bug).
-                .fixedSize(horizontal: false, vertical: true)
+        if hostProvidesChrome {
+            // The presenter (.vaylSheet) owns the frame + grabber + drag.
+            // We supply content only; it scrolls inside the presenter's fixed height when tall.
             ScrollView(showsIndicators: false) { sheetStack }
-                .vaylSheetChrome(signature: .full)
+        } else {
+            // Bespoke reveal ceremony host provides no chrome — self-frame to content height,
+            // matching the reveal's sibling sheets (star detail, full-map list). The chrome
+            // carries the spectrum top border like every sheet.
+            ViewThatFits(in: .vertical) {
+                sheetStack
+                    .vaylSheetChrome()
+                    // .fixedSize(vertical) overrides the chrome's maxHeight:.infinity so the sheet
+                    // hugs content; horizontal:false keeps full-bleed width (no width bug).
+                    .fixedSize(horizontal: false, vertical: true)
+                ScrollView(showsIndicators: false) { sheetStack }
+                    .vaylSheetChrome()
+            }
         }
     }
 
@@ -125,18 +144,20 @@ struct PaywallSheet: View {
     // with the hook whether the sheet hugs content or scrolls.
     private var sheetStack: some View {
         VStack(spacing: 0) {
-            grabHandle
+            if !hostProvidesChrome { grabHandle }   // vaylSheet draws its own grabber at the Map/Play doors
             VStack(alignment: .leading, spacing: 0) {
                 header                                          // hook + hero
-                sectionHeading.padding(.top, AppSpacing.lg)     // air between value prop and label — premium apps breathe here
-                bulletList.padding(.top, AppSpacing.sm)         // small breathe between label and list
-                glowDivider.padding(.top, AppSpacing.lg)        // the value / decision break
-                priceRow.padding(.top, AppSpacing.lg)           // price leads the decision zone — more air = more weight
+                bulletList.padding(.top, AppSpacing.md)         // value list follows the hook directly (eyebrow removed)
+                glowDivider.padding(.top, AppSpacing.md)        // the value / decision break
+                priceRow.padding(.top, AppSpacing.md)           // price leads the decision zone
                 cta.padding(.top, AppSpacing.md)                // price + CTA read as one unit
                 coversBoth.padding(.top, AppSpacing.sm)         // badge hugs the button it reassures
                 if let purchaseStatus {
                     purchaseStatusLine(purchaseStatus)
                         .padding(.top, AppSpacing.sm)
+                }
+                if onClose != nil {
+                    notNow.padding(.top, AppSpacing.sm)   // an honest exit, as visible as the CTA
                 }
             }
             .padding(.horizontal, AppSpacing.xl)
@@ -144,7 +165,7 @@ struct PaywallSheet: View {
 
             footer
                 .padding(.horizontal, AppSpacing.xl)
-                .padding(.top, AppSpacing.lg)                   // clear separation between decision zone and legal footer
+                .padding(.top, AppSpacing.sm)                   // clear separation between decision zone and legal footer
                 .padding(.bottom, AppSpacing.sm)                // minimal clearance above home indicator
         }
         .frame(maxWidth: .infinity)
@@ -172,22 +193,14 @@ struct PaywallSheet: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.horizontal, -AppSpacing.md)   // widen past the body inset so 38pt stays one line
 
+            // Secondary tone so the supporting line recedes under the hero and reads
+            // distinct from the bright (textPrimary) value bullets below — no white-on-white wall.
             Text("Made to take your curiosity somewhere deeper. Follow it together, and see where it leads.")
-                .font(AppFonts.body(20, weight: .medium, relativeTo: .body))
-                .foregroundStyle(AppColors.textBody)
+                .font(AppFonts.body(16, weight: .medium, relativeTo: .body))
+                .foregroundStyle(AppColors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    // MARK: - Section heading (introduces the bullets)
-
-    private var sectionHeading: some View {
-        Text("Explore with less guesswork")
-            .font(AppFonts.body(18, weight: .bold, relativeTo: .headline))
-            .textCase(.uppercase)
-            .foregroundStyle(AppColors.spectrumPurple)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Header bloom (paywall-only spectrum halo behind the hook)
@@ -216,7 +229,7 @@ struct PaywallSheet: View {
             ForEach(Array(bullets.enumerated()), id: \.offset) { i, line in
                 SpectrumBulletRow(text: line,
                                   phaseOffset: Double(i) * 0.22,
-                                  font: AppFonts.body(20, weight: .medium, relativeTo: .body))
+                                  font: AppFonts.body(16, weight: .medium, relativeTo: .body))
             }
         }
     }
@@ -226,8 +239,8 @@ struct PaywallSheet: View {
     private var glowDivider: some View {
         ZStack {
             SpectrumHairline()
-                .blur(radius: 6)
-                .opacity(0.9)
+                .blur(radius: dividerGlowBlur)
+                .opacity(dividerGlowOpacity)
             SpectrumHairline()
         }
     }
@@ -236,20 +249,28 @@ struct PaywallSheet: View {
 
     private var priceRow: some View {
         HStack(alignment: .firstTextBaseline, spacing: AppSpacing.xs) {
-            Text(priceText)
-                .font(AppFonts.display(30, weight: .bold, relativeTo: .title))
-                .foregroundStyle(AppColors.textPrimary)
-            Text("· one time · yours forever")
-                .font(AppFonts.body(15, weight: .regular, relativeTo: .subheadline))
-                .foregroundStyle(AppColors.textSecondary)
-                .accessibilityLabel("one time, yours forever")   // read clean; drop the · dividers
+            if priceReady {
+                Text(entitlements.corePriceText ?? "")
+                    .font(AppFonts.display(30, weight: .bold, relativeTo: .title))
+                    .foregroundStyle(AppColors.textPrimary)
+                Text("· one time · yours forever")
+                    .font(AppFonts.body(15, weight: .regular, relativeTo: .subheadline))
+                    .foregroundStyle(AppColors.textSecondary)
+                    .accessibilityLabel("one time, yours forever")   // read clean; drop the · dividers
+            } else {
+                Text("Loading price…")
+                    .font(AppFonts.body(17, weight: .medium, relativeTo: .body))
+                    .foregroundStyle(AppColors.textSecondary)
+            }
             Button {
                 hapticTick += 1
                 withAnimation(AppAnimation.standard) { showDetails = true }
             } label: {
                 Image(systemName: AppIcons.infoCircle)
                     .font(AppFonts.body(19, weight: .regular, relativeTo: .body))
-                    .foregroundStyle(AppColors.spectrumText)
+                    .foregroundStyle(AppColors.spectrumTextSafe)
+                    .frame(minWidth: 44, minHeight: 44)   // 44pt hit area around the small glyph
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("What's included")
@@ -330,11 +351,32 @@ struct PaywallSheet: View {
     // MARK: - CTA + reassurance (badge UNDER the button)
 
     private var cta: some View {
-        VaylButton(label: "Unlock everything", isLoading: purchasing) {
+        VaylButton(label: "Unlock everything", isLoading: purchasing, isDisabled: !priceReady) {
             hapticTick += 1
             purchase()
         }
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// Honest off-ramp. Declining returns the user to what they had (free reveal / prior
+    /// screen), never loses anything. Kept visible and 44pt-tappable, one-handed reachable.
+    private var notNow: some View {
+        Button {
+            hapticTick += 1
+            onClose?()
+        } label: {
+            Text("Not now")
+                .font(AppFonts.body(15, weight: .medium, relativeTo: .subheadline))
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.vertical, AppSpacing.sm)
+                .padding(.horizontal, AppSpacing.lg)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .accessibilityLabel("Not now")
+        .accessibilityHint("Closes this without purchasing")
     }
 
     private var coversBoth: some View {
@@ -354,35 +396,27 @@ struct PaywallSheet: View {
     // MARK: - Footer
 
     private var footer: some View {
-        VStack(spacing: AppSpacing.sm) {
-            // Legal trio — wired controls: Restore runs EntitlementStore.restore() (spinner while
-            // in flight); Terms/Privacy open the in-app Safari sheet. App Store requires all three.
-            HStack(spacing: AppSpacing.xs) {
-                if restoring {
-                    HStack(spacing: AppSpacing.xxs) {
-                        ProgressView()
-                            .controlSize(.mini)
-                            .tint(AppColors.textTertiary)
-                        Text("Restoring…")
-                            .font(AppFonts.body(14, weight: .regular, relativeTo: .footnote))
-                            .foregroundStyle(AppColors.textTertiary)
-                    }
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("Restoring purchase")
-                } else {
-                    footerLink("Restore purchase", hint: "Restores a purchase you already made", action: restorePurchases)
+        // Legal trio only (App Store requires Restore / Terms / Privacy). The decorative
+        // "Grounded In Research" badge was removed to declutter the bottom; re-add if wanted.
+        HStack(spacing: AppSpacing.xs) {
+            if restoring {
+                HStack(spacing: AppSpacing.xxs) {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .tint(AppColors.textTertiary)
+                    Text("Restoring…")
+                        .font(AppFonts.body(14, weight: .regular, relativeTo: .footnote))
+                        .foregroundStyle(AppColors.textTertiary)
                 }
-                footerDot
-                footerLink("Terms", hint: "Opens the Terms of Service", action: openTerms)
-                footerDot
-                footerLink("Privacy", hint: "Opens the Privacy Policy", action: openPrivacy)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Restoring purchase")
+            } else {
+                footerLink("Restore purchase", hint: "Restores a purchase you already made", action: restorePurchases)
             }
-            HStack(spacing: AppSpacing.xs) {
-                Image(systemName: AppIcons.booksVertical)
-                Text("Grounded In Research")
-            }
-            .font(AppFonts.body(13, weight: .regular, relativeTo: .caption))
-            .foregroundStyle(AppColors.textSecondary)
+            footerDot
+            footerLink("Terms", hint: "Opens the Terms of Service", action: openTerms)
+            footerDot
+            footerLink("Privacy", hint: "Opens the Privacy Policy", action: openPrivacy)
         }
         .frame(maxWidth: .infinity)
     }
@@ -393,6 +427,8 @@ struct PaywallSheet: View {
             Text(label)
                 .font(AppFonts.body(14, weight: .regular, relativeTo: .footnote))
                 .foregroundStyle(AppColors.textTertiary)
+                .padding(.vertical, AppSpacing.xs)   // compact legal fine-print; tap area via contentShape
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityHint(hint)
