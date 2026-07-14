@@ -38,10 +38,21 @@ final class AuthStore {
     var isLoading: Bool { service.isLoading }
     var error: String? { service.error }
     var userId: UUID? { service.userId }
+    /// Authenticated from a cached session but offline (returning user, no connection).
+    /// Drives the quiet Home offline banner. Non-blocking.
+    var isOffline: Bool { service.isOffline }
 
     // MARK: - Actions
 
     func checkSession() async { await service.checkSession() }
     func signInWithApple() { service.signInWithApple() }
     func signOut() async { await service.signOut() }
+
+    /// Re-attempts the session refresh if we're authenticated-offline (called on return
+    /// to foreground). A success clears `isOffline`.
+    func retrySessionIfOffline() async { await service.retrySessionIfOffline() }
+
+    /// Starts the app-lifetime auth-state observer so connectivity returning while
+    /// foregrounded clears the offline state. Idempotent. Call once at launch.
+    func startObservingAuthState() { service.startObservingAuthState() }
 }
