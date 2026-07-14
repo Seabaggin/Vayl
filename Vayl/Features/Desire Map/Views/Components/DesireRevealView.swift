@@ -415,11 +415,18 @@ struct DesireRevealView: View {
                 .animation(AppAnimation.desireSheetRise, value: store.showFullMap)
             }
 
-            // S1.4 — paywall
+            // S1.4 — paywall (capped to ~two-thirds; content scrolls within via
+            // PaywallSheet's own ViewThatFits fallback, so the CTA stays reachable)
             if store.showPaywall {
-                PaywallSheet(entry: .reveal, onUnlocked: {
-                    store.handleUnlockSuccess()
-                })
+                GeometryReader { g in
+                    PaywallSheet(entry: .reveal, onUnlocked: {
+                        store.handleUnlockSuccess()
+                    }, onClose: {
+                        store.closePaywall()
+                    })
+                    .frame(height: g.size.height * 0.65)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(AppAnimation.desireSheetRise, value: store.showPaywall)
             }

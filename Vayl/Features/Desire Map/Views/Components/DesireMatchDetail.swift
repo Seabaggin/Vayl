@@ -13,9 +13,12 @@ import SwiftUI
 struct DesireMatchDetail: View {
 
     let match: RevealMatch
-    /// Called when the user taps "Talk about this". Stub — stub action in S1.3.
+    /// Called when the user taps "Talk about this". Wired: the reveal host routes this
+    /// into the Vault (see `DesireRevealView.routeToVault`).
     var onTalkTapped: (() -> Void)?
-    /// Called when the user taps "Explore in Learn". Stub — stub action in S1.3.
+    /// Called when the user taps "Explore in Learn". Deferred to V1.1 (needs Learn
+    /// desire-term deep-linking). Callers pass `nil` today, so the control hides itself
+    /// rather than showing a dead button.
     var onLearnTapped: (() -> Void)?
 
     var body: some View {
