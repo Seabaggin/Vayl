@@ -2,19 +2,30 @@
 //
 // Slug: delete-account
 //
-// HARD-deletes the caller's account (App Store requirement). Service-role so it can
-// write cross-partner + delete the auth user. The caller is resolved from their JWT —
+// HARD-deletes the caller's account (App Store 5.1.1(v) requirement). Service-role so it
+// can write cross-partner + delete the auth user. The caller is resolved from their JWT —
 // a caller can only ever delete THEIR OWN account (never a target id from the body).
 //
-// What it touches (verified against prod FKs, project ynhjlabjzauamntbyxdp):
-//   • If in a couple: the OTHER member is reverted to unpaired/free (couple_id=null,
-//     is_linked=false), then the `couples` row is DELETED. That delete cascades the
-//     couple-scoped tables (desire_matches, desire_map_status, desire_reveal_progress,
-//     entitlements, card_progress, couple_session_records, curated_sessions).
-//   • The caller's `user_profiles` row is DELETED — cascades their own per-user rows
-//     (desire_ratings, assessment_responses, assessment_results, desire_reveal_progress).
-//   • The caller's auth user is deleted so the same Apple ID re-onboards clean.
-// The partner's own artifacts (their desire_ratings, assessment_*) survive.
+// Order of operations (why it is this order):
+//   1. If in a couple: revert the OTHER member to unpaired/free (couple_id=null,
+//      is_linked=false), then DELETE the `couples` row. Must happen while the caller's
+//      profile still exists (couples.user_a/user_b are ON DELETE SET NULL → deleting the
+//      profile first would leave a half-null couple). Deleting the couple cascades the
+//      couple-scoped tables (desire_matches, desire_map_status, entitlements, card_progress,
+//      couple_session_records, curated_sessions, …).
+//   2. DELETE the caller's auth user. This is the AUTHORITATIVE step: user_profiles.auth_id
+//      is ON DELETE CASCADE, so removing the auth user removes the profile in the same
+//      operation, which in turn cascades every per-user row (desire_ratings, assessment_*,
+//      pulse_entries, pairing_codes, path_* …). We rely on the cascade instead of deleting
+//      the profile separately, so the profile can NEVER outlive the auth identity or vice
+//      versa — the account is gone as one atomic unit or not at all.
+//
+// CRITICAL (do not regress): if the auth-user delete fails we return a NON-200 error and do
+// NOT report success. A prior version swallowed this error and returned {deleted:true} while
+// the auth identity (email/PII) survived — a partial deletion that fails App Store review.
+// For that to succeed, EVERY foreign key into auth.users and user_profiles must be
+// ON DELETE CASCADE or SET NULL (see migrations 20260714120000 / 20260714120100). Any new
+// table referencing those with NO ACTION will re-break account deletion — add a cascade rule.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
@@ -56,25 +67,21 @@ serve(async (req) => {
     if (userError || !user) return json({ error: "Unauthorized" }, 401)
     const callerAuthId = user.id
 
-    // ── Caller's profile (id + couple) ────────────────────────────────
-    const { data: me, error: meErr } = await serviceClient
+    // ── Caller's profile (id + couple), if one exists ─────────────────
+    // maybeSingle: a caller with no profile row yet is valid — we still delete their auth user.
+    const { data: me } = await serviceClient
       .from("user_profiles")
       .select("id, couple_id")
       .eq("auth_id", callerAuthId)
-      .single()
-    // No profile row yet? Still delete the auth user so the account is gone.
-    if (meErr || !me) {
-      await serviceClient.auth.admin.deleteUser(callerAuthId).catch(() => {})
-      return json({ deleted: true }, 200)
-    }
+      .maybeSingle()
 
-    // ── Handle the couple (if any) ────────────────────────────────────
-    if (me.couple_id) {
+    // ── Handle the couple (while the profile still exists) ────────────
+    if (me?.couple_id) {
       const { data: couple } = await serviceClient
         .from("couples")
         .select("user_a, user_b")
         .eq("id", me.couple_id)
-        .single()
+        .maybeSingle()
 
       if (couple) {
         const partnerProfileId = couple.user_a === me.id ? couple.user_b : couple.user_a
@@ -87,29 +94,22 @@ serve(async (req) => {
         }
       }
 
-      // Delete the couple BEFORE the profile (user_a/user_b are ON DELETE SET NULL,
-      // so deleting the profile first would leave a half-null couple). This cascades
-      // all couple-scoped tables.
       const { error: coupleDelErr } = await serviceClient
         .from("couples")
         .delete()
         .eq("id", me.couple_id)
-      if (coupleDelErr) return json({ error: "Could not dissolve couple" }, 500)
+      if (coupleDelErr) {
+        console.error("delete-account: couple delete failed:", coupleDelErr.message)
+        return json({ error: "Could not dissolve couple. Please try again." }, 500)
+      }
     }
 
-    // ── Delete the caller's profile (cascades their own per-user rows) ─
-    const { error: profileDelErr } = await serviceClient
-      .from("user_profiles")
-      .delete()
-      .eq("id", me.id)
-    if (profileDelErr) return json({ error: "Could not delete profile" }, 500)
-
-    // ── Delete the auth user so the same Apple ID re-onboards clean ────
+    // ── Authoritative delete: the auth user (cascades the profile + all per-user rows) ──
     const { error: authDelErr } = await serviceClient.auth.admin.deleteUser(callerAuthId)
     if (authDelErr) {
-      // Profile is already gone; a lingering auth user with no profile is recoverable
-      // (ensureRemoteProfile recreates one). Log server-side, still report success.
+      // Do NOT report success — the account (auth identity + email) must actually be gone.
       console.error("delete-account: auth user delete failed:", authDelErr.message)
+      return json({ error: "Could not delete account. Please try again." }, 500)
     }
 
     return json({ deleted: true }, 200)
