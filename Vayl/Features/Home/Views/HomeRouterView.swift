@@ -30,6 +30,7 @@ private struct HomeRouterInnerView: View {
 
     @Environment(AppState.self) private var appState
     @Environment(EntitlementStore.self) private var entitlements
+    @Environment(AuthStore.self) private var authStore
     @Environment(\.modelContext) private var modelContext
 
     @State private var store: HomeStore
@@ -231,6 +232,7 @@ private struct HomeRouterInnerView: View {
                 displayName: appState.displayName,
                 partnerChipState: store.partnerChipState,
                 cards: loadedDeck.orderedCards,
+                deck: loadedDeck,
                 deckTitle: loadedDeck.title,
                 desireMapState: store.desireMapState,
                 partnerPulsePosition: store.partnerPulsePosition,
@@ -241,6 +243,7 @@ private struct HomeRouterInnerView: View {
                 cardsCompleted: store.cardsCompleted,
                 recentEvents: [],
                 isSolo: store.isSolo,
+                isOffline: authStore.isOffline,
                 lexiconRemotePool: store.lexiconRemotePool,
                 gettingStarted: store.gettingStarted,
                 pathNamespace: pathNamespace,

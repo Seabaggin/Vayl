@@ -304,7 +304,7 @@ struct HomeLexicon: View {
                 .padding(.top, AppSpacing.sm)
             Text(item.keyword)
                 .font(AppFonts.display(20, weight: .semibold, relativeTo: .title3))
-                .foregroundStyle(AppColors.spectrumText)
+                .foregroundStyle(AppColors.spectrumTextSafe)
                 .padding(.top, AppSpacing.md)
             Text(item.detail)
                 .font(AppFonts.caption)
@@ -340,7 +340,7 @@ struct HomeLexicon: View {
 
             Text("\u{2014} \(item.keyword)")   // — Author
                 .font(AppFonts.display(16, weight: .semibold, relativeTo: .body))
-                .foregroundStyle(AppColors.spectrumText)
+                .foregroundStyle(AppColors.spectrumTextSafe)
                 .padding(.top, AppSpacing.md)
 
             if !item.detail.isEmpty {

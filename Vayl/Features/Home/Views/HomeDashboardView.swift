@@ -49,6 +49,10 @@ struct HomeDashboardView: View {
     var displayName: String = "Jordan"
     var partnerChipState: PartnerChipState = .none
     var cards: [Card] = []
+    /// The full active deck — needed so "Settle in" can open a real session
+    /// directly (build a plan from the selected hand). Optional so #Previews
+    /// still compile; the real call site (HomeRouterView) always supplies it.
+    var deck: Deck?
     /// The active deck's title, for the small header above the card. Empty hides the header.
     var deckTitle: String = ""
     var desireMapState: DesireMapState = .hidden
@@ -65,6 +69,9 @@ struct HomeDashboardView: View {
     var daysSinceLastSession: Int?
     var recentEvents: [HomeEvent] = []
     var isSolo: Bool = false
+    /// True when authenticated from a cached session but offline (returning user, no
+    /// connection). Drives the quiet, dismissible offline banner. Non-blocking.
+    var isOffline: Bool = false
     var showReflectionBanner: Bool = false
     /// Server-overridden Lexicon content from HomeStore (nil → bundled baseline).
     var lexiconRemotePool: LexiconRemotePool?
@@ -113,6 +120,10 @@ struct HomeDashboardView: View {
     @State private var pulseVisible    = false
     @State private var lexVisible      = false
 
+    /// User-dismissed the offline banner this offline episode. Reset when connectivity
+    /// returns (isOffline flips false), so a later offline episode surfaces it again.
+    @State private var offlineBannerDismissed = false
+
     /// Whether the partner chip's quick-view popover (`PartnerChipExpand`) is
     /// open. Only meaningful for `.active` — the chip's tap handler only
     /// toggles this in that state; other states keep routing through
@@ -141,13 +152,9 @@ struct HomeDashboardView: View {
     @State private var showPulseCheckIn = false
     @Environment(PulseStore.self) private var pulseStore
 
-    /// Presents the two-knob session-settings sheet from the chest cog.
-    @State private var showSessionSettingsSheet = false
-
     /// Tonight's hand, set when the carousel hands off via `onStartHand`. Non-nil
     /// drives the protected session cover. DEBUG-only couch mode (spec rule 26):
     /// release "Settle in" routes to Play instead.
-    @State private var sessionHand: [Card]?
 
     /// Joiner entry: "‹name› set up a session" banner + join cover.
     @Environment(\.modelContext) private var modelContext
@@ -156,6 +163,8 @@ struct HomeDashboardView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var entryStore: SessionEntryStore?
     @State private var joinerLaunch: SessionLaunch?
+    /// The session opened by THIS user's "Settle in" (initiator or DEBUG local).
+    @State private var initiatorLaunch: SessionLaunch?
 
     #if DEBUG
     @State private var showDebugGrid = false
@@ -429,6 +438,8 @@ struct HomeDashboardView: View {
 
                 joinErrorBanner
 
+                offlineBanner
+
                 #if DEBUG
                 debugOverlay(layout: layout)
                 #endif
@@ -440,26 +451,29 @@ struct HomeDashboardView: View {
             .frame(width: layout.screenWidth, alignment: .center)
             .onPreferenceChange(GreetingHeightKey.self) { greetingHeight = $0 }
             .onAppear { runEntranceAnimations() }
+            // Reset the per-episode dismissal when connectivity returns, so a later
+            // offline episode surfaces the banner again.
+            .onChange(of: isOffline) { _, nowOffline in
+                if !nowOffline { offlineBannerDismissed = false }
+            }
             .blur(radius: pathOpen ? 9 : 0)
             .animation(AppAnimation.spring, value: pathOpen)
-            .vaylCover(
-                isPresented: Binding(
-                    get: { sessionHand != nil },
-                    set: { if !$0 { sessionHand = nil } }
-                )
-            ) {
-                // DEBUG-only couch mode: sessionHand is only ever set in DEBUG
-                // builds (see settleIn()).
-                CardSessionContainerView(launch: SessionLaunch(
-                    hand: sessionHand ?? [], entry: .localDebug, role: .a, session: nil
-                ))
-            }
             // Joiner path: partner opened a lobby → banner → this cover.
             .vaylCover(isPresented: Binding(
                 get: { joinerLaunch != nil },
                 set: { if !$0 { joinerLaunch = nil; onSessionEnded?() } }
             )) {
                 if let launch = joinerLaunch {
+                    CardSessionContainerView(launch: launch)
+                        .id(launch.id)
+                }
+            }
+            // Initiator path: THIS user's "Settle in" opened a session directly.
+            .vaylCover(isPresented: Binding(
+                get: { initiatorLaunch != nil },
+                set: { if !$0 { initiatorLaunch = nil; onSessionEnded?() } }
+            )) {
+                if let launch = initiatorLaunch {
                     CardSessionContainerView(launch: launch)
                         .id(launch.id)
                 }
@@ -492,22 +506,6 @@ struct HomeDashboardView: View {
             // not a protected two-device session.
             .vaylCover(isPresented: $showPulseCheckIn, confirmOnExit: false) {
                 PulseCheckInView(store: pulseStore, onClose: { showPulseCheckIn = false })
-            }
-            // The Vayl sheet (custom OB chrome). Pass the real screen height so the
-            // half fraction is reliable — the overlay's own geometry here measures the
-            // tall scroll runway, which would resolve the fraction too large.
-            .vaylSheet(
-                isPresented: $showSessionSettingsSheet,
-                heightFraction: 0.5,
-                screenHeight: layout.screenHeight
-            ) {
-                SessionSettingsSheet(
-                    reader: $appState.sessionSettings.reader,
-                    length: $appState.sessionSettings.length,
-                    partnerName: coupleContext.partnerName ?? "Partner"
-                ) {
-                    showSessionSettingsSheet = false
-                }
             }
         }
     }
@@ -566,6 +564,7 @@ struct HomeDashboardView: View {
                 font: AppFonts.tabMasthead,
                 animated: false
             )
+            .vaylDisplayTracking(40)   // tabMasthead is display(40); tighten optically
             Spacer()
             PartnerChip(
                 state: partnerChipState,
@@ -624,6 +623,27 @@ struct HomeDashboardView: View {
     }
 
     // MARK: - Pending Session Banner (joiner entry)
+
+    // MARK: - Offline Banner
+
+    @ViewBuilder
+    private var offlineBanner: some View {
+        if isOffline && !offlineBannerDismissed {
+            VStack {
+                OfflineBanner(
+                    onDismiss: {
+                        withAnimation(AppAnimation.spring) { offlineBannerDismissed = true }
+                    }
+                )
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.top, AppSpacing.sm)
+                Spacer()
+            }
+            .transition(.move(edge: .top).combined(with: .opacity))
+            .animation(AppAnimation.spring, value: isOffline)
+            .zIndex(1)
+        }
+    }
 
     @ViewBuilder
     private var pendingSessionBanner: some View {
@@ -698,18 +718,37 @@ struct HomeDashboardView: View {
     }
 
     private func settleIn() {
-        let hand = handIDs.compactMap { id in cards.first { $0.id == id } }
-        guard !hand.isEmpty else { return }
+        guard !handIDs.isEmpty, let deck else { return }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        // Single-device couch mode survives only behind DEBUG (spec rule 26);
-        // release routes to Play, where the real two-device flow begins.
-        #if DEBUG
-        sessionHand = hand
-        #else
-        onNavigateToPlay?()
-        #endif
-        handIDs = []
-        deckReset += 1   // reset the carousel back to floating behind the session
+        // Open a real session directly — the same path Play uses (shared
+        // SessionOpener), no tab redirect. Session Settings is inserted between
+        // here and the cover in a later segment.
+        let plan = SessionPlan(
+            deckId: deck.id,
+            cardIds: handIDs,
+            perCardTimerSeconds: nil,
+            globalTimerSeconds: nil,
+            deckVariant: nil
+        )
+        Task { @MainActor in
+            let opener = SessionOpener(realtime: RealtimeSessionService())
+            let result = await opener.open(
+                deck: deck, plan: plan,
+                coupleId: appState.coupleId,
+                context: ModelContext(modelContext.container)
+            )
+            switch result {
+            case .launch(let launch), .debugLocal(let launch):
+                initiatorLaunch = launch
+                handIDs = []
+                deckReset += 1   // reset the carousel back to floating behind the session
+            case .conflict, .failed, .unavailable:
+                // Home keeps conflict/error quiet for this segment (Play surfaces
+                // them); the hand is kept so the user can try again. A later
+                // segment can unify the error surface.
+                break
+            }
+        }
     }
 
     /// The deck's chrome over the open carousel: the "tonight" corner deck (always
@@ -733,21 +772,6 @@ struct HomeDashboardView: View {
             }
             .position(
                 x: layout.screenWidth / 2 + cardHalfWidth,
-                y: layout.safeAreaInsets.top + 34
-            )
-
-            // Settings cog + label — anchored above the card's own LEFT edge, opposite
-            // the corner deck. Opens the two-knob session-settings sheet.
-            VStack(spacing: AppSpacing.xs) {
-                settingsCog
-                Text("Setup")
-                    .font(AppFonts.label)
-                    .tracking(1.4)
-                    .textCase(.uppercase)
-                    .foregroundStyle(AppColors.textTertiary)
-            }
-            .position(
-                x: layout.screenWidth / 2 - cardHalfWidth,
                 y: layout.safeAreaInsets.top + 34
             )
 
@@ -805,11 +829,6 @@ struct HomeDashboardView: View {
         .animation(AppAnimation.spring, value: handIDs.count)
     }
 
-    /// Chest settings cog — opens the two-knob session-settings sheet.
-    private var settingsCog: some View {
-        SettingsCogButton { showSessionSettingsSheet = true }
-    }
-
     private func runEntranceAnimations() {
         withAnimation(AppAnimation.slow.delay(0.10)) { greetingVisible = true }
         withAnimation(AppAnimation.spring.delay(0.30)) { heroVisible     = true }
@@ -860,29 +879,6 @@ struct HomeDashboardView: View {
 }
 
 // MARK: - Settings Cog Button
-
-/// Small circular glass button for the chest's top-leading corner. Opens the
-/// two-knob session-settings sheet. Owns its own press state (tap contract).
-private struct SettingsCogButton: View {
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: AppIcons.gearOutline)
-                .font(AppFonts.bodyMedium)
-                .foregroundStyle(AppColors.spectrumText)
-                .frame(width: 44, height: 44)
-                .background(
-                    Circle().fill(AppColors.glassSurface)
-                )
-                .overlay(
-                    Circle().strokeBorder(AppColors.borderDefault, lineWidth: 0.7)
-                )
-        }
-        .buttonStyle(PressableCardStyle())
-        .accessibilityLabel("Settings")
-    }
-}
 
 // MARK: - Debug Grid Overlay
 
