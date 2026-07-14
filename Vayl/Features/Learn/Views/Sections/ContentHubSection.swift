@@ -29,6 +29,15 @@ struct ContentHubSection: View {
             case .listen: return "waveform"; case .voices: return "person.2"
             }
         }
+        /// Per-tab accent — a spectrum sweep so each tab reads as its own place.
+        var accent: Color {
+            switch self {
+            case .books:  return AppColors.spectrumCyan
+            case .watch:  return AppColors.spectrumBridge
+            case .listen: return AppColors.spectrumPurple
+            case .voices: return AppColors.spectrumMagenta
+            }
+        }
     }
 
     var body: some View {
@@ -38,10 +47,9 @@ struct ContentHubSection: View {
                 .foregroundStyle(accent)
 
             VStack(spacing: AppSpacing.md) {
-                LearnSegmented(
-                    items: HubTab.allCases.map { .init($0, $0.label, icon: $0.icon) },
-                    selection: $tab,
-                    accent: accent
+                SegmentedPillGroup(
+                    options: HubTab.allCases.map { .init($0, label: $0.label, icon: $0.icon, accent: $0.accent) },
+                    selection: $tab
                 )
 
                 Group {
@@ -156,10 +164,12 @@ struct ContentHubSection: View {
 
     private var voicesPanel: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            LearnSegmented(
-                items: [.init(VoiceKind.creator, "Creators"), .init(VoiceKind.researcher, "Researchers")],
-                selection: $voiceFilter,
-                accent: accent
+            SegmentedPillGroup(
+                options: [
+                    .init(VoiceKind.creator, label: "Creators", accent: AppColors.spectrumCyan),
+                    .init(VoiceKind.researcher, label: "Researchers", accent: AppColors.spectrumMagenta)
+                ],
+                selection: $voiceFilter
             )
             ForEach(store.voices(voiceFilter)) { voice in
                 Button {} label: { voiceRow(voice) }

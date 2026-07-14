@@ -38,6 +38,10 @@ struct LearnView: View {
                 .padding(.top, AppSpacing.md)
                 .padding(.bottom, AppSpacing.lg)   // breathing room only; tab-bar clearance is TabContentWrapper's job
             }
+            // Top scroll-edge: the masthead dissolves under the Dynamic Island as
+            // it scrolls up, instead of hard-cutting at the safe-area line. Reference
+            // adoption of the shared modifier; other tabs adopt the same once felt.
+            .scrollTopEdgeFade()
         }
         .vaylCover(isPresented: $showDatabase, confirmOnExit: false) {
             ResearchDatabaseView(store: store, onOpenFinding: { f in
@@ -85,6 +89,7 @@ struct LearnView: View {
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text("Learn.")
                     .font(AppFonts.tabMasthead)
+                    .vaylDisplayTracking(40)   // tabMasthead is display(40); tighten optically
                     .foregroundStyle(AppColors.spectrumText)
                 Text("Build your frame before you need it")
                     .font(AppFonts.caption)
