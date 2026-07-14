@@ -172,7 +172,15 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
                                         .onEnded { value in
                                             let past = value.translation.height > sheetHeight * dismissDistanceRatio
                                             let fling = value.predictedEndTranslation.height > flingProjection
-                                            if past || fling { dismiss() } else { withAnimation(AppAnimation.arrive.reduceMotionSafe) { drag = 0 } }
+                                            // Release-velocity carry: the momentum projected past
+                                            // the finger, fed to the settle spring.
+                                            let momentum = value.predictedEndTranslation.height - value.translation.height
+                                            if past || fling {
+                                                dismiss()
+                                            } else {
+                                                // Snap back at the speed it was moving, not a fixed curve.
+                                                withAnimation(.vaylFlick(momentum: momentum)) { drag = 0 }
+                                            }
                                         }
                                 )
                         }
@@ -180,7 +188,10 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .animation(AppAnimation.arrive.reduceMotionSafe, value: isPresented)
+                // Interruptible: a critically-damped spring retargets from the live
+                // value if the sheet is grabbed mid-rise, where the fixed `arrive`
+                // curve would finish its scripted duration first.
+                .animation(AppAnimation.arriveSpring.reduceMotionSafe, value: isPresented)
             }
             .ignoresSafeArea()
             .allowsHitTesting(isPresented)
@@ -192,7 +203,7 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
     private var grabber: some View {
         Capsule()
             .fill(AppColors.spectrumBorder)
-            .frame(width: 40, height: 4)
+            .frame(width: 36, height: 5)
             .opacity(0.6)
             .frame(maxWidth: .infinity)
             .padding(.top, AppSpacing.sm)
@@ -201,7 +212,7 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
 
     private func dismiss() {
         drag = 0
-        withAnimation(AppAnimation.arrive.reduceMotionSafe) { isPresented = false }
+        withAnimation(AppAnimation.arriveSpring.reduceMotionSafe) { isPresented = false }
     }
 }
 
@@ -257,6 +268,190 @@ extension View {
             showsGrabber: showsGrabber,
             sheetContent: content
         ))
+    }
+
+    /// Multi-detent sheet (Apple-style stop points). Additive to `vaylSheet(heightFraction:)`;
+    /// use when a sheet needs more than one resting height (e.g. a peek that drags up to full).
+    /// Caller order sets the initial detent (first element). Spec:
+    /// docs/superpowers/specs/2026-07-12-unified-sheet-system.md
+    /// `scrimTapDismisses`: whether a tap on the dimmed area dismisses (default
+    /// true — the standard "tap outside to close"). Pass false when the content
+    /// behind the scrim is meant to be looked at (e.g. the session-close recap),
+    /// so a tap on it doesn't become an accidental exit.
+    /// `interactiveDismissDisabled`: when true, a downward swipe can't discard the
+    /// sheet — it settles back to the smallest (peek) detent instead. Pass a live
+    /// value (e.g. "there's unsaved input") so leaving stays an explicit, labeled
+    /// action and a stray drag never throws away what the user entered. Mirrors
+    /// SwiftUI's `.interactiveDismissDisabled`, but snaps to peek rather than
+    /// fully locking, so the sheet still collapses out of the way.
+    func vaylSheet<SheetContent: View>(
+        isPresented: Binding<Bool>,
+        detents: [VaylSheetDetent],
+        screenHeight: CGFloat? = nil,
+        showsGrabber: Bool = true,
+        scrimTapDismisses: Bool = true,
+        interactiveDismissDisabled: Bool = false,
+        @ViewBuilder content: @escaping () -> SheetContent
+    ) -> some View {
+        modifier(VaylDetentSheetModifier(
+            isPresented: isPresented,
+            detents: detents,
+            screenHeight: screenHeight,
+            showsGrabber: showsGrabber,
+            scrimTapDismisses: scrimTapDismisses,
+            interactiveDismissDisabled: interactiveDismissDisabled,
+            sheetContent: content
+        ))
+    }
+}
+
+// MARK: - Detents
+
+/// A resting height a sheet can settle at, resolved against the available height.
+/// A peek is just `.height(_)` — not a special case.
+enum VaylSheetDetent: Equatable {
+    case medium              // ~half the screen (Apple .medium)
+    case large               // near-full, small top gap (Apple .large)
+    case fraction(CGFloat)   // custom fraction of available height
+    case height(CGFloat)     // custom absolute height (e.g. a 100pt peek)
+
+    func resolved(in available: CGFloat) -> CGFloat {
+        switch self {
+        case .medium:          return available * 0.5
+        case .large:           return available * 0.92
+        case .fraction(let f): return available * f
+        case .height(let h):   return min(h, available * 0.96)
+        }
+    }
+}
+
+// MARK: - Detent sheet
+
+/// The multi-detent presenter. Shares the single-height path's chrome/scrim/grabber look,
+/// adds velocity-projected snapping between stop points. FEEL-GATE: the thresholds below
+/// are tuned on device, not from code review.
+private struct VaylDetentSheetModifier<SheetContent: View>: ViewModifier {
+
+    @Binding var isPresented: Bool
+    let detents: [VaylSheetDetent]
+    let screenHeight: CGFloat?
+    let showsGrabber: Bool
+    var scrimTapDismisses: Bool = true
+    /// When true, a dismiss-height drag settles back to the smallest detent
+    /// instead of dismissing — guards unsaved content behind an explicit exit.
+    var interactiveDismissDisabled: Bool = false
+    @ViewBuilder let sheetContent: () -> SheetContent
+
+    /// Resting detent, indexed into the caller-ordered `detents` (first = initial).
+    @State private var detentIndex: Int = 0
+    /// Live drag (down = positive) from the resting detent.
+    @State private var drag: CGFloat = 0
+
+    /// Fling/drag below `smallest * this` dismisses.
+    private let dismissBelow: CGFloat = 0.6
+    /// Resistance factor above the largest detent.
+    private let rubberBand: CGFloat = 0.2
+
+    func body(content: Content) -> some View {
+        content.overlay {
+            GeometryReader { geo in
+                let available = screenHeight ?? geo.size.height
+                let heights = detents.map { $0.resolved(in: available) }
+                let idx = min(detentIndex, max(0, heights.count - 1))
+                let restingH = heights.isEmpty ? 0 : heights[idx]
+                let largest = heights.max() ?? restingH
+                let smallest = heights.min() ?? restingH
+                let raw = restingH - drag
+                // Rubber-band above the tallest detent; follow the finger down toward dismiss.
+                let liveH = raw > largest ? largest + (raw - largest) * rubberBand : max(0, raw)
+                let scrimBase = 0.5 * (largest / max(available, 1))
+                let scrimNow = scrimBase * min(1, liveH / max(largest, 1))
+
+                ZStack(alignment: .bottom) {
+                    if isPresented {
+                        Color.black
+                            .opacity(scrimNow)
+                            .ignoresSafeArea()
+                            .contentShape(Rectangle())
+                            // Opt-out for sheets whose backdrop is meant to be
+                            // read — a tap there shouldn't be a silent exit.
+                            .onTapGesture { if scrimTapDismisses { dismiss() } }
+                            .transition(.opacity)
+
+                        VStack(spacing: 0) {
+                            if showsGrabber { grabber }
+                            sheetContent()
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .vaylSheetChrome()
+                        .frame(height: liveH, alignment: .top)
+                        .overlay(alignment: .top) {
+                            // Top-zone drag only, so the content's own ScrollViews aren't hijacked.
+                            Color.clear
+                                .frame(height: 56)
+                                .contentShape(Rectangle())
+                                .gesture(
+                                    DragGesture()
+                                        .onChanged { drag = $0.translation.height }
+                                        .onEnded { value in
+                                            let projected = restingH - value.predictedEndTranslation.height
+                                            if projected < smallest * dismissBelow {
+                                                if interactiveDismissDisabled {
+                                                    // Guarded: a downward swipe can't discard unsaved
+                                                    // content — settle back to the smallest (peek)
+                                                    // detent. Leaving stays an explicit control in the
+                                                    // content, never an accidental drag.
+                                                    let peekIndex = heights.enumerated()
+                                                        .min(by: { $0.element < $1.element })?.offset ?? idx
+                                                    let momentum = value.predictedEndTranslation.height - value.translation.height
+                                                    withAnimation(.vaylFlick(momentum: momentum)) {
+                                                        detentIndex = peekIndex
+                                                        drag = 0
+                                                    }
+                                                    return
+                                                }
+                                                dismiss()
+                                                return
+                                            }
+                                            let clamped = min(max(projected, smallest), largest)
+                                            let nearest = heights.enumerated().min(by: {
+                                                abs($0.element - clamped) < abs($1.element - clamped)
+                                            })?.offset ?? idx
+                                            let momentum = value.predictedEndTranslation.height - value.translation.height
+                                            withAnimation(.vaylFlick(momentum: momentum)) {
+                                                detentIndex = nearest
+                                                drag = 0
+                                            }
+                                        }
+                                )
+                        }
+                        .transition(.move(edge: .bottom))
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .animation(AppAnimation.arriveSpring.reduceMotionSafe, value: isPresented)
+                .animation(AppAnimation.arriveSpring.reduceMotionSafe, value: detentIndex)
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(isPresented)
+        }
+    }
+
+    /// Spectrum pull-tab — matches the single-height sheet grabber exactly.
+    private var grabber: some View {
+        Capsule()
+            .fill(AppColors.spectrumBorder)
+            .frame(width: 36, height: 5)
+            .opacity(0.6)
+            .frame(maxWidth: .infinity)
+            .padding(.top, AppSpacing.sm)
+            .padding(.bottom, AppSpacing.sm)
+    }
+
+    private func dismiss() {
+        drag = 0
+        withAnimation(AppAnimation.arriveSpring.reduceMotionSafe) { isPresented = false }
     }
 }
 

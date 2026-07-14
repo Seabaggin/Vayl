@@ -24,35 +24,24 @@ private struct VaylSheetChrome: ViewModifier {
     /// with it (toward the edge, still on-screen) rather than being left inset.
     var widen: CGFloat = 0
 
-    /// How much brand signature the top edge carries. `.hairline` (default) is a
-    /// neutral separator — the workhorse look, one accent (the grabber) per sheet,
-    /// content reads first. `.full` restores the spectrum top-edge border, reserved
-    /// for ceremonial sheets (the paywall) where the hero treatment earns its keep.
-    var signature: VaylSheetSignature = .hairline
-
     // The fill always bleeds a base 2pt so the dark surface reaches the edge.
     private var fillBleed: CGFloat { 2 + widen }
 
-    /// Spectrum-purple wash composited over the (muted gray) modalBackground so
-    /// the sheet reads richer/warmer. Tune here — affects both OB sheets.
-    private let purpleTint: Double = 0.13
-    /// Black wash to lower the overall tone (the tint alone read too bright).
-    /// Step this up gradually — small increments so it doesn't go too dark.
-    private let darken: Double = 0.18
+    /// Faint spectrum-purple warmth over the (muted gray) modalBackground. Kept to a
+    /// whisper on purpose: the panel is the calm stage, the spectrum top edge and the
+    /// hero carry the color, not the surface itself. Tune here (affects every sheet).
+    private let purpleTint: Double = 0.05
+    /// Black wash to lower the overall tone. Pulled back in step with the muted tint
+    /// above: less purple means less brightness to counter, and the panel must stay a
+    /// touch lighter than the void floor so it still reads as raised.
+    private let darken: Double = 0.10
 
-    /// The top-edge stroke fill: spectrum gradient for `.full`, a neutral hairline
-    /// for `.hairline`. Same tracing geometry either way — only the fill differs.
-    private var edgeStyle: AnyShapeStyle {
-        switch signature {
-        case .full:
-            return AnyShapeStyle(LinearGradient(
-                colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-                startPoint: .leading, endPoint: .trailing
-            ))
-        case .hairline:
-            return AnyShapeStyle(AppColors.borderDefault)
-        }
-    }
+    /// The top-edge stroke fill — the spectrum gradient tracing the rounded top.
+    /// The one sheet signature: every sheet carries it, there is no quieter variant.
+    private let edgeStyle = LinearGradient(
+        colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+        startPoint: .leading, endPoint: .trailing
+    )
 
     func body(content: Content) -> some View {
         let surface = UnevenRoundedRectangle(
@@ -83,12 +72,11 @@ private struct VaylSheetChrome: ViewModifier {
                     .padding(.horizontal, -fillBleed)
                     .ignoresSafeArea(edges: .bottom)
             )
-            // Top-edge stroke wrapping the rounded corner, then easing off down
-            // the sides with a soft tail (no abrupt cutoff). Spectrum for `.full`,
-            // a neutral hairline for `.hairline` — same geometry, different fill.
+            // Top-edge spectrum stroke wrapping the rounded corner, then easing
+            // off down the sides with a soft tail (no abrupt cutoff).
             .overlay(alignment: .top) {
                 surface
-                .strokeBorder(edgeStyle, lineWidth: signature == .full ? 1.0 : 0.75)
+                .strokeBorder(edgeStyle, lineWidth: 1.0)
                 // Match the fill's bleed so the stroke lands at the physical edge
                 // too — otherwise it traces 2pt inside and the sheet reads narrow.
                 .padding(.horizontal, -fillBleed)
@@ -127,24 +115,14 @@ private struct VaylSheetChrome: ViewModifier {
     }
 }
 
-/// How much brand signature a sheet's top edge carries.
-enum VaylSheetSignature {
-    /// Neutral hairline separator — the workhorse default. One brand accent per
-    /// sheet (the grabber); the content reads first.
-    case hairline
-    /// Spectrum top-edge border — reserved for ceremonial sheets (the paywall),
-    /// where the hero treatment is the point rather than noise.
-    case full
-}
-
 extension View {
     /// Native-style sheet chrome — full-bleed width, continuous rounded top
-    /// corners, and a top-edge stroke that is a neutral hairline by default
-    /// (`.hairline`) or the spectrum border for ceremony (`.full`). See VaylSheetChrome.
+    /// corners, and a spectrum top-edge border that traces the rounded top and
+    /// dissolves down the sides. The one sheet signature. See VaylSheetChrome.
     /// `widen`: extra push-out per side for sheets whose bounds sit inset from
     /// the physical edge (e.g. the founder letter, hosted deep in the tree).
-    func vaylSheetChrome(widen: CGFloat = 0, signature: VaylSheetSignature = .hairline) -> some View {
-        modifier(VaylSheetChrome(widen: widen, signature: signature))
+    func vaylSheetChrome(widen: CGFloat = 0) -> some View {
+        modifier(VaylSheetChrome(widen: widen))
     }
 }
 

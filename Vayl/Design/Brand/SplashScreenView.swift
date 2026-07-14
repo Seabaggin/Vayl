@@ -15,6 +15,10 @@ struct SplashScreenView<Destination: View>: View {
 
     var onComplete: () -> Void
     var onTearBegan: () -> Void
+    /// Returns true once cold-launch routing is decided. The reveal holds until
+    /// this is true (or the cap), then blooms. Defaults to always-ready so
+    /// previews and any non-routing caller behave as a plain fixed splash.
+    var isRoutingSettled: () -> Bool = { true }
     var destination: Destination
 
     private let seamFadeHeight: CGFloat = 30
@@ -45,6 +49,10 @@ struct SplashScreenView<Destination: View>: View {
     @State private var destinationOpacity: CGFloat = 0
     @State private var splashOpacity: CGFloat = 1
     @State private var backgroundOpacity: CGFloat = 1
+    /// Atmosphere layer opacity. Starts at 0 so the screen wakes on pure black
+    /// (pageBackground) and the atmosphere blooms in — the void fill stays
+    /// instant, only the atmosphere fades. Written once at launch.
+    @State private var atmosphereOpacity: CGFloat = 0
     @State private var animationTask: Task<Void, Never>?
     @State private var capturedLineY: CGFloat = 0
     @State private var capturedTearDist: CGFloat = 0
@@ -81,6 +89,7 @@ struct SplashScreenView<Destination: View>: View {
                                 .ignoresSafeArea()
                             OnboardingAtmosphere()
                                 .ignoresSafeArea()
+                                .opacity(atmosphereOpacity)
                         }
                         .opacity(backgroundOpacity)
 
@@ -121,6 +130,7 @@ struct SplashScreenView<Destination: View>: View {
                     destinationOpacity = 0
                     splashOpacity      = 1
                     backgroundOpacity  = 1
+                    atmosphereOpacity  = 0
                 }
 
                 if animationTask == nil, newSize.width > 0, newSize.height > 0 {
@@ -197,6 +207,7 @@ struct SplashScreenView<Destination: View>: View {
                 .ignoresSafeArea()
             OnboardingAtmosphere()
                 .ignoresSafeArea()
+                .opacity(atmosphereOpacity)
 
             wordmarkReveal(isTop: true)
 
@@ -233,6 +244,7 @@ struct SplashScreenView<Destination: View>: View {
                 .ignoresSafeArea()
             OnboardingAtmosphere()
                 .ignoresSafeArea()
+                .opacity(atmosphereOpacity)
 
             // ── Measurement anchor 1 — full wordmark frame ─────────────────
             Text("VAYL")
@@ -611,28 +623,48 @@ struct SplashScreenView<Destination: View>: View {
     @MainActor
     private func runFullSequence() async {
 
-        // ── ATMOSPHERE SETTLE ─────────────────────────────────────────────
-        try? await sleep(ms: 420)
+        // ── BLACK → ATMOSPHERE ────────────────────────────────────────────
+        // The screen wakes on pure black, then the atmosphere blooms in — the
+        // void fill is instant, only the atmosphere fades. This is what stops
+        // the opening feeling abrupt (the atmosphere used to be at full opacity
+        // from frame zero). Beat sheet: 2026-07-11 (docs/mockups/splash-beat-timing.html).
+        try? await sleep(ms: 80)                        // a breath of pure black
         guard !Task.isCancelled else { return }
+        withAnimation(AppAnimation.splashAtmosphereFade) { atmosphereOpacity = 1 }
 
         // ── APPEAR ───────────────────────────────────────────────────────
+        // Quick 1-2 after the atmosphere starts blooming, then the wordmark
+        // rises (overlapping the fade tail so the two flow into each other).
+        // Trimmed to keep total inside the 1.2–2s splash range (fast ~1.8s).
+        // FEEL-GATE: black hold + this beat tuned on device.
+        try? await sleep(ms: 150)
+        guard !Task.isCancelled else { return }
         await lockLineGeometry()
         withAnimation(AppAnimation.splashLineAppear) { lineOpacity = 1 }
         withAnimation(AppAnimation.splashReveal) { revealProgress = 1.0 }
         withAnimation(AppAnimation.splashBloomCreep) { lineBloom = 0.58 }
 
-        // ── IGNITION BLOOM ────────────────────────────────────────────────
-        try? await sleep(ms: 600)
+        // ── HOLD FOR READY ────────────────────────────────────────────────
+        // The reveal gate. On a fast launch (routing already settled by the
+        // floor) this is just a brief presence beat and the wordmark blooms at
+        // ~1.8s total — no visible pulse, because there is nothing to wait for.
+        // On a slow launch (a network token refresh) it holds, breathing
+        // calmly, until routing settles or the cap fires — never a hang, never
+        // a reveal mid-decision. Ref: docs/mockups/splash-beat-timing.html.
+        // FEEL-GATE: floor / cap tuned on device.
+        await holdForReady(floorMs: 650, capMs: 1450)
         guard !Task.isCancelled else { return }
+
+        // ── BLOOM ─────────────────────────────────────────────────────────
+        // Routing is settled (or capped): the ignition pulse fires and grows
+        // straight into the zoom below — the bloom IS the "ready" signal. The
+        // old settle beat is gone, so the energy never dissipates first.
         withAnimation(AppAnimation.splashBloomIgnite) { lineBloom = 1.0; linePulse = 1.6 }
 
-        // ── HOLD SETTLE ───────────────────────────────────────────────────
-        try? await sleep(ms: 600)
-        guard !Task.isCancelled else { return }
-        withAnimation(AppAnimation.splashBloomSettle) { lineBloom = 0.65; linePulse = 1.0 }
-
-        // ── ZOOM ──────────────────────────────────────────────────────────
-        try? await sleep(ms: 450)
+        // ── ZOOM (transition, immediately off the pulse) ──────────────────
+        // pulse → zoom: just enough for the pulse peak to register, then the
+        // camera launches. No settle, no re-summon. FEEL-GATE: tune on device.
+        try? await sleep(ms: 180)
         guard !Task.isCancelled else { return }
         withAnimation(AppAnimation.splashTextFade) { textOpacity = 0 }
         withAnimation(AppAnimation.splashZoom) { zoomScale = 3.5; lineBloom = 3.0; linePulse = 1.4 }
@@ -654,13 +686,16 @@ struct SplashScreenView<Destination: View>: View {
         // visual energy — no zombie line floating in the void.
         withAnimation(AppAnimation.splashLineVaporize) { lineOpacity = 0 }
 
-        try? await sleep(ms: 100)
+        try? await sleep(ms: 90)
         guard !Task.isCancelled else { return }
         withAnimation(AppAnimation.splashTearIntensityDecay) { tearIntensity = 0 }
         withAnimation(AppAnimation.splashTearFade) { lineBloom = 0; linePulse = 1.0 }
 
         // Wait for panels to mostly clear before dismissing the overlay.
-        try? await sleep(ms: 250)
+        // 100ms: the destination is already fully revealed here, so this tail
+        // is trimmed hard — the overlay lingers less over live content, and it
+        // keeps the total inside the 1.2–2s range.
+        try? await sleep(ms: 100)
         guard !Task.isCancelled else { return }
         withAnimation(AppAnimation.splashDismiss) { splashOpacity = 0 }
 
@@ -678,6 +713,7 @@ struct SplashScreenView<Destination: View>: View {
         let fadeDurationMs: Int = 250
 
         await lockLineGeometry()
+        atmosphereOpacity = 1          // instant under reduce motion — no fade
         lineOpacity    = 1
         lineBloom      = 0.35
         revealProgress = 1.0
@@ -698,6 +734,45 @@ struct SplashScreenView<Destination: View>: View {
         try? await sleep(ms: fadeDurationMs + 50)
         guard !Task.isCancelled else { return }
         onComplete()
+    }
+
+    // MARK: - Reveal gate
+
+    /// Holds the reveal until routing is settled, breathing calmly if we cross
+    /// the floor still un-settled. `floorMs` = the minimum presence beat (a fast
+    /// launch is still a ceremony, not a flash). `capMs` = the hard backstop (a
+    /// stalled launch reveals anyway — connectivity is the app's problem to
+    /// surface, never the splash's). The breath is a bounded, interrupted
+    /// one-shot per cold launch — suppressed under reduce motion / LPM.
+    @MainActor
+    private func holdForReady(floorMs: Int, capMs: Int) async {
+        let pollMs = 40
+        var waited = 0
+        var breathing = false
+
+        while waited < capMs {
+            let settled = isRoutingSettled()
+            if settled, waited >= floorMs { break }
+
+            // Only breathe if we actually wait past the floor un-settled — a
+            // fast launch blooms at the floor and never shows this.
+            if !settled, waited >= floorMs, !breathing,
+               !AppAnimation.ambientMotionDisabled {
+                breathing = true
+                withAnimation(AppAnimation.splashBreath) { lineBloom = 0.74 }
+            }
+
+            try? await sleep(ms: pollMs)
+            waited += pollMs
+            if Task.isCancelled { return }
+        }
+
+        // Settle the breath (cancel the repeatForever) before the bloom takes
+        // over, so the ignition grows out of a known resting value.
+        if breathing {
+            withAnimation(AppAnimation.splashBloomSettle) { lineBloom = 0.58 }
+            try? await sleep(ms: 80)
+        }
     }
 
     // MARK: - Sleep helper

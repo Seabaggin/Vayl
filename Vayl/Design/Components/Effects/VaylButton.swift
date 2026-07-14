@@ -184,12 +184,10 @@ struct VaylButton: View {
         isPressed     = true
         pressDownTime = CACurrentMediaTime()
 
-        // Drive hairline from dedicated state — independent of borderProgress.
-        // borderProgress starts animating one run-loop tick after this call.
-        // Reading progress > 0.05 as the hairline trigger creates a single-frame
-        // window where isPressed is true but progress is still 0.0, leaving the
-        // hairline visible for one frame as the border begins filling.
-        hairlineVisible = false
+        // Hairline STAYS through the press — it is the resting seed the metal
+        // border grows out of (a morph, not a hide-then-fill). The fill trims
+        // from location 0 (12 o'clock), exactly where the hairline sits, so the
+        // metal unfurls from under the glint rather than replacing it.
 
         softHaptic.impactOccurred()
 

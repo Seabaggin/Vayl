@@ -33,14 +33,33 @@ struct RacetrackTabBar: View {
                 let idx: CGFloat = CGFloat(AppTab.allCases.firstIndex(of: selection) ?? 0)
                 let pillW: CGFloat = AppSpacing.md * 2 + 26   // 58 pt
                 let pillH: CGFloat = AppSpacing.sm * 2 + 26   // 42 pt
-                Capsule()
-                    .fill(AppColors.glassFrostPillSelected)
-                    .frame(width: pillW, height: pillH)
-                    .offset(
-                        x: tabW * idx + (tabW - pillW) / 2,
-                        y: (proxy.size.height - pillH) / 2
-                    )
-                    .animation(AppAnimation.tabSwitch, value: selection)
+                // Selection indicator = ONE fill + ONE metal ring that GLIDE
+                // together to the selected tab. Replaces four per-tab rings
+                // cross-fading — one TimelineView total, and the ring travels
+                // with the pill instead of dissolving/reappearing.
+                ZStack {
+                    Capsule()
+                        .fill(AppColors.tabSelectionFill)
+                    if colorScheme != .light {
+                        MetalRing(
+                            cornerRadius: pillH / 2,
+                            lineWidth: 2.0,
+                            glowOpacity: 0.28,
+                            glowLineWidth: 3.5,
+                            glowBlur: 4,
+                            isActive: true,
+                            sweepOnAppear: true,
+                            // tab switch → one-shot sweep as the ring glides
+                            sweepToken: AppTab.allCases.firstIndex(of: selection) ?? 0
+                        )
+                    }
+                }
+                .frame(width: pillW, height: pillH)
+                .offset(
+                    x: tabW * idx + (tabW - pillW) / 2,
+                    y: (proxy.size.height - pillH) / 2
+                )
+                .animation(AppAnimation.tabSwitch, value: selection)
             }
             .allowsHitTesting(false)
         }
@@ -54,12 +73,12 @@ struct RacetrackTabBar: View {
 
     private var barBackground: some View {
         ZStack {
-            // Base fill
+            // Base fill — a touch darker than the surface so the selected chip lifts.
             Capsule()
                 .fill(
                     colorScheme == .light
                         ? AnyShapeStyle(AppColors.glassFrostCard)
-                        : AnyShapeStyle(AppColors.modalBackground.opacity(0.97))
+                        : AnyShapeStyle(AppColors.tabBarFill)
                 )
 
             // Shimmer
@@ -146,25 +165,25 @@ private struct RacetrackTabPill: View {
         if isPressed {
             return isLight
                 ? AppColors.glassFrostPill
-                : Color(red: 0.086, green: 0.079, blue: 0.141)
+                : AppColors.tabSelectionFill.opacity(0.7)
         }
         return .clear
     }
 
     private var racetrackBorder: some View {
-        TopAnchoredCapsule()
-            .trim(from: 0, to: 1)
-            .stroke(arcGradient, style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
-            .opacity(isSelected ? 1 : 0)
-            .animation(AppAnimation.fast, value: isSelected)
-            .shadow(
-                color: isLight
-                    ? AppColors.accentTertiary.opacity(0.55)
-                    : AppColors.accentPrimary.opacity(0.70),
-                radius: 4,
-                x: 0,
-                y: 0
-            )
+        // Dark (V1): the selection ring is a single sliding MetalRing in the bar
+        // background, so there is no per-tab ring here (it would double up and
+        // cross-fade). Light retains the warm arc per-tab (metal light deferred).
+        Group {
+            if isLight {
+                TopAnchoredCapsule()
+                    .trim(from: 0, to: 1)
+                    .stroke(arcGradient, style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
+                    .opacity(isSelected ? 1 : 0)
+                    .animation(AppAnimation.fast, value: isSelected)
+                    .shadow(color: AppColors.accentTertiary.opacity(0.55), radius: 4)
+            }
+        }
     }
 
     private var arcGradient: AngularGradient {

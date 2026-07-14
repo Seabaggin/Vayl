@@ -70,16 +70,11 @@ struct VaylBorderEffect: View {
 
     // MARK: - Gradient
 
-    private var spectrumGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                AppColors.spectrumCyan,
-                AppColors.spectrumPurple,
-                AppColors.spectrumMagenta
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+    // Liquid-metal material — the fill unfurls this around the ring on press.
+    // AngularGradient maps the metal highlights to angular positions so the
+    // border reads as metal wrapping, not a flat corner-to-corner gradient.
+    private var spectrumGradient: AngularGradient {
+        AppColors.spectrumMetalAngular
     }
 
     // MARK: - Body
@@ -338,12 +333,15 @@ private struct HairlineView: View {
     var body: some View {
         TaperedHairlineShape(thickness: thickness)
             .fill(
+                // Resting hairline is a metallic glint of the same material the
+                // border fills with — bright near-white core (hairline↔metal blend).
                 LinearGradient(
                     colors: [
                         .clear,
-                        AppColors.spectrumCyan.opacity(0.90),
-                        AppColors.spectrumPurple.opacity(1.0),    // peak at centre
-                        AppColors.spectrumMagenta.opacity(0.90),
+                        AppColors.spectrumCyan.opacity(0.85),
+                        Color(uiColor: VaylPrimitives.metalHiCyan),     // bright metal core
+                        Color(uiColor: VaylPrimitives.metalHiMagenta),  // bright metal core
+                        AppColors.spectrumMagenta.opacity(0.85),
                         .clear
                     ],
                     startPoint: .leading,

@@ -37,8 +37,27 @@ final class CarouselPhysics {
         var response: Double = 0.35
         /// 0.70 gives a lively overshoot-and-settle without losing render-server smoothness.
         var dampingFraction: Double = 0.70
+        /// Rubber-band saturation, in card-index units: the most a non-wrapping
+        /// carousel can be pulled past its first/last card. Resistance grows the
+        /// further past the end you drag (Apple's rubberband), so a boundary reads
+        /// as "responsive, but nothing more here," never a hard wall. FEEL-GATE.
+        var rubberBandDimension: Double = 1.0
 
         nonisolated static let standard = Config()
+
+        /// Deck-library detail carousel. Heavier and more deliberate than
+        /// `.standard`: one card per flick, a firm near-critical settle with no
+        /// flowy overshoot, and firmer end-walls. The deck panels are heavier
+        /// objects than the browse cards in CardCarousel / ContextPhase (which run
+        /// `.standard`). FEEL-GATE — Bryan finalizes on device. (Spec 2026-07-11 §8.)
+        nonisolated static let deckBrowse = Config(
+            dragSensitivity: 170,      // 133 → 170: more finger travel per card = weightier
+            projection: 0.10,          // 0.16 → 0.10: less momentum carry
+            maxFlick: 1,               // 5 → 1: one deliberate move per flick, never skids the set
+            response: 0.40,            // 0.35 → 0.40: a touch slower settle reads as mass
+            dampingFraction: 0.90,     // 0.70 → 0.90: near-critical, kills the flowy bounce
+            rubberBandDimension: 0.6   // 1.0 → 0.6: firmer "this is the edge" at section ends
+        )
     }
 
     var config: Config
@@ -100,7 +119,17 @@ final class CarouselPhysics {
     func drag(translation: CGFloat) {
         guard isDragging else { return }
         var next = dragStartPosition - Double(translation / config.dragSensitivity)
-        if !wraps { next = min(Double(count - 1), max(0, next)) }
+        if !wraps {
+            // Rubber-band past the ends instead of a hard clamp: progressive
+            // resistance, saturating at rubberBandDimension. settle() snaps back
+            // to a valid index on release, so the overshoot springs home.
+            let hi = Double(count - 1)
+            if next < 0 {
+                next = -VaylRubberBand.damp(-next, dimension: config.rubberBandDimension)
+            } else if next > hi {
+                next = hi + VaylRubberBand.damp(next - hi, dimension: config.rubberBandDimension)
+            }
+        }
         position = next
     }
 

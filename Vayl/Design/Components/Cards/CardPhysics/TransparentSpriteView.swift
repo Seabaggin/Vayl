@@ -39,7 +39,7 @@ struct TransparentSpriteView: UIViewRepresentable {
     final class Coordinator {
         private weak var view: SKView?
         private var shouldRender: ((TimeInterval) -> Bool)?
-        private var displayLink: CADisplayLink?
+        nonisolated(unsafe) private var displayLink: CADisplayLink?
 
         func attach(to view: SKView, shouldRender: @escaping (TimeInterval) -> Bool) {
             self.view = view

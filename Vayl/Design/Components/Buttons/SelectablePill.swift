@@ -24,6 +24,13 @@ struct SelectablePill: View {
     /// HStack) — multiple maxWidth: .infinity siblings competing for that axis's
     /// effectively-unbounded proposed width collapses/overlaps them.
     var fillWidth: Bool = true
+    /// Optional per-option colour whisper (design pass 2026-07-09, Pulse check-in
+    /// pill-options mockup Option A: docs/mockups/pulse-checkin-pill-options.html).
+    /// nil (default) = every existing caller unaffected. When set, a faint tinted
+    /// wash sits behind the label at rest and deepens when selected, so an option
+    /// that maps to a place on a colour field (the Pulse circumplex) can carry a
+    /// hint of that colour without changing shape or footprint.
+    var tint: Color?
     var action: () -> Void
 
     // ─────────────────────────────────────────────
@@ -72,6 +79,11 @@ struct SelectablePill: View {
         }
     }
 
+    /// Wash opacity for the optional `tint` — 0.16 at rest, 0.30 selected (mockup's
+    /// values). Independent of `intensity`: the whisper is about the OPTION's own
+    /// colour, not how excited the selection state is.
+    private var tintWashOpacity: Double { isSelected ? 0.30 : 0.16 }
+
     private var flameFrameHeight: CGFloat {
         switch intensity {
         case .dim:   return 0
@@ -87,7 +99,6 @@ struct SelectablePill: View {
     var body: some View {
         Button {
             action()
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
         } label: {
             pillContent
                 .modifier(PillShadowModifier(
@@ -99,7 +110,10 @@ struct SelectablePill: View {
                 }
                 .animation(AppAnimation.fast, value: isSelected)
         }
-        .buttonStyle(.plain)
+        // Was `.buttonStyle(.plain)` with the haptic fired on release inside the
+        // action — no press-scale, feedback lagged to touch-up. The shared style
+        // puts the press-scale + light haptic on touch-DOWN (RESPONSE principle).
+        .buttonStyle(.vaylPressable)
     }
 
     private var pillContent: some View {
@@ -125,6 +139,18 @@ struct SelectablePill: View {
                 HolographicShimmer(duration: shimmerSpeed)
                     .opacity(shimmerOpacity)
                     .allowsHitTesting(false)
+                if let tint {
+                    LinearGradient(
+                        stops: [
+                            .init(color: tint.opacity(tintWashOpacity), location: 0),
+                            .init(color: .clear, location: 0.65)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .allowsHitTesting(false)
+                    .animation(AppAnimation.fast, value: isSelected)
+                }
             }
             .clipShape(Capsule())
             .modifier(PillBorderModifier(
@@ -190,18 +216,23 @@ private struct PillBorderModifier: ViewModifier {
     let darkBorderWidth: CGFloat
 
     func body(content: Content) -> some View {
-        if isSelected {
-            content.pillBorder(
-                cornerRadius: AppRadius.pill,
-                lineWidth: darkBorderWidth,
-                glowRadius: 5,
-                opacity: 0.85
-            )
-        } else {
-            content.overlay(
-                Capsule().strokeBorder(darkBorderColor, lineWidth: darkBorderWidth)
-            )
-        }
+        content
+            // Unselected: subtle dark stroke.
+            .overlay {
+                Capsule()
+                    .strokeBorder(darkBorderColor, lineWidth: darkBorderWidth)
+                    .opacity(isSelected ? 0 : 1)
+                    .animation(AppAnimation.fast, value: isSelected)
+            }
+            // Selected: liquid-metal ring. Always mounted so MetalRing's
+            // onChange(isActive) fires the one-shot sweep on false→true select.
+            .overlay {
+                MetalRing(
+                    cornerRadius: AppRadius.pill,
+                    lineWidth: darkBorderWidth,
+                    isActive: isSelected
+                )
+            }
     }
 }
 
@@ -215,14 +246,13 @@ private struct PillShadowModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .shadow(color: isSelected ? glowColor(AppColors.accentSecondary, 0.20, 0.25, 0.34) : .clear,
-                    radius: pick(6, 12, 14))
-            .shadow(color: isSelected ? glowColor(AppColors.accentPrimary, 0.0, 0.15, 0.30) : .clear,
-                    radius: pick(0, 16, 28))
-            .shadow(color: isSelected ? glowColor(AppColors.accentTertiary, 0.0, 0.08, 0.25) : .clear,
-                    radius: pick(0, 8, 45))
-            .shadow(color: isSelected ? glowColor(AppColors.accentTertiary, 0.0, 0.0, 0.12) : .clear,
-                    radius: pick(0, 0, 70))
+            // Glow turned down so the metal ring drives (border, not halo).
+            .shadow(color: isSelected ? glowColor(AppColors.accentSecondary, 0.12, 0.15, 0.20) : .clear,
+                    radius: pick(6, 9, 10))
+            .shadow(color: isSelected ? glowColor(AppColors.accentPrimary, 0.0, 0.08, 0.12) : .clear,
+                    radius: pick(0, 12, 18))
+            .shadow(color: isSelected ? glowColor(AppColors.accentTertiary, 0.0, 0.05, 0.08) : .clear,
+                    radius: pick(0, 6, 30))
     }
 
     private func glowColor(_ base: Color, _ d: CGFloat, _ w: CGFloat, _ a: CGFloat) -> Color {
