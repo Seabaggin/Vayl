@@ -1,3 +1,10 @@
+## Design Context
+
+- **PRODUCT.md** (root) — strategic who/what/why: register, users, purpose, positioning, brand personality, anti-references, design principles. Read first for intent.
+- **DESIGN_DOC.md** (root) — source-verified visual system: real token values and component APIs. Read for how it looks. (`DESIGN.md` is a leaner companion; when they disagree, this file and CLAUDE.md's rules win.)
+
+---
+
 ## Architecture Rules (Non-Negotiable)
 
 ### 4-Layer Architecture
@@ -19,33 +26,102 @@
 
 ## Build Protocol — Non-Negotiable
 
-Never build a full feature in one pass.
-Break every feature into named segments.
-Each segment must have:
+**Discipline lives at plan-time, not execution-time.** A feature is not sliced into
+sequential segments gated one-by-one; it is *planned as a whole suite up front*, then
+executed as a **phase-gated pipeline** where subagents parallelize *within* a phase and the
+human gates *between* phases. Segment-by-segment was training wheels — it kept Claude in the
+loop because the plan couldn't be trusted to carry the feature. With a strong upfront plan,
+that gate is pure latency. The rigor moves earlier, it does not disappear.
 
-1. ONE thing it does
-2. A done condition that is verified in the simulator
-   before the next segment begins — not just "build succeeds"
-3. A constraints list — files it may not touch
+**The load-bearing rule: a weak plan makes parallel execution WORSE, not better.** Fan-out
+amplifies whatever the plan got wrong instead of catching it mid-stream. So Phase 1–2 (below)
+carry the weight. If the screens come out weak, the failure was upstream in planning, not in
+the agents.
 
-The AI must confirm what it is building before writing
-any code. If the AI proposes changes beyond the current
-segment's scope, stop it and redirect.
+### The Pipeline
 
-Timing and feel decisions must be verified in a React
-demo or interactive reference before being written into
-Swift. Never guess at a timing value — always feel it first.
+| Phase | Unit of work | Parallel? | Gate to advance (human-owned) |
+|---|---|---|---|
+| **1. Function-in-practice** | conversation (Claude + Bryan) | no | Bryan approves the mental model of how the feature behaves in real use |
+| **2. Screen suite + edge cases + competitor scan** | screens mapped as a family; mockups to `docs/mockups/` | research fans out (WebSearch on how peer apps solve the moment) | Bryan approves the screen list, the flow, and the per-screen data contract |
+| **3. Frontend** | ONE subagent per screen, built against **stubbed Stores/Services** | yes | build-clean + renders with stub data; Bryan sees the flow |
+| **3.5 Reconciliation** | one reviewer agent diffs all screens vs the Screen Brief | no | no token/motion/grammar drift; no invented visual elements |
+| **4. Backend** | per Store/Service, fills the same contract the frontend renders against | yes | routes + persists/reads correctly against real schema |
+| **5. Verify** | build + unit tests (+ XcodeBuildMCP only if explicitly asked) | yes | green build, tests pass with exact counts reported |
 
-A segment is not complete until it has run on device and the human has confirmed the feel.
-Build succeeds is not done. Feel is correct is done.
+### Rules that hold the pipeline together
+- **Confirm before code.** Claude states what it is building and the authoritative reference
+  (on-disk mockup path, DESIGN_DOC section) before writing anything. If Claude proposes work
+  beyond the approved plan, stop it and redirect. Never invent a flow, screen, or visual
+  element (glow, hairline, accent) not present in the reference.
+- **The Screen Brief is the anti-drift anchor.** End of Phase 2, write ONE file holding the
+  token/motion/presentation decisions plus each screen's data contract and definition-of-done.
+  Every Phase 3 subagent reads ONLY its screen brief + the token contract — never the other
+  screens' code. Clean context, single source of truth, no room to hallucinate a dialect of
+  the design system.
+- **Data-contract-first.** Frontend builds against stubbed Stores returning fake data (Bryan
+  sees the whole flow immediately); backend fills the identical contract later without touching
+  Views. Verify the contract against the **real Supabase schema** in Phase 2 so a stub never
+  promises data the DB can't store. This is the rework-killer.
+- **Reconciliation is mandatory after every parallel fan-out.** Parallel agents each drift a
+  little from the token/motion contract; segments never had this because Bryan reconciled each
+  step. Phase 3.5 makes the reconciler explicit and adversarial.
+- **Never guess timing/feel.** Feel it first in an HTML/interactive reference (or in Swift on
+  device for 3D/shader work), never a raw literal into Swift.
 
-**Both forms of runtime verification are allowed:** Claude may drive the simulator directly
-via XcodeBuildMCP (build, install, launch, tap, screenshot, snapshot_ui) when the task calls
-for it — e.g. scripted end-to-end flows, multi-simulator scenarios, or a runbook that says so.
-Bryan also runs the app himself on simulator/device for feel passes. Neither replaces the
-other: a Claude-driven sim run verifies behavior/wiring; Bryan's pass verifies feel. When
-running sims directly, still report findings honestly (screenshots, logs, anomalies) rather
-than asserting a visual/feel verdict from automation alone.
+### Feel is still Bryan's, and it moves to a real gate
+Parallel work batches feel-verification instead of checking it per-segment. That is fine only
+if feel is its own owned pass: **Phase 3's gate is "renders correctly," NOT "feels right."**
+Build-clean is never "done." Bryan confirms feel on device before Phase 4. Do not let
+automation assert a feel verdict.
+
+### Right-size the pipeline
+The full 6-phase rail is for a feature suite. A single-view polish or a bugfix does not need
+Phase 1–2 fan-out — run the relevant tail (build against the locked reference, verify) and
+skip the ceremony. Match the process to the work; don't perform the pipeline on a one-liner.
+
+### XcodeBuildMCP Usage Gatekeeping — READ THIS BEFORE REACHING FOR THE SIM
+
+**XcodeBuildMCP is a last resort, not a first tool. Claude can almost always infer behavior
+from code — do that first.** Driving the sim to "see" a change is NOT a substitute for reading
+the code and reasoning about it, and it is not a default verification step. Aggressive,
+unrequested sim-driving is a violation of this protocol, not diligence.
+
+**The bar to touch XcodeBuildMCP — ALL must be true:**
+1. Static reasoning has genuinely run out (you have read the code, the contracts, and the
+   relevant mock/logs), AND
+2. Either Bryan **explicitly asked in the current message** ("run this," "take a screenshot,"
+   "drive the sim through X"), OR you are at **final build/test verification** (Phase 5), OR
+   you are **3+ failed fix attempts deep** on the same bug with code review + logs exhausted.
+
+**Forbidden (these are the patterns that have crept in — stop them):**
+- Launching the sim after a routine edit to see if it "just works"
+- Using it as the reflexive next step after reading or editing code
+- Reaching for it before HTML mocks, logs, and static code review have been tried
+- Inferring permission from a prior message ("you had me run it earlier, I'll run it again")
+- Treating "I can see it" as more authoritative than "I reasoned about the code"
+
+**Progression (in order, stop as soon as you have your answer):**
+1. Read code + CLAUDE.md contracts and reason from them
+2. Write/analyze an HTML mock or interactive reference (timing, layout, feel)
+3. Static code review (types, logic, token usage, architecture)
+4. `build_sim` / `test_sim` for a compile + test verdict (no UI driving)
+5. Only if still unsure AND the bar above is met: request explicit approval to drive the sim
+
+A build + test verdict is the ceiling Claude reaches on its own. UI driving, screenshots, and
+snapshot_ui are opt-in only. When Bryan does ask for a sim run, report findings honestly
+(screenshots, logs, anomalies) rather than asserting a visual/feel verdict from automation.
+
+---
+
+## HTML & Mockup Protocol
+
+**Never use the Artifact tool for HTML mockups.** Write HTML files directly to disk instead.
+Artifacts reduce functionality (authentication gates, inspection tools, copy accessibility).
+
+- For design mockups, prototypes, or UI exploration: write `.html` files to `/docs/mockups/` or scratchpad
+- HTML files can be opened locally, inspected via DevTools, iterated fast, and version-controlled
+- Reference existing mockups in docs/mockups/ for feel/timing validation before Swift implementation
 
 ---
 

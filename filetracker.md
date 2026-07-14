@@ -1,6 +1,6 @@
 # Vayl — File Tree & Descriptions
 
-_Last updated: 2026-06-28_  
+_Last updated: 2026-07-13_  
 _~350+ Swift files + Metal shaders + test suites across 50+ directories_
 
 ---
@@ -281,7 +281,6 @@ Vayl/
 │   │       ├── ConstellationNode.swift         — Individual node in learning constellation.
 │   │       ├── FindingDetailView.swift         — Detail view for research findings.
 │   │       ├── LearnCardStyle.swift            — Card styling for learn tab.
-│   │       ├── LearnSegmented.swift            — Segmented control for learn content.
 │   │       ├── LearnView.swift                 — Educational content browser; constellation layout.
 │   │       ├── ResearchDatabaseView.swift      — Database view of research content.
 │   │       ├── ResourcesOverlayView.swift      — Overlay for resource browsing.
@@ -641,3 +640,10 @@ Me|Us toggle (NOT "Mirror"). Pulse hero + Vault. Single canonical glass card + r
 ### Deprecated/Reference Only
 - `TabContentWrapper.swift` — deprecated; AppShell now uses native tab bar; kept for reference
 - (`RotaryDial.swift` and `Sessions/Debug/PresenceDebugView.swift` deleted 2026-07-07 — dead code)
+- (`LearnSegmented.swift` deleted 2026-07-13 — consolidated into LearnView)
+
+### Recent Changes (2026-07-12 to 2026-07-13)
+- Swift 6 mode wave 1: Models + Theme tokens cleaned for concurrency safety
+- A11y review pass: session-flow CTAs made real actionable controls
+- Session heartbeat optimized to prevent card timer churn
+- Partner-disconnect via last_seen heartbeat timestamp
