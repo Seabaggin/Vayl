@@ -30,7 +30,7 @@ struct SingleGreetingOverlay: View {
             Text("AN HONEST MOMENT")
                 .font(AppFonts.overline)
                 .textCase(.uppercase)
-                .foregroundStyle(AppColors.spectrumText)
+                .foregroundStyle(AppColors.textAccent)
                 .tracking(2)
 
             Text("Vayl gets the most out of two people right now — more for solo journeys is on the way.")

@@ -118,7 +118,10 @@ final class CuriositySequencer {
         }
     }
 
-    func commitCuriositySwipe(screenSize: CGSize) {
+    /// `momentum` = |predictedEndTranslation − translation| along the swipe axis,
+    /// in points — the release-velocity carry (see `Animation.vaylFlick`). A hard
+    /// flick throws the card off faster; a slow release drifts.
+    func commitCuriositySwipe(screenSize: CGSize, momentum: CGFloat = 0) {
         guard !pile.isEmpty else { return }
         let topCard = pile[0]
         let isKeep  = dragOffset.width > 0
@@ -129,7 +132,8 @@ final class CuriositySequencer {
 
         advanceCuriosityTopCard(
             flingTo: CGSize(width: flingX, height: flingY),
-            startingFrom: dragOffset
+            startingFrom: dragOffset,
+            momentum: momentum
         )
         thresholdCrossed = false
 
@@ -141,8 +145,10 @@ final class CuriositySequencer {
         }
     }
 
-    func snapBackCuriosityCard() {
-        withAnimation(AppAnimation.cardSettle) { dragOffset = .zero }
+    /// `momentum` carries the release velocity into the snap-back so a card let go
+    /// mid-drift returns at the speed it was moving, not on a fixed curve.
+    func snapBackCuriosityCard(momentum: CGFloat = 0) {
+        withAnimation(.vaylFlick(momentum: momentum)) { dragOffset = .zero }
         thresholdCrossed = false
     }
 
@@ -187,15 +193,18 @@ final class CuriositySequencer {
         thresholdCrossed = true
         try? await Task.sleep(for: .milliseconds(60))
         demoCommitTrigger.toggle()
+        // The dealer's demo throw is a confident, scripted flick — carry full
+        // reference momentum so the teach reads as a committed swipe.
         advanceCuriosityTopCard(
             flingTo: CGSize(width: dir * screenWidth * 1.6, height: 0),
-            startingFrom: dragOffset
+            startingFrom: dragOffset,
+            momentum: AppAnimation.flickMomentumReference
         )
         thresholdCrossed = false
         try? await Task.sleep(for: .milliseconds(520))
     }
 
-    private func advanceCuriosityTopCard(flingTo flingOffset: CGSize, startingFrom startOffset: CGSize) {
+    private func advanceCuriosityTopCard(flingTo flingOffset: CGSize, startingFrom startOffset: CGSize, momentum: CGFloat = 0) {
         guard let top = pile.first else { return }
         flyingCard = top
         flyingOffset = startOffset
@@ -210,7 +219,9 @@ final class CuriositySequencer {
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(30))
             guard current == self.flyingClearAttempt else { return }
-            withAnimation(AppAnimation.curiosityThrow.reduceMotionSafe) {
+            // Velocity carry: a hard flick throws the card off faster than a slow
+            // release. Reduce Motion collapses this to a fast opacity confirm.
+            withAnimation(.vaylFlick(momentum: momentum)) {
                 self.flyingOffset = flingOffset
             }
             try? await Task.sleep(for: .milliseconds(380))

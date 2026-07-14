@@ -125,8 +125,8 @@ private enum SignatureGeometry {
     enum Stroke: CaseIterable { case first, middle, last }
 
     /// Reference box the normalized path coordinates were drawn against.
-    private static let refWidth: CGFloat = 250
-    private static let refHeight: CGFloat = 100
+    nonisolated private static let refWidth: CGFloat = 250
+    nonisolated private static let refHeight: CGFloat = 100
 
     // MARK: Typesetting (tunable)
     //
@@ -138,16 +138,16 @@ private enum SignatureGeometry {
     // tighten/loosen spacing, or a stroke's `baseline` to nudge it onto the line.
 
     /// Horizontal space between names (ref space).
-    private static let strokeGap: CGFloat = 7
+    nonisolated private static let strokeGap: CGFloat = 7
     /// Inset so round caps / descenders / glow don't clip the frame edge.
-    private static let edgePad: CGFloat = 5
+    nonisolated private static let edgePad: CGFloat = 5
 
     private struct Metrics {
         let minX, maxX, minY, maxY, baseline: CGFloat
-        var width: CGFloat { maxX - minX }
+        nonisolated var width: CGFloat { maxX - minX }
     }
 
-    private static func metrics(_ s: Stroke) -> Metrics {
+    nonisolated private static func metrics(_ s: Stroke) -> Metrics {
         switch s {
         case .first:  return Metrics(minX: 22.53, maxX: 61.29, minY: 7.60, maxY: 46.70, baseline: 39.74)
         case .middle: return Metrics(minX: 77.16, maxX: 92.68, minY: 9.93, maxY: 35.12, baseline: 33.22)
@@ -155,7 +155,7 @@ private enum SignatureGeometry {
         }
     }
 
-    private static func rawPath(_ s: Stroke) -> Path {
+    nonisolated private static func rawPath(_ s: Stroke) -> Path {
         switch s {
         case .first:  return firstName()
         case .middle: return middleInitial()
@@ -164,38 +164,38 @@ private enum SignatureGeometry {
     }
 
     /// Left edge where `s` is placed in the packed row.
-    private static func placedMinX(_ s: Stroke) -> CGFloat {
-        var x: CGFloat = 0
-        for stroke in Stroke.allCases {
-            if stroke == s { return x }
-            x += metrics(stroke).width + strokeGap
+    nonisolated private static func placedMinX(_ s: Stroke) -> CGFloat {
+        switch s {
+        case .first:  return 0
+        case .middle: return metrics(.first).width + strokeGap
+        case .last:   return metrics(.first).width + strokeGap + metrics(.middle).width + strokeGap
         }
-        return x
     }
 
     /// Move `s` into the row: left edge → its slot, baseline → y = 0.
-    private static func placement(_ s: Stroke) -> CGAffineTransform {
+    nonisolated private static func placement(_ s: Stroke) -> CGAffineTransform {
         let m = metrics(s)
         return CGAffineTransform(translationX: placedMinX(s) - m.minX, y: -m.baseline)
     }
 
     /// Bounds of the whole laid-out row (analytic — no path building).
-    private static func rowBounds() -> CGRect {
-        let totalWidth = Stroke.allCases.reduce(CGFloat(0)) { $0 + metrics($1).width }
-            + strokeGap * CGFloat(Stroke.allCases.count - 1)
-        let minY = Stroke.allCases.map { metrics($0).minY - metrics($0).baseline }.min() ?? 0
-        let maxY = Stroke.allCases.map { metrics($0).maxY - metrics($0).baseline }.max() ?? 0
+    nonisolated private static func rowBounds() -> CGRect {
+        let totalWidth = metrics(.first).width + metrics(.middle).width + metrics(.last).width
+            + strokeGap * 2
+        let allMetrics = [metrics(.first), metrics(.middle), metrics(.last)]
+        let minY = allMetrics.map { $0.minY - $0.baseline }.min() ?? 0
+        let maxY = allMetrics.map { $0.maxY - $0.baseline }.max() ?? 0
         return CGRect(x: 0, y: minY, width: totalWidth, height: maxY - minY)
     }
 
-    static func path(for stroke: Stroke, in rect: CGRect) -> Path {
+    nonisolated static func path(for stroke: Stroke, in rect: CGRect) -> Path {
         rawPath(stroke)
             .applying(placement(stroke))
             .applying(fitTransform(in: rect))
     }
 
     /// Aspect-fit + centre the laid-out row into `rect`, inset by `edgePad`.
-    private static func fitTransform(in rect: CGRect) -> CGAffineTransform {
+    nonisolated private static func fitTransform(in rect: CGRect) -> CGAffineTransform {
         let area = rect.insetBy(dx: edgePad, dy: edgePad)
         let union = rowBounds()
         guard union.width > 0, union.height > 0, area.width > 0, area.height > 0 else { return .identity }
@@ -210,7 +210,7 @@ private enum SignatureGeometry {
 
     // MARK: Raw strokes (250×100 reference space)
 
-    private static func firstName() -> Path {
+    nonisolated private static func firstName() -> Path {
         var path = Path()
         let width = refWidth
         let height = refHeight
@@ -272,7 +272,7 @@ private enum SignatureGeometry {
         return path
     }
 
-    private static func middleInitial() -> Path {
+    nonisolated private static func middleInitial() -> Path {
         var path = Path()
         let width = refWidth
         let height = refHeight
@@ -297,7 +297,7 @@ private enum SignatureGeometry {
         return path
     }
 
-    private static func lastName() -> Path {
+    nonisolated private static func lastName() -> Path {
         var path = Path()
         let width = refWidth
         let height = refHeight

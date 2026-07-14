@@ -188,7 +188,7 @@ struct ContextPhase: View {
 
             Text(reassuranceText)
                 .font(AppFonts.caption)
-                .foregroundStyle(AppColors.spectrumText)
+                .foregroundStyle(AppColors.textAccent)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.bottom, AppSpacing.xl)

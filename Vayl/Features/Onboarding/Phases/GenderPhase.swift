@@ -482,13 +482,28 @@ struct GenderPhase: View {
             DragGesture()
                 .onChanged { value in
                     director.gender.endSwipeHint()
-                    dragOffset.wrappedValue = value.translation.height
+                    // Rubber-band past the first/last option instead of tracking the
+                    // finger 1:1 off the ends — the drum resists, it never runs free
+                    // into empty space. `t0`/`tN` are the translations that centre
+                    // index 0 and index n-1; beyond them the excess is damped.
+                    let n = options.count
+                    var t = value.translation.height
+                    if n > 0 {
+                        let t0 = initialOffset - currentBase                                   // index 0
+                        let tN = initialOffset - currentBase - CGFloat(n - 1) * drumItemH      // index n-1
+                        if t > t0 {
+                            t = t0 + VaylRubberBand.damp(t - t0, dimension: drumItemH)
+                        } else if t < tN {
+                            t = tN - VaylRubberBand.damp(tN - t, dimension: drumItemH)
+                        }
+                    }
+                    dragOffset.wrappedValue = t
                     let nowIdx = centeredIndex
                     if nowIdx != lastCentered.wrappedValue {
                         lastCentered.wrappedValue = nowIdx
                         hapticGen.selectionChanged()
                     }
-                    onUpdate(initialOffset - currentBase - value.translation.height)
+                    onUpdate(initialOffset - currentBase - t)
                 }
                 .onEnded { value in
                     let n = options.count

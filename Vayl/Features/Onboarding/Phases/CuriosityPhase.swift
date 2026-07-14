@@ -332,12 +332,15 @@ struct CuriosityPhase: View {
                 // never commits on momentum alone.
                 let travelled = value.translation.width
                 let projected = value.predictedEndTranslation.width
+                // Release-velocity carry: the momentum SwiftUI projects past the
+                // finger, fed to the settle spring (Animation.vaylFlick).
+                let momentum = abs(projected - travelled)
                 if abs(travelled) >= commitThreshold || abs(projected) >= commitThreshold * 1.6 {
                     // Toggle before calling director so the haptic fires on this frame.
                     commitHapticTrigger.toggle()
-                    director.curiosity.commitCuriositySwipe(screenSize: screenSize)
+                    director.curiosity.commitCuriositySwipe(screenSize: screenSize, momentum: momentum)
                 } else {
-                    director.curiosity.snapBackCuriosityCard()
+                    director.curiosity.snapBackCuriosityCard(momentum: momentum)
                 }
             }
     }
