@@ -2,26 +2,52 @@
 //  DeckWallView.swift
 //  Vayl — Play
 //
-//  The deck library: a full 2-column grid of every deck's case, scrolling inline
-//  beneath the hero. Replaces the old docked-peek → pan/zoom canvas, which clipped
-//  to one row (hiding most decks) and left a fade-to-void cutoff band. Now the page
-//  simply scrolls and the whole library is visible. Tap a deck → its detail.
+//  The deck library, split into two shelves: "Your decks" (owned — sealed OR
+//  opened) and "Premium" (locked, behind Core). Each is a 2-column grid of deck
+//  cells scrolling inline beneath the hero. The Premium shelf hides entirely once
+//  Core is owned (every deck migrates up, as sealed). Tap a deck → its detail
+//  carousel (sealed decks pass through the first-open ceremony on the way).
+//  (Spec 2026-07-11 §1, §7.)
 //
 
 import SwiftUI
 
 struct DeckWallView: View {
     let store: PlayStore
-    let namespace: Namespace.ID
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.md) {
-            header
-            grid
-        }
+    /// Measured wall width → deterministic column width so each case can be pinned to
+    /// an explicit 2:3 size (see DeckCellView). Read via a background preference so it
+    /// never perturbs the ScrollView's vertical layout the way a GeometryReader would.
+    @State private var wallWidth: CGFloat = 0
+
+    private let columns = [
+        GridItem(.flexible(), spacing: AppSpacing.md),
+        GridItem(.flexible(), spacing: AppSpacing.md)
+    ]
+
+    /// Two flexible columns, `md` between them, grid inset `lg` on each side.
+    private var caseWidth: CGFloat {
+        let content = wallWidth - AppSpacing.lg * 2 - AppSpacing.md
+        return content > 0 ? content / 2 : 150
     }
 
-    private var header: some View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xl) {
+            libraryHeader
+            section(label: "Your decks", decks: store.unlockedSummaries)
+            if !store.lockedSummaries.isEmpty {
+                section(label: "Premium", decks: store.lockedSummaries)
+            }
+        }
+        .background(
+            GeometryReader { geo in
+                Color.clear.preference(key: WallWidthKey.self, value: geo.size.width)
+            }
+        )
+        .onPreferenceChange(WallWidthKey.self) { wallWidth = $0 }
+    }
+
+    private var libraryHeader: some View {
         HStack(alignment: .firstTextBaseline) {
             Text("Deck library")
                 .font(AppFonts.sectionHeading)
@@ -34,28 +60,40 @@ struct DeckWallView: View {
         .padding(.horizontal, AppSpacing.lg)
     }
 
-    private var grid: some View {
-        let cols = [GridItem(.flexible(), spacing: AppSpacing.md),
-                    GridItem(.flexible(), spacing: AppSpacing.md)]
-        return LazyVGrid(columns: cols, spacing: AppSpacing.lg) {
-            ForEach(Array(store.summaries.enumerated()), id: \.element.id) { i, s in
-                DeckCellView(summary: s, style: store.style(for: s),
-                             locked: store.isLocked(s), index: i, namespace: namespace,
-                             detailOpen: store.detailID == s.id) {
-                    store.openDetail(s.id)
+    @ViewBuilder
+    private func section(label: String, decks: [DeckSummary]) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            Text(label)
+                .overlineTracked()
+                .foregroundStyle(AppColors.textMuted)
+                .padding(.horizontal, AppSpacing.lg)
+
+            LazyVGrid(columns: columns, spacing: AppSpacing.lg) {
+                ForEach(Array(decks.enumerated()), id: \.element.id) { index, summary in
+                    DeckCellView(summary: summary,
+                                 style: store.style(for: summary),
+                                 store: store,
+                                 index: index,
+                                 caseWidth: caseWidth)
                 }
             }
+            .padding(.horizontal, AppSpacing.lg)
         }
-        .padding(.horizontal, AppSpacing.lg)
+    }
+}
+
+private struct WallWidthKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
 #if DEBUG
 #Preview("Deck library") {
-    @Previewable @Namespace var ns
     ZStack {
         AppColors.void.ignoresSafeArea()
-        ScrollView(showsIndicators: false) { DeckWallView(store: .preview, namespace: ns) }
+        ScrollView(showsIndicators: false) { DeckWallView(store: .preview) }
     }
     .preferredColorScheme(.dark)
 }

@@ -2,10 +2,17 @@
 //  DeckCellView.swift
 //  Vayl — Play
 //
-//  A wall cell: the flat case + the deck's title/meta UNDERNEATH (shelf grammar).
-//  Tap + press feedback come from a Button + PressableCardStyle (the Learn-tab pattern),
-//  which is scroll-safe. A minimumDistance:0 DragGesture here used to grab every touch
-//  and fight the library's scroll.
+//  A wall cell: the flat case (title now lives INSIDE the case) + a compact
+//  metadata SHELF underneath (shelf grammar). Shelf v2 (spec 2026-07-11 §7):
+//  category → "N cards" + partner-saved dot → progress bar / "✓ Completed" /
+//  nothing. No difficulty label anywhere. Tap routes through the store, which
+//  decides paywall / first-open ceremony / detail from the deck's state.
+//
+//  Tap + press feedback come from a Button + PressableCardStyle (the Learn-tab
+//  pattern), which is scroll-safe. A minimumDistance:0 DragGesture here used to
+//  grab every touch and fight the library's scroll. The wall→detail open is a
+//  fade now (matchedGeometry lives only in the first-open ceremony), so the cell
+//  no longer sources a matchedGeometryEffect.
 //
 
 import SwiftUI
@@ -13,41 +20,27 @@ import SwiftUI
 struct DeckCellView: View {
     let summary: DeckSummary
     let style: DeckStyle
-    /// Live lock state from the wall's store (nil = frozen catalog flag).
-    var locked: Bool?
+    /// The wall's store — the cell reads deck state / progress / partner-star
+    /// through it and routes taps through `tapDeck`. Never touches SwiftData or
+    /// the catalog service directly (spec §2).
+    let store: PlayStore
     var index: Int = 0
-    var namespace: Namespace.ID
-    /// True while THIS deck's detail overlay is open. The cell yields matched-
-    /// geometry sourcehood (and hides its case) so the detail's case is the one
-    /// live source — two simultaneous sources degrade the zoom to a crossfade.
-    var detailOpen: Bool = false
-    var onTap: () -> Void
+    /// The measured grid-column width (from `DeckWallView`). The case is pinned to
+    /// `caseWidth × 1.5` so it can NEVER stretch to fill leftover row height — the bug
+    /// that made rowmate cases render at different heights. `.aspectRatio` alone does
+    /// not hold inside a LazyVGrid row; an explicit height does.
+    var caseWidth: CGFloat = 150
 
     @State private var appeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        Button(action: onTap) {
+        Button {
+            store.tapDeck(summary.id)
+        } label: {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                DeckCaseView(summary: summary, style: style, lockedOverride: locked)
-                    .matchedGeometryEffect(id: summary.id, in: namespace, isSource: !detailOpen)
-                    .opacity(detailOpen ? 0 : 1)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(summary.category.displayName)
-                        .font(AppFonts.overline)
-                        .foregroundStyle(AppColors.textHint)
-                    Text(summary.title)
-                        .font(AppFonts.bodyMedium)
-                        .foregroundStyle(AppColors.textPrimary)
-                        .lineLimit(2)
-                    HStack(spacing: 6) {
-                        Circle().fill(style.accent).frame(width: 6, height: 6)
-                        Text("\(summary.intensity.difficultyLabel) · \(summary.cardCount) cards")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.textTertiary)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                DeckCaseView(summary: summary, style: style, state: store.deckState(summary), width: caseWidth)
+                shelf
             }
             .contentShape(Rectangle())
         }
@@ -56,43 +49,74 @@ struct DeckCellView: View {
         .scaleEffect(appeared ? 1 : 0.96)
         .opacity(appeared ? 1 : 0)
         .onAppear {
-            if reduceMotion { appeared = true } else { withAnimation(AppAnimation.enter.delay(Double(index % 6) * 0.04)) { appeared = true } }
+            if reduceMotion {
+                appeared = true
+            } else {
+                withAnimation(AppAnimation.enter.delay(Double(index % 6) * 0.04)) { appeared = true }
+            }
+        }
+    }
+
+    // MARK: - Shelf v2
+
+    private var shelf: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            Text(summary.category.displayName)
+                .font(AppFonts.overline)
+                .foregroundStyle(AppColors.textHint)
+
+            HStack(spacing: AppSpacing.xs) {
+                Text("\(summary.cardCount) cards")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+                // Partner-saved affordance. Invisible in V1 (isStarredByPartner
+                // returns false until partner-star sync lands) — kept on purpose,
+                // never faked.
+                if store.isStarredByPartner(summary) {
+                    Circle()
+                        .fill(AppColors.spectrumMagenta)
+                        .frame(width: AppSpacing.xs, height: AppSpacing.xs)
+                }
+            }
+
+            statusLine
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// One of: in-progress bar + "N% in" · "✓ Completed" · nothing (fresh).
+    /// `progressFraction` is nil when fresh OR completed, so the completed branch
+    /// only shows for genuinely finished decks.
+    @ViewBuilder
+    private var statusLine: some View {
+        if let fraction = store.progressFraction(summary) {
+            HStack(spacing: AppSpacing.sm) {
+                ProgressBar(value: fraction, max: 1)
+                Text("\(Int((fraction * 100).rounded()))% in")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .fixedSize()
+            }
+        } else if store.isCompleted(summary) {
+            Text("✓ Completed")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
         }
     }
 }
 
 #if DEBUG
-#Preview("Cell — unlocked") {
-    @Previewable @Namespace var ns
+#Preview("Cells — shelf v2") {
+    let store = PlayStore.preview
     let samples = (try? DeckCatalogService().loadSummaries()) ?? []
     return ZStack {
         AppColors.void.ignoresSafeArea()
         LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: AppSpacing.lg) {
-            ForEach(Array(samples.prefix(2).enumerated()), id: \.element.id) { index, summary in
+            ForEach(Array(samples.prefix(4).enumerated()), id: \.element.id) { index, summary in
                 DeckCellView(summary: summary,
-                             style: DeckStyle.make(for: summary),
-                             locked: false,
-                             index: index,
-                             namespace: ns) {}
-            }
-        }
-        .padding()
-    }
-    .preferredColorScheme(.dark)
-}
-
-#Preview("Cell — locked") {
-    @Previewable @Namespace var ns
-    let samples = (try? DeckCatalogService().loadSummaries()) ?? []
-    return ZStack {
-        AppColors.void.ignoresSafeArea()
-        LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: AppSpacing.lg) {
-            ForEach(Array(samples.prefix(2).enumerated()), id: \.element.id) { index, summary in
-                DeckCellView(summary: summary,
-                             style: DeckStyle.make(for: summary),
-                             locked: true,
-                             index: index,
-                             namespace: ns) {}
+                             style: store.style(for: summary),
+                             store: store,
+                             index: index)
             }
         }
         .padding()

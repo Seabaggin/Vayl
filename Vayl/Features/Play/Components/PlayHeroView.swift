@@ -14,18 +14,20 @@ struct PlayHeroView: View {
     /// 0 = full at rest, 1 = collapsed. Scroll-linked (matches Home's hero-zone transform).
     var collapse: Double = 0
 
+    /// Tonight's hand, built by tapping cards in the hero carousel — same
+    /// selecting mechanic Home uses. "Settle in" opens the session with these.
+    @State private var handIDs: [String] = []
+
     var body: some View {
         VStack(spacing: AppSpacing.md) {
             if let deck = store.featured { header(deck) }
 
             CardCarousel(
                 cards: store.featuredCards,
-                onCardAction: { _, action in
-                    if case .startSession = action, let id = store.featuredID {
-                        store.beginCeremony(id)
-                    }
-                },
-                selecting: false,
+                onCardAction: { _, _ in },
+                selecting: true,
+                selectedIDs: Set(handIDs),
+                onToggleSelect: { toggleHand($0) },
                 dimOpacity: 0.15,
                 colorway: store.featured.map { store.style(for: $0).colorway },
                 glyphPath: store.featured.map { store.style(for: $0).glyph.path }
@@ -34,7 +36,13 @@ struct PlayHeroView: View {
                 DeckPedestal(showBloom: false)
                     .offset(y: 191)
             }
+
+            if !handIDs.isEmpty {
+                settleInBar
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
+        .animation(AppAnimation.spring, value: handIDs.isEmpty)
         // A · recede into depth — the hero tilts back in 3D and falls away as the
         // library rises past it (the chosen collapse). Still the same scroll-linked,
         // Home-matched mechanism, just a grander transform on top.
@@ -47,6 +55,27 @@ struct PlayHeroView: View {
         )
         .opacity(1 - collapse * 0.92)
         .offset(y: -collapse * 22)
+    }
+
+    /// "Settle in · N →" — opens the session with tonight's selected hand,
+    /// matching Home's CTA. Placement in the scroll-collapsing hero is
+    /// feel-gated (Bryan's device pass).
+    private var settleInBar: some View {
+        VaylButton(label: "Settle in  ·  \(handIDs.count)  →", isDisabled: false) {
+            store.settleInFeatured(cardIds: handIDs)
+            handIDs = []
+        }
+        .padding(.horizontal, AppSpacing.lg)
+    }
+
+    private func toggleHand(_ card: Card) {
+        withAnimation(AppAnimation.spring) {
+            if let idx = handIDs.firstIndex(of: card.id) {
+                handIDs.remove(at: idx)
+            } else {
+                handIDs.append(card.id)
+            }
+        }
     }
 
     private func header(_ d: DeckSummary) -> some View {

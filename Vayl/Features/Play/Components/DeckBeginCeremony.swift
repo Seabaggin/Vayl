@@ -2,8 +2,12 @@
 //  DeckBeginCeremony.swift
 //  Vayl — Play
 //
-//  The reserved metallic case + crack/dissolve, played only on Begin. Reduce
-//  Motion / fallback cross-fades straight through to the session.
+//  The first-open ceremony: the reserved metallic case + crack/dissolve, played
+//  once per person when a SEALED deck is first opened. It breaks the seal and
+//  lands in the deck detail (not a session — Start from detail begins play). A
+//  quiet top-right Skip pill is present from the start; skipping STILL breaks the
+//  seal (same destination, minus the animation) — a skip that only deferred would
+//  re-nag. Reduce Motion / Low Power cross-fade straight through. (Spec §3.)
 //
 
 import SwiftUI
@@ -43,6 +47,9 @@ struct DeckBeginCeremony: View {
                 }
             }
         }
+        .overlay(alignment: .topTrailing) {
+            if deck != nil { skipPill.padding(AppSpacing.lg) }
+        }
         .transition(.opacity)
         .task(id: dissolve) {
             // RM / Low Power: skip straight through. Otherwise wait for the
@@ -60,6 +67,22 @@ struct DeckBeginCeremony: View {
         }
     }
 
+    /// Quiet, always-present skip. Breaks the seal and jumps to detail without the
+    /// animation — the manual equivalent of the RM / Low-Power short-path.
+    private var skipPill: some View {
+        Button { store.skipFirstOpen() } label: {
+            Text("Skip")
+                .font(AppFonts.buttonLabelSmall)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.xs)
+                .background(Capsule().fill(AppColors.cardBg.opacity(0.6)))
+                .overlay(Capsule().strokeBorder(AppColors.borderSubtle, lineWidth: 1))
+        }
+        .buttonStyle(PressableCardStyle())
+        .accessibilityLabel("Skip ceremony")
+    }
+
     private func theme(_ d: DeckSummary) -> FoilDeckTheme {
         FoilDeckTheme(colorway: store.style(for: d).colorway, deckName: d.title.uppercased())
     }
@@ -70,11 +93,11 @@ struct DeckBeginCeremony: View {
 }
 
 #if DEBUG
-// "the-opener" is a free deck, so beginCeremony sets ceremonyDeckID directly
+// "the-opener" is a free deck, so beginFirstOpen sets ceremonyDeckID directly
 // (a locked id would route to the paywall instead and leave the preview blank).
 #Preview("Begin ceremony") {
     let store = PlayStore.preview
-    store.beginCeremony("the-opener")
+    store.beginFirstOpen("the-opener")
     return ZStack {
         AppColors.void.ignoresSafeArea()
         DeckBeginCeremony(store: store)

@@ -18,6 +18,7 @@ struct PlayMastheadView: View {
         // (no underline bar). "Cards" stays — future-proof for more game types.
         Text("Cards.")
             .font(AppFonts.tabMasthead)
+            .vaylDisplayTracking(40)   // tabMasthead is display(40); tighten optically
             .foregroundStyle(AppColors.spectrumText)
             .frame(maxWidth: .infinity, alignment: .leading)
     }

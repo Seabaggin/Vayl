@@ -21,7 +21,6 @@ struct PlayView: View {
     @State private var store: PlayStore?
     @State private var entryStore: SessionEntryStore?
     @State private var scrollY: CGFloat = 0
-    @Namespace private var deckZoom
 
     /// Inject a store for previews; nil in the app (built from the environment).
     var injectedStore: PlayStore?
@@ -78,7 +77,7 @@ struct PlayView: View {
                                 .padding(.horizontal, AppSpacing.lg)
                                 .padding(.top, AppSpacing.xs)
                             PlayHeroView(store: store, collapse: collapse)
-                            DeckWallView(store: store, namespace: deckZoom)
+                            DeckWallView(store: store)
                         }
                         .padding(.top, AppSpacing.sm)
                         // No bottom clearance here: AppShell's .safeAreaInset
@@ -87,10 +86,14 @@ struct PlayView: View {
                     .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
                         scrollY = y
                     }
+                    // Top scroll-edge: the Cards masthead dissolves under the Island
+                    // as it scrolls up, instead of hard-cutting at the safe-area line.
+                    .scrollTopEdgeFade()
                 }
             }
 
-            DeckDetailView(store: store, namespace: deckZoom)
+            DeckCarouselView(store: store)
+                .zIndex(5)
 
             if store.ceremonyDeckID != nil {
                 DeckBeginCeremony(store: store)
@@ -197,11 +200,13 @@ struct PlayView: View {
                 get: { store.paywallDeck != nil },
                 set: { if !$0 { store.dismissPaywall() } }
             ),
-            heightFraction: 0.92
+            heightFraction: 0.65
         ) {
             PaywallSheet(
-                entry: .playDeck(name: store.paywallDeck?.title ?? "this deck"),
-                onUnlocked: { store.dismissPaywall() }
+                entry: .playDeck,
+                onUnlocked: { store.dismissPaywall() },
+                onClose: { store.dismissPaywall() },
+                hostProvidesChrome: true
             )
         }
         // A new session can't dead-end on an existing unfinished one (spec
