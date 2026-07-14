@@ -72,10 +72,12 @@ struct EventEntryEditor: View {
                         .lineLimit(3...8)
                 }
                 field("Visibility") {
-                    LearnSegmented<EventVisibility>(
-                        items: [.init(.onlyMe, "Private"), .init(.shared, "Shared")],
-                        selection: $visibility,
-                        accent: AppColors.accentSecondary
+                    SegmentedPillGroup<EventVisibility>(
+                        options: [
+                            .init(.onlyMe, label: "Private", accent: AppColors.spectrumCyan),
+                            .init(.shared, label: "Shared", accent: AppColors.spectrumMagenta)
+                        ],
+                        selection: $visibility
                     )
                 }
                 Text(visibility == .onlyMe ? "Only you can ever see this." : "Shared with your partner.")

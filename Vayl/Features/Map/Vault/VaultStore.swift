@@ -153,19 +153,13 @@ final class VaultStore {
         let mineToDecide: Bool      // true when my partner proposed it (I'm the approver)
     }
 
-    private(set) var safeWord: String = "red"
     private(set) var agreements: [AgreementVM] = []
     private(set) var proposals: [ProposalVM] = []
 
-    /// Loads the shared safe word + active agreements + pending proposals.
+    /// Loads the active agreements + pending proposals.
     func loadAgreements(appState: AppState, context: ModelContext) async {
         guard let coupleId = appState.coupleId,
               let me = try? context.fetch(FetchDescriptor<UserProfile>()).first else { return }
-        if let couple = try? context.fetch(
-            FetchDescriptor<Couple>(predicate: #Predicate { $0.id == coupleId })
-        ).first {
-            safeWord = couple.sharedSafeWord
-        }
 
         isLoading = true
         loadError = nil

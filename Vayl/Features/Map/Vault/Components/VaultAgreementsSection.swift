@@ -2,7 +2,7 @@
 //  VaultAgreementsSection.swift
 //  Vayl
 //
-//  The Vault's Agreements segment (Phase A): the shared safe word, pending proposals
+//  The Vault's Agreements segment (Phase A): pending proposals
 //  (the dual lock, you approve your partner's, they approve yours), the active list,
 //  and an inline propose / edit / retire flow. Every change is a proposal that takes
 //  effect only once both agree. Free. VaultStore owns the data + the async actions.
@@ -24,30 +24,10 @@ struct VaultAgreementsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.xl) {
-            safeWordCard
             pendingProposals
             activeAgreements
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    // MARK: - Safe word
-
-    private var safeWordCard: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            MapSectionHeader(title: "Shared safe word")
-            HStack {
-                Text(store.safeWord)
-                    .font(AppFonts.display(20, weight: .bold, relativeTo: .title2))
-                    .foregroundStyle(AppColors.textPrimary)
-                Spacer()
-                Image(systemName: AppIcons.lifepreserver)
-                    .font(AppFonts.body(18, weight: .regular, relativeTo: .body))
-                    .foregroundStyle(AppColors.safetyAccent)
-            }
-            .padding(AppSpacing.md)
-            .vaylGlassCard(accent: AppColors.safetyAccent)
-        }
     }
 
     // MARK: - Pending proposals (the dual lock)

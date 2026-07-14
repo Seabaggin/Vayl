@@ -35,14 +35,13 @@ struct VaultSheet: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                LearnSegmented<VaultStore.Segment>(
-                    items: [
-                        .init(.desire, "Desire Map"),
-                        .init(.agreements, "Agreements"),
-                        .init(.log, "Log")
+                SegmentedPillGroup<VaultStore.Segment>(
+                    options: [
+                        .init(.desire, label: "Desire Map", accent: AppColors.spectrumCyan),
+                        .init(.agreements, label: "Agreements", accent: AppColors.spectrumPurple),
+                        .init(.log, label: "Log", accent: AppColors.spectrumMagenta)
                     ],
-                    selection: $store.segment,
-                    accent: AppColors.accentSecondary
+                    selection: $store.segment
                 )
 
                 section

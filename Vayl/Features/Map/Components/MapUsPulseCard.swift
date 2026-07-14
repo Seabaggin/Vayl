@@ -38,8 +38,6 @@ struct MapUsPulseCard: View {
     let relativeDay: (Date) -> String
     var onTap: (() -> Void)?
 
-    @State private var isPressed = false
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
@@ -58,17 +56,9 @@ struct MapUsPulseCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         // NO card chrome — MapPulseHero (Me) has none either. This is a hero
         // sitting on the atmosphere, not a bordered card like the Vault door.
-        .contentShape(Rectangle())
-        .scaleEffect(isPressed ? 0.96 : 1.0)
-        .sensoryFeedback(.impact(weight: .light), trigger: isPressed) { _, now in now }
-        .onTapGesture {
-            isPressed = true
-            onTap?()
-            Task { @MainActor in
-                try? await Task.sleep(for: .seconds(0.1))
-                isPressed = false
-            }
-        }
+        // Shared tap contract: press-scale + haptic on touch-DOWN (was a manual
+        // isPressed flipped on tap-UP with a timed reset — the scale lagged the touch).
+        .vaylPressableTap { onTap?() }
     }
 
     // MARK: - Header (mirrors MapPulseHero.sectionHeader)

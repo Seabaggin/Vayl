@@ -141,6 +141,9 @@ struct MapView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .scrollIndicators(.hidden)
+                    // Top scroll-edge: the name/Me-Us masthead dissolves under the
+                    // Island as it scrolls up, instead of hard-cutting at the edge.
+                    .scrollTopEdgeFade()
                 }
             }
             .onChange(of: store.hasUs) { _, has in
@@ -191,7 +194,7 @@ struct MapView: View {
             }
             .vaylSheet(
                 isPresented: $showPaywall,
-                heightFraction: 0.92,
+                heightFraction: 0.65,
                 screenHeight: layout.screenHeight
             ) {
                 PaywallSheet(entry: .reveal, onUnlocked: {
@@ -199,7 +202,9 @@ struct MapView: View {
                     // canRevealAll flips via EntitlementStore the moment the purchase
                     // applies — the reload just re-fetches rows under the new gate.
                     Task { await vaultStore.loadDesire(appState: appState, context: modelContext) }
-                })
+                }, onClose: {
+                    showPaywall = false
+                }, hostProvidesChrome: true)
             }
         }
         .task { await loadEverything() }
@@ -303,6 +308,7 @@ struct MapView: View {
             }
         }
         .font(AppFonts.tabMasthead)
+        .vaylDisplayTracking(40)   // tabMasthead is display(40); tighten optically
         // Animate only the partner-name LOAD (""→name) so it fades in once; the
         // Me/Us colour/period changes are animated separately by the button taps.
         .animation(AppAnimation.slow, value: store.partnerName)

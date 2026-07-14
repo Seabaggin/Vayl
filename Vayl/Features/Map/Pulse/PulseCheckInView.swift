@@ -207,12 +207,13 @@ struct PulseCheckInView: View {
                     .frame(maxWidth: .infinity)
 
                 VStack(spacing: AppSpacing.xs) {
-                    ForEach(q.pills) { pill in
+                    ForEach(Array(q.pills.enumerated()), id: \.element.id) { index, pill in
                         SelectablePill(
                             label: pill.label,
                             isSelected: answers[currentQ] == pill.label,
                             intensity: .warm,
-                            showFlame: false
+                            showFlame: false,
+                            tint: Self.answerScaleTint(at: index)
                         ) {
                             selectPill(pill.label, qIndex: currentQ)
                         }
@@ -273,6 +274,23 @@ struct PulseCheckInView: View {
             }
         }
         .transition(.opacity.combined(with: .scale(scale: 0.97)))
+    }
+
+    // MARK: - Per-pill tint (design pass 2026-07-09, pill-options mockup Option A)
+
+    /// Fixed 5-step colour whisper by PILL POSITION (leftmost = highest score,
+    /// per PulseAnswers' own pill ordering), the same for every question rather
+    /// than derived per-pill from energy/openness: Cyan / Purple / Neutral
+    /// (silver) / Magenta / Orange (Bryan's call, 2026-07-09). Every one of the
+    /// five questions has exactly five pills, so index is a safe key.
+    private static func answerScaleTint(at index: Int) -> Color {
+        switch index {
+        case 0:  return AppColors.auraCoreCyan
+        case 1:  return AppColors.spectrumPurple
+        case 2:  return AppColors.auraCoreNeutral
+        case 3:  return AppColors.auraCoreMagenta
+        default: return AppColors.pulseAnswerScaleOrange
+        }
     }
 
     // MARK: - Running position / colour / space
