@@ -289,6 +289,17 @@ final class SettingsStore {
         if case .error = accountPhase { accountPhase = .idle }
     }
 
+    // MARK: - Restore purchases (Apple-required path for non-consumables)
+
+    /// Explicit "Restore Purchases" from Settings. Re-syncs entitlements from the App Store
+    /// and re-grants the couple server-side if Core is owned. Delegates to EntitlementStore,
+    /// which owns purchase state; progress (`isPurchasing`) and any error (`loadError`) surface
+    /// through `entitlements`, so the View reflects those directly.
+    @discardableResult
+    func restorePurchases() async -> Bool {
+        await entitlements.restore()
+    }
+
     // MARK: - Private
 
     /// Clears in-memory routing so the root re-renders to onboarding / sign-in cleanly.

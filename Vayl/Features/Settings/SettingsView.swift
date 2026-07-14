@@ -193,9 +193,9 @@ struct SettingsView: View {
                 }
                 Spacer()
                 Button {
-                    // TODO: wire StoreKit restore-purchases
+                    Task { await store?.restorePurchases() }
                 } label: {
-                    Text("Restore")
+                    Text(entitlements.isPurchasing ? "Restoring…" : "Restore")
                         .font(AppFonts.caption.bold())
                         .foregroundStyle(AppColors.spectrumCyan)
                         .padding(.leading, AppSpacing.md)
@@ -203,6 +203,7 @@ struct SettingsView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(PressableCardStyle())
+                .disabled(entitlements.isPurchasing)
             }
             .padding(AppSpacing.md)
             .vaylGlassCard(accent: AppColors.spectrumCyan, radius: AppRadius.container)
