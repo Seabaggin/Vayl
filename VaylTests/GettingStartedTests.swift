@@ -1,6 +1,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class GettingStartedTests: XCTestCase {
 
     func test_day1_paired_nothingDone_mapIsActive_inviteAutoDone() {

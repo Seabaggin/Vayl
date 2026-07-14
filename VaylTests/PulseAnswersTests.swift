@@ -1,6 +1,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class PulseAnswersTests: XCTestCase {
 
     // MARK: - Canonical quadrant coverage

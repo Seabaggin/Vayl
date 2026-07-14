@@ -9,6 +9,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class PartnerChipPulseCopyTests: XCTestCase {
     func testNilPositionShowsConfirmedEmptyCopy() {
         XCTAssertEqual(PartnerChipPulseCopy.tileText(for: nil), "No Pulse to show")

@@ -6,6 +6,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class PulseHistoryTests: XCTestCase {
 
     // MARK: - lastLogged

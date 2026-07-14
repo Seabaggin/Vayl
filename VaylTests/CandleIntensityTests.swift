@@ -1,6 +1,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class CandleIntensityTests: XCTestCase {
 
     func test_orderedCasesMatchRowSlots() {

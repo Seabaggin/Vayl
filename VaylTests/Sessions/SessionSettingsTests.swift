@@ -9,6 +9,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class SessionSettingsTests: XCTestCase {
 
     // MARK: - Pace scales to the selected card count

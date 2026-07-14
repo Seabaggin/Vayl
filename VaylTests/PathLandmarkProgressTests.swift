@@ -1,6 +1,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class PathLandmarkProgressTests: XCTestCase {
     func test_pathLandmarkState_rawValues_matchDatabaseCheckConstraint() {
         XCTAssertEqual(PathLandmarkState.curious.rawValue, "curious")

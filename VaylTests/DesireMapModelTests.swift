@@ -13,6 +13,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class DesireMapModelTests: XCTestCase {
 
     // MARK: - DesireRatingValue (the 4-point weight)

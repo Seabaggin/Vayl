@@ -16,6 +16,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class ContentLintTests: XCTestCase {
 
     // MARK: - Fixture

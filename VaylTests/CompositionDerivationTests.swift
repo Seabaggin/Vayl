@@ -5,6 +5,7 @@ import XCTest
 // PROPOSE at link completion, or nil → silent .flexible. Inputs are the raw
 // GenderPhase drum strings (GenderSequencer.options) or nil when declined.
 // Source of truth: GenderDynamic.proposal in AppCardEnums.swift.
+@MainActor
 final class CompositionDerivationTests: XCTestCase {
 
     func test_binaryPairsDeriveTheirComposition() {

@@ -6,6 +6,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class UsOrbStateTests: XCTestCase {
 
     /// Fixed clock so day math never straddles a real midnight.

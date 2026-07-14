@@ -1,6 +1,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class PathContentServiceTests: XCTestCase {
     func test_loadStyle_swinging_returnsThirteenLandmarksAcrossFivePhases() throws {
         let content = try PathContentService().loadStyle("swinging")

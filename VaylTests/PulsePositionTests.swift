@@ -3,6 +3,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class PulsePositionTests: XCTestCase {
 
     // MARK: - Quadrant resolution

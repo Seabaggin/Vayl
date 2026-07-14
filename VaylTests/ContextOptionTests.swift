@@ -7,6 +7,7 @@ import XCTest
 //   • No "undecided" escape card — the low-commitment options ("here to learn", "checking
 //     it out") cover that, and solo sets are single-anchored (last).
 // Source of truth: AppEnums.swift (enums) + ContextOption.swift (options + derivedRegister).
+@MainActor
 final class ContextOptionTests: XCTestCase {
 
     private let modes: [AppMode] = [.together, .solo]

@@ -1,6 +1,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class MonteRowGeometryTests: XCTestCase {
 
     func test_monteFanLayout_centerIsUpright_outerAnglesAreSymmetric() {

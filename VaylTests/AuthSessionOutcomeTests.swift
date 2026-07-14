@@ -11,6 +11,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class AuthSessionOutcomeTests: XCTestCase {
 
     // MARK: - Network failure WITH a stored session → stay in, retry offline

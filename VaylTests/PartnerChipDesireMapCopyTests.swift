@@ -9,6 +9,7 @@
 import XCTest
 @testable import Vayl
 
+@MainActor
 final class PartnerChipDesireMapCopyTests: XCTestCase {
     func testAllCasesProduceNonEmptyTileCopy() {
         let cases: [DesireMapState] = [
