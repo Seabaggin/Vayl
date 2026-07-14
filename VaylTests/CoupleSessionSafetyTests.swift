@@ -77,7 +77,8 @@ final class CoupleSessionSafetyTests: XCTestCase {
         store.armPresence()
         await waitUntil("partner never arrived") { store.partnerPresent }
         store.confirmSynced()
-        await waitUntil("transition never resolved to session") { store.phase == .session }
+        store.introDidFinish()   // SessionDealIntroView lands card 1 → .session
+        XCTAssertEqual(store.phase, .session)
     }
 
     // MARK: togglePause()

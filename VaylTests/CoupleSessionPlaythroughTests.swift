@@ -73,7 +73,8 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         await waitUntil("partner never arrived") { store.partnerPresent }
         store.confirmSynced()
         XCTAssertEqual(store.phase, .transition)
-        await waitUntil("transition never resolved to session") { store.phase == .session }
+        store.introDidFinish()   // SessionDealIntroView lands card 1 → .session
+        XCTAssertEqual(store.phase, .session)
     }
 
     // MARK: - Context beat gating (banner header vs. interstitial overlay)
