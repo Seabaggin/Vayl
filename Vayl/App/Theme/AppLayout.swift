@@ -175,6 +175,11 @@ struct AppLayout {
     /// The visible icon may be smaller — this is the minimum hit target.
     static let iconBtnSize: CGFloat = 30
 
+    /// 224pt — The airlock lock-in ring's base diameter (the size its geometry
+    /// is proportioned against; SyncLockInRing / LockInRingBloom scale from it).
+    /// The entrance grows it via scaleEffect, not by changing this value.
+    static let lockInRingSize: CGFloat = 224
+
     /// 36pt — Width of the drag handle on a bottom sheet.
     static let dragHandleW: CGFloat = 36
 

@@ -100,6 +100,10 @@ struct VaylApp: App {
                 .environment(entitlementStore)
                 .environment(coupleContext)
                 .task {
+                    // Keep auth state live for the app's lifetime: when connectivity
+                    // returns while foregrounded, the SDK's auto-refresh clears any
+                    // offline flag without waiting for a scene-phase change.
+                    authStore.startObservingAuthState()
                     #if DEBUG
                     let debugSeedRan = await DebugCoupleSeedService(
                         modelContainer: ModelContainer.appContainer,
@@ -120,6 +124,10 @@ struct VaylApp: App {
                     appState.hydrateOnboardingState(from: ModelContainer.appContainer)
                     await authStore.checkSession()
                     #endif
+                    // Routing is now decided (onboarding reconciled + session checked,
+                    // success or failure) — release the splash to reveal. Everything
+                    // below is post-reveal warmup and must NOT gate the splash.
+                    appState.isRoutingSettled = true
                     // Resolve tier (server + local StoreKit) + load the product + start the
                     // purchase-updates listener, now the session is ready (RLS-scoped).
                     await entitlementStore.bootstrap()
@@ -145,6 +153,9 @@ struct VaylApp: App {
                 .onChange(of: scenePhase) { _, newPhase in
                     guard newPhase == .active else { return }
                     Task { await pulseStore.hydrateFromServer() }
+                    // If we entered the app authenticated-but-offline, a return to
+                    // foreground is a natural moment to re-attempt the session refresh.
+                    Task { await authStore.retrySessionIfOffline() }
                 }
                 .modelContainer(ModelContainer.appContainer)
         }

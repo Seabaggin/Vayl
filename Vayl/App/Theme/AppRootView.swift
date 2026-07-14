@@ -67,7 +67,10 @@ struct AppRootView: View {
         // shell, skipping the OB + auth gates, so unattended perf captures (xctrace,
         // CPU sampling) can reach Home without an interactive sign-in. DEBUG only —
         // compiled out of release.
-        if CommandLine.arguments.contains("-vaylForceHome") {
+        if CommandLine.arguments.contains("-vaylDebugAirlock") {
+            DebugAirlockHarness()
+                .themedRoot()
+        } else if CommandLine.arguments.contains("-vaylForceHome") {
             AppShell()
                 .themedRoot()
         } else if !appState.isOnboardingComplete {
@@ -102,6 +105,9 @@ struct AppRootView: View {
                 SplashScreenView(
                     onComplete: { splashDone = true },
                     onTearBegan: {},
+                    // Reveal-gate: the splash holds (breathing) until routing is
+                    // decided, then blooms — no reveal mid-decision, no auth flash.
+                    isRoutingSettled: { appState.isRoutingSettled },
                     // SplashScreenView stores a single type-erased destination handed off
                     // once at launch (not a hot path), so AnyView is acceptable here.
                     // swiftlint:disable:next no_anyview
@@ -120,3 +126,25 @@ struct AppRootView: View {
         }
     }
 }
+
+#if DEBUG
+/// TEMPORARY visual harness — reach AirlockView solo (the real airlock needs a
+/// paired partner present). Launch with `-vaylDebugAirlock`. Remove after verifying.
+private struct DebugAirlockHarness: View {
+    var body: some View {
+        ZStack {
+            AppColors.void.ignoresSafeArea()
+            OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+            AirlockView(
+                store: CoupleSessionStore(
+                    hand: Array(Card.samples.prefix(8)),
+                    modelContainer: .previewContainer,
+                    appState: AppState()
+                ),
+                airlock: nil
+            )
+        }
+        .environment(PulseStore())
+    }
+}
+#endif

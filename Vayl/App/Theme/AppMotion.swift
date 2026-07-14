@@ -91,6 +91,29 @@ extension View {
     }
 }
 
+// MARK: — Flick Settle: velocity-carrying release spring
+
+extension Animation {
+
+    /// The release-velocity handoff for a thrown surface. Returns a spring whose
+    /// response shortens as the flick's `momentum` grows, so the settle continues
+    /// at the finger's speed instead of snapping on a fixed duration.
+    ///
+    /// `momentum` = the extra projected travel from release velocity, in points:
+    /// `predictedEndTranslation − translation` along the thrown axis (pass its
+    /// magnitude). The same quantity the commit gates already read — iOS-16-safe,
+    /// no `.velocity` API.
+    ///
+    /// Reduce Motion: collapses to `.easeOut(0.15)` — velocity carry is motion.
+    static func vaylFlick(momentum: CGFloat) -> Animation {
+        guard !UIAccessibility.isReduceMotionEnabled else { return .easeOut(duration: 0.15) }
+        let t = min(1, max(0, Double(abs(momentum) / AppAnimation.flickMomentumReference)))
+        let response = AppAnimation.flickResponseSlow
+            + (AppAnimation.flickResponseFast - AppAnimation.flickResponseSlow) * t
+        return .spring(response: response, dampingFraction: AppAnimation.flickDamping)
+    }
+}
+
 private struct VaylCascadeModifier: ViewModifier {
     let index: Int
     let shown: Bool

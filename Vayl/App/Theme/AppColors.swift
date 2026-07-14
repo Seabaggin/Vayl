@@ -50,6 +50,15 @@ struct AppColors {
         dark: VaylPrimitives.inkSurface
     )
 
+    /// Racetrack selected-tab fill — the decided purplish that reads as a
+    /// lifted chip above the darker bar base (button-family surface, not the
+    /// frosted glass look). Matches the CTA base fill.
+    static let tabSelectionFill = Color(.sRGB, red: 32/255, green: 28/255, blue: 52/255)  // #201C34
+
+    /// Racetrack bar base fill — a touch darker than the elevated surface so the
+    /// selected chip lifts off it, still purplish (not black).
+    static let tabBarFill = Color(.sRGB, red: 19/255, green: 17/255, blue: 29/255)  // #13111D
+
     /// Holographic shimmer pill base. HolographicShimmer use only.
     static let shimmerBase    = Color(uiColor: VaylPrimitives.inkShimmerBase)
     /// Dark muted orb colours — not the vivid spectrum anchors. HolographicShimmer use only.
@@ -233,6 +242,33 @@ struct AppColors {
     static let spectrumLilac   = Color(uiColor: VaylPrimitives.lilac)
 
     // ─────────────────────────────────────────────
+    // MARK: Liquid-metal spectrum
+    //
+    // The ONE metal material: spectrum hues + bright highlights + deep
+    // spectrum shadows (continuous ring, no black valley). Used only on
+    // earned states — selected pill, CTA press, selected tab ring — via
+    // MetalRing / VaylBorderEffect. Never on chrome, backgrounds, or
+    // unselected states.
+    // ─────────────────────────────────────────────
+
+    static let spectrumMetalStops: [Gradient.Stop] = [
+        .init(color: spectrumCyan, location: 0.00),
+        .init(color: Color(uiColor: VaylPrimitives.metalHiCyan), location: 0.12),
+        .init(color: spectrumPurple, location: 0.30),
+        .init(color: Color(uiColor: VaylPrimitives.metalShadowA), location: 0.44),
+        .init(color: spectrumMagenta, location: 0.60),
+        .init(color: Color(uiColor: VaylPrimitives.metalHiMagenta), location: 0.72),
+        .init(color: spectrumLilac, location: 0.86),
+        .init(color: Color(uiColor: VaylPrimitives.metalShadowB), location: 0.94),
+        .init(color: spectrumCyan, location: 1.00)
+    ]
+
+    static let spectrumMetalAngular = AngularGradient(
+        gradient: Gradient(stops: spectrumMetalStops),
+        center: .center
+    )
+
+    // ─────────────────────────────────────────────
     // MARK: Text — hierarchy
     //
     // Never use a lower-hierarchy token for primary content.
@@ -379,14 +415,14 @@ struct AppColors {
     // MARK: Gold — safety signal
     //
     // At full or near-full opacity: safety signals only.
-    // (safe word button, warnings, hard stop actions)
+    // (warnings, hard stop actions, crisis links)
     // Aurora atmospheric use at ≤8% opacity is acceptable —
     // it cannot be read as a directional signal at that opacity.
     // If it is visible enough to be noticed as gold, it is
     // too opaque for non-safety use.
     // ─────────────────────────────────────────────
 
-    /// Safety signal accent. Safe word, warnings, hard stops only.
+    /// Safety signal accent. Warnings, hard stops, crisis links only.
     static let safetyAccent = Color.dynamic(
         light: VaylPrimitives.gold,
         dark: VaylPrimitives.gold
@@ -622,6 +658,23 @@ struct AppColors {
         dark: VaylPrimitives.magenta
     )
 
+    // Text-safe spectrum stops. The stroke gradient's dark midpoint (purple #6C3AE0)
+    // clears only ~3:1 on the void and FAILS AA-large on card/modal fills — fine for a
+    // stroke, not for text. These lighter stops all clear WCAG AA (4.5:1+) as text on
+    // every surface, so gradient TEXT stays legible. Cyan still never appears in Dawn.
+    private static let textStop1 = Color.dynamic(
+        light: VaylPrimitives.purpleLight,
+        dark: VaylPrimitives.cyanLight
+    )
+    private static let textStop2 = Color.dynamic(
+        light: VaylPrimitives.magentaLight,
+        dark: VaylPrimitives.purpleLight
+    )
+    private static let textStop3 = Color.dynamic(
+        light: VaylPrimitives.gold,
+        dark: VaylPrimitives.magentaLight
+    )
+
     // ─────────────────────────────────────────────
     // MARK: Gradients — public tokens
     // ─────────────────────────────────────────────
@@ -643,6 +696,16 @@ struct AppColors {
     /// OB files reference this token as spectrumTextGradient — use this instead.
     static let spectrumText = LinearGradient(
         colors: [gradientStop1, gradientStop2, gradientStop3],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+
+    /// Contrast-safe spectrum text gradient (lighter stops).
+    /// Use on gradient TEXT that must clear WCAG AA — smaller sizes, or any text on
+    /// a card/modal fill. Reserve `spectrumText` (darker stops) for strokes/borders and
+    /// hero display text (≥24pt) that sits on the page floor. Same horizontal direction.
+    static let spectrumTextSafe = LinearGradient(
+        colors: [textStop1, textStop2, textStop3],
         startPoint: .leading,
         endPoint: .trailing
     )
@@ -749,6 +812,23 @@ struct AppColors {
     static let auraLightNeutral = Color(uiColor: VaylPrimitives.lavenderSilverLight)
     static let auraDeepNeutral  = Color(uiColor: VaylPrimitives.lavenderSilverDeep)
     static let auraGlowNeutral  = Color(uiColor: VaylPrimitives.lavenderSilverCore).opacity(0.22)
+
+    // ─────────────────────────────────────────────
+    // MARK: Pulse check-in answer scale — SelectablePill tint only
+    //
+    // A fixed 5-step colour whisper for a check-in question's five pills,
+    // leftmost (highest score) to rightmost (lowest): Cyan / Purple / Neutral
+    // (lavender silver, reused from the Neutral space above) / Magenta / Orange.
+    // Deliberately NOT the 3-token brand spectrum above (cyan/purple/magenta
+    // only, cyan=Me/magenta=Us) — this is a standalone 5-step scale for the
+    // check-in pills only (docs/mockups/pulse-checkin-pill-options.html Option
+    // A). Orange was Bryan's explicit call (2026-07-09): a straight 3-way
+    // cyan/purple/magenta scale had no complementary colour to close the ramp
+    // out against magenta, so Orange fills that 5th step visually rather than
+    // carrying any circumplex-quadrant meaning. Reuses the existing amber
+    // primitive already used elsewhere in the app.
+    // ─────────────────────────────────────────────
+    static let pulseAnswerScaleOrange = Color(uiColor: VaylPrimitives.orangeHot)
 
     // Pre-answer ramp — plain silver-white, the orb's colour before the FIRST answer lands.
     // Deliberately distinct from the Neutral SPACE's lavender-silver ramp above: no answer

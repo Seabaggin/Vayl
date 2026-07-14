@@ -238,11 +238,11 @@ internal enum AppGlows {
     // ─────────────────────────────────────────────
     // MARK: Safety Glow
     //
-    // Reserved exclusively for safe word and warning surfaces.
+    // Reserved exclusively for warning and hard-stop surfaces.
     // Same constraints as AppColors.safetyAccent — never
     // use for decorative or ambient purposes.
     //
-    // Applied to: Vault safe-word agreement card, hard-stop confirmation UI
+    // Applied to: hard-stop confirmation UI, crisis-resource surfaces
     // ─────────────────────────────────────────────
 
     enum safety {
@@ -375,7 +375,7 @@ extension View {
             )
     }
 
-    /// Applies a safety glow for safe word and warning surfaces.
+    /// Applies a safety glow for warning and hard-stop surfaces.
     func safetyGlow(visible: Bool) -> some View {
         let layers = AppGlows.safety.layers
         return self

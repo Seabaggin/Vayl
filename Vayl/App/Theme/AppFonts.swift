@@ -69,9 +69,26 @@ struct AppFonts {
         }
     }
 
+    /// Editorial serif — deck **case titles ONLY**. A deliberate third typeface
+    /// (Playfair Display Black), scoped to the sealed-case face for its engraved,
+    /// editorial weight. Do NOT use elsewhere without a brand decision — it is not
+    /// part of the general type system (ClashDisplay + Switzer).
+    static func editorial(
+        _ size: CGFloat,
+        relativeTo textStyle: Font.TextStyle
+    ) -> Font {
+        Font.custom("PlayfairDisplay-Black", size: size, relativeTo: textStyle)
+    }
+
     // ─────────────────────────────────────────────
     // MARK: Display scale — ClashDisplay
     // ─────────────────────────────────────────────
+
+    /// The in-case deck title on a `DeckCaseView`. Playfair Black, spectrum
+    /// gradient applied at the call site. Case face only.
+    static var caseTitle: Font {
+        editorial(15, relativeTo: .headline)
+    }
 
     /// Full-screen hero text. Splash screens and empty state illustrations only.
     static var heroTitle: Font {
@@ -112,6 +129,23 @@ struct AppFonts {
     /// screenTitle, named for the sheet-title rule so the intent reads at the call site.
     static var sheetTitle: Font {
         display(24, weight: .semibold, relativeTo: .title)
+    }
+
+    /// Cover-family afterglow headline — the session-close recap
+    /// ("You went N cards deep tonight."). A hero statement inside the protected
+    /// cover, sized well above screenTitle so the moment lands with weight.
+    /// relativeTo: .largeTitle so it still scales at accessibility sizes.
+    /// Session close only — one per screen.
+    static var closeHero: Font {
+        display(34, weight: .bold, relativeTo: .largeTitle)
+    }
+
+    /// The airlock "Let's Lock In." hero title — a cover-family hero statement,
+    /// bold and large so it owns the top of the lock-in moment (matches the design
+    /// reference docs/mockups/airlock-lock-in.html). Airlock only, one per screen.
+    /// relativeTo: .largeTitle so it still scales at accessibility sizes.
+    static var lockInTitle: Font {
+        display(38, weight: .bold, relativeTo: .largeTitle)
     }
 
     /// Onboarding phase headline. One per OB phase screen.
@@ -288,5 +322,42 @@ extension View {
             .font(AppFonts.overline)
             .textCase(.uppercase)
             .tracking(2)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// MARK: - Optical tracking (size-specific letter-spacing)
+//
+// Apple's type model: tracking is SIZE-specific, never one value for all sizes.
+// Large display text reads too loose as it grows, so it wants NEGATIVE tracking;
+// body text wants ~0. SwiftUI `Font` can't carry tracking, so this is a View
+// modifier keyed to the token's point size — the display counterpart to the
+// fixed 2pt `overlineTracked` (which is for small uppercase labels only).
+//
+// FEEL-GATE: the slope/threshold below are a starting curve; Bryan dials final
+// feel on device. Do NOT apply to the overline/caption labels — those keep their
+// deliberate positive tracking.
+// ─────────────────────────────────────────────────────────────
+
+extension AppFonts {
+    /// Size-specific letter-spacing, in points. Display sizes tighten (negative);
+    /// body sizes sit at zero. Linear ramp between `bodyCeiling` and `displayFloor`.
+    /// -0.02em on large text is Apple's rule of thumb; expressed here in points.
+    static func opticalTracking(forSize size: CGFloat) -> CGFloat {
+        let bodyCeiling: CGFloat = 20    // at/below this, no tightening
+        let displayFloor: CGFloat = 34   // at/above this, full -0.02em
+        guard size > bodyCeiling else { return 0 }
+        let t = min(1, (size - bodyCeiling) / (displayFloor - bodyCeiling))
+        return -0.02 * size * t
+    }
+}
+
+extension View {
+    /// Applies `AppFonts.opticalTracking(forSize:)` for a display token's point
+    /// size — headlines tighten as they grow, body stays at zero. Pass the same
+    /// size the font token was built at (e.g. `.vaylDisplayTracking(40)` for a
+    /// `tabMasthead`). See the optical-tracking note above.
+    func vaylDisplayTracking(_ size: CGFloat) -> some View {
+        self.tracking(AppFonts.opticalTracking(forSize: size))
     }
 }

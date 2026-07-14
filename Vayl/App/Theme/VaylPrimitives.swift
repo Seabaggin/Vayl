@@ -42,6 +42,15 @@ enum VaylPrimitives {
     static let magentaDark    = UIColor(hex: "#BE185D")
     static let pink           = UIColor(hex: "#FF2D8A")
 
+    // ── Liquid-metal stops ──────────────────────────────────────────
+    // Bright near-white highlights + DEEP-SPECTRUM shadows for the metal
+    // border. Shadows are deep spectrum, NEVER near-black — a near-black
+    // stop reads as a hole sweeping the ring.
+    static let metalHiCyan    = UIColor(hex: "#DDF3FF")  // near-white cyan glint
+    static let metalHiMagenta = UIColor(hex: "#FFD6E8")  // near-white magenta glint
+    static let metalShadowA   = UIColor(hex: "#3A2170")  // deep purple valley
+    static let metalShadowB   = UIColor(hex: "#35236B")  // deep indigo valley
+
     static let rose           = UIColor(hex: "#C76A86")  // Protective/Empty tier core
     static let roseLight      = UIColor(hex: "#ECC0CE")  // Protective tier highlight
     static let roseDark       = UIColor(hex: "#8F4A60")  // Protective tier deep

@@ -51,6 +51,12 @@ internal enum AppAnimation {
     /// Reduce motion: replace with .easeOut(duration: 0.15) — the reveal happens, the travel does not.
     static let slow: Animation = .easeOut(duration: 0.5)
 
+    /// 0.6s ease-out — One-shot liquid-metal sweep. Fires ONCE when a state
+    /// becomes active (pill select), rotating the metal a single turn, then
+    /// settles to the static ring. Reactive one-shot, so NOT Low-Power gated
+    /// (user feedback always plays); Reduce Motion skips it, ring crossfades in.
+    static let metalSweep: Animation = .timingCurve(0.16, 0.84, 0.24, 1.0, duration: 0.6)
+
     // MARK: — Cinematic Duration
     // Not an Animation value — a raw duration for use with .easeOut(duration: AppAnimation.cinematic).
     // Reserved for screen-level content reveals requiring ceremony beyond slow (0.5s).
@@ -206,6 +212,52 @@ internal enum AppAnimation {
     /// Number of inhale/exhale cycles before the breath resolves to "there you are".
     static let breatheCycles: Int = 3
 
+    // MARK: - Airlock entrance ("Let's Lock In")
+    // The lock-in screen's entrance: a two-person capacity glance that yields to
+    // the focal ring. A scripted one-shot (reactive, not ambient). Values ported
+    // from the finalized reference docs/mockups/airlock-lock-in.html. The WHOLE
+    // choreography is skipped under Reduce Motion — the screen mounts straight to
+    // the focal ring (no glance, no rise). It is NOT Low-Power-gated: a one-shot
+    // is never LPM-gated (only the aura/glow loops inside it are, internally).
+    // Guard the entrance at the call site; do NOT gate the press-to-arm sweep.
+    //
+    // Choreography at the hold mark (reference run() JS + .ring-wrap/.peek/.title
+    // CSS in docs/mockups/airlock-lock-in.html):
+    //   1. The glance CLEARS FIRST — the peek fades out, the two orbs fly into the
+    //      ring centre (PEEK_HOLD = 2700 → airlockGlanceHold).
+    //   2. RISE_LAG = 250ms later (→ airlockGlanceLead) the ring goes focal: it
+    //      RISES (translateY 75 → 0) and grows (scale 0.9 → 1.42, ~1.58×) to fill
+    //      the vacated space, on a 1.5s easeOutQuint (→ airlockConverge).
+    //   3. The copy lands COPY_LAG = 2000ms after the glance clears
+    //      (→ airlockChromeDelay).
+
+    /// Seconds the two-person capacity glance holds before it clears and yields to
+    /// the ring (reference PEEK_HOLD = 2700).
+    static let airlockGlanceHold: TimeInterval = 2.7
+
+    /// The ring rising + growing from behind the glance into the focal centre.
+    /// easeOutQuint (fast rise → long soft settle) over 1.5s — the reference's
+    /// .ring-wrap transition. Reduce motion: mount focal directly, no animation.
+    static let airlockConverge: Animation = .timingCurve(0.22, 1, 0.36, 1, duration: 1.5)
+
+    /// The beat AFTER the glance starts clearing, BEFORE the ring rises to fill the
+    /// vacated space — the glance leads, the ring follows (reference RISE_LAG = 250).
+    static let airlockGlanceLead: TimeInterval = 0.25
+
+    /// The title stepping back (dim) as the ring takes over.
+    static let airlockTitleRecede: Animation = .easeInOut(duration: 1.2)
+
+    /// The glance orbs flying into the ring centre as they merge (reference orb-fly
+    /// `1.4s cubic-bezier(.5,0,.2,1)`).
+    static let airlockGlanceOut: Animation = .timingCurve(0.5, 0, 0.2, 1, duration: 1.4)
+
+    /// The lock-in chrome (copy) settling in, over the reference's 0.8s fade.
+    static let airlockChromeReveal: Animation = .easeOut(duration: 0.8)
+
+    /// The beat before the copy appears, measured from when the glance clears — the
+    /// copy lands ~2s after (reference COPY_LAG = 2000).
+    static let airlockChromeDelay: TimeInterval = 2.0
+
     // MARK: - Ambient dwell + deck recede
 
     /// Auto-advance dwell for ambient carousels (Learn quiz/research rails,
@@ -298,23 +350,34 @@ internal enum AppAnimation {
     // They must never appear in any other screen — the cold launch ceremony
     // does not repeat as a UI pattern anywhere in the main app.
     //
-    // Sequence timing (absolute offsets from cold launch):
-    //   0.000s  void       — black screen, destination renders silently underneath
-    //   0.250s  slit       — spectrum line aperture opens at constant velocity
-    //   0.280s  bloom creep — line bloom builds from 0.35 → 0.58 over 300ms
-    //   0.600s  ignition   — wordmark reveal begins, bloom spikes to 1.0
-    //   0.640s  pulse      — linePulse fires 40ms after ignition (reveal leads)
-    //   0.900s  hold       — bloom settles to 0.65, ambient oscillation begins
-    //   1.660s  anticipate — zoom container micro-squeezes to 0.97× (40ms)
-    //   1.700s  zoom       — camera crashes into line at 3.5×
-    //   1.950s  tear       — panels snap apart, destination revealed
-    //   2.200s  home fade  — destination opacity confirms (no animation — instant)
-    //   2.400s  dismiss    — splash container removed from hierarchy
+    // Sequence timing (absolute offsets from cold launch).
+    // Reveal-gate model 2026-07-11 — the bloom is the "routing ready" signal.
+    // Fast launch: routing settles by the floor → blooms at ~1.8s, no visible
+    // pulse (nothing to wait for). Slow launch: the splash HOLDS, breathing
+    // calmly (splashBreath) until routing settles or the cap (~1.5s bloom /
+    // ~2.55s total), then blooms. Ref: docs/mockups/splash-beat-timing.html.
+    //   0.000s  void       — atmosphere on screen, destination silent underneath
+    //   ~0.05s  appear     — geometry locks, spectrum line + wordmark reveal begin
+    //   ~0.65s  floor      — earliest the bloom may fire (fast-launch presence beat)
+    //     …     hold/breathe — only on a slow launch, until routing settles or cap
+    //   ~1.5s   cap        — hard backstop: reveal anyway, load surfaces in-app
+    //   bloom → zoom → tear → complete  (~1.05s tail from the bloom)
+    //   fast total ~1.8s · stalled total ~2.55s
+    //
+    // Offsets are gated by SplashScreenView.runFullSequence() / holdForReady();
+    // the token DURATIONS below are the motion itself. splashBloomSettle is used
+    // by holdForReady to cancel the hold-breath before the bloom.
     //
     // Reduce motion fallback for all splash tokens:
     //   Skip the sequence entirely. Crossfade from void to destination at
     //   AppAnimation.standard duration. The destination must be visually
     //   complete at rest — no motion required to read it.
+
+    /// 0.55s ease-out — Atmosphere blooming up from pure black at cold launch,
+    /// before the wordmark appears. Only the atmosphere fades; the black void
+    /// fill (pageBackground) is instant, so the screen wakes gently rather than
+    /// snapping to full brightness. Reduce motion: atmosphere is set on instantly.
+    static let splashAtmosphereFade: Animation = .easeOut(duration: 0.55)
 
     /// 0.08s linear — Spectrum line aperture opening.
     /// Constant velocity communicates mechanical precision — an iris or shutter
@@ -402,6 +465,15 @@ internal enum AppAnimation {
 
     /// 0.30s ease-out — Splash container opacity fading to 0, the final dismiss.
     static let splashDismiss: Animation = .easeOut(duration: 0.30)
+
+    /// 1.3s ease-in-out breath, used ONLY while the splash HOLDS for routing to
+    /// settle on a slow launch (holdForReady). It is bounded (the hold caps at
+    /// ~0.8s, usually interrupted before a full cycle) and one-shot per cold
+    /// launch — the same ceremony-exemption from the 2s ambient floor as every
+    /// other splash token here (this ceremony never recurs in the app). It is
+    /// suppressed under reduce motion / LPM by holdForReady, never plays on a
+    /// fast launch, and is cancelled by splashBloomSettle before the bloom.
+    static let splashBreath: Animation = .easeInOut(duration: 1.3).repeatForever(autoreverses: true)
 
     // MARK: — OB Card Physics
     // These tokens are exclusive to the Onboarding canvas. They must never appear
@@ -989,6 +1061,14 @@ internal enum AppAnimation {
     /// Reduce motion: replace with .easeOut(duration: 0.15) on opacity.
     static let arriveCover: Animation = .timingCurve(0, 0, 0.2, 1, duration: 0.55)
 
+    /// Critically-damped spring companion to `arrive`, for the INTERRUPTIBLE sheet
+    /// present/dismiss. Apple's move/reposition register: no overshoot (dampingFraction
+    /// 1.0), response tuned to `arrive`'s ~0.5s settle. Unlike the fixed `arrive`
+    /// curve, a spring retargets from the live value — a sheet grabbed mid-rise
+    /// follows the finger instead of finishing its scripted duration first.
+    /// FEEL-GATE: response tuned on device. Reduce motion: `.reduceMotionSafe` at call site.
+    static let arriveSpring: Animation = .spring(response: 0.42, dampingFraction: 1.0)
+
     /// 0.18s — Cover CONTENT settles from depth (Staple 1 nested in Staple 2) this long after
     /// the cover container starts rising. Consumed as a .delay on the content's settle.
     /// Reduce motion: unused — content appears with the cover.
@@ -1196,6 +1276,114 @@ internal enum AppAnimation {
     /// separate token since the raw Double also drives the mid-dive Task.sleep timing.
     static let sessionDiveIn: Animation = .easeIn(duration: 0.82)
     static let sessionDiveOut: Animation = .easeOut(duration: 0.82)
+
+    // MARK: — Session Deal Intro (pre-session beat)
+    // Tokens for SessionDealIntroView — the "you're in it now" transition from
+    // the airlock into the session: dealer copy → bloom → settle → auto-deal
+    // (pull + flip) → card→text dive → text resolve. Values ported verbatim
+    // from docs/mockups/pre-session-deal.html per
+    // docs/superpowers/specs/2026-07-11-session-entry-flow-redesign.md.
+    // The dive/warp/text-resolve leg reuses sessionDiveIn/sessionDiveOut/standard
+    // above — no separate tokens needed there.
+    // Reduce Motion / Low Power: the whole beat collapses to a short cross-fade;
+    // the auto-deal still lands the first card (motion stripped, not the
+    // mechanic). Guarded at the call site with `reduceMotion || AppAnimation.lowPower`.
+    // FEEL-GATE: starting values from the prototype — Bryan dials final feel on device.
+
+    /// 0.7s ease-in-out — Dealer copy line fading in at the top of the beat.
+    static let sessionIntroCopyFadeIn: Animation = .easeInOut(duration: 0.7)
+
+    /// 1.4s — Total hold before the copy begins its fade-out. Consumed by Task.sleep.
+    static let sessionIntroCopyHold: Double = 1.4
+
+    /// 0.45s ease-in-out — Dealer copy line fading out as the bloom begins.
+    static let sessionIntroCopyFadeOut: Animation = .easeInOut(duration: 0.45)
+
+    /// 0.8s — Reservoir bloom travel duration (raw seconds, shared with sessionIntroBloom
+    /// so the sequencer can compute the bloom's total span without dividing the token).
+    static let sessionIntroBloomDuration: Double = 0.8
+
+    /// Cubic bezier (0.2, 0.9, 0.25, 1) — cards blooming from center up into the
+    /// reservoir: a real rise + spread, not a scale-in-place.
+    static let sessionIntroBloom: Animation =
+        .timingCurve(0.2, 0.9, 0.25, 1, duration: sessionIntroBloomDuration)
+
+    /// 0.14s — Per-card stagger inside the bloom, so the reservoir reads as cards
+    /// arriving one after another, not a single particle burst.
+    static let sessionIntroBloomStagger: Double = 0.14
+
+    /// 0.75 — Reservoir fan spread, 0 (tight stack) … 1 (full arc). Not an
+    /// Animation — a layout ratio consumed when positioning each reservoir slot.
+    static let sessionIntroReservoirSpread: Double = 0.75
+
+    /// 0.18s — Settle beat between the bloom finishing and the auto-deal pull
+    /// beginning. Consumed by Task.sleep.
+    static let sessionIntroSettle: Double = 0.18
+
+    /// 0.85s — Auto-deal pull duration: the portrait card back travelling from
+    /// its reservoir slot to center. Matches SessionPlayerView.holdSeconds so the
+    /// auto-dealt first card carries the same weight as every later hold-to-deal.
+    static let sessionIntroPullDuration: Double = 0.85
+
+    /// Cubic bezier (0.42, 0, 0.4, 1) — the pull's easing: instant departure,
+    /// confident deceleration into center.
+    static let sessionIntroPull: Animation =
+        .timingCurve(0.42, 0, 0.4, 1, duration: sessionIntroPullDuration)
+
+    /// 0.72 — Fraction of the pull's duration elapsed before the flip begins, so
+    /// the turn overlaps the pull's tail instead of waiting for it to finish.
+    static let sessionIntroFlipStartRatio: Double = 0.72
+
+    /// 0.26s ease-in — The portrait back turning edge-on (first half of the flip).
+    static let sessionIntroFlipBackTurn: Animation = .easeIn(duration: 0.26)
+
+    /// 0.18s — Delay after the flip starts before the landscape front begins
+    /// opening, so the back has cleared edge-on before the front turns into
+    /// view — the VAYL wordmark is never caught mid-turn.
+    static let sessionIntroFlipFrontDelay: Double = 0.18
+
+    /// 0.32s cubic (0.2, 0.75, 0.3, 1) — The landscape front opening from
+    /// edge-on to face-on (second phase of the flip). Front-open start
+    /// (sessionIntroFlipFrontDelay) + this duration is the flip's total span.
+    static let sessionIntroFlipFrontOpen: Animation = .timingCurve(0.2, 0.75, 0.3, 1, duration: 0.32)
+
+    /// 0.82s — Matches sessionDiveIn/sessionDiveOut's duration exactly. Kept as a
+    /// raw companion since the mid-dive text handoff needs a Task.sleep interval,
+    /// not an Animation. Re-tune together if sessionDiveIn/Out ever change.
+    static let sessionIntroDiveSeconds: Double = 0.82
+
+    /// 0.45 — Fraction of the dive elapsed before the reading text resolves
+    /// underneath the diving card. Matches SessionPlayerView.commitDeal's
+    /// dealNext handoff point exactly.
+    static let sessionIntroTextHandoffRatio: Double = 0.45
+
+    // MARK: — Flick Settle (velocity carry)
+    // The release-velocity handoff for thrown surfaces (Curiosity swipe, sheet
+    // drag-dismiss). Apple's "Designing Fluid Interfaces": the settle must continue
+    // at the finger's speed so there is no seam between dragging and animating.
+    // SwiftUI has no public initialVelocity on .spring, so the idiomatic carry is a
+    // spring whose RESPONSE shortens as the flick's momentum grows — a hard throw
+    // resolves faster, a lazy release drifts. The applier lives in AppMotion
+    // (`Animation.vaylFlick(momentum:)`); these are its tunables.
+    //
+    // "momentum" = |predictedEndTranslation − translation| in points: the extra
+    // travel SwiftUI projects from release velocity. iOS-16-safe (no .velocity API)
+    // and the same quantity the commit gates already read.
+    //
+    // FEEL-GATE: starting values — Bryan dials final feel on device. Deviates from
+    // the locked curiosityThrow prototype; re-feel that reference before locking.
+    // Reduce motion: the applier collapses to .easeOut(0.15) (built in).
+
+    /// Spring response at zero momentum — a slow, deliberate release settles here.
+    static let flickResponseSlow: Double = 0.48
+    /// Spring response at/above flickMomentumReference — a hard flick resolves here.
+    static let flickResponseFast: Double = 0.26
+    /// Damping for the flick settle — high enough for one confident settle, low
+    /// enough that a thrown card still reads as physical, not critically damped.
+    static let flickDamping: Double = 0.82
+    /// Momentum (pt) at which response reaches flickResponseFast. Above this the
+    /// response clamps — a flick past the reference does not keep getting snappier.
+    static let flickMomentumReference: CGFloat = 380
 }
 
 // MARK: — Ambient Motion Gate (Reduce Motion + Low Power Mode)

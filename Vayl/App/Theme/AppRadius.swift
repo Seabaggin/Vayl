@@ -57,12 +57,12 @@ internal enum AppRadius {
     static let pill: CGFloat = .infinity
 
     /// 57pt — Native-style presented sheet corners for Dynamic Island devices.
-    /// Apple's native bottom sheets on modern Pro devices (iPhone 14/15 Pro) use
-    /// a much larger continuous corner radius of ~55pt to match the hardware corners.
-    /// Because VaylSheetChrome applies a 2pt bleed (pushing the shape off-screen),
-    /// we increase this to 57pt. This ensures exactly 55pt of the curve is
-    /// visible on-screen.
-    static let sheet: CGFloat = 57
+    /// Top-corner radius for bottom sheets. iOS system sheets sit at a small top
+    /// corner (~10pt default, ~16–24pt for softer premium sheets); the ~55pt device
+    /// figure is the *hardware display* corner, which a mid-screen sheet top never
+    /// meets, so matching it read as an oversized dome. 24pt keeps it on-scale (== `xl`)
+    /// and nests concentrically with the sheet's inner cards (`lg`/`container`, 16–20pt).
+    static let sheet: CGFloat = 24
 
     // MARK: - OB Card Radii
     // These tokens are exclusive to the Onboarding canvas and its card components.
