@@ -287,6 +287,26 @@ final class SessionEntryStoreTests: XCTestCase {
         XCTAssertNil(store.pendingSession, "accept() clears the banner once the launch is built")
     }
 
+    func test_accept_revalidatesAgainstServer_rowGone_setsJoinError_clearsPending_noLaunch() async {
+        let (container, appState, _, coupleId) = makeContext()
+        let realtime = FakeSessionEntryRealtime()
+        realtime.openRow = makeRow(coupleId: coupleId, initiatorId: UUID(), status: .lobby)
+        let store = makeStore(container: container, appState: appState, realtime: realtime)
+
+        store.refresh()
+        await waitUntil("pendingSession never set") { store.pendingSession != nil }
+
+        // The initiator ended the lobby after this device rendered its cached invite.
+        realtime.openRow = nil
+
+        store.accept()
+        await waitUntil("joinError never set") { store.joinError != nil }
+
+        XCTAssertNil(store.acceptedLaunch, "a vanished row must never produce a launch")
+        XCTAssertNil(store.pendingSession, "the dead banner is cleared")
+        XCTAssertEqual(store.joinError, SessionEntryStore.joinErrorMessage)
+    }
+
     func test_accept_withMissingCardId_setsJoinError_clearsPending_noLaunch() async {
         let (container, appState, _, coupleId) = makeContext()
         let realtime = FakeSessionEntryRealtime()

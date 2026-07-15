@@ -49,9 +49,8 @@ final class SessionEntryStore {
     /// Set on accept; the host view presents the cover with it, then clears it.
     var acceptedLaunch: SessionLaunch?
     /// Loud failure surface (spec 2026-07-09 §1.8): set when accept()/resume()
-    /// fails to load the deck or build a valid hand — never when the row
-    /// simply vanished server-side (that path silently clears the banner, by
-    /// design). Cleared on the next successful refresh/accept/resume.
+    /// cannot open the selected session. Cleared on the next successful
+    /// refresh/accept/resume.
     private(set) var joinError: String?
 
     private let modelContainer: ModelContainer
@@ -184,7 +183,8 @@ final class SessionEntryStore {
                   dto.id == pending.id,
                   isJoinablePending(dto)
             else {
-                pendingSession = nil       // gone — drop the dead banner
+                joinError = Self.joinErrorMessage
+                pendingSession = nil       // gone or changed — drop the dead banner, fail loud
                 return
             }
             guard let deck = try? catalog.loadDeck(id: dto.deckId) else {
