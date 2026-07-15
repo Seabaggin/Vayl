@@ -89,3 +89,6 @@ repomix-output.xml
 *.mp4
 
 .sentryclirc
+
+# transient state for subagent burst-limiter hook
+.claude/hooks/.subagent-launches.log

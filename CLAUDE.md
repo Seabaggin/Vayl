@@ -112,6 +112,33 @@ A build + test verdict is the ceiling Claude reaches on its own. UI driving, scr
 snapshot_ui are opt-in only. When Bryan does ask for a sim run, report findings honestly
 (screenshots, logs, anomalies) rather than asserting a visual/feel verdict from automation.
 
+### Subagent Fan-Out at Scale — Don't Torch the Session Budget
+
+Large batch jobs (analyze N files, transform M records, fan out reviewers) blow the session usage
+limit when launched carelessly, and a mid-run limit-hit kills in-flight agents. These rules are
+learned from a run that failed twice before finishing:
+
+- **Throttle waves; never fan out everything at once.** Launch small waves (default 4–6 agents,
+  fewer if Bryan says so), wait for the wave to finish, then launch the next. A single 30-agent
+  burst is what trips the limit. Match wave size to the work's weight, not to how many items exist.
+- **Resume from disk, never redo.** Each agent writes its result to its own output file; the
+  orchestrator checks which outputs already exist and only launches the missing ones. A limit-hit
+  or restart then costs nothing already done. Report progress from the output files on disk, not by
+  reading agent transcripts (those overflow context).
+- **Pre-chunk the data; forbid agents from touching the raw source.** Split the big input into
+  small per-agent batch files up front. Tell each agent to read ONLY its batch file, never the
+  original multi-hundred-MB dump, and never to write extraction/verification scripts. One agent
+  re-reading a giant raw file is the single biggest token blowout.
+- **Pretty-print batch files (multi-line JSON).** A batch written as one giant single-line array
+  gets truncated on Read, the agent thinks data is missing, and it goes hunting in the raw source —
+  the exact failure above. Multi-line JSON is immune.
+- **Keep agent replies tiny.** Agents write output to disk and reply with only a count + validity
+  confirmation + a sentence or two. Never have them echo the full payload back into the orchestrator.
+- **Validate mechanically after aggregation.** Concatenate in batch order, then check count, schema,
+  enum membership, and (for quoted data) exact-substring provenance with a script — don't eyeball it.
+- **Workflow tool is opt-in.** Multi-agent orchestration via the Workflow tool requires Bryan's
+  explicit ask ("ultracode", "use a workflow"). Absent that, use the Agent tool in throttled waves.
+
 ---
 
 ## HTML & Mockup Protocol

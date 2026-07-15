@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Task|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/throttle-subagents.py\"",
+            "timeout": 10,
+            "statusMessage": "Checking subagent burst limit"
+          }
+        ]
+      }
+    ]
+  }
+}
