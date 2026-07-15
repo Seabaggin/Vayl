@@ -242,6 +242,113 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         XCTAssertEqual(syncedPayloads.first?.id, remoteId, "sync payload must be keyed by the shared remote session id")
     }
 
+    // MARK: - Two-device: abandon-follow never logs, resume-finish never duplicates
+
+    private func makeTwoDeviceDTO(id: UUID, coupleId: UUID, hand: [Card], currentIndex: Int, status: CuratedSessionStatus) -> CuratedSessionDTO {
+        CuratedSessionDTO(
+            id: id,
+            coupleId: coupleId,
+            initiatorId: UUID(),
+            deckId: hand.first?.deckId ?? "unknown",
+            deckVariant: nil,
+            cardIds: hand.map(\.id),
+            perCardTimer: [:],
+            globalTimerSeconds: nil,
+            status: status.rawValue,
+            currentIndex: currentIndex,
+            aPresent: true,
+            bPresent: true,
+            aBandwidth: nil,
+            bBandwidth: nil,
+            aConsented: true,
+            bConsented: true,
+            timerStartedAt: nil,
+            revealState: [:],
+            createdAt: ISO8601DateFormatter().string(from: Date()),
+            updatedAt: ISO8601DateFormatter().string(from: Date())
+        )
+    }
+
+    private func makeTwoDeviceStore(
+        dto: CuratedSessionDTO,
+        hand: [Card],
+        container: ModelContainer,
+        appState: AppState,
+        enqueueSync: @escaping @MainActor (SessionRecordPayload) -> Void = { _ in }
+    ) -> CoupleSessionStore {
+        CoupleSessionStore(
+            launch: SessionLaunch(hand: hand, entry: .initiator, role: .a, session: dto),
+            modelContainer: container,
+            appState: appState,
+            realtime: fakeRealtimeService(),
+            presenceSeconds: 0.01,
+            transitionSeconds: 0.01,
+            enqueueSync: enqueueSync
+        )
+    }
+
+    /// A partner's ABANDON ("pick this hand up later") is a mutual quiet exit,
+    /// never a completed sitting: the follower must not write a CardSession or
+    /// push a remote record (the 2026-07-15 vault-divergence finding — the old
+    /// follow path logged a phantom "finished" session on one device only).
+    func test_partnerAbandonFollow_neverLogsASession() async throws {
+        let remoteId = UUID()
+        let hand = Array(Card.openerSamples.prefix(4))
+        let container = ModelContainer.previewContainer
+        let appState = AppState()
+        appState.coupleId = UUID()
+        var syncedPayloads: [SessionRecordPayload] = []
+        let store = makeTwoDeviceStore(
+            dto: makeTwoDeviceDTO(id: remoteId, coupleId: appState.coupleId!, hand: hand, currentIndex: 0, status: .active),
+            hand: hand, container: container, appState: appState,
+            enqueueSync: { syncedPayloads.append($0) }
+        )
+        await crossAirlock(store)
+
+        // Mid-session with real progress — the case the old path logged.
+        store.dealNext()
+        XCTAssertEqual(store.phase, .session)
+        XCTAssertFalse(store.records.isEmpty)
+
+        store.applyRemoteRow(makeTwoDeviceDTO(
+            id: remoteId, coupleId: appState.coupleId!, hand: hand, currentIndex: 1, status: .abandoned))
+
+        XCTAssertEqual(store.phase, .done, "the follower mirrors the abandoner's quiet exit")
+        XCTAssertFalse(store.sessionLogged, "no close screen for an abandoned sitting")
+        let saved = try ModelContext(container).fetch(FetchDescriptor<CardSession>())
+        XCTAssertTrue(saved.isEmpty, "an abandon must never persist a CardSession")
+        XCTAssertTrue(syncedPayloads.isEmpty, "an abandon must never push a remote record")
+    }
+
+    /// One curated session = one local row, ever: a resume-then-finish (new
+    /// store, same shared remote id) updates the row the first finish wrote
+    /// instead of inserting a duplicate the Record double-counts.
+    func test_resumeFinish_upsertsSingleLocalRow_byRemoteSessionId() async throws {
+        let remoteId = UUID()
+        let hand = Array(Card.openerSamples.prefix(3))
+        let container = ModelContainer.previewContainer
+        let appState = AppState()
+        appState.coupleId = UUID()
+        let dto = makeTwoDeviceDTO(id: remoteId, coupleId: appState.coupleId!, hand: hand, currentIndex: 0, status: .active)
+
+        let first = makeTwoDeviceStore(dto: dto, hand: hand, container: container, appState: appState)
+        await crossAirlock(first)
+        while first.phase == .session { first.dealNext() }
+        XCTAssertEqual(first.phase, .close)
+
+        // A second store over the SAME shared session (kill + relaunch resume),
+        // finishing again — e.g. the follow-to-close after a complete echo.
+        let second = makeTwoDeviceStore(dto: dto, hand: hand, container: container, appState: appState)
+        await crossAirlock(second)
+        while second.phase == .session { second.dealNext() }
+        XCTAssertEqual(second.phase, .close)
+
+        let saved = try ModelContext(container).fetch(FetchDescriptor<CardSession>())
+        XCTAssertEqual(saved.count, 1, "the same curated session must never produce two local rows")
+        XCTAssertEqual(saved.first?.remoteSessionId, remoteId)
+        XCTAssertEqual(saved.first?.cardsDiscussed, 3, "counts stay monotonic across the re-finish")
+    }
+
     // MARK: - Whole-session budget: threshold, still-here, never re-fires
 
     /// The budget check fires once elapsed crosses the planned budget, and
@@ -361,14 +468,19 @@ final class CoupleSessionPlaythroughTests: XCTestCase {
         XCTAssertTrue(store.sessionStatLine.hasSuffix("3 min"),
                       "expected minutes from row created_at, got \(store.sessionStatLine)")
 
-        // (b) Cards deep floors at the shared confirmed index when local
-        // records are empty (the relaunched-joiner case).
-        XCTAssertEqual(store.closeCardsDeep, 0)
+        // (b) Cards deep floors at the shared row progress when local records
+        // are empty (the relaunched-joiner case). current_index is 0-based and
+        // points AT the card on the table, so cards seen = index + 1: at row
+        // index 0 the first card is showing (1 deep), and a hand resting at
+        // index 3 has had 4 cards on the table — never the raw index (the
+        // off-by-one found in the 2026-07-15 two-sim pass, where a completed
+        // 3-card hand read "2 cards deep").
+        XCTAssertEqual(store.closeCardsDeep, 1, "card 1 is on the table at index 0")
         store.applyRemoteRow(row(currentIndex: 3))
         XCTAssertTrue(store.records.isEmpty, "this device recorded nothing locally")
         XCTAssertEqual(store.discussedCount, 0)
-        XCTAssertEqual(store.closeCardsDeep, 3, "close count must floor at the row's confirmed index")
-        XCTAssertTrue(store.sessionStatLine.hasPrefix("3 cards"),
+        XCTAssertEqual(store.closeCardsDeep, 4, "cards seen = confirmed index + 1, never the raw index")
+        XCTAssertTrue(store.sessionStatLine.hasPrefix("4 cards"),
                       "the stat line must agree with the close headline, got \(store.sessionStatLine)")
     }
 

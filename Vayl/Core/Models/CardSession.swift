@@ -26,6 +26,11 @@ final class CardSession {
     var id: UUID
     var coupleId: UUID          // sessions are couple-owned — never userId
     var deckId: String          // String reference to JSON content ID — not a UUID FK
+    /// The shared curated_sessions row id (nil on the pure-local DEBUG path).
+    /// The dedup key: one curated session = at most ONE local row, ever —
+    /// a resume-then-finish updates the existing row instead of inserting a
+    /// second one, and the Map's Record merge matches remote history on it.
+    var remoteSessionId: UUID?
     var startedAt: Date
     var completedAt: Date?
     var sessionNumber: Int      // which pass through this deck (1, 2, 3...)
@@ -43,6 +48,7 @@ final class CardSession {
         self.id = UUID()
         self.coupleId = coupleId
         self.deckId = deckId
+        self.remoteSessionId = nil
         self.startedAt = Date()
         self.completedAt = nil
         self.sessionNumber = 1

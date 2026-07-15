@@ -13,7 +13,7 @@
     "swinging"
   ],
   "sort_order": 7,
-  "schema_version": 1,
+  "schema_version": 2,
   "cards": [
     {
       "id": "sw-01",
@@ -100,26 +100,6 @@
     {
       "id": "sw-05",
       "deck_id": "swinging",
-      "text": "For him:\n\nIn a room where everything is visible, where does the measuring-up worry show up for you?\n\nSay it plainly. Every man in that room has a version of it.\n\nThen, for her: tell him what you'd actually be noticing.",
-      "highlight_words": [
-        "measuring-up"
-      ],
-      "type": "prompt",
-      "intensity": 5,
-      "who_starts": "both",
-      "is_sensitive": false,
-      "can_skip": false,
-      "register": "flexible",
-      "context_beat_type": null,
-      "context_beat_copy": null,
-      "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "mf",
-      "sort_order": 5
-    },
-    {
-      "id": "sw-05f",
-      "deck_id": "swinging",
       "text": "Whichever of you worries more about performing:\n\nIn a room where everything is visible, where does that worry show up?\n\nSay it plainly.\n\nThen the other: say what you'd actually be noticing.",
       "highlight_words": [
         "performing"
@@ -133,32 +113,12 @@
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "flexible",
+      "is_gendered_card": false,
+      "gendered_for": null,
       "sort_order": 5
     },
     {
       "id": "sw-06",
-      "deck_id": "swinging",
-      "text": "For her:\n\nBeing read first and approached most comes with a job: reading the room for safety while trying to have fun in it.\n\nWhat would make that job lighter?\n\nThen, for him: how do you make the room feel safer without hovering?",
-      "highlight_words": [
-        "reading the room"
-      ],
-      "type": "prompt",
-      "intensity": 5,
-      "who_starts": "both",
-      "is_sensitive": false,
-      "can_skip": false,
-      "register": "flexible",
-      "context_beat_type": null,
-      "context_beat_copy": null,
-      "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "mf",
-      "sort_order": 6
-    },
-    {
-      "id": "sw-06f",
       "deck_id": "swinging",
       "text": "Whichever of you gets read first and approached most:\n\nThat comes with a job: reading the room for safety while trying to have fun in it.\n\nWhat would make the job lighter?\n\nThen the other: how do you help without hovering?",
       "highlight_words": [
@@ -173,8 +133,8 @@
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "flexible",
+      "is_gendered_card": false,
+      "gendered_for": null,
       "sort_order": 6
     },
     {

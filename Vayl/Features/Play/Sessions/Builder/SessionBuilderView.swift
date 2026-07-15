@@ -106,6 +106,10 @@ struct SessionBuilderView: View {
                 .background(
                     Capsule().stroke(AppColors.spectrumBorder, lineWidth: 1)
                 )
+                // Stroke-only chrome: make the full capsule the hit target so
+                // synthesized (accessibility/automation) taps land, not just
+                // raw touches on drawn pixels.
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
     }

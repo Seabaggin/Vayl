@@ -13,7 +13,7 @@
     "pleasure"
   ],
   "sort_order": 4,
-  "schema_version": 1,
+  "schema_version": 2,
   "cards": [
     {
       "id": "sp-01",
@@ -98,26 +98,6 @@
     {
       "id": "sp-05",
       "deck_id": "sex-and-pleasure",
-      "text": "For him:\n\nWhat has carrying the first move felt like lately?\n\nIf the wanting between you runs at different speeds, say what that does to you. Say it without apologizing for it.\n\nThen, for her: tell him one thing you see him carry that he thinks is invisible.",
-      "highlight_words": [
-        "first move"
-      ],
-      "type": "prompt",
-      "intensity": 5,
-      "who_starts": "both",
-      "is_sensitive": false,
-      "can_skip": false,
-      "register": "flexible",
-      "context_beat_type": null,
-      "context_beat_copy": null,
-      "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "mf",
-      "sort_order": 5
-    },
-    {
-      "id": "sp-05f",
-      "deck_id": "sex-and-pleasure",
       "text": "Whichever of you reaches first, more often:\n\nWhat has carrying the first move felt like lately?\n\nIf the wanting between you runs at different speeds, say what that does to you.\n\nThen the other: tell them one thing you see them carry that they think is invisible.",
       "highlight_words": [
         "first move"
@@ -131,32 +111,12 @@
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "flexible",
+      "is_gendered_card": false,
+      "gendered_for": null,
       "sort_order": 5
     },
     {
       "id": "sp-06",
-      "deck_id": "sex-and-pleasure",
-      "text": "For her:\n\nWhat does it take for you to want freely?\n\nName the quiet math you run before you can let go. The reading of the room. The managing of the temperature.\n\nThen, for him: what could you take on so less of that math is needed?",
-      "highlight_words": [
-        "want freely"
-      ],
-      "type": "prompt",
-      "intensity": 5,
-      "who_starts": "both",
-      "is_sensitive": false,
-      "can_skip": false,
-      "register": "flexible",
-      "context_beat_type": null,
-      "context_beat_copy": null,
-      "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "mf",
-      "sort_order": 6
-    },
-    {
-      "id": "sp-06f",
       "deck_id": "sex-and-pleasure",
       "text": "Whichever of you does more of the reading in bed, the checking, the sensing, the adjusting:\n\nWhat would it take to put that down and just want?\n\nThen the other: what could you take on so more of that letting go is possible?",
       "highlight_words": [
@@ -171,8 +131,8 @@
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "flexible",
+      "is_gendered_card": false,
+      "gendered_for": null,
       "sort_order": 6
     },
     {

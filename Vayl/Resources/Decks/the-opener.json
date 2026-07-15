@@ -7,7 +7,12 @@
   "intensity": 2,
   "is_locked": false,
   "required_entitlement": null,
-  "tags": ["foundation", "free", "entry", "starter"],
+  "tags": [
+    "foundation",
+    "free",
+    "entry",
+    "starter"
+  ],
   "sort_order": 1,
   "schema_version": 2,
   "cards": [
@@ -15,7 +20,10 @@
       "id": "opener-01",
       "deck_id": "the-opener",
       "text": "What are the anchors that have kept you two tethered to each other through everything so far?",
-      "highlight_words": ["anchors", "tethered"],
+      "highlight_words": [
+        "anchors",
+        "tethered"
+      ],
       "type": "prompt",
       "intensity": 2,
       "who_starts": "partnerA",
@@ -33,7 +41,9 @@
       "id": "opener-02",
       "deck_id": "the-opener",
       "text": "What does a boundary mean to you?\n\nDo you feel like you two genuinely respect each other's boundaries?",
-      "highlight_words": ["boundary"],
+      "highlight_words": [
+        "boundary"
+      ],
       "type": "prompt",
       "intensity": 3,
       "who_starts": "partnerA",
@@ -51,7 +61,9 @@
       "id": "opener-03",
       "deck_id": "the-opener",
       "text": "Where does communication between you two usually fall apart?\n\nWhat does that moment typically look like?",
-      "highlight_words": ["fall apart"],
+      "highlight_words": [
+        "fall apart"
+      ],
       "type": "prompt",
       "intensity": 4,
       "who_starts": "partnerB",
@@ -69,7 +81,9 @@
       "id": "opener-04",
       "deck_id": "the-opener",
       "text": "Exploring this will bring things to the surface that have been easy to ignore until now.\n\nWhat insecurities do you expect to show up for you?\n\nHow do you want your partner to show up when they do?",
-      "highlight_words": ["insecurities"],
+      "highlight_words": [
+        "insecurities"
+      ],
       "type": "prompt",
       "intensity": 4,
       "who_starts": "partnerA",
@@ -87,7 +101,10 @@
       "id": "opener-05",
       "deck_id": "the-opener",
       "text": "What tends to trigger it in you specifically?\n\nWhat do you need to build to navigate it well in this?",
-      "highlight_words": ["trigger", "navigate"],
+      "highlight_words": [
+        "trigger",
+        "navigate"
+      ],
       "type": "prompt",
       "intensity": 5,
       "who_starts": "partnerB",
@@ -102,46 +119,13 @@
       "sort_order": 5
     },
     {
-      "id": "opener-06",
-      "deck_id": "the-opener",
-      "text": "In most NM spaces men find the dating landscape harder to navigate than expected.\n\nFewer matches. More skepticism. A quiet question that can creep in...\n\nAm I enough?\n\nHow do you each sit with that reality?\n\nWhat does it make you want to do for each other?",
-      "highlight_words": ["Am I enough?"],
-      "type": "prompt",
-      "intensity": 5,
-      "who_starts": "both",
-      "is_sensitive": false,
-      "can_skip": true,
-      "register": "flexible",
-      "context_beat_type": null,
-      "context_beat_copy": null,
-      "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "mf",
-      "sort_order": 6
-    },
-    {
-      "id": "opener-07",
-      "deck_id": "the-opener",
-      "text": "Women in NM often find themselves with more access than they anticipated.\n\nThat can feel electric but it can also complicate things. Enjoying all of this newness will require balance.\n\nHow do you both intend to find that balance?\n\nWhat feels exciting? What feels scary?",
-      "highlight_words": ["electric", "balance"],
-      "type": "prompt",
-      "intensity": 5,
-      "who_starts": "both",
-      "is_sensitive": false,
-      "can_skip": true,
-      "register": "flexible",
-      "context_beat_type": null,
-      "context_beat_copy": null,
-      "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "mf",
-      "sort_order": 7
-    },
-    {
       "id": "opener-08",
       "deck_id": "the-opener",
       "text": "Expectations rarely match reality.\n\nWhat are you each expecting this to look and feel like?\n\nWhich of those feel solid and which ones may require thinking about more deeply?",
-      "highlight_words": ["Expectations", "reality"],
+      "highlight_words": [
+        "Expectations",
+        "reality"
+      ],
       "type": "prompt",
       "intensity": 6,
       "who_starts": "partnerA",
@@ -159,7 +143,10 @@
       "id": "opener-09",
       "deck_id": "the-opener",
       "text": "What do you love most about your sex life together?\n\nWhat's one thing you'd change, add, or explore if you could?",
-      "highlight_words": ["love most", "explore"],
+      "highlight_words": [
+        "love most",
+        "explore"
+      ],
       "type": "prompt",
       "intensity": 7,
       "who_starts": "partnerB",
@@ -177,7 +164,9 @@
       "id": "opener-10",
       "deck_id": "the-opener",
       "text": "What excites you most about where this could go?",
-      "highlight_words": ["excites"],
+      "highlight_words": [
+        "excites"
+      ],
       "type": "whisper",
       "intensity": 8,
       "who_starts": "both",
@@ -192,10 +181,12 @@
       "sort_order": 10
     },
     {
-      "id": "opener-06f",
+      "id": "opener-06",
       "deck_id": "the-opener",
       "text": "In most NM spaces, one of you may find the outside landscape slower than expected.\n\nFewer sparks. More waiting. A quiet question that can creep in...\n\nAm I enough?\n\nIf that turns out to be you, how do you want to be met?\n\nWhat do you want to promise each other before anyone finds out which way it goes?",
-      "highlight_words": ["Am I enough?"],
+      "highlight_words": [
+        "Am I enough?"
+      ],
       "type": "prompt",
       "intensity": 5,
       "who_starts": "both",
@@ -205,15 +196,18 @@
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "flexible",
+      "is_gendered_card": false,
+      "gendered_for": null,
       "sort_order": 6
     },
     {
-      "id": "opener-07f",
+      "id": "opener-07",
       "deck_id": "the-opener",
       "text": "And one of you may find more attention than you anticipated.\n\nThat can feel electric, but it can also complicate things. Enjoying the newness will take balance.\n\nIf that turns out to be you, how do you intend to find that balance?\n\nWhat feels exciting? What feels scary?",
-      "highlight_words": ["electric", "balance"],
+      "highlight_words": [
+        "electric",
+        "balance"
+      ],
       "type": "prompt",
       "intensity": 5,
       "who_starts": "both",
@@ -223,8 +217,8 @@
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "flexible",
+      "is_gendered_card": false,
+      "gendered_for": null,
       "sort_order": 7
     }
   ]

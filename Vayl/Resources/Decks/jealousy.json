@@ -13,7 +13,7 @@
     "jealousy"
   ],
   "sort_order": 5,
-  "schema_version": 1,
+  "schema_version": 2,
   "cards": [
     {
       "id": "j-01",
@@ -98,26 +98,6 @@
     {
       "id": "j-05",
       "deck_id": "jealousy",
-      "text": "For him:\n\nHas the question ever visited you... could someone simply do this better?\n\nSay where comparison sneaks in for you, even when it arrives dressed as curiosity.\n\nThen, for her: name one thing about him nobody else could replace.",
-      "highlight_words": [
-        "replace"
-      ],
-      "type": "prompt",
-      "intensity": 5,
-      "who_starts": "both",
-      "is_sensitive": false,
-      "can_skip": false,
-      "register": "flexible",
-      "context_beat_type": null,
-      "context_beat_copy": null,
-      "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "mf",
-      "sort_order": 5
-    },
-    {
-      "id": "j-05f",
-      "deck_id": "jealousy",
       "text": "Whichever of you carries the quieter fear of being outgrown:\n\nSay where comparison sneaks in for you, even when it arrives dressed as curiosity.\n\nThen the other: name one thing about them nobody else could replace.",
       "highlight_words": [
         "outgrown"
@@ -131,32 +111,12 @@
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "flexible",
+      "is_gendered_card": false,
+      "gendered_for": null,
       "sort_order": 5
     },
     {
       "id": "j-06",
-      "deck_id": "jealousy",
-      "text": "For her:\n\nWhat happens to your own feelings when you're busy managing someone else's?\n\nWhere have you shrunk your joy to keep the peace?\n\nSay one place you want that to stop.",
-      "highlight_words": [
-        "shrunk your joy"
-      ],
-      "type": "prompt",
-      "intensity": 5,
-      "who_starts": "both",
-      "is_sensitive": false,
-      "can_skip": false,
-      "register": "flexible",
-      "context_beat_type": null,
-      "context_beat_copy": null,
-      "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "mf",
-      "sort_order": 6
-    },
-    {
-      "id": "j-06f",
       "deck_id": "jealousy",
       "text": "Whichever of you dims your own excitement to protect the other:\n\nWhere has that been happening lately?\n\nSay one place you want it to stop.",
       "highlight_words": [
@@ -171,8 +131,8 @@
       "context_beat_type": null,
       "context_beat_copy": null,
       "back_copy": null,
-      "is_gendered_card": true,
-      "gendered_for": "flexible",
+      "is_gendered_card": false,
+      "gendered_for": null,
       "sort_order": 6
     },
     {

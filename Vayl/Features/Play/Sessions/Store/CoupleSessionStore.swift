@@ -246,9 +246,11 @@ final class CoupleSessionStore: Identifiable {
 
     /// Close-screen "cards deep" — the local discussed count floored at the
     /// shared row progress, so a device that relaunched mid-session (empty
-    /// local records) still shows how far the couple actually got. Accepted
+    /// local records) still shows how far the couple actually got. The row's
+    /// current_index is 0-based and points AT the card on the table, so cards
+    /// seen = index + 1 (a completed 3-card hand rests at index 2). Accepted
     /// tradeoff: after a relaunch this can count skipped cards too.
-    var closeCardsDeep: Int { max(discussedCount, confirmedIndex) }
+    var closeCardsDeep: Int { max(discussedCount, confirmedIndex + 1) }
 
     /// Position label for the in-session header ("Card 3 · 8").
     var positionLabel: String { "\(index + 1) · \(hand.count)" }
@@ -717,7 +719,14 @@ final class CoupleSessionStore: Identifiable {
             finishSession()                       // partner finished → follow to close
         }
         if dto.status == CuratedSessionStatus.abandoned.rawValue, phase == .session {
-            endEarly()                            // partner confirmed exit
+            // Partner ABANDONED ("pick this hand up later") — mirror their
+            // quiet exit. An abandon is never a completed sitting: no
+            // CardSession row, no close screen (the old endEarly() here logged
+            // a phantom "finished" session on this device only — the vault
+            // count divergence found 2026-07-15). DeckProgress checkpoints
+            // already keep the hand resumable; the row is already abandoned,
+            // so there's nothing to write back.
+            phase = .done   // sessionLogged stays false → container dismisses, no beat
         }
         revealEngine.applyRow(dto.revealState)
     }
@@ -1069,25 +1078,42 @@ final class CoupleSessionStore: Identifiable {
         }
         let deckId = hand.first?.deckId ?? "unknown"
         let context = ModelContext(modelContainer)
+        // The couple's shared start (row created_at), not this device's store
+        // construction time — both devices' records carry the same real start.
+        let sharedStart = sharedStartedAt ?? sessionStartedAt
 
         do {
-            let session = CardSession(coupleId: coupleId, deckId: deckId)
+            // One curated session = at most ONE local row, keyed by the shared
+            // remote id: a resume-then-finish or a second finish signal updates
+            // the row already written instead of inserting a duplicate the
+            // Record would double-count (2026-07-15 vault-divergence finding).
+            let session: CardSession
+            if let rid = remoteSessionId,
+               let alreadySaved = try context.fetch(
+                    FetchDescriptor<CardSession>(predicate: #Predicate { $0.remoteSessionId == rid })
+               ).first {
+                session = alreadySaved
+            } else {
+                session = CardSession(coupleId: coupleId, deckId: deckId)
+                var sessionFetch = FetchDescriptor<CardSession>(
+                    predicate: #Predicate { $0.coupleId == coupleId && $0.deckId == deckId }
+                )
+                sessionFetch.fetchLimit = 100
+                session.sessionNumber = (try context.fetch(sessionFetch)).count + 1
+                context.insert(session)
+            }
+            session.remoteSessionId = remoteSessionId
+            session.startedAt = sharedStart
             session.completedAt = Date()
-            session.cardsAttempted = records.count
-            session.cardsDiscussed = discussedCount
-            session.cardsSkipped = skippedCount
-            session.cardsBookmarked = 0
+            // Monotonic on the update path — a device holding only the resumed
+            // sitting's records can grow the record, never shrink it (mirrors
+            // the server-side additive merge on couple_session_records).
+            session.cardsAttempted = max(session.cardsAttempted, records.count)
+            session.cardsDiscussed = max(session.cardsDiscussed, discussedCount)
+            session.cardsSkipped = max(session.cardsSkipped, skippedCount)
 
-            var sessionFetch = FetchDescriptor<CardSession>(
-                predicate: #Predicate { $0.coupleId == coupleId && $0.deckId == deckId }
-            )
-            sessionFetch.fetchLimit = 100
-            let existing = try context.fetch(sessionFetch)
-            session.sessionNumber = existing.count + 1
-
-            context.insert(session)
-
-            for record in records {
+            let knownCardIds = Set(session.cardResults.map(\.cardId))
+            for record in records where !knownCardIds.contains(record.card.id) {
                 let result = CardResult(
                     sessionId: session.id,
                     cardId: record.card.id,
@@ -1130,7 +1156,8 @@ final class CoupleSessionStore: Identifiable {
             enqueueSync(SessionRecordPayload(
                 id: remoteSessionId ?? session.id,
                 coupleId: coupleId,
-                startedAt: session.startedAt,
+                deckId: deckId,
+                startedAt: sharedStart,
                 endedAt: session.completedAt,
                 cardsDiscussed: session.cardsDiscussed
             ))

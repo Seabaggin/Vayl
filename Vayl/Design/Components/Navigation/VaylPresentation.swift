@@ -128,6 +128,20 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
 
     func body(content: Content) -> some View {
         content.overlay {
+            // Capture the host's bottom safe-area inset BEFORE the sheet ignores it.
+            // In the tab shell this inset IS the floating tab bar's reserved zone
+            // (AppShell attaches the bar via .safeAreaInset); elsewhere it's the home
+            // indicator. The chrome below still full-bleeds, but sheet CONTENT gets
+            // this re-injected as a bottom inset so interactive elements can never
+            // sit under the bar/indicator (the bar hit-tests above this overlay).
+            GeometryReader { host in
+                sheetOverlay(hostBottomInset: host.safeAreaInsets.bottom)
+            }
+        }
+    }
+
+    private func sheetOverlay(hostBottomInset: CGFloat) -> some View {
+        Group {
             GeometryReader { geo in
                 let sheetHeight = (screenHeight ?? geo.size.height) * heightFraction
                 let dragProgress = sheetHeight > 0 ? min(1, max(0, drag) / sheetHeight) : 0
@@ -152,6 +166,13 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
                             if showsGrabber { grabber }
                             sheetContent()
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                                // Keep interactive content clear of the floating tab
+                                // bar (in-shell) / home indicator (elsewhere). The
+                                // chrome still bleeds to the physical edge; only the
+                                // content's layout region stops above the zone.
+                                .safeAreaInset(edge: .bottom, spacing: 0) {
+                                    Color.clear.frame(height: hostBottomInset)
+                                }
                         }
                         .frame(maxWidth: .infinity)
                         // Chrome FIRST (it applies .frame(maxHeight: .infinity) to fill
@@ -354,6 +375,16 @@ private struct VaylDetentSheetModifier<SheetContent: View>: ViewModifier {
 
     func body(content: Content) -> some View {
         content.overlay {
+            // Same host-inset capture as the single-height sheet: re-inject the
+            // tab-bar / home-indicator zone as a content inset (see note there).
+            GeometryReader { host in
+                sheetOverlay(hostBottomInset: host.safeAreaInsets.bottom)
+            }
+        }
+    }
+
+    private func sheetOverlay(hostBottomInset: CGFloat) -> some View {
+        Group {
             GeometryReader { geo in
                 let available = screenHeight ?? geo.size.height
                 let heights = detents.map { $0.resolved(in: available) }
@@ -382,6 +413,13 @@ private struct VaylDetentSheetModifier<SheetContent: View>: ViewModifier {
                             if showsGrabber { grabber }
                             sheetContent()
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                                // Keep interactive content clear of the floating tab
+                                // bar (in-shell) / home indicator (elsewhere). The
+                                // chrome still bleeds to the physical edge; only the
+                                // content's layout region stops above the zone.
+                                .safeAreaInset(edge: .bottom, spacing: 0) {
+                                    Color.clear.frame(height: hostBottomInset)
+                                }
                         }
                         .frame(maxWidth: .infinity)
                         .vaylSheetChrome()

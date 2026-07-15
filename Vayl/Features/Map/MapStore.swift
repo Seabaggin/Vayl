@@ -44,6 +44,7 @@ final class MapStore {
     private let pulseSync: PulseSyncService
     private let desireSync: DesireSyncService
     private let deckCatalog: DeckCatalogService
+    private let sessionSync: SessionSyncService
 
     /// Service params nil-resolve inside the MainActor-isolated body (a `= .shared`
     /// default argument would evaluate nonisolated — same pattern as SettingsStore).
@@ -51,12 +52,14 @@ final class MapStore {
         defaults: UserDefaults = .standard,
         pulseSync: PulseSyncService? = nil,
         desireSync: DesireSyncService? = nil,
-        deckCatalog: DeckCatalogService? = nil
+        deckCatalog: DeckCatalogService? = nil,
+        sessionSync: SessionSyncService? = nil
     ) {
         self.defaults = defaults
         self.pulseSync = pulseSync ?? .shared
         self.desireSync = desireSync ?? .shared
         self.deckCatalog = deckCatalog ?? DeckCatalogService()
+        self.sessionSync = sessionSync ?? .shared
     }
 
     var usRevealSeen: Bool { defaults.bool(forKey: Self.usRevealKey) }
@@ -193,6 +196,7 @@ final class MapStore {
         loadMeCard(context: context)
         loadUs(appState: appState, context: context)
         Task { await loadServerAlignData(appState: appState, context: context) }
+        Task { await loadSharedRecord(coupleId: appState.coupleId, context: context) }
     }
 
     /// Async: fetches the partner's full Pulse history and derives their current position
@@ -260,6 +264,71 @@ final class MapStore {
         categoryShares = counts
             .map { CategoryShare(category: $0.key, count: $0.value) }
             .sorted { $0.count > $1.count }
+    }
+
+    /// Async: reconciles the Record with the couple's SHARED session history
+    /// (`couple_session_records` — both devices upsert it and the server merges
+    /// additively). The local fetch above stays the instant path; this pass makes
+    /// both partners' Record screens agree: sessions only the partner's device
+    /// finished (or a reinstall lost) appear, and card counts floor at the shared
+    /// value, so neither device under-reports the sitting it only half-recorded
+    /// (2026-07-15 vault-divergence finding). Offline: keep local, no error.
+    private func loadSharedRecord(coupleId: UUID?, context: ModelContext) async {
+        guard let coupleId,
+              let remote = try? await sessionSync.fetchSessions(coupleId: coupleId),
+              !remote.isEmpty
+        else { return }
+
+        let summaries = (try? deckCatalog.loadSummaries()) ?? []
+        let byId = Dictionary(summaries.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+
+        var fetch = FetchDescriptor<CardSession>(
+            predicate: #Predicate { $0.coupleId == coupleId },
+            sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
+        )
+        fetch.fetchLimit = 50
+        let local = (try? context.fetch(fetch)) ?? []
+        let localByRemoteId = Dictionary(
+            local.compactMap { row in row.remoteSessionId.map { ($0, row) } },
+            uniquingKeysWith: { first, _ in first }
+        )
+        let remoteIds = Set(remote.map(\.id))
+
+        // Shared rows first: identity is the curated session, count is the
+        // greater of the shared record and whatever this device saw locally.
+        var merged: [RecordSession] = remote.map { record in
+            let localRow = localByRemoteId[record.id]
+            let deckId = record.deckId ?? localRow?.deckId
+            let summary = deckId.flatMap { byId[$0] }
+            return RecordSession(
+                id: record.id,
+                deckName: summary?.title ?? "A deck",
+                category: summary?.category ?? .wildcard,
+                date: record.startedAt,
+                cardCount: max(record.cardsDiscussed, localRow?.cardsDiscussed ?? 0)
+            )
+        }
+        // Local-only rows: the pure-local DEBUG path, or a push that hasn't
+        // landed yet. (Rows written before remoteSessionId existed also land
+        // here — pre-launch debug data only.)
+        for row in local where !(row.remoteSessionId.map(remoteIds.contains) ?? false) {
+            let summary = byId[row.deckId]
+            merged.append(RecordSession(
+                id: row.id,
+                deckName: summary?.title ?? "A deck",
+                category: summary?.category ?? .wildcard,
+                date: row.startedAt,
+                cardCount: row.cardsDiscussed
+            ))
+        }
+        merged.sort { $0.date > $1.date }
+
+        sessions = merged
+        let counts = Dictionary(grouping: merged, by: { $0.category }).mapValues(\.count)
+        categoryShares = counts
+            .map { CategoryShare(category: $0.key, count: $0.value) }
+            .sorted { $0.count > $1.count }
+        usStats.sessionCount = merged.count
     }
 
     private func loadMeCard(context: ModelContext) {
