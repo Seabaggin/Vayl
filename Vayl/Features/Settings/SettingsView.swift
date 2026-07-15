@@ -463,7 +463,10 @@ struct SettingsView: View {
                     Divider().overlay(AppColors.borderSubtle)
 
                     Button {
-                        openURL(SupportLinks.contactURL)
+                        openURL(SupportLinks.mailURL(
+                            profileId: profile?.id.uuidString,
+                            coupleId: appState.coupleId?.uuidString
+                        ))
                     } label: {
                         SettingsNavRow(icon: "questionmark.circle.fill", label: "Support")
                     }
