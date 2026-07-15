@@ -11,6 +11,7 @@
 //  Modeled on HomeStore / PairingStore.
 //
 
+import PostHog
 import SwiftUI
 import SwiftData
 import OSLog
@@ -225,6 +226,7 @@ final class SettingsStore {
         // Re-linking must earn the Us reveal ceremony again (Map spec §2.3).
         MapStore.resetUsRevealGlobally()
 
+        PostHogSDK.shared.capture("partner_unlinked")
         appState.unlink()   // clears coupleId + linkState → routing re-renders unlinked
         accountPhase = .idle
         logger.info("Unlink complete — partner link dissolved")
@@ -236,10 +238,11 @@ final class SettingsStore {
     /// onboarding / sign-in reactively. Release-safe (no #if DEBUG gate).
     func signOut() async {
         accountPhase = .signingOut
+        PostHogSDK.shared.capture("user_signed_out")
         await accountService.signOut()
         accountService.wipeLocalStore(container: modelContainer)
         resetAppStateAfterLeaving()
-        await authService.signOut()   // clears isAuthenticated → reactive routing
+        await authService.signOut()   // clears isAuthenticated → reactive routing (also calls PostHogSDK.shared.reset())
         accountPhase = .idle
         didLeaveAccount = true
         logger.info("Sign-out complete")
@@ -259,10 +262,11 @@ final class SettingsStore {
             logger.error("Delete account failed: \(error.localizedDescription)")
             return
         }
+        PostHogSDK.shared.capture("account_deleted")
         accountService.wipeLocalStore(container: modelContainer)
         resetAppStateAfterLeaving()
         await accountService.signOut()
-        await authService.signOut()
+        await authService.signOut()   // also calls PostHogSDK.shared.reset()
         accountPhase = .idle
         didLeaveAccount = true
         logger.info("Account deleted + local cleared")

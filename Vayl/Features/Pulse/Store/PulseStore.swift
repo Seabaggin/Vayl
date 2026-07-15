@@ -5,6 +5,7 @@
 
 import Foundation
 import Observation
+import PostHog
 
 @Observable
 @MainActor
@@ -112,6 +113,7 @@ final class PulseStore {
         // Carry the ORIGINAL createdAt forward across a same-day re-edit — a fresh
         // `Date()` here would reset the edit-window clock on every redo, letting
         // someone extend how long today stays editable indefinitely.
+        let isEdit = entries.contains(where: { cal.isDate($0.date, inSameDayAs: entry.date) })
         if let existing = entries.first(where: { cal.isDate($0.date, inSameDayAs: entry.date) }) {
             entry.createdAt = existing.resolvedCreatedAt
         } else if entry.createdAt == nil {
@@ -121,6 +123,10 @@ final class PulseStore {
         entries.append(entry)
         entries.sort { $0.date < $1.date }
         save()
+        PostHogSDK.shared.capture("pulse_checkin_submitted", properties: [
+            "is_edit": isEdit,
+            "total_entries": entries.count,
+        ])
         // Push the full entry to Supabase (fire-and-forget; local save above is already
         // the source of truth for this session). `pulse_entries` RLS gates partner
         // visibility on the existing share_pulse_with_partner consent flag.

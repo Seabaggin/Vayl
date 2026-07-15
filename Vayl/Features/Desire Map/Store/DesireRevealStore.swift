@@ -15,6 +15,7 @@
 //
 
 import Foundation
+import PostHog
 import SwiftData
 import SwiftUI   // AppAnimation tokens + UIAccessibility (Reduce Motion checks in the beat ceremony)
 
@@ -194,6 +195,11 @@ final class DesireRevealStore: Identifiable {
     /// (matches / lockedCount are populated by load() before .ready, which gates this call.)
     func startBeatSequence() {
         guard beatPhase == .idle else { return }
+        PostHogSDK.shared.capture("desire_reveal_viewed", properties: [
+            "match_count": matches.count,
+            "locked_count": lockedMatches.count,
+            "is_fully_unlocked": isFullyUnlocked,
+        ])
         if isFullyUnlocked || lockedCount == 0 {
             beatPhase = .revealed
             // Landing straight on the lit sky (already-Core, or a lone free match) is a full

@@ -7,6 +7,7 @@ import AuthenticationServices
 import CryptoKit
 import Foundation
 import Observation
+import PostHog
 import Supabase
 
 // MARK: - AuthService
@@ -86,6 +87,7 @@ final class AuthService: NSObject {
             // must still clear local auth state or the app is stuck inside the shell.
             self.error = error.localizedDescription
         }
+        PostHogSDK.shared.reset()
         self.isAuthenticated = false
         self.userId = nil
     }
@@ -167,6 +169,10 @@ extension AuthService: ASAuthorizationControllerDelegate {
                 self.userId = session.user.id
                 self.isAuthenticated = true
                 self.isLoading = false
+                PostHogSDK.shared.identify(session.user.id.uuidString)
+                PostHogSDK.shared.capture("user_signed_in", properties: [
+                    "method": "apple",
+                ])
                 await ensureRemoteProfile()
             } catch {
                 self.error = error.localizedDescription

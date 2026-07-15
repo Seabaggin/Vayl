@@ -12,6 +12,7 @@
 //
 
 import Foundation
+import PostHog
 import SwiftData
 
 @Observable
@@ -131,12 +132,19 @@ final class DesireMapStore: Identifiable {
             context.insert(DesireMapEntry(userId: userId, itemId: itemId, rating: rating))
         }
         try? context.save()
+        let wasAlreadyComplete = isComplete   // capture before updating ratings
         ratings[itemId] = rating
 
         // On completion: durably mark the local profile complete (the truth the rest of the app
         // reads — HomeStore.myMapComplete, Getting Started, desireMapState), THEN sync. Local-first:
         // the flag is set independently of sync success (sync is best-effort and retried on reopen).
         if isComplete {
+            if !wasAlreadyComplete {
+                PostHogSDK.shared.capture("desire_map_completed", properties: [
+                    "track": track,
+                    "item_count": items.count,
+                ])
+            }
             markProfileComplete()
             triggerSync()
         }
