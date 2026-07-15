@@ -186,7 +186,10 @@ private struct HomeRouterInnerView: View {
         }
 
         #if DEBUG
-        .overlay(alignment: .bottomTrailing) {
+        // Keep the simulator-only state controls clear of the Pulse pill on the card's
+        // trailing edge. Synthesized taps target screen coordinates, so an overlapping
+        // debug Button otherwise receives the check-in tap and opens the reveal fixture.
+        .overlay(alignment: .bottomLeading) {
             debugControls(store: store, layout: layout)
         }
         #endif
