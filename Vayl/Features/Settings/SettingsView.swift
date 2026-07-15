@@ -33,6 +33,8 @@ struct SettingsView: View {
     @State private var showSignOutConfirm: Bool = false
     @State private var showDeleteConfirm: Bool = false
     @State private var legalDoc: LegalDoc?
+    @State private var showPaywall: Bool = false
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         GeometryReader { geo in
@@ -101,6 +103,14 @@ struct SettingsView: View {
                 if let store {
                     SettingsCompositionView(store: store, onClose: { showComposition = false })
                 }
+            }
+            .vaylSheet(isPresented: $showPaywall, heightFraction: 0.65, screenHeight: layout.screenHeight) {
+                PaywallSheet(
+                    entry: .settings,
+                    onUnlocked: { showPaywall = false },
+                    onClose: { showPaywall = false },
+                    hostProvidesChrome: true
+                )
             }
             .confirmationDialog("Unlink partner?", isPresented: $showUnlink, titleVisibility: .visible) {
                 Button("Unlink", role: .destructive) {
@@ -211,9 +221,7 @@ struct SettingsView: View {
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.container))
         } else {
             Button {
-                // TODO: present the paywall (PaywallSheet). This card is the Settings
-                // paywall entry point and is intentionally styled to stand out, but is
-                // not yet linked to monetization.
+                showPaywall = true
             } label: {
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     HStack(spacing: AppSpacing.sm) {
@@ -455,7 +463,7 @@ struct SettingsView: View {
                     Divider().overlay(AppColors.borderSubtle)
 
                     Button {
-                        // TODO: wire Support (contact / help destination)
+                        openURL(SupportLinks.contactURL)
                     } label: {
                         SettingsNavRow(icon: "questionmark.circle.fill", label: "Support")
                     }
