@@ -25,7 +25,6 @@ struct ResearchDatabaseView: View {
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
                     backButton
                     header
-                    searchField
                     topicChips
                     controlRow
                     ForEach(store.findings) { f in
@@ -60,21 +59,6 @@ struct ResearchDatabaseView: View {
                 .font(AppFonts.caption)
                 .foregroundStyle(AppColors.textSecondary)
         }
-    }
-
-    private var searchField: some View {
-        HStack(spacing: AppSpacing.sm) {
-            Image(systemName: AppIcons.magnifyingglass).foregroundStyle(AppColors.textSecondary)
-            Text("Search findings, authors…")
-                .font(AppFonts.bodyText)
-                .foregroundStyle(AppColors.textTertiary)
-            Spacer(minLength: 0)
-        }
-        .padding(.vertical, AppSpacing.sm)
-        .padding(.horizontal, AppSpacing.md)
-        .background(RoundedRectangle(cornerRadius: AppRadius.md)
-            .fill(AppColors.whisperFill)
-            .overlay(RoundedRectangle(cornerRadius: AppRadius.md).stroke(AppColors.borderSubtle, lineWidth: 1)))
     }
 
     private var topicChips: some View {

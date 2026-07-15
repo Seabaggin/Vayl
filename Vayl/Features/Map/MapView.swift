@@ -125,7 +125,9 @@ struct MapView: View {
                         VStack(alignment: .leading, spacing: AppSpacing.lg) {
                             masthead   // the name wordmark IS the Me/Us switch now
 
-                            // TEMPORARY (Task 15) — see field declarations above.
+                            // TEMPORARY (Task 15) — DEBUG-only dev entry point to the
+                            // unshipped Path feature. Must NOT ship in V1 (Path is post-launch).
+                            #if DEBUG
                             Button("Open Path (temporary entry point)") {
                                 guard let coupleId = appState.coupleId,
                                       let profileId = try? modelContext.fetch(FetchDescriptor<UserProfile>()).first?.id
@@ -133,6 +135,7 @@ struct MapView: View {
                                 pathStore = PathStore(coupleId: coupleId, profileId: profileId, pathStyle: "swinging", transport: PathSyncService())
                                 showPathScreen = true
                             }
+                            #endif
 
                             layerContent
                         }
