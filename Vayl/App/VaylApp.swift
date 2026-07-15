@@ -30,6 +30,7 @@ struct VaylApp: App {
     // @MainActor stores here is safe.
     init() {
         Self.startSentryIfNeeded()
+        PostHogService.shared.setupIfNeeded()
 
         let appState = AppState()
         _appState = State(initialValue: appState)
@@ -124,6 +125,9 @@ struct VaylApp: App {
                     appState.hydrateOnboardingState(from: ModelContainer.appContainer)
                     await authStore.checkSession()
                     #endif
+                    if let userId = authStore.userId {
+                        PostHogService.shared.identify(authId: userId)
+                    }
                     // Routing is now decided (onboarding reconciled + session checked,
                     // success or failure) — release the splash to reveal. Everything
                     // below is post-reveal warmup and must NOT gate the splash.

@@ -56,6 +56,7 @@
 		AA00000ZAAAA000000000001 /* SyncRoundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000ZAAAA000000000002 /* SyncRoundTests.swift */; };
 		AB000001AAAA000000000001 /* AuthSessionOutcomeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000001AAAA000000000002 /* AuthSessionOutcomeTests.swift */; };
 		EC2BBA430B5D473898E20D6A /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 7C3C13ECAFB04A2E962CB6BB /* Sentry */; };
+		68C6D42C0AFB53EB88B9E1D1 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = EE252AEA3A2C1183B6038032 /* PostHog */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -158,6 +159,7 @@
 				3D51D74B2F5FB8D7002488A7 /* Storage in Frameworks */,
 				3D51D7492F5FB8D7002488A7 /* Realtime in Frameworks */,
 				EC2BBA430B5D473898E20D6A /* Sentry in Frameworks */,
+				68C6D42C0AFB53EB88B9E1D1 /* PostHog in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,6 +286,7 @@
 				3D51D74F2F5FBA71002488A7 /* Supabase */,
 				3D82F2972FE618DE004AD1C7 /* Auth */,
 				7C3C13ECAFB04A2E962CB6BB /* Sentry */,
+				EE252AEA3A2C1183B6038032 /* PostHog */,
 			);
 			productName = "Open Lightly";
 			productReference = 3D767EB22F5D520D00F2D70F /* Vayl.app */;
@@ -364,6 +367,7 @@
 			packageReferences = (
 				3D51D7412F5FB8D7002488A7 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 				23A31AB9B7AB45EEA1042700 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+				BFF4B6074DE9C4EDCBDF4271 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3D767EB32F5D520D00F2D70F /* Products */;
@@ -573,7 +577,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -633,7 +637,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -725,7 +729,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.bryanjorden.Open-LightlyTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -746,7 +750,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.bryanjorden.Open-LightlyTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -858,6 +862,14 @@
 				minimumVersion = 2.5.1;
 			};
 		};
+		BFF4B6074DE9C4EDCBDF4271 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -895,6 +907,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 23A31AB9B7AB45EEA1042700 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
 			productName = Sentry;
+		};
+		EE252AEA3A2C1183B6038032 /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BFF4B6074DE9C4EDCBDF4271 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

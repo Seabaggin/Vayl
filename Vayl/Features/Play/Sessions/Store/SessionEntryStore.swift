@@ -203,6 +203,11 @@ final class SessionEntryStore {
             acceptedLaunch = SessionLaunch(
                 hand: hand, entry: .joiner, role: role(for: myId), session: dto
             )
+            PostHogService.shared.capture("session_invite_accepted", properties: [
+                "entry": "joiner",
+                "deck_id": dto.deckId,
+                "card_count": dto.cardIds.count
+            ])
             pendingSession = nil
         }
     }

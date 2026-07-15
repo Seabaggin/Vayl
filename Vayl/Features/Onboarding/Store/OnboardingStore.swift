@@ -77,6 +77,11 @@ final class OnboardingStore {
             appState.markOnboardingComplete(profile, context: context) // single completion writer (truth+surface+cache)
             lastCommitError = nil
             didComplete = true
+            PostHogService.shared.capture("onboarding_completed", properties: [
+                "app_mode": data.appMode.rawValue,
+                "has_partner_profile": data.genderB != nil,
+                "curiosity_selection_count": data.curiositySelections.count
+            ])
             logger.info("Onboarding committed — appMode: \(data.appMode.rawValue)")
             return true
         } catch {

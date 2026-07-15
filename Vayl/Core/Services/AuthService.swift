@@ -93,6 +93,7 @@ final class AuthService: NSObject {
             self.userId = session.user.id
             self.isAuthenticated = true
             self.isOffline = false
+            PostHogService.shared.identify(authId: session.user.id, email: session.user.email)
             await ensureRemoteProfile()
         } catch {
             // A stored (possibly expired) session survives a failed refresh — read it
@@ -161,6 +162,9 @@ final class AuthService: NSObject {
     func signInWithApple() {
         isLoading = true
         error = nil
+        PostHogService.shared.capture("auth_sign_in_started", properties: [
+            "provider": "apple"
+        ])
 
         let nonce = randomNonceString()
         currentNonce = nonce
@@ -177,6 +181,7 @@ final class AuthService: NSObject {
     // MARK: - Sign Out
 
     func signOut() async {
+        let previousUserId = userId
         do {
             try await supabase.auth.signOut()
         } catch {
@@ -185,6 +190,10 @@ final class AuthService: NSObject {
             // must still clear local auth state or the app is stuck inside the shell.
             self.error = error.localizedDescription
         }
+        PostHogService.shared.capture("auth_signed_out", properties: [
+            "had_user_id": previousUserId != nil
+        ])
+        PostHogService.shared.reset()
         self.isAuthenticated = false
         self.userId = nil
     }
@@ -266,10 +275,20 @@ extension AuthService: ASAuthorizationControllerDelegate {
                 self.userId = session.user.id
                 self.isAuthenticated = true
                 self.isLoading = false
+                PostHogService.shared.identify(authId: session.user.id, email: session.user.email)
+                PostHogService.shared.capture("auth_sign_in_succeeded", properties: [
+                    "provider": "apple",
+                    "has_email": session.user.email != nil
+                ])
                 await ensureRemoteProfile()
             } catch {
                 self.error = AuthService.signInErrorMessage(error)
                 self.isLoading = false
+                PostHogService.shared.capture("auth_sign_in_failed", properties: [
+                    "provider": "apple",
+                    "error_type": String(describing: type(of: error)),
+                    "is_network_error": error is URLError
+                ])
             }
         }
     }
@@ -281,6 +300,11 @@ extension AuthService: ASAuthorizationControllerDelegate {
         Task { @MainActor in
             self.error = AuthService.signInErrorMessage(error)
             self.isLoading = false
+            PostHogService.shared.capture("auth_sign_in_failed", properties: [
+                "provider": "apple",
+                "error_type": String(describing: type(of: error)),
+                "is_network_error": error is URLError
+            ])
         }
     }
 }

@@ -50,6 +50,10 @@ final class StoreKitService {
             let jws = verification.jwsRepresentation
             switch verification {
             case .verified(let transaction):
+                PostHogService.shared.capture("purchase_completed", properties: [
+                    "product_id": transaction.productID,
+                    "source": "storekit"
+                ])
                 return .success(transaction: transaction, jws: jws)
             case .unverified:
                 return .unverified

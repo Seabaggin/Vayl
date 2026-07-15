@@ -130,6 +130,10 @@ final class PairingStore {
             codeExpiresAt = expiresAt
             await recordFirstInviteSentIfNeeded()
             linkState = .waitingForPartner(code: code)
+            PostHogService.shared.capture("pairing_invite_generated", properties: [
+                "code_length": code.count,
+                "invite_expiry_seconds": max(0, Int(expiresAt.timeIntervalSinceNow))
+            ])
             logger.info("Invite generated — expires \(expiresAt)")
             await pollForPartner(code: code, deadline: expiresAt)
         } catch {
@@ -193,6 +197,10 @@ final class PairingStore {
             let coupleId = try await pairingService.claimCode(code)
             try await persistLink(coupleId: coupleId)
             linkState = .linked(coupleId: coupleId)
+            PostHogService.shared.capture("pairing_join_succeeded", properties: [
+                "code_length": code.trimmingCharacters(in: .whitespaces).count,
+                "linked_from_join": true
+            ])
             logger.info("Joined successfully — coupleId: \(coupleId)")
             await refreshPartner()
         } catch {

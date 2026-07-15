@@ -322,6 +322,12 @@ final class CoupleSessionStore: Identifiable {
     func introDidFinish() {
         guard phase == .transition else { return }
         phase = .session
+        PostHogService.shared.capture("session_started", properties: [
+            "entry": entry.analyticsValue,
+            "deck_id": hand.first?.deckId ?? "unknown",
+            "card_count": hand.count,
+            "is_live": isLive
+        ])
         cardDidChange()      // Section 3: first card's beat/reveal setup
         startTimerIfNeeded()
         startSessionBudgetWatch()
@@ -1147,6 +1153,14 @@ final class CoupleSessionStore: Identifiable {
 
             try context.saveWithLogging()
             savedSessionId = session.id
+            PostHogService.shared.capture("session_completed", properties: [
+                "entry": entry.analyticsValue,
+                "deck_id": deckId,
+                "cards_attempted": records.count,
+                "cards_discussed": discussedCount,
+                "cards_skipped": skippedCount,
+                "reached_end_of_hand": reachedEndOfHand
+            ])
             logger.info("couple session saved — \(self.records.count) cards, deck \(deckId)")
 
             // Two devices in the same session must upsert the SAME remote row —
@@ -1185,9 +1199,23 @@ final class CoupleSessionStore: Identifiable {
 
         do {
             try context.saveWithLogging()
+            PostHogService.shared.capture("session_reflection_saved", properties: [
+                "word_count": self.reflectionWords.count,
+                "has_note": !trimmedNote.isEmpty
+            ])
             logger.info("session reflection saved — \(self.reflectionWords.count) words")
         } catch {
             logger.error("reflection save failed — \(error.localizedDescription)")
+        }
+    }
+}
+
+private extension SessionLaunch.Entry {
+    var analyticsValue: String {
+        switch self {
+        case .initiator: return "initiator"
+        case .joiner: return "joiner"
+        case .localDebug: return "local_debug"
         }
     }
 }
