@@ -8,7 +8,7 @@
 //   • the catalog is exactly the 12 canonical launch decks with the right tiers,
 //   • every deck file decodes, and counts/rituals/living-card mix hold,
 //   • no card uses a deferred (render-path-less) CardType,
-//   • gendered slots ship the mf + flexible pair, symmetrically,
+//   • every launch card is gender-neutral,
 //   • no em dash or en dash anywhere in copy (repo-wide rule),
 //   • schemaVersion is pinned per deck so silent edits are visible.
 //
@@ -39,11 +39,6 @@ final class ContentLintTests: XCTestCase {
         "opener-steady", "opener-opening", "opener-return", "opener-wider"
     ]
 
-    /// Decks whose gendered slots ship the mf + flexible variant pair.
-    private static let genderedDeckIds: Set<String> = [
-        "the-opener", "sex-and-pleasure", "jealousy", "swinging"
-    ]
-
     /// CardTypes with no V1 render path (Memory/Time + Shared Creation).
     /// Using one is a content bug: the session would render nothing.
     private static let deferredTypes: Set<CardType> = [
@@ -68,8 +63,8 @@ final class ContentLintTests: XCTestCase {
     /// 1 = net-new id introduced by it. Any content edit must bump these.
     private static let expectedSchemaVersions: [String: Int] = [
         "the-opener": 2, "the-check-in": 2, "before-tonight": 2,
-        "communication-intimacy": 1, "sex-and-pleasure": 1, "jealousy": 1,
-        "flavors-discovery": 1, "swinging": 1, "after-last-night": 1,
+        "communication-intimacy": 1, "sex-and-pleasure": 2, "jealousy": 2,
+        "flavors-discovery": 1, "swinging": 2, "after-last-night": 1,
         "the-first-time": 1, "when-it-gets-hard": 1, "appreciation": 1,
         "opener-steady": 2, "opener-opening": 2, "opener-return": 2, "opener-wider": 2
     ]
@@ -190,26 +185,13 @@ final class ContentLintTests: XCTestCase {
         }
     }
 
-    // MARK: - Gendered contract
+    // MARK: - Gender-neutral contract
 
-    func test_genderedDecks_shipSymmetricMfAndFlexiblePairs() {
+    func test_allDecks_shipOnlyGenderNeutralCards() {
         for deck in decks {
             let gendered = deck.cards.filter(\.isGenderedCard)
-            if Self.genderedDeckIds.contains(deck.id) {
-                let mf = gendered.filter { $0.genderedFor == .mf }
-                let flex = gendered.filter { $0.genderedFor == .flexible }
-                XCTAssertEqual(mf.count, 2, "\(deck.id): expected a His + Her mf pair")
-                XCTAssertEqual(flex.count, 2, "\(deck.id): expected 2 flexible variants")
-                // Variants pair up by shared sortOrder, so exactly one renders per slot.
-                XCTAssertEqual(Set(mf.map(\.sortOrder)), Set(flex.map(\.sortOrder)),
-                               "\(deck.id): mf and flexible variants must share sortOrders")
-                // Only the two shipped dynamics exist; mm/ff copy is deferred.
-                XCTAssertTrue(gendered.allSatisfy { $0.genderedFor == .mf || $0.genderedFor == .flexible },
-                              "\(deck.id): only mf and flexible variants may ship")
-            } else {
-                XCTAssertTrue(gendered.isEmpty,
-                              "\(deck.id): unexpected gendered card in a non-gendered deck")
-            }
+            XCTAssertTrue(gendered.isEmpty,
+                          "\(deck.id): launch content must not assign gendered card variants")
         }
     }
 
