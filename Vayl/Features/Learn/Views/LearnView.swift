@@ -26,7 +26,6 @@ struct LearnView: View {
                     if store.loadError != nil {
                         loadErrorNotice
                     }
-                    QuizCarouselSection(quizzes: store.quizzes)
                     ResearchSection(
                         findings: store.findings,
                         onOpenDatabase: { showDatabase = true },
