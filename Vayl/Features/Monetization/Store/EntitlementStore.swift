@@ -13,6 +13,7 @@
 //
 
 import Foundation
+import PostHog
 import SwiftData
 import StoreKit
 
@@ -144,6 +145,10 @@ final class EntitlementStore {
             loadError = "Core isn't available right now."
             return false
         }
+        PostHogSDK.shared.capture("paywall_shown", properties: [
+            "price": product.displayPrice,
+            "product_id": product.id,
+        ])
         isPurchasing = true
         defer { isPurchasing = false }
         do {
@@ -155,6 +160,10 @@ final class EntitlementStore {
                 // instead of silently leaving the partner locked forever.
                 await grantThenFinish(transaction: transaction, jws: jws)
                 await refresh()
+                PostHogSDK.shared.capture("purchase_completed", properties: [
+                    "product_id": transaction.productID,
+                    "price": product.displayPrice,
+                ])
                 return isCore
             case .pending, .userCancelled:
                 return false

@@ -20,6 +20,7 @@
 //  fresh at write time — never stored on self (matches SessionStore).
 //
 
+import PostHog
 import SwiftUI
 import SwiftData
 import OSLog
@@ -242,6 +243,11 @@ final class CoupleSessionStore: Identifiable {
             try? await Task.sleep(for: .seconds(transitionSeconds))
             if phase == .transition {
                 phase = .session
+                PostHogSDK.shared.capture("session_started", properties: [
+                    "deck_id": hand.first?.deckId ?? "unknown",
+                    "card_count": hand.count,
+                    "is_live": false,
+                ])
                 cardDidChange()      // Section 3: first card's beat/reveal setup
                 persistProgressCheckpoint()
             }
@@ -258,6 +264,11 @@ final class CoupleSessionStore: Identifiable {
             try? await Task.sleep(for: .seconds(transitionSeconds))
             if phase == .transition {
                 phase = .session
+                PostHogSDK.shared.capture("session_started", properties: [
+                    "deck_id": hand.first?.deckId ?? "unknown",
+                    "card_count": hand.count,
+                    "is_live": true,
+                ])
                 cardDidChange()      // Section 3: first card's beat/reveal setup
                 startTimerIfLeader()
                 persistProgressCheckpoint()
@@ -607,6 +618,11 @@ final class CoupleSessionStore: Identifiable {
     /// beyond cards already recorded.
     func raiseSafeWord() {
         safeWordUsed = true
+        PostHogSDK.shared.capture("session_safe_word_raised", properties: [
+            "deck_id": hand.first?.deckId ?? "unknown",
+            "card_index": index,
+            "cards_discussed": discussedCount,
+        ])
         if isLive, let realtime, let sid = remoteSessionId {
             Task { @MainActor in try? await realtime.raiseSafeWord(sessionId: sid) }
         }
@@ -653,6 +669,10 @@ final class CoupleSessionStore: Identifiable {
     /// Save the private reflection against the just-saved session, then dismiss.
     func saveReflection() {
         persistReflection()
+        PostHogSDK.shared.capture("session_reflection_saved", properties: [
+            "word_count": reflectionWords.count,
+            "has_note": !reflectionNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+        ])
         phase = .done
     }
 
@@ -674,6 +694,13 @@ final class CoupleSessionStore: Identifiable {
         persistSession()
         liveComplete()
         UserDefaults.standard.set(true, forKey: UserDefaultsKey.hasCompletedCoupleSession)
+        PostHogSDK.shared.capture("session_completed", properties: [
+            "deck_id": hand.first?.deckId ?? "unknown",
+            "cards_discussed": discussedCount,
+            "cards_skipped": skippedCount,
+            "cards_total": hand.count,
+            "reached_end": reachedEndOfHand,
+        ])
         phase = .close
     }
 

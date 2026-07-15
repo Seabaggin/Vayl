@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import PostHog
 import SwiftData
 import SwiftUI
 import OSLog
@@ -75,6 +76,10 @@ final class OnboardingStore {
             let (profile, context) = try persist(data: data)
             mirrorIntoAppState(data: data)                              // displayName + appMode
             appState.markOnboardingComplete(profile, context: context) // single completion writer (truth+surface+cache)
+            PostHogSDK.shared.capture("onboarding_completed", properties: [
+                "app_mode": data.appMode.rawValue,
+                "nm_stage": data.nmStage.rawValue,
+            ])
             lastCommitError = nil
             didComplete = true
             logger.info("Onboarding committed — displayName: \(data.displayName), appMode: \(data.appMode.rawValue)")

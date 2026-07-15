@@ -5,6 +5,15 @@
 
 import SwiftUI
 import SwiftData
+import PostHog
+
+// PostHog configuration.
+// The project token is a public client-side key designed to ship in the binary.
+// The Xcode scheme can inject POSTHOG_PROJECT_TOKEN as an optional override (debug/simulator only).
+private let posthogProjectToken = ProcessInfo.processInfo.environment["POSTHOG_PROJECT_TOKEN"]
+    ?? "phc_CUyhTpkEm9fsGZpdWvL2K3W2k5XaRNja5BSqZYMiPa89"
+private let posthogHost = ProcessInfo.processInfo.environment["POSTHOG_HOST"]
+    ?? "https://us.i.posthog.com"
 
 @main
 struct VaylApp: App {
@@ -27,6 +36,10 @@ struct VaylApp: App {
     // main-actor (SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor), so constructing these
     // @MainActor stores here is safe.
     init() {
+        let config = PostHogConfig(apiKey: posthogProjectToken, host: posthogHost)
+        config.captureApplicationLifecycleEvents = true
+        PostHogSDK.shared.setup(config)
+
         let appState = AppState()
         _appState = State(initialValue: appState)
         _onboardingStore = State(initialValue: OnboardingStore(

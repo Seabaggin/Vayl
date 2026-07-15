@@ -12,6 +12,7 @@
 //
 
 import Foundation
+import PostHog
 import SwiftData
 import SwiftUI
 import OSLog
@@ -123,6 +124,7 @@ final class PairingStore {
             codeExpiresAt = expiresAt
             await recordFirstInviteSentIfNeeded()
             linkState = .waitingForPartner(code: code)
+            PostHogSDK.shared.capture("partner_invite_generated")
             logger.info("Invite generated — code: \(code)")
             await pollForPartner(code: code, deadline: expiresAt)
         } catch {
@@ -375,6 +377,9 @@ final class PairingStore {
         // Mirror into AppState for in-memory routing
         appState.linkState = .linked
         appState.coupleId = coupleId
+        PostHogSDK.shared.capture("partner_linked", properties: [
+            "couple_id": coupleId.uuidString,
+        ])
         logger.info("Link persisted — coupleId: \(coupleId)")
     }
 }
