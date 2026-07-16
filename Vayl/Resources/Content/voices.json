@@ -1,5 +1,3 @@
 [
-  { "id": "schechinger", "kind": "researcher", "name": "Dr. Heath Schechinger", "role": "Researcher · Counseling Psychology", "blurb": "CNM-affirming psychology, research-backed.", "platform": "Instagram", "link": null },
-  { "id": "fern", "kind": "researcher", "name": "Jessica Fern", "role": "Author · Psychotherapist", "blurb": "Attachment + non-monogamy, plainly.", "platform": "Substack", "link": null },
-  { "id": "sawyers", "kind": "creator", "name": "Evita Sawyers", "role": "Creator", "blurb": "Lived-experience reflections on poly life.", "platform": "TikTok · IG", "link": null }
+  { "id": "sawyers", "name": "Evita Sawyers", "role": "Creator", "blurb": "Lived-experience reflections on poly life.", "platform": "TikTok · IG", "link": null }
 ]

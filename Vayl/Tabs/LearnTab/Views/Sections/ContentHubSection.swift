@@ -25,7 +25,6 @@ struct ContentHubSection: View {
 
     @Environment(\.openURL) private var openURL
     @State private var tab: HubTab = .books
-    @State private var voiceFilter: VoiceKind = .creator
 
     /// One accent for the whole hub, matching the Knowledge hub's. Purple is the
     /// spectrum midpoint and carries no directional meaning, unlike cyan (Me) and
@@ -82,7 +81,17 @@ struct ContentHubSection: View {
 
     // MARK: - Books
 
+    @ViewBuilder
     private var bookShelf: some View {
+        if store.media(.book).isEmpty {
+            emptyPanel(headline: "No books yet",
+                       message: "Reading worth your time will show up here.")
+        } else {
+            bookScroller
+        }
+    }
+
+    private var bookScroller: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: AppSpacing.sm) {
                 ForEach(store.media(.book)) { book in
@@ -156,13 +165,18 @@ struct ContentHubSection: View {
 
     private func mediaList(_ kind: MediaKind, tag: String) -> some View {
         VStack(spacing: AppSpacing.sm) {
-            ForEach(store.media(kind)) { item in
-                if let url = link(item.link) {
-                    Button { openURL(url) } label: { mediaRow(item, tag: tag, linked: true) }
-                        .buttonStyle(PressableCardStyle())
-                        .accessibilityHint("Opens in Safari")
-                } else {
-                    mediaRow(item, tag: tag, linked: false)
+            if store.media(kind).isEmpty {
+                emptyPanel(headline: "Nothing here yet",
+                           message: "\(tag) picks will show up here.")
+            } else {
+                ForEach(store.media(kind)) { item in
+                    if let url = link(item.link) {
+                        Button { openURL(url) } label: { mediaRow(item, tag: tag, linked: true) }
+                            .buttonStyle(PressableCardStyle())
+                            .accessibilityHint("Opens in Safari")
+                    } else {
+                        mediaRow(item, tag: tag, linked: false)
+                    }
                 }
             }
         }
@@ -200,25 +214,39 @@ struct ContentHubSection: View {
 
     // MARK: - Voices
 
+    /// Creators only — see Voice.swift for why researchers aren't listed here.
+    /// The Creators/Researchers filter is gone with them; a segmented control over
+    /// one category was chrome pretending the shelf was deeper than it is.
     private var voicesPanel: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            SegmentedPillGroup(
-                options: [
-                    .init(VoiceKind.creator, label: "Creators", accent: accent),
-                    .init(VoiceKind.researcher, label: "Researchers", accent: accent)
-                ],
-                selection: $voiceFilter
-            )
-            ForEach(store.voices(voiceFilter)) { voice in
-                if let url = link(voice.link) {
-                    Button { openURL(url) } label: { voiceRow(voice, linked: true) }
-                        .buttonStyle(PressableCardStyle())
-                        .accessibilityHint("Opens in Safari")
-                } else {
-                    voiceRow(voice, linked: false)
+            if store.voices.isEmpty {
+                emptyPanel(headline: "No voices yet",
+                           message: "People worth following will show up here.")
+            } else {
+                ForEach(store.voices) { voice in
+                    if let url = link(voice.link) {
+                        Button { openURL(url) } label: { voiceRow(voice, linked: true) }
+                            .buttonStyle(PressableCardStyle())
+                            .accessibilityHint("Opens in Safari")
+                    } else {
+                        voiceRow(voice, linked: false)
+                    }
                 }
             }
         }
+    }
+
+    /// The hub's panels can each render zero rows once the corpus changes; the
+    /// contract wants an empty state on every data surface, and a bare ForEach
+    /// renders blank space inside the glass card.
+    private func emptyPanel(headline: String, message: String) -> some View {
+        VaylEmptyState(
+            icon: AppIcons.textMagnifyingglass,
+            headline: headline,
+            message: message
+        )
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppSpacing.lg)
     }
 
     private func voiceRow(_ v: Voice, linked: Bool) -> some View {

@@ -56,7 +56,6 @@ final class LearnStore {
     var findingCount: Int { findings.count }
 
     func media(_ kind: MediaKind) -> [LearnMediaItem] { media.filter { $0.kind == kind } }
-    func voices(_ kind: VoiceKind) -> [Voice] { voices.filter { $0.kind == kind } }
     func finding(id: String) -> ResearchFinding? { findings.first { $0.id == id } }
     func resources(_ tier: ResourceTier) -> [SupportResource] { supportResources.filter { $0.tier == tier } }
 }
