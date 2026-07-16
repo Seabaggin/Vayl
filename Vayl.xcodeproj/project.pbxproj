@@ -14,12 +14,10 @@
 		3D51D7492F5FB8D7002488A7 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D7482F5FB8D7002488A7 /* Realtime */; };
 		3D51D74B2F5FB8D7002488A7 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D74A2F5FB8D7002488A7 /* Storage */; };
 		3D51D7502F5FBA71002488A7 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 3D51D74F2F5FBA71002488A7 /* Supabase */; };
-		3D767EFA2F5D562900F2D70F /* RULES.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EF92F5D562100F2D70F /* RULES.md */; };
-		3D767EFC2F5D565700F2D70F /* PROJECT_SCOPE.md in Resources */ = {isa = PBXBuildFile; fileRef = 3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */; };
 		3D807B942F8DC74B0021F080 /* .aider.conf.yml in Resources */ = {isa = PBXBuildFile; fileRef = 3D807B932F8DC7450021F080 /* .aider.conf.yml */; };
 		3D82F2982FE618DE004AD1C7 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 3D82F2972FE618DE004AD1C7 /* Auth */; };
 		3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */ = {isa = PBXBuildFile; fileRef = 3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */; };
-		3DBFFC432FF2053D00CA8FF0 /* vayl-context-dump.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3DBFFC422FF2053400CA8FF0 /* vayl-context-dump.sh */; };
+		68C6D42C0AFB53EB88B9E1D1 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = EE252AEA3A2C1183B6038032 /* PostHog */; };
 		AA000001AAAA000000000001 /* MonteRowGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */; };
 		AA000002AAAA000000000001 /* CandleIntensityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000002AAAA000000000002 /* CandleIntensityTests.swift */; };
 		AA000003AAAA000000000001 /* ContextOptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000003AAAA000000000002 /* ContextOptionTests.swift */; };
@@ -56,7 +54,6 @@
 		AA00000ZAAAA000000000001 /* SyncRoundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000ZAAAA000000000002 /* SyncRoundTests.swift */; };
 		AB000001AAAA000000000001 /* AuthSessionOutcomeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000001AAAA000000000002 /* AuthSessionOutcomeTests.swift */; };
 		EC2BBA430B5D473898E20D6A /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 7C3C13ECAFB04A2E962CB6BB /* Sentry */; };
-		68C6D42C0AFB53EB88B9E1D1 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = EE252AEA3A2C1183B6038032 /* PostHog */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,11 +80,8 @@
 		3D767EB22F5D520D00F2D70F /* Vayl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vayl.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D767EC12F5D520E00F2D70F /* VaylTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VaylTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D767ECB2F5D520E00F2D70F /* VaylUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VaylUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		3D767EF92F5D562100F2D70F /* RULES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = RULES.md; sourceTree = "<group>"; };
-		3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PROJECT_SCOPE.md; sourceTree = "<group>"; };
 		3D807B932F8DC7450021F080 /* .aider.conf.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .aider.conf.yml; sourceTree = "<group>"; };
 		3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DESIGN_DOC.md; sourceTree = "<group>"; };
-		3DBFFC422FF2053400CA8FF0 /* vayl-context-dump.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "vayl-context-dump.sh"; sourceTree = "<group>"; };
 		AA000001AAAA000000000002 /* MonteRowGeometryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonteRowGeometryTests.swift; sourceTree = "<group>"; };
 		AA000002AAAA000000000002 /* CandleIntensityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandleIntensityTests.swift; sourceTree = "<group>"; };
 		AA000003AAAA000000000002 /* ContextOptionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextOptionTests.swift; sourceTree = "<group>"; };
@@ -191,12 +185,9 @@
 		3D767EA92F5D520D00F2D70F = {
 			isa = PBXGroup;
 			children = (
-				3DBFFC422FF2053400CA8FF0 /* vayl-context-dump.sh */,
 				3D0160492FBBFA4400492968 /* CLAUDE.md */,
 				3D807B932F8DC7450021F080 /* .aider.conf.yml */,
-				3D767EFB2F5D564D00F2D70F /* PROJECT_SCOPE.md */,
 				3DAF2AE62F5E80D0007133FD /* DESIGN_DOC.md */,
-				3D767EF92F5D562100F2D70F /* RULES.md */,
 				3D767EB42F5D520D00F2D70F /* Vayl */,
 				AA000001AAAA000000000003 /* VaylTests */,
 				3D51D74E2F5FBA71002488A7 /* Frameworks */,
@@ -386,10 +377,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3D767EFC2F5D565700F2D70F /* PROJECT_SCOPE.md in Resources */,
 				3DAF2AE72F5E80D0007133FD /* DESIGN_DOC.md in Resources */,
-				3D767EFA2F5D562900F2D70F /* RULES.md in Resources */,
-				3DBFFC432FF2053D00CA8FF0 /* vayl-context-dump.sh in Resources */,
 				3D807B942F8DC74B0021F080 /* .aider.conf.yml in Resources */,
 				3D01604A2FBBFA4B00492968 /* CLAUDE.md in Resources */,
 			);
