@@ -63,7 +63,7 @@ struct ContentHubSection: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(AppSpacing.md)
-            .learnCard(accent)
+            .learnCard()
         }
     }
 

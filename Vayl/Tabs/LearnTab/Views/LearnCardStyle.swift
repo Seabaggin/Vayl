@@ -1,20 +1,24 @@
-// Features/Learn/Views/LearnCardStyle.swift
+// Tabs/LearnTab/Views/LearnCardStyle.swift
 //
-// The Learn-tab card surface. Unlike the opaque `.themedCard()`, this fill is
-// translucent so the page's OnboardingAtmosphere (void + spectrum bloom) shows
-// THROUGH the card — the section's single-colour hairline (cyan / purple /
-// magenta) is the only hard edge. Matches the OB glass-over-void direction the
-// tabs are moving toward.
+// The Learn-tab card surface — one glass card, unified 2026-07-16.
 //
-// DEVICE-TUNE: the fill is `AppColors.whisperFill` — the glass-vs-atmosphere
-// knob lives on that token now; lower lets more atmosphere through, higher
-// reads as a more solid card. Confirm on device.
+// Before, `learnCard(_ accent:)` took a colour and each section passed its own
+// (purple research, magenta hub), so the tab was a stack of differently-coloured
+// containers. Now every Learn card is the Map-family surface: `.vaylGlassCard()`
+// (glass over the atmosphere) plus one tapered spectrum hairline along the top
+// edge — the same chrome as HomePulseRail and the journal threshold. The gradient
+// appears once per card, on a stroke, which is exactly the Earned Spectrum Rule.
+//
+// DEVICE-TUNE: the fill comes from `.vaylGlassCard()`'s `glassSurface`; the
+// glass-vs-atmosphere knob lives on that token. Confirm on device.
 
 import SwiftUI
 
 extension View {
-    func learnCard(_ accent: Color, cornerRadius: CGFloat = AppRadius.xl) -> some View {
-        modifier(LearnCardStyle(accent: accent, cornerRadius: cornerRadius))
+    /// The one Learn surface: Map-family glass + a tapered spectrum top hairline.
+    /// The hairline is inset horizontally so it fades before the corner radius.
+    func learnCard(cornerRadius: CGFloat = AppRadius.xl) -> some View {
+        modifier(LearnCardStyle(cornerRadius: cornerRadius))
     }
 }
 
@@ -32,19 +36,15 @@ struct PressableCardStyle: ButtonStyle {
 }
 
 private struct LearnCardStyle: ViewModifier {
-    let accent: Color
     let cornerRadius: CGFloat
 
     func body(content: Content) -> some View {
         content
-            .background(
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(AppColors.whisperFill)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(accent.opacity(0.45), lineWidth: 1)
-            )
+            .vaylGlassCard(radius: cornerRadius)
+            .overlay(alignment: .top) {
+                TaperedSpectrumHairline(thickness: 1.5)
+                    .padding(.horizontal, AppSpacing.md)
+            }
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
     }
 }

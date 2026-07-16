@@ -1,20 +1,32 @@
-// Features/Learn/Views/Sections/ResearchSection.swift
+// Tabs/LearnTab/Views/Sections/ResearchSection.swift
 //
-// Section 2 — research: an auto-advancing, infinite-loop paging carousel of
-// findings (InfiniteCarousel) over a quiet "browse all" row into the
-// filterable database. Purple section hairline.
+// Section 1 — the reference: research findings AND glossary terms, previewed in a
+// swipeable paging carousel over a quiet "browse all" row into the database.
+//
+// Two changes, 2026-07-16:
+//
+// 1. The glossary joined the research. They're the same kind of thing (cited,
+//    first-party) and the vocabulary previously had no front door at all — it was
+//    reachable only by filtering inside the research database.
+// 2. The carousel no longer auto-advances. Drifting every 12s was decorative
+//    motion: it conveyed no state and made the section read as a feed. It now
+//    moves only when the user swipes.
+//
+// Deliberately NOT here: a finding-of-the-day. Home's Lexicon already serves a
+// daily-5 from these exact corpora with a day-seeded rotation; a daily hero here
+// would be the same content, same trick, second surface.
 
 import SwiftUI
 
 struct ResearchSection: View {
-    let findings: [ResearchFinding]
+    let items: [ReferenceItem]
     var onOpenDatabase: () -> Void = {}
     var onOpenFinding: (ResearchFinding) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             HStack {
-                Text("THE RESEARCH")
+                Text("RESEARCH & VOCABULARY")
                     .font(AppFonts.display(16, weight: .semibold, relativeTo: .title3))
                     .foregroundStyle(AppColors.spectrumPurple)
                 Spacer()
@@ -35,9 +47,16 @@ struct ResearchSection: View {
                 .buttonStyle(PressableCardStyle())
             }
 
-            InfiniteCarousel(items: findings, interval: AppAnimation.ambientDwell, height: 212) { finding in
-                Button { onOpenFinding(finding) } label: { findingCard(finding) }
-                    .buttonStyle(PressableCardStyle())
+            InfiniteCarousel(items: items, autoAdvances: false, height: 212) { item in
+                switch item {
+                case .finding(let f):
+                    Button { onOpenFinding(f) } label: { findingCard(f) }
+                        .buttonStyle(PressableCardStyle())
+                case .term(let t):
+                    // Not a button: the definition is the whole payload, so there's
+                    // nothing deeper to open. No tap target without a destination.
+                    termCard(t)
+                }
             } emptyContent: {
                 emptyState
             }
@@ -49,10 +68,10 @@ struct ResearchSection: View {
             Image(systemName: AppIcons.textMagnifyingglass)
                 .font(AppFonts.body(26, weight: .regular, relativeTo: .title2))
                 .foregroundStyle(AppColors.textTertiary)
-            Text("No research to show")
+            Text("Nothing to show yet")
                 .font(AppFonts.cardTitle)
                 .foregroundStyle(AppColors.textSecondary)
-            Text("Findings will show up here when they load.")
+            Text("Research and vocabulary will show up here when they load.")
                 .font(AppFonts.caption)
                 .foregroundStyle(AppColors.textTertiary)
                 .multilineTextAlignment(.center)
@@ -62,9 +81,13 @@ struct ResearchSection: View {
     }
 
     private func typeChip(_ f: ResearchFinding) -> some View {
+        chip(icon: f.type.sfSymbol, label: f.type.label)
+    }
+
+    private func chip(icon: String, label: String) -> some View {
         HStack(spacing: AppSpacing.xs) {
-            Image(systemName: f.type.sfSymbol)
-            Text(f.type.label.uppercased())
+            Image(systemName: icon)
+            Text(label.uppercased())
         }
         .font(AppFonts.label)
         .foregroundStyle(AppColors.spectrumPurple)   // section is purple-only; the icon conveys type
@@ -92,7 +115,30 @@ struct ResearchSection: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(AppSpacing.lg)
-        .learnCard(AppColors.spectrumPurple)
+        .learnCard()
+    }
+
+    private func termCard(_ t: LexiconTerm) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            chip(icon: AppIcons.textMagnifyingglass, label: "Term")
+            Text(t.term)
+                .font(AppFonts.cardTitle)
+                .foregroundStyle(AppColors.textPrimary)
+            Text(t.definition)
+                .font(AppFonts.bodyText)
+                .foregroundStyle(AppColors.textBody)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+            if let example = t.example {
+                Text("\u{201C}\(example)\u{201D}")
+                    .font(AppFonts.caption).italic()
+                    .foregroundStyle(AppColors.textTertiary)
+                    .lineLimit(2)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(AppSpacing.lg)
+        .learnCard()
     }
 }
 
@@ -103,8 +149,11 @@ struct ResearchSection: View {
     // Seed research data literal.
     // swiftlint:disable:next line_length
     let b = ResearchFinding(id: "conley", type: .myth, stat: nil, headline: "Monogamy myths", finding: "Monogamy isn't inherently safer for STI risk — CNM couples test and talk more.", bullets: [], limitation: "", citation: "Conley et al. (2013).", author: "Conley et al.", year: 2013, topics: [], connected: [])
+    let t = LexiconTerm(id: "compersion", kind: .term, term: "Compersion",
+                        definition: "Joy felt when a partner experiences joy with someone else.",
+                        example: nil)
     return ZStack {
         AppColors.pageBackground.ignoresSafeArea()
-        ResearchSection(findings: [a, b]).padding()
+        ResearchSection(items: [.finding(a), .finding(b), .term(t)]).padding()
     }
 }

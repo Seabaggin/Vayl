@@ -1,12 +1,15 @@
 // Design/Components/Cards/InfiniteCarousel.swift
 //
 // A full-width paging carousel that:
-//   • auto-advances on an interval (discoverability),
+//   • optionally auto-advances on an interval (discoverability),
 //   • supports swipe (TabView page style), and
 //   • loops infinitely via clone-and-reset at the seam.
 //
-// Reduce Motion disables the auto-advance (swipe still works). A fixed height
-// is required — TabView's page style does not size to its content.
+// Reduce Motion disables the auto-advance (swipe still works), as does passing
+// `autoAdvances: false` — a carousel that moves without the user asking is
+// decorative motion, which conveys no state and reads as a feed. Prefer the
+// swipe-only form unless the drift is genuinely earning discoverability.
+// A fixed height is required — TabView's page style does not size to content.
 //
 // DEVICE-TUNE (per Build Protocol — feel is confirmed on device, not in code):
 //   • `interval`, the advance animation, and the seam-reset `jump` delay are
@@ -19,6 +22,8 @@ import SwiftUI
 struct InfiniteCarousel<Item: Identifiable, Content: View, EmptyContent: View>: View {
     let items: [Item]
     var interval: TimeInterval = AppAnimation.ambientDwell
+    /// When false, the carousel only moves when the user swipes.
+    var autoAdvances: Bool = true
     var height: CGFloat
     @ViewBuilder var content: (Item) -> Content
     /// Shown when `items` is empty. Defaults to the original EmptyView (render
@@ -29,12 +34,14 @@ struct InfiniteCarousel<Item: Identifiable, Content: View, EmptyContent: View>: 
     init(
         items: [Item],
         interval: TimeInterval = AppAnimation.ambientDwell,
+        autoAdvances: Bool = true,
         height: CGFloat,
         @ViewBuilder content: @escaping (Item) -> Content,
         @ViewBuilder emptyContent: @escaping () -> EmptyContent
     ) {
         self.items = items
         self.interval = interval
+        self.autoAdvances = autoAdvances
         self.height = height
         self.content = content
         self.emptyContent = emptyContent
@@ -112,7 +119,7 @@ struct InfiniteCarousel<Item: Identifiable, Content: View, EmptyContent: View>: 
     }
 
     private func autoAdvance() async {
-        guard !reduceMotion, realCount > 1 else { return }
+        guard autoAdvances, !reduceMotion, realCount > 1 else { return }
         while !Task.isCancelled {
             try? await Task.sleep(for: .seconds(interval))
             guard !Task.isCancelled else { break }
@@ -126,12 +133,14 @@ extension InfiniteCarousel where EmptyContent == EmptyView {
     init(
         items: [Item],
         interval: TimeInterval = AppAnimation.ambientDwell,
+        autoAdvances: Bool = true,
         height: CGFloat,
         @ViewBuilder content: @escaping (Item) -> Content
     ) {
         self.init(
             items: items,
             interval: interval,
+            autoAdvances: autoAdvances,
             height: height,
             content: content,
             emptyContent: { EmptyView() }

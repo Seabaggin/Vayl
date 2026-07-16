@@ -27,7 +27,7 @@ struct LearnView: View {
                         loadErrorNotice
                     }
                     ResearchSection(
-                        findings: store.findings,
+                        items: store.referencePreview,
                         onOpenDatabase: { showDatabase = true },
                         onOpenFinding: { selectedFinding = $0 }
                     )
