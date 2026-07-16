@@ -44,6 +44,7 @@ struct ContentHubSection: View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             Text("Content hub")
                 .font(AppFonts.sectionHeading)
+                .textCase(.uppercase)
                 .foregroundStyle(AppColors.textSectionLabel)
 
             VStack(spacing: AppSpacing.md) {

@@ -28,6 +28,7 @@ struct ResearchSection: View {
             HStack {
                 Text("Research & vocabulary")
                     .font(AppFonts.sectionHeading)
+                    .textCase(.uppercase)
                     .foregroundStyle(AppColors.textSectionLabel)
                 Spacer()
                 Button { onOpenDatabase() } label: {
