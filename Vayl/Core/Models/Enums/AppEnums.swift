@@ -341,6 +341,7 @@ enum AppIcons {
     static let lifepreserver        = "lifepreserver"
     static let sparkle              = "sparkle"
     static let diamond              = "diamond"
+    static let shuffle              = "shuffle"
 
     // ── People & content (extended) ───────────────────────────
     static let personFill           = "person.fill"
