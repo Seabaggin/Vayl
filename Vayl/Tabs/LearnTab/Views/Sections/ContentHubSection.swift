@@ -42,9 +42,9 @@ struct ContentHubSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            Text("CONTENT HUB")
-                .font(AppFonts.display(16, weight: .semibold, relativeTo: .title3))
-                .foregroundStyle(accent)
+            Text("Content hub")
+                .overlineTracked()
+                .foregroundStyle(AppColors.textSectionLabel)
 
             VStack(spacing: AppSpacing.md) {
                 SegmentedPillGroup(

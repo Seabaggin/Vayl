@@ -26,9 +26,9 @@ struct ResearchSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             HStack {
-                Text("RESEARCH & VOCABULARY")
-                    .font(AppFonts.display(16, weight: .semibold, relativeTo: .title3))
-                    .foregroundStyle(AppColors.spectrumPurple)
+                Text("Research & vocabulary")
+                    .overlineTracked()
+                    .foregroundStyle(AppColors.textSectionLabel)
                 Spacer()
                 Button { onOpenDatabase() } label: {
                     HStack(spacing: AppSpacing.xs) {

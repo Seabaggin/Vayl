@@ -88,7 +88,7 @@ struct ResearchDatabaseView: View {
         HStack(alignment: .firstTextBaseline) {
             Text("Research & Vocabulary")
                 .font(AppFonts.screenTitle)
-                .foregroundStyle(AppColors.spectrumPurple)
+                .foregroundStyle(AppColors.textPrimary)
             Spacer()
             Text(countLabel)
                 .font(AppFonts.caption)
