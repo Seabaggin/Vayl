@@ -28,7 +28,7 @@ struct ResearchSection: View {
             HStack {
                 Text("Research & vocabulary")
                     .font(AppFonts.sectionHeading)
-                    .foregroundStyle(AppColors.textPrimary)
+                    .foregroundStyle(AppColors.textSectionLabel)
                 Spacer()
                 Button { onOpenDatabase() } label: {
                     HStack(spacing: AppSpacing.xs) {
