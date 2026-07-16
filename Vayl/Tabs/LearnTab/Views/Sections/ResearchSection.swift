@@ -1,7 +1,10 @@
 // Tabs/LearnTab/Views/Sections/ResearchSection.swift
 //
-// Section 1 — the reference: research findings AND glossary terms, previewed in a
-// swipeable paging carousel over a quiet "browse all" row into the database.
+// Section 1 — the Knowledge hub: research findings AND glossary terms, previewed
+// in a swipeable paging carousel over a quiet "browse all" row into the database.
+//
+// (Filename still says Research; the section outgrew it when the glossary joined.
+// Renaming the type is a mechanical follow-up, not worth the churn mid-sprint.)
 //
 // Two changes, 2026-07-16:
 //
@@ -26,7 +29,7 @@ struct ResearchSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             HStack {
-                Text("Research & vocabulary")
+                Text("Knowledge hub")
                     .font(AppFonts.sectionHeading)
                     .textCase(.uppercase)
                     .foregroundStyle(AppColors.textSectionLabel)
