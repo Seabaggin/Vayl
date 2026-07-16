@@ -1,18 +1,36 @@
-// Features/Learn/Views/Sections/ContentHubSection.swift
+// Tabs/LearnTab/Views/Sections/ContentHubSection.swift
 //
-// Section 3 — Content Hub (magenta). A custom segmented control over four
-// panels: Books (cover shelf), Watch + Listen (media rows), Voices (circular
-// avatars + a Creators/Researchers filter). Mirrors the HTML mockup's hub.
+// Section 2 — Content Hub. A segmented control over four panels: Books (cover
+// shelf), Watch + Listen (media rows), Voices (circular avatars + a
+// Creators/Researchers filter). Third-party media: where to go deeper.
+//
+// Polish pass 2026-07-16:
+// • Every row was a `Button {}` — an empty action — while media and voice rows
+//   drew a chevron promising navigation. Both models have carried `link: String?`
+//   all along; the views just never read it. Rows now open their link, and a row
+//   with no link renders as plain content with no tap target and no arrow. An
+//   affordance that does nothing is worse than no affordance.
+// • The arrow is `arrowUpRight`, not `chevronRight`: these leave the app for
+//   Safari. A chevron means "push deeper in Vayl" everywhere else, and
+//   ResourcesOverlayView already uses the up-right arrow for exactly this.
+// • Accent unified to purple. Magenta means Us/shared and Learn is a private,
+//   solo surface — that's the Don't-Cross-the-Wires rule, not a taste call. The
+//   per-tab spectrum sweep (cyan/bridge/purple/magenta) is gone too: it made each
+//   panel look like a different product.
 
 import SwiftUI
 
 struct ContentHubSection: View {
     let store: LearnStore
 
+    @Environment(\.openURL) private var openURL
     @State private var tab: HubTab = .books
     @State private var voiceFilter: VoiceKind = .creator
 
-    private let accent = AppColors.spectrumMagenta
+    /// One accent for the whole hub, matching the Knowledge hub's. Purple is the
+    /// spectrum midpoint and carries no directional meaning, unlike cyan (Me) and
+    /// magenta (Us) — correct for content, which is nobody's data.
+    private let accent = AppColors.spectrumPurple
 
     enum HubTab: String, CaseIterable, Identifiable {
         case books, watch, listen, voices
@@ -25,19 +43,13 @@ struct ContentHubSection: View {
         }
         var icon: String {
             switch self {
-            case .books: return "books.vertical"; case .watch: return "play.rectangle"
-            case .listen: return "waveform"; case .voices: return "person.2"
+            case .books:  return AppIcons.booksVertical
+            case .watch:  return AppIcons.playRectangle
+            case .listen: return AppIcons.waveform
+            case .voices: return AppIcons.person2
             }
         }
-        /// Per-tab accent — a spectrum sweep so each tab reads as its own place.
-        var accent: Color {
-            switch self {
-            case .books:  return AppColors.spectrumCyan
-            case .watch:  return AppColors.spectrumBridge
-            case .listen: return AppColors.spectrumPurple
-            case .voices: return AppColors.spectrumMagenta
-            }
-        }
+        var accent: Color { AppColors.spectrumPurple }
     }
 
     var body: some View {
@@ -74,12 +86,25 @@ struct ContentHubSection: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: AppSpacing.sm) {
                 ForEach(store.media(.book)) { book in
-                    Button {} label: { bookCover(book) }
-                        .buttonStyle(PressableCardStyle())
+                    // A cover with nowhere to go is just a cover.
+                    if let url = link(book.link) {
+                        Button { openURL(url) } label: { bookCover(book) }
+                            .buttonStyle(PressableCardStyle())
+                            .accessibilityHint("Opens in Safari")
+                    } else {
+                        bookCover(book)
+                    }
                 }
             }
             .padding(.vertical, AppSpacing.xxs)
         }
+    }
+
+    /// Non-empty, parseable links only — a blank string in the corpus must not
+    /// produce a tap target that opens nothing.
+    private func link(_ raw: String?) -> URL? {
+        guard let raw, !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        return URL(string: raw)
     }
 
     private func bookCover(_ b: LearnMediaItem) -> some View {
@@ -91,8 +116,9 @@ struct ContentHubSection: View {
                     .overlay(RoundedRectangle(cornerRadius: AppRadius.md)
                         .stroke(AppColors.borderSubtle, lineWidth: 1))
                 if let tier = b.tier {
-                    Text(tier.uppercased())
+                    Text(tier)
                         .font(AppFonts.label)
+                        .textCase(.uppercase)
                         .foregroundStyle(AppColors.textPrimary)
                         .padding(.horizontal, AppSpacing.xs)
                         .padding(.vertical, AppSpacing.xxs)
@@ -131,18 +157,23 @@ struct ContentHubSection: View {
     private func mediaList(_ kind: MediaKind, tag: String) -> some View {
         VStack(spacing: AppSpacing.sm) {
             ForEach(store.media(kind)) { item in
-                Button {} label: { mediaRow(item, tag: tag) }
-                    .buttonStyle(PressableCardStyle())
+                if let url = link(item.link) {
+                    Button { openURL(url) } label: { mediaRow(item, tag: tag, linked: true) }
+                        .buttonStyle(PressableCardStyle())
+                        .accessibilityHint("Opens in Safari")
+                } else {
+                    mediaRow(item, tag: tag, linked: false)
+                }
             }
         }
     }
 
-    private func mediaRow(_ m: LearnMediaItem, tag: String) -> some View {
+    private func mediaRow(_ m: LearnMediaItem, tag: String, linked: Bool) -> some View {
         HStack(spacing: AppSpacing.md) {
             thumb(url: m.artworkUrl, icon: kindIcon(m.kind), circle: false)
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                Text(tag.uppercased())
-                    .font(AppFonts.label)
+                Text(tag)
+                    .overlineTracked()
                     .foregroundStyle(AppColors.textTertiary)
                 Text(m.title)
                     .font(AppFonts.bodyMedium)
@@ -155,9 +186,15 @@ struct ContentHubSection: View {
                 if let platform = m.platform { platformBadge(platform) }
             }
             Spacer(minLength: 0)
-            Image(systemName: AppIcons.chevronRight).foregroundStyle(AppColors.textTertiary)
+            // Up-right, not a chevron: this leaves the app. Only when it does.
+            if linked {
+                Image(systemName: AppIcons.arrowUpRight)
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+            }
         }
         .padding(.vertical, AppSpacing.xs)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
     }
 
@@ -167,24 +204,29 @@ struct ContentHubSection: View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             SegmentedPillGroup(
                 options: [
-                    .init(VoiceKind.creator, label: "Creators", accent: AppColors.spectrumCyan),
-                    .init(VoiceKind.researcher, label: "Researchers", accent: AppColors.spectrumMagenta)
+                    .init(VoiceKind.creator, label: "Creators", accent: accent),
+                    .init(VoiceKind.researcher, label: "Researchers", accent: accent)
                 ],
                 selection: $voiceFilter
             )
             ForEach(store.voices(voiceFilter)) { voice in
-                Button {} label: { voiceRow(voice) }
-                    .buttonStyle(PressableCardStyle())
+                if let url = link(voice.link) {
+                    Button { openURL(url) } label: { voiceRow(voice, linked: true) }
+                        .buttonStyle(PressableCardStyle())
+                        .accessibilityHint("Opens in Safari")
+                } else {
+                    voiceRow(voice, linked: false)
+                }
             }
         }
     }
 
-    private func voiceRow(_ v: Voice) -> some View {
+    private func voiceRow(_ v: Voice, linked: Bool) -> some View {
         HStack(spacing: AppSpacing.md) {
-            thumb(url: nil, icon: "person.fill", circle: true)
+            thumb(url: nil, icon: AppIcons.personFill, circle: true)
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                Text(v.role.uppercased())
-                    .font(AppFonts.label)
+                Text(v.role)
+                    .overlineTracked()
                     .foregroundStyle(AppColors.textTertiary)
                 Text(v.name)
                     .font(AppFonts.bodyMedium)
@@ -197,9 +239,14 @@ struct ContentHubSection: View {
                 platformBadge(v.platform)
             }
             Spacer(minLength: 0)
-            Image(systemName: AppIcons.chevronRight).foregroundStyle(AppColors.textTertiary)
+            if linked {
+                Image(systemName: AppIcons.arrowUpRight)
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+            }
         }
         .padding(.vertical, AppSpacing.xs)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
     }
 
@@ -249,9 +296,9 @@ struct ContentHubSection: View {
 
     private func kindIcon(_ kind: MediaKind) -> String {
         switch kind {
-        case .book: return "book.closed.fill"
-        case .show: return "play.rectangle.fill"
-        case .podcast: return "waveform"
+        case .book:    return AppIcons.bookClosedFill
+        case .show:    return AppIcons.playRectangleFill
+        case .podcast: return AppIcons.waveform
         }
     }
 }

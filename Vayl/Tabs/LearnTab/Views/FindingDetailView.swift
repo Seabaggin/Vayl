@@ -15,13 +15,17 @@ struct FindingDetailView: View {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
                 HStack(spacing: AppSpacing.xs) {
                     Image(systemName: finding.type.sfSymbol)
-                    Text(finding.type.label.uppercased())
+                    Text(finding.type.label)
+                        .textCase(.uppercase)
                 }
                 .font(AppFonts.label)
                 .foregroundStyle(finding.type.tint)
 
                 if let stat = finding.stat {
-                    Text(stat).font(AppFonts.displayHero).foregroundStyle(AppColors.spectrumPurple)
+                    // On the modal fill, so the contrast-safe stops; `spectrumText`'s
+                    // darker stops only clear AA against the page floor.
+                    Text(stat).font(AppFonts.displayHero)
+                        .foregroundStyle(AppColors.spectrumTextSafe)
                 }
                 Text(finding.finding)
                     .font(AppFonts.sectionHeading)
@@ -44,8 +48,9 @@ struct FindingDetailView: View {
                     .foregroundStyle(AppColors.textTertiary)
 
                 if !finding.connected.isEmpty {
-                    Text("CONNECTED RESEARCH")
-                        .font(AppFonts.overline).foregroundStyle(AppColors.textSecondary)
+                    Text("Connected research")
+                        .overlineTracked()
+                        .foregroundStyle(AppColors.textSecondary)
                         .padding(.top, AppSpacing.sm)
                     ForEach(finding.connected, id: \.self) { id in
                         if let c = store.finding(id: id) {

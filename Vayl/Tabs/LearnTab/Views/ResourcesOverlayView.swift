@@ -34,8 +34,9 @@ struct ResourcesOverlayView: View {
 
     private func tier(_ heading: String, _ which: ResourceTier, _ accent: Color) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text(heading.uppercased())
-                .font(AppFonts.overline).foregroundStyle(accent)
+            Text(heading)
+                .overlineTracked()
+                .foregroundStyle(accent)
                 .padding(.top, AppSpacing.sm)
             ForEach(resources.filter { $0.tier == which }) { r in
                 Button { if let url = URL(string: r.action) { openURL(url) } } label: {
@@ -48,7 +49,7 @@ struct ResourcesOverlayView: View {
                             Text(r.detail).font(AppFonts.caption).foregroundStyle(AppColors.textSecondary)
                         }
                         Spacer()
-                        Image(systemName: which == .crisis ? "arrow.right" : "arrow.up.right")
+                        Image(systemName: which == .crisis ? AppIcons.arrowRight : AppIcons.arrowUpRight)
                             .foregroundStyle(AppColors.textTertiary)
                     }
                     .padding(AppSpacing.md)

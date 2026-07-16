@@ -278,6 +278,11 @@ enum AppIcons {
 
     // ── Education & content ───────────────────────────────────
     static let books              = "books.vertical.fill"
+    static let bookClosedFill     = "book.closed.fill"
+    static let playRectangle      = "play.rectangle"
+    static let playRectangleFill  = "play.rectangle.fill"
+    static let waveform           = "waveform"
+    static let person2            = "person.2"
 
     // ── Input ─────────────────────────────────────────────────
     static let mic                = "mic.fill"

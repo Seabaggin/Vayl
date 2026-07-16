@@ -91,7 +91,8 @@ struct ResearchSection: View {
     private func chip(icon: String, label: String) -> some View {
         HStack(spacing: AppSpacing.xs) {
             Image(systemName: icon)
-            Text(label.uppercased())
+            Text(label)
+                .textCase(.uppercase)
         }
         .font(AppFonts.label)
         .foregroundStyle(AppColors.spectrumPurple)   // section is purple-only; the icon conveys type
