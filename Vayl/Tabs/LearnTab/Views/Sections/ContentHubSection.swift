@@ -1,17 +1,8 @@
-// Tabs/LearnTab/Views/Sections/ContentHubSection.swift
+// Features/Learn/Views/Sections/ContentHubSection.swift
 //
-// The Content Hub — books (cover shelf), watch + listen (media rows), voices.
-// Third-party media: "where to go deeper," as opposed to the reference's cited
-// first-party "what we know." That split is why it is its own screen now.
-//
-// Presented as a cover from Learn's hub door (2026-07-16). It kept its segmented
-// control because at screen level that's honest IA — the sin was nesting it inside
-// a card inside a tab, where four panels fought over one small box.
-//
-// What changed in the restyle: the per-panel accent sweep is gone (each tab used to
-// paint itself a different spectrum colour, which is what made Learn read as a
-// template), the display-caps header is now the tracked overline, and the card is
-// the unified `learnCard()`.
+// Section 3 — Content Hub (magenta). A custom segmented control over four
+// panels: Books (cover shelf), Watch + Listen (media rows), Voices (circular
+// avatars + a Creators/Researchers filter). Mirrors the HTML mockup's hub.
 
 import SwiftUI
 
@@ -21,9 +12,7 @@ struct ContentHubSection: View {
     @State private var tab: HubTab = .books
     @State private var voiceFilter: VoiceKind = .creator
 
-    /// One accent for the whole hub. Cyan, not magenta: magenta means Us/shared,
-    /// and Learn is a private, solo surface. Don't cross the wires.
-    private let accent = AppColors.spectrumCyan
+    private let accent = AppColors.spectrumMagenta
 
     enum HubTab: String, CaseIterable, Identifiable {
         case books, watch, listen, voices
@@ -40,30 +29,42 @@ struct ContentHubSection: View {
             case .listen: return "waveform"; case .voices: return "person.2"
             }
         }
-        /// One accent across all four. The old per-tab spectrum sweep made each
-        /// panel look like a different product.
-        var accent: Color { AppColors.spectrumCyan }
+        /// Per-tab accent — a spectrum sweep so each tab reads as its own place.
+        var accent: Color {
+            switch self {
+            case .books:  return AppColors.spectrumCyan
+            case .watch:  return AppColors.spectrumBridge
+            case .listen: return AppColors.spectrumPurple
+            case .voices: return AppColors.spectrumMagenta
+            }
+        }
     }
 
     var body: some View {
-        VStack(spacing: AppSpacing.md) {
-            SegmentedPillGroup(
-                options: HubTab.allCases.map { .init($0, label: $0.label, icon: $0.icon, accent: $0.accent) },
-                selection: $tab
-            )
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            Text("CONTENT HUB")
+                .font(AppFonts.display(16, weight: .semibold, relativeTo: .title3))
+                .foregroundStyle(accent)
 
-            Group {
-                switch tab {
-                case .books:  bookShelf
-                case .watch:  mediaList(.show, tag: "Watch")
-                case .listen: mediaList(.podcast, tag: "Listen")
-                case .voices: voicesPanel
+            VStack(spacing: AppSpacing.md) {
+                SegmentedPillGroup(
+                    options: HubTab.allCases.map { .init($0, label: $0.label, icon: $0.icon, accent: $0.accent) },
+                    selection: $tab
+                )
+
+                Group {
+                    switch tab {
+                    case .books:  bookShelf
+                    case .watch:  mediaList(.show, tag: "Watch")
+                    case .listen: mediaList(.podcast, tag: "Listen")
+                    case .voices: voicesPanel
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(AppSpacing.md)
+            .learnCard(accent)
         }
-        .padding(AppSpacing.md)
-        .learnCard()
     }
 
     // MARK: - Books
