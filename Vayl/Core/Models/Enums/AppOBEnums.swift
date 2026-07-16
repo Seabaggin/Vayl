@@ -212,7 +212,7 @@ enum OpenerDeckType: String, Codable, CaseIterable {
 
     /// The real catalog deck forged for this opener type — the deck the BuildDeck
     /// ceremony names and Play features first. Ids must match `deck-catalog.json`;
-    /// `WelcomeDeck.of(_:)` mirrors each deck's title + subtitle for the reveal.
+    /// `BuildDeckPhase.welcomeDeck` loads it directly via `ContentLoader.loadDeck(id:)`.
     var welcomeDeckId: String {
         switch self {
         case .anxious:        return "opener-steady"

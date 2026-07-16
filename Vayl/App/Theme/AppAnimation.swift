@@ -1251,13 +1251,15 @@ internal enum AppAnimation {
 
     /// Beat 6 reveal sequence — breath, name, fan, flip wave, CTA.
     /// The breath is the silence beat: the freed deck inhales/exhales once before
-    /// any UI names it. Cutting it turns the ceremony into a UI transition.
-    static let deckBreathIn: Animation = .easeInOut(duration: 0.68)
-    static let deckBreathOut: Animation = .easeInOut(duration: 0.52)
+    /// any UI names it. Cutting it turns the ceremony into a UI transition — but
+    /// a slow solitary glow ramp still reads as dead air, so it's a real pause,
+    /// not a stall. Matching sleeps live in BuildDeckPhase.beginPeelReveal().
+    static let deckBreathIn: Animation = .easeInOut(duration: 0.45)
+    static let deckBreathOut: Animation = .easeInOut(duration: 0.35)
     static let deckNameRise: Animation = .easeOut(duration: 0.58)
     static let deckFanBloom: Animation = .easeOut(duration: 0.70)
     static let deckFlipWave: Animation = .easeInOut(duration: 0.32)   // per card
-    static let deckFlipStagger: Double  = 0.085                        // seconds between flips
+    static let deckFlipStagger: Double  = 0.08                         // seconds between flips
     static let deckCtaFade: Animation = .easeOut(duration: 0.36)
 
     /// Session player idle-dim — the room falls dark slowly (1.7s) but wakes fast (0.4s)

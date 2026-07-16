@@ -46,7 +46,8 @@ struct MetallicCaseView: View {
     var tiltAmplitude: Double  = 6      // float tilt amplitude (deg) — subtle
     var floatSpeed: Double  = 0.7
     var perspective: Double  = 600    // smaller = more convergence/foreshortening (photographic; 820 = flat/CAD)
-    var saturation: Double  = 0.95   // richer base (the holo iridescence adds the electric pop)
+    var saturation: Double  = 0.78   // trimmed from 0.95 — near-max saturation read as "loud" once the
+                                         // wake-ring/coreGlow lattice layer stacks color on top of the base metal
     var metalDarkness: Double  = 0.52   // how dark the metal base sits (solid deep colour, not black)
     var ambient: Double  = 0.28   // floor brightness on faces away from light (low = box reads in 3D)
     var frontLightAnchor: Double = 1.0   // hold the FRONT face's VALUE steady as the box tips flat→¾.
@@ -67,7 +68,7 @@ struct MetallicCaseView: View {
     var latticeColumns: Double = 13      // hex columns across the face width
     var grooveWidth: Double = 0.10    // groove half-width in cell units
     var bandSharpness: Double = 10      // band specular exponent
-    var bandGain: Double = 0.9     // band strength
+    var bandGain: Double = 0.68    // trimmed from 0.9 — paired with the saturation trim above
     var glintGain: Double = 0.5     // per-cell glint strength
     var bandTravel: Double = 0.35    // band phase per degree of Y tilt
     var grainGain: Double = 0.15    // anodized micro-grain amplitude on the flats (0 = flat mockup)

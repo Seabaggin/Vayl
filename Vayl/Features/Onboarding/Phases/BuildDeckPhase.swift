@@ -112,8 +112,21 @@ struct BuildDeckPhase: View {
     @State private var inCarousel: Bool = false           // Beat 6e
     @State private var revealExiting: Bool = false          // the deck sinks on hand-off
     @State private var ctaShown: Bool = false           // "Take your deck"
-    @State private var revealPhysics = CarouselPhysics(count: WelcomeDeck.placeholderCards.count)
-    private var welcomeDeck: WelcomeDeck { WelcomeDeck.of(director.openerDeckType) }
+    @State private var revealPhysics = CarouselPhysics(count: 6)   // every opener deck (Resources/Decks/opener-*.json) has 6 cards
+    /// The real catalog deck for this user's assigned opener type — no more
+    /// placeholder copy. Falls back to opener-steady (always bundled), then to
+    /// an empty-but-valid literal if even that somehow fails to decode.
+    private var welcomeDeck: Deck {
+        if let real = try? ContentLoader.loadDeck(id: director.openerDeckType.welcomeDeckId) {
+            return real
+        }
+        if let fallback = try? ContentLoader.loadDeck(id: "opener-steady") {
+            return fallback
+        }
+        return Deck(id: "opener-steady", title: "Steady", subtitle: "Start slow. Find your footing.",
+                    category: .foundationEntry, act: 1, intensity: .void, isLocked: false,
+                    requiredEntitlement: nil, tags: [], sortOrder: 0, schemaVersion: 2, cards: [])
+    }
 
     // Mirrors ConfirmationPhase.cardWidth(in:) — the deck arrives at FAN-card
     // scale (the collapse never grows the cards). The size change to the hero
@@ -152,7 +165,7 @@ struct BuildDeckPhase: View {
                     .opacity(revealExiting ? 0 : 1)
                     .offset(y: revealExiting ? AppSpacing.xl : 0)
                     .accessibilityElement(children: .contain)
-                    .accessibilityLabel("Your \(welcomeDeck.name) deck")
+                    .accessibilityLabel("Your \(welcomeDeck.title) deck")
                     .accessibilityHint("Swipe left or right to browse your cards.")
 
                 // The exit — a bottom CTA. The deck is the user's to keep, so a
@@ -185,8 +198,15 @@ struct BuildDeckPhase: View {
                     knockSeed: knockSeed,
                     coreGlow: coreEnergy,
                     peelMode: true,
-                    eruptStart: director.ceremony.eruptStart,
-                    eruptTapIndex: max(0, director.ceremony.tapCount - 1),
+                    // No card-punch-through-the-shell visual on taps — the reveal
+                    // stays inside the case (wake rings + seam stress + breathing)
+                    // until the peel; a card popping out mid-tap read as a separate,
+                    // competing gesture rather than the shell itself coming alive.
+                    // director.ceremony.eruptStart is still tracked (gates the
+                    // knock-anticipation pause window below) — only the view's
+                    // erupting-card draw is disabled here.
+                    eruptStart: .distantFuture,
+                    eruptTapIndex: 0,
                     seamStress: director.ceremony.stressLevel,
                     seamStressFloor: director.ceremony.stressFloor,
                     strainPulse: director.ceremony.strainPulse,
@@ -233,15 +253,17 @@ struct BuildDeckPhase: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .sensoryFeedback(.impact(weight: .medium), trigger: meltDone)   // the deck goes under
-        .sensoryFeedback(.impact(weight: .heavy), trigger: caseFloat)  // the case takes the air
+        .sensoryFeedback(.impact(flexibility: .rigid), trigger: caseFloat)  // the case takes the air — a seal, not the safe-word tier
         .sensoryFeedback(.impact(weight: .light, intensity: 0.5), trigger: knockCount)
-        // the three strikes — light 0.8, medium 0.9, heavy 1.0 (the negotiation arc)
+        // the three strikes — light 0.8, medium 0.9, rigid 1.0 (the negotiation arc).
+        // `.heavy` is reserved app-wide for the safe-word only — a tap-to-open
+        // release must never carry that same weight.
         .sensoryFeedback(trigger: director.ceremony.tapCount) { old, new in
             guard new > old else { return nil }
             switch new {
             case 1:  return .impact(weight: .light, intensity: 0.8)
             case 2:  return .impact(weight: .medium, intensity: 0.9)
-            default: return .impact(weight: .heavy, intensity: 1.0)
+            default: return .impact(flexibility: .rigid, intensity: 1.0)
             }
         }
         // the reseal — a softer confirmation as the lattice closes over the card
@@ -299,14 +321,16 @@ struct BuildDeckPhase: View {
             // the cards — stacked → fan → flip wave; crossfades to the carousel
             if inCarousel {
                 VaylCardCarousel(
-                    count: WelcomeDeck.placeholderCards.count,
+                    count: welcomeDeck.cards.count,
                     cardSize: deckSize,
                     physics: revealPhysics,
                     content: { index, isFront in
-                        let c = WelcomeDeck.placeholderCards[index]
+                        let c = welcomeDeck.cards[index]
                         VaylCardFace(
-                            content: .context(number: c.number, title: c.title,
-                                              subtitle: c.subtitle, detail: c.detail),
+                            // ContextCardFace only renders number + title (subtitle/detail
+                            // are retained-but-unused props) — see its file header.
+                            content: .context(number: String(format: "%02d", c.sortOrder),
+                                              title: c.text, subtitle: "", detail: c.backCopy ?? ""),
                             isFront: isFront, confirmed: false
                         )
                     }
@@ -328,7 +352,7 @@ struct BuildDeckPhase: View {
                     .tracking(3)
                     .textCase(.uppercase)
                     .foregroundStyle(AppColors.spectrumCyan.opacity(0.65))
-                Text(welcomeDeck.name)
+                Text(welcomeDeck.title.uppercased())
                     .font(AppFonts.screenTitle)
                     .foregroundStyle(LinearGradient(
                         colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
@@ -352,10 +376,10 @@ struct BuildDeckPhase: View {
         let yLift = abs(off) * 0.09
         ZStack {
             if faceUp[i] {
-                let c = WelcomeDeck.placeholderCards[i]
+                let c = welcomeDeck.cards[i]
                 VaylCardFace(
-                    content: .context(number: c.number, title: c.title,
-                                      subtitle: c.subtitle, detail: c.detail),
+                    content: .context(number: String(format: "%02d", c.sortOrder),
+                                      title: c.text, subtitle: "", detail: c.backCopy ?? ""),
                     isFront: true, confirmed: false
                 )
             } else {
@@ -505,23 +529,26 @@ struct BuildDeckPhase: View {
             caseOpacity = 0
 
             // — Beat 6a: the breath. No UI, no haptics — the silence beat. —
+            // Trimmed from 0.68/0.52 — a solitary slow glow ramp reads as dead
+            // air even though it's technically animating; still a real pause,
+            // just not a stall.
             withAnimation(AppAnimation.deckBreathIn.reduceMotionSafe) { glowPulse = 1.0 }
-            try? await Task.sleep(for: .seconds(rm ? 0 : 0.68))
+            try? await Task.sleep(for: .seconds(rm ? 0 : 0.45))
             withAnimation(AppAnimation.deckBreathOut.reduceMotionSafe) { glowPulse = 0 }
-            try? await Task.sleep(for: .seconds(rm ? 0 : 0.52))
+            try? await Task.sleep(for: .seconds(rm ? 0 : 0.35))
 
             // — Beat 6b: the name rises (the object earned it by existing first) —
-            try? await Task.sleep(for: .milliseconds(rm ? 0 : 250))
+            try? await Task.sleep(for: .milliseconds(rm ? 0 : 100))
             withAnimation(AppAnimation.deckNameRise.reduceMotionSafe) { nameShown = true }
             try? await Task.sleep(for: .seconds(rm ? 0.1 : 0.58))
 
             // — Beat 6c: the fan blooms (face-down — the object before the content) —
-            try? await Task.sleep(for: .milliseconds(rm ? 0 : 280))
+            try? await Task.sleep(for: .milliseconds(rm ? 0 : 100))
             withAnimation(AppAnimation.deckFanBloom.reduceMotionSafe) { fanned = true }
             try? await Task.sleep(for: .seconds(rm ? 0 : 0.70))
 
             // — Beat 6d: the flip wave, left to right —
-            try? await Task.sleep(for: .milliseconds(rm ? 0 : 150))
+            try? await Task.sleep(for: .milliseconds(rm ? 0 : 80))
             guard !Task.isCancelled else { return }
             if rm {
                 for i in 0..<6 { flipDegrees[i] = 0; faceUp[i] = true }
@@ -541,7 +568,9 @@ struct BuildDeckPhase: View {
             }
 
             // — Beat 6e: the fan collapses to the carousel; the deck is theirs —
-            try? await Task.sleep(for: .milliseconds(rm ? 0 : 520))
+            // Trimmed from 520 — enough to register the full fanned deck, not
+            // enough to stall before the payoff.
+            try? await Task.sleep(for: .milliseconds(rm ? 0 : 350))
             guard !Task.isCancelled else { return }
             withAnimation(AppAnimation.standard.reduceMotionSafe) { inCarousel = true }
             withAnimation(AppAnimation.deckCtaFade.reduceMotionSafe) { ctaShown = true }
