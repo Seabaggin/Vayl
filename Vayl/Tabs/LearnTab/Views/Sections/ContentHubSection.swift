@@ -180,7 +180,7 @@ struct ContentHubSection: View {
 
     private func mediaRow(_ m: LearnMediaItem, tag: String) -> some View {
         HStack(spacing: AppSpacing.md) {
-            thumb(url: m.artworkUrl, icon: kindIcon(m.kind), circle: false)
+            thumb(url: m.artworkUrl, icon: kindIcon(m.kind))
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                 Text(tag)
                     .overlineTracked()
@@ -291,9 +291,13 @@ struct ContentHubSection: View {
         .padding(.vertical, AppSpacing.lg)
     }
 
+    /// No avatar. `thumb(url: nil, icon: .personFill)` drew the identical grey
+    /// person glyph beside all 24 names — an avatar slot with no avatar, spending
+    /// 52pt of row width to convey nothing. A book has a cover, so `mediaRow`
+    /// showing artwork is information; a person here has no image asset, so the
+    /// name is the identity. Text-only reads as a reference, which is the job.
     private func voiceRow(_ v: Voice) -> some View {
         HStack(spacing: AppSpacing.md) {
-            thumb(url: nil, icon: AppIcons.personFill, circle: true)
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                 // "Poly educator" — topic + mode. Never exceeds their own claim.
                 Text(v.label)
@@ -320,16 +324,14 @@ struct ContentHubSection: View {
 
     // MARK: - Shared bits
 
-    @ViewBuilder
-    private func thumb(url: String?, icon: String, circle: Bool) -> some View {
-        let base = coverOrIcon(url: url, icon: icon).frame(width: 52, height: 52)
-        if circle {
-            base.clipShape(Circle())
-                .overlay(Circle().stroke(accent.opacity(0.22), lineWidth: 1))
-        } else {
-            base.clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
-                .overlay(RoundedRectangle(cornerRadius: AppRadius.md).stroke(accent.opacity(0.2), lineWidth: 1))
-        }
+    /// Media artwork only. The circular variant existed for voice avatars; with
+    /// those gone, nothing calls it.
+    private func thumb(url: String?, icon: String) -> some View {
+        coverOrIcon(url: url, icon: icon)
+            .frame(width: 52, height: 52)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
+            .overlay(RoundedRectangle(cornerRadius: AppRadius.md)
+                .stroke(accent.opacity(0.2), lineWidth: 1))
     }
 
     @ViewBuilder
