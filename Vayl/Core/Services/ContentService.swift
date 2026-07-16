@@ -64,4 +64,41 @@ struct ContentService {
             return nil
         }
     }
+
+    /// Published books/shows/podcasts, server sort order. Nil → bundled fallback.
+    ///
+    /// Remote-overridable because these rows carry outbound links, and links rot.
+    /// Bundle-only meant a dead URL cost an App Store release.
+    func fetchMedia() async -> [LearnMediaItem]? {
+        do {
+            let rows: [LearnMediaItem] = try await supabase
+                .from("learn_media")
+                .select("id,kind,title,creator,positioning,tier,platform,artwork_url,background,links")
+                .order("sort_order")
+                .execute()
+                .value
+            return rows.isEmpty ? nil : rows
+        } catch {
+            return nil
+        }
+    }
+
+    /// Published creators, server sort order. Nil → bundled fallback.
+    ///
+    /// The most rot-prone corpus in the app: Instagram restricts, renames, and
+    /// removes non-monogamy educators at a real rate, and creators migrate when it
+    /// happens. This fetcher is what makes a dead handle a row update.
+    func fetchVoices() async -> [Voice]? {
+        do {
+            let rows: [Voice] = try await supabase
+                .from("voices")
+                .select("id,name,role,blurb,topic,mode,platform,background,links")
+                .order("sort_order")
+                .execute()
+                .value
+            return rows.isEmpty ? nil : rows
+        } catch {
+            return nil
+        }
+    }
 }

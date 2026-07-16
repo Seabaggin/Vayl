@@ -4,27 +4,33 @@
 // shelf), Watch + Listen (media rows), Voices (circular avatars + a
 // Creators/Researchers filter). Third-party media: where to go deeper.
 //
-// Polish pass 2026-07-16:
-// • Every row was a `Button {}` — an empty action — while media and voice rows
-//   drew a chevron promising navigation. Both models have carried `link: String?`
-//   all along; the views just never read it. Rows now open their link, and a row
-//   with no link renders as plain content with no tap target and no arrow. An
-//   affordance that does nothing is worse than no affordance.
-// • The arrow is `arrowUpRight`, not `chevronRight`: these leave the app for
-//   Safari. A chevron means "push deeper in Vayl" everywhere else, and
-//   ResourcesOverlayView already uses the up-right arrow for exactly this.
-// • Accent unified to purple. Magenta means Us/shared and Learn is a private,
-//   solo surface — that's the Don't-Cross-the-Wires rule, not a taste call. The
-//   per-tab spectrum sweep (cyan/bridge/purple/magenta) is gone too: it made each
-//   panel look like a different product.
+// 2026-07-16 — every row now opens ContentItemSheet, Vayl's own background on the
+// thing, with the outbound doors inside it. Two rewrites got us here:
+//
+// 1. Rows were `Button {}` — an empty action — while drawing a chevron that
+//    promised navigation. Both models carried `link: String?` that no view read.
+// 2. So rows opened the link directly. But that made the row's destination
+//    hostage to an external URL, and every link in the corpus was null — the whole
+//    hub rendered untappable. A row should not depend on a vendor's URL existing.
+//
+// Now the destination is ours. The chevron is honest again (it opens a sheet
+// inside Vayl); `arrowUpRight` moved into the sheet, on the links that actually
+// leave. Vayl links a profile, never a link-aggregator page.
+//
+// Accent unified to purple: magenta means Us/shared and Learn is a private, solo
+// surface — the Don't-Cross-the-Wires rule, not a taste call. The per-tab spectrum
+// sweep (cyan/bridge/purple/magenta) went with it; it made each panel look like a
+// different product.
 
 import SwiftUI
 
 struct ContentHubSection: View {
     let store: LearnStore
 
-    @Environment(\.openURL) private var openURL
     @State private var tab: HubTab = .books
+    @State private var selected: HubItem?
+    /// nil = all topics.
+    @State private var voiceTopic: VoiceTopic?
 
     /// One accent for the whole hub, matching the Knowledge hub's. Purple is the
     /// spectrum midpoint and carries no directional meaning, unlike cyan (Me) and
@@ -77,6 +83,14 @@ struct ContentHubSection: View {
             .padding(AppSpacing.md)
             .learnCard()
         }
+        .vaylSheet(isPresented: sheetBinding, heightFraction: 0.7) {
+            if let selected { ContentItemSheet(item: selected) }
+        }
+    }
+
+    private var sheetBinding: Binding<Bool> {
+        Binding(get: { selected != nil },
+                set: { if !$0 { selected = nil } })
     }
 
     // MARK: - Books
@@ -95,25 +109,12 @@ struct ContentHubSection: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: AppSpacing.sm) {
                 ForEach(store.media(.book)) { book in
-                    // A cover with nowhere to go is just a cover.
-                    if let url = link(book.link) {
-                        Button { openURL(url) } label: { bookCover(book) }
-                            .buttonStyle(PressableCardStyle())
-                            .accessibilityHint("Opens in Safari")
-                    } else {
-                        bookCover(book)
-                    }
+                    Button { selected = .media(book) } label: { bookCover(book) }
+                        .buttonStyle(PressableCardStyle())
                 }
             }
             .padding(.vertical, AppSpacing.xxs)
         }
-    }
-
-    /// Non-empty, parseable links only — a blank string in the corpus must not
-    /// produce a tap target that opens nothing.
-    private func link(_ raw: String?) -> URL? {
-        guard let raw, !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
-        return URL(string: raw)
     }
 
     private func bookCover(_ b: LearnMediaItem) -> some View {
@@ -170,19 +171,14 @@ struct ContentHubSection: View {
                            message: "\(tag) picks will show up here.")
             } else {
                 ForEach(store.media(kind)) { item in
-                    if let url = link(item.link) {
-                        Button { openURL(url) } label: { mediaRow(item, tag: tag, linked: true) }
-                            .buttonStyle(PressableCardStyle())
-                            .accessibilityHint("Opens in Safari")
-                    } else {
-                        mediaRow(item, tag: tag, linked: false)
-                    }
+                    Button { selected = .media(item) } label: { mediaRow(item, tag: tag) }
+                        .buttonStyle(PressableCardStyle())
                 }
             }
         }
     }
 
-    private func mediaRow(_ m: LearnMediaItem, tag: String, linked: Bool) -> some View {
+    private func mediaRow(_ m: LearnMediaItem, tag: String) -> some View {
         HStack(spacing: AppSpacing.md) {
             thumb(url: m.artworkUrl, icon: kindIcon(m.kind), circle: false)
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
@@ -200,12 +196,11 @@ struct ContentHubSection: View {
                 if let platform = m.platform { platformBadge(platform) }
             }
             Spacer(minLength: 0)
-            // Up-right, not a chevron: this leaves the app. Only when it does.
-            if linked {
-                Image(systemName: AppIcons.arrowUpRight)
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textTertiary)
-            }
+            // A chevron again, honestly: this opens a sheet inside Vayl. The
+            // up-right arrow lives in that sheet, on the links that do leave.
+            Image(systemName: AppIcons.chevronRight)
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textMuted)
         }
         .padding(.vertical, AppSpacing.xs)
         .frame(minHeight: 44)
@@ -215,25 +210,72 @@ struct ContentHubSection: View {
     // MARK: - Voices
 
     /// Creators only — see Voice.swift for why researchers aren't listed here.
-    /// The Creators/Researchers filter is gone with them; a segmented control over
-    /// one category was chrome pretending the shelf was deeper than it is.
+    ///
+    /// The old Creators/Researchers control filtered on CREDENTIAL, which is why it
+    /// collapsed the moment the researchers came out. This filters on TOPIC: the
+    /// shape of non-monogamy someone's work is about, which is a real property of
+    /// the work and roughly the shape-space a couple is choosing between. Chips
+    /// rather than a second SegmentedPillGroup — a segmented control nested inside a
+    /// segmented control is the thing that made this section read as chrome.
     private var voicesPanel: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             if store.voices.isEmpty {
                 emptyPanel(headline: "No voices yet",
                            message: "People worth following will show up here.")
             } else {
-                ForEach(store.voices) { voice in
-                    if let url = link(voice.link) {
-                        Button { openURL(url) } label: { voiceRow(voice, linked: true) }
+                if topicsPresent.count > 1 { topicChips }
+                if visibleVoices.isEmpty {
+                    emptyPanel(headline: "None here yet",
+                               message: "Nobody in this corner of the map yet.")
+                } else {
+                    ForEach(visibleVoices) { voice in
+                        Button { selected = .voice(voice) } label: { voiceRow(voice) }
                             .buttonStyle(PressableCardStyle())
-                            .accessibilityHint("Opens in Safari")
-                    } else {
-                        voiceRow(voice, linked: false)
                     }
                 }
             }
         }
+    }
+
+    /// Only offer a filter for topics the corpus actually has.
+    private var topicsPresent: [VoiceTopic] {
+        VoiceTopic.allCases.filter { t in store.voices.contains { $0.topic == t } }
+    }
+
+    private var visibleVoices: [Voice] {
+        guard let voiceTopic else { return store.voices }
+        return store.voices.filter { $0.topic == voiceTopic }
+    }
+
+    private var topicChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: AppSpacing.sm) {
+                topicChip("All", on: voiceTopic == nil) { voiceTopic = nil }
+                ForEach(topicsPresent) { t in
+                    topicChip(t.label, on: voiceTopic == t) { voiceTopic = t }
+                }
+            }
+        }
+    }
+
+    private func topicChip(_ label: String, on: Bool, action: @escaping () -> Void) -> some View {
+        Button {
+            withAnimation(AppAnimation.standard) { action() }
+        } label: {
+            Text(label)
+                .font(AppFonts.buttonLabelSmall)
+                .foregroundStyle(on ? AppColors.textPrimary : AppColors.textSecondary)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.sm)
+                .frame(minHeight: 44)
+                .background(Capsule()
+                    .fill(on ? accent.opacity(0.2) : AppColors.whisperFill)
+                    .overlay(Capsule().stroke(on ? accent.opacity(0.45) : AppColors.borderSubtle,
+                                              lineWidth: 1)))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(PressableCardStyle())
+        .accessibilityAddTraits(on ? [.isSelected] : [])
     }
 
     /// The hub's panels can each render zero rows once the corpus changes; the
@@ -249,11 +291,12 @@ struct ContentHubSection: View {
         .padding(.vertical, AppSpacing.lg)
     }
 
-    private func voiceRow(_ v: Voice, linked: Bool) -> some View {
+    private func voiceRow(_ v: Voice) -> some View {
         HStack(spacing: AppSpacing.md) {
             thumb(url: nil, icon: AppIcons.personFill, circle: true)
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                Text(v.role)
+                // "Poly educator" — topic + mode. Never exceeds their own claim.
+                Text(v.label)
                     .overlineTracked()
                     .foregroundStyle(AppColors.textTertiary)
                 Text(v.name)
@@ -264,14 +307,11 @@ struct ContentHubSection: View {
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textSecondary)
                     .lineLimit(2)
-                platformBadge(v.platform)
             }
             Spacer(minLength: 0)
-            if linked {
-                Image(systemName: AppIcons.arrowUpRight)
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textTertiary)
-            }
+            Image(systemName: AppIcons.chevronRight)
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textMuted)
         }
         .padding(.vertical, AppSpacing.xs)
         .frame(minHeight: 44)

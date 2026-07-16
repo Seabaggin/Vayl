@@ -35,6 +35,11 @@ final class LearnStore {
         if let f = await content.fetchFindings() { findings = f }
         if let t = await content.fetchGlossary() { lexiconTerms = t }
         if let q = await content.fetchQuotes() { mediaQuotes = q }
+        // Media and voices were bundle-only until 2026-07-16, which meant a dead
+        // outbound link — the one thing these two corpora carry — could only be
+        // fixed by shipping a build.
+        if let m = await content.fetchMedia() { media = m }
+        if let v = await content.fetchVoices() { voices = v }
     }
 
     func load() {

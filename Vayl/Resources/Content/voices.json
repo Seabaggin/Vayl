@@ -1,3 +1,73 @@
 [
-  { "id": "sawyers", "name": "Evita Sawyers", "role": "Creator", "blurb": "Lived-experience reflections on poly life.", "platform": "TikTok · IG", "link": null }
+  { "id": "polyphiliablog", "name": "Leanne Yau", "role": "Polyamorous Relationship Educator", "blurb": "Polyamory education, plainly and at scale.", "topic": "polyamory", "mode": "educator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/polyphiliablog/" } ] },
+
+  { "id": "nonmonogamyhelp", "name": "Lola Phoenix", "role": "Writer, Non-Monogamy Help", "blurb": "Advice from someone who says plainly they are not a therapist.", "topic": "polyamory", "mode": "writer", "platform": "Instagram · Podcast", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/nonmonogamyhelp/" } ] },
+
+  { "id": "chillpolyamory", "name": "Genevieve", "role": "Polyamory educator", "blurb": "Polyamorous since 2012; education, not therapy.", "topic": "polyamory", "mode": "educator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/chillpolyamory/" } ] },
+
+  { "id": "bygabriellesmith", "name": "Gabrielle Smith", "role": "Writer, editor and non-monogamy educator", "blurb": "The resource she wanted when she started.", "topic": "polyamory", "mode": "educator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/bygabriellesmith/" } ] },
+
+  { "id": "itsangelahan", "name": "Angela Han", "role": "Non-monogamous relationship coach", "blurb": "Coaching, with two small kids in the mix.", "topic": "polyamory", "mode": "coach", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/itsangelahan/" } ] },
+
+  { "id": "thepoly.pocket", "name": "Hayley Folk", "role": "Sex and relationships writer", "blurb": "Writing as a way through her own open life.", "topic": "polyamory", "mode": "writer", "platform": "Instagram · Substack", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/thepoly.pocket/" } ] },
+
+  { "id": "polyamarla", "name": "Marla", "role": "Polyamory educator, MSW", "blurb": "Queer, gender-defiant, neurodivergent, and plain-spoken.", "topic": "polyamory", "mode": "educator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/polyamarla/" } ] },
+
+  { "id": "polyampoppy", "name": "Poppy Scarlett", "role": "Bi + polyam educator + creator", "blurb": "Polyamory and kink, from the inside.", "topic": "polyamory", "mode": "educator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/polyampoppy/" } ] },
+
+  { "id": "thepollymaeway", "name": "Polly Mae", "role": "Ethical non-monogamy educator", "blurb": "Guides individuals and couples through opening up.", "topic": "polyamory", "mode": "educator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/thepollymaeway/" } ] },
+
+  { "id": "unapolygetically", "name": "Ro Moëd", "role": "Solo polyamory content creator and writer", "blurb": "Solo polyamory and relationship anarchy.", "topic": "polyamory", "mode": "creator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/unapolygetically/" } ] },
+
+  { "id": "unapolygeticallyjoy", "name": "Joy", "role": "Poly coach", "blurb": "Self-love and sex-positivity, centring people of colour.", "topic": "polyamory", "mode": "coach", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/unapolygeticallyjoy/" } ] },
+
+  { "id": "decolonizing.love", "name": "Millie Boella and Nick", "role": "Creators, Decolonizing Love", "blurb": "A polyamorous couple in Toronto, together 14 years.", "topic": "polyamory", "mode": "creator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/decolonizing.love/" } ] },
+
+  { "id": "thepolykink.therapist", "name": "Jaime Gama", "role": "Author and Gestalt psychotherapist", "blurb": "Polyamory and kink, mostly in Spanish.", "topic": "polyamory", "mode": "educator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/thepolykink.therapist/" } ] },
+
+  { "id": "drmariethouin", "name": "Marie Thouin, PhD", "role": "Mindful dating and relationship coach", "blurb": "Coaching for people of all genders and sexualities.", "topic": "polyamory", "mode": "coach", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/drmariethouin/" } ] },
+
+  { "id": "aria__diana", "name": "Aria Diana", "role": "Somatic relationship coach", "blurb": "Somatic work for non-monogamous relating.", "topic": "polyamory", "mode": "coach", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/aria__diana/" } ] },
+
+  { "id": "openlycommitted", "name": "Danielle", "role": "Creator, Openly Committed", "blurb": "An open marriage, told from inside it.", "topic": "open", "mode": "coach", "platform": "Instagram · Substack", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/openlycommitted/" } ] },
+
+  { "id": "vista.wife", "name": "Olivia", "role": "Co-founder, SwingHub", "blurb": "The Lifestyle, and a Channel 4 Open House resident.", "topic": "lifestyle", "mode": "creator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/vista.wife/" } ] },
+
+  { "id": "magicgage", "name": "Gage", "role": "Co-founder, SwingHub", "blurb": "The Lifestyle, from the other half of the couple.", "topic": "lifestyle", "mode": "creator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/magicgage/" } ] },
+
+  { "id": "4ourplay.official", "name": "Bella and Jase", "role": "Hosts, 4OURPLAY", "blurb": "High school sweethearts, 170 episodes deep.", "topic": "lifestyle", "mode": "creator", "platform": "Instagram · Podcast", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/4ourplay.official/" } ] },
+
+  { "id": "fpspodmedia", "name": "Front Porch Swingers", "role": "Hosts, Front Porch Swingers", "blurb": "An ethically non-monogamous couple exploring the Lifestyle.", "topic": "lifestyle", "mode": "creator", "platform": "Instagram · Podcast", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/fpspodmedia/" } ] },
+
+  { "id": "edandphoebe", "name": "Ed and Phoebe", "role": "Hosts, Swinger University", "blurb": "The Lifestyle, taught like a course.", "topic": "lifestyle", "mode": "educator", "platform": "Instagram · Podcast", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/edandphoebe/" } ] },
+
+  { "id": "justinjlehmiller", "name": "Dr. Justin J. Lehmiller", "role": "Kinsey Institute Senior Research Fellow, host of the Sex and Psychology Podcast", "blurb": "The research on what people actually want.", "topic": "sexEducation", "mode": "educator", "platform": "Instagram · Podcast", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/justinjlehmiller/" } ] },
+
+  { "id": "shanboodram", "name": "Shan Boodram", "role": "Sex educator", "blurb": "Intimacy education for a mainstream audience.", "topic": "sexEducation", "mode": "educator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/shanboodram/" } ] },
+
+  { "id": "thefirstdatediaries", "name": "Connie Collins", "role": "Sex educator and writer", "blurb": "Dating, sex, and telling the truth about both.", "topic": "sexEducation", "mode": "educator", "platform": "Instagram", "background": null,
+    "links": [ { "label": "Instagram", "url": "https://www.instagram.com/thefirstdatediaries/" } ] }
 ]
