@@ -13,8 +13,9 @@
 //   1. Apple receipt path (production): the client posts its StoreKit 2 signed transaction
 //      (JWS). The server verifies Apple's signature + claims, then grants. This is what the
 //      paywall doc means by "server-side receipt validation, never client-only."
-//      Verification is gated by APPLE_VERIFICATION_ENABLED and fails closed (returns null) until
-//      the env (root certs, bundleId, appAppleId) is set — so it cannot bypass the paywall.
+//      Production requires APPLE_VERIFICATION_ENABLED=true plus the root cert, bundle ID, and
+//      Apple app ID. With that flag enabled, verifier errors fail closed and cannot bypass the
+//      paywall. Decode-only handling exists only for local StoreKit configuration testing.
 //
 //   2. Admin / support path: a server-only secret (header x-grant-secret == ENTITLEMENT_GRANT_SECRET).
 //      For support comps, founding-member grants, and M1 verification. Clients never hold the
@@ -148,14 +149,17 @@ serve(async (req) => {
     let transactionId: string | null = null
 
     if (typeof body.signedTransaction === "string" && body.signedTransaction.length > 0) {
-      // Option A: full server-side re-verification (when APPLE_VERIFICATION_ENABLED=true).
-      const verified = await verifyAppleTransaction(body.signedTransaction, productId)
-      if (verified) {
-        transactionId = verified.transactionId
+      const appleVerificationEnabled = Deno.env.get("APPLE_VERIFICATION_ENABLED") === "true"
+
+      if (appleVerificationEnabled) {
+        // Production: fail closed. A verifier error or invalid Apple signature must never fall
+        // through to decode-only trust, or any authenticated paired user could forge a grant.
+        const verified = await verifyAppleTransaction(body.signedTransaction, productId)
+        if (verified) transactionId = verified.transactionId
       } else {
-        // Option B: trust StoreKit 2's on-device .verified stamp — decode payload only, skip
-        // re-verification. Security holds: couple_id is server-authoritative (can't grant to
-        // another couple) and transaction_id uniqueness prevents replay.
+        // Local development only: StoreKit configuration transactions use a local test
+        // certificate that Apple's server verifier cannot trust. Decode the transaction after
+        // StoreKit has marked it .verified on-device so simulator flows remain testable.
         try {
           const payload = decodeJwsPayload(body.signedTransaction) as {
             transactionId?: string
@@ -183,8 +187,8 @@ serve(async (req) => {
     }
 
     if (!transactionId) {
-      // Neither a verified Apple receipt nor an admin grant. The Apple path fails closed until
-      // verification is enabled, so this refusal is what keeps the paywall intact.
+      // Neither a verified Apple receipt nor an admin grant. With production verification
+      // enabled, any Apple verifier error reaches this refusal and keeps the paywall intact.
       return json({ error: "Purchase could not be validated" }, 402)
     }
 
