@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-03
 **Scope:** Marketing/App Store screenshot set for Vayl (not a Swift implementation task, but surfaced two real code findings worth acting on — see §4 and §5)
-**Status:** Screen 1 mocked and ready for review. Screen 2 not started. Screen 3 **blocked** — see §3.
+**Status:** All three screens mocked and ready for review. Screen 3's original block (§3) is resolved — see §3a.
 
 ---
 
@@ -67,9 +67,79 @@ A screenshot or description of the actual current Pulse UI. Specifically need: i
 
 ---
 
-## 4. Screen 2 — Desire Map: not started
+## 3a. Resolution — the real Pulse redesign was one `git status` away
 
-No investigation done yet this session. Next step when picked back up: research `Features/Compatibility/` the same way Screens 1 and 3 were researched (real copy/content, actual reveal-state visuals, real tokens) before mocking.
+The block above was based on checking this branch, `master`, and `origin/feat/home-redesign-onboarding-polish` — but never the **primary working directory's own current branch**, `feat/pulse-redesign-2d-circumplex`, which is exactly what it sounds like: a full, uncommitted, local-only Pulse rebuild. `PulseWidget.swift` is deleted there and replaced by `MapPulseHero.swift` + `PulseAura.swift` + `PulseField.swift` + `PulseHistoryGrid.swift`. `docs/handoffs/2026-07-03-pulse-finalization-goal.md` confirms it as feature-complete, pending only Bryan's on-device feel pass — matching memory of this project (`pulse_redesign.md`: "A-E FINAL 2026-07-03").
+
+**What it actually looks like:** a full-screen 2D circumplex (`PulseField.swift`) — four soft quadrant washes (rose=Protective bottom-left, magenta=Friction top-left, indigo=Sovereign bottom-right, cyan=Expansive top-right, each with real cx/cy/opacity values), ghost quadrant word-labels, and axis labels ("Charged"/"Depleted"/"Guarded"/"Open"). Today's position renders as a `PulseAura` — a 4-layer glass orb (radial-gradient body, animated caustic screen-blend blobs, glass sweep, rim highlight) sized 148pt on the Map hero, or full-bleed on tap via `MapFieldSheet`, with real present-tense copy ("You're in an Expansive day" / "High energy and open. A good day to connect and explore."). A separate `PulseHistoryGrid` renders the last 30 logged entries as a 10-column grid of glossy orb beads (or split diagonal beads in Us mode).
+
+**Updated artifact:** https://claude.ai/code/artifact/f1818b23-a29a-47cb-9bf9-62311c2f0174 (Screen 3 panel rebuilt around the field + single hero aura; history grid omitted from this frame to keep it focused).
+
+**General lesson, same shape as [[worktree-branch-anchoring]]:** when a feature's shipped/committed state doesn't match what the user describes, check the *primary working directory's currently-checked-out branch* before concluding "not committed anywhere" — a `git fetch` only surfaces pushed branches, not local-only work sitting right there in `git status`.
+
+---
+
+## 4. Screen 2 — Desire Map: done
+
+**Artifact:** https://claude.ai/code/artifact/21df353f-f26c-4373-bcba-f578f75d70a3
+
+### Important finding: `Features/Compatibility/` is the wrong place to look
+
+This branch (and `master`) only has `Vayl/Features/Compatibility/DesireMapView.swift` — the
+**rating UI** (2x2 excited/open/probably-not/not-for-me buttons per desire item). That is a real
+screen but it is **not** the "mutual-match reveal" moment the objective calls for — there is no
+blurred/locked state or star imagery anywhere in `Compatibility/`.
+
+The actual reveal system — `DesireRevealView.swift`, `DesireStarView.swift`,
+`DesireConstellationView.swift`, `DesireRevealStore.swift` — lives under
+`Vayl/Features/Desire Map/` (note the space, a folder rename) and **only exists on the local,
+unpushed branch `feat/pulse-redesign-2d-circumplex`** in the primary working directory
+(`/Users/bryanjorden/Documents/School/Code/Vayl`, not this worktree). It is not on `origin` in
+any form, so a worktree checkout of this branch — or any fresh clone — will not see it. This is
+the same shape of problem as the Screen 3 (Pulse) blocker: **the shipped/current visual design for
+a feature can live in local-only work that a bare `git fetch` will never surface.** If Screen 2
+ever needs revisiting from a fresh checkout, read those four files directly from the primary
+working directory, not from whatever branch this screenshot work is checked out on.
+
+### What the reveal actually looks like
+
+`DesireRevealView` is a 3-beat ceremony (`beat1` → `beat2/beat3` → `revealed`), one `.vaylCover`,
+background `AppColors.void` + `OnboardingAtmosphere(config: .cardReveal)`:
+
+- **beat1** — only the free/hero match's star ignites (two-seed converge: cool purple + warm
+  magenta merge into one star), caption "You both marked this ✦".
+- **beat2/beat3** — the hero star stays lit, teaser rows for the remaining matches slide in below
+  as blurred text + a lock glyph (`_LockedSection`), count line "N more aligned desires" + a
+  spectrum hairline.
+- **revealed** — everything lights, lines draw between stars, caption "N desires you share ✦ · tap
+  any star to talk about it".
+
+**beat2/beat3 is the single frame that best captures "blurred → revealed" in one static
+screenshot** — one fully-lit, labeled star at top, three blurred/locked rows below — so that's
+what the mockup depicts.
+
+**Star geometry** (`DesireStarView.swift`) is fully proportional to a `size` knob: `glow = size ×
+3.2`, `halo = glow × 2.2`, `core = glow × 0.12`, `cross = glow × 1.4`. Colors are magenta-led
+(never cyan) — halo/glow radial gradients through `spectrumMagenta`/`spectrumPurple`, white core
+with magenta/purple shadow blooms. Reproduced verbatim at hero size 24pt.
+
+**Content used is the file's own preview fixture data** — the exact four match names from
+`DesireRevealView.swift`'s `#Preview("Free reveal — 1 lit + 3 locked")`: "New Relationship Energy"
+(hero, lit), "Overnight Stays With Others", "Meeting Your Partner's Other Connections", "Time and
+Attention" (locked). Not invented copy — pulled directly from the developer's own test fixture for
+this exact screen state.
+
+**Tokens:** `AppColors.void` (#0a0810), `cardBg` (#120f1a @ 55%), `borderSubtle`/`borderDefault`
+(white 6%/10%), `whisperFill` (white 4%), spectrum cyan/purple/magenta (#00C2FF/#6C3AE0/#FF006A),
+`textPrimary`/`textSecondary`/`textTertiary`. Fonts: Switzer Regular/Medium/Semibold for all UI
+text (overline, captions, locked-row labels), ClashDisplay Semibold for the marketing caption
+headline above the phone frame (added this session to match Screen 1's caption convention — the
+headline text itself is the real in-app overline copy "Where you meet.", not invented tagline
+copy).
+
+**Approximated:** `OnboardingAtmosphere(config: .cardReveal)` is a procedural SwiftUI three-band
+radial gradient — reproduced as three CSS radial gradients at the same dark-mode intensity weights
+(top 0.08 / mid 0.08 / bottom 0.35 / global 0.22).
 
 ---
 
