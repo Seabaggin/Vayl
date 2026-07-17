@@ -26,11 +26,15 @@ import SwiftUI
 
 struct ContentHubSection: View {
     let store: LearnStore
+    /// Presentation is the screen's job, not a section's. `.vaylSheet` renders as
+    /// an overlay sized from its host's geometry, so attaching it here — inside
+    /// LearnView's ScrollView — measured the SECTION's height, not the screen: the
+    /// scrim dimmed the display while the sheet resolved to a fraction of a section.
+    /// The section reports selection up; LearnView presents.
+    var onSelect: (HubItem) -> Void = { _ in }
+    var onSeeAllVoices: () -> Void = {}
 
     @State private var tab: HubTab = .books
-    @State private var selected: HubItem?
-    /// nil = all topics.
-    @State private var voiceTopic: VoiceTopic?
 
     /// One accent for the whole hub, matching the Knowledge hub's. Purple is the
     /// spectrum midpoint and carries no directional meaning, unlike cyan (Me) and
@@ -83,14 +87,6 @@ struct ContentHubSection: View {
             .padding(AppSpacing.md)
             .learnCard()
         }
-        .vaylSheet(isPresented: sheetBinding, heightFraction: 0.7) {
-            if let selected { ContentItemSheet(item: selected) }
-        }
-    }
-
-    private var sheetBinding: Binding<Bool> {
-        Binding(get: { selected != nil },
-                set: { if !$0 { selected = nil } })
     }
 
     // MARK: - Books
@@ -109,7 +105,7 @@ struct ContentHubSection: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: AppSpacing.sm) {
                 ForEach(store.media(.book)) { book in
-                    Button { selected = .media(book) } label: { bookCover(book) }
+                    Button { onSelect(.media(book)) } label: { bookCover(book) }
                         .buttonStyle(PressableCardStyle())
                 }
             }
@@ -171,7 +167,7 @@ struct ContentHubSection: View {
                            message: "\(tag) picks will show up here.")
             } else {
                 ForEach(store.media(kind)) { item in
-                    Button { selected = .media(item) } label: { mediaRow(item, tag: tag) }
+                    Button { onSelect(.media(item)) } label: { mediaRow(item, tag: tag) }
                         .buttonStyle(PressableCardStyle())
                 }
             }
@@ -211,71 +207,43 @@ struct ContentHubSection: View {
 
     /// Creators only — see Voice.swift for why researchers aren't listed here.
     ///
-    /// The old Creators/Researchers control filtered on CREDENTIAL, which is why it
-    /// collapsed the moment the researchers came out. This filters on TOPIC: the
-    /// shape of non-monogamy someone's work is about, which is a real property of
-    /// the work and roughly the shape-space a couple is choosing between. Chips
-    /// rather than a second SegmentedPillGroup — a segmented control nested inside a
-    /// segmented control is the thing that made this section read as chrome.
+    /// A sample, not the whole shelf. 24 creators inline made the card a scroll
+    /// inside a scroll with no shape to it: nothing to take in, no way to tell how
+    /// much was left. This shows a rotating handful over a "See all" door — the
+    /// same recent-plus-door shape the journal threshold uses. The topic filter
+    /// lives behind that door, where a list long enough to need filtering actually
+    /// is; a filter over four rows would be chrome again.
     private var voicesPanel: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             if store.voices.isEmpty {
                 emptyPanel(headline: "No voices yet",
                            message: "People worth following will show up here.")
             } else {
-                if topicsPresent.count > 1 { topicChips }
-                if visibleVoices.isEmpty {
-                    emptyPanel(headline: "None here yet",
-                               message: "Nobody in this corner of the map yet.")
-                } else {
-                    ForEach(visibleVoices) { voice in
-                        Button { selected = .voice(voice) } label: { voiceRow(voice) }
-                            .buttonStyle(PressableCardStyle())
-                    }
+                ForEach(store.voicesSample()) { voice in
+                    Button { onSelect(.voice(voice)) } label: { voiceRow(voice) }
+                        .buttonStyle(PressableCardStyle())
+                }
+                if store.voices.count > store.voicesSample().count {
+                    seeAllVoices
                 }
             }
         }
     }
 
-    /// Only offer a filter for topics the corpus actually has.
-    private var topicsPresent: [VoiceTopic] {
-        VoiceTopic.allCases.filter { t in store.voices.contains { $0.topic == t } }
-    }
-
-    private var visibleVoices: [Voice] {
-        guard let voiceTopic else { return store.voices }
-        return store.voices.filter { $0.topic == voiceTopic }
-    }
-
-    private var topicChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: AppSpacing.sm) {
-                topicChip("All", on: voiceTopic == nil) { voiceTopic = nil }
-                ForEach(topicsPresent) { t in
-                    topicChip(t.label, on: voiceTopic == t) { voiceTopic = t }
-                }
+    private var seeAllVoices: some View {
+        Button { onSeeAllVoices() } label: {
+            HStack(spacing: AppSpacing.xs) {
+                Text("See all \(store.voices.count)")
+                    .font(AppFonts.buttonLabel)
+                Image(systemName: AppIcons.chevronRight)
+                    .font(AppFonts.caption)
             }
-        }
-    }
-
-    private func topicChip(_ label: String, on: Bool, action: @escaping () -> Void) -> some View {
-        Button {
-            withAnimation(AppAnimation.standard) { action() }
-        } label: {
-            Text(label)
-                .font(AppFonts.buttonLabelSmall)
-                .foregroundStyle(on ? AppColors.textPrimary : AppColors.textSecondary)
-                .padding(.horizontal, AppSpacing.md)
-                .padding(.vertical, AppSpacing.sm)
-                .frame(minHeight: 44)
-                .background(Capsule()
-                    .fill(on ? accent.opacity(0.2) : AppColors.whisperFill)
-                    .overlay(Capsule().stroke(on ? accent.opacity(0.45) : AppColors.borderSubtle,
-                                              lineWidth: 1)))
-                .contentShape(Capsule())
+            .foregroundStyle(AppColors.textAccent)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(PressableCardStyle())
-        .accessibilityAddTraits(on ? [.isSelected] : [])
     }
 
     /// The hub's panels can each render zero rows once the corpus changes; the

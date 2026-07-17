@@ -61,6 +61,30 @@ final class LearnStore {
     var findingCount: Int { findings.count }
 
     func media(_ kind: MediaKind) -> [LearnMediaItem] { media.filter { $0.kind == kind } }
+
+    /// A rotating handful of creators for the hub's inline panel; the rest live
+    /// behind "See all".
+    ///
+    /// The window advances by day, not per render. Pure random would reshuffle
+    /// every time the view rebuilt — the list would change under a thumb mid-scroll.
+    /// Day-stepping means it is fixed while you are looking at it, fresh when you
+    /// come back, and every creator surfaces within a couple of weeks rather than
+    /// the first four owning the panel forever.
+    func voicesSample(count: Int = 4) -> [Voice] {
+        guard voices.count > count else { return voices }
+        let start = Self.dayIndex % voices.count
+        // Wrap so the window can straddle the end of the list.
+        return (0..<count).map { voices[(start + $0) % voices.count] }
+    }
+
+    /// Days since epoch in UTC — both partners see the same rotation on the same
+    /// day, the same trick HomeLexicon's daily-5 uses.
+    private static var dayIndex: Int {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+        let days = cal.dateComponents([.day], from: Date(timeIntervalSince1970: 0), to: Date()).day
+        return abs(days ?? 0)
+    }
     func finding(id: String) -> ResearchFinding? { findings.first { $0.id == id } }
     func resources(_ tier: ResourceTier) -> [SupportResource] { supportResources.filter { $0.tier == tier } }
 }

@@ -15,6 +15,13 @@ struct LearnView: View {
     @State private var showDatabase = false
     @State private var showResources = false
     @State private var selectedFinding: ResearchFinding?
+    /// Hub presentations live here, not in ContentHubSection. `.vaylSheet` is an
+    /// overlay sized from its host's geometry, so a sheet attached to a section
+    /// inside this ScrollView measured the SECTION — the scrim dimmed the screen
+    /// while the sheet resolved to a fraction of a section. Screens present;
+    /// sections compose.
+    @State private var selectedHubItem: HubItem?
+    @State private var showAllVoices = false
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -31,7 +38,11 @@ struct LearnView: View {
                         onOpenDatabase: { showDatabase = true },
                         onOpenFinding: { selectedFinding = $0 }
                     )
-                    ContentHubSection(store: store)
+                    ContentHubSection(
+                        store: store,
+                        onSelect: { selectedHubItem = $0 },
+                        onSeeAllVoices: { showAllVoices = true }
+                    )
                 }
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.top, AppSpacing.md)
@@ -56,6 +67,20 @@ struct LearnView: View {
                 FindingDetailView(finding: f, store: store, onOpenFinding: { selectedFinding = $0 })
             }
         }
+        .vaylSheet(isPresented: hubItemBinding, heightFraction: 0.7) {
+            if let selectedHubItem { ContentItemSheet(item: selectedHubItem) }
+        }
+        .vaylSheet(isPresented: $showAllVoices, heightFraction: 0.85) {
+            VoicesListSheet(store: store, onSelect: { voice in
+                showAllVoices = false
+                selectedHubItem = .voice(voice)
+            })
+        }
+    }
+
+    private var hubItemBinding: Binding<Bool> {
+        Binding(get: { selectedHubItem != nil },
+                set: { if !$0 { selectedHubItem = nil } })
     }
 
     private var loadErrorNotice: some View {
