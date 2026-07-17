@@ -160,10 +160,12 @@ final class VaylDirector {
   
 
     private func runNameEntry() {
-        // TODO: deal point warms, card slides in, flips, corner deck appears
-        tableFade         = 1.0   // table must be visible for the deal animation
-        rimBurst          = 0     // reset any lingering burst from previous phase
+        tableFade         = 1.0
+        rimBurst          = 0
         cornerDeckVisible = true
+        withAnimation(.easeOut(duration: 0.8)) {
+            dealPointIntensity = 0.7
+        }
     }
 
     private func runGenderEntry() {
@@ -238,6 +240,20 @@ final class VaylDirector {
     // 2. "Tell me where you're at."                 — ContextPhase
     // 3. "Sweep away what you aren't ready for."    — CuriosityPhase R1
     // 4. "Pick one."                                — CuriosityPhase R2
+
+    func showDealerLineManual(_ text: String) {
+        dealerLineAttempt += 1
+        projectedText = text
+        withAnimation(AppAnimation.textProject) {
+            projectedTextVisible = true
+        }
+    }
+
+    func hideDealerLine() {
+        withAnimation(AppAnimation.textProject) {
+            projectedTextVisible = false
+        }
+    }
 
     func showDealerLine(_ text: String, hideAfter seconds: Double = 4.0) {
         dealerLineAttempt += 1

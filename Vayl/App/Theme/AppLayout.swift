@@ -199,6 +199,17 @@ struct AppLayout {
         obCardWidth(in: screenWidth) * 1.5
     }
 
+    /// Width of an OB card sitting on the table during the deal animation.
+    /// Smaller than the full card — produces the dramatic zoom during the lift phase.
+    static func obTableCardWidth(in screenWidth: CGFloat) -> CGFloat {
+        min(screenWidth * 0.30, 135)
+    }
+
+    /// Height of an OB table card. Derived at 3:2 portrait aspect ratio (×1.5).
+    static func obTableCardHeight(in screenWidth: CGFloat) -> CGFloat {
+        obTableCardWidth(in: screenWidth) * 1.5
+    }
+
     /// Width of a session card (horizontal orientation).
     /// Clamps at 480pt. Used in the main app session flow, never in OB.
     static func sessionCardWidth(in screenWidth: CGFloat) -> CGFloat {
