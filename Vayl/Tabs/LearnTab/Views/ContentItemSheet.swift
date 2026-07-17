@@ -63,7 +63,7 @@ struct ContentItemSheet: View {
         switch item {
         case .media(let m):
             HStack(alignment: .top, spacing: AppSpacing.md) {
-                artwork(m.artworkUrl, kind: m.kind)
+                artwork(m.artworkAsset, m.artworkUrl, kind: m.kind)
                 VStack(alignment: .leading, spacing: AppSpacing.xs) {
                     Text(kindLabel(m.kind))
                         .overlineTracked()
@@ -155,13 +155,14 @@ struct ContentItemSheet: View {
     // MARK: - Bits
 
     @ViewBuilder
-    private func artwork(_ url: String?, kind: MediaKind) -> some View {
+    private func artwork(_ asset: String?, _ url: String?, kind: MediaKind) -> some View {
         Group {
-            if let url, let u = URL(string: url) {
+            if let asset, UIImage(named: asset) != nil {
+                Image(asset).resizable().aspectRatio(contentMode: .fill)
+            } else if let url, let u = URL(string: url) {
                 AsyncImage(url: u) { phase in
                     switch phase {
                     case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
-                    // A 404 must not leave a bare grey slab where a cover should be.
                     default: iconTile(kind)
                     }
                 }

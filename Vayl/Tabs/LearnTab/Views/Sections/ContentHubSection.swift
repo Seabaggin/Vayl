@@ -114,7 +114,7 @@ struct ContentHubSection: View {
     private func bookCover(_ b: LearnMediaItem) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
             ZStack(alignment: .topLeading) {
-                coverImage(b.artworkUrl)
+                coverImage(b.artworkAsset, b.artworkUrl)
                     .frame(width: 118, height: 172)
                     .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
                     .overlay(RoundedRectangle(cornerRadius: AppRadius.md)
@@ -144,8 +144,10 @@ struct ContentHubSection: View {
     }
 
     @ViewBuilder
-    private func coverImage(_ url: String?) -> some View {
-        if let url, let u = URL(string: url) {
+    private func coverImage(_ asset: String?, _ url: String?) -> some View {
+        if let asset, UIImage(named: asset) != nil {
+            Image(asset).resizable().aspectRatio(contentMode: .fill)
+        } else if let url, let u = URL(string: url) {
             AsyncImage(url: u) { img in
                 img.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
@@ -174,7 +176,7 @@ struct ContentHubSection: View {
 
     private func mediaRow(_ m: LearnMediaItem, tag: String) -> some View {
         HStack(spacing: AppSpacing.md) {
-            thumb(url: m.artworkUrl, icon: kindIcon(m.kind))
+            thumb(asset: m.artworkAsset, url: m.artworkUrl, icon: kindIcon(m.kind))
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                 Text(tag)
                     .overlineTracked()
@@ -294,8 +296,8 @@ struct ContentHubSection: View {
     /// those gone, nothing calls it.
     /// Neutral stroke. Artwork is content — it isn't a control, so it doesn't wear
     /// the accent. Purple in Learn means "you can act here": links and selection.
-    private func thumb(url: String?, icon: String) -> some View {
-        coverOrIcon(url: url, icon: icon)
+    private func thumb(asset: String?, url: String?, icon: String) -> some View {
+        coverOrIcon(asset: asset, url: url, icon: icon)
             .frame(width: 52, height: 52)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
             .overlay(RoundedRectangle(cornerRadius: AppRadius.md)
@@ -303,8 +305,10 @@ struct ContentHubSection: View {
     }
 
     @ViewBuilder
-    private func coverOrIcon(url: String?, icon: String) -> some View {
-        if let url, let u = URL(string: url) {
+    private func coverOrIcon(asset: String?, url: String?, icon: String) -> some View {
+        if let asset, UIImage(named: asset) != nil {
+            Image(asset).resizable().aspectRatio(contentMode: .fill)
+        } else if let url, let u = URL(string: url) {
             AsyncImage(url: u) { img in
                 img.resizable().aspectRatio(contentMode: .fill)
             } placeholder: { iconTile(icon) }

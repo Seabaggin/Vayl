@@ -133,16 +133,10 @@ struct ResearchSection: View {
             )
             .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
-            // Plain, not LivingText. Its gradient runs cyan → PURPLE → magenta, and
-            // at 13pt on the atmosphere's purple bloom the middle stop vanished into
-            // the light behind it — the exact muddying the Earned Spectrum Rule
-            // predicts below 24pt ("it muddies — use a single accent"). The card
-            // already spends its one earned gradient on the stat; a second one on
-            // the quietest element competed with it and lost.
-            Text(f.citation)
-                .font(AppFonts.caption).italic()
-                .foregroundStyle(AppColors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
+            // `wraps: true` is load-bearing: LivingText defaults to .fixedSize()
+            // for its hero-word callers, and a citation is a sentence — without it
+            // the card inflates past the screen and clips the finding above.
+            LivingText(text: f.citation, font: AppFonts.caption, wraps: true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(AppSpacing.lg)

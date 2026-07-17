@@ -1,21 +1,32 @@
 // Tabs/LearnTab/Views/LearnCardStyle.swift
 //
-// The Learn-tab card surface — one glass card, unified 2026-07-16.
+// The Learn-tab card surface — real Liquid Glass, 2026-07-16.
 //
-// Before, `learnCard(_ accent:)` took a colour and each section passed its own
-// (purple research, magenta hub), so the tab was a stack of differently-coloured
-// containers. Now every Learn card is the Map-family surface: `.vaylGlassCard()`
-// (glass over the atmosphere) plus one tapered spectrum hairline along the top
-// edge — the same chrome as HomePulseRail and the journal threshold. The gradient
-// appears once per card, on a stroke, which is exactly the Earned Spectrum Rule.
+// `.vaylGlassCard()` is not glass. It fills with `glassSurface` — white at 3% —
+// and strokes a hairline. No material, no backdrop blur, nothing frosted. Its
+// token comment says why, and it's deliberate: "this lets the aurora bloom read
+// through the card." That is exactly right for the Map tab, where the bloom
+// reading through IS the content and there are a handful of words on screen.
 //
-// DEVICE-TUNE: the fill comes from `.vaylGlassCard()`'s `glassSurface`; the
-// glass-vs-atmosphere knob lives on that token. Confirm on device.
+// Learn is a reading surface with paragraphs, and the research card sits directly
+// under the atmosphere's brightest point (`.stat` runs top 1.00). With nothing
+// diffusing it, the bloom arrives at full strength behind body copy — which is
+// what made a 13pt gradient citation vanish into purple light. The card wasn't
+// doing a card's job.
+//
+// So Learn uses iOS 26's Liquid Glass (deployment target is 26.0). PartnerChip
+// already adopted it — `.glassEffect(.regular, in: Capsule())` — and this follows
+// its pattern, including the gotcha its comment documents: the material goes in a
+// `.background`, never `glassEffect`'s own `content:` closure, whose vibrancy pass
+// darkens and desaturates whatever it samples.
+//
+// Same spectrum hairline, same radius, same everything else. The difference is
+// that it now diffuses what's behind it, which is the whole point of glass.
 
 import SwiftUI
 
 extension View {
-    /// The one Learn surface: Map-family glass + a tapered spectrum top hairline.
+    /// The Learn surface: iOS 26 Liquid Glass + a tapered spectrum top hairline.
     /// The hairline is inset horizontally so it fades before the corner radius.
     func learnCard(cornerRadius: CGFloat = AppRadius.xl) -> some View {
         modifier(LearnCardStyle(cornerRadius: cornerRadius))
@@ -38,13 +49,27 @@ struct PressableCardStyle: ButtonStyle {
 private struct LearnCardStyle: ViewModifier {
     let cornerRadius: CGFloat
 
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+    }
+
     func body(content: Content) -> some View {
         content
-            .vaylGlassCard(radius: cornerRadius)
+            // The material is a `.background`, never `glassEffect`'s `content:`
+            // closure — its vibrancy pass darkens whatever it composites, and the
+            // background form also sizes off the real content (PartnerChip's
+            // comment documents both). `.fill(.clear)` gives glassEffect a shape to
+            // sample through without painting over it.
+            .background {
+                shape
+                    .fill(.clear)
+                    .glassEffect(.regular, in: shape)
+                    .overlay(shape.strokeBorder(AppColors.borderSubtle, lineWidth: 1))
+            }
             .overlay(alignment: .top) {
                 TaperedSpectrumHairline(thickness: 1.5)
                     .padding(.horizontal, AppSpacing.md)
             }
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .clipShape(shape)
     }
 }
