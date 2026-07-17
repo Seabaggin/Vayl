@@ -122,7 +122,7 @@ struct CuriosityPhase: View {
         // Tug loop on the presented deck — flick up, spring home, rest.
         .onChange(of: director.curiosity.summaryPresented) { _, presented in
             summaryHintTask?.cancel()
-            guard presented, !reduceMotion else {
+            guard presented, !reduceMotion, !AppAnimation.lowPower else {
                 withAnimation(AppAnimation.spring.reduceMotionSafe) { summaryHintOffset = 0 }
                 return
             }

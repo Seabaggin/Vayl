@@ -318,7 +318,7 @@ struct ExperienceLevelPhase: View {
     ///     confirm tug, since the user already knows swipe-up from earlier phases.
     private func startSwipeHint(initialDelayMs: UInt64 = 600, restMs: UInt64 = 1900) {
         hintTask?.cancel()
-        guard !reduceMotion else {
+        guard !reduceMotion, !AppAnimation.lowPower else {
             withAnimation(AppAnimation.spring.reduceMotionSafe) { hintOffset = 0 }
             return
         }

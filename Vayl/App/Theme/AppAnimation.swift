@@ -1227,13 +1227,6 @@ internal enum AppAnimation {
     /// 1.2s ease-in-out — the case core lighting up once armed (contained energy).
     static let coreCharge: Animation = .easeInOut(duration: 1.2)
 
-    /// 0.9s / 1.3s — one leg of the forge's rim-glow and topo-sway oscillations (Beat 1–2,
-    /// "the table works"). Raw Doubles per the ambient-duration convention: build at the
-    /// call site with .easeInOut(duration:) + .repeatForever(autoreverses: true).
-    /// Reduce motion: the oscillation never starts (steady mid glow, still lines).
-    static let forgeRimOscillation: Double = 0.9
-    static let forgeSwayOscillation: Double = 1.3
-
     // — Living Case tap ceremony (Beat 5 rework, 2026-07-04) + flower-peel reveal.
     //   The three taps are a negotiation: the case recognizes, resists, releases.
     //   Feel reference: the React "Living Case / Flower Peel" mockup (values verbatim).

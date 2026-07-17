@@ -18,9 +18,11 @@ import SwiftUI
 /// Visible from DemoPhase onward. Shows collected credential cards.
 /// Maximum 7 cards — one per OBCredential case.
 ///
-/// Full visual implementation — TODO:
-///   - Spectrum hairline on each mini-card top edge
-///   - Glow pulse on card landing via AppAnimation.deckReceive
+/// Full visual implementation:
+///   - Spectrum hairline (cyan → purple → magenta) on each mini-card top edge
+///   - Glow pulse on card landing — `.cornerDeckGlow(visible:)` animated via
+///     AppAnimation.deckReceive; `deckPulse` is raised by
+///     `VaylDirector.receiveCardIntoCornerDeck` and dropped after the pulse
 ///   - Full stack offset and rotation per card position
 ///
 /// This view never responds to gestures and never holds state.
@@ -64,6 +66,20 @@ struct CornerDeckView: View {
                         width: AppLayout.cornerDeckWidth,
                         height: AppLayout.cornerDeckHeight
                     )
+                    // Spectrum hairline on the mini-card top edge — crisp single
+                    // pass (the hairline does not glow; the landing pulse below is
+                    // the deck's only emissive moment). Inset horizontally by the
+                    // mini-card corner radius so the strip never overhangs the
+                    // rounded corners; applied before rotation so it rides each
+                    // card's stack tilt.
+                    .overlay(alignment: .top) {
+                        RoundedRectangle(cornerRadius: AppRadius.micro)
+                            .fill(AppColors.spectrumBorder)
+                            .frame(
+                                width: AppLayout.cornerDeckWidth - AppRadius.cornerCard * 2,
+                                height: AppGlows.spectrumBorder.hairlineHeight
+                            )
+                    }
                     .rotationEffect(.degrees(offset.rot))
                     .offset(x: offset.x, y: offset.y)
             }

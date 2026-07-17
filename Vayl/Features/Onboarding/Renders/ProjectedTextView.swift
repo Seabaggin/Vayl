@@ -18,14 +18,16 @@ import SwiftUI
 /// Positioned above the table horizon. Never floating UI.
 /// Driven by VaylDirector.projectedText and projectedTextVisible.
 ///
-/// Full visual implementation — TODO:
-///   - Warm amber tint: rgba(245,235,215,0.90)
-///   - Shadow beneath: rgba(0,0,0,0.55) blur 10 offsetY 3
-///   - Entrance: scaleY 0.94→1.0 + opacity 0→1 over textProject
-///   - Italic serif font — not the app display font
+/// Visual spec (implemented):
+///   - Shadow beneath: AppColors.shadowDeep, blur 10 offsetY 3 — the line sits ON the felt
+///   - Entrance: scaleY 0.94→1.0 over AppAnimation.textProject (opacity fade is the
+///     caller's `.transition(.opacity)` — one owner per property)
 ///   - Spectrum line beneath (2pt, 9% opacity) — projection glow on felt
+///   - Font: single-sourced from AppDealerTyping.font (dealer voice decision superseded
+///     the original italic-serif note — one dealer, one voice)
+///   - Warm amber tint via AppColors.tableProjectedText (rgba 245,235,215,0.90)
 ///
-/// This view never responds to gestures and never holds state.
+/// This view never responds to gestures and never holds transient UI state.
 struct ProjectedTextView: View {
     let text: String
     let screenSize: CGSize
@@ -47,6 +49,19 @@ struct ProjectedTextView: View {
     @State private var entered: Bool = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    // Projection surface spec — tuned reference values from the render TODO
+    // (same idiom as the file's yOffset: documented literals pending layout tokens).
+    /// Shadow blur beneath the line — the projection sits ON the felt, so the
+    /// shadow is tight, not a floating-card drop (spec: blur 10).
+    private let shadowBlur: CGFloat = 10
+    /// Shadow vertical drop (spec: offsetY 3).
+    private let shadowDropY: CGFloat = 3
+    /// The spectrum line under the text is a glow caught on the felt, not a rule —
+    /// atmospheric register (spec: 9%, in the aurora ≤~9% band).
+    private let glowLineOpacity: Double = 0.09
+    /// Optical gap between the text's last baseline and the projection glow line.
+    private let glowLineGap: CGFloat = AppSpacing.xs
+
     var body: some View {
         Group {
             if centerGrow {
@@ -61,9 +76,21 @@ struct ProjectedTextView: View {
         }
         // Dealer voice — single source (AppDealerTyping.font). Change the font once there.
         .font(AppDealerTyping.font)
-        // Token: warm amber (rgba 245,235,215,0.90) pending AppColors.tableProjectedText
-        .foregroundStyle(AppColors.textPrimary)
+        .foregroundStyle(AppColors.tableProjectedText)
         .multilineTextAlignment(.center)
+        // Grounding shadow — the line is light cast ON the felt, so the shadow is
+        // tight and directly beneath (never a floating-card elevation token).
+        .shadow(color: AppColors.shadowDeep, radius: shadowBlur, y: shadowDropY)
+        // Projection glow on the felt — a 2pt spectrum line under the text. Applied
+        // AFTER the shadow so the glow itself casts nothing; strokes/lines are the
+        // sanctioned home of the full spectrum gradient.
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(AppColors.spectrumBorder)
+                .frame(height: AppSpacing.xxs)
+                .opacity(glowLineOpacity)
+                .offset(y: glowLineGap + AppSpacing.xxs)
+        }
         .padding(.horizontal, AppLayout.screenHPad)
         // Projection entrance — a slight vertical grow as the line lands on the felt,
         // co-timed with the caller's opacity fade (both AppAnimation.textProject).

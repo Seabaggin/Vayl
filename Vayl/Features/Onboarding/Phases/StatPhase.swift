@@ -37,9 +37,24 @@ struct StatPhase: View {
     // safe area region and need no additional offset compensation.
     @Environment(\.realSafeArea) private var safeAreaInsets
 
-    @State private var holoShiftPhase: CGFloat = -0.35
-    @State private var holoFlashOffset: CGFloat =  2.5
-    @State private var glowPulseHigh  = false
+    // ── Single ambient driver ──────────────────────────────────────────
+    // One repeating timeline (0 → 1, autoreversing at ambientDrift) drives all
+    // three holographic motions. The gradient shift, specular flash, and glow
+    // breathe were always in lockstep (same duration, same trigger); running
+    // them as three separate repeatForever timelines just tripled the frame
+    // cost. Derived values below map the driver onto each motion's range.
+    @State private var holoDriftPhase: CGFloat = 0
+
+    // Derived motions — same start/end poses as the old three-@State version.
+    private var holoShiftPhase: CGFloat {
+        reduceMotion ? 0.3 : (-0.35 + holoDriftPhase * 1.0)      // -0.35 → 0.65
+    }
+    private var holoFlashOffset: CGFloat {
+        reduceMotion ? 0 : (2.5 - holoDriftPhase * 3.0)           //  2.5 → -0.5
+    }
+    private var glowPulseHigh: Bool {
+        reduceMotion ? true : holoDriftPhase >= 1                 // false → true
+    }
 
     // Arrival ignition — one-time light-catch fired as the numeral seats (~0.76s).
     @State private var igniteGlow: Double  = 0     // additive glow bloom, 0 at rest
@@ -187,9 +202,7 @@ struct StatPhase: View {
             // update and skips the animation — gradient freezes at position 0.65.
             try? await Task.sleep(for: .milliseconds(32))
             guard !reduceMotion else { return }
-            holoShiftPhase  = 0.65
-            holoFlashOffset = -0.5
-            glowPulseHigh   = true
+            holoDriftPhase = 1
         }
         .onDisappear {
             hasAnimated = false
@@ -227,17 +240,11 @@ struct StatPhase: View {
                 igniteGlow: igniteGlow,
                 fontSize: statFontSize
             )
+            // One repeating ambient timeline; shift, flash, and glow all derive
+            // from holoDriftPhase, so a single animation carries all three.
             .ambientAnimation(
                 .easeInOut(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: true),
-                value: holoShiftPhase
-            )
-            .ambientAnimation(
-                .easeInOut(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: true),
-                value: holoFlashOffset
-            )
-            .ambientAnimation(
-                .easeInOut(duration: AppAnimation.ambientDrift).repeatForever(autoreverses: true),
-                value: glowPulseHigh
+                value: holoDriftPhase
             )
             .opacity(showStat ? 1 : 0)
             .scaleEffect(showStat ? 1.0 : kLandScaleFrom)
@@ -289,10 +296,9 @@ struct StatPhase: View {
 
         if reduceMotion {
             // Under reduce motion: all elements appear instantly.
-            // No spatial movement — state changes only.
-            holoShiftPhase  = 0.3
-            holoFlashOffset = 0
-            glowPulseHigh   = true
+            // No spatial movement — state changes only. The holographic
+            // resting pose comes from the derived properties (they read
+            // reduceMotion directly), so no driver assignment is needed.
             showStat        = true
             showStatLabel   = true
             showEthos       = true

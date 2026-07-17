@@ -118,6 +118,7 @@ enum VaylPrimitives {
     static let tableTopoLine    = UIColor(red: 150/255, green: 132/255, blue: 208/255, alpha: 1)    // topo contour stroke
     static let tableCompassStar = UIColor(red: 232/255, green: 228/255, blue: 222/255, alpha: 1)    // compass star
     static let tableAmberPool   = UIColor(red: 255/255, green: 235/255, blue: 180/255, alpha: 0.055) // amber pool center
+    static let tableProjectedText = UIColor(red: 245/255, green: 235/255, blue: 215/255, alpha: 0.90) // dealer projected text
 
     // ── Tinted card darks ─────────────────────────────────────
     static let tintCyan       = UIColor(hex: "#061018")

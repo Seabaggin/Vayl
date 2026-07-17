@@ -232,7 +232,7 @@ struct ConfirmationPhase: View {
     /// Sparse rightward nudge on the whole fan — the curiosity keep direction.
     private func startNudge(amplitude: CGFloat) {
         nudgeTask?.cancel()
-        guard !reduceMotion else { return }
+        guard !reduceMotion, !AppAnimation.lowPower else { return }
         nudgeTask = Task { @MainActor in
             while !Task.isCancelled {
                 withAnimation(AppAnimation.swipeHintFlick.reduceMotionSafe) { nudgeX = amplitude }

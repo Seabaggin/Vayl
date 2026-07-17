@@ -414,7 +414,7 @@ struct ModeSelectPhase: View {
     /// more frequent reminder than ExperienceLevel's sparse lifted-state cadence.
     private func startSwipeHint(initialDelayMs: UInt64 = 600, restMs: UInt64 = 1900) {
         hintTask?.cancel()
-        guard !reduceMotion else {
+        guard !reduceMotion, !AppAnimation.lowPower else {
             withAnimation(AppAnimation.spring.reduceMotionSafe) { hintOffset = 0 }
             return
         }

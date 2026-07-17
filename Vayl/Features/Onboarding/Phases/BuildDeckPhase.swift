@@ -599,7 +599,7 @@ struct BuildDeckPhase: View {
     /// strike makes the thing inside more desperate — the cadence accelerates
     /// (3.5s → 1.8s → 0.9s) and the twitch grows. Only the release ends it.
     private func startKnocking() {
-        guard !reduceMotion else { return }
+        guard !reduceMotion, !AppAnimation.lowPower else { return }
         knockTask = Task { @MainActor in
             let cadence: [Double] = [3.5, 1.8, 0.9]
             while knockCount < 40,
@@ -748,18 +748,24 @@ struct BuildDeckPhase: View {
 
     /// The table works: the spectrum rim glow and the topo-line sway oscillate
     /// together while the forge is active (TableSurfaceView is Animatable, so
-    /// the repeatForever genuinely interpolates). Reduce Motion: steady mid
-    /// glow, still lines.
+    /// the repeatForever genuinely interpolates). ONE driver clock: both values
+    /// ride a single `ambientPulse` (2s, inert-chrome tempo — the table is
+    /// machinery performing, not a living breath) so there are never two
+    /// competing loops on the same surface; the per-line phase variation comes
+    /// from the render (`fe * .pi * 2` in the topo sway), not a second tempo.
+    /// Reduce Motion / Low Power: steady mid glow, still lines.
     private func startRimOscillation() {
         if reduceMotion || AppAnimation.lowPower {
             tableRimBurst = 0.3
         } else {
+            // Floors land un-animated so the autoreverse breathes 0.3→0.8 /
+            // 0.2→1.0 — the glow never collapses to dead-dark mid-cycle.
+            tableRimBurst = 0.3
+            tableForgeEnergy = 0.2
             // 0.8 ceiling — the work has to survive phone scale; at 0.55 the
             // oscillation read as dead air in the recording, not a performance
-            withAnimation(.easeInOut(duration: AppAnimation.forgeRimOscillation).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: AppAnimation.ambientPulse).repeatForever(autoreverses: true)) {
                 tableRimBurst = 0.8
-            }
-            withAnimation(.easeInOut(duration: AppAnimation.forgeSwayOscillation).repeatForever(autoreverses: true)) {
                 tableForgeEnergy = 1.0
             }
         }

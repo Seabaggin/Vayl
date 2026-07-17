@@ -92,8 +92,11 @@ struct ContextPhase: View {
         // renders large (frame doesn't clip); only its reported layout size shrinks.
         .frame(width: screenSize.width, height: screenSize.height)
         .opacity(entered && !exiting ? 1 : 0)
+        // One animation per property: the index-scoped standard drives ONLY the tint
+        // crossfade on swipe. confirmPulse animates via withAnimation at its mutation
+        // sites (spring up in handleConfirm, slow settle on release) — a second scoped
+        // .animation here stacked onto the same gradient and clobbered that settle.
         .animation(AppAnimation.standard, value: physics.currentIndex)
-        .animation(AppAnimation.spring, value: confirmPulse)
         .allowsHitTesting(false)
 
         VStack(spacing: 0) {
@@ -177,12 +180,17 @@ struct ContextPhase: View {
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
                     .opacity(confirmedIndex != nil ? 1 : 0)
+                    // Scoped here, not on the panel: the detail reveal is the only
+                    // confirmedIndex-driven property in this subtree without its own
+                    // animation (the divider glow carries one above). Keeps the panel
+                    // under a single animation per property.
+                    .animation(AppAnimation.standard, value: confirmedIndex)
             }
             .padding(.horizontal, AppSpacing.lg)
             .frame(minHeight: screenSize.height * 0.14, alignment: .top)
             .opacity(entered && !exiting ? 1 : 0)
+            // Index-scoped: drives the subtitle's .opacity transition on swipe only.
             .animation(AppAnimation.standard, value: physics.currentIndex)
-            .animation(AppAnimation.standard, value: confirmedIndex)
 
             Spacer()
 
@@ -332,7 +340,7 @@ struct ContextPhase: View {
     // MARK: - Swipe-up hint (sparse — user has done this gesture 4 times already)
     private func startConfirmTug() {
         tugTask?.cancel()
-        guard !reduceMotion else { return }
+        guard !reduceMotion, !AppAnimation.lowPower else { return }
         confirmTug = 0
         // Flick is 3% of card height — barely noticeable, just directional.
         // Initial delay and rest match ExperienceLevel's .lifted cadence (2200/6000ms).

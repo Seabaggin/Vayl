@@ -108,7 +108,7 @@ struct GenderPhase: View {
         }
         .onChange(of: director.gender.swipeHintActive) { _, active in
             hintTask?.cancel()
-            guard active, !reduceMotion else {
+            guard active, !reduceMotion, !AppAnimation.lowPower else {
                 // Stopped (user grabbed the card or re-scrolled the drum) — settle back to rest Y.
                 withAnimation(AppAnimation.spring.reduceMotionSafe) { hintOffset = 0 }
                 return

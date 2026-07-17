@@ -214,6 +214,12 @@ struct AppColors {
         dark: VaylPrimitives.tableAmberPool
     )
 
+    /// Warm amber-cream dealer voice. ProjectedTextView use only.
+    static let tableProjectedText = Color.dynamic(
+        light: VaylPrimitives.tableProjectedText,
+        dark: VaylPrimitives.tableProjectedText
+    )
+
     // ─────────────────────────────────────────────
     // MARK: Spectrum — fixed accent values
     //
