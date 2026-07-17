@@ -204,15 +204,14 @@ struct AppLayout {
     // slots below — survives here as `mapHeroSlotHeight`, which both lenses share.
     // See docs/design/2026-07-17-void-rule-and-map-hero-scale.md.
 
-    /// Default: 0.35 of screen width (≈137pt at 393pt — within 2pt of the old 135,
-    /// so the retirement of 218 is a no-lurch change on its own).
+    /// 0.46 of screen width — ≈184pt orb, ≈479pt glow wash at 402pt.
     ///
-    /// FEEL — this is the one dial worth turning on Map. The orb is the tab's only
-    /// hero and reads small against Home's deck (≈56% of screen height). Note the
-    /// perceived size is NOT this number: MapHeroAmbientGlow washes to ≈2.6x the
-    /// orb, so judge it by eye on device against the real glow, never by arithmetic.
-    /// The DEBUG tuner on MapView scrubs this live; copy the value you land on here.
-    static let defaultMapHeroOrbFraction: CGFloat = 0.35
+    /// FEEL — LOCKED 2026-07-17 on device (Bryan, iPhone 17 Pro), scrubbed live and
+    /// approved at 0.459; stored as 0.46, a 0.4pt difference at this width. This is a
+    /// felt value, not a derived one: the wash runs ≈2.6x the orb and bleeds past the
+    /// screen edges, so the hero's real presence is nothing you can compute from this
+    /// number. Do not "improve" it by arithmetic against Home's deck. Re-feel it.
+    static let defaultMapHeroOrbFraction: CGFloat = 0.46
 
     /// Default: 0.26 of screen height (≈221pt at 852pt — the old 218's shared
     /// footprint, now expressed proportionally). A floor for Me/Us parity, applied
@@ -220,8 +219,9 @@ struct AppLayout {
     static let mapHeroSlotFraction: CGFloat = 0.26
 
     /// The live orb fraction. A stored `var` with a default, so it lands last in the
-    /// memberwise init and `from(_:)` never passes it — the only writer is MapView's
-    /// DEBUG tuner. Release builds always read `defaultMapHeroOrbFraction`.
+    /// memberwise init and `from(_:)` never passes it. Nothing overrides it now that
+    /// the fraction is locked; the seam stays because re-feeling the hero means
+    /// re-introducing a tuner, and this is the hook it writes to.
     var mapHeroOrbFraction: CGFloat = AppLayout.defaultMapHeroOrbFraction
 
     /// The Map hero orb's diameter. Shared by BOTH lenses (Me's single aura and

@@ -176,7 +176,7 @@ Standard spacing: `screenHPad` 18 · `screenMargin` 24 (OB canvas) · `ctaHorizo
 **Clause 2 — heroes derive from `AppLayout.from(geo)`, never a constant.** Already law for the OB canvas (`obCardWidth(in:)`) and hardware insets; now law for every hero. A constant cannot breathe across devices, and it outlives whatever justified it.
 
 ```swift
-defaultMapHeroOrbFraction = 0.35            // FEEL — the one dial on Map
+defaultMapHeroOrbFraction = 0.46            // FEEL — locked on device 2026-07-17
 mapHeroSlotFraction       = 0.26            // shared Me/Us footprint (spec §1)
 mapHeroOrbSize            = screenWidth  * mapHeroOrbFraction
 mapHeroSlotHeight         = screenHeight * mapHeroSlotFraction   // applied as minHeight

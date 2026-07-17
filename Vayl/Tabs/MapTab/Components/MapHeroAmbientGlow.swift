@@ -26,18 +26,19 @@ struct MapHeroAmbientGlow: View {
     // FEEL: tune all four on device — this is the thing that didn't land on
     // the first pass, so treat these as a first guess, not a final answer.
     //
-    // `outerDiameterMultiple` is static because the orb's PERCEIVED size is this
-    // multiple of its actual size, which is why the Map hero cannot be sized by
-    // arithmetic against Home's deck. MapView's DEBUG tuner reads it to report the
-    // true wash footprint while scrubbing.
-    static let outerDiameterMultiple: CGFloat = 2.6
+    // The orb's PERCEIVED size is `outerDiameterMultiple` x its actual size — at the
+    // locked hero fraction the wash runs ~479pt against a ~402pt screen, so it bleeds
+    // off both edges. This is why the Map hero cannot be sized by arithmetic against a
+    // crisp hero like Home's deck, and why AppLayout.defaultMapHeroOrbFraction is a
+    // felt value. Change this and the hero's weight changes without its size changing.
+    private let outerDiameterMultiple: CGFloat = 2.6
     private let innerDiameterMultiple: CGFloat = 1.35
     private let outerPeakOpacity: Double  = 0.22
     private let innerPeakOpacity: Double  = 0.30
 
     var body: some View {
         ZStack {
-            wash(diameter: orbSize * Self.outerDiameterMultiple, peak: outerPeakOpacity, coreStop: 0.12)
+            wash(diameter: orbSize * outerDiameterMultiple, peak: outerPeakOpacity, coreStop: 0.12)
             wash(diameter: orbSize * innerDiameterMultiple, peak: innerPeakOpacity, coreStop: 0.05)
         }
         .allowsHitTesting(false)
