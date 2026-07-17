@@ -36,11 +36,6 @@ struct ContentHubSection: View {
 
     @State private var tab: HubTab = .books
 
-    /// One accent for the whole hub, matching the Knowledge hub's. Purple is the
-    /// spectrum midpoint and carries no directional meaning, unlike cyan (Me) and
-    /// magenta (Us) — correct for content, which is nobody's data.
-    private let accent = AppColors.spectrumPurple
-
     enum HubTab: String, CaseIterable, Identifiable {
         case books, watch, listen, voices
         var id: String { rawValue }
@@ -58,6 +53,9 @@ struct ContentHubSection: View {
             case .voices: return AppIcons.person2
             }
         }
+        /// Purple marks the SELECTED segment — the one thing on this control you
+        /// can act on. It is the only colour left in the hub; artwork, icon tiles
+        /// and labels are neutral because they're content.
         var accent: Color { AppColors.spectrumPurple }
     }
 
@@ -294,12 +292,14 @@ struct ContentHubSection: View {
 
     /// Media artwork only. The circular variant existed for voice avatars; with
     /// those gone, nothing calls it.
+    /// Neutral stroke. Artwork is content — it isn't a control, so it doesn't wear
+    /// the accent. Purple in Learn means "you can act here": links and selection.
     private func thumb(url: String?, icon: String) -> some View {
         coverOrIcon(url: url, icon: icon)
             .frame(width: 52, height: 52)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
             .overlay(RoundedRectangle(cornerRadius: AppRadius.md)
-                .stroke(accent.opacity(0.2), lineWidth: 1))
+                .stroke(AppColors.borderSubtle, lineWidth: 1))
     }
 
     @ViewBuilder
@@ -313,12 +313,13 @@ struct ContentHubSection: View {
         }
     }
 
+    /// The artwork fallback — also content, also neutral.
     private func iconTile(_ icon: String) -> some View {
         ZStack {
-            accent.opacity(0.08)
+            AppColors.whisperFill
             Image(systemName: icon)
                 .font(AppFonts.body(20, weight: .regular, relativeTo: .body))
-                .foregroundStyle(accent)
+                .foregroundStyle(AppColors.textTertiary)
         }
     }
 

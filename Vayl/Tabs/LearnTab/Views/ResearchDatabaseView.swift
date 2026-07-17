@@ -206,12 +206,14 @@ struct ResearchDatabaseView: View {
     /// deeper to open. No tap target without a destination.
     private func termRow(_ t: LexiconTerm) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
+            // Neutral: an icon tile marking a row's kind is content, not a control.
+            // Purple in Learn means "you can act here" — links and selection.
             Image(systemName: AppIcons.textMagnifyingglass)
                 .font(AppFonts.body(20, weight: .regular, relativeTo: .body))
-                .foregroundStyle(AppColors.spectrumPurple)
+                .foregroundStyle(AppColors.textTertiary)
                 .frame(width: 48, height: 48)
                 .background(RoundedRectangle(cornerRadius: AppRadius.md)
-                    .fill(AppColors.spectrumPurple.opacity(0.08)))
+                    .fill(AppColors.whisperFill))
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text(t.term).font(AppFonts.cardTitleCompact)
                     .foregroundStyle(AppColors.textPrimary)

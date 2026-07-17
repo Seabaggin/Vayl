@@ -88,6 +88,9 @@ struct ResearchSection: View {
         chip(icon: f.type.sfSymbol, label: f.type.label)
     }
 
+    /// A white pill. The chip names a category — it is content, not a control, and
+    /// it was wearing the same purple as the links and the selected filter. Colour
+    /// marks what you can act on; a label goes neutral.
     private func chip(icon: String, label: String) -> some View {
         HStack(spacing: AppSpacing.xs) {
             Image(systemName: icon)
@@ -95,28 +98,38 @@ struct ResearchSection: View {
                 .textCase(.uppercase)
         }
         .font(AppFonts.label)
-        .foregroundStyle(AppColors.spectrumPurple)   // section is purple-only; the icon conveys type
+        .foregroundStyle(AppColors.textSecondary)
         .padding(.horizontal, AppSpacing.sm)
         .padding(.vertical, AppSpacing.xs)
-        .background(Capsule().fill(AppColors.spectrumPurple.opacity(0.1)))
+        .background(Capsule().fill(AppColors.whisperFill))
+        .overlay(Capsule().stroke(AppColors.borderSubtle, lineWidth: 1))
     }
 
+    /// The finding IS the card. The standalone `scoreDisplay` stat is gone: it
+    /// printed "1 in 5" in 32pt directly above a sentence that reads "Roughly 1 in
+    /// 5 Americans…" — the same number twice, with the big one winning and the
+    /// actual claim demoted to a caption.
+    ///
+    /// Now the number is highlighted inside the sentence via `HighlightText`, the
+    /// same treatment OB card prompts use for their highlight words. Note its
+    /// gradient is two-stop (cyan→purple), not the full cyan→purple→magenta, which
+    /// is why it's legal below the Earned Spectrum Rule's 24pt bar.
     private func findingCard(_ f: ResearchFinding) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             typeChip(f)
-            if let stat = f.stat {
-                Text(stat)
-                    .font(AppFonts.scoreDisplay)
-                    .foregroundStyle(AppColors.spectrumPurple)
-            }
-            Text(f.finding)
-                .font(AppFonts.bodyText)
-                .foregroundStyle(AppColors.textBody)
-                .fixedSize(horizontal: false, vertical: true)
+            HighlightText.highlighted(
+                f.finding,
+                // The stat verbatim — it's already inside the sentence. A finding
+                // with no number has nothing to highlight and reads plain, which is
+                // honest: not every finding is a statistic.
+                words: [f.stat].compactMap { $0 },
+                baseFont: AppFonts.prompt,
+                highlightFont: AppFonts.prompt,
+                baseColor: AppColors.textBody
+            )
+            .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
-            Text(f.citation)
-                .font(AppFonts.caption).italic()
-                .foregroundStyle(AppColors.textTertiary)
+            LivingText(text: f.citation, font: AppFonts.caption)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(AppSpacing.lg)
