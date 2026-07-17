@@ -23,6 +23,8 @@ import SwiftUI
 
 struct PulseInfoSheet: View {
 
+    @Environment(PulseStore.self) private var pulse
+
     /// The user's current reading, plotted on the field. Nil for a user with no history —
     /// the explainer still stands, there's just nothing to place on it yet.
     struct Reading {
@@ -34,7 +36,19 @@ struct PulseInfoSheet: View {
         let staleSince: String?
     }
 
-    var reading: Reading?
+    /// Derived from the store rather than passed in. The sheet is presented from MapView
+    /// (screen level — see MapPulseHero.onOpenInfo), which would otherwise have to
+    /// re-derive the hero's stale/quiet logic just to hand it back down. Reading from the
+    /// Store is the layer's own rule; threading it through a tab view is not.
+    private var reading: Reading? {
+        guard let last = pulse.entries.last else { return nil }
+        return Reading(
+            position: pulse.currentPosition,
+            space: last.space,
+            isQuiet: pulse.isPositionQuiet,
+            staleSince: pulse.isPositionStale ? pulse.relativeDay(for: last.date) : nil
+        )
+    }
 
     /// The four named quadrant spaces, in reading order, with their static
     /// aura-core dot colours (the same colour the history grid uses).
@@ -211,23 +225,16 @@ struct PulseInfoSheet: View {
 
 // MARK: - Preview
 
-#Preview("With a reading") {
-    ZStack {
-        AppColors.void.ignoresSafeArea()
-        PulseInfoSheet(reading: .init(
-            position: PulsePosition(energy: 0.69, openness: 0.68),
-            space: .expansive,
-            isQuiet: false,
-            staleSince: "4 days ago"
-        ))
-    }
-    .preferredColorScheme(.dark)
-}
-
-#Preview("Never checked in") {
+// PulseStore's init seeds preview entries under XCODE_RUNNING_FOR_PREVIEWS, so this
+// always renders WITH a reading (field + dot). The no-history branch — explainer only,
+// no field — has no preview: `entries` is private(set) and the seed is unconditional in
+// previews, so there is no honest way to stage an empty store from here. It's covered by
+// the `reading == nil` guard in fieldSection.
+#Preview {
     ZStack {
         AppColors.void.ignoresSafeArea()
         PulseInfoSheet()
     }
+    .environment(PulseStore())
     .preferredColorScheme(.dark)
 }

@@ -25,9 +25,14 @@ struct MapPulseHero: View {
 
     let layout: AppLayout
     var onCheckIn: () -> Void
+    /// Presented by MapView, NOT here. `.vaylSheet` is an `.overlay` on the view it's
+    /// attached to (VaylPresentation.swift:130) and sizes off that view's geometry, so
+    /// attaching it to this hero produced a sheet 0.85 × THE HERO's height, anchored to
+    /// the hero's bottom edge — a card floating mid-dashboard. It has to be attached at
+    /// screen level, alongside MapView's other sheets.
+    var onOpenInfo: () -> Void
     var isLinked: Bool = false
 
-    @State private var showInfo  = false
     @State private var isPressed = false
     @State private var infoPressed = false
 
@@ -78,11 +83,6 @@ struct MapPulseHero: View {
         // No minHeight floor. The old one (mapHeroSlotHeight, ≈221pt) was co-tuned to a
         // 135pt orb and stopped binding entirely at 184pt — see AppLayout's retirement
         // note. The hero sizes to its content, honestly.
-        // No AppLayout in scope here, so the screenHeight-less overload sizes off
-        // the presenting context (same pattern as ReflectionBannerView/LearnView).
-        .vaylSheet(isPresented: $showInfo, heightFraction: 0.85) {
-            PulseInfoSheet(reading: infoReading)
-        }
     }
 
     // MARK: - Hero block (aura + the read + the invite)
@@ -170,7 +170,7 @@ struct MapPulseHero: View {
             Spacer()
             Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                showInfo = true
+                onOpenInfo()
             } label: {
                 Image(systemName: AppIcons.infoCircle)
                     .font(AppFonts.body(15, weight: .regular, relativeTo: .footnote))
@@ -278,18 +278,6 @@ struct MapPulseHero: View {
         PulseHistory.lastLoggedSpaces(pulse.entries)
     }
 
-    /// What ⓘ plots. Nil before the first check-in: the explainer still stands, there's
-    /// just no dot to place yet.
-    private var infoReading: PulseInfoSheet.Reading? {
-        guard hasHistory else { return nil }
-        return .init(
-            position: currentPosition,
-            space: currentSpace,
-            isQuiet: isQuiet,
-            staleSince: isStale ? pulse.entries.last.map { pulse.relativeDay(for: $0.date) } : nil
-        )
-    }
-
     /// One spoken label for the whole hero. `children: .combine` would otherwise read the
     /// orb, the name, the sublabel, the weather line and the invite as one run-on string.
     /// States WHAT THIS IS only; what a tap does is the hint's job (CheckInTap), and
@@ -345,7 +333,7 @@ private struct CheckInTap: ViewModifier {
             OnboardingAtmosphere(config: .stat).ignoresSafeArea()
             ScrollView {
                 VStack {
-                    MapPulseHero(layout: AppLayout.from(geo), onCheckIn: {})
+                    MapPulseHero(layout: AppLayout.from(geo), onCheckIn: {}, onOpenInfo: {})
                         .padding(.horizontal, AppSpacing.lg)
                         .padding(.top, AppSpacing.lg)
                 }

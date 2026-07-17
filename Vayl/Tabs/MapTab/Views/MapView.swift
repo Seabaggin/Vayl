@@ -24,6 +24,7 @@ struct MapView: View {
 
     @State private var showCheckIn = false
     @State private var showPulseSheet = false
+    @State private var showPulseInfo  = false
     @State private var showVault = false
     @State private var showPaywall = false
     @State private var vaultStore = VaultStore()
@@ -174,6 +175,17 @@ struct MapView: View {
                     showVault = true
                     appState.vaultOpenPending = false
                 }
+            }
+            // Presented here, not on MapPulseHero: .vaylSheet is an .overlay that sizes
+            // and anchors to the view it's attached to, so hanging it off the hero gave a
+            // sheet 0.85 × the hero's height pinned to the hero's bottom edge. Screen
+            // level is the only correct host, same as the three sheets below.
+            .vaylSheet(
+                isPresented: $showPulseInfo,
+                heightFraction: 0.85,
+                screenHeight: layout.screenHeight
+            ) {
+                PulseInfoSheet()
             }
             .vaylSheet(
                 isPresented: $showPulseSheet,
@@ -335,6 +347,7 @@ struct MapView: View {
             MapPulseHero(
                 layout: layout,
                 onCheckIn: { startCheckIn() },
+                onOpenInfo: { showPulseInfo = true },
                 isLinked: store.hasUs
             )
             MapRecord(sessions: store.sessions, shares: store.categoryShares)
