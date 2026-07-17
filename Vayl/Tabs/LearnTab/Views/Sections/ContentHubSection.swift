@@ -83,10 +83,7 @@ struct ContentHubSection: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(AppSpacing.md)
-            // Opaque: this is a reading surface, and it sits low enough that glass
-            // would show a different slice of the atmosphere than the Knowledge hub
-            // above it. Glass is reserved for the alive card.
-            .learnReadingCard()
+            .learnCard()
         }
     }
 

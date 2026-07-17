@@ -93,10 +93,7 @@ struct LearnView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(AppSpacing.md)
-        // Was raw `.vaylGlassCard()` — the one card in the tab that never got the
-        // Learn treatment, so it had no hairline and a different radius. It's a
-        // notice, not the alive card: opaque, like the other reading surfaces.
-        .learnReadingCard()
+        .vaylGlassCard()
     }
 
     private var header: some View {
