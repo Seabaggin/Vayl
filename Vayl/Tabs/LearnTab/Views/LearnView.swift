@@ -62,13 +62,11 @@ struct LearnView: View {
         .vaylSheet(isPresented: $showResources, heightFraction: 0.75) {
             ResourcesOverlayView(resources: store.supportResources)
         }
-        .vaylSheet(isPresented: detailBinding, heightFraction: 0.85) {
-            if let f = selectedFinding {
-                FindingDetailView(finding: f, store: store, onOpenFinding: { selectedFinding = $0 })
-            }
+        .vaylSheet(item: $selectedFinding, heightFraction: 0.85) { finding in
+            FindingDetailView(finding: finding, store: store, onOpenFinding: { selectedFinding = $0 })
         }
-        .vaylSheet(isPresented: hubItemBinding, heightFraction: 0.7) {
-            if let selectedHubItem { ContentItemSheet(item: selectedHubItem) }
+        .vaylSheet(item: $selectedHubItem, heightFraction: 0.7) { item in
+            ContentItemSheet(item: item)
         }
         .vaylSheet(isPresented: $showAllVoices, heightFraction: 0.85) {
             VoicesListSheet(store: store, onSelect: { voice in
@@ -76,11 +74,6 @@ struct LearnView: View {
                 selectedHubItem = .voice(voice)
             })
         }
-    }
-
-    private var hubItemBinding: Binding<Bool> {
-        Binding(get: { selectedHubItem != nil },
-                set: { if !$0 { selectedHubItem = nil } })
     }
 
     private var loadErrorNotice: some View {
@@ -101,11 +94,6 @@ struct LearnView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(AppSpacing.md)
         .vaylGlassCard()
-    }
-
-    private var detailBinding: Binding<Bool> {
-        Binding(get: { selectedFinding != nil },
-                set: { if !$0 { selectedFinding = nil } })
     }
 
     private var header: some View {

@@ -219,13 +219,13 @@ struct ContentHubSection: View {
                 emptyPanel(headline: "No voices yet",
                            message: "People worth following will show up here.")
             } else {
-                ForEach(store.voicesSample()) { voice in
+                // Computed once, not per ForEach + per count check.
+                let sample = store.voicesSample()
+                ForEach(sample) { voice in
                     Button { onSelect(.voice(voice)) } label: { voiceRow(voice) }
                         .buttonStyle(PressableCardStyle())
                 }
-                if store.voices.count > store.voicesSample().count {
-                    seeAllVoices
-                }
+                if store.voices.count > sample.count { seeAllVoices }
             }
         }
     }

@@ -291,6 +291,48 @@ extension View {
         ))
     }
 
+    /// Item-driven sheet — the `vaylSheet` counterpart to SwiftUI's `sheet(item:)`.
+    ///
+    /// Use this whenever the presentation state IS a selected model. The
+    /// `isPresented` form forces two things at every call site: a hand-rolled
+    /// `Binding(get: item != nil, set: item = nil)` shim, and an `if let` inside the
+    /// sheet body — which can hand SwiftUI an empty sheet if the item clears while
+    /// the sheet is presenting (you get a scrim over nothing). Passing the item
+    /// through means the content is non-optional and a single sheet is guaranteed:
+    ///
+    ///     .vaylSheet(item: $selectedFinding, heightFraction: 0.85) { finding in
+    ///         FindingDetailView(finding: finding)
+    ///     }
+    ///
+    /// Reach for `isPresented` only when the sheet has no subject (Resources, a
+    /// settings pane) — a boolean is honest there.
+    func vaylSheet<Item: Identifiable, SheetContent: View>(
+        item: Binding<Item?>,
+        heightFraction: CGFloat = 0.55,
+        screenHeight: CGFloat? = nil,
+        showsGrabber: Bool = true,
+        @ViewBuilder content: @escaping (Item) -> SheetContent
+    ) -> some View {
+        // Snapshot the item so the content closure keeps rendering the outgoing
+        // value through the dismiss animation instead of collapsing to empty the
+        // instant the binding clears.
+        let presented = Binding(
+            get: { item.wrappedValue != nil },
+            set: { if !$0 { item.wrappedValue = nil } }
+        )
+        return modifier(VaylSheetModifier(
+            isPresented: presented,
+            heightFraction: heightFraction,
+            screenHeight: screenHeight,
+            showsGrabber: showsGrabber,
+            sheetContent: {
+                Group {
+                    if let value = item.wrappedValue { content(value) }
+                }
+            }
+        ))
+    }
+
     /// Multi-detent sheet (Apple-style stop points). Additive to `vaylSheet(heightFraction:)`;
     /// use when a sheet needs more than one resting height (e.g. a peek that drags up to full).
     /// Caller order sets the initial detent (first element). Spec:
