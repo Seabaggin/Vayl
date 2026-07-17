@@ -69,3 +69,9 @@ struct ResourcesOverlayView: View {
 #Preview {
     ResourcesOverlayView(resources: LearnStore().supportResources)
 }
+
+#Preview("In rail") {
+    VaylSheetPreviewHost(heightFraction: 0.75) {
+        ResourcesOverlayView(resources: LearnStore().supportResources)
+    }
+}

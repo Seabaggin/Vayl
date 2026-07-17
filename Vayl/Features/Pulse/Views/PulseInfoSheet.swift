@@ -160,3 +160,10 @@ struct PulseInfoSheet: View {
     }
     .preferredColorScheme(.dark)
 }
+
+#Preview("In rail") {
+    VaylSheetPreviewHost(heightFraction: 0.85) {
+        PulseInfoSheet()
+    }
+    .environment(PulseStore())
+}

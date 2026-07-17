@@ -80,3 +80,17 @@ struct DiscussionCardView: View {
     .preferredColorScheme(.dark)
 }
 #endif
+
+#Preview("Mutual prompt — in rail") {
+    VaylSheetPreviewHost(heightFraction: 0.80) {
+        DiscussionCardView(
+            card: CompanionCard(
+                id: "preview-rail",
+                desireItemId: "desire-001",
+                title: "New Relationship Energy",
+                prompt: "What part of this feels most exciting to you?",
+                suggestedDeckId: nil
+            )
+        )
+    }
+}

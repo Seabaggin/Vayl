@@ -134,3 +134,9 @@ struct VoicesListSheet: View {
         VoicesListSheet(store: LearnStore())
     }
 }
+
+#Preview("In rail") {
+    VaylSheetPreviewHost(heightFraction: 0.85) {
+        VoicesListSheet(store: LearnStore())
+    }
+}

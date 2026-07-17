@@ -221,6 +221,34 @@ struct MapView: View {
                     showPaywall = false
                 }, hostProvidesChrome: true)
             }
+            // Vault second-level sheets, hoisted from VaultSheet (which is
+            // itself `.vaylSheet` content and can't host its own sheets — see
+            // the anchoring note above the Pulse info sheet). Presentation
+            // state lives on VaultStore so the Vault's rows and this screen
+            // read one truth.
+            .vaylSheet(
+                isPresented: Binding(
+                    get: { vaultStore.logEditorOpen },
+                    set: { if !$0 { vaultStore.closeLogEditor() } }
+                ),
+                heightFraction: 0.9,
+                screenHeight: layout.screenHeight
+            ) {
+                EventEntryEditor(entry: vaultStore.editingLogEntry, store: vaultStore, onDone: {
+                    vaultStore.closeLogEditor()
+                    vaultStore.loadLog(context: modelContext)
+                })
+            }
+            .vaylSheet(
+                item: Binding(
+                    get: { vaultStore.selectedDiscussionCard },
+                    set: { if $0 == nil { vaultStore.closeDiscussion() } }
+                ),
+                heightFraction: 0.80,
+                screenHeight: layout.screenHeight
+            ) { card in
+                DiscussionCardView(card: card, onDismiss: { vaultStore.closeDiscussion() })
+            }
         }
         .task { await loadEverything() }
     }

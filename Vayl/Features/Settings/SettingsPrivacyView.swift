@@ -1,6 +1,7 @@
 // Vayl/Features/Settings/SettingsPrivacyView.swift
 
 import SwiftUI
+import SwiftData
 
 struct SettingsPrivacyView: View {
     let store: SettingsStore
@@ -47,3 +48,24 @@ struct SettingsPrivacyView: View {
         }
     }
 }
+
+#if DEBUG
+@MainActor
+private func previewSettingsStore(_ appState: AppState) -> SettingsStore {
+    SettingsStore(
+        modelContainer: .previewContainerWithProfile,
+        appState: appState,
+        authService: AuthService(),
+        entitlements: EntitlementStore(modelContainer: .previewContainerWithProfile, appState: appState)
+    )
+}
+
+#Preview("In rail") {
+    let appState = AppState()
+    VaylSheetPreviewHost(heightFraction: 0.92) {
+        SettingsPrivacyView(store: previewSettingsStore(appState))
+    }
+    .environment(appState)
+    .modelContainer(.previewContainerWithProfile)
+}
+#endif

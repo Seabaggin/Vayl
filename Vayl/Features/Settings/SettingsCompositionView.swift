@@ -5,6 +5,7 @@
 // Copy is wayfinding (how cards are phrased), never a label on either person.
 
 import SwiftUI
+import SwiftData
 
 struct SettingsCompositionView: View {
 
@@ -90,5 +91,26 @@ extension GenderDynamic {
         )
     )
     .preferredColorScheme(.dark)
+}
+#endif
+
+#if DEBUG
+@MainActor
+private func previewSettingsStore(_ appState: AppState) -> SettingsStore {
+    SettingsStore(
+        modelContainer: .previewContainerWithProfile,
+        appState: appState,
+        authService: AuthService(),
+        entitlements: EntitlementStore(modelContainer: .previewContainerWithProfile, appState: appState)
+    )
+}
+
+#Preview("In rail") {
+    let appState = AppState()
+    VaylSheetPreviewHost(heightFraction: 0.5) {
+        SettingsCompositionView(store: previewSettingsStore(appState))
+    }
+    .environment(appState)
+    .modelContainer(.previewContainerWithProfile)
 }
 #endif

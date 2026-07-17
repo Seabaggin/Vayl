@@ -385,4 +385,24 @@ final class VaultStore {
     func closeDiscussion() {
         selectedDiscussionCard = nil
     }
+
+    // MARK: - Log editor
+
+    // Presented by MapView (the screen root), not by VaultSheet — VaultSheet is
+    // itself `.vaylSheet` content, and a `.vaylSheet` anchors to the view it's
+    // attached to. The store owns the presentation state so the triggering rows
+    // (in VaultSheet) and the presenting screen (MapView) read one truth.
+    private(set) var logEditorOpen = false
+    private(set) var editingLogEntry: EventLogEntry?
+
+    /// Opens the log-entry editor; `nil` composes a new entry.
+    func openLogEditor(_ entry: EventLogEntry? = nil) {
+        editingLogEntry = entry
+        logEditorOpen = true
+    }
+
+    func closeLogEditor() {
+        logEditorOpen = false
+        editingLogEntry = nil
+    }
 }

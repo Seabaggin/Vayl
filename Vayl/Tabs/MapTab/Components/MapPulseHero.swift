@@ -99,10 +99,15 @@ struct MapPulseHero: View {
             // which was inflating this whole block's reported height and
             // pushing everything below it down. .background renders the
             // glow behind the aura without it participating in layout.
-            PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: layout.mapHeroOrbSize)
+            // rampStatic, not ramp(at:): the hero shows a NAME with no field under it, so
+            // the colour has to back the name up. Blended, a barely-Expansive reading
+            // painted itself #7B6CC2 (43% cyan, the rest magenta/indigo/rose cancelling
+            // toward grey) under the title "The Expansive Space" — while its own history
+            // dot 40pt below, which never blended, showed true cyan.
+            PulseAura(ramp: currentSpace.rampStatic, size: layout.mapHeroOrbSize)
                 .background {
                     MapHeroAmbientGlow(
-                        color: currentSpace.ramp(at: currentPosition).glow,
+                        color: currentSpace.rampStatic.glow,
                         orbSize: layout.mapHeroOrbSize
                     )
                 }

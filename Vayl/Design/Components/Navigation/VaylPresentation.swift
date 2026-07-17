@@ -100,11 +100,44 @@ private struct VaylCoverModifier<CoverContent: View>: ViewModifier {
     }
 }
 
+// MARK: - Host guard (DEBUG)
+
+#if DEBUG
+/// A `.vaylSheet` is an overlay: it sizes and anchors to the view it's attached
+/// to. Its host must therefore be a screen-root view (a tab/cover root that,
+/// after `.ignoresSafeArea()`, reaches the physical screen edges). Mounted on
+/// anything smaller — a card, a section, another sheet's content — the sheet
+/// renders as a clipped box pinned to that view's bottom edge, floating above
+/// the phone's bottom. This has shipped as a visual bug at least four times
+/// (MapPulseHero, ContentHubSection, PathNodeView, ReflectionBannerView), each
+/// caught by eye; this check makes the next one a named console failure instead.
+@MainActor
+private func warnIfNotScreenRootHost(_ frame: CGRect, callSite: String) {
+    let screen = UIApplication.shared.connectedScenes
+        .compactMap { ($0 as? UIWindowScene)?.screen.bounds }
+        .first
+    guard let screen else { return }
+    let gapBelow = screen.height - frame.maxY
+    let widthShortfall = screen.width - frame.width
+    guard gapBelow > 1 || widthShortfall > 1 else { return }
+    print("""
+    ⚠️ VaylSheet host violation — \(callSite)
+       The presenting host does not reach the physical screen bounds \
+    (gap below: \(Int(gapBelow))pt, width shortfall: \(Int(widthShortfall))pt). \
+    A `.vaylSheet` anchors to its host: this sheet will render as a box pinned \
+    above the screen bottom. Move the `.vaylSheet` to the screen root (see \
+    MapView's Pulse sheets for the pattern).
+    """)
+}
+#endif
+
 // MARK: - Sheet
 
 private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
 
     @Binding var isPresented: Bool
+    /// "file:line" of the `.vaylSheet` call, for the DEBUG host-guard warning.
+    let callSite: String
     let heightFraction: CGFloat
     /// When provided, the sheet height is this × heightFraction. Use it when the
     /// modifier is attached over tall/scrolling content, where the overlay's own
@@ -213,6 +246,11 @@ private struct VaylSheetModifier<SheetContent: View>: ViewModifier {
                 // value if the sheet is grabbed mid-rise, where the fixed `arrive`
                 // curve would finish its scripted duration first.
                 .animation(AppAnimation.arriveSpring.reduceMotionSafe, value: isPresented)
+                #if DEBUG
+                .onChange(of: isPresented) { _, up in
+                    if up { warnIfNotScreenRootHost(geo.frame(in: .global), callSite: callSite) }
+                }
+                #endif
             }
             .ignoresSafeArea()
             .allowsHitTesting(isPresented)
@@ -280,10 +318,13 @@ extension View {
         heightFraction: CGFloat = 0.55,
         screenHeight: CGFloat? = nil,
         showsGrabber: Bool = true,
+        file: StaticString = #fileID,
+        line: UInt = #line,
         @ViewBuilder content: @escaping () -> SheetContent
     ) -> some View {
         modifier(VaylSheetModifier(
             isPresented: isPresented,
+            callSite: "\(file):\(line)",
             heightFraction: heightFraction,
             screenHeight: screenHeight,
             showsGrabber: showsGrabber,
@@ -311,6 +352,8 @@ extension View {
         heightFraction: CGFloat = 0.55,
         screenHeight: CGFloat? = nil,
         showsGrabber: Bool = true,
+        file: StaticString = #fileID,
+        line: UInt = #line,
         @ViewBuilder content: @escaping (Item) -> SheetContent
     ) -> some View {
         // Snapshot the item so the content closure keeps rendering the outgoing
@@ -322,6 +365,7 @@ extension View {
         )
         return modifier(VaylSheetModifier(
             isPresented: presented,
+            callSite: "\(file):\(line)",
             heightFraction: heightFraction,
             screenHeight: screenHeight,
             showsGrabber: showsGrabber,
@@ -354,10 +398,13 @@ extension View {
         showsGrabber: Bool = true,
         scrimTapDismisses: Bool = true,
         interactiveDismissDisabled: Bool = false,
+        file: StaticString = #fileID,
+        line: UInt = #line,
         @ViewBuilder content: @escaping () -> SheetContent
     ) -> some View {
         modifier(VaylDetentSheetModifier(
             isPresented: isPresented,
+            callSite: "\(file):\(line)",
             detents: detents,
             screenHeight: screenHeight,
             showsGrabber: showsGrabber,
@@ -396,6 +443,8 @@ enum VaylSheetDetent: Equatable {
 private struct VaylDetentSheetModifier<SheetContent: View>: ViewModifier {
 
     @Binding var isPresented: Bool
+    /// "file:line" of the `.vaylSheet` call, for the DEBUG host-guard warning.
+    let callSite: String
     let detents: [VaylSheetDetent]
     let screenHeight: CGFloat?
     let showsGrabber: Bool
@@ -512,6 +561,11 @@ private struct VaylDetentSheetModifier<SheetContent: View>: ViewModifier {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .animation(AppAnimation.arriveSpring.reduceMotionSafe, value: isPresented)
                 .animation(AppAnimation.arriveSpring.reduceMotionSafe, value: detentIndex)
+                #if DEBUG
+                .onChange(of: isPresented) { _, up in
+                    if up { warnIfNotScreenRootHost(geo.frame(in: .global), callSite: callSite) }
+                }
+                #endif
             }
             .ignoresSafeArea()
             .allowsHitTesting(isPresented)
@@ -584,6 +638,44 @@ private struct VaylShareSheetModifier<Item: Identifiable>: ViewModifier {
         }
     }
 }
+
+// MARK: - Preview harness
+
+#if DEBUG
+/// Renders sheet content through the REAL presentation rail — chrome, grabber,
+/// scrim, and bottom anchoring over a void screen root — so a sheet's preview
+/// shows what actually presents, not content floating on a background. Use it
+/// in every sheet content view's #Preview, passing the same `heightFraction`
+/// the real call site uses:
+///
+///     #Preview("In rail") {
+///         VaylSheetPreviewHost(heightFraction: 0.85) { PulseInfoSheet() }
+///             .environment(PulseStore())
+///     }
+struct VaylSheetPreviewHost<C: View>: View {
+    var heightFraction: CGFloat = 0.55
+    @ViewBuilder var content: () -> C
+
+    var body: some View {
+        GeometryReader { geo in
+            let layout = AppLayout.from(geo)
+            ZStack {
+                AppColors.void.ignoresSafeArea()
+                OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+            }
+            .frame(width: layout.screenWidth)
+            .vaylSheet(
+                isPresented: .constant(true),
+                heightFraction: heightFraction,
+                screenHeight: layout.screenHeight
+            ) {
+                content()
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+}
+#endif
 
 // MARK: - View API — System Chrome Exemptions
 

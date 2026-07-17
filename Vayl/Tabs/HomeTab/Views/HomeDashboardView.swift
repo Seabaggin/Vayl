@@ -150,6 +150,15 @@ struct HomeDashboardView: View {
     /// Presents the Pulse check-in in place over Home (no tab-yank). The shared
     /// PulseStore the cover writes to is the same instance the rail reads.
     @State private var showPulseCheckIn = false
+
+    /// Reflection input, shared between the banner (inline pills/note) and the
+    /// full pill sheet. Owned here — the sheet must be presented at this screen
+    /// root (a `.vaylSheet` anchors to the view it's attached to; hanging it
+    /// off the banner card sized it to the banner and pinned it mid-screen).
+    @State private var reflectionPills: Set<String> = []
+    @State private var reflectionNote: String = ""
+    @State private var reflectionShare: Bool = true
+    @State private var showReflectionPillSheet = false
     @Environment(PulseStore.self) private var pulseStore
 
     /// Tonight's hand, set when the carousel hands off via `onStartHand`. Non-nil
@@ -507,6 +516,26 @@ struct HomeDashboardView: View {
             .vaylCover(isPresented: $showPulseCheckIn, confirmOnExit: false) {
                 PulseCheckInView(store: pulseStore, onClose: { showPulseCheckIn = false })
             }
+            // The reflection banner's full pill browser, presented here at the
+            // screen root (see the reflection state declarations above).
+            .vaylSheet(
+                isPresented: $showReflectionPillSheet,
+                heightFraction: 0.85,
+                screenHeight: layout.screenHeight
+            ) {
+                ReflectionPillSheet(
+                    selectedPills: $reflectionPills,
+                    noteText: $reflectionNote,
+                    shareWithPartner: $reflectionShare,
+                    partnerName: bannerPartnerName,
+                    onDone: {
+                        showReflectionPillSheet = false
+                        onReflectionDone?(Array(reflectionPills),
+                                          reflectionNote.isEmpty ? nil : reflectionNote,
+                                          reflectionShare)
+                    }
+                )
+            }
         }
     }
 
@@ -606,7 +635,11 @@ struct HomeDashboardView: View {
                     sessionLabel: bannerSessionLabel,
                     partnerName: bannerPartnerName,
                     onDone: onReflectionDone,
-                    onDismiss: onReflectionBannerDismiss
+                    onDismiss: onReflectionBannerDismiss,
+                    selectedPills: $reflectionPills,
+                    noteText: $reflectionNote,
+                    shareWithPartner: $reflectionShare,
+                    onMore: { showReflectionPillSheet = true }
                 )
                 .padding(.horizontal, AppSpacing.sm)
                 .padding(.top, AppSpacing.sm)

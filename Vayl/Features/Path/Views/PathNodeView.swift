@@ -28,25 +28,15 @@ struct PathNodeView: View {
     @Bindable var store: PathStore
     let landmarkId: String
 
-    /// The presenting screen's true height, threaded down from the caller's own
-    /// `AppLayout` (PathTrailView / PathLedgerView, Tasks 11-12) — same
-    /// `screenHeight: layout.screenHeight` pattern MapView.swift and
-    /// SettingsView.swift already use when a `.vaylSheet` is nested under
-    /// content that doesn't itself expand to fill its offered height.
-    ///
-    /// PathNodeView is content dropped inside another sheet/card, not a screen
-    /// root, so its own root VStack sizes to its intrinsic content height
-    /// rather than the true screen height. Without this, `dateEditorSheet`'s
-    /// nested `.vaylSheet`'s internal GeometryReader would measure that small
-    /// intrinsic height instead (VaylPresentation.swift's `screenHeight` doc
-    /// comment), undersizing the graphical DatePicker. Optional and defaulted
-    /// so this view stays independently previewable/buildable before Tasks
-    /// 11-12 exist to supply the real value.
-    var screenHeight: CGFloat?
+    /// Requests the "Did it" date editor from the presenting screen
+    /// (PathScreen). PathNodeView is itself `.vaylSheet` content, and a
+    /// `.vaylSheet` anchors to the view it's attached to — presenting from
+    /// here sized the editor to this view's intrinsic bounds and pinned it to
+    /// their bottom edge, a floating box mid-screen. The screen root is the
+    /// only correct host (see PathDateEditorSheet below).
+    var onEditDate: () -> Void = {}
 
     @State private var showOverflow = false
-    @State private var showDatePicker = false
-    @State private var pendingDidItDate = Date()
 
     private var landmark: PathLandmark? {
         store.landmarks.first { $0.id == landmarkId }
@@ -81,9 +71,6 @@ struct PathNodeView: View {
                 note
             }
             .padding(AppSpacing.lg)
-            .vaylSheet(isPresented: $showDatePicker, heightFraction: 0.62, screenHeight: screenHeight) {
-                dateEditorSheet
-            }
         } else {
             EmptyView()
         }
@@ -333,8 +320,7 @@ struct PathNodeView: View {
                     .foregroundStyle(AppColors.textTertiary)
             }
             Button("Edit date") {
-                pendingDidItDate = store.didItDate(for: landmarkId) ?? Date()
-                showDatePicker = true
+                onEditDate()
             }
             .font(AppFonts.buttonLabelSmall)
             .foregroundStyle(AppColors.spectrumCyan)
@@ -345,43 +331,6 @@ struct PathNodeView: View {
         .overlay(
             Capsule().stroke(AppColors.borderSubtle, lineWidth: 1)
         )
-    }
-
-    private var dateEditorSheet: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: AppSpacing.md) {
-                Text("When did this happen?")
-                    .font(AppFonts.sectionHeading)
-                    .foregroundStyle(AppColors.textPrimary)
-                Text("The date records when it was told to the app, not a claim about exact timing — change it any time to reflect reality.")
-                    .font(AppFonts.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-                DatePicker("", selection: $pendingDidItDate, displayedComponents: .date)
-                    .labelsHidden()
-                    .datePickerStyle(.graphical)
-                    .tint(AppColors.accentPrimary)
-                saveDateButton
-            }
-            .padding(AppSpacing.lg)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    private var saveDateButton: some View {
-        Button {
-            Task {
-                try? await store.editDidItDate(landmarkId, date: pendingDidItDate)
-                showDatePicker = false
-            }
-        } label: {
-            Text("Save")
-                .font(AppFonts.buttonLabel)
-                .foregroundStyle(Color.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, AppSpacing.md)
-                .background(Capsule().fill(AppColors.accentSecondary))
-        }
-        .buttonStyle(PressableCardStyle())
     }
 
     // MARK: - Discussed — two distinguishable paths (spec §5)
@@ -416,6 +365,61 @@ struct PathNodeView: View {
         .foregroundStyle(AppColors.textTertiary)
         .frame(maxWidth: .infinity)
         .multilineTextAlignment(.center)
+    }
+}
+
+// MARK: - Date editor sheet
+
+/// The "Did it" date editor, presented by PathScreen (the screen root), NOT by
+/// PathNodeView — see `onEditDate`'s doc comment. Self-contained: it seeds its
+/// picker from the store on appear and commits through the store on Save.
+struct PathDateEditorSheet: View {
+    let store: PathStore
+    let landmarkId: String
+    /// Closes the presenting `.vaylSheet` (a custom overlay — the owner
+    /// collapses its presentation state; `dismiss()` has nothing to act on).
+    var onDone: () -> Void
+
+    @State private var pendingDate = Date()
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
+                Text("When did this happen?")
+                    .font(AppFonts.sectionHeading)
+                    .foregroundStyle(AppColors.textPrimary)
+                Text("The date records when it was told to the app, not a claim about exact timing — change it any time to reflect reality.")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+                DatePicker("", selection: $pendingDate, displayedComponents: .date)
+                    .labelsHidden()
+                    .datePickerStyle(.graphical)
+                    .tint(AppColors.accentPrimary)
+                saveButton
+            }
+            .padding(AppSpacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .onAppear {
+            pendingDate = store.didItDate(for: landmarkId) ?? Date()
+        }
+    }
+
+    private var saveButton: some View {
+        Button {
+            Task {
+                try? await store.editDidItDate(landmarkId, date: pendingDate)
+                onDone()
+            }
+        } label: {
+            Text("Save")
+                .font(AppFonts.buttonLabel)
+                .foregroundStyle(Color.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.md)
+                .background(Capsule().fill(AppColors.accentSecondary))
+        }
+        .buttonStyle(PressableCardStyle())
     }
 }
 
@@ -512,3 +516,13 @@ private struct PathNodeCuriousPreviewHarness: View {
     PathNodeCuriousPreviewHarness()
 }
 #endif
+
+#Preview("Date editor — in rail") {
+    let store = PathStore(
+        coupleId: UUID(), profileId: UUID(),
+        pathStyle: "swinging", transport: MockPathTransport()
+    )
+    VaylSheetPreviewHost(heightFraction: 0.62) {
+        PathDateEditorSheet(store: store, landmarkId: "strip-club", onDone: {})
+    }
+}

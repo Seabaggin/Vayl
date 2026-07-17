@@ -225,3 +225,15 @@ struct ContentItemSheet: View {
         ContentItemSheet(item: .voice(v))
     }
 }
+
+#Preview("Voice — in rail") {
+    let v = Voice(
+        id: "polyphiliablog", name: "Leanne Yau", role: "Polyamorous Relationship Educator",
+        blurb: "Polyamory education, plainly and at scale.",
+        topic: .polyamory, mode: .educator, platform: "Instagram", background: nil,
+        links: [ContentLink(label: "Instagram", url: "https://www.instagram.com/polyphiliablog/")]
+    )
+    VaylSheetPreviewHost(heightFraction: 0.7) {
+        ContentItemSheet(item: .voice(v))
+    }
+}

@@ -1,8 +1,34 @@
 #!/bin/bash
+#
+# Generates the gitignored Vayl.xcconfig (the baseConfiguration for every build
+# configuration) from environment variables. Xcode substitutes these build
+# settings into Vayl/Vayl.plist, which PostHogService/SupabaseService read at
+# runtime. Vayl.xcconfig is gitignored — real keys never land in git.
+#
+# WHERE TO PASTE REAL KEYS: put them in `.env` at the repo root (gitignored),
+# one per line, e.g.
+#   SUPABASE_URL=https://<project>.supabase.co
+#   SUPABASE_ANON_KEY=sb_publishable_...
+#   POSTHOG_API_KEY=phc_...            <- PostHog project API key (project 512827)
+#   POSTHOG_HOST=https://us.i.posthog.com
+# then run:  scripts/generate-vayl-xcconfig.sh
+# (Already-exported environment variables take precedence over .env.)
 
 set -euo pipefail
 
-output_path="${1:-Vayl.xcconfig}"
+repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Load .env if present; exported env vars win over .env values.
+if [[ -f "${repo_root}/.env" ]]; then
+  while IFS='=' read -r name value; do
+    [[ -z "${name}" || "${name}" == \#* ]] && continue
+    if [[ -z "${!name:-}" ]]; then
+      export "${name}=${value}"
+    fi
+  done < "${repo_root}/.env"
+fi
+
+output_path="${1:-${repo_root}/Vayl.xcconfig}"
 required_variables=(
   SUPABASE_URL
   SUPABASE_ANON_KEY
@@ -12,7 +38,7 @@ required_variables=(
 
 for variable_name in "${required_variables[@]}"; do
   if [[ -z "${!variable_name:-}" ]]; then
-    echo "Missing required environment variable: ${variable_name}" >&2
+    echo "Missing required variable: ${variable_name} (export it or add it to ${repo_root}/.env)" >&2
     exit 1
   fi
 done

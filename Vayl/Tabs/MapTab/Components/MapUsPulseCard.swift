@@ -363,8 +363,8 @@ private struct UsCardPreviewStage<Content: View>: View {
         MapUsPulseCard(
             layout: layout,
             state: .split(mine: .current, partner: .current),
-            myAura: AuraColors.bilinear(energy: mine.resolvedPosition.energy, openness: mine.resolvedPosition.openness),
-            partnerAura: AuraColors.bilinear(energy: partner.resolvedPosition.energy, openness: partner.resolvedPosition.openness),
+            myAura: mine.space.rampStatic,
+            partnerAura: partner.space.rampStatic,
             myLastEntry: mine,
             partnerLastEntry: partner,
             mySpaceName: mine.space.displayName,
@@ -384,8 +384,8 @@ private struct UsCardPreviewStage<Content: View>: View {
         MapUsPulseCard(
             layout: layout,
             state: .split(mine: .current, partner: .quiet),
-            myAura: AuraColors.bilinear(energy: mine.resolvedPosition.energy, openness: mine.resolvedPosition.openness),
-            partnerAura: AuraColors.bilinear(energy: partner.resolvedPosition.energy, openness: partner.resolvedPosition.openness),
+            myAura: mine.space.rampStatic,
+            partnerAura: partner.space.rampStatic,
             myLastEntry: mine,
             partnerLastEntry: partner,
             mySpaceName: mine.space.displayName,
@@ -404,7 +404,7 @@ private struct UsCardPreviewStage<Content: View>: View {
         MapUsPulseCard(
             layout: layout,
             state: .split(mine: .current, partner: .unwritten),
-            myAura: AuraColors.bilinear(energy: mine.resolvedPosition.energy, openness: mine.resolvedPosition.openness),
+            myAura: mine.space.rampStatic,
             partnerAura: AuraColors.neutral,
             myLastEntry: mine,
             partnerLastEntry: nil,

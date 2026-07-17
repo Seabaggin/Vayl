@@ -336,3 +336,13 @@ struct SessionBuilderView: View {
     }
     .preferredColorScheme(.dark)
 }
+
+#Preview("Session Builder — in rail") {
+    VaylSheetPreviewHost(heightFraction: 0.92) {
+        SessionBuilderView(
+            deck: .previewWithCards,
+            onConfirm: { _ in },
+            onCancel: {}
+        )
+    }
+}

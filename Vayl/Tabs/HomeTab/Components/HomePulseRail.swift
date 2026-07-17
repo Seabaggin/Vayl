@@ -50,9 +50,12 @@ struct HomePulseRail: View {
                 let position = entry.resolvedPosition
                 let space    = entry.space
                 card(
-                    // Bilinear-coloured orb + six-space name, matching the check-in reveal and
-                    // Map hero — a Neutral/Uncharted reading reads the same everywhere.
-                    orb: PulseAura(ramp: space.ramp(at: position), size: orbSize, haloSpread: orbHaloSpread),
+                    // rampStatic, not ramp(at:) — the rail names a space with no field under
+                    // it, so the colour must back the name up (rule: colour blends only where
+                    // position is visible; see PulseSpace.ramp(at:)). Blending here painted a
+                    // barely-Expansive day muted lavender under the word "Expansive". Still
+                    // matches the Map hero and the history dots; only the field blends now.
+                    orb: PulseAura(ramp: space.rampStatic, size: orbSize, haloSpread: orbHaloSpread),
                     hero: space.displayName,
                     heroColor: AppColors.textPrimary,
                     sub: space.descriptors(at: position),

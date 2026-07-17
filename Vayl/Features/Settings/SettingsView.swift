@@ -28,6 +28,13 @@ struct SettingsView: View {
     @State private var showPartner: Bool = false
     @State private var showComposition: Bool = false
 
+    // Second-level sheets, hoisted from the sub-screens that trigger them.
+    // A `.vaylSheet` anchors to the view it's attached to; the sub-screens are
+    // themselves sheet content, so their presentations live at this screen root.
+    @State private var identityEditField: SettingsIdentityView.IdentityField?
+    @State private var showPairingInvite: Bool = false
+    @State private var showPairingJoin: Bool = false
+
     // Sheet / dialog state
     @State private var showUnlink: Bool = false
     @State private var showSignOutConfirm: Bool = false
@@ -78,7 +85,11 @@ struct SettingsView: View {
             }
             .vaylSheet(isPresented: $showYou, heightFraction: 0.92, screenHeight: layout.screenHeight) {
                 if let store {
-                    SettingsIdentityView(store: store, onClose: { showYou = false })
+                    SettingsIdentityView(
+                        store: store,
+                        onClose: { showYou = false },
+                        onEdit: { identityEditField = $0 }
+                    )
                 }
             }
             .vaylSheet(isPresented: $showPrivacy, heightFraction: 0.92, screenHeight: layout.screenHeight) {
@@ -96,7 +107,12 @@ struct SettingsView: View {
             }
             .vaylSheet(isPresented: $showPartner, heightFraction: 0.92, screenHeight: layout.screenHeight) {
                 if let store {
-                    SettingsPartnerView(store: store, onClose: { showPartner = false })
+                    SettingsPartnerView(
+                        store: store,
+                        onClose: { showPartner = false },
+                        onInvite: { showPairingInvite = true },
+                        onJoin: { showPairingJoin = true }
+                    )
                 }
             }
             .vaylSheet(isPresented: $showComposition, heightFraction: 0.5, screenHeight: layout.screenHeight) {
@@ -111,6 +127,29 @@ struct SettingsView: View {
                     onClose: { showPaywall = false },
                     hostProvidesChrome: true
                 )
+            }
+            // Second-level sheets (triggered from inside the You / Partner
+            // sheets, presented here at the screen root — see the state
+            // declarations above). Attached after the sub-screen sheets so
+            // they layer on top.
+            .vaylSheet(item: $identityEditField, heightFraction: 0.5, screenHeight: layout.screenHeight) { field in
+                if let store {
+                    IdentityEditSheet(field: field, profile: profile, store: store) {
+                        identityEditField = nil
+                    }
+                }
+            }
+            .vaylSheet(isPresented: $showPairingInvite, heightFraction: 0.92, screenHeight: layout.screenHeight) {
+                PairingInviteView(
+                    store: PairingStore(modelContainer: modelContext.container, appState: appState)
+                )
+                .environment(appState)
+            }
+            .vaylSheet(isPresented: $showPairingJoin, heightFraction: 0.92, screenHeight: layout.screenHeight) {
+                PairingJoinView(
+                    store: PairingStore(modelContainer: modelContext.container, appState: appState)
+                )
+                .environment(appState)
             }
             .confirmationDialog("Unlink partner?", isPresented: $showUnlink, titleVisibility: .visible) {
                 Button("Unlink", role: .destructive) {

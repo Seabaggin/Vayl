@@ -27,6 +27,9 @@ struct LearnMediaItem: Codable, Identifiable, Hashable {
     /// Where it lives ("Netflix", "Apple · Spotify"). Display only.
     let platform: String?
     let artworkUrl: String?
+    /// Asset catalog name for a locally bundled cover image (e.g. "book-cover-polysecure").
+    /// Preferred over artworkUrl when present — no network, no latency.
+    let artworkAsset: String?
     /// Longer copy for the item sheet: what it is, who it's for, what it isn't.
     /// Nil until written — the sheet falls back to `positioning`.
     let background: String?

@@ -154,3 +154,15 @@ struct EventEntryEditor: View {
         .opacity(blank ? 0.5 : 1)
     }
 }
+
+// MARK: - Previews
+
+#if DEBUG
+#Preview("New entry — in rail") {
+    VaylSheetPreviewHost(heightFraction: 0.9) {
+        EventEntryEditor(entry: nil, store: VaultStore(), onDone: {})
+    }
+    .environment(AppState())
+    .modelContainer(.previewContainer)
+}
+#endif

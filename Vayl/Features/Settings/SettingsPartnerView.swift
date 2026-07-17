@@ -12,8 +12,13 @@ struct SettingsPartnerView: View {
     @Environment(\.modelContext)       private var modelContext
     @Environment(\.dismiss)            private var dismiss
 
-    @State private var showInvite: Bool = false
-    @State private var showJoin: Bool = false
+    /// Pairing sheets are presented by SettingsView (the screen root), NOT here.
+    /// This view is itself `.vaylSheet` content, and a `.vaylSheet` anchors to
+    /// the view it's attached to — presenting from here would size the pairing
+    /// sheets to THIS sheet's bounds, not the screen.
+    var onInvite: () -> Void = {}
+    var onJoin: () -> Void = {}
+
     @State private var showUnlink: Bool = false
 
     var body: some View {
@@ -28,24 +33,6 @@ struct SettingsPartnerView: View {
         }
         .task {
             await coupleContext.refreshIfNeeded()
-        }
-        .vaylSheet(isPresented: $showInvite, heightFraction: 0.92) {
-            PairingInviteView(
-                store: PairingStore(
-                    modelContainer: modelContext.container,
-                    appState: appState
-                )
-            )
-            .environment(appState)
-        }
-        .vaylSheet(isPresented: $showJoin, heightFraction: 0.92) {
-            PairingJoinView(
-                store: PairingStore(
-                    modelContainer: modelContext.container,
-                    appState: appState
-                )
-            )
-            .environment(appState)
         }
         .confirmationDialog(
             "Unlink partner?",
@@ -120,7 +107,7 @@ struct SettingsPartnerView: View {
             SettingsCard {
                 VStack(spacing: 0) {
                     Button {
-                        showInvite = true
+                        onInvite()
                     } label: {
                         SettingsNavRow(
                             icon: "envelope.fill",
@@ -134,7 +121,7 @@ struct SettingsPartnerView: View {
                     Divider().overlay(AppColors.borderSubtle)
 
                     Button {
-                        showJoin = true
+                        onJoin()
                     } label: {
                         SettingsNavRow(
                             icon: "link.badge.plus",
@@ -149,3 +136,26 @@ struct SettingsPartnerView: View {
         }
     }
 }
+
+#if DEBUG
+@MainActor
+private func previewSettingsStore(_ appState: AppState) -> SettingsStore {
+    SettingsStore(
+        modelContainer: .previewContainerWithProfile,
+        appState: appState,
+        authService: AuthService(),
+        entitlements: EntitlementStore(modelContainer: .previewContainerWithProfile, appState: appState)
+    )
+}
+
+#Preview("In rail") {
+    let appState = AppState()
+    let entitlements = EntitlementStore(modelContainer: .previewContainerWithProfile, appState: appState)
+    VaylSheetPreviewHost(heightFraction: 0.92) {
+        SettingsPartnerView(store: previewSettingsStore(appState))
+    }
+    .environment(appState)
+    .environment(CoupleContext(appState: appState, entitlements: entitlements, modelContainer: .previewContainerWithProfile))
+    .modelContainer(.previewContainerWithProfile)
+}
+#endif

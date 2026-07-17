@@ -101,17 +101,10 @@ struct PaywallSheet: View {
             } message: {
                 Text("We couldn't find a purchase to restore on this Apple ID. If you've bought Vayl, make sure you're signed in with the same Apple ID you used to purchase.")
             }
-            .vaylSheet(
-                isPresented: Binding(
-                    get: { legalDoc != nil },
-                    set: { if !$0 { legalDoc = nil } }
-                ),
-                heightFraction: 0.92
-            ) {
-                if let doc = legalDoc {
-                    SafariView(url: doc.url)
-                }
-            }
+            // System Safari sheet (same route as SettingsView/SignInView): the
+            // paywall is itself `.vaylSheet` content, so a nested `.vaylSheet`
+            // would anchor to the paywall's bounds, not the screen.
+            .vaylSafariSheet(item: $legalDoc) { $0.url }
     }
 
     // Content-height when it fits; scrolls when it can't (large Dynamic Type / small screens).
@@ -526,3 +519,11 @@ struct PaywallSheet: View {
     .preferredColorScheme(.dark)
 }
 #endif
+
+#Preview("Settings door — in rail") {
+    VaylSheetPreviewHost(heightFraction: 0.65) {
+        PaywallSheet(entry: .settings, hostProvidesChrome: true)
+    }
+    .environment(EntitlementStore(modelContainer: .previewContainer, appState: AppState()))
+    .preferredColorScheme(.dark)
+}

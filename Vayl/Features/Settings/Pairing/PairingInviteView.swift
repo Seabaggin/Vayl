@@ -399,3 +399,12 @@ struct PairingInviteView: View {
         .environment(appState)
         .preferredColorScheme(.dark)
 }
+
+#Preview("In rail") {
+    let container = ModelContainer.previewContainer
+    let appState  = AppState()
+    VaylSheetPreviewHost(heightFraction: 0.92) {
+        PairingInviteView(store: PairingStore(modelContainer: container, appState: appState))
+    }
+    .environment(appState)
+}

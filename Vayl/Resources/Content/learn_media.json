@@ -7,7 +7,8 @@
     "positioning": "The clearest map of the territory.",
     "tier": null,
     "platform": null,
-    "artwork_url": "https://is1-ssl.mzstatic.com/image/thumb/Publication111/v4/86/31/e0/8631e0ca-a683-aff6-d3a3-668926fd7243/9780399579677.jpg/400x400bb.jpg",
+    "artwork_url": null,
+    "artwork_asset": "book-cover-ethical-slut",
     "background": "The foundational text for consensual non-monogamy. Easton and Hardy lay out the philosophy, the ethics, and the practicalities of loving more than one person, from managing jealousy to navigating multiple relationships honestly. It is opinionated and sex-positive, written from decades of lived experience rather than clinical distance.",
     "links": []
   },
@@ -20,6 +21,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-opening-up",
     "background": "A structured survey of the different ways people practice open relationships, from swinging to polyfidelity to solo polyamory. Taormino interviewed dozens of people living these structures and lets their experiences drive the book. Less philosophy, more: here is what this actually looks like day to day.",
     "links": []
   },
@@ -32,6 +34,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-love-in-abundance",
     "background": "A short, plain-language introduction to polyamory aimed at people who are new to the idea or still figuring out whether it applies to them. Labriola is a counselor who works with non-monogamous clients, and the book reads like a calm conversation rather than a manifesto. Good if The Ethical Slut felt like too much to start.",
     "links": []
   },
@@ -44,6 +47,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-come-as-you-are",
     "background": "Nagoski draws on sex research to explain the dual-control model: desire has both an accelerator (things that turn it on) and a brake (things that suppress it), and the balance between them varies enormously from person to person. The book is written primarily for women but the underlying framework applies broadly. Useful for understanding why desire can feel inconsistent or confusing.",
     "links": []
   },
@@ -55,7 +59,8 @@
     "positioning": "Why some thrive, others struggle.",
     "tier": null,
     "platform": null,
-    "artwork_url": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/fe/8a/bb/fe8abbb2-2aa5-f564-8a46-eb6fab21ec4a/9781944934996.jpg/400x400bb.jpg",
+    "artwork_url": null,
+    "artwork_asset": "book-cover-polysecure",
     "background": "Fern is a therapist who works with non-monogamous clients. The book applies attachment theory, the research on secure vs. anxious vs. avoidant bonding, to the specific challenges of building and maintaining multiple relationships. It explains why people with the same values can still feel chronically insecure or overwhelmed, and what the path toward earned security actually involves.",
     "links": []
   },
@@ -68,6 +73,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-polywise",
     "background": "The follow-up to Polysecure. Where that book focused on attachment patterns, this one focuses on the cognitive and emotional reorientation required when moving from a monogamous to an open structure. Fern addresses the assumptions people carry from monogamy that cause friction in open relationships, things like ownership, hierarchy, and what jealousy is actually signaling.",
     "links": []
   },
@@ -80,6 +86,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-nonviolent-communication",
     "background": "Rosenberg developed NVC as a structured approach to communication that separates observation from judgment, and needs from demands. The framework is widely used in relationship therapy and conflict mediation. The core skill is learning to say what you need without triggering the other person's defenses, and to hear what they need without taking it personally.",
     "links": []
   },
@@ -92,6 +99,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-mating-in-captivity",
     "background": "Perel argues that the qualities that make a relationship feel safe, familiarity, reliability, closeness, are structurally at odds with the conditions that generate erotic desire. The book is not specifically about non-monogamy, but it is widely read in those communities because it names something real about how long-term intimacy and aliveness can seem to work against each other.",
     "links": []
   },
@@ -104,6 +112,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": null,
     "background": "Loree is a therapist specializing in non-monogamy and kink. The book is for people who want to practice open relationships but find that jealousy or attachment panic keeps derailing them. She draws on somatic and neurobiological frameworks to explain why these responses happen and what actually helps, beyond the typical advice to \"just communicate more.\"",
     "links": []
   },
@@ -116,6 +125,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-jealousy-workbook",
     "background": "An interactive workbook rather than a narrative read. Labriola provides guided exercises to help readers identify which specific fear or unmet need is driving their jealousy in a given situation. Useful for people who know they feel jealous but can't get specific enough about why to actually address it.",
     "links": []
   },
@@ -128,6 +138,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-stepping-off-escalator",
     "background": "The \"relationship escalator\" is Gahran's term for the default trajectory most people follow: date, become exclusive, move in, marry, have kids. The book is about the people who intentionally get off that escalator, not because they don't want connection, but because they want different things. It documents the wide range of unconventional structures people actually live and validates that none of them require the standard milestones.",
     "links": []
   },
@@ -140,6 +151,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-smart-girls-guide-polyamory",
     "background": "Winston writes from a solo polyamory and relationship anarchy perspective, meaning she does not organize her relationships around a primary couple or follow a hierarchical structure. The book is an alternative to frameworks that assume a central dyad, and is particularly useful for people who find that couple-centric models don't describe what they want.",
     "links": []
   },
@@ -152,6 +164,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-loves-not-color-blind",
     "background": "Patterson examines how racism, microaggressions, and fetishization operate within polyamorous spaces, which are predominantly white and often present themselves as uniquely progressive. The book is not a critique of non-monogamy but of the specific blind spots in these communities, and it is written for both people of color navigating these spaces and white practitioners who want to do better.",
     "links": []
   },
@@ -164,6 +177,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-polyamory-breakup-book",
     "background": "Labriola covers the specific ways open relationships end or restructure, including one partner leaving, relationships de-escalating from romantic to platonic, metamour conflicts that force a decision, and breakups that affect an entire network. The book treats ending or changing a relationship as something that can be done thoughtfully rather than just survived.",
     "links": []
   },
@@ -176,6 +190,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-becoming-cliterate",
     "background": "Mintz is a sex researcher and professor. The book addresses the persistent gap in sexual satisfaction between women and their partners by going back to basics: anatomy, how arousal actually works, and why penetrative sex alone doesn't produce orgasm for most women. Direct, evidence-based, and written without euphemism.",
     "links": []
   },
@@ -188,6 +203,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": "book-cover-girl-sex-101",
     "background": "A sex ed guide written for queer women and femmes, though its coverage of anatomy, consent, communication, and specific sexual practices is useful regardless of identity. The tone is friendly and non-clinical, and the book explicitly includes trans and non-binary people throughout rather than treating them as a footnote.",
     "links": []
   },
@@ -200,6 +216,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
+    "artwork_asset": null,
     "background": "Fielding is a somatic therapist working with trans and non-binary clients. The book addresses how gender dysphoria, medical transition, and embodiment intersect with sexuality, and offers frameworks for exploring pleasure that don't depend on a fixed or assumed relationship to one's body. Clinically grounded but written accessibly.",
     "links": []
   },
@@ -212,6 +229,7 @@
     "tier": null,
     "platform": "Netflix",
     "artwork_url": null,
+    "artwork_asset": null,
     "background": null,
     "links": []
   },
@@ -224,6 +242,7 @@
     "tier": null,
     "platform": "Apple · Spotify",
     "artwork_url": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts211/v4/78/c4/1a/78c41afe-9800-6231-4d9f-04f56ce96f34/mza_17876877000416303257.jpg/600x600bb.jpg",
+    "artwork_asset": null,
     "background": null,
     "links": []
   }

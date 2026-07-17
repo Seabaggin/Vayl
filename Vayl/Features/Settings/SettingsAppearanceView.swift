@@ -54,3 +54,11 @@ struct SettingsAppearanceView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("In rail") {
+    VaylSheetPreviewHost(heightFraction: 0.92) {
+        SettingsAppearanceView()
+    }
+}
+#endif

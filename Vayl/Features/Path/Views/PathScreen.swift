@@ -32,6 +32,10 @@ struct PathScreen: View {
     @State private var selectedLandmarkId: String?
     @State private var showEditPath = false
     @State private var showActivity = false
+    /// The landmark whose "Did it" date is being edited — hoisted from
+    /// PathNodeView (sheet content can't host its own `.vaylSheet`; the
+    /// overlay would anchor to the node content's bounds, not the screen).
+    @State private var editingDateLandmarkId: String?
 
     var body: some View {
         NavigationStack {
@@ -84,7 +88,11 @@ struct PathScreen: View {
                     screenHeight: layout.screenHeight
                 ) {
                     if let selectedLandmarkId {
-                        PathNodeView(store: store, landmarkId: selectedLandmarkId, screenHeight: layout.screenHeight)
+                        PathNodeView(
+                            store: store,
+                            landmarkId: selectedLandmarkId,
+                            onEditDate: { editingDateLandmarkId = selectedLandmarkId }
+                        )
                     }
                 }
                 .vaylSheet(isPresented: $showEditPath, screenHeight: layout.screenHeight) {
@@ -92,6 +100,22 @@ struct PathScreen: View {
                 }
                 .vaylSheet(isPresented: $showActivity, screenHeight: layout.screenHeight) {
                     PathActivityLogView(store: store, partnerName: partnerName)
+                }
+                // The node sheet's date editor, presented here (the screen
+                // root) and attached after it so it layers on top.
+                .vaylSheet(
+                    isPresented: Binding(
+                        get: { editingDateLandmarkId != nil },
+                        set: { if !$0 { editingDateLandmarkId = nil } }
+                    ),
+                    heightFraction: 0.62,
+                    screenHeight: layout.screenHeight
+                ) {
+                    if let editingDateLandmarkId {
+                        PathDateEditorSheet(store: store, landmarkId: editingDateLandmarkId) {
+                            self.editingDateLandmarkId = nil
+                        }
+                    }
                 }
             }
             .toolbar {

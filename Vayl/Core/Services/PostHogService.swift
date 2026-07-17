@@ -1,5 +1,8 @@
 import Foundation
+import OSLog
 import PostHog
+
+private let logger = Logger(subsystem: "com.vayl.app", category: "PostHogService")
 
 @MainActor
 final class PostHogService {
@@ -18,6 +21,7 @@ final class PostHogService {
         guard !isConfigured else { return }
         guard let apiKey = configurationValue(for: ConfigKey.apiKey),
               let host = configurationValue(for: ConfigKey.host) else {
+            logger.warning("PostHog NOT configured: POSTHOG_API_KEY/POSTHOG_HOST missing or unsubstituted. All analytics events will be dropped. Run scripts/generate-vayl-xcconfig.sh (keys go in .env) and rebuild.")
             return
         }
 

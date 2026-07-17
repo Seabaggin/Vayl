@@ -1,6 +1,7 @@
 // Vayl/Features/Settings/SettingsNotificationsView.swift
 
 import SwiftUI
+import SwiftData
 
 struct SettingsNotificationsView: View {
     let store: SettingsStore
@@ -85,3 +86,24 @@ struct SettingsNotificationsView: View {
         }
     }
 }
+
+#if DEBUG
+@MainActor
+private func previewSettingsStore(_ appState: AppState) -> SettingsStore {
+    SettingsStore(
+        modelContainer: .previewContainerWithProfile,
+        appState: appState,
+        authService: AuthService(),
+        entitlements: EntitlementStore(modelContainer: .previewContainerWithProfile, appState: appState)
+    )
+}
+
+#Preview("In rail") {
+    let appState = AppState()
+    VaylSheetPreviewHost(heightFraction: 0.92) {
+        SettingsNotificationsView(store: previewSettingsStore(appState))
+    }
+    .environment(appState)
+    .modelContainer(.previewContainerWithProfile)
+}
+#endif

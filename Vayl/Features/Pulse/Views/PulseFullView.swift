@@ -408,3 +408,17 @@ struct PulseFullView: View {
     .environment(PulseStore())
     .preferredColorScheme(.dark)
 }
+
+#Preview("Us — in rail") {
+    let store = MapStore()
+    store.layer = .us
+    return VaylSheetPreviewHost(heightFraction: 0.92) {
+        PulseFullView(
+            mapStore: store,
+            myEntries: PulseEntry.previews,
+            partnerEntries: PulseEntry.previews,
+            partnerName: "Alex"
+        )
+    }
+    .environment(PulseStore())
+}

@@ -19,8 +19,10 @@ struct VaultSheet: View {
     @Environment(AppState.self) private var appState
     @Environment(\.modelContext) private var modelContext
 
-    @State private var logEditorOpen = false
-    @State private var editingEntry: EventLogEntry?
+    // The log editor and discussion card are presented by MapView (the screen
+    // root), not here — this view is itself `.vaylSheet` content, and a
+    // `.vaylSheet` anchors to the view it's attached to. Presentation state
+    // lives on VaultStore (openLogEditor / openDiscussion).
 
     var body: some View {
         ScrollView {
@@ -58,23 +60,6 @@ struct VaultSheet: View {
                 await store.syncLogDown(context: modelContext)
             case .desire:
                 await store.loadConsent(appState: appState, context: modelContext)
-            }
-        }
-        .vaylSheet(isPresented: $logEditorOpen, heightFraction: 0.9) {
-            EventEntryEditor(entry: editingEntry, store: store, onDone: {
-                logEditorOpen = false
-                store.loadLog(context: modelContext)
-            })
-        }
-        .vaylSheet(
-            isPresented: Binding(
-                get: { store.selectedDiscussionCard != nil },
-                set: { if !$0 { store.closeDiscussion() } }
-            ),
-            heightFraction: 0.80
-        ) {
-            if let card = store.selectedDiscussionCard {
-                DiscussionCardView(card: card, onDismiss: { store.closeDiscussion() })
             }
         }
         .screenshotProtected()
@@ -116,8 +101,8 @@ struct VaultSheet: View {
             case .log:
                 VaultLogSection(
                     entries: store.logEntries,
-                    onAdd: { editingEntry = nil; logEditorOpen = true },
-                    onEdit: { editingEntry = $0; logEditorOpen = true }
+                    onAdd: { store.openLogEditor() },
+                    onEdit: { store.openLogEditor($0) }
                 )
             }
         }
@@ -136,3 +121,15 @@ struct VaultSheet: View {
         }
     }
 }
+
+// MARK: - Previews
+
+#if DEBUG
+#Preview("Vault — in rail") {
+    VaylSheetPreviewHost(heightFraction: 0.9) {
+        VaultSheet(store: VaultStore(), onUnlock: {})
+    }
+    .environment(AppState())
+    .modelContainer(.previewContainer)
+}
+#endif

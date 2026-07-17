@@ -108,8 +108,14 @@ struct MapUsLayer: View {
         return MapUsPulseCard(
             layout: layout,
             state: state,
-            myAura: mySpace.ramp(at: myPosition),
-            partnerAura: partnerPosition.map { partnerSpace($0).ramp(at: $0) } ?? .neutral,
+            // rampStatic, not ramp(at:) — the Us orb names two spaces with no field under
+            // it, so each half's colour must back its name up (rule: colour blends only
+            // where position is visible; see PulseSpace.ramp(at:)). It matters more here
+            // than anywhere: the whole card is a COMPARISON, and two blended halves drift
+            // toward the same grey-lavender, which reads as "you're aligned" when the
+            // headline says a step apart.
+            myAura: mySpace.rampStatic,
+            partnerAura: partnerPosition.map { partnerSpace($0).rampStatic } ?? .neutral,
             myLastEntry: pulse.entries.last,
             partnerLastEntry: partnerLastEntry,
             mySpaceName: mySpace.displayName,

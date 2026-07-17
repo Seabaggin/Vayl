@@ -376,11 +376,17 @@ extension PulseSpace {
         }
     }
 
-    /// The space's aura ramp with no position needed — its tier colour, not a blend.
-    /// `ramp(at:)` is the live-reading path: it interpolates bilinearly, so it needs a
-    /// point on the field. A LEGEND has no point. Same resolution order as
-    /// `dotCoreStatic` (border states fall back to their primary neighbour), so a
-    /// legend orb and a history dot for the same space can never disagree.
+    /// The space's own ramp at full strength — its tier colour, no blending.
+    ///
+    /// The default for every surface that shows a space by NAME: Map hero, Home rail, the
+    /// Us orb, history dots, the ⓘ legend. If you're calling an Expansive day "The
+    /// Expansive Space", it should look Expansive — that's what's true. Use `ramp(at:)`
+    /// only where the field is on screen and a between-colour reads as position rather
+    /// than as a muddy mistake. See `ramp(at:)` for the full rule and the arithmetic.
+    ///
+    /// Same resolution order as `dotCoreStatic` (border states fall back to their primary
+    /// neighbour), so an orb, a history dot and a legend swatch for one space can never
+    /// disagree.
     var rampStatic: AuraColors {
         switch self {
         case .neutral:   return .neutral
@@ -400,6 +406,22 @@ extension PulseSpace {
 
     /// The aura ramp for this space. Named + border states blend continuously across the
     /// field (bilinear); Neutral and Uncharted are fixed ramps that do NOT blend.
+    ///
+    /// ONLY use this where the user can SEE the dot's position — the check-in field, the
+    /// Us field, the capsule. There, a blended colour is legible: it says "you're near the
+    /// edge of this space", which is true and useful.
+    ///
+    /// Anywhere the user sees only the NAME (Map hero, Home rail, Us orb, history dots,
+    /// the ⓘ legend) use `rampStatic` instead. Rule, 2026-07-17: **colour blends only
+    /// where position is visible; otherwise it snaps to the space.**
+    ///
+    /// Why this matters: the NAME snaps at a threshold (openness > 0.525 → Expansive) but
+    /// this BLEND is proportional to distance across the whole field. A reading at
+    /// (0.74, 0.58) is Expansive by name while its mix is only 43% cyan, 31% magenta,
+    /// 15% indigo, 11% rose — and lerping opposing hues in RGB cancels them toward grey,
+    /// so it paints #7B6CC2, a muted lavender, under the title "The Expansive Space".
+    /// Only an all-five-maxed answer set ever reaches the true #00C2FF corner. Off the
+    /// field, that isn't nuance, it's the colour contradicting the label next to it.
     func ramp(at position: PulsePosition) -> AuraColors {
         switch self {
         case .neutral:   return .neutral

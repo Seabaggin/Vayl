@@ -6,14 +6,17 @@ import SwiftData
 struct SettingsIdentityView: View {
     let store: SettingsStore
     var onClose: (() -> Void)?
+    /// Requests the edit sheet from the presenting screen (SettingsView). This
+    /// view is itself `.vaylSheet` content, and a `.vaylSheet` anchors to the
+    /// view it's attached to — presenting from here would size the edit sheet
+    /// to THIS sheet's bounds, not the screen.
+    var onEdit: (IdentityField) -> Void = { _ in }
 
     @Environment(AppState.self) private var appState
     @Environment(\.dismiss)     private var dismiss
 
     @Query private var profiles: [UserProfile]
     private var profile: UserProfile? { profiles.first }
-
-    @State private var editField: IdentityField?
 
     enum IdentityField: Hashable, Identifiable {
         case name, pronouns, experience
@@ -35,7 +38,7 @@ struct SettingsIdentityView: View {
             SettingsCard {
                 VStack(spacing: 0) {
                     Button {
-                        editField = .name
+                        onEdit(.name)
                     } label: {
                         SettingsNavRow(
                             icon: "person.fill",
@@ -50,7 +53,7 @@ struct SettingsIdentityView: View {
                     Divider().overlay(AppColors.borderSubtle)
 
                     Button {
-                        editField = .pronouns
+                        onEdit(.pronouns)
                     } label: {
                         SettingsNavRow(
                             icon: "quote.bubble",
@@ -63,7 +66,7 @@ struct SettingsIdentityView: View {
                     Divider().overlay(AppColors.borderSubtle)
 
                     Button {
-                        editField = .experience
+                        onEdit(.experience)
                     } label: {
                         SettingsNavRow(
                             icon: "sparkles",
@@ -75,25 +78,14 @@ struct SettingsIdentityView: View {
                 }
             }
         }
-        .vaylSheet(
-            isPresented: Binding(
-                get: { editField != nil },
-                set: { if !$0 { editField = nil } }
-            ),
-            heightFraction: 0.5
-        ) {
-            if let field = editField {
-                IdentityEditSheet(field: field, profile: profile, store: store) {
-                    editField = nil
-                }
-            }
-        }
     }
 }
 
 // MARK: - Edit sheet
 
-private struct IdentityEditSheet: View {
+/// Presented by SettingsView (the screen root), NOT by SettingsIdentityView —
+/// see `onEdit`'s doc comment for why.
+struct IdentityEditSheet: View {
     let field: SettingsIdentityView.IdentityField
     let profile: UserProfile?
     let store: SettingsStore
@@ -224,3 +216,34 @@ private struct IdentityEditSheet: View {
         onDone()
     }
 }
+
+// MARK: - Previews
+
+#if DEBUG
+@MainActor
+private func previewSettingsStore(_ appState: AppState) -> SettingsStore {
+    SettingsStore(
+        modelContainer: .previewContainerWithProfile,
+        appState: appState,
+        authService: AuthService(),
+        entitlements: EntitlementStore(modelContainer: .previewContainerWithProfile, appState: appState)
+    )
+}
+
+#Preview("You sheet — in rail") {
+    let appState = AppState()
+    VaylSheetPreviewHost(heightFraction: 0.92) {
+        SettingsIdentityView(store: previewSettingsStore(appState))
+    }
+    .environment(appState)
+    .modelContainer(.previewContainerWithProfile)
+}
+
+#Preview("Identity edit — in rail") {
+    let appState = AppState()
+    VaylSheetPreviewHost(heightFraction: 0.5) {
+        IdentityEditSheet(field: .name, profile: nil, store: previewSettingsStore(appState), onDone: {})
+    }
+    .environment(appState)
+}
+#endif
