@@ -1,33 +1,41 @@
 // Tabs/LearnTab/Views/LearnCardStyle.swift
 //
-// The Learn-tab card surface — real Liquid Glass, 2026-07-16.
+// The Learn-tab card surface — Map-family CLEAR glass. Bryan's call, 2026-07-16.
 //
-// `.vaylGlassCard()` is not glass. It fills with `glassSurface` — white at 3% —
-// and strokes a hairline. No material, no backdrop blur, nothing frosted. Its
-// token comment says why, and it's deliberate: "this lets the aurora bloom read
-// through the card." That is exactly right for the Map tab, where the bloom
-// reading through IS the content and there are a handful of words on screen.
+// `.vaylGlassCard()` fills with `glassSurface` (white at 3%) and strokes a
+// hairline: no material, no backdrop blur. It is clear, not frosted, and that's
+// deliberate — the token's comment says so ("this lets the aurora bloom read
+// through the card"). The atmosphere showing through IS the look.
 //
-// Learn is a reading surface with paragraphs, and the research card sits directly
-// under the atmosphere's brightest point (`.stat` runs top 1.00). With nothing
-// diffusing it, the bloom arrives at full strength behind body copy — which is
-// what made a 13pt gradient citation vanish into purple light. The card wasn't
-// doing a card's job.
+// Know the trade you're taking. The app has two card languages, and this is the
+// atmospheric one:
 //
-// So Learn uses iOS 26's Liquid Glass (deployment target is 26.0). PartnerChip
-// already adopted it — `.glassEffect(.regular, in: Capsule())` — and this follows
-// its pattern, including the gotcha its comment documents: the material goes in a
-// `.background`, never `glassEffect`'s own `content:` closure, whose vibrancy pass
-// darkens and desaturates whatever it samples.
+//   .vaylGlassCard()  clear 3% — Map tab, void-native surfaces. The bloom reads
+//                     through. Few words.
+//   HomePulseRail     OPAQUE cardBackground + spectrum top hairline. Its comment:
+//                     "so the atmosphere does NOT bleed through". Same hairline,
+//                     same brand language, readable pane.
 //
-// Same spectrum hairline, same radius, same everything else. The difference is
-// that it now diffuses what's behind it, which is the whole point of glass.
+// Learn takes the clear one, so the bloom lands at full strength behind body copy
+// — the research card sits under the atmosphere's brightest point (.stat runs
+// top 1.00). Legibility therefore has to be solved in the TEXT (weight, colour,
+// size), because the surface is deliberately not helping.
+//
+// Two things tried and rejected here, both because they kill the clear look:
+//   • iOS 26 Liquid Glass (.glassEffect(.regular), as PartnerChip uses) — real
+//     frosted glass, diffuses the bloom, helps small text.
+//   • Opaque reading cards (the HomePulseRail pattern).
+// Don't re-introduce either without asking.
+//
+// DEVICE-TUNE: the glass-vs-atmosphere knob is `AppColors.glassSurface` (0.03) —
+// shared with the Map tab, so Learn-only weight means giving this modifier its own
+// fill rather than moving the token.
 
 import SwiftUI
 
 extension View {
-    /// The Learn surface: iOS 26 Liquid Glass + a tapered spectrum top hairline.
-    /// The hairline is inset horizontally so it fades before the corner radius.
+    /// The one Learn surface: Map-family clear glass + a tapered spectrum top
+    /// hairline. The hairline is inset horizontally so it fades before the corner.
     func learnCard(cornerRadius: CGFloat = AppRadius.xl) -> some View {
         modifier(LearnCardStyle(cornerRadius: cornerRadius))
     }
@@ -49,27 +57,13 @@ struct PressableCardStyle: ButtonStyle {
 private struct LearnCardStyle: ViewModifier {
     let cornerRadius: CGFloat
 
-    private var shape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-    }
-
     func body(content: Content) -> some View {
         content
-            // The material is a `.background`, never `glassEffect`'s `content:`
-            // closure — its vibrancy pass darkens whatever it composites, and the
-            // background form also sizes off the real content (PartnerChip's
-            // comment documents both). `.fill(.clear)` gives glassEffect a shape to
-            // sample through without painting over it.
-            .background {
-                shape
-                    .fill(.clear)
-                    .glassEffect(.regular, in: shape)
-                    .overlay(shape.strokeBorder(AppColors.borderSubtle, lineWidth: 1))
-            }
+            .vaylGlassCard(radius: cornerRadius)
             .overlay(alignment: .top) {
                 TaperedSpectrumHairline(thickness: 1.5)
                     .padding(.horizontal, AppSpacing.md)
             }
-            .clipShape(shape)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
     }
 }
