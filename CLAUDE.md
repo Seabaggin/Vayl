@@ -15,6 +15,21 @@
 | **Service** | Handles network / I/O | Injected into Stores via initializer |
 | **Model** | Pure data shape (`struct`) | No logic, no dependencies |
 
+### Tabs vs Features — File Tree Ownership
+**A tab is NOT a feature.** It is a composition surface. The 4 layers above describe what lives *inside* a module; this describes *where the module lives*.
+
+| Category | What it is | Home |
+|---|---|---|
+| **Tab** | Composes capabilities. One per `AppTab` case (home/play/map/learn) | `Vayl/Tabs/<Name>Tab/` — composition + tab-specific chrome ONLY |
+| **Capability** | Self-contained domain, owns its Views/Store/Services/Models | `Vayl/Features/<Name>/` — flat sibling, NEVER nested under a tab |
+| **Flow** | Bounded, self-driving, gated sequence in a cover; composed by no one | `Vayl/Features/<Name>/` (Onboarding, Card Session, Pairing) |
+
+- **Invariant: `Tabs/` may import `Features/`. `Features/` must NEVER import from `Tabs/`.** One direction, always. A tab composes capabilities; a capability never reaches up into a tab.
+- **A new capability is born flat in `Features/`**, even if only one tab presents it today (Journal → `Features/Journal`). Never nest it under the tab that happens to show it.
+- `Features/` → `Features/` is allowed, but watch for cycles.
+- Presenting a feature (`.vaylCover { FeatureView() }`) is composition, not ownership. Routing to a tab (`appState.selectedTab = .map`) or reading another feature's Store is not ownership either.
+- A thin tab is correct. `Tabs/MapTab` holding only `MapView` + `MapStore` (lens state) + chrome is the target shape, not a smell.
+
 ### Strict Separation of Concerns
 - Views read from Stores and call Store methods only
 - Stores call Services only
@@ -281,6 +296,7 @@ or numeric literals for spacing, radius, opacity, or animation duration.
 ### Rules that aren't a single token
 - **OB card sizing (mandatory, no exceptions):** `AppLayout.obCardWidth(in: screenWidth)` = `min(screenWidth * 0.72, 320)`; `obCardHeight` = `obCardWidth * 1.5`.
 - **Layout from geometry only:** `AppLayout.from(geo)`, never `UIScreen.main.bounds` (iOS 26 banned).
+- **The Void Rule (heroes), 2026-07-17.** Two clauses, both mandatory. **(1) A hero never wears card chrome** — it floats on `AppColors.void` + `OnboardingAtmosphere`; `.vaylGlassCard()` / `.themedCard()` / `.learnCard()` are for secondary content only. Play's tab screen has zero card calls, Home has one (a popover), and that is the target shape. **(2) A hero sizes off `AppLayout.from(geo)`, never a constant** — a fixed hero height cannot breathe across devices and outlives whatever justified it (`mapPulseCardHeight = 218` was named for a card that never rendered and sized for a grid that had moved away; it survived a year because the rule was unwritten). If you are typing a literal for a hero's height, stop. Full rule + the tuning caveat for glowing heroes: DESIGN_DOC §5, `docs/design/2026-07-17-void-rule-and-map-hero-scale.md`.
 - **Looping animations** require `.ambientAnimation(_:value:)` with a Reduce Motion fallback.
 
 ### Required View Patterns
@@ -396,10 +412,13 @@ The dark-only constraint keeps V1 coherent and ship-focused. The token infrastru
 - [ ] No UIWebView or NSURLConnection (iOS 26 hard errors)
 - [ ] No UNAuthorizationOptionAlert, use .Banner variant
 - [ ] No UIScreen.main.bounds, use AppLayout.from(geo)
+- [ ] Void Rule: no card chrome on a hero; no constant sizing a hero (derive from `AppLayout.from(geo)`)
 - [ ] Tab content adds NO bottom clearance (AppShell `.safeAreaInset` owns it); covers/sheets use `.bottomClearance` / `.stickyBottomCTA`
 - [ ] No hardcoded hardware padding (`.padding(.top, 60)` / `.padding(.bottom, 34/100)`); use `.topClearance` / safe-area insets
 - [ ] No Service/network calls in Views
 - [ ] No View writes to VaylCardModel
+- [ ] No capability nested under a tab; new capabilities born flat in `Features/`
+- [ ] No `Features/` file importing from `Tabs/` (one direction only)
 - [ ] No phase change without director.advance()
 - [ ] No VaylCardFace shell modifications
 - [ ] Every OB screen: AppColors.void + OnboardingAtmosphere
