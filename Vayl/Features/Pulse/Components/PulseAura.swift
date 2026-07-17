@@ -14,6 +14,12 @@ struct PulseAura: View {
     /// unchanged. The Home widget sets this to wash the pane with the orb's colour; because
     /// the halo lives here it stays in sync with the cycling dormant ramp automatically.
     var haloSpread: CGFloat = 0
+    /// False = render the aura's four layers at rest: no breath, no caustic drift, no glass
+    /// sweep. For a LEGEND, where the orb is a colour sample rather than a live reading.
+    /// Six breathing orbs in an explainer is motion as decoration, and the register only
+    /// spends motion on state. This is NOT the Reduce Motion path (`.ambientAnimation`
+    /// still owns that) — it's a caller declaring the orb has no state to convey.
+    var animates: Bool = true
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -23,25 +29,28 @@ struct PulseAura: View {
     @State private var sweepActive   = false  // drives glassSweep via GlassSpecularSweep factory
 
     /// Colour the aura by its quadrant tier (the common case — every existing caller).
-    init(quadrant: PulseQuadrant, size: CGFloat = 44, haloSpread: CGFloat = 0) {
+    init(quadrant: PulseQuadrant, size: CGFloat = 44, haloSpread: CGFloat = 0, animates: Bool = true) {
         self.ramp = AuraColors(quadrant.capacityColor)
         self.size = size
         self.haloSpread = haloSpread
+        self.animates = animates
     }
 
     /// Colour the aura from an explicit ramp — used by the cycling dormant aura.
-    init(ramp: AuraColors, size: CGFloat = 44, haloSpread: CGFloat = 0) {
+    init(ramp: AuraColors, size: CGFloat = 44, haloSpread: CGFloat = 0, animates: Bool = true) {
         self.ramp = ramp
         self.size = size
         self.haloSpread = haloSpread
+        self.animates = animates
     }
 
     /// Continuous position-based colour. No quadrant snap — blends across the full field via
     /// bilinear interpolation of the four corner ramps. Used by the 2D check-in / field.
-    init(energy: Double, openness: Double, size: CGFloat = 44, haloSpread: CGFloat = 0) {
+    init(energy: Double, openness: Double, size: CGFloat = 44, haloSpread: CGFloat = 0, animates: Bool = true) {
         self.ramp = AuraColors.bilinear(energy: energy, openness: openness)
         self.size = size
         self.haloSpread = haloSpread
+        self.animates = animates
     }
 
     var body: some View {
@@ -180,7 +189,7 @@ struct PulseAura: View {
     // MARK: - Animation control
 
     private func startAmbient() {
-        guard !reduceMotion, !AppAnimation.lowPower else { return }
+        guard animates, !reduceMotion, !AppAnimation.lowPower else { return }
         breathing     = true
         causticActive = true
         sweepActive   = true
@@ -364,6 +373,22 @@ extension PulseSpace {
         default:
             if let q = namedQuadrant { return q.capacityColor.auraCore }
             return borderingQuadrants?.0.capacityColor.auraCore ?? AppColors.auraCoreNeutral
+        }
+    }
+
+    /// The space's aura ramp with no position needed — its tier colour, not a blend.
+    /// `ramp(at:)` is the live-reading path: it interpolates bilinearly, so it needs a
+    /// point on the field. A LEGEND has no point. Same resolution order as
+    /// `dotCoreStatic` (border states fall back to their primary neighbour), so a
+    /// legend orb and a history dot for the same space can never disagree.
+    var rampStatic: AuraColors {
+        switch self {
+        case .neutral:   return .neutral
+        case .uncharted: return .uncharted
+        default:
+            if let q = namedQuadrant { return AuraColors(q.capacityColor) }
+            guard let (a, _) = borderingQuadrants else { return .neutral }
+            return AuraColors(a.capacityColor)
         }
     }
 
