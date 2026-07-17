@@ -124,16 +124,25 @@ struct ResearchSection: View {
                 // honest: not every finding is a statistic.
                 words: [f.stat].compactMap { $0 },
                 baseFont: AppFonts.prompt,
-                highlightFont: AppFonts.prompt,
-                baseColor: AppColors.textBody
+                // Semibold, one weight up — the gradient alone doesn't carry a
+                // highlight, and purple-on-purple-bloom needs the mass. This is the
+                // pairing SessionPlayerView uses on the real card prompts
+                // (medium base / semibold highlight); `promptHighlight` exists for it.
+                highlightFont: AppFonts.promptHighlight,
+                baseColor: AppColors.textBody   // pure white in dark — max contrast
             )
             .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
-            // wraps: true is load-bearing. Citations are sentences, and LivingText
-            // defaults to .fixedSize() for its hero-word callers — without this the
-            // citation renders as one line wider than the screen and drags the whole
-            // card with it, clipping the finding text above.
-            LivingText(text: f.citation, font: AppFonts.caption, wraps: true)
+            // Plain, not LivingText. Its gradient runs cyan → PURPLE → magenta, and
+            // at 13pt on the atmosphere's purple bloom the middle stop vanished into
+            // the light behind it — the exact muddying the Earned Spectrum Rule
+            // predicts below 24pt ("it muddies — use a single accent"). The card
+            // already spends its one earned gradient on the stat; a second one on
+            // the quietest element competed with it and lost.
+            Text(f.citation)
+                .font(AppFonts.caption).italic()
+                .foregroundStyle(AppColors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(AppSpacing.lg)
@@ -146,15 +155,20 @@ struct ResearchSection: View {
             Text(t.term)
                 .font(AppFonts.cardTitle)
                 .foregroundStyle(AppColors.textPrimary)
+            // `prompt`, matching the finding card — the two are siblings in one
+            // carousel and were set in different faces (display vs body).
             Text(t.definition)
-                .font(AppFonts.bodyText)
+                .font(AppFonts.prompt)
                 .foregroundStyle(AppColors.textBody)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
             if let example = t.example {
+                // textSecondary, matching the citation's slot on the finding card.
+                // textTertiary (white @ 0.50) is too faint to sit on glass over the
+                // atmosphere's bright top.
                 Text("\u{201C}\(example)\u{201D}")
                     .font(AppFonts.caption).italic()
-                    .foregroundStyle(AppColors.textTertiary)
+                    .foregroundStyle(AppColors.textSecondary)
                     .lineLimit(2)
             }
         }
