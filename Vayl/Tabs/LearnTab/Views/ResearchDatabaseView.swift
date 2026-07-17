@@ -199,7 +199,7 @@ struct ResearchDatabaseView: View {
         .padding(AppSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .learnCard(cornerRadius: AppRadius.lg)
+        .learnReadingCard(cornerRadius: AppRadius.lg)
     }
 
     /// Not a button — the definition is the entire content, so there is nothing
@@ -231,7 +231,7 @@ struct ResearchDatabaseView: View {
         }
         .padding(AppSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .learnCard(cornerRadius: AppRadius.lg)
+        .learnReadingCard(cornerRadius: AppRadius.lg)
     }
 }
 
