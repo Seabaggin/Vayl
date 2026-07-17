@@ -17,7 +17,8 @@ struct PulseAura: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var breatheOpacity: Double = 1.0
+    /// One flag drives both halves of the breath so they cannot drift out of phase.
+    @State private var breathing = false
     @State private var causticActive = false
     @State private var sweepActive   = false  // drives glassSweep via GlassSpecularSweep factory
 
@@ -80,10 +81,15 @@ struct PulseAura: View {
                     .frame(width: size * haloSpread, height: size * haloSpread)
             }
         }
-        .opacity(breatheOpacity)
+        // The breath swells AND dims on one flag. Scale is the half that carries it: it is
+        // size-relative, so the same token reads at 44pt and at 184pt. This used to be
+        // opacity-only, which is size-invariant and went dead the moment the Map orb became
+        // a hero. scaleEffect does not participate in layout, so nothing below reflows.
+        .scaleEffect(breathing ? AppAnimation.auraBreatheScale : 1.0)
+        .opacity(breathing ? AppAnimation.auraBreatheOpacity : 1.0)
         .ambientAnimation(
             .easeInOut(duration: AppAnimation.auraBreathe).repeatForever(autoreverses: true),
-            value: breatheOpacity
+            value: breathing
         )
         .onAppear { startAmbient() }
         .accessibilityHidden(true)
@@ -175,7 +181,7 @@ struct PulseAura: View {
 
     private func startAmbient() {
         guard !reduceMotion, !AppAnimation.lowPower else { return }
-        breatheOpacity = 0.88  // FEEL: tune on device — opacity breath (no spatial float)
+        breathing     = true
         causticActive = true
         sweepActive   = true
     }

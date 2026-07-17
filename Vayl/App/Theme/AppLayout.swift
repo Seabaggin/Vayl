@@ -200,8 +200,8 @@ struct AppLayout {
     // These replace `mapPulseCardHeight = 218` / `mapMeAuraSize = 218 * 0.62`.
     // That 218 was named for a card that does not render and sized for a history
     // grid that moved to PulseFullView; both justifications were already dead. Its
-    // one live job — a shared Me/Us footprint so the lens flip never shifts the
-    // slots below — survives here as `mapHeroSlotHeight`, which both lenses share.
+    // last claimed job, a shared Me/Us footprint, turned out to be dead too — see
+    // the retirement note below.
     // See docs/design/2026-07-17-void-rule-and-map-hero-scale.md.
 
     /// 0.46 of screen width — ≈184pt orb, ≈479pt glow wash at 402pt.
@@ -213,10 +213,19 @@ struct AppLayout {
     /// number. Do not "improve" it by arithmetic against Home's deck. Re-feel it.
     static let defaultMapHeroOrbFraction: CGFloat = 0.46
 
-    /// Default: 0.26 of screen height (≈221pt at 852pt — the old 218's shared
-    /// footprint, now expressed proportionally). A floor for Me/Us parity, applied
-    /// as `minHeight`, so growing the orb still pushes the slot naturally.
-    static let mapHeroSlotFraction: CGFloat = 0.26
+    // RETIRED 2026-07-17 — `mapHeroSlotFraction` (0.26, ≈221pt), the shared Me/Us
+    // `minHeight` floor carried over from the old 218. It was co-tuned to a 135pt orb:
+    // minimal hero content ran 135 + header + padding + a text line ≈ 215, so the floor
+    // bound by a hair. At the locked 184pt orb it cannot bind in ANY state, empty
+    // included, because the orb alone clears it. A floor below every natural height
+    // enforces nothing — it was a ghost of the same species as `mapPulseCardHeight`,
+    // so it goes rather than get a new magic number.
+    //
+    // Deleting it changes no pixels: it had already stopped binding, which means the
+    // Me/Us flip has been unparented for a while and is no worse now. If the flip
+    // visibly jumps on device, parity needs to be MEASURED (reserve max(me, us)), not
+    // floored — a constant cannot track conditional content (the check-in pill, the
+    // weather line, the linked note) and pretending otherwise is how 218 happened.
 
     /// The live orb fraction. A stored `var` with a default, so it lands last in the
     /// memberwise init and `from(_:)` never passes it. Nothing overrides it now that
@@ -227,10 +236,6 @@ struct AppLayout {
     /// The Map hero orb's diameter. Shared by BOTH lenses (Me's single aura and
     /// Us's split orb) so the lens flip preserves visual parity.
     var mapHeroOrbSize: CGFloat { screenWidth * mapHeroOrbFraction }
-
-    /// The shared Me/Us hero footprint. Applied as `minHeight`, never a hard height:
-    /// the check-in pill is conditional and a hard height risks clipping it.
-    var mapHeroSlotHeight: CGFloat { screenHeight * AppLayout.mapHeroSlotFraction }
 
     // MARK: - OB Card Geometry
     // These values are exclusive to the Onboarding canvas.

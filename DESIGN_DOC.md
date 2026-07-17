@@ -177,14 +177,16 @@ Standard spacing: `screenHPad` 18 · `screenMargin` 24 (OB canvas) · `ctaHorizo
 
 ```swift
 defaultMapHeroOrbFraction = 0.46            // FEEL — locked on device 2026-07-17
-mapHeroSlotFraction       = 0.26            // shared Me/Us footprint (spec §1)
-mapHeroOrbSize            = screenWidth  * mapHeroOrbFraction
-mapHeroSlotHeight         = screenHeight * mapHeroSlotFraction   // applied as minHeight
+mapHeroOrbSize            = screenWidth * mapHeroOrbFraction   // ≈184pt, no height floor
 ```
 
-Retired 2026-07-17: `mapPulseCardHeight` 218 / `mapMeAuraSize` = `218 × 0.62`. The 218 was named for a card that never rendered and sized for a history grid that had already moved to `PulseFullView`. Its one live job, a shared Me/Us footprint so the lens flip never shifts the slots below, survives as `mapHeroSlotHeight`. Full rationale: `docs/design/2026-07-17-void-rule-and-map-hero-scale.md`.
+Retired 2026-07-17, all three: `mapPulseCardHeight` 218, `mapMeAuraSize` = `218 × 0.62`, and `mapHeroSlotFraction` 0.26. The 218 was named for a card that never rendered and sized for a history grid that had already moved to `PulseFullView`. Its last claimed job, a shared Me/Us `minHeight` floor, was dead too: co-tuned to a 135pt orb (135 + header + padding + a line ≈ 215, binding by a hair), it cannot bind in any state at 184pt. Deleting it changed no pixels. Full rationale: `docs/design/2026-07-17-void-rule-and-map-hero-scale.md`.
+
+**A floor cannot deliver parity.** If the Me/Us flip needs to stop shifting the slots below, it must be **measured** (reserve `max(me, us)`), never floored — a constant cannot track conditional content (check-in pill, weather line, linked note), and pretending it can is exactly how 218 survived a year.
 
 **Caveat when tuning a glowing hero:** `MapHeroAmbientGlow.outerDiameterMultiple` is 2.6, so the orb's perceived size is ~2.6x its set size. Never size a glowing hero by arithmetic against a crisp one (Home's deck at `screenWidth * 0.72`). Judge on device against the real glow.
+
+**Auras breathe on scale, not opacity.** `auraBreatheScale` 1.045 at `auraBreathe` 5.4s. Scale is size-relative, so one token reads at 44pt (Home's rail) and 184pt (Map's hero); opacity is size-invariant, which is why an opacity-only breath read fine small and read dead once the Map orb became a hero. An aura is a living surface: it breathes at `auraBreathe`, never at `ambientPulse`.
 
 **Status — Learn fails clause 1.** Eleven cards, no floating hero, and `LearnStore.featuredFinding` is computed then rendered as an ordinary carousel card. Parked pending Map's device pass.
 

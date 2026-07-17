@@ -51,9 +51,9 @@ struct MapUsPulseCard: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, AppSpacing.sm)
         }
-        // minHeight, not a hard height — matches MapPulseHero's own reasoning
-        // (spec §1's shared footprint is the common case, not a hard guarantee).
-        .frame(minHeight: layout.mapHeroSlotHeight, alignment: .top)
+        // No minHeight floor — matches MapPulseHero. Spec §1's shared Me/Us footprint was
+        // always "the common case, not a hard guarantee," and the floor that was supposed
+        // to deliver it stopped binding at the locked orb size. See AppLayout's note.
         .frame(maxWidth: .infinity, alignment: .leading)
         // NO card chrome — MapPulseHero (Me) has none either. This is a hero
         // sitting on the atmosphere, not a bordered card like the Vault door.

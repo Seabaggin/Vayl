@@ -964,8 +964,21 @@ internal enum AppAnimation {
     // All three are ambient: guard with `!reduceMotion` in PulseAura; never fire under reduce motion.
     // FEEL: all values tuned on device against docs/prototypes/pulse-aura-glass.html.
 
-    /// 5.4s — Aura body breathe (scale 1 ↔ 1.045, autoreverses). FEEL: tune on device.
+    /// 5.4s — Aura body breathe, autoreverses. The living-surface tempo: an aura is a
+    /// presence, so it breathes here, never at `ambientPulse` (that is inert chrome).
+    /// FEEL: tune on device.
     static let auraBreathe: Double = 5.4
+
+    /// 1.045 — the breathe's swell. Load-bearing that this is SCALE and not opacity:
+    /// scale is size-relative, so one token reads correctly at every aura size (≈2pt on
+    /// Home's 44pt rail orb, ≈8pt on Map's 184pt hero). Opacity is size-invariant — the
+    /// aura previously breathed on opacity alone, which read fine small and read DEAD once
+    /// the Map orb became a hero (2026-07-17). If an aura ever looks inert, this is why.
+    static let auraBreatheScale: CGFloat = 1.045
+
+    /// 0.88 — the breathe's dim, phase-locked to the swell. Expanding and dimming together
+    /// is the same light spread over more area. FEEL: tune on device.
+    static let auraBreatheOpacity: Double = 0.88
 
     /// 7.0s — Caustic drift, one leg (offsets alternate, autoreverses). FEEL: tune on device.
     static let auraCausticDrift: Double = 7.0

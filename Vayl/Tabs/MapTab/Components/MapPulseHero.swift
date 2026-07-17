@@ -4,8 +4,7 @@
 //
 // Glance: aura hero (layout.mapHeroOrbSize) + Space name + sublabel + weather one-liner.
 // Floats on the atmosphere with NO card chrome, at a screen-proportional size — the
-// Void Rule, both clauses. Slot floor is layout.mapHeroSlotHeight, the shared Me/Us
-// footprint (Map dashboard spec §1) that MapUsPulseCard also uses.
+// Void Rule, both clauses. No height floor: the hero sizes to its content.
 // "tap to open →" opens a cover with the full 2D field at the user's current position.
 //
 // Visual reference: docs/prototypes/map-pulse-final.html — "Me · the glance" phone.
@@ -105,11 +104,9 @@ struct MapPulseHero: View {
                 emptyStateBlock
             }
         }
-        // NOTE: kept as minHeight, not a hard height. The check-in pill is conditional
-        // (pulse.canCheckInToday) and its presence/absence changes total content height
-        // enough that a hard height risks clipping it. minHeight also means a larger orb
-        // grows the slot naturally rather than overflowing it.
-        .frame(minHeight: layout.mapHeroSlotHeight, alignment: .top)
+        // No minHeight floor. The old one (mapHeroSlotHeight, ≈221pt) was co-tuned to a
+        // 135pt orb and stopped binding entirely at 184pt — see AppLayout's retirement
+        // note. The hero sizes to its content, honestly.
         // No AppLayout in scope here, so the screenHeight-less overload sizes off
         // the presenting context (same pattern as ReflectionBannerView/LearnView).
         .vaylSheet(isPresented: $showInfo, heightFraction: 0.85) {
