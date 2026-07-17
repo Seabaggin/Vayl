@@ -18,6 +18,7 @@ import SwiftUI
 
 struct MapUsPulseCard: View {
 
+    let layout: AppLayout
     let state: UsOrbState
     let myAura: AuraColors
     let partnerAura: AuraColors
@@ -52,7 +53,7 @@ struct MapUsPulseCard: View {
         }
         // minHeight, not a hard height — matches MapPulseHero's own reasoning
         // (spec §1's shared footprint is the common case, not a hard guarantee).
-        .frame(minHeight: AppLayout.mapPulseCardHeight, alignment: .top)
+        .frame(minHeight: layout.mapHeroSlotHeight, alignment: .top)
         .frame(maxWidth: .infinity, alignment: .leading)
         // NO card chrome — MapPulseHero (Me) has none either. This is a hero
         // sitting on the atmosphere, not a bordered card like the Vault door.
@@ -77,8 +78,8 @@ struct MapUsPulseCard: View {
         }
     }
 
-    // MARK: - Orb (hero-sized — same AppLayout.mapMeAuraSize as the Me aura,
-    // for visual parity between the two lenses, not the old smaller compact size)
+    // MARK: - Orb (hero-sized — same layout.mapHeroOrbSize as the Me aura, for
+    // visual parity between the two lenses, not the old smaller compact size)
 
     @ViewBuilder
     private var orb: some View {
@@ -87,12 +88,12 @@ struct MapUsPulseCard: View {
             // No ambient glow here — same reasoning as MapPulseHero's empty
             // state: a cycling ramp has no fixed colour for a static wash to
             // match, and the movement already reads as "not yet answered."
-            PulseCyclingAura(size: AppLayout.mapMeAuraSize)
+            PulseCyclingAura(size: layout.mapHeroOrbSize)
         case .split(let mine, let partner):
             SplitOrbView(
                 mine: half(for: mine, aura: myAura),
                 partner: half(for: partner, aura: partnerAura),
-                size: AppLayout.mapMeAuraSize
+                size: layout.mapHeroOrbSize
             )
         }
     }
@@ -312,11 +313,32 @@ struct HalfCircle: Shape {
 
 // MARK: - Preview
 
+#if DEBUG
+/// Void + atmosphere + real geometry. Previews resolve their AppLayout through
+/// `from(geo)` exactly like the app does, so a preview can never disagree with the
+/// device about hero scale (Void Rule clause 2: heroes derive from geometry, never
+/// a constant — and a preview-only constant would be the same bug wearing a hat).
+private struct UsCardPreviewStage<Content: View>: View {
+    @ViewBuilder var content: (AppLayout) -> Content
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                AppColors.void.ignoresSafeArea()
+                OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+                content(AppLayout.from(geo))
+                    .padding(.horizontal, AppSpacing.lg)
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+}
+#endif
+
 #Preview("Whole unwritten") {
-    ZStack {
-        AppColors.void.ignoresSafeArea()
-        OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+    UsCardPreviewStage { layout in
         MapUsPulseCard(
+            layout: layout,
             state: .wholeUnwritten,
             myAura: AuraColors(.cyan),
             partnerAura: AuraColors(.indigo),
@@ -329,9 +351,7 @@ struct HalfCircle: Shape {
             partnerPosition: nil,
             relativeDay: { _ in "3 days ago" }
         )
-        .padding(.horizontal, AppSpacing.lg)
     }
-    .preferredColorScheme(.dark)
 }
 
 // Preview-only sample data (PulseEntry.previews is always populated).
@@ -339,10 +359,9 @@ struct HalfCircle: Shape {
 #Preview("Split · current/current") {
     let mine    = PulseEntry.previews.last!
     let partner = PulseEntry.previews[PulseEntry.previews.count - 2]
-    ZStack {
-        AppColors.void.ignoresSafeArea()
-        OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+    UsCardPreviewStage { layout in
         MapUsPulseCard(
+            layout: layout,
             state: .split(mine: .current, partner: .current),
             myAura: AuraColors.bilinear(energy: mine.resolvedPosition.energy, openness: mine.resolvedPosition.openness),
             partnerAura: AuraColors.bilinear(energy: partner.resolvedPosition.energy, openness: partner.resolvedPosition.openness),
@@ -355,18 +374,15 @@ struct HalfCircle: Shape {
             partnerPosition: partner.resolvedPosition,
             relativeDay: { _ in "today" }
         )
-        .padding(.horizontal, AppSpacing.lg)
     }
-    .preferredColorScheme(.dark)
 }
 
 #Preview("Split · current/quiet") {
     let mine    = PulseEntry.previews.last!
     let partner = PulseEntry.previews.first!
-    ZStack {
-        AppColors.void.ignoresSafeArea()
-        OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+    UsCardPreviewStage { layout in
         MapUsPulseCard(
+            layout: layout,
             state: .split(mine: .current, partner: .quiet),
             myAura: AuraColors.bilinear(energy: mine.resolvedPosition.energy, openness: mine.resolvedPosition.openness),
             partnerAura: AuraColors.bilinear(energy: partner.resolvedPosition.energy, openness: partner.resolvedPosition.openness),
@@ -379,17 +395,14 @@ struct HalfCircle: Shape {
             partnerPosition: partner.resolvedPosition,
             relativeDay: { _ in "6 days ago" }
         )
-        .padding(.horizontal, AppSpacing.lg)
     }
-    .preferredColorScheme(.dark)
 }
 
 #Preview("Split · current/unwritten") {
     let mine = PulseEntry.previews.last!
-    ZStack {
-        AppColors.void.ignoresSafeArea()
-        OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+    UsCardPreviewStage { layout in
         MapUsPulseCard(
+            layout: layout,
             state: .split(mine: .current, partner: .unwritten),
             myAura: AuraColors.bilinear(energy: mine.resolvedPosition.energy, openness: mine.resolvedPosition.openness),
             partnerAura: AuraColors.neutral,
@@ -402,7 +415,5 @@ struct HalfCircle: Shape {
             partnerPosition: nil,
             relativeDay: { _ in "" }
         )
-        .padding(.horizontal, AppSpacing.lg)
     }
-    .preferredColorScheme(.dark)
 }

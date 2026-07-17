@@ -17,6 +17,7 @@ struct MapUsLayer: View {
 
     @Environment(PulseStore.self) private var pulse
 
+    let layout: AppLayout
     let stats: MapStore.UsStats
     let align: [MapStore.AlignItem]
     let lockedAlignCount: Int
@@ -87,6 +88,7 @@ struct MapUsLayer: View {
     private var usPulseCard: some View {
         let state = usOrbState
         return MapUsPulseCard(
+            layout: layout,
             state: state,
             myAura: mySpace.ramp(at: myPosition),
             partnerAura: partnerPosition.map { partnerSpace($0).ramp(at: $0) } ?? .neutral,
@@ -129,20 +131,25 @@ struct MapUsLayer: View {
 // MARK: - Preview
 
 #Preview("Wide day") {
-    ZStack {
-        AppColors.void.ignoresSafeArea()
-        OnboardingAtmosphere(config: .stat).ignoresSafeArea()
-        ScrollView {
-            MapUsLayer(
-                stats: .init(),
-                align: [],
-                lockedAlignCount: 0,
-                onOpenVault: {},
-                onCheckIn: {},
-                partnerPosition: PulsePosition(energy: 0.18, openness: 0.22),
-                partnerName: "Alex"
-            )
-            .padding(.horizontal, AppSpacing.lg)
+    // GeometryReader, not a hand-built AppLayout: the preview resolves hero scale
+    // the same way the device does (Void Rule clause 2).
+    GeometryReader { geo in
+        ZStack {
+            AppColors.void.ignoresSafeArea()
+            OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+            ScrollView {
+                MapUsLayer(
+                    layout: AppLayout.from(geo),
+                    stats: .init(),
+                    align: [],
+                    lockedAlignCount: 0,
+                    onOpenVault: {},
+                    onCheckIn: {},
+                    partnerPosition: PulsePosition(energy: 0.18, openness: 0.22),
+                    partnerName: "Alex"
+                )
+                .padding(.horizontal, AppSpacing.lg)
+            }
         }
     }
     .environment({
@@ -153,20 +160,23 @@ struct MapUsLayer: View {
 }
 
 #Preview("Same space") {
-    ZStack {
-        AppColors.void.ignoresSafeArea()
-        OnboardingAtmosphere(config: .stat).ignoresSafeArea()
-        ScrollView {
-            MapUsLayer(
-                stats: .init(),
-                align: [],
-                lockedAlignCount: 0,
-                onOpenVault: {},
-                onCheckIn: {},
-                partnerPosition: PulsePosition(energy: 0.78, openness: 0.72),
-                partnerName: "Alex"
-            )
-            .padding(.horizontal, AppSpacing.lg)
+    GeometryReader { geo in
+        ZStack {
+            AppColors.void.ignoresSafeArea()
+            OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+            ScrollView {
+                MapUsLayer(
+                    layout: AppLayout.from(geo),
+                    stats: .init(),
+                    align: [],
+                    lockedAlignCount: 0,
+                    onOpenVault: {},
+                    onCheckIn: {},
+                    partnerPosition: PulsePosition(energy: 0.78, openness: 0.72),
+                    partnerName: "Alex"
+                )
+                .padding(.horizontal, AppSpacing.lg)
+            }
         }
     }
     .environment({

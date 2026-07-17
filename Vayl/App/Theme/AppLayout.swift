@@ -191,18 +191,46 @@ struct AppLayout {
     /// screen width. Matches the visual design at standard iPhone widths.
     static let citationPanelMaxWidth: CGFloat = 300
 
-    // MARK: - Map Dashboard Pulse Card
+    // MARK: - Map Dashboard Hero (Void Rule)
+    //
+    // The Map hero obeys the Void Rule: it floats on the atmosphere with no card
+    // chrome (clause 1 — already true, see MapUsPulseCard), and it sizes off the
+    // screen, never a constant (clause 2 — what these values fix).
+    //
+    // These replace `mapPulseCardHeight = 218` / `mapMeAuraSize = 218 * 0.62`.
+    // That 218 was named for a card that does not render and sized for a history
+    // grid that moved to PulseFullView; both justifications were already dead. Its
+    // one live job — a shared Me/Us footprint so the lens flip never shifts the
+    // slots below — survives here as `mapHeroSlotHeight`, which both lenses share.
+    // See docs/design/2026-07-17-void-rule-and-map-hero-scale.md.
 
-    /// 218pt — The Map dashboard Pulse card — ONE height shared by the Me and Us
-    /// lenses so the lens flip never shifts the slots below (Map dashboard spec §1).
-    /// Orb sizes derive from it; never hardcode a second number.
-    static let mapPulseCardHeight: CGFloat = 218
+    /// Default: 0.35 of screen width (≈137pt at 393pt — within 2pt of the old 135,
+    /// so the retirement of 218 is a no-lurch change on its own).
+    ///
+    /// FEEL — this is the one dial worth turning on Map. The orb is the tab's only
+    /// hero and reads small against Home's deck (≈56% of screen height). Note the
+    /// perceived size is NOT this number: MapHeroAmbientGlow washes to ≈2.6x the
+    /// orb, so judge it by eye on device against the real glow, never by arithmetic.
+    /// The DEBUG tuner on MapView scrubs this live; copy the value you land on here.
+    static let defaultMapHeroOrbFraction: CGFloat = 0.35
 
-    /// ≈ 135/218 of the card (bumped from 0.48 2026-07-05 — the orb is the ONE
-    /// breathing hero on the dashboard and read too modest against the card's
-    /// whitespace at the old size). Shared by BOTH lenses' hero orb (Me's single
-    /// aura and Us's split orb) for visual parity. FEEL: tune further on device.
-    static var mapMeAuraSize: CGFloat { mapPulseCardHeight * 0.62 }
+    /// Default: 0.26 of screen height (≈221pt at 852pt — the old 218's shared
+    /// footprint, now expressed proportionally). A floor for Me/Us parity, applied
+    /// as `minHeight`, so growing the orb still pushes the slot naturally.
+    static let mapHeroSlotFraction: CGFloat = 0.26
+
+    /// The live orb fraction. A stored `var` with a default, so it lands last in the
+    /// memberwise init and `from(_:)` never passes it — the only writer is MapView's
+    /// DEBUG tuner. Release builds always read `defaultMapHeroOrbFraction`.
+    var mapHeroOrbFraction: CGFloat = AppLayout.defaultMapHeroOrbFraction
+
+    /// The Map hero orb's diameter. Shared by BOTH lenses (Me's single aura and
+    /// Us's split orb) so the lens flip preserves visual parity.
+    var mapHeroOrbSize: CGFloat { screenWidth * mapHeroOrbFraction }
+
+    /// The shared Me/Us hero footprint. Applied as `minHeight`, never a hard height:
+    /// the check-in pill is conditional and a hard height risks clipping it.
+    var mapHeroSlotHeight: CGFloat { screenHeight * AppLayout.mapHeroSlotFraction }
 
     // MARK: - OB Card Geometry
     // These values are exclusive to the Onboarding canvas.

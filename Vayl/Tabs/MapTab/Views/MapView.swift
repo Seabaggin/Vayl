@@ -34,6 +34,14 @@ struct MapView: View {
     @State private var showPathScreen = false
     @State private var pathStore: PathStore?
 
+    // TEMPORARY — backs the DEBUG hero tuner. @AppStorage so a scrubbed value
+    // survives rebuilds while Bryan gates the feel. Release builds never read it;
+    // resolvedLayout(_:) leaves AppLayout.defaultMapHeroOrbFraction untouched.
+    #if DEBUG
+    @AppStorage("debug.map.heroOrbFraction")
+    private var debugOrbFraction: Double = Double(AppLayout.defaultMapHeroOrbFraction)
+    #endif
+
     // FEEL: tune on device
     private let lensTintOpacity: Double = 0.10
     // FEEL: tune on device
@@ -81,7 +89,7 @@ struct MapView: View {
     var body: some View {
         @Bindable var store = store
         GeometryReader { geo in
-            let layout = AppLayout.from(geo)
+            let layout = resolvedLayout(geo)
 
             ZStack(alignment: .top) {
                 // Same floor + sky as every other tab.
@@ -137,7 +145,17 @@ struct MapView: View {
                             }
                             #endif
 
-                            layerContent
+                            // TEMPORARY — the feel gate for the Map hero orb (Void
+                            // Rule clause 2). Scrub it, land on a value, copy it into
+                            // AppLayout.defaultMapHeroOrbFraction, delete this block.
+                            #if DEBUG
+                            MapHeroTuner(
+                                fraction: $debugOrbFraction,
+                                orbSize: layout.mapHeroOrbSize
+                            )
+                            #endif
+
+                            layerContent(layout)
                         }
                         .padding(.horizontal, AppSpacing.lg)
                         .padding(.top, AppSpacing.md)
@@ -320,16 +338,17 @@ struct MapView: View {
     // MARK: - Layers (empty scaffolds in Seg 0; filled in Segments 1-5)
 
     @ViewBuilder
-    private var layerContent: some View {
+    private func layerContent(_ layout: AppLayout) -> some View {
         switch store.layer {
-        case .me: meLayer
-        case .us: if store.hasUs { usLayer } else { meLayer }
+        case .me: meLayer(layout)
+        case .us: if store.hasUs { usLayer(layout) } else { meLayer(layout) }
         }
     }
 
-    private var meLayer: some View {
+    private func meLayer(_ layout: AppLayout) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.xl) {
             MapPulseHero(
+                layout: layout,
                 onCheckIn: { startCheckIn() },
                 onOpenHistory: { showPulseSheet = true },
                 isLinked: store.hasUs
@@ -339,8 +358,9 @@ struct MapView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var usLayer: some View {
+    private func usLayer(_ layout: AppLayout) -> some View {
         MapUsLayer(
+            layout: layout,
             stats: store.usStats,
             align: store.alignItems,
             lockedAlignCount: store.lockedAlignCount,
@@ -354,6 +374,20 @@ struct MapView: View {
         )
     }
 
+    // MARK: - Layout
+
+    /// `AppLayout.from(geo)` in release. In DEBUG the hero tuner's scrubbed fraction
+    /// is folded in here, so every hero downstream sizes off one resolved layout.
+    /// A function, not an inline `var` mutation — a result builder cannot hold a
+    /// mutating statement.
+    private func resolvedLayout(_ geo: GeometryProxy) -> AppLayout {
+        var layout = AppLayout.from(geo)
+        #if DEBUG
+        layout.mapHeroOrbFraction = CGFloat(debugOrbFraction)
+        #endif
+        return layout
+    }
+
     // MARK: - Pulse check-in
 
     private func startCheckIn() {
@@ -363,6 +397,60 @@ struct MapView: View {
 }
 
 // MARK: - Preview
+
+// MARK: - DEBUG hero tuner (TEMPORARY — delete once the fraction is locked)
+
+#if DEBUG
+/// The feel gate for the Map hero orb, per the Void Rule's clause 2
+/// (docs/design/2026-07-17-void-rule-and-map-hero-scale.md).
+///
+/// Exists because the orb's size cannot be derived on paper: MapHeroAmbientGlow
+/// washes to 2.6x the orb, so the perceived hero is far larger than the number, and
+/// the honest way to pick it is to look at it. Scrub against the real glow on real
+/// hardware, then copy the value into AppLayout.defaultMapHeroOrbFraction and delete
+/// this struct, the @AppStorage in MapView, and the #if DEBUG block that renders it.
+///
+/// A concrete View struct, not a @ViewBuilder helper on MapView — conditional
+/// @ViewBuilder helpers trip the DebugReplaceableView SIGABRT in previews.
+private struct MapHeroTuner: View {
+
+    @Binding var fraction: Double
+    let orbSize: CGFloat
+
+    /// Home's deck is min(screenWidth * 0.72, 320) — the widest hero the app ships,
+    /// so 0.72 is the ceiling worth trying, not an arbitrary bound.
+    private let range: ClosedRange<Double> = 0.20...0.72
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+            Text("HERO ORB — DEBUG")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textTertiary)
+
+            Slider(value: $fraction, in: range)
+                .tint(AppColors.spectrumCyan)
+
+            // Orb / wash / share. The wash is the one that matters: it is what the
+            // eye reads, and it is 2.6x the number the slider is setting.
+            Text(readout)
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+
+            Text("Copy into AppLayout.defaultMapHeroOrbFraction, then delete this.")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textMuted)
+        }
+        .padding(AppSpacing.sm)
+        .vaylGlassCard()
+    }
+
+    private var readout: String {
+        let wash = orbSize * MapHeroAmbientGlow.outerDiameterMultiple
+        let f = String(format: "%.3f", fraction)
+        return "fraction \(f) · orb \(Int(orbSize))pt · wash \(Int(wash))pt"
+    }
+}
+#endif
 
 #Preview("Map tab") {
     let state = { let s = AppState(); s.displayName = "Jordan"; return s }()

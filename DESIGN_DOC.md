@@ -165,7 +165,28 @@ obFanCardWidth(in:)    = min(screenWidth * 0.42, 280)   // ExperienceLevel fanne
 sessionCardWidth(in:)  = min(screenWidth * 0.88, 480)   // Card Session
 sessionCardHeight(in:) = sessionCardWidth * 0.708
 ```
-Standard spacing: `screenHPad` 18 · `screenMargin` 24 (OB canvas) · `ctaHorizontalMargin` 32 · `cardHPad` 16 · `cardVPad` 14 · `cardGap` 10 · `sectionGap` 24. Components: `ctaHeight` 52 · `pillHeight` 32 · `iconBtnSize` 30. Map: `mapPulseCardHeight` 218, `mapMeAuraSize` = `mapPulseCardHeight × 0.62`.
+Standard spacing: `screenHPad` 18 · `screenMargin` 24 (OB canvas) · `ctaHorizontalMargin` 32 · `cardHPad` 16 · `cardVPad` 14 · `cardGap` 10 · `sectionGap` 24. Components: `ctaHeight` 52 · `pillHeight` 32 · `iconBtnSize` 30.
+
+### The Void Rule (heroes)
+
+**A screen's hero floats in the void, and it sizes off the screen.** Two clauses, both mandatory.
+
+**Clause 1 — no card chrome on a hero.** The hero sits on `AppColors.void` + `OnboardingAtmosphere`, never inside `.vaylGlassCard()` / `.themedCard()` / `.learnCard()`. Cards are for secondary content. This is why Play uses zero card chrome on its tab screen and Home uses exactly one (the partner-chip popover). `MapUsPulseCard` states it in-file: "NO card chrome... a hero sitting on the atmosphere, not a bordered card like the Vault door."
+
+**Clause 2 — heroes derive from `AppLayout.from(geo)`, never a constant.** Already law for the OB canvas (`obCardWidth(in:)`) and hardware insets; now law for every hero. A constant cannot breathe across devices, and it outlives whatever justified it.
+
+```swift
+defaultMapHeroOrbFraction = 0.35            // FEEL — the one dial on Map
+mapHeroSlotFraction       = 0.26            // shared Me/Us footprint (spec §1)
+mapHeroOrbSize            = screenWidth  * mapHeroOrbFraction
+mapHeroSlotHeight         = screenHeight * mapHeroSlotFraction   // applied as minHeight
+```
+
+Retired 2026-07-17: `mapPulseCardHeight` 218 / `mapMeAuraSize` = `218 × 0.62`. The 218 was named for a card that never rendered and sized for a history grid that had already moved to `PulseFullView`. Its one live job, a shared Me/Us footprint so the lens flip never shifts the slots below, survives as `mapHeroSlotHeight`. Full rationale: `docs/design/2026-07-17-void-rule-and-map-hero-scale.md`.
+
+**Caveat when tuning a glowing hero:** `MapHeroAmbientGlow.outerDiameterMultiple` is 2.6, so the orb's perceived size is ~2.6x its set size. Never size a glowing hero by arithmetic against a crisp one (Home's deck at `screenWidth * 0.72`). Judge on device against the real glow.
+
+**Status — Learn fails clause 1.** Eleven cards, no floating hero, and `LearnStore.featuredFinding` is computed then rendered as an ordinary carousel card. Parked pending Map's device pass.
 
 `AppSafeArea.swift` — the only file allowed to call `.safeAreaInset(edge:)` directly:
 | Modifier | Purpose |

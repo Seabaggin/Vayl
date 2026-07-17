@@ -2,8 +2,10 @@
 //
 // The Me layer's Pulse section on the Map tab.
 //
-// Glance: aura hero (AppLayout.mapMeAuraSize) + Space name + sublabel + weather one-liner.
-// Card pinned to AppLayout.mapPulseCardHeight — the shared Me/Us footprint (Map dashboard spec §1).
+// Glance: aura hero (layout.mapHeroOrbSize) + Space name + sublabel + weather one-liner.
+// Floats on the atmosphere with NO card chrome, at a screen-proportional size — the
+// Void Rule, both clauses. Slot floor is layout.mapHeroSlotHeight, the shared Me/Us
+// footprint (Map dashboard spec §1) that MapUsPulseCard also uses.
 // "tap to open →" opens a cover with the full 2D field at the user's current position.
 //
 // Visual reference: docs/prototypes/map-pulse-final.html — "Me · the glance" phone.
@@ -14,6 +16,7 @@ struct MapPulseHero: View {
 
     @Environment(PulseStore.self) private var pulse
 
+    let layout: AppLayout
     var onCheckIn: () -> Void
     var onOpenHistory: () -> Void
     var isLinked: Bool = false
@@ -46,11 +49,11 @@ struct MapPulseHero: View {
                     // which was inflating this whole block's reported height and
                     // pushing everything below it down. .background renders the
                     // glow behind the aura without it participating in layout.
-                    PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: AppLayout.mapMeAuraSize)
+                    PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: layout.mapHeroOrbSize)
                         .background {
                             MapHeroAmbientGlow(
                                 color: currentSpace.ramp(at: currentPosition).glow,
-                                orbSize: AppLayout.mapMeAuraSize
+                                orbSize: layout.mapHeroOrbSize
                             )
                         }
                         .frame(maxWidth: .infinity)
@@ -102,13 +105,11 @@ struct MapPulseHero: View {
                 emptyStateBlock
             }
         }
-        // NOTE: kept as minHeight, not a hard height. The history grid that used to
-        // live here (and justified the original minHeight) moved to PulseFullView,
-        // but the check-in pill is conditional (pulse.canCheckInToday) and its
-        // presence/absence still changes total content height enough that a hard
-        // height risks clipping the pill on some content combinations. Revisit once
-        // on-device sizing confirms a fixed height never clips.
-        .frame(minHeight: AppLayout.mapPulseCardHeight, alignment: .top)
+        // NOTE: kept as minHeight, not a hard height. The check-in pill is conditional
+        // (pulse.canCheckInToday) and its presence/absence changes total content height
+        // enough that a hard height risks clipping it. minHeight also means a larger orb
+        // grows the slot naturally rather than overflowing it.
+        .frame(minHeight: layout.mapHeroSlotHeight, alignment: .top)
         // No AppLayout in scope here, so the screenHeight-less overload sizes off
         // the presenting context (same pattern as ReflectionBannerView/LearnView).
         .vaylSheet(isPresented: $showInfo, heightFraction: 0.85) {
@@ -201,7 +202,7 @@ struct MapPulseHero: View {
             // No ambient glow here: the cycling ramp's colour is always shifting,
             // and a static wash behind it would just look mismatched — the
             // moving colour already carries "not yet answered" on its own.
-            PulseCyclingAura(size: AppLayout.mapMeAuraSize)
+            PulseCyclingAura(size: layout.mapHeroOrbSize)
                 .frame(maxWidth: .infinity)
                 .padding(.top, AppSpacing.lg)
 
@@ -389,14 +390,18 @@ private struct MapFieldSheet: View {
 // MARK: - Preview
 
 #Preview("Hero + sheet") {
-    ZStack {
-        AppColors.void.ignoresSafeArea()
-        OnboardingAtmosphere(config: .stat).ignoresSafeArea()
-        ScrollView {
-            VStack {
-                MapPulseHero(onCheckIn: {}, onOpenHistory: {})
-                    .padding(.horizontal, AppSpacing.lg)
-                    .padding(.top, AppSpacing.lg)
+    // GeometryReader, not a hand-built AppLayout: the preview resolves hero scale
+    // the same way the device does (Void Rule clause 2).
+    GeometryReader { geo in
+        ZStack {
+            AppColors.void.ignoresSafeArea()
+            OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+            ScrollView {
+                VStack {
+                    MapPulseHero(layout: AppLayout.from(geo), onCheckIn: {}, onOpenHistory: {})
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.top, AppSpacing.lg)
+                }
             }
         }
     }
