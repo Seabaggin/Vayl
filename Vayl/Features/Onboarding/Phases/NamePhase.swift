@@ -7,10 +7,8 @@ struct NamePhase: View {
     let director:   VaylDirector
     let screenSize: CGSize
 
-    @State private var name:       String  = ""
-    @State private var uiAlpha:    Double  = 0
-    @State private var dragY:      CGFloat = 0
-    @State private var isCharging: Bool    = false
+    @State private var name:    String = ""
+    @State private var uiAlpha: Double = 0
 
     private var safeTop: CGFloat {
         guard let scene = UIApplication.shared.connectedScenes
@@ -42,6 +40,17 @@ struct NamePhase: View {
 
     private var nameInputLayer: some View {
         VStack(alignment: .leading, spacing: 0) {
+
+            // Drag handle — communicates "this sheet can be pulled down"
+            HStack {
+                Spacer()
+                RoundedRectangle(cornerRadius: AppRadius.pill)
+                    .fill(Color.white.opacity(0.20))
+                    .frame(width: AppLayout.dragHandleW, height: AppLayout.dragHandleH)
+                Spacer()
+            }
+            .padding(.top, AppSpacing.sm)
+
             Spacer().frame(height: safeTop + 58)
 
             // Back button
@@ -104,53 +113,42 @@ struct NamePhase: View {
             Spacer().frame(height: safeBottom + 42)
         }
         .padding(.horizontal, 32)
-        .offset(y: dragY)
+        .background(AppColors.void)
+        .clipShape(
+            UnevenRoundedRectangle(
+                topLeadingRadius:    AppRadius.xl,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius:   AppRadius.xl,
+                style: .continuous
+            )
+        )
+        .offset(y: director.nameInputDragY)
         .gesture(
             DragGesture()
                 .onChanged { v in
-                    if v.translation.height > 0 { dragY = v.translation.height }
+                    if v.translation.height > 0 {
+                        director.applyNameInputDrag(dy: v.translation.height)
+                    }
                 }
-                .onEnded { v in handleSwipeDown(v.translation.height) }
+                .onEnded { v in
+                    let translationY = v.translation.height
+                    let velocity     = v.predictedEndLocation.y - v.location.y
+                    guard translationY > 80 || velocity > 400 else {
+                        director.snapBackNameInputDrag()
+                        return
+                    }
+                    let trimmed = name.trimmingCharacters(in: .whitespaces)
+                    guard !trimmed.isEmpty else {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        director.snapBackNameInputDrag()
+                        return
+                    }
+                    UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                    withAnimation(.easeIn(duration: 0.20)) { uiAlpha = 0 }
+                    director.commitNameAndDismiss(name: trimmed)
+                }
         )
-    }
-
-    // MARK: - Submission
-
-    @MainActor
-    private func handleSwipeDown(_ translationY: CGFloat) {
-        guard translationY > 80 else {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { dragY = 0 }
-            return
-        }
-
-        guard !name.trimmingCharacters(in: .whitespaces).isEmpty else {
-            let impact = UIImpactFeedbackGenerator(style: .medium)
-            impact.impactOccurred()
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { dragY = 0 }
-            return
-        }
-
-        submitName()
-    }
-
-    @MainActor
-    private func submitName() {
-        isCharging = true
-
-        let impact = UIImpactFeedbackGenerator(style: .heavy)
-        impact.impactOccurred()
-
-        director.onboardingData.displayName = name.trimmingCharacters(in: .whitespaces)
-
-        withAnimation(.easeIn(duration: 0.20)) { uiAlpha = 0 }
-        withAnimation(.spring(response: 0.48, dampingFraction: 0.88)) {
-            dragY = screenSize.height * 1.2
-        }
-
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(480))
-            director.advance(to: .gender)
-        }
     }
 }
 

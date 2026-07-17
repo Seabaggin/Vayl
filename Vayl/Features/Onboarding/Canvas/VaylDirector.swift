@@ -23,9 +23,10 @@ final class VaylDirector {
     var genderCard: VaylCardModel? = nil
 
     // UI visibility signals — observed by phase overlays
-    var nameInputVisible:    Bool = false
-    var genderPickerVisible: Bool = false
-    var genderCopyVisible:   Bool = false
+    var nameInputVisible:    Bool    = false
+    var nameInputDragY:      CGFloat = 0     // drives overlay offset + table/card peek
+    var genderPickerVisible: Bool    = false
+    var genderCopyVisible:   Bool    = false
 
     // MARK: - User Data
 
@@ -67,9 +68,10 @@ final class VaylDirector {
     // MARK: - Phase Sequence Private State
     // @ObservationIgnored — these never need to trigger view re-renders.
 
-    @ObservationIgnored private var cachedScreenSize:  CGSize = .zero
-    @ObservationIgnored private var nameLandingAngle:  Double = 0
-    @ObservationIgnored private var nameLandingOffset: CGSize = .zero
+    @ObservationIgnored private var cachedScreenSize:    CGSize = .zero
+    @ObservationIgnored private var nameLandingAngle:   Double = 0
+    @ObservationIgnored private var nameLandingOffset:  CGSize = .zero
+    @ObservationIgnored private var nameInputDismissFired: Bool = false
 
     @ObservationIgnored private var genderLiftFired:  Bool = false
     @ObservationIgnored private var genderHasTugged:  Bool = false
@@ -160,10 +162,12 @@ final class VaylDirector {
     private func runNameEntry() {
         guard cachedScreenSize != .zero else { return }
 
-        tableFade         = 1.0
-        rimBurst          = 0
-        cornerDeckVisible = true
-        nameInputVisible  = false
+        tableFade             = 1.0
+        rimBurst              = 0
+        cornerDeckVisible     = true
+        nameInputVisible      = false
+        nameInputDragY        = 0
+        nameInputDismissFired = false
 
         // Seed landing position once per session
         nameLandingAngle  = Double.random(in: -7...7)
@@ -281,6 +285,60 @@ final class VaylDirector {
         guard !Task.isCancelled else { return }
 
         nameInputVisible = true
+        triggerNameInputHint()
+    }
+
+    private func triggerNameInputHint() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.5))
+            guard nameInputVisible, nameInputDragY == 0 else { return }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
+                applyNameInputDragValues(dy: 16)
+            }
+            try? await Task.sleep(for: .milliseconds(400))
+            guard nameInputDragY > 0 else { return }
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                applyNameInputDragValues(dy: 0)
+            }
+        }
+    }
+
+    // MARK: - Name Input Drag API (called by NamePhase gesture)
+
+    private func applyNameInputDragValues(dy: CGFloat) {
+        let clampedDy   = max(0, dy)
+        nameInputDragY  = clampedDy
+        let progress    = min(clampedDy / (cachedScreenSize.height * 0.25), 1.0)
+        tableFade       = progress * 0.75
+        nameCard?.opacity = progress * 0.40
+    }
+
+    func applyNameInputDrag(dy: CGFloat) {
+        guard nameInputVisible else { return }
+        applyNameInputDragValues(dy: dy)
+    }
+
+    func snapBackNameInputDrag() {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            nameInputDragY = 0
+        }
+        withAnimation(.easeOut(duration: 0.25)) {
+            tableFade         = 0
+            nameCard?.opacity = 0
+        }
+    }
+
+    func commitNameAndDismiss(name: String) {
+        guard !nameInputDismissFired else { return }
+        nameInputDismissFired      = true
+        onboardingData.displayName = name
+        withAnimation(.spring(response: 0.48, dampingFraction: 0.88)) {
+            nameInputDragY = cachedScreenSize.height * 1.2
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(480))
+            advance(to: .gender)
+        }
     }
 
     // MARK: - Gender Entry Sequence
