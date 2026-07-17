@@ -129,7 +129,11 @@ struct ResearchSection: View {
             )
             .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
-            LivingText(text: f.citation, font: AppFonts.caption)
+            // wraps: true is load-bearing. Citations are sentences, and LivingText
+            // defaults to .fixedSize() for its hero-word callers — without this the
+            // citation renders as one line wider than the screen and drags the whole
+            // card with it, clipping the finding text above.
+            LivingText(text: f.citation, font: AppFonts.caption, wraps: true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(AppSpacing.lg)

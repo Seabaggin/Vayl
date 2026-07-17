@@ -41,7 +41,7 @@ struct ContentItemSheet: View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
                 header
-                Text(body_)
+                Text(backgroundCopy)
                     .font(AppFonts.bodyText)
                     .foregroundStyle(AppColors.textBody)
                     .fixedSize(horizontal: false, vertical: true)
@@ -102,7 +102,7 @@ struct ContentItemSheet: View {
 
     /// Falls back to the row's one-liner until the longer copy is written, so the
     /// sheet is never empty — the fallback is short, not absent.
-    private var body_: String {
+    private var backgroundCopy: String {
         switch item {
         case .media(let m): return m.background ?? m.positioning
         case .voice(let v): return v.background ?? v.blurb

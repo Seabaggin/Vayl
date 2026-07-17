@@ -9,6 +9,16 @@ struct LivingText: View {
     /// Home greeting name). Defaults true to preserve every existing caller.
     var animated: Bool = true
 
+    /// Whether the text may wrap onto multiple lines.
+    ///
+    /// Defaults FALSE — i.e. `.fixedSize()`, which is what this component always
+    /// did and what every hero-word caller needs ("acquainted.", "exploring?").
+    /// But `.fixedSize()` means "never wrap, take your full ideal width", so a
+    /// multi-line string renders as one enormous line and inflates its parent past
+    /// the screen: neighbouring text gets clipped, not just this view. Pass true
+    /// for anything longer than a couple of words.
+    var wraps: Bool = false
+
     // MARK: - Gradient Stops
     //
     // Clean three-stop directional gradient.
@@ -32,7 +42,9 @@ struct LivingText: View {
                 animatedText
             }
         }
-        .fixedSize()
+        // Vertical-only when wrapping: the text still takes the height it needs,
+        // but yields its width to the parent instead of forcing it.
+        .fixedSize(horizontal: !wraps, vertical: true)
         .accessibilityLabel(text)
     }
 
