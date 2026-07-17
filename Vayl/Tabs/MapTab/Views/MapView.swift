@@ -329,10 +329,12 @@ struct MapView: View {
 
     private func meLayer(_ layout: AppLayout) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.xl) {
+            // No onOpenHistory: the Me lens's history is inline in the hero now (a
+            // collapsed strip that expands in place), so the "History" link retired.
+            // PulseFullView stays alive — the Us lens still opens it from its own card.
             MapPulseHero(
                 layout: layout,
                 onCheckIn: { startCheckIn() },
-                onOpenHistory: { showPulseSheet = true },
                 isLinked: store.hasUs
             )
             MapRecord(sessions: store.sessions, shares: store.categoryShares)

@@ -191,6 +191,18 @@ struct AppLayout {
     /// screen width. Matches the visual design at standard iPhone widths.
     static let citationPanelMaxWidth: CGFloat = 300
 
+    // MARK: - Touch targets
+
+    /// The iOS minimum comfortable hit area (HIG). Not a feel value and never tuned:
+    /// it is Apple's floor, and Accessibility & Inclusion in PRODUCT.md commits to it.
+    ///
+    /// Use it whenever the GLYPH is smaller than the TARGET — a 15pt ⓘ, a chevron, a
+    /// small close affordance. Pattern: keep the icon at its optical size and hang a
+    /// `.frame(width:height:)` + `.contentShape(Rectangle())` off it, rather than
+    /// inflating the icon to reach 44 (which makes it shout) or leaving a 15pt target
+    /// (which makes it miss).
+    static let minTouchTarget: CGFloat = 44
+
     // MARK: - Map Dashboard Hero (Void Rule)
     //
     // The Map hero obeys the Void Rule: it floats on the atmosphere with no card

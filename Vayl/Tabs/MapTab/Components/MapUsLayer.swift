@@ -67,10 +67,28 @@ struct MapUsLayer: View {
                 checkInPill
                     .padding(.top, AppSpacing.xxs)
             }
+            // Lens symmetry (2026-07-17): Me's hero grew an inline collapsed history
+            // strip, so Us grows the same one in its own mode (split you/partner beads).
+            // Me-only would have broken the dashboard spec's governing rule — "Me is
+            // never a smaller copy of Us" — by giving the two lenses different heights
+            // and different content shapes. Same component, one mode apart.
+            if !usGridPairs.isEmpty {
+                PulseHistoryGrid(
+                    mode: .us(usGridPairs, partnerName: partnerName),
+                    collapsible: true
+                )
+                .padding(.top, AppSpacing.lg)
+            }
             vaultDoorCard
                 .padding(.top, AppSpacing.sm)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// The paired last-30 for the inline strip. Same helper `PulseFullView` uses, so the
+    /// dashboard strip and the pillar's grid can never disagree.
+    private var usGridPairs: [(date: Date, mine: PulseSpace, partner: PulseSpace?)] {
+        PulseHistory.pairedLastLoggedSpaces(mine: pulse.entries, partner: partnerEntries)
     }
 
     // MARK: - Vault door

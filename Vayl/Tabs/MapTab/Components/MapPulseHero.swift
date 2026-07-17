@@ -5,9 +5,17 @@
 // Glance: aura hero (layout.mapHeroOrbSize) + Space name + sublabel + weather one-liner.
 // Floats on the atmosphere with NO card chrome, at a screen-proportional size — the
 // Void Rule, both clauses. No height floor: the hero sizes to its content.
-// "tap to open →" opens a cover with the full 2D field at the user's current position.
 //
-// Visual reference: docs/prototypes/map-pulse-final.html — "Me · the glance" phone.
+// TWO tap targets, and only two (2026-07-17 rework, option A "spoken invite"):
+//   1. The hero itself → check in. The whole block, not a pill.
+//   2. ⓘ → PulseInfoSheet: what this is, what the spaces mean, and where you are.
+// It previously carried FOUR (About / History / "tap to open →" / the orb / a pill),
+// where the biggest, most obviously tappable element (the orb) opened the field map —
+// the least important destination — and the primary action was a 10pt outlined pill.
+// The field folded into ⓘ; history became an inline strip that expands in place; the
+// pill is gone. See docs/mockups/map-pulse-hero-options.html.
+//
+// Visual reference: docs/mockups/map-pulse-hero-options.html — "A · spoken invite".
 
 import SwiftUI
 
@@ -17,19 +25,11 @@ struct MapPulseHero: View {
 
     let layout: AppLayout
     var onCheckIn: () -> Void
-    var onOpenHistory: () -> Void
     var isLinked: Bool = false
 
-    @State private var showMap   = false
     @State private var showInfo  = false
     @State private var isPressed = false
-
-    // Per-control press states for the header affordances + pill (tap contract:
-    // every tappable element carries press scale + haptic + action).
-    @State private var aboutPressed   = false
-    @State private var historyPressed = false
-    @State private var mapPressed     = false
-    @State private var pillPressed    = false
+    @State private var infoPressed = false
 
     // MARK: - Body
 
@@ -37,71 +37,42 @@ struct MapPulseHero: View {
         VStack(alignment: .leading, spacing: 0) {
             sectionHeader
 
-            if hasHistory {
-                // Aura — tapping it opens the field-map sheet.
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    showMap = true
-                } label: {
-                    // .background, NOT a ZStack sibling — a ZStack sizes itself to
-                    // its largest child, and the glow's outer wash is ~2.6x the orb,
-                    // which was inflating this whole block's reported height and
-                    // pushing everything below it down. .background renders the
-                    // glow behind the aura without it participating in layout.
-                    PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: layout.mapHeroOrbSize)
-                        .background {
-                            MapHeroAmbientGlow(
-                                color: currentSpace.ramp(at: currentPosition).glow,
-                                orbSize: layout.mapHeroOrbSize
-                            )
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, AppSpacing.lg)
-                        .opacity(isQuiet ? PulseFieldEntry.staleOpacity : 1.0)
-                }
-                .buttonStyle(.plain)
+            // ONE target: the whole hero checks you in. The orb no longer owns a tap of
+            // its own, so nothing is nested inside it.
+            //
+            // Gated on canCheckInToday (= todayEntry?.isEditable ?? true). A locked entry
+            // used to simply hide the pill; now that the hero IS the button, the same
+            // condition has to remove the tap and the invite, or the whole hero becomes a
+            // dead target that silently does nothing.
+            heroContent
+                .contentShape(Rectangle())
                 .scaleEffect(isPressed ? 0.96 : 1.0)
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { _ in isPressed = true }
-                        .onEnded { _ in isPressed = false }
-                )
+                .modifier(CheckInTap(
+                    active: pulse.canCheckInToday,
+                    isPressed: $isPressed,
+                    hint: pulse.todayEntry == nil ? "Checks in" : "Edits today's check-in",
+                    action: onCheckIn
+                ))
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(heroAccessibilityLabel)
 
-                // Space name + sublabel
-                VStack(spacing: AppSpacing.xxs) {
-                    Text(currentSpace.displayName)
-                        .font(AppFonts.screenTitle)
-                        .foregroundStyle(AppColors.textPrimary)
-                        .multilineTextAlignment(.center)
+            // History — a sibling of the hero button, never a child of it. Nesting a tap
+            // target inside a tap target is the gesture conflict this layout avoids.
+            if hasHistory {
+                PulseHistoryGrid(mode: .me(gridDays), collapsible: true)
+                    .padding(.top, AppSpacing.lg)
+            }
 
-                    Text(staleSublabel ?? currentSpace.descriptors(at: currentPosition))
-                        .font(AppFonts.bodyText)
-                        .foregroundStyle(AppColors.textSecondary)
-                        .multilineTextAlignment(.center)
-
-                    if let wl = pulse.weatherLine {
-                        Text(wl)
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.spectrumCyan)
-                            .padding(.top, AppSpacing.xxs)
-                    }
-
-                    if isLinked {
-                        Text("Your read also appears in your shared orb")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.textMuted)
-                            .padding(.top, AppSpacing.xxs)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, AppSpacing.sm)
-
-                if pulse.canCheckInToday {
-                    checkInPill
-                        .padding(.top, AppSpacing.md)
-                }
-            } else {
-                emptyStateBlock
+            if isLinked {
+                // The worded-consent line (dashboard spec §3.4): the one place "Me = mine
+                // alone" and the data model diverge. It was textMuted — 1.76:1, unreadable.
+                // A privacy disclosure nobody can read is not a disclosure, so this is a
+                // correctness fix, not a cosmetic one. textTertiary = 5.32:1.
+                Text("Your read also appears in your shared orb")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, AppSpacing.md)
             }
         }
         // No minHeight floor. The old one (mapHeroSlotHeight, ≈221pt) was co-tuned to a
@@ -110,21 +81,85 @@ struct MapPulseHero: View {
         // No AppLayout in scope here, so the screenHeight-less overload sizes off
         // the presenting context (same pattern as ReflectionBannerView/LearnView).
         .vaylSheet(isPresented: $showInfo, heightFraction: 0.85) {
-            PulseInfoSheet()
+            PulseInfoSheet(reading: infoReading)
         }
-        .vaylCover(isPresented: $showMap, confirmOnExit: false) {
-            MapFieldSheet(
-                position: currentPosition,
-                space: currentSpace,
-                isStale: isStale,
-                isQuiet: isQuiet,
-                staleSince: pulse.entries.last.map { pulse.relativeDay(for: $0.date) }
-            )
+    }
+
+    // MARK: - Hero block (aura + the read + the invite)
+
+    @ViewBuilder
+    private var heroContent: some View {
+        if hasHistory { heroBlock } else { emptyStateBlock }
+    }
+
+    private var heroBlock: some View {
+        VStack(spacing: 0) {
+            // .background, NOT a ZStack sibling — a ZStack sizes itself to
+            // its largest child, and the glow's outer wash is ~2.6x the orb,
+            // which was inflating this whole block's reported height and
+            // pushing everything below it down. .background renders the
+            // glow behind the aura without it participating in layout.
+            PulseAura(ramp: currentSpace.ramp(at: currentPosition), size: layout.mapHeroOrbSize)
+                .background {
+                    MapHeroAmbientGlow(
+                        color: currentSpace.ramp(at: currentPosition).glow,
+                        orbSize: layout.mapHeroOrbSize
+                    )
+                }
+                .frame(maxWidth: .infinity)
+                // xs, not lg: the header's 44pt ⓘ target already contributes ~14pt of
+                // slack below the section label, so lg would double-count it and push the
+                // orb down. 🎚️ FEEL: verify the label→orb gap on device.
+                .padding(.top, AppSpacing.xs)
+                .opacity(isQuiet ? PulseFieldEntry.staleOpacity : 1.0)
+
+            VStack(spacing: AppSpacing.xxs) {
+                Text(currentSpace.displayName)
+                    .font(AppFonts.screenTitle)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .multilineTextAlignment(.center)
+
+                Text(staleSublabel ?? currentSpace.descriptors(at: currentPosition))
+                    .font(AppFonts.bodyText)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+
+                if let wl = pulse.weatherLine {
+                    Text(wl)
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.spectrumCyan)
+                        .padding(.top, AppSpacing.xxs)
+                }
+
+                inviteLine
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, AppSpacing.sm)
+        }
+    }
+
+    /// The affordance the check-in pill used to carry. `textSecondary`, not `textAccent`:
+    /// the orb owns colour on this screen, and on an Expansive day the ramp IS cyan, so a
+    /// cyan invite would sit under a cyan orb and read as an accident. Secondary still
+    /// outranks the timestamp below it, which is the hierarchy bug the pill left behind.
+    /// 🎚️ FEEL: try `textAccent` on device before locking this.
+    @ViewBuilder
+    private var inviteLine: some View {
+        if pulse.canCheckInToday {
+            // "Edit", not "update": the app already says "Edit check-in" in HomePulseRail
+            // and MapUsLayer. One term per concept.
+            Text(pulse.todayEntry == nil ? "Tap to check in" : "Tap to edit today's check-in")
+                .font(AppFonts.caption)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.top, AppSpacing.sm)
         }
     }
 
     // MARK: - Section header
 
+    // ⓘ shows in BOTH states: a first-run user (empty state) needs a way to learn what
+    // the Pulse is before checking in. It replaces three text links (About / History /
+    // "tap to open →") — History moved inline, the field folded into ⓘ itself.
     private var sectionHeader: some View {
         HStack {
             Text("The Pulse")
@@ -133,60 +168,37 @@ struct MapPulseHero: View {
                 .tracking(1.5)
                 .foregroundStyle(AppColors.textSectionLabel)
             Spacer()
-            HStack(spacing: AppSpacing.sm) {
-                // "About" shows in BOTH states: first-run users (empty state)
-                // need a way to learn what the Pulse is before checking in.
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    showInfo = true
-                } label: {
-                    Text("About")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textMuted)
-                }
-                .buttonStyle(.plain)
-                .scaleEffect(aboutPressed ? 0.96 : 1.0)
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { _ in aboutPressed = true }
-                        .onEnded { _ in aboutPressed = false }
-                )
-
-                if hasHistory {
-                    Button {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        onOpenHistory()
-                    } label: {
-                        Text("History")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.textMuted)
-                    }
-                    .buttonStyle(.plain)
-                    .scaleEffect(historyPressed ? 0.96 : 1.0)
-                    .simultaneousGesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { _ in historyPressed = true }
-                            .onEnded { _ in historyPressed = false }
-                    )
-
-                    Button {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        showMap = true
-                    } label: {
-                        Text("tap to open →")
-                            .font(AppFonts.caption)
-                            .foregroundStyle(AppColors.textMuted)
-                    }
-                    .buttonStyle(.plain)
-                    .scaleEffect(mapPressed ? 0.96 : 1.0)
-                    .simultaneousGesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { _ in mapPressed = true }
-                            .onEnded { _ in mapPressed = false }
-                    )
-                }
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                showInfo = true
+            } label: {
+                Image(systemName: AppIcons.infoCircle)
+                    .font(AppFonts.body(15, weight: .regular, relativeTo: .footnote))
+                    // textTertiary (5.32:1 on void), NOT textMuted (1.76:1 — fails both
+                    // WCAG AA text and the 3:1 non-text control floor). The three links
+                    // this replaces were all textMuted, i.e. the whole header was near
+                    // invisible; carrying that onto the ONE affordance that now explains
+                    // the feature would be worse, not equal.
+                    .foregroundStyle(AppColors.textTertiary)
+                    // A 15pt glyph is not a 44pt target. The frame is the touch area;
+                    // the glyph stays small (iOS HIG 44x44 minimum).
+                    .frame(width: AppLayout.minTouchTarget, height: AppLayout.minTouchTarget, alignment: .trailing)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .scaleEffect(infoPressed ? 0.96 : 1.0)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in infoPressed = true }
+                    .onEnded { _ in infoPressed = false }
+            )
+            .accessibilityLabel("About the Pulse")
+            .accessibilityHint("Explains the check-in and the spaces, and shows where you are")
         }
+        // The header owns the ⓘ's full 44pt height. Clamping it shorter (e.g. to
+        // AppSpacing.lg) does NOT shrink the button's hit area — it just lets the target
+        // overhang into the hero's tap zone below, where the two would fight over the
+        // same points. The hero's top padding absorbs the extra height instead.
     }
 
     // MARK: - Empty state (never checked in) — reuses Home's exact dormant-state
@@ -201,7 +213,8 @@ struct MapPulseHero: View {
             // moving colour already carries "not yet answered" on its own.
             PulseCyclingAura(size: layout.mapHeroOrbSize)
                 .frame(maxWidth: .infinity)
-                .padding(.top, AppSpacing.lg)
+                // Matches heroBlock's orb padding so the empty→filled transition doesn't shift.
+                .padding(.top, AppSpacing.xs)
 
             VStack(spacing: AppSpacing.xxs) {
                 Text("How's your capacity?")
@@ -220,37 +233,11 @@ struct MapPulseHero: View {
             .frame(maxWidth: .infinity)
             .padding(.top, AppSpacing.sm)
 
-            checkInPill
-                .padding(.top, AppSpacing.md)
+            // The empty state carries the invite too — a first-run user is exactly who
+            // most needs to be told the orb is a door. (The pill this replaced was the
+            // only working check-in entry point Map's Me lens had.)
+            inviteLine
         }
-    }
-
-    // MARK: - Check-in pill (fixes onCheckIn previously being wired by MapView but
-    // never actually called anywhere in this view — Map's Me lens had no working
-    // check-in entry point at all until now.)
-
-    private var checkInPill: some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            onCheckIn()
-        } label: {
-            Text(pulse.todayEntry == nil ? "Check in" : "Edit check-in")
-                .font(AppFonts.buttonLabelSmall)
-                .foregroundStyle(AppColors.textSecondary)
-                .padding(.horizontal, AppSpacing.sm)
-                .padding(.vertical, AppSpacing.xxs)
-                .overlay(
-                    Capsule().strokeBorder(AppColors.borderDefault, lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
-        .scaleEffect(pillPressed ? 0.96 : 1.0)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in pillPressed = true }
-                .onEnded { _ in pillPressed = false }
-        )
-        .accessibilityLabel(pulse.todayEntry == nil ? "Check in" : "Edit today's check-in")
     }
 
     // MARK: - Derived state
@@ -284,102 +271,65 @@ struct MapPulseHero: View {
         guard isStale, let last = pulse.entries.last else { return nil }
         return "As of \(pulse.relativeDay(for: last.date))"
     }
+
+    /// The last 30 logged check-ins for the inline strip. Same helper the Pulse pillar
+    /// uses, so the two surfaces can never disagree about what "your last 30" means.
+    private var gridDays: [(date: Date, space: PulseSpace)] {
+        PulseHistory.lastLoggedSpaces(pulse.entries)
+    }
+
+    /// What ⓘ plots. Nil before the first check-in: the explainer still stands, there's
+    /// just no dot to place yet.
+    private var infoReading: PulseInfoSheet.Reading? {
+        guard hasHistory else { return nil }
+        return .init(
+            position: currentPosition,
+            space: currentSpace,
+            isQuiet: isQuiet,
+            staleSince: isStale ? pulse.entries.last.map { pulse.relativeDay(for: $0.date) } : nil
+        )
+    }
+
+    /// One spoken label for the whole hero. `children: .combine` would otherwise read the
+    /// orb, the name, the sublabel, the weather line and the invite as one run-on string.
+    /// States WHAT THIS IS only; what a tap does is the hint's job (CheckInTap), and
+    /// "button" plus "double tap to activate" is VoiceOver's own announcement to make.
+    private var heroAccessibilityLabel: String {
+        guard hasHistory else { return "How's your capacity? A quick check-in." }
+        return "\(currentSpace.displayName). \(staleSublabel ?? currentSpace.descriptors(at: currentPosition))."
+    }
 }
 
-// MARK: - Field map sheet
+// MARK: - Check-in tap
 
-/// Full-screen cover: the circumplex field owns the screen, zone glows bleed into
-/// the void atmosphere, copy reads below. Presented via .vaylCover so the system
-/// knows this is an immersive experience, not a sheet.
-private struct MapFieldSheet: View {
-    let position: PulsePosition
-    let space: PulseSpace
-    /// Governs copy softening only ("Your last Pulse: … (2 days ago)").
-    let isStale: Bool
-    /// Governs the aura's opacity — the same 4-day threshold Us dims on.
-    let isQuiet: Bool
-    let staleSince: String?
+/// Makes the hero the check-in target, but only while a check-in is actually possible.
+/// A concrete modifier rather than an inline `if` around the whole block: conditional
+/// branches in a preview host are what trip DebugReplaceableView's SIGABRT, and this one
+/// would wrap the aura (the most expensive thing on the screen to re-raster).
+private struct CheckInTap: ViewModifier {
+    let active: Bool
+    @Binding var isPressed: Bool
+    let hint: String
+    let action: () -> Void
 
-    @Environment(\.vaylDismiss) private var dismiss
-
-    var body: some View {
-        GeometryReader { geo in
-            let layout = AppLayout.from(geo)
-            let w = geo.size.width
-
-            ZStack(alignment: .top) {
-                AppColors.void.ignoresSafeArea()
-                OnboardingAtmosphere(config: .stat).ignoresSafeArea()
-
-                ScrollView {
-                    VStack(spacing: 0) {
-                        PulseField(
-                            entries: [PulseFieldEntry(
-                                position: space == .uncharted ? PulsePosition(energy: 0.5, openness: 0.5) : position,
-                                auraSize: 60,
-                                opacity: isQuiet ? PulseFieldEntry.staleOpacity : 1.0,
-                                space: space
-                            )],
-                            size: w,
-                            showAxisLabels: true,
-                            isUncharted: space == .uncharted
-                        )
-                        .padding(.top, layout.safeAreaInsets.top + AppSpacing.xl)
-
-                        VStack(spacing: AppSpacing.xxs) {
-                            Text(readCopy)
-                                .font(AppFonts.display(15, weight: .semibold, relativeTo: .subheadline))
-                                .foregroundStyle(AppColors.textPrimary)
-                                .multilineTextAlignment(.center)
-                            Text(descCopy)
-                                .font(AppFonts.body(11, weight: .regular, relativeTo: .footnote))
-                                .foregroundStyle(AppColors.textSecondary)
-                                .multilineTextAlignment(.center)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(.horizontal, AppSpacing.lg)
-                        .padding(.top, AppSpacing.md)
-
-                        Spacer(minLength: AppSpacing.xl)
-                    }
+    func body(content: Content) -> some View {
+        if active {
+            content
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { _ in isPressed = true }
+                        .onEnded { _ in isPressed = false }
+                )
+                .onTapGesture {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    action()
                 }
-
-                // Dismiss — top-leading, below Dynamic Island
-                VaylCloseButton { dismiss() }
-                .padding(.top, layout.safeAreaInsets.top + AppSpacing.sm)
-                .padding(.leading, AppSpacing.lg)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-
-    // A stale reading never claims "day" in the present tense — it names itself as
-    // the last known Pulse instead. descCopy stays unchanged either way: it
-    // describes the space's character, not a live status claim.
-    private var readCopy: String {
-        guard isStale, let staleSince else {
-            switch space {
-            case .expansive:  return "You're in an Expansive day"
-            case .reactive:   return "A Reactive day"
-            case .receptive:  return "A Receptive day"
-            case .protective: return "A Protective day"
-            case .neutral:    return "A Neutral day"
-            case .uncharted:  return "An Uncharted day"
-            default:          return space.displayName   // border state
-            }
-        }
-        return "Your last Pulse: \(space.displayName) (\(staleSince))"
-    }
-
-    private var descCopy: String {
-        switch space {
-        case .expansive:  return "High energy and open. A good day to connect and explore."
-        case .reactive:   return "High energy, turned inward. Things feel charged right now."
-        case .receptive:  return "Grounded and open, moving at your own pace."
-        case .protective: return "Low energy and guarded. Be kind to yourself today."
-        case .neutral:    return "Balanced across both axes. Steady and calm right now."
-        case .uncharted:  return "Your answers pull in different directions today. Fluid, still finding shape."
-        default:          return space.descriptors(at: position)   // border state
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint(hint)
+        } else {
+            // Not a button, so no trait and no hint: a locked entry must not announce
+            // an action that will not happen.
+            content
         }
     }
 }
@@ -395,7 +345,7 @@ private struct MapFieldSheet: View {
             OnboardingAtmosphere(config: .stat).ignoresSafeArea()
             ScrollView {
                 VStack {
-                    MapPulseHero(layout: AppLayout.from(geo), onCheckIn: {}, onOpenHistory: {})
+                    MapPulseHero(layout: AppLayout.from(geo), onCheckIn: {})
                         .padding(.horizontal, AppSpacing.lg)
                         .padding(.top, AppSpacing.lg)
                 }
