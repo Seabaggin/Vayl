@@ -1,0 +1,139 @@
+{
+  "id": "opener-wider",
+  "title": "Wider",
+  "subtitle": "Build on the ground you've covered.",
+  "category": "foundationEntry",
+  "act": 1,
+  "intensity": 3,
+  "is_locked": false,
+  "required_entitlement": null,
+  "tags": [
+    "opener",
+    "free",
+    "stub"
+  ],
+  "sort_order": 0,
+  "schema_version": 2,
+  "cards": [
+    {
+      "id": "opener-wider-01",
+      "deck_id": "opener-wider",
+      "text": "What pulled you toward this?\n\nName it, plainly.",
+      "highlight_words": [
+        "Name it"
+      ],
+      "type": "prompt",
+      "intensity": 1,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": "A first card to open the conversation.",
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 1
+    },
+    {
+      "id": "opener-wider-02",
+      "deck_id": "opener-wider",
+      "text": "Say one true thing out loud.\n\nPractice putting words to the want.",
+      "highlight_words": [
+        "one true thing"
+      ],
+      "type": "prompt",
+      "intensity": 1,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 2
+    },
+    {
+      "id": "opener-wider-03",
+      "deck_id": "opener-wider",
+      "text": "Where does it get tender?\n\nThe place you usually go quiet.",
+      "highlight_words": [
+        "tender"
+      ],
+      "type": "prompt",
+      "intensity": 2,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": true,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 3
+    },
+    {
+      "id": "opener-wider-04",
+      "deck_id": "opener-wider",
+      "text": "What would you want to hear?\n\nImagine it from across the table.",
+      "highlight_words": [
+        "want to hear"
+      ],
+      "type": "prompt",
+      "intensity": 1,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 4
+    },
+    {
+      "id": "opener-wider-05",
+      "deck_id": "opener-wider",
+      "text": "One small step this week.\n\nLow stakes, real movement.",
+      "highlight_words": [
+        "small step"
+      ],
+      "type": "prompt",
+      "intensity": 1,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 5
+    },
+    {
+      "id": "opener-wider-06",
+      "deck_id": "opener-wider",
+      "text": "Come back and tell the truth about how it felt.",
+      "highlight_words": [
+        "the truth"
+      ],
+      "type": "closingRitual",
+      "intensity": 1,
+      "who_starts": "both",
+      "is_sensitive": false,
+      "can_skip": false,
+      "register": "flexible",
+      "context_beat_type": null,
+      "context_beat_copy": null,
+      "back_copy": null,
+      "is_gendered_card": false,
+      "gendered_for": null,
+      "sort_order": 6
+    }
+  ]
+}

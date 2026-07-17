@@ -41,9 +41,6 @@ public enum VaylCardContent: Equatable {
     /// carriageProgress: 0.0 (left) → 1.0 (right).
     case typewriter(activeKey: Int, carriageProgress: CGFloat)
 
-    /// Slot machine symbol face — used during GenderPhase.
-    case slotMachine
-
     /// Vintage radio tuner face — used during GenderPhase.
     /// signalStrength 0.0 (scanning) → 1.0 (locked). Dial progress 0.0–1.0.
     /// scanPhase shifts sine waves as user scrolls drum pickers.
@@ -60,16 +57,6 @@ public enum VaylCardContent: Equatable {
 
     /// Experience-level candle face. `time` is the shared flame clock from the phase.
     case candle(intensity: CandleIntensity, time: Double)
-
-    /// CompassPhase Q1/Q2 answer card — one option label per card.
-    /// Revealed by the flip cascade after the 2×2 grid settles.
-    case compassOption(label: String)
-
-    /// CompassPhase Q3 register card — felt-state slider on the card face.
-    /// `value` 0.0 ("I want to feel safer") → 1.0 ("I want to feel more alive").
-    /// `dragging` scales the thumb while the user is actively dragging.
-    /// The drag gesture itself is an overlay owned by the phase — this only draws.
-    case compassSlider(value: Double, dragging: Bool)
 
     /// DemoPhase snapshot card — "I [verb] [noun]." sentence completion.
     /// `toneProgress` 0.0 (need, cool) → 1.0 (desire, warm) tints the face.

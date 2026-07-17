@@ -1052,6 +1052,45 @@ internal enum AppAnimation {
     /// Reduce motion: the oscillation never starts (steady mid glow, still lines).
     static let forgeRimOscillation:  Double = 0.9
     static let forgeSwayOscillation: Double = 1.3
+
+    // — Living Case tap ceremony (Beat 5 rework, 2026-07-04) + flower-peel reveal.
+    //   The three taps are a negotiation: the case recognizes, resists, releases.
+    //   Feel reference: the React "Living Case / Flower Peel" mockup (values verbatim).
+
+    /// Damped-shake decay spans per strike (seconds) — consumed by the per-frame shake
+    /// task in BuildDeckPhase: amplitude * exp(-p * 5) * sin(p * freq * 2π).
+    /// Reduce motion: the shake task never starts.
+    static let caseShake1: Double = 0.28
+    static let caseShake2: Double = 0.42
+    static let caseShake3: Double = 0.60
+
+    /// A card back erupting through the lattice / the lattice resealing over it.
+    /// The module's per-tap erupt/hold/seal spans (MetallicCaseView tunables) are
+    /// timed against these two curves — re-tune both together.
+    static let cardErupt:  Animation = .easeOut(duration: 0.32)
+    static let cardReseal: Animation = .easeInOut(duration: 0.42)
+
+    /// The flower peel — the case peeling away from the deck, centre cells first.
+    static let flowerPeel: Animation = .easeInOut(duration: 1.35)
+    /// Raw span of the peel — drives MetallicCaseView.peelSpan and the phase's
+    /// shell-unmount sleep. Must match flowerPeel's duration.
+    static let flowerPeelSpan: Double = 1.35
+
+    /// The deck becoming visible / rising through the opening centre WHILE the peel
+    /// runs (the case peels away FROM the deck — the deck never "appears after").
+    static let peelDeckFade: Animation = .easeOut(duration: 0.54)
+    static let peelDeckRise: Animation = .easeOut(duration: 0.81)
+
+    /// Beat 6 reveal sequence — breath, name, fan, flip wave, CTA.
+    /// The breath is the silence beat: the freed deck inhales/exhales once before
+    /// any UI names it. Cutting it turns the ceremony into a UI transition.
+    static let deckBreathIn:  Animation = .easeInOut(duration: 0.68)
+    static let deckBreathOut: Animation = .easeInOut(duration: 0.52)
+    static let deckNameRise:  Animation = .easeOut(duration: 0.58)
+    static let deckFanBloom:  Animation = .easeOut(duration: 0.70)
+    static let deckFlipWave:  Animation = .easeInOut(duration: 0.32)   // per card
+    static let deckFlipStagger: Double  = 0.085                        // seconds between flips
+    static let deckCtaFade:   Animation = .easeOut(duration: 0.36)
 }
 
 // MARK: — Ambient Motion Gate (Reduce Motion + Low Power Mode)

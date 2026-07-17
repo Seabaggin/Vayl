@@ -2,7 +2,14 @@
 //  BuildDeckCeremony.swift
 //  Vayl
 //
-//  Manages the foil tear composition and shatter logic for BuildDeckPhase.
+//  Owns the Living Case tap ceremony state for BuildDeckPhase (Beat 5).
+//
+//  The case is not a passive container — it is actively holding the deck in.
+//  The three taps are a negotiation: the case RECOGNIZES the strike (tap 1,
+//  a card tears through and the lattice reseals), RESISTS harder (tap 2, two
+//  cards, slower reseal), then RELEASES (tap 3, the seams stay open, the held
+//  breath, the flower peel). No authored strike positions — the sequence is
+//  fixed; where the finger lands does not matter.
 //
 
 import SwiftUI
@@ -10,64 +17,44 @@ import SwiftUI
 @Observable
 @MainActor
 final class BuildDeckCeremony {
-    
-    var foilIntegrity: Double = 1.0
-    var foilTears: [FoilTear] = []
-    
-    private var strikeSequenceIndex: Int = 0
-    private var strikeMirrored: Bool = false
-    
-    private static let strikeSequences: [[(zone: CGPoint, angleDeg: Double)]] = [
-        [(CGPoint(x: 0.28, y: 0.233),  10),
-         (CGPoint(x: 0.74, y: 0.480), 125),
-         (CGPoint(x: 0.45, y: 0.747),  85)],
-         
-        [(CGPoint(x: 0.25, y: 0.230), 45),
-         (CGPoint(x: 0.75, y: 0.770), 45),
-         (CGPoint(x: 0.50, y: 0.500), 45)],
-         
-        [(CGPoint(x: 0.70, y: 0.787), 175),
-         (CGPoint(x: 0.26, y: 0.467),  80),
-         (CGPoint(x: 0.52, y: 0.200),  35)],
-    ]
-    
+
+    /// Strikes landed this ceremony (0…3). Escalates the eruption, the seam
+    /// stress, and the wake rings; the third arms the held breath + peel.
+    private(set) var tapCount: Int = 0
+
+    /// When the current eruption began — MetallicCaseView derives the card's
+    /// rise / hold / reseal from this moment on its own frame clock.
+    private(set) var eruptStart: Date = .distantFuture
+
+    /// True between the third strike landing and the peel firing: everything
+    /// freezes, the case brightens, nothing moves. The phase releases it.
+    private(set) var holdBreath: Bool = false
+
+    /// Seam-stress target per strike — how far the lattice bows outward from
+    /// centre. Taps 1–2 reseal back to rest on the module's timeline; tap 3
+    /// holds at 1.0 (the case cannot close anymore).
+    var stressLevel: Double { Self.stressLevels[min(tapCount, 3)] }
+    private static let stressLevels: [Double] = [0, 0.40, 0.72, 1.0]
+
     func runEntry() {
-        foilIntegrity = 1.0
-        foilTears = []
-        
-        // Locked to "The Pincer"
-        strikeSequenceIndex = 1
-        strikeMirrored = false
+        tapCount = 0
+        eruptStart = .distantFuture
+        holdBreath = false
     }
-    
-    func addFoilTear(atFaceUV uv: CGPoint) {
-        guard foilIntegrity > 0.5, foilTears.count < 3 else { return }
-        
-        let spec = Self.strikeSequences[strikeSequenceIndex][foilTears.count]
-        var zone = spec.zone
-        var angle = spec.angleDeg
-        
-        if strikeMirrored {
-            zone.x = 1 - zone.x
-            angle = 180 - angle
-        }
-        
-        let pulled = CGPoint(x: uv.x + (zone.x - uv.x) * 0.75,
-                             y: uv.y + (zone.y - uv.y) * 0.75)
-        let dx = pulled.x - zone.x
-        let dy = pulled.y - zone.y
-        let offset = (dx * dx + dy * dy).squareRoot()
-        let maxOffset: CGFloat = 0.10
-        let strike = offset <= maxOffset ? pulled
-            : CGPoint(x: zone.x + dx / offset * maxOffset,
-                      y: zone.y + dy / offset * maxOffset)
-                      
-        foilTears.append(FoilTear(faceUV: strike, angleDeg: angle))
-        
-        if foilTears.count >= 3 {
-            withAnimation(AppAnimation.foilDissolve.reduceMotionSafe) {
-                self.foilIntegrity = 0
-            }
-        }
+
+    /// Land a strike. Returns the tap index that just landed (0, 1, 2) so the
+    /// phase can run the matching shake + choreography, or nil if the ceremony
+    /// is complete / breath-held and the tap is ignored.
+    func registerTap() -> Int? {
+        guard tapCount < 3, !holdBreath else { return nil }
+        tapCount += 1
+        eruptStart = .now
+        if tapCount >= 3 { holdBreath = true }
+        return tapCount - 1
+    }
+
+    /// The held breath ends — the phase calls this right before firing the peel.
+    func releaseBreath() {
+        holdBreath = false
     }
 }

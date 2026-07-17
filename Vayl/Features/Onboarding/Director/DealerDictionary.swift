@@ -41,8 +41,7 @@ enum DealerDictionary {
     static let curiosityDemoKeepInstruction = "Swipe right if a card feels true for you."
     static let curiosityDemoPassInstruction = "Left if it doesn't."
     static let curiosityDemoIntroRealHand = "Now I'll deal you the real hand."
-    static let curiosityRound1Headline = "What's drawing you here?"
-    static let curiosityRound2Headline = "What are you curious to try?"        // curious: first-times
-    static let curiosityRound2HeadlineInIt = "What do you want more of?"        // in it: refining the lane
+    static let curiosityHeadline = "What are you curious to try?"        // curious: first-times
+    static let curiosityHeadlineInIt = "What do you want more of?"       // in it: refining the lane
     static let curiosityDoneLine = "That's everything I need."
 }

@@ -202,12 +202,12 @@ struct CredentialEditorSheet: View {
     // MARK: - Curiosity (all tags; kept = selected, skipped = greyed)
 
     private var curiosityEditor: some View {
-        ScrollView {
+        // Mirrors the sort's stage-aware headline (single round since 2026-07-04).
+        let inIt = director.onboardingData.nmStage != .curious
+        return ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                curiositySection(title: "What's drawing you here",
-                                 cards: director.curiosity.buildCuriosityPile(round: 1, onboardingData: director.onboardingData))
-                curiositySection(title: "What you're curious to try",
-                                 cards: director.curiosity.buildCuriosityPile(round: 2, onboardingData: director.onboardingData))
+                curiositySection(title: inIt ? "What you want more of" : "What you're curious to try",
+                                 cards: director.curiosity.buildCuriosityPile(onboardingData: director.onboardingData))
             }
             .padding(.vertical, AppSpacing.xs)
         }
@@ -298,12 +298,8 @@ struct CredentialEditorSheet: View {
     private func toggleCuriosity(_ card: CuriositySortCard) {
         if director.onboardingData.curiositySelections.contains(card.id) {
             director.onboardingData.curiositySelections.removeAll { $0 == card.id }
-            if card.round == 1 { director.onboardingData.communicationGoals.removeAll { $0 == card.id } }
-            else               { director.onboardingData.learningGoals.removeAll { $0 == card.id } }
         } else {
             director.onboardingData.curiositySelections.append(card.id)
-            if card.round == 1 { director.onboardingData.communicationGoals.append(card.id) }
-            else               { director.onboardingData.learningGoals.append(card.id) }
         }
     }
 }

@@ -73,7 +73,13 @@ final class PlayStore {
 
     func load() {
         do {
-            summaries = try catalog.loadSummaries()
+            var loaded = try catalog.loadSummaries()
+            // Opener decks are personal: the forge revealed ONE of the four
+            // (UserProfile.openerDeckType). The other three never appear on the
+            // wall — a user has their forged deck, not a menu of forgeries.
+            let mine = localProfile()?.openerDeckType.welcomeDeckId
+            loaded.removeAll { OpenerDeckType.allWelcomeDeckIds.contains($0.id) && $0.id != mine }
+            summaries = loaded
             loadError = nil
         } catch {
             summaries = []
@@ -120,8 +126,9 @@ final class PlayStore {
         builderStartIndex = (row?.completedAt == nil) ? (row?.currentCardIndex ?? 0) : 0
     }
 
-    /// Pick the featured deck (most-recent in-progress, else first available) and resolve
-    /// its continuity, both from real `DeckProgress`. Mirrors `HomeStore.loadDeckProgress`.
+    /// Pick the featured deck (most-recent in-progress, else the user's forged
+    /// opener deck until it's completed, else first available) and resolve its
+    /// continuity, both from real `DeckProgress`. Mirrors `HomeStore.loadDeckProgress`.
     /// "Most-recent" means most-recently-opened: `DeckProgress` has no last-touched stamp yet.
     private func resolveFeatured() {
         let progress = fetchProgress()
@@ -129,7 +136,17 @@ final class PlayStore {
         let recentInProgress = progress
             .filter { availableIDs.contains($0.deckId) && $0.completedAt == nil && $0.currentCardIndex > 0 }
             .max { ($0.firstOpenedAt ?? .distantPast) < ($1.firstOpenedAt ?? .distantPast) }
-        let fallback = summaries.first { !isLocked($0) }?.id ?? summaries.first?.id
+        // The OB forge's promise lands here: with nothing in progress, the hero
+        // is the deck the ceremony revealed — until the user completes it, after
+        // which normal recency takes over.
+        let openerID: String? = {
+            guard let id = localProfile()?.openerDeckType.welcomeDeckId,
+                  availableIDs.contains(id),
+                  !progress.contains(where: { $0.deckId == id && $0.completedAt != nil })
+            else { return nil }
+            return id
+        }()
+        let fallback = openerID ?? summaries.first { !isLocked($0) }?.id ?? summaries.first?.id
         featuredID = recentInProgress?.deckId ?? fallback
         featuredContinuity = continuity(forDeck: featuredID, in: progress)
     }
@@ -256,11 +273,14 @@ final class PlayStore {
 
     /// The local SwiftData profile id (auth-id vs profile-id convention: this is
     /// the PROFILE id, which is what couples rows reference).
-    private func localProfileId() -> UUID? {
+    private func localProfileId() -> UUID? { localProfile()?.id }
+
+    /// The local SwiftData profile row (single-profile device convention).
+    private func localProfile() -> UserProfile? {
         let context = ModelContext(modelContainer)
         var fetch = FetchDescriptor<UserProfile>()
         fetch.fetchLimit = 1
-        return try? context.fetch(fetch).first?.id
+        return try? context.fetch(fetch).first
     }
 
     /// Locked deck → open the Core paywall (closes the detail first).

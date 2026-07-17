@@ -203,13 +203,28 @@ internal enum AppDealerTyping {
 }
 /// Which opener deck sequence is assigned after OB data collection.
 /// Evaluated silently by VaylDirector.evaluateOpenerDeckType() at the
-/// end of CuriosityPhase round 2. Never shown to the user in any form.
+/// end of the Curiosity sort. Never shown to the user in any form.
 /// Drives card sequencing and tone in the first session deck.
-enum OpenerDeckType: String, Codable {
+enum OpenerDeckType: String, Codable, CaseIterable {
     case anxious          // newer + anxious register → reassurance-first, anticipatory
     case excited          // newer + other register → expansion-first, anticipatory
     case reflectiveCalm   // experienced + anxious register → retrospective, measured
     case reflectiveOpen   // experienced + other register → retrospective, expansive
+
+    /// The real catalog deck forged for this opener type — the deck the BuildDeck
+    /// ceremony names and Play features first. Ids must match `deck-catalog.json`;
+    /// `WelcomeDeck.of(_:)` mirrors each deck's title + subtitle for the reveal.
+    var welcomeDeckId: String {
+        switch self {
+        case .anxious:        return "opener-steady"
+        case .excited:        return "opener-opening"
+        case .reflectiveCalm: return "opener-return"
+        case .reflectiveOpen: return "opener-wider"
+        }
+    }
+
+    /// Every opener deck id — Play hides the three that aren't the user's.
+    static let allWelcomeDeckIds: Set<String> = Set(allCases.map(\.welcomeDeckId))
 }
 
 // MARK: - Age Range

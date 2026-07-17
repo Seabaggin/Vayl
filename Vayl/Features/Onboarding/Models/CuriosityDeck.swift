@@ -4,12 +4,13 @@ import Foundation
 
 /// The CuriosityPhase sort deck, selected by the user's mode + register.
 ///
-/// Round 1 ("What's drawing you here?") = inner feelings, weighted by
-/// `SituationalRegister`: excited leads with expansive cards, anxious leads with
-/// grounding cards (pleasure still rides in every deck), flexible leads with
-/// curiosity. Round 2 ("What are you curious to try?") = a fixed, escalating set of
-/// milestone acts (a date, then a threesome, a play party, swinging or open dating,
-/// then polyamory), adjusted for solo vs couple.
+/// The OB flow deals ROUND 2 ONLY since 2026-07-04 ("What are you curious to
+/// try?" / "What do you want more of?"): a fixed, escalating set of milestone
+/// acts (a date, then a threesome, a play party, swinging or open dating, then
+/// polyamory), adjusted for solo vs couple and stage. Round 1 ("What's drawing
+/// you here?" = inner feelings, register-weighted) was cut from the flow —
+/// Context already carries the present-state signal — but its data is retained
+/// here for potential future use (do NOT re-add it to OB without a new decision).
 ///
 /// Selection is DETERMINISTIC for a given (mode, register), so the ConfirmationPhase
 /// credential editor rebuilds the exact 10 cards the user sorted.
@@ -71,7 +72,7 @@ enum CuriosityDeck {
     }
 
     // MARK: - Catalog (stable id -> user-facing text)
-    // Stable ids persist into communicationGoals / learningGoals. NEVER reuse an
+    // Stable ids persist into curiositySelections. NEVER reuse an
     // id for different text. No em dashes (Vayl copy rule).
 
     private static let catalog: [String: String] = [

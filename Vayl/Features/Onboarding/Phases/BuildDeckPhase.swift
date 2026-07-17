@@ -6,23 +6,32 @@
 import SwiftUI
 
 /// OB Phase — Build Deck (renders OBPhase.buildDeck).
-/// The forge ceremony, per the 2026-06-10 ceremony spec:
+/// The forge ceremony, per the 2026-06-10 ceremony spec + the Living Case
+/// rework (2026-07-04):
 ///   Beat 1 · the confirmed deck MELTS down through the felt (their truths go
 ///            under the table)
 ///   Beat 2 · the TABLE performs — its spectrum rim oscillates while it works
 ///   Beat 3 · the cased deck lies FLAT and lifeless, lifts to vertical, the
 ///            camera dollies in, and the hex material wakes on arrival
 ///   Beat 4 · stillness, dealer invitation — the case ARMS
-///   Beat 5 · crack ceremony — three strikes (the locked Pincer), escalating
-///            light + haptics, third → overload + honeycomb UN-KNIT: the shell
-///            disassembles along its hex lattice, uncovering the deck behind it
-///            (taps forward to director.ceremony.addFoilTear)
-///   Beat 6 · the forged deck stands revealed — browse, then the exit CTA
+///   Beat 5 · the LIVING CASE tap ceremony — the case is actively holding the
+///            deck in, and the three taps are a negotiation:
+///            tap 1 RECOGNITION — the case flinches, a card tears up through
+///                  the lattice, the seams strain, then it reseals (case wins)
+///            tap 2 RESISTANCE — bigger recoil, two cards, slower reseal
+///            tap 3 RELEASE — maximum shudder, the seams stay open, the HELD
+///                  BREATH (~380ms, everything freezes, the case brightens),
+///                  then the FLOWER PEEL: the lattice peels centre-out like
+///                  petals opening, uncovering the deck already standing behind
+///   Beat 6 · the reveal sequence on a FIXED STAGE (nothing reflows):
+///            breath (the freed deck inhales/exhales once, no UI) → name rises
+///            → the fan blooms face-down → flip wave left-to-right → carousel
+///            + the exit CTA
 ///   Beat 7 · founder letter sheet-peek exit
 ///
-/// Timing values are AppAnimation tokens (OB Ceremony Tokens section, tokenized
-/// 2026-07-03, values verbatim). Re-tune the tokens directly after a device feel
-/// pass — never by re-introducing raw values here.
+/// Timing values are AppAnimation tokens (OB Ceremony Tokens section). Re-tune
+/// the tokens directly after a device feel pass — never by re-introducing raw
+/// values here.
 struct BuildDeckPhase: View {
 
     let director:   VaylDirector
@@ -38,7 +47,7 @@ struct BuildDeckPhase: View {
     // sequence state
     @State private var started:    Bool = false
     // Long-lived task handles — cancelled on disappear so the knock loop, the beat
-    // sequence, and the spark-field retirement never outlive the phase.
+    // sequences, and the spark-field retirement never outlive the phase.
     @State private var sequenceTask:    Task<Void, Never>? = nil
     @State private var knockTask:       Task<Void, Never>? = nil
     @State private var sparksClearTask: Task<Void, Never>? = nil
@@ -53,25 +62,30 @@ struct BuildDeckPhase: View {
     @State private var latticeWake: Date = .distantFuture  // hex wakes AFTER the zoom
     @State private var caseFloat:  Bool = false     // felt → float position
 
-    // crack ceremony (Beat 5) — taps forward to director.ceremony.addFoilTear
+    // Living Case tap ceremony (Beat 5) — state lives in director.ceremony
+    // (tapCount / eruptStart / holdBreath); the view owns only the physical read.
     @State private var caseArmed:    Bool = false   // invitation landed; taps live
-    @State private var caseDissolve: Date = .distantFuture  // third crack → shatter
+    @State private var caseDissolve: Date = .distantFuture  // third tap → flower peel
     // Segment 2 — the charged core: the deck's energy contained inside the shell.
-    // 0 = dark; lights to a baseline when the case arms, climbs per tap (the
-    // release premise's charge floor rising toward the break).
     @State private var coreEnergy:   Double = 0
-    // directional recoil — the case is KNOCKED, yawing away from the strike
+    // damped-oscillation shake — the case recoiling with MASS (per-frame task)
+    @State private var shakeOffset: CGSize = .zero
+    @State private var shakeTask:   Task<Void, Never>? = nil
+    // directional micro-yaw — the knock twitch + a small kick riding each shake
     @State private var kickDeg:  Double = 0
     @State private var kickAxis: (x: CGFloat, y: CGFloat) = (0, 1)
-    // spectrum motes knocked loose into the air per strike
+    // reseal haptics — the lattice closing over the card after taps 1–2
+    @State private var resealCount: Int = 0
+    @State private var resealTask:  Task<Void, Never>? = nil
+    // the held breath — the case brightens, nothing moves (third tap)
+    @State private var holdBreathVisual: Bool = false
+    @State private var peelStarted:      Bool = false   // .success haptic trigger
+    // spectrum motes venting as the peel opens
     @State private var sparkBursts: [SparkBurst] = []
     // the knock from inside — anticipation while armed and untouched
     @State private var knockStart: Date = .distantFuture
     @State private var knockSeed:  UInt64 = 0
     @State private var knockCount: Int = 0
-    // the burst — full-screen flash + stage punch as the flood erupts
-    @State private var burstFlashOpacity: Double = 0
-    @State private var stagePunch: Bool = false
 
     // founder letter sheet-peek (Beat 7)
     @State private var peekShown:     Bool = false
@@ -80,14 +94,23 @@ struct BuildDeckPhase: View {
     @State private var sheetDrag:     CGFloat = 0
     private let peekHeight: CGFloat = 100   // shows the grabber + "A note from the founder" with presence
 
-    // Beat 6 — the reveal (the forged deck presents and browses). The exit is a
-    // bottom CTA, not a swipe: this deck is the user's to KEEP, so there's no
-    // hand-it-back gesture. User-paced — it only leaves when they tap.
-    @State private var revealShown:    Bool = false
-    @State private var revealExiting:   Bool = false   // Beat 1: the deck fades out + sinks as the user hands off
-    @State private var revealHeaderShown: Bool = false // deck name + purpose land AFTER the shell is gone
-    @State private var ctaShown:       Bool = false    // "Take your deck" fades in after the deck lands
-    @State private var revealPhysics   = CarouselPhysics(count: WelcomeDeck.placeholderCards.count)   // match ContextPhase's init
+    // Beat 6 — the reveal sequence, on a FIXED STAGE anchored to floatCenter:
+    // the case and the reveal occupy the same position, nothing reflows.
+    // breath → name → fan → flip wave → carousel → CTA. User-paced exit.
+    @State private var revealTask:   Task<Void, Never>? = nil
+    @State private var deckStanding: Bool = false           // fan cards mounted behind the shell
+    @State private var deckOpacity:  Double = 0             // uncovered through the opening centre
+    @State private var deckRise:     CGFloat = 8            // small settle-down as it's freed
+    @State private var glowPulse:    Double = 0             // released energy → the breath
+    @State private var nameShown:    Bool = false           // Beat 6b — named AFTER it stands alone
+    @State private var fanned:       Bool = false           // Beat 6c — the bloom
+    @State private var flipDegrees:  [Double] = Array(repeating: 180, count: 6)
+    @State private var faceUp:       [Bool]   = Array(repeating: false, count: 6)
+    @State private var flipIndex:    Int = -1               // .selection haptic trigger
+    @State private var inCarousel:   Bool = false           // Beat 6e
+    @State private var revealExiting: Bool = false          // the deck sinks on hand-off
+    @State private var ctaShown:     Bool = false           // "Take your deck"
+    @State private var revealPhysics = CarouselPhysics(count: WelcomeDeck.placeholderCards.count)
     private var welcomeDeck: WelcomeDeck { WelcomeDeck.of(director.openerDeckType) }
 
     // Mirrors ConfirmationPhase.cardWidth(in:) — the deck arrives at FAN-card
@@ -103,66 +126,35 @@ struct BuildDeckPhase: View {
     private var feltCenter:  CGPoint { CGPoint(x: screenSize.width / 2, y: AppLayout.obTableCardCenterY(in: screenSize.height)) }
     private var floatCenter: CGPoint { CGPoint(x: screenSize.width / 2, y: screenSize.height * 0.42) }
 
+    // Beat 6c fan geometry — mockup values scaled to card width (mockup card 88pt).
+    private let fanAngles:      [Double]  = [-22, -13, -4, 4, 13, 22]
+    private let fanOffsetFracs: [CGFloat] = [-0.91, -0.55, -0.18, 0.18, 0.55, 0.91]
+
     var body: some View {
         ZStack {
             // No background — the persistent canvas (void + atmosphere + FELT) shows through.
 
             // Beat 1 — the confirmed deck, melting down through the felt.
-            // The table itself reacts (rim oscillation via tableRimBurst) —
-            // no overlay props on the felt.
             if deckShown {
                 VaylDeckStack(size: deckSize)
                     .modifier(MeltThroughFelt(progress: deckMelt, size: deckSize))
                     .position(feltCenter)
             }
 
-            // Beat 6 — the forged deck. Mounted BEHIND the shell (earlier in
-            // this ZStack) the moment the un-knit wave starts, so the
-            // disassembling case genuinely UNCOVERS it — object continuity,
-            // no cross-fade, no void (Segment 3). Browse freely once standing.
-            if revealShown {
-                VStack(spacing: AppSpacing.lg) {
-                    VStack(spacing: AppSpacing.xs) {
-                        Text(welcomeDeck.name)
-                            .font(AppFonts.screenTitle)
-                            .foregroundStyle(LinearGradient(
-                                colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
-                                startPoint: .leading, endPoint: .trailing))
-                        Text(welcomeDeck.purpose)
-                            .font(AppFonts.bodyMedium)
-                            .foregroundStyle(AppColors.textBody)
-                    }
-                    // the header waits for the shell to finish un-knitting — the
-                    // uncovered deck stands alone first, THEN is named
-                    .opacity(revealHeaderShown ? 1 : 0)
-                    VaylCardCarousel(
-                        count:    WelcomeDeck.placeholderCards.count,
-                        cardSize: deckSize,
-                        physics:  revealPhysics,
-                        content: { index, isFront in
-                            let c = WelcomeDeck.placeholderCards[index]
-                            VaylCardFace(
-                                content: .context(number: c.number, title: c.title,
-                                                  subtitle: c.subtitle, detail: c.detail),
-                                isFront: isFront, confirmed: false
-                            )
-                        }
-                    )
-                    .frame(height: deckSize.height * 1.3)
-                }
-                .frame(maxWidth: .infinity)
-                .position(x: screenSize.width / 2, y: screenSize.height * 0.42)
-                // Beat 1 — the deck exits: fade out + a small downward sink.
-                .opacity(revealExiting ? 0 : 1)
-                .offset(y: revealExiting ? AppSpacing.xl : 0)
-                .transition(.opacity)
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel("Your \(welcomeDeck.name) deck")
-                .accessibilityHint("Swipe left or right to browse your cards.")
+            // Beat 6 — the reveal stage. Mounted BEHIND the shell (earlier in
+            // this ZStack) the moment the peel starts, so the case peels away
+            // FROM the deck — object continuity, no cross-fade, no void.
+            if deckStanding {
+                revealStage
+                    // Beat 7 hand-off — the deck exits: fade out + a small sink.
+                    .opacity(revealExiting ? 0 : 1)
+                    .offset(y: revealExiting ? AppSpacing.xl : 0)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Your \(welcomeDeck.name) deck")
+                    .accessibilityHint("Swipe left or right to browse your cards.")
 
                 // The exit — a bottom CTA. The deck is the user's to keep, so a
                 // TAP (not a hand-it-back swipe) presents the founder letter.
-                // Hidden once the deck begins exiting (revealExiting).
                 if ctaShown && !revealExiting {
                     VStack {
                         Spacer()
@@ -175,36 +167,35 @@ struct BuildDeckPhase: View {
                 }
             }
 
-            // Beat 3 — the cased deck: lies flat and lifeless where the cards
-            // went under, lifts to vertical, then the camera dollies in; the
-            // hex material wakes only after the zoom lands.
-            // Beat 5 — once the invitation arms it, taps crack the foil:
-            // the view forwards face-UV strikes to the director (sole owner of
-            // crack state); the dealer's words are the affordance.
+            // Beat 3 — the cased deck. Beat 5 — the Living Case: once armed,
+            // taps land ANYWHERE on it (the sequence is fixed, no authored
+            // strike zones); the ceremony store escalates eruption + stress +
+            // wake rings, and the view reads them straight through.
             if caseShown {
-                // Segment 2 — the charged core glows from WITHIN: coreGlow lights
-                // the case's own hex SEAMS (in MetallicCaseView's shader), so the
-                // energy reads as coming through the deck's structure, not a halo
-                // behind it. Lights at arm, climbs per tap toward the break.
                 MetallicCaseView(
                     riseStart: caseRiseStart,
                     latticeWakeStart: latticeWake,
-                    tears: director.ceremony.foilTears.map {
-                        CaseTear(id: $0.id, faceUV: $0.faceUV, seed: $0.seed,
-                                 struck: $0.struck, angleDeg: $0.angleDeg)
-                    },
                     dissolveStart: caseDissolve,
                     onFaceTap: caseArmed && caseDissolve == .distantFuture
-                        ? { uv in director.ceremony.addFoilTear(atFaceUV: uv) }
+                        ? { _ in strike() }
                         : nil,
                     knockStart: knockStart,
                     knockSeed: knockSeed,
-                    coreGlow: coreEnergy
+                    coreGlow: coreEnergy,
+                    peelMode: true,
+                    eruptStart: director.ceremony.eruptStart,
+                    eruptTapIndex: max(0, director.ceremony.tapCount - 1),
+                    seamStress: director.ceremony.stressLevel,
+                    wakeRings: director.ceremony.tapCount
                 )
                     .frame(width: deckSize.width, height: deckSize.height)
                     .rotation3DEffect(.degrees(kickDeg),
                                       axis: (x: kickAxis.x, y: kickAxis.y, z: 0),
                                       perspective: 0.5)
+                    .offset(shakeOffset)
+                    // the held breath — the case brightens + saturates, nothing moves
+                    .brightness(holdBreathVisual ? 0.12 : 0)
+                    .saturation(holdBreathVisual ? 1.5 : 1)
                     .scaleEffect(caseFloat ? floatZoom : 1.0)
                     .position(caseFloat ? floatCenter : feltCenter)
                     .opacity(caseOpacity)
@@ -213,21 +204,10 @@ struct BuildDeckPhase: View {
                     .accessibilityAddTraits(caseArmed ? .isButton : [])
             }
 
-            // sparks knocked loose by the strikes — float free in screen space,
-            // above the case, never intercepting taps
+            // motes venting as the peel opens — float free in screen space
             if !sparkBursts.isEmpty {
                 SpectrumSparkField(bursts: sparkBursts)
                     .frame(width: screenSize.width, height: screenSize.height)
-            }
-
-            // the room shakes: brief full-screen flash riding the flood
-            // (skipped under Reduce Motion — never flash a photosensitive user)
-            if burstFlashOpacity > 0 {
-                Rectangle()
-                    .fill(.white)   // flash white — intentionally untinted
-                    .ignoresSafeArea()
-                    .opacity(burstFlashOpacity)
-                    .allowsHitTesting(false)
             }
 
             // Beat 7 — founder letter peek: the exit affordance IS the destination
@@ -247,12 +227,11 @@ struct BuildDeckPhase: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .scaleEffect(stagePunch ? 1.05 : 1.0)   // the whole stage jolts on each strike + the burst
         .sensoryFeedback(.impact(weight: .medium), trigger: meltDone)   // the deck goes under
         .sensoryFeedback(.impact(weight: .heavy),  trigger: caseFloat)  // the case takes the air
         .sensoryFeedback(.impact(weight: .light, intensity: 0.5), trigger: knockCount)
-        // crack ceremony — strikes escalate light, medium, heavy (the ritual arc)
-        .sensoryFeedback(trigger: director.ceremony.foilTears.count) { old, new in
+        // the three strikes — light 0.8, medium 0.9, heavy 1.0 (the negotiation arc)
+        .sensoryFeedback(trigger: director.ceremony.tapCount) { old, new in
             guard new > old else { return nil }
             switch new {
             case 1:  return .impact(weight: .light,  intensity: 0.8)
@@ -260,32 +239,13 @@ struct BuildDeckPhase: View {
             default: return .impact(weight: .heavy,  intensity: 1.0)
             }
         }
-        .onChange(of: director.ceremony.foilTears.count) { _, count in
-            guard count > 0, let strike = director.ceremony.foilTears.last?.faceUV else { return }
-            // If the idle peek already rose and the user then commits to the
-            // ritual, retract it — the knock-cued strike wins. Two exit
-            // affordances must not coexist (and the peek's low edge could
-            // otherwise intercept a strike tap near the bottom of the case).
-            if count == 1, peekShown, caseDissolve == .distantFuture {
-                withAnimation(AppAnimation.fast.reduceMotionSafe) { peekShown = false }
-            }
-            // every strike hits HARDER — bigger recoil + a stage jolt = weight
-            recoil(from: strike, degrees: 4.0 + 1.8 * Double(count - 1))
-            spawnSparks(at: strike, count: 16 + 10 * (count - 1))
-            if count < 3 {   // count 3 is the shatter — its own jolt handles that frame
-                withAnimation(AppAnimation.strikeJolt) { stagePunch = true }
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(reduceMotion ? 0 : 90))
-                    withAnimation(AppAnimation.strikeJoltSettle) { stagePunch = false }
-                }
-            }
-            // each release vents a burst, but the shell is more compromised — the
-            // steady core glow climbs toward the break (Segment 2 charge floor).
-            withAnimation(AppAnimation.standard.reduceMotionSafe) {
-                coreEnergy = 0.40 + 0.30 * Double(count)
-            }
-            if count >= 3 { beginShatter() }
+        // the reseal — a softer confirmation as the lattice closes over the card
+        .sensoryFeedback(trigger: resealCount) { old, new in
+            guard new > old else { return nil }
+            return .impact(weight: .light, intensity: new == 1 ? 0.4 : 0.5)
         }
+        .sensoryFeedback(.success, trigger: peelStarted)   // the release
+        .sensoryFeedback(.selection, trigger: flipIndex)   // the flip wave, card by card
         .accessibilityLabel("Build deck phase")
         .onAppear {
             guard !started else { return }
@@ -295,6 +255,9 @@ struct BuildDeckPhase: View {
         .onDisappear {
             sequenceTask?.cancel()
             knockTask?.cancel()
+            shakeTask?.cancel()
+            resealTask?.cancel()
+            revealTask?.cancel()
             sparksClearTask?.cancel()
             sparkBursts = []
             // Hard-stop the table bindings the forge oscillated. A repeatForever
@@ -309,27 +272,270 @@ struct BuildDeckPhase: View {
         }
     }
 
-    // MARK: - Crack ceremony (Beat 5)
+    // MARK: - Beat 6: the reveal stage (fixed — nothing reflows)
 
-    /// The case is KNOCKED by each strike — it yaws away from where the finger
-    /// landed and springs back. Directional recoil is the tap contract's press
-    /// state, expressed as physics (a uniform scale dip reads as UI, not impact).
-    private func recoil(from uv: CGPoint, degrees: Double) {
-        let dx = uv.x - 0.5, dy = uv.y - 0.5
-        let length = max(0.08, (dx * dx + dy * dy).squareRoot())
-        kickAxis = (x: -dy / length, y: dx / length)   // torque axis: r × (into screen)
-        withAnimation(AppAnimation.fast.reduceMotionSafe) { kickDeg = degrees }
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(110))
-            withAnimation(AppAnimation.strikeRecoilReturn.reduceMotionSafe) {
-                kickDeg = 0
+    /// The freed deck + name + fan + carousel, all absolutely positioned at
+    /// floatCenter — the same anchor the case occupied. No layout shift, no
+    /// camera-pan feeling, when the shell unmounts and the reveal takes over.
+    @ViewBuilder
+    private var revealStage: some View {
+        ZStack {
+            // the released energy — glows behind the deck, then breathes (Beat 6a)
+            Ellipse()
+                .fill(RadialGradient(
+                    colors: [AppColors.spectrumPurple.opacity(0.55),
+                             AppColors.spectrumCyan.opacity(0.18),
+                             .clear],
+                    center: .center, startRadius: 0, endRadius: deckSize.width))
+                .frame(width: deckSize.width * 2.2, height: deckSize.height * 1.4)
+                .opacity(glowPulse * 0.7)   // glow breathes 0 → 0.7, never to full white-out
+                .allowsHitTesting(false)
+
+            // the cards — stacked → fan → flip wave; crossfades to the carousel
+            if inCarousel {
+                VaylCardCarousel(
+                    count:    WelcomeDeck.placeholderCards.count,
+                    cardSize: deckSize,
+                    physics:  revealPhysics,
+                    content: { index, isFront in
+                        let c = WelcomeDeck.placeholderCards[index]
+                        VaylCardFace(
+                            content: .context(number: c.number, title: c.title,
+                                              subtitle: c.subtitle, detail: c.detail),
+                            isFront: isFront, confirmed: false
+                        )
+                    }
+                )
+                .frame(height: deckSize.height * 1.3)
+                .transition(.opacity)
+            } else {
+                ForEach(0..<6, id: \.self) { i in
+                    fanCard(i)
+                }
+                .transition(.opacity)
             }
+
+            // Beat 6b — the name, risen ABOVE the cards. The deck is named
+            // AFTER it stands alone: the object earns its name by existing first.
+            VStack(spacing: AppSpacing.xxs) {
+                Text("Your Deck")
+                    .font(AppFonts.caption)
+                    .tracking(3)
+                    .textCase(.uppercase)
+                    .foregroundStyle(AppColors.spectrumCyan.opacity(0.65))
+                Text(welcomeDeck.name)
+                    .font(AppFonts.screenTitle)
+                    .foregroundStyle(LinearGradient(
+                        colors: [AppColors.spectrumCyan, AppColors.spectrumPurple, AppColors.spectrumMagenta],
+                        startPoint: .leading, endPoint: .trailing))
+            }
+            .offset(y: -(deckSize.height * 0.82) + (nameShown ? 0 : 6))
+            .opacity(nameShown ? 1 : 0)
+        }
+        .offset(y: deckRise)
+        .opacity(deckOpacity)
+        .position(floatCenter)
+    }
+
+    /// One card of the reveal fan. Face-down (VaylCardBack) until its flip-wave
+    /// moment; the content swaps edge-on at ~90° so neither face ever shows
+    /// mirrored. At rest (pre-fan) the six cards sit in the VaylDeckStack pose,
+    /// so the deck the peel uncovers and the fan are the SAME object.
+    @ViewBuilder
+    private func fanCard(_ i: Int) -> some View {
+        let off   = fanOffsetFracs[i] * deckW
+        let yLift = abs(off) * 0.09
+        ZStack {
+            if faceUp[i] {
+                let c = WelcomeDeck.placeholderCards[i]
+                VaylCardFace(
+                    content: .context(number: c.number, title: c.title,
+                                      subtitle: c.subtitle, detail: c.detail),
+                    isFront: true, confirmed: false
+                )
+            } else {
+                VaylCardBack()
+                    // counter-rotated so the back reads UN-mirrored at 180°
+                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+            }
+        }
+        .frame(width: deckSize.width, height: deckSize.height)
+        .rotation3DEffect(.degrees(flipDegrees[i]),
+                          axis: (x: 0, y: 1, z: 0), perspective: 0.5)
+        .rotationEffect(.degrees(fanned ? fanAngles[i] : 0))
+        .offset(x: fanned ? off : CGFloat(5 - i) * 1.2,
+                y: fanned ? -yLift : CGFloat(5 - i) * 1.6)
+        .zIndex(fanned ? (3 - abs(2.5 - Double(i))) : Double(i))
+    }
+
+    // MARK: - Living Case tap ceremony (Beat 5)
+
+    /// A strike lands. Where the finger hit doesn't matter — the sequence is
+    /// fixed; the ceremony store escalates, the view runs the physical read
+    /// (shake, dealer line, core charge) and fires the release on the third.
+    private func strike() {
+        guard let idx = director.ceremony.registerTap() else { return }
+        // If the idle peek somehow rose, retract it — two exit affordances
+        // must not coexist, and its low edge could intercept a strike tap.
+        if idx == 0, peekShown, caseDissolve == .distantFuture {
+            withAnimation(AppAnimation.fast.reduceMotionSafe) { peekShown = false }
+        }
+        runShake(idx)
+        // the contained charge climbs — recognition, resistance, release
+        withAnimation(AppAnimation.standard.reduceMotionSafe) {
+            coreEnergy = [0.32, 0.68, 1.0][idx]
+        }
+        switch idx {
+        case 0:
+            showStatusLine("It fights back. Tap again.")
+            scheduleReseal(afterMilliseconds: 520)   // erupt 300 + hold 220
+        case 1:
+            showStatusLine("It's losing. One more.")
+            scheduleReseal(afterMilliseconds: 660)   // erupt 360 + hold 300
+        default:
+            beginRelease()
         }
     }
 
-    /// Spectrum motes knocked loose into the air at the strike point. Origin is
-    /// the strike's UV mapped through the case's frame (tilt ignored — airborne
-    /// particles don't need surgical registration).
+    private func showStatusLine(_ line: String) {
+        let t = Double(AppDealerTyping.typeDuration(line)) / 1000.0
+        director.projector.showDealerLine(line, hideAfter: t + 0.8,
+                                          anchorYFrac: AppLayout.forgeFloatTextYFrac)
+    }
+
+    /// The reseal haptic — fires as the lattice closes back over the card
+    /// (taps 1–2 only). Cancelled if the next strike lands first.
+    private func scheduleReseal(afterMilliseconds ms: Int) {
+        resealTask?.cancel()
+        resealTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(ms))
+            guard !Task.isCancelled else { return }
+            resealCount += 1
+        }
+    }
+
+    /// Damped-oscillation shake — a per-frame mathematical spring
+    /// (amplitude * exp(-p*5) * sin(p*freq*2π)) so the case reads as an object
+    /// with MASS recoiling, not a UI element transitioning. Escalates per tap;
+    /// tap 3 adds the vertical component (the whole case shudders).
+    private func runShake(_ tapIdx: Int) {
+        shakeTask?.cancel()
+        guard !reduceMotion else { return }
+        let amp:   [Double] = [5, 9, 14]
+        let decay: [Double] = [AppAnimation.caseShake1, AppAnimation.caseShake2, AppAnimation.caseShake3]
+        let freq:  [Double] = [3, 2.5, 2]
+        kickAxis = (0, 1)   // the shake's micro-yaw swings about the vertical axis
+        shakeTask = Task { @MainActor in
+            let start = Date.now
+            while !Task.isCancelled {
+                let p = Date.now.timeIntervalSince(start) / decay[tapIdx]
+                guard p < 1 else { break }
+                let envelope = exp(-p * 5)
+                let osc = sin(p * freq[tapIdx] * 2 * .pi)
+                let kick = osc * amp[tapIdx] * envelope
+                shakeOffset = CGSize(width: kick,
+                                     height: tapIdx == 2 ? kick * 0.3 : 0)
+                kickDeg = kick * 0.35
+                try? await Task.sleep(for: .milliseconds(16))
+            }
+            shakeOffset = .zero
+            kickDeg = 0
+        }
+    }
+
+    /// Third tap — RELEASE. The seams stay open, then the HELD BREATH: ~380ms
+    /// where everything freezes and the case brightens (the moment before the
+    /// break). Then the flower peel begins and the deck is already there.
+    private func beginRelease() {
+        guard caseDissolve == .distantFuture else { return }
+        withAnimation(AppAnimation.fast.reduceMotionSafe) { holdBreathVisual = true }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(reduceMotion ? 0 : 380))
+            director.ceremony.releaseBreath()
+            withAnimation(AppAnimation.exit.reduceMotionSafe) { holdBreathVisual = false }
+            peelStarted = true          // .notification(.success) — the release
+            caseDissolve = .now         // the flower peel begins
+            beginPeelReveal()
+        }
+    }
+
+    /// The peel + Beat 6. The deck mounts BEHIND the shell the moment the peel
+    /// begins — the user watches the case peel away FROM the deck. Then, on the
+    /// fixed stage: the breath (silence, no UI) → the name → the fan bloom →
+    /// the flip wave → the carousel + CTA.
+    private func beginPeelReveal() {
+        deckStanding = true
+        deckOpacity = 0; deckRise = 8; glowPulse = 0
+        revealTask = Task { @MainActor in
+            let rm = reduceMotion
+
+            // — Beat 5b: the deck uncovered through the opening centre —
+            try? await Task.sleep(for: .milliseconds(rm ? 0 : 70))
+            withAnimation(AppAnimation.peelDeckFade.reduceMotionSafe) { deckOpacity = 1 }
+            withAnimation(AppAnimation.peelDeckRise.reduceMotionSafe) { deckRise = 0 }
+            // it glows with the energy that was just released
+            withAnimation(AppAnimation.flowerPeel.reduceMotionSafe) { glowPulse = 0.6 }
+            // essence venting — it STREAMS out through the peel, not detonates
+            if !rm {
+                spawnSparks(at: CGPoint(x: 0.5, y: 0.5), count: 18, style: .burst)
+                sparksClearTask = Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(SparkBurst.lifespan))
+                    sparkBursts = []
+                }
+            }
+            // the shell unmounts once the peel has consumed it
+            try? await Task.sleep(for: .seconds(rm ? 0.1 : AppAnimation.flowerPeelSpan + 0.05))
+            guard !Task.isCancelled else { return }
+            caseShown = false
+            caseOpacity = 0
+
+            // — Beat 6a: the breath. No UI, no haptics — the silence beat. —
+            withAnimation(AppAnimation.deckBreathIn.reduceMotionSafe) { glowPulse = 1.0 }
+            try? await Task.sleep(for: .seconds(rm ? 0 : 0.68))
+            withAnimation(AppAnimation.deckBreathOut.reduceMotionSafe) { glowPulse = 0 }
+            try? await Task.sleep(for: .seconds(rm ? 0 : 0.52))
+
+            // — Beat 6b: the name rises (the object earned it by existing first) —
+            try? await Task.sleep(for: .milliseconds(rm ? 0 : 250))
+            withAnimation(AppAnimation.deckNameRise.reduceMotionSafe) { nameShown = true }
+            try? await Task.sleep(for: .seconds(rm ? 0.1 : 0.58))
+
+            // — Beat 6c: the fan blooms (face-down — the object before the content) —
+            try? await Task.sleep(for: .milliseconds(rm ? 0 : 280))
+            withAnimation(AppAnimation.deckFanBloom.reduceMotionSafe) { fanned = true }
+            try? await Task.sleep(for: .seconds(rm ? 0 : 0.70))
+
+            // — Beat 6d: the flip wave, left to right —
+            try? await Task.sleep(for: .milliseconds(rm ? 0 : 150))
+            guard !Task.isCancelled else { return }
+            if rm {
+                for i in 0..<6 { flipDegrees[i] = 0; faceUp[i] = true }
+            } else {
+                for i in 0..<6 {
+                    try? await Task.sleep(for: .seconds(AppAnimation.deckFlipStagger))
+                    guard !Task.isCancelled else { return }
+                    withAnimation(AppAnimation.deckFlipWave) { flipDegrees[i] = 0 }
+                    flipIndex = i   // .selection — the haptic wave rides the visual one
+                    Task { @MainActor in
+                        // content swaps edge-on at the flip's midpoint (~90°)
+                        try? await Task.sleep(for: .milliseconds(160))
+                        faceUp[i] = true
+                    }
+                }
+                try? await Task.sleep(for: .milliseconds(320))   // the last flip lands
+            }
+
+            // — Beat 6e: the fan collapses to the carousel; the deck is theirs —
+            try? await Task.sleep(for: .milliseconds(rm ? 0 : 520))
+            guard !Task.isCancelled else { return }
+            withAnimation(AppAnimation.standard.reduceMotionSafe) { inCarousel = true }
+            withAnimation(AppAnimation.deckCtaFade.reduceMotionSafe) { ctaShown = true }
+        }
+    }
+
+    /// Spectrum motes venting into the air. Origin is a face-UV point mapped
+    /// through the case's frame (tilt ignored — airborne particles don't need
+    /// surgical registration).
     private func spawnSparks(at uv: CGPoint, count: Int = 14,
                              style: SparkBurst.Style = .strike) {
         guard !reduceMotion else { return }
@@ -350,10 +556,10 @@ struct BuildDeckPhase: View {
         guard !reduceMotion else { return }
         knockTask = Task { @MainActor in
             while knockCount < 24,
-                  director.ceremony.foilTears.isEmpty,
+                  director.ceremony.tapCount == 0,
                   caseDissolve == .distantFuture {
                 try? await Task.sleep(for: .seconds(3.5))
-                guard director.ceremony.foilTears.isEmpty, caseDissolve == .distantFuture else { break }
+                guard director.ceremony.tapCount == 0, caseDissolve == .distantFuture else { break }
                 knock()
             }
         }
@@ -372,57 +578,6 @@ struct BuildDeckPhase: View {
             withAnimation(AppAnimation.knockReturn.reduceMotionSafe) {
                 kickDeg = 0
             }
-        }
-    }
-
-    /// Third crack — OVERLOAD (0.45s: every crack flares white, the drift
-    /// freezes, the held breath), then the UN-KNIT (Segment 3): the shell
-    /// disassembles cell by cell along its hex lattice, UNCOVERING the forged
-    /// deck already mounted behind it — no cross-fade, no void gap.
-    /// Segment 6: the release beat leans on the wave's own weight — a
-    /// restrained flash + one jolt at the break, and the essence motes STREAM
-    /// out through the opening lattice (two ventings) instead of detonating.
-    private func beginShatter() {
-        guard caseDissolve == .distantFuture else { return }
-        caseDissolve = .now
-        Task { @MainActor in
-            // overload holds — must match MetallicCaseView.overloadSpan
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0 : 0.45))
-            // The deck mounts BEHIND the still-covering shell as the wave starts;
-            // the un-knit does the revealing. The short fade only covers the
-            // sliver of carousel peek that outreaches the case silhouette.
-            withAnimation(AppAnimation.enter.reduceMotionSafe) { revealShown = true }
-            if !reduceMotion {
-                burstFlashOpacity = 0.4   // restrained — the wave carries the weight
-                withAnimation(AppAnimation.burstFlashDecay) { burstFlashOpacity = 0 }
-                withAnimation(AppAnimation.shatterJolt) { stagePunch = true }
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(160))
-                    withAnimation(AppAnimation.shatterJoltSettle) { stagePunch = false }
-                }
-            }
-            // first venting — essence escaping as the lattice opens
-            spawnSparks(at: CGPoint(x: 0.5, y: 0.5), count: 24, style: .burst)
-            // second, softer venting mid-wave — it STREAMS, not detonates
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0 : 0.55))
-            spawnSparks(at: CGPoint(x: 0.5, y: 0.5), count: 12, style: .strike)
-            // Retire the spark field once the motes age out, so its
-            // TimelineView(.animation) stops redrawing through the user-paced reveal.
-            sparksClearTask = Task { @MainActor in
-                try? await Task.sleep(for: .seconds(SparkBurst.lifespan))
-                sparkBursts = []
-            }
-            // Unmount the shell once the wave has consumed it (unknitSpan 1.25
-            // + the sliver fade; 0.55 elapsed above). Nothing visible remains —
-            // the deck is simply standing where the case was.
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.1 : 0.85))
-            caseShown = false
-            caseOpacity = 0
-            // the uncovered deck stands alone a beat, THEN is named…
-            withAnimation(AppAnimation.enter.reduceMotionSafe) { revealHeaderShown = true }
-            // …and the exit CTA follows
-            try? await Task.sleep(for: .seconds(reduceMotion ? 0.2 : 0.9))   // FEEL-GATE: tune on device
-            withAnimation(AppAnimation.enter.reduceMotionSafe) { ctaShown = true }
         }
     }
 
@@ -538,10 +693,6 @@ struct BuildDeckPhase: View {
             startKnocking()   // the deck inside wants out
             // the core lights: the deck's energy is now contained and straining
             withAnimation(AppAnimation.coreCharge.reduceMotionSafe) { coreEnergy = 0.40 }
-            // The reveal now owns the path forward: striking the case blooms into
-            // the forged deck (beginShatter → reveal), and the bottom CTA hands
-            // off to the letter. A pre-reveal idle peek is wrong — the knock cue
-            // carries the wait until the user acts.
         }
     }
 

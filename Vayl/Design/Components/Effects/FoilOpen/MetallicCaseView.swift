@@ -110,6 +110,39 @@ struct MetallicCaseView: View {
     var unknitSpan:   Double = 1.25   // the wave front crossing the whole shell
     var unknitBand:   Double = 3.2    // wave front thickness (lattice units) — cells actively departing
 
+    // — Living Case ceremony (Beat 5 rework) —
+
+    /// Flower-peel exit mode: when true, `dissolveStart` runs the FLOWER PEEL
+    /// (the lattice peels away from the centre outward like petals opening —
+    /// the case CHOOSES to open) instead of the formation-in-reverse un-knit.
+    /// The peel starts immediately at `dissolveStart` — the held breath is the
+    /// consumer's beat (it decides when to assign the date), not an overload span.
+    var peelMode: Bool = false
+    var peelSpan: Double = AppAnimation.flowerPeelSpan   // the peel wave crossing the shell
+
+    /// A card back tearing UP through the centre of the lattice (the deck inside
+    /// straining against the shell). Each new date plays one eruption; the module
+    /// derives rise / hold / reseal from its own frame clock. `.distantFuture` = none.
+    var eruptStart: Date = .distantFuture
+    /// Which strike this eruption belongs to (0, 1, 2) — escalates rise height,
+    /// adds the second card on 1+, and suppresses the reseal on 2 (the case
+    /// cannot close anymore).
+    var eruptTapIndex: Int = 0
+    // per-tap eruption spans (seconds) — rise, hold-at-peak, reseal
+    var eruptRiseSpans: [Double] = [0.30, 0.36, 0.42]
+    var eruptHoldSpans: [Double] = [0.22, 0.30, 0]
+    var eruptSealSpans: [Double] = [0.40, 0.50, 0]
+
+    /// Seam-stress target (0…1): lattice cells bow outward from centre, most at
+    /// the middle, as the deck pushes from within. Ramps in with the eruption and
+    /// unwinds with its reseal (held when the reseal is suppressed on tap 3).
+    var seamStress: Double = 0
+
+    /// Wake rings (0…3): each strike permanently lights another ring of lattice
+    /// cells from the centre out (inner 0.28 · middle 0.62 · full). Spectrum
+    /// colour is keyed per cell (radial + angular hue) so the lattice shimmers.
+    var wakeRings: Int = 0
+
     /// Tap-to-crack: when set, taps landing on (or near) the FRONT FACE are
     /// converted to face-local UV at tap time — the inverse-bilinear of the
     /// projected quad — and forwarded. The consumer routes them to its store;
@@ -143,7 +176,12 @@ struct MetallicCaseView: View {
          onFaceTap: ((CGPoint) -> Void)? = nil,
          knockStart: Date = .distantFuture,
          knockSeed: UInt64 = 0,
-         coreGlow: Double = 0) {
+         coreGlow: Double = 0,
+         peelMode: Bool = false,
+         eruptStart: Date = .distantFuture,
+         eruptTapIndex: Int = 0,
+         seamStress: Double = 0,
+         wakeRings: Int = 0) {
         self.theme = theme
         self.flat = flat
         self.riseStart = riseStart
@@ -155,6 +193,11 @@ struct MetallicCaseView: View {
         self.knockStart = knockStart
         self.knockSeed = knockSeed
         self.coreGlow = coreGlow
+        self.peelMode = peelMode
+        self.eruptStart = eruptStart
+        self.eruptTapIndex = eruptTapIndex
+        self.seamStress = seamStress
+        self.wakeRings = wakeRings
     }
 
 
@@ -272,6 +315,11 @@ struct MetallicCaseView: View {
         if dissolveStart == .distantFuture { return (0, 0) }
         guard motion else { return (1, 1) }
         let e = t - dissolveStart.timeIntervalSinceReferenceDate
+        if peelMode {
+            // The peel starts immediately — the held breath is the consumer's beat.
+            let f = min(1, max(0, e / peelSpan))
+            return (1, f * f * (3 - 2 * f))
+        }
         let overload = min(1, max(0, e / overloadSpan))
         let f = min(1, max(0, (e - overloadSpan) / unknitSpan))
         return (overload, f * f * (3 - 2 * f))
@@ -314,7 +362,8 @@ struct MetallicCaseView: View {
             drawCase(&ctx, size: size, geo: geo)
             drawKnock(&ctx, geo: geo, t: t, motion: motion)
             drawTears(&ctx, geo: geo, overload: overload, t: t, motion: motion)
-            eraseUnknit(&ctx, geo: geo, flood: flood)
+            if peelMode { erasePeel(&ctx, geo: geo, flood: flood) }
+            else        { eraseUnknit(&ctx, geo: geo, flood: flood) }
         }
             // Debossed hex foil — the band phase is driven by the FLOAT TILT, not
             // time, so the light only moves because the box moves (and Reduce
@@ -345,12 +394,26 @@ struct MetallicCaseView: View {
             // wrap can't reach (wrapPoint dies past 90% of the depth).
             .opacity(flood > 0.92 ? max(0, (1 - flood) / 0.08) : 1)
 
-            // UN-KNIT pieces: the freed cells at the wave front, drawn in a
-            // plain Canvas (no foil shader) so they read as solid metal lifting
-            // clear, plus the seam pre-glow where the lattice is about to give.
+            // Living Case overlay — seam stress + wake rings + card eruptions,
+            // drawn in a plain Canvas (no foil shader) ABOVE the shell so the
+            // spectrum strokes stay vivid. Stress/rings retire once the peel
+            // begins consuming the lattice; the eruption fades over its start.
+            if wakeRings > 0 || eruptStart != .distantFuture {
+                Canvas { ctx, _ in
+                    if flood < 0.001 {
+                        drawLatticeStress(&ctx, geo: geo, t: t, motion: motion)
+                    }
+                    drawEruption(&ctx, geo: geo, t: t, motion: motion, flood: flood)
+                }
+            }
+
+            // Exit pieces: the departing cells, drawn in a plain Canvas (no foil
+            // shader). Un-knit = solid metal lifting clear at the wave front;
+            // flower peel = three-pass spectrum petals (shadow, face, tear-edge).
             if flood > 0.001, flood < 0.999 {
                 Canvas { ctx, _ in
-                    drawUnknitPieces(&ctx, geo: geo, flood: flood)
+                    if peelMode { drawFlowerPeel(&ctx, geo: geo, flood: flood) }
+                    else        { drawUnknitPieces(&ctx, geo: geo, flood: flood) }
                 }
             }
         }
@@ -1159,6 +1222,391 @@ struct MetallicCaseView: View {
                 flare.stroke(piece, with: spectrum, lineWidth: 1.4)
             }
         }
+    }
+
+    // MARK: - Living Case ceremony (Beat 5 rework): stress, rings, eruption, flower peel
+
+    /// The theme colorway as a clamped spectrum ramp (c0 → c1 → c2), resolved to
+    /// RGB once per draw pass — never white-primary: the lattice shimmers across
+    /// the colorway, white only ever mixes IN at a lift peak.
+    private struct ColorwayRamp {
+        let c0: SIMD3<Double>, c1: SIMD3<Double>, c2: SIMD3<Double>
+        func at(_ t: Double) -> SIMD3<Double> {
+            let u = min(1, max(0, t))
+            return u < 0.5 ? c0 + (c1 - c0) * (u * 2)
+                           : c1 + (c2 - c1) * ((u - 0.5) * 2)
+        }
+    }
+    private func colorwayRamp() -> ColorwayRamp {
+        ColorwayRamp(c0: Self.components(theme.colorway.c0),
+                     c1: Self.components(theme.colorway.c1),
+                     c2: Self.components(theme.colorway.c2))
+    }
+
+    /// Per-cell spectrum position: radial (70%) + angular (30%) so adjacent cells
+    /// at the same radius still differ slightly — shimmer, not colour rings.
+    private func cellHueT(dx: Double, dy: Double, dist: Double, maxD: Double) -> Double {
+        (dist / maxD) * 0.7 + (Darwin.atan2(dy, dx) / (2 * .pi) + 0.5) * 0.3
+    }
+
+    /// The eruption's pose on the module's frame clock: rise (0…1, eased), seal
+    /// (0…1, eased; suppressed on the third tap), and visibility.
+    private struct EruptPose {
+        let rise: Double        // net rise after any reseal pull-back
+        let seal: Double
+        let visible: Double
+        static let none = EruptPose(rise: 0, seal: 0, visible: 0)
+    }
+    private func eruptPose(t: Double, motion: Bool) -> EruptPose {
+        guard motion, eruptStart != .distantFuture else { return .none }
+        let e = t - eruptStart.timeIntervalSinceReferenceDate
+        guard e >= 0 else { return .none }
+        let k = min(max(eruptTapIndex, 0), 2)
+        let riseDur = eruptRiseSpans[k]
+        let riseIn = min(1, e / riseDur)
+        let riseP = 1 - (1 - riseIn) * (1 - riseIn) * (1 - riseIn)   // easeOut
+        var sealP = 0.0
+        if k < 2 {
+            let sealAt = riseDur + eruptHoldSpans[k]
+            if e > sealAt {
+                let s = min(1, (e - sealAt) / max(0.01, eruptSealSpans[k]))
+                sealP = s * s * (3 - 2 * s)
+            }
+        }
+        let visible = min(1, riseP * 4) * (1 - sealP * sealP)
+        guard visible > 0.001 else { return .none }
+        return EruptPose(rise: riseP * (1 - sealP), seal: sealP, visible: visible)
+    }
+
+    /// Live seam stress: the target bows in with the eruption's rise and unwinds
+    /// with its reseal — held open when the reseal is suppressed (tap 3).
+    private func netSeamStress(t: Double, motion: Bool) -> Double {
+        guard seamStress > 0.001, motion, eruptStart != .distantFuture else { return 0 }
+        let e = t - eruptStart.timeIntervalSinceReferenceDate
+        guard e >= 0 else { return 0 }
+        let pose = eruptPose(t: t, motion: motion)
+        let ramp = min(1, e / 0.30)
+        return seamStress * ramp * (1 - pose.seal)
+    }
+
+    /// One lattice cell with its radial coordinates from the FACE CENTRE (the
+    /// peel + stress + rings all radiate from the middle, not a strike point).
+    private struct RadialCell {
+        let center: SIMD2<Double>   // lattice space
+        let dist: Double            // lattice units from face centre
+        let dx: Double, dy: Double
+    }
+
+    /// Enumerate honeycomb cell centres radially from the face centre. Overhang
+    /// includes the fold wrap (peel consumes the whole shell); without it the
+    /// enumeration stays on the front face (stress/ring overlay).
+    private func radialCells(overhang: Bool) -> (cells: [RadialCell], maxD: Double) {
+        let r3 = 1.7320508
+        let cols = latticeColumns
+        let over = overhang ? Double(depthFrac) * cols : 0
+        let xLo = -over, xHi = cols + over
+        let yLo = -over, yHi = 1.5 * cols + over
+        let o = SIMD2(0.5 * cols, 0.75 * cols)
+        let maxD = [SIMD2(xLo, yLo), SIMD2(xHi, yLo), SIMD2(xLo, yHi), SIMD2(xHi, yHi)]
+            .map { c -> Double in
+                let v = c - o
+                return (v.x * v.x + v.y * v.y).squareRoot()
+            }
+            .max() ?? 1
+        var cells: [RadialCell] = []
+        func visit(_ c: SIMD2<Double>) {
+            guard c.x >= xLo, c.x <= xHi, c.y >= yLo, c.y <= yHi else { return }
+            let v = c - o
+            cells.append(RadialCell(center: c,
+                                    dist: (v.x * v.x + v.y * v.y).squareRoot(),
+                                    dx: v.x, dy: v.y))
+        }
+        let jLo = Int((yLo / r3).rounded(.down)), jHi = Int((yHi / r3).rounded(.up))
+        let iLo = Int(xLo.rounded(.down)), iHi = Int(xHi.rounded(.up))
+        for j in jLo...jHi {
+            let rowY = Double(j) * r3
+            for i in iLo...iHi {
+                visit(SIMD2(Double(i), rowY))                       // grid A
+                visit(SIMD2(Double(i) + 0.5, rowY + r3 * 0.5))      // grid B
+            }
+        }
+        return (cells, maxD)
+    }
+
+    /// Peel stagger: centre cells depart first — a centre cell starts at
+    /// exitProgress ≈ 0, an edge cell not until ≈ 0.44; each takes 0.56 of the
+    /// normalized timeline to complete its arc.
+    private func peelLocalP(dist: Double, maxD: Double, flood: Double) -> Double {
+        let delay = (dist / (maxD * 1.03)) * 0.44
+        return min(1, max(0, (flood - delay) / 0.56))
+    }
+
+    /// Erase peeled cells from the shell — same destinationOut mechanism as the
+    /// un-knit, but centre-out on the peel stagger: the deck behind is genuinely
+    /// UNCOVERED through the opening middle while the edges still hold.
+    private func erasePeel(_ ctx: inout GraphicsContext, geo: CaseGeometry, flood: Double) {
+        guard flood > 0.001 else { return }
+        let (cells, maxD) = radialCells(overhang: true)
+        var cut = ctx
+        cut.blendMode = .destinationOut
+        for cell in cells where peelLocalP(dist: cell.dist, maxD: maxD, flood: flood) > 0 {
+            guard let hex = hexCellPath(center: cell.center, geo: geo, scale: 1.18) else { continue }
+            cut.fill(hex, with: .color(.black))
+        }
+    }
+
+    /// The FLOWER PEEL — each departing cell is a petal opening toward the
+    /// camera: drifts outward along its radial, scales up (perspective of the
+    /// lift), brightens toward white at the arc's midpoint, fades as it
+    /// completes. Three passes per cell:
+    ///   1 shadow underside (darker, offset further outward — the petal's back)
+    ///   2 face (spectrum colour, white-mixed at peak lift)
+    ///   3 tear-edge highlight (bright stroke, 88% scale, pulled back toward
+    ///     centre — the seam catching light as it breaks; the pass that makes
+    ///     the peel read as material separating, not cells fading out)
+    private func drawFlowerPeel(_ ctx: inout GraphicsContext, geo: CaseGeometry, flood: Double) {
+        let (cells, maxD) = radialCells(overhang: true)
+        guard !cells.isEmpty else { return }
+        let quad = geo.frontQuad
+        let sc = bilerp(quad, 0.5, 0.5)   // screen-space face centre
+        let faceW = hypot(quad[1].x - quad[0].x, quad[1].y - quad[0].y)
+        guard faceW > 1 else { return }
+        let ramp = colorwayRamp()
+        let white = SIMD3(1.0, 1.0, 1.0)
+        let black = SIMD3(0.0, 0.0, 0.0)
+
+        for cell in cells {
+            let p = peelLocalP(dist: cell.dist, maxD: maxD, flood: flood)
+            guard p > 0 else { continue }
+            let fadeP = p * p * p                                  // easeIn3
+            guard fadeP < 0.99 else { continue }
+            let ep = 1 - (1 - p) * (1 - p) * (1 - p) * (1 - p)     // easeOut4
+            guard let pc = wrapPoint(cell.center, geo: geo),
+                  let hex = hexCellPath(center: cell.center, geo: geo, scale: 1.0)
+            else { continue }
+
+            // radial flight direction in SCREEN space
+            let ddx = pc.x - sc.x, ddy = pc.y - sc.y
+            let len = max(1, hypot(ddx, ddy))
+            let nx = ddx / len, ny = ddy / len
+
+            // centre cells travel farther (they carry more energy) + lift steeper
+            let radial = 1 - cell.dist / maxD
+            let travelScale = 0.6 + radial * 0.4
+            let travel = ep * faceW * 0.20 * travelScale
+            let liftAngle = radial * 0.5 + 0.2
+            let scaleX = 1 + ep * dcos(liftAngle) * 0.5
+            let scaleY = 1 + ep * 0.35
+
+            let hueT = cellHueT(dx: cell.dx, dy: cell.dy, dist: cell.dist, maxD: maxD)
+            let liftColor = ramp.at(hueT + ep * 0.15)
+            let peakMix = max(0, dsin(p * .pi))                    // bell over the arc
+            let faceColor = mix(liftColor, white, peakMix * 0.55)
+            let alpha = 1 - fadeP
+
+            // transform a hex path about its own centre: scale then translate
+            func transformed(_ scale: Double, tx: CGFloat, ty: CGFloat) -> Path {
+                var out = Path()
+                hex.forEach { el in
+                    func moved(_ pt: CGPoint) -> CGPoint {
+                        CGPoint(x: pc.x + (pt.x - pc.x) * scaleX * scale + tx,
+                                y: pc.y + (pt.y - pc.y) * scaleY * scale + ty)
+                    }
+                    switch el {
+                    case .move(let pt):  out.move(to: moved(pt))
+                    case .line(let pt):  out.addLine(to: moved(pt))
+                    case .closeSubpath:  out.closeSubpath()
+                    default:             break
+                    }
+                }
+                return out
+            }
+            let tx = nx * travel, ty = ny * travel
+
+            // 1 — shadow underside, offset further outward
+            let shadowDepth = ep * faceW * 0.028 * travelScale
+            var shadow = ctx
+            shadow.opacity = alpha * 0.6
+            shadow.fill(transformed(1.0, tx: tx + nx * shadowDepth, ty: ty + ny * shadowDepth),
+                        with: .color(color(mix(liftColor, black, 0.75))))
+
+            // 2 — face: spectrum colour brightening toward white at peak lift
+            let facePath = transformed(1.0, tx: tx, ty: ty)
+            var face = ctx
+            face.opacity = alpha * (0.85 + peakMix * 0.15)
+            face.fill(facePath, with: .color(color(faceColor).opacity(0.18 + peakMix * 0.35)))
+            face.stroke(facePath, with: .color(color(faceColor)),
+                        lineWidth: 1.2 + peakMix * 0.8)
+
+            // 3 — tear-edge highlight: bright inner stroke, pulled back toward centre
+            let tearOp = peakMix * 0.9 * alpha
+            if tearOp > 0.02 {
+                let back = faceW * 0.008
+                var tear = ctx
+                tear.opacity = tearOp
+                tear.stroke(transformed(0.88, tx: tx - nx * back, ty: ty - ny * back),
+                            with: .color(color(mix(liftColor, white, 0.7))),
+                            lineWidth: 2.2)
+            }
+        }
+    }
+
+    /// Seam stress + wake rings on the intact shell: each strike permanently
+    /// lights another ring of cells in per-cell spectrum colour; live stress
+    /// bows cells outward from centre (most in the middle) — the lattice being
+    /// pulled apart from within, without redrawing the shader's grooves.
+    private func drawLatticeStress(_ ctx: inout GraphicsContext, geo: CaseGeometry,
+                                   t: Double, motion: Bool) {
+        let stress = netSeamStress(t: t, motion: motion)
+        guard wakeRings > 0 || stress > 0.01 else { return }
+        let (cells, maxD) = radialCells(overhang: false)
+        let quad = geo.frontQuad
+        let faceW = hypot(quad[1].x - quad[0].x, quad[1].y - quad[0].y)
+        guard faceW > 1 else { return }
+        let ringFrac = [0.0, 0.28, 0.62, 1.0][min(max(wakeRings, 0), 3)]
+        let ringRadius = ringFrac * maxD
+        let ramp = colorwayRamp()
+
+        for cell in cells {
+            let lit = cell.dist <= ringRadius
+            let localStress = stress * max(0, 1 - cell.dist / maxD) * 1.3
+            guard lit || localStress > 0.05 else { continue }
+            guard var hex = hexCellPath(center: cell.center, geo: geo, scale: 1.0) else { continue }
+
+            // stress displacement: bow outward from centre, screen-radial
+            if localStress > 0.01, let pc = wrapPoint(cell.center, geo: geo) {
+                let sc = bilerp(quad, 0.5, 0.5)
+                let ddx = pc.x - sc.x, ddy = pc.y - sc.y
+                let len = max(1, hypot(ddx, ddy))
+                let push = localStress * faceW * 0.02
+                hex = hex.applying(CGAffineTransform(translationX: ddx / len * push,
+                                                     y: ddy / len * push))
+            }
+
+            let cw = color(ramp.at(cellHueT(dx: cell.dx, dy: cell.dy,
+                                            dist: cell.dist, maxD: maxD)))
+            let op = min(1, (lit ? 0.55 + 0.25 * coreGlow : 0) + localStress * 0.25)
+            // soft glow (wide, additive) + crisp seam — two passes, no per-cell blur
+            var glow = ctx
+            glow.blendMode = .plusLighter
+            glow.opacity = op * 0.35
+            glow.stroke(hex, with: .color(cw), lineWidth: 3.0)
+            var crisp = ctx
+            crisp.opacity = op
+            crisp.stroke(hex, with: .color(cw), lineWidth: 1.0 + localStress * 0.8)
+            if lit {
+                var fill = ctx
+                fill.opacity = 0.08 + coreGlow * 0.12
+                fill.fill(hex, with: .color(cw))
+            }
+        }
+    }
+
+    /// A card back tearing UP through the centre of the lattice — drawn in
+    /// face-UV space through the projected quad and CLIPPED to the upper half
+    /// of the front face, so it reads as pushing through from inside (without
+    /// the clip it floats on top and reads as UI). Second card on tap 2+.
+    private func drawEruption(_ ctx: inout GraphicsContext, geo: CaseGeometry,
+                              t: Double, motion: Bool, flood: Double) {
+        let pose = eruptPose(t: t, motion: motion)
+        // the eruption hands off to the peel — fade over the peel's first act
+        let visible = pose.visible * (1 - sstep(flood, 0.0, 0.35))
+        guard visible > 0.01 else { return }
+        let quad = geo.frontQuad
+        let faceW = hypot(quad[1].x - quad[0].x, quad[1].y - quad[0].y)
+        guard faceW > 1 else { return }
+        let k = min(max(eruptTapIndex, 0), 2)
+        let ramp = colorwayRamp()
+
+        // card metrics in face-UV (card ≈ 29% of the face each way, mockup-scale)
+        let wU = 0.30, hV = 0.29
+        let maxRiseFrac = [0.55, 0.72, 0.85][k]
+        let riseV = pose.rise * maxRiseFrac * hV
+
+        // clip: the upper half of the front face — the card pushes through the midline
+        var upper = Path()
+        upper.move(to: quad[0])
+        upper.addLine(to: quad[1])
+        upper.addLine(to: bilerp(quad, 1, 0.5))
+        upper.addLine(to: bilerp(quad, 0, 0.5))
+        upper.closeSubpath()
+
+        func drawCard(cxU: Double, rise: Double, opacity: Double, glowTint: Color) {
+            let bottomV = 0.5 - rise
+            let card = mappedRoundedRect(u0: cxU - wU / 2, v0: bottomV - hV,
+                                         u1: cxU + wU / 2, v1: bottomV,
+                                         rU: 0.045, geo: geo)
+            var g = ctx
+            g.clip(to: upper)
+            g.opacity = opacity
+            // body — near-void card back, colorway-tinted
+            g.fill(card, with: .color(color(mix(ramp.at(0.5), SIMD3(0, 0, 0), 0.8))))
+            // border glow (wide, soft) + crisp spectrum edge
+            var glow = g
+            glow.blendMode = .plusLighter
+            glow.opacity = opacity * 0.35
+            glow.stroke(card, with: .color(glowTint), lineWidth: 2.5)
+            g.stroke(card, with: .linearGradient(
+                Gradient(colors: [theme.colorway.c0, theme.colorway.c1, theme.colorway.c2]),
+                startPoint: bilerp(quad, cxU - wU / 2, bottomV - hV),
+                endPoint:   bilerp(quad, cxU + wU / 2, bottomV)),
+                lineWidth: 1.2)
+        }
+
+        // second card first (behind): offset left, lower, dimmer — tap 2+
+        if k >= 1 {
+            drawCard(cxU: 0.5 - wU - 0.045, rise: riseV * 0.8,
+                     opacity: visible * 0.85 * 0.75, glowTint: theme.colorway.c0)
+        }
+        drawCard(cxU: 0.5, rise: riseV, opacity: visible, glowTint: theme.colorway.c1)
+
+        // the breach — glow at the tear point + spectrum lines radiating 6 ways
+        let breach = bilerp(quad, 0.5, 0.5)
+        var bg = ctx
+        bg.blendMode = .plusLighter
+        bg.opacity = visible * 0.5
+        let bw = faceW * 0.36, bh = faceW * 0.06
+        bg.fill(Path(ellipseIn: CGRect(x: breach.x - bw / 2, y: breach.y - bh / 2,
+                                       width: bw, height: bh)),
+                with: .color(theme.colorway.c1))
+        let tearLen = faceW * (0.10 + 0.08 * visible)
+        for i in 0..<6 {
+            let a = Double(i) / 6 * 2 * .pi
+            var line = Path()
+            line.move(to: breach)
+            line.addLine(to: CGPoint(x: breach.x + dcos(a) * tearLen,
+                                     y: breach.y + dsin(a) * tearLen))
+            var lg = ctx
+            lg.blendMode = .plusLighter
+            lg.opacity = visible * 0.6
+            lg.stroke(line, with: .color(color(ramp.at(Double(i) / 6))), lineWidth: 0.8)
+        }
+    }
+
+    /// A rounded rect authored in face-UV, every point mapped through the TRUE
+    /// projected quad (bilerp) — same perspective-correct technique as the brand
+    /// frame, so the erupting card sits ON the face, not on the screen.
+    private func mappedRoundedRect(u0: Double, v0: Double, u1: Double, v1: Double,
+                                   rU: Double, geo: CaseGeometry) -> Path {
+        let rV = rU / 1.5   // face is w × 1.5w — equal corner radius in both axes
+        var unit: [CGPoint] = []
+        let seg = 4
+        func corner(_ cx: Double, _ cy: Double, _ from: Double, _ to: Double) {
+            for s in 0...seg {
+                let a = from + (to - from) * Double(s) / Double(seg)
+                unit.append(CGPoint(x: cx + rU * dcos(a), y: cy + rV * dsin(a)))
+            }
+        }
+        corner(u0 + rU, v0 + rV, .pi,       1.5 * .pi)   // TL
+        corner(u1 - rU, v0 + rV, 1.5 * .pi, 2.0 * .pi)   // TR
+        corner(u1 - rU, v1 - rV, 0.0,       0.5 * .pi)   // BR
+        corner(u0 + rU, v1 - rV, 0.5 * .pi, .pi)         // BL
+        var path = Path()
+        let mapped = unit.map { bilerp(geo.frontQuad, Double($0.x), Double($0.y)) }
+        path.move(to: mapped[0])
+        for p in mapped.dropFirst() { path.addLine(to: p) }
+        path.closeSubpath()
+        return path
     }
 
     /// Cracks RADIATE from the impact — `count` clean lines fanning out in evenly
