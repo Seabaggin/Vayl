@@ -120,12 +120,12 @@ struct VaylBorderEffect: View {
                         // Hold clear only as far as the hairline taper
                         .init(color: .clear, location: 0.20),
                         // Border fades in right at the taper end
-                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255).opacity(0.50), location: 0.23),
-                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255), location: 0.26),
+                        .init(color: Color(.sRGB, red: 26/255, green: 25/255, blue: 31/255).opacity(0.50), location: 0.23),
+                        .init(color: Color(.sRGB, red: 26/255, green: 25/255, blue: 31/255), location: 0.26),
                         // Full opacity across the bottom
-                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255), location: 0.74),
+                        .init(color: Color(.sRGB, red: 26/255, green: 25/255, blue: 31/255), location: 0.74),
                         // Mirror — fades out as it rounds the left corner back up
-                        .init(color: Color(.sRGB, red: 48/255, green: 42/255, blue: 72/255).opacity(0.50), location: 0.77),
+                        .init(color: Color(.sRGB, red: 26/255, green: 25/255, blue: 31/255).opacity(0.50), location: 0.77),
                         .init(color: .clear, location: 0.80),
                         // Hold clear back to top centre
                         .init(color: .clear, location: 1.00)

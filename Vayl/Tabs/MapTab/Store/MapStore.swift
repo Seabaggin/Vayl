@@ -72,7 +72,6 @@ final class MapStore {
     // MARK: - Derived masthead
 
     private(set) var displayName: String = ""
-    private(set) var subtitle: String = ""
 
     /// The linked partner's name — drives the "Jordan & Alex." header toggle.
     /// Empty when unpaired or not yet fetched (header falls back to your name only).
@@ -89,7 +88,15 @@ final class MapStore {
         self.couple = couple
     }
 
-    // MARK: - The Record (Me layer)
+    // MARK: - The Record (dormant — awaiting relocation to Play)
+
+    // The Record left the Map in the 2026-07-21 scope cut. `load()` no longer calls the
+    // two loaders below, so the Map stops paying for a network round-trip
+    // (loadSharedRecord) to populate data nothing renders.
+    //
+    // Kept rather than deleted: these two are the app's ONLY implementation of the
+    // local/remote session merge, and Play's Record sheet needs it. Owner is still open
+    // (PlayStore vs a new RecordStore) — scope-cut spec §5.
 
     struct RecordSession: Identifiable {
         let id: UUID
@@ -191,12 +198,10 @@ final class MapStore {
     /// server-enforced (2026-07-09 launch hardening): locked matches arrive as
     /// identity-less stubs, so no client-side entitlement check runs here.
     func load(appState: AppState, context: ModelContext) {
-        loadMasthead(appState: appState, context: context)
-        loadRecord(coupleId: appState.coupleId, context: context)
+        loadMasthead(appState: appState)
         loadMeCard(context: context)
         loadUs(appState: appState, context: context)
         Task { await loadServerAlignData(appState: appState, context: context) }
-        Task { await loadSharedRecord(coupleId: appState.coupleId, context: context) }
     }
 
     /// Async: fetches the partner's full Pulse history and derives their current position
@@ -224,11 +229,8 @@ final class MapStore {
         }
     }
 
-    private func loadMasthead(appState: AppState, context: ModelContext) {
+    private func loadMasthead(appState: AppState) {
         displayName = appState.displayName
-        let profile = try? context.fetch(FetchDescriptor<UserProfile>()).first
-        let stageLabel = (profile?.nmStage ?? .exploring).displayName
-        subtitle = Self.subtitle(stageLabel: stageLabel, joinedAt: profile?.createdAt)
     }
 
     private func loadRecord(coupleId: UUID?, context: ModelContext) {
@@ -473,15 +475,4 @@ final class MapStore {
 
     // MARK: - Helpers
 
-    /// "Exploring · 14 weeks on Vayl" once there is real tenure, otherwise the
-    /// forming variant.
-    private static func subtitle(stageLabel: String, joinedAt: Date?) -> String {
-        guard let joinedAt else { return "\(stageLabel) · your map is just beginning" }
-        let weeks = Calendar.current
-            .dateComponents([.weekOfYear], from: joinedAt, to: Date())
-            .weekOfYear ?? 0
-        guard weeks >= 1 else { return "\(stageLabel) · your map is just beginning" }
-        let unit = weeks == 1 ? "week" : "weeks"
-        return "\(stageLabel) · \(weeks) \(unit) on Vayl"
-    }
 }

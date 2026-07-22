@@ -20,9 +20,21 @@ import SwiftUI
 
 enum ConstellationLayout {
 
+    /// A connecting line, stored **oriented**: `a` is always the endpoint nearer the hero, `b` the
+    /// farther one. The reveal draws every line `a → b`, so the constellation always grows *away*
+    /// from the hero — see `DesireConstellationView`. Orientation is a property of the figure, not
+    /// of any beat's ignition timing, which is what lets one rule cover every reveal mode.
     struct Edge: Equatable {
+        /// Hero-nearer endpoint. The draw origin.
         let a: Int
+        /// Farther endpoint. The draw target.
         let b: Int
+        /// MST depth of `a` from the hero (hero itself is 0). Drives the outward draw stagger, so
+        /// lines ripple away from the hero instead of firing in array order.
+        let depth: Int
+        /// True for the seeded short links added on top of the spanning tree. These are what make a
+        /// low-count sky read as a figure rather than a chain (see `extraLengthSpan`).
+        let isExtra: Bool
     }
 
     struct Result: Equatable {
@@ -91,12 +103,26 @@ enum ConstellationLayout {
 
     // MARK: - Edges (MST + short extras)
 
+    /// How much longer than the mean tree edge a seeded extra link may be.
+    ///
+    /// Raised from 1.35 (2026-07-21). At 1.35 the candidate pool is frequently **empty** at low
+    /// star counts, so the extras the generator asks for were silently dropped and the figure fell
+    /// back to the bare spanning tree — which at 4–6 stars is almost always a *path*, i.e. a chain
+    /// that reads as a scribble rather than a constellation. Measured over 12 seeds at 5 stars:
+    /// 1.35 left 5 of 12 skies with zero extras; 1.70 left none. Nine-star skies were never
+    /// affected (dense enough pool), which is exactly why 5 looked poor next to 9.
+    private static let extraLengthSpan: Double = 1.70
+
     private static func buildEdges(points: [CGPoint], hero: Int, rng: inout SeededRNG) -> [Edge] {
         let n = points.count
         var inTree: Set<Int> = [hero]
         var rest = Set(0..<n)
         rest.remove(hero)
         var edges: [Edge] = []
+
+        // MST depth from the hero, filled as Prim's grows. Prim's already emits (tree-side,
+        // new-node) pairs, so every tree edge is born hero-outward — the depth just records it.
+        var depth = [Int](repeating: 0, count: n)
 
         // Prim's minimum spanning tree — guarantees one connected figure with n-1 edges.
         while !rest.isEmpty {
@@ -110,7 +136,8 @@ enum ConstellationLayout {
                 }
             }
             guard bj >= 0 else { break }
-            edges.append(Edge(a: bi, b: bj))
+            depth[bj] = depth[bi] + 1
+            edges.append(Edge(a: bi, b: bj, depth: depth[bi], isExtra: false))
             inTree.insert(bj)
             rest.remove(bj)
         }
@@ -123,12 +150,21 @@ enum ConstellationLayout {
         for i in 0..<n {
             for j in (i + 1)..<n where !have.contains(key(i, j)) {
                 let d = dist(points[i], points[j])
-                if d < mean * 1.35 { candidates.append((d, i, j)) }
+                if d < mean * extraLengthSpan { candidates.append((d, i, j)) }
             }
         }
         candidates.sort { $0.d < $1.d }
         let extraCount = n >= 5 ? 1 + Int(rng.nextUnit() * 2) : (n >= 4 ? 1 : 0)
-        for c in candidates.prefix(extraCount) { edges.append(Edge(a: c.a, b: c.b)) }
+        for c in candidates.prefix(extraCount) {
+            // Extras are the one place orientation isn't already decided: they can join two nodes
+            // at equal MST depth, where "nearer the hero" is undefined. Tie-break on raw distance
+            // to the hero so the rule still resolves. This clause cannot trigger on a tree edge.
+            let aIsNearer = depth[c.a] < depth[c.b]
+                || (depth[c.a] == depth[c.b] && dist(points[c.a], points[hero]) <= dist(points[c.b], points[hero]))
+            let from = aIsNearer ? c.a : c.b
+            let to   = aIsNearer ? c.b : c.a
+            edges.append(Edge(a: from, b: to, depth: depth[from], isExtra: true))
+        }
         return edges
     }
 

@@ -74,6 +74,12 @@ struct PlayView: View {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: AppSpacing.xl) {
                             PlayMastheadView()
+                                // Coupled to the hero recede off the one scroll
+                                // input: the masthead resists leaving and shrinks
+                                // while the hero tilts into depth behind it (one
+                                // surface). Takes scrollY raw — parallax is a
+                                // function of distance travelled, not of collapse.
+                                .mastheadCollapse(scrollY: scrollY)
                                 .padding(.horizontal, AppSpacing.lg)
                                 .padding(.top, AppSpacing.xs)
                             PlayHeroView(store: store, collapse: collapse)
@@ -83,9 +89,10 @@ struct PlayView: View {
                         // No bottom clearance here: AppShell's .safeAreaInset
                         // tab bar reserves its own height for every tab.
                     }
-                    .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
-                        scrollY = y
-                    }
+                    // Rest-zeroed scroll offset (the inset normalisation lives in
+                    // the shared reader, so no tab re-derives it wrong). Feeds
+                    // both `collapse` (hero) and `.mastheadCollapse` (masthead).
+                    .mastheadScrollReader($scrollY)
                     // Top scroll-edge: the Cards masthead dissolves under the Island
                     // as it scrolls up, instead of hard-cutting at the safe-area line.
                     .scrollTopEdgeFade()

@@ -214,6 +214,12 @@ private extension Comparable {
 struct HolographicShimmer: View {
     var duration: Double = 6
 
+    /// Opaque foundation the sweep + orbs render over. Defaults to the app's
+    /// purplish surface (`#201C34`) used by the tab bar, pills and PartnerChip.
+    /// The CTA overrides this with the sheet floor so the button reads as the
+    /// same material as the surface it sits on.
+    var baseColor: Color = Color(.sRGB, red: 32/255, green: 28/255, blue: 52/255)
+
     private let noiseSpeed: Double = 0.09
 
     @State private var phaseOffset: Double = Double.random(in: 0...100)
@@ -227,7 +233,7 @@ struct HolographicShimmer: View {
         // settled frame and renders on top of the base fill.
         // Never competes with VaylButton's outer GeometryReader.
         Rectangle()
-            .fill(Color(.sRGB, red: 32/255, green: 28/255, blue: 52/255))
+            .fill(baseColor)
             .overlay(
                 GeometryReader { geo in
                     let size = geo.size
@@ -256,7 +262,7 @@ struct HolographicShimmer: View {
 
         ZStack {
                             // Layer 0: Base — opaque foundation for the ZStack.
-                            Color(.sRGB, red: 32/255, green: 28/255, blue: 52/255)
+                            baseColor
 
                             // Layer 1: Specular sweep
                             Rectangle()

@@ -116,7 +116,8 @@ struct DeckCaseView: View {
                     HexTwinkle(unit: Self.hexUnit, columns: 6,
                                c0: style.colorway.c0,
                                c1: style.colorway.c1,
-                               c2: style.colorway.c2)
+                               c2: style.colorway.c2,
+                               width: w)
                 }
             }
             .frame(width: w, height: h)     // firm size — no GeometryReader to over-read
@@ -397,65 +398,89 @@ private struct HexFoil: View {
 
 // MARK: - Live hex twinkle
 
-/// The guidepost's `startShimmer`, ported: random lattice CELLS ignite in the deck
-/// colorway and fade, over the static `HexFoil`. One capped `TimelineView` Canvas
-/// (~30fps). Each cell's cycle is seeded by its index (stable launch-to-launch) and
-/// driven by an elapsed-since-mount clock WRAPPED to a bounded window — never an
-/// absolute timestamp handed to a float. Mounted only by hex (unlocked) cases and
-/// only when the caller allows ambient motion (Reduce Motion + Low Power gate it).
+/// Random lattice cells ignite in the deck colorway and fade, over the static HexFoil.
+///
+/// **Performance design:** all geometry, path objects, and color bridge calls are
+/// pre-computed once at init from the known `width`. The per-frame Canvas loop only
+/// iterates the ~6 active cells per card (sin + lerp + fill + stroke) — never the
+/// full ~60-cell lattice. Six simultaneous instances on screen (LazyVGrid viewport
+/// limit) cost roughly the same as the old single-pass version over the full lattice.
 private struct HexTwinkle: View {
     let unit: [CGPoint]
     var columns: Double = 6
-    let c0: Color
-    let c1: Color
-    let c2: Color
-    /// @State so the origin is fixed at view birth and survives re-renders.
+    let c0: Color, c1: Color, c2: Color
+    /// Known at construction — the parent ZStack frames to `(w, w*1.5)` before mounting.
+    let width: CGFloat
+
     @State private var birth = Date()
+
+    // Pre-built once per view lifetime.
+    private struct ActiveCell {
+        let path: Path
+        let phase: Double       // [0,1) stable per-cell offset into the cycle
+        let colorFrac: Double   // drives lerp3 color selection
+    }
+    private let activeCells: [ActiveCell]
+    private let colorStops: [(r: Double, g: Double, b: Double)]
+
+    init(unit: [CGPoint], columns: Double = 6,
+         c0: Color, c1: Color, c2: Color, width: CGFloat) {
+        self.unit = unit; self.columns = columns
+        self.c0 = c0; self.c1 = c1; self.c2 = c2; self.width = width
+        // Bridge UIColor once here, never on the draw path.
+        self.colorStops = [Self.comps(c0), Self.comps(c1), Self.comps(c2)]
+
+        let w = Double(width), h = w * 1.5
+        let cols = max(3, columns)
+        let hw = w / cols
+        let radius = hw / 1.7320508
+        let rowH = radius * 1.5
+        var built: [ActiveCell] = []
+        var idx = 0, row = 0
+        var y = -radius
+        while y < h + radius {
+            let xo = row % 2 == 0 ? 0.0 : hw / 2
+            var x = -hw + xo
+            while x < w + hw {
+                let s = Double(idx)
+                // ~1 in 12 cells breathes (≈4–5 per card). Seed 2.31 avoids
+                // column-aligned clustering that 1.73 produced with the hex stride.
+                if Self.fract(s * 2.31) < 0.08 {
+                    var p = Path()
+                    for (i, u) in unit.enumerated() {
+                        let pt = CGPoint(x: x + Double(u.x) * radius,
+                                         y: y + Double(u.y) * radius)
+                        if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
+                    }
+                    p.closeSubpath()
+                    built.append(ActiveCell(path: p,
+                                            phase: Self.fract(s * 4.7),
+                                            colorFrac: Self.fract(s * 5.9)))
+                }
+                x += hw; idx += 1
+            }
+            y += rowH; row += 1
+        }
+        self.activeCells = built
+    }
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { timeline in
-            Canvas { ctx, size in
+            Canvas { ctx, _ in
                 let elapsed = timeline.date.timeIntervalSince(birth)
                     .truncatingRemainder(dividingBy: 3600)
-                let cols = max(3, columns)
-                let hw = size.width / cols
-                let radius = hw / 1.7320508
-                let rowH = radius * 1.5
-                let stops = [Self.comps(c0), Self.comps(c1), Self.comps(c2)]
-
-                var idx = 0, row = 0
-                var y = -radius
-                while y < Double(size.height) + radius {
-                    let xo = row % 2 == 0 ? 0.0 : hw / 2
-                    var x = -hw + xo
-                    while x < Double(size.width) + hw {
-                        let s = Double(idx)
-                        // Only ~1 in 20 cells ever breathes (≈3–4 per card), each on the
-                        // living-surface tempo (auraBreathe, 5.4s) with a spread phase, so
-                        // at any moment one or two glow softly — slow and gravitational,
-                        // the sanctioned breathing speed, not an invented tempo.
-                        if Self.fract(s * 1.73) < 0.05 {
-                            let phase = Self.fract(s * 4.7)
-                            let localT = Self.fract(elapsed / AppAnimation.auraBreathe + phase)
-                            let env = pow(sin(localT * .pi), 2)              // gentle bloom over the cycle
-                            if env > 0.12 {
-                                let br = (env - 0.12) / 0.88
-                                let col = Self.lerp3(stops, Self.fract(s * 5.9))
-                                var p = Path()
-                                for (i, u) in unit.enumerated() {
-                                    let pt = CGPoint(x: x + Double(u.x) * radius,
-                                                     y: y + Double(u.y) * radius)
-                                    if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
-                                }
-                                p.closeSubpath()
-                                ctx.opacity = br * 0.7
-                                ctx.fill(p, with: .color(col.opacity(0.10)))
-                                ctx.stroke(p, with: .color(col), lineWidth: 0.8)
-                            }
-                        }
-                        x += hw; idx += 1
-                    }
-                    y += rowH; row += 1
+                for cell in activeCells {
+                    // truncatingRemainder = real fractional part; Self.fract is the
+                    // PRNG hash — wrong here, right for stable per-cell seeds above.
+                    let localT = (elapsed / AppAnimation.auraBreathe + cell.phase)
+                        .truncatingRemainder(dividingBy: 1.0)
+                    let env = pow(sin(localT * .pi), 2)
+                    guard env > 0.18 else { continue }
+                    let br = (env - 0.18) / 0.82
+                    let col = Self.lerp3(colorStops, cell.colorFrac)
+                    ctx.opacity = br * 0.7
+                    ctx.fill(cell.path, with: .color(col.opacity(0.10)))
+                    ctx.stroke(cell.path, with: .color(col), lineWidth: 0.8)
                 }
             }
             .blendMode(.plusLighter)
@@ -464,6 +489,7 @@ private struct HexTwinkle: View {
     }
 
     /// Deterministic fractional hash — the per-cell PRNG (stable every launch).
+    /// Call only with fixed cell-index values, never with a changing time argument.
     private static func fract(_ x: Double) -> Double {
         let v = sin(x * 12.9898 + 78.233) * 43758.5453
         return v - v.rounded(.down)

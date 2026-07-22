@@ -14,6 +14,15 @@ struct AtmosphereConfig: Equatable {
         dark: AtmosphereIntensity(top: 1.00, mid: 0.50, bottom: 1.00, global: 0.70)
     )
 
+    /// Learn tab. Same tri-colour bloom as `.stat`, but raised (`mid`) so colour
+    /// climbs higher behind the Knowledge Hub card and the lit→dark transition is
+    /// gradual instead of a hard cut. Paired with a lowered `maskStart` at the call
+    /// site (LearnView). Separate from `.stat` so no other screen's atmosphere moves.
+    static let learn = AtmosphereConfig(
+        light: AtmosphereIntensity(top: 1.00, mid: 0.92, bottom: 1.10, global: 0.85),
+        dark: AtmosphereIntensity(top: 1.00, mid: 0.92, bottom: 1.00, global: 0.76)
+    )
+
     static let brand = AtmosphereConfig(
         light: AtmosphereIntensity(top: 1.00, mid: 0.35, bottom: 0.70, global: 0.78),
         dark: AtmosphereIntensity(top: 1.00, mid: 0.45, bottom: 0.80, global: 0.65)

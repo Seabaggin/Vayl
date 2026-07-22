@@ -62,7 +62,6 @@ struct FindingDetailView: View {
             }
             .padding(AppSpacing.lg)
         }
-        .background(AppColors.modalBackground)
     }
 
     private func connectedRow(_ c: ResearchFinding) -> some View {

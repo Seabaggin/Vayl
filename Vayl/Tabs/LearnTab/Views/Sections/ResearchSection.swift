@@ -29,28 +29,46 @@ struct ResearchSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             HStack {
-                Text("Knowledge hub")
+                Text("Knowledge Hub")
                     .font(AppFonts.sectionHeading)
-                    .textCase(.uppercase)
-                    .foregroundStyle(AppColors.textSectionLabel)
+                    // White, not lavender: the heading names the section, it isn't
+                    // something you can act on. Colour marks action here.
+                    .foregroundStyle(AppColors.textPrimary)
                 Spacer()
                 Button { onOpenDatabase() } label: {
                     HStack(spacing: AppSpacing.xs) {
                         Image(systemName: AppIcons.rectangleStack)
-                            .foregroundStyle(AppColors.spectrumPurple)   // purple symbol (section is purple-only)
+                            .foregroundStyle(AppColors.textBody)   // neutral: the pill's label already carries the affordance
                         Text("Browse")
                             .font(AppFonts.buttonLabel)
                             .foregroundStyle(AppColors.textBody)
                     }
                     .padding(.horizontal, AppSpacing.md)
                     .padding(.vertical, AppSpacing.sm)
-                    .background(HolographicShimmer().opacity(0.7))        // same shimmer as the Resources pill
-                    .clipShape(Capsule())
+                    // No fill. Browse is a section-level door into the database; it
+                    // was wearing the masthead Resources pill's shimmer, which
+                    // ranked a content link alongside the safety off-ramp. The
+                    // hairline carries the affordance now (plus PressableCardStyle's
+                    // press state), and the row reads as quiet as the section is.
+                    // Not the Resources shimmer, not bare void either: the dedicated
+                    // pill interior. It reads as its own surface (~15% brighter than
+                    // cardBackground, which is the contrast floor pill labels need
+                    // against the purple atmosphere) without ranking itself alongside
+                    // the masthead's safety off-ramp.
+                    .background(AppColors.pillSurfaceBottom, in: Capsule())
+                    .contentShape(Capsule())
                     .overlay(Capsule().stroke(AppColors.borderSubtle, lineWidth: 1))
                 }
                 .buttonStyle(PressableCardStyle())
             }
 
+            // One glass pane behind the whole section, matching Content Hub. The
+            // slides used to each wear `.learnCard()`, but `glassSurface` is white
+            // at 3%: across Content Hub's full-width pane that reads as a surface,
+            // across a 212pt slide under the atmosphere's brightest point it reads
+            // as nothing. Same token, different amount of glass. The pane is the
+            // fix; the slides go chrome-less so this isn't a card inside a card
+            // (which would also double the spectrum hairline).
             InfiniteCarousel(items: items, autoAdvances: false, height: 212) { item in
                 switch item {
                 case .finding(let f):
@@ -64,6 +82,8 @@ struct ResearchSection: View {
             } emptyContent: {
                 emptyState
             }
+            .padding(AppSpacing.md)
+            .learnCard()
         }
     }
 
@@ -138,9 +158,9 @@ struct ResearchSection: View {
             // the card inflates past the screen and clips the finding above.
             LivingText(text: f.citation, font: AppFonts.caption, wraps: true)
         }
+        // No card of its own — the section's glass pane is the surface now.
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding(AppSpacing.lg)
-        .learnCard()
+        .padding(AppSpacing.sm)
     }
 
     private func termCard(_ t: LexiconTerm) -> some View {
@@ -166,9 +186,9 @@ struct ResearchSection: View {
                     .lineLimit(2)
             }
         }
+        // No card of its own — the section's glass pane is the surface now.
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding(AppSpacing.lg)
-        .learnCard()
+        .padding(AppSpacing.sm)
     }
 }
 

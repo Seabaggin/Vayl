@@ -75,6 +75,12 @@
             ReferencedContainer = "container:Vayl.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "-vaylForceHome"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <StoreKitConfigurationFileReference
          identifier = "../../Vayl/Vayl.storekit">
       </StoreKitConfigurationFileReference>

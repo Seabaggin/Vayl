@@ -17,19 +17,28 @@ struct AppShell: View {
     var body: some View {
         @Bindable var appState = appState
         Group {
+            // Tabs are hosted directly. The old TabContentWrapper was retired
+            // (2026-07-19): two of its three documented jobs — bottom content
+            // inset and scroll-indicator inset — had already moved to the
+            // `.safeAreaInset` tab bar below, and its one remaining behaviour (a
+            // 110pt bottom fade mask) was applied to the WHOLE tab, so it
+            // dissolved each screen's void + atmosphere and killed hit-testing in
+            // the bottom strip. Backgrounds bleed, content insets — a mask over
+            // the background is the inverse of that rule. If a bottom dissolve is
+            // wanted again, it belongs on the ScrollView (a companion to
+            // `.scrollTopEdgeFade()`), never on the tab.
             switch contentTab {
             case .home:
-                // fade off: Home's Lexicon is anchored at the bottom and must not dissolve.
-                TabContentWrapper(fade: false) { HomeRouterView() }
+                HomeRouterView()
                     .transition(driftTransition)
             case .play:
-                TabContentWrapper { PlayView() }
+                PlayView()
                     .transition(driftTransition)
             case .map:
-                TabContentWrapper { MapView() }
+                MapView()
                     .transition(driftTransition)
             case .learn:
-                TabContentWrapper { LearnView() }
+                LearnView()
                     .transition(driftTransition)
             }
         }
@@ -66,10 +75,22 @@ struct AppShell: View {
             // Drop the pill into the home-indicator strip and set the gap ourselves: without
             // this, `.safeAreaInset` floats the bar ABOVE the ~34pt system inset, which reads
             // as dead space. `.ignoresSafeArea(.container, .bottom)` collapses that inset so the
-            // pad below IS the true gap to the physical edge. Kept at `.sm` (8pt), not tighter,
-            // so the pill clears the home-indicator gesture zone. FEEL: confirm on device.
+            // pad below IS the true gap to the physical edge. `.md` (16pt), set 2026-07-21.
+            //
+            // The line to clear is the HOME INDICATOR, not the 34pt safe area. The indicator
+            // is a 5pt pill sitting 8pt off the edge, so its top edge is at 13pt; 16pt leaves
+            // 3pt of air above it. The 34pt inset is dead space a full-width bar must reserve
+            // — a floating pill rides inside it, which is the whole point of floating.
+            //
+            // Briefly set to `.lg` (24pt) on the reasoning that 60 + 24 matched the system
+            // bar's 50 + 34 total footprint. That was wrong: it matched a number that includes
+            // reserved emptiness, and the bar read as hovering. Band is ~14–20pt; below 13
+            // overlaps the indicator, past ~22 floats.
+            //
+            // Verified against a to-scale indicator in docs/mockups/tab-bar-sizing.html.
+            // FEEL: confirm on device.
             .padding(.bottom, AppSpacing.sm)
-            .ignoresSafeArea(.container, edges: .bottom)
+            .ignoresSafeArea(.all, edges: .bottom)
         }
         // Programmatic routing: HomeRouterView's appState.selectedTab writes (dead
         // before this) and the joiner banner's route-to-Play both land here. The

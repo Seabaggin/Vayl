@@ -91,6 +91,26 @@ struct VaylApp: App {
 
     var body: some Scene {
         WindowGroup {
+            #if DEBUG
+            // `-vaylDesireRevealDebug` boots straight into the Desire-Map reveal tuning harness,
+            // bypassing auth/routing entirely. Same convention as `-vaylForceHome`.
+            // Spec: plans/001-desire-reveal-constellation-sequence.md
+            if CommandLine.arguments.contains("-vaylDesireRevealDebug") {
+                DesireRevealDebugView()
+                    .preferredColorScheme(.dark)
+                    .environment(appState)
+                    .environment(entitlementStore)
+            } else {
+                appRoot
+            }
+            #else
+            appRoot
+            #endif
+        }
+    }
+
+    @ViewBuilder
+    private var appRoot: some View {
             AppRootView()
                 .preferredColorScheme(.dark)
                 .environment(themeManager)
@@ -106,6 +126,10 @@ struct VaylApp: App {
                     // offline flag without waiting for a scene-phase change.
                     authStore.startObservingAuthState()
                     #if DEBUG
+                    if CommandLine.arguments.contains("-vaylForceHome") {
+                        appState.isRoutingSettled = true
+                        return
+                    }
                     let debugSeedRan = await DebugCoupleSeedService(
                         modelContainer: ModelContainer.appContainer,
                         appState: appState,
@@ -162,6 +186,5 @@ struct VaylApp: App {
                     Task { await authStore.retrySessionIfOffline() }
                 }
                 .modelContainer(ModelContainer.appContainer)
-        }
     }
 }

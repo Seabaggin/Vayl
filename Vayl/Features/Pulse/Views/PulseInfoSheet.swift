@@ -67,6 +67,16 @@ struct PulseInfoSheet: View {
 
                 spacesSection
 
+                // Carried over from the first-run doorway (PulseFramingView), which is shown
+                // once and then gone: this is the one idea there that lived nowhere else, and
+                // it is the one that matters most — the anti-assessment line. Nothing should
+                // be teachable only once.
+                Text("There's no “correct” capacity. It's about showing up most authentically.")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .lineSpacing(AppSpacing.xs)
+                    .fixedSize(horizontal: false, vertical: true)
+
                 Text("Your Pulse is yours. If you share it, your partner sees your capacity, not your answers.")
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textSecondary)

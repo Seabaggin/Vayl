@@ -116,8 +116,15 @@ final class DesireRevealStore: Identifiable {
         }
 
         let n = max(matches.count, 1)
-        let base = max(9.0, min(16.0, 16.0 * (4.0 / Double(n)).squareRoot()))
-        let heroSize = CGFloat(min(24.0, base * 1.5))
+        // Bumped 2026-07-21 (was 9…16 / hero ≤24): the stars read as faint pinpricks against the
+        // atmosphere. `size` is the core diameter — glow is 3.2× it — so a few points here is a
+        // visible jump in presence.
+        var base = max(12.0, min(21.0, 21.0 * (4.0 / Double(n)).squareRoot()))
+        var heroSize = min(31.0, base * 1.5)
+        #if DEBUG
+        base *= DesireSequenceTuning.shared.starSizeScale
+        heroSize *= DesireSequenceTuning.shared.starSizeScale
+        #endif
 
         placedStars = placed.enumerated().compactMap { index, match in
             guard let match else { return nil }
@@ -137,6 +144,25 @@ final class DesireRevealStore: Identifiable {
 
     /// Drives the 3-beat ceremony. View observes this to choreograph the visual sequence.
     private(set) var beatPhase: BeatPhase = .idle
+
+    /// True once the free (hero) match has opened — its star lights and its row shows a real name,
+    /// on the same frame. False through the whole beat-1 ceremony: the sky arrives entirely locked
+    /// and *then* one star opens, so the free match gets a moment of its own instead of merely
+    /// being the row that was always bright.
+    private(set) var heroRevealed: Bool = false
+
+    /// Drives the match-row cascade. Flipped false → true when beat2 begins, which is what the
+    /// rows' stagger animates off. It must be a value that genuinely *changes* after the rows are
+    /// on screen: the previous implementation keyed the stagger off `beatPhase.rawValue >= 2`,
+    /// which was already true when the rows were first constructed, so `.animation(value:)` saw no
+    /// change and every row appeared at once with the cascade silently dead.
+    private(set) var rowsVisible: Bool = false
+
+    /// True when the rows are arriving at their terminal state rather than performing — a
+    /// tap-to-skip, Reduce Motion, or a couple who has nothing locked to gate. The rows read this
+    /// to decide whether to cascade at all; it cannot be inferred from `heroRevealed`, because on
+    /// the skip path that flag flips in the same runloop as the rows' first render.
+    private(set) var skipsCeremony: Bool = false
 
     /// The pending auto-advance timer (held weakly inside; tracked here so a new sequence
     /// or an unlock can cancel a stale one). Never strongly retains the store.
@@ -243,6 +269,9 @@ final class DesireRevealStore: Identifiable {
         guard beatPhase == .idle else { return }
         if lockedCount == 0 {
             beatPhase = .revealed
+            heroRevealed = true
+            rowsVisible = true
+            skipsCeremony = true
             // Landing straight on the lit sky is a full viewing — stamp it as one
             // (the addendum rule: stamps reflect actual viewing, at the beat, not at load).
             stampFullSeen()
@@ -252,33 +281,71 @@ final class DesireRevealStore: Identifiable {
         }
     }
 
-    /// Tap-to-advance: skip the beat1 hold immediately, landing on beat2 (locked teasers). Idempotent.
-    /// Animations are driven by the View observing beatPhase changes.
+    /// Tap-to-advance: skip the whole beat-1 ceremony and land on its terminal state — rows in,
+    /// free match open. Idempotent. Never trap someone in an animation they can't get out of;
+    /// this is also the exact state Reduce Motion lands on, so the two share one definition.
     ///
     /// The ceremony rests at beat2 — there is no further auto-advance. The paywall (beat3) only
     /// opens from an explicit tap on a locked star (selectStar) or the Full Map/upgrade CTA, never
     /// from a timer or a generic tap-anywhere.
     func advanceBeat() {
         autoAdvanceTask?.cancel()   // a tap supersedes the current auto-timer; the user drives from here
-        if beatPhase == .beat1 {
-            enterBeat2()
-        }
+        guard beatPhase == .beat1 || (beatPhase == .beat2 && !heroRevealed) else { return }
+        skipsCeremony = true
+        if beatPhase == .beat1 { enterBeat2() }
+        rowsVisible = true
+        heroRevealed = true
     }
 
-    /// Beat1 hold, then beat1 → beat2. The ceremony has no further timer past this — beat2 is
-    /// where it rests until the user taps a locked star (opening the paywall) or purchases.
+    /// How long the beat-1 constellation ceremony runs: the star cascade, the hold, then the line
+    /// draw rippling outward by MST depth. It scales with the match count and with the figure's own
+    /// depth, so it cannot be a constant — which is why `desireBeatHold1` is now only the tail.
+    private var ceremonyDuration: Double {
+        let starCount = max(placedStars.count, 1)
+        let edgeCount = layout.edges.count
+        let cascade = Double(starCount - 1) * AppAnimation.desireStarCascadeStep
+            + AppAnimation.desireStarBloomDuration
+        // Per-LINE stagger now (see desireLineDrawStep): the last line starts at
+        // (edgeCount - 1) × step, so the draw phase ends one full draw-duration after that.
+        let draw = Double(max(edgeCount - 1, 0)) * AppAnimation.desireLineDrawStep
+            + AppAnimation.desireLineDrawDuration
+        return cascade + AppAnimation.desireHoldStarsToLines + draw + AppAnimation.desireBeatHold1
+    }
+
+    /// How long the locked rows take to finish cascading in, once beat2 begins.
+    private var rowCascadeDuration: Double {
+        let rows = max(min(lockedMatches.count, 4) + (heroMatch == nil ? 0 : 1), 1)
+        return Double(rows - 1) * AppAnimation.desireBeatStaggerStep
+            + AppAnimation.desireLockedRowEnterDuration
+    }
+
+    /// The beat-1 → beat-2 → first-reveal timeline. Runs the constellation ceremony, brings the
+    /// rows in (all locked, the free one included), lets them settle, then opens the free match.
     /// [weak self]: a fire-and-forget timer must NOT keep the store alive past the reveal.
     /// A strong capture would release the store on a background executor when the Task ends
     /// (after the cover dismissed / in tests, after the case returned), routing the
     /// @MainActor isolated deinit through the wrong executor.
     private func scheduleAutoAdvance() {
-        // Fix #3a: with Reduce Motion on, collapse the hold to 0 so there is no timed ceremony.
-        let hold: Double = UIAccessibility.isReduceMotionEnabled ? 0 : AppAnimation.desireBeatHold1
+        // Reduce Motion: no timed ceremony at all — land directly on the terminal state, the same
+        // one a tap produces.
+        guard !UIAccessibility.isReduceMotionEnabled else {
+            skipsCeremony = true
+            enterBeat2()
+            rowsVisible = true
+            heroRevealed = true
+            return
+        }
+        let ceremony = ceremonyDuration
+        let rowsSettle = rowCascadeDuration + AppAnimation.desireHoldRowsToReveal
         autoAdvanceTask?.cancel()
         autoAdvanceTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(hold))
+            try? await Task.sleep(for: .seconds(ceremony))
             guard let self, beatPhase == .beat1 else { return }
             enterBeat2()
+            rowsVisible = true
+            try? await Task.sleep(for: .seconds(rowsSettle))
+            guard !Task.isCancelled, beatPhase == .beat2 || beatPhase == .beat3 else { return }
+            heroRevealed = true
         }
     }
 
@@ -432,6 +499,8 @@ final class DesireRevealStore: Identifiable {
         if appState.coupleId == nil {
             matches = matches.map { RevealMatch(id: $0.id, itemName: $0.itemName, itemCategory: $0.itemCategory, alignment: $0.alignment, isLocked: false, bridgeCardId: $0.bridgeCardId, isFreeReveal: $0.isFreeReveal, meaning: $0.meaning) }
             beatPhase = .revealed
+            heroRevealed = true
+            rowsVisible = true
             unlockPending = false
             return
         }
@@ -445,6 +514,8 @@ final class DesireRevealStore: Identifiable {
                 if !self.matches.isEmpty && self.lockedCount == 0 {
                     // Server confirmed Core: real named rows arrived for every match.
                     self.beatPhase = .revealed
+                    self.heroRevealed = true
+                    self.rowsVisible = true
                     self.unlockPending = false
                     self.stampFullSeen()
                     FunnelEventService.shared.log(.unlockRendered, coupleId: self.appState.coupleId)

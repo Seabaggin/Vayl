@@ -23,17 +23,16 @@ struct MapView: View {
     @State private var store = MapStore()
 
     @State private var showCheckIn = false
+    /// The Pulse aura's on-screen frame, published by MapPulseHero via `.pulseOrbSource()`.
+    /// Handed to the first-run doorway so its entrance starts on the orb the user tapped.
+    @State private var pulseOrbFrame: CGRect?
     @State private var showPulseSheet = false
     @State private var showPulseInfo  = false
     @State private var showVault = false
     @State private var showPaywall = false
     @State private var vaultStore = VaultStore()
-
-    // TEMPORARY (Task 15) — minimum wiring to reach PathScreen at all. The Map
-    // dashboard has no Path widget yet (spec §0 / Bryan's standing direction);
-    // replace this row when that widget is designed.
-    @State private var showPathScreen = false
-    @State private var pathStore: PathStore?
+    /// Rest-zeroed scroll offset driving the masthead collapse (see MastheadCollapse).
+    @State private var scrollY: CGFloat = 0
 
     // FEEL: tune on device
     private let lensTintOpacity: Double = 0.10
@@ -126,18 +125,6 @@ struct MapView: View {
                         VStack(alignment: .leading, spacing: AppSpacing.lg) {
                             masthead   // the name wordmark IS the Me/Us switch now
 
-                            // TEMPORARY (Task 15) — DEBUG-only dev entry point to the
-                            // unshipped Path feature. Must NOT ship in V1 (Path is post-launch).
-                            #if DEBUG
-                            Button("Open Path (temporary entry point)") {
-                                guard let coupleId = appState.coupleId,
-                                      let profileId = try? modelContext.fetch(FetchDescriptor<UserProfile>()).first?.id
-                                else { return }
-                                pathStore = PathStore(coupleId: coupleId, profileId: profileId, pathStyle: "swinging", transport: PathSyncService())
-                                showPathScreen = true
-                            }
-                            #endif
-
                             layerContent(layout)
                         }
                         .padding(.horizontal, AppSpacing.lg)
@@ -148,6 +135,8 @@ struct MapView: View {
                     // Top scroll-edge: the name/Me-Us masthead dissolves under the
                     // Island as it scrolls up, instead of hard-cutting at the edge.
                     .scrollTopEdgeFade()
+                    // Rest-zeroed offset feeding the masthead shrink (name only).
+                    .mastheadScrollReader($scrollY)
                 }
             }
             .onChange(of: store.hasUs) { _, has in
@@ -159,17 +148,22 @@ struct MapView: View {
             .frame(width: layout.screenWidth, alignment: .center)
             // Full-screen cover — see HomeDashboardView's matching check-in presentation
             // for why (PulseField needs real screen geometry, not a sheet's).
-            .vaylCover(isPresented: $showCheckIn, confirmOnExit: false) {
-                PulseCheckInView(store: pulse, onClose: { showCheckIn = false })
+            // PulseCheckInFlow, not PulseCheckInView — see HomeDashboardView's matching
+            // presentation: the flow owns the one-time first-run doorway and its gate, so
+            // neither tab carries first-run state. transparentBackground lets the doorway
+            // dissolve this screen away around the aura instead of sliding over it.
+            .vaylCover(
+                isPresented: $showCheckIn,
+                confirmOnExit: false,
+                transparentBackground: true
+            ) {
+                PulseCheckInFlow(
+                    store: pulse,
+                    sourceOrbFrame: pulseOrbFrame,
+                    onClose: { showCheckIn = false }
+                )
             }
-            // TEMPORARY (Task 15) — see field declarations above. `.vaylCover` per
-            // the parent Map dashboard spec's own note: Path is a territory-drilling
-            // mode, decided in the roadmap spec as a cover.
-            .vaylCover(isPresented: $showPathScreen, confirmOnExit: false) {
-                if let pathStore {
-                    PathScreen(store: pathStore, partnerName: store.partnerName)
-                }
-            }
+            .onPreferenceChange(PulseOrbFrameKey.self) { pulseOrbFrame = $0 }
             .onChange(of: appState.vaultOpenPending) { _, pending in
                 if pending {
                     showVault = true
@@ -277,21 +271,16 @@ struct MapView: View {
                 if !store.displayName.isEmpty {
                     nameToggle
                 }
-                if !store.subtitle.isEmpty {
-                    Text(store.subtitle)
+                // Us only. The Me lens carries no sublabel: the lit/dim names already say
+                // whose map this is, and "Only you" was making a privacy promise the
+                // shared orb doesn't keep. Us keeps its line because "your partner sees
+                // this" is a disclosure, not a label.
+                if store.hasUs, store.layer == .us {
+                    Text("Shared · you both see this")
                         .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textTertiary)
-                }
-                if store.hasUs {
-                    Text(store.layer == .us ? "Shared · you both see this" : "Only you")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(store.layer == .us
-                            ? AppColors.spectrumMagenta.opacity(0.8)
-                            : AppColors.spectrumCyan.opacity(0.8))
+                        .foregroundStyle(AppColors.spectrumMagenta.opacity(0.8))
                         .transition(.opacity)
-                        .accessibilityLabel(store.layer == .us
-                            ? "Shared lens: your partner sees this too"
-                            : "Private lens: only you see this")
+                        .accessibilityLabel("Shared lens: your partner sees this too")
                 }
                 if revealStage == 2, store.hasUs {
                     Text("\(store.partnerName) is here. Tap a name to change whose map you're reading.")
@@ -300,6 +289,10 @@ struct MapView: View {
                         .transition(.opacity)
                 }
             }
+            // Only the name/switch shrinks; the gear holds its position (trailing
+            // control, like an iOS large-title bar button). The Me/Us tap targets
+            // shrink with the name — acceptable at these sizes, feel-gate on device.
+            .mastheadCollapse(scrollY: scrollY)
             Spacer()
             SettingsGearButton { appState.settingsPresented = true }
         }
@@ -368,18 +361,19 @@ struct MapView: View {
     }
 
     private func meLayer(_ layout: AppLayout) -> some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xl) {
-            // No onOpenHistory: the Me lens's history is inline in the hero now (a
-            // collapsed strip that expands in place), so the "History" link retired.
-            // PulseFullView stays alive — the Us lens still opens it from its own card.
-            MapPulseHero(
-                layout: layout,
-                onCheckIn: { startCheckIn() },
-                onOpenInfo: { showPulseInfo = true },
-                isLinked: store.hasUs
-            )
-            MapRecord(sessions: store.sessions, shares: store.categoryShares)
-        }
+        // Exactly one hero, zero card chrome — the Void Rule's Me shape. The Record left
+        // for the Play tab (2026-07-21 scope cut): session history is the Card Game's
+        // residue, not the mirror's.
+        //
+        // No onOpenHistory: the Me lens's history is inline in the hero now (a
+        // collapsed strip that expands in place), so the "History" link retired.
+        // PulseFullView stays alive — the Us lens still opens it from its own card.
+        MapPulseHero(
+            layout: layout,
+            onCheckIn: { startCheckIn() },
+            onOpenInfo: { showPulseInfo = true },
+            isLinked: store.hasUs
+        )
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -403,7 +397,9 @@ struct MapView: View {
 
     private func startCheckIn() {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        showCheckIn = true
+        // No system slide — the first-run doorway dissolves this screen away around the
+        // aura, which a slide would drag upward. See presentWithoutAnimation.
+        presentWithoutAnimation { showCheckIn = true }
     }
 }
 

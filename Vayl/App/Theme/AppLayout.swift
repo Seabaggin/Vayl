@@ -92,6 +92,27 @@ struct AppLayout {
 
     // MARK: - Tab Bar
 
+    // ── Racetrack floating pill geometry ──────────────────────────────
+    //
+    // Verified at real logical widths in docs/mockups/tab-bar-sizing.html
+    // (2026-07-21). Apple publishes metrics for the standard full-width bar
+    // (~50pt over a 34pt indicator strip) but none for a floating pill, so
+    // these were derived empirically and locked here rather than left as
+    // literals in the view.
+    //
+    // 36 is deliberately OFF the AppSpacing scale (32 → 48). It is component
+    // geometry, not a spacing step: it holds the pill at 80.8–83.6% of screen
+    // width across every shipping width — 375 (SE/mini), 390 (16e), 393 (15/16),
+    // 402 (17/17 Pro), 420 (Air), 440 (Pro Max) — a 2.8-point drift. Widths read
+    // from Xcode 26.6's own simulator device profiles, not estimated.
+
+    /// Horizontal inset per side for the floating tab pill.
+    static let tabBarInset: CGFloat = 36
+
+    /// Icon frame edge inside a tab. Drives the pill and bar heights:
+    /// bar = icon + AppSpacing.sm × 4 = 60pt.
+    static let tabBarIcon: CGFloat = 28
+
     /// Height of the visible UITabBar, read from the key window at call time.
     /// Returns 0 when no tab bar is present (onboarding, sheets, modals).
     /// Use with .bottomClearance(_:includesTabBar:) — do not read this value directly in views.

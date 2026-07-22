@@ -120,6 +120,12 @@ struct AppFonts {
         display(32, weight: .bold, relativeTo: .title)
     }
 
+    /// Featured-deck hero title (Play tab) — the deck name above the hero card.
+    /// Prose counterpart to scoreDisplay: same 32pt scale, semibold, never numeric data.
+    static var deckHeroTitle: Font {
+        display(32, weight: .semibold, relativeTo: .title)
+    }
+
     /// One per screen. Top of content area, primary screen identifier.
     static var screenTitle: Font {
         display(24, weight: .semibold, relativeTo: .title)

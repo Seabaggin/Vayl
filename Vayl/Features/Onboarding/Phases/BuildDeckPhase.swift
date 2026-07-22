@@ -114,16 +114,16 @@ struct BuildDeckPhase: View {
     @State private var ctaShown: Bool = false           // "Take your deck"
     @State private var revealPhysics = CarouselPhysics(count: 6)   // every opener deck (Resources/Decks/opener-*.json) has 6 cards
     /// The real catalog deck for this user's assigned opener type — no more
-    /// placeholder copy. Falls back to opener-steady (always bundled), then to
-    /// an empty-but-valid literal if even that somehow fails to decode.
+    /// placeholder copy. Falls back to the-opener (always bundled, canonical),
+    /// then to an empty-but-valid literal if even that somehow fails to decode.
     private var welcomeDeck: Deck {
         if let real = try? ContentLoader.loadDeck(id: director.openerDeckType.welcomeDeckId) {
             return real
         }
-        if let fallback = try? ContentLoader.loadDeck(id: "opener-steady") {
+        if let fallback = try? ContentLoader.loadDeck(id: "the-opener") {
             return fallback
         }
-        return Deck(id: "opener-steady", title: "Steady", subtitle: "Start slow. Find your footing.",
+        return Deck(id: "the-opener", title: "The Opener", subtitle: "Where are we, actually.",
                     category: .foundationEntry, act: 1, intensity: .void, isLocked: false,
                     requiredEntitlement: nil, tags: [], sortOrder: 0, schemaVersion: 2, cards: [])
     }

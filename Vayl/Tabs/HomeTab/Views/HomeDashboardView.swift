@@ -119,6 +119,8 @@ struct HomeDashboardView: View {
     @State private var heroVisible     = false
     @State private var pulseVisible    = false
     @State private var lexVisible      = false
+    /// Rest-zeroed scroll offset driving the masthead collapse (see MastheadCollapse).
+    @State private var scrollY: CGFloat = 0
 
     /// User-dismissed the offline banner this offline episode. Reset when connectivity
     /// returns (isOffline flips false), so a later offline episode surfaces it again.
@@ -150,6 +152,9 @@ struct HomeDashboardView: View {
     /// Presents the Pulse check-in in place over Home (no tab-yank). The shared
     /// PulseStore the cover writes to is the same instance the rail reads.
     @State private var showPulseCheckIn = false
+    /// The Pulse aura's on-screen frame, published by HomePulseRail via `.pulseOrbSource()`.
+    /// Handed to the first-run doorway so its entrance starts on the orb the user tapped.
+    @State private var pulseOrbFrame: CGRect?
 
     /// Reflection input, shared between the banner (inline pills/note) and the
     /// full pill sheet. Owned here — the sheet must be presented at this screen
@@ -359,6 +364,10 @@ struct HomeDashboardView: View {
                     .frame(maxWidth: .infinity, minHeight: safeContentH, alignment: .top)
                 }
                 .scrollIndicators(.hidden)
+                // Rest-zeroed offset feeding the VAYL. wordmark shrink (greetingBlock).
+                // Independent of the deckEngaged recede — that's a tap interaction,
+                // this is scroll; they compose without competing (different values).
+                .mastheadScrollReader($scrollY)
 
                 // Outside-tap dismiss for the partner-chip popover. A full-screen,
                 // invisible tap-catcher: sits ABOVE the ScrollView content (so a tap
@@ -513,9 +522,22 @@ struct HomeDashboardView: View {
             // geometry instead of a sheet's measured-content sizing (the bug that made it
             // not land reliably). Not confirm-on-exit: a check-in is quick and low-stakes,
             // not a protected two-device session.
-            .vaylCover(isPresented: $showPulseCheckIn, confirmOnExit: false) {
-                PulseCheckInView(store: pulseStore, onClose: { showPulseCheckIn = false })
+            // PulseCheckInFlow, not PulseCheckInView: the flow owns the one-time first-run
+            // doorway and its gate, so this tab knows nothing about first-run state — it only
+            // reports where its aura is, so the entrance has something to travel from.
+            // transparentBackground lets the doorway dissolve this screen rather than covering it.
+            .vaylCover(
+                isPresented: $showPulseCheckIn,
+                confirmOnExit: false,
+                transparentBackground: true
+            ) {
+                PulseCheckInFlow(
+                    store: pulseStore,
+                    sourceOrbFrame: pulseOrbFrame,
+                    onClose: { showPulseCheckIn = false }
+                )
             }
+            .onPreferenceChange(PulseOrbFrameKey.self) { pulseOrbFrame = $0 }
             // The reflection banner's full pill browser, presented here at the
             // screen root (see the reflection state declarations above).
             .vaylSheet(
@@ -544,7 +566,10 @@ struct HomeDashboardView: View {
     private func pulseModule(columnWidth: CGFloat) -> some View {
         HomePulseRail(
             onTap: { onPulseTap?() },
-            onCheckIn: { showPulseCheckIn = true }
+            // Presented without the system slide so the first-run doorway can dissolve this
+            // screen away around the aura instead of dragging it upward. See
+            // presentWithoutAnimation / PulseCheckInFlow.
+            onCheckIn: { presentWithoutAnimation { showPulseCheckIn = true } }
         )
         // Cap at the column's inner width so the long title scales-to-fit rather than
         // forcing the card wider than the viewport (which a vertical ScrollView would
@@ -594,6 +619,8 @@ struct HomeDashboardView: View {
                 animated: false
             )
             .vaylDisplayTracking(40)   // tabMasthead is display(40); tighten optically
+            // Only the wordmark shrinks; the PartnerChip holds its trailing spot.
+            .mastheadCollapse(scrollY: scrollY)
             Spacer()
             PartnerChip(
                 state: partnerChipState,

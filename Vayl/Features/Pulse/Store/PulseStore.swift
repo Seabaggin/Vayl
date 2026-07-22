@@ -37,6 +37,50 @@ final class PulseStore {
     /// when local entries exist (a failed refresh over real data isn't first-run).
     private(set) var lastHydrateFailed: Bool = false
 
+    /// True once a hydrate has SUCCEEDED this launch — the missing half of
+    /// `lastHydrateFailed`. The store knew when a restore had failed but not when one had
+    /// finished, so `entries.isEmpty` alone could not tell "you have no history" apart from
+    /// "I don't know yet." Any UI that makes a CLAIM about the user's history must wait for
+    /// this; UI that merely renders history does not (it re-renders when data lands).
+    private(set) var hasHydrated: Bool = false
+
+    // MARK: - First-run framing gate
+
+    /// Whether to show the one-time "Your First Pulse" doorway ahead of the check-in.
+    ///
+    /// Derived from the DATA, not from a stored flag: if a person has pulse entries they have
+    /// obviously met Pulse already, so the entries ARE the record. That is what makes this
+    /// correct across the cases a device flag gets wrong —
+    ///   • reinstall / new device — history returns on hydrate, so no "Your First Pulse" for
+    ///     a veteran (the `hasHydrated` term is what closes the race where entries are still
+    ///     empty because the fetch hasn't landed).
+    ///   • sign out, new account, same device — entries are wiped and per-account, so the
+    ///     next person is correctly a first-timer.
+    ///   • linking a NEW partner who has never used the app — they are a different person on
+    ///     their own install; nothing here is couple state. Knowing what Pulse is belongs to
+    ///     a person, not a pairing, which is also why unlinking must NOT reset it.
+    ///
+    /// `hasSeenPulseFraming` only ever SUPPRESSES. It cannot trigger the framing, so a lost or
+    /// stale key can at worst show someone a nice intro twice.
+    ///
+    /// Failure direction is deliberate: offline on a genuine first run means no proof, so the
+    /// framing is skipped and earned on a later launch (nothing marks it seen but "Begin").
+    /// Skipping an intro is far cheaper than telling a veteran it is their first time.
+    var shouldShowFraming: Bool {
+        hasHydrated && entries.isEmpty && !hasSeenPulseFraming
+    }
+
+    var hasSeenPulseFraming: Bool {
+        UserDefaults.standard.bool(forKey: UserDefaultsKey.hasSeenPulseFraming)
+    }
+
+    /// Called when the user taps "Begin" — NOT when they finish a check-in. If they bail on
+    /// question three they have still read the doorway; re-showing it would be nagging.
+    /// "Maybe later" deliberately does not call this: they declined checking in, not learning.
+    func markFramingSeen() {
+        UserDefaults.standard.set(true, forKey: UserDefaultsKey.hasSeenPulseFraming)
+    }
+
     /// Today's entry, if any — the single source of truth for "have I checked in
     /// today" (was duplicated as a local `Calendar.current.isDateInToday` filter in
     /// both HomePulseRail and MapPulseHero).
@@ -180,6 +224,9 @@ final class PulseStore {
             return
         }
         lastHydrateFailed = false
+        // Set BEFORE the merge: the fetch succeeded, so the question "does this person have
+        // history" is now answerable either way. See shouldShowFraming.
+        hasHydrated = true
 
         let cal = Calendar.current
         var merged = entries

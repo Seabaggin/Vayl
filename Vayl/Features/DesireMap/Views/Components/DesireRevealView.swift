@@ -225,6 +225,7 @@ struct DesireRevealView: View {
             edges: store.layout.edges,
             variant: ceremonyVariant,
             mode: constellationMode,
+            heroRevealed: store.heroRevealed,
             onTap: { id in
                 hapticTick += 1
                 if let match = store.matches.first(where: { $0.id.uuidString == id }) {
@@ -262,37 +263,20 @@ struct DesireRevealView: View {
             EmptyView()
 
         case .beat1:
-            // Caption for the free match
-            VStack(spacing: AppSpacing.xs) {
-                HStack(spacing: AppSpacing.xs) {
-                    Text("You both marked this")
-                        .font(AppFonts.bodyText)
-                        .foregroundStyle(AppColors.textSecondary)
-                    Text("✦")
-                        .font(AppFonts.bodyText)
-                        .foregroundStyle(LinearGradient(
-                            colors: [AppColors.spectrumCyan, AppColors.spectrumMagenta],
-                            startPoint: .leading, endPoint: .trailing
-                        ))
-                }
-                .multilineTextAlignment(.center)
-                if store.lockedCount > 0 {
-                    Text("tap to read · or open the full map")
-                        .font(AppFonts.caption)
-                        .foregroundStyle(AppColors.textTertiary)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .padding(.horizontal, AppSpacing.xxl)
-            .padding(.bottom, AppSpacing.xxl)
-            .transition(.opacity)
+            // Nothing below the sky during the ceremony. Beat 1 is the constellation assembling
+            // itself; the rows (and with them the free match's own moment) belong to beat 2.
+            EmptyView()
 
         case .beat2, .beat3:
-            // Locked teasers + count
             _LockedSection(
                 hero: store.heroMatch,
                 matches: store.lockedMatches,
-                isVisible: store.beatPhase.rawValue >= 2
+                heroRevealed: store.heroRevealed,
+                animatesEntrance: !store.skipsCeremony,
+                onSelect: { match in
+                    hapticTick += 1
+                    store.selectStar(match)
+                }
             )
             .padding(.horizontal, AppSpacing.lg)
             .padding(.bottom, AppSpacing.xxl)
@@ -363,10 +347,12 @@ struct DesireRevealView: View {
     }
 
     /// What the constellation does at the current beat.
+    /// beat1 runs the ceremony (stars cascade → lines draw); beat2/3 hold its terminal state,
+    /// which is also exactly where a tap-to-skip lands.
     private var constellationMode: DesireConstellationView.Mode {
         switch store.beatPhase {
-        case .idle, .beat1:   return .intro
-        case .beat2, .beat3:  return .teasers
+        case .idle, .beat1:   return .ceremony
+        case .beat2, .beat3:  return .settled
         case .revealed:       return reduceMotion ? .resolved : .assemble
         }
     }
@@ -500,30 +486,61 @@ struct DesireRevealView: View {
 private struct _LockedSection: View {
     let hero: RevealMatch?
     let matches: [RevealMatch]
-    let isVisible: Bool
+    /// Whether the free match has opened. The hero row lands **locked** like every other row and
+    /// only opens when this flips — on the same frame its star ignites in the sky above.
+    let heroRevealed: Bool
+    /// False when the rows are landing at their terminal state (tap-skip / Reduce Motion / nothing
+    /// to gate) rather than performing the cascade.
+    let animatesEntrance: Bool
+    let onSelect: (RevealMatch) -> Void
+
+    /// The cascade driver. Starts `false` only when we intend to animate, and is flipped in
+    /// `.onAppear` — a value that is guaranteed to *change* after the first render.
+    ///
+    /// This is the fix for a cascade that was fully written and never once played: it used to key
+    /// off `beatPhase.rawValue >= 2`, which is already `true` at the moment this view is first
+    /// constructed. `.animation(_, value:)` only fires on a change, so every row rendered straight
+    /// at its final opacity and offset, and all n arrived simultaneously.
+    @State private var appeared: Bool
+
+    init(hero: RevealMatch?, matches: [RevealMatch], heroRevealed: Bool,
+         animatesEntrance: Bool, onSelect: @escaping (RevealMatch) -> Void) {
+        self.hero = hero
+        self.matches = matches
+        self.heroRevealed = heroRevealed
+        self.animatesEntrance = animatesEntrance
+        self.onSelect = onSelect
+        _appeared = State(initialValue: !animatesEntrance)
+    }
+
+    private var lockedRows: [RevealMatch] {
+        Array(matches.filter { $0.id != hero?.id }.prefix(4))
+    }
 
     var body: some View {
         VStack(spacing: AppSpacing.xs) {
             if let hero {
-                _LockedPreviewRow(title: hero.itemName ?? hero.teaserTitle, isRevealed: true)
-                    .opacity(isVisible ? 1 : 0)
-                    .offset(y: isVisible ? 0 : 22)
-                    .animation(AppAnimation.desireLockedRowEnter.reduceMotionSafe, value: isVisible)
+                _LockedPreviewRow(
+                    title: heroRevealed ? (hero.itemName ?? hero.teaserTitle) : hero.teaserTitle,
+                    isRevealed: heroRevealed,
+                    onTap: { onSelect(hero) }
+                )
+                .opacity(appeared ? 1 : 0)
+                .offset(y: appeared ? 0 : 22)
+                .animation(AppAnimation.desireLockedRowEnter.reduceMotionSafe, value: appeared)
             }
 
-            ForEach(Array(matches.filter { $0.id != hero?.id }.prefix(4).enumerated()), id: \.element.id) { i, match in
-                _LockedPreviewRow(title: match.teaserTitle, isRevealed: false)
+            ForEach(Array(lockedRows.enumerated()), id: \.element.id) { i, match in
+                _LockedPreviewRow(title: match.teaserTitle, isRevealed: false, onTap: { onSelect(match) })
                     .accessibilityLabel("Hidden match")
-                    .opacity(isVisible ? 1 : 0)
-                    .offset(y: isVisible ? 0 : 22)
-                    // Fix #5: tokenized locked-row stagger (was .easeOut 0.36 / 0.08 step),
-                    // reduceMotionSafe so it collapses to a fast opacity confirm. Offset by
-                    // one extra step so locked rows cascade in just after the hero row.
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: appeared ? 0 : 22)
+                    // Offset by one extra step so locked rows cascade in just after the hero row.
                     .animation(
                         AppAnimation.desireLockedRowEnter
                             .delay(Double(i + 1) * AppAnimation.desireBeatStaggerStep)
                             .reduceMotionSafe,
-                        value: isVisible
+                        value: appeared
                     )
             }
 
@@ -542,16 +559,15 @@ private struct _LockedSection: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.top, AppSpacing.sm)
-            .opacity(isVisible ? 1 : 0)
-            // Fix #5: tokenized count + hairline fade (was .easeOut 0.4 / 0.08 step / 0.14 base),
-            // reduceMotionSafe so it collapses to a fast opacity confirm.
+            .opacity(appeared ? 1 : 0)
             .animation(
                 AppAnimation.enter
-                    .delay(Double(min(matches.count, 4)) * AppAnimation.desireBeatStaggerStep + AppAnimation.desireBeatStaggerBase)
+                    .delay(Double(lockedRows.count + 1) * AppAnimation.desireBeatStaggerStep + AppAnimation.desireBeatStaggerBase)
                     .reduceMotionSafe,
-                value: isVisible
+                value: appeared
             )
         }
+        .onAppear { if animatesEntrance { appeared = true } }
     }
 }
 
@@ -564,11 +580,31 @@ private struct _LockedSection: View {
 private struct _LockedPreviewRow: View {
     let title: String
     let isRevealed: Bool
+    let onTap: () -> Void
+
+    @State private var isPressed = false
 
     private var accent: Color { isRevealed ? AppColors.spectrumMagenta : .white }
     private var textColor: Color { isRevealed ? AppColors.textBright : Color.white.opacity(0.30) }
 
     var body: some View {
+        rowBody
+            // The open ramps rather than swapping — it is authored against the star's two-seed
+            // ignite so the row and its star land together and read as one event in two places.
+            .animation(AppAnimation.desireStarIgnite.reduceMotionSafe, value: isRevealed)
+            .scaleEffect(isPressed ? 0.96 : 1.0)
+            .animation(AppAnimation.fast, value: isPressed)
+            .sensoryFeedback(.impact(weight: .light), trigger: isPressed)
+            .contentShape(Rectangle())
+            .onTapGesture { onTap() }
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in isPressed = true }
+                    .onEnded { _ in isPressed = false }
+            )
+    }
+
+    private var rowBody: some View {
         ZStack(alignment: .top) {
             LinearGradient(colors: [.white.opacity(0.05), .clear], startPoint: .top, endPoint: .bottom)
                 .frame(height: 14)
@@ -596,6 +632,7 @@ private struct _LockedPreviewRow: View {
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(isRevealed ? title : "Locked desire")
+        .accessibilityAddTraits(.isButton)
     }
 
     private var orb: some View {

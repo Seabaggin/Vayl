@@ -86,16 +86,6 @@ enum CardIntensity: Int, CaseIterable, Identifiable, Codable, Comparable {
         }
     }
 
-    var difficultyLabel: String {
-        switch self {
-        case .void, .deepOcean:         return "Easy"
-        case .emberFloor, .split:       return "Medium"
-        case .nebula, .auroraBand:      return "Deep"
-        case .deepSpace:                return "Sensitive"
-        case .supernova:                return "Ultimate"
-        }
-    }
-
     /// Maps a string difficulty label from JSON content to an intensity level.
     static func from(difficulty: String) -> CardIntensity {
         switch difficulty.lowercased() {

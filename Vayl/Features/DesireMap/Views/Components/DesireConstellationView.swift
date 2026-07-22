@@ -2,16 +2,16 @@
 //  DesireConstellationView.swift
 //  Vayl
 //
-//  The Desire Map reveal constellation with the telegraphed two-seed assembly ceremony.
-//  Renders generated star positions + MST edges and, in `.assemble`, lights the stars in the
-//  variant's order (each via DesireStarView's two-seed ignite) while the lines draw and a
-//  telegraph plays. Reduce Motion lands on the static lit sky.
+//  The Desire Map reveal constellation. Stars cascade into an empty sky hero-outward, then the
+//  lines DRAW themselves outward from the hero — a trim, never an opacity fade. Post-unlock, the
+//  telegraphed variant ceremony re-lights the whole sky with the two-seed ignite.
 //
-//  Replaces the reveal's use of ConstellationField. Positions/edges come from ConstellationLayout
-//  (stable per couple); the variant comes from CeremonyVariant.
+//  Positions/edges come from ConstellationLayout (stable per couple); the variant from
+//  CeremonyVariant. Edges arrive already oriented hero-outward (`Edge.a` is the nearer endpoint),
+//  so this view never has to decide a direction — it just draws `a → b`.
 //
-//  Feel reference: docs/prototypes/desire-map-ceremony-variants.html
-//  Spec: docs/superpowers/specs/2026-06-27-desire-map-reveal-ceremony-design.md
+//  Spec: plans/001-desire-reveal-constellation-sequence.md
+//  Feel reference: docs/mockups/desire-reveal-sequence.html
 //
 
 import SwiftUI
@@ -31,20 +31,36 @@ struct DesireConstellationView: View {
     }
 
     enum Mode: Equatable {
-        case intro      // beat 1: only the hero free star, igniting
-        case teasers    // beat 2/3: all shown, hero lit, locked dim, no lines
-        case assemble   // revealed (motion): the telegraphed variant ceremony
-        case resolved   // revealed (reduce motion / static): all lit, lines drawn, no motion
+        /// beat 1 — the sky is empty and fills: stars cascade in dim, hero-outward, then the lines
+        /// draw outward. Nothing is lit yet; the hero's own reveal is a later beat.
+        case ceremony
+        /// beat 2/3 — the ceremony's terminal state, landed instantly. Also where a tap-to-skip
+        /// arrives, which is why skipping needs no separate code path.
+        case settled
+        /// revealed (motion) — the telegraphed variant ceremony: every star ignites two-seed.
+        case assemble
+        /// revealed (Reduce Motion / static) — all lit, lines drawn, no motion.
+        case resolved
     }
 
     let stars: [Star]
     let edges: [ConstellationLayout.Edge]
     let variant: CeremonyVariant
     let mode: Mode
+    /// Whether the free (hero) match has opened yet. False through the whole beat-1 ceremony —
+    /// the hero sits dim among the rest until its own moment, so the open reads as a gift rather
+    /// than as the one star that was always brighter.
+    var heroRevealed: Bool = false
     var onTap: ((String) -> Void)?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var revealed: Set<Int> = []
+
+    /// Stars that have arrived in the sky. During `.ceremony` this fills on a hero-outward
+    /// schedule; every other mode lands it complete.
+    @State private var present: Set<Int> = []
+    /// Armed once the star cascade has settled — every line's trim animates 0 → 1 off this,
+    /// delayed by its own MST depth so the figure draws outward.
+    @State private var linesArmed = false
     @State private var gatherContracted = false
     @State private var sweepProgress: CGFloat = 0
     @State private var sweepVisible = false
@@ -61,99 +77,144 @@ struct DesireConstellationView: View {
                 }
 
                 ForEach(Array(edges.enumerated()), id: \.offset) { index, edge in
-                    line(edge, index: index, in: geo.size)
+                    line(edge, ordinal: drawOrdinal[index], in: geo.size)
                 }
 
                 ForEach(Array(stars.enumerated()), id: \.element.id) { index, star in
-                    if revealed.contains(index) {
-                        DesireStarView(
-                            size: star.size,
-                            state: starState(index, star),
-                            label: showsLabel(star) ? star.label : nil,
-                            cadence: star.cadence,
-                            ignites: ignites(index),
-                            ring: (star.isAdjacent && !star.isLocked) ? .dashed : .none
-                        )
-                        .position(x: star.point.x * geo.size.width,
-                                  y: star.point.y * geo.size.height)
-                        .onTapGesture { onTap?(star.id) }
-                        .accessibilityElement()
-                        .accessibilityAddTraits(.isButton)
-                        .accessibilityLabel(star.isLocked ? "Locked desire" : (star.label ?? "Desire"))
-                        .accessibilityAction { onTap?(star.id) }
+                    if present.contains(index) {
+                        starView(index, star)
+                            .position(x: star.point.x * geo.size.width,
+                                      y: star.point.y * geo.size.height)
                     }
                 }
             }
         }
-        .task(id: mode) { await applyMode() }
+        .task(id: taskKey) { await applyMode() }
     }
+
+    /// Re-runs the timeline when the mode changes *or* when the hero opens — the latter so the
+    /// hero's two-seed entrance is armed at the right moment rather than on first mount.
+    private var taskKey: String { "\(mode)-\(heroRevealed)" }
 
     // MARK: - Per-star rendering
 
-    /// Only the hero plays the two-seed ignite entrance during `.intro` — it's the one star
-    /// growing brighter in a system that's already fully present; every other star is simply
-    /// there from the start, dim and static, not arriving. During `.assemble` every star ignites
-    /// as the telegraphed ceremony reveals it, which is unchanged.
-    private func ignites(_ index: Int) -> Bool {
+    @ViewBuilder
+    private func starView(_ index: Int, _ star: Star) -> some View {
+        DesireStarView(
+            size: star.size,
+            state: starState(index, star),
+            label: showsLabel(star) ? star.label : nil,
+            cadence: star.cadence,
+            entrance: entrance(index),
+            ring: (star.isAdjacent && !star.isLocked) ? .dashed : .none
+        )
+        // Remounting on the hero's open is what lets its two-seed entrance play *then*, instead of
+        // only on first appearance. Non-hero stars keep a stable identity so the cascade isn't
+        // restarted underneath them.
+        .id(star.isHero ? "\(star.id)-\(heroRevealed)" : star.id)
+        .onTapGesture { onTap?(star.id) }
+        .accessibilityElement()
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel(star.isLocked ? "Locked desire" : (star.label ?? "Desire"))
+        .accessibilityAction { onTap?(star.id) }
+    }
+
+    /// The cascade uses the plain bloom; the hero's own moment and the post-unlock ceremony use the
+    /// two-seed convergence. See `DesireStarView.Entrance` for why that distinction is load-bearing.
+    private func entrance(_ index: Int) -> DesireStarView.Entrance {
         switch mode {
-        case .intro:              return index == heroIndex
-        case .assemble:           return true
-        case .teasers, .resolved: return false
+        case .ceremony:
+            return index == heroIndex && heroRevealed ? .twoSeed : .bloom
+        case .assemble:
+            return .twoSeed
+        case .settled:
+            // Only the hero animates here — it opens during beat 2, after the sky already settled.
+            return index == heroIndex && heroRevealed ? .twoSeed : .none
+        case .resolved:
+            return .none
         }
     }
 
+    /// Through the ceremony every star is dim, hero included — the sky arrives locked and *then*
+    /// one star opens. Post-unlock, everything is lit.
     private func starState(_ index: Int, _ star: Star) -> DesireStarView.StarState {
-        ((mode == .teasers || mode == .intro) && star.isLocked) ? .dim : .lit
+        switch mode {
+        case .ceremony, .settled:
+            if index == heroIndex { return heroRevealed ? .lit : .dim }
+            return star.isLocked ? .dim : .lit
+        case .assemble, .resolved:
+            return .lit
+        }
     }
 
     private func showsLabel(_ star: Star) -> Bool {
         guard star.label != nil, !star.isLocked else { return false }
-        return star.isHero || stars.count <= 6
+        // The hero carries no name until it opens — a name on a dim star would give away the one
+        // thing the reveal is holding back.
+        if star.isHero { return heroRevealed }
+        return stars.count <= 6
     }
 
     // MARK: - Lines
 
-    // One view structure for every mode — no branch swap on `mode`. Earlier this switched between
-    // two structurally different views (a straight-line plain stroke for `.teasers`, a curved
-    // blurred stroke for everything else); swapping `if`/`else` branches when `mode` changed from
-    // `.intro` to `.teasers` meant SwiftUI couldn't interpolate across the swap, so the beat1→beat2
-    // transition — the one most visibly hit in practice — popped the lines in instantly instead of
-    // fading them. Keeping one view means `.animation(value: drawn)` always has a continuous
-    // property change to animate, at every mode transition, not just within a single mode's run.
+    /// One view structure for every mode — no branch swap on `mode`. Earlier this switched between
+    /// two structurally different views, and swapping `if`/`else` branches when `mode` changed meant
+    /// SwiftUI couldn't interpolate across the swap, so the transition popped instead of animating.
+    /// Keeping one structure means `.animation(value:)` always has a continuous change to animate.
+    ///
+    /// The line is a **trim**, not a fade. `Edge.a` is guaranteed to be the hero-nearer endpoint
+    /// (ConstellationLayout orients every edge), so `trim(from: 0, to:)` always grows the line away
+    /// from the hero — in every mode, with no per-mode special case and no dependence on which star
+    /// happened to light first.
     @ViewBuilder
-    private func line(_ edge: ConstellationLayout.Edge, index: Int, in size: CGSize) -> some View {
-        let drawn = lineDrawn(edge)
-        let path = Path { path in
-            path.move(to: scaled(stars[edge.a].point, size))
-            path.addLine(to: scaled(stars[edge.b].point, size))
+    private func line(_ edge: ConstellationLayout.Edge, ordinal: Int, in size: CGSize) -> some View {
+        if let from = point(edge.a, size), let to = point(edge.b, size) {
+            let progress: CGFloat = lineDrawn(edge) ? 1 : 0
+            Path { path in
+                path.move(to: from)
+                path.addLine(to: to)
+            }
+            .trim(from: 0, to: progress)
+            .stroke(Color.white.opacity(lineOpacity), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
+            .animation(lineAnimation(edge, ordinal: ordinal).reduceMotionSafe, value: progress)
         }
-        path
-            .stroke(Color.white.opacity(drawn ? lineOpacity : 0), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
-            .animation(lineAnimation(index: index, edge: edge).reduceMotionSafe, value: drawn)
     }
 
-    /// Per-mode fade timing. Teasers stagger by the edge's own index in `edges` —
-    /// ConstellationLayout.buildEdges grows its MST outward from the hero (nearest-neighbor-first),
-    /// so that array order already radiates outward from the hero star, reading as the connection
-    /// spreading outward rather than every line fading at once. Assemble uses a smaller, seeded
-    /// per-edge jitter instead, since its own ignition schedule already provides the spread.
-    private func lineAnimation(index: Int, edge: ConstellationLayout.Edge) -> Animation {
+    /// Per-**line** draw stagger (`drawOrdinal`), NOT per-depth. A hero-centred MST puts most edges
+    /// at depth 0 — 4 of 6 lines in a typical 5-star sky — so staggering by depth alone fired those
+    /// four at the same instant and the figure appeared to draw all at once. Ordering every edge
+    /// individually (depth first, so the flow is still outward; then a stable tiebreak) guarantees
+    /// no two lines ever start together.
+    /// `.assemble` keeps its seeded per-edge jitter — its own ignition schedule already supplies the
+    /// spread, and an ordinal ramp on top would double-count.
+    private func lineAnimation(_ edge: ConstellationLayout.Edge, ordinal: Int) -> Animation {
         switch mode {
-        case .teasers:
-            // Was AppAnimation.enter (0.4s ease-out) — ease-out starts fast then decelerates,
-            // which read as an abrupt pop rather than a fade. desireLineCondense ramps in gently
-            // (ease-in-out) instead, matching the softer settle already used elsewhere on this
-            // screen.
-            return AppAnimation.desireLineCondense.delay(Double(index) * AppAnimation.desireBeatStaggerStep)
+        case .ceremony, .settled:
+            return AppAnimation.desireLineDraw
+                .delay(Double(ordinal) * AppAnimation.desireLineDrawStep)
         case .assemble:
-            return AppAnimation.desireLineCondense.delay(edgeJitter(edge) * AppAnimation.desireLineJitterSpan)
-        case .intro, .resolved:
-            return AppAnimation.desireLineCondense
+            return AppAnimation.desireLineDraw
+                .delay(edgeJitter(edge) * AppAnimation.desireLineJitterSpan)
+        case .resolved:
+            return AppAnimation.desireLineDraw
         }
     }
 
-    /// Deterministic 0...1 unit derived from the edge's endpoints, used to offset each line's
-    /// condense so simultaneous ignitions don't settle in mechanical lockstep.
+    /// Maps each edge (by its index in `edges`) to its position in the draw sequence: sorted by MST
+    /// depth so lines still ripple outward from the hero, then by array order as a stable tiebreak
+    /// so same-depth lines draw one after another instead of together. `buildEdges` emits the MST
+    /// nearest-first and appends extras last, so that array order already reads outward within a ring.
+    private var drawOrdinal: [Int] {
+        let sorted = edges.indices.sorted { a, b in
+            edges[a].depth != edges[b].depth ? edges[a].depth < edges[b].depth : a < b
+        }
+        var ordinal = [Int](repeating: 0, count: edges.count)
+        for (position, index) in sorted.enumerated() { ordinal[index] = position }
+        return ordinal
+    }
+
+    /// Deterministic 0...1 unit derived from the edge's endpoints, so simultaneous ignitions don't
+    /// settle in mechanical lockstep.
     private func edgeJitter(_ edge: ConstellationLayout.Edge) -> Double {
         var hasher = Hasher()
         hasher.combine(min(edge.a, edge.b))
@@ -163,17 +224,35 @@ struct DesireConstellationView: View {
 
     private func lineDrawn(_ edge: ConstellationLayout.Edge) -> Bool {
         switch mode {
-        case .resolved:  return true
-        case .assemble:  return revealed.contains(edge.a) && revealed.contains(edge.b)
-        case .teasers:   return true
-        case .intro:     return false
+        case .resolved, .settled:
+            return true
+        case .ceremony:
+            return linesArmed
+        case .assemble:
+            // Lines follow the stars: a line draws once both its endpoints exist. Deliberately not
+            // the reverse (arrival igniting the far star) — a chain reaction would force the MST's
+            // topology onto every variant and make `.constellate`'s simultaneous merge unexpressible.
+            return present.contains(edge.a) && present.contains(edge.b)
         }
     }
 
-    /// Teaser-beat lines read as a hint of connection, not a confirmed one — dimmer than
-    /// the confident weight used once the sky is actually lit (resolved / mid-assembly).
+    /// Lines are the FLOOR of the hierarchy — structure, beneath the nodes they connect. Lowered
+    /// from 0.68 (2026-07-21): at 0.68 a line outshone a locked star and the wires dominated the
+    /// figure. "Confident" means fully-drawn, not bright — the line stays one continuous stroke,
+    /// just quiet. Still no dim "hint of connection" state; a line is either drawn or it isn't.
     private var lineOpacity: Double {
-        mode == .teasers ? 0.30 : 0.68
+        #if DEBUG
+        DesireSequenceTuning.shared.lineOpacity
+        #else
+        0.42
+        #endif
+    }
+
+    /// Guards against an index that outruns `stars` — `edges` index into the layout's full point
+    /// list, and a placement gap would otherwise crash rather than simply omit a line.
+    private func point(_ index: Int, _ size: CGSize) -> CGPoint? {
+        guard stars.indices.contains(index) else { return nil }
+        return scaled(stars[index].point, size)
     }
 
     // MARK: - Telegraph
@@ -212,22 +291,60 @@ struct DesireConstellationView: View {
         CGPoint(x: point.x * size.width, y: point.y * size.height)
     }
 
-    // MARK: - Assembly timeline
+    // MARK: - Timelines
 
     private func applyMode() async {
         sweepVisible = false
         gatherContracted = false
         sweepProgress = 0
+
         switch mode {
-        case .intro, .teasers, .resolved:
-            // The whole sky is present from beat1 onward — the hero is already in its rightful
-            // place among the rest, simply lit while they sit dim. It ignites there in place;
-            // it doesn't arrive alone and get a system overlaid onto it later.
-            revealed = Set(stars.indices)
+        case .settled, .resolved:
+            // Terminal state. This is also exactly where a tap-to-skip lands, which is why skipping
+            // needs no separate branch: the parent moves the mode on, and the sky is simply done.
+            present = Set(stars.indices)
+            linesArmed = true
+
+        case .ceremony:
+            if reduceMotion {
+                present = Set(stars.indices)
+                linesArmed = true
+                return
+            }
+            await runCascade()
+
         case .assemble:
-            revealed = []
+            present = []
+            linesArmed = false
             await runAssembly()
         }
+    }
+
+    /// beat 1 — stars bloom in hero-outward, then (after a hold) the lines draw outward. Both
+    /// orderings are rooted at the hero so the two halves read as one continuous outward motion
+    /// rather than two unrelated events.
+    private func runCascade() async {
+        guard !stars.isEmpty else { return }
+        linesArmed = false
+        present = []
+
+        let hero = stars.indices.contains(heroIndex) ? stars[heroIndex].point : CGPoint(x: 0.5, y: 0.5)
+        let order = stars.indices.sorted {
+            distance(stars[$0].point, hero) < distance(stars[$1].point, hero)
+        }
+
+        for (step, index) in order.enumerated() {
+            if step > 0 {
+                try? await Task.sleep(for: .seconds(AppAnimation.desireStarCascadeStep))
+            }
+            if Task.isCancelled { return }
+            present.insert(index)
+        }
+
+        // Let the last star's bloom finish before the shape starts asserting itself.
+        try? await Task.sleep(for: .seconds(AppAnimation.desireHoldStarsToLines))
+        if Task.isCancelled { return }
+        linesArmed = true
     }
 
     private func runAssembly() async {
@@ -253,8 +370,12 @@ struct DesireConstellationView: View {
             if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
             if Task.isCancelled { return }
             elapsed = step.delay
-            revealed.insert(step.index)
+            present.insert(step.index)
         }
         sweepVisible = false
+    }
+
+    private func distance(_ a: CGPoint, _ b: CGPoint) -> Double {
+        hypot(Double(a.x - b.x), Double(a.y - b.y))
     }
 }

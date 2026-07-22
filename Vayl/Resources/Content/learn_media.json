@@ -112,7 +112,7 @@
     "tier": null,
     "platform": null,
     "artwork_url": null,
-    "artwork_asset": null,
+    "artwork_asset": "book-cover-open-deeply",
     "background": "Loree is a therapist specializing in non-monogamy and kink. The book is for people who want to practice open relationships but find that jealousy or attachment panic keeps derailing them. She draws on somatic and neurobiological frameworks to explain why these responses happen and what actually helps, beyond the typical advice to \"just communicate more.\"",
     "links": []
   },
@@ -205,19 +205,6 @@
     "artwork_url": null,
     "artwork_asset": "book-cover-girl-sex-101",
     "background": "A sex ed guide written for queer women and femmes, though its coverage of anatomy, consent, communication, and specific sexual practices is useful regardless of identity. The tone is friendly and non-clinical, and the book explicitly includes trans and non-binary people throughout rather than treating them as a footnote.",
-    "links": []
-  },
-  {
-    "id": "trans-sex",
-    "kind": "book",
-    "title": "Trans Sex",
-    "creator": "Lucie Fielding",
-    "positioning": "Embodiment, pleasure, and sexuality through a trans and non-binary lens.",
-    "tier": null,
-    "platform": null,
-    "artwork_url": null,
-    "artwork_asset": null,
-    "background": "Fielding is a somatic therapist working with trans and non-binary clients. The book addresses how gender dysphoria, medical transition, and embodiment intersect with sexuality, and offers frameworks for exploring pleasure that don't depend on a fixed or assumed relationship to one's body. Clinically grounded but written accessibly.",
     "links": []
   },
   {

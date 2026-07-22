@@ -105,6 +105,9 @@ struct MapPulseHero: View {
             // toward grey) under the title "The Expansive Space" — while its own history
             // dot 40pt below, which never blended, showed true cyan.
             PulseAura(ramp: currentSpace.rampStatic, size: layout.mapHeroOrbSize)
+                // Publishes this aura's frame so the first-run Pulse doorway can begin its
+                // entrance on the very orb the user tapped, rather than conjuring a new one.
+                .pulseOrbSource()
                 .background {
                     MapHeroAmbientGlow(
                         color: currentSpace.rampStatic.glow,
@@ -217,6 +220,8 @@ struct MapPulseHero: View {
             // and a static wash behind it would just look mismatched — the
             // moving colour already carries "not yet answered" on its own.
             PulseCyclingAura(size: layout.mapHeroOrbSize)
+                // See heroBlock's aura — publishes the frame the first-run doorway enters from.
+                .pulseOrbSource()
                 .frame(maxWidth: .infinity)
                 // Matches heroBlock's orb padding so the empty→filled transition doesn't shift.
                 .padding(.top, AppSpacing.xs)

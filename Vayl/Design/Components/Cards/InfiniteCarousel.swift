@@ -2,20 +2,30 @@
 //
 // A full-width paging carousel that:
 //   • optionally auto-advances on an interval (discoverability),
-//   • supports swipe (TabView page style), and
-//   • loops infinitely via clone-and-reset at the seam.
+//   • supports swipe (native horizontal ScrollView paging), and
+//   • shows a page-dot indicator.
 //
-// Reduce Motion disables the auto-advance (swipe still works), as does passing
-// `autoAdvances: false` — a carousel that moves without the user asking is
-// decorative motion, which conveys no state and reads as a feed. Prefer the
-// swipe-only form unless the drift is genuinely earning discoverability.
-// A fixed height is required — TabView's page style does not size to content.
+// 2026-07-21 — the paging engine changed from `TabView(.page)` to a horizontal
+// ScrollView with `.scrollTargetBehavior(.paging)`. TabView's page style is
+// UIKit's UIPageViewController, which paints its OWN background across the
+// paging region — `.background(.clear)` can't clear the page controller's
+// internal scroll view — so when the carousel sits inside a clear-glass
+// `.learnCard()` the pages covered the glass exactly where the cards are. A
+// ScrollView is transparent by default and lets the glass (and the atmosphere
+// behind it) read through. Deployment target is 26.0, so the scroll paging APIs
+// are available.
 //
-// DEVICE-TUNE (per Build Protocol — feel is confirmed on device, not in code):
-//   • `interval`, the advance animation, and the seam-reset `jump` delay are
-//     placeholder timings; verify the loop reads seamless and adjust to taste.
-//   • TabView page style is the simplest swipe+paging primitive but is fiddly;
-//     if the seam flickers on device, the fallback is a ScrollView + paging.
+// TRADE: the old TabView path looped infinitely (clone-and-reset at the seam).
+// The paging ScrollView does not wrap — swiping past the last slide stops, which
+// is the standard iOS paged-preview behaviour and removes the seam-jump hitch.
+// The only call site (ResearchSection) already passed `autoAdvances: false`, so
+// no motion behaviour changed there. (The type name is now slightly inaccurate;
+// renaming it is a mechanical follow-up, not worth the churn mid-change.)
+//
+// Reduce Motion / Low Power disable the auto-advance; swipe still works. A
+// carousel that moves without the user asking is decorative motion — prefer the
+// swipe-only form unless the drift genuinely earns discoverability.
+// A fixed height is required — paged slides don't size to content.
 
 import SwiftUI
 
@@ -48,13 +58,14 @@ struct InfiniteCarousel<Item: Identifiable, Content: View, EmptyContent: View>: 
     }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var selection: Int = 1
+    /// The id of the slide currently paged into view. Optional per the
+    /// `.scrollPosition` contract; nil before the first layout resolves.
+    @State private var currentID: Int?
 
     private var realCount: Int { items.count }
-    private var paddedCount: Int { realCount + 2 }
     private var realIndex: Int {
         guard realCount > 0 else { return 0 }
-        return ((selection - 1) % realCount + realCount) % realCount
+        return min(max(currentID ?? 0, 0), realCount - 1)
     }
 
     var body: some View {
@@ -64,14 +75,20 @@ struct InfiniteCarousel<Item: Identifiable, Content: View, EmptyContent: View>: 
             content(items[0]).frame(height: height)
         } else {
             VStack(spacing: AppSpacing.sm) {
-                TabView(selection: $selection) {
-                    ForEach(0..<paddedCount, id: \.self) { i in
-                        content(paddedItem(at: i)).tag(i)
+                ScrollView(.horizontal) {
+                    LazyHStack(spacing: 0) {
+                        ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                            content(item)
+                                .containerRelativeFrame(.horizontal)
+                                .id(index)
+                        }
                     }
+                    .scrollTargetLayout()
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+                .scrollTargetBehavior(.paging)
+                .scrollIndicators(.hidden)
+                .scrollPosition(id: $currentID)
                 .frame(height: height)
-                .onChange(of: selection) { _, new in handleSeam(new) }
                 .task(id: items.count) { await autoAdvance() }
 
                 dots
@@ -92,38 +109,13 @@ struct InfiniteCarousel<Item: Identifiable, Content: View, EmptyContent: View>: 
         .accessibilityHidden(true)
     }
 
-    private func paddedItem(at i: Int) -> Item {
-        if i == 0 { return items[realCount - 1] }      // clone of last
-        if i == paddedCount - 1 { return items[0] }    // clone of first
-        return items[i - 1]
-    }
-
-    // When the user lands on a clone, snap (without animation) back to the
-    // matching real slide once the paging animation has settled.
-    private func handleSeam(_ new: Int) {
-        guard realCount > 1 else { return }
-        if new == 0 {
-            jump(to: realCount)
-        } else if new == paddedCount - 1 {
-            jump(to: 1)
-        }
-    }
-
-    private func jump(to index: Int) {
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(0.45))
-            var transaction = Transaction()
-            transaction.disablesAnimations = true
-            withTransaction(transaction) { selection = index }
-        }
-    }
-
     private func autoAdvance() async {
         guard autoAdvances, !reduceMotion, realCount > 1 else { return }
         while !Task.isCancelled {
             try? await Task.sleep(for: .seconds(interval))
             guard !Task.isCancelled else { break }
-            withAnimation(AppAnimation.standard) { selection += 1 }
+            let next = (realIndex + 1) % realCount
+            withAnimation(AppAnimation.standard) { currentID = next }
         }
     }
 }

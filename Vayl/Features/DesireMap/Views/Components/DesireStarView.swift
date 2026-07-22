@@ -17,6 +17,13 @@ import SwiftUI
 extension DesireStarView {
     enum StarState { case dim, lit }
     enum Cadence { case free, locked }
+    /// How the star arrives.
+    /// - `none`: already at rest on first render (the default; no entrance).
+    /// - `bloom`: scale + fade only — the cascade entrance for locked stars filling the sky.
+    /// - `twoSeed`: the full purple/magenta convergence. Reserved for the hero's reveal and for
+    ///   the post-unlock ceremony, because the convergence *means* "you two met on this desire";
+    ///   spending it on every dim star at once turns that meaning into decoration.
+    enum Entrance { case none, bloom, twoSeed }
     /// Alignment marker: adjacent ("worth exploring") stars carry a dashed orbit ring
     /// so mutual and adjacent read differently on the unlocked sky.
     enum RingStyle { case none, dashed }
@@ -40,28 +47,28 @@ struct DesireStarView: View {
     var state: StarState = .lit
     var label: String?
     var cadence: Cadence = .free
-    /// When true, the star plays the two-seed ignite entrance once on appear (your purple + their
-    /// magenta converging into one bright star). Default false — renders lit immediately.
-    var ignites: Bool = false
+    /// How this star arrives. See `Entrance`.
+    var entrance: Entrance = .none
     /// Dashed orbit ring for adjacent ("worth exploring") matches on the unlocked sky.
     var ring: RingStyle = .none
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var sparkleTrigger: Int = 0
-    /// Entrance state. Initialized from `ignites` so non-igniting stars render at rest with no
-    /// first-frame flash; igniting stars start collapsed and bloom in `startEntrance()`.
+    /// Entrance state. Initialized from `entrance` so a star with no entrance renders at rest with
+    /// no first-frame flash; an arriving star starts collapsed and blooms in `startEntrance()`.
     @State private var bloomed: Bool
     @State private var seedsMerged: Bool
 
-    init(size: CGFloat, state: StarState = .lit, label: String? = nil, cadence: Cadence = .free, ignites: Bool = false, ring: RingStyle = .none) {
+    init(size: CGFloat, state: StarState = .lit, label: String? = nil, cadence: Cadence = .free, entrance: Entrance = .none, ring: RingStyle = .none) {
         self.size = size
         self.state = state
         self.label = label
         self.cadence = cadence
-        self.ignites = ignites
+        self.entrance = entrance
         self.ring = ring
-        _bloomed = State(initialValue: !ignites)
-        _seedsMerged = State(initialValue: !ignites)
+        let arrives = entrance != .none
+        _bloomed = State(initialValue: !arrives)
+        _seedsMerged = State(initialValue: entrance != .twoSeed)
     }
 
     // MARK: Derived geometry (all proportional to size)
@@ -81,9 +88,48 @@ struct DesireStarView: View {
     private var ringSize: CGFloat { glowSize * 0.92 }
     private var labelWidth: CGFloat { max(haloSize, 120) }
 
-    private var glowOpacity: Double { state == .lit ? 1.0 : 0.18 }
-    private var coreOpacity: Double { state == .lit ? 1.0 : 0.28 }
-    private var crossOpacity: Double { state == .lit ? 0.38 : 0.20 }
+    // Locked = DORMANT, not merely dim (2026-07-21). The old dim tier crushed every opacity toward
+    // zero (glow 0.18 / core 0.28), which put a locked star *below* the connecting line (0.68) — the
+    // wires dominated the nodes. A dormant star is instead a cool white pinpoint that hasn't caught
+    // its magenta yet: a crisp, readable core sitting *above* the (now quieter) lines, a compact
+    // hueless glow, and no warmth. Unlocking is it *warming* — magenta blooms, glow expands, sparkle
+    // begins. "Dormant but could come to life."
+    private var glowOpacity: Double { state == .lit ? 1.0 : Self.lockedGlowOpacity }
+    private var coreOpacity: Double { state == .lit ? 1.0 : Self.lockedCoreOpacity }
+    private var crossOpacity: Double { state == .lit ? 0.38 : 0.16 }
+
+    /// The dormant glow is compact — a tight cool halo, not the lit star's expansive bloom.
+    private var resolvedGlowSize: CGFloat { glowSize * (state == .lit ? 1.0 : 0.72) }
+
+    /// A dormant star is scaled up a touch so it's distinguishable — just a speck otherwise. Applied
+    /// only while dim; lit stars are 1.0. `scaleEffect` is visual only, so the frame the connecting
+    /// lines target is unchanged — no endpoint drift.
+    private var dormantScale: CGFloat { state == .lit ? 1.0 : Self.dormantSizeScale }
+
+    static var dormantSizeScale: CGFloat {
+        #if DEBUG
+        CGFloat(DesireSequenceTuning.shared.dormantSizeScale)
+        #else
+        1.12
+        #endif
+    }
+
+    // Appearance constants. DEBUG reads the on-device dial so the hierarchy can be tuned live; the
+    // literal here is the production value and the dial's default equals it.
+    static var lockedCoreOpacity: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.lockedCore
+        #else
+        0.55
+        #endif
+    }
+    static var lockedGlowOpacity: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.lockedGlow
+        #else
+        0.32
+        #endif
+    }
 
     // MARK: Body
 
@@ -109,8 +155,16 @@ struct DesireStarView: View {
                         sparkleLayer
                     }
                 }
-                .scaleEffect(bloomed ? 1 : entranceStartScale)
+                // A dormant star carries a small extra scale so it reads as a star, not a speck —
+                // folded into the entrance scale so there's only ever one scaleEffect. Warming to
+                // lit settles it back to 1.0 as the glow blooms, which reads as the star focusing.
+                .scaleEffect((bloomed ? 1 : entranceStartScale) * dormantScale)
                 .opacity(bloomed ? 1 : 0)
+                // dim → lit must RAMP. Every brightness here (glow/core/cross opacity) is derived
+                // from `state`, and without this the transition is a discrete swap — the star pops
+                // from locked to lit in one frame. That pop is what made the first star's reveal
+                // read as abrupt even once the surrounding sequence was right.
+                .animation(AppAnimation.desireStarIgnite.reduceMotionSafe, value: state)
             }
             .frame(width: haloSize, height: haloSize)
 
@@ -144,7 +198,8 @@ struct DesireStarView: View {
 
     // MARK: Entrance (two-seed ignite)
 
-    private var playsEntrance: Bool { ignites && state == .lit && !reduceMotion }
+    /// Only the two-seed entrance renders seeds, and only on a lit star with motion enabled.
+    private var playsEntrance: Bool { entrance == .twoSeed && state == .lit && !reduceMotion }
 
     private var seedDiameter: CGFloat { glowSize * 0.5 }
     private var seedOffset: CGFloat { glowSize * 0.45 }
@@ -168,7 +223,15 @@ struct DesireStarView: View {
     /// Drives the entrance on appear. Igniting stars converge two seeds and bloom; everything
     /// else (no ignite, or Reduce Motion) lands at rest instantly.
     private func startEntrance() {
-        guard ignites else { return }              // already at rest (bloomed initialized true)
+        guard entrance != .none else { return }    // already at rest (bloomed initialized true)
+
+        if entrance == .bloom {
+            // Cascade arrival: scale + fade, no seeds. Reduce Motion lands it instantly.
+            guard !reduceMotion else { bloomed = true; return }
+            withAnimation(AppAnimation.desireStarBloom) { bloomed = true }
+            return
+        }
+
         guard playsEntrance else {                 // Reduce Motion / not lit: skip the ceremony
             bloomed = true
             seedsMerged = true
@@ -184,7 +247,9 @@ struct DesireStarView: View {
 
     // MARK: Layers
 
-    // Gradient stops mirror the mockup's radial-gradients exactly (shalo / sglow).
+    // The halo is the star's WARMTH — a soft magenta bloom. It belongs to a lit star only; a dormant
+    // star has none (that's what makes unlocking read as "warming"). Gradient stops mirror the
+    // mockup's radial-gradients (shalo / sglow).
     private var haloLayer: some View {
         Circle()
             .fill(
@@ -201,35 +266,48 @@ struct DesireStarView: View {
             )
             .frame(width: haloSize, height: haloSize)
             .blur(radius: 17)
+            .opacity(state == .lit ? 1 : 0)
     }
 
+    /// Lit: a warm white→magenta→purple bloom. Dormant: a cool, hueless white glow — no warmth to
+    /// catch yet. The colour is the whole locked/unlocked signal, so the two gradients are distinct
+    /// rather than one faded by opacity.
     private var glowLayer: some View {
-        Circle()
+        let stops: [Gradient.Stop] = state == .lit
+            ? [
+                .init(color: Color.white.opacity(0.85), location: 0.0),
+                .init(color: AppColors.spectrumMagenta.opacity(0.42), location: 0.28),
+                .init(color: AppColors.spectrumPurple.opacity(0.14), location: 0.60),
+                .init(color: .clear, location: 0.80)
+              ]
+            : [
+                .init(color: Color.white.opacity(0.80), location: 0.0),
+                .init(color: Color.white.opacity(0.22), location: 0.42),
+                .init(color: .clear, location: 0.78)
+              ]
+        return Circle()
             .fill(
                 RadialGradient(
-                    gradient: Gradient(stops: [
-                        .init(color: Color.white.opacity(0.85), location: 0.0),
-                        .init(color: AppColors.spectrumMagenta.opacity(0.42), location: 0.28),
-                        .init(color: AppColors.spectrumPurple.opacity(0.14), location: 0.60),
-                        .init(color: .clear, location: 0.80)
-                    ]),
+                    gradient: Gradient(stops: stops),
                     center: .center,
                     startRadius: 0,
-                    endRadius: glowSize / 2
+                    endRadius: resolvedGlowSize / 2
                 )
             )
-            .frame(width: glowSize, height: glowSize)
+            .frame(width: resolvedGlowSize, height: resolvedGlowSize)
             .blur(radius: 5)
             .opacity(glowOpacity)
     }
 
+    /// The core is a crisp white pinpoint in both states. Its coloured shadow bloom is warmth, so a
+    /// dormant core keeps only the plain white halo — a clean cool point, not a magenta-haloed one.
     private var coreLayer: some View {
         Circle()
             .fill(Color.white)
             .frame(width: coreSize, height: coreSize)
             .shadow(color: Color.white, radius: 3)
-            .shadow(color: AppColors.spectrumMagenta.opacity(0.82), radius: 7)
-            .shadow(color: AppColors.spectrumPurple.opacity(0.42), radius: 15)
+            .shadow(color: AppColors.spectrumMagenta.opacity(state == .lit ? 0.82 : 0), radius: 7)
+            .shadow(color: AppColors.spectrumPurple.opacity(state == .lit ? 0.42 : 0), radius: 15)
             .opacity(coreOpacity)
     }
 
@@ -367,8 +445,8 @@ struct DesireStarView: View {
     ZStack {
         AppColors.void.ignoresSafeArea()
         HStack(spacing: AppSpacing.xl) {
-            DesireStarView(size: 22, state: .lit, label: "Opening Up", cadence: .free, ignites: true)
-            DesireStarView(size: 15, state: .lit, label: "Shared", cadence: .free, ignites: true)
+            DesireStarView(size: 22, state: .lit, label: "Opening Up", cadence: .free, entrance: .twoSeed)
+            DesireStarView(size: 15, state: .lit, label: "Shared", cadence: .free, entrance: .twoSeed)
         }
     }
     .preferredColorScheme(.dark)

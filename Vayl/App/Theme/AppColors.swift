@@ -47,7 +47,7 @@ struct AppColors {
     /// Sheets, modals, overlays. Always sits above cardBackground.
     static let modalBackground = Color.dynamic(
         light: VaylPrimitives.pureWhite,
-        dark: VaylPrimitives.inkSurface
+        dark: VaylPrimitives.inkSheet
     )
 
     /// Racetrack selected-tab fill — the decided purplish that reads as a
@@ -57,7 +57,7 @@ struct AppColors {
 
     /// Racetrack bar base fill — a touch darker than the elevated surface so the
     /// selected chip lifts off it, still purplish (not black).
-    static let tabBarFill = Color(.sRGB, red: 19/255, green: 17/255, blue: 29/255)  // #13111D
+    static let tabBarFill = Color(uiColor: VaylPrimitives.inkSheet)  // matches the sheet floor
 
     /// Holographic shimmer pill base. HolographicShimmer use only.
     static let shimmerBase    = Color(uiColor: VaylPrimitives.inkShimmerBase)
@@ -530,10 +530,13 @@ struct AppColors {
         dark: VaylPrimitives.inkPillSelected
     )
 
-    /// CTA button fill. Warm rose on Dawn, ink surface on Midnight.
+    /// CTA button fill. Warm rose on Dawn; on Midnight the pill sits at the
+    /// sheet floor (`inkSheet`) so the primary action reads as the same material
+    /// as the surface it lives on — weight comes from the resting border + glint,
+    /// not a lifted fill. (Was `inkSurface`, a lifted purple-ink chip.)
     static let glassFrostCTA = Color.dynamic(
         light: VaylPrimitives.frostCTA,
-        dark: VaylPrimitives.inkSurface
+        dark: VaylPrimitives.inkSheet
     )
 
     /// Translucent glass surface for cards that float on the void + atmosphere

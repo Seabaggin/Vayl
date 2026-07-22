@@ -91,6 +91,7 @@ enum VaylPrimitives {
     static let inkBase        = UIColor(hex: "#030305")  // page floor
     static let inkCard        = UIColor(hex: "#12111A")  // card interior
     static let inkSurface     = UIColor(hex: "#1A1825")  // elevated surface
+    static let inkSheet        = UIColor(hex: "#0C0912")  // sheet/modal floor — black-first, a trace of purple
     static let inkRaised      = UIColor(hex: "#0C0C10")  // input fields
     static let inkWidget      = UIColor(hex: "#08060A")  // widget dark floor
     static let inkShimmerBase    = UIColor(hex: "#0D0B1A")                                          // holographic shimmer pill base — HolographicShimmer use only

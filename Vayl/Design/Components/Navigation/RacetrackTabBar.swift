@@ -31,8 +31,10 @@ struct RacetrackTabBar: View {
                 let count: CGFloat = CGFloat(AppTab.allCases.count)
                 let tabW: CGFloat = proxy.size.width / count
                 let idx: CGFloat = CGFloat(AppTab.allCases.firstIndex(of: selection) ?? 0)
-                let pillW: CGFloat = AppSpacing.md * 2 + 26   // 58 pt
-                let pillH: CGFloat = AppSpacing.sm * 2 + 26   // 42 pt
+                // Must track RacetrackTabPill's own padding + icon frame exactly,
+                // or the sliding selection capsule stops matching the tab it lands on.
+                let pillW: CGFloat = AppSpacing.md * 2 + AppLayout.tabBarIcon   // 60 pt
+                let pillH: CGFloat = AppSpacing.sm * 2 + AppLayout.tabBarIcon   // 44 pt
                 // Selection indicator = ONE fill + ONE metal ring that GLIDE
                 // together to the selected tab. Replaces four per-tab rings
                 // cross-fading — one TimelineView total, and the ring travels
@@ -66,7 +68,9 @@ struct RacetrackTabBar: View {
         .padding(.vertical, AppSpacing.sm)
         .padding(.horizontal, AppSpacing.sm)
         .background(barBackground)
-        .padding(.horizontal, AppSpacing.xl)
+        // Floating-pill inset — see AppLayout.tabBarInset for why 36 and not
+        // an AppSpacing step. Verified across 375–440pt in tab-bar-sizing.html.
+        .padding(.horizontal, AppLayout.tabBarInset)
     }
 
     // MARK: - Bar background
@@ -124,8 +128,10 @@ private struct RacetrackTabPill: View {
     var body: some View {
         Button(action: onTap) {
             Image(systemName: tab.icon)
-                .font(AppFonts.body(24, weight: .regular, relativeTo: .title3))
-                .frame(width: 26, height: 26)
+                // Glyph scales with the frame — the 24:26 ratio the bar shipped
+                // with, carried to the new 28pt frame.
+                .font(AppFonts.body(26, weight: .regular, relativeTo: .title3))
+                .frame(width: AppLayout.tabBarIcon, height: AppLayout.tabBarIcon)
                 .foregroundStyle(iconColor)
                 .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.sm)

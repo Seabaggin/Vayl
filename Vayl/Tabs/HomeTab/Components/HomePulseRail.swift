@@ -37,11 +37,6 @@ struct HomePulseRail: View {
 
     @Environment(PulseStore.self) private var pulse
 
-    // Press states (tap contract: every tappable element carries press scale +
-    // haptic + action): one for the card's tap surface, one for the pill.
-    @State private var cardPressed = false
-    @State private var pillPressed = false
-
     // MARK: - Body
 
     var body: some View {
@@ -107,7 +102,10 @@ struct HomePulseRail: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(spacing: AppSpacing.sm) {
-                    orb
+                    // Publishes this aura's frame so the first-run Pulse doorway can begin
+                    // its entrance on the very orb the user tapped. Marked here in the shared
+                    // card layout, so both the landed and cycling states report it.
+                    orb.pulseOrbSource()
                     if pulse.canCheckInToday {
                         checkInPill
                     }
@@ -139,6 +137,12 @@ struct HomePulseRail: View {
             RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous)
                 .strokeBorder(AppColors.borderDefault, lineWidth: 1)
         )
+        // Weight — the whole card is a tap target now, so it earns Card elevation to read as
+        // a liftable object rather than a flat panel. This is the resting affordance (an
+        // object you can press); the press-scale below is the interaction affordance. Together
+        // they say "tappable" without a chevron or the word "tap" — the modern-iOS pairing.
+        // Applied before .scaleEffect so the lift compresses under the press.
+        .cardElevation()
         // Spectrum top hairline — the codebase card-chrome language (same cyan→purple→magenta
         // stops as VaylBorderEffect's HairlineView), tapered to nothing at the ends via the
         // clear stops. Inset horizontally so it lands on the straight top segment, clear of
@@ -159,46 +163,47 @@ struct HomePulseRail: View {
             .padding(.horizontal, AppSpacing.md)
         }
         .contentShape(RoundedRectangle(cornerRadius: AppRadius.container, style: .continuous))
-        .scaleEffect(cardPressed ? 0.96 : 1.0)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in cardPressed = true }
-                .onEnded { _ in cardPressed = false }
-        )
-        .onTapGesture {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            onTap?()
+        // The whole card is one tap target, via the codebase's tap-contract modifier (press
+        // scale + light haptic on touch-DOWN + action on release). The prior hand-rolled
+        // `.onTapGesture` + `.simultaneousGesture(DragGesture(minimumDistance: 0))` never fired
+        // — the drag swallowed the tap, which is why the card "didn't route on tap." One
+        // gesture owns the whole card now; the pill is a visual affordance, not a rival Button
+        // (a Button inside a gesture-tapped card double-fires), so there is exactly one route.
+        //
+        // State-aware (option b): with a check-in available the card opens the check-in flow
+        // (firing the orb-anchored first-run doorway); once today's entry has locked there is
+        // nothing to check in, so it opens the full Pulse on the Map. Tracks the pill's own
+        // `canCheckInToday` visibility, so card and pill never disagree about "the Pulse action."
+        .vaylPressableTap {
+            if pulse.canCheckInToday {
+                onCheckIn?()
+            } else {
+                onTap?()
+            }
         }
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
         .accessibilityLabel("The Pulse. \(hero)")
-        .accessibilityHint("Opens the Pulse on the Map")
+        .accessibilityHint(pulse.canCheckInToday ? "Opens your Pulse check-in" : "Opens the full Pulse on the Map")
     }
 
     // MARK: - Check-in pill (both states — hidden once today's entry has locked
     // past its 2-hour edit window; see PulseStore.canCheckInToday)
+    //
+    // A VISUAL affordance, not a Button: the whole card is the tap target (see the card's
+    // .vaylPressableTap), and a real Button here would double-fire against that gesture. It
+    // reads as the labelled hint for what the card tap does — "Check in" / "Edit check-in" —
+    // and is covered by the card's own combined accessibility element.
 
     private var checkInPill: some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            onCheckIn?()
-        } label: {
-            Text(pulse.todayEntry == nil ? "Check in" : "Edit check-in")
-                .font(AppFonts.buttonLabelSmall)
-                .foregroundStyle(AppColors.textSecondary)
-                .padding(.horizontal, AppSpacing.sm)
-                .padding(.vertical, AppSpacing.xxs)
-                .overlay(
-                    Capsule().strokeBorder(AppColors.borderDefault, lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
-        .scaleEffect(pillPressed ? 0.96 : 1.0)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in pillPressed = true }
-                .onEnded { _ in pillPressed = false }
-        )
-        .accessibilityLabel(pulse.todayEntry == nil ? "Check in" : "Edit today's check-in")
+        Text(pulse.todayEntry == nil ? "Check in" : "Edit check-in")
+            .font(AppFonts.buttonLabelSmall)
+            .foregroundStyle(AppColors.textSecondary)
+            .padding(.horizontal, AppSpacing.sm)
+            .padding(.vertical, AppSpacing.xxs)
+            .overlay(
+                Capsule().strokeBorder(AppColors.borderDefault, lineWidth: 1)
+            )
     }
 
     // MARK: - Helpers

@@ -835,6 +835,112 @@ internal enum AppAnimation {
     /// its two star indices), not re-randomized on redraw.
     static let desireLineJitterSpan: Double = 0.22
 
+    // ── Reveal constellation: the DRAWN sequence (2026-07-21) ────────────────────────────────
+    // Spec: plans/001-desire-reveal-constellation-sequence.md
+    // Feel reference: docs/mockups/desire-reveal-sequence.html
+    //
+    // The sequence: stars cascade in hero-outward → hold → lines DRAW outward → hold → match rows
+    // cascade in (all locked) → hold → the first row opens with its star. A tap at any point skips
+    // to the terminal state, which is also the Reduce Motion landing.
+    //
+    // NOTE: these are the prototype's starting values, not device-confirmed feel. Bryan tunes them
+    // in the in-app debug view before they are locked.
+
+    /// 0.90s — a constellation line drawing itself from its hero-nearer end to its far end
+    /// (`.trim`, not opacity). Deliberately NOT `desireLineCondense`: that curve is ease-in-out
+    /// because ease-out "read as an abrupt pop" *for an opacity fade*, and that reasoning inverts
+    /// for a length animation, where a slow start reads as hesitation instead.
+    /// Reduce motion: lines land already drawn, no travel.
+    /// DEBUG reads the on-device dial (`DesireSequenceTuning`) so the sequence can be tuned in the
+    /// running app; RELEASE is the literal. The literal here is the production value either way —
+    /// the dial's defaults are exactly these numbers.
+    static var desireLineDraw: Animation {
+        #if DEBUG
+        let c = DesireSequenceTuning.shared.curve
+        return .timingCurve(c.0, c.1, c.2, c.3, duration: desireLineDrawDuration)
+        #else
+        return .timingCurve(0.22, 1, 0.36, 1, duration: desireLineDrawDuration)
+        #endif
+    }
+
+    /// The same 0.90s as a raw Double. `DesireRevealStore` has to know how long the ceremony runs
+    /// in order to schedule the beat after it, and an `Animation` won't surrender its duration —
+    /// so the number is declared once here and both the curve and the schedule read it.
+    static var desireLineDrawDuration: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.lineDrawDuration
+        #else
+        0.90
+        #endif
+    }
+
+    /// 0.07s — per-**line** stagger on the draw. Multiplied by each edge's ordinal in the draw
+    /// sequence (depth-sorted, so still outward from the hero), NOT by its depth: a hero-centred MST
+    /// puts most edges at depth 0, so a per-depth stagger fired them all together and the figure drew
+    /// all at once. Per-line means no two lines ever start on the same frame.
+    static var desireLineDrawStep: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.lineDrawStep
+        #else
+        0.07
+        #endif
+    }
+
+    /// 0.56s — a non-hero star blooming into the sky during the cascade: scale + fade only, no
+    /// two-seed convergence. The convergence *means* "you two met on this desire" and is reserved
+    /// for the hero (and for every star once unlocked); spending it on a row of dim locked stars
+    /// turns a meaning into a texture.
+    /// Reduce motion: the star lands at rest.
+    static var desireStarBloom: Animation { .easeOut(duration: desireStarBloomDuration) }
+
+    /// The same 0.56s as a raw Double — see `desireLineDrawDuration` for why both forms exist.
+    static var desireStarBloomDuration: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.starBloomDuration
+        #else
+        0.56
+        #endif
+    }
+
+    /// 0.09s — per-star stagger step during the cascade, applied in hero-outward order so the sky
+    /// fills from the middle out and hands off continuously into the line draw.
+    static var desireStarCascadeStep: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.starCascadeStep
+        #else
+        0.09
+        #endif
+    }
+
+    /// 0.22s — hold after the last star settles, before the first line begins drawing. Separates
+    /// "here is the sky" from "here is its shape" without letting the two read as unrelated events.
+    static var desireHoldStarsToLines: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.holdStarsToLines
+        #else
+        0.22
+        #endif
+    }
+
+    /// 0.26s — hold after the constellation completes, before the match rows begin cascading in.
+    static var desireHoldLinesToRows: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.holdLinesToRows
+        #else
+        0.26
+        #endif
+    }
+
+    /// 0.70s — hold after the rows settle, before the first (free) row opens itself. The stillness
+    /// is what makes the open read as a gift rather than as one more item arriving.
+    static var desireHoldRowsToReveal: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.holdRowsToReveal
+        #else
+        0.70
+        #endif
+    }
+
     /// 0.50s ease-out — Detail / full-map / paywall sheet rising from the bottom.
     /// Applied to the .move(edge: .bottom) transition inside the cover's sheet host.
     /// Reduce motion: replace with .easeOut(duration: 0.15) — sheet appears in place.
@@ -906,21 +1012,47 @@ internal enum AppAnimation {
     // Reveal 3-beat ceremony holds (raw Double — consumed by Task.sleep in DesireRevealStore).
     // Reduce motion: collapse both holds to ~0 so the reveal resolves instantly (no timed ceremony).
 
-    /// 1.5s — Beat 1 → Beat 2: the free star settles before the locked gap appears.
-    static let desireBeatHold1: Double = 1.5
+    /// 0.4s — Beat 1 → Beat 2 *tail* hold, added after the constellation ceremony finishes.
+    ///
+    /// Was 1.5s, when beat 1 was only "the hero star ignites." Beat 1 now carries the whole
+    /// constellation ceremony (star cascade → hold → line draw), whose length scales with the
+    /// match count, so a single constant can no longer describe it — `DesireRevealStore`
+    /// computes the ceremony duration and adds this as the settle before the rows arrive.
+    static var desireBeatHold1: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.beatHold1
+        #else
+        0.4
+        #endif
+    }
 
     /// 1.2s — Beat 2 → Beat 3: the gap holds before the paywall rises.
     static let desireBeatHold2: Double = 1.2
 
     /// 0.08s — Per-locked-row stagger step (added per locked match before the Beat-2 hold begins).
-    static let desireBeatStaggerStep: Double = 0.08
+    static var desireBeatStaggerStep: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.rowStaggerStep
+        #else
+        0.08
+        #endif
+    }
 
     /// 0.14s — Base offset before the locked-row stagger (the first row's lead-in).
     static let desireBeatStaggerBase: Double = 0.14
 
     /// 0.36s — A single locked teaser row fading/staggering into the gap (Beat 2).
     /// Reduce motion: falls back via `.reduceMotionSafe` to a fast opacity confirm.
-    static let desireLockedRowEnter: Animation = .easeOut(duration: 0.36)
+    static var desireLockedRowEnter: Animation { .easeOut(duration: desireLockedRowEnterDuration) }
+
+    /// The same 0.36s as a raw Double — see `desireLineDrawDuration` for why both forms exist.
+    static var desireLockedRowEnterDuration: Double {
+        #if DEBUG
+        DesireSequenceTuning.shared.rowEnterDuration
+        #else
+        0.36
+        #endif
+    }
 
     // Reveal ceremony — the telegraphed constellation assembly (DesireConstellationView).
     // Stars light in the variant's order with a budgeted stagger; lines draw when both ends are
@@ -1092,6 +1224,52 @@ internal enum AppAnimation {
     /// speaks the same physics as the sheets and the depth handoff.
     /// Reduce motion: replace with AppAnimation.fast — orb jumps without travel.
     static let orbGlide: Animation = .timingCurve(0.3, 0, 0.15, 1, duration: 0.38)
+
+    // ─────────────────────────────────────────────
+    // MARK: Pulse framing entrance — first check-in only
+    //
+    // The one-time "Your First Pulse" doorway (PulseFramingView / PulseCheckInFlow).
+    // Reference: docs/mockups/pulse-framing-entrance.html — every value below was
+    // tuned in that HTML against the real components before reaching Swift, per the
+    // never-guess-timing rule. Timings are absolute offsets from the tap, NOT derived
+    // from each other, so no arithmetic on tokens is needed at the call site.
+    //
+    // Reduce Motion: the flow skips the whole sequence — the framing screen appears
+    // fully composed with the orb already in its hero slot. None of these are used.
+    // ─────────────────────────────────────────────
+
+    /// 0.70s — the originating screen dissolving away beneath the framing cover, leaving
+    /// only the aura. The transition IS the idea: everything falls quiet around your capacity.
+    static let pulseFramingDissolve: Animation = .easeOut(duration: 0.70)
+
+    /// 2.2s gentle S-curve — the aura drifting from its rail/hero position into the framing
+    /// hero slot while it grows. Position and scale ride this ONE curve so the orb reads as
+    /// approaching, not as a move plus a resize. Eases OUT of rest as softly as it eases in;
+    /// a decelerate-only curve launched at full velocity and read as abrupt on the first pass.
+    static let pulseFramingDrift: Animation = .timingCurve(0.55, 0.06, 0.18, 1, duration: 2.2)
+
+    /// 0.55s — the title and lede fading up. Faster than a bullet: they are the headline.
+    static let pulseFramingCopy: Animation = .easeOut(duration: 0.55)
+
+    /// 0.85s — one bullet blooming. Deliberately LONGER than the 0.60s gap between bullets
+    /// (see the delays below), so each is still arriving as the next begins and the three
+    /// read as one unfurling rather than three pops.
+    static let pulseFramingBeat: Animation = .easeOut(duration: 0.85)
+
+    /// 0.70s — the CTA pair. A pure fade with NO rise, unlike every element above it:
+    /// the copy travels because it is being read, the doors simply become available.
+    static let pulseFramingCTA: Animation = .easeOut(duration: 0.70)
+
+    // Absolute offsets from the tap, in seconds.
+    static let pulseFramingDriftDelay: Double = 0.15
+    static let pulseFramingTitleDelay: Double = 1.90
+    static let pulseFramingLedeDelay:  Double = 2.20
+    static let pulseFramingBeat1Delay: Double = 2.90
+    static let pulseFramingBeat2Delay: Double = 3.50
+    static let pulseFramingBeat3Delay: Double = 4.10
+    /// +0.90s after the last bullet — a real breath, not another 0.60s list beat, so the
+    /// CTAs read as the arrival rather than a fourth item.
+    static let pulseFramingCTADelay:   Double = 5.00
 
     /// 0.52s long-tail drift — One row of a FIRST-ARRIVAL cascade: cubic (0.25, 0.1, 0.15, 1),
     /// soft start, slow bleed into rest. Rows overlap ~85% via cascadeStagger so the list reads

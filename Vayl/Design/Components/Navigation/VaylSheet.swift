@@ -27,13 +27,8 @@ private struct VaylSheetChrome: ViewModifier {
     // The fill always bleeds a base 2pt so the dark surface reaches the edge.
     private var fillBleed: CGFloat { 2 + widen }
 
-    /// Faint spectrum-purple warmth over the (muted gray) modalBackground. Kept to a
-    /// whisper on purpose: the panel is the calm stage, the spectrum top edge and the
-    /// hero carry the color, not the surface itself. Tune here (affects every sheet).
-    private let purpleTint: Double = 0.05
-    /// Black wash to lower the overall tone. Pulled back in step with the muted tint
-    /// above: less purple means less brightness to counter, and the panel must stay a
-    /// touch lighter than the void floor so it still reads as raised.
+    /// Black wash to lower the overall tone. The panel must stay a touch lighter than
+    /// the void floor so it still reads as raised.
     private let darken: Double = 0.10
 
     /// The top-edge stroke fill — the spectrum gradient tracing the rounded top.
@@ -54,20 +49,7 @@ private struct VaylSheetChrome: ViewModifier {
             .background(
                 surface
                     .fill(AppColors.modalBackground)
-                    // Purple tint over the muted base — gentle vertical falloff
-                    // so the top of the sheet is the richest.
-                    .overlay(
-                        surface.fill(
-                            LinearGradient(
-                                colors: [
-                                    AppColors.spectrumPurple.opacity(purpleTint),
-                                    AppColors.spectrumPurple.opacity(purpleTint * 0.55)
-                                ],
-                                startPoint: .top, endPoint: .bottom
-                            )
-                        )
-                    )
-                    // Tone-down wash over the tinted surface.
+                    // Tone-down wash over the base surface.
                     .overlay(surface.fill(Color.black.opacity(darken)))
                     .padding(.horizontal, -fillBleed)
                     .ignoresSafeArea(edges: .bottom)

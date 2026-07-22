@@ -63,6 +63,7 @@ private struct VaylCoverModifier<CoverContent: View>: ViewModifier {
     let confirmTitle: String
     let confirmMessage: String
     let confirmDiscardLabel: String
+    let transparentBackground: Bool
     let onExit: (() -> Void)?
     @ViewBuilder let coverContent: () -> CoverContent
 
@@ -71,6 +72,11 @@ private struct VaylCoverModifier<CoverContent: View>: ViewModifier {
     func body(content: Content) -> some View {
         content.fullScreenCover(isPresented: $isPresented) {
             coverContent()
+                // Opt-in: lets the cover's own content own the entrance by fading its
+                // background in over the still-visible screen beneath, instead of the
+                // system sliding an opaque pane up. Pair with `presentWithoutAnimation`
+                // at the call site — the slide has to be off for this to read.
+                .modifier(TransparentCoverBackground(enabled: transparentBackground))
                 .environment(\.vaylDismiss, VaylDismissAction { confirm in
                     if confirm && confirmOnExit {
                         showConfirm = true
@@ -98,6 +104,45 @@ private struct VaylCoverModifier<CoverContent: View>: ViewModifier {
         onExit?()
         isPresented = false
     }
+}
+
+// MARK: - Transparent cover background
+
+/// Clears a full-screen cover's system background so the presenting screen stays visible
+/// beneath it, letting the cover's content dissolve in on its own terms. Isolated in a
+/// modifier so the `.presentationBackground` availability check lives in exactly one place.
+///
+/// Degrades honestly: where it can't apply, the cover is simply opaque from its first frame
+/// and the content's fade-in becomes a no-op — the entrance loses its dissolve, nothing breaks.
+private struct TransparentCoverBackground: ViewModifier {
+    let enabled: Bool
+
+    func body(content: Content) -> some View {
+        if enabled, #available(iOS 16.4, *) {
+            content.presentationBackground(.clear)
+        } else {
+            content
+        }
+    }
+}
+
+// MARK: - Present without the slide
+
+/// Flip a presentation binding with the system's present/dismiss animation suppressed.
+///
+/// For covers that own their entrance (`transparentBackground: true`): the system slide would
+/// drag the whole screen — and any element the entrance is trying to hold still — upward,
+/// which is exactly what a dissolve-in-place must not do. The cover appears instantly and its
+/// content animates itself from there.
+///
+/// Deliberately explicit at the call site rather than hidden inside the modifier: the binding's
+/// source of truth lives with the caller, so the caller is the only place the mutation's
+/// transaction can be controlled.
+@MainActor
+func presentWithoutAnimation(_ mutate: () -> Void) {
+    var transaction = Transaction()
+    transaction.disablesAnimations = true
+    withTransaction(transaction, mutate)
 }
 
 // MARK: - Host guard (DEBUG)
@@ -292,6 +337,7 @@ extension View {
         confirmTitle: String = "Leave the session?",
         confirmMessage: String = "You can pick this hand up again later. Nothing here is saved until you finish.",
         confirmDiscardLabel: String = "Leave",
+        transparentBackground: Bool = false,
         onExit: (() -> Void)? = nil,
         @ViewBuilder content: @escaping () -> CoverContent
     ) -> some View {
@@ -301,6 +347,7 @@ extension View {
             confirmTitle: confirmTitle,
             confirmMessage: confirmMessage,
             confirmDiscardLabel: confirmDiscardLabel,
+            transparentBackground: transparentBackground,
             onExit: onExit,
             coverContent: content
         ))

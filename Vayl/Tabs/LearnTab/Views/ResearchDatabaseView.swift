@@ -86,7 +86,7 @@ struct ResearchDatabaseView: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text("Knowledge hub")
+            Text("Knowledge Hub")
                 .font(AppFonts.screenTitle)
                 .foregroundStyle(AppColors.textPrimary)
             Spacer()

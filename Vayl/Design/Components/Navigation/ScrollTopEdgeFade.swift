@@ -3,8 +3,11 @@
 //
 // Top scroll-edge effect: content dissolves as it scrolls up under the top
 // chrome (the masthead / Dynamic Island) instead of hard-cutting at the safe-
-// area line. The BOTTOM edge is handled by TabContentWrapper's fade mask; this
-// is its top-edge counterpart.
+// area line. There is no bottom-edge counterpart: TabContentWrapper's bottom
+// fade mask was retired (2026-07-19) because it masked the WHOLE tab — void and
+// atmosphere included — which dissolved each screen's background and killed
+// hit-testing in the bottom strip. If a bottom dissolve is wanted again, model
+// it on THIS file: scoped to the ScrollView, never to the tab.
 //
 // Why scroll-DRIVEN, not a static mask: a tab's masthead is the first element
 // inside its ScrollView, so it sits at the very top at rest. A static top mask

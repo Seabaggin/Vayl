@@ -23,4 +23,10 @@ enum UserDefaultsKey {
     /// The pending-session banner the user dismissed. Shared across the Home
     /// and Play surfaces so one dismissal silences both.
     static let dismissedPendingSessionId = "vayl.dismissedPendingSessionId"
+    /// Set when the user taps "Begin" on the one-time Pulse framing doorway.
+    /// SUPPRESSOR ONLY — it can stop a re-show, it can never cause one. The
+    /// authoritative "is this genuinely their first check-in" test is the DATA
+    /// (hydrate settled + no entries), so losing this key is harmless and it can
+    /// never leak a wrong answer across accounts. See PulseStore.shouldShowFraming.
+    static let hasSeenPulseFraming = "vayl.hasSeenPulseFraming"
 }

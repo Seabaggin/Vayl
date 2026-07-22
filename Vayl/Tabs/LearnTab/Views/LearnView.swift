@@ -22,11 +22,19 @@ struct LearnView: View {
     /// sections compose.
     @State private var selectedHubItem: HubItem?
     @State private var showAllVoices = false
+    /// Rest-zeroed scroll offset driving the masthead collapse (see MastheadCollapse).
+    @State private var scrollY: CGFloat = 0
 
     var body: some View {
         ZStack(alignment: .top) {
             AppColors.pageBackground.ignoresSafeArea()
-            OnboardingAtmosphere(config: .stat).ignoresSafeArea()
+            // The Knowledge Hub card sits at ~27–56% of screen height — inside the
+            // default 0.52 void-only zone — so its clear glass had nothing behind it
+            // and read as flat charcoal. The `.learn` atmosphere raises the bloom and
+            // the lowered maskStart unmasks it, so colour rises behind the card and
+            // the lit→dark transition is gradual, not a hard cut. Learn-only; the
+            // shared 0.52 / .stat contract for every other screen is untouched.
+            OnboardingAtmosphere(config: .learn, maskStart: 0.18).ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: AppSpacing.xl) {
                     header
@@ -46,12 +54,13 @@ struct LearnView: View {
                 }
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.top, AppSpacing.md)
-                .padding(.bottom, AppSpacing.lg)   // breathing room only; tab-bar clearance is TabContentWrapper's job
+                .padding(.bottom, AppSpacing.lg)   // breathing room only; tab-bar clearance is the AppShell .safeAreaInset's job
             }
             // Top scroll-edge: the masthead dissolves under the Dynamic Island as
-            // it scrolls up, instead of hard-cutting at the safe-area line. Reference
-            // adoption of the shared modifier; other tabs adopt the same once felt.
+            // it scrolls up, instead of hard-cutting at the safe-area line.
             .scrollTopEdgeFade()
+            // Rest-zeroed offset feeding the masthead shrink (header, below).
+            .mastheadScrollReader($scrollY)
         }
         .vaylCover(isPresented: $showDatabase, confirmOnExit: false) {
             ResearchDatabaseView(store: store, onOpenFinding: { f in
@@ -107,6 +116,9 @@ struct LearnView: View {
                     .font(AppFonts.caption)
                     .foregroundStyle(AppColors.textTertiary)
             }
+            // Only the wordmark + subline shrink; the Resources button stays put
+            // (trailing controls hold, like iOS large-title bar buttons).
+            .mastheadCollapse(scrollY: scrollY)
             Spacer()
             Button { showResources = true } label: {
                 HStack(spacing: AppSpacing.xs) {

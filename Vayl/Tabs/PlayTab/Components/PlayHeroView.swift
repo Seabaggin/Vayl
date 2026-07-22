@@ -78,47 +78,58 @@ struct PlayHeroView: View {
         }
     }
 
+    /// Three lines, one register each: the state line carries logistics, the
+    /// title carries identity, the subtitle carries meaning (what the deck is
+    /// for — the question the retired difficulty label was crudely proxying).
     private func header(_ d: DeckSummary) -> some View {
-        let style = store.style(for: d)
-        return VStack(spacing: AppSpacing.sm) {
-            eyebrow
+        VStack(spacing: AppSpacing.sm) {
+            eyebrow(d)
 
             Text(d.title)
-                .font(AppFonts.screenTitle)
+                .font(AppFonts.deckHeroTitle)
+                .vaylDisplayTracking(32)
                 .foregroundStyle(AppColors.textPrimary)
                 .multilineTextAlignment(.center)
 
-            HStack(spacing: AppSpacing.sm) {
-                Circle().fill(style.accent)
-                    .frame(width: AppSpacing.sm, height: AppSpacing.sm)
-                Text(d.intensity.difficultyLabel)
-                Circle().fill(AppColors.textMuted)
-                    .frame(width: AppSpacing.xxs, height: AppSpacing.xxs)
-                Text("\(d.cardCount) cards")
-            }
-            .font(AppFonts.caption)
-            .foregroundStyle(AppColors.textSecondary)
+            Text(d.subtitle)
+                .font(AppFonts.bodyMedium)
+                .foregroundStyle(AppColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
 
-            continuityRow
+            if case .inProgress(let index, let total) = store.featuredContinuity {
+                progressReadout(value: index, total: total, label: "\(index) of \(total) explored")
+                    .font(AppFonts.caption)
+                    .padding(.top, AppSpacing.xxs)
+            }
         }
     }
 
     /// Continuity eyebrow — flips with the featured deck's real `DeckProgress`.
-    private var eyebrow: some View {
+    /// Fresh/completed carry the card count here (muted, after a dot); in-progress
+    /// drops it — the total already lives inside "X of N explored" below.
+    private func eyebrow(_ d: DeckSummary) -> some View {
         let icon: String
         let label: String
         let tint: Color
+        let showCount: Bool
         switch store.featuredContinuity {
         case .inProgress:
-            icon = "play.fill";        label = "Continue";  tint = AppColors.accentPrimary
+            icon = "play.fill";        label = "Continue";   tint = AppColors.accentPrimary; showCount = false
         case .completed:
-            icon = "arrow.clockwise";  label = "Play again"; tint = AppColors.accentPrimary
+            icon = "arrow.clockwise";  label = "Play again"; tint = AppColors.accentPrimary; showCount = true
         case .fresh:
-            icon = "sparkles";         label = "New deck";   tint = AppColors.spectrumCyan
+            icon = "sparkles";         label = "New deck";   tint = AppColors.accentPrimary; showCount = true
         }
         return HStack(spacing: AppSpacing.xs) {
             Image(systemName: icon)
             Text(label)
+            if showCount {
+                Circle().fill(AppColors.textMuted)
+                    .frame(width: AppSpacing.xxs, height: AppSpacing.xxs)
+                Text("\(d.cardCount) cards")
+                    .foregroundStyle(AppColors.textTertiary)
+            }
         }
         .font(AppFonts.overline)
         .foregroundStyle(tint)
@@ -126,24 +137,6 @@ struct PlayHeroView: View {
 
     /// ~128pt continuity bar (token-derived; matches the masthead/peek widths).
     private var barWidth: CGFloat { AppSpacing.xxl * 2 + AppSpacing.xl }
-
-    /// Continuity read — slim spectrum bar + "X of N explored", or "Not started".
-    /// Both states keep the same slot height so the hero does not jump between decks.
-    private var continuityRow: some View {
-        Group {
-            switch store.featuredContinuity {
-            case .inProgress(let index, let total):
-                progressReadout(value: index, total: total, label: "\(index) of \(total) explored")
-            case .completed:
-                progressReadout(value: 1, total: 1, label: "Completed")
-            case .fresh:
-                Text("Not started")
-                    .foregroundStyle(AppColors.textTertiary)
-            }
-        }
-        .font(AppFonts.caption)
-        .padding(.top, AppSpacing.xxs)
-    }
 
     /// Bar + label, folding from a row to a stack at large Dynamic Type so nothing clips.
     private func progressReadout(value: Int, total: Int, label: String) -> some View {

@@ -61,10 +61,11 @@ struct ContentHubSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            Text("Content hub")
+            Text("Content Hub")
                 .font(AppFonts.sectionHeading)
-                .textCase(.uppercase)
-                .foregroundStyle(AppColors.textSectionLabel)
+                // White, not lavender: matches the Knowledge hub heading. Purple is
+                // reserved for the one thing you can act on (the selected segment).
+                .foregroundStyle(AppColors.textPrimary)
 
             VStack(spacing: AppSpacing.md) {
                 SegmentedPillGroup(

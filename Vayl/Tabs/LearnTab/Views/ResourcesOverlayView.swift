@@ -29,7 +29,6 @@ struct ResourcesOverlayView: View {
             }
             .padding(AppSpacing.lg)
         }
-        .background(AppColors.modalBackground)
     }
 
     private func tier(_ heading: String, _ which: ResourceTier, _ accent: Color) -> some View {

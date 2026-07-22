@@ -54,15 +54,17 @@ struct VaylButton: View {
             let h = geo.size.height
 
             ZStack {
-                // Base fill — lifted above void so the pill reads as a surface.
+                // Base fill — the sheet floor (`glassFrostCTA`). The pill reads
+                // as the same material as the surface it sits on; weight comes
+                // from the resting border + glint, not a lifted fill.
                 Capsule()
-                    .fill(Color(.sRGB, red: 32/255, green: 28/255, blue: 52/255))
+                    .fill(AppColors.glassFrostCTA)
 
                 // Holographic shimmer
                 // clipShape applied before opacity so the alpha
                 // composites against the already-clipped region,
                 // not a sharp rectangular boundary.
-                HolographicShimmer()
+                HolographicShimmer(baseColor: AppColors.glassFrostCTA)
                     .clipShape(Capsule())
                     .opacity(shimmerOpacity)
                     // AUDIT FLAG (2026-07-08): easeInOut(duration: 0.20) has no exact-value

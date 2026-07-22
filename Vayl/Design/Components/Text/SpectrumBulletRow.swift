@@ -19,6 +19,11 @@ import SwiftUI
 struct SpectrumBulletRow: View {
 
     let text: String
+    /// Optional second line under the label, sharing the label's text column (the disc stays
+    /// top-aligned to the label, not centred on the pair). For rows that name a thing AND say
+    /// what it means — the Pulse framing doorway. nil keeps every existing caller's single-line
+    /// row byte-identical.
+    var detail: String? = nil
     /// Per-row delay (set by index) so the light cascades DOWN the list — the first bullet sweeps,
     /// then the next, and so on. Higher value = later.
     var phaseOffset: Double = 0
@@ -30,11 +35,21 @@ struct SpectrumBulletRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             orb
-            Text(text)
-                .font(font)
-                .foregroundStyle(AppColors.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                Text(text)
+                    .font(font)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let detail {
+                    Text(detail)
+                        .font(AppFonts.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // The label and its detail are one idea; VoiceOver should not stop twice.
+            .accessibilityElement(children: .combine)
         }
     }
 
